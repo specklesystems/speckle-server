@@ -129,7 +129,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
       ...(to.query['transparent'] === 'true' ? { isTransparent: true } : {}),
       ...(to.query['hidecontrols'] === 'true' ? { hideControls: true } : {}),
       ...(to.query['hideselectioninfo'] === 'true' ? { hideSelectionInfo: true } : {}),
-      ...(to.query['hidebranding'] === 'true' ? { hideBranding: true } : {}),
       ...(to.query['disablemodellink'] === 'true' ? { disableModelLink: true } : {}),
       ...(to.query['noscroll'] === 'true' ? { noScroll: true } : {}),
       ...(to.query['autoload'] === 'true'
