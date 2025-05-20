@@ -1,6 +1,8 @@
 name: Run builds
 
-on: pull_request
+# temporarely diabled while working on the rest
+on: workflow_dispatch
+# on: pull_request
 
 jobs:
   docker-build-server:

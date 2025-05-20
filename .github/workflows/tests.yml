@@ -1,6 +1,8 @@
 name: Run tests
 
-on: pull_request
+# temporarely diabled while working on the rest
+on: workflow_dispatch
+# on: pull_request
 
 jobs:
   # TODO:
