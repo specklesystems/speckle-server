@@ -11345,6 +11345,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@intercom/messenger-js-sdk@npm:^0.0.14":
+  version: 0.0.14
+  resolution: "@intercom/messenger-js-sdk@npm:0.0.14"
+  checksum: 10/49a95cdb701553df45e8c526596ab7ae9b44f462ef3317e9397b44e9358c5e9cbd556f49722984a714f7052645998876aa8721d43c5f77479e3b9ba94699c7ed
+  languageName: node
+  linkType: hard
+
 "@ioredis/as-callback@npm:^3.0.0":
   version: 3.0.0
   resolution: "@ioredis/as-callback@npm:3.0.0"
@@ -15669,6 +15676,7 @@ __metadata:
     "@graphql-codegen/visitor-plugin-common": "npm:^5.7.1"
     "@headlessui/vue": "npm:^1.7.13"
     "@heroicons/vue": "npm:^2.0.12"
+    "@intercom/messenger-js-sdk": "npm:^0.0.14"
     "@jsonforms/core": "npm:^3.5.1"
     "@jsonforms/vue": "npm:^3.5.1"
     "@jsonforms/vue-vanilla": "npm:^3.3.0"
@@ -15682,7 +15690,7 @@ __metadata:
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
     "@speckle/viewer": "workspace:^"
-    "@survicate/survicate-web-surveys-wrapper": "npm:^1.2.1"
+    "@survicate/survicate-web-surveys-wrapper": "npm:^1.3.0"
     "@tailwindcss/forms": "npm:^0.5.3"
     "@tailwindcss/line-clamp": "npm:^0.4.2"
     "@tailwindcss/typography": "npm:^0.5.12"
@@ -17356,10 +17364,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@survicate/survicate-web-surveys-wrapper@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@survicate/survicate-web-surveys-wrapper@npm:1.2.1"
-  checksum: 10/bd2f6fd69c7876e914650d9ac12627c90751bdd3165b653538ee729cd3fdfde922594e58ab43204a0577639fc15717af0b088696485392f724807c58c8aa3bf7
+"@survicate/survicate-web-surveys-wrapper@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@survicate/survicate-web-surveys-wrapper@npm:1.3.0"
+  checksum: 10/d22681dcd1029d494b36de88273df770b8619b0c1baeccfd89d5b7c2f088f03bf77479bbe898118ea928eb48e6294157937c9bb55b5c2988f26fb00180b7d371
   languageName: node
   linkType: hard
 

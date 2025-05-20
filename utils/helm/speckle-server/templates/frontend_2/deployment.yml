@@ -99,10 +99,6 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
                 key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
-          {{- if .Values.frontend_2.webflowApiToken }}
-          - name: NUXT_WEBFLOW_API_TOKEN
-            value: {{ .Values.frontend_2.webflowApiToken | quote }}
-          {{- end }}
           {{- if .Values.analytics.datadog_app_id }}
           - name: NUXT_PUBLIC_DATADOG_APP_ID
             value: {{ .Values.analytics.datadog_app_id | quote }}
@@ -145,9 +141,9 @@ spec:
             value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
           - name: NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED
             value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
-          {{- if .Values.analytics.survicate_workspace_key }}
-          - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
-            value: {{ .Values.analytics.survicate_workspace_key | quote }}
+          {{- if .Values.analytics.intercom_app_id }}
+          - name: NUXT_PUBLIC_INTERCOM_APP_ID
+            value: {{ .Values.analytics.intercom_app_id | quote }}
           {{- end }}
           {{- with .Values.frontend_2.additionalEnvVars }}
           {{- toYaml . | nindent 10}}

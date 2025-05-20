@@ -64,10 +64,7 @@ type PolicyErrors =
   | InstanceType<typeof ServerNotEnoughPermissionsError>
   | InstanceType<typeof WorkspaceNoEditorSeatError>
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
-  | InstanceType<
-      | typeof WorkspaceNotEnoughPermissionsError
-      | typeof ProjectNotEnoughPermissionsError
-    >
+  | InstanceType<typeof ProjectNotEnoughPermissionsError>
 
 export const canMoveToWorkspacePolicy: AuthPolicy<
   PolicyLoaderKeys,

@@ -84,13 +84,18 @@ export const requestToJoinWorkspaceFactory =
       throw new WorkspaceProtectedError()
     }
 
-    await createWorkspaceJoinRequest({
+    const joinRequest = await createWorkspaceJoinRequest({
       workspaceJoinRequest: {
         userId,
         workspaceId,
         status: 'pending'
       }
     })
+
+    if (!joinRequest || joinRequest.status !== 'pending') {
+      // The request was already created, so don't send the email again
+      return true
+    }
 
     await sendWorkspaceJoinRequestReceivedEmail({
       workspace,

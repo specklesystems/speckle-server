@@ -24,10 +24,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isMemberOfWorkspace = (data?.activeUser?.workspaces?.totalCount ?? 0) > 0
 
-  const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()
+  const isGoingToCreateWorkspace = to.path === workspaceCreateRoute
 
   if (!hasDiscoverableWorkspaces && !isGoingToCreateWorkspace) {
-    return navigateTo(workspaceCreateRoute())
+    return navigateTo(workspaceCreateRoute)
   }
 
   if (isMemberOfWorkspace) {
