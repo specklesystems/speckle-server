@@ -4210,6 +4210,7 @@ export type UserUpdateInput = {
 };
 
 export type UserWorkspacesFilter = {
+  completed?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4864,6 +4865,7 @@ export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof 
 export type WorkspacePermissionChecks = {
   __typename?: 'WorkspacePermissionChecks';
   canCreateProject: PermissionCheckResult;
+  canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
 };
@@ -9063,6 +9065,7 @@ export type WorkspacePaidPlanPricesFieldArgs = {
 }
 export type WorkspacePermissionChecksFieldArgs = {
   canCreateProject: {},
+  canEditEmbedOptions: {},
   canInvite: {},
   canMoveProjectToWorkspace: WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs,
 }
