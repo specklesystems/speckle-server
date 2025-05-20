@@ -10,6 +10,18 @@ export const settingsUpdateWorkspaceMutation = graphql(`
   }
 `)
 
+export const settingsUpdateWorkspaceEmbedOptionsMutation = graphql(`
+  mutation SettingsUpdateWorkspaceEmbedOptions(
+    $input: WorkspaceUpdateEmbedOptionsInput!
+  ) {
+    workspaceMutations {
+      updateEmbedOptions(input: $input) {
+        hideSpeckleBranding
+      }
+    }
+  }
+`)
+
 export const settingsCreateUserEmailMutation = graphql(`
   mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {
     activeUserMutations {
