@@ -31,9 +31,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       minio:
-        image: 'minio/minio'
+        image: bitnami/minio
         ports:
           - 9000:9000
+
     env:
       NODE_ENV: test
       POSTGRES_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
