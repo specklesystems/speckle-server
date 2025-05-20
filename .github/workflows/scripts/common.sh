@@ -5,14 +5,14 @@ DOCKER_IMAGE_TAG="speckle/speckle-${SPECKLE_SERVER_PACKAGE}"
 
 echo "1 ${DOCKER_IMAGE_TAG}"
 
+# shellcheck disable=SC2034,SC2086
 IMAGE_VERSION_TAG="${IMAGE_VERSION_TAG:-${GITHUB_SHA}}"
 
 echo "2 ${IMAGE_VERSION_TAG}"
 
-# shellcheck disable=SC2034,SC2086
-DOCKER_FILE_NAME="$(echo ${DOCKER_IMAGE_TAG}_${IMAGE_VERSION_TAG} | sed -e 's/[^A-Za-z0-9._-]/_/g')"
-
-echo "3 ${DOCKER_FILE_NAME}"
+echo "3 $(git rev-list --tags)"
+echo "3.2 $(git describe --always --tags $(git rev-list --tags))"
+echo "3.3 $(git describe --always --tags $(git rev-list --tags) | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$')"
 
 # shellcheck disable=SC2068,SC2046
 LAST_RELEASE="$(git describe --always --tags $(git rev-list --tags) | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)" # get the last release tag. FIXME: Fails if a commit is tagged with more than one tag: https://stackoverflow.com/questions/8089002/git-describe-with-two-tags-on-the-same-commit/56039163#56039163
