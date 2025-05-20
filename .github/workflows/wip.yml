@@ -63,11 +63,17 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/server'
+      - run: cat .env.test
+        working-directory: 'packages/server'
       - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - run: cp .env.test-example .env.test
+        working-directory: 'packages/server'
+      - run: cat .env.test
         working-directory: 'packages/server'
       - name: 'Lint'
         run: yarn lint:ci
