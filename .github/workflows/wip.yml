@@ -13,6 +13,8 @@ jobs:
         working-directory: ./.github/workflows/scripts
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-tags: true
       - run: chmod +x ./get_version.sh ./common.sh
       - run: ./get_version.sh
       - run: echo "IMAGE_VERSION_TAG=${result}"
