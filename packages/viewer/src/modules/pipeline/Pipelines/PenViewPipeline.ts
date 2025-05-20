@@ -30,8 +30,8 @@ export class PenViewPipeline extends ProgressivePipeline {
     edgesPipeline.edgePassDynamic.outputTarget = null
     edgesPipeline.depthPass.setVisibility(ObjectVisibility.DEPTH)
     edgesPipeline.depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
-    edgesPipeline.edgePass.options = { backgroundColor: 0x000000 }
-    edgesPipeline.edgePassDynamic.options = { backgroundColor: 0x000000 }
+    edgesPipeline.edgePass.options = { backgroundColor: 0x000000, ...options }
+    edgesPipeline.edgePassDynamic.options = { backgroundColor: 0x000000, ...options }
 
     const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)

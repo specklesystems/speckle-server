@@ -1,6 +1,5 @@
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
-import { WorkspaceRoles } from '@speckle/shared'
 
 export const workspaceEventNamespace = 'workspace' as const
 
@@ -13,7 +12,6 @@ export const WorkspaceEvents = {
   Deleted: `${eventPrefix}deleted`,
   RoleDeleted: `${eventPrefix}role-deleted`,
   RoleUpdated: `${eventPrefix}role-updated`,
-  JoinedFromDiscovery: `${eventPrefix}joined-from-discovery`,
   SeatUpdated: `${eventPrefix}seat-updated`
 } as const
 
@@ -41,11 +39,6 @@ type WorkspaceSeatUpdatedPayload = {
   seat: WorkspaceSeat
   updatedByUserId: string
 }
-type WorkspaceJoinedFromDiscoveryPayload = {
-  userId: string
-  workspaceId: string
-  role: WorkspaceRoles
-}
 
 export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Authorizing]: WorkspaceAuthorizedPayload
@@ -55,5 +48,4 @@ export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
   [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
   [WorkspaceEvents.SeatUpdated]: WorkspaceSeatUpdatedPayload
-  [WorkspaceEvents.JoinedFromDiscovery]: WorkspaceJoinedFromDiscoveryPayload
 }

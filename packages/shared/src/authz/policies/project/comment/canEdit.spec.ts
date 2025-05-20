@@ -19,10 +19,7 @@ import { ProjectVisibility } from '../../../domain/projects/types.js'
 describe('canEditProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canEditProjectCommentPolicy>) =>
     canEditProjectCommentPolicy({
-      getEnv: async () =>
-        parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'true'
-        }),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null

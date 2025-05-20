@@ -29,6 +29,8 @@ export type Workspace = {
   logo: string | null
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
+  // TODO: Create new table/structure if embeds get more configuration
+  isEmbedSpeckleBrandingHidden: boolean
 }
 
 export type LimitedWorkspace = Pick<

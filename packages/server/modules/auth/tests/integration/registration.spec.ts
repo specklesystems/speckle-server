@@ -158,7 +158,7 @@ describe('Server registration', () => {
             getTokenFromAccessCodeChallenge: 'mismatched'
           })
       )
-      expect(e.message).to.contain('Invalid request')
+      expect(e.message).to.contain('Code challenge mismatch')
     })
     ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? it.skip : it)(
       'works with stream invite and allows joining stream afterwards',
@@ -293,7 +293,7 @@ describe('Server registration', () => {
             getTokenFromAccessCodeChallenge: 'mismatched'
           })
         })
-        expect(e.message).to.contain('Invalid request')
+        expect(e.message).to.contain('Code challenge mismatch')
       })
 
       it("doesn't work with invalid credentials", async () => {

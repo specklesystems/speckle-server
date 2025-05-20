@@ -24,10 +24,7 @@ describe('canCreateProjectVersionPolicy', () => {
         workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () =>
-        parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'true'
-        }),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getServerRole: async () => Roles.Server.Guest,
       getWorkspaceRole: async () => null,
       getWorkspace: async () => null,

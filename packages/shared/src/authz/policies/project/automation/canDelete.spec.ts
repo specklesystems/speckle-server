@@ -19,10 +19,7 @@ const buildCanDeletePolicy = (
   overrides?: Partial<Parameters<typeof canDeleteAutomationPolicy>[0]>
 ) =>
   canDeleteAutomationPolicy({
-    getEnv: async () =>
-      parseFeatureFlags({
-        FF_WORKSPACES_MODULE_ENABLED: 'true'
-      }),
+    getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getProject: async () => ({
       id: 'project-id',
       workspaceId: null,

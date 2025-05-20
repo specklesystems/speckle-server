@@ -44,12 +44,12 @@ workflows:
               # run tests for any commit on any branch, including any tags
               only: /.*/
           requires:
-            - docker-publish-postgres-container
+            - docker-build-postgres-container
 
       - test-server-no-ff:
           filters: *filters-allow-all
           requires:
-            - docker-publish-postgres-container
+            - docker-build-postgres-container
 
       - test-server-multiregion: *test-server-job-definition
 
@@ -131,6 +131,7 @@ workflows:
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
+            - docker-hub
           filters: &filters-build
             tags:
               only: /.*/
@@ -309,7 +310,13 @@ workflows:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - docker-build-postgres-container
+            - docker-build-monitor-container
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-server
+            - test-server-no-ff
+            - test-server-multiregion
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -619,8 +626,10 @@ jobs:
       FF_BILLING_INTEGRATION_ENABLED: 'true'
       # These are the only different env keys:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      FF_GATEKEEPER_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
+      FF_MOVE_PROJECT_REGION_ENABLED: 'true'
       RUN_TESTS_IN_MULTIREGION_MODE: true
       RATELIMITER_ENABLED: 'false'
 
@@ -922,12 +931,8 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Push
           command: ./.circleci/build.sh
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - speckle*
 
   docker-build-server:
     <<: *build-job
@@ -955,7 +960,7 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Publish sourcemaps
           command: ./.circleci/build_publish_fe2_sourcemaps.sh
 
   docker-build-previews:

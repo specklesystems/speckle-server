@@ -17,12 +17,7 @@ import {
   createCommitByBranchNameFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import {
-  isRateLimitBreached,
-  getRateLimitResult
-} from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -80,6 +75,7 @@ import {
 import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
@@ -124,6 +120,10 @@ const getUserCommitsFactory =
 
     return { items, cursor, totalCount }
   }
+
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = {
   Query: {},
@@ -359,10 +359,10 @@ export = {
   },
   Mutation: {
     async commitCreate(_parent, args, context) {
-      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', context.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
+      await throwIfRateLimited({
+        action: 'COMMIT_CREATE',
+        source: context.userId!
+      })
 
       const projectId = args.commit.streamId
       const modelName = args.commit.branchName
