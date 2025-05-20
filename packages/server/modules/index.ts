@@ -116,7 +116,7 @@ async function getSpeckleModules() {
   const moduleNames = getEnabledModuleNames()
 
   for (const dir of moduleNames) {
-    const moduleIndex = require(`./${dir}/index`)
+    const moduleIndex = await import(`./${dir}/index`)
 
     // CJS/ESM interop is weird
     let moduleDefinition: SpeckleModule

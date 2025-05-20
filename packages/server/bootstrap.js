@@ -6,7 +6,7 @@ import {
   getApolloServerVersion,
   getServerVersion
 } from '@/modules/shared/helpers/envHelper'
-import { logger } from '@/logging/logging'
+import { logger } from '@/observability/logging'
 import { initOpenTelemetry } from '@/observability/otel'
 import { patchKnex } from '@/modules/core/patches/knex'
 import { appRoot, packageRoot } from '#/root.js'

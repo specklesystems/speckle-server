@@ -1,6 +1,6 @@
 import { BaseError } from '@/modules/shared/errors'
 import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
-import { ApolloError } from '@apollo/client/core/core.cjs'
+import { ApolloError } from '@apollo/client/core'
 import { ensureError } from '@speckle/shared'
 import { GraphQLError } from 'graphql'
 import type { Logger } from 'pino'
