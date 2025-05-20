@@ -13,10 +13,12 @@ jobs:
       - run: git fetch origin 'refs/tags/*:refs/tags/*'
       - run: chmod +x ./get_version.sh ./common.sh
         working-directory: ./.github/workflows/scripts
-      - run: export result=$(./get_version.sh)
+      - run: ./get_version.sh >> result
         working-directory: ./.github/workflows/scripts
-      - run: echo "IMAGE_VERSION_TAG=$result"
-      - run: echo "IMAGE_VERSION_TAG=$result" >> "$GITHUB_OUTPUT"
+      - run: echo "IMAGE_VERSION_TAG=$(cat result)"
+        working-directory: ./.github/workflows/scripts
+      - run: echo "IMAGE_VERSION_TAG=$(cat result)" >> "$GITHUB_OUTPUT"
+        working-directory: ./.github/workflows/scripts
 
   # # TODO:
   docker-build-server:
