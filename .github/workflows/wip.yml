@@ -15,10 +15,12 @@ jobs:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-        # TOOD: add max connections
+        options: >-
+          "-c",
+          "max_connections=1000"
+
       minio:
         image: 'minio/minio'
-        options: server /data --console-address ":9001"
     env:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
