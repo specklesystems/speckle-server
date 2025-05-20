@@ -63,10 +63,6 @@ jobs:
         with:
           node-version: 22
           cache: yarn
-      - run: cp .env.test-example .env.test
-        working-directory: 'packages/server'
-      - run: cat .env.test
-        working-directory: 'packages/server'
       - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
@@ -79,7 +75,7 @@ jobs:
         run: yarn lint:ci
         working-directory: 'packages/server'
       - name: 'Run test'
-        run: yarn test:report --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
+        run: yarn test:report
         working-directory: 'packages/server'
         timeout-minutes: 30
       # TODO: codecov
