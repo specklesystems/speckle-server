@@ -75,21 +75,13 @@ export class EdgesPipeline extends ProgressivePipeline {
     edgesPass.setTexture('tDepth', depthNormalIdPass.depthTexture)
     edgesPass.setTexture('tNormal', depthNormalIdPass.normalTexture)
     edgesPass.setTexture('tId', depthNormalIdPass.idTexture)
-    edgesPass.options = {
-      outlineThickness: options.outlineThickness,
-      outlineDensity: options.outlineOpacity,
-      outlineColor: options.outlineColor
-    }
+    edgesPass.options = options
 
     const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthPassNormalIdDynamic.depthTexture)
     edgesPassDynamic.setTexture('tNormal', depthPassNormalIdDynamic.normalTexture)
     edgesPassDynamic.setTexture('tId', depthPassNormalIdDynamic.idTexture)
-    edgesPassDynamic.options = {
-      outlineThickness: options.outlineThickness,
-      outlineDensity: options.outlineOpacity,
-      outlineColor: options.outlineColor
-    }
+    edgesPassDynamic.options = options
 
     const taaPass = new TAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture
@@ -147,20 +139,12 @@ export class EdgesPipeline extends ProgressivePipeline {
     const edgesPass = new EdgesPass()
     edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
     edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
-    edgesPass.options = {
-      outlineThickness: options.outlineThickness,
-      outlineDensity: options.outlineOpacity,
-      outlineColor: options.outlineColor
-    }
+    edgesPass.options = options
 
     const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthPassDynamic.outputTarget?.texture)
     edgesPassDynamic.setTexture('tNormal', normalPassDynamic.outputTarget?.texture)
-    edgesPassDynamic.options = {
-      outlineThickness: options.outlineThickness,
-      outlineDensity: options.outlineOpacity,
-      outlineColor: options.outlineColor
-    }
+    edgesPassDynamic.options = options
 
     const taaPass = new TAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture

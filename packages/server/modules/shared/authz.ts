@@ -36,11 +36,14 @@ import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { moduleAuthLoaders } from '@/modules/index'
 export { AuthContext, AuthParams }
 
-interface AuthFailedResult extends AuthResult {
+export interface AuthFailedResult extends AuthResult {
   authorized: false
   error: BaseError | null
   fatal?: boolean
 }
+
+export const isAuthFailedResult = (result: AuthResult): result is AuthFailedResult =>
+  ('error' in result || ('fatal' in result && !!result.fatal)) && !result.authorized
 
 interface AuthFailedData extends AuthData {
   authResult: AuthFailedResult

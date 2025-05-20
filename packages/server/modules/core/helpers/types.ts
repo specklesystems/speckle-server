@@ -63,14 +63,6 @@ export type StreamRecord = {
   workspaceId: Nullable<string>
   regionKey: Nullable<string>
   visibility: ProjectRecordVisibility
-  /**
-   * @deprecated No longer used, about to be removed
-   */
-  isDiscoverable: boolean
-  /**
-   * @deprecated No longer used, about to be removed
-   */
-  isPublic: boolean
 }
 
 export type StreamAclRecord = {

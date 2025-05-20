@@ -1,12 +1,8 @@
 import crs from 'crypto-random-string'
 import chai from 'chai'
 import request from 'supertest'
-import httpMocks from 'node-mocks-http'
-import { TIME } from '@speckle/shared'
-import { RATE_LIMITERS, createConsumer } from '@/modules/core/services/ratelimiter'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createStreamInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
-import { RateLimiterMemory } from 'rate-limiter-flexible'
 import {
   findInviteFactory,
   findUserByTargetFactory,
@@ -58,10 +54,14 @@ import {
   getServerInfoFactory,
   updateServerInfoFactory
 } from '@/modules/core/repositories/server'
-import { temporarilyEnableRateLimiter } from '@/modules/core/tests/ratelimiter.spec'
+import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
+import { RATE_LIMITERS, createConsumer } from '@/modules/core/utils/ratelimiter'
+import httpMocks from 'node-mocks-http'
+import { RateLimiterMemory } from 'rate-limiter-flexible'
+import { TIME } from '@speckle/shared'
+import type { Application } from 'express'
 import { passportAuthenticationCallbackFactory } from '@/modules/auth/services/passportService'
 import { testLogger as logger } from '@/observability/logging'
-import { Application } from 'express'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
@@ -225,12 +225,15 @@ describe('Auth @auth', () => {
       ;({ sendRequest } = await initializeTestServer(ctx))
 
       // Register a user for testing login flows
-      await createUser(me).then((id) => (me.id = id))
+      const meId = await createUser(me)
+      me.id = meId
 
       // Create a test stream for testing stream invites
-      await createStream({ ...myPrivateStream, ownerId: me.id! }).then(
-        (id) => (myPrivateStream.id = id)
-      )
+      const myPrivateStreamId = await createStream({
+        ...myPrivateStream,
+        ownerId: me.id
+      })
+      myPrivateStream.id = myPrivateStreamId
     })
 
     it('Should register a new user (speckle frontend)', async () => {
@@ -623,32 +626,35 @@ describe('Auth @auth', () => {
       expect(res.body.data.serverInfo.authStrategies).to.be.an('array')
     })
 
-    it('Should rate-limit user creation', async () => {
-      const newUser = async (id: string, ip: string, expectCode: number) => {
-        await request(app)
-          .post(`/auth/local/register?challenge=test`)
-          .set('CF-Connecting-IP', ip)
-          .send({
-            email: `rltest_${id}@speckle.systems`,
-            name: 'ratelimit test',
-            company: 'test',
-            password: 'roll saving throws'
+    // Rate limiting tests can only be run if the rate limiter is enabled when the application is loaded for the first time
+    // `RATELIMITER_ENABLED='true'` has to be set in `.env.test` or when calling `RATELIMITER_ENABLED=true yarn test`
+    ;(isRateLimiterEnabled() ? it : it.skip)(
+      'Should rate-limit user creation',
+      async () => {
+        const newUser = async (id: string, ip: string, expectCode: number) => {
+          await request(app)
+            .post(`/auth/local/register?challenge=test`)
+            .set('CF-Connecting-IP', ip)
+            .send({
+              email: `rltest_${id}@speckle.systems`,
+              name: 'ratelimit test',
+              company: 'test',
+              password: 'roll saving throws'
+            })
+            .expect(expectCode)
+        }
+
+        const oldRateLimiter = RATE_LIMITERS.USER_CREATE
+
+        RATE_LIMITERS.USER_CREATE = createConsumer(
+          'USER_CREATE',
+          new RateLimiterMemory({
+            keyPrefix: 'USER_CREATE',
+            points: 1,
+            duration: 1 * TIME.week
           })
-          .expect(expectCode)
-      }
+        )
 
-      const oldRateLimiter = RATE_LIMITERS.USER_CREATE
-
-      RATE_LIMITERS.USER_CREATE = createConsumer(
-        'USER_CREATE',
-        new RateLimiterMemory({
-          keyPrefix: 'USER_CREATE',
-          points: 1,
-          duration: 1 * TIME.week
-        })
-      )
-
-      await temporarilyEnableRateLimiter(async () => {
         // 1 users should be fine
         await newUser(`test0`, '1.2.3.4', 302)
 
@@ -663,10 +669,10 @@ describe('Auth @auth', () => {
 
         // should fail the additional user from unknown ip address
         await newUser(`unknown1`, '', 429)
-      })
 
-      RATE_LIMITERS.USER_CREATE = oldRateLimiter
-    })
+        RATE_LIMITERS.USER_CREATE = oldRateLimiter
+      }
+    )
   })
 
   describe('passportAuthenticationCallbackFactory', () => {

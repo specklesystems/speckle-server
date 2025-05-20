@@ -5,7 +5,8 @@ import {
   DeleteCheckoutSession,
   GetWorkspaceCheckoutSession,
   GetWorkspacePlan,
-  SaveCheckoutSession
+  SaveCheckoutSession,
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import {
@@ -123,7 +124,7 @@ export const startCheckoutSessionFactory =
 
     const editorsCount = await countSeatsByTypeInWorkspace({
       workspaceId,
-      type: 'editor'
+      type: WorkspaceSeatType.Editor
     })
     if (!editorsCount) {
       throw new InvalidWorkspacePlanUpgradeError('Workspace has no seats')

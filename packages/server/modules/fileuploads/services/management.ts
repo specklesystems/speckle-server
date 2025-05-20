@@ -74,7 +74,7 @@ export const insertNewUploadAndNotifyFactoryV2 =
         upload: {
           ...file,
           streamId: upload.projectId,
-          branchName: '' // @deprecated
+          branchName: upload.modelName
         }
       },
       projectId: file.projectId

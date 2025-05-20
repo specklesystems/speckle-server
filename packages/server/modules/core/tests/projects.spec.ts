@@ -14,6 +14,9 @@ import {
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { times } from 'lodash'
 import { Roles } from '@speckle/shared'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
 describe('Projects', () => {
   const me: BasicTestUser = {
@@ -41,24 +44,28 @@ describe('Projects', () => {
         authUserId: me.id
       })
     })
+    ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? it.skip : it)(
+      'can be created',
+      async () => {
+        const input: ProjectCreateInput = {
+          name: 'my first project',
+          description: 'ayyooo'
+        }
+        const res = await apollo.execute(CreateProjectDocument, {
+          input
+        })
 
-    it('can be created', async () => {
-      const input: ProjectCreateInput = {
-        name: 'my first project',
-        description: 'ayyooo'
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.create.id).to.be.ok
+        expect(res.data?.projectMutations.create.name).to.equal(input.name)
+        expect(res.data?.projectMutations.create.description).to.equal(
+          input.description
+        )
+        expect(res.data?.projectMutations.create.visibility).to.equal(
+          ProjectVisibility.Private // private by default
+        )
       }
-      const res = await apollo.execute(CreateProjectDocument, {
-        input
-      })
-
-      expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.projectMutations.create.id).to.be.ok
-      expect(res.data?.projectMutations.create.name).to.equal(input.name)
-      expect(res.data?.projectMutations.create.description).to.equal(input.description)
-      expect(res.data?.projectMutations.create.visibility).to.equal(
-        ProjectVisibility.Private // private by default
-      )
-    })
+    )
 
     describe('after creation', () => {
       const myStream: BasicTestStream = {

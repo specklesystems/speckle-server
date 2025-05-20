@@ -36,7 +36,7 @@
           v-else-if="!selectedWorkspace"
           color="outline"
           full-width
-          @click="navigateTo(workspaceCreateRoute())"
+          @click="navigateTo(workspaceCreateRoute)"
         >
           Create a new workspace
         </FormButton>

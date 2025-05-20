@@ -223,7 +223,6 @@ export async function buildContext(params?: {
         authLoaders.clearCache()
       }
     },
-    authLoaders: authLoaders.loaders,
     clearCache: async () => {
       authLoaders.clearCache()
       dataLoaders.clearAll()

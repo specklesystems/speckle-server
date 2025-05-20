@@ -3,10 +3,7 @@ import {
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   getPendingProjectCollaboratorsFactory,
   inviteUsersToProjectFactory
@@ -39,12 +36,12 @@ import {
 import { Nullable, Roles, Scopes } from '@speckle/shared'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
 import {
   toProjectIdWhitelist,
   isResourceAllowed,
-  throwIfResourceAccessNotAllowed
+  throwIfResourceAccessNotAllowed,
+  throwIfNewResourceNotAllowed
 } from '@/modules/core/helpers/token'
 import {
   Resolvers,
@@ -81,7 +78,10 @@ import {
 } from '@/modules/core/services/streams/favorite'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  adminOverrideEnabled,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -102,6 +102,7 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -226,6 +227,9 @@ const favoriteStream = favoriteStreamFactory({
 })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 /**
  * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
@@ -490,10 +494,19 @@ export = {
   },
   Mutation: {
     async streamCreate(_, args, context) {
-      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
+      await throwIfRateLimited({
+        action: 'STREAM_CREATE',
+        source: context.userId!
+      })
+
+      throwIfNewResourceNotAllowed({
+        resourceAccessRules: context.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
+      const canCreate = await context.authPolicies.project.canCreatePersonal({
+        userId: context.userId!
+      })
+      throwIfAuthNotOk(canCreate)
 
       const { id } = await withOperationLogging(
         async () =>
@@ -514,12 +527,18 @@ export = {
 
     async streamUpdate(_, args, context) {
       const projectId = args.stream.id
-      await authorizeResolver(
-        context.userId,
-        args.stream.id,
-        Roles.Stream.Owner,
-        context.resourceAccessRules
-      )
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+      const canUpdate = await context.authPolicies.project.canUpdate({
+        userId: context.userId!,
+        projectId
+      })
+      throwIfAuthNotOk(canUpdate)
+
       const logger = context.log.child({
         projectId,
         streamId: projectId //legacy
@@ -538,12 +557,18 @@ export = {
 
     async streamDelete(_, args, context) {
       const projectId = args.id
-      await authorizeResolver(
-        context.userId,
-        args.id,
-        Roles.Stream.Owner,
-        context.resourceAccessRules
-      )
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+      const canDelete = await context.authPolicies.project.canDelete({
+        userId: context.userId!,
+        projectId
+      })
+      throwIfAuthNotOk(canDelete)
+
       const logger = context.log.child({
         projectId,
         streamId: projectId //legacy
@@ -566,6 +591,17 @@ export = {
         async () =>
           await Promise.all(
             (args.ids || []).map(async (id) => {
+              throwIfResourceAccessNotAllowed({
+                resourceId: id,
+                resourceType: TokenResourceIdentifierType.Project,
+                resourceAccessRules: context.resourceAccessRules
+              })
+              const canDelete = await context.authPolicies.project.canDelete({
+                userId: context.userId!,
+                projectId: id
+              })
+              throwIfAuthNotOk(canDelete)
+
               return await deleteStreamAndNotify(id, context.userId!)
             })
           ),
@@ -580,6 +616,18 @@ export = {
 
     async streamUpdatePermission(_, args, context) {
       const projectId = args.permissionParams.streamId
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+      const canUpdate = await context.authPolicies.project.canUpdate({
+        userId: context.userId!,
+        projectId
+      })
+      throwIfAuthNotOk(canUpdate)
+
       const logger = context.log.child({
         projectId,
         streamId: projectId //legacy
@@ -602,6 +650,18 @@ export = {
 
     async streamRevokePermission(_, args, context) {
       const projectId = args.permissionParams.streamId
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+      const canUpdate = await context.authPolicies.project.canUpdate({
+        userId: context.userId!,
+        projectId
+      })
+      throwIfAuthNotOk(canUpdate)
+
       const logger = context.log.child({
         projectId,
         streamId: projectId //legacy
@@ -651,6 +711,17 @@ export = {
     async streamLeave(_parent, args, ctx) {
       const { streamId } = args
       const { userId } = ctx
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+      const canLeave = await ctx.authPolicies.project.canLeave({
+        userId: ctx.userId!,
+        projectId: streamId
+      })
+      throwIfAuthNotOk(canLeave)
 
       const logger = ctx.log.child({
         projectId: streamId,
@@ -717,6 +788,17 @@ export = {
       subscribe: filteredSubscribe(
         StreamSubscriptions.StreamUpdated,
         async (payload, variables, context) => {
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+          const canRead = await context.authPolicies.project.canRead({
+            userId: context.userId!,
+            projectId: payload.id
+          })
+          throwIfAuthNotOk(canRead)
+
           await authorizeResolver(
             context.userId,
             payload.id,
@@ -732,12 +814,17 @@ export = {
       subscribe: filteredSubscribe(
         StreamSubscriptions.StreamDeleted,
         async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.streamId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+          const canRead = await context.authPolicies.project.canRead({
+            userId: context.userId!,
+            projectId: payload.streamId
+          })
+          throwIfAuthNotOk(canRead)
+
           return payload.streamId === variables.streamId
         }
       )

@@ -19,7 +19,8 @@ export const WorkspacePlanFeatures = <const>{
   // Optional/plan specific
   DomainSecurity: 'domainBasedSecurityPolicies',
   SSO: 'oidcSso',
-  CustomDataRegion: 'workspaceDataRegionSpecificity'
+  CustomDataRegion: 'workspaceDataRegionSpecificity',
+  CustomViewerEmbed: 'customViewerEmbed'
 }
 
 export type WorkspacePlanFeatures =
@@ -46,6 +47,10 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.CustomDataRegion]: {
     displayName: 'Custom data residency',
     description: 'Store your data in EU, UK, North America, or Asia Pacific'
+  },
+  [WorkspacePlanFeatures.CustomViewerEmbed]: {
+    displayName: 'Customised viewer',
+    description: 'Configure the branding of the embedded Speckle viewer'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -112,7 +117,8 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.CustomViewerEmbed
     ],
     limits: {
       projectCount: 10,
@@ -127,7 +133,8 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.CustomViewerEmbed
     ],
     limits: {
       projectCount: null,
@@ -147,7 +154,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.CustomViewerEmbed
     ],
     limits: unlimited
   },
@@ -157,7 +165,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.CustomViewerEmbed
     ],
     limits: unlimited
   },
