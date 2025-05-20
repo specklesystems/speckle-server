@@ -19,6 +19,15 @@ jobs:
       - run: echo "IMAGE_VERSION_TAG=${result}"
       - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
-        # TODO:
-        # - store_test_results:
-        #    path: packages/server/reports
+  # TODO:
+  docker-build-server:
+    runs-on: blacksmith
+    needs: [get-version]
+    name: Docker build server
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-server:${needs.get-version.outputs.IMAGE_VERSION_TAG}
+          file: ./packages/server/Dockerfile
