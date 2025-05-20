@@ -1,30 +1,50 @@
 name: Run builds
 
 # temporarely diabled while working on the rest
-on: workflow_dispatch
+on: pull_request
 # on: pull_request
 
 jobs:
+  get-version:
+    outputs:
+      IMAGE_VERSION_TAG: ${{ steps.export-step.outputs.IMAGE_VERSION_TAG }}
+    name: Get version
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - run: git fetch origin 'refs/tags/*:refs/tags/*'
+      - run: chmod +x ./get_version.sh ./common.sh
+        working-directory: ./.github/workflows/scripts
+      - run: ./get_version.sh >> result
+        working-directory: ./.github/workflows/scripts
+      - run: echo "IMAGE_VERSION_TAG=$(cat result)"
+        working-directory: ./.github/workflows/scripts
+      - id: export-step
+        run: echo "IMAGE_VERSION_TAG=$(cat result)" >> "$GITHUB_OUTPUT"
+        working-directory: ./.github/workflows/scripts
+
   docker-build-server:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build server
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-server:test # TODO: fix tag
+          tags: speckle/speckle-server:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./packages/server/Dockerfile
 
   docker-build-frontend2:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build frontend2
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-frontend-2:test # TODO: fix tag
+          tags: speckle/speckle-frontend-2:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./packages/frontend-2/Dockerfile
 
   # TODO:
@@ -32,77 +52,84 @@ jobs:
 
   docker-build-preview-service:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build preview service
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-preview-service:test # TODO: fix tag
+          tags: speckle/speckle-preview-service:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./packages/preview-service/Dockerfile
 
   docker-build-webhook-service:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build webhook service
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-webhook-service:test # TODO: fix tag
+          tags: speckle/speckle-webhook-service:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./packages/webhook-service/Dockerfile
 
   docker-build-fileimport-service:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build file import service
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-fileimport-service:test # TODO: fix tag
+          tags: speckle/speckle-fileimport-service:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./packages/fileimport-service/Dockerfile
 
   docker-build-test-deploy:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build test deploy util
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-test-deployment # TODO: fix tag,
+          tags: speckle/speckle-test-deployment:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }} # TODO: fix tag,
           file: ./utils/test-deployment
 
   docker-build-postgres-container:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build postgres container
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-postgres:test # TODO: fix tag
+          tags: speckle/speckle-postgres:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./utils/postgres
 
   docker-build-monitor-deployment:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build monitor container
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-monitor-deployment:test # TODO: fix tag
+          tags: speckle/speckle-monitor-deployment:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./packages/monitor-deployment
 
   docker-build-docker-compose-ingress:
     runs-on: blacksmith
+    needs: [get-version]
     name: Docker build docker compose ingress
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-docker-compose-ingress:test # TODO: fix tag
+          tags: speckle/speckle-docker-compose-ingress:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./utils/docker-compose-ingress/Dockerfile
