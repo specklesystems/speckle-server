@@ -10,7 +10,8 @@
     <div v-if="isPrivate">
       <CommonAlert color="info">
         <template #title>
-          Model embedding does not work when the project is "Private".
+          Model embedding does not work when the project visibility is set to
+          "Private"{{ project.workspaceId ? ' or "Workspace"' : '' }}.
         </template>
       </CommonAlert>
 

@@ -20,7 +20,8 @@ export const WorkspacePlanFeatures = <const>{
   DomainSecurity: 'domainBasedSecurityPolicies',
   SSO: 'oidcSso',
   CustomDataRegion: 'workspaceDataRegionSpecificity',
-  CustomViewerEmbed: 'customViewerEmbed'
+  CustomViewerEmbed: 'customViewerEmbed',
+  HideSpeckleBranding: 'hideSpeckleBranding'
 }
 
 export type WorkspacePlanFeatures =
@@ -51,6 +52,10 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.CustomViewerEmbed]: {
     displayName: 'Customised viewer',
     description: 'Configure the branding of the embedded Speckle viewer'
+  },
+  [WorkspacePlanFeatures.HideSpeckleBranding]: {
+    displayName: 'Hide Speckle branding',
+    description: 'Hide the Speckle branding in embedded viewer'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -118,7 +123,8 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.CustomViewerEmbed
+      WorkspacePlanFeatures.CustomViewerEmbed,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: {
       projectCount: 10,
@@ -134,7 +140,8 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.CustomViewerEmbed
+      WorkspacePlanFeatures.CustomViewerEmbed,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: {
       projectCount: null,
@@ -155,7 +162,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.CustomViewerEmbed
+      WorkspacePlanFeatures.CustomViewerEmbed,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: unlimited
   },
@@ -166,7 +174,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.CustomViewerEmbed
+      WorkspacePlanFeatures.CustomViewerEmbed,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: unlimited
   },

@@ -3,6 +3,7 @@
     <ProjectVisibilitySelect
       v-model="currentVisibility"
       :disabled="isDisabled"
+      :workspace-id="project.workspaceId"
       mount-menu-on-body
     />
   </div>
@@ -22,6 +23,7 @@ graphql(`
     id
     visibility
     role
+    workspaceId
   }
 `)
 
