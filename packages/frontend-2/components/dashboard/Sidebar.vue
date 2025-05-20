@@ -140,6 +140,9 @@
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
+          <template v-if="showSpeckleConPromo" #promo>
+            <DashboardPromo />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
@@ -163,6 +166,7 @@ import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import dayjs from 'dayjs'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -186,6 +190,10 @@ const showSidebar = computed(() => {
   return isWorkspacesEnabled.value
     ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
     : isLoggedIn.value
+})
+
+const showSpeckleConPromo = computed(() => {
+  return dayjs('2025-11-08').isAfter(dayjs())
 })
 
 const openChat = () => {

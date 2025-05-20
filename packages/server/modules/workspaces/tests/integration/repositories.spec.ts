@@ -12,17 +12,24 @@ import {
   getWorkspaceWithDomainsFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceCollaboratorsFactory,
-  getWorkspaceBySlugFactory
+  getWorkspaceBySlugFactory,
+  getWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import {
+  BasicTestUser,
+  buildBasicTestUser,
+  createTestUser,
+  createTestUsers
+} from '@/test/authHelper'
 import {
   BasicTestWorkspace,
   assignToWorkspace,
+  buildBasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import {
@@ -46,6 +53,7 @@ import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/works
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 
 const getWorkspace = getWorkspaceFactory({ db })
+const getWorkspaces = getWorkspacesFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
 const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
 const deleteWorkspace = deleteWorkspaceFactory({ db })
@@ -84,6 +92,23 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
 
 describe('Workspace repositories', () => {
   describe('getWorkspaceFactory creates a function, that', () => {
+    const testUserA = buildBasicTestUser()
+    const workspaceA1 = buildBasicTestWorkspace({ name: 'My House Workspace' })
+    const workspaceA2 = buildBasicTestWorkspace({ name: 'My Garage Workspace' })
+
+    before(async () => {
+      const testUserB = buildBasicTestUser()
+      await createTestUsers([testUserA, testUserB])
+
+      const workspaceB = buildBasicTestWorkspace()
+      await createTestWorkspace(workspaceB, testUserB)
+
+      await createTestWorkspace(workspaceA1, testUserA, {
+        addCreationState: { completed: true, state: {} }
+      })
+      await createTestWorkspace(workspaceA2, testUserA)
+    })
+
     it('returns null if the workspace is not found', async () => {
       const workspace = await getWorkspace({
         workspaceId: cryptoRandomString({ length: 10 })
@@ -91,6 +116,61 @@ describe('Workspace repositories', () => {
       expect(workspace).to.be.null
     })
     // not testing get here, we're going to use that for testing upsert
+
+    describe('getWorkspaces filters', () => {
+      it('is able to select them by name', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA1.id],
+          search: 'house'
+        })
+
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(workspaceA1.id)
+      })
+
+      it('is able to filter them out by name', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA1.id],
+          search: 'park'
+        })
+
+        expect(workspaces).to.have.lengthOf(0)
+      })
+
+      it('is able to filer them by completed status', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA1.id],
+          completed: true
+        })
+
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(workspaceA1.id)
+      })
+
+      it('is able to filer them out by completed status', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA1.id],
+          completed: false
+        })
+
+        expect(workspaces).to.have.lengthOf(0)
+      })
+
+      it('does not filter when there is no workspace_completed entry as safety mechanism', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA2.id],
+          completed: false
+        })
+
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(workspaceA2.id)
+      })
+    })
   })
 
   describe('getWorkspaceBySlugFactory creates a function, that', () => {
