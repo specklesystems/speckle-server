@@ -3,30 +3,79 @@ name: Pipeline test build
 on: pull_request
 
 jobs:
-  prepre-commit: # TODO: move to blacksmith
-    name: Precommit check
-    runs-on: ubuntu-latest
-    container:
-      image: speckle/pre-commit-runner:latest
+  test-server:
+    name: Test server
+    runs-on: blacksmith
+    services:
+      redis:
+        image: redis:7.2.4
+      postgres:
+        image: speckle/speckle-postgres
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        options: -c 'max_connections=1000'
+      minio:
+        image: 'minio/minio'
+        options: server /data --console-address ":9001"
+    env:
+      NODE_ENV: test
+      DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
+      PGDATABASE: speckle2_test
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      PGUSER: speckle
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://127.0.0.1:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://127.0.0.1:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
     steps:
-      # it clones a helmchart md outside the repo
-      - name: Move into
-        run: |
-          mkdir -p app
-          cd app
       - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4
+      - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
           cache: yarn
-      - name: Set precommit
-        run: pre-commit install-hooks --config ./.pre-commit-config.yaml
       - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
-      - name: Run precommit
-        run: ./.husky/pre-commit
-      - name: Diff on failure
-        if: failure()
-        run: git --no-pager diff
+      - name: Wait for dependencies to start
+        run: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/server'
+      - name: 'Lint'
+        run: yarn lint:ci
+      - name: 'Run test'
+        run: |
+          GREP_FLAG=""
+
+          if [ "$RUN_TESTS_IN_MULTIREGION_MODE" == "true" ]; then
+            GREP_FLAG="--grep @multiregion"
+          fi
+
+          yarn test:report $GREP_FLAG --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
+        working-directory: 'packages/server'
+        timeout-minutes: 30
+      # TODO: codecov
+      - name: Introspect GQL schema for subsequent checks
+        run: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+        working-directory: 'packages/server'
+      - name: Checking for GQL schema breakages against app.speckle.systems
+        run: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
+        working-directory: 'packages/server'
+      - name: Checking for GQL schema breakages against latest.speckle.systems
+        run: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+        working-directory: 'packages/server'
+      # TODO:
+      # - store_test_results:
+      #    path: packages/server/reports

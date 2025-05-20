@@ -42,7 +42,7 @@ workflows:
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
-              only: /.*/
+              only: main
           requires:
             - docker-publish-postgres-container
 
