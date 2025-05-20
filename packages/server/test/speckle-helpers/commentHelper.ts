@@ -21,14 +21,17 @@ import {
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/core/services/commit/viewerResources'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
 
-export const createTestComment = async (params: {
-  userId: string
-  projectId: string
-  objectId: string
-}): Promise<CommentRecord> => {
-  const { userId, projectId, objectId } = params
+export const createTestComment = async (
+  params: {
+    userId: string
+    projectId: string
+    createdAt?: Date
+  } & ({ objectId: string } | { modelId: string; versionId?: string })
+): Promise<CommentRecord> => {
+  const { userId, projectId } = params
 
   const projectDb = await getProjectDbClient({ projectId })
 
@@ -51,6 +54,13 @@ export const createTestComment = async (params: {
     emitEvent: async () => {}
   })
 
+  const resourceIdStringBuilder = resourceBuilder()
+  if ('objectId' in params) {
+    resourceIdStringBuilder.addObject(params.objectId)
+  } else {
+    resourceIdStringBuilder.addModel(params.modelId, params.versionId)
+  }
+
   return await createComment(
     {
       content: {
@@ -70,8 +80,11 @@ export const createTestComment = async (params: {
         }
       },
       projectId,
-      resourceIdString: objectId
+      resourceIdString: resourceIdStringBuilder.toString()
     },
-    userId
+    userId,
+    {
+      createdAt: params.createdAt
+    }
   )
 }

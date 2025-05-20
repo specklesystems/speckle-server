@@ -33,7 +33,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       const result = canReadProjectPolicy({
         getWorkspace,
         getAdminOverrideEnabled: async () => false,
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
         getProject: async () => null,
         getProjectRole: () => {
           assert.fail()

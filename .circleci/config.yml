@@ -715,8 +715,12 @@ jobs:
           command: yarn lint:ci
           working_directory: 'packages/shared'
       - run:
-          name: Run tests
-          command: yarn test:ci
+          name: Run tests (all FFs)
+          command: ENABLE_ALL_FFS=1 yarn test:ci
+          working_directory: 'packages/shared'
+      - run:
+          name: Run tests (no FFs)
+          command: DISABLE_ALL_FFS=1 yarn test:ci
           working_directory: 'packages/shared'
       - codecov/upload:
           files: packages/shared/coverage/coverage-final.json

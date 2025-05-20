@@ -1,3 +1,4 @@
+import { has } from '#lodash'
 import { parseEnv } from 'znv'
 import { z } from 'zod'
 
@@ -13,9 +14,17 @@ const isEnableAllFFsMode = () =>
   ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
 export const parseFeatureFlags = (
-  input: // | Record<string, string | undefined>
-  Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>
+  input: Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>,
+  options?: Partial<{
+    /**
+     * Whether to prevent inputs from being overriden by disable/enable all
+     * Default: true
+     */
+    forceInputs: boolean
+  }>
 ): FeatureFlags => {
+  const { forceInputs = true } = options || {}
+
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
   const res = parseEnv(input, {
@@ -88,7 +97,7 @@ export const parseFeatureFlags = (
       defaults: { _: false }
     },
     // Enable limits on personal projects
-    FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
+    FF_PERSONAL_PROJECTS_LIMITS_ENABLED: {
       schema: z.boolean(),
       description:
         'Enables limits on personal projects. Requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
@@ -105,6 +114,10 @@ export const parseFeatureFlags = (
   // Can be used to disable/enable all feature flags for testing purposes
   if (isDisableAllFFsMode() || isEnableAllFFsMode()) {
     for (const key of Object.keys(res)) {
+      if (forceInputs && has(input, key)) {
+        continue // skip if we are forcing inputs
+      }
+
       ;(res as Record<string, boolean>)[key] = !isDisableAllFFsMode() // disable takes precedence
     }
   }
@@ -125,12 +138,12 @@ export type FeatureFlags = {
   FF_FORCE_ONBOARDING: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
-  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+  FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {
   //@ts-expect-error this way, the parse function typing is a lot better
-  if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env)
+  if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env, { forceInputs: false })
   return parsedFlags
 }

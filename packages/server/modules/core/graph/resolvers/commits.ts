@@ -78,20 +78,9 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
-import {
-  getProjectLimitDate,
-  isNonNullable,
-  MaybeNullOrUndefined,
-  Roles
-} from '@speckle/shared'
-import { PersonalProjectsLimits } from '@speckle/shared/authz'
-
-const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
-const getPersonalProjectLimits = FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-  ? () => Promise.resolve(PersonalProjectsLimits)
-  : () => Promise.resolve(null)
+import { isNonNullable, MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import { getProjectLimitDateFactory } from '@/modules/gatekeeperCore/utils/limits'
 
 const getStreams = getStreamsFactory({ db })
 
@@ -221,10 +210,10 @@ export = {
     async commits(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })
 
-      const limitsDate = await getProjectLimitDate({
-        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
-        getPersonalProjectLimits
-      })({ limitType: 'versionsHistory', project: parent })
+      const limitsDate = await getProjectLimitDateFactory({ ctx })({
+        limitType: 'versionsHistory',
+        project: parent
+      })
 
       const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
         db: projectDB,
@@ -347,10 +336,10 @@ export = {
         })
       }
 
-      const limitsDate = await getProjectLimitDate({
-        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
-        getPersonalProjectLimits
-      })({ limitType: 'versionsHistory', project })
+      const limitsDate = await getProjectLimitDateFactory({ ctx })({
+        limitType: 'versionsHistory',
+        project
+      })
 
       const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),

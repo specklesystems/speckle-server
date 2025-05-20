@@ -50,6 +50,11 @@
           "description": "High level flag fully toggles the workspaces module",
           "default": false
         },
+        "personalProjectLimitsEnabled": {
+          "type": "boolean",
+          "description": "High level flag toggles personal (non-workspace) project limits",
+          "default": false
+        },
         "workspacesSSOEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces dynamic sso",
