@@ -4,7 +4,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { SpeckleViewer, TimeoutError } from '@speckle/shared'
 import { get } from 'lodash-es'
-import { Vector3, Box3 } from 'three'
+import { Vector3 } from 'three'
 import {
   useDiffUtilities,
   useFilterUtilities,
@@ -13,6 +13,7 @@ import {
 import { CameraController, ViewMode, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import type { PartialDeep } from 'type-fest'
+import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -107,12 +108,7 @@ export function useStateSerialization() {
           zoom: (get(camControls, '_zoom') as number) || 1 // kinda hacky, _zoom is a protected prop
         },
         viewMode: state.ui.viewMode.value,
-        sectionBox: state.ui.sectionBox.value
-          ? {
-              min: box.min.toArray(),
-              max: box.max.toArray()
-            }
-          : null,
+        sectionBox: state.ui.sectionBox.value ? box : null,
         lightConfig: { ...state.ui.lightConfig.value },
         explodeFactor: state.ui.explodeFactor.value,
         selection: state.ui.selection.value?.toArray() || null,
@@ -198,18 +194,8 @@ export function useApplySerializedState() {
     isOrthoProjection.value = !!state.ui?.camera?.isOrthoProjection
 
     sectionBox.value = state.ui?.sectionBox
-      ? new Box3(
-          new Vector3(
-            state.ui.sectionBox.min?.[0],
-            state.ui.sectionBox.min?.[1],
-            state.ui.sectionBox.min?.[2]
-          ),
-          new Vector3(
-            state.ui.sectionBox.max?.[0],
-            state.ui.sectionBox.max?.[1],
-            state.ui.sectionBox.max?.[2]
-          )
-        )
+      ? // It's complaining otherwise
+        (state.ui.sectionBox as SectionBoxData)
       : null
 
     const filters = state.ui?.filters || {}

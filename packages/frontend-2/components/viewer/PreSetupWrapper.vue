@@ -102,6 +102,8 @@
       :name="modelName || 'Loading...'"
       :date="lastUpdate"
       :url="route.path"
+      :hide-speckle-branding="hideSpeckleBranding"
+      :disable-model-link="disableModelLink"
     />
     <Portal to="primary-actions">
       <HeaderNavShare
@@ -137,6 +139,9 @@ graphql(`
       name
       role
     }
+    embedOptions {
+      hideSpeckleBranding
+    }
   }
 `)
 
@@ -171,7 +176,8 @@ const {
   isEnabled: isEmbedEnabled,
   hideSelectionInfo,
   isTransparent,
-  showControls
+  showControls,
+  disableModelLink
 } = useEmbed()
 const mp = useMixpanel()
 
@@ -254,6 +260,10 @@ const lastUpdate = computed(() => {
   } else if (project.value) {
     return 'Created ' + dayjs(project.value.createdAt).fromNow()
   } else return undefined
+})
+
+const hideSpeckleBranding = computed(() => {
+  return project.value ? project.value?.embedOptions?.hideSpeckleBranding : true
 })
 
 useHead({ title })

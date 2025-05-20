@@ -120,6 +120,7 @@ generates:
       - 'test/graphql/*.{js,ts}'
       - 'modules/**/tests/helpers/graphql.ts'
       - 'modules/**/tests/helpers/*Graphql.ts'
+      - 'modules/**/tests/helpers/graphql/*.ts'
     config:
       enumsAsConst: true
       scalars:

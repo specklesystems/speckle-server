@@ -69,10 +69,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginRoute } from '~~/lib/common/helpers/route'
-import {
-  passwordRules,
-  doesNotContainBlockedDomain
-} from '~~/lib/auth/helpers/validation'
+import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMounted } from '@vueuse/core'
@@ -96,18 +93,13 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const isMounted = useMounted()
-const isNoPersonalEmailsEnabled = useIsNoPersonalEmailsEnabled()
 
 const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
 
-const emailRules = computed(() =>
-  inviteToken.value || !isNoPersonalEmailsEnabled.value
-    ? [isEmail]
-    : [isEmail, doesNotContainBlockedDomain]
-)
+const emailRules = [isEmail]
 const nameRules = [isRequired]
 
 const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)

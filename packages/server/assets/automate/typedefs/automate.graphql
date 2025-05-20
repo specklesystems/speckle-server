@@ -209,7 +209,6 @@ input ProjectAutomationCreateInput {
 input ProjectTestAutomationCreateInput {
   name: String!
   modelId: String!
-  functionId: String!
 }
 
 input AutomateFunctionsFilter {

@@ -10,7 +10,8 @@
     <div v-if="isPrivate">
       <CommonAlert color="info">
         <template #title>
-          Model embedding does not work when the project is "Private".
+          Model embedding does not work when the project visibility is set to
+          "Private"{{ project.workspaceId ? ' or "Workspace"' : '' }}.
         </template>
       </CommonAlert>
 
@@ -89,13 +90,16 @@
 
 <script setup lang="ts">
 import type { ProjectsModelPageEmbed_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { SimpleProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useUpdateProject } from '~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import {
+  castToSupportedVisibility,
+  SupportedProjectVisibility
+} from '~/lib/projects/helpers/visibility'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
@@ -126,6 +130,7 @@ const mp = useMixpanel()
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
+const disableModelLink = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const projectVisibility = ref(props.project.visibility)
@@ -183,7 +188,10 @@ const iframeCode = computed(() => {
 })
 
 const isPrivate = computed(() => {
-  return props.project.visibility === SimpleProjectVisibility.Private
+  return (
+    castToSupportedVisibility(props.project.visibility) !==
+    SupportedProjectVisibility.Public
+  )
 })
 
 const discoverableButtons = computed((): LayoutDialogButton[] => [
@@ -231,7 +239,7 @@ const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
   optionRef.value = newValue === undefined ? false : !!newValue
 }
 
-const handleChangeVisibility = (newVisibility: SimpleProjectVisibility) => {
+const handleChangeVisibility = (newVisibility: SupportedProjectVisibility) => {
   projectVisibility.value = newVisibility
 }
 
@@ -267,6 +275,11 @@ const embedDialogOptions = [
     id: 'hideSelectionInfo',
     label: 'Hide the selection info panel',
     value: hideSelectionInfo
+  },
+  {
+    id: 'disableModelLink',
+    label: 'No link back to web viewer',
+    value: disableModelLink
   },
   {
     id: 'noScroll',

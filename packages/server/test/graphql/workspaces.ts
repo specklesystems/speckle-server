@@ -38,6 +38,7 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
+    visibility
     team {
       id
       role
@@ -127,9 +128,9 @@ export const updateWorkspaceQuery = gql`
 `
 
 export const getActiveUserWorkspacesQuery = gql`
-  query GetActiveUserWorkspaces {
+  query GetActiveUserWorkspaces($filter: UserWorkspacesFilter) {
     activeUser {
-      workspaces {
+      workspaces(filter: $filter) {
         items {
           ...TestWorkspace
         }
@@ -271,11 +272,44 @@ export const moveProjectToWorkspaceMutation = gql`
         moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
           id
           workspaceId
+          visibility
           team {
             id
             role
           }
         }
+      }
+    }
+  }
+`
+
+export const updateWorkspaceEmbedOptionsMutation = gql`
+  mutation UpdateEmbedOptions($input: WorkspaceUpdateEmbedOptionsInput!) {
+    workspaceMutations {
+      updateEmbedOptions(input: $input) {
+        hideSpeckleBranding
+      }
+    }
+  }
+`
+
+export const getWorkspaceEmbedOptions = gql`
+  query WorkspaceEmbedOptions($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      embedOptions {
+        hideSpeckleBranding
+      }
+    }
+  }
+`
+
+export const getProjectEmbedOptions = gql`
+  query ProjectEmbedOptions($projectId: String!) {
+    project(id: $projectId) {
+      id
+      embedOptions {
+        hideSpeckleBranding
       }
     }
   }

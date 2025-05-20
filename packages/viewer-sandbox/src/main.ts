@@ -6,7 +6,8 @@ import {
   Viewer,
   ViewModes,
   SelectionExtension,
-  HybridCameraController
+  HybridCameraController,
+  OrientedSectionTool
 } from '@speckle/viewer'
 
 import './style.css'
@@ -17,9 +18,7 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
-import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
-import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
 
@@ -47,14 +46,13 @@ const createViewer = async (containerName: string, _stream: string) => {
 
   viewer.createExtension(HybridCameraController)
   viewer.createExtension(SelectionExtension)
-  viewer.createExtension(SectionTool)
+  viewer.createExtension(OrientedSectionTool)
   viewer.createExtension(SectionOutlines)
   viewer.createExtension(MeasurementsExtension)
   viewer.createExtension(FilteringExtension)
   viewer.createExtension(ExplodeExtension)
   viewer.createExtension(DiffExtension)
   viewer.createExtension(ViewModes)
-  viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
@@ -66,7 +64,9 @@ const createViewer = async (containerName: string, _stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
-    if (event) console.log(event.hits[0].node.model.id)
+    if (event) {
+      console.log(event.hits[0].node.model.id)
+    }
   })
 
   viewer.on(ViewerEvent.LoadComplete, async () => {
@@ -111,9 +111,8 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
-    //  'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
     //  'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
     // IFC building (good for a tree based structure)
@@ -355,8 +354,11 @@ const getStream = () => {
 
     // 'https://latest.speckle.systems/streams/e9285828d7/commits/9b80b7a70c'
     // 'https://app.speckle.systems/streams/b85d53c3b4/commits/be26146460'
+
     // Germany
     // 'https://latest.speckle.systems/streams/7117052f4e/commits/a646bf659e'
+
+    // Diffing tests
     // 'https://latest.speckle.systems/streams/aea12cab71/commits/787ade768e'
     // 'https://app.speckle.systems/streams/a29e5c7772/commits/a8cfae2645'
     // 'https://latest.speckle.systems/streams/9d71f041b2/commits/01279333e5'
@@ -490,6 +492,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
 
     // Dim's meshed together non instanced + instanced
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be@ee21745e43'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
 
     // A LOT of text objects
@@ -500,6 +503,7 @@ const getStream = () => {
     // REGIONS
     // https://app.speckle.systems/projects/16ce7b208c/models/1c14e37363@0614bb2957
 
+    // 'https://app.speckle.systems/projects/63bb691d0f/models/a64da9072d'
     // 'https://app.speckle.systems/projects/7591c56179/models/82b94108a3'
 
     // SUPER slow tree build time (LARGE N-GONS TRIANGULATION)
@@ -518,6 +522,14 @@ const getStream = () => {
 
     // New text
     // 'https://app.speckle.systems/projects/16ce7b208c/models/e9f8edeb13@dc0b9471e9'
+
+    // Materials in blocks full
+    // 'https://app.speckle.systems/projects/1b96a34aae/models/673312057e'
+    // Materials in blocks single
+    // 'https://app.speckle.systems/projects/f7bb16037a/models/5d090c6f07'
+
+    // Large topological stuff
+    'https://app.speckle.systems/projects/7a489ac0d4/models/146d5fbe27,3e481c9a58,65b4cf97d5,6d07577256,903850fa6f'
   )
 }
 

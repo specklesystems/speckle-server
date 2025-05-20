@@ -12,6 +12,7 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  GetAllWorkspaces,
   GetPaginatedWorkspaceProjects,
   GetPaginatedWorkspaceProjectsArgs,
   GetPaginatedWorkspaceProjectsItems,
@@ -28,6 +29,7 @@ import {
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
+  GetWorkspaceSeatCount,
   GetWorkspaceWithDomains,
   GetWorkspaces,
   GetWorkspacesProjectsCounts,
@@ -39,33 +41,25 @@ import {
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
-import { Roles } from '@speckle/shared'
+import { isNullOrUndefined, Roles } from '@speckle/shared'
 import {
   ServerAclRecord,
   BranchRecord,
   StreamAclRecord,
-  StreamRecord
+  StreamRecord,
+  ProjectRecordVisibility
 } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
+  WorkspaceCreationState as DbWorkspaceCreationState,
   WorkspaceDomains,
-  Workspaces
+  Workspaces,
+  WorkspaceSeats
 } from '@/modules/workspaces/helpers/db'
-import {
-  knex,
-  ServerAcl,
-  ServerInvites,
-  StreamAcl,
-  Streams,
-  Users
-} from '@/modules/core/dbSchema'
+import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import {
-  filterByResource,
-  InvitesRetrievalValidityFilter
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+
 import { clamp, has, isObjectLike } from 'lodash'
 import {
   WorkspaceCreationState,
@@ -73,7 +67,9 @@ import {
 } from '@/modules/workspaces/domain/types'
 import {
   decodeCompositeCursor,
-  encodeCompositeCursor
+  decodeCursor,
+  encodeCompositeCursor,
+  encodeCursor
 } from '@/modules/shared/helpers/graphqlHelper'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
@@ -154,11 +150,55 @@ const workspaceWithRoleBaseQuery = ({
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
-  async ({ workspaceIds, userId }) => {
+  async ({ workspaceIds, userId, search, completed }) => {
     const q = workspaceWithRoleBaseQuery({ db, userId })
     if (workspaceIds !== undefined) q.whereIn(Workspaces.col.id, workspaceIds)
+
+    if (search) {
+      q.andWhere((builder) => {
+        builder
+          .where('name', 'ILIKE', `%${search}%`)
+          .orWhere('slug', 'ILIKE', `%${search}%`)
+      })
+    }
+
+    if (completed !== undefined) {
+      q.leftJoin(
+        DbWorkspaceCreationState.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      ).andWhere((builder) => {
+        builder
+          .where({ [DbWorkspaceCreationState.col.completed]: completed })
+          .orWhere({ [DbWorkspaceCreationState.col.completed]: null })
+      })
+    }
+
     const results = await q
     return results
+  }
+
+export const getAllWorkspacesFactory =
+  ({ db }: { db: Knex }): GetAllWorkspaces =>
+  async (args) => {
+    const cursor = args.cursor ? decodeCursor(args.cursor) : null
+    const limit = isNullOrUndefined(args.limit) ? 10 : args.limit
+
+    const q = tables
+      .workspaces(db)
+      .limit(clamp(limit, 1, 25))
+      .orderBy(Workspaces.col.id, 'asc')
+
+    if (cursor?.length) {
+      q.andWhere(Workspaces.col.id, '>', cursor)
+    }
+
+    const res = await q
+
+    return {
+      items: res,
+      cursor: res.length ? encodeCursor(res[res.length - 1].id) : null
+    }
   }
 
 export const getWorkspaceFactory =
@@ -244,7 +284,8 @@ export const upsertWorkspaceFactory =
         'name',
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
-        'discoverabilityEnabled'
+        'discoverabilityEnabled',
+        'isEmbedSpeckleBrandingHidden'
       ])
   }
 
@@ -412,26 +453,6 @@ export const getWorkspaceCollaboratorsFactory =
     return items
   }
 
-export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
-  return q
-    .leftJoin(
-      knex.raw(
-        ":workspaces: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :workspaceIdCol:",
-        {
-          workspaces: Workspaces.name,
-          resourceCol: ServerInvites.col.resource,
-          resourceType: WorkspaceInviteResourceType,
-          workspaceIdCol: Workspaces.col.id
-        }
-      )
-    )
-    .where((w1) => {
-      w1.whereNot((w2) =>
-        filterByResource(w2, { resourceType: WorkspaceInviteResourceType })
-      ).orWhereNotNull(Workspaces.col.id)
-    })
-}
-
 export const storeWorkspaceDomainFactory =
   ({ db }: { db: Knex }): StoreWorkspaceDomain =>
   async ({ workspaceDomain }): Promise<void> => {
@@ -532,6 +553,21 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
     return parseInt(res.count.toString())
   }
 
+export const getWorkspaceSeatCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSeatCount =>
+  async ({ workspaceId, type }) => {
+    const query = db(WorkspaceSeats.name).where(
+      WorkspaceSeats.col.workspaceId,
+      workspaceId
+    )
+
+    if (type) query.andWhere(WorkspaceSeats.col.type, type)
+
+    const [{ count }] = await query.count()
+
+    return parseInt(String(count))
+  }
+
 export const getWorkspaceCreationStateFactory =
   ({ db }: { db: Knex }): GetWorkspaceCreationState =>
   async ({ workspaceId }) => {
@@ -595,8 +631,11 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
     /**
      * If userId is set:
      * - If no workspace role, user should be server admin w/ admin override enabled
-     * - If workspace role is guest, user should have explicit stream roles
-     * - If workspace role other than guest, just get all workspace streams
+     * - If workspace role is admin: user can get all workspace streams
+     * - If workspace role is guest: user should have explicit stream roles
+     * - If workspace role is member:
+     *  - Public/Workspace visibility: get stream
+     *  - Private visibility: user should have explicit stream roles
      *
      * If withProjectRoleOnly is set: Require project role always
      */
@@ -621,10 +660,21 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
           }
 
           w.orWhere((w2) => {
-            // Ensure workspace role exists and its not guest or the user has explicit stream roles
+            // Ensure workspace role exists and:
+            // user has explicit stream role or is admin or is a non-guest in a non-private project
             w2.whereNotNull(DbWorkspaceAcl.col.role).andWhere((w3) => {
               if (!withProjectRoleOnly) {
-                w3.whereNot(DbWorkspaceAcl.col.role, Roles.Workspace.Guest)
+                w3.where(DbWorkspaceAcl.col.role, Roles.Workspace.Admin).orWhere(
+                  (w4) => {
+                    w4.whereNot(
+                      DbWorkspaceAcl.col.role,
+                      Roles.Workspace.Guest
+                    ).andWhereNot(
+                      Streams.col.visibility,
+                      ProjectRecordVisibility.Private
+                    )
+                  }
+                )
               }
 
               w3.orWhereExists(
