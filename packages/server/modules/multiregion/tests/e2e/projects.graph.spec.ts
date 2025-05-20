@@ -7,6 +7,7 @@ import { updateCommentFactory } from '@/modules/comments/repositories/comments'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   createWebhookConfigFactory,
   createWebhookEventFactory
@@ -72,6 +73,8 @@ const ensureProjectRegion = async (
 ): Promise<void> => {
   await retry(async () => assertProjectRegion(projectId, regionKey), 30, 500)
 }
+
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 isMultiRegionTestMode()
   ? describe('Workspace project region changes @multiregion', () => {
@@ -321,30 +324,32 @@ isMultiRegionTestMode()
 
         expect(resB.data?.project.object).to.not.be.undefined
       })
+      ;(FF_AUTOMATE_MODULE_ENABLED ? it : it.skip)(
+        'moves project automations to target regional db',
+        async () => {
+          const resA = await apollo.execute(UpdateProjectRegionDocument, {
+            projectId: testProject.id,
+            regionKey: regionKey2
+          })
+          expect(resA).to.not.haveGraphQLErrors()
 
-      it('moves project automations to target regional db', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
+          await ensureProjectRegion(testProject.id, regionKey2)
 
-        await ensureProjectRegion(testProject.id, regionKey2)
+          const resB = await apollo.execute(GetRegionalProjectAutomationDocument, {
+            projectId: testProject.id,
+            automationId: testAutomation.id
+          })
+          expect(resB).to.not.haveGraphQLErrors()
 
-        const resB = await apollo.execute(GetRegionalProjectAutomationDocument, {
-          projectId: testProject.id,
-          automationId: testAutomation.id
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.automation.id).to.equal(testAutomation.id)
-        expect(resB.data?.project.automation.runs.items.at(0)?.id).to.equal(
-          testAutomationRun.id
-        )
-        expect(
-          resB.data?.project.automation.runs.items.at(0)?.functionRuns.length
-        ).to.not.equal(0)
-      })
+          expect(resB.data?.project.automation.id).to.equal(testAutomation.id)
+          expect(resB.data?.project.automation.runs.items.at(0)?.id).to.equal(
+            testAutomationRun.id
+          )
+          expect(
+            resB.data?.project.automation.runs.items.at(0)?.functionRuns.length
+          ).to.not.equal(0)
+        }
+      )
 
       it('moves project comments to target regional db', async () => {
         const resA = await apollo.execute(UpdateProjectRegionDocument, {

@@ -16,7 +16,10 @@ import { ProjectVisibility } from '../../domain/projects/types.js'
 
 const buildCanLoadPolicy = (overrides?: Partial<Parameters<typeof canLoadPolicy>[0]>) =>
   canLoadPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () =>
+      parseFeatureFlags({
+        FF_WORKSPACES_MODULE_ENABLED: 'true'
+      }),
     getProject: async () => ({
       id: 'project-id',
       workspaceId: null,
