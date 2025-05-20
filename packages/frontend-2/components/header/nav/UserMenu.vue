@@ -64,18 +64,6 @@
                 Invite to Speckle
               </NuxtLink>
             </MenuItem>
-            <MenuItem v-slot="{ active }">
-              <NuxtLink
-                :class="[
-                  active ? 'bg-highlight-1' : '',
-                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-                ]"
-                class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
-                @click="openFeedbackDialog"
-              >
-                Feedback
-              </NuxtLink>
-            </MenuItem>
           </div>
           <div class="border-t border-outline-3 py-1 mt-1">
             <MenuItem v-if="activeUser" v-slot="{ active }">
@@ -112,7 +100,6 @@
       </Transition>
     </Menu>
     <InviteDialogServer v-model:open="showInviteDialog" />
-    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -137,16 +124,11 @@ const { serverInfo } = useServerInfo()
 const menuButtonId = useId()
 
 const showInviteDialog = ref(false)
-const showFeedbackDialog = ref(false)
 
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
-}
-
-const openFeedbackDialog = () => {
-  showFeedbackDialog.value = true
 }
 </script>
