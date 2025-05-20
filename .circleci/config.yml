@@ -42,7 +42,7 @@ workflows:
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
-              only: main
+              ignore: /.*/
           requires:
             - docker-publish-postgres-container
 
@@ -110,7 +110,7 @@ workflows:
           filters: &filters-deployment-testing
             tags:
               # run tests for any commit on any branch, including any tags
-              only: /.*/
+              ignore: /.*/
           requires:
             - get-version
             - deployment-testing-approval
@@ -133,7 +133,7 @@ workflows:
             - github-readonly-public-repos
           filters: &filters-build
             tags:
-              only: /.*/
+              ignore: /.*/
           requires:
             - get-version
 
@@ -196,7 +196,7 @@ workflows:
             branches:
               ignore: /pull\/[0-9]+/
             tags:
-              only: /.*/
+              ignore: /.*/
           requires:
             - docker-build-server
             - get-version
