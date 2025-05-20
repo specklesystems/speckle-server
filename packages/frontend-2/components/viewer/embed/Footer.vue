@@ -42,13 +42,14 @@
 <script setup lang="ts">
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
   date?: string
   name?: string
   url?: string
   hideSpeckleBranding?: boolean
-  disableModelLink?: boolean
+  disableModelLink?: MaybeNullOrUndefined<boolean>
 }>()
 
 const { isEmbedEnabled } = useEmbed()
