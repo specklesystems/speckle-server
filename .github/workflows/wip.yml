@@ -5,15 +5,17 @@ on: pull_request
 jobs:
   prepre-commit:
     name: Precommit check
-    runs-on: speckle/pre-commit-runner:latest
+    runs-on: ubuntu-latest
+    container:
+      image: speckle/pre-commit-runner:latest
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: useblacksmith/setup-node@v5
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: yarn
       - name: Set precommit
-        run: pre-commit install-hooks --config ./.pre-commit-config.deployment.yaml
+        run: pre-commit install-hooks --config ./.pre-commit-config.yaml
       - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
