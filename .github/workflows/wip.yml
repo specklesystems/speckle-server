@@ -5,7 +5,7 @@ on: pull_request
 jobs:
   get-version:
     outputs:
-      IMAGE_VERSION_TAG: ${{ steps.step6.outputs }}
+      IMAGE_VERSION_TAG: ${{ steps.step6.outputs.IMAGE_VERSION_TAG }}
     name: Get version
     runs-on: blacksmith
     defaults:
@@ -16,21 +16,21 @@ jobs:
       - run: git fetch origin 'refs/tags/*:refs/tags/*'
       - run: chmod +x ./get_version.sh ./common.sh
       - run: export result=$(./get_version.sh)
-      - run: echo "IMAGE_VERSION_TAG=${result}"
-      - run: echo "${result}" >> "$GITHUB_OUTPUT"
+      - run: echo "IMAGE_VERSION_TAG={$result}"
+      - run: echo "IMAGE_VERSION_TAG={$result}" >> "$GITHUB_OUTPUT"
 
   # # TODO:
-  # docker-build-server:
-  #   runs-on: blacksmith
-  #   needs: [get-version]
-  #   name: Docker build server
-  #   steps:
-  #     - name: Build and push
-  #       uses: useblacksmith/build-push-action@v1
-  #       with:
-  #         push: false
-  #         tags: speckle/speckle-server:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-  #         file: ./packages/server/Dockerfile
+  docker-build-server:
+    runs-on: blacksmith
+    needs: [get-version]
+    name: Docker build server
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-server:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+          file: ./packages/server/Dockerfile
   # job1:
   #   runs-on: ubuntu-latest
   #   # Map a step output to a job output
