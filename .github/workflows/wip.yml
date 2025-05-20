@@ -16,6 +16,11 @@ jobs:
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
         # TODO: add it in the dockerfile as a separate mr
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       minio:
         image: 'minio/minio'
     env:
@@ -48,8 +53,6 @@ jobs:
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
-      - name: Wait for dependencies to start
-        run: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
       - run: cp .env.test-example .env.test
         working-directory: 'packages/server'
       - name: 'Lint'
