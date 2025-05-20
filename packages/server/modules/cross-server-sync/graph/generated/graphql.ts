@@ -4128,12 +4128,14 @@ export type UserMeta = {
   __typename?: 'UserMeta';
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  speckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
 
@@ -4143,6 +4145,11 @@ export type UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs = {
 
 
 export type UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
+};
+
+
+export type UserMetaMutationsSetSpeckleConBannerDismissedArgs = {
   value: Scalars['Boolean']['input'];
 };
 

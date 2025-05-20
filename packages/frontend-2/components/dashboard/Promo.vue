@@ -1,8 +1,18 @@
 <template>
   <CommonCard class="relative !px-3 !py-2.5 bg-foundation shadow-sm">
+    <FormButton
+      class="absolute top-1 right-1"
+      size="sm"
+      color="subtle"
+      :icon-right="XMarkIcon"
+      hide-text
+      @click="dismissSpeckleConBanner"
+    >
+      <span class="sr-only">Close</span>
+    </FormButton>
     <div class="flex flex-col gap-y-2 text-foreground">
       <span class="text-[10px] font-mono uppercase tracking-widest">
-        Upcoming Event
+        Upcoming event
       </span>
       <h3 class="text-body-xs font-semibold leading-tight tracking-tight">
         SpeckleCON:
@@ -28,14 +38,20 @@
   </CommonCard>
 </template>
 <script setup lang="ts">
-import { ArrowUpRightIcon } from '@heroicons/vue/24/solid'
+import { ArrowUpRightIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useActiveUserMeta } from '~~/lib/user/composables/meta'
 
 const mixpanel = useMixpanel()
+const { updateSpeckleConBannerDismissed } = useActiveUserMeta()
 
 const onCTAClick = () => {
   mixpanel.track('SpeckleCON CTA Clicked', {
     location: 'sidebar'
   })
+}
+
+const dismissSpeckleConBanner = async () => {
+  await updateSpeckleConBannerDismissed(true)
 }
 </script>
