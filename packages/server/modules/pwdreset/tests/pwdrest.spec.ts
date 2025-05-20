@@ -1,45 +1,38 @@
-const request = require('supertest')
+import request from 'supertest'
 
-const { knex } = require('@/db/knex')
-const ResetTokens = () => knex('pwdreset_tokens')
+import { knex } from '@/db/knex'
 
-const { beforeEachContext } = require('@/test/hooks')
-const { localAuthRestApi } = require('@/modules/auth/tests/helpers/registration')
-const { expectToThrow } = require('@/test/assertionHelper')
-const { expect } = require('chai')
-const {
+import { beforeEachContext } from '@/test/hooks'
+import { localAuthRestApi } from '@/modules/auth/tests/helpers/registration'
+import { expectToThrow } from '@/test/assertionHelper'
+import { expect } from 'chai'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import {
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
+} from '@/modules/core/repositories/users'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { BasicTestUser } from '@/test/authHelper'
 
+const ResetTokens = () => knex('pwdreset_tokens')
 const db = knex
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
@@ -71,17 +64,18 @@ const createUser = createUserFactory({
 })
 
 describe('Password reset requests @passwordresets', () => {
-  let app
+  let app: Awaited<ReturnType<typeof beforeEachContext>>['app']
 
   before(async () => {
     ;({ app } = await beforeEachContext())
   })
 
   it('Should carefully send a password request email', async () => {
-    const userA = {
+    const userA: BasicTestUser = {
       name: 'd1',
       email: 'd@speckle.systems',
-      password: 'wowwow8charsplease'
+      password: 'wowwow8charsplease',
+      id: ''
     }
     userA.id = await createUser(userA)
 
@@ -108,10 +102,11 @@ describe('Password reset requests @passwordresets', () => {
   })
 
   it('Should reset passwords', async () => {
-    const userB = {
+    const userB: BasicTestUser = {
       name: 'd2',
       email: 'd2@speckle.systems',
-      password: 'w0ww0w8charsplease'
+      password: 'w0ww0w8charsplease',
+      id: ''
     }
     userB.id = await createUser(userB)
 
@@ -163,7 +158,7 @@ describe('Password reset requests @passwordresets', () => {
       async () =>
         await authRestApi.login({
           email: userB.email,
-          password: userB.password,
+          password: userB.password!,
           challenge: '123'
         })
     )
