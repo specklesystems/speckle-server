@@ -15,7 +15,7 @@ jobs:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-        options: -c 'max_connections=1000'
+        # TOOD: add max connections
       minio:
         image: 'minio/minio'
         options: server /data --console-address ":9001"
