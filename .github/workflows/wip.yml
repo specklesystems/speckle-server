@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4.2.2
       - run: git fetch origin 'refs/tags/*:refs/tags/*'
       - run: chmod +x ./get_version.sh ./common.sh
-      - run: ./get_version.sh
+      - run: result=$(./get_version.sh)
       - run: echo "IMAGE_VERSION_TAG=${result}"
       - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
