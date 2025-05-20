@@ -30,8 +30,90 @@ jobs:
         if: failure()
         run: git --no-pager diff
 
-  # TODO:
-  # test-server:
+  # TODO: add other env context
+  test-server:
+    name: Test server
+    runs-on: blacksmith
+    services:
+      redis:
+        image: redis:7.2.4
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      postgres:
+        image: speckle/speckle-postgres
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5432:5432
+        # TODO: add it in the dockerfile as a separate mr
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      minio:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9000:9000
+
+    env:
+      NODE_ENV: test
+      POSTGRES_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://localhost:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://localhost:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/server'
+      - name: 'Lint'
+        run: yarn lint:ci
+        working-directory: 'packages/server'
+      - name: 'Run test'
+        run: yarn test:report
+        working-directory: 'packages/server'
+        timeout-minutes: 30
+      # TODO: codecov
+      - name: Introspect GQL schema for subsequent checks
+        run: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+        working-directory: 'packages/server'
+      - name: Checking for GQL schema breakages against app.speckle.systems
+        run: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
+        working-directory: 'packages/server'
+      - name: Checking for GQL schema breakages against latest.speckle.systems
+        run: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+        working-directory: 'packages/server'
 
   # TODO:
   # test-server-no-ff
