@@ -399,6 +399,12 @@ const updateShowBranding = async () => {
   })
 
   if (result && result.data) {
+    mixpanel.track('Workspace Embed Options Updated', {
+      hideBranding: !showBranding.value,
+      // eslint-disable-next-line camelcase
+      workspace_id: workspaceResult.value.workspaceBySlug.id
+    })
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: `Speckle logo on embeds ${showBranding.value ? 'enabled' : 'disabled'}`
