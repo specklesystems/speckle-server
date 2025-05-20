@@ -74,8 +74,16 @@ jobs:
           tags: speckle/speckle-test-deployment # TODO: fix tag,
           file: ./utils/test-deployment
 
-  # docker-build-postgres-container
-  # TODO:
+  docker-build-postgres-container:
+    runs-on: blacksmith
+    name: Docker build postgres container
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-postgres:test # TODO: fix tag
+          file: ./utils/postgres
 
   docker-build-monitor-deployment:
     runs-on: blacksmith

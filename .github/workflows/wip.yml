@@ -3,11 +3,15 @@ name: Pipeline test build
 on: pull_request
 
 jobs:
-  prepre-commit:
+  prepre-commit: # TODO: move to blacksmith
     name: Precommit check
     runs-on: ubuntu-latest
     container:
       image: speckle/pre-commit-runner:latest
+    defaults:
+      run:
+        # it clones a helmchart md outside the repo
+        working-directory: ./app
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-node@v4
