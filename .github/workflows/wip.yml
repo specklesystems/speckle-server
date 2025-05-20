@@ -8,11 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: speckle/pre-commit-runner:latest
-    defaults:
-      run:
-        # it clones a helmchart md outside the repo
-        working-directory: ./app
     steps:
+      # it clones a helmchart md outside the repo
+      - name: Move into
+        run: |
+          mkdir -p app
+          cd app
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-node@v4
         with:
