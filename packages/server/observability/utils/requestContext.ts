@@ -14,10 +14,10 @@ type TaskStorageType = { taskId: string; taskName: string } & StorageTypeBase
 
 type StorageType = RequestStorageType | TaskStorageType
 
-const isRequestStorage = (store: unknown): store is RequestStorageType => {
+export const isRequestContext = (store: unknown): store is RequestStorageType => {
   return typeof store === 'object' && store !== null && 'requestId' in store
 }
-const isTaskStorage = (store: unknown): store is TaskStorageType => {
+export const isTaskContext = (store: unknown): store is TaskStorageType => {
   return (
     typeof store === 'object' &&
     store !== null &&
@@ -66,7 +66,7 @@ export const loggerWithMaybeContext = ({ logger }: { logger: Logger }) => {
   const reqCtx = getRequestContext()
   if (!reqCtx) return logger
 
-  if (isTaskStorage(reqCtx)) {
+  if (isTaskContext(reqCtx)) {
     return logger.child({
       taskId: reqCtx.taskId,
       taskName: reqCtx.taskName,
@@ -74,7 +74,7 @@ export const loggerWithMaybeContext = ({ logger }: { logger: Logger }) => {
     })
   }
 
-  if (isRequestStorage(reqCtx)) {
+  if (isRequestContext(reqCtx)) {
     return logger.child({
       req: reqCtx.requestId ? { id: reqCtx.requestId } : undefined,
       dbMetrics: reqCtx.dbMetrics

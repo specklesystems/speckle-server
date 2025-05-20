@@ -6,7 +6,10 @@ import { BaseError } from '@/modules/shared/errors'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/observability/utils/redact'
 import type { Counter } from 'prom-client'
-import { getRequestContext } from '@/observability/utils/requestContext'
+import {
+  getRequestContext,
+  isRequestContext
+} from '@/observability/utils/requestContext'
 import { subscriptionLogger } from '@/observability/logging'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,7 +45,7 @@ export const onOperationHandlerFactory = (deps: {
         graphql_query: baseParams.query.toString(),
         graphql_variables: redactSensitiveVariables(baseParams.variables),
         graphql_operation_type: 'subscription',
-        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
+        ...(isRequestContext(reqCtx) ? { req: { id: reqCtx.requestId } } : {})
       },
       'Subscription event fired for {graphql_operation_name}'
     )
@@ -89,7 +92,7 @@ export function logSubscriptionOperation(params: {
     graphql_operation_name: execParams.operationName,
     graphql_operation_type: 'subscription',
     userId,
-    ...(reqCtx
+    ...(isRequestContext(reqCtx)
       ? {
           req: { id: reqCtx.requestId },
           dbMetrics: reqCtx.dbMetrics
