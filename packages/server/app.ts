@@ -80,7 +80,8 @@ import type { Server as MockWsServer } from 'mock-socket'
 import { SetOptional } from 'type-fest'
 import {
   enterNewRequestContext,
-  getRequestContext
+  getRequestContext,
+  isRequestContext
 } from '@/observability/utils/requestContext'
 import { randomUUID } from 'crypto'
 import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
@@ -225,7 +226,7 @@ export function buildApolloSubscriptionServer(params: {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
             headers: sanitizeHeaders(headers),
-            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
+            ...(isRequestContext(reqCtx) ? { req: { id: reqCtx.requestId } } : {})
           },
           'Websocket disconnected.'
         )
