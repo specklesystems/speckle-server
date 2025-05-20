@@ -14,6 +14,8 @@ import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
 import type { Logger } from 'pino'
 // import { createRequire } from 'node:module'
+import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 // const require = createRequire(import.meta.url)
 // const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
@@ -58,10 +60,19 @@ export const getObjectPreviewBufferOrFilepathFactory =
     // Get existing preview metadata
     const previewInfo = await deps.getObjectPreviewInfo({ streamId, objectId })
     if (!previewInfo) {
-      await deps.createObjectPreview({ streamId, objectId, priority: 0 })
+      const objPreviewQueued = await deps.createObjectPreview({
+        streamId,
+        objectId,
+        priority: PreviewPriority.LOW
+      })
+      if (!objPreviewQueued) return { type: 'file', file: noPreviewImage }
     }
 
-    if (!previewInfo || previewInfo.previewStatus !== 2 || !previewInfo.preview) {
+    if (
+      !previewInfo ||
+      previewInfo.previewStatus !== PreviewStatus.DONE ||
+      !previewInfo.preview
+    ) {
       return { type: 'file', file: noPreviewImage }
     }
 
@@ -161,11 +172,14 @@ export const checkStreamPermissionsFactory =
       return { hasPermissions: false, httpErrorCode: 404 }
     }
 
-    if (!stream.isPublic && req.context.auth === false) {
+    if (
+      stream.visibility !== ProjectRecordVisibility.Public &&
+      req.context.auth === false
+    ) {
       return { hasPermissions: false, httpErrorCode: 401 }
     }
 
-    if (!stream.isPublic) {
+    if (stream.visibility !== ProjectRecordVisibility.Public) {
       try {
         await deps.validateScopes(req.context.scopes, Scopes.Streams.Read)
       } catch {

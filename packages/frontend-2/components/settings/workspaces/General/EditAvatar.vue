@@ -15,7 +15,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import type { SettingsWorkspacesGeneralEditAvatar_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserAvatarSize } from '@speckle/ui-components/dist/composables/user/avatar'
+import type { UserAvatarSize } from '@speckle/ui-components'
 import { useUpdateWorkspace } from '~~/lib/settings/composables/management'
 
 graphql(`

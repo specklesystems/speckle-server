@@ -17,14 +17,14 @@
         color="foundation"
         auto-focus
       />
-      <FormButton :icon-left="PlusIcon" submit>Add</FormButton>
+      <FormButton submit>Add</FormButton>
     </form>
   </div>
 </template>
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
-import { PlusIcon, LinkIcon } from '@heroicons/vue/20/solid'
+import { LinkIcon } from '@heroicons/vue/20/solid'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { isObjectId } from '~~/lib/common/helpers/resources'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'

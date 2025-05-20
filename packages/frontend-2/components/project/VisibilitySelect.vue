@@ -37,44 +37,44 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { isArray } from 'lodash-es'
+import { SupportedProjectVisibility } from '~/lib/projects/helpers/visibility'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: ProjectVisibility): void
+  (e: 'update:modelValue', v: SupportedProjectVisibility): void
 }>()
 
 const props = defineProps<{
-  modelValue: ProjectVisibility
+  modelValue: SupportedProjectVisibility
   showLabel?: boolean
   name?: string
   disabled?: boolean
+  workspaceId?: string
 }>()
 
 const labelId = useId()
 const buttonId = useId()
-const items = ref<
-  Record<
-    ProjectVisibility,
-    { id: ProjectVisibility; description: string; title: string }
-  >
->({
-  [ProjectVisibility.Public]: {
-    id: ProjectVisibility.Public,
-    description: 'Project is visible to everyone',
-    title: 'Discoverable'
-  },
-  [ProjectVisibility.Unlisted]: {
-    id: ProjectVisibility.Unlisted,
+const items = computed(() => ({
+  [SupportedProjectVisibility.Public]: {
+    id: SupportedProjectVisibility.Public,
     description: 'Anyone with the link can view',
-    title: 'Link shareable'
+    title: 'Public'
   },
-  [ProjectVisibility.Private]: {
-    id: ProjectVisibility.Private,
-    description: 'Only collaborators can access',
+  ...(props.workspaceId
+    ? {
+        [SupportedProjectVisibility.Workspace]: {
+          id: SupportedProjectVisibility.Workspace,
+          description: 'All workspace members can view',
+          title: 'Workspace'
+        }
+      }
+    : {}),
+  [SupportedProjectVisibility.Private]: {
+    id: SupportedProjectVisibility.Private,
+    description: 'Only for project members and admins',
     title: 'Private'
   }
-})
+}))
 
 const selectedValue = computed({
   get: () => props.modelValue,
@@ -82,7 +82,8 @@ const selectedValue = computed({
 })
 
 const selectValue = computed({
-  get: () => items.value[selectedValue.value],
+  get: () =>
+    items.value[selectedValue.value] || items.value[SupportedProjectVisibility.Private],
   set: (newVal) => (selectedValue.value = newVal.id)
 })
 </script>

@@ -12,6 +12,7 @@ import {
 } from '@/modules/auth/repositories/apps'
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getApp = getAppFactory({ db })
 const getAllPublicApps = getAllPublicAppsFactory({ db })
@@ -65,12 +66,20 @@ export default {
   },
   Mutation: {
     async appCreate(_parent, args, context) {
-      const { id } = await createApp({
-        ...args.app,
-        authorId: context.userId!,
-        public: isNullOrUndefined(args.app.public) ? undefined : args.app.public,
-        scopes: args.app.scopes.filter(isScope)
-      })
+      const { id } = await withOperationLogging(
+        async () =>
+          await createApp({
+            ...args.app,
+            authorId: context.userId!,
+            public: isNullOrUndefined(args.app.public) ? undefined : args.app.public,
+            scopes: args.app.scopes.filter(isScope)
+          }),
+        {
+          operationName: 'appCreate',
+          operationDescription: 'Create a new app',
+          logger: context.log
+        }
+      )
       return id
     },
 
@@ -88,13 +97,21 @@ export default {
       if (app?.author?.id !== context.userId && context.role !== Roles.Server.Admin)
         throw new ForbiddenError('You are not authorized to edit this app.')
 
-      await updateApp({
-        app: {
-          ...args.app,
-          public: isNullOrUndefined(args.app.public) ? undefined : args.app.public,
-          scopes: args.app.scopes.filter(isScope)
+      await withOperationLogging(
+        async () =>
+          await updateApp({
+            app: {
+              ...args.app,
+              public: isNullOrUndefined(args.app.public) ? undefined : args.app.public,
+              scopes: args.app.scopes.filter(isScope)
+            }
+          }),
+        {
+          operationName: 'appUpdate',
+          operationDescription: 'Update an existing app',
+          logger: context.log
         }
-      })
+      )
       return true
     },
 
@@ -112,14 +129,29 @@ export default {
       if (app.author?.id !== context.userId && context.role !== Roles.Server.Admin)
         throw new ForbiddenError('You are not authorized to edit this app.')
 
-      return (await deleteApp({ id: args.appId })) === 1
+      return await withOperationLogging(
+        async () => (await deleteApp({ id: args.appId })) === 1,
+        {
+          operationName: 'appDelete',
+          operationDescription: 'Delete an existing app',
+          logger: context.log
+        }
+      )
     },
 
     async appRevokeAccess(_parent, args, context) {
-      return !!(await revokeExistingAppCredentialsForUser({
-        appId: args.appId,
-        userId: context.userId!
-      }))
+      return await withOperationLogging(
+        async () =>
+          !!(await revokeExistingAppCredentialsForUser({
+            appId: args.appId,
+            userId: context.userId!
+          })),
+        {
+          operationName: 'appRevokeAccess',
+          operationDescription: 'Revoke access to an app',
+          logger: context.log
+        }
+      )
     }
   }
 } as Resolvers

@@ -4,6 +4,7 @@ import {
   RoleResourceTargets,
   roleResourceTypeToTokenResourceType
 } from '@/modules/core/helpers/token'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   AuthorizeResolver,
   GetUserAclRole,
@@ -15,6 +16,7 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
 import { isNullOrUndefined, Roles } from '@speckle/shared'
 import { OperationTypeNode } from 'graphql'
 
@@ -31,6 +33,18 @@ export const validateScopesFactory = (): ValidateScopes => async (scopes, scope)
     throw new ForbiddenError(errMsg, { info: { scope } })
 }
 
+const workspaceRoleImplicitProjectRoleMap = (
+  projectVisibility: ProjectRecordVisibility | null
+) => {
+  const isFullyPrivate = projectVisibility === ProjectRecordVisibility.Private
+
+  return <const>{
+    [Roles.Workspace.Admin]: Roles.Stream.Owner,
+    [Roles.Workspace.Member]: isFullyPrivate ? null : Roles.Stream.Reviewer,
+    [Roles.Workspace.Guest]: null
+  }
+}
+
 /**
  * Checks the userId against the resource's acl.
  */
@@ -41,6 +55,7 @@ export const authorizeResolverFactory =
     getUserServerRole: GetUserServerRole
     getStream: GetStream
     getUserAclRole: GetUserAclRole
+    getWorkspaceRoleAndSeat: GetWorkspaceRoleAndSeat
     emitWorkspaceEvent: EventBusEmit
   }): AuthorizeResolver =>
   async (userId, resourceId, requiredRole, userResourceAccessLimits, operationType) => {
@@ -74,6 +89,7 @@ export const authorizeResolverFactory =
     }
 
     let targetWorkspaceId: string | null = null
+    let streamVisibility: ProjectRecordVisibility | null = null
 
     if (role.resourceTarget === RoleResourceTargets.Streams) {
       const stream = await deps.getStream({
@@ -88,8 +104,9 @@ export const authorizeResolverFactory =
       }
 
       targetWorkspaceId = stream.workspaceId
+      streamVisibility = stream.visibility
 
-      const isPublic = !!stream?.isPublic
+      const isPublic = streamVisibility === ProjectRecordVisibility.Public
       if (isPublic && role.weight < 200) return
     }
 
@@ -97,7 +114,7 @@ export const authorizeResolverFactory =
       targetWorkspaceId = resourceId
     }
 
-    const userAclRole = userId
+    let userAclRole = userId
       ? await deps.getUserAclRole({
           aclTableName: role.aclTableName,
           userId,
@@ -106,7 +123,27 @@ export const authorizeResolverFactory =
       : null
 
     if (!userAclRole) {
-      throw new ForbiddenError('You are not authorized to access this resource.')
+      // Implicit workspace project access
+      if (
+        role.resourceTarget === RoleResourceTargets.Streams &&
+        targetWorkspaceId &&
+        userId
+      ) {
+        const workspaceRoleAndSeat = await deps.getWorkspaceRoleAndSeat({
+          workspaceId: targetWorkspaceId,
+          userId
+        })
+        const implicitStreamRole =
+          workspaceRoleAndSeat?.role.role &&
+          workspaceRoleImplicitProjectRoleMap(streamVisibility)[
+            workspaceRoleAndSeat.role.role
+          ]
+        userAclRole = implicitStreamRole
+      }
+
+      if (!userAclRole) {
+        throw new ForbiddenError('You are not authorized to access this resource.')
+      }
     }
 
     const fullRole = roles.find((r) => r.name === userAclRole)
@@ -117,7 +154,7 @@ export const authorizeResolverFactory =
 
     if (!isNullOrUndefined(targetWorkspaceId)) {
       await deps.emitWorkspaceEvent({
-        eventName: WorkspaceEvents.Authorized,
+        eventName: WorkspaceEvents.Authorizing,
         payload: {
           workspaceId: targetWorkspaceId,
           userId

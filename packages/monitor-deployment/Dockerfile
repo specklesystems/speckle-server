@@ -12,7 +12,7 @@ RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20230311 \
-     curl=7.88.1-10+deb12u8 \
+     curl=7.88.1-10+deb12u12 \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o ./tini \
     && chmod +x ./tini \
     && apt-get remove -y curl \
@@ -33,7 +33,7 @@ COPY package.json yarn.lock ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/monitor-deployment/package.json ./packages/monitor-deployment/
 
-RUN yarn workspaces focus -A && yarn install
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus -A
 
 # Only copy in the relevant source files for the dependencies
 COPY packages/shared ./packages/shared/
@@ -42,7 +42,7 @@ COPY packages/monitor-deployment ./packages/monitor-deployment/
 RUN yarn workspaces foreach -W run build
 
 WORKDIR /speckle-server/packages/monitor-deployment
-RUN yarn workspaces focus --production
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
 FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
 

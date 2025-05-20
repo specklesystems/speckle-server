@@ -1,4 +1,4 @@
-import { crossServerSyncLogger, Logger } from '@/logging/logging'
+import { crossServerSyncLogger, Logger } from '@/observability/logging'
 import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
 import {
   createApolloClient,

@@ -1,13 +1,11 @@
 import {
-  GetWorkspacePlanPrice,
+  GetWorkspacePlanPriceId,
+  GetWorkspacePlanProductAndPriceIds,
   GetWorkspacePlanProductId
 } from '@/modules/gatekeeper/domain/billing'
-import {
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeperCore/domain/billing'
 import { getStringFromEnv, getStripeApiKey } from '@/modules/shared/helpers/envHelper'
 import { Stripe } from 'stripe'
+import { NotImplementedError } from '@/modules/shared/errors'
 
 let stripeClient: Stripe | undefined = undefined
 
@@ -16,37 +14,82 @@ export const getStripeClient = () => {
   return stripeClient
 }
 
-export const workspacePlanPrices = (): Record<
-  WorkspacePricingPlans,
-  Record<WorkspacePlanBillingIntervals, string> & { productId: string }
-> => ({
-  guest: {
-    productId: getStringFromEnv('WORKSPACE_GUEST_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: getStringFromEnv('WORKSPACE_MONTHLY_GUEST_SEAT_STRIPE_PRICE_ID'),
-    yearly: getStringFromEnv('WORKSPACE_YEARLY_GUEST_SEAT_STRIPE_PRICE_ID')
-  },
-  starter: {
+const loadProductAndPriceIds: GetWorkspacePlanProductAndPriceIds = () => ({
+  team: {
     productId: getStringFromEnv('WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: getStringFromEnv('WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID'),
-    yearly: getStringFromEnv('WORKSPACE_YEARLY_TEAM_SEAT_STRIPE_PRICE_ID')
+    monthly: {
+      gbp: getStringFromEnv('WORKSPACE_MONTHLY_TEAM_SEAT_GBP_STRIPE_PRICE_ID'),
+      usd: getStringFromEnv('WORKSPACE_MONTHLY_TEAM_SEAT_USD_STRIPE_PRICE_ID')
+    },
+    yearly: {
+      gbp: getStringFromEnv('WORKSPACE_YEARLY_TEAM_SEAT_GBP_STRIPE_PRICE_ID'),
+      usd: getStringFromEnv('WORKSPACE_YEARLY_TEAM_SEAT_USD_STRIPE_PRICE_ID')
+    }
   },
-  plus: {
+  teamUnlimited: {
+    productId: getStringFromEnv('WORKSPACE_TEAM_UNLIMITED_SEAT_STRIPE_PRODUCT_ID'),
+    monthly: {
+      gbp: getStringFromEnv(
+        'WORKSPACE_MONTHLY_TEAM_UNLIMITED_SEAT_GBP_STRIPE_PRICE_ID'
+      ),
+      usd: getStringFromEnv('WORKSPACE_MONTHLY_TEAM_UNLIMITED_SEAT_USD_STRIPE_PRICE_ID')
+    },
+    yearly: {
+      gbp: getStringFromEnv('WORKSPACE_YEARLY_TEAM_UNLIMITED_SEAT_GBP_STRIPE_PRICE_ID'),
+      usd: getStringFromEnv('WORKSPACE_YEARLY_TEAM_UNLIMITED_SEAT_USD_STRIPE_PRICE_ID')
+    }
+  },
+  pro: {
     productId: getStringFromEnv('WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: getStringFromEnv('WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID'),
-    yearly: getStringFromEnv('WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID')
+    monthly: {
+      gbp: getStringFromEnv('WORKSPACE_MONTHLY_PRO_SEAT_GBP_STRIPE_PRICE_ID'),
+      usd: getStringFromEnv('WORKSPACE_MONTHLY_PRO_SEAT_USD_STRIPE_PRICE_ID')
+    },
+    yearly: {
+      gbp: getStringFromEnv('WORKSPACE_YEARLY_PRO_SEAT_GBP_STRIPE_PRICE_ID'),
+      usd: getStringFromEnv('WORKSPACE_YEARLY_PRO_SEAT_USD_STRIPE_PRICE_ID')
+    }
   },
-  business: {
-    productId: getStringFromEnv('WORKSPACE_BUSINESS_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: getStringFromEnv('WORKSPACE_MONTHLY_BUSINESS_SEAT_STRIPE_PRICE_ID'),
-    yearly: getStringFromEnv('WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID')
+  proUnlimited: {
+    productId: getStringFromEnv('WORKSPACE_PRO_UNLIMITED_SEAT_STRIPE_PRODUCT_ID'),
+    monthly: {
+      gbp: getStringFromEnv('WORKSPACE_MONTHLY_PRO_UNLIMITED_SEAT_GBP_STRIPE_PRICE_ID'),
+      usd: getStringFromEnv('WORKSPACE_MONTHLY_PRO_UNLIMITED_SEAT_USD_STRIPE_PRICE_ID')
+    },
+    yearly: {
+      gbp: getStringFromEnv('WORKSPACE_YEARLY_PRO_UNLIMITED_SEAT_GBP_STRIPE_PRICE_ID'),
+      usd: getStringFromEnv('WORKSPACE_YEARLY_PRO_UNLIMITED_SEAT_USD_STRIPE_PRICE_ID')
+    }
   }
 })
 
-export const getWorkspacePlanPrice: GetWorkspacePlanPrice = ({
+let priceIds: ReturnType<typeof getWorkspacePlanProductAndPriceIds> | null = null
+
+export const getWorkspacePlanProductAndPriceIds: GetWorkspacePlanProductAndPriceIds =
+  () => {
+    if (!priceIds) priceIds = loadProductAndPriceIds()
+    return priceIds
+  }
+
+export const getWorkspacePlanPriceId: GetWorkspacePlanPriceId = ({
   workspacePlan,
-  billingInterval
-}) => workspacePlanPrices()[workspacePlan][billingInterval]
+  billingInterval,
+  currency
+}) => {
+  const plan = getWorkspacePlanProductAndPriceIds()[workspacePlan]
+  const priceIds = plan[billingInterval]
+  return priceIds[currency]
+}
 
 export const getWorkspacePlanProductId: GetWorkspacePlanProductId = ({
   workspacePlan
-}) => workspacePlanPrices()[workspacePlan].productId
+}) => {
+  const planMetadata = getWorkspacePlanProductAndPriceIds()[workspacePlan]
+  if (!planMetadata) {
+    throw new NotImplementedError(`Plan {workspacePlan} not supported`, {
+      info: { workspacePlan }
+    })
+  }
+
+  return planMetadata.productId
+}

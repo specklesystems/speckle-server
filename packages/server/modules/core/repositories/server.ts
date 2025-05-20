@@ -15,10 +15,15 @@ import {
   getServerMovedFrom,
   getServerMovedTo,
   getServerOrigin,
-  getServerVersion
+  getServerVersion,
+  isEmailEnabled
 } from '@/modules/shared/helpers/envHelper'
+import {
+  inMemoryCacheProviderFactory,
+  wrapFactoryWithCache
+} from '@/modules/shared/utils/caching'
+import { TIME_MS } from '@speckle/shared'
 import { Knex } from 'knex'
-import { LRUCache } from 'lru-cache'
 
 const ServerConfig = buildTableHelper('server_config', [
   'id',
@@ -39,21 +44,6 @@ const tables = {
   scopes: (db: Knex) => db<ScopeRecord>(Scopes.name)
 }
 
-const SERVER_CONFIG_CACHE_KEY = 'server_config'
-
-export const getServerInfoFromCacheFactory =
-  ({ cache }: { cache: LRUCache<string, ServerInfo> }) =>
-  () => {
-    const serverInfo = cache.get(SERVER_CONFIG_CACHE_KEY)
-    return serverInfo ?? null
-  }
-
-export const storeServerInfoInCacheFactory =
-  ({ cache }: { cache: LRUCache<string, ServerInfo> }) =>
-  ({ serverInfo }: { serverInfo: ServerInfo }) => {
-    cache.set(SERVER_CONFIG_CACHE_KEY, serverInfo)
-  }
-
 export const getServerInfoFactory =
   (deps: { db: Knex }): GetServerInfo =>
   async () => {
@@ -67,7 +57,8 @@ export const getServerInfoFactory =
       canonicalUrl: getServerOrigin(),
       configuration: {
         objectSizeLimitBytes: getMaximumObjectSizeMB() * 1024 * 1024,
-        objectMultipartUploadSizeLimitBytes: getFileSizeLimitMB() * 1024 * 1024
+        objectMultipartUploadSizeLimitBytes: getFileSizeLimitMB() * 1024 * 1024,
+        isEmailEnabled: isEmailEnabled()
       },
       ...(movedTo || movedFrom
         ? {
@@ -81,6 +72,13 @@ export const getServerInfoFactory =
 
     return serverInfo
   }
+
+export const getCachedServerInfoFactory = wrapFactoryWithCache({
+  factory: getServerInfoFactory,
+  name: 'modules/core/repositories/server::getServerInfo',
+  ttlMs: TIME_MS.hour,
+  cacheProvider: inMemoryCacheProviderFactory()
+})
 
 export const updateServerInfoFactory =
   (deps: { db: Knex }): UpdateServerInfo =>

@@ -2,7 +2,7 @@ import {
   CreateFunctionBody,
   ExecutionEngineFunctionTemplateId,
   createFunction,
-  getFunction,
+  getFunctionFactory,
   updateFunction as updateExecEngineFunction
 } from '@/modules/automate/clients/executionEngine'
 import {
@@ -43,7 +43,7 @@ import {
   speckleAutomateUrl
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
-import { automateLogger } from '@/logging/logging'
+import type { Logger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { noop } from 'lodash'
@@ -89,6 +89,14 @@ const cleanFunctionLogo = (logo: MaybeNullOrUndefined<string>): Nullable<string>
 export const convertFunctionToGraphQLReturn = (
   fn: FunctionSchemaType
 ): AutomateFunctionGraphQLReturn => {
+  const functionCreator: FunctionSchemaType['functionCreator'] =
+    fn.functionCreatorSpeckleUserId && fn.functionCreatorSpeckleServerOrigin
+      ? {
+          speckleUserId: fn.functionCreatorSpeckleUserId,
+          speckleServerOrigin: fn.functionCreatorSpeckleServerOrigin
+        }
+      : fn.functionCreator
+
   const ret: AutomateFunctionGraphQLReturn = {
     id: fn.functionId,
     name: fn.functionName,
@@ -98,7 +106,7 @@ export const convertFunctionToGraphQLReturn = (
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
-    functionCreator: fn.functionCreator,
+    functionCreator,
     workspaceIds: fn.workspaceIds
   }
 
@@ -124,13 +132,14 @@ export type CreateFunctionDeps = {
   createStoredAuthCode: CreateStoredAuthCode
   createExecutionEngineFn: typeof createFunction
   getUser: GetUser
+  logger: Logger
 }
 
 export const createFunctionFromTemplateFactory =
   (deps: CreateFunctionDeps) =>
   async (params: { input: CreateAutomateFunctionInput; userId: string }) => {
     const { input, userId } = params
-    const { createExecutionEngineFn, getUser, createStoredAuthCode } = deps
+    const { createExecutionEngineFn, getUser, createStoredAuthCode, logger } = deps
 
     // Validate user
     const user = await getUser(userId)
@@ -155,7 +164,7 @@ export const createFunctionFromTemplateFactory =
     const created = await createExecutionEngineFn({ body })
 
     if (isDevEnv() && created) {
-      automateLogger.info({ created }, `[dev] Created function #${created.functionId}`)
+      logger.info({ created }, `[dev] Created function #${created.functionId}`)
     }
 
     // Don't want to pull the function w/ another req, so we'll just return the input
@@ -187,14 +196,14 @@ export const createFunctionFromTemplateFactory =
 
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
-  getFunction: typeof getFunction
+  getFunction: ReturnType<typeof getFunctionFactory>
   createStoredAuthCode: CreateStoredAuthCode
 }
 
 export const updateFunctionFactory =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
-    const { updateFunction, createStoredAuthCode } = deps
+    const { getFunction, updateFunction, createStoredAuthCode } = deps
     const { input, userId } = params
 
     const existingFn = await getFunction({ functionId: input.id })
@@ -229,8 +238,6 @@ export const updateFunctionFactory =
         speckleServerAuthenticationPayload: authCode
       }
     })
-
-    console.log(JSON.stringify(apiResult, null, 2))
 
     return convertFunctionToGraphQLReturn(apiResult)
   }

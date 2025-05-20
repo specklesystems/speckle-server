@@ -1,8 +1,8 @@
-import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import type {
-  TreeNode,
-  MeasurementOptions,
-  PropertyInfo,
+import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
+import {
+  type TreeNode,
+  type MeasurementOptions,
+  type PropertyInfo,
   ViewMode
 } from '@speckle/viewer'
 import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
@@ -18,7 +18,6 @@ import {
   type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
-import { Vector3, Box3 } from 'three'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import type {
@@ -26,7 +25,8 @@ import type {
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useActiveElement } from '@vueuse/core'
-import { SnowPipeline } from '~/lib/viewer/pipelines/snow/SnowPipeline'
+import { useTheme } from '~/lib/core/composables/theme'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -45,8 +45,12 @@ export function useSectionBoxUtilities() {
 
   const resolveSectionBoxFromSelection = () => {
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
-    const box = instance.getSectionBoxFromObjects(objectIds)
-    sectionBox.value = box
+    const box = instance.getRenderer().boxFromObjects(objectIds)
+    /** When generating a section box from selection we don't apply any rotation */
+    sectionBox.value = {
+      min: box.min.toArray(),
+      max: box.max.toArray()
+    }
   }
 
   const toggleSectionBox = () => {
@@ -68,18 +72,11 @@ export function useSectionBoxUtilities() {
 
     if (serializedSectionBox) {
       // Same logic we have in deserialization
-      sectionBox.value = new Box3(
-        new Vector3(
-          serializedSectionBox.min[0],
-          serializedSectionBox.min[1],
-          serializedSectionBox.min[2]
-        ),
-        new Vector3(
-          serializedSectionBox.max[0],
-          serializedSectionBox.max[1],
-          serializedSectionBox.max[2]
-        )
-      )
+      sectionBox.value = {
+        min: serializedSectionBox.min,
+        max: serializedSectionBox.max,
+        rotation: serializedSectionBox.rotation
+      }
     }
   }
 
@@ -231,7 +228,7 @@ export function useFilterUtilities(
     key: string,
     options?: Partial<{ timeout: number }>
   ) => {
-    const timeout = options?.timeout || 10000
+    const timeout = options?.timeout || 10 * TIME_MS.second
 
     const res = await Promise.race([
       until(viewer.metadata.availableFilters).toMatch(
@@ -488,26 +485,105 @@ export function useHighlightedObjectsUtilities() {
 export function useViewModeUtilities() {
   const { instance } = useInjectedViewer()
   const { viewMode } = useInjectedViewerInterfaceState()
+  const { isLightTheme } = useTheme()
+  const mp = useMixpanel()
+
+  const edgesEnabled = ref(true)
+  const edgesWeight = ref(1)
+  const outlineOpacity = ref(0.75)
+  const defaultColor = ref(0x1a1a1a)
+  const edgesColor = ref(defaultColor.value)
 
   const currentViewMode = computed(() => viewMode.value)
 
-  const setViewMode = (mode: ViewMode) => {
+  const updateViewMode = () => {
     const viewModes = instance.getExtension(ViewModes)
     if (viewModes) {
-      viewModes.setViewMode(mode)
+      viewModes.setViewMode(currentViewMode.value, {
+        edges: edgesEnabled.value,
+        outlineThickness: edgesWeight.value,
+        outlineOpacity: outlineOpacity.value,
+        outlineColor: edgesColor.value
+      })
     }
   }
 
-  const letItSnow = () => {
-    const snowPipeline = new SnowPipeline(instance.getRenderer())
-    instance.getRenderer().pipeline = snowPipeline
-    void snowPipeline.start()
+  const setViewMode = (mode: ViewMode) => {
+    viewMode.value = mode
+    if (mode === ViewMode.PEN) {
+      outlineOpacity.value = 1
+      edgesEnabled.value = true
+      if (edgesColor.value === defaultColor.value) {
+        if (!isLightTheme.value) {
+          edgesColor.value = 0xffffff
+        }
+      }
+    } else {
+      outlineOpacity.value = 0.75
+      if (edgesColor.value === 0xffffff) {
+        edgesColor.value = isLightTheme.value ? 0xffffff : defaultColor.value
+      }
+    }
+
+    updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-view-mode',
+      mode
+    })
   }
+
+  const toggleEdgesEnabled = () => {
+    edgesEnabled.value = !edgesEnabled.value
+    updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'toggle-edges',
+      enabled: edgesEnabled.value
+    })
+  }
+
+  const setEdgesWeight = (weight: number) => {
+    edgesWeight.value = Number(weight)
+    updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-edges-weight',
+      weight: edgesWeight.value
+    })
+  }
+
+  const setEdgesColor = (color: number) => {
+    edgesColor.value = color
+    updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-edges-color',
+      color: color.toString(16).padStart(6, '0')
+    })
+  }
+
+  onBeforeUnmount(() => {
+    // Reset edges settings
+    edgesEnabled.value = true
+    edgesWeight.value = 1
+    outlineOpacity.value = 0.75
+    edgesColor.value = defaultColor.value
+
+    // Reset view mode to default
+    viewMode.value = ViewMode.DEFAULT
+    updateViewMode()
+  })
 
   return {
     currentViewMode,
     setViewMode,
-    letItSnow
+    edgesEnabled,
+    toggleEdgesEnabled,
+    edgesWeight,
+    setEdgesWeight,
+    setEdgesColor,
+    edgesColor
   }
 }
 

@@ -1,9 +1,5 @@
-import { ensureError, Roles, SpeckleViewer } from '@speckle/shared'
-import { AuthContext } from '@/modules/shared/authz'
-import { ForbiddenError } from '@/modules/shared/errors'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import { ensureError, SpeckleViewer } from '@speckle/shared'
 import {
-  CreateCommentInput,
   CreateCommentReplyInput,
   EditCommentInput
 } from '@/modules/core/graph/generated/graphql'
@@ -18,7 +14,6 @@ import {
   formatSerializedViewerState,
   inputToDataStruct
 } from '@/modules/comments/services/data'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   ArchiveCommentAndNotify,
   CreateCommentReplyAndNotify,
@@ -39,73 +34,6 @@ import { GetStream } from '@/modules/core/domain/streams/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
 
-type AuthorizeProjectCommentsAccessDeps = {
-  getStream: GetStream
-  adminOverrideEnabled: typeof adminOverrideEnabled
-}
-
-export const authorizeProjectCommentsAccessFactory =
-  (deps: AuthorizeProjectCommentsAccessDeps) =>
-  async (params: {
-    projectId: string
-    authCtx: AuthContext
-    requireProjectRole?: boolean
-  }) => {
-    const { projectId, authCtx, requireProjectRole } = params
-    if (authCtx.role === Roles.Server.ArchivedUser) {
-      throw new ForbiddenError('You are not authorized')
-    }
-
-    const project = await deps.getStream({
-      streamId: projectId,
-      userId: authCtx.userId
-    })
-    if (!project) {
-      throw new StreamInvalidAccessError('Stream not found')
-    }
-
-    let success = true
-    if (!project.isPublic && !authCtx.auth) success = false
-    if (!project.isPublic && !project.role) success = false
-    if (requireProjectRole && !project.role && !project.allowPublicComments)
-      success = false
-    if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin)
-      success = true
-
-    if (!success) {
-      throw new StreamInvalidAccessError('You are not authorized')
-    }
-
-    return project
-  }
-
-export const authorizeCommentAccessFactory =
-  (
-    deps: {
-      getComment: GetComment
-    } & AuthorizeProjectCommentsAccessDeps
-  ) =>
-  async (params: {
-    authCtx: AuthContext
-    commentId: string
-    requireProjectRole?: boolean
-  }) => {
-    const { authCtx, commentId, requireProjectRole } = params
-    const comment = await deps.getComment({
-      id: commentId,
-      userId: authCtx.userId
-    })
-    if (!comment) {
-      throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
-    }
-
-    return authorizeProjectCommentsAccessFactory(deps)({
-      projectId: comment.streamId,
-      authCtx,
-      requireProjectRole
-    })
-  }
-
 export const createCommentThreadAndNotifyFactory =
   (deps: {
     getViewerResourceItemsUngrouped: GetViewerResourceItemsUngrouped
@@ -115,7 +43,7 @@ export const createCommentThreadAndNotifyFactory =
     markCommentViewed: MarkCommentViewed
     emitEvent: EventBusEmit
   }): CreateCommentThreadAndNotify =>
-  async (input: CreateCommentInput, userId: string) => {
+  async (input, userId, options) => {
     const [resources] = await Promise.all([
       deps.getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
       deps.validateInputAttachments(input.projectId, input.content.blobIds || [])
@@ -139,7 +67,10 @@ export const createCommentThreadAndNotifyFactory =
         blobIds: input.content.blobIds || undefined
       }),
       screenshot: input.screenshot,
-      data: dataStruct
+      data: dataStruct,
+      ...(options?.createdAt
+        ? { createdAt: options.createdAt, updatedAt: options.createdAt }
+        : {})
     }
 
     let comment: CommentRecord
@@ -300,10 +231,7 @@ export const archiveCommentAndNotifyFactory =
     }
 
     const stream = await deps.getStream({ streamId: comment.streamId, userId })
-    if (
-      !stream ||
-      (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)
-    ) {
+    if (!stream) {
       throw new CommentUpdateError(
         'You do not have permissions to archive this comment'
       )

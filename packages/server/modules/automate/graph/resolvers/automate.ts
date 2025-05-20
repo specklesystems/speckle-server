@@ -3,13 +3,12 @@ import {
   createFunctionWithoutVersion,
   triggerAutomationRun,
   updateFunction as execEngineUpdateFunction,
-  getFunction,
-  getFunctionRelease,
-  getPublicFunctions,
-  getFunctionReleases,
+  getFunctionFactory,
+  getFunctionReleaseFactory,
+  getFunctionReleasesFactory,
   getUserGithubAuthState,
   getUserGithubOrganizations,
-  getUserFunctions
+  getUserFunctionsFactory
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -30,14 +29,16 @@ import {
   updateAutomationFactory,
   updateAutomationRunFactory,
   upsertAutomationFunctionRunFactory,
-  upsertAutomationRunFactory
+  upsertAutomationRunFactory,
+  markAutomationDeletedFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
   createAutomationRevisionFactory,
   createTestAutomationFactory,
   getAutomationsStatusFactory,
-  validateAndUpdateAutomationFactory
+  validateAndUpdateAutomationFactory,
+  deleteAutomationFactory
 } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
@@ -73,10 +74,7 @@ import {
   manuallyTriggerAutomationFactory,
   triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
-import {
-  reportFunctionRunStatusFactory,
-  ReportFunctionRunStatusDeps
-} from '@/modules/automate/services/runsManagement'
+import { reportFunctionRunStatusFactory } from '@/modules/automate/services/runsManagement'
 import {
   AutomationNotFoundError,
   FunctionNotFoundError
@@ -125,6 +123,12 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { asOperation } from '@/modules/shared/command'
+import {
+  mapAuthToServerError,
+  throwIfAuthNotOk
+} from '@/modules/shared/helpers/errorHelper'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -211,22 +215,36 @@ export default (FF_AUTOMATE_MODULE_ENABLED
       },
       Project: {
         async automation(parent, args, ctx) {
+          const canReadAutomation = await ctx.authPolicies.project.automation.canRead({
+            userId: ctx.userId,
+            projectId: parent.id
+          })
+          if (!canReadAutomation.isOk) {
+            throw mapAuthToServerError(canReadAutomation.error)
+          }
+
           const projectDb = await getProjectDbClient({ projectId: parent.id })
 
-          const res = ctx.loaders
+          const res = await ctx.loaders
             .forRegion({ db: projectDb })
             .streams.getAutomation.forStream(parent.id)
             .load(args.id)
 
           if (!res) {
-            if (!res) {
-              throw new AutomationNotFoundError()
-            }
+            throw new AutomationNotFoundError()
           }
 
           return res
         },
-        async automations(parent, args) {
+        async automations(parent, args, ctx) {
+          const canReadAutomation = await ctx.authPolicies.project.automation.canRead({
+            userId: ctx.userId,
+            projectId: parent.id
+          })
+          if (!canReadAutomation.isOk) {
+            throw mapAuthToServerError(canReadAutomation.error)
+          }
+
           const projectDb = await getProjectDbClient({ projectId: parent.id })
 
           const retrievalArgs: GetProjectAutomationsParams = {
@@ -250,12 +268,10 @@ export default (FF_AUTOMATE_MODULE_ENABLED
         async automationsStatus(parent, _args, ctx) {
           const projectDb = await getProjectDbClient({ projectId: parent.streamId })
 
-          const getLatestVersionAutomationRuns = getLatestVersionAutomationRunsFactory({
-            db: projectDb
-          })
-
           const getStatus = getAutomationsStatusFactory({
-            getLatestVersionAutomationRuns
+            getLatestVersionAutomationRuns: getLatestVersionAutomationRunsFactory({
+              db: projectDb
+            })
           })
 
           const modelId = parent.id
@@ -305,7 +321,9 @@ export default (FF_AUTOMATE_MODULE_ENABLED
           const automationRevision = await ctx.loaders
             .forRegion({ db: projectDb })
             .automations.getLatestAutomationRevision.load(parent.id)
-          return { ...automationRevision, projectId: parent.projectId }
+          return automationRevision
+            ? { ...automationRevision, projectId: parent.projectId }
+            : null
         },
         async runs(parent, args) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
@@ -372,6 +390,9 @@ export default (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateFunctionRun: {
         async function(parent, _args, ctx) {
+          if (!parent.functionId) {
+            return null
+          }
           const fn = await ctx.loaders.automationsApi.getFunction.load(
             parent.functionId
           )
@@ -393,6 +414,7 @@ export default (FF_AUTOMATE_MODULE_ENABLED
           } catch (e) {
             ctx.log.warn('Error formatting results schema', e)
           }
+          return null
         },
         status: (parent) => mapDbStatusToGqlStatus(parent.status)
       },
@@ -459,10 +481,12 @@ export default (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       AutomateFunction: {
-        async releases(parent, args) {
+        async releases(parent, args, context) {
           try {
             // TODO: Replace w/ dataloader batch call, when/if possible
-            const fn = await getFunction({
+            const fn = await getFunctionFactory({
+              logger: context.log
+            })({
               functionId: parent.id,
               releases:
                 args?.cursor || args?.filter?.search || args?.limit
@@ -517,6 +541,9 @@ export default (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateFunctionRelease: {
         async function(parent, _args, ctx) {
+          if (!parent.functionId) {
+            return null
+          }
           const fn = await ctx.loaders.automationsApi.getFunction.load(
             parent.functionId
           )
@@ -531,115 +558,250 @@ export default (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateMutations: {
         async createFunction(_parent, args, ctx) {
+          const logger = ctx.log
           const create = createFunctionFromTemplateFactory({
             createExecutionEngineFn: createFunction,
             getUser: getUserFactory({ db }),
             createStoredAuthCode: createStoredAuthCodeFactory({
               redis: getGenericRedis()
-            })
+            }),
+            logger
           })
 
-          return (await create({ input: args.input, userId: ctx.userId! }))
-            .graphqlReturn
+          const { graphqlReturn } = await withOperationLogging(
+            async () => await create({ input: args.input, userId: ctx.userId! }),
+            {
+              logger,
+              operationName: 'createFunction',
+              operationDescription: 'Create a new Automate function'
+            }
+          )
+          return graphqlReturn
         },
         async createFunctionWithoutVersion(_parent, args, ctx) {
+          const logger = ctx.log
+
           const authCode = await createStoredAuthCodeFactory({
             redis: getGenericRedis()
           })({
             userId: ctx.userId!,
             action: AuthCodePayloadAction.CreateFunction
           })
-          return await createFunctionWithoutVersion({
-            body: {
-              speckleServerAuthenticationPayload: {
-                ...authCode,
-                origin: getServerOrigin()
-              },
-              functionName: args.input.name,
-              description: args.input.description,
-              repositoryUrl:
-                'https://github.com/specklesystems/speckle_automate_python_example',
-              supportedSourceApps: [],
-              tags: []
+          return await withOperationLogging(
+            async () =>
+              await createFunctionWithoutVersion({
+                body: {
+                  speckleServerAuthenticationPayload: {
+                    ...authCode,
+                    origin: getServerOrigin()
+                  },
+                  functionName: args.input.name,
+                  description: args.input.description,
+                  repositoryUrl:
+                    'https://github.com/specklesystems/speckle_automate_python_example',
+                  supportedSourceApps: [],
+                  tags: []
+                }
+              }),
+            {
+              logger,
+              operationName: 'createFunctionWithoutVersion',
+              operationDescription: 'Create a new Automate function without version'
             }
-          })
+          )
         },
         async updateFunction(_parent, args, ctx) {
+          const functionId = args.input.id
+          const logger = ctx.log.child({
+            functionId
+          })
           const update = updateFunctionFactory({
             updateFunction: execEngineUpdateFunction,
-            getFunction,
+            getFunction: getFunctionFactory({ logger }),
             createStoredAuthCode: createStoredAuthCodeFactory({
               redis: getGenericRedis()
             })
           })
-          return await update({ input: args.input, userId: ctx.userId! })
+          return await withOperationLogging(
+            async () => await update({ input: args.input, userId: ctx.userId! }),
+            {
+              logger,
+              operationName: 'updateFunction',
+              operationDescription: 'Update an Automate function'
+            }
+          )
         }
       },
       ProjectAutomationMutations: {
         async create(parent, { input }, ctx) {
-          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const canCreate = await ctx.authPolicies.project.automation.canCreate({
+            userId: ctx.userId,
+            projectId: parent.projectId
+          })
+          if (!canCreate.isOk) {
+            throw mapAuthToServerError(canCreate.error)
+          }
+
+          const projectId = parent.projectId
+
+          const logger = ctx.log.child({
+            projectId,
+            streamId: projectId //legacy
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
 
           const create = createAutomationFactory({
             createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationToken: storeAutomationTokenFactory({ db: projectDb }),
-            validateStreamAccess,
             eventEmit: getEventBus().emit
           })
 
-          return (
-            await create({
-              input,
-              userId: ctx.userId!,
-              projectId: parent.projectId,
-              userResourceAccessRules: ctx.resourceAccessRules
-            })
-          ).automation
+          const { automation } = await withOperationLogging(
+            async () =>
+              await create({
+                input,
+                userId: ctx.userId!,
+                projectId,
+                userResourceAccessRules: ctx.resourceAccessRules
+              }),
+            {
+              logger,
+              operationName: 'createProjectAutomation',
+              operationDescription: 'Create a new Automation attached to a project'
+            }
+          )
+
+          return automation
         },
         async update(parent, { input }, ctx) {
-          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const canUpdate = await ctx.authPolicies.project.automation.canUpdate({
+            userId: ctx.userId,
+            projectId: parent.projectId
+          })
+          if (!canUpdate.isOk) {
+            throw mapAuthToServerError(canUpdate.error)
+          }
+
+          const projectId = parent.projectId
+          const automationId = input.id
+
+          const logger = ctx.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
 
           const update = validateAndUpdateAutomationFactory({
             getAutomation: getAutomationFactory({ db: projectDb }),
             updateAutomation: updateAutomationFactory({ db: projectDb }),
-            validateStreamAccess,
             eventEmit: getEventBus().emit
           })
 
-          return await update({
-            input,
-            userId: ctx.userId!,
-            projectId: parent.projectId,
-            userResourceAccessRules: ctx.resourceAccessRules
+          return await withOperationLogging(
+            async () =>
+              await update({
+                input,
+                userId: ctx.userId!,
+                projectId,
+                userResourceAccessRules: ctx.resourceAccessRules
+              }),
+            {
+              logger,
+              operationName: 'updateProjectAutomation',
+              operationDescription: 'Update an Automation attached to a project'
+            }
+          )
+        },
+        async delete(parent, input, context) {
+          const canDelete = await context.authPolicies.project.automation.canDelete({
+            userId: context.userId,
+            projectId: parent.projectId
           })
+          throwIfAuthNotOk(canDelete)
+
+          const projectId = parent.projectId
+          const automationId = input.automationId
+
+          const logger = context.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
+
+          return await asOperation(
+            async ({ db }) => {
+              const deleteAutomation = deleteAutomationFactory({
+                deleteAutomation: markAutomationDeletedFactory({ db })
+              })
+
+              return await deleteAutomation({ automationId })
+            },
+            {
+              logger,
+              name: 'deleteProjectAutomation',
+              description: 'Delete an Automation attached to a project',
+              db: projectDb
+            }
+          )
         },
         async createRevision(parent, { input }, ctx) {
-          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const projectId = parent.projectId
+          const automationId = input.automationId
+
+          const logger = ctx.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
 
           const create = createAutomationRevisionFactory({
             getAutomation: getAutomationFactory({ db: projectDb }),
             storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
-            getFunctionRelease,
+            getFunctionRelease: getFunctionReleaseFactory({ logger: ctx.log }),
             getEncryptionKeyPair,
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
             }),
-            getFunctionReleases,
+            getFunctionReleases: getFunctionReleasesFactory({ logger: ctx.log }),
             eventEmit: getEventBus().emit,
             validateStreamAccess
           })
 
-          return await create({
-            input,
-            projectId: parent.projectId,
-            userId: ctx.userId!,
-            userResourceAccessRules: ctx.resourceAccessRules
-          })
+          return await withOperationLogging(
+            async () =>
+              await create({
+                input,
+                projectId,
+                userId: ctx.userId!,
+                userResourceAccessRules: ctx.resourceAccessRules
+              }),
+            {
+              logger,
+              operationName: 'createAutomationRevision',
+              operationDescription: 'Create a new Automation revision'
+            }
+          )
         },
         async trigger(parent, { automationId }, ctx) {
-          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const projectId = parent.projectId
+
+          const logger = ctx.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
 
           const trigger = manuallyTriggerAutomationFactory({
             getAutomationTriggerDefinitions: getAutomationTriggerDefinitionsFactory({
@@ -665,35 +827,71 @@ export default (FF_AUTOMATE_MODULE_ENABLED
             validateStreamAccess
           })
 
-          const { automationRunId } = await trigger({
-            automationId,
-            userId: ctx.userId!,
-            userResourceAccessRules: ctx.resourceAccessRules,
-            projectId: parent.projectId
-          })
+          const { automationRunId } = await withOperationLogging(
+            async () =>
+              await trigger({
+                automationId,
+                userId: ctx.userId!,
+                userResourceAccessRules: ctx.resourceAccessRules,
+                projectId
+              }),
+            {
+              logger,
+              operationName: 'triggerProjectAutomation',
+              operationDescription: 'Trigger an Automation'
+            }
+          )
 
           return automationRunId
         },
         async createTestAutomation(parent, { input }, ctx) {
-          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const projectId = parent.projectId
+
+          const authResult = await ctx.authPolicies.project.automation.canCreate({
+            userId: ctx.userId,
+            projectId
+          })
+          throwIfAuthNotOk(authResult)
+
+          const logger = ctx.log.child({
+            projectId,
+            streamId: projectId //legacy
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
 
           const create = createTestAutomationFactory({
             getEncryptionKeyPair,
-            getFunction,
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             validateStreamAccess,
             eventEmit: getEventBus().emit
           })
 
-          return await create({
-            input,
-            projectId: parent.projectId,
-            userId: ctx.userId!,
-            userResourceAccessRules: ctx.resourceAccessRules
-          })
+          return await withOperationLogging(
+            async () =>
+              await create({
+                automationName: input.name,
+                modelId: input.modelId,
+                projectId,
+                userId: ctx.userId!
+              }),
+            {
+              logger,
+              operationName: 'createTestAutomation',
+              operationDescription: 'Create a new test Automation'
+            }
+          )
         },
         async createTestAutomationRun(parent, { automationId }, ctx) {
+          const projectId = parent.projectId
+
+          const logger = ctx.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
 
           const create = createTestAutomationRunFactory({
@@ -722,23 +920,36 @@ export default (FF_AUTOMATE_MODULE_ENABLED
             validateStreamAccess
           })
 
-          return await create({
-            projectId: parent.projectId,
-            automationId,
-            userId: ctx.userId!
-          })
+          return await withOperationLogging(
+            async () =>
+              await create({
+                projectId: parent.projectId,
+                automationId,
+                userId: ctx.userId!
+              }),
+            {
+              logger,
+              operationName: 'createTestAutomationRun',
+              operationDescription: 'Create a new test Automation run'
+            }
+          )
         }
       },
       Query: {
-        async automateValidateAuthCode(_parent, args) {
+        async automateValidateAuthCode(_parent, args, ctx) {
           const validate = validateStoredAuthCodeFactory({
             redis: getGenericRedis(),
-            emit: getEventBus().emit
+            emit: getEventBus().emit,
+            logger: ctx.log
           })
           const payload = removeNullOrUndefinedKeys(args.payload)
+          const resources = removeNullOrUndefinedKeys(args.resources ?? {})
           return await validate({
-            ...payload,
-            action: args.payload.action as AuthCodePayloadAction
+            payload: {
+              ...payload,
+              action: args.payload.action as AuthCodePayloadAction
+            },
+            resources
           })
         },
         async automateFunction(_parent, { id }, ctx) {
@@ -750,48 +961,6 @@ export default (FF_AUTOMATE_MODULE_ENABLED
           }
 
           return convertFunctionToGraphQLReturn(fn)
-        },
-        async automateFunctions(_parent, args) {
-          try {
-            const res = await getPublicFunctions({
-              query: {
-                query: args.filter?.search || undefined,
-                cursor: args.cursor || undefined,
-                limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
-                functionsWithoutVersions:
-                  args.filter?.functionsWithoutReleases || undefined
-              }
-            })
-
-            if (!res) {
-              return {
-                cursor: null,
-                totalCount: 0,
-                items: []
-              }
-            }
-
-            const items = res.items.map(convertFunctionToGraphQLReturn)
-
-            return {
-              cursor: res.cursor,
-              totalCount: res.totalCount,
-              items
-            }
-          } catch (e) {
-            const isNotFound =
-              e instanceof ExecutionEngineFailedResponseError &&
-              e.response.statusMessage === 'FunctionNotFound'
-            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
-              return {
-                cursor: null,
-                totalCount: 0,
-                items: []
-              }
-            }
-
-            throw e
-          }
         }
       },
       User: {
@@ -805,7 +974,9 @@ export default (FF_AUTOMATE_MODULE_ENABLED
               action: AuthCodePayloadAction.ListUserFunctions
             })
 
-            const res = await getUserFunctions({
+            const res = await getUserFunctionsFactory({
+              logger: context.log
+            })({
               userId: context.userId!,
               query: {
                 query: args.filter?.search || undefined,
@@ -916,9 +1087,17 @@ export default (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       Mutation: {
-        async automateFunctionRunStatusReport(_parent, { input }) {
+        async automateFunctionRunStatusReport(_parent, { input }, ctx) {
+          const projectId = input.projectId
+          const functionRunId = input.functionRunId
+          const logger = ctx.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            functionRunId
+          })
+
           const projectDb = await getProjectDbClient({ projectId: input.projectId })
-          const deps: ReportFunctionRunStatusDeps = {
+          const reportFunctionRunStatus = reportFunctionRunStatusFactory({
             getAutomationFunctionRunRecord: getFunctionRunFactory({
               db: projectDb
             }),
@@ -929,18 +1108,25 @@ export default (FF_AUTOMATE_MODULE_ENABLED
               db: projectDb
             }),
             emitEvent: getEventBus().emit
-          }
+          })
 
-          const payload = {
-            ...input,
-            contextView: input.contextView ?? null,
-            results: (input.results as Automate.AutomateTypes.ResultsSchema) ?? null,
-            runId: input.functionRunId,
-            status: mapGqlStatusToDbStatus(input.status),
-            statusMessage: input.statusMessage ?? null
-          }
-
-          const result = await reportFunctionRunStatusFactory(deps)(payload)
+          const result = await withOperationLogging(
+            async () =>
+              await reportFunctionRunStatus({
+                ...input,
+                contextView: input.contextView ?? null,
+                results:
+                  (input.results as Automate.AutomateTypes.ResultsSchema) ?? null,
+                runId: input.functionRunId,
+                status: mapGqlStatusToDbStatus(input.status),
+                statusMessage: input.statusMessage ?? null
+              }),
+            {
+              logger,
+              operationName: 'automateFunctionRunStatusReport',
+              operationDescription: 'Report the status of a function run'
+            }
+          )
 
           return result
         },

@@ -11,12 +11,12 @@ import {
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
+  AddOrUpdateWorkspaceRole,
   CreateWorkspaceJoinRequest,
   SendWorkspaceJoinRequestApprovedEmail,
   SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
-  UpdateWorkspaceJoinRequestStatus,
-  UpsertWorkspaceRole
+  UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
 import {
   denyWorkspaceJoinRequestFactory,
@@ -233,6 +233,95 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         )
         expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].requester).to.equal(user)
       })
+      it('duplicate request is idempotent', async () => {
+        const createWorkspaceJoinRequest = createWorkspaceJoinRequestFactory({ db })
+
+        const sendWorkspaceJoinRequestReceivedEmailCalls: Parameters<SendWorkspaceJoinRequestReceivedEmail>[number][] =
+          []
+        const sendWorkspaceJoinRequestReceivedEmail = async (
+          args: Parameters<SendWorkspaceJoinRequestReceivedEmail>[number]
+        ) => sendWorkspaceJoinRequestReceivedEmailCalls.push(args)
+
+        const user: BasicTestUser = {
+          id: '',
+          name: 'John Speckle',
+          email: `${createRandomString()}@example.org`,
+          role: Roles.Server.Admin,
+          verified: true
+        }
+
+        await createTestUser(user)
+
+        const workspace: BasicTestWorkspace = {
+          id: '',
+          slug: '',
+          ownerId: '',
+          name: cryptoRandomString({ length: 6 }),
+          description: cryptoRandomString({ length: 12 }),
+          discoverabilityEnabled: true
+        }
+        await createTestWorkspace(workspace, user, { domain: 'example.org' })
+        const domain = {
+          id: cryptoRandomString({ length: 10 }),
+          workspaceId: workspace.id,
+          domain: 'example.org',
+          verified: true,
+          createdAt: new Date(),
+          createdByUserId: user.id,
+          updatedAt: new Date()
+        }
+
+        const requestToJoinWorkspace = await requestToJoinWorkspaceFactory({
+          createWorkspaceJoinRequest,
+          sendWorkspaceJoinRequestReceivedEmail:
+            sendWorkspaceJoinRequestReceivedEmail as unknown as SendWorkspaceJoinRequestReceivedEmail,
+          getUserById: async () => user as unknown as UserWithOptionalRole,
+          getWorkspaceWithDomains: async () =>
+            ({
+              ...workspace,
+              domains: [domain]
+            } as unknown as WorkspaceWithDomains),
+          getUserEmails: async () =>
+            [{ email: user.email, verified: true }] as unknown as UserEmail[]
+        })
+
+        expect(
+          await requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
+        ).to.equal(true)
+
+        expect(
+          (await db<WorkspaceJoinRequest>(WorkspaceJoinRequests.name)
+            .where({
+              workspaceId: workspace.id,
+              userId: user.id
+            })
+            .select('status')
+            .first())!.status
+        ).to.equal('pending')
+
+        expect(sendWorkspaceJoinRequestReceivedEmailCalls).to.have.length(1)
+        expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].workspace.id).to.equal(
+          workspace.id
+        )
+        expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].requester).to.equal(user)
+
+        // attempt to join again
+        expect(
+          await requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
+        ).to.equal(true)
+
+        expect(
+          (await db<WorkspaceJoinRequest>(WorkspaceJoinRequests.name)
+            .where({
+              workspaceId: workspace.id,
+              userId: user.id
+            })
+            .select('status')
+            .first())!.status
+        ).to.equal('pending')
+
+        expect(sendWorkspaceJoinRequestReceivedEmailCalls).to.have.length(1)
+      })
     })
 
     describe('approveWorkspaceJoinRequestFactory, returns a function that ', () => {
@@ -245,9 +334,15 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => null,
             getWorkspace: async () => null,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve(),
-            emit: async () => Promise.resolve()
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+            emit: async () => Promise.resolve(),
+            addOrUpdateWorkspaceRole: async () => {
+              throw new Error('Should not happen')
+            }
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal('User not found')
@@ -262,9 +357,15 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => null,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve(),
-            emit: async () => Promise.resolve()
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+            emit: async () => Promise.resolve(),
+            addOrUpdateWorkspaceRole: async () => {
+              throw new Error('Should not happen')
+            }
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal(WorkspaceNotFoundError.defaultMessage)
@@ -287,9 +388,15 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => workspace as unknown as Workspace,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve(),
-            emit: async () => Promise.resolve()
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+            emit: async () => Promise.resolve(),
+            addOrUpdateWorkspaceRole: async () => {
+              throw new Error('Should not happen')
+            }
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal('Workspace join request not found')
@@ -301,11 +408,12 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
           args: Parameters<SendWorkspaceJoinRequestApprovedEmail>[number]
         ) => sendWorkspaceJoinRequestApprovedEmailCalls.push(args)
 
-        const upsertWorkspaceRoleCalls: Parameters<UpsertWorkspaceRole>[number][] = []
-        const upsertWorkspaceRole = async (
-          args: Parameters<UpsertWorkspaceRole>[number]
+        const addOrUpdateWorkspaceRoleCalls: Parameters<AddOrUpdateWorkspaceRole>[number][] =
+          []
+        const addOrUpdateWorkspaceRole = async (
+          args: Parameters<AddOrUpdateWorkspaceRole>[number]
         ) => {
-          upsertWorkspaceRoleCalls.push(args)
+          addOrUpdateWorkspaceRoleCalls.push(args)
         }
 
         const user: BasicTestUser = {
@@ -346,9 +454,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => workspace as unknown as Workspace,
             getWorkspaceJoinRequest: async () => request,
-            upsertWorkspaceRole,
-            emit: async () => Promise.resolve()
-          })({ workspaceId: workspace.id, userId: user.id })
+            emit: async () => Promise.resolve(),
+            addOrUpdateWorkspaceRole
+          })({ workspaceId: workspace.id, userId: user.id, approvedByUserId: user.id })
         ).to.equal(true)
 
         expect(
@@ -361,10 +469,10 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             .first())!.status
         ).to.equal('approved')
 
-        expect(upsertWorkspaceRoleCalls).to.have.length(1)
-        expect(upsertWorkspaceRoleCalls[0].workspaceId).to.equal(workspace.id)
-        expect(upsertWorkspaceRoleCalls[0].userId).to.equal(user.id)
-        expect(upsertWorkspaceRoleCalls[0].role).to.equal(Roles.Workspace.Member)
+        expect(addOrUpdateWorkspaceRoleCalls).to.have.length(1)
+        expect(addOrUpdateWorkspaceRoleCalls[0].workspaceId).to.equal(workspace.id)
+        expect(addOrUpdateWorkspaceRoleCalls[0].userId).to.equal(user.id)
+        expect(addOrUpdateWorkspaceRoleCalls[0].role).to.equal(Roles.Workspace.Member)
 
         expect(sendWorkspaceJoinRequestApprovedEmailCalls).to.have.length(1)
         expect(sendWorkspaceJoinRequestApprovedEmailCalls[0].workspace).to.equal(

@@ -1,15 +1,7 @@
-import type { LayoutDialogButton } from '@speckle/ui-components'
-
 export type TutorialItem = {
   title: string
   image: string
   url: string
-}
-
-export type QuickStartItem = {
-  title: string
-  description: string
-  buttons: LayoutDialogButton[]
 }
 
 export const enum ConnectorCategory {
@@ -26,8 +18,23 @@ export const enum ConnectorCategory {
 
 export type ConnectorItem = {
   title: string
-  image: string
-  url: string
+  slug: string
+  images: string[]
+  url?: string
   description: string
   categories?: ConnectorCategory[]
+  isComingSoon?: boolean
+}
+
+export type Version = {
+  Number: string
+  Url: string
+  Os: number
+  Architecture: number
+  Date: string
+  Prerelease: boolean
+}
+
+export type Versions = {
+  Versions: Version[]
 }

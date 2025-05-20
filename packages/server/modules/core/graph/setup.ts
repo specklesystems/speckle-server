@@ -2,8 +2,6 @@ import { ApolloServerOptions, BaseContext } from '@apollo/server'
 import { GraphQLError } from 'graphql'
 import _ from 'lodash'
 import VError from 'verror'
-import { ZodError } from 'zod'
-import { fromZodError } from 'zod-validation-error'
 
 /**
  * Some VError implementation details that we want to remove from object representations
@@ -24,15 +22,6 @@ export function buildErrorFormatter(params: {
     let realError = error || formattedError
     if (realError instanceof GraphQLError && realError.originalError) {
       realError = realError.originalError
-    }
-
-    // If error is a ZodError, convert its message to something more readable
-    if (realError instanceof ZodError) {
-      return {
-        ...formattedError,
-        message: fromZodError(realError).message,
-        extensions: { ...formattedError.extensions, code: 'BAD_REQUEST' }
-      }
     }
 
     // If error isn't a VError child, don't do anything extra

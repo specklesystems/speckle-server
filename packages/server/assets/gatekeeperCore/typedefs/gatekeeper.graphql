@@ -1,0 +1,179 @@
+extend type WorkspaceMutations {
+  billing: WorkspaceBillingMutations! @hasScope(scope: "workspace:billing")
+}
+
+enum PaidWorkspacePlans {
+  team
+  teamUnlimited
+  pro
+  proUnlimited
+}
+
+enum BillingInterval {
+  monthly
+  yearly
+}
+
+enum SessionPaymentStatus {
+  paid
+  unpaid
+}
+
+input CheckoutSessionInput {
+  workspaceId: ID!
+  workspacePlan: PaidWorkspacePlans!
+  billingInterval: BillingInterval!
+  isCreateFlow: Boolean
+  currency: Currency
+}
+
+type CheckoutSession {
+  id: ID!
+  url: String!
+  workspacePlan: PaidWorkspacePlans!
+  paymentStatus: SessionPaymentStatus!
+  billingInterval: BillingInterval!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input CancelCheckoutSessionInput {
+  sessionId: ID!
+  workspaceId: ID!
+}
+
+input UpgradePlanInput {
+  workspaceId: ID!
+  workspacePlan: PaidWorkspacePlans!
+  billingInterval: BillingInterval!
+}
+
+type WorkspaceBillingMutations {
+  createCheckoutSession(input: CheckoutSessionInput!): CheckoutSession!
+  cancelCheckoutSession(input: CancelCheckoutSessionInput!): Boolean!
+  upgradePlan(input: UpgradePlanInput!): Boolean!
+}
+
+enum WorkspacePlans {
+  free
+  unlimited
+  academia
+  team
+  teamUnlimited
+  teamUnlimitedInvoiced
+  pro
+  proUnlimited
+  proUnlimitedInvoiced
+}
+
+enum WorkspacePlanStatuses {
+  valid
+  paymentFailed
+  cancelationScheduled
+  canceled
+}
+
+enum WorkspacePaymentMethod {
+  unpaid
+  invoice
+  billing
+}
+
+type WorkspacePlanUsage {
+  projectCount: Int!
+  modelCount: Int!
+}
+
+type WorkspacePlan {
+  name: WorkspacePlans!
+  status: WorkspacePlanStatuses!
+  createdAt: DateTime!
+  paymentMethod: WorkspacePaymentMethod!
+  usage: WorkspacePlanUsage!
+}
+
+type WorkspaceSubscriptionSeats {
+  editors: WorkspaceSubscriptionSeatCount!
+  viewers: WorkspaceSubscriptionSeatCount!
+}
+
+type WorkspaceSubscriptionSeatCount {
+  """
+  Total number of seats purchased and available in the current subscription cycle
+  """
+  available: Int!
+  """
+  Total number of seats in use by workspace users
+  """
+  assigned: Int!
+}
+
+enum Currency {
+  usd
+  gbp
+}
+
+type WorkspaceSubscription {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  currentBillingCycleEnd: DateTime!
+  billingInterval: BillingInterval!
+  currency: Currency!
+  seats: WorkspaceSubscriptionSeats!
+}
+
+extend type Workspace {
+  # for now, this is nullable, cause existing workspaces have not been migrated to plans
+  # this doesn't need a special token scope
+  plan: WorkspacePlan
+  subscription: WorkspaceSubscription
+    @hasScope(scope: "workspace:billing")
+    @hasWorkspaceRole(role: MEMBER)
+  seats: WorkspaceSubscriptionSeats
+    @hasScope(scope: "workspace:billing")
+    @hasWorkspaceRole(role: MEMBER)
+  # this can only be created if there is an active subscription
+  customerPortalUrl: String
+    @hasScope(scope: "workspace:billing")
+    @hasWorkspaceRole(role: ADMIN)
+  hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
+    @hasWorkspaceRole(role: GUEST)
+  """
+  A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed
+  """
+  readOnly: Boolean!
+  """
+  Shows the plan prices localized for the given workspace
+  """
+  planPrices: WorkspacePaidPlanPrices
+}
+
+enum WorkspaceFeatureName {
+  domainBasedSecurityPolicies
+  oidcSso
+  workspaceDataRegionSpecificity
+}
+
+type WorkspacePlanPrice {
+  monthly: Price!
+  yearly: Price!
+}
+
+type WorkspacePaidPlanPrices {
+  team: WorkspacePlanPrice!
+  teamUnlimited: WorkspacePlanPrice!
+  pro: WorkspacePlanPrice!
+  proUnlimited: WorkspacePlanPrice!
+}
+
+type CurrencyBasedPrices {
+  usd: WorkspacePaidPlanPrices!
+  gbp: WorkspacePaidPlanPrices!
+}
+
+extend type ServerWorkspacesInfo {
+  """
+  Up-to-date prices for paid & non-invoiced Workspace plans
+  """
+  planPrices: CurrencyBasedPrices
+}

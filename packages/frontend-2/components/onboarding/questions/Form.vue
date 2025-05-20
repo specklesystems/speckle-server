@@ -15,7 +15,7 @@
           link
           color="subtle"
           full-width
-          @click="setUserOnboardingComplete()"
+          @click="onSkip"
         >
           Skip
         </FormButton>
@@ -26,15 +26,16 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
-import type {
-  OnboardingRole,
-  OnboardingPlan,
-  OnboardingSource
-} from '~/lib/auth/helpers/onboarding'
+import type { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
-import { homeRoute } from '~/lib/common/helpers/route'
+import { homeRoute, bookDemoRoute } from '~/lib/common/helpers/route'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const isOnboardingForced = useIsOnboardingForced()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const { setUserOnboardingComplete, setMixpanelSegments } = useProcessOnboarding()
 
@@ -50,7 +51,17 @@ const onSubmit = handleSubmit(async () => {
   if (values.role) {
     setMixpanelSegments({ role: values.role })
   }
-  await setUserOnboardingComplete()
-  navigateTo(homeRoute)
+  await setUserOnboardingComplete({
+    role: values.role,
+    plans: values.plan,
+    source: values.source
+  })
+
+  navigateTo(!isMobile.value && isWorkspacesEnabled.value ? bookDemoRoute : homeRoute)
 })
+
+const onSkip = () => {
+  setUserOnboardingComplete()
+  navigateTo(!isMobile.value && isWorkspacesEnabled.value ? bookDemoRoute : homeRoute)
+}
 </script>

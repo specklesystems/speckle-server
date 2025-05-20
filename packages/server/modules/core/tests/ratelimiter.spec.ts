@@ -1,21 +1,26 @@
 /* istanbul ignore file */
 import { TIME } from '@speckle/shared'
 import {
-  createRateLimiterMiddleware,
   getRateLimitResult,
   isRateLimitBreached,
   getActionForPath,
-  sendRateLimitResponse,
   RateLimitBreached,
   RateLimits,
   createConsumer,
   RateLimiterMapping,
   allActions,
-  RateLimitAction
-} from '@/modules/core/services/ratelimiter'
+  RateLimitAction,
+  throwIfRateLimitedFactory
+} from '@/modules/core/utils/ratelimiter'
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'
 import { RateLimiterMemory } from 'rate-limiter-flexible'
+import {
+  addRateLimitHeadersToResponseFactory,
+  createRateLimiterMiddleware
+} from '@/modules/core/rest/ratelimiter'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { expectToThrow } from '@/test/assertionHelper'
 
 type RateLimiterOptions = {
   [key in RateLimitAction]: RateLimits
@@ -39,10 +44,21 @@ const initializeInMemoryRateLimiters = (
   return mapping as RateLimiterMapping
 }
 
-const createTestRateLimiterMappings = () => {
+const createTestRateLimiterFailingMappings = () => {
   const mapping = Object.fromEntries(
     allActions.map((action) => {
       return [action, { limitCount: 0, duration: 1 * TIME.week }]
+    })
+  )
+  const rateLimiterOptions = mapping as RateLimiterOptions
+  return initializeInMemoryRateLimiters(rateLimiterOptions)
+}
+
+const PASSING_RATE_LIMIT_COUNT = 10_000
+const createTestRateLimiterPassingMappings = () => {
+  const mapping = Object.fromEntries(
+    allActions.map((action) => {
+      return [action, { limitCount: PASSING_RATE_LIMIT_COUNT, duration: 1 * TIME.week }]
     })
   )
   const rateLimiterOptions = mapping as RateLimiterOptions
@@ -58,7 +74,7 @@ const generateRandomIP = () => {
 describe('Rate Limiting', () => {
   describe('isRateLimitBreached', () => {
     it('should rate limit known actions', async () => {
-      const rateLimiterMapping = createTestRateLimiterMappings()
+      const rateLimiterMapping = createTestRateLimiterFailingMappings()
       const result = await getRateLimitResult(
         'STREAM_CREATE',
         generateRandomIP(),
@@ -83,15 +99,15 @@ describe('Rate Limiting', () => {
   })
 
   describe('sendRateLimitResponse', () => {
-    it('should return 429 and set appropriate headers', async () => {
+    it('should set appropriate headers', async () => {
       const breached: RateLimitBreached = {
         isWithinLimits: false,
         action: 'POST /graphql',
         msBeforeNext: 4900
       }
       const response = httpMocks.createResponse()
-      await sendRateLimitResponse(response, breached)
-      assert429response(response)
+      addRateLimitHeadersToResponseFactory(response)(breached)
+      assertRateLimiterHeadersResponse(response)
     })
   })
 
@@ -109,29 +125,22 @@ describe('Rate Limiting', () => {
         nextCalled++
       }
 
-      const action = 'POST /graphql'
-      const testMappings = createTestRateLimiterMappings()
-      const limit = 100
-      testMappings[action] = createConsumer(
-        action,
-        new RateLimiterMemory({
-          keyPrefix: action,
-          points: limit,
-          duration: 1 * TIME.week
-        })
-      )
+      const testMappings = createTestRateLimiterPassingMappings()
 
-      const SUT = createRateLimiterMiddleware(testMappings)
-
-      await temporarilyEnableRateLimiter(async () => {
-        await SUT(request, response, next)
+      const SUT = createRateLimiterMiddleware({
+        rateLimiterEnabled: true,
+        rateLimiterMapping: testMappings
       })
 
+      await SUT(request, response, next)
+
       expect(nextCalled).to.equal(1)
-      expect(response.getHeader('X-RateLimit-Remaining')).to.equal(limit - 1)
+      expect(response.getHeader('X-RateLimit-Remaining')).to.equal(
+        PASSING_RATE_LIMIT_COUNT - 1
+      )
     })
 
-    it('should return 429 if rate limited', async () => {
+    it('should set relevant headers if rate limited', async () => {
       const request = httpMocks.createRequest({
         path: '/graphql',
         method: 'POST',
@@ -139,36 +148,89 @@ describe('Rate Limiting', () => {
       })
 
       let response = httpMocks.createResponse()
-      let nextCalled = 0
-      const next = () => {
-        nextCalled++
+      let nextCalledWithErr = 0
+      let nextCalledWithoutErr = 0
+      const next = (err: unknown) => {
+        if (err) {
+          nextCalledWithErr++
+        } else {
+          nextCalledWithoutErr++
+        }
+        expect(err).to.not.be.undefined
+        expect(err).to.have.property('rateLimitBreached')
       }
 
-      const SUT = createRateLimiterMiddleware(createTestRateLimiterMappings())
+      const SUT = createRateLimiterMiddleware({
+        rateLimiterEnabled: true,
+        rateLimiterMapping: createTestRateLimiterFailingMappings()
+      })
       response = httpMocks.createResponse()
 
-      await temporarilyEnableRateLimiter(async () => {
-        await SUT(request, response, next)
-      })
+      const e = await expectToThrow(async () => await SUT(request, response, next))
+      expect(e).to.be.instanceOf(RateLimitError)
 
-      expect(nextCalled).to.equal(0)
-      assert429response(response)
+      // next should be called as it instead throws an error
+      expect(nextCalledWithErr).to.equal(0)
+      expect(nextCalledWithoutErr).to.equal(0)
+      assertRateLimiterHeadersResponse(response)
+    })
+  })
+
+  describe('throwIfRateLimited', () => {
+    it('returns null if rate limiter is not enabled', async () => {
+      const throwIfRateLimited = throwIfRateLimitedFactory({
+        rateLimiterEnabled: false
+      })
+      const result = await throwIfRateLimited({
+        action: 'POST /graphql',
+        source: 'some-source'
+      })
+      expect(result).to.be.null
+    })
+    it('returns rate limit success if rate limit is not breached', async () => {
+      const throwIfRateLimited = throwIfRateLimitedFactory({
+        rateLimiterEnabled: true,
+        rateLimiterMapping: createTestRateLimiterPassingMappings()
+      })
+      const result = await throwIfRateLimited({
+        action: 'POST /graphql',
+        source: 'some-source'
+      })
+      expect(result).to.not.be.null
+      expect(result?.remainingPoints).to.equal(PASSING_RATE_LIMIT_COUNT - 1)
+    })
+    it('throws RateLimitError if rate limit is breached', async () => {
+      const throwIfRateLimited = throwIfRateLimitedFactory({
+        rateLimiterEnabled: true,
+        rateLimiterMapping: createTestRateLimiterFailingMappings()
+      })
+      let handlerCalled = 0
+      let result: RateLimitBreached | null = null
+      const e = await expectToThrow(
+        async () =>
+          await throwIfRateLimited({
+            action: 'POST /graphql',
+            handleRateLimitBreachPriorToThrowing: (rateLimitResult) => {
+              handlerCalled++
+              result = rateLimitResult
+            },
+            source: 'some-source'
+          })
+      )
+      expect(e).to.be.instanceOf(
+        RateLimitError,
+        'Rate limit should have been breached and thrown a RateLimitError'
+      )
+      expect(handlerCalled).to.equal(1)
+      expect(result).to.not.be.null
     })
   })
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const temporarilyEnableRateLimiter = async (callback: () => Promise<any>) => {
-  const oldRateLimiterEnabledFlag = process.env.RATELIMITER_ENABLED
-  process.env.RATELIMITER_ENABLED = 'true'
-  await callback()
-  process.env.RATELIMITER_ENABLED = oldRateLimiterEnabledFlag
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const assert429response = (response: any) => {
+const assertRateLimiterHeadersResponse = (response: any) => {
   expect(response.getHeader('X-RateLimit-Remaining')).to.be.undefined
   expect(response.getHeader('Retry-After')).to.be.greaterThanOrEqual(4)
   expect(response.getHeader('X-RateLimit-Reset')).to.not.be.undefined
-  expect(response.statusCode).to.equal(429)
+  // expect(response.statusCode).to.equal(429) // response status code is added by the error handler, which is not part of this integration test
 }

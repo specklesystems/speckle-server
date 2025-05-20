@@ -5,7 +5,6 @@
         <ProjectPageModelsStructureItem
           :item="item"
           :project="project"
-          :can-contribute="canContribute"
           :is-search-result="isUsingSearch"
           @model-updated="onModelUpdated"
           @create-submodel="onCreateSubmodel"
@@ -58,7 +57,6 @@ import {
   projectModelsTreeTopLevelQuery,
   projectModelsTreeTopLevelPaginationQuery
 } from '~~/lib/projects/graphql/queries'
-import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import type { Nullable, SourceAppDefinition } from '@speckle/shared'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
@@ -82,6 +80,7 @@ const logger = useLogger()
 
 const infiniteLoadCacheBuster = ref(0)
 const newSubmodelParent = ref('')
+
 const showNewDialog = computed({
   get: () => !!newSubmodelParent.value,
   set: (newVal) => {
@@ -156,9 +155,7 @@ const topLevelItems = computed(
       props.disablePagination ? 8 : undefined
     )
 )
-const canContribute = computed(() =>
-  props.project ? canModifyModels(props.project) : false
-)
+
 const isUsingSearch = computed(() => !!resultVariables.value?.filter?.search)
 const moreToLoad = computed(
   () =>

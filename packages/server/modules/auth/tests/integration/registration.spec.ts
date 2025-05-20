@@ -8,6 +8,8 @@ import {
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { updateServerInfoFactory } from '@/modules/core/repositories/server'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { LogicError } from '@/modules/shared/errors'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -33,6 +35,9 @@ import {
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
+const { FF_NO_PERSONAL_EMAILS_ENABLED, FF_PERSONAL_PROJECTS_LIMITS_ENABLED } =
+  getFeatureFlags()
+
 const updateServerInfo = updateServerInfoFactory({ db })
 
 describe('Server registration', () => {
@@ -44,6 +49,10 @@ describe('Server registration', () => {
   ) => {
     return await captureCreatedInvite(async () => {
       if ('projectId' in args) {
+        if (FF_PERSONAL_PROJECTS_LIMITS_ENABLED) {
+          throw new LogicError('Should not be invoked when personal limits are enabled')
+        }
+
         await apollo.execute(CreateProjectInviteDocument, args, {
           assertNoErrors: true
         })
@@ -96,6 +105,18 @@ describe('Server registration', () => {
       expect(user.emails.every((e) => !e.verified)).to.be.true
     })
 
+    FF_NO_PERSONAL_EMAILS_ENABLED
+      ? it('rejects registration with blocked email domain', async () => {
+          const params = generateRegistrationParams()
+          params.user.email = 'test@gmail.com'
+
+          const error = await expectToThrow(() => restApi.register(params))
+          expect(error.message).to.contain(
+            'Please use your work email instead of a personal email address'
+          )
+        })
+      : null
+
     it('fails without challenge', async () => {
       const params = generateRegistrationParams()
       params.challenge = ''
@@ -137,51 +158,53 @@ describe('Server registration', () => {
             getTokenFromAccessCodeChallenge: 'mismatched'
           })
       )
-      expect(e.message).to.contain('Invalid request')
+      expect(e.message).to.contain('Code challenge mismatch')
     })
+    ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? it.skip : it)(
+      'works with stream invite and allows joining stream afterwards',
+      async () => {
+        const params = generateRegistrationParams()
 
-    it('works with stream invite and allows joining stream afterwards', async () => {
-      const params = generateRegistrationParams()
+        const invite = await createInviteAsAdmin({
+          input: {
+            email: params.user.email,
+            serverRole: Roles.Server.Admin
+          },
+          projectId: basicAdminStream.id
+        })
+        expect(invite.token).to.be.ok
 
-      const invite = await createInviteAsAdmin({
-        input: {
-          email: params.user.email,
-          serverRole: Roles.Server.Admin
-        },
-        projectId: basicAdminStream.id
-      })
-      expect(invite.token).to.be.ok
+        params.inviteToken = invite.token
 
-      params.inviteToken = invite.token
+        const newUser = await restApi.register(params)
+        expect(newUser.role).to.equal(Roles.Server.Admin)
 
-      const newUser = await restApi.register(params)
-      expect(newUser.role).to.equal(Roles.Server.Admin)
+        const res = await apollo.execute(
+          UseStreamInviteDocument,
+          {
+            accept: true,
+            token: invite.token,
+            streamId: basicAdminStream.id
+          },
+          {
+            context: await createTestContext({
+              userId: newUser.id,
+              auth: true,
+              role: Roles.Server.User,
+              token: 'asd',
+              scopes: AllScopes
+            })
+          }
+        )
 
-      const res = await apollo.execute(
-        UseStreamInviteDocument,
-        {
-          accept: true,
-          token: invite.token,
-          streamId: basicAdminStream.id
-        },
-        {
-          context: await createTestContext({
-            userId: newUser.id,
-            auth: true,
-            role: Roles.Server.User,
-            token: 'asd',
-            scopes: AllScopes
-          })
-        }
-      )
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.streamInviteUse).to.be.ok
+        expect(await findInviteFactory({ db })({ inviteId: invite.id })).to.be.not.ok
 
-      expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.streamInviteUse).to.be.ok
-      expect(await findInviteFactory({ db })({ inviteId: invite.id })).to.be.not.ok
-
-      const userStreamRole = await getUserStreamRole(newUser.id, basicAdminStream.id)
-      expect(userStreamRole).to.be.ok
-    })
+        const userStreamRole = await getUserStreamRole(newUser.id, basicAdminStream.id)
+        expect(userStreamRole).to.be.ok
+      }
+    )
 
     const inviteOnlyModeSettings = [{ inviteOnly: true }, { inviteOnly: false }]
 
@@ -205,7 +228,10 @@ describe('Server registration', () => {
         }
 
         itEach(
-          [{ stream: true }, { stream: false }],
+          [
+            ...(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? [] : [{ stream: true }]),
+            { stream: false }
+          ],
           ({ stream }) =>
             `works with valid ${
               stream ? 'stream' : 'server'
@@ -267,7 +293,7 @@ describe('Server registration', () => {
             getTokenFromAccessCodeChallenge: 'mismatched'
           })
         })
-        expect(e.message).to.contain('Invalid request')
+        expect(e.message).to.contain('Code challenge mismatch')
       })
 
       it("doesn't work with invalid credentials", async () => {

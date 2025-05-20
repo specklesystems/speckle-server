@@ -13,7 +13,7 @@
         "default": "./dist/objectloader.esm.js"
       },
       "require": {
-        "types": "./types/index.d.ts",
+        "types": "./types/index.d.cts",
         "default": "./dist/objectloader.cjs"
       }
     },
@@ -22,9 +22,7 @@
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es",
-      "node": "lodash",
-      "default": "lodash-es"
+      "import": "lodash-es"
     }
   },
   "homepage": "https://speckle.systems",

@@ -11,6 +11,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -44,18 +45,33 @@ const resolvers = {
         }
       })
 
-      return await createPersonalAccessToken(
-        context.userId!,
-        args.token.name,
-        args.token.scopes.filter(isValidScope),
-        args.token.lifespan || undefined
+      return await withOperationLogging(
+        async () =>
+          await createPersonalAccessToken(
+            context.userId!,
+            args.token.name,
+            args.token.scopes.filter(isValidScope),
+            args.token.lifespan || undefined
+          ),
+        {
+          logger: context.log,
+          operationName: 'createPersonalAccessToken',
+          operationDescription: `Create a new Personal Access Token`
+        }
       )
     },
     async apiTokenRevoke(_parent, args, context) {
       let id = null
       if (args.token.toLowerCase().includes('bearer')) id = args.token.split(' ')[1]
       else id = args.token
-      await revokeToken(id, context.userId!) // let's not revoke other people's tokens
+      await withOperationLogging(
+        async () => await revokeToken(id, context.userId!), // let's not revoke other people's tokens
+        {
+          logger: context.log,
+          operationName: 'revokePersonalAccessToken',
+          operationDescription: `Revoke a Personal Access Token`
+        }
+      )
       return true
     }
   }

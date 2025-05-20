@@ -134,7 +134,7 @@
                     />
                   </div>
                 </label>
-                <div class="overflow-auto simple-scrollbar max-h-60">
+                <div class="overflow-auto simple-scrollbar max-h-60 xl:max-h-80">
                   <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                     <CommonLoadingBar :loading="true" />
                   </div>

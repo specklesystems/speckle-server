@@ -1,10 +1,9 @@
 import { UpsertWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GetWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlan } from '@speckle/shared'
 
 export const updateWorkspacePlanFactory =
   ({
@@ -29,28 +28,11 @@ export const updateWorkspacePlanFactory =
     if (!workspace) throw new WorkspaceNotFoundError()
     const createdAt = new Date()
     switch (name) {
-      case 'starter':
+      case 'team':
+      case 'teamUnlimited':
+      case 'pro':
+      case 'proUnlimited':
         switch (status) {
-          case 'trial':
-          case 'expired':
-          case 'valid':
-          case 'cancelationScheduled':
-          case 'canceled':
-          case 'paymentFailed':
-            await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
-            })
-            break
-          default:
-            throwUncoveredError(status)
-        }
-        break
-      case 'business':
-      case 'plus':
-        switch (status) {
-          case 'trial':
-          case 'expired':
-            throw new InvalidWorkspacePlanStatus()
           case 'valid':
           case 'cancelationScheduled':
           case 'canceled':
@@ -64,11 +46,11 @@ export const updateWorkspacePlanFactory =
         }
         break
 
+      case 'free':
       case 'academia':
       case 'unlimited':
-      case 'starterInvoiced':
-      case 'plusInvoiced':
-      case 'businessInvoiced':
+      case 'teamUnlimitedInvoiced':
+      case 'proUnlimitedInvoiced':
         switch (status) {
           case 'valid':
             await upsertWorkspacePlan({
@@ -77,9 +59,7 @@ export const updateWorkspacePlanFactory =
             break
           case 'cancelationScheduled':
           case 'canceled':
-          case 'expired':
           case 'paymentFailed':
-          case 'trial':
             throw new InvalidWorkspacePlanStatus()
           default:
             throwUncoveredError(status)

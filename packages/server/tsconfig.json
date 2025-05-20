@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
-
     /* Projects */
     // "incremental": true,                              /* Enable incremental compilation */
     // "composite": true,                                /* Enable constraints that allow a TypeScript project to be used with project references. */
@@ -105,18 +104,15 @@
     "swc": true
   },
   "include": [
+    "bin/**/*",
     "db/**/*",
     "healthchecks/**/*",
-    "logging/**/*",
     "modules/**/*",
-    "bin/**/*",
+    "observability/**/*",
     "scripts/**/*",
-    "type-augmentations/**/*",
     "test/**/*",
+    "type-augmentations/**/*",
     "app.ts",
-    "otel.ts",
-    "bootstrap.ts",
-    "knexfile.ts",
     "bootstrap.js",
     "knexfile.ts"
   ],

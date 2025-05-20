@@ -1,7 +1,6 @@
 import { db } from '@/db/knex'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamCommentMentionActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { reportSubscriptionEventsFactory } from '@/modules/comments/events/subscriptionListeners'
 import { getCommentsResourcesFactory } from '@/modules/comments/repositories/comments'
 import { notifyUsersOnCommentEventsFactory } from '@/modules/comments/services/notifications'
@@ -20,16 +19,14 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 let unsubFromEvents: Optional<() => void> = undefined
 
 const commentsModule: SpeckleModule = {
-  async init(_, isInitial) {
+  async init({ isInitial }) {
     moduleLogger.info('🗣  Init comments module')
 
     if (isInitial) {
       const notifyUsersOnCommentEvents = notifyUsersOnCommentEventsFactory({
         eventBus: getEventBus(),
         publish: publishNotification,
-        addStreamCommentMentionActivity: addStreamCommentMentionActivityFactory({
-          saveActivity: saveActivityFactory({ db })
-        })
+        saveActivity: saveActivityFactory({ db })
       })
       unsubFromEvents = await notifyUsersOnCommentEvents()
 

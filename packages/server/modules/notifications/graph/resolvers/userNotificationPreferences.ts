@@ -8,6 +8,7 @@ import {
   getUserNotificationPreferencesFactory,
   updateNotificationPreferencesFactory
 } from '@/modules/notifications/services/notificationPreferences'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getUserNotificationPreferences = getUserNotificationPreferencesFactory({
   getSavedUserNotificationPreferences: getSavedUserNotificationPreferencesFactory({
@@ -28,7 +29,15 @@ export default {
   },
   Mutation: {
     async userNotificationPreferencesUpdate(_parent, args, context) {
-      await updateNotificationPreferences(context.userId!, args.preferences)
+      const logger = context.log
+      await await withOperationLogging(
+        async () => updateNotificationPreferences(context.userId!, args.preferences),
+        {
+          logger,
+          operationName: 'userNotificationPreferencesUpdate',
+          operationDescription: 'Update user notification preferences'
+        }
+      )
       return true
     }
   }

@@ -6,12 +6,14 @@ export type ResourceIdentifier = {
   resourceType: ResourceType
 }
 
-export enum ResourceType {
-  Comment = 'comment',
-  Commit = 'commit',
-  Object = 'object',
-  Stream = 'stream'
-}
+export const ResourceType = {
+  Comment: 'comment',
+  Commit: 'commit',
+  Object: 'object',
+  Stream: 'stream'
+} as const
+
+export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType]
 
 export type ExtendedComment = CommentRecord & {
   /**

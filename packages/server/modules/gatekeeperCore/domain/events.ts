@@ -1,4 +1,4 @@
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspacePlan } from '@speckle/shared'
 
 export const gatekeeperEventNamespace = 'gatekeeper' as const
 
@@ -6,7 +6,8 @@ const eventPrefix = `${gatekeeperEventNamespace}.` as const
 
 export const GatekeeperEvents = {
   WorkspaceTrialExpired: `${eventPrefix}workspace-trial-expired`,
-  WorkspacePlanUpdated: `${eventPrefix}workspace-plan-updated`
+  WorkspacePlanUpdated: `${eventPrefix}workspace-plan-updated`,
+  WorkspaceSeatUpdated: `${eventPrefix}workspace-seat-updated`
 } as const
 
 export type GatekeeperEventPayloads = {

@@ -10,10 +10,12 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { isString, noop } from 'lodash'
 import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
-import { ensureError } from '@speckle/shared'
+import { ensureError, TIME_MS } from '@speckle/shared'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { UserEvents } from '@/modules/core/domain/users/events'
 
 export const sessionMiddlewareFactory = (): RequestHandler => {
   const RedisStore = ConnectRedis(ExpressSession)
@@ -24,7 +26,7 @@ export const sessionMiddlewareFactory = (): RequestHandler => {
     saveUninitialized: false,
     resave: false,
     cookie: {
-      maxAge: 1000 * 60 * 3, // 3 minutes
+      maxAge: 3 * TIME_MS.minute,
       secure: isSSLServer()
     }
   })
@@ -65,11 +67,19 @@ export const finalizeAuthMiddlewareFactory =
   (deps: {
     createAuthorizationCode: CreateAuthorizationCode
     getUser: LegacyGetUser
+    emitEvent: EventBusEmit
   }): RequestHandler =>
   async (req, res) => {
     try {
       if (!req.user) {
         throw new ForbiddenError('Cannot finalize auth - No user attached to session')
+      }
+
+      if (res.headersSent) {
+        req.log.info(
+          'Headers already sent, probably by Passport if prior steps fail; skipping auth finalization'
+        )
+        return
       }
 
       const ac = await deps.createAuthorizationCode({
@@ -89,6 +99,11 @@ export const finalizeAuthMiddlewareFactory =
       }
 
       const redirectUrl = urlObj.toString()
+
+      await deps.emitEvent({
+        eventName: UserEvents.Authenticated,
+        payload: { userId: req.user.id, isNewUser: !!req.user.isNewUser }
+      })
 
       return res.redirect(redirectUrl)
     } catch (err) {

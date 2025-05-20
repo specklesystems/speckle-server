@@ -1,16 +1,11 @@
 <template>
-  <div>
+  <div class="mx-auto max-w-4xl">
     <div class="flex flex-col gap-y-6">
       <section class="flex items-center gap-2">
         <div class="flex flex-col gap-2 flex-1">
           <div class="flex items-center gap-2">
-            <IconConnectors class="size-4" />
-            <h1 class="text-heading-lg">Connectors</h1>
+            <h1 class="text-heading-sm md:text-heading line-clamp-2">Connectors</h1>
           </div>
-          <p class="text-body-sm text-foreground-2">
-            Extract and exchange data between the most popular AEC applications using
-            our tailored connectors.
-          </p>
         </div>
       </section>
       <section class="flex gap-4 flex-col">
@@ -33,9 +28,12 @@
             name="categories"
             label="Categories"
             placeholder="All categories"
-            class="md:min-w-80"
+            class="md:w-80"
             allow-unset
             :items="categories"
+            size="base"
+            color="foundation"
+            clearable
           >
             <template #something-selected="{ value }">
               {{ isArray(value) ? value[0].name : value.name }}
@@ -45,7 +43,19 @@
             </template>
           </FormSelectBase>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <ConnectorsBanner v-if="filteredConnectors.length === connectors.length" />
+        <div>
+          <p class="text-body-2xs text-foreground-3 leading-none">
+            Looking for V2 connectors? Get them
+            <NuxtLink
+              class="text-foreground-3 hover:text-foreground-2 underline"
+              to="https://releases.speckle.systems/legacy-connectors"
+            >
+              here.
+            </NuxtLink>
+          </p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ConnectorsCard
             v-for="connector in filteredConnectors"
             :key="connector.title"

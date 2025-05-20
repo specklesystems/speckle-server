@@ -48,9 +48,6 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { AutomationEvents } from '@/modules/automate/domain/events'
@@ -64,17 +61,12 @@ import { AutomationEvents } from '@/modules/automate/domain/events'
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const getUser = getUserFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const buildAutomationUpdate = () => {
@@ -83,7 +75,6 @@ const buildAutomationUpdate = () => {
   const update = validateAndUpdateAutomationFactory({
     getAutomation,
     updateAutomation: updateDbAutomation,
-    validateStreamAccess,
     eventEmit: getEventBus().emit
   })
 
@@ -144,38 +135,6 @@ const buildAutomationUpdate = () => {
         })
       })
 
-      it('fails if refering to a project that doesnt exist', async () => {
-        const create = buildAutomationCreate()
-
-        const e = await expectToThrow(
-          async () =>
-            await create({
-              input: { name: 'Automation', enabled: true },
-              projectId: 'non-existent',
-              userId: me.id
-            })
-        )
-        expect(e)
-          .to.have.property('message')
-          .match(/^User does not have required access to stream/)
-      })
-
-      it('fails if user does not have access to the project', async () => {
-        const create = buildAutomationCreate()
-
-        const e = await expectToThrow(
-          async () =>
-            await create({
-              input: { name: 'Automation', enabled: true },
-              projectId: myStream.id,
-              userId: otherGuy.id
-            })
-        )
-        expect(e)
-          .to.have.property('message')
-          .match(/^User does not have required access to stream/)
-      })
-
       it('creates an automation', async () => {
         let eventFired = false
         const name = 'My Super Automation #1'
@@ -228,22 +187,6 @@ const buildAutomationUpdate = () => {
         )
         expect(e).to.have.property('name', AutomationUpdateError.name)
         expect(e).to.have.property('message', 'Automation not found')
-      })
-
-      it('fails if refering to an automation in a project owned by someone else', async () => {
-        const update = buildAutomationUpdate()
-
-        const e = await expectToThrow(
-          async () =>
-            await update({
-              input: { id: createdAutomation.automation.id, enabled: false },
-              userId: otherGuy.id,
-              projectId: myStream.id
-            })
-        )
-        expect(e)
-          .to.have.property('message')
-          .match(/^User does not have required access to stream/)
       })
 
       it('fails if automation is mismatched with specified project id', async () => {

@@ -24,7 +24,7 @@ import {
 import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
-import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
+import { AddOrUpdateWorkspaceRole } from '@/modules/workspaces/domain/operations'
 import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
 import {
   OidcProviderMissingGrantTypeError,
@@ -38,7 +38,7 @@ import {
   getEmailFromOidcProfile,
   isValidSsoSession
 } from '@/modules/workspaces/domain/sso/logic'
-import { Logger } from '@/logging/logging'
+import type { Logger } from '@/observability/logging'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
@@ -124,22 +124,25 @@ export const saveSsoProviderRegistrationFactory =
 export const createWorkspaceUserFromSsoProfileFactory =
   ({
     createUser,
-    upsertWorkspaceRole,
     findInvite,
-    deleteInvite
+    deleteInvite,
+    addOrUpdateWorkspaceRole
   }: {
     createUser: CreateValidatedUser
-    upsertWorkspaceRole: UpsertWorkspaceRole
     findInvite: FindInvite
     deleteInvite: DeleteInvite
+    addOrUpdateWorkspaceRole: AddOrUpdateWorkspaceRole
   }) =>
   async (args: {
     ssoProfile: UserinfoResponse<OidcProfile>
     workspaceId: string
   }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
+    const email = getEmailFromOidcProfile(args.ssoProfile)
+
     // Check if user has email-based invite to given workspace
+    // TODO: Use invite token instead of searching by email. Enterprise providers may return an email different from the one we sent an invite to.
     const invite = await findInvite({
-      target: args.ssoProfile.email,
+      target: email.toLowerCase(),
       resourceFilter: {
         resourceId: args.workspaceId,
         resourceType: 'workspace'
@@ -147,12 +150,11 @@ export const createWorkspaceUserFromSsoProfileFactory =
     })
 
     if (!invite) {
-      throw new SsoUserInviteRequiredError()
+      throw new SsoUserInviteRequiredError(email)
     }
 
     // Create Speckle user
     const { name } = args.ssoProfile
-    const email = getEmailFromOidcProfile(args.ssoProfile)
 
     if (!name) {
       throw new SsoProviderProfileInvalidError('SSO provider user requires a name')
@@ -171,11 +173,11 @@ export const createWorkspaceUserFromSsoProfileFactory =
 
     if (!isWorkspaceRole(workspaceRole)) throw new WorkspaceInvalidRoleError()
 
-    await upsertWorkspaceRole({
+    await addOrUpdateWorkspaceRole({
       userId: newSpeckleUserId,
       workspaceId: args.workspaceId,
       role: workspaceRole,
-      createdAt: new Date()
+      updatedByUserId: newSpeckleUserId
     })
 
     // Delete invite (i.e. we implicitly "use" the invite during this sign up flow)

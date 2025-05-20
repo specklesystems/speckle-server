@@ -1,12 +1,31 @@
 import { pino } from 'pino'
 import type { LoggerOptions } from 'pino'
-import { toClef, clefLevels } from './pinoClef.js'
+import { toClef, toClefLogLevel } from './pinoClef.js'
+import { TIME_MS } from '../core/index.js'
+import inspector from 'node:inspector'
 
 let logger: pino.Logger
-type MixinFn = (mergeObject: object, level: number) => object
+export type MixinFn = (mergeObject: object, level: number) => object
+type LogLevelFormatter = (label: string, number: number) => object
+type LogFormatter = (logObject: Record<string, unknown>) => Record<string, unknown>
+
+const allowPrettyDebugger = ['1', 'true'].includes(
+  process.env.ALLOW_PRETTY_DEBUGGER || 'false'
+)
+
+const defaultLevelFormatterFactory =
+  (pretty: boolean): LogLevelFormatter =>
+  (label, number) =>
+    // for not pretty, we're providing clef levels
+    pretty ? { level: label } : toClefLogLevel(number)
+
+const defaultLogFormatterFactory =
+  (pretty: boolean): LogFormatter =>
+  (logObject) =>
+    pretty ? logObject : toClef(logObject)
 
 export function getLogger(
-  logLevel = 'info',
+  minimumLoggedLevel = 'info',
   pretty = false,
   mixin?: MixinFn
 ): pino.Logger {
@@ -15,27 +34,19 @@ export function getLogger(
   const pinoOptions: LoggerOptions = {
     base: undefined, // Set to undefined to avoid adding pid, hostname properties to each log.
     formatters: {
-      level: (label: string, number: number) =>
-        // for not pretty, we're providing clef levels
-        pretty
-          ? { level: label }
-          : {
-              '@l':
-                number in clefLevels
-                  ? clefLevels[number as keyof typeof clefLevels]
-                  : clefLevels[30]
-            },
-      log: (logObject) => (pretty ? logObject : toClef(logObject))
+      level: defaultLevelFormatterFactory(pretty),
+      log: defaultLogFormatterFactory(pretty)
     },
     mixin,
     // when not pretty, to produce a clef format, we need the message to be the message template key
     messageKey: pretty ? 'msg' : '@mt',
-    level: logLevel,
+    level: minimumLoggedLevel,
     // when not pretty, we need the time in the clef appropriate field, not from pino
     timestamp: pretty ? pino.stdTimeFunctions.isoTime : false
   }
 
-  if (pretty) {
+  // pino-pretty hangs in debugger mode in node 22 for some (Ubuntu/WSL2?), dunno why
+  if (pretty && (allowPrettyDebugger || !inspector.url())) {
     pinoOptions.transport = {
       target: '@speckle/shared/pinoPrettyTransport.cjs',
       options: {
@@ -74,7 +85,7 @@ export function simpleRpmCounter() {
 
   const validateHits = () => {
     const timestamp = getTimestamp()
-    if (timestamp > lastDateTimestamp + 60 * 1000) {
+    if (timestamp > lastDateTimestamp + TIME_MS.minute) {
       hits = 0
       lastDateTimestamp = timestamp
     }

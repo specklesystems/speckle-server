@@ -1,16 +1,11 @@
-import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { Project } from '@/modules/core/domain/streams/types'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { MaybeNullOrUndefined, StreamRoles } from '@speckle/shared'
 
 export type GetProject = (args: { projectId: string }) => Promise<Project | null>
 
-export type GetProjectCollaborators = (args: {
-  projectId: string
-}) => Promise<ProjectTeamMember[]>
-
 export type UpdateProject = (args: {
-  projectUpdate: Pick<StreamRecord, 'id' | 'workspaceId'>
+  projectUpdate: Pick<StreamRecord, 'id'> & Partial<StreamRecord>
 }) => Promise<StreamRecord>
 
 export type StoreProjectRole = (args: {
@@ -43,7 +38,7 @@ export type GetRolesByUserId = ({
   workspaceId?: string
 }) => Promise<Pick<StreamAclRecord, 'role' | 'resourceId'>[]>
 
-export type ProjectVisibility = 'PRIVATE' | 'PUBLIC' | 'UNLISTED'
+export type ProjectVisibility = 'PRIVATE' | 'PUBLIC' | 'UNLISTED' | 'WORKSPACE'
 
 export type ProjectCreateArgs = {
   description?: MaybeNullOrUndefined<string>

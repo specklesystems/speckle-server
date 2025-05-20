@@ -13,6 +13,7 @@ import {
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getUser = getUserFactory({ db })
 const requestEmailVerification = requestEmailVerificationFactory({
@@ -38,14 +39,25 @@ export default {
   Mutation: {
     async requestVerification(_parent, _args, ctx) {
       const { userId } = ctx
-      await requestEmailVerification(userId || '')
+      await withOperationLogging(
+        async () => await requestEmailVerification(userId || ''),
+        {
+          logger: ctx.log,
+          operationName: 'requestEmailVerification',
+          operationDescription: 'Request email verification'
+        }
+      )
       return true
     },
-    async requestVerificationByEmail(_parent, args) {
+    async requestVerificationByEmail(_parent, args, ctx) {
       const { email } = args
       const user = await getUserByEmail(email)
       if (!user?.email || user.verified) return false
-      await requestEmailVerification(user.id)
+      await withOperationLogging(async () => await requestEmailVerification(user.id), {
+        logger: ctx.log,
+        operationName: 'requestEmailVerificationFromEmail',
+        operationDescription: `Request verification by email`
+      })
       return true
     }
   }

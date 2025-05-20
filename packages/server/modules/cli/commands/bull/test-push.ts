@@ -1,4 +1,4 @@
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 import {
   MentionedInCommentData,
   NotificationType
@@ -24,7 +24,7 @@ const command: CommandModule = {
       })
   },
   handler: async (argv) => {
-    initializeQueue()
+    await initializeQueue()
 
     // we don't want to submit a real mentions payload, this is for testing only
     await publishNotification(NotificationType.MentionedInComment, {

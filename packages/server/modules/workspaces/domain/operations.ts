@@ -1,5 +1,4 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
@@ -20,15 +19,14 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
-import {
-  WorkspaceCreationState,
-  WorkspaceRoleToDefaultProjectRoleMapping
-} from '@/modules/workspaces/domain/types'
+import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
-import { Stream } from '@/modules/core/domain/streams/types'
+import { Stream, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
+import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { UserRecord } from '@/modules/core/helpers/userHelper'
 
 /** Workspace */
 
@@ -36,10 +34,7 @@ export type UpsertWorkspaceArgs = {
   workspace: Omit<
     SetOptional<
       NullableKeysToOptional<Workspace>,
-      | 'domainBasedMembershipProtectionEnabled'
-      | 'discoverabilityEnabled'
-      | 'defaultProjectRole'
-      | 'slug'
+      'domainBasedMembershipProtectionEnabled' | 'discoverabilityEnabled' | 'slug'
     >,
     'domains'
   >
@@ -70,7 +65,17 @@ export type GetWorkspaceBySlugOrId = (args: {
 export type GetWorkspaces = (args: {
   workspaceIds?: string[]
   userId?: string
+  search?: string
+  completed?: boolean
 }) => Promise<WorkspaceWithOptionalRole[]>
+
+export type GetAllWorkspaces = (args: {
+  limit: number
+  cursor: Nullable<string>
+}) => Promise<{
+  items: Workspace[]
+  cursor: Nullable<string>
+}>
 
 export type GetWorkspacesBySlug = (args: {
   workspaceIds: string[]
@@ -112,6 +117,9 @@ export type QueryWorkspacesArgs = CountWorkspacesArgs & {
 }
 export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
 export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
+export type GetProjectWorkspace = (args: {
+  projectId: string
+}) => Promise<Workspace | null>
 
 /** Workspace Roles */
 
@@ -128,6 +136,11 @@ export type GetWorkspaceCollaboratorsArgs = {
      * Optionally filter by user name or email
      */
     search?: string
+    seatType?: WorkspaceSeatType
+    /**
+     * Optionally filter by user id
+     */
+    excludeUserIds?: string[]
   }
 }
 
@@ -184,36 +197,142 @@ export type GetWorkspaceRolesForUser = (
   options?: GetWorkspaceRolesForUserOptions
 ) => Promise<WorkspaceAcl[]>
 
+export type GetWorkspacesRolesForUsers = (
+  reqs: Array<{
+    userId: string
+    workspaceId: string
+  }>
+) => Promise<{
+  [workspaceId: string]:
+    | {
+        [userId: string]: WorkspaceAcl | undefined
+      }
+    | undefined
+}>
+
 /** Repository-level change to workspace acl record */
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
 /** Service-level change with protection against invalid role changes */
-export type UpdateWorkspaceRole = (
+export type AddOrUpdateWorkspaceRole = (
   args: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
-    /**
-     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
-     */
-    skipProjectRoleUpdatesFor?: string[]
     /**
      * Only add or upgrade role, prevent downgrades
      */
     preventRoleDowngrade?: boolean
+    /**
+     * Whether to skip event emit
+     */
+    skipEvent?: boolean
+
+    updatedByUserId: string
   }
 ) => Promise<void>
 
 export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
   workspaceId: string
-}) => Promise<WorkspaceRoleToDefaultProjectRoleMapping>
+}) => Promise<{
+  allowed: {
+    [workspaceRole in WorkspaceRoles]: StreamRoles[]
+  }
+  default: {
+    [workspaceRole in WorkspaceRoles]: StreamRoles | null
+  }
+}>
+
+export type GetWorkspaceSeatTypeToProjectRoleMapping = (args: {
+  workspaceId: string
+}) => Promise<{
+  allowed: {
+    [workspaceSeatType in WorkspaceSeatType]: StreamRoles[]
+  }
+  default: {
+    [workspaceSeatType in WorkspaceSeatType]: StreamRoles
+  }
+}>
+
+export type ValidateWorkspaceMemberProjectRole = (params: {
+  workspaceId: string
+  userId: string
+  projectRole: StreamRoles
+  /**
+   * Instead of resolving actual workspace role/seatType, use this one. Useful when checking
+   * if a planned workspace member will have valid access to a project
+   */
+  workspaceAccess?: {
+    role: WorkspaceRoles
+    seatType: WorkspaceSeatType
+  }
+}) => Promise<void>
 
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {
   workspaceId: string
+  /**
+   * Optionally get project roles for a specific user
+   */
+  userId?: string
 }
 
 export type QueryAllWorkspaceProjects = (
   args: QueryAllWorkspaceProjectsArgs
-) => AsyncGenerator<StreamRecord[], void, unknown>
+) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
+
+export type GetWorkspacesProjectsCounts = (params: {
+  workspaceIds: string[]
+}) => Promise<{
+  [workspaceId: string]: number
+}>
+
+export type GetWorkspaceModelCount = (params: {
+  workspaceId: string
+}) => Promise<number>
+
+export type GetPaginatedWorkspaceProjectsArgs = {
+  workspaceId: string
+  /**
+   * If set, will take the user's workspace role into account when fetching projects.
+   * E.g. guests will only see projects they have explicit access to.
+   */
+  userId?: string
+  cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Defaults to 25, if unset
+   */
+  limit?: MaybeNullOrUndefined<number>
+  filter?: MaybeNullOrUndefined<
+    Partial<{
+      /**
+       * Search for projects by name
+       */
+      search: MaybeNullOrUndefined<string>
+      /**
+       * Only get projects that the active user has an explicit role in
+       */
+      withProjectRoleOnly: MaybeNullOrUndefined<boolean>
+    }>
+  >
+}
+
+export type GetPaginatedWorkspaceProjectsItems = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  items: Stream[]
+  cursor: string | null
+}>
+
+export type GetPaginatedWorkspaceProjectsTotalCount = (
+  params: Omit<GetPaginatedWorkspaceProjectsArgs, 'cursor' | 'limit'>
+) => Promise<number>
+
+export type GetPaginatedWorkspaceProjects = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  cursor: string | null
+  items: Stream[]
+  totalCount: number
+}>
 
 /** Workspace Project Roles */
 
@@ -245,7 +364,9 @@ export type UpdateWorkspaceProjectRole = (
 
 /** Events */
 
-export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
+export type EmitWorkspaceEvent = <
+  TEvent extends WorkspaceEvents & keyof EventBusPayloads
+>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
 }) => Promise<void>
@@ -255,6 +376,11 @@ export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
   workspaceRole: WorkspaceRoles
   projectRole?: StreamRoles
   skipUserIds?: string[]
+}) => Promise<number>
+
+export type GetWorkspaceSeatCount = (args: {
+  workspaceId: string
+  type?: WorkspaceSeatType
 }) => Promise<number>
 
 export type GetUserIdsWithRoleInWorkspace = (
@@ -336,7 +462,9 @@ export type GetWorkspaceJoinRequest = (
 ) => Promise<WorkspaceJoinRequest | undefined>
 
 export type ApproveWorkspaceJoinRequest = (
-  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'> & {
+    approvedByUserId: string
+  }
 ) => Promise<boolean>
 
 export type DenyWorkspaceJoinRequest = (
@@ -355,6 +483,22 @@ export type UpdateProjectRegion = (params: {
   regionKey: string
 }) => Promise<Stream>
 
+/**
+ * Given a count of objects successfully copied to another region, confirm that these counts
+ * match the current state of the source project in its original region.
+ */
+export type ValidateProjectRegionCopy = (params: {
+  projectId: string
+  copiedRowCount: {
+    models: number
+    versions: number
+    objects: number
+    automations: number
+    comments: number
+    webhooks: number
+  }
+}) => Promise<[boolean, Record<string, number>]>
+
 export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
 export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
 export type CopyProjectModels = (params: {
@@ -369,3 +513,47 @@ export type CopyProjectObjects = (params: {
 export type CopyProjectAutomations = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+
+export type CountProjectModels = (params: { projectId: string }) => Promise<number>
+export type CountProjectVersions = (params: { projectId: string }) => Promise<number>
+export type CountProjectObjects = (params: { projectId: string }) => Promise<number>
+export type CountProjectAutomations = (params: { projectId: string }) => Promise<number>
+export type CountProjectComments = (params: { projectId: string }) => Promise<number>
+export type CountProjectWebhooks = (params: { projectId: string }) => Promise<number>
+
+export type AssignWorkspaceSeat = (
+  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {
+    type: WorkspaceSeatType
+    assignedByUserId: string
+  }
+) => Promise<WorkspaceSeat>
+
+export type EnsureValidWorkspaceRoleSeat = (params: {
+  workspaceId: string
+  userId: string
+  role: WorkspaceRoles
+  updatedByUserId: string
+  skipEvent?: boolean
+}) => Promise<WorkspaceSeat>
+
+export type CopyProjectComments = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectWebhooks = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectBlobs = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+
+export type SetUserActiveWorkspace = (args: {
+  userId: string
+  workspaceSlug: string | null
+  /** Is the user in a "personal project" outside of a workspace? */
+  isProjectsActive?: boolean
+}) => Promise<void>
+
+export type IntersectProjectCollaboratorsAndWorkspaceCollaborators = (params: {
+  projectId: string
+  workspaceId: string
+}) => Promise<UserRecord[]>

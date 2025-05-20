@@ -134,6 +134,9 @@ function createCache(): InMemoryCache {
       },
       User: {
         fields: {
+          meta: {
+            merge: mergeAsObjectsFunction
+          },
           timeline: {
             keyArgs: ['after', 'before'],
             merge: buildAbstractCollectionMergeFunction('ActivityCollection')
@@ -153,6 +156,9 @@ function createCache(): InMemoryCache {
           versions: {
             keyArgs: ['authoredOnly', 'limit'],
             merge: buildAbstractCollectionMergeFunction('CountOnlyCollection')
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -202,6 +208,9 @@ function createCache(): InMemoryCache {
           },
           pendingImportedModels: {
             merge: (_existing, incoming) => incoming
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -213,6 +222,16 @@ function createCache(): InMemoryCache {
           },
           pendingImportedVersions: {
             merge: (_existing, incoming) => incoming
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
+          }
+        }
+      },
+      Version: {
+        fields: {
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -220,6 +239,9 @@ function createCache(): InMemoryCache {
         fields: {
           replies: {
             keyArgs: ['limit']
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -300,6 +322,15 @@ function createCache(): InMemoryCache {
           projects: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
+          },
+          subscription: {
+            merge: mergeAsObjectsFunction
+          },
+          creationState: {
+            merge: mergeAsObjectsFunction
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       }
@@ -382,6 +413,7 @@ function createLink(params: {
       // only log as error if at least one error has a status code of 5xx or has no status code
       const shouldLogAsWarn = gqlErrors.every(
         (e) =>
+          e.extensions &&
           'statusCode' in e.extensions &&
           typeof e.extensions.statusCode === 'number' &&
           e.extensions.statusCode < 500

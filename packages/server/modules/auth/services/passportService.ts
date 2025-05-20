@@ -1,14 +1,14 @@
 import passport, { Strategy, AuthenticateOptions } from 'passport'
-import { logger } from '@/logging/logging'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   UnverifiedEmailSSOLoginError,
   UserInputError
 } from '@/modules/core/errors/userinput'
-import type { Handler } from 'express'
-import { Optional } from '@speckle/shared'
+import type { Request, Response, NextFunction, RequestHandler } from 'express'
+import { ensureError, Optional } from '@speckle/shared'
 import { get, isArray, isObjectLike, isString } from 'lodash'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const resolveInfoMessage = (
   info?: Optional<string | Record<string, unknown> | Array<string | undefined>>
@@ -27,6 +27,64 @@ const resolveInfoMessage = (
   return null
 }
 
+const defaultErrorPath = (message: string) => `/error?message=${message}`
+const unverifiedEmailPath = (email: string) => `/error-email-verify?email=${email}`
+
+export const passportAuthenticationCallbackFactory =
+  (context: {
+    strategy: Strategy | string
+    req: Request
+    res: Response
+    next: NextFunction
+  }) =>
+  (
+    e: unknown,
+    user: Optional<Express.User>,
+    info: Optional<string | Record<string, unknown> | Array<string | undefined>>
+  ) => {
+    const { strategy, req, res, next } = context
+
+    if (user && !e) {
+      req.user = user
+      // user authenticated successfully
+      next()
+      return
+    }
+
+    const infoMsg = resolveInfoMessage(info)
+    if (!user && !e) {
+      // no user despite there being no error, so authentication failed
+      const message = infoMsg || 'Failed to authenticate, contact server admins'
+      res.redirect(new URL(defaultErrorPath(message), getFrontendOrigin()).toString())
+      return
+    }
+
+    const err = ensureError(
+      e,
+      'Unknown authentication error. Please contact server admins'
+    )
+    switch (err.constructor) {
+      case UserInputError:
+      case InviteNotFoundError:
+        const message = infoMsg || err.message
+        res.redirect(new URL(defaultErrorPath(message), getFrontendOrigin()).toString())
+        return
+      case UnverifiedEmailSSOLoginError:
+        const email = (err as UnverifiedEmailSSOLoginError).info()?.email || ''
+        res.redirect(
+          new URL(unverifiedEmailPath(email), getFrontendOrigin()).toString()
+        )
+        return
+      default:
+        req.log.error(
+          { err, strategy },
+          'Authentication error for strategy "{strategy}"'
+        )
+        return next(err)
+      // throwUncoveredError(err) //TODO at some point in the future, ideally change error handling to use this
+    }
+  }
+
 /**
  * Wrapper for passport.authenticate that handles success & failure scenarios correctly
  * (passport.authenticate() by default doesn't, so don't use it)
@@ -36,42 +94,12 @@ export const passportAuthenticateHandlerBuilderFactory =
   (
     strategy: Strategy | string,
     options: Optional<AuthenticateOptions> = undefined
-  ): Handler => {
+  ): RequestHandler => {
     return (req, res, next) => {
       passport.authenticate(
         strategy,
         options || {},
-        // Not sure why types aren't automatically picked up
-        (
-          err: unknown,
-          user: Optional<Express.User>,
-          info: Optional<string | Record<string, unknown> | Array<string | undefined>>
-        ) => {
-          if (err && !(err instanceof UserInputError)) logger.error(err)
-
-          if (!user) {
-            const infoMsg = resolveInfoMessage(info)
-            const errMsg = err instanceof UserInputError ? err.message : null
-            const finalMessage =
-              infoMsg ||
-              errMsg ||
-              (err
-                ? 'An issue occurred during authentication, contact server admins'
-                : 'Failed to authenticate, contact server admins')
-
-            let errPath = `/error?message=${finalMessage}`
-
-            if (err instanceof UnverifiedEmailSSOLoginError) {
-              const email = err.info()?.email || ''
-              errPath = `/error-email-verify?email=${email}`
-            }
-
-            res.redirect(new URL(errPath, getFrontendOrigin()).toString())
-          }
-
-          req.user = user
-          next()
-        }
+        passportAuthenticationCallbackFactory({ strategy, req, res, next })
       )(req, res, next)
     }
   }

@@ -8,16 +8,16 @@ declare module 'express' {
   }
 }
 
+declare module 'http' {
+  interface IncomingMessage {
+    context?: AuthContext
+  }
+}
+
 declare module 'express-serve-static-core' {
   interface Request {
     context: AuthContext
     mixpanel: ReturnType<typeof mixpanel>
-  }
-}
-
-declare module 'http' {
-  interface IncomingMessage {
-    context?: AuthContext
   }
 }
 

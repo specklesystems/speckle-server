@@ -1,14 +1,14 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :title="cancel ? 'Cancel adding email' : 'Delete email address'"
+    :title="isAdding ? 'Stop adding email?' : 'Delete email address'"
     max-width="xs"
     :buttons="dialogButtons"
   >
     <p class="text-body-xs text-foreground mb-2">
       {{
-        cancel
-          ? `Are you sure you want to cancel adding ${email?.email} to your account?`
+        isAdding
+          ? `Do you want to stop adding ${email?.email}? Any progress will be discarded.`
           : `Are you sure you want to delete ${email?.email} from your account?`
       }}
     </p>
@@ -22,7 +22,7 @@ import { useUserEmails } from '~/lib/user/composables/emails'
 
 const props = defineProps<{
   email?: UserEmail
-  cancel?: boolean
+  isAdding?: boolean
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -31,14 +31,14 @@ const { deleteUserEmail } = useUserEmails()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
-    text: 'Cancel',
+    text: props.isAdding ? 'No' : 'Cancel',
     props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
-    text: props.cancel ? 'Confirm' : 'Delete',
+    text: props.isAdding ? 'Yes' : 'Delete',
     props: { color: 'primary' },
     onClick: () => {
       onDeleteEmail()
@@ -48,7 +48,10 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 
 const onDeleteEmail = async () => {
   if (!props.email) return
-  const success = await deleteUserEmail(props.email)
+  const success = await deleteUserEmail({
+    email: props.email,
+    hideToast: props.isAdding
+  })
   if (success) {
     isOpen.value = false
   }

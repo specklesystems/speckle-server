@@ -1,12 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamDeletedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory,
-  addStreamUpdatedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   deleteBranchByIdFactory,
@@ -26,7 +19,6 @@ import {
 import {
   deleteStreamFactory,
   getCommitStreamFactory,
-  getStreamCollaboratorsFactory,
   getStreamFactory,
   getStreamsFactory,
   grantStreamPermissionsFactory,
@@ -56,7 +48,6 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -101,10 +92,9 @@ import {
 } from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { faker } from '@faker-js/faker'
-import { Optional, Roles, Scopes, ServerScope } from '@speckle/shared'
+import { Optional, Roles, Scopes, ServerScope, WorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream: getStreamFactory({ db })
@@ -117,29 +107,20 @@ const buildDeleteProject = async (params: { projectId: string; ownerId: string }
     deleteStream: deleteStreamFactory({
       db: projectDb
     }),
-    authorizeResolver,
-    addStreamDeletedActivity: addStreamDeletedActivityFactory({
-      saveActivity,
-      publish,
-      getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-    }),
+    emitEvent: getEventBus().emit,
     deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
     getStream: getStreamFactory({ db: projectDb })
   })
-  return async () => deleteStreamAndNotify(projectId, ownerId, null)
+  return async () => deleteStreamAndNotify(projectId, ownerId)
 }
 
 const buildUpdateProject = async (params: { projectId: string }) => {
   const { projectId } = params
   const projectDB = await getProjectDbClient({ projectId })
   const updateStreamAndNotify = updateStreamAndNotifyFactory({
-    authorizeResolver,
     getStream: getStreamFactory({ db: projectDB }),
     updateStream: updateStreamFactory({ db: projectDB }),
-    addStreamUpdatedActivity: addStreamUpdatedActivityFactory({
-      saveActivity,
-      publish
-    })
+    emitEvent: getEventBus().emit
   })
   return updateStreamAndNotify
 }
@@ -207,21 +188,14 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser: getUserFactory({ db }),
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 describe('Core GraphQL Subscriptions (New)', () => {
@@ -248,7 +222,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
   ]
 
   modes.forEach(({ isMultiRegion }) => {
-    describe(`W/${!isMultiRegion ? 'o' : ''} multiregion`, () => {
+    describe(`W/${!isMultiRegion ? 'o' : ''} @multiregion`, () => {
       const myMainWorkspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
@@ -265,10 +239,12 @@ describe('Core GraphQL Subscriptions (New)', () => {
       before(async () => {
         await Promise.all([
           createTestWorkspace(myMainWorkspace, me, {
-            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+            addPlan: WorkspacePlans.Pro
           }),
           createTestWorkspace(otherGuysWorkspace, otherGuy, {
-            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+            addPlan: WorkspacePlans.Pro
           })
         ])
 
@@ -309,8 +285,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             const updateProject = await buildUpdateProject({ projectId })
             await updateProject(
               { id: projectId, name: new Date().toISOString() },
-              me.id,
-              null
+              me.id
             )
           }
 
@@ -616,11 +591,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             }
           )
           await meSubClient.waitForReadiness()
-          await updateProject(
-            { id: myProj.id, name: 'Updated Project Name' },
-            me.id,
-            null
-          )
+          await updateProject({ id: myProj.id, name: 'Updated Project Name' }, me.id)
 
           await Promise.all([
             onUserProjectsUpdated.waitForMessage(),
@@ -661,11 +632,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             }
           )
           await meSubClient.waitForReadiness()
-          await updateProject(
-            { id: myProj.id, name: 'Updated Project Name' },
-            me.id,
-            null
-          )
+          await updateProject({ id: myProj.id, name: 'Updated Project Name' }, me.id)
 
           await Promise.all([
             onUserProjectsUpdated.waitForTimeout(),
@@ -721,6 +688,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             objectId: '',
             id: '',
             authorId: '',
+            branchId: '',
             message
           }
 
@@ -741,6 +709,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             objectId: '',
             id: '',
             authorId: '',
+            branchId: '',
             message: 'Commit to Delete'
           }
           await createTestCommits([commitToDelete], {
@@ -794,6 +763,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             objectId: '',
             id: '',
             authorId: '',
+            branchId: '',
             message: 'Commit to Update'
           }
           await createTestCommits([commitToUpdate], {
@@ -879,6 +849,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             objectId: '',
             id: '',
             authorId: '',
+            branchId: '',
             message: 'Random Commit'
           }
           await createTestCommits([commit], {

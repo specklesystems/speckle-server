@@ -1,6 +1,6 @@
 require('../bootstrap.js')
 const { db } = require('@/db/knex')
-const { logger } = require('@/logging/logging')
+const { logger } = require('@/observability/logging')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const {
   findEmailFactory,

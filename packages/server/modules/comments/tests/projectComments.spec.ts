@@ -22,7 +22,7 @@ import {
 } from '@/test/speckle-helpers/branchHelper'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { SpeckleViewer } from '@speckle/shared'
+import { SpeckleViewer, TIME_MS } from '@speckle/shared'
 import { RichTextEditor } from '@speckle/shared'
 import { expect } from 'chai'
 
@@ -51,6 +51,7 @@ describe('Project Comments', () => {
     objectId: '',
     streamId: '',
     authorId: '',
+    branchId: '',
     message: 'this is my nice commit :)))',
     branchName: myBranch.name
   }
@@ -93,7 +94,7 @@ describe('Project Comments', () => {
           expect(commentTextToRawString(payload.comment.text)).to.equal(parentText)
           createEventFired = true
         },
-        { timeout: 1000 }
+        { timeout: TIME_MS.second }
       )
 
       const threadInput: CreateCommentInput = {
@@ -112,7 +113,7 @@ describe('Project Comments', () => {
       expect(res1).to.not.haveGraphQLErrors()
       expect(threadId).to.be.ok
       expect(res1.data?.commentMutations.create.rawText).to.equal(parentText)
-      expect(res1.data?.commentMutations.create.text.doc).to.be.ok
+      expect(res1.data?.commentMutations.create.text?.doc).to.be.ok
       expect(res1.data?.commentMutations.create.authorId).to.equal(me.id)
       expect(createEventFired).to.be.true
     })
@@ -147,7 +148,7 @@ describe('Project Comments', () => {
             expect(payload.comment.parentComment).to.equal(threadId)
             replyEventFired = true
           },
-          { timeout: 1000 }
+          { timeout: TIME_MS.second }
         )
 
         const replyInput: CreateCommentReplyInput = {
@@ -161,7 +162,7 @@ describe('Project Comments', () => {
 
         expect(res2).to.not.haveGraphQLErrors()
         expect(res2.data?.commentMutations.reply.rawText).to.equal(replyText)
-        expect(res2.data?.commentMutations.reply.text.doc).to.be.ok
+        expect(res2.data?.commentMutations.reply.text?.doc).to.be.ok
         expect(res2.data?.commentMutations.reply.authorId).to.equal(me.id)
         expect(replyEventFired).to.be.true
       })
@@ -177,7 +178,7 @@ describe('Project Comments', () => {
             expect(payload.newComment.id).to.equal(threadId)
             editEventFired = true
           },
-          { timeout: 1000 }
+          { timeout: TIME_MS.second }
         )
 
         const res = await editProjectComment({
@@ -190,7 +191,7 @@ describe('Project Comments', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.commentMutations.edit.rawText).to.equal(newText)
-        expect(res.data?.commentMutations.edit.text.doc).to.be.ok
+        expect(res.data?.commentMutations.edit.text?.doc).to.be.ok
         expect(res.data?.commentMutations.edit.authorId).to.equal(me.id)
         expect(editEventFired).to.be.true
       })

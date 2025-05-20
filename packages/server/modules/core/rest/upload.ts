@@ -12,6 +12,7 @@ import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/s
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { ExecuteHooks } from '@/modules/core/hooks'
+import { logWithErr } from '@/observability/utils/logLevels'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 
@@ -70,8 +71,8 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
     try {
       busboy = Busboy({ headers: req.headers })
     } catch (e) {
-      req.log.warn(
-        e,
+      req.log.info(
+        { err: e },
         'Failed to parse request headers and body content as valid multipart/form-data.'
       )
       return res
@@ -98,7 +99,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
         })
 
         file.on('end', async () => {
-          req.log.info(
+          req.log.debug(
             `File upload of the multipart form has reached an end of file (EOF) boundary. The mimetype of the file is '${mimeType}'.`
           )
           if (requestDropped) return
@@ -107,7 +108,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
 
           const gzippedBuffer = Buffer.concat(buffer)
           if (gzippedBuffer.length > MAX_FILE_SIZE) {
-            req.log.error(
+            req.log.info(
               calculateLogMetadata({
                 batchSizeMb: toMegabytesWith1DecimalPlace(gzippedBuffer.length),
                 start,
@@ -131,7 +132,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
           const gunzippedBufferMegabyteSize =
             estimateStringMegabyteSize(gunzippedBuffer)
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {
-            req.log.error(
+            req.log.info(
               calculateLogMetadata({
                 batchSizeMb: gunzippedBufferMegabyteSize,
                 start,
@@ -151,14 +152,17 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
 
           try {
             objs = JSON.parse(gunzippedBuffer)
-          } catch {
+          } catch (e) {
             req.log.info(
-              calculateLogMetadata({
-                batchSizeMb: gunzippedBufferMegabyteSize,
-                start,
-                batchStartTime,
-                totalObjectsProcessed
-              }),
+              {
+                ...calculateLogMetadata({
+                  batchSizeMb: gunzippedBufferMegabyteSize,
+                  start,
+                  batchStartTime,
+                  totalObjectsProcessed
+                }),
+                err: e
+              },
               'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch of objects took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped) res.status(400).send('Failed to parse data.')
@@ -179,7 +183,9 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             objects: objs,
             logger: req.log
           }).catch((e) => {
-            req.log.error(
+            logWithErr(
+              req.log,
+              e,
               {
                 ...calculateLogMetadata({
                   batchSizeMb: gunzippedBufferMegabyteSize,
@@ -187,8 +193,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                   batchStartTime,
                   totalObjectsProcessed
                 }),
-                objectCount: objs.length,
-                err: e
+                objectCount: objs.length
               },
               `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
             )
@@ -242,7 +247,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
           let objs = []
 
           if (buffer.length > MAX_FILE_SIZE) {
-            req.log.error(
+            req.log.info(
               calculateLogMetadata({
                 batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
@@ -260,14 +265,17 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
 
           try {
             objs = JSON.parse(buffer)
-          } catch {
-            req.log.error(
-              calculateLogMetadata({
-                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
-                start,
-                batchStartTime,
-                totalObjectsProcessed
-              }),
+          } catch (e) {
+            req.log.info(
+              {
+                ...calculateLogMetadata({
+                  batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
+                  start,
+                  batchStartTime,
+                  totalObjectsProcessed
+                }),
+                err: e
+              },
               'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch failed after {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
@@ -275,7 +283,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             requestDropped = true
           }
           if (!Array.isArray(objs)) {
-            req.log.error(
+            req.log.info(
               calculateLogMetadata({
                 batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
@@ -318,16 +326,15 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             objects: objs,
             logger: req.log
           }).catch((e) => {
-            req.log.error(
-              {
-                ...calculateLogMetadata({
-                  batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
-                  start,
-                  batchStartTime,
-                  totalObjectsProcessed
-                }),
-                err: e
-              },
+            logWithErr(
+              req.log,
+              e,
+              calculateLogMetadata({
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
               `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
             )
             if (!requestDropped)

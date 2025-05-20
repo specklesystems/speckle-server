@@ -57,6 +57,10 @@ export const useIsGendoModuleEnabled = () => {
   return ref(FF_GENDOAI_MODULE_ENABLED)
 }
 
+export const useWorkspaceNewPlansEnabled = () => {
+  return ref(true)
+}
+
 export const useIsBillingIntegrationEnabled = () => {
   const {
     public: { FF_BILLING_INTEGRATION_ENABLED }

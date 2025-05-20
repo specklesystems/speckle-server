@@ -1,3 +1,4 @@
+{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -17,7 +18,6 @@ spec:
   - host: {{ .Values.domain }}
     http:
       paths:
-      {{- if .Values.frontend_2.enabled }}
       - pathType: Prefix
         path: "/"
         backend:
@@ -25,15 +25,6 @@ spec:
             name: speckle-frontend-2
             port:
               name: web
-      {{- else }}
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: speckle-frontend
-            port:
-              name: www
-      {{- end }}
       - pathType: Exact
         path: "/graphql"
         backend:
@@ -83,3 +74,4 @@ spec:
             name: speckle-objects
             port:
               name: web
+{{- end }}

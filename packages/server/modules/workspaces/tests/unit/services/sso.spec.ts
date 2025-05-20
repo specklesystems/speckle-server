@@ -82,7 +82,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
+          addOrUpdateWorkspaceRole: async () => {},
           findInvite: async () => null,
           deleteInvite: async () => true
         })
@@ -96,13 +96,13 @@ describe('Workspace SSO services', () => {
           workspaceId: cryptoRandomString({ length: 9 })
         })
       )
-      expect(err.message).to.equal(SsoUserInviteRequiredError.defaultMessage)
+      expect(err.message).to.include(SsoUserInviteRequiredError.defaultMessage)
     })
     it('throws if SSO provider user profile does not have a name configured', async () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
+          addOrUpdateWorkspaceRole: async () => {},
           findInvite: async () => ({} as unknown as any),
           deleteInvite: async () => true
         })
@@ -122,7 +122,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
+          addOrUpdateWorkspaceRole: async () => {},
           findInvite: async () =>
             ({
               resource: {
@@ -155,7 +155,7 @@ describe('Workspace SSO services', () => {
             serverRole = role
             return ''
           },
-          upsertWorkspaceRole: async ({ role }) => {
+          addOrUpdateWorkspaceRole: async ({ role }) => {
             workspaceRole = role
           },
           findInvite: async () =>
@@ -189,7 +189,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
+          addOrUpdateWorkspaceRole: async () => {},
           findInvite: async () =>
             ({
               resource: {
@@ -381,9 +381,9 @@ describe('Workspace SSO services', () => {
               name: '',
               description: '',
               logo: null,
-              defaultProjectRole: 'stream:contributor',
               domainBasedMembershipProtectionEnabled: false,
               discoverabilityEnabled: false,
+              isEmbedSpeckleBrandingHidden: false,
               createdAt: new Date(),
               updatedAt: new Date()
             }

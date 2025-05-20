@@ -112,6 +112,12 @@ export class EnvironmentResourceError extends BaseError {
   static statusCode = 502
 }
 
+export class NotImplementedError extends BaseError {
+  static code = 'NOT_IMPLEMENTED'
+  static defaultMessage = 'This feature is not yet implemented'
+  static statusCode = 500
+}
+
 export class DatabaseError<I extends Info = Info> extends EnvironmentResourceError {
   static code = 'DATABASE_ERROR'
   static defaultMessage = 'An error occurred while trying to access the database.'
@@ -132,6 +138,23 @@ export class DatabaseError<I extends Info = Info> extends EnvironmentResourceErr
           : additionalInfo
     })
   }
+}
+
+export class LoaderConfigurationError extends BaseError {
+  static code = 'LOADER_CONFIGURATION_ERROR'
+  static defaultMessage = 'Error while initializing authz loaders'
+  static statusCode = 500
+
+  constructor(message?: string) {
+    super(message)
+  }
+}
+
+export class LoaderUnsupportedError extends BaseError {
+  static code = 'LOADER_UNSUPPORTED_ERROR'
+  static defaultMessage =
+    'Cannot invoke loader given current server configuration. Check environment variables.'
+  static statusCode = 500
 }
 
 export { BaseError }

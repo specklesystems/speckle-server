@@ -11,6 +11,7 @@ import {
   BranchCommitRecord,
   BranchRecord,
   CommitRecord,
+  ProjectRecordVisibility,
   StreamAclRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
@@ -58,7 +59,8 @@ import {
   MoveCommitsToBranch,
   LegacyGetPaginatedUserCommitsPage,
   LegacyGetPaginatedUserCommitsTotalCount,
-  LegacyGetPaginatedStreamCommitsPage
+  LegacyGetPaginatedStreamCommitsPage,
+  GetTotalVersionCount
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -337,7 +339,7 @@ const getPaginatedBranchCommitsBaseQueryFactory =
   }
 
 export const getPaginatedBranchCommitsItemsFactory =
-  (deps: { db: Knex }): GetPaginatedBranchCommitsItems =>
+  (deps: { db: Knex; limitsDate?: Date | null }): GetPaginatedBranchCommitsItems =>
   async (params: PaginatedBranchCommitsParams) => {
     const { cursor } = params
 
@@ -348,6 +350,9 @@ export const getPaginatedBranchCommitsItemsFactory =
 
     if (cursor) {
       q.andWhere(Commits.col.createdAt, '<', cursor)
+    }
+    if (deps.limitsDate) {
+      q.andWhere(Commits.col.createdAt, '>', deps.limitsDate)
     }
 
     const rows = await q
@@ -523,7 +528,7 @@ export const getUserStreamCommitCountsFactory =
     if (publicOnly) {
       q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
       q.andWhere((q1) => {
-        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+        q1.where(Streams.col.visibility, ProjectRecordVisibility.Public)
       })
     }
 
@@ -556,7 +561,7 @@ export const getUserAuthoredCommitCountsFactory =
       q.join(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
       q.join(Streams.name, Streams.col.id, StreamCommits.col.streamId)
       q.andWhere((q1) => {
-        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+        q1.where(Streams.col.visibility, ProjectRecordVisibility.Public)
       })
     }
 
@@ -606,7 +611,7 @@ const getCommitsByUserIdBaseFactory =
       .leftJoin('users', 'commits.author', 'users.id')
       .where('author', userId)
 
-    if (publicOnly) query.andWhere('streams.isPublic', true)
+    if (publicOnly) query.andWhere('streams.visibility', ProjectRecordVisibility.Public)
     if (streamIdWhitelist?.length) query.whereIn('streams.streamId', streamIdWhitelist)
 
     return query
@@ -663,7 +668,7 @@ export const legacyGetPaginatedUserCommitsTotalCount =
  * without any joins, and let those be handled by GQL dataloaders
  */
 export const legacyGetPaginatedStreamCommitsPageFactory =
-  (deps: { db: Knex }): LegacyGetPaginatedStreamCommitsPage =>
+  (deps: { db: Knex; limitsDate?: Date | null }): LegacyGetPaginatedStreamCommitsPage =>
   async ({ streamId, limit, cursor, ignoreGlobalsBranch }) => {
     limit = clamp(limit || 25, 0, 100)
     if (!limit) return { commits: [], cursor: null }
@@ -696,6 +701,7 @@ export const legacyGetPaginatedStreamCommitsPageFactory =
     if (ignoreGlobalsBranch) query.andWhere('branches.name', '!=', 'globals')
 
     if (cursor) query.andWhere('commits.createdAt', '<', cursor)
+    if (deps.limitsDate) query.andWhere('commits.createdAt', '>', deps.limitsDate)
 
     query.orderBy('commits.createdAt', 'desc').limit(limit)
 
@@ -704,4 +710,13 @@ export const legacyGetPaginatedStreamCommitsPageFactory =
       commits: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
     }
+  }
+
+export const getTotalVersionCountFactory =
+  (deps: { db: Knex }): GetTotalVersionCount =>
+  async () => {
+    const query = tables.commits(deps.db).count()
+    const [{ count }] = await query
+
+    return parseInt(String(count))
   }

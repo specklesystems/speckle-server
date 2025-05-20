@@ -2,25 +2,18 @@
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>Measure mode</template>
     <div
-      class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 border-b border-outline-3 text-foreground-2"
+      class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 border-b border-outline-2 text-foreground-2"
     >
-      <InformationCircleIcon class="h-5 w-5 sm:h-6 sm:h-6 shrink-0" />
-      <span class="text-body-2xs">Reloading will delete all measurements</span>
+      <span class="text-body-3xs">Reloading will delete all measurements</span>
     </div>
     <template #actions>
-      <FormButton
-        text
-        color="danger"
-        :icon-left="TrashIcon"
-        class="py-1"
-        @click="() => clearMeasurements()"
-      >
+      <FormButton class="my-1" size="sm" color="outline" @click="clearMeasurements">
         Delete all measurements
       </FormButton>
     </template>
-    <div class="px-3 py-2 sm:p-3 flex flex-col gap-3 border-b border-outline-3">
+    <div class="p-2 px-3 flex flex-col gap-2 border-b border-outline-2">
       <div>
-        <h6 class="text-heading-sm mb-2">Measurement type</h6>
+        <h6 class="text-body-2xs font-medium mb-2.5">Measurement type</h6>
         <FormRadio
           v-for="option in measurementTypeOptions"
           :key="option.value"
@@ -30,30 +23,32 @@
           name="measurementType"
           :icon="option.icon"
           :checked="measurementParams.type === option.value"
+          size="sm"
           @change="updateMeasurementsType(option)"
         />
       </div>
     </div>
-    <div class="py-2 px-3 sm:p-3 flex items-center border-b border-outline-3">
+    <div class="py-1.5 px-3 flex items-center border-b border-outline-2">
       <FormCheckbox
-        name="Snap to Objects"
+        name="Snap to vertices"
         hide-label
         :model-value="measurementParams.vertexSnap"
         @update:model-value="() => toggleMeasurementsSnap()"
       />
-      <span class="text-heading-sm">Snap to vertices</span>
+      <span class="text-body-2xs font-medium">Snap to vertices</span>
     </div>
-    <div class="p-3 flex flex-col gap-3">
-      <div class="flex flex-col gap-2">
-        <h6 class="font-medium text-xs sm:text-sm">Units</h6>
+    <div class="pb-3 flex flex-col">
+      <div class="flex flex-col gap-1.5 p-3 pt-2 pb-3">
+        <h6 class="text-body-2xs font-medium">Units</h6>
         <ViewerMeasurementsUnitSelect
           v-model="selectedUnit"
           mount-menu-on-body
+          class="w-1/2"
           @update:model-value="onChangeMeasurementUnits"
         />
       </div>
-      <div class="flex flex-col gap-2 sm:gap-3">
-        <label class="text-heading-sm" for="precision">Precision</label>
+      <div class="flex flex-col gap-1.5 px-3 pt-2 border-t border-outline-2">
+        <label class="text-body-2xs font-medium" for="precision">Precision</label>
         <div class="flex gap-2 items-center">
           <input
             id="precision"
@@ -72,7 +67,6 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-import { InformationCircleIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { FormRadio } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
@@ -132,7 +126,7 @@ const measurementTypeOptions = [
     title: 'Point to Point',
     icon: IconPointToPoint,
     value: MeasurementType.POINTTOPOINT,
-    description: 'Choose two points for precise measurements'
+    description: 'Measure between two points'
   },
   {
     title: 'Perpendicular',

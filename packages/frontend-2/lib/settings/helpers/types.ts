@@ -1,6 +1,4 @@
-import type { AvailableRoles } from '@speckle/shared'
-import { isObjectLike, has } from 'lodash'
-import type { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
+import type { AvailableRoles, WorkspaceSeatType } from '@speckle/shared'
 
 type BaseSettingsMenuItem = {
   title: string
@@ -15,24 +13,25 @@ export type GenericSettingsMenuItem = BaseSettingsMenuItem & {
 
 export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
   name: string
-  route: (slug: string) => string
+  route: (slug?: string) => string
 }
 
-export type WorkspacePricingPlans = {
-  workspacePricingPlans: {
-    workspacePlanInformation: {
-      [key: string]: {
-        name: WorkspacePlans
-      }
-    }
-  }
+export enum WorkspaceUserActionTypes {
+  RemoveFromWorkspace = 'remove-from-workspace',
+  LeaveWorkspace = 'leave-workspace',
+  MakeAdmin = 'make-admin',
+  RemoveAdmin = 'remove-admin',
+  MakeGuest = 'make-guest',
+  MakeMember = 'make-member',
+  UpgradeEditor = 'upgrade-editor',
+  DowngradeEditor = 'downgrade-editor',
+  UpdateProjectPermissions = 'update-project-permissions'
 }
 
-export function isWorkspacePricingPlans(
-  pricingPlans: unknown
-): pricingPlans is WorkspacePricingPlans {
-  return (
-    isObjectLike(pricingPlans) &&
-    has(pricingPlans, 'workspacePricingPlans.workspacePlanInformation')
-  )
+export type WorkspaceUserUpdateShowOptions = {
+  isActiveUserWorkspaceAdmin?: boolean
+  isActiveUserTargetUser?: boolean
+  targetUserCurrentRole?: string
+  targetUserCurrentSeatType?: WorkspaceSeatType
+  isDomainCompliant?: boolean
 }

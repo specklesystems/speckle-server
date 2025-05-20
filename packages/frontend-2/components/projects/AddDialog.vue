@@ -25,75 +25,23 @@
         />
         <div>
           <h3 class="label mb-2">Access permissions</h3>
-          <ProjectVisibilitySelect v-model="visibility" mount-menu-on-body />
+          <ProjectVisibilitySelect
+            v-model="visibility"
+            mount-menu-on-body
+            :workspace-id="workspaceId"
+          />
         </div>
-        <template v-if="isWorkspacesEnabled && !workspaceId">
-          <div class="flex gap-y-2 flex-col">
-            <p class="text-body-xs text-foreground font-medium">Workspace</p>
-            <div class="flex gap-x-2 items-center">
-              <ProjectsWorkspaceSelect
-                v-model="selectedWorkspace"
-                :items="workspaces"
-                :disabled-roles="[Roles.Workspace.Guest]"
-                :disabled="!hasWorkspaces"
-                disabled-item-tooltip="You dont have rights to create projects in this workspace"
-                class="flex-1"
-              />
-              <div v-tippy="'Create workspace'" class="flex">
-                <FormButton
-                  :icon-left="PlusIcon"
-                  hide-text
-                  class="flex"
-                  color="outline"
-                  @click="navigateToWorkspaceExplainer"
-                />
-              </div>
-            </div>
-            <p class="text-foreground-2 text-body-2xs">
-              Workspaces offer better project management and higher data security.
-            </p>
-          </div>
-        </template>
       </div>
     </form>
-    <CommonConfirmDialog
-      v-model:open="showConfirmDialog"
-      @confirm="handleConfirmAction"
-    />
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useForm } from 'vee-validate'
-import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import { SupportedProjectVisibility } from '~/lib/projects/helpers/visibility'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCreateProject } from '~~/lib/projects/composables/projectManagement'
-import { useIsWorkspacesEnabled } from '~/composables/globals'
-import { PlusIcon } from '@heroicons/vue/24/outline'
-import type { ProjectsAddDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
-import { graphql } from '~~/lib/common/generated/gql'
-import { projectWorkspaceSelectQuery } from '~/lib/projects/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
-import { Roles } from '@speckle/shared'
-import { workspacesRoute } from '~/lib/common/helpers/route'
-
-graphql(`
-  fragment ProjectsAddDialog_Workspace on Workspace {
-    id
-    ...ProjectsWorkspaceSelect_Workspace
-  }
-`)
-
-graphql(`
-  fragment ProjectsAddDialog_User on User {
-    workspaces {
-      items {
-        ...ProjectsAddDialog_Workspace
-      }
-    }
-  }
-`)
 
 type FormValues = {
   name: string
@@ -108,37 +56,32 @@ const emit = defineEmits<{
   (e: 'created'): void
 }>()
 
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const createProject = useCreateProject()
-const router = useRouter()
 const logger = useLogger()
-const { handleSubmit, meta, isSubmitting } = useForm<FormValues>()
-const { result: workspaceResult } = useQuery(projectWorkspaceSelectQuery, null, () => ({
-  enabled: isWorkspacesEnabled.value
-}))
+const { handleSubmit, isSubmitting } = useForm<FormValues>()
 
-const visibility = ref(ProjectVisibility.Unlisted)
-const selectedWorkspace = ref<ProjectsAddDialog_WorkspaceFragment>()
-const showConfirmDialog = ref(false)
-const confirmActionType = ref<'navigate' | 'close' | null>(null)
-const isClosing = ref(false)
+const visibility = ref(
+  props.workspaceId
+    ? SupportedProjectVisibility.Workspace
+    : SupportedProjectVisibility.Private
+)
+const isLoading = ref(false)
 
 const open = defineModel<boolean>('open', { required: true })
 
 const mp = useMixpanel()
 
 const onSubmit = handleSubmit(async (values) => {
-  if (isClosing.value) return // Prevent submission while closing
+  if (isLoading.value) return // Prevent submission while closing
 
   try {
-    isClosing.value = true
-    const workspaceId = props.workspaceId || selectedWorkspace.value?.id
+    isLoading.value = true
 
     await createProject({
       name: values.name,
       description: values.description,
       visibility: visibility.value,
-      ...(workspaceId ? { workspaceId } : {})
+      ...(props.workspaceId ? { workspaceId: props.workspaceId } : {})
     })
     emit('created')
     mp.track('Stream Action', {
@@ -149,18 +92,13 @@ const onSubmit = handleSubmit(async (values) => {
     })
     open.value = false
   } catch (error) {
-    isClosing.value = false
+    isLoading.value = false
     logger.error('Failed to create project:', error)
   }
 })
 
-const workspaces = computed(
-  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
-)
-const hasWorkspaces = computed(() => workspaces.value.length > 0)
-
 const dialogButtons = computed((): LayoutDialogButton[] => {
-  const isDisabled = isSubmitting.value || isClosing.value
+  const isDisabled = isSubmitting.value || isLoading.value
 
   return [
     {
@@ -169,7 +107,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
         color: 'outline',
         disabled: isDisabled
       },
-      onClick: confirmCancel
+      onClick: () => (open.value = false)
     },
     {
       text: 'Create',
@@ -183,41 +121,12 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
   ]
 })
 
-const formIsDirty = computed(() => {
-  return meta.value.dirty
-})
-
-const navigateToWorkspaceExplainer = () => {
-  if (formIsDirty.value) {
-    confirmActionType.value = 'navigate'
-    showConfirmDialog.value = true
-  } else {
-    router.push(workspacesRoute)
-  }
-}
-
-const confirmCancel = () => {
-  if (formIsDirty.value) {
-    confirmActionType.value = 'close'
-    showConfirmDialog.value = true
-  } else {
-    open.value = false
-  }
-}
-
-const handleConfirmAction = () => {
-  if (confirmActionType.value === 'navigate') {
-    router.push(workspacesRoute)
-  } else if (confirmActionType.value === 'close') {
-    open.value = false
-  }
-  confirmActionType.value = null
-}
-
 watch(open, (newVal, oldVal) => {
   if (newVal && !oldVal) {
-    selectedWorkspace.value = undefined
-    isClosing.value = false
+    isLoading.value = false
+    visibility.value = props.workspaceId
+      ? SupportedProjectVisibility.Workspace
+      : SupportedProjectVisibility.Private
   }
 })
 </script>

@@ -1,3 +1,4 @@
+import { basicProjectFieldsFragment } from '@/test/graphql/projects'
 import { gql } from 'graphql-tag'
 
 export const basicWorkspaceFragment = gql`
@@ -360,4 +361,111 @@ export const getWorkspaceWithJoinRequestsQuery = gql`
     }
   }
   ${basicWorkspaceFragment}
+`
+
+export const getWorkspaceWithSubscriptionQuery = gql`
+  query GetWorkspaceWithSubscription($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      subscription {
+        createdAt
+        updatedAt
+        currentBillingCycleEnd
+        billingInterval
+        seats {
+          editors {
+            available
+            assigned
+          }
+          viewers {
+            assigned
+          }
+        }
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
+`
+
+export const getWorkspacePlanUsage = gql`
+  query GetWorkspacePlanUsage($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      plan {
+        usage {
+          projectCount
+          modelCount
+        }
+      }
+    }
+  }
+`
+
+export const getWorkspaceWithMembersByRole = gql`
+  query GetWorkspaceWithMembersByRole($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      teamByRole {
+        admins {
+          totalCount
+        }
+        members {
+          totalCount
+        }
+        guests {
+          totalCount
+        }
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
+`
+
+export const updateWorkspaceProjectRoleMutation = gql`
+  mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {
+    workspaceMutations {
+      projects {
+        updateRole(input: $input) {
+          ...BasicProjectFields
+        }
+      }
+    }
+  }
+
+  ${basicProjectFieldsFragment}
+`
+
+export const updateWorkspaceSeatTypeMutation = gql`
+  mutation UpdateWorkspaceSeatType($input: WorkspaceUpdateSeatTypeInput!) {
+    workspaceMutations {
+      updateSeatType(input: $input) {
+        id
+        team {
+          items {
+            id
+            role
+            seatType
+          }
+        }
+      }
+    }
+  }
+`
+
+export const invitableUsersInProjectQuery = gql`
+  query GetProjectInvitableCollaborators($projectId: String!, $search: String) {
+    project(id: $projectId) {
+      id
+      name
+      invitableCollaborators(filter: { search: $search }) {
+        totalCount
+        items {
+          id
+          user {
+            name
+          }
+        }
+      }
+    }
+  }
 `

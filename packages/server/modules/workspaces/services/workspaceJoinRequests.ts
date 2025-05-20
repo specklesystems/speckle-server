@@ -7,6 +7,8 @@ import {
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { NotFoundError } from '@/modules/shared/errors'
 import {
+  AddOrUpdateWorkspaceRole,
+  ApproveWorkspaceJoinRequest,
   CreateWorkspaceJoinRequest,
   DenyWorkspaceJoinRequest,
   GetWorkspace,
@@ -15,8 +17,7 @@ import {
   SendWorkspaceJoinRequestApprovedEmail,
   SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
-  UpdateWorkspaceJoinRequestStatus,
-  UpsertWorkspaceRole
+  UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
 import { Roles } from '@speckle/shared'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
@@ -83,13 +84,18 @@ export const requestToJoinWorkspaceFactory =
       throw new WorkspaceProtectedError()
     }
 
-    await createWorkspaceJoinRequest({
+    const joinRequest = await createWorkspaceJoinRequest({
       workspaceJoinRequest: {
         userId,
         workspaceId,
         status: 'pending'
       }
     })
+
+    if (!joinRequest || joinRequest.status !== 'pending') {
+      // The request was already created, so don't send the email again
+      return true
+    }
 
     await sendWorkspaceJoinRequestReceivedEmail({
       workspace,
@@ -106,18 +112,18 @@ export const approveWorkspaceJoinRequestFactory =
     getUserById,
     getWorkspace,
     getWorkspaceJoinRequest,
-    upsertWorkspaceRole,
-    emit
+    emit,
+    addOrUpdateWorkspaceRole
   }: {
     updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
     sendWorkspaceJoinRequestApprovedEmail: SendWorkspaceJoinRequestApprovedEmail
     getUserById: GetUser
     getWorkspace: GetWorkspace
     getWorkspaceJoinRequest: GetWorkspaceJoinRequest
-    upsertWorkspaceRole: UpsertWorkspaceRole
     emit: EventBus['emit']
-  }) =>
-  async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
+    addOrUpdateWorkspaceRole: AddOrUpdateWorkspaceRole
+  }): ApproveWorkspaceJoinRequest =>
+  async ({ userId, workspaceId, approvedByUserId }) => {
     const requester = await getUserById(userId)
     if (!requester) {
       throw new NotFoundError('User not found')
@@ -143,8 +149,12 @@ export const approveWorkspaceJoinRequestFactory =
       status: 'approved'
     })
 
-    const role = Roles.Workspace.Member
-    await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
+    await addOrUpdateWorkspaceRole({
+      userId,
+      workspaceId,
+      role: Roles.Workspace.Member,
+      updatedByUserId: approvedByUserId
+    })
 
     await emit({ eventName: WorkspaceEvents.Updated, payload: { workspace } })
 

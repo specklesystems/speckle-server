@@ -5,7 +5,7 @@ import {
   deleteWebhookFactory,
   updateWebhookFactory
 } from '@/modules/webhooks/services/webhooks'
-import { Roles } from '@speckle/shared'
+import { Authz, Roles } from '@speckle/shared'
 import {
   countWebhooksByStreamIdFactory,
   createWebhookConfigFactory,
@@ -17,20 +17,35 @@ import {
   updateWebhookConfigFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const streamWebhooksResolver = async (
   parent: { id: string },
   args: { id?: string },
-  context: { resourceAccessRules?: TokenResourceIdentifier[] | null; userId: string }
+  context: {
+    resourceAccessRules?: TokenResourceIdentifier[] | null
+    userId: string
+    authPolicies: Authz.AuthPolicies
+  }
 ) => {
-  await authorizeResolver(
-    context.userId,
-    parent.id,
-    Roles.Stream.Owner,
-    context.resourceAccessRules
-  )
+  throwIfResourceAccessNotAllowed({
+    resourceId: parent.id,
+    resourceType: TokenResourceIdentifierType.Project,
+    resourceAccessRules: context.resourceAccessRules
+  })
+
+  const canReadWebhooks = await context.authPolicies.project.canReadWebhooks({
+    projectId: parent.id,
+    userId: context.userId
+  })
+  throwIfAuthNotOk(canReadWebhooks)
 
   const projectDb = await getProjectDbClient({ projectId: parent.id })
 
@@ -72,37 +87,61 @@ export default {
   },
   Mutation: {
     webhookCreate: async (_parent, args, context) => {
+      const projectId = args.webhook.streamId
       await authorizeResolver(
         context.userId,
-        args.webhook.streamId,
+        projectId,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
-      const projectDb = await getProjectDbClient({ projectId: args.webhook.streamId })
 
-      const id = await createWebhookFactory({
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const createWebhook = createWebhookFactory({
         createWebhookConfig: createWebhookConfigFactory({ db: projectDb }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db: projectDb })
-      })({
-        streamId: args.webhook.streamId,
-        url: args.webhook.url,
-        description: args.webhook.description,
-        secret: args.webhook.secret,
-        enabled: args.webhook.enabled !== false,
-        triggers: args.webhook.triggers
       })
+
+      const id = await withOperationLogging(
+        async () =>
+          await createWebhook({
+            streamId: projectId,
+            url: args.webhook.url,
+            description: args.webhook.description,
+            secret: args.webhook.secret,
+            enabled: args.webhook.enabled !== false,
+            triggers: args.webhook.triggers
+          }),
+        {
+          logger,
+          operationName: 'webhookCreate',
+          operationDescription: 'Create a new webhook'
+        }
+      )
 
       return id
     },
     webhookUpdate: async (_parent, args, context) => {
+      const projectId = args.webhook.streamId
+      const webhookId = args.webhook.id
       await authorizeResolver(
         context.userId,
-        args.webhook.streamId,
+        projectId,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
 
-      const projectDb = await getProjectDbClient({ projectId: args.webhook.streamId })
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        webhookId
+      })
+
+      const projectDb = await getProjectDbClient({ projectId })
 
       const wh = await getWebhookByIdFactory({ db: projectDb })({ id: args.webhook.id })
       if (args.webhook.streamId !== wh?.streamId)
@@ -110,33 +149,57 @@ export default {
           'The webhook id and stream id do not match. Please check your inputs.'
         )
 
-      const updated = await updateWebhookFactory({
+      const updateWebhook = updateWebhookFactory({
         updateWebhookConfig: updateWebhookConfigFactory({ db: projectDb })
-      })({
-        id: args.webhook.id,
-        url: args.webhook.url,
-        description: args.webhook.description,
-        secret: args.webhook.secret,
-        enabled: args.webhook.enabled !== false,
-        triggers: args.webhook.triggers
       })
+
+      const updated = await withOperationLogging(
+        async () =>
+          await updateWebhook({
+            id: args.webhook.id,
+            url: args.webhook.url,
+            description: args.webhook.description,
+            secret: args.webhook.secret,
+            enabled: args.webhook.enabled !== false,
+            triggers: args.webhook.triggers
+          }),
+        {
+          logger,
+          operationName: 'webhookUpdate',
+          operationDescription: 'Update an existing webhook'
+        }
+      )
 
       return updated
     },
     webhookDelete: async (_parent, args, context) => {
+      const projectId = args.webhook.streamId
+      const webhookId = args.webhook.id
       await authorizeResolver(
         context.userId,
-        args.webhook.streamId,
+        projectId,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
 
-      const projectDb = await getProjectDbClient({ projectId: args.webhook.streamId })
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        webhookId
+      })
 
-      return await deleteWebhookFactory({
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const deleteWebhook = deleteWebhookFactory({
         deleteWebhookConfig: deleteWebhookConfigFactory({ db: projectDb }),
         getWebhookById: getWebhookByIdFactory({ db: projectDb })
-      })(args.webhook)
+      })
+
+      return await withOperationLogging(async () => await deleteWebhook(args.webhook), {
+        logger,
+        operationName: 'webhookDelete',
+        operationDescription: 'Delete an existing webhook'
+      })
     }
   }
 } as Resolvers

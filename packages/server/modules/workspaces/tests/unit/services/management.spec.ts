@@ -2,6 +2,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceSeatType,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -10,7 +11,7 @@ import {
   deleteWorkspaceRoleFactory,
   generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory,
+  addOrUpdateWorkspaceRoleFactory,
   validateSlugFactory
 } from '@/modules/workspaces/services/management'
 import { Roles, validateWorkspaceSlug } from '@speckle/shared'
@@ -43,7 +44,7 @@ import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/ope
 
 type WorkspaceTestContext = {
   storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
-  storedRoles: WorkspaceAcl[]
+  storedRoles: Pick<WorkspaceAcl, 'role' | 'userId' | 'workspaceId'>[]
   eventData: {
     isCalled: boolean
     eventName: string
@@ -70,7 +71,7 @@ const buildCreateWorkspaceWithTestContext = (
     },
     validateSlug: async () => {},
     generateValidSlug: async () => cryptoRandomString({ length: 10 }),
-    upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
+    addOrUpdateWorkspaceRole: async (workspaceAcl) => {
       context.storedRoles.push(workspaceAcl)
     },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
@@ -259,7 +260,7 @@ describe('Workspace services', () => {
         logo: null,
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
-        defaultProjectRole: 'stream:contributor',
+        isEmbedSpeckleBrandingHidden: false,
         domains: []
       }
       return merge(workspace, input)
@@ -563,8 +564,9 @@ const buildDeleteWorkspaceRoleAndTestContext = (
 
       switch (eventName) {
         case WorkspaceEvents.RoleDeleted: {
-          const { userId } =
-            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
+          const {
+            acl: { userId }
+          } = payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
           for (const project of context.workspaceProjects) {
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
               (role) => role.resourceId !== project.id && role.userId !== userId
@@ -584,14 +586,16 @@ const buildDeleteWorkspaceRoleAndTestContext = (
 
 const buildUpdateWorkspaceRoleAndTestContext = (
   contextOverrides: Partial<WorkspaceRoleTestContext> = {},
-  dependencyOverrides: Partial<Parameters<typeof updateWorkspaceRoleFactory>[0]> = {}
+  dependencyOverrides: Partial<
+    Parameters<typeof addOrUpdateWorkspaceRoleFactory>[0]
+  > = {}
 ) => {
   const context = {
     ...getDefaultWorkspaceRoleTestContext(),
     ...contextOverrides
   }
 
-  const deps: Parameters<typeof updateWorkspaceRoleFactory>[0] = {
+  const deps: Parameters<typeof addOrUpdateWorkspaceRoleFactory>[0] = {
     getWorkspaceRoles: async () => context.workspaceRoles,
     getWorkspaceWithDomains: async () =>
       context.workspace as unknown as Workspace & { domains: WorkspaceDomain[] },
@@ -609,8 +613,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
 
       switch (eventName) {
         case WorkspaceEvents.RoleDeleted: {
-          const { userId } =
-            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
+          const {
+            acl: { userId }
+          } = payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
           for (const project of context.workspaceProjects) {
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
               (role) => role.resourceId !== project.id && role.userId !== userId
@@ -623,26 +628,25 @@ const buildUpdateWorkspaceRoleAndTestContext = (
             payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated]
           const mapping = {
             [Roles.Workspace.Guest]: null,
-            [Roles.Workspace.Member]:
-              context.workspace.defaultProjectRole ?? Roles.Stream.Contributor,
+            [Roles.Workspace.Member]: Roles.Stream.Contributor,
             [Roles.Workspace.Admin]: Roles.Stream.Owner
           }
 
           for (const project of context.workspaceProjects) {
-            const projectRole = mapping[workspaceRole.role]
+            const projectRole = mapping[workspaceRole.acl.role]
 
             if (!projectRole) {
               continue
             }
 
             const streamAcl: StreamAclRecord = {
-              userId: workspaceRole.userId,
+              userId: workspaceRole.acl.userId,
               role: projectRole,
               resourceId: project.id
             }
 
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
-              (acl) => acl.userId !== workspaceRole.userId
+              (acl) => acl.userId !== workspaceRole.acl.userId
             )
             context.workspaceProjectRoles.push(streamAcl)
           }
@@ -650,10 +654,19 @@ const buildUpdateWorkspaceRoleAndTestContext = (
         }
       }
     },
+    ensureValidWorkspaceRoleSeat: async () => {
+      return {
+        type: WorkspaceSeatType.Editor,
+        workspaceId: 'test',
+        userId: 'test',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    },
     ...dependencyOverrides
   }
 
-  const updateWorkspaceRole = updateWorkspaceRoleFactory(deps)
+  const updateWorkspaceRole = addOrUpdateWorkspaceRoleFactory(deps)
 
   return { updateWorkspaceRole, context }
 }
@@ -675,7 +688,11 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
+      const deletedRole = await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId: cryptoRandomString({ length: 10 })
+      })
 
       expect(context.workspaceRoles.length).to.equal(0)
       expect(deletedRole).to.deep.equal(role)
@@ -695,11 +712,19 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      await deleteWorkspaceRole({ userId, workspaceId })
+      const deletedByUserId = cryptoRandomString({ length: 10 })
+      await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId
+      })
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
-      expect(context.eventData.payload).to.deep.equal(role)
+      expect(context.eventData.payload).to.deep.equal({
+        acl: role,
+        updatedByUserId: deletedByUserId
+      })
     })
     it('throws if attempting to delete the last admin from a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
@@ -716,7 +741,13 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      await expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
+      await expectToThrow(() =>
+        deleteWorkspaceRole({
+          userId,
+          workspaceId,
+          deletedByUserId: cryptoRandomString({ length: 10 })
+        })
+      )
     })
     it('deletes workspace project roles', async () => {
       const userId = cryptoRandomString({ length: 10 })
@@ -739,7 +770,11 @@ describe('Workspace role services', () => {
         ]
       })
 
-      await deleteWorkspaceRole({ userId, workspaceId })
+      await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId: cryptoRandomString({ length: 10 })
+      })
 
       expect(context.workspaceProjectRoles.length).to.equal(0)
     })
@@ -749,10 +784,12 @@ describe('Workspace role services', () => {
     it('sets the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
+      const workspaceOwnerId = cryptoRandomString({ length: 10 })
       const role = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Member
+        role: Roles.Workspace.Member,
+        updatedByUserId: workspaceOwnerId
       }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
@@ -770,6 +807,7 @@ describe('Workspace role services', () => {
     it('emits a role-updated event', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
+      const workspaceOwnerId = cryptoRandomString({ length: 10 })
       const role: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> = {
         userId,
         workspaceId,
@@ -780,21 +818,24 @@ describe('Workspace role services', () => {
         workspaceId
       })
 
-      await updateWorkspaceRole(role)
+      await updateWorkspaceRole({ ...role, updatedByUserId: workspaceOwnerId })
 
       const payload = {
         ...(context.eventData
           .payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
       }
-      delete payload.flags
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
-      expect(payload).to.deep.equal(role)
+      expect(payload).to.deep.equal({
+        acl: role,
+        updatedByUserId: workspaceOwnerId
+      })
     })
     it('throws if attempting to remove the last admin in a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
+      const workspaceOwnerId = cryptoRandomString({ length: 10 })
       const role: WorkspaceAcl = {
         userId,
         workspaceId,
@@ -808,7 +849,11 @@ describe('Workspace role services', () => {
       })
 
       await expectToThrow(() =>
-        updateWorkspaceRole({ ...role, role: Roles.Workspace.Member })
+        updateWorkspaceRole({
+          ...role,
+          role: Roles.Workspace.Member,
+          updatedByUserId: workspaceOwnerId
+        })
       )
     })
     it('throws if attempting to set user role to more than GUEST and workspace domain protection is enabled and user has not an email matching a workspace domain', async () => {
@@ -859,7 +904,8 @@ describe('Workspace role services', () => {
         updateWorkspaceRole({
           workspaceId,
           userId: guestId,
-          role: Roles.Workspace.Member
+          role: Roles.Workspace.Member,
+          updatedByUserId: adminId
         })
       )
       expect(err.message).to.eq(new WorkspaceProtectedError().message)
@@ -867,6 +913,7 @@ describe('Workspace role services', () => {
     it('sets roles on workspace projects when user added to workspace as admin', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
+      const workspaceOwnerId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
 
       const workspaceRole: WorkspaceAcl = {
@@ -881,7 +928,7 @@ describe('Workspace role services', () => {
         workspaceProjects: [{ id: projectId } as StreamRecord]
       })
 
-      await updateWorkspaceRole(workspaceRole)
+      await updateWorkspaceRole({ ...workspaceRole, updatedByUserId: workspaceOwnerId })
 
       expect(context.workspaceProjectRoles.length).to.equal(1)
       expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
@@ -891,6 +938,7 @@ describe('Workspace role services', () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
+      const workspaceOwnerId = cryptoRandomString({ length: 10 })
 
       const workspaceRole: WorkspaceAcl = {
         userId,
@@ -904,7 +952,7 @@ describe('Workspace role services', () => {
         workspaceProjects: [{ id: projectId } as StreamRecord]
       })
 
-      await updateWorkspaceRole(workspaceRole)
+      await updateWorkspaceRole({ ...workspaceRole, updatedByUserId: workspaceOwnerId })
 
       expect(context.workspaceProjectRoles.length).to.equal(1)
       expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
@@ -914,6 +962,7 @@ describe('Workspace role services', () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
+      const workspaceOwnerId = cryptoRandomString({ length: 10 })
 
       const workspaceRole: WorkspaceAcl = {
         userId,
@@ -927,7 +976,7 @@ describe('Workspace role services', () => {
         workspaceProjects: [{ id: projectId } as StreamRecord]
       })
 
-      await updateWorkspaceRole(workspaceRole)
+      await updateWorkspaceRole({ ...workspaceRole, updatedByUserId: workspaceOwnerId })
 
       expect(context.workspaceProjectRoles.find((role) => role.userId === userId)).to
         .not.exist
@@ -1092,7 +1141,7 @@ describe('Workspace role services', () => {
                   description: null,
                   discoverabilityEnabled: false,
                   domainBasedMembershipProtectionEnabled: false,
-                  defaultProjectRole: 'stream:contributor'
+                  isEmbedSpeckleBrandingHidden: false
                 }
               },
               getDomains: async () => {
@@ -1132,7 +1181,7 @@ describe('Workspace role services', () => {
           description: null,
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
-          defaultProjectRole: 'stream:contributor'
+          isEmbedSpeckleBrandingHidden: false
         }
 
         await addDomainToWorkspaceFactory({

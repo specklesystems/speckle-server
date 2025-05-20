@@ -92,6 +92,8 @@ export const useClientsideMixpanelClientBuilder = () => {
   const { wasJustLoggedOut } = useJustLoggedOutTracking()
 
   return async (): Promise<Nullable<MixpanelClient>> => {
+    if (import.meta.server) return null
+
     // Dynamic import to be able to suppress loading errors that happen because of adblock
     const mixpanel = (await import('mixpanel-browser')).default
     if (!mixpanel || !mixpanelTokenId.length || !mixpanelApiHost.length) {
@@ -128,8 +130,9 @@ export const useClientsideMixpanelClientBuilder = () => {
     }
 
     // Track app visit
+    const serverId = getMixpanelServerId()
     mixpanel.track(`Visit ${HOST_APP_DISPLAY_NAME}`)
-    logger.info('MP client initialized')
+    logger.info({ serverId }, 'MP client initialized')
 
     return mixpanel
   }

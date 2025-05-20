@@ -43,18 +43,26 @@ export type ServerAclRecord = {
   role: string
 }
 
+export const ProjectRecordVisibility = <const>{
+  Public: 'public',
+  Private: 'private',
+  Workspace: 'workspace'
+}
+
+export type ProjectRecordVisibility =
+  (typeof ProjectRecordVisibility)[keyof typeof ProjectRecordVisibility]
+
 export type StreamRecord = {
   id: string
   name: string
   description: Nullable<string>
-  isPublic: boolean
   clonedFrom: Nullable<string>
   createdAt: Date
   updatedAt: Date
   allowPublicComments: boolean
-  isDiscoverable: boolean
   workspaceId: Nullable<string>
   regionKey: Nullable<string>
+  visibility: ProjectRecordVisibility
 }
 
 export type StreamAclRecord = {
@@ -92,6 +100,7 @@ export type ServerInfo = ServerConfigRecord & {
   configuration: {
     objectSizeLimitBytes: number
     objectMultipartUploadSizeLimitBytes: number
+    isEmailEnabled: boolean
   }
 }
 

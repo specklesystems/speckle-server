@@ -1,13 +1,14 @@
 /* eslint-disable no-restricted-imports */
 import path from 'path'
 import yargs from 'yargs'
+import { hideBin } from 'yargs/helpers'
 import '../../bootstrap.js'
-import { cliLogger, logger } from '@/logging/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { mochaHooks } from '@/test/hooks'
 
 const main = async () => {
-  const execution = yargs
+  const execution = yargs(hideBin(process.argv))
     .scriptName('yarn cli')
     .usage('$0 <cmd> [args]')
     .commandDir(path.resolve(__dirname, './commands'), { extensions: ['js', 'ts'] })
@@ -23,7 +24,7 @@ const main = async () => {
 
       // In test env, run beforeAll hooks to properly initialize everything first
       if (isBeforeAllSet && isTestEnv()) {
-        cliLogger.info('Running test beforeAll hooks...')
+        logger.info('Running test beforeAll hooks...')
         await (mochaHooks.beforeAll as () => Promise<void>)()
       }
     })
@@ -45,7 +46,7 @@ const main = async () => {
   return execution
 }
 
-main().then(() => {
+void main().then(() => {
   // weird TS typing issue
   yargs.exit(0, undefined as unknown as Error)
 })

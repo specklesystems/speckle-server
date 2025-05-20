@@ -1,32 +1,4 @@
-export enum OnboardingRole {
-  ComputationalDesign = 'computational-design',
-  BIM = 'bim',
-  ArchitecturePlanning = 'architecture-planning',
-  EngineeringAEC = 'engineering-aec',
-  EngineeringSoftware = 'engineering-software',
-  Education = 'education',
-  Management = 'management',
-  Other = 'other'
-}
-
-export enum OnboardingPlan {
-  Exploring = 'exploring',
-  DataExchange = 'data-exchange',
-  Analytics = 'analytics',
-  Collaboration = 'collaboration',
-  DataWarehouse = 'data-warehouse',
-  Development = 'development',
-  Other = 'other'
-}
-
-export enum OnboardingSource {
-  SocialMedia = 'social-media',
-  Search = 'internet-search',
-  Referral = 'friend-or-colleague',
-  Event = 'event-conference',
-  Education = 'university-course',
-  Other = 'other'
-}
+import { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 
 export const RoleTitleMap: Record<OnboardingRole, string> = {
   [OnboardingRole.ComputationalDesign]: 'Computational Design',
@@ -41,13 +13,14 @@ export const RoleTitleMap: Record<OnboardingRole, string> = {
 
 export const PlanTitleMap: Record<OnboardingPlan, string> = {
   [OnboardingPlan.Exploring]: 'Just checking things out',
-  [OnboardingPlan.DataExchange]: 'Exchange data between applications',
+  [OnboardingPlan.DataExchange]: 'Design coordination (cross-app data exchange)',
   [OnboardingPlan.Analytics]:
-    'Data analytics, visualisation and reporting (eg PowerBI)',
-  [OnboardingPlan.Collaboration]: 'Collaborate with my team and share 3D models online',
+    'Business intelligence (data analytics and visualisation)',
+  [OnboardingPlan.Collaboration]:
+    'Online collaboration (sharing and discussing 3D models online)',
   [OnboardingPlan.DataWarehouse]: 'Data warehouse and common data environment (CDE)',
   [OnboardingPlan.Development]: 'Develop custom functionalities and apps',
-  [OnboardingPlan.Other]: 'Other'
+  [OnboardingPlan.Automation]: 'Automation (pre-made or custom automations)'
 }
 
 export const SourceTitleMap: Record<OnboardingSource, string> = {
@@ -57,10 +30,4 @@ export const SourceTitleMap: Record<OnboardingSource, string> = {
   [OnboardingSource.Event]: 'Event or conference',
   [OnboardingSource.Education]: 'University or course',
   [OnboardingSource.Other]: 'Other'
-}
-
-export type OnboardingState = {
-  role?: OnboardingRole
-  plans?: OnboardingPlan[]
-  source?: OnboardingSource
 }

@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="bg-foundation rounded-lg p-2 pr-1 w-full max-w-full relative dark:bg-foundation-2"
-  >
+  <div :class="containerClasses">
     <div class="flex space-x-1 items-center">
       <span class="truncate text-xs pr-4 flex-1">{{ item.file.name }}</span>
       <span class="text-tiny text-foreground-2">
@@ -16,6 +14,12 @@
       :class="[' w-full mt-2', progressBarClasses]"
       :style="progressBarStyle"
     />
+    <div v-if="errorMessage" class="flex">
+      <span class="text-tiny text-danger">
+        {{ errorMessage }}
+      </span>
+    </div>
+
     <div v-if="false" class="flex flex-col flex-grow">
       <div class="text-foreground space-x-1 inline-flex max-w-full truncate">
         <span class="normal truncate">{{ item.file.name }}</span>
@@ -32,16 +36,6 @@
         :style="progressBarStyle"
       />
     </div>
-    <FormButton
-      v-if="false"
-      class="absolute -right-8 top-4"
-      color="danger"
-      size="sm"
-      rounded
-      hide-text
-      :icon-left="XMarkIcon"
-      @click="onDelete"
-    ></FormButton>
   </div>
 </template>
 <script setup lang="ts">
@@ -63,6 +57,20 @@ const { errorMessage, progressBarClasses, progressBarStyle } =
   useFileUploadProgressCore({
     item: computed(() => props.item)
   })
+
+const containerClasses = computed(() => {
+  const classParts = [
+    'bg-foundation-page dark:bg-foundation border rounded-lg p-2 pr-1 w-full max-w-full relative'
+  ]
+
+  if (errorMessage.value) {
+    classParts.push(' border-danger')
+  } else {
+    classParts.push('border-outline-3 ')
+  }
+
+  return classParts.join(' ')
+})
 
 const onDelete = () => {
   if (props.disabled) return

@@ -1,4 +1,5 @@
-import { moduleLogger } from '@/logging/logging'
+import cron from 'node-cron'
+import { moduleLogger } from '@/observability/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
@@ -10,10 +11,22 @@ import { initializeEventListenersFactory } from '@/modules/workspaces/events/eve
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getSsoRouter } from '@/modules/workspaces/rest/sso'
 import { InvalidLicenseError } from '@/modules/gatekeeper/errors/license'
+import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
+import { scheduleUpdateAllWorkspacesTracking } from '@/modules/workspaces/services/tracking'
+import { getClient } from '@/modules/shared/utils/mixpanel'
 
-const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
+const {
+  FF_WORKSPACES_MODULE_ENABLED,
+  FF_WORKSPACES_SSO_ENABLED,
+  FF_BILLING_INTEGRATION_ENABLED
+} = getFeatureFlags()
 
 let quitListeners: Optional<() => void> = undefined
+let scheduledTasks: cron.ScheduledTask[] = []
 
 const initScopes = async () => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
@@ -26,7 +39,7 @@ const initRoles = async () => {
 }
 
 const workspacesModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     if (!FF_WORKSPACES_MODULE_ENABLED) return
     const isWorkspaceLicenseValid = await validateModuleLicense({
       requiredModules: ['workspaces']
@@ -41,6 +54,17 @@ const workspacesModule: SpeckleModule = {
     if (FF_WORKSPACES_SSO_ENABLED) app.use(getSsoRouter())
 
     if (isInitial) {
+      const mixpanel = getClient()
+      const scheduleExecution = scheduleExecutionFactory({
+        acquireTaskLock: acquireTaskLockFactory({ db }),
+        releaseTaskLock: releaseTaskLockFactory({ db })
+      })
+
+      if (FF_BILLING_INTEGRATION_ENABLED && mixpanel)
+        scheduledTasks = [
+          scheduleUpdateAllWorkspacesTracking({ scheduleExecution, mixpanel })
+        ]
+
       quitListeners = initializeEventListenersFactory({ db })()
     }
     await Promise.all([initScopes(), initRoles()])
@@ -48,6 +72,9 @@ const workspacesModule: SpeckleModule = {
   shutdown() {
     if (!FF_WORKSPACES_MODULE_ENABLED) return
     quitListeners?.()
+    scheduledTasks.forEach((task) => {
+      task.stop()
+    })
   }
 }
 

@@ -1,4 +1,4 @@
-{{- if .Values.frontend_2.enabled -}}
+{{- if .Values.frontend_2.enabled }}
 {{- if (and (.Values.frontend_2.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -44,4 +44,4 @@ spec:
     # redis
 {{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
 {{- end -}}
-{{- end -}}
+{{- end }}

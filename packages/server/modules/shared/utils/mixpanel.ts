@@ -1,5 +1,5 @@
 import { Optional, resolveMixpanelUserId } from '@speckle/shared'
-import * as MixpanelUtils from '@speckle/shared/dist/commonjs/observability/mixpanel.js'
+import * as MixpanelUtils from '@speckle/shared/observability/mixpanel'
 import {
   enableMixpanel,
   getServerOrigin,
@@ -8,7 +8,7 @@ import {
 import Mixpanel from 'mixpanel'
 import type express from 'express'
 import type http from 'http'
-import { mixpanelLogger } from '@/logging/logging'
+import { mixpanelLogger } from '@/observability/logging'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined
@@ -40,6 +40,8 @@ export function initialize() {
 export function getClient() {
   return client
 }
+
+export const getMixpanelClient = getClient
 
 /**
  * Mixpanel tracking helper. An abstraction layer over the client that makes it a bit nicer to work with.

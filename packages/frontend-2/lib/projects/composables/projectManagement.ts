@@ -30,7 +30,11 @@ import {
   modifyObjectField,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { useNavigateToHome, workspaceRoute } from '~~/lib/common/helpers/route'
+import {
+  useNavigateToHome,
+  workspaceRoute,
+  projectRoute
+} from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
@@ -46,7 +50,6 @@ import {
   createWorkspaceProjectMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
-import { projectRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useRouter } from 'vue-router'
 
@@ -210,7 +213,7 @@ export function useUpdateUserRole(
     } else {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Project permissions updated'
+        title: input.role ? 'Project role updated' : 'User removed from project'
       })
     }
 
@@ -244,7 +247,7 @@ export function useUpdateUserRole(
     } else {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Workspace project permissions updated'
+        title: input.role ? 'Project role updated' : 'User removed from project'
       })
     }
 
@@ -304,7 +307,10 @@ export function useInviteUserToProject() {
     if (err && !hideToasts) {
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title: input.length > 1 ? "Couldn't send invites" : "Couldn't send invite",
+        title:
+          input.length > 1
+            ? "Couldn't send project invites"
+            : "Couldn't send project invite",
         description: err
       })
     } else {
@@ -312,7 +318,9 @@ export function useInviteUserToProject() {
         triggerNotification({
           type: ToastNotificationType.Success,
           title:
-            input.length > 1 ? 'Invites successfully send' : 'Invite successfully sent'
+            input.length > 1
+              ? 'Project invites successfully sent'
+              : 'Project invite successfully sent'
         })
       }
     }
@@ -480,13 +488,13 @@ export function useProcessProjectInvite() {
           type: input.accept
             ? ToastNotificationType.Success
             : ToastNotificationType.Info,
-          title: input.accept ? 'Invite accepted' : 'Invite dismissed'
+          title: input.accept ? 'Project invite accepted' : 'Project invite dismissed'
         })
       } else {
         const errMsg = getFirstErrorMessage(errors)
         triggerNotification({
           type: ToastNotificationType.Danger,
-          title: "Couldn't process invite",
+          title: "Couldn't process project invite",
           description: errMsg
         })
       }

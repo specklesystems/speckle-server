@@ -9,7 +9,7 @@ import {
   estimateStringMegabyteSize
 } from '@/modules/core/utils/chunking'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
-import { servicesLogger } from '@/logging/logging'
+import { servicesLogger } from '@/observability/logging'
 import {
   CreateObject,
   CreateObjects,
@@ -181,7 +181,8 @@ export const createObjectsFactory =
         {
           batchIndex: index + 1,
           totalCountOfBatches: batches.length,
-          elapsedTimeMs: t1 - t0
+          elapsedTimeMs: t1 - t0,
+          countStoredObjects: objsToInsert.length
         },
         'Batch {batchIndex}/{totalCountOfBatches}: Stored {countStoredObjects} objects in {elapsedTimeMs}ms.'
       )

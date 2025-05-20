@@ -1,7 +1,7 @@
 import { Knex } from 'knex'
 import { DatabaseError } from '@/modules/shared/errors'
 import { ensureError } from '@speckle/shared'
-import { logger } from '@/logging/logging'
+import { startupLogger } from '@/observability/logging'
 
 export const migrateDbToLatest = async (params: { db: Knex; region: string }) => {
   const { db, region } = params
@@ -11,7 +11,7 @@ export const migrateDbToLatest = async (params: { db: Knex; region: string }) =>
     await db.migrate.latest()
 
     const durationMs = endStopWatch().milliseconds
-    logger.info(
+    startupLogger.info(
       { region, durationMs },
       'Migrated db to latest for region "{region}" in {durationMs}ms.'
     )

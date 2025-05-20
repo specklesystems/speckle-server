@@ -15,9 +15,10 @@ export interface InviteServerForm {
 // Project
 export type InviteProjectItem = {
   email: string
-  serverRole: ServerRoles
+  userId?: string
   projectRole?: StreamRoles
   project?: FormSelectProjects_ProjectFragment
+  serverRole?: ServerRoles
 }
 
 export interface InviteProjectForm {
@@ -25,7 +26,7 @@ export interface InviteProjectForm {
 }
 
 // Workspace
-export type InviteGenericItem = {
+export type InviteWorkspaceItem = {
   email: string
   workspaceRole?: WorkspaceRoles
   projectRole?: StreamRoles
@@ -33,6 +34,6 @@ export type InviteGenericItem = {
   matchesDomainPolicy?: boolean
 }
 
-export interface InviteGenericForm {
-  fields: InviteGenericItem[]
+export interface InviteWorkspaceForm {
+  fields: InviteWorkspaceItem[]
 }

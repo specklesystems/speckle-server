@@ -1,5 +1,5 @@
 import buildPlugin from 'tailwindcss/plugin.js'
-import preset from './preset.js'
+import { config as preset } from './preset.js'
 
 export const lightThemeVariables = {
   /* used only as the page background */
@@ -337,6 +337,11 @@ const plugin = buildPlugin(({ addComponents, addBase }) => {
         '@apply max-w-[1312px]': {}
       }
     },
+    // Limit reached pattern
+    '.diagonal-stripes': {
+      backgroundImage:
+        'repeating-linear-gradient(-45deg, transparent, transparent 5px, var(--outline-3) 7px)'
+    },
     // Simple scrollbar (OSX-like) to use instead of the ugly browser one
     '.simple-scrollbar': {
       'scrollbar-width': 'var(--simple-scrollbar-width)',
@@ -380,5 +385,4 @@ const plugin = buildPlugin(({ addComponents, addBase }) => {
   })
 }, preset)
 
-export default plugin
 export { plugin }

@@ -62,11 +62,7 @@
       :email="emailData.email"
     />
 
-    <SettingsUserEmailDeleteDialog
-      v-model:open="showDeleteDialog"
-      :email="emailData"
-      :is-verifying="!emailData.verified"
-    />
+    <SettingsUserEmailDeleteDialog v-model:open="showDeleteDialog" :email="emailData" />
   </div>
 </template>
 

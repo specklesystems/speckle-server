@@ -7,6 +7,10 @@ import {
 import { ServerScope } from '@speckle/shared'
 import { Merge } from 'type-fest'
 
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+
+const workspaceScopes = FF_WORKSPACES_MODULE_ENABLED ? [Scopes.Workspaces.Read] : []
+
 export enum DefaultAppIds {
   Web = 'spklwebapp',
   Explorer = 'explorer',
@@ -56,7 +60,8 @@ const SpeckleDesktopApp = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    ...workspaceScopes
   ]
 }
 
@@ -74,7 +79,8 @@ const SpeckleConnectorApp = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    ...workspaceScopes
   ]
 }
 
@@ -94,7 +100,8 @@ const SpeckleDesktopAuthService = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    ...workspaceScopes
   ]
 }
 
@@ -121,8 +128,7 @@ const SpecklePowerBi = {
   id: DefaultAppIds.PowerBI,
   secret: DefaultAppIds.PowerBI,
   name: 'Speckle Connector For PowerBI',
-  description:
-    'The Speckle Connector For Excel. For more info check the docs here: https://speckle.guide/user/powerbi.html.',
+  description: 'The Speckle Connector for Power BI.',
   trustByDefault: true,
   public: true,
   redirectUrl: 'https://oauth.powerbi.com/views/oauthredirect.html',

@@ -5,6 +5,7 @@ import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import { AsyncPause } from '../../World.js'
 import Logger from '../../utils/Logger.js'
+import { TIME_MS } from '@speckle/shared'
 
 export class SpeckleLoader extends Loader {
   protected loader: ObjectLoader
@@ -102,7 +103,6 @@ export class SpeckleLoader extends Loader {
 
     const pause = new AsyncPause()
 
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this.resource)
@@ -135,7 +135,7 @@ export class SpeckleLoader extends Loader {
 
     Logger.warn(
       `Finished converting object ${this.resource} in ${
-        (performance.now() - start) / 1000
+        (performance.now() - start) / TIME_MS.second
       } seconds. Node count: ${this.tree.nodeCount}`
     )
 

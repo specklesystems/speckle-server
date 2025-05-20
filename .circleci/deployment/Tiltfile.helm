@@ -16,8 +16,8 @@ if IS_LOAD_DOCKER:
 else:
   symbols = load_dynamic('./Tiltfile.build')
 
-# Prepare the Speckle images
-# (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
+# # Prepare the Speckle images
+# # (builds the images or pulls them from remote)
 speckle_image = symbols['speckle_image']
 speckle_image('fileimport-service')
 speckle_image('frontend-2')

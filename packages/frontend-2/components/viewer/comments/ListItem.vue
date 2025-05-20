@@ -2,67 +2,83 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
-      ${isOpenInViewer ? 'border-primary' : 'border-transparent'}
+    :class="`p-1.5 pb-1 flex flex-col rounded-md
+      ${isOpenInViewer ? 'bg-highlight-2' : ''}
+      ${isLimited ? 'cursor-default' : 'cursor-pointer hover:bg-highlight-3'}
     `"
-    @click="open(thread.id)"
+    @click="isLimited ? null : open(thread.id)"
   >
-    <div class="flex justify-between items-center">
-      <UserAvatarGroup :users="threadAuthors" />
+    <div class="flex w-full items-center">
+      <div class="flex-1 flex flex-col gap-y-1.5">
+        <div class="flex items-center space-x-1.5 select-none">
+          <UserAvatarGroup :users="threadAuthors" size="sm" />
+          <span class="grow truncate text-body-2xs text-foreground">
+            {{ thread.author.name }}
+            <span v-if="threadAuthors.length !== 1">
+              & {{ thread.replyAuthors.totalCount }} others
+            </span>
+          </span>
+        </div>
+        <div
+          v-if="!isLimited"
+          class="text-body-2xs text-foreground dark:text-foreground-2 line-clamp-2"
+        >
+          {{ thread.rawText }}
+        </div>
+        <ViewerResourcesUpgradeLimitAlert v-else limit-type="comment" />
+        <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
+          <div
+            v-if="itemStatus.isDifferentVersion || itemStatus.isFederatedModel"
+            class="flex items-center space-x-1"
+          >
+            <div
+              v-if="itemStatus.isDifferentVersion"
+              v-tippy="'Conversation started in a different version.'"
+            >
+              <ClockIcon class="w-4 h-4" />
+            </div>
+            <div
+              v-if="itemStatus.isFederatedModel"
+              v-tippy="'References models not currently loaded.'"
+            >
+              <ExclamationCircleIcon class="w-4 h-4" />
+            </div>
+          </div>
+          <span>
+            {{ thread.replies.totalCount }}
+            {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
+          </span>
+          <span v-tippy="createdAt.full">
+            {{ createdAt.relative }}
+          </span>
+        </div>
+      </div>
       <FormButton
+        v-if="!isLimited"
         v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
         :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
         text
         hide-text
         :disabled="!canArchiveOrUnarchive"
         @click.stop="toggleCommentResolvedStatus()"
-      ></FormButton>
-    </div>
-    <div class="flex items-center space-x-1">
-      <span class="grow truncate text-body-xs font-medium text-foreground-2">
-        {{ thread.author.name }}
-        <span v-if="threadAuthors.length !== 1">
-          & {{ thread.replyAuthors.totalCount }} others
-        </span>
-      </span>
-    </div>
-    <div class="truncate text-body-xs mb-1">
-      {{ thread.rawText }}
-    </div>
-    <div
-      :class="`text-xs font-medium flex items-center space-x-2 ${
-        thread.replies.totalCount > 0 ? 'text-primary' : 'text-foreground-2'
-      } mb-1`"
-    >
-      <span
-        v-if="!isThreadResourceLoaded"
-        v-tippy="'Conversation started in a different version.'"
-      >
-        <ExclamationCircleIcon class="w-4 h-4" />
-      </span>
-      <span>
-        {{ thread.replies.totalCount }}
-        {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
-      </span>
-      <span v-tippy="createdAt.full" class="text-foreground-2 text-body-2xs">
-        {{ createdAt.relative }}
-      </span>
+      />
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'
 import {
   useInjectedViewerInterfaceState,
-  useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
+import {
+  useArchiveComment,
+  useCommentContext
+} from '~~/lib/viewer/composables/commentManagement'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -72,7 +88,6 @@ const props = defineProps<{
   thread: LoadedCommentThread
 }>()
 
-const { resourceItems } = useInjectedViewerLoadedResources()
 const {
   threads: { openThread }
 } = useInjectedViewerInterfaceState()
@@ -87,6 +102,10 @@ const {
   }
 } = useInjectedViewerState()
 
+const isLimited = computed(() => {
+  return !props.thread.rawText || props.thread.rawText.trim() === ''
+})
+
 const mp = useMixpanel()
 const open = (id: string) => {
   openThreadRaw(id)
@@ -98,30 +117,14 @@ const open = (id: string) => {
   })
 }
 
+const { calculateThreadResourceStatus } = useCommentContext()
+const itemStatus = computed(() => calculateThreadResourceStatus(props.thread))
+
 const createdAt = computed(() => {
   return {
     full: formattedFullDate(props.thread.createdAt),
     relative: formattedRelativeDate(props.thread.createdAt, { capitalize: true })
   }
-})
-
-const isThreadResourceLoaded = computed(() => {
-  const thread = props.thread
-  const loadedResources = resourceItems.value
-  const resourceLinks = thread.resources
-
-  const objectLinks = resourceLinks
-    .filter((l) => l.resourceType === ResourceType.Object)
-    .map((l) => l.resourceId)
-  const commitLinks = resourceLinks
-    .filter((l) => l.resourceType === ResourceType.Commit)
-    .map((l) => l.resourceId)
-
-  if (loadedResources.some((lr) => objectLinks.includes(lr.objectId))) return true
-  if (loadedResources.some((lr) => lr.versionId && commitLinks.includes(lr.versionId)))
-    return true
-
-  return false
 })
 
 const isOpenInViewer = computed(() => openThread.thread.value?.id === props.thread.id)
@@ -153,7 +156,7 @@ const toggleCommentResolvedStatus = async () => {
     status: !props.thread.archived
   })
   triggerNotification({
-    description: `Thread ${props.thread.archived ? 'reopened.' : 'resolved.'}`,
+    title: `Thread ${props.thread.archived ? 'reopened.' : 'resolved.'}`,
     type: ToastNotificationType.Info
   })
 }
