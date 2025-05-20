@@ -29,5 +29,5 @@ jobs:
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: speckle/speckle-server:${needs.get-version.outputs.IMAGE_VERSION_TAG}
+          tags: speckle/speckle-server:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./packages/server/Dockerfile
