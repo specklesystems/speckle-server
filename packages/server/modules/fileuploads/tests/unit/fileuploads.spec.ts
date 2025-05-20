@@ -110,7 +110,6 @@ describe('FileUploads @fileuploads', () => {
           getServerOrigin: () => serverOrigin,
           scheduleJob: async (jobData) => {
             assign(result, jobData)
-            return Promise.resolve(cryptoRandomString({ length: 10 }))
           },
           createAppToken: (args) => {
             usedUserId = args.userId
