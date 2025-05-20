@@ -5,7 +5,7 @@ on: pull_request
 jobs:
   get-version:
     outputs:
-      IMAGE_VERSION_TAG: ${{ steps.step6.outputs.IMAGE_VERSION_TAG }}
+      IMAGE_VERSION_TAG: ${{ steps.step6.outputs }}
     name: Get version
     runs-on: blacksmith
     defaults:
@@ -17,7 +17,7 @@ jobs:
       - run: chmod +x ./get_version.sh ./common.sh
       - run: result=$(./get_version.sh)
       - run: echo "IMAGE_VERSION_TAG=${result}"
-      - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}" >> "$GITHUB_OUTPUT"
+      - run: echo "${result}" >> "$GITHUB_OUTPUT"
 
   # TODO:
   docker-build-server:
