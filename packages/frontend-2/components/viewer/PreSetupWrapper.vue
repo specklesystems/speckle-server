@@ -102,6 +102,7 @@
       :name="modelName || 'Loading...'"
       :date="lastUpdate"
       :url="route.path"
+      :hide-speckle-branding="hideSpeckleBranding"
     />
     <Portal to="primary-actions">
       <HeaderNavShare
@@ -136,6 +137,9 @@ graphql(`
       slug
       name
       role
+    }
+    embedOptions {
+      hideSpeckleBranding
     }
   }
 `)
@@ -254,6 +258,10 @@ const lastUpdate = computed(() => {
   } else if (project.value) {
     return 'Created ' + dayjs(project.value.createdAt).fromNow()
   } else return undefined
+})
+
+const hideSpeckleBranding = computed(() => {
+  return project.value ? project.value?.embedOptions?.hideSpeckleBranding : true
 })
 
 useHead({ title })

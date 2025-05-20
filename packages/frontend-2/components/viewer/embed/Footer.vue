@@ -4,14 +4,16 @@
       v-if="isEmbedEnabled"
       class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-3 px-4 h-14 items-center bg-foundation"
     >
-      <HeaderLogoBlock
-        large-icon
-        to="https://speckle.systems/"
-        target="_blank"
-        show-text-on-mobile
-        :active="false"
-      />
-      <div class="h-6 w-px bg-outline-3"></div>
+      <template v-if="!hideSpeckleBranding">
+        <HeaderLogoBlock
+          large-icon
+          to="https://speckle.systems/"
+          target="_blank"
+          show-text-on-mobile
+          :active="false"
+        />
+        <div class="h-6 w-px bg-outline-3"></div>
+      </template>
       <div class="flex flex-col">
         <NuxtLink :to="url" target="_blank" class="leading-3">
           <div class="flex items-center gap-1 w-full">
@@ -37,6 +39,7 @@ defineProps<{
   date?: string
   name?: string
   url?: string
+  hideSpeckleBranding?: boolean
 }>()
 
 const { isEmbedEnabled } = useEmbed()
