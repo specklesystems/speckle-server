@@ -15,7 +15,7 @@ jobs:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-        options: --entrypoint="docker-entrypoint.sh postgres -c max_connections=1000"
+        # TODO: add it in the dockerfile as a separate mr
       minio:
         image: 'minio/minio'
     env:
