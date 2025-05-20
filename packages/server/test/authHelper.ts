@@ -133,6 +133,16 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   })
   setVal('id', id)
 
+  // if (userObj?.verified && userObj.email) {
+  //   await createUserEmailFactory({ db })({
+  //     userEmail: {
+  //       userId: id,
+  //       email: userObj.email,
+  //       verified: true
+  //     }
+  //   })
+  // }
+
   return baseUser
 }
 
