@@ -14,8 +14,7 @@ const isEnableAllFFsMode = () =>
   ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
 export const parseFeatureFlags = (
-  input: // | Record<string, string | undefined>
-  Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>,
+  input: Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>,
   options?: Partial<{
     /**
      * Whether to prevent inputs from being overriden by disable/enable all
