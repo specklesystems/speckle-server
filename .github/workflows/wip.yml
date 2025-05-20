@@ -15,7 +15,7 @@ jobs:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-        options: --entrypoint='postgres -c max_connections=1000'
+        options: --entrypoint="postgres -c max_connections=1000"
       minio:
         image: 'minio/minio'
     env:
