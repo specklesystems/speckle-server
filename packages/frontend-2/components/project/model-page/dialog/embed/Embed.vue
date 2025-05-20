@@ -278,7 +278,7 @@ const embedDialogOptions = [
   },
   {
     id: 'disableModelLink',
-    label: 'Disable model title link',
+    label: 'No link back to web viewer',
     value: disableModelLink
   },
   {
