@@ -1,68 +1,59 @@
 /* eslint-disable camelcase */
 /* istanbul ignore file */
-const chai = require('chai')
+import chai from 'chai'
 
 const expect = chai.expect
 
-const {
+import {
   createBareToken,
   createAppTokenFactory,
   createPersonalAccessTokenFactory
-} = require('@/modules/core/services/tokens')
-const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const { Scopes } = require('@speckle/shared')
-const {
+} from '@/modules/core/services/tokens'
+import { beforeEachContext, initializeTestServer } from '@/test/hooks'
+import { Scopes } from '@speckle/shared'
+import {
   createAuthorizationCodeFactory,
   getAuthorizationCodeFactory,
   deleteAuthorizationCodeFactory,
   getAppFactory,
   createRefreshTokenFactory
-} = require('@/modules/auth/repositories/apps')
-const { db } = require('@/db/knex')
-const {
-  createAppTokenFromAccessCodeFactory
-} = require('@/modules/auth/services/serverApps')
-const {
+} from '@/modules/auth/repositories/apps'
+import { db } from '@/db/knex'
+import { createAppTokenFromAccessCodeFactory } from '@/modules/auth/services/serverApps'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import {
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
+} from '@/modules/core/repositories/users'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
+} from '@/modules/serverinvites/repositories/serverInvites'
+import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storeUserServerAppTokenFactory,
   storePersonalApiTokenFactory
-} = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { BasicTestUser } from '@/test/authHelper'
 
-let sendRequest
+let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
 const createAppToken = createAppTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -120,10 +111,10 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 })
 
 describe('GraphQL @apps-api', () => {
-  let testUser
-  let testUser2
-  let testToken
-  let testToken2
+  let testUser: BasicTestUser
+  let testUser2: BasicTestUser
+  let testToken: string
+  let testToken2: string
 
   before(async () => {
     const ctx = await beforeEachContext()
@@ -131,7 +122,8 @@ describe('GraphQL @apps-api', () => {
     testUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@example.org',
-      password: 'wtfwtfwtf'
+      password: 'wtfwtfwtf',
+      id: ''
     }
 
     testUser.id = await createUser(testUser)
@@ -144,7 +136,8 @@ describe('GraphQL @apps-api', () => {
     testUser2 = {
       name: 'Mr. Mac',
       email: 'steve@jobs.com',
-      password: 'wtfwtfwtf'
+      password: 'wtfwtfwtf',
+      id: ''
     }
 
     testUser2.id = await createUser(testUser2)
@@ -155,8 +148,8 @@ describe('GraphQL @apps-api', () => {
     ])}`
   })
 
-  let testAppId
-  let testApp
+  let testAppId: string
+  let testApp: { secret: string }
 
   it('Should create an app', async () => {
     const query =

@@ -324,7 +324,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
 
     try {
@@ -336,7 +336,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
 
     try {
@@ -350,7 +350,7 @@ describe('Branches @core-branches', () => {
       )
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
 
     try {
@@ -364,7 +364,7 @@ describe('Branches @core-branches', () => {
       )
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
 
     try {
@@ -376,7 +376,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
   })
 

@@ -81,11 +81,12 @@ import { SetOptional } from 'type-fest'
 import {
   enterNewRequestContext,
   getRequestContext,
-  initiateRequestContextMiddleware
-} from '@/observability/components/express/requestContext'
+  isRequestContext
+} from '@/observability/utils/requestContext'
 import { randomUUID } from 'crypto'
 import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
 import { initApolloSubscriptionMonitoring } from '@/observability/components/apollo/metrics/apolloSubscriptionMonitoring'
+import { initiateRequestContextMiddleware } from '@/observability/components/express/requestContextMiddleware'
 import { createRateLimiterMiddleware } from '@/modules/core/rest/ratelimiter'
 import { TIME_MS } from '@speckle/shared'
 
@@ -225,7 +226,7 @@ export function buildApolloSubscriptionServer(params: {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
             headers: sanitizeHeaders(headers),
-            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
+            ...(isRequestContext(reqCtx) ? { req: { id: reqCtx.requestId } } : {})
           },
           'Websocket disconnected.'
         )

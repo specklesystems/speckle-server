@@ -6,7 +6,7 @@ import { FieldNode, SelectionNode } from 'graphql'
 import { ApolloServerPlugin } from '@apollo/server'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { shouldLogAsInfoLevel } from '@/observability/utils/logLevels'
-import { getRequestContext } from '@/observability/components/express/requestContext'
+import { getRequestContext } from '@/observability/utils/requestContext'
 
 type ApolloLoggingPluginTransaction = {
   start: number

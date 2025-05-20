@@ -1,9 +1,9 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
+import { expect } from 'chai'
 
-const { init } = require('@/app')
-const { knex } = require('@/db/knex')
-const { beforeEachContext } = require('@/test/hooks')
+import { init } from '@/app'
+import { knex } from '@/db/knex'
+import { beforeEachContext } from '@/test/hooks'
 
 // NOTE:
 // These tests check that the initialization routine of the whole server
