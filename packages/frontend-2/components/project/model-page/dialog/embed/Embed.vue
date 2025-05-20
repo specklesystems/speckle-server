@@ -130,6 +130,7 @@ const mp = useMixpanel()
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
+const disableModelLink = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const projectVisibility = ref(props.project.visibility)
@@ -274,6 +275,11 @@ const embedDialogOptions = [
     id: 'hideSelectionInfo',
     label: 'Hide the selection info panel',
     value: hideSelectionInfo
+  },
+  {
+    id: 'disableModelLink',
+    label: 'Disable model title link',
+    value: disableModelLink
   },
   {
     id: 'noScroll',

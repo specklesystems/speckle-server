@@ -103,6 +103,7 @@
       :date="lastUpdate"
       :url="route.path"
       :hide-speckle-branding="hideSpeckleBranding"
+      :disable-model-link="disableModelLink"
     />
     <Portal to="primary-actions">
       <HeaderNavShare
@@ -175,7 +176,8 @@ const {
   isEnabled: isEmbedEnabled,
   hideSelectionInfo,
   isTransparent,
-  showControls
+  showControls,
+  disableModelLink
 } = useEmbed()
 const mp = useMixpanel()
 
