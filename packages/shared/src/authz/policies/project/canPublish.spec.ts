@@ -18,7 +18,10 @@ const buildCanPublishPolicy = (
   overrides?: Partial<Parameters<typeof canPublishPolicy>[0]>
 ) =>
   canPublishPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () =>
+      parseFeatureFlags({
+        FF_WORKSPACES_MODULE_ENABLED: 'true'
+      }),
     getProject: async () => ({
       id: 'project-id',
       workspaceId: null,

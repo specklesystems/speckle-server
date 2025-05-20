@@ -36,7 +36,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getWorkspaceRole: async () => null,
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       ...overrides
     })
 
@@ -268,7 +268,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
         id: 'projectId',
         workspaceId: null
       }),
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -423,7 +423,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       getAdminOverrideEnabled: async () => false,
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -661,7 +661,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       }),
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,

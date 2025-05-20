@@ -21,7 +21,10 @@ const buildCanUpdateEmbedOptionsPolicy = (
   const workspaceId = cryptoRandomString({ length: 9 })
 
   return canUpdateEmbedOptionsPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () =>
+      parseFeatureFlags({
+        FF_WORKSPACES_MODULE_ENABLED: 'true'
+      }),
     getServerRole: async () => Roles.Server.Admin,
     getWorkspace: async () => {
       return {
