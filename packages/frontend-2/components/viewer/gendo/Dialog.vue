@@ -48,22 +48,9 @@
         </div>
         <div v-else class="flex items-center gap-2">
           <p class="text-body-xs text-foreground-2">Thanks for your feedback!</p>
-          <FormButton color="outline" @click="isFeedbackDialogOpen = true">
-            Give detailed feedback
-          </FormButton>
         </div>
       </div>
     </div>
-    <FeedbackDialog
-      v-model:open="isFeedbackDialogOpen"
-      type="gendo"
-      :intro="feedbackIntro"
-      :metadata="{
-        initialFeedback: initialFeedback,
-        render_url: renderUrl,
-        prompt: renderPrompt
-      }"
-    />
   </LayoutDialog>
 </template>
 
@@ -82,16 +69,8 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const isFeedbackDialogOpen = ref(false)
 const hasFeedback = ref(false)
 const initialFeedback = ref<FeedbackValue>()
-
-const feedbackIntro = computed(() => {
-  if (initialFeedback.value === 'positive') {
-    return "Great to hear you liked this render! Help us make Gendo even better - what worked well about this render? Are there specific features you'd like to see?"
-  }
-  return "We're sorry this render didn't meet your expectations. Please help us improve - what aspects didn't work well? What would have made this render more useful for you?"
-})
 
 const handleFeedback = (value: FeedbackValue) => {
   initialFeedback.value = value

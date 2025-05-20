@@ -113,7 +113,6 @@ const getStream = () => {
     // Revit sample house (good for bim-like stuff with many display meshes)
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
-    //  'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
     //  'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
     // IFC building (good for a tree based structure)
@@ -136,7 +135,7 @@ const getStream = () => {
     //Car
     // 'https://latest.speckle.systems/streams/17d2e25a97/commits/6b6cf3d43e'
     // Jonathon's
-    'https://latest.speckle.systems/streams/501258ee5f/commits/f885570011'
+    // 'https://latest.speckle.systems/streams/501258ee5f/commits/f885570011'
     // Alex's cube
     // 'https://latest.speckle.systems/streams/46e3e0e1ec/commits/a6392c19d6?c=%5B6.85874,2.9754,0.79022,0,0,0,0,1%5D'
     // Groups of groups
@@ -336,7 +335,8 @@ const getStream = () => {
 
     // Far away instances
     // 'https://latest.speckle.systems/streams/ee5346d3e1/commits/576310a6d5'
-    // 'https://latest.speckle.systems/streams/ee5346d3e1/commits/489d42ca8c'
+
+    // Door+wall instances
     // 'https://latest.speckle.systems/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
     // 'https://app.speckle.systems/streams/0ed2cdc8eb/commits/350c4e1a4d'
 
@@ -355,8 +355,11 @@ const getStream = () => {
 
     // 'https://latest.speckle.systems/streams/e9285828d7/commits/9b80b7a70c'
     // 'https://app.speckle.systems/streams/b85d53c3b4/commits/be26146460'
+
     // Germany
     // 'https://latest.speckle.systems/streams/7117052f4e/commits/a646bf659e'
+
+    // Diffing tests
     // 'https://latest.speckle.systems/streams/aea12cab71/commits/787ade768e'
     // 'https://app.speckle.systems/streams/a29e5c7772/commits/a8cfae2645'
     // 'https://latest.speckle.systems/streams/9d71f041b2/commits/01279333e5'
@@ -449,7 +452,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9'
 
     // Far away house section tool
-    // 'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9@80db5ff26a'
+    'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9@80db5ff26a'
 
     // 'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/49874f87a2ddd370bd2bf46b68c3660d'
@@ -529,6 +532,13 @@ const getStream = () => {
 
     // MONSTER
     // 'https://app.speckle.systems/projects/40df04e516/models/5658c83729@29b08a8601'
+    // Materials in blocks full
+    // 'https://app.speckle.systems/projects/1b96a34aae/models/673312057e'
+    // Materials in blocks single
+    // 'https://app.speckle.systems/projects/f7bb16037a/models/5d090c6f07'
+
+    // Large topological stuff
+    // 'https://app.speckle.systems/projects/7a489ac0d4/models/146d5fbe27,3e481c9a58,65b4cf97d5,6d07577256,903850fa6f'
   )
 }
 

@@ -1,17 +1,17 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
+import { expect } from 'chai'
 
-const {
+import {
   createBareToken,
   createAppTokenFactory,
   validateTokenFactory
-} = require(`@/modules/core/services/tokens`)
-const { beforeEachContext } = require(`@/test/hooks`)
+} from '@/modules/core/services/tokens'
+import { beforeEachContext } from '@/test/hooks'
 
-const { Scopes } = require('@/modules/core/helpers/mainConstants')
-const { knex } = require('@/db/knex')
-const cryptoRandomString = require('crypto-random-string')
-const {
+import { Scopes } from '@/modules/core/helpers/mainConstants'
+import { knex } from '@/db/knex'
+import cryptoRandomString from 'crypto-random-string'
+import {
   getAppFactory,
   updateDefaultAppFactory,
   getAllPublicAppsFactory,
@@ -26,43 +26,35 @@ const {
   getRefreshTokenFactory,
   revokeRefreshTokenFactory,
   getTokenAppInfoFactory
-} = require('@/modules/auth/repositories/apps')
-const {
+} from '@/modules/auth/repositories/apps'
+import {
   createAppTokenFromAccessCodeFactory,
   refreshAppTokenFactory
-} = require('@/modules/auth/services/serverApps')
-const {
+} from '@/modules/auth/services/serverApps'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import {
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory,
   getUserRoleFactory
-} = require('@/modules/core/repositories/users')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
+} from '@/modules/core/repositories/users'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
+} from '@/modules/serverinvites/repositories/serverInvites'
+import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
@@ -72,9 +64,16 @@ const {
   getTokenScopesByIdFactory,
   getTokenResourceAccessDefinitionsByIdFactory,
   updateApiTokenFactory
-} = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { BasicTestUser } from '@/test/authHelper'
+import { AppScopes, ensureError } from '@speckle/shared'
+import { ValidTokenResult } from '@/modules/core/helpers/types'
+import {
+  DefaultAppIds,
+  DefaultAppWithUnwrappedScopes
+} from '@/modules/auth/defaultApps'
 
 const db = knex
 const getApp = getAppFactory({ db: knex })
@@ -156,10 +155,11 @@ const validateToken = validateTokenFactory({
 })
 
 describe('Services @apps-services', () => {
-  const actor = {
+  const actor: BasicTestUser = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@example.org',
-    password: 'wtfwtfwtf'
+    password: 'wtfwtfwtf',
+    id: ''
   }
 
   before(async () => {
@@ -173,7 +173,8 @@ describe('Services @apps-services', () => {
       name: testAppName,
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id
     })
 
     expect(res).to.have.property('id')
@@ -183,7 +184,7 @@ describe('Services @apps-services', () => {
     expect(res.secret).to.be.a('string')
 
     const app = await getApp({ id: res.id })
-    expect(app.id).to.equal(res.id)
+    expect(app?.id).to.equal(res.id)
   })
 
   it('Should get all the public apps on this server', async () => {
@@ -193,7 +194,12 @@ describe('Services @apps-services', () => {
   })
 
   it('Should fail to register an app with no scopes', async () => {
-    await createApp({ name: 'test application2', redirectUrl: 'http://127.0.0.1:1335' })
+    await createApp({
+      name: 'test application2',
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id,
+      scopes: undefined as unknown as AppScopes[]
+    })
       .then(() => {
         throw new Error('this should have been rejected')
       })
@@ -207,7 +213,8 @@ describe('Services @apps-services', () => {
       name: cryptoRandomString({ length: 10 }),
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id
     })
     const res = await updateApp({
       app: {
@@ -219,10 +226,10 @@ describe('Services @apps-services', () => {
     expect(res).to.be.a('string')
 
     const app = await getApp({ id: myTestApp.id })
-    expect(app.name).to.equal('updated test application')
-    expect(app.scopes).to.be.an('array')
-    expect(app.scopes.map((s) => s.name)).to.include(Scopes.Users.Read)
-    expect(app.scopes.map((s) => s.name)).to.include(Scopes.Streams.Read)
+    expect(app?.name).to.equal('updated test application')
+    expect(app?.scopes).to.be.an('array')
+    expect(app?.scopes.map((s) => s.name)).to.include(Scopes.Users.Read)
+    expect(app?.scopes.map((s) => s.name)).to.include(Scopes.Streams.Read)
   })
 
   const challenge = 'random'
@@ -232,7 +239,8 @@ describe('Services @apps-services', () => {
       name: cryptoRandomString({ length: 10 }),
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id
     })
     const authorizationCode = await createAuthorizationCode({
       appId: myTestApp.id,
@@ -247,7 +255,8 @@ describe('Services @apps-services', () => {
       name: cryptoRandomString({ length: 10 }),
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id
     })
     const authorizationCode = await createAuthorizationCode({
       appId: myTestApp.id,
@@ -267,7 +276,7 @@ describe('Services @apps-services', () => {
     expect(response).to.have.property('refreshToken')
     expect(response.refreshToken).to.be.a('string')
 
-    const validation = await validateToken(response.token)
+    const validation = (await validateToken(response.token)) as ValidTokenResult
     expect(validation.valid).to.equal(true)
     expect(validation.userId).to.equal(actor.id)
     expect(validation.scopes[0]).to.equal(Scopes.Streams.Read)
@@ -278,7 +287,8 @@ describe('Services @apps-services', () => {
       name: cryptoRandomString({ length: 10 }),
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id
     })
     const authorizationCode = await createAuthorizationCode({
       appId: myTestApp.id,
@@ -301,14 +311,13 @@ describe('Services @apps-services', () => {
     const res = await refreshAppToken({
       refreshToken: tokenCreateResponse.refreshToken,
       appId: myTestApp.id,
-      appSecret: myTestApp.secret,
-      userId: actor.id
+      appSecret: myTestApp.secret
     })
 
     expect(res.token).to.be.a('string')
     expect(res.refreshToken).to.be.a('string')
 
-    const validation = await validateToken(res.token)
+    const validation = (await validateToken(res.token)) as ValidTokenResult
     expect(validation.valid).to.equal(true)
     expect(validation.userId).to.equal(actor.id)
   })
@@ -318,7 +327,8 @@ describe('Services @apps-services', () => {
       name: cryptoRandomString({ length: 10 }),
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id
     })
     const unusedAccessCode = await createAuthorizationCode({
       appId: myTestApp.id,
@@ -385,8 +395,8 @@ describe('Services @apps-services', () => {
     it(`Should get the default app: ${speckleAppId}`, async () => {
       const app = await getApp({ id: speckleAppId })
       expect(app).to.be.an('object')
-      expect(app.redirectUrl).to.be.a('string')
-      expect(app.scopes).to.be.a('array')
+      expect(app?.redirectUrl).to.be.a('string')
+      expect(app?.scopes).to.be.a('array')
     })
     it(`Should not invalidate tokens, refresh tokens and access codes for default app: ${speckleAppId}, if updated`, async () => {
       const [unusedAccessCode, usedAccessCode] = await Promise.all([
@@ -418,14 +428,14 @@ describe('Services @apps-services', () => {
       await updateDefaultApp(
         {
           name: 'updated test application',
-          id: speckleAppId,
+          id: speckleAppId as DefaultAppIds,
           scopes: newScopes
-        },
-        existingApp
+        } as DefaultAppWithUnwrappedScopes,
+        existingApp!
       )
       const updatedApp = await getApp({ id: speckleAppId })
 
-      expect(updatedApp.scopes.map((s) => s.name)).to.equalInAnyOrder(newScopes)
+      expect(updatedApp?.scopes.map((s) => s.name)).to.deep.equalInAnyOrder(newScopes)
 
       const validationResponse = await validateToken(apiTokenResponse.token)
       expect(validationResponse.valid).to.equal(true)
@@ -447,7 +457,7 @@ describe('Services @apps-services', () => {
       expect(appToken.token).to.exist
       expect(appToken.refreshToken).to.exist
 
-      const apiTokens = await knex('user_server_app_tokens')
+      const apiTokens = (await knex('user_server_app_tokens')
         .join(
           'token_scopes',
           'user_server_app_tokens.tokenId',
@@ -456,7 +466,7 @@ describe('Services @apps-services', () => {
         )
         .where({
           appId: speckleAppId
-        })
+        })) as { scopeName: string }[]
 
       expect(newScopes).to.include.members(apiTokens.map((t) => t.scopeName))
     })
@@ -471,19 +481,21 @@ describe('Services @apps-services', () => {
           name: 'updated test application',
           id: speckleAppId,
           scopes: ['aWeird:Scope']
-        },
-        existingApp
+        } as unknown as DefaultAppWithUnwrappedScopes,
+        existingApp!
       )
       throw new Error('This should have failed')
     } catch (err) {
       // check that the weird:Scope violates a foreign key constraint...
       // leaky abstractions i know, but no better way to test this for now
-      expect(err.message).to.contain('server_apps_scopes_scopename_foreign')
+      expect(ensureError(err).message).to.contain(
+        'server_apps_scopes_scopename_foreign'
+      )
     }
     const notUpdatedApp = await getApp({ id: speckleAppId })
     // check that no harm was done
-    expect(notUpdatedApp.name).to.equal(existingApp.name)
-    expect(notUpdatedApp.scopes).to.equalInAnyOrder(existingApp.scopes)
+    expect(notUpdatedApp?.name).to.equal(existingApp?.name)
+    expect(notUpdatedApp?.scopes).to.deep.equalInAnyOrder(existingApp?.scopes)
   })
 
   it('Should revoke access for a given user', async () => {
@@ -491,12 +503,14 @@ describe('Services @apps-services', () => {
       name: cryptoRandomString({ length: 10 }),
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id
     })
-    const secondUser = {
+    const secondUser: BasicTestUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie.wow@example.org',
-      password: 'wtfwtfwtf'
+      password: 'wtfwtfwtf',
+      id: ''
     }
 
     secondUser.id = await createUser(secondUser)
@@ -557,7 +571,8 @@ describe('Services @apps-services', () => {
       name: cryptoRandomString({ length: 10 }),
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
+      redirectUrl: 'http://127.0.0.1:1335',
+      authorId: actor.id
     })
     const res = await deleteApp({ id: myTestApp.id })
     expect(res).to.equal(1)

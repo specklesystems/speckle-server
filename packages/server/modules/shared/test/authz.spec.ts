@@ -1,5 +1,5 @@
-const expect = require('chai').expect
-const {
+import { expect } from 'chai'
+import {
   authPipelineCreator,
   authFailed,
   authSuccess,
@@ -9,167 +9,227 @@ const {
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
   allowForServerAdmins,
   validateResourceAccess,
-  validateRequiredStreamFactory
-} = require('@/modules/shared/authz')
-const {
-  ForbiddenError: SFE,
-  UnauthorizedError: SUE,
+  validateRequiredStreamFactory,
+  AuthContext,
+  isAuthFailedResult,
+  AuthFailedResult
+} from '@/modules/shared/authz'
+import {
+  ForbiddenError as SFE,
+  UnauthorizedError as SUE,
   UnauthorizedError,
   ContextError,
-  NotFoundError
-} = require('@/modules/shared/errors')
-const { Roles } = require('@speckle/shared')
-const {
-  TokenResourceIdentifierType
-} = require('@/modules/core/graph/generated/graphql')
-const { ProjectRecordVisibility } = require('@/modules/core/helpers/types')
+  NotFoundError,
+  BaseError
+} from '@/modules/shared/errors'
+import { AvailableRoles, ensureError, Roles } from '@speckle/shared'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
+import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  AuthData,
+  AuthPipelineFunction,
+  AuthResult
+} from '@/modules/shared/domain/authz/types'
+import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 
 describe('AuthZ @shared', () => {
+  const buildFooAuthData = (): AuthData =>
+    ({
+      context: { foo: 'bar' } as unknown as AuthContext
+    } as AuthData)
+  const buildEmptyContext = (): AuthContext => ({} as unknown as AuthContext)
+  const buildEmptySuccess = () => authSuccess(buildEmptyContext())
+
   describe('Auth pipeline', () => {
     it('Empty pipeline returns no authorization', async () => {
       const pipeline = authPipelineCreator([])
-      const { authResult } = await pipeline({ context: { foo: 'bar' } })
+      const { authResult } = await pipeline(buildFooAuthData())
       expect(authResult.authorized).to.equal(false)
     })
     it('Pipeline breaks on fatal error', async () => {
       const errorMessage = 'dummy'
-      const fatalFail = async () => authFailed({}, new Error(errorMessage), true)
-      const shouldRescue = async () => authSuccess()
+      const fatalFail = async () =>
+        authFailed(buildEmptyContext(), new BaseError(errorMessage), true)
+      const shouldRescue = async () => buildEmptySuccess()
       const pipeline = authPipelineCreator([shouldRescue, fatalFail, shouldRescue])
-      const { authResult } = await pipeline({ context: { foo: 'bar' } })
+      const { authResult } = await pipeline(buildFooAuthData())
+
+      if (!isAuthFailedResult(authResult)) {
+        throw new Error('AuthResult should be an auth failed result')
+      }
+
       expect(authResult.authorized).to.equal(false)
       expect(authResult.fatal).to.equal(true)
-      expect(authResult.error.message).to.equal(errorMessage)
+      expect(authResult.error?.message).to.equal(errorMessage)
     })
     it('Pipeline continues for non fatal errors', async () => {
-      const nonFatalFail = async () => authFailed({}, new Error('errorMessage'), false)
-      const shouldRescue = async () => authSuccess()
+      const nonFatalFail = async () =>
+        authFailed(buildEmptyContext(), new BaseError('errorMessage'), false)
+      const shouldRescue = async () => buildEmptySuccess()
       const pipeline = authPipelineCreator([shouldRescue, nonFatalFail, shouldRescue])
-      const { authResult } = await pipeline({ context: { foo: 'bar' } })
+      const { authResult } = await pipeline(buildFooAuthData())
+
+      if (isAuthFailedResult(authResult)) {
+        throw new Error('AuthResult should not be an auth failed result')
+      }
+
       expect(authResult.authorized).to.equal(true)
-      expect(authResult.fatal).to.not.exist
-      expect(authResult.error).to.not.exist
     })
     it('Pipeline throws Error if authorized but has error', async () => {
-      const borkedStep = async () => ({
+      const borkedStep: AuthPipelineFunction = async () => ({
         authResult: {
           authorized: true,
           error: new UnauthorizedError('Weird stuff'),
           fatal: false
-        }
+        },
+        context: undefined as unknown as AuthContext
       })
       const pipeline = authPipelineCreator([borkedStep])
       try {
-        await pipeline({ context: { foo: 'bar' } })
+        await pipeline(buildFooAuthData())
         throw new Error('This should have thrown')
       } catch (err) {
-        expect(err.message).to.equal('Auth failure')
+        expect(ensureError(err).message).to.equal('Auth failure')
       }
     })
   })
 
   describe('Role validation', () => {
-    const rolesLookup = async () => [
-      { name: '1', weight: 1 },
-      { name: 'server:2', weight: 2 },
-      { name: '3', weight: 3 },
-      { name: 'goku', weight: 9001 },
-      { name: '42', weight: 42 }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rolesLookup: () => Promise<UserRoleData<any>[]> = async () => [
+      { name: '1', weight: 1, description: '', public: false },
+      { name: 'server:2', weight: 2, description: '', public: false },
+      { name: '3', weight: 3, description: '', public: false },
+      { name: 'goku', weight: 9001, description: '', public: false },
+      { name: '42', weight: 42, description: '', public: false }
     ]
 
     const testData = [
       {
         name: 'Having lower privileged role than required results auth failed',
         requiredRole: 'server:2',
-        context: { auth: true, role: '1' },
+        context: { auth: true, role: '1' } as unknown as AuthContext,
         expectedResult: authFailed(
-          null,
+          buildEmptyContext(),
           new SFE('You do not have the required server role')
         )
       },
       {
         name: 'Not having auth fails role validation',
         requiredRole: 'server:2',
-        context: { auth: false },
-        expectedResult: authFailed(null, new SUE('Must provide an auth token'))
+        context: { auth: false } as unknown as AuthContext,
+        expectedResult: authFailed(
+          buildEmptyContext(),
+          new SUE('Must provide an auth token')
+        )
       },
       {
         name: 'Requiring a junk role fails auth',
         requiredRole: 'knock knock...',
-        context: { auth: true, role: '1' },
-        expectedResult: authFailed(null, new SFE('Invalid role requirement specified'))
+        context: { auth: true, role: '1' } as unknown as AuthContext,
+        expectedResult: authFailed(
+          buildEmptyContext(),
+          new SFE('Invalid role requirement specified')
+        )
       },
       {
         name: 'Having a junk role fails auth',
         requiredRole: 'server:2',
-        context: { auth: true, role: 'iddqd' },
-        expectedResult: authFailed(null, new SFE('Your role is not valid'))
+        context: { auth: true, role: 'iddqd' } as unknown as AuthContext,
+        expectedResult: authFailed(
+          buildEmptyContext(),
+          new SFE('Your role is not valid')
+        )
       },
       {
         name: 'Not having the required level fails',
         requiredRole: 'goku',
-        context: { auth: true, role: '3' },
+        context: { auth: true, role: '3' } as unknown as AuthContext,
         expectedResult: authFailed(
-          null,
+          buildEmptyContext(),
           new SFE('You do not have the required goku role')
         )
       },
       {
         name: 'Having the god mode role defeats even higher privilege requirement',
         requiredRole: 'goku',
-        context: { auth: true, role: '42' },
-        expectedResult: authSuccess()
+        context: { auth: true, role: '42' } as unknown as AuthContext,
+        expectedResult: buildEmptySuccess()
       },
       {
         name: 'Having equal role weight to required succeeds',
         requiredRole: '3',
-        context: { auth: true, role: '3' },
-        expectedResult: authSuccess()
+        context: { auth: true, role: '3' } as unknown as AuthContext,
+        expectedResult: buildEmptySuccess()
       },
       {
         name: 'Having bigger role weight than required succeeds',
         requiredRole: '3',
-        context: { auth: true, role: 'goku' },
-        expectedResult: authSuccess()
+        context: { auth: true, role: 'goku' } as unknown as AuthContext,
+        expectedResult: buildEmptySuccess()
       }
     ]
 
     testData.forEach((testCase) =>
       it(`${testCase.name}`, async () => {
         const step = validateRole({
-          requiredRole: testCase.requiredRole,
+          requiredRole: testCase.requiredRole as unknown as AvailableRoles,
           rolesLookup,
-          iddqd: '42',
-          roleGetter: (context) => context.role
+          iddqd: '42' as AvailableRoles,
+          roleGetter: (context) => context.role || null
         })
         const { authResult, context } = await step({
           context: testCase.context,
-          authResult: authFailed()
+          authResult: { authorized: false }
         })
         expect(authResult.authorized).to.exist
         expect(authResult.authorized).to.equal(
           testCase.expectedResult.authResult.authorized
         )
-        // this also needs to check for the error type... is this how do you do that in JS????
-        expect(authResult.error?.name).to.equal(
-          testCase.expectedResult.authResult.error?.name
-        )
-        expect(authResult.error?.message).to.equal(
-          testCase.expectedResult.authResult.error?.message
-        )
+
+        if (
+          isAuthFailedResult(authResult) ||
+          isAuthFailedResult(testCase.expectedResult.authResult)
+        ) {
+          if (
+            !isAuthFailedResult(authResult) ||
+            !isAuthFailedResult(testCase.expectedResult.authResult)
+          ) {
+            throw new Error('AuthResult should be an auth failed result')
+          }
+
+          // this also needs to check for the error type... is this how do you do that in JS????
+          expect(authResult.error?.name).to.equal(
+            testCase.expectedResult.authResult.error?.name
+          )
+          expect(authResult.error?.message).to.equal(
+            testCase.expectedResult.authResult.error?.message
+          )
+        }
+
         expect(context).to.deep.equal(testCase.context)
       })
     )
     it('Role validation fails if input authResult is already in an error state', async () => {
-      const step = validateRole({ requiredRole: 'goku', rolesLookup, iddqd: '42' })
+      const step = validateRole({
+        requiredRole: 'goku' as AvailableRoles,
+        rolesLookup,
+        iddqd: '42' as AvailableRoles,
+        roleGetter: (context) => context.role || null
+      })
       const error = new SFE('This will be echoed back')
       const { authResult } = await step({
-        context: {},
-        authResult: { authorized: false, error }
+        context: buildEmptyContext(),
+        authResult: { authorized: false, error } as AuthFailedResult
       })
+
+      if (!isAuthFailedResult(authResult)) {
+        throw new Error('AuthResult should be an auth failed result')
+      }
+
       expect(authResult.authorized).to.be.false
-      expect(authResult.error.message).to.equal(error.message)
-      expect(authResult.error.name).to.equal(error.name)
+      expect(authResult.error?.message).to.equal(error.message)
+      expect(authResult.error?.name).to.equal(error.name)
     })
   })
 
@@ -178,53 +238,77 @@ describe('AuthZ @shared', () => {
       const step = validateScope({ requiredScope: 'play mahjong' })
       const expectedError = new SFE("Scope validation doesn't rescue the auth pipeline")
       const { authResult } = await step({
-        context: {},
-        authResult: { authorized: false, error: expectedError }
+        context: buildEmptyContext(),
+        authResult: { authorized: false, error: expectedError } as AuthFailedResult
       })
+
+      if (!isAuthFailedResult(authResult)) {
+        throw new Error('AuthResult should be an auth failed result')
+      }
+
       expect(authResult.authorized).to.be.false
-      expect(authResult.error.message).to.equal(expectedError.message)
-      expect(authResult.error.name).to.equal(expectedError.name)
+      expect(authResult.error?.message).to.equal(expectedError.message)
+      expect(authResult.error?.name).to.equal(expectedError.name)
     })
     it('Without having any scopes on the context cannot validate scopes', async () => {
       const step = validateScope({ requiredScope: 'play mahjong' })
-      const { authResult } = await step({ context: {}, authResult: {} })
+      const { authResult } = await step({
+        context: buildEmptyContext(),
+        authResult: { authorized: false }
+      })
+
+      if (!isAuthFailedResult(authResult)) {
+        throw new Error('AuthResult should be an auth failed result')
+      }
+
       expect(authResult.authorized).to.equal(false)
       const expectedError = new SFE(
         'Your auth token does not have the required scope: play mahjong.'
       )
-      expect(authResult.error.message).to.equal(expectedError.message)
-      expect(authResult.error.name).to.equal(expectedError.name)
+      expect(authResult.error?.message).to.equal(expectedError.message)
+      expect(authResult.error?.name).to.equal(expectedError.name)
     })
     it('Not having the right scopes results auth failed', async () => {
       const step = validateScope({ requiredScope: 'play mahjong' })
       const { authResult } = await step({
-        context: { scopes: ['sit around and wait', 'try to be cool'] },
-        authResult: {}
+        context: { scopes: ['sit around and wait', 'try to be cool'] } as AuthContext,
+        authResult: { authorized: false }
       })
+
+      if (!isAuthFailedResult(authResult)) {
+        throw new Error('AuthResult should be an auth failed result')
+      }
+
       expect(authResult.authorized).to.equal(false)
       const expectedError = new SFE(
         'Your auth token does not have the required scope: play mahjong.'
       )
 
-      expect(authResult.error.message).to.equal(expectedError.message)
-      expect(authResult.error.name).to.equal(expectedError.name)
+      expect(authResult.error?.message).to.equal(expectedError.message)
+      expect(authResult.error?.name).to.equal(expectedError.name)
     })
     it('Having the right scopes results auth success', async () => {
       const step = validateScope({ requiredScope: 'play mahjong' })
       const { authResult } = await step({
-        context: { scopes: ['sit around and wait', 'try to be cool', 'play mahjong'] },
-        authResult: {}
+        context: {
+          scopes: ['sit around and wait', 'try to be cool', 'play mahjong']
+        } as AuthContext,
+        authResult: { authorized: false }
       })
+
+      if (isAuthFailedResult(authResult)) {
+        throw new Error('AuthResult should not be an auth failed result')
+      }
+
       expect(authResult.authorized).to.equal(true)
-      expect(authResult.error).to.not.exist
     })
   })
 
   describe('Validate resource access', () => {
     it('Succeeds when no resource access rules present', async () => {
       const res = await validateResourceAccess({
-        context: {},
-        authResult: {}
+        context: buildEmptyContext(),
+        authResult: { authorized: false }
       })
 
       expect(res.authResult.authorized).to.be.true
@@ -236,8 +320,8 @@ describe('AuthZ @shared', () => {
           resourceAccessRules: [
             { id: 'foo', type: TokenResourceIdentifierType.Project }
           ]
-        },
-        authResult: {}
+        } as AuthContext,
+        authResult: { authorized: false }
       })
 
       expect(res.authResult.authorized).to.be.true
@@ -249,8 +333,8 @@ describe('AuthZ @shared', () => {
           resourceAccessRules: [
             { id: 'foo', type: TokenResourceIdentifierType.Project }
           ]
-        },
-        authResult: { authorized: false, error: new Error('dummy') }
+        } as AuthContext,
+        authResult: { authorized: false, error: new Error('dummy') } as AuthFailedResult
       })
 
       expect(res.authResult.authorized).to.be.false
@@ -263,12 +347,16 @@ describe('AuthZ @shared', () => {
             { id: 'foo', type: TokenResourceIdentifierType.Project }
           ],
           stream: { id: 'bar' }
-        },
-        authResult: {}
+        } as AuthContext,
+        authResult: { authorized: false }
       })
 
+      if (!isAuthFailedResult(res.authResult)) {
+        throw new Error('AuthResult should be an auth failed result')
+      }
+
       expect(res.authResult.authorized).to.be.false
-      expect(res.authResult.error.message).to.equal(
+      expect(res.authResult.error?.message).to.equal(
         'You are not authorized to access this resource.'
       )
     })
@@ -281,8 +369,8 @@ describe('AuthZ @shared', () => {
             { id: 'bar', type: TokenResourceIdentifierType.Project }
           ],
           stream: { id: 'bar' }
-        },
-        authResult: {}
+        } as AuthContext,
+        authResult: { authorized: false }
       })
 
       expect(res.authResult.authorized).to.be.true
@@ -295,8 +383,8 @@ describe('AuthZ @shared', () => {
             { id: 'foo', type: 'fake' },
             { id: 'bar', type: 'fake' }
           ]
-        },
-        authResult: {}
+        } as unknown as AuthContext,
+        authResult: { authorized: false }
       })
 
       expect(res.authResult.authorized).to.be.true
@@ -304,18 +392,21 @@ describe('AuthZ @shared', () => {
   })
 
   describe('Context requires stream', () => {
-    const expectAuthError = (expectedError, authResult) => {
+    const expectAuthError = (expectedError: Error, authResult: AuthResult) => {
+      if (!isAuthFailedResult(authResult)) {
+        throw new Error('AuthResult should be an auth failed result')
+      }
+
       expect(authResult.authorized).to.be.false
       expect(authResult.error).to.exist
-      expect(authResult.error.message).to.equal(expectedError.message)
-      expect(authResult.error.name).to.equal(expectedError.name)
+      expect(authResult.error?.message).to.equal(expectedError.message)
+      expect(authResult.error?.name).to.equal(expectedError.name)
     }
     it('Without streamId in the params it raises context error', async () => {
       const step = validateRequiredStreamFactory({
-        getStream: async () => ({ ur: 'bamboozled' }),
-        getAutomationProject: async () => null
+        getStream: async () => ({ ur: 'bamboozled' } as unknown as StreamRecord)
       })
-      const { authResult } = await step({ params: {} })
+      const { authResult } = await step({ params: {} } as AuthData)
       expectAuthError(
         new ContextError("The context doesn't have a streamId"),
         authResult
@@ -323,10 +414,9 @@ describe('AuthZ @shared', () => {
     })
     it('If params is not defined it raises context error', async () => {
       const step = validateRequiredStreamFactory({
-        getStream: async () => ({ ur: 'bamboozled' }),
-        getAutomationProject: async () => null
+        getStream: async () => ({ ur: 'bamboozled' } as unknown as StreamRecord)
       })
-      const { authResult } = await step({})
+      const { authResult } = await step({} as AuthData)
       expectAuthError(
         new ContextError("The context doesn't have a streamId"),
         authResult
@@ -336,23 +426,24 @@ describe('AuthZ @shared', () => {
       const demoStream = {
         id: 'foo',
         name: 'bar'
-      }
+      } as StreamRecord
+
       const step = validateRequiredStreamFactory({
-        getStream: async () => demoStream,
-        getAutomationProject: async () => null
+        getStream: async () => demoStream
       })
       const { context } = await step({
-        context: {},
+        context: buildEmptyContext(),
         params: { streamId: 'this is fake and its fine' }
-      })
+      } as AuthData)
       expect(context.stream).to.deep.equal(demoStream)
     })
     it('If context is not defined return auth failure', async () => {
       const step = validateRequiredStreamFactory({
-        getStream: async () => {},
-        getAutomationProject: async () => null
+        getStream: async () => undefined
       })
-      const { authResult } = await step({ params: { streamId: 'the need for stream' } })
+      const { authResult } = await step({
+        params: { streamId: 'the need for stream' }
+      } as AuthData)
 
       expectAuthError(new ContextError('The context is not defined'), authResult)
     })
@@ -361,25 +452,23 @@ describe('AuthZ @shared', () => {
       const step = validateRequiredStreamFactory({
         getStream: async () => {
           throw new Error(errorMessage)
-        },
-        getAutomationProject: async () => null
+        }
       })
       const { authResult } = await step({
         context: {},
         params: { streamId: 'the need for stream' }
-      })
+      } as AuthData)
 
       expectAuthError(new ContextError(errorMessage), authResult)
     })
     it("If stream getter doesn't find a stream it returns fatal auth failure", async () => {
       const step = validateRequiredStreamFactory({
-        getStream: async () => {},
-        getAutomationProject: async () => null
+        getStream: async () => undefined
       })
       const { authResult } = await step({
         params: { streamId: 'the need for stream' },
         context: {}
-      })
+      } as AuthData)
 
       expectAuthError(
         new NotFoundError(
@@ -393,19 +482,25 @@ describe('AuthZ @shared', () => {
   describe('Escape hatches', () => {
     describe('Admin override', () => {
       it('server:admins get authSuccess', async () => {
-        const input = { context: { role: Roles.Server.Admin }, authResult: 'fake' }
+        const input = {
+          context: { role: Roles.Server.Admin },
+          authResult: 'fake'
+        } as unknown as AuthData
         const result = await allowForServerAdmins(input)
         expect(result).to.deep.equal(authSuccess(input.context))
       })
       it('server:users get the previous authResult', async () => {
-        const input = { context: { role: Roles.Server.User }, authResult: 'fake' }
+        const input = {
+          context: { role: Roles.Server.User },
+          authResult: 'fake'
+        } as unknown as AuthData
         const result = await allowForServerAdmins(input)
         expect(result).to.deep.equal(input)
       })
     })
     describe('Allow for public stream no role', () => {
       it('not public stream, no auth returns same context ', async () => {
-        const input = { context: 'dummy', authResult: 'fake' }
+        const input = { context: 'dummy', authResult: 'fake' } as unknown as AuthData
         const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
           input
         )
@@ -415,7 +510,7 @@ describe('AuthZ @shared', () => {
         const input = {
           context: { stream: { visibility: ProjectRecordVisibility.Public } },
           authResult: 'fake'
-        }
+        } as unknown as AuthData
         const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
           input
         )
@@ -428,7 +523,7 @@ describe('AuthZ @shared', () => {
             stream: { visibility: ProjectRecordVisibility.Private }
           },
           authResult: 'fake'
-        }
+        } as unknown as AuthData
         const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
           input
         )
@@ -441,7 +536,7 @@ describe('AuthZ @shared', () => {
             stream: { visibility: ProjectRecordVisibility.Public }
           },
           authResult: 'fake'
-        }
+        } as unknown as AuthData
         const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
           input
         )
@@ -560,7 +655,9 @@ describe('AuthZ @shared', () => {
       sameContextTestData.map(([caseName, context]) =>
         it(`${caseName} returns same context`, async () => {
           const result =
-            await allowForAllRegisteredUsersOnPublicStreamsWithPublicComments(context)
+            await allowForAllRegisteredUsersOnPublicStreamsWithPublicComments(
+              context as unknown as AuthData
+            )
           expect(result).to.deep.equal(context)
         })
       )
@@ -574,7 +671,7 @@ describe('AuthZ @shared', () => {
             }
           },
           authResult: 'fake'
-        }
+        } as unknown as AuthData
         const result =
           await allowForAllRegisteredUsersOnPublicStreamsWithPublicComments(input)
         expect(result).to.deep.equal(authSuccess(input.context))

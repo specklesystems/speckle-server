@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Result } from 'true-myth'
+import type { Result } from 'true-myth'
 import { AuthError } from '../domain/authErrors.js'
 
 export type GraphqlPermissionCheckResult = {
