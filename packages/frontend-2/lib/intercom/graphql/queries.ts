@@ -17,6 +17,9 @@ export const intercomActiveWorkspaceQuery = graphql(`
       team {
         totalCount
       }
+      projects {
+        totalCount
+      }
     }
   }
 `)
