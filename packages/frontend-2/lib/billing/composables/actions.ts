@@ -159,7 +159,7 @@ export const useBillingActions = () => {
     if (result.data) {
       const metaData = {
         plan,
-        cycle: plan === PaidWorkspacePlans.Free ? undefined : cycle,
+        cycle,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       }
