@@ -40,7 +40,8 @@ const buildCanUpdateEmbedOptionsPolicy = (
         workspaceId,
         name: 'unlimited',
         status: 'valid',
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
       } as WorkspacePlan
     },
     ...overrides
@@ -120,7 +121,8 @@ describe('canUpdateEmbedOptions', () => {
         workspaceId: cryptoRandomString({ length: 9 }),
         name: 'proUnlimited',
         status: 'canceled',
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
       })
     })
 
