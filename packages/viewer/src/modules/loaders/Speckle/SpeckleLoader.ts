@@ -138,6 +138,7 @@ export class SpeckleLoader extends Loader {
 
     await this.converter.convertInstances()
     await this.converter.applyMaterials()
+    await this.loader.disposeAsync()
 
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()

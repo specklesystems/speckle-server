@@ -50,6 +50,7 @@ import {
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -110,7 +111,7 @@ function useViewerObjectAutoLoading() {
 
   const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
 
-  const loadObject = (
+  const loadObject = async (
     objectId: string,
     unload?: boolean,
     options?: Partial<{ zoomToObject: boolean }>
@@ -118,7 +119,7 @@ function useViewerObjectAutoLoading() {
     const objectUrl = getObjectUrl(projectId.value, objectId)
 
     if (unload) {
-      viewer.unloadObject(objectUrl)
+      return viewer.unloadObject(objectUrl)
     } else {
       const loader = new SpeckleLoader(
         viewer.getWorldTree(),
@@ -134,7 +135,7 @@ function useViewerObjectAutoLoading() {
         consolidateProgressInternal({ id, progress: 1 })
       })
 
-      viewer.loadObject(loader, options?.zoomToObject)
+      return viewer.loadObject(loader, options?.zoomToObject)
     }
   }
 
@@ -154,9 +155,15 @@ function useViewerObjectAutoLoading() {
       if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
-        const res = await Promise.all(
-          allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
-        )
+        /** Load sequentially */
+        const res = []
+        for (const i of allObjectIds) {
+          res.push(await loadObject(i, false, { zoomToObject }))
+        }
+        /** Load in parallel */
+        // const res = await Promise.all(
+        //   allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        // )
         if (res.length) {
           hasDoneInitialLoad.value = true
         }
@@ -309,6 +316,16 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
+function sectionBoxDataEquals(a: SectionBoxData, b: SectionBoxData): boolean {
+  const isEqual = (a: number[], b: number[]) =>
+    a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 1e-6)
+  return (
+    isEqual(a.min, b.min) &&
+    isEqual(a.max, b.max) &&
+    (a.rotation && b.rotation ? isEqual(a.rotation, b.rotation) : true)
+  )
+}
+
 function useViewerSectionBoxIntegration() {
   const {
     ui: {
@@ -332,7 +349,7 @@ function useViewerSectionBoxIntegration() {
   watch(
     sectionBox,
     (newVal, oldVal) => {
-      if (newVal && oldVal && newVal.equals(oldVal)) return
+      if (newVal && oldVal && sectionBoxDataEquals(newVal, oldVal)) return
       if (!newVal && !oldVal) return
 
       if (oldVal && !newVal) {
@@ -344,14 +361,11 @@ function useViewerSectionBoxIntegration() {
         return
       }
 
-      if (newVal && (!oldVal || !newVal.equals(oldVal))) {
+      if (newVal && (!oldVal || !sectionBoxDataEquals(newVal, oldVal))) {
         visible.value = true
         edited.value = false
 
-        instance.setSectionBox({
-          min: newVal.min,
-          max: newVal.max
-        })
+        instance.setSectionBox(newVal)
         instance.sectionBoxOn()
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()

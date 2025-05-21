@@ -7,6 +7,7 @@ import {
 } from '@/test/graphqlHelper'
 import {
   BasicTestUser,
+  buildBasicTestUser,
   createAuthTokenForUser,
   createTestUser,
   createTestUsers,
@@ -30,13 +31,17 @@ import {
   CreateWorkspaceProjectDocument,
   DismissWorkspaceDocument,
   GetActiveUserDiscoverableWorkspacesDocument,
-  GetWorkspaceWithMembersByRoleDocument
+  GetWorkspaceWithMembersByRoleDocument,
+  UpdateEmbedOptionsDocument,
+  WorkspaceEmbedOptionsDocument,
+  ProjectEmbedOptionsDocument
 } from '@/test/graphql/generated/graphql'
-import { beforeEachContext } from '@/test/hooks'
+import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
+  buildBasicTestWorkspace,
   createTestWorkspace,
   createWorkspaceInviteDirectly
 } from '@/modules/workspaces/tests/helpers/creation'
@@ -73,6 +78,7 @@ import { itEach } from '@/test/assertionHelper'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { Workspaces } from '@/modules/workspaces/helpers/db'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
@@ -392,7 +398,7 @@ describe('Workspaces GQL CRUD', () => {
         })({
           workspaceId: workspace.id,
           userId: memberEditor.id,
-          type: 'editor',
+          type: WorkspaceSeatType.Editor,
           assignedByUserId: admin.id
         })
         // Assign the same user editor to another workspace
@@ -404,7 +410,7 @@ describe('Workspaces GQL CRUD', () => {
         })({
           workspaceId: otherWorkspace.id,
           userId: memberEditor.id,
-          type: 'editor',
+          type: WorkspaceSeatType.Editor,
           assignedByUserId: admin.id
         })
 
@@ -422,14 +428,14 @@ describe('Workspaces GQL CRUD', () => {
         })({
           workspaceId: workspace.id,
           userId: memberViewer.id,
-          type: 'viewer',
+          type: WorkspaceSeatType.Viewer,
           assignedByUserId: admin.id
         })
 
         const res = await session.execute(GetWorkspaceTeamDocument, {
           workspaceId: workspace.id,
           filter: {
-            seatType: 'editor'
+            seatType: WorkspaceSeatType.Editor
           }
         })
 
@@ -697,16 +703,26 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('query activeUser.workspaces', () => {
-      it('should return all workspaces for a user', async () => {
-        const testUser: BasicTestUser = {
-          id: '',
-          name: 'John Speckle',
-          email: 'foobar@example.org',
-          role: Roles.Server.Admin,
-          verified: true
-        }
+      const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
+
+      before(async () => {
+        await truncateTables([Workspaces.name])
 
         await createTestUser(testUser)
+
+        await createTestWorkspace(buildBasicTestWorkspace(), testUser)
+        await createTestWorkspace(
+          buildBasicTestWorkspace({
+            name: 'A loooooooooong name'
+          }),
+          testUser
+        )
+        await createTestWorkspace(buildBasicTestWorkspace(), testUser, {
+          addCreationState: { completed: false, state: {} }
+        })
+      })
+
+      it('should return all workspaces for a user', async () => {
         const testApollo: TestApolloServer = await testApolloServer({
           context: await createTestContext({
             auth: true,
@@ -717,35 +733,52 @@ describe('Workspaces GQL CRUD', () => {
           })
         })
 
-        const workspace1: BasicTestWorkspace = {
-          id: '',
-          ownerId: '',
-          name: 'Workspace A',
-          slug: cryptoRandomString({ length: 10 })
-        }
-
-        const workspace2: BasicTestWorkspace = {
-          id: '',
-          ownerId: '',
-          name: 'Workspace A',
-          slug: cryptoRandomString({ length: 10 })
-        }
-
-        const workspace3: BasicTestWorkspace = {
-          id: '',
-          ownerId: '',
-          name: 'Workspace A',
-          slug: cryptoRandomString({ length: 10 })
-        }
-
-        await createTestWorkspace(workspace1, testUser)
-        await createTestWorkspace(workspace2, testUser)
-        await createTestWorkspace(workspace3, testUser)
-
         const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {})
         expect(res).to.not.haveGraphQLErrors()
-        // TODO: this test depends on the previous tests
+
         expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(3)
+      })
+
+      it('omits non complete workspaces on request', async () => {
+        const testApollo: TestApolloServer = await testApolloServer({
+          context: await createTestContext({
+            auth: true,
+            userId: testUser.id,
+            token: '',
+            role: testUser.role,
+            scopes: AllScopes
+          })
+        })
+
+        const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {
+          filter: {
+            completed: true
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(2)
+      })
+
+      it('filters by name workspaces on request', async () => {
+        const testApollo: TestApolloServer = await testApolloServer({
+          context: await createTestContext({
+            auth: true,
+            userId: testUser.id,
+            token: '',
+            role: testUser.role,
+            scopes: AllScopes
+          })
+        })
+
+        const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {
+          filter: {
+            search: 'loooooooooong'
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(1)
       })
     })
 
@@ -1051,7 +1084,8 @@ describe('Workspaces GQL CRUD', () => {
           id: cryptoRandomString({ length: 10 }),
           streamId: workspaceProject.id,
           objectId: '',
-          authorId: ''
+          authorId: '',
+          branchId: ''
         }
 
         await createTestCommit(testVersion, {
@@ -1357,6 +1391,73 @@ describe('Workspaces GQL CRUD', () => {
           deleteDomainRes.data?.workspaceMutations.deleteDomain
             .domainBasedMembershipProtectionEnabled
         ).to.false
+      })
+    })
+
+    describe('mutation workspaceMutations.updateEmbedOptions', () => {
+      const workspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        slug: cryptoRandomString({ length: 10 }),
+        name: 'My Test Workspace'
+      }
+
+      const workspaceProject: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'My Test Project',
+        isPublic: false
+      }
+
+      before(async () => {
+        await createTestWorkspace(workspace, testAdminUser, { addPlan: false })
+        workspaceProject.workspaceId = workspace.id
+        await createTestStream(workspaceProject, testAdminUser)
+      })
+
+      beforeEach(async () => {
+        await apollo.execute(UpdateEmbedOptionsDocument, {
+          input: {
+            workspaceId: workspace.id,
+            hideSpeckleBranding: false
+          }
+        })
+      })
+
+      it('should update options at workspace level', async () => {
+        const resA = await apollo.execute(UpdateEmbedOptionsDocument, {
+          input: {
+            workspaceId: workspace.id,
+            hideSpeckleBranding: true
+          }
+        })
+
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(WorkspaceEmbedOptionsDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(resB).to.not.haveGraphQLErrors()
+        expect(resB?.data?.workspace.embedOptions.hideSpeckleBranding).to.equal(true)
+      })
+
+      it('should update options at workspace project level', async () => {
+        const resA = await apollo.execute(UpdateEmbedOptionsDocument, {
+          input: {
+            workspaceId: workspace.id,
+            hideSpeckleBranding: true
+          }
+        })
+
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(ProjectEmbedOptionsDocument, {
+          projectId: workspaceProject.id
+        })
+
+        expect(resB).to.not.haveGraphQLErrors()
+        expect(resB.data?.project.embedOptions.hideSpeckleBranding).to.equal(true)
       })
     })
   })

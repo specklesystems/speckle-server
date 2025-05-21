@@ -9,6 +9,7 @@ export type EmbedOptions = {
   isTransparent?: boolean
   hideControls?: boolean
   hideSelectionInfo?: boolean
+  disableModelLink?: boolean
   noScroll?: boolean
   manualLoad?: boolean
 }
@@ -23,6 +24,7 @@ export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
           'isTransparent',
           'hideControls',
           'hideSelectionInfo',
+          'disableModelLink',
           'noScroll',
           'manualLoad'
         ].includes(key) &&
@@ -98,7 +100,7 @@ export function useEmbed() {
 
     const isEnabled = createComputed('isEnabled')
     const isTransparent = createComputed('isTransparent')
-
+    const disableModelLink = createComputed('disableModelLink')
     const hideSelectionInfo = createComputed('hideSelectionInfo')
     const noScroll = createComputed('noScroll')
     const manualLoad = createComputed('manualLoad')
@@ -122,6 +124,7 @@ export function useEmbed() {
       isTransparent,
       showControls: showControlsNew,
       hideSelectionInfo,
+      disableModelLink,
       noScroll,
       manualLoad
     }

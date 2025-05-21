@@ -38,7 +38,7 @@ export class ShadedPass extends BaseGPass {
   }
 
   public get displayName(): string {
-    return 'BASIT'
+    return 'SHADED'
   }
 
   public setClippingPlanes(planes: Plane[]) {

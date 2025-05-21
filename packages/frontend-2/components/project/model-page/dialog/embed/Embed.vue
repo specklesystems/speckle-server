@@ -10,7 +10,8 @@
     <div v-if="isPrivate">
       <CommonAlert color="info">
         <template #title>
-          Model embedding does not work when the project is "Private".
+          Model embedding does not work when the project visibility is set to
+          "Private"{{ project.workspaceId ? ' or "Workspace"' : '' }}.
         </template>
       </CommonAlert>
 
@@ -129,6 +130,7 @@ const mp = useMixpanel()
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
+const disableModelLink = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const projectVisibility = ref(props.project.visibility)
@@ -273,6 +275,11 @@ const embedDialogOptions = [
     id: 'hideSelectionInfo',
     label: 'Hide the selection info panel',
     value: hideSelectionInfo
+  },
+  {
+    id: 'disableModelLink',
+    label: 'No link back to web viewer',
+    value: disableModelLink
   },
   {
     id: 'noScroll',

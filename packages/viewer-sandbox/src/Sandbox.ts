@@ -526,7 +526,7 @@ export default class Sandbox {
       edges: false,
       outlineThickness: 1,
       outlineColor: 0x323232,
-      outlineDensity: 0.75
+      outlineOpacity: 0.75
     }
     const setPipeline = (value: number) => {
       const viewModes = this.viewer.getExtension(ViewModes)
@@ -620,8 +620,8 @@ export default class Sandbox {
       })
 
     this.tabs.pages[0]
-      .addInput(pipeline, 'outlineDensity', {
-        label: 'Outline Density',
+      .addInput(pipeline, 'outlineOpacity', {
+        label: 'Outline Opacity',
         min: 0.01,
         max: 1,
         step: 0.01

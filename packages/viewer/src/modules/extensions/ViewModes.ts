@@ -16,6 +16,7 @@ import {
   DefaultEdgesPipelineOptions,
   EdgesPipelineOptions
 } from '../pipeline/Pipelines/EdgesPipeline.js'
+import { DefaultEdgesPassOptions } from '../pipeline/Passes/EdgesPass.js'
 
 export enum ViewMode {
   DEFAULT,
@@ -67,15 +68,18 @@ export class ViewModes extends Extension {
           (!arg.colorGroups || !arg.colorGroups.length) &&
           (!arg.userColorGroups || !arg.userColorGroups.length)
         ) {
-          /** If any basit pass exists, set it's required color indices */
+          /** If any shaded pass exists, set it's required color indices */
           this.viewer
             .getRenderer()
-            .pipeline.getPass('BASIT')
+            .pipeline.getPass('SHADED')
             .forEach((pass: GPass) => {
               ;(pass as ShadedPass).applyColorIndices()
             })
         }
       })
+    this.viewer.on(ViewerEvent.LoadComplete, () => {
+      this.updateViewModeOptions(this._viewModeOptions)
+    })
   }
 
   public on<T extends ViewModeEvent>(
@@ -129,10 +133,12 @@ export class ViewModes extends Extension {
 
   protected updateViewModeOptions(options?: ViewModeOptions) {
     if (!options) return
-
+    const relativeDepthBias = this.viewer.World.getRelativeOffset(
+      DefaultEdgesPassOptions.depthBias
+    )
     const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
     edgesPasses.forEach((pass: GPass) => {
-      pass.options = options
+      pass.options = { ...options, depthBias: relativeDepthBias }
     })
     this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }

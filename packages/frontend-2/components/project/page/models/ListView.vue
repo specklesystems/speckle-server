@@ -80,6 +80,7 @@ const logger = useLogger()
 
 const infiniteLoadCacheBuster = ref(0)
 const newSubmodelParent = ref('')
+
 const showNewDialog = computed({
   get: () => !!newSubmodelParent.value,
   set: (newVal) => {

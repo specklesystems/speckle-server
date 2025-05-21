@@ -2,6 +2,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceSeatType,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -259,6 +260,7 @@ describe('Workspace services', () => {
         logo: null,
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
+        isEmbedSpeckleBrandingHidden: false,
         domains: []
       }
       return merge(workspace, input)
@@ -654,7 +656,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
     },
     ensureValidWorkspaceRoleSeat: async () => {
       return {
-        type: 'editor',
+        type: WorkspaceSeatType.Editor,
         workspaceId: 'test',
         userId: 'test',
         createdAt: new Date(),
@@ -1138,7 +1140,8 @@ describe('Workspace role services', () => {
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
-                  domainBasedMembershipProtectionEnabled: false
+                  domainBasedMembershipProtectionEnabled: false,
+                  isEmbedSpeckleBrandingHidden: false
                 }
               },
               getDomains: async () => {
@@ -1177,7 +1180,8 @@ describe('Workspace role services', () => {
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false
+          domainBasedMembershipProtectionEnabled: false,
+          isEmbedSpeckleBrandingHidden: false
         }
 
         await addDomainToWorkspaceFactory({

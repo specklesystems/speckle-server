@@ -199,11 +199,32 @@ export const getNewWorkspaceExplainerDismissedQuery = gql`
     }
   }
 `
+
 export const setNewWorkspaceExplainerDismissedMutation = gql`
   mutation SetNewWorkspaceExplainerDismissed($input: Boolean!) {
     activeUserMutations {
       meta {
         setNewWorkspaceExplainerDismissed(value: $input)
+      }
+    }
+  }
+`
+
+export const getSpeckleConBannerDismissedQuery = gql`
+  query GetSpeckleConBannerDismissed {
+    activeUser {
+      meta {
+        speckleConBannerDismissed
+      }
+    }
+  }
+`
+
+export const setSpeckleConBannerDismissedMutation = gql`
+  mutation SetSpeckleConBannerDismissed($input: Boolean!) {
+    activeUserMutations {
+      meta {
+        setSpeckleConBannerDismissed(value: $input)
       }
     }
   }

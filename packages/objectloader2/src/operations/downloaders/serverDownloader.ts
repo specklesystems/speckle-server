@@ -88,7 +88,6 @@ export default class ServerDownloader implements Downloader {
 
   async disposeAsync(): Promise<void> {
     await this.#downloadQueue?.disposeAsync()
-    await this.#getPool().disposeAsync()
   }
 
   #processJson(baseId: string, unparsedBase: string): Item {

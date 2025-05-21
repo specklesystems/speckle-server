@@ -50,6 +50,11 @@
           "description": "High level flag fully toggles the workspaces module",
           "default": false
         },
+        "personalProjectLimitsEnabled": {
+          "type": "boolean",
+          "description": "High level flag toggles personal (non-workspace) project limits",
+          "default": false
+        },
         "workspacesSSOEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces dynamic sso",
@@ -1491,16 +1496,6 @@
               "type": "string",
               "description": "Audience id for the onboarding list",
               "default": ""
-            },
-            "onboardingJourneyId": {
-              "type": "string",
-              "description": "Id of the onboarding journey",
-              "default": ""
-            },
-            "onboardingStepId": {
-              "type": "string",
-              "description": "Id of the onboarding journey step we trigger",
-              "default": ""
             }
           }
         },
@@ -1773,11 +1768,6 @@
         "image": {
           "type": "string",
           "description": "The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
-          "default": ""
-        },
-        "webflowApiToken": {
-          "type": "string",
-          "description": "API Key for Webflow, which provides the blog content for the new web application frontend.",
           "default": ""
         },
         "logClientApiToken": {
