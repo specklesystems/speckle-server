@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "NODE_OPTIONS=--max-old-space-size=8192 nuxt build",
-    "build:postinstall": "yarn ensure:tailwind-deps && nuxt prepare",
+    "build:postinstall": "nuxt prepare",
     "build:sourcemaps": "BUILD_SOURCEMAPS=true yarn build",
     "dev:nuxt": "nuxt dev",
     "dev:app": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
