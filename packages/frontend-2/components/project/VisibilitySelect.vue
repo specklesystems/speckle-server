@@ -39,6 +39,7 @@
 <script setup lang="ts">
 import { isArray } from 'lodash-es'
 import { SupportedProjectVisibility } from '~/lib/projects/helpers/visibility'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: SupportedProjectVisibility): void
@@ -49,7 +50,7 @@ const props = defineProps<{
   showLabel?: boolean
   name?: string
   disabled?: boolean
-  workspaceId?: string
+  workspaceId?: MaybeNullOrUndefined<string>
 }>()
 
 const labelId = useId()

@@ -566,6 +566,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
+- name: FF_PERSONAL_PROJECTS_LIMITS_ENABLED
+  value: {{ .Values.featureFlags.personalProjectLimitsEnabled | quote }}
+
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
 

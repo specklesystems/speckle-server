@@ -1986,6 +1986,16 @@ export = FF_WORKSPACES_MODULE_ENABLED
             cursor: args.cursor ?? undefined
           })
           return team
+        },
+        adminTeam: async (parent) => {
+          const team = await getWorkspaceCollaboratorsFactory({ db })({
+            workspaceId: parent.id,
+            limit: 100,
+            filter: {
+              roles: [Roles.Workspace.Admin]
+            }
+          })
+          return team
         }
       },
       ActiveUserMutations: {

@@ -6,7 +6,12 @@ import {
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
-import { WorkspacePlan } from '@speckle/shared'
+import {
+  WorkspaceLimits,
+  WorkspacePaidPlanConfigs,
+  WorkspacePlan,
+  WorkspaceUnpaidPlanConfigs
+} from '@speckle/shared'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -73,6 +78,24 @@ const dataLoadersDefinition = defineRequestDataloaders(
           },
           {
             cacheKeyFn: ({ workspaceId }) => workspaceId
+          }
+        ),
+        getWorkspaceLimits: createLoader<string, WorkspaceLimits | null>(
+          async (workspaceIds) => {
+            const workspacePlans = await getWorkspacePlansByWorkspaceId({
+              workspaceIds: workspaceIds.slice()
+            })
+
+            return workspaceIds.map((workspaceId) => {
+              const plan = workspacePlans[workspaceId]
+              if (!plan) return null
+
+              const config = {
+                ...WorkspacePaidPlanConfigs,
+                ...WorkspaceUnpaidPlanConfigs
+              }
+              return config[plan.name]?.limits || null
+            })
           }
         )
       }

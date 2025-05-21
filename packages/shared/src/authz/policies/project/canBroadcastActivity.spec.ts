@@ -20,7 +20,10 @@ describe('canBroadcastProjectActivityPolicy', () => {
     overrides?: OverridesOf<typeof canBroadcastProjectActivityPolicy>
   ) =>
     canBroadcastProjectActivityPolicy({
-      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null

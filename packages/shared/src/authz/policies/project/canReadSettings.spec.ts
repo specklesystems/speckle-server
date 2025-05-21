@@ -17,7 +17,10 @@ import { ProjectVisibility } from '../../domain/projects/types.js'
 describe('canReadProjectSettingsPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>) =>
     canReadProjectSettingsPolicy({
-      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null

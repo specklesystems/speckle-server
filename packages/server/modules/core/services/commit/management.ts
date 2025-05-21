@@ -101,7 +101,8 @@ export const createCommitByBranchIdFactory =
       authorId,
       message,
       sourceApplication,
-      parents
+      parents,
+      createdAt
     } = params
 
     // If no total children count is passed in, get it from the original object
@@ -129,7 +130,8 @@ export const createCommitByBranchIdFactory =
       sourceApplication,
       totalChildrenCount,
       parents,
-      message
+      message,
+      ...(createdAt ? { createdAt } : {})
     })
     const id = commit.id
 
@@ -176,7 +178,8 @@ export const createCommitByBranchNameFactory =
       message,
       sourceApplication,
       parents,
-      totalChildrenCount
+      totalChildrenCount,
+      createdAt
     } = params
     const branchName = params.branchName.toLowerCase()
     let myBranch = await deps.getStreamBranchByName(streamId, branchName)
@@ -200,7 +203,8 @@ export const createCommitByBranchNameFactory =
       message,
       sourceApplication,
       totalChildrenCount,
-      parents
+      parents,
+      createdAt
     })
 
     return commit

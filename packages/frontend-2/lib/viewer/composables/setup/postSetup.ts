@@ -111,7 +111,7 @@ function useViewerObjectAutoLoading() {
 
   const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
 
-  const loadObject = (
+  const loadObject = async (
     objectId: string,
     unload?: boolean,
     options?: Partial<{ zoomToObject: boolean }>
@@ -119,7 +119,7 @@ function useViewerObjectAutoLoading() {
     const objectUrl = getObjectUrl(projectId.value, objectId)
 
     if (unload) {
-      viewer.unloadObject(objectUrl)
+      return viewer.unloadObject(objectUrl)
     } else {
       const loader = new SpeckleLoader(
         viewer.getWorldTree(),
@@ -135,7 +135,7 @@ function useViewerObjectAutoLoading() {
         consolidateProgressInternal({ id, progress: 1 })
       })
 
-      viewer.loadObject(loader, options?.zoomToObject)
+      return viewer.loadObject(loader, options?.zoomToObject)
     }
   }
 
@@ -155,9 +155,15 @@ function useViewerObjectAutoLoading() {
       if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
-        const res = await Promise.all(
-          allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
-        )
+        /** Load sequentially */
+        const res = []
+        for (const i of allObjectIds) {
+          res.push(await loadObject(i, false, { zoomToObject }))
+        }
+        /** Load in parallel */
+        // const res = await Promise.all(
+        //   allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        // )
         if (res.length) {
           hasDoneInitialLoad.value = true
         }
