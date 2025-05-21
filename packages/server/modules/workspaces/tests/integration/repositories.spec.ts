@@ -30,7 +30,8 @@ import {
   BasicTestWorkspace,
   assignToWorkspace,
   buildBasicTestWorkspace,
-  createTestWorkspace
+  createTestWorkspace,
+  createTestWorkspaces
 } from '@/modules/workspaces/tests/helpers/creation'
 import {
   createUserEmailFactory,
@@ -930,6 +931,78 @@ describe('Workspace repositories', () => {
 
       expect(otherUserWorkspaces.length).to.equal(1)
       expect(otherUserWorkspaces[0].id).to.equal(workspaceWithExistingRequest.id)
+    })
+
+    it('should return workspaces in order of team size', async () => {
+      const userA: BasicTestUser = {
+        id: '',
+        name: 'John Speckle',
+        email: createRandomEmail(),
+        verified: true
+      }
+      const userB: BasicTestUser = {
+        id: '',
+        name: 'John Speckle 2',
+        email: createRandomEmail(),
+        verified: true
+      }
+      const userC: BasicTestUser = {
+        id: '',
+        name: 'John Speckle 2 2',
+        email: createRandomEmail(),
+        verified: true
+      }
+      const userD: BasicTestUser = {
+        id: '',
+        name: 'No Workspace User',
+        email: createRandomEmail(),
+        verified: true
+      }
+
+      const workspaceA: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'Small Workspace',
+        slug: cryptoRandomString({ length: 9 }),
+        discoverabilityEnabled: true
+      }
+      const workspaceB: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'Medium Workspace',
+        slug: cryptoRandomString({ length: 9 }),
+        discoverabilityEnabled: true
+      }
+      const workspaceC: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'Large Workspace',
+        slug: cryptoRandomString({ length: 9 }),
+        discoverabilityEnabled: true
+      }
+
+      await createTestUsers([userA, userB, userC])
+      await createTestWorkspaces([
+        [workspaceA, userA, { domain: 'example.org' }],
+        [workspaceB, userB, { domain: 'example.org' }],
+        [workspaceC, userC, { domain: 'example.org' }]
+      ])
+
+      await Promise.all([
+        assignToWorkspace(workspaceB, userA),
+        assignToWorkspace(workspaceC, userA),
+        assignToWorkspace(workspaceC, userB)
+      ])
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: userD.id
+      })
+
+      expect(workspaces.length).to.equal(3)
+      expect(workspaces[0].id).to.equal(workspaceC.id)
+      expect(workspaces[1].id).to.equal(workspaceB.id)
+      expect(workspaces[2].id).to.equal(workspaceA.id)
     })
   })
 

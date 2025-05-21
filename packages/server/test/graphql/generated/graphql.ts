@@ -1201,6 +1201,8 @@ export type LimitedUserWorkspaceRoleArgs = {
 /** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
+  /** Workspace admins ordered by join date */
+  adminTeam: Array<LimitedWorkspaceCollaborator>;
   /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
   /** Workspace id */

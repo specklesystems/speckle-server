@@ -393,6 +393,10 @@ type LimitedWorkspace {
   Workspace members visible to people with verified email domain
   """
   team(cursor: String, limit: Int! = 25): LimitedWorkspaceCollaboratorCollection
+  """
+  Workspace admins ordered by join date
+  """
+  adminTeam: [LimitedWorkspaceCollaborator!]!
 }
 
 type LimitedWorkspaceCollaboratorCollection {

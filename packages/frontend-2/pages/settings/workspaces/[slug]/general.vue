@@ -18,26 +18,29 @@
           validate-on-value-update
           @change="save()"
         />
-        <hr class="my-4 border-outline-3" />
-        <FormTextInput
-          id="short-id"
-          v-model="slug"
-          color="foundation"
-          label="Short ID"
-          name="shortId"
-          :help="slugHelp"
-          :disabled="disableSlugInput"
-          show-label
-          label-position="left"
-          :tooltip-text="disabledSlugTooltipText"
-          read-only
-          :right-icon="disableSlugInput ? undefined : IconEdit"
-          :right-icon-title="disableSlugInput ? undefined : 'Edit short ID'"
-          custom-help-class="!break-all"
-          @right-icon-click="openSlugEditDialog"
-        />
+        <ClientOnly>
+          <hr class="my-4 border-outline-3" />
+          <FormTextInput
+            id="short-id"
+            v-model="slug"
+            color="foundation"
+            label="Short ID"
+            name="shortId"
+            :help="slugHelp"
+            :disabled="disableSlugInput"
+            show-label
+            label-position="left"
+            :tooltip-text="disabledSlugTooltipText"
+            read-only
+            :right-icon="disableSlugInput ? undefined : IconEdit"
+            :right-icon-title="disableSlugInput ? undefined : 'Edit short ID'"
+            custom-help-class="!break-all"
+            @right-icon-click="openSlugEditDialog"
+          />
+        </ClientOnly>
         <hr class="my-4 border-outline-3" />
         <FormTextArea
+          id="settings-description"
           v-model="description"
           color="foundation"
           label="Description"
@@ -66,6 +69,57 @@
               :disabled="!isAdmin || needsSsoLogin"
               size="3xl"
             />
+          </div>
+        </div>
+        <hr class="my-4 border-outline-3" />
+        <div class="grid grid-cols-2 gap-4 pt-1">
+          <div class="flex flex-col">
+            <span class="text-body-xs font-medium text-foreground">
+              Speckle logo in embeds
+            </span>
+            <span class="text-body-2xs text-foreground-2 max-w-[230px]">
+              Control the visibility of the Speckle logo in model embeds
+            </span>
+          </div>
+          <div class="flex h-full flex-col justify-center gap-y-2">
+            <ClientOnly>
+              <div
+                :key="`canEditEmbedOptions-${canEditEmbedOptions?.code}`"
+                v-tippy="
+                  !canEditEmbedOptions?.authorized
+                    ? canEditEmbedOptions?.message
+                    : undefined
+                "
+                class="flex items-center gap-x-2"
+              >
+                <FormSwitch
+                  v-model="showBranding"
+                  :disabled="!canEditEmbedOptions?.authorized || needsSsoLogin"
+                  name="showBranding"
+                  label="Show branding"
+                  :show-label="false"
+                  @update:model-value="updateShowBranding"
+                />
+                <p class="text-body-xs text-foreground-2">
+                  {{ showBranding ? 'Logo visible' : 'Logo hidden' }}
+                </p>
+              </div>
+              <p
+                v-if="
+                  !canEditEmbedOptions?.authorized &&
+                  canEditEmbedOptions?.code === 'WorkspaceNoFeatureAccess'
+                "
+                class="text-body-2xs text-foreground-2"
+              >
+                This feature is only available on the business plan
+                <NuxtLink
+                  :to="settingsWorkspaceRoutes.billing.route(slug)"
+                  class="underline"
+                >
+                  upgrade now
+                </NuxtLink>
+              </p>
+            </ClientOnly>
           </div>
         </div>
       </div>
@@ -135,7 +189,10 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { useForm } from 'vee-validate'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
+import {
+  settingsUpdateWorkspaceMutation,
+  settingsUpdateWorkspaceEmbedOptionsMutation
+} from '~/lib/settings/graphql/mutations'
 import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
 import type { WorkspaceUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
@@ -146,7 +203,7 @@ import {
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { Roles, WorkspacePlans } from '@speckle/shared'
-import { workspaceRoute } from '~/lib/common/helpers/route'
+import { workspaceRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
@@ -165,6 +222,14 @@ graphql(`
     plan {
       status
       name
+    }
+    embedOptions {
+      hideSpeckleBranding
+    }
+    permissions {
+      canEditEmbedOptions {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -190,6 +255,9 @@ const route = useRoute()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
+const { mutate: updateEmbedOptionsMutation } = useMutation(
+  settingsUpdateWorkspaceEmbedOptionsMutation
+)
 const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () => ({
   slug: routeSlug.value
 }))
@@ -205,10 +273,12 @@ const description = ref('')
 const showDeleteDialog = ref(false)
 const showEditSlugDialog = ref(false)
 const showLeaveDialog = ref(false)
+const showBranding = ref(true)
 
 const isAdmin = computed(
   () => workspaceResult.value?.workspaceBySlug?.role === Roles.Workspace.Admin
 )
+const adminRef = toRef(isAdmin)
 const workspaceId = computed(() => workspaceResult.value?.workspaceBySlug?.id)
 const canDeleteWorkspace = computed(
   () =>
@@ -278,6 +348,8 @@ watch(
       name.value = workspaceResult.value.workspaceBySlug.name
       description.value = workspaceResult.value.workspaceBySlug.description ?? ''
       slug.value = workspaceResult.value.workspaceBySlug.slug ?? ''
+      showBranding.value =
+        !workspaceResult.value.workspaceBySlug.embedOptions.hideSpeckleBranding
     }
   },
   { deep: true, immediate: true }
@@ -292,8 +364,10 @@ const slugHelp = computed(() => {
   }
   return `${baseUrl}/workspaces/${workspaceResult.value.workspaceBySlug.slug}`
 })
-// Using toRef to fix reactivity bug around tooltips
-const adminRef = toRef(isAdmin)
+
+const canEditEmbedOptions = computed(
+  () => workspaceResult.value?.workspaceBySlug?.permissions?.canEditEmbedOptions
+)
 
 const disabledTooltipText = computed(() => {
   if (!adminRef.value) return 'Only admins can edit this field'
@@ -314,6 +388,29 @@ const openSlugEditDialog = () => {
   showEditSlugDialog.value = true
 }
 
+const updateShowBranding = async () => {
+  if (!workspaceResult.value?.workspaceBySlug) return
+
+  const result = await updateEmbedOptionsMutation({
+    input: {
+      workspaceId: workspaceResult.value.workspaceBySlug.id,
+      hideSpeckleBranding: !showBranding.value
+    }
+  })
+
+  if (result && result.data) {
+    mixpanel.track('Workspace Embed Options Updated', {
+      hideBranding: !showBranding.value,
+      // eslint-disable-next-line camelcase
+      workspace_id: workspaceResult.value.workspaceBySlug.id
+    })
+
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: `Speckle logo on embeds ${showBranding.value ? 'enabled' : 'disabled'}`
+    })
+  }
+}
 const updateWorkspaceSlug = async (newSlug: string) => {
   if (!workspaceResult.value?.workspaceBySlug) {
     return
