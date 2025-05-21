@@ -50,6 +50,7 @@ export const useBillingActions = () => {
     settingsBillingCancelCheckoutSessionMutation
   )
   const logger = useLogger()
+  const { $intercom } = useNuxtApp()
 
   const billingPortalRedirect = async (workspaceId: MaybeNullOrUndefined<string>) => {
     if (!workspaceId) {
@@ -156,12 +157,18 @@ export const useBillingActions = () => {
       .catch(convertThrowIntoFetchResult)
 
     if (result.data) {
-      mixpanel.track('Workspace Upgraded', {
+      const metaData = {
         plan,
         cycle,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
+      }
+      mixpanel.track('Workspace Upgraded', metaData)
+      $intercom.track('Workspace Upgraded', {
+        ...metaData,
+        isExistingSubscription: falsez
       })
+      $intercom.updateCompany()
 
       triggerNotification({
         type: ToastNotificationType.Success,
@@ -212,12 +219,19 @@ export const useBillingActions = () => {
           title: 'Your workspace plan was successfully updated'
         })
 
-        mixpanel.track('Workspace Upgraded', {
+        const metaData = {
           plan: workspace.plan?.name,
           cycle: workspace.subscription?.billingInterval,
           // eslint-disable-next-line camelcase
           workspace_id: workspace.id
+        }
+
+        mixpanel.track('Workspace Upgraded', metaData)
+        $intercom.track('Workspace Upgraded', {
+          ...metaData,
+          isExistingSubscription: false
         })
+        $intercom.updateCompany()
       }
 
       const currentQueryParams = { ...route.query }
