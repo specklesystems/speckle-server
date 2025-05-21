@@ -64,6 +64,7 @@ input WorkspaceUpdateInput {
     @deprecated(reason: "Always the reviewer role. Will be removed in the future.")
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
+  discoverabilityAutoJoinEnabled: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -393,6 +394,10 @@ type LimitedWorkspace {
   Optional base64 encoded workspace logo image
   """
   logo: String
+  """
+  If true, the users with a matching domain may join the workspace directly
+  """
+  discoverabilityAutoJoinEnabled: Boolean!
   """
   Workspace members visible to people with verified email domain
   """
