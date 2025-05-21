@@ -13,7 +13,7 @@ export const useNavigationState = () =>
 export const useNavigation = () => {
   const state = useNavigationState()
   const { mutate } = useMutation(setActiveWorkspaceMutation)
-  const $intercom = useIntercom()
+  const { $intercom } = useNuxtApp()
 
   const activeWorkspaceSlug = computed({
     get: () => state.value.activeWorkspaceSlug,
