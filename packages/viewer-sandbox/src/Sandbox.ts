@@ -11,6 +11,7 @@ import {
   ObjectLayers,
   OutputPass,
   Pipeline,
+  SectionOutlines,
   SectionTool,
   SpeckleOfflineLoader,
   SpeckleRenderer,
@@ -1095,10 +1096,12 @@ export default class Sandbox {
         max: 1,
         step: 0.001
       })
-      .on('change', () => {
+      .on('change', (value) => {
         this.viewer
           .getExtension(ExplodeExtension)
           .setExplode(this.batchesParams.explode)
+        const outlines = this.viewer.getExtension(SectionOutlines)
+        if (outlines) outlines.requestUpdate(true)
       })
     // container
     //   .addInput(Sandbox.batchesParams, 'culling', {
