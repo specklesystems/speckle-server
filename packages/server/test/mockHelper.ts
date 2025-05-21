@@ -5,7 +5,9 @@ import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import { isArray, isFunction } from 'lodash-es'
 import mock from 'mock-require'
 import { ConditionalPick } from 'type-fest'
+import { createRequire } from 'module'
 
+const require = createRequire(import.meta.url)
 export type MockedFunctionImplementation = (...args: any[]) => MaybeAsync<any>
 
 /**
