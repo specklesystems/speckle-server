@@ -277,16 +277,18 @@ export const useWorkspacesWizard = () => {
         plan: state.plan,
         billingInterval: state.billingInterval,
         source: 'wizard',
-        fields: Object.keys(state).filter(
-          (key) =>
-            key !== 'id' &&
-            (key !== 'invites' || (state.invites && state.invites.length > 0))
-        ) as Array<keyof WorkspaceWizardState>,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       }
 
-      mixpanel.track('Workspace Created', metaPayload)
+      mixpanel.track('Workspace Created', {
+        ...metaPayload,
+        fields: Object.keys(state).filter(
+          (key) =>
+            key !== 'id' &&
+            (key !== 'invites' || (state.invites && state.invites.length > 0))
+        ) as Array<keyof WorkspaceWizardState>
+      })
       $intercom.track('Workspace Created', metaPayload)
     }
 

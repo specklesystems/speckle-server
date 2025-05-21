@@ -2,7 +2,13 @@ import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 import { watch, computed, ref } from 'vue'
-import Intercom, { shutdown, show, hide, update } from '@intercom/messenger-js-sdk'
+import Intercom, {
+  shutdown,
+  show,
+  hide,
+  update,
+  trackEvent
+} from '@intercom/messenger-js-sdk'
 import { useApolloClient } from '@vue/apollo-composable'
 import { intercomActiveWorkspaceQuery } from '~~/lib/intercom/graphql/queries'
 
@@ -56,7 +62,8 @@ export const useIntercom = () => {
       created_at: Math.floor(new Date(user.value.createdAt || '').getTime() / 1000),
       /* eslint-enable camelcase */
       name: user.value.name || '',
-      email: user.value.email || ''
+      email: user.value.email || '',
+      avatar: user.value.avatar || ''
     })
 
     updateCompany()
@@ -80,7 +87,7 @@ export const useIntercom = () => {
 
   const trackIntercom = (event: string, metadata?: Record<string, unknown>) => {
     if (!isInitialized.value) return
-    track(event, metadata)
+    trackEvent(event, metadata)
   }
 
   // Fetch active workspace and add to the user as a company
