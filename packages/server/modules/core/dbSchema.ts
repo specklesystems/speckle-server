@@ -299,6 +299,7 @@ export const UsersMeta = buildMetaTableHelper(
     'activeWorkspace',
     'isProjectsActive',
     'newWorkspaceExplainerDismissed',
+    'speckleConBannerDismissed',
     'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',
