@@ -50,7 +50,7 @@ services:
       - '127.0.0.1:5402:5432'
 
   redis:
-    image: 'valkey/valkey:7-alpine'
+    image: 'valkey/valkey:8.1-alpine'
     restart: always
     volumes:
       - redis-data:/data
