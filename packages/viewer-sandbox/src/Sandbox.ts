@@ -489,9 +489,24 @@ export default class Sandbox {
     const screenshot = this.tabs.pages[0].addButton({
       title: 'Screenshot'
     })
+    let enabled = -1
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
-
+      // console.warn(await this.viewer.screenshot())
+      this.viewer
+        .getRenderer()
+        .enableLayers(
+          [
+            ObjectLayers.STREAM_CONTENT,
+            ObjectLayers.STREAM_CONTENT_MESH,
+            ObjectLayers.STREAM_CONTENT_LINE,
+            ObjectLayers.STREAM_CONTENT_POINT,
+            ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
+            ObjectLayers.STREAM_CONTENT_TEXT,
+            ObjectLayers.SHADOWCATCHER
+          ],
+          (++enabled % 2) as unknown as boolean
+        )
+      this.viewer.requestRender()
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
@@ -1096,7 +1111,7 @@ export default class Sandbox {
         max: 1,
         step: 0.001
       })
-      .on('change', (value) => {
+      .on('change', () => {
         this.viewer
           .getExtension(ExplodeExtension)
           .setExplode(this.batchesParams.explode)
