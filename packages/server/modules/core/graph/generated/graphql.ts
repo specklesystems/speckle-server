@@ -4496,6 +4496,8 @@ export type Workspace = {
    */
   defaultRegion?: Maybe<ServerRegionItem>;
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable discovery of the workspace */
   discoverabilityEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable restriction to invite users to workspace as Guests only */
@@ -7457,6 +7459,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   defaultProjectRole?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   defaultRegion?: Resolver<Maybe<ResolversTypes['ServerRegionItem']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  discoverabilityAutoJoinEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   discoverabilityEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   domainBasedMembershipProtectionEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   domains?: Resolver<Maybe<Array<ResolversTypes['WorkspaceDomain']>>, ParentType, ContextType>;

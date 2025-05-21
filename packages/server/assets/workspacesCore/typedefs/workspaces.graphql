@@ -306,6 +306,10 @@ type Workspace {
   """
   discoverabilityEnabled: Boolean!
   """
+  If true, allow users to automatically join discoverable workspaces (instead of requesting to join)
+  """
+  discoverabilityAutoJoinEnabled: Boolean!
+  """
   Info about the workspace creation state
   """
   creationState: WorkspaceCreationState

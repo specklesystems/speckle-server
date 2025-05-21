@@ -4476,6 +4476,8 @@ export type Workspace = {
    */
   defaultRegion?: Maybe<ServerRegionItem>;
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable discovery of the workspace */
   discoverabilityEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable restriction to invite users to workspace as Guests only */

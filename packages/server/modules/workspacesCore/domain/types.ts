@@ -29,7 +29,8 @@ export type Workspace = {
   logo: string | null
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
-  // TODO: Create new table/structure if embeds get more configuration
+  discoverabilityAutoJoinEnabled: boolean
+  // TODO: Create new table/structure if embeds get more workspace-level configuration
   isEmbedSpeckleBrandingHidden: boolean
 }
 
