@@ -56,7 +56,6 @@ const props = defineProps<{
 
 const { mutateActiveWorkspaceSlug, mutateIsProjectsActive, activeWorkspaceSlug } =
   useNavigation()
-const { $intercom } = useNuxtApp()
 
 const formattedName = computed(() => props.name || props.workspace?.name || '')
 const tag = computed(() => {
@@ -73,7 +72,6 @@ const onClick = () => {
   if (props.workspace) {
     navigateTo(workspaceRoute(props.workspace.slug))
     mutateActiveWorkspaceSlug(props.workspace.slug)
-    $intercom.updateCompany()
   } else {
     mutateIsProjectsActive(true)
     navigateTo(projectsRoute)
