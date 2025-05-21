@@ -139,7 +139,7 @@ export default class ServerDownloader implements Downloader {
     }
     if (keys.size > 0) {
       throw new Error(
-        'Items requested where not downloaded: ' + take(keys.values(), 10).join(',')
+        'Items requested were not downloaded: ' + take(keys.values(), 10).join(',')
       )
     }
   }
