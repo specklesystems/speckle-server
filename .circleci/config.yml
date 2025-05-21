@@ -693,6 +693,9 @@ jobs:
           name: Lint everything
           command: yarn lint:ci
           working_directory: 'packages/preview-service'
+
+      # delete all this:>
+
       - run:
           name: Copy .env.example to .env
           command: |
@@ -795,6 +798,7 @@ jobs:
           command: yarn chromatic
           working_directory: 'packages/ui-components'
 
+  # ignore this one
   vulnerability-scan:
     # snyk can undertake most types of scans through GitHub integration
     # which does not require integration with the CI
@@ -811,6 +815,7 @@ jobs:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
 
+  # ignore this one
   deployment-test-docker-compose:
     machine:
       image: ubuntu-2204:2024.05.1
@@ -845,6 +850,7 @@ jobs:
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
 
+  # ignore this one
   deployment-test-helm-chart:
     machine:
       image: ubuntu-2204:2024.01.1
@@ -1001,6 +1007,7 @@ jobs:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
+  # we ignore this ones and the one refrenced
   docker-publish: &publish-job
     <<: *docker-base-image
     resource_class: medium
@@ -1094,6 +1101,7 @@ jobs:
           name: publish to npm
           command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
 
+  # no need for now
   publish-helm-chart:
     docker:
       - image: cimg/python:3.12.1
@@ -1110,6 +1118,7 @@ jobs:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
 
+  # no need for now
   update-helm-documentation:
     <<: *docker-node-image
     working_directory: *work-dir
