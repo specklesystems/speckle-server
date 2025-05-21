@@ -166,7 +166,7 @@ export const useBillingActions = () => {
       mixpanel.track('Workspace Upgraded', metaData)
       $intercom.track('Workspace Upgraded', {
         ...metaData,
-        isExistingSubscription: falsez
+        isExistingSubscription: false
       })
       $intercom.updateCompany()
 
