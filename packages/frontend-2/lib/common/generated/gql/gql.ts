@@ -134,7 +134,7 @@ type Documents = {
     "\n  fragment ViewerGendoPanel_Project on Project {\n    id\n    permissions {\n      canRequestRender {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ViewerGendoPanel_ProjectFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": typeof types.ViewerModelVersionCardItemFragmentDoc,
     "\n  fragment WorkspaceAddProjectMenu_Workspace on Workspace {\n    id\n    name\n    slug\n    role\n    plan {\n      name\n    }\n    permissions {\n      canCreateProject {\n        ...FullPermissionCheckResult\n      }\n      canMoveProjectToWorkspace {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.WorkspaceAddProjectMenu_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceDashboard_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceDashboardHeader_Workspace\n    ...WorkspaceDashboardProjectList_Workspace\n    id\n    name\n    role\n    creationState {\n      completed\n      state\n    }\n  }\n": typeof types.WorkspaceDashboard_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceDashboard_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceDashboardHeader_Workspace\n    ...WorkspaceDashboardProjectList_Workspace\n    ...BillingActions_Workspace\n    id\n    name\n    role\n    creationState {\n      completed\n      state\n    }\n  }\n": typeof types.WorkspaceDashboard_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceDashboardHeader_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceAddProjectMenu_Workspace\n    ...BillingAlert_Workspace\n    id\n    role\n  }\n": typeof types.WorkspaceDashboardHeader_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceDashboardProjectList_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...ProjectDashboardItem\n    }\n    cursor\n  }\n": typeof types.WorkspaceDashboardProjectList_ProjectCollectionFragmentDoc,
     "\n  fragment WorkspaceDashboardProjectList_Workspace on Workspace {\n    ...WorkspaceAddProjectMenu_Workspace\n    id\n  }\n": typeof types.WorkspaceDashboardProjectList_WorkspaceFragmentDoc,
@@ -326,9 +326,10 @@ type Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": typeof types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": typeof types.ActiveUserAvatarFragmentDoc,
-    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n        speckleConBannerDismissed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
     "\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateWorkspaceExplainerDocument,
     "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateLegacyProjectsExplainerDocument,
+    "\n  mutation UpdateSpeckleConBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setSpeckleConBannerDismissed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateSpeckleConBannerDismissedDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": typeof types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": typeof types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": typeof types.UpdateNotificationPreferencesDocument,
@@ -548,7 +549,7 @@ const documents: Documents = {
     "\n  fragment ViewerGendoPanel_Project on Project {\n    id\n    permissions {\n      canRequestRender {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ViewerGendoPanel_ProjectFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
     "\n  fragment WorkspaceAddProjectMenu_Workspace on Workspace {\n    id\n    name\n    slug\n    role\n    plan {\n      name\n    }\n    permissions {\n      canCreateProject {\n        ...FullPermissionCheckResult\n      }\n      canMoveProjectToWorkspace {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.WorkspaceAddProjectMenu_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceDashboard_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceDashboardHeader_Workspace\n    ...WorkspaceDashboardProjectList_Workspace\n    id\n    name\n    role\n    creationState {\n      completed\n      state\n    }\n  }\n": types.WorkspaceDashboard_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceDashboard_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceDashboardHeader_Workspace\n    ...WorkspaceDashboardProjectList_Workspace\n    ...BillingActions_Workspace\n    id\n    name\n    role\n    creationState {\n      completed\n      state\n    }\n  }\n": types.WorkspaceDashboard_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceDashboardHeader_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceAddProjectMenu_Workspace\n    ...BillingAlert_Workspace\n    id\n    role\n  }\n": types.WorkspaceDashboardHeader_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceDashboardProjectList_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...ProjectDashboardItem\n    }\n    cursor\n  }\n": types.WorkspaceDashboardProjectList_ProjectCollectionFragmentDoc,
     "\n  fragment WorkspaceDashboardProjectList_Workspace on Workspace {\n    ...WorkspaceAddProjectMenu_Workspace\n    id\n  }\n": types.WorkspaceDashboardProjectList_WorkspaceFragmentDoc,
@@ -740,9 +741,10 @@ const documents: Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
-    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n        speckleConBannerDismissed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
     "\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n": types.UpdateWorkspaceExplainerDocument,
     "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": types.UpdateLegacyProjectsExplainerDocument,
+    "\n  mutation UpdateSpeckleConBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setSpeckleConBannerDismissed(value: $value)\n      }\n    }\n  }\n": types.UpdateSpeckleConBannerDismissedDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
@@ -1339,7 +1341,7 @@ export function graphql(source: "\n  fragment WorkspaceAddProjectMenu_Workspace 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceDashboard_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceDashboardHeader_Workspace\n    ...WorkspaceDashboardProjectList_Workspace\n    id\n    name\n    role\n    creationState {\n      completed\n      state\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceDashboard_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceDashboardHeader_Workspace\n    ...WorkspaceDashboardProjectList_Workspace\n    id\n    name\n    role\n    creationState {\n      completed\n      state\n    }\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceDashboard_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceDashboardHeader_Workspace\n    ...WorkspaceDashboardProjectList_Workspace\n    ...BillingActions_Workspace\n    id\n    name\n    role\n    creationState {\n      completed\n      state\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceDashboard_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceDashboardHeader_Workspace\n    ...WorkspaceDashboardProjectList_Workspace\n    ...BillingActions_Workspace\n    id\n    name\n    role\n    creationState {\n      completed\n      state\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2107,7 +2109,7 @@ export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n        speckleConBannerDismissed\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n        speckleConBannerDismissed\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2116,6 +2118,10 @@ export function graphql(source: "\n  mutation UpdateWorkspaceExplainer($value: B
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateSpeckleConBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setSpeckleConBannerDismissed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateSpeckleConBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setSpeckleConBannerDismissed(value: $value)\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

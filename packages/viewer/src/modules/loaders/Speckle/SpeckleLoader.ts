@@ -124,7 +124,6 @@ export class SpeckleLoader extends Loader {
         (performance.now() - start) / TIME_MS.second
       } seconds. Node count: ${this.tree.nodeCount}`
     )
-    await this.loader.disposeAsync()
 
     if (viewerLoads === 0) {
       Logger.warn(`Viewer: no 3d objects found in object ${this.resource}`)
@@ -138,6 +137,7 @@ export class SpeckleLoader extends Loader {
 
     await this.converter.convertInstances()
     await this.converter.applyMaterials()
+    await this.loader.disposeAsync()
 
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()

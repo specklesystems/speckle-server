@@ -27,6 +27,7 @@ describe('downloader', () => {
     }
 
     expect(r).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('download batch of two', async () => {
@@ -55,6 +56,7 @@ describe('downloader', () => {
     }
 
     expect(r).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('download batch of three', async () => {
@@ -90,6 +92,7 @@ describe('downloader', () => {
     }
 
     expect(r).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('download single exists', async () => {
@@ -109,6 +112,7 @@ describe('downloader', () => {
     })
     const x = await downloader.downloadSingle()
     expect(x).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('add extra header', async () => {
@@ -134,5 +138,21 @@ describe('downloader', () => {
     })
     const x = await downloader.downloadSingle()
     expect(x).toMatchSnapshot()
+    await downloader.disposeAsync()
+  })
+
+  test('can dispose used', async () => {
+    const fetchMocker = createFetchMock(vi)
+    const headers = new Headers()
+    const downloader = new ServerDownloader({
+      serverUrl: 'http://speckle.test',
+      headers,
+      streamId: 'streamId',
+      objectId: 'objectId',
+      token: 'token',
+
+      fetch: fetchMocker
+    })
+    await downloader.disposeAsync()
   })
 })
