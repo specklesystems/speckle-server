@@ -111,7 +111,7 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'Super' heavy revit shit
     //  'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
@@ -529,7 +529,10 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/f7bb16037a/models/5d090c6f07'
 
     // Large topological stuff
-    'https://app.speckle.systems/projects/7a489ac0d4/models/146d5fbe27,3e481c9a58,65b4cf97d5,6d07577256,903850fa6f'
+    // 'https://app.speckle.systems/projects/7a489ac0d4/models/146d5fbe27,3e481c9a58,65b4cf97d5,6d07577256,903850fa6f'
+
+    // Small (microscopic) building
+    // 'https://app.speckle.systems/projects/26e4c4aab5/models/7d5ff72f5b'
   )
 }
 
