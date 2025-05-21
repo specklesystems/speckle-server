@@ -62,8 +62,7 @@ export const useIntercom = () => {
       created_at: Math.floor(new Date(user.value.createdAt || '').getTime() / 1000),
       /* eslint-enable camelcase */
       name: user.value.name || '',
-      email: user.value.email || '',
-      avatar: user.value.avatar || ''
+      email: user.value.email || ''
     })
 
     updateCompany()
