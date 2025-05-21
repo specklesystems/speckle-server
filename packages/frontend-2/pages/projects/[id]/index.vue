@@ -244,7 +244,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
   if (
     isAutomateEnabled.value &&
     project.value?.workspace &&
-    project.value?.workspace.role !== Roles.Workspace.Guest
+    project.value?.workspace?.role !== Roles.Workspace.Guest
   ) {
     items.push({
       title: 'Automations',
