@@ -12,6 +12,7 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  GetAllWorkspaces,
   GetPaginatedWorkspaceProjects,
   GetPaginatedWorkspaceProjectsArgs,
   GetPaginatedWorkspaceProjectsItems,
@@ -28,7 +29,7 @@ import {
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
-  GetWorkspaceSeatsCount,
+  GetWorkspaceSeatCount,
   GetWorkspaceWithDomains,
   GetWorkspaces,
   GetWorkspacesProjectsCounts,
@@ -40,7 +41,7 @@ import {
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
-import { Roles } from '@speckle/shared'
+import { isNullOrUndefined, Roles } from '@speckle/shared'
 import {
   ServerAclRecord,
   BranchRecord,
@@ -51,6 +52,7 @@ import {
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
+  WorkspaceCreationState as DbWorkspaceCreationState,
   WorkspaceDomains,
   Workspaces,
   WorkspaceSeats
@@ -65,7 +67,9 @@ import {
 } from '@/modules/workspaces/domain/types'
 import {
   decodeCompositeCursor,
-  encodeCompositeCursor
+  decodeCursor,
+  encodeCompositeCursor,
+  encodeCursor
 } from '@/modules/shared/helpers/graphqlHelper'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
@@ -89,10 +93,22 @@ export const getUserDiscoverableWorkspacesFactory =
     if (domains.length === 0) {
       return []
     }
-    return (await tables
+
+    const workspaces = (await tables
       .workspaces(db)
-      .select('workspaces.id as id', 'name', 'slug', 'description', 'logo')
-      .distinctOn('workspaces.id')
+      .select(
+        'workspaces.id as id',
+        'name',
+        'slug',
+        'description',
+        'logo',
+        tables
+          .workspacesAcl(db)
+          .select(knex.raw('count(*)::integer'))
+          .where(DbWorkspaceAcl.col.workspaceId, knex.ref(Workspaces.col.id))
+          .as('teamCount')
+      )
+      .distinctOn(['teamCount', 'workspaces.id'])
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
         tables.workspacesAcl(db).select('*').where({ userId }).as('acl'),
@@ -112,10 +128,13 @@ export const getUserDiscoverableWorkspacesFactory =
       .whereIn('domain', domains)
       .where('discoverabilityEnabled', true)
       .where('verified', true)
-      .where('role', null)) as Pick<
+      .where('role', null)
+      .orderBy([{ column: 'teamCount', order: 'desc' }, 'workspaces.id'])) as Pick<
       Workspace,
       'id' | 'name' | 'slug' | 'description' | 'logo'
     >[]
+
+    return workspaces
   }
 
 const workspaceWithRoleBaseQuery = ({
@@ -146,11 +165,55 @@ const workspaceWithRoleBaseQuery = ({
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
-  async ({ workspaceIds, userId }) => {
+  async ({ workspaceIds, userId, search, completed }) => {
     const q = workspaceWithRoleBaseQuery({ db, userId })
     if (workspaceIds !== undefined) q.whereIn(Workspaces.col.id, workspaceIds)
+
+    if (search) {
+      q.andWhere((builder) => {
+        builder
+          .where('name', 'ILIKE', `%${search}%`)
+          .orWhere('slug', 'ILIKE', `%${search}%`)
+      })
+    }
+
+    if (completed !== undefined) {
+      q.leftJoin(
+        DbWorkspaceCreationState.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      ).andWhere((builder) => {
+        builder
+          .where({ [DbWorkspaceCreationState.col.completed]: completed })
+          .orWhere({ [DbWorkspaceCreationState.col.completed]: null })
+      })
+    }
+
     const results = await q
     return results
+  }
+
+export const getAllWorkspacesFactory =
+  ({ db }: { db: Knex }): GetAllWorkspaces =>
+  async (args) => {
+    const cursor = args.cursor ? decodeCursor(args.cursor) : null
+    const limit = isNullOrUndefined(args.limit) ? 10 : args.limit
+
+    const q = tables
+      .workspaces(db)
+      .limit(clamp(limit, 1, 25))
+      .orderBy(Workspaces.col.id, 'asc')
+
+    if (cursor?.length) {
+      q.andWhere(Workspaces.col.id, '>', cursor)
+    }
+
+    const res = await q
+
+    return {
+      items: res,
+      cursor: res.length ? encodeCursor(res[res.length - 1].id) : null
+    }
   }
 
 export const getWorkspaceFactory =
@@ -236,7 +299,8 @@ export const upsertWorkspaceFactory =
         'name',
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
-        'discoverabilityEnabled'
+        'discoverabilityEnabled',
+        'isEmbedSpeckleBrandingHidden'
       ])
   }
 
@@ -505,7 +569,7 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
   }
 
 export const getWorkspaceSeatCountFactory =
-  ({ db }: { db: Knex }): GetWorkspaceSeatsCount =>
+  ({ db }: { db: Knex }): GetWorkspaceSeatCount =>
   async ({ workspaceId, type }) => {
     const query = db(WorkspaceSeats.name).where(
       WorkspaceSeats.col.workspaceId,

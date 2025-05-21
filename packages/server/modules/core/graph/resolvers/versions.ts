@@ -3,7 +3,10 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getServerOrigin,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -14,11 +17,7 @@ import {
   markCommitReceivedAndNotifyFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   createCommitFactory,
   deleteCommitsFactory,
@@ -54,16 +53,7 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { Version } from '@/modules/core/domain/commits/types'
 import { GraphQLResolveInfo } from 'graphql'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
-import {
-  Authz,
-  getProjectLimitDate,
-  isCreatedBeyondHistoryLimitCutoff
-} from '@speckle/shared'
-
-const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
-const getPersonalProjectLimits = FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-  ? () => Promise.resolve(Authz.PersonalProjectsLimits)
-  : () => Promise.resolve(null)
+import { isCreatedBeyondHistoryLimitCutoffFactory } from '@/modules/gatekeeperCore/utils/limits'
 
 /**
  * Simple utility to check if version is inside a Model or a Project
@@ -78,6 +68,10 @@ const getTypeFromPath = (info: GraphQLResolveInfo): 'Model' | 'Project' | null =
   }
   return null
 }
+
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = {
   Project: {
@@ -134,12 +128,12 @@ export = {
         })
       }
 
-      const isBeyondLimit = await isCreatedBeyondHistoryLimitCutoff({
-        getProjectLimitDate: getProjectLimitDate({
-          getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
-          getPersonalProjectLimits
-        })
-      })({ entity: parent, limitType: 'versionsHistory', project })
+      const isBeyondLimit = await isCreatedBeyondHistoryLimitCutoffFactory({ ctx })({
+        entity: parent,
+        limitType: 'versionsHistory',
+        project
+      })
+
       let lastVersion: Version | null
       if (getTypeFromPath(info) === 'Model') {
         lastVersion = await ctx.loaders
@@ -150,6 +144,7 @@ export = {
           .forRegion({ db: projectDB })
           .streams.getLastVersion.load(parent.streamId)
       }
+
       if (lastVersion?.id === parent.id) return parent.referencedObject
       if (isBeyondLimit) return null
       return parent.referencedObject
@@ -305,10 +300,10 @@ export = {
       )
     },
     async create(_parent, args, ctx) {
-      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
+      await throwIfRateLimited({
+        action: 'COMMIT_CREATE',
+        source: ctx.userId!
+      })
 
       const projectId = args.input.projectId
       const modelId = args.input.modelId

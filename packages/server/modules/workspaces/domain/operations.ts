@@ -65,7 +65,17 @@ export type GetWorkspaceBySlugOrId = (args: {
 export type GetWorkspaces = (args: {
   workspaceIds?: string[]
   userId?: string
+  search?: string
+  completed?: boolean
 }) => Promise<WorkspaceWithOptionalRole[]>
+
+export type GetAllWorkspaces = (args: {
+  limit: number
+  cursor: Nullable<string>
+}) => Promise<{
+  items: Workspace[]
+  cursor: Nullable<string>
+}>
 
 export type GetWorkspacesBySlug = (args: {
   workspaceIds: string[]
@@ -368,7 +378,7 @@ export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
   skipUserIds?: string[]
 }) => Promise<number>
 
-export type GetWorkspaceSeatsCount = (args: {
+export type GetWorkspaceSeatCount = (args: {
   workspaceId: string
   type?: WorkspaceSeatType
 }) => Promise<number>

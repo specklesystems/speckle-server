@@ -67,6 +67,7 @@ const tag = computed(() => {
 const itemIsActive = computed(
   () => props.workspace?.slug === activeWorkspaceSlug.value || props.isActive
 )
+
 const onClick = () => {
   if (props.workspace) {
     navigateTo(workspaceRoute(props.workspace.slug))

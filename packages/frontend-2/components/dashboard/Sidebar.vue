@@ -83,6 +83,14 @@
                   </LayoutSidebarMenuGroupItem>
                 </CalPopUp>
 
+                <div v-if="isWorkspacesEnabled" @click="openChat">
+                  <LayoutSidebarMenuGroupItem label="Give us feedback">
+                    <template #icon>
+                      <IconFeedback class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </div>
+
                 <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
                   <LayoutSidebarMenuGroupItem
                     label="Tutorials"
@@ -105,14 +113,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-
-                <div @click="openFeedbackDialog">
-                  <LayoutSidebarMenuGroupItem label="Give us feedback">
-                    <template #icon>
-                      <IconFeedback class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </div>
 
                 <NuxtLink
                   to="https://speckle.guide/"
@@ -140,11 +140,12 @@
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
+          <template v-if="showSpeckleConPromo" #promo>
+            <DashboardPromo />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
-
-    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -165,15 +166,18 @@ import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import dayjs from 'dayjs'
+import { useActiveUserMeta } from '~/lib/user/composables/meta'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
+const { hasDismissedSpeckleConBanner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
-const showFeedbackDialog = ref(false)
 const showExplainerVideoDialog = ref(false)
 
 const projectsLink = computed(() => {
@@ -190,6 +194,16 @@ const showSidebar = computed(() => {
     : isLoggedIn.value
 })
 
+const showSpeckleConPromo = computed(() => {
+  if (hasDismissedSpeckleConBanner.value) return false
+  return dayjs('2025-11-08').isAfter(dayjs())
+})
+
+const openChat = () => {
+  $intercom.show()
+  isOpenMobile.value = false
+}
+
 const openExplainerVideoDialog = () => {
   showExplainerVideoDialog.value = true
   isOpenMobile.value = false
@@ -200,10 +214,5 @@ const openExplainerVideoDialog = () => {
 
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
-}
-
-const openFeedbackDialog = () => {
-  showFeedbackDialog.value = true
-  isOpenMobile.value = false
 }
 </script>

@@ -12,7 +12,10 @@ describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
     overrides?: OverridesOf<typeof canUpdateProjectAllowPublicCommentsPolicy>
   ) =>
     canUpdateProjectAllowPublicCommentsPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,

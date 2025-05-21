@@ -1200,6 +1200,8 @@ export type LimitedUserWorkspaceRoleArgs = {
 /** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
+  /** Workspace admins ordered by join date */
+  adminTeam: Array<LimitedWorkspaceCollaborator>;
   /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
   /** Workspace id */
@@ -2032,6 +2034,8 @@ export type Project = {
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  /** Public project-level configuration for embedded viewer */
+  embedOptions: ProjectEmbedOptions;
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
   /** Collaborators who have been invited, but not yet accepted. */
@@ -2363,6 +2367,11 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectEmbedOptions = {
+  __typename?: 'ProjectEmbedOptions';
+  hideSpeckleBranding: Scalars['Boolean']['output'];
 };
 
 export type ProjectFileImportUpdatedMessage = {
@@ -4121,12 +4130,14 @@ export type UserMeta = {
   __typename?: 'UserMeta';
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  speckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
 
@@ -4136,6 +4147,11 @@ export type UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs = {
 
 
 export type UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
+};
+
+
+export type UserMetaMutationsSetSpeckleConBannerDismissedArgs = {
   value: Scalars['Boolean']['input'];
 };
 
@@ -4206,6 +4222,7 @@ export type UserUpdateInput = {
 };
 
 export type UserWorkspacesFilter = {
+  completed?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4472,6 +4489,8 @@ export type Workspace = {
   domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
   /** Verified workspace domains */
   domains?: Maybe<Array<WorkspaceDomain>>;
+  /** Workspace-level configuration for models in embedded viewer */
+  embedOptions: WorkspaceEmbedOptions;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   /** Only available to workspace owners/members */
@@ -4623,6 +4642,11 @@ export type WorkspaceDomainDeleteInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type WorkspaceEmbedOptions = {
+  __typename?: 'WorkspaceEmbedOptions';
+  hideSpeckleBranding: Scalars['Boolean']['output'];
+};
+
 export const WorkspaceFeatureName = {
   DomainBasedSecurityPolicies: 'domainBasedSecurityPolicies',
   OidcSso: 'oidcSso',
@@ -4759,6 +4783,7 @@ export type WorkspaceMutations = {
   setDefaultRegion: Workspace;
   update: Workspace;
   updateCreationState: Scalars['Boolean']['output'];
+  updateEmbedOptions: WorkspaceEmbedOptions;
   updateRole: Workspace;
   updateSeatType: Workspace;
 };
@@ -4820,6 +4845,11 @@ export type WorkspaceMutationsUpdateCreationStateArgs = {
 };
 
 
+export type WorkspaceMutationsUpdateEmbedOptionsArgs = {
+  input: WorkspaceUpdateEmbedOptionsInput;
+};
+
+
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
@@ -4847,6 +4877,7 @@ export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof 
 export type WorkspacePermissionChecks = {
   __typename?: 'WorkspacePermissionChecks';
   canCreateProject: PermissionCheckResult;
+  canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
 };
@@ -5082,6 +5113,11 @@ export type WorkspaceTeamFilter = {
   /** Search for team members by name or email */
   search?: InputMaybe<Scalars['String']['input']>;
   seatType?: InputMaybe<WorkspaceSeatType>;
+};
+
+export type WorkspaceUpdateEmbedOptionsInput = {
+  hideSpeckleBranding: Scalars['Boolean']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export type WorkspaceUpdateInput = {

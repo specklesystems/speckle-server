@@ -1,0 +1,8 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CacheReader testing > deferred getObject 1`] = `
+{
+  "id": "id",
+  "speckle_type": "type",
+}
+`;

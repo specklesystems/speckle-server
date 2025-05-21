@@ -149,12 +149,18 @@ type WorkspaceMutations {
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
   updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+  updateEmbedOptions(input: WorkspaceUpdateEmbedOptionsInput!): WorkspaceEmbedOptions!
   """
   Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
   """
   dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
   requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
+}
+
+input WorkspaceUpdateEmbedOptionsInput {
+  workspaceId: String!
+  hideSpeckleBranding: Boolean!
 }
 
 input WorkspaceDismissInput {
@@ -304,6 +310,10 @@ type Workspace {
   """
   creationState: WorkspaceCreationState
   """
+  Workspace-level configuration for models in embedded viewer
+  """
+  embedOptions: WorkspaceEmbedOptions!
+  """
   Get all join requests for all the workspaces the user is an admin of
   """
   adminWorkspacesJoinRequests(
@@ -314,6 +324,10 @@ type Workspace {
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
+}
+
+type WorkspaceEmbedOptions {
+  hideSpeckleBranding: Boolean!
 }
 
 type WorkspaceTeamByRole {
@@ -379,6 +393,10 @@ type LimitedWorkspace {
   Workspace members visible to people with verified email domain
   """
   team(cursor: String, limit: Int! = 25): LimitedWorkspaceCollaboratorCollection
+  """
+  Workspace admins ordered by join date
+  """
+  adminTeam: [LimitedWorkspaceCollaborator!]!
 }
 
 type LimitedWorkspaceCollaboratorCollection {
@@ -551,9 +569,17 @@ extend type User {
 extend type Project {
   workspace: Workspace
   """
+  Public project-level configuration for embedded viewer
+  """
+  embedOptions: ProjectEmbedOptions!
+  """
   Returns information about the potential effects of moving a project to a given workspace.
   """
   moveToWorkspaceDryRun(workspaceId: String!): ProjectMoveToWorkspaceDryRun!
+}
+
+type ProjectEmbedOptions {
+  hideSpeckleBranding: Boolean!
 }
 
 type ProjectMoveToWorkspaceDryRun {
@@ -583,6 +609,7 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
+  completed: Boolean
 }
 
 extend type Project {

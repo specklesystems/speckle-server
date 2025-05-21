@@ -1,14 +1,13 @@
 import SpeckleConverter from './SpeckleConverter.js'
 import { Loader, LoaderEvent } from '../Loader.js'
-import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
-import { AsyncPause } from '../../World.js'
 import Logger from '../../utils/Logger.js'
+import { ObjectLoader2, ObjectLoader2Factory } from '@speckle/objectloader2'
 import { TIME_MS } from '@speckle/shared'
 
 export class SpeckleLoader extends Loader {
-  protected loader: ObjectLoader
+  protected loader: ObjectLoader2
   protected converter: SpeckleConverter
   protected tree: WorldTree
   protected isCancelled = false
@@ -49,9 +48,9 @@ export class SpeckleLoader extends Loader {
   protected initObjectLoader(
     resource: string,
     authToken?: string,
-    enableCaching?: boolean,
+    _enableCaching?: boolean,
     resourceData?: unknown
-  ): ObjectLoader {
+  ): ObjectLoader2 {
     resourceData
     let token = undefined
     try {
@@ -81,14 +80,7 @@ export class SpeckleLoader extends Loader {
     const streamId = segments[2]
     const objectId = segments[4]
 
-    return new ObjectLoader({
-      serverUrl,
-      token,
-      streamId,
-      objectId,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: { enableCaching, customLogger: (Logger as any).log }
-    })
+    return ObjectLoader2Factory.createFromUrl({ serverUrl, streamId, objectId, token })
   }
 
   public async load(): Promise<boolean> {
@@ -101,8 +93,6 @@ export class SpeckleLoader extends Loader {
 
     Logger.warn('Downloading object ', this.resource)
 
-    const pause = new AsyncPause()
-
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this.resource)
@@ -114,10 +104,6 @@ export class SpeckleLoader extends Loader {
           obj as SpeckleObject,
           async () => {
             viewerLoads++
-            pause.tick(100)
-            if (pause.needsWait) {
-              await pause.wait(16)
-            }
           }
         )
         first = false
@@ -151,6 +137,7 @@ export class SpeckleLoader extends Loader {
 
     await this.converter.convertInstances()
     await this.converter.applyMaterials()
+    await this.loader.disposeAsync()
 
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()
@@ -185,6 +172,6 @@ export class SpeckleLoader extends Loader {
 
   dispose() {
     super.dispose()
-    this.loader.dispose()
+    void this.loader.disposeAsync()
   }
 }
