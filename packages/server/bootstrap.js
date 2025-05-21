@@ -10,6 +10,7 @@ import { logger } from '@/observability/logging'
 import { initOpenTelemetry } from '@/observability/otel'
 import { patchKnex } from '@/modules/core/patches/knex'
 import { appRoot, packageRoot } from '#/root.js'
+import inspector from 'node:inspector'
 
 /**
  * Bootstrap module that should be imported at the very top of each entry point module
@@ -21,7 +22,7 @@ if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
 }
 
 // If running in test env, load .env.test first
-// (appRoot necessary, cause env files aren't loaded through require() calls)
+// (appRoot necessary, cause env files aren't loaded through require()/import() calls)
 if (isTestEnv()) {
   const { error } = dotenv.config({ path: `${packageRoot}/.env.test` })
   if (error) {
@@ -37,7 +38,6 @@ if (isTestEnv()) {
 // (e.g. due to various child processes capturing the --inspect flag)
 const startDebugger = process.env.START_DEBUGGER
 if ((isTestEnv() || isDevEnv()) && startDebugger) {
-  const inspector = require('node:inspector')
   if (!inspector.url()) {
     console.log('Debugger starting on process ' + process.pid)
     inspector.open(0, undefined, true)

@@ -17,9 +17,6 @@ import type { Logger } from 'pino'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
-// const require = createRequire(import.meta.url)
-// const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
-// const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
 const defaultAngle = '0'
 
 export const getObjectPreviewBufferOrFilepathFactory =

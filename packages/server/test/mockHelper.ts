@@ -5,9 +5,7 @@ import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import { isArray, isFunction } from 'lodash-es'
 import mock from 'mock-require'
 import { ConditionalPick } from 'type-fest'
-import { createRequire } from 'module'
 
-const require = createRequire(import.meta.url)
 export type MockedFunctionImplementation = (...args: any[]) => MaybeAsync<any>
 
 /**
@@ -46,7 +44,9 @@ export function mockRequireModule<
     Record<MockTypeFunctionProp, MockedFunc<MockTypeFunctionProp>>
   > = {}
 
-  const originalModule = require(modulePaths[0]) as MockType
+  // TODO: Fix, move mocks to ESM, needs a complete rewrite possibly
+  // const originalModule = require(modulePaths[0]) as MockType
+  const originalModule = {} as MockType
   const mockDefinition = new Proxy<MockType>(originalModule, {
     get(target, prop) {
       const realProp = prop as keyof MockTypeFunctionsOnly
