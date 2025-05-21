@@ -4,7 +4,7 @@
   <FormFileUploadZone
     ref="uploadZone"
     v-slot="{ isDraggingFiles, openFilePicker }"
-    :disabled="isUploading || disabled"
+    :disabled="isUploading || isDisabled"
     :size-limit="maxSizeInBytes"
     :accept="accept"
     class="flex items-center h-full"
@@ -49,15 +49,18 @@
             }}
           </p>
           <p :class="paragraphClasses">
-            Use
-            <NuxtLink :to="connectorsRoute" class="font-medium">
-              <span class="underline">connectors</span>
-            </NuxtLink>
-            to publish a {{ modelName ? '' : 'new model' }} version to
-            {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-            IFC/OBJ/STL file here.
+            <template v-if="!isDisabled">
+              Use
+              <NuxtLink :to="connectorsRoute" class="font-medium">
+                <span class="underline">connectors</span>
+              </NuxtLink>
+              to publish a {{ modelName ? '' : 'new model' }} version to
+              {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
+              IFC/OBJ/STL file here.
+            </template>
+            <template v-else>TODO: Disabled</template>
           </p>
-          <div v-if="showEmptyState" :class="buttonsClasses">
+          <div v-if="showEmptyState && !isDisabled" :class="buttonsClasses">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
               Install connectors
             </FormButton>
@@ -76,13 +79,43 @@ import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
+import { graphql } from '~/lib/common/generated/gql'
+import type {
+  ProjectCardImportFileArea_ModelFragment,
+  ProjectCardImportFileArea_ProjectFragment
+} from '~/lib/common/generated/gql/graphql'
 
 type EmptyStateVariants = 'modelGrid' | 'modelList' | 'modelsSection'
 
+graphql(`
+  fragment ProjectCardImportFileArea_Project on Project {
+    id
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
+    }
+    ...UseFileImport_Project
+  }
+`)
+
+graphql(`
+  fragment ProjectCardImportFileArea_Model on Model {
+    id
+    name
+    permissions {
+      canCreateVersion {
+        ...FullPermissionCheckResult
+      }
+    }
+    ...UseFileImport_Model
+  }
+`)
+
 const props = defineProps<{
-  projectId: string
+  project: ProjectCardImportFileArea_ProjectFragment
+  model?: ProjectCardImportFileArea_ModelFragment
   modelName?: string
-  disabled?: boolean
   emptyStateVariant?: EmptyStateVariants
 }>()
 
@@ -104,6 +137,14 @@ const uploadZone = ref(
     triggerPicker: () => void
   }>
 )
+
+const modelName = computed(() => props.modelName || props.model?.name)
+const accessCheck = computed(() => {
+  return props.model
+    ? props.model.permissions.canCreateVersion
+    : props.project.permissions.canCreateModel
+})
+const isDisabled = computed(() => !accessCheck.value.authorized)
 
 const showEmptyState = computed(
   () =>
