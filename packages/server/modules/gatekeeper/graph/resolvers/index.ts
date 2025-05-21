@@ -161,6 +161,25 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return { workspaceId: parent.id }
         }
       },
+      Project: {
+        hasAccessToFeature: async (parent, args) => {
+          if (args.featureName !== 'hideSpeckleBranding') {
+            // Only publicly validate embed-related features at the project level
+            return false
+          }
+
+          if (!parent.workspaceId) {
+            return false
+          }
+
+          return await canWorkspaceAccessFeatureFactory({
+            getWorkspacePlan: getWorkspacePlanFactory({ db })
+          })({
+            workspaceId: parent.id,
+            workspaceFeature: args.featureName
+          })
+        }
+      },
       WorkspacePlan: {
         usage: async (parent) => {
           return { workspaceId: parent.workspaceId }
