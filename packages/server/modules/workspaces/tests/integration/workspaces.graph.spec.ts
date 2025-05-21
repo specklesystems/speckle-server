@@ -47,7 +47,7 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { shuffle } from 'lodash'
+import { shuffle } from 'lodash-es'
 import knex, { db } from '@/db/knex'
 import {
   createRandomPassword,

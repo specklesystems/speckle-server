@@ -6,7 +6,7 @@ import {
   streamReadPermissionsPipelineFactory
 } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { isArray } from 'lodash'
+import { isArray } from 'lodash-es'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import {
   getAllStreamBlobIdsFactory,

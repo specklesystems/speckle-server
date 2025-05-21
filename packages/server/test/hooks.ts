@@ -50,7 +50,7 @@ import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { ApolloServer } from '@apollo/server'
 import { ReadinessHandler } from '@/healthchecks/types'
-import { set } from 'lodash'
+import { set } from 'lodash-es'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 

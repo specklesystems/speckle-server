@@ -1,6 +1,6 @@
 import { ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
-import { times, clamp } from 'lodash'
+import { times, clamp } from 'lodash-es'
 import { createStreamInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
 import { getAdminUsersList } from '@/test/graphql/users'
 import { buildApolloServer } from '@/app'

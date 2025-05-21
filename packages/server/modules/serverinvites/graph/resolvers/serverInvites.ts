@@ -17,7 +17,7 @@ import {
   getServerInviteForTokenFactory
 } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import {
   Resolvers,
   TokenResourceIdentifierType

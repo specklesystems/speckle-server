@@ -6,7 +6,7 @@ import {
 } from '@/modules/core/errors/userinput'
 import type { Request, Response, NextFunction, RequestHandler } from 'express'
 import { ensureError, Optional } from '@speckle/shared'
-import { get, isArray, isObjectLike, isString } from 'lodash'
+import { get, isArray, isObjectLike, isString } from 'lodash-es'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 

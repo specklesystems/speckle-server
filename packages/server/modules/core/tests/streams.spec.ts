@@ -25,7 +25,7 @@ import {
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
-import { has, times } from 'lodash'
+import { has, times } from 'lodash-es'
 import { Streams } from '@/modules/core/dbSchema'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { sleep } from '@/test/helpers'

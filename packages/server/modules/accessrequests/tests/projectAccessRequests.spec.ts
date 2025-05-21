@@ -56,7 +56,7 @@ import {
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { noop } from 'lodash'
+import { noop } from 'lodash-es'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })

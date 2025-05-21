@@ -2,7 +2,7 @@
 /* eslint-disable camelcase */
 import { expect } from 'chai'
 import assert from 'assert'
-import { cloneDeep, times, random, padStart } from 'lodash'
+import { cloneDeep, times, random, padStart } from 'lodash-es'
 
 import { beforeEachContext } from '@/test/hooks'
 import { getAnIdForThisOnePlease } from '@/test/helpers'

@@ -9,7 +9,7 @@ import {
   inviteUsersToProjectFactory
 } from '@/modules/serverinvites/services/projectInviteManagement'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import {
   getStreamFactory,
   createStreamFactory,

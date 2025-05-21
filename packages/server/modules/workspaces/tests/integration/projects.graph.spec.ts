@@ -57,7 +57,7 @@ import {
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const adminOverrideMock = mockAdminOverride()

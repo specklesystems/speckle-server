@@ -21,7 +21,7 @@ import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import { getTotalVersionCountFactory } from '@/modules/core/repositories/commits'
-import { sum } from 'lodash'
+import { sum } from 'lodash-es'
 
 export const legacyGetPaginatedStreamCommitsFactory =
   (deps: {

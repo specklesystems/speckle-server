@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Knex } from 'knex'
-import { isString } from 'lodash'
+import { isString } from 'lodash-es'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { isNonNullable, MaybeAsync } from '@speckle/shared'

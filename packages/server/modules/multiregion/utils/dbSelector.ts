@@ -25,7 +25,7 @@ import {
   getProjectRegionKey,
   getRegisteredRegionConfigs
 } from '@/modules/multiregion/utils/regionSelector'
-import { get, mapValues } from 'lodash'
+import { get, mapValues } from 'lodash-es'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 let getter: GetProjectDb | undefined = undefined

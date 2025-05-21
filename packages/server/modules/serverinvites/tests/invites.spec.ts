@@ -41,7 +41,7 @@ import {
   UseStreamInviteDocument
 } from '@/test/graphql/generated/graphql'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import { reduce } from 'lodash'
+import { reduce } from 'lodash-es'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 

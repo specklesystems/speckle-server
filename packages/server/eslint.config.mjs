@@ -20,17 +20,17 @@ const configs = [
     }
   },
   {
-    files: ['**/*.cjs'],
+    files: ['**/*.cjs', '**/*.cts'],
     languageOptions: {
       sourceType: 'commonjs'
     }
   },
   ...tseslint.configs.recommendedTypeChecked.map((c) => ({
     ...c,
-    files: [...(c.files || []), '**/*.ts', '**/*.d.ts']
+    files: [...(c.files || []), '**/*.ts', '**/*.d.ts', '**/*.cts']
   })),
   {
-    files: ['**/*.ts', '**/*.d.ts'],
+    files: ['**/*.ts', '**/*.d.ts', '**/*.cts'],
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: getESMDirname(import.meta.url),

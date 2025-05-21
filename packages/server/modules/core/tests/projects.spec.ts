@@ -12,7 +12,7 @@ import {
   ProjectVisibility
 } from '@/test/graphql/generated/graphql'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 import { Roles } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 

@@ -12,7 +12,7 @@ import {
 } from '@/modules/serverinvites/domain/operations'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { resolveTarget } from '@/modules/serverinvites/helpers/core'
-import { clamp } from 'lodash'
+import { clamp } from 'lodash-es'
 
 type LegacyGetUsersInvitesTotalCounts = {
   userCount: number

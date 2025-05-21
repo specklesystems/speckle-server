@@ -2,7 +2,7 @@ import { CommentRecord } from '@/modules/comments/helpers/types'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
-import { difference, flatten } from 'lodash'
+import { difference, flatten } from 'lodash-es'
 import {
   NotificationPublisher,
   NotificationType

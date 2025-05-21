@@ -5,7 +5,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { throwUncoveredError } from '@speckle/shared'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 
 export const isProjectCreateInput = (
   i: StreamCreateInput | ProjectCreateArgs

@@ -29,7 +29,7 @@ import {
   AutomationRunStatuses,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
-import { keyBy, uniq } from 'lodash'
+import { keyBy, uniq } from 'lodash-es'
 import { resolveStatusFromFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
 import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'

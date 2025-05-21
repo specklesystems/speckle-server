@@ -3,7 +3,7 @@ import { Optional } from '@speckle/shared'
 import knex from '@/db/knex'
 import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Knex } from 'knex'
-import { reduce } from 'lodash'
+import { reduce } from 'lodash-es'
 
 type BaseInnerSchemaConfig<T extends string, C extends string> = {
   /**

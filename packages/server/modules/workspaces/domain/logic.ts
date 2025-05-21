@@ -6,7 +6,7 @@ import {
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 
 export const userEmailsCompliantWithWorkspaceDomains = ({
   userEmails,

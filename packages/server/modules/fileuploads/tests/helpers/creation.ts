@@ -3,7 +3,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { FileImportMessage } from '@/modules/fileuploads/domain/operations'
-import { assign } from 'lodash'
+import { assign } from 'lodash-es'
 
 const saveUploadFile = saveUploadFileFactory({ db })
 export const createFileUploadJob = (params: { projectId: string; userId: string }) => {

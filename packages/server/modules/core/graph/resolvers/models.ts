@@ -9,7 +9,7 @@ import {
   getProjectTopLevelModelsTreeFactory
 } from '@/modules/core/services/branch/retrieval'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { last } from 'lodash'
+import { last } from 'lodash-es'
 
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {

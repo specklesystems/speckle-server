@@ -21,8 +21,8 @@ import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
 export { Currency } from '@/modules/gatekeeperCore/domain/billing'
-export { WorkspaceSeat, WorkspaceSeatType }
-export {
+export { type WorkspaceSeat, WorkspaceSeatType }
+export type {
   GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats
 } from '@/modules/workspacesCore/domain/operations'

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Factory, FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
-import { isArray, isFunction } from 'lodash'
+import { isArray, isFunction } from 'lodash-es'
 import mock from 'mock-require'
 import { ConditionalPick } from 'type-fest'
 

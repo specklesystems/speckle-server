@@ -8,7 +8,7 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import { LogicError } from '@/modules/shared/errors'
 import { TIME_MS } from '@speckle/shared'
-import { isString } from 'lodash'
+import { isString } from 'lodash-es'
 import { Stripe } from 'stripe'
 
 export const createCustomerPortalUrlFactory =

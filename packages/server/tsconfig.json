@@ -108,13 +108,16 @@
     "db/**/*",
     "healthchecks/**/*",
     "modules/**/*",
+    "modules/**/*.cts",
+    "modules/schema.cts",
     "observability/**/*",
     "scripts/**/*",
     "test/**/*",
     "type-augmentations/**/*",
     "app.ts",
     "bootstrap.js",
-    "knexfile.ts"
+    "knexfile.ts",
+    "codegen.ts"
   ],
   "exclude": ["node_modules", "coverage", "reports"]
 }

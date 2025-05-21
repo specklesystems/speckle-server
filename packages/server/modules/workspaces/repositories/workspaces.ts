@@ -60,7 +60,7 @@ import {
 import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 
-import { clamp, has, isObjectLike } from 'lodash'
+import { clamp, has, isObjectLike } from 'lodash-es'
 import {
   WorkspaceCreationState,
   WorkspaceTeamMember

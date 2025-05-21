@@ -32,7 +32,7 @@ import {
   ensureCommentSchema,
   validateInputAttachmentsFactory
 } from '@/modules/comments/services/commentTextService'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import {
   documentToBasicString,
   SmartTextEditorValueSchema

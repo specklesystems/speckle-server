@@ -24,7 +24,7 @@ import { Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { itEach } from '@/test/assertionHelper'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { db } from '@/db/knex'
 import {

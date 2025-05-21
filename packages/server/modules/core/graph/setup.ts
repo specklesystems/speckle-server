@@ -1,6 +1,6 @@
 import { ApolloServerOptions, BaseContext } from '@apollo/server'
 import { GraphQLError } from 'graphql'
-import _ from 'lodash'
+import { omit } from 'lodash-es'
 import VError from 'verror'
 
 /**
@@ -40,7 +40,7 @@ export function buildErrorFormatter(params: {
 
     // Updating exception metadata in extensions
     if (extensions.exception) {
-      extensions.exception = _.omit(extensions.exception, VERROR_TRASH_PROPS)
+      extensions.exception = omit(extensions.exception, VERROR_TRASH_PROPS)
 
       if (includeStacktraceInErrorResponses) {
         extensions.exception.stacktrace = VError.fullStack(realError)

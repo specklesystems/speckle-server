@@ -94,7 +94,7 @@ import {
   getFunctionInputsForFrontendFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
-import { keyBy } from 'lodash'
+import * as _ from 'lodash-es'
 import { redactWriteOnlyInputData } from '@/modules/automate/utils/jsonSchemaRedactor'
 import {
   ProjectSubscriptions,
@@ -443,7 +443,7 @@ export default (FF_AUTOMATE_MODULE_ENABLED
           const fns = await ctx.loaders
             .forRegion({ db: projectDb })
             .automations.getRevisionFunctions.load(parent.id)
-          const fnsReleases = keyBy(
+          const fnsReleases = _.keyBy(
             (
               await ctx.loaders
                 .forRegion({ db: projectDb })

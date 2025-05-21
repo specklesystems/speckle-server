@@ -91,7 +91,7 @@ import {
   ProjectSubscriptions,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import {

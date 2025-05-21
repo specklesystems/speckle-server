@@ -117,7 +117,7 @@ import {
   removeNullOrUndefinedKeys,
   throwUncoveredError
 } from '@speckle/shared'
-import { chunk, omit } from 'lodash'
+import { chunk, omit } from 'lodash-es'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,

@@ -21,7 +21,7 @@ import {
   PaidWorkspacePlanStatuses,
   throwUncoveredError
 } from '@speckle/shared'
-import { cloneDeep } from 'lodash'
+import { cloneDeep } from 'lodash-es'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 
 export const handleSubscriptionUpdateFactory =

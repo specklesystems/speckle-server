@@ -19,7 +19,7 @@ import { expect } from 'chai'
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
-import { get, pick, set } from 'lodash'
+import { get, pick, set } from 'lodash-es'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { publish, TestSubscriptions } from '@/modules/shared/utils/subscriptions'
 import cryptoRandomString from 'crypto-random-string'
@@ -295,7 +295,7 @@ export const testApolloSubscriptionServer = async () => {
   set(mockWsServer, 'removeListener', mockWsServer.off.bind(mockWsServer)) // backwards compat w/ subscriptions-transport-ws
 
   const mockWs = MockSocket.WebSocket as unknown as ws.WebSocket
-  const apolloSubServer = buildApolloSubscriptionServer({ server: mockWsServer })
+  const apolloSubServer = await buildApolloSubscriptionServer({ server: mockWsServer })
 
   // weakRef to ensure we dont prevent garbage collection
   const clients: WeakRef<SubscriptionClient>[] = []

@@ -25,7 +25,7 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { PaidWorkspacePlans, throwUncoveredError, WorkspacePlan } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
 
 describe('subscriptions @gatekeeper', () => {

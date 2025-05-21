@@ -17,7 +17,7 @@ import {
   buildCommentTextFromInput,
   validateInputAttachmentsFactory
 } from '@/modules/comments/services/commentTextService'
-import { get, range } from 'lodash'
+import { get, range } from 'lodash-es'
 import { buildApolloServer } from '@/app'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createAuthTokenForUser } from '@/test/authHelper'
