@@ -28,10 +28,9 @@
         Add project
       </FormButton>
     </LayoutMenu>
-    <ProjectsAddDialog
-      v-model:open="showNewProjectDialog"
-      :workspace-id="workspace?.id"
-    />
+
+    <ProjectsAdd v-model:open="showNewProjectDialog" :workspace="workspace" />
+
     <ClientOnly>
       <WorkspaceMoveProjectManager
         v-model:open="showMoveProjectDialog"
@@ -76,6 +75,7 @@ graphql(`
         ...FullPermissionCheckResult
       }
     }
+    ...ProjectsAdd_Workspace
   }
 `)
 

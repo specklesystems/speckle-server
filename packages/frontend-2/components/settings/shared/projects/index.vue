@@ -12,8 +12,8 @@
           v-on="on"
         />
       </div>
-      <div v-tippy="disabledTooltip">
-        <FormButton :disabled="disableCreate" @click="handleCreateProject">
+      <div :key="createDisabledTooltip" v-tippy="createDisabledTooltip">
+        <FormButton :disabled="isCreateDisabled" @click="openNewProject = true">
           Create
         </FormButton>
       </div>
@@ -93,7 +93,7 @@
       :project="projectToModify"
     />
 
-    <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
+    <ProjectsAdd v-model:open="openNewProject" :workspace="workspace" />
   </div>
 </template>
 
@@ -101,7 +101,8 @@
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type {
   SettingsSharedProjects_ProjectFragment,
-  ProjectsDeleteDialog_ProjectFragment
+  ProjectsDeleteDialog_ProjectFragment,
+  SettingsSharedProjects_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import {
   MagnifyingGlassIcon,
@@ -113,6 +114,9 @@ import { useDebouncedTextInput, type LayoutMenuItem } from '@speckle/ui-componen
 import { graphql } from '~/lib/common/generated/gql'
 import { useRouter } from 'vue-router'
 import { projectRoute } from '~/lib/common/helpers/route'
+import { useCanCreatePersonalProject } from '~/lib/projects/composables/permissions'
+import { useCanCreateWorkspaceProject } from '~/lib/workspaces/composables/projects/permissions'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsSharedProjects_Project on Project {
@@ -150,17 +154,42 @@ graphql(`
   }
 `)
 
+graphql(`
+  fragment SettingsSharedProjects_Workspace on Workspace {
+    id
+    ...ProjectsAdd_Workspace
+  }
+`)
+
 const props = defineProps<{
-  projects?: SettingsSharedProjects_ProjectFragment[]
-  workspaceId?: string
-  disableCreate?: boolean
-  disabledTooltip?: string
-  limitReached?: boolean
+  workspaceId: MaybeNullOrUndefined<string>
+  projects: MaybeNullOrUndefined<SettingsSharedProjects_ProjectFragment[]>
+  workspace: MaybeNullOrUndefined<SettingsSharedProjects_WorkspaceFragment>
 }>()
 
-const emit = defineEmits<{
-  (e: 'project-limit-reached'): void
-}>()
+const { activeUser } = useActiveUser()
+const canCreatePersonal = useCanCreatePersonalProject({
+  activeUser: computed(() => activeUser.value)
+})
+
+const canCreateWorkspace = useCanCreateWorkspaceProject({
+  workspace: computed(() => props.workspace)
+})
+
+const isCreateDisabled = computed(() => {
+  if (props.workspaceId) {
+    return !canCreateWorkspace.canClickCreate.value
+  }
+
+  return !canCreatePersonal.canClickCreate.value
+})
+const createDisabledTooltip = computed(() => {
+  if (props.workspaceId) {
+    return canCreateWorkspace.cantClickCreateReason.value
+  }
+
+  return canCreatePersonal.cantClickCreateReason.value
+})
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
@@ -237,11 +266,11 @@ const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
 
-const handleCreateProject = () => {
-  if (props.limitReached) {
-    emit('project-limit-reached')
-  } else {
-    openNewProject.value = true
-  }
-}
+// const handleCreateProject = () => {
+//   if (props.limitReached) {
+//     emit('project-limit-reached')
+//   } else {
+//     openNewProject.value = true
+//   }
+// }
 </script>
