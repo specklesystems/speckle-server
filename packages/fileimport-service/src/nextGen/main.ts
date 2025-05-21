@@ -122,7 +122,8 @@ const sendResult = async ({
   )
   if (!response.ok) {
     const text = await response.text()
-    console.log(text)
+    currentJob?.logger.error({ cause: text }, 'Failed to report job result')
+    throw new Error(`Failed to report job result: ${text}`)
   }
 }
 

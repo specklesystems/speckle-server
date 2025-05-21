@@ -31,7 +31,7 @@ import {
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
-import { ModelNotFoundError } from '@speckle/shared/authz'
+import { ModelNotFoundError } from '@/modules/core/errors/model'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -67,7 +67,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       const projectDb = await getProjectDbClient({ projectId })
       const getModelsByIds = getBranchesByIdsFactory({ db: projectDb })
       const [model] = await getModelsByIds([modelId], { streamId: projectId })
-      if (!model) throw new ModelNotFoundError()
+      if (!model) throw new ModelNotFoundError(undefined, { statusCode: 401 })
 
       const pushJobToFileImporter = pushJobToFileImporterFactory({
         getServerOrigin,

@@ -44,6 +44,7 @@ export const jobProcessor = async ({
 
   const tmp = tmpdir()
   const jobDir = path.join(tmp, job.jobId)
+  fs.rmSync(jobDir, { force: true, recursive: true })
   fs.mkdirSync(jobDir)
   try {
     const fileType = job.fileType.toLowerCase()

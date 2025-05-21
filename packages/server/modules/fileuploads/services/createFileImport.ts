@@ -38,11 +38,6 @@ export const pushJobToFileImporterFactory =
       ]
     })
 
-    // const url = new URL(
-    //   `/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
-    //   deps.getServerOrigin()
-    // ).toString()
-
     await deps.scheduleJob({
       jobId,
       fileName,
