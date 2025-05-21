@@ -46,7 +46,7 @@ const showAllWorkspaces = ref(false)
 const workspacesToShow = computed(() => {
   return showAllWorkspaces.value
     ? discoverableWorkspacesAndJoinRequests.value
-    : discoverableWorkspacesAndJoinRequests.value.slice(0, 3)
+    : discoverableWorkspacesAndJoinRequests.value.slice(0, 5)
 })
 const dialogButtons = computed((): LayoutDialogButton[] => {
   return [

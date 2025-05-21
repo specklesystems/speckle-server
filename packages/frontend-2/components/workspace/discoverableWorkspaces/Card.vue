@@ -1,5 +1,10 @@
 <template>
-  <WorkspaceCard :logo="workspace.logo ?? ''" :name="workspace.name">
+  <WorkspaceCard
+    :condensed="requestStatus === 'pending'"
+    :logo="workspace.logo ?? ''"
+    :name="workspace.name"
+    :class="requestStatus === 'pending' ? '' : 'bg-foundation'"
+  >
     <template #text>
       <div class="flex flex-col gap-y-1">
         <div class="text-body-2xs line-clamp-3">
@@ -7,10 +12,13 @@
         </div>
         <div class="flex flex-col gap-2">
           <div class="flex flex-col">
-            <span class="text-body-3xs text-foreground-2">Admin team:</span>
+            <span class="text-body-3xs text-foreground-2">Contacts:</span>
             <UserAvatarGroup :users="adminTeam" :max-count="3" size="sm" />
           </div>
-          <div v-if="members.length > 0" class="flex flex-col">
+          <div
+            v-if="members.length > 0 && requestStatus !== 'pending'"
+            class="flex flex-col"
+          >
             <span class="text-body-3xs text-foreground-2">Members:</span>
             <UserAvatarGroup :users="members" :max-count="5" size="sm" />
           </div>
