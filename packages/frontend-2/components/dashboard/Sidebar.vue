@@ -167,6 +167,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import dayjs from 'dayjs'
+import { useActiveUserMeta } from '~/lib/user/composables/meta'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -174,6 +175,7 @@ const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
+const { hasDismissedSpeckleConBanner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
@@ -193,6 +195,7 @@ const showSidebar = computed(() => {
 })
 
 const showSpeckleConPromo = computed(() => {
+  if (hasDismissedSpeckleConBanner.value) return false
   return dayjs('2025-11-08').isAfter(dayjs())
 })
 

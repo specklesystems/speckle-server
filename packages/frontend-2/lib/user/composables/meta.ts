@@ -7,6 +7,7 @@ export const activeUserMetaQuery = graphql(`
       meta {
         newWorkspaceExplainerDismissed
         legacyProjectsExplainerCollapsed
+        speckleConBannerDismissed
       }
     }
   }
@@ -32,6 +33,16 @@ export const updateLegacyProjectsExplainerMutation = graphql(`
   }
 `)
 
+export const updateSpeckleConBannerDismissedMutation = graphql(`
+  mutation UpdateSpeckleConBannerDismissed($value: Boolean!) {
+    activeUserMutations {
+      meta {
+        setSpeckleConBannerDismissed(value: $value)
+      }
+    }
+  }
+`)
+
 export function useActiveUserMeta() {
   const { result } = useQuery(activeUserMetaQuery)
   const { mutate: updateWorkspaceExplainer } = useMutation(
@@ -39,6 +50,9 @@ export function useActiveUserMeta() {
   )
   const { mutate: updateLegacyProjectsExplainer } = useMutation(
     updateLegacyProjectsExplainerMutation
+  )
+  const { mutate: updateSpeckleConBanner } = useMutation(
+    updateSpeckleConBannerDismissedMutation
   )
   const apollo = useApolloClient().client
   const cache = apollo.cache
@@ -53,6 +67,10 @@ export function useActiveUserMeta() {
 
   const hasCollapsedLegacyProjectsExplainer = computed(
     () => meta.value?.legacyProjectsExplainerCollapsed
+  )
+
+  const hasDismissedSpeckleConBanner = computed(
+    () => meta.value?.speckleConBannerDismissed ?? false
   )
 
   const updateNewWorkspaceExplainerDismissed = async (value: boolean) => {
@@ -83,10 +101,26 @@ export function useActiveUserMeta() {
     )
   }
 
+  const updateSpeckleConBannerDismissed = async (value: boolean) => {
+    await updateSpeckleConBanner({ value })
+
+    modifyObjectField(
+      cache,
+      getCacheId('User', activeUserId.value),
+      'meta',
+      ({ helpers: { createUpdatedValue } }) =>
+        createUpdatedValue(({ update }) => {
+          update('speckleConBannerDismissed', () => value)
+        })
+    )
+  }
+
   return {
+    hasDismissedNewWorkspaceExplainer,
+    hasCollapsedLegacyProjectsExplainer,
+    hasDismissedSpeckleConBanner,
     updateNewWorkspaceExplainerDismissed,
     updateLegacyProjectsExplainerCollapsed,
-    hasDismissedNewWorkspaceExplainer,
-    hasCollapsedLegacyProjectsExplainer
+    updateSpeckleConBannerDismissed
   }
 }
