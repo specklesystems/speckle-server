@@ -42,6 +42,8 @@ const fileImportErrorPayload = z.object({
   result: baseFileImportResult
 })
 
+export type FileImportErrorPayload = z.infer<typeof fileImportErrorPayload>
+
 export const fileImportResultPayload = z.discriminatedUnion('status', [
   fileImportSuccessPayload,
   fileImportErrorPayload
