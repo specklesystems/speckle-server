@@ -34,6 +34,7 @@ describe('Module @gatekeeper', () => {
             workspaceId: workspace1.id,
             name: PaidWorkspacePlans.Team,
             createdAt: now,
+            updatedAt: now,
             status: PaidWorkspacePlanStatuses.Valid
           }
           await upsertWorkspacePlan({
@@ -49,6 +50,7 @@ describe('Module @gatekeeper', () => {
             workspaceId: workspace2.id,
             name: PaidWorkspacePlans.Team,
             createdAt: now,
+            updatedAt: now,
             status: PaidWorkspacePlanStatuses.Valid
           }
           await upsertWorkspacePlan({
