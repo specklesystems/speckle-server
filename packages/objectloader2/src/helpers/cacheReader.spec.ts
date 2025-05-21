@@ -8,7 +8,7 @@ describe('CacheReader testing', () => {
   test('deferred getObject', async () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id', speckle_type: 'type' } }
 
-    const deferments = new DefermentManager({ maxSize: 1, ttl: 1 })
+    const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
     const cacheReader = new CacheReader(
       new MemoryDatabase({
         items: new Map<string, Base>([[i1.baseId, i1.base]])
