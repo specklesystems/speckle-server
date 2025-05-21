@@ -5,7 +5,16 @@
         <div class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <UserAvatarGroup :users="users" :max-count="5" size="sm" />
+        <div class="flex flex-col gap-2">
+          <div class="flex flex-col">
+            <span class="text-body-3xs text-foreground-2">Admin team:</span>
+            <UserAvatarGroup :users="adminTeam" :max-count="3" size="sm" />
+          </div>
+          <div v-if="members.length > 0" class="flex flex-col">
+            <span class="text-body-3xs text-foreground-2">Members:</span>
+            <UserAvatarGroup :users="members" :max-count="5" size="sm" />
+          </div>
+        </div>
       </div>
     </template>
     <template #actions>
@@ -45,7 +54,13 @@ const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
   useDiscoverableWorkspaces()
 const mixpanel = useMixpanel()
 
-const users = computed(() => props.workspace.team?.items?.map((u) => u.user) ?? [])
+const adminTeam = computed(() => props.workspace.adminTeam?.map((t) => t.user) ?? [])
+const adminIds = computed(() => new Set(adminTeam.value.map((admin) => admin.id)))
+const members = computed(() =>
+  (props.workspace.team?.items?.map((u) => u.user) ?? []).filter(
+    (user) => !adminIds.value.has(user.id)
+  )
+)
 
 const onRequest = () => {
   requestToJoinWorkspace(props.workspace.id, props.location || 'discovery_card')
