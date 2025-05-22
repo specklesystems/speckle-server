@@ -81,7 +81,7 @@
                       !canEditEmbedOptions?.authorized
                     "
                   />
-                  <div class="flex flex-col gap-1">
+                  <div class="flex flex-col gap-0.5">
                     <span
                       :key="`hide-branding-tooltip-${workspaceHideSpeckleBrandingEnabled}`"
                       v-tippy="hideSpeckleBrandingTooltip"
@@ -101,6 +101,18 @@
                         class="underline"
                       >
                         upgrade now
+                      </NuxtLink>
+                    </span>
+                    <span
+                      v-if="hideSpeckleBranding && !workspaceHideSpeckleBrandingEnabled"
+                      class="text-body-2xs text-foreground-2"
+                    >
+                      Tip: You can also hide the logo for all embeds in the
+                      <NuxtLink
+                        :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
+                        class="underline"
+                      >
+                        workspace settings.
                       </NuxtLink>
                     </span>
                   </div>
