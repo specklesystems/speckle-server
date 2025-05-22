@@ -35,6 +35,7 @@ graphql(`
     ...WorkspaceSidebarMembers_Workspace
     ...WorkspaceDashboardHeader_Workspace
     ...WorkspaceDashboardProjectList_Workspace
+    ...BillingActions_Workspace
     id
     name
     role
