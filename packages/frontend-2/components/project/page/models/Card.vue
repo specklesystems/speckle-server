@@ -86,7 +86,7 @@
             ref="importArea"
             empty-state-variant="modelGrid"
             :project="project"
-            :model-name="model.name"
+            :model="model"
             class="w-full h-full"
           />
         </div>

@@ -57,6 +57,7 @@
           ref="importArea"
           :project="project"
           :model-name="item.fullName"
+          :model="item.model || undefined"
           class="hidden"
         />
         <div
@@ -79,6 +80,7 @@
             "
             :project="project"
             :model-name="item.fullName"
+            :model="item.model || undefined"
             class="h-full w-full"
           />
         </div>
