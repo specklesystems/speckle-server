@@ -107,7 +107,7 @@
                       v-if="hideSpeckleBranding && !workspaceHideSpeckleBrandingEnabled"
                       class="text-body-2xs text-foreground-2"
                     >
-                      Tip: You can also hide the logo for all embeds in the
+                      Tip: You can also hide the logo for all embeds in
                       <NuxtLink
                         :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
                         class="underline"
