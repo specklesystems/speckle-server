@@ -103,7 +103,16 @@ aliases:
       command: |
         PUPPETEER_SKIP_DOWNLOAD=true \
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
-        yarn
+        yarn --immutable
+
+  - &yarn-from-cache
+    run:
+      name: Install Dependencies
+      # puppeteer and playwright attempt to download browsers, which we don't need
+      command: |
+        PUPPETEER_SKIP_DOWNLOAD=true \
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+        yarn --immutable --immutable-cache
 
 workflows:
   test-build:
@@ -163,6 +172,8 @@ workflows:
           context:
             - chromatic-ui-components
           filters: *filters-allow-all
+          requires:
+            - install-dependencies
 
       - deployment-testing-approval:
           type: approval
@@ -613,7 +624,7 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -749,7 +760,7 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -765,7 +776,7 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -793,7 +804,7 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - run:
           name: Lint
           command: yarn lint:ci
@@ -828,7 +839,7 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -847,8 +858,8 @@ jobs:
       # - *restore-yarn-cache # fails because the cache does not have the playwright browsers
       - *pull-npm-global # workaround
       - run:
-          name: Install Dependencies
-          command: PUPPETEER_SKIP_DOWNLOAD=true yarn
+          name: Install Dependencies and download Puppeteer browsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable
       - run:
           name: Build public packages
           command: yarn build:public
@@ -876,7 +887,7 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - run:
           name: Build shared packages
           command: yarn build:public
@@ -897,7 +908,7 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -1155,7 +1166,7 @@ jobs:
       - *restore_env_vars
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1209,7 +1220,7 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
+      - *yarn-from-cache
       - run:
           name: Build public packages
           command: yarn build:public
