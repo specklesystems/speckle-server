@@ -7,7 +7,8 @@ import { usePermissionedAction } from '~/lib/common/composables/permissions'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseCanCreateModel_ProjectFragment,
-  UseCanCreatePersonalProject_UserFragment
+  UseCanCreatePersonalProject_UserFragment,
+  UseCanInviteToProject_ProjectFragment
 } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
@@ -77,5 +78,38 @@ export const useCanCreateModel = (params: {
     canActuallyCreate,
     cantClickCreateReason,
     cantClickCreateCode
+  }
+}
+
+graphql(`
+  fragment UseCanInviteToProject_Project on Project {
+    id
+    permissions {
+      canInvite {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
+export const useCanInviteToProject = (params: {
+  project: MaybeRef<MaybeNullOrUndefined<UseCanInviteToProject_ProjectFragment>>
+}) => {
+  const {
+    canClickAction: canClickInvite,
+    canActuallyInvokeAction: canActuallyInvite,
+    cantClickErrorReason: cantClickInviteReason,
+    cantClickErrorCode: cantClickInviteCode
+  } = usePermissionedAction({
+    check: computed(() => unref(params.project)?.permissions?.canInvite),
+    disclaimerErrorCodes: [PersonalProjectsLimitedError.code],
+    fallbackReason: 'Cannot invite to project'
+  })
+
+  return {
+    canClickInvite,
+    canActuallyInvite,
+    cantClickInviteReason,
+    cantClickInviteCode
   }
 }

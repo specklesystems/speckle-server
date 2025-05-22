@@ -40,11 +40,7 @@
           </div>
         </div>
       </div>
-      <InviteDialogProject
-        v-if="project"
-        v-model:open="showInviteDialog"
-        :project="project"
-      />
+      <ProjectInviteAdd v-model:open="showInviteDialog" :project="project" />
     </div>
   </div>
 </template>
@@ -74,6 +70,7 @@ graphql(`
         ...FullPermissionCheckResult
       }
     }
+    ...ProjectInviteAdd_Project
   }
 `)
 

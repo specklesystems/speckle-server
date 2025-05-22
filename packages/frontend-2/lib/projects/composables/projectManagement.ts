@@ -325,6 +325,10 @@ export function useInviteUserToProject() {
       }
     }
 
+    if (hideToasts && err) {
+      throw new Error(err)
+    }
+
     return res
   }
 }
