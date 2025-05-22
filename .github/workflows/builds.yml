@@ -47,9 +47,6 @@ jobs:
           tags: speckle/speckle-frontend-2:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
           file: ./packages/frontend-2/Dockerfile
 
-  # TODO:
-  # docker-publish-frontend-2-sourcemaps
-
   docker-build-preview-service:
     runs-on: blacksmith
     needs: [get-version]
