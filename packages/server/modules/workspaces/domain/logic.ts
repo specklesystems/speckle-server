@@ -6,7 +6,6 @@ import {
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
-import { pick } from 'lodash'
 
 export const userEmailsCompliantWithWorkspaceDomains = ({
   userEmails,
@@ -45,5 +44,12 @@ export const isWorkspaceRole = (role: string): role is WorkspaceRoles => {
 }
 
 export const toLimitedWorkspace = (workspace: Workspace): LimitedWorkspace => {
-  return pick(workspace, ['id', 'slug', 'name', 'description', 'logo'])
+  return {
+    id: workspace.id,
+    slug: workspace.slug,
+    name: workspace.name,
+    description: workspace.description,
+    logo: workspace.logo,
+    discoverabilityAutoJoinEnabled: workspace.discoverabilityAutoJoinEnabled
+  }
 }

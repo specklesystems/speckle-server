@@ -12,7 +12,7 @@ describe('CachePump testing', () => {
     const i2: Item = { baseId: 'id2', base: { id: 'id', speckle_type: 'type' } }
 
     const gathered = new AsyncGeneratorQueue<Item>()
-    const deferments = new DefermentManager({ maxSize: 1, ttl: 1 })
+    const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
     const cachePump = new CachePump(new MemoryDatabase({}), gathered, deferments, {
       maxCacheReadSize: 1,
       maxCacheWriteSize: 1,
@@ -44,7 +44,7 @@ describe('CachePump testing', () => {
     db.set(i2.baseId, i2.base)
 
     const gathered = new AsyncGeneratorQueue<Item>()
-    const deferments = new DefermentManager({ maxSize: 1, ttl: 1 })
+    const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
     const cachePump = new CachePump(
       new MemoryDatabase({ items: db }),
       gathered,

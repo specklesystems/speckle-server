@@ -60,9 +60,8 @@
     <div v-else>
       <ProjectCardImportFileArea
         ref="importArea"
-        :project-id="project.id"
-        :model-name="project.model.name"
-        :disabled="project.workspace?.readOnly"
+        :project="project"
+        :model="project.model"
         class="h-full w-full"
       />
     </div>
@@ -127,8 +126,10 @@ graphql(`
           ...ProjectModelPageVersionsCardVersion
         }
       }
+      ...ProjectCardImportFileArea_Model
     }
     ...ProjectsModelPageEmbed_Project
+    ...ProjectCardImportFileArea_Project
   }
 `)
 

@@ -26,8 +26,8 @@
       />
       <div v-else>
         <ProjectCardImportFileArea
-          :project-id="projectId"
-          :disabled="project?.workspace?.readOnly"
+          v-if="project"
+          :project="project"
           class="h-36 col-span-4"
         />
       </div>

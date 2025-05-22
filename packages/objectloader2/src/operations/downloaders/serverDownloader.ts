@@ -1,7 +1,7 @@
 import BatchedPool from '../../helpers/batchedPool.js'
 import Queue from '../../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
-import { Fetcher, isBase, Item } from '../../types/types.js'
+import { Fetcher, isBase, Item, take } from '../../types/types.js'
 import { Downloader } from '../interfaces.js'
 
 export interface ServerDownloaderOptions {
@@ -88,7 +88,6 @@ export default class ServerDownloader implements Downloader {
 
   async disposeAsync(): Promise<void> {
     await this.#downloadQueue?.disposeAsync()
-    await this.#getPool().disposeAsync()
   }
 
   #processJson(baseId: string, unparsedBase: string): Item {
@@ -111,6 +110,7 @@ export default class ServerDownloader implements Downloader {
     headers: HeadersInit
   }): Promise<void> {
     const { batch, url, headers } = params
+    const keys = new Set<string>(batch)
     const response = await this.#fetch(url, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
@@ -130,18 +130,24 @@ export default class ServerDownloader implements Downloader {
       const { done, value } = await reader.read()
       if (done) break
 
-      leftover = await this.processArray(leftover, value, async () => {
+      leftover = await this.processArray(leftover, value, keys, async () => {
         count++
         if (count % 1000 === 0) {
           await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
         }
       })
     }
+    if (keys.size > 0) {
+      throw new Error(
+        'Items requested were not downloaded: ' + take(keys.values(), 10).join(',')
+      )
+    }
   }
 
   async processArray(
     leftover: Uint8Array,
     value: Uint8Array,
+    keys: Set<string>,
     callback: () => Promise<void>
   ): Promise<Uint8Array> {
     //this concat will allocate a new array
@@ -157,6 +163,7 @@ export default class ServerDownloader implements Downloader {
         this.#results?.add(item)
         start = i + 1
         await callback()
+        keys.delete(item.baseId)
       }
     }
     return combined.subarray(start) // carry over remainder

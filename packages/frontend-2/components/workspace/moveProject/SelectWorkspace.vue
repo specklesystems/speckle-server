@@ -84,6 +84,10 @@ import { UserAvatarGroup } from '@speckle/ui-components'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
 import { formatName } from '~/lib/billing/helpers/plan'
 import { Roles } from '@speckle/shared'
+import {
+  WorkspaceLimitsReachedError,
+  WorkspaceSsoSessionNoAccessError
+} from '@speckle/shared/authz'
 
 graphql(`
   fragment WorkspaceMoveProjectSelectWorkspace_User on User {
@@ -148,7 +152,9 @@ const isWorkspaceDisabled = computed(
     }
 
     const permission = workspace.permissions?.canMoveProjectToWorkspace
-    return !permission?.authorized && permission?.code !== 'WorkspaceLimitsReached'
+    return (
+      !permission?.authorized && permission?.code !== WorkspaceLimitsReachedError.code
+    )
   }
 )
 
@@ -158,7 +164,8 @@ const getWorkspaceTooltip = computed(
       return undefined
     }
     if (
-      workspace.permissions.canMoveProjectToWorkspace.code === 'WorkspaceLimitsReached'
+      workspace.permissions.canMoveProjectToWorkspace.code ===
+      WorkspaceLimitsReachedError.code
     ) {
       return undefined
     }
@@ -175,10 +182,12 @@ const sortedWorkspaces = computed(() => {
   return [...workspaces.value].sort((a, b) => {
     const aEnabled =
       a.permissions?.canMoveProjectToWorkspace?.authorized ||
-      a.permissions?.canMoveProjectToWorkspace?.code === 'WorkspaceLimitsReached'
+      a.permissions?.canMoveProjectToWorkspace?.code ===
+        WorkspaceLimitsReachedError.code
     const bEnabled =
       b.permissions?.canMoveProjectToWorkspace?.authorized ||
-      b.permissions?.canMoveProjectToWorkspace?.code === 'WorkspaceLimitsReached'
+      b.permissions?.canMoveProjectToWorkspace?.code ===
+        WorkspaceLimitsReachedError.code
 
     if (aEnabled && !bEnabled) return -1
     if (!aEnabled && bEnabled) return 1
@@ -190,7 +199,7 @@ const handleWorkspaceClick = (
   workspace: WorkspaceMoveProjectManager_WorkspaceFragment
 ) => {
   const permission = workspace.permissions?.canMoveProjectToWorkspace
-  if (permission?.code === 'WorkspaceLimitsReached') {
+  if (permission?.code === WorkspaceLimitsReachedError.code) {
     limitReachedWorkspace.value = workspace
     showLimitDialog.value = true
     return
@@ -205,7 +214,7 @@ const isSsoRequired = computed(
   () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment) => {
     return (
       workspace.permissions?.canMoveProjectToWorkspace?.code ===
-      'WorkspaceSsoSessionNoAccess'
+      WorkspaceSsoSessionNoAccessError.code
     )
   }
 )

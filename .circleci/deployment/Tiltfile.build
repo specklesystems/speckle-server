@@ -6,7 +6,7 @@ def speckle_image(package,original_package_name=None):
         original_package_name = package
 
     package_dir = 'packages/{}'.format(original_package_name)
-    if package == 'test-deployment' or package == 'monitor-deployment' or package == 'docker-compose-ingress':
+    if package == 'test-deployment' or package == 'docker-compose-ingress':
         package_dir = 'utils/{}'.format(package)
     docker_build('speckle/speckle-{}'.format(package),
                   context='../..',

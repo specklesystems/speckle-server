@@ -55,9 +55,9 @@
         <ProjectCardImportFileArea
           v-if="!isPendingFileUpload(item)"
           ref="importArea"
-          :project-id="project.id"
+          :project="project"
           :model-name="item.fullName"
-          :disabled="!canCreateModel.authorized"
+          :model="item.model || undefined"
           class="hidden"
         />
         <div
@@ -78,9 +78,9 @@
             :empty-state-variant="
               props.gridOrList === GridListToggleValue.Grid ? 'modelGrid' : 'modelList'
             "
-            :project-id="project.id"
+            :project="project"
             :model-name="item.fullName"
-            :disabled="!canCreateModel.authorized"
+            :model="item.model || undefined"
             class="h-full w-full"
           />
         </div>
@@ -259,6 +259,7 @@ graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
     ...ProjectPageModelsActions_Project
+    ...ProjectCardImportFileArea_Project
     permissions {
       canCreateModel {
         ...FullPermissionCheckResult
@@ -274,6 +275,7 @@ graphql(`
     fullName
     model {
       ...ProjectPageLatestItemsModelItem
+      ...ProjectCardImportFileArea_Model
     }
     hasChildren
     updatedAt
