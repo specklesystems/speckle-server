@@ -32,7 +32,7 @@
         location="workspace_join_page"
       />
       <FormButton
-        v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 5"
+        v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 3"
         color="subtle"
         size="lg"
         full-width
