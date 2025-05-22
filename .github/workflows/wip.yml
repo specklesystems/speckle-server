@@ -6,6 +6,8 @@ jobs:
   # TODO:
   # ui-components-chromatic
   ui-components-chromatic:
+    env:
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     name: UI components chromatic
     runs-on: blacksmith
     steps:
