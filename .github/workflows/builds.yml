@@ -12,7 +12,6 @@ on:
 jobs:
   docker-build-server:
     runs-on: blacksmith
-    needs: [get-version]
     name: Docker build server
     steps:
       - name: Build and push
@@ -24,7 +23,6 @@ jobs:
 
   docker-build-frontend2:
     runs-on: blacksmith
-    needs: [get-version]
     name: Docker build frontend2
     steps:
       - name: Build and push
@@ -36,7 +34,6 @@ jobs:
 
   docker-build-preview-service:
     runs-on: blacksmith
-    needs: [get-version]
     name: Docker build preview service
     steps:
       - name: Build and push
@@ -48,7 +45,6 @@ jobs:
 
   docker-build-webhook-service:
     runs-on: blacksmith
-    needs: [get-version]
     name: Docker build webhook service
     steps:
       - name: Build and push
@@ -60,7 +56,6 @@ jobs:
 
   docker-build-fileimport-service:
     runs-on: blacksmith
-    needs: [get-version]
     name: Docker build file import service
     steps:
       - name: Build and push
@@ -72,7 +67,6 @@ jobs:
 
   docker-build-test-deploy:
     runs-on: blacksmith
-    needs: [get-version]
     name: Docker build test deploy util
     steps:
       - name: Build and push
@@ -84,7 +78,6 @@ jobs:
 
   docker-build-monitor-deployment:
     runs-on: blacksmith
-    needs: [get-version]
     name: Docker build monitor container
     steps:
       - name: Build and push
@@ -96,7 +89,6 @@ jobs:
 
   docker-build-docker-compose-ingress:
     runs-on: blacksmith
-    needs: [get-version]
     name: Docker build docker compose ingress
     steps:
       - name: Build and push

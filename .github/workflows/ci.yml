@@ -22,13 +22,13 @@ jobs:
         working-directory: ./.github/workflows/scripts
 
   tests:
+    needs: get-version
     uses: ./.github/workflows/tests.yml
-    needs: get_version
     with:
-      version: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
 
   builds:
-    needs: get_version
+    needs: get-version
     uses: ./.github/workflows/builds.yml
     with:
-      version: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
