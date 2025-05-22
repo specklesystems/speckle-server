@@ -7,52 +7,16 @@
     <CommonCard v-if="workspace?.sso?.provider?.id" class="bg-foundation mb-4">
       With SSO enabled, allowed domains are configured on your identity provider's side.
     </CommonCard>
-    <ul v-if="hasWorkspaceDomains">
-      <li
-        v-for="domain in workspaceDomains"
-        :key="domain.id"
-        class="border-x border-b first:border-t first:rounded-t-lg border-outline-2 last:rounded-b-lg p-6 py-4 flex items-center"
-      >
-        <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
-        <FormButton color="outline" size="sm" @click="openRemoveDialog(domain)">
-          Delete
-        </FormButton>
-      </li>
-    </ul>
 
-    <p
-      v-else
-      class="text-body-xs text-center text-foreground-2 border border-outline-2 p-6 rounded-lg"
-    >
-      No verified domains yet
-    </p>
-
-    <div class="grid grid-cols-2 gap-x-6 mt-6">
-      <div class="flex flex-col gap-y-1">
-        <p class="text-body-xs font-medium text-foreground">New domain</p>
-        <p class="text-body-2xs text-foreground-2 leading-5">
-          Add a domain from a list of email domains for your active account.
-        </p>
-      </div>
-      <div class="flex gap-x-3">
-        <FormSelectBase
-          v-model="selectedDomain"
-          :items="verifiedUserDomains"
-          :disabled-item-predicate="disabledItemPredicate"
-          disabled-item-tooltip="This domain can't be used for verified workspace domains"
-          name="workspaceDomains"
-          label="Verified domains"
-          class="w-full"
-        >
-          <template #nothing-selected>Select domain</template>
-          <template #something-selected="{ value }">@{{ value }}</template>
-          <template #option="{ item }">
-            <div class="flex items-center">@{{ item }}</div>
-          </template>
-        </FormSelectBase>
-        <FormButton :disabled="!selectedDomain" @click="addDomain">Add</FormButton>
-      </div>
-    </div>
+    <DomainManagement
+      :domains="workspaceDomains"
+      :available-domains="verifiedUserDomains"
+      add-domain-title="New domain"
+      add-domain-description="Add a domain from a list of email domains for your active account."
+      select-name="discoverabilityDomains"
+      @add="handleAddDomain"
+      @remove="openRemoveDialog"
+    />
 
     <div class="mt-6 flex flex-col gap-2">
       <p class="text-body-xs font-medium text-foreground">New user policy</p>
@@ -79,7 +43,6 @@
 </template>
 
 <script setup lang="ts">
-import type { ShallowRef } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
@@ -88,9 +51,9 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { blockedDomains } from '@speckle/shared'
 import { workspaceUpdateDiscoverabilityMutation } from '~/lib/workspaces/graphql/mutations'
 import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
+import DomainManagement from './DomainManagement.vue'
 
 graphql(`
   fragment SettingsWorkspacesSecurityDiscoverability_Workspace on Workspace {
@@ -133,11 +96,9 @@ const { mutate: updateDiscoverability } = useMutation(
   workspaceUpdateDiscoverabilityMutation
 )
 
-const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
 const removeDialogDomain =
   ref<SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment>()
-const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
 const joinPolicy = ref<JoinPolicy>(JoinPolicy.AdminApproval)
 
 const workspaceDomains = computed(() => {
@@ -177,13 +138,13 @@ const isDomainDiscoverabilityEnabled = computed({
   }
 })
 
-const addDomain = async () => {
-  if (!selectedDomain.value || !props.workspace) return
+const handleAddDomain = async (domain: string) => {
+  if (!props.workspace) return
   const isFirstDomain = !hasWorkspaceDomains.value
 
   await addWorkspaceDomain.mutate(
     {
-      domain: selectedDomain.value,
+      domain,
       workspaceId: props.workspace.id
     },
     props.workspace.domains ?? [],
@@ -197,7 +158,6 @@ const addDomain = async () => {
     // eslint-disable-next-line camelcase
     workspace_id: props.workspace?.id
   })
-  selectedDomain.value = undefined
 }
 
 const openRemoveDialog = (
@@ -205,10 +165,6 @@ const openRemoveDialog = (
 ) => {
   removeDialogDomain.value = domain
   showRemoveDomainDialog.value = true
-}
-
-const disabledItemPredicate = (item: string) => {
-  return blockedDomainItems.value.includes(item)
 }
 
 const radioOptions = [

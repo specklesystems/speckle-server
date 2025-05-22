@@ -1,10 +1,22 @@
 <template>
   <section class="py-8">
-    <SettingsSectionHeader subheading title="Allowed email domains" />
+    <SettingsSectionHeader subheading title="Domain protection" />
     <p class="text-body-xs text-foreground-2 mt-2 mb-6">
-      Only users with email addresses from your verified domains can be added as
-      workspace members or administrators.
+      When enabled, only users with email addresses from specific domains can be added
+      as members.
     </p>
+
+    <!-- This will be enabled when the backend supports separate domain lists -->
+    <!-- <DomainManagement
+      :domains="protectionDomains"
+      :available-domains="verifiedUserDomains"
+      add-domain-title="New protected domain"
+      add-domain-description="Add a domain to restrict workspace access to."
+      select-name="protectionDomains"
+      @add="handleAddProtectionDomain"
+      @remove="handleRemoveProtectionDomain"
+    /> -->
+
     <div class="flex">
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">Domain protection</p>
