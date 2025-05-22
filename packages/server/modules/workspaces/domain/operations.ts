@@ -1,5 +1,6 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
+  LimitedWorkspace,
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
@@ -45,7 +46,7 @@ export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
-}) => Promise<Pick<Workspace, 'id' | 'name' | 'slug' | 'description' | 'logo'>[]>
+}) => Promise<LimitedWorkspace[]>
 
 export type GetWorkspace = (args: {
   workspaceId: string
