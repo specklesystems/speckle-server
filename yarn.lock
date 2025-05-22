@@ -21975,7 +21975,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.12.0, ajv@npm:~8.13.0":
+"ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.12.0, ajv@npm:^8.6.1, ajv@npm:~8.13.0":
   version: 8.13.0
   resolution: "ajv@npm:8.13.0"
   dependencies:
@@ -21987,7 +21987,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.6.1, ajv@npm:~8.12.0":
+"ajv@npm:~8.12.0":
   version: 8.12.0
   resolution: "ajv@npm:8.12.0"
   dependencies:
