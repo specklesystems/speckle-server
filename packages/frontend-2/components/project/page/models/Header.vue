@@ -78,7 +78,7 @@
           >
             View all in 3D
           </FormButton>
-          <div v-tippy="canCreateModel.cantClickCreateReason.value">
+          <div v-tippy="canCreateModel.cantClickCreateReason.value" class="test123">
             <FormButton
               :disabled="!canCreateModel.canClickCreate.value"
               class="hidden lg:inline-flex shrink-0"
