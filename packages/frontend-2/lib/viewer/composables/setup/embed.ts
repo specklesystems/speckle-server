@@ -12,6 +12,7 @@ export type EmbedOptions = {
   disableModelLink?: boolean
   noScroll?: boolean
   manualLoad?: boolean
+  hideSpeckleBranding?: boolean
 }
 
 export function isEmbedOptions(obj: unknown): obj is EmbedOptions {

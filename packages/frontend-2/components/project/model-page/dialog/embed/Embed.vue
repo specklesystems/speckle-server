@@ -393,7 +393,7 @@ watch(
   () => {
     if (isWorkspacesEnabled.value) {
       hideSpeckleBranding.value =
-        props.project.workspace?.embedOptions?.hideSpeckleBranding
+        props.project.workspace?.embedOptions?.hideSpeckleBranding ?? false
     }
   },
   { immediate: true }
