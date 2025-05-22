@@ -106,7 +106,7 @@
       :workspace-role="project?.workspace?.role"
       :workspace-slug="project?.workspace?.slug || ''"
       location="models"
-      limit-type="model"
+      type="model"
     />
   </div>
 </template>

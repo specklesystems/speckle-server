@@ -11,7 +11,7 @@
         :plan="workspace.plan?.name"
         :workspace-role="workspace.role"
         :workspace-slug="workspace.slug || ''"
-        location="add_project"
+        :location="location"
       />
     </template>
     <template v-else>
@@ -62,9 +62,16 @@ graphql(`
 `)
 
 const open = defineModel<boolean>('open', { required: true })
-const props = defineProps<{
-  workspace?: MaybeNullOrUndefined<ProjectsAdd_WorkspaceFragment>
-}>()
+const props = withDefaults(
+  defineProps<{
+    workspace?: MaybeNullOrUndefined<ProjectsAdd_WorkspaceFragment>
+    location?: string
+  }>(),
+  {
+    location: 'add_project'
+  }
+)
+
 const workspaceId = computed(() => props.workspace?.id || undefined)
 const { activeUser } = useActiveUser()
 const canCreatePersonal = useCanCreatePersonalProject({

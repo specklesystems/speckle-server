@@ -7,7 +7,7 @@
       :plan="workspace.plan?.name"
       :workspace-role="workspace.role"
       :workspace-slug="workspace.slug"
-      location="move_project"
+      :location="location"
     />
     <WorkspaceMoveProjectManager
       v-model:open="openMoveManager"
@@ -61,10 +61,16 @@ graphql(`
 `)
 
 const open = defineModel<boolean>('open', { required: true })
-const props = defineProps<{
-  project?: MaybeNullOrUndefined<WorkspaceMoveProject_ProjectFragment>
-  workspace?: MaybeNullOrUndefined<WorkspaceMoveProject_WorkspaceFragment>
-}>()
+const props = withDefaults(
+  defineProps<{
+    project?: MaybeNullOrUndefined<WorkspaceMoveProject_ProjectFragment>
+    workspace?: MaybeNullOrUndefined<WorkspaceMoveProject_WorkspaceFragment>
+    location?: string
+  }>(),
+  {
+    location: 'move_project'
+  }
+)
 
 const canMoveProjectIntoWorkspace = useCanMoveProjectIntoWorkspace({
   project: computed(() => props.project),

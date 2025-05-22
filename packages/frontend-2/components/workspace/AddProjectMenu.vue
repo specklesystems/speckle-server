@@ -29,8 +29,16 @@
       </FormButton>
     </LayoutMenu>
 
-    <ProjectsAdd v-model:open="showNewProjectDialog" :workspace="workspace" />
-    <WorkspaceMoveProject v-model:open="showMoveProjectDialog" :workspace="workspace" />
+    <ProjectsAdd
+      v-model:open="showNewProjectDialog"
+      :workspace="workspace"
+      location="add-project-menu"
+    />
+    <WorkspaceMoveProject
+      v-model:open="showMoveProjectDialog"
+      :workspace="workspace"
+      location="add-project-menu"
+    />
   </div>
 </template>
 
