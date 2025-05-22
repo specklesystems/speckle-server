@@ -1201,6 +1201,8 @@ export type LimitedWorkspace = {
   adminTeam: Array<LimitedWorkspaceCollaborator>;
   /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, the users with a matching domain may join the workspace directly */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Workspace id */
   id: Scalars['ID']['output'];
   /** Optional base64 encoded workspace logo image */
@@ -4480,6 +4482,8 @@ export type Workspace = {
    */
   defaultRegion?: Maybe<ServerRegionItem>;
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable discovery of the workspace */
   discoverabilityEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable restriction to invite users to workspace as Guests only */
@@ -5119,6 +5123,7 @@ export type WorkspaceUpdateEmbedOptionsInput = {
 
 export type WorkspaceUpdateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  discoverabilityAutoJoinEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
@@ -8143,6 +8148,7 @@ export type LimitedUserFieldArgs = {
 export type LimitedWorkspaceFieldArgs = {
   adminTeam: {},
   description: {},
+  discoverabilityAutoJoinEnabled: {},
   id: {},
   logo: {},
   name: {},
@@ -8985,6 +8991,7 @@ export type WorkspaceFieldArgs = {
   defaultProjectRole: {},
   defaultRegion: {},
   description: {},
+  discoverabilityAutoJoinEnabled: {},
   discoverabilityEnabled: {},
   domainBasedMembershipProtectionEnabled: {},
   domains: {},

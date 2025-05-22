@@ -259,6 +259,7 @@ describe('Workspace services', () => {
         updatedAt: new Date(),
         logo: null,
         discoverabilityEnabled: false,
+        discoverabilityAutoJoinEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
         isEmbedSpeckleBrandingHidden: false,
         domains: []
@@ -1140,6 +1141,7 @@ describe('Workspace role services', () => {
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
+                  discoverabilityAutoJoinEnabled: false,
                   domainBasedMembershipProtectionEnabled: false,
                   isEmbedSpeckleBrandingHidden: false
                 }
@@ -1180,6 +1182,7 @@ describe('Workspace role services', () => {
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
+          discoverabilityAutoJoinEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
           isEmbedSpeckleBrandingHidden: false
         }
