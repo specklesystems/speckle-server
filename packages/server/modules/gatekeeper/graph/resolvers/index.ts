@@ -1,7 +1,7 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { Roles, throwUncoveredError } from '@speckle/shared'
+import { Roles, throwUncoveredError, WorkspacePlanFeatures } from '@speckle/shared'
 import {
   getWorkspaceFactory,
   getWorkspaceRoleForUserFactory,
@@ -163,21 +163,24 @@ export = FF_GATEKEEPER_MODULE_ENABLED
       },
       Project: {
         hasAccessToFeature: async (parent, args) => {
-          if (args.featureName !== 'hideSpeckleBranding') {
-            // Only publicly validate embed-related features at the project level
-            return false
-          }
-
           if (!parent.workspaceId) {
             return false
           }
 
-          return await canWorkspaceAccessFeatureFactory({
-            getWorkspacePlan: getWorkspacePlanFactory({ db })
-          })({
-            workspaceId: parent.id,
-            workspaceFeature: args.featureName
-          })
+          switch (args.featureName) {
+            case WorkspacePlanFeatures.HideSpeckleBranding: {
+              return await canWorkspaceAccessFeatureFactory({
+                getWorkspacePlan: getWorkspacePlanFactory({ db })
+              })({
+                workspaceId: parent.id,
+                workspaceFeature: args.featureName
+              })
+            }
+            default: {
+              // Only publicly validate embed-related features at the project level
+              return false
+            }
+          }
         }
       },
       WorkspacePlan: {
