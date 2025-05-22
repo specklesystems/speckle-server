@@ -49,6 +49,7 @@ aliases:
 
   - &yarn-cache-paths
     - .yarn/cache
+    - .yarn/global # generated from postinstall scripts
     - .yarn/unplugged
     - .husky/_ # generated from postinstall scripts
     - .yarn/install-state.gz
@@ -69,7 +70,6 @@ aliases:
     # - packages/preview-frontend/node_modules
     # - packages/objectloader/node_modules
     # - packages/objectsender/node_modules
-    - .yarn/global # generated from postinstall scripts
 
   - &push-yarn-cache
     save_cache:
