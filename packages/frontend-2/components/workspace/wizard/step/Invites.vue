@@ -37,21 +37,11 @@
             :label="`Make workspace discoverable to @${verifiedDomain} users`"
           />
           <div class="ml-6 text-body-2xs text-foreground-2">
-            <p class="font-medium">When enabled:</p>
-            <ul class="list-disc ml-4 mt-1 space-y-1">
-              <li>
-                Users with the
-                <span class="font-medium">@{{ verifiedDomain }}</span>
-                domain can find and request to join this workspace
-              </li>
-              <li>Workspace admins must approve all join requests</li>
-              <li>
-                Your workspace name, members and description will be visible to users
-                with the
-                <span class="font-medium">@{{ verifiedDomain }}</span>
-                domain
-              </li>
-            </ul>
+            <p>
+              Users signing up with a
+              <span class="font-medium">@{{ verifiedDomain }}</span>
+              email will be able to find and request to join this workspace.
+            </p>
           </div>
         </CommonCard>
       </div>
