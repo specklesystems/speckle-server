@@ -151,6 +151,7 @@ export type BasicTestWorkspace = {
   description?: string
   logo?: string
   discoverabilityEnabled?: boolean
+  discoverabilityAutoJoinEnabled?: boolean
   domainBasedMembershipProtectionEnabled?: boolean
 }
 
@@ -326,13 +327,14 @@ export const createTestWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
-  if (workspace.discoverabilityEnabled) {
+  if (workspace.discoverabilityEnabled || workspace.discoverabilityAutoJoinEnabled) {
     if (!domain) throw new Error('Domain is needed for discoverability')
 
     await updateWorkspace({
       workspaceId: newWorkspace.id,
       workspaceInput: {
-        discoverabilityEnabled: true
+        discoverabilityEnabled: workspace.discoverabilityEnabled,
+        discoverabilityAutoJoinEnabled: workspace.discoverabilityAutoJoinEnabled
       }
     })
   }

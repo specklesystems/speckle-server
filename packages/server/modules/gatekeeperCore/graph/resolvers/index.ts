@@ -27,6 +27,11 @@ const resolvers: Resolvers = FF_GATEKEEPER_MODULE_ENABLED
       },
       ServerWorkspacesInfo: {
         planPrices: () => null
+      },
+      Project: {
+        hasAccessToFeature: () => {
+          return false
+        }
       }
     }
 
