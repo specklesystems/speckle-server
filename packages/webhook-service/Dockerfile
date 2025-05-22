@@ -41,7 +41,6 @@ RUN apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 
 FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS dependency-stage
-# yarn install
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
