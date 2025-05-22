@@ -30,13 +30,13 @@
         </div>
       </div>
       <div v-if="verifiedDomain" class="flex flex-col gap-2 w-full">
-        <CommonCard class="flex flex-col gap-2 !p-3">
+        <CommonCard class="flex flex-col gap-1 !p-3">
           <FormCheckbox
             v-model="enableDomainDiscoverabilityModel"
             name="enableDomainDiscoverability"
             :label="`Make workspace discoverable to @${verifiedDomain} users`"
           />
-          <div class="ml-6 text-body-2xs text-foreground-2">
+          <div class="ml-6 text-body-2xs text-foreground-2 select-none">
             <p>
               Users signing up with a
               <span class="font-medium">@{{ verifiedDomain }}</span>
