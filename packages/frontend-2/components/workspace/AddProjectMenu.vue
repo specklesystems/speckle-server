@@ -30,33 +30,21 @@
     </LayoutMenu>
 
     <ProjectsAdd v-model:open="showNewProjectDialog" :workspace="workspace" />
-
-    <ClientOnly>
-      <WorkspaceMoveProjectManager
-        v-model:open="showMoveProjectDialog"
-        :workspace-slug="workspaceSlug"
-        :workspace-id="workspace?.id"
-      />
-      <WorkspacePlanProjectModelLimitReachedDialog
-        v-model:open="showLimitDialog"
-        :workspace-name="workspace?.name"
-        :plan="workspace?.plan?.name"
-        :workspace-role="workspace?.role"
-        :workspace-slug="workspaceSlug"
-        location="add-project-menu"
-      />
-    </ClientOnly>
+    <WorkspaceMoveProject v-model:open="showMoveProjectDialog" :workspace="workspace" />
   </div>
 </template>
 
 <script setup lang="ts">
-// TODO: The ClientOnly is to avoid the dialog from being rendered on the server and have hydration sideeffects. These need to be addressed and fixed instead of the ClientOnly
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import type { WorkspaceAddProjectMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
+import {
+  useCanCreateWorkspaceProject,
+  useCanMoveProjectIntoWorkspace
+} from '~/lib/workspaces/composables/projects/permissions'
 
 graphql(`
   fragment WorkspaceAddProjectMenu_Workspace on Workspace {
@@ -76,6 +64,9 @@ graphql(`
       }
     }
     ...ProjectsAdd_Workspace
+    ...WorkspaceMoveProject_Workspace
+    ...UseCanCreateWorkspaceProject_Workspace
+    ...UseCanMoveProjectIntoWorkspace_Workspace
   }
 `)
 
@@ -94,20 +85,15 @@ const props = defineProps<{
 const menuId = useId()
 
 const showMenu = ref(false)
-const showLimitDialog = ref(false)
 const showMoveProjectDialog = ref(false)
 const showNewProjectDialog = ref(false)
 
-const isLimitReached = computed(() => {
-  return (
-    props.workspace?.permissions.canCreateProject?.code === 'WorkspaceLimitsReached'
-  )
+const canCreateProject = useCanCreateWorkspaceProject({
+  workspace: computed(() => props.workspace)
 })
 
-const isDisabled = computed(() => {
-  return (
-    !props.workspace?.permissions.canCreateProject?.authorized && !isLimitReached.value
-  )
+const canMoveProject = useCanMoveProjectIntoWorkspace({
+  workspace: computed(() => props.workspace)
 })
 
 const menuItems = computed<LayoutMenuItem[][]>(() => [
@@ -115,17 +101,17 @@ const menuItems = computed<LayoutMenuItem[][]>(() => [
     {
       title: 'Create new project...',
       id: AddNewProjectActionTypes.NewProject,
-      disabled: isDisabled.value,
-      disabledTooltip: isDisabled.value
-        ? props.workspace?.permissions.canCreateProject?.message
+      disabled: !canCreateProject.canClickCreate.value,
+      disabledTooltip: !canCreateProject.canClickCreate.value
+        ? canCreateProject.cantClickCreateReason.value
         : undefined
     },
     {
       title: 'Move existing project...',
       id: AddNewProjectActionTypes.MoveProject,
-      disabled: isDisabled.value,
-      disabledTooltip: isDisabled.value
-        ? props.workspace?.permissions.canMoveProjectToWorkspace?.message
+      disabled: !canMoveProject.canClickMove.value,
+      disabledTooltip: !canMoveProject.canClickMove.value
+        ? canMoveProject.cantClickMoveReason.value
         : undefined
     }
   ]
@@ -133,13 +119,6 @@ const menuItems = computed<LayoutMenuItem[][]>(() => [
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
-
-  if (isLimitReached.value) {
-    showMoveProjectDialog.value = false
-    showNewProjectDialog.value = false
-    showLimitDialog.value = true
-    return
-  }
 
   switch (item.id) {
     case AddNewProjectActionTypes.NewProject:
