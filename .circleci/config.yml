@@ -106,6 +106,7 @@ aliases:
     - packages/tailwind-theme/dist-cjs
     - packages/ui-components/dist
     - packages/viewer/dist
+    - node_modules/@speckle/ui-components/dist
 
   - &save-build-public
     persist_to_workspace:
