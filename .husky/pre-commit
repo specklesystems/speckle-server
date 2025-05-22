@@ -2,7 +2,7 @@
 # shellcheck disable=SC1091
 set -e
 
-if [ -n "$CI" ]
+if [ -n "$CI" ] 
 then
   echo "running eslint"
   yarn eslint:projectwide
@@ -15,6 +15,7 @@ else
   . "$(dirname "$0")/_/husky.sh"
   yarn lint-staged
 fi
+
 
 echo "🔍 looking for additional linter dependencies"
 
