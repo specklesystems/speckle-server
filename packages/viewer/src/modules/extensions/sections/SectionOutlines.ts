@@ -356,12 +356,13 @@ export class SectionOutlines extends Extension {
 
   private setSectionPlaneChanged(planes: Plane[]) {
     this.sectionPlanesChanged.length = 0
+    const epsilon = this.viewer.World.getRelativeOffset(0.0001)
     for (let k = 0; k < planes.length; k++) {
       if (
-        Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001 ||
+        Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > epsilon ||
         Math.abs(
           this.lastSectionPlanes[k].normal.length() - planes[k].normal.length()
-        ) > 0.0001
+        ) > epsilon
       )
         this.sectionPlanesChanged.push(planes[k])
       this.lastSectionPlanes[k].copy(planes[k])
