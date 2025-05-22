@@ -1136,7 +1136,20 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 sendWorkspaceJoinRequestReceivedEmail,
                 getUserById: getUserFactory({ db }),
                 getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-                getUserEmails: findEmailsByUserIdFactory({ db })
+                getUserEmails: findEmailsByUserIdFactory({ db }),
+                addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                  findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                  emitWorkspaceEvent: getEventBus().emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    eventEmit: getEventBus().emit
+                  })
+                }),
+                getWorkspaceTeam: getWorkspaceCollaboratorsFactory({ db })
               })
             }
           })
