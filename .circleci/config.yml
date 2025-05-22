@@ -132,11 +132,7 @@ workflows:
             - docker-build-postgres-container
             - install-dependencies
 
-      - test-server-no-ff:
-          filters: *filters-allow-all
-          requires:
-            - docker-build-postgres-container
-            - install-dependencies
+      - test-server-no-ff: *test-server-job-definition
 
       - test-server-multiregion: *test-server-job-definition
 
@@ -147,6 +143,8 @@ workflows:
 
       - test-viewer:
           filters: *filters-allow-all
+          requires:
+            - install-dependencies
 
       - test-objectsender:
           filters: *filters-allow-all
