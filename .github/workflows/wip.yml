@@ -3,6 +3,8 @@ name: Pipeline test build
 on: pull_request
 
 jobs:
+  # TODO:
+  # ui-components-chromatic
   ui-components-chromatic:
     name: UI components chromatic
     runs-on: blacksmith
@@ -12,6 +14,8 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - name: Run chromatic
