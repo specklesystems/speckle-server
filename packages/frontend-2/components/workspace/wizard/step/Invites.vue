@@ -30,11 +30,30 @@
         </div>
       </div>
       <div v-if="verifiedDomain" class="flex flex-col gap-2 w-full">
-        <FormCheckbox
-          v-model="enableDomainDiscoverabilityModel"
-          name="enableDomainDiscoverability"
-          :label="`Allow users with the @${verifiedDomain} domain to request to join workspace`"
-        />
+        <CommonCard class="flex flex-col gap-2 !p-3">
+          <FormCheckbox
+            v-model="enableDomainDiscoverabilityModel"
+            name="enableDomainDiscoverability"
+            :label="`Make workspace discoverable to @${verifiedDomain} users`"
+          />
+          <div class="ml-6 text-body-2xs text-foreground-2">
+            <p class="font-medium">When enabled:</p>
+            <ul class="list-disc ml-4 mt-1 space-y-1">
+              <li>
+                Users with the
+                <span class="font-medium">@{{ verifiedDomain }}</span>
+                domain can find and request to join this workspace
+              </li>
+              <li>Workspace admins must approve all join requests</li>
+              <li>
+                Your workspace name, members and description will be visible to users
+                with the
+                <span class="font-medium">@{{ verifiedDomain }}</span>
+                domain
+              </li>
+            </ul>
+          </div>
+        </CommonCard>
       </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <FormButton size="lg" submit full-width>{{ nextButtonText }}</FormButton>

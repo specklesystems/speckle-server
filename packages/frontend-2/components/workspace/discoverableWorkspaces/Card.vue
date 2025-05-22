@@ -7,19 +7,19 @@
   >
     <template #text>
       <div class="flex flex-col gap-y-1">
-        <div class="text-body-2xs line-clamp-3">
+        <div v-if="workspace.description" class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-1 mt-2">
           <div class="flex flex-col">
-            <span class="text-body-3xs text-foreground-2">Contacts:</span>
+            <span class="text-body-3xs text-foreground-2 font-medium">Admins</span>
             <UserAvatarGroup :users="adminTeam" :max-count="3" size="sm" />
           </div>
           <div
             v-if="members.length > 0 && requestStatus !== 'pending'"
             class="flex flex-col"
           >
-            <span class="text-body-3xs text-foreground-2">Members:</span>
+            <span class="text-body-3xs text-foreground-2 font-medium">Members</span>
             <UserAvatarGroup :users="members" :max-count="5" size="sm" />
           </div>
         </div>

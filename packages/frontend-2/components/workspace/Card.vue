@@ -4,7 +4,7 @@
     :class="{
       'cursor-pointer hover:border-outline-3 shadow-sm hover:border-zinc-400 bg-foundation':
         clickable,
-      '!py-2 !px-4': condensed
+      '!py-3 !px-4': condensed
     }"
     @click="clickable && onClick"
   >
