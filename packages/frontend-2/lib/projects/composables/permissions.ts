@@ -3,6 +3,7 @@ import {
   PersonalProjectsLimitedError,
   WorkspaceLimitsReachedError
 } from '@speckle/shared/authz'
+import { usePermissionedAction } from '~/lib/common/composables/permissions'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseCanCreateModel_ProjectFragment,
@@ -19,42 +20,20 @@ graphql(`
   }
 `)
 
-// TODO: Cleanup these
-
 export const useCanCreatePersonalProject = (params: {
   activeUser: MaybeRef<MaybeNullOrUndefined<UseCanCreatePersonalProject_UserFragment>>
 }) => {
-  // errors that have special disclaimers on click
-  const disclaimerErrors: string[] = [PersonalProjectsLimitedError.code]
-
-  const canClickCreate = computed(() => {
-    const check = unref(params.activeUser)?.permissions?.canCreatePersonalProject
-    if (!check) return false
-
-    if (disclaimerErrors.includes(check.code)) {
-      return true // we block the user downstream w/ a modal
-    }
-
-    return check.authorized
-  })
-
-  const canActuallyCreate = computed(
-    () => !!unref(params.activeUser)?.permissions?.canCreatePersonalProject.authorized
-  )
-
-  const cantClickCreateCode = computed(() => {
-    const check = unref(params.activeUser)?.permissions?.canCreatePersonalProject
-    if (check?.authorized) return undefined
-
-    return check?.code || 'UNKNOWN'
-  })
-
-  const cantClickCreateReason = computed(() => {
-    const check = unref(params.activeUser)?.permissions?.canCreatePersonalProject
-    if (check?.authorized) return undefined
-    if (check && disclaimerErrors.includes(check.code)) return undefined
-
-    return check?.message || 'Cannot create personal project'
+  const {
+    canClickAction: canClickCreate,
+    canActuallyInvokeAction: canActuallyCreate,
+    cantClickErrorReason: cantClickCreateReason,
+    cantClickErrorCode: cantClickCreateCode
+  } = usePermissionedAction({
+    check: computed(
+      () => unref(params.activeUser)?.permissions?.canCreatePersonalProject
+    ),
+    disclaimerErrorCodes: [PersonalProjectsLimitedError.code],
+    fallbackReason: 'Cannot create personal project'
   })
 
   return {
@@ -79,37 +58,18 @@ graphql(`
 export const useCanCreateModel = (params: {
   project: MaybeRef<MaybeNullOrUndefined<UseCanCreateModel_ProjectFragment>>
 }) => {
-  // errors that have special disclaimers on click
-  const disclaimerErrors: string[] = [
-    WorkspaceLimitsReachedError.code,
-    PersonalProjectsLimitedError.code
-  ]
-
-  const check = computed(() => unref(params.project)?.permissions?.canCreateModel)
-
-  const canClickCreate = computed(() => {
-    if (!check.value) return false
-
-    if (disclaimerErrors.includes(check.value.code)) {
-      return true // we block the user downstream w/ a modal
-    }
-
-    return check.value.authorized
-  })
-
-  const canActuallyCreate = computed(() => !!check.value?.authorized)
-
-  const cantClickCreateCode = computed(() => {
-    if (check.value?.authorized) return undefined
-
-    return check.value?.code || 'UNKNOWN'
-  })
-
-  const cantClickCreateReason = computed(() => {
-    if (check.value?.authorized) return undefined
-    if (check.value && disclaimerErrors.includes(check.value.code)) return undefined
-
-    return check.value?.message || 'Cannot create personal project'
+  const {
+    canClickAction: canClickCreate,
+    canActuallyInvokeAction: canActuallyCreate,
+    cantClickErrorReason: cantClickCreateReason,
+    cantClickErrorCode: cantClickCreateCode
+  } = usePermissionedAction({
+    check: computed(() => unref(params.project)?.permissions?.canCreateModel),
+    disclaimerErrorCodes: [
+      WorkspaceLimitsReachedError.code,
+      PersonalProjectsLimitedError.code
+    ],
+    fallbackReason: 'Cannot create model'
   })
 
   return {
