@@ -48,7 +48,7 @@ aliases:
     - .yarn/cache
     - .yarn/unplugged
     - .husky/_ # generated from postinstall scripts
-    # - .yarn/install-state.gz
+    - .yarn/install-state.gz
     # - node_modules
     # - packages/ui-components-nuxt/node_modules
     # - packages/monitor-deployment/node_modules
@@ -67,6 +67,7 @@ aliases:
     # - packages/objectloader/node_modules
     # - packages/objectsender/node_modules
     - .yarn/global # generated from postinstall scripts
+    - ~/.yarn/berry
 
   - &push-yarn-cache
     save_cache:
