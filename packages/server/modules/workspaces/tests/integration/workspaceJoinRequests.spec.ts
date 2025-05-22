@@ -8,8 +8,15 @@ import {
   WorkspaceNotDiscoverableError,
   WorkspaceNotFoundError
 } from '@/modules/workspaces/errors/workspace'
-import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import {
+  getWorkspaceCollaboratorsFactory,
+  getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
+  getWorkspaceRolesFactory,
+  getWorkspaceWithDomainsFactory,
+  upsertWorkspaceRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   AddOrUpdateWorkspaceRole,
   CreateWorkspaceJoinRequest,
@@ -35,7 +42,7 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -44,6 +51,17 @@ import {
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import {
+  findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory
+} from '@/modules/core/repositories/userEmails'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -109,7 +127,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             sendWorkspaceJoinRequestReceivedEmail: async () => Promise.resolve(),
             getUserById: async () => null,
             getWorkspaceWithDomains: async () => null,
-            getUserEmails: async () => []
+            getUserEmails: async () => [],
+            addOrUpdateWorkspaceRole: async () => {},
+            getWorkspaceTeam: async () => []
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -124,7 +144,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             sendWorkspaceJoinRequestReceivedEmail: async () => Promise.resolve(),
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspaceWithDomains: async () => null,
-            getUserEmails: async () => []
+            getUserEmails: async () => [],
+            addOrUpdateWorkspaceRole: async () => {},
+            getWorkspaceTeam: async () => []
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -157,7 +179,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspaceWithDomains: async () =>
               workspace as unknown as WorkspaceWithDomains,
-            getUserEmails: async () => []
+            getUserEmails: async () => [],
+            addOrUpdateWorkspaceRole: async () => {},
+            getWorkspaceTeam: async () => []
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -213,7 +237,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
                 domains: [domain]
               } as unknown as WorkspaceWithDomains),
             getUserEmails: async () =>
-              [{ email: user.email, verified: true }] as unknown as UserEmail[]
+              [{ email: user.email, verified: true }] as unknown as UserEmail[],
+            addOrUpdateWorkspaceRole: async () => {},
+            getWorkspaceTeam: async () => []
           })({ workspaceId: workspace.id, userId: user.id })
         ).to.equal(true)
 
@@ -282,7 +308,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
               domains: [domain]
             } as unknown as WorkspaceWithDomains),
           getUserEmails: async () =>
-            [{ email: user.email, verified: true }] as unknown as UserEmail[]
+            [{ email: user.email, verified: true }] as unknown as UserEmail[],
+          addOrUpdateWorkspaceRole: async () => {},
+          getWorkspaceTeam: async () => []
         })
 
         expect(
@@ -321,6 +349,64 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         ).to.equal('pending')
 
         expect(sendWorkspaceJoinRequestReceivedEmailCalls).to.have.length(1)
+      })
+      it('adds user to workspace if discoverable auto-join is enabled', async () => {
+        const userA: BasicTestUser = {
+          id: '',
+          name: 'John Speckle',
+          email: createRandomEmail(),
+          role: Roles.Server.Admin,
+          verified: true
+        }
+        const userB: BasicTestUser = {
+          id: '',
+          name: 'Jimothy Speckle',
+          email: createRandomEmail(),
+          verified: true
+        }
+        await createTestUsers([userA, userB])
+
+        const workspace: BasicTestWorkspace = {
+          id: '',
+          slug: '',
+          ownerId: '',
+          name: cryptoRandomString({ length: 6 }),
+          description: cryptoRandomString({ length: 12 }),
+          discoverabilityEnabled: true,
+          discoverabilityAutoJoinEnabled: true
+        }
+        await createTestWorkspace(workspace, userA, { domain: 'example.org' })
+
+        await requestToJoinWorkspaceFactory({
+          createWorkspaceJoinRequest: createWorkspaceJoinRequestFactory({ db }),
+          sendWorkspaceJoinRequestReceivedEmail: async () => {},
+          getUserById: getUserFactory({ db }),
+          addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+            findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit,
+            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              eventEmit: getEventBus().emit
+            })
+          }),
+          getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+          getWorkspaceTeam: getWorkspaceCollaboratorsFactory({ db }),
+          getUserEmails: findEmailsByUserIdFactory({ db })
+        })({
+          userId: userB.id,
+          workspaceId: workspace.id
+        })
+
+        const workspaceRole = await getWorkspaceRoleForUserFactory({ db })({
+          userId: userB.id,
+          workspaceId: workspace.id
+        })
+
+        expect(workspaceRole).to.not.be.null
       })
     })
 

@@ -59,7 +59,10 @@ import {
   type FilteringState
 } from './modules/extensions/FilteringExtension.js'
 import { Extension } from './modules/extensions/Extension.js'
-import { ExplodeExtension } from './modules/extensions/ExplodeExtension.js'
+import {
+  ExplodeEvent,
+  ExplodeExtension
+} from './modules/extensions/ExplodeExtension.js'
 import {
   DiffExtension,
   type DiffResult,
@@ -193,6 +196,7 @@ export {
   FilteringExtension,
   CameraEvent,
   ExplodeExtension,
+  ExplodeEvent,
   DiffExtension,
   Loader,
   SpeckleConverter,

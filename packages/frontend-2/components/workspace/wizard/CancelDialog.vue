@@ -7,7 +7,7 @@
   >
     <div class="flex flex-col gap-2">
       <p class="text-body-xs text-foreground font-medium">
-        You'll loose all the information entered for this workspace.
+        You will lose all the information entered for this workspace.
       </p>
     </div>
   </LayoutDialog>

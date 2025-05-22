@@ -148,9 +148,14 @@ extend type Workspace {
   planPrices: WorkspacePaidPlanPrices
 }
 
+extend type Project {
+  hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
+}
+
 enum WorkspaceFeatureName {
   domainBasedSecurityPolicies
   oidcSso
+  hideSpeckleBranding
   workspaceDataRegionSpecificity
 }
 
