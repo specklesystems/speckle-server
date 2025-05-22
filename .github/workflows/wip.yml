@@ -1,6 +1,6 @@
 name: Pipeline test build
 
-on: pull_request
+on: workflow_dispatch
 
 jobs:
   # TODO:
@@ -27,8 +27,64 @@ jobs:
   # TODO
   # test-preview-service
 
-  # TODO:
-  # docker-publish-frontend-2-sourcemaps
+  test-preview-service:
+    name: Test preview service
+    runs-on: blacksmith
+    container:
+      image: cimg/node:22.6.0-browsers # TODO:
+    services:
+      postgres0:
+        image: speckle/speckle-postgres
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5432:5432
+        # TODO: add it in the dockerfile as a separate mr
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/preview-service'
+
+  # TODO: fix, shh error on cloning helmjson schema at .helm-readme-configuration.json
+  # TODO: move to blacksmith
+  prepre-commit:
+    name: Precommit check
+    runs-on: ubuntu-latest
+    container:
+      image: speckle/pre-commit-runner:latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Set precommit
+        run: pre-commit install-hooks --config ./.pre-commit-config.yaml
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Run precommit
+        run: ./.husky/pre-commit
+      - name: Diff on failure
+        if: failure()
+        run: git --no-pager diff
 
   # TODO: codecov
 

@@ -1,0 +1,34 @@
+name: CI Pipeline
+
+on: pull_request
+
+jobs:
+  get-version:
+    outputs:
+      IMAGE_VERSION_TAG: ${{ steps.export-step.outputs.IMAGE_VERSION_TAG }}
+    name: Get version
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - run: git fetch origin 'refs/tags/*:refs/tags/*'
+      - run: chmod +x ./get_version.sh ./common.sh
+        working-directory: ./.github/workflows/scripts
+      - run: ./get_version.sh >> result
+        working-directory: ./.github/workflows/scripts
+      - run: echo "IMAGE_VERSION_TAG=$(cat result)"
+        working-directory: ./.github/workflows/scripts
+      - id: export-step
+        run: echo "IMAGE_VERSION_TAG=$(cat result)" >> "$GITHUB_OUTPUT"
+        working-directory: ./.github/workflows/scripts
+
+  tests:
+    uses: ./.github/workflows/tests.yml
+    needs: get_version
+    with:
+      version: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+
+  builds:
+    needs: get_version
+    uses: ./.github/workflows/builds.yml
+    with:
+      version: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
