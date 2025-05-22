@@ -11,7 +11,7 @@ on:
 
 jobs:
   test-frontend-2:
-    name: Test Frontend
+    name: Frontend
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -28,7 +28,7 @@ jobs:
         working-directory: 'packages/frontend-2'
 
   test-viewer:
-    name: Test Viwer
+    name: Viwer
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -54,7 +54,7 @@ jobs:
         working-directory: 'packages/viewer-sandbox'
 
   test-shared:
-    name: Test Shared
+    name: Shared
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -97,7 +97,7 @@ jobs:
       # TODO: (codecov) store artifact
 
   test-ui-components:
-    name: Test UI Components
+    name: UI Components
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -134,7 +134,7 @@ jobs:
           file: ./utils/postgres/Dockerfile
 
   test-server:
-    name: Test server
+    name: Server
     needs: [docker-build-postgres-container]
     runs-on: blacksmith
     services:
@@ -224,7 +224,7 @@ jobs:
         working-directory: 'packages/server'
 
   test-server-no-ff:
-    name: Test server no ff
+    name: Server no ff
     needs: [docker-build-postgres-container]
     runs-on: blacksmith
     services:
@@ -305,7 +305,7 @@ jobs:
       # TODO: codecov
 
   test-server-multiregion:
-    name: Test server multiregion
+    name: Server multiregion
     needs: [docker-build-postgres-container]
     runs-on: blacksmith
     services:
