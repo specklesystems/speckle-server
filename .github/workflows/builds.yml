@@ -1,7 +1,7 @@
 name: Run builds
 
 # temporarely diabled while working on the rest
-on: pull_request
+on: workflow_dispatch
 # on: pull_request
 
 jobs:
