@@ -19,7 +19,7 @@ aliases:
     docker:
       - image: cimg/node:22.6.0-browsers
 
-  - &cache-key v4-yarn-packages-cachebust23-{{ checksum "yarn.lock" }}
+  - &cache-key v4-yarn-packages-cachebust24-{{ checksum "yarn.lock" }}
 
   # This is a workaround for the fact that some packages run postinstall scripts
   # and do not respect the NPM_CONFIG_PREFIX setting.
@@ -69,6 +69,8 @@ aliases:
     # - packages/objectsender/node_modules
     - .yarn/global # generated from postinstall scripts
     - node_modules/bcrypt
+    - node_modules/dtrace-provider
+    - packages/frontend-2/node_modules/cpu-features
 
   - &push-yarn-cache
     save_cache:
@@ -148,9 +150,13 @@ workflows:
 
       - test-objectsender:
           filters: *filters-allow-all
+          requires:
+            - install-dependencies
 
       - test-shared:
           filters: *filters-allow-all
+          requires:
+            - install-dependencies
 
       - test-ui-components:
           filters: *filters-allow-all
