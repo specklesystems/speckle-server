@@ -31,11 +31,7 @@ export default class BatchedPool<T> {
     while (!this.#disposed || this.#queue.length > 0) {
       if (this.#queue.length > 0) {
         const batch = this.getBatch(batchSize)
-        try {
-          await this.#processFunction(batch)
-        } catch (e) {
-          console.error(e)
-        }
+        await this.#processFunction(batch)
       }
       await this.#delay(this.#baseInterval)
     }
