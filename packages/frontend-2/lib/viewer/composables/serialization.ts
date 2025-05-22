@@ -19,6 +19,7 @@ type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
 export function useStateSerialization() {
   const state = useInjectedViewerState()
+  const { objects } = useSelectionUtilities()
   const { serializeDiffCommand } = useDiffUtilities()
 
   /**
@@ -96,6 +97,9 @@ export function useStateSerialization() {
           isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
           hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
           selectedObjectIds: [...state.ui.filters.selectedObjectIds.value.values()],
+          selectedObjectApplicationIds: objects.value
+            .map((obj) => obj.applicationId)
+            .filter((id): id is string => !!id),
           propertyFilter: {
             key: state.ui.filters.propertyFilter.filter.value?.key || null,
             isApplied: state.ui.filters.propertyFilter.isApplied.value
