@@ -1,6 +1,5 @@
 <template>
   <WorkspaceCard
-    :condensed="requestStatus === 'pending'"
     :logo="workspace.logo ?? ''"
     :name="workspace.name"
     :class="requestStatus === 'pending' ? '' : 'bg-foundation'"
@@ -10,17 +9,20 @@
         <div v-if="workspace.description" class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <div class="flex flex-col gap-1 mt-2">
-          <div class="flex flex-col">
-            <span class="text-body-3xs text-foreground-2 font-medium">Admins</span>
-            <UserAvatarGroup :users="adminTeam" :max-count="3" size="sm" />
-          </div>
-          <div
+        <div class="flex flex-col gap-2 mt-1">
+          <UserAvatarGroup
             v-if="members.length > 0 && requestStatus !== 'pending'"
-            class="flex flex-col"
-          >
-            <span class="text-body-3xs text-foreground-2 font-medium">Members</span>
-            <UserAvatarGroup :users="members" :max-count="5" size="sm" />
+            :users="members"
+            :max-count="5"
+            size="base"
+          />
+          <div class="flex gap-1 text-body-3xs text-foreground-2">
+            <span class="font-medium">Admins:</span>
+            <span v-for="(admin, index) in adminTeam.slice(0, 3)" :key="admin.id">
+              {{ admin.name
+              }}{{ index < 2 && index < adminTeam.length - 1 ? ', ' : '' }}
+            </span>
+            <span v-if="adminTeam.length > 3">+{{ adminTeam.length - 3 }}</span>
           </div>
         </div>
       </div>

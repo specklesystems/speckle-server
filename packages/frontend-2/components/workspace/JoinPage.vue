@@ -91,7 +91,7 @@ const showAllWorkspaces = ref(false)
 const workspacesToShow = computed(() => {
   return showAllWorkspaces.value
     ? discoverableWorkspacesAndJoinRequests.value
-    : discoverableWorkspacesAndJoinRequests.value.slice(0, 5)
+    : discoverableWorkspacesAndJoinRequests.value.slice(0, 3)
 })
 
 const description = computed(() => {
