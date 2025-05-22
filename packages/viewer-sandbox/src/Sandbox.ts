@@ -11,8 +11,8 @@ import {
   ObjectLayers,
   OutputPass,
   Pipeline,
+  SectionOutlines,
   SectionTool,
-  SpeckleMesh,
   SpeckleOfflineLoader,
   SpeckleRenderer,
   SpeckleStandardMaterial,
@@ -53,11 +53,9 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Euler, Vector3, Box3, Color, LinearFilter, Vector2, Matrix4 } from 'three'
+import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import { Geometry } from '@speckle/viewer'
-import { DEG2RAD } from 'three/src/math/MathUtils'
 import { ObjectLoader2Factory } from '@speckle/objectloader2'
 
 export default class Sandbox {
@@ -491,45 +489,10 @@ export default class Sandbox {
     const screenshot = this.tabs.pages[0].addButton({
       title: 'Screenshot'
     })
+
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
+      console.warn(await this.viewer.screenshot())
 
-      const batches = this.viewer
-        .getRenderer()
-        .batcher.getBatches(undefined, GeometryType.MESH)
-
-      const screenSize = this.viewer.getRenderer().renderer.getSize(new Vector2())
-      const aspect = screenSize.x / screenSize.y
-      const fov = 50
-      const near = this.viewer.World.getRelativeOffset(0.009)
-      const top = near * Math.tan(DEG2RAD * 0.5 * fov)
-      const height = 2 * top
-      const width = aspect * height
-      const left = -0.5 * width
-
-      const projection = new Matrix4().makePerspective(
-        left,
-        left + width,
-        top,
-        top - height,
-        near,
-        near * 10
-      )
-
-      for (let k = 0; k < batches.length; k++) {
-        const tas = (batches[k].renderObject as SpeckleMesh).TAS
-        const box = tas.getBoundingBox(new Box3())
-
-        console.log(
-          'Delta projection -> ',
-          Geometry.getFP32ProjectionDelta(
-            box.min,
-            projection,
-            screenSize,
-            this.viewer.World.getRelativeOffset(0.01)
-          )
-        )
-      }
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
@@ -1138,6 +1101,8 @@ export default class Sandbox {
         this.viewer
           .getExtension(ExplodeExtension)
           .setExplode(this.batchesParams.explode)
+        const outlines = this.viewer.getExtension(SectionOutlines)
+        if (outlines) outlines.requestUpdate(true)
       })
     // container
     //   .addInput(Sandbox.batchesParams, 'culling', {

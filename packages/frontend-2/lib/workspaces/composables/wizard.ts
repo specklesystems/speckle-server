@@ -275,7 +275,8 @@ export const useWorkspacesWizard = () => {
     if (result?.data?.workspaceMutations.updateCreationState) {
       const metaPayload = {
         plan: state.plan,
-        billingInterval: state.billingInterval,
+        billingInterval:
+          state.plan === WorkspacePlans.Free ? undefined : state.billingInterval,
         source: 'wizard',
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
