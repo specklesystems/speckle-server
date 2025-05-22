@@ -5,10 +5,11 @@ import AsyncGeneratorQueue from './asyncGeneratorQueue.js'
 import { Item } from '../types/types.js'
 import { DefermentManager } from './defermentManager.js'
 
-const makeDatabase = ():Database => ({
-  cacheSaveBatch: async (): Promise<void> => {},
-  getAll: async (): Promise<(Item | undefined)[]> => Promise.resolve([])
-} as unknown as Database)
+const makeDatabase = (): Database =>
+  ({
+    cacheSaveBatch: async (): Promise<void> => {},
+    getAll: async (): Promise<(Item | undefined)[]> => Promise.resolve([])
+  } as unknown as Database)
 const makeGathered = (): AsyncGeneratorQueue<Item> =>
   ({
     add: () => {},
@@ -20,18 +21,13 @@ const makeDeferments = (): DefermentManager =>
   } as unknown as DefermentManager)
 describe('CachePump disposal', () => {
   test('disposeAsync is idempotent and always resolves', async () => {
-    const pump = new CachePump(
-      makeDatabase(),
-      makeGathered(),
-      makeDeferments(),
-      {
-        maxCacheWriteSize: 2,
-        maxCacheBatchWriteWait: 100,
-        maxCacheBatchReadWait: 1,
-        maxWriteQueueSize: 2,
-        maxCacheReadSize: 2
-      }
-    )
+    const pump = new CachePump(makeDatabase(), makeGathered(), makeDeferments(), {
+      maxCacheWriteSize: 2,
+      maxCacheBatchWriteWait: 100,
+      maxCacheBatchReadWait: 1,
+      maxWriteQueueSize: 2,
+      maxCacheReadSize: 2
+    })
     await pump.disposeAsync()
     await expect(pump.disposeAsync()).resolves.toBeUndefined()
   })

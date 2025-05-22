@@ -57,7 +57,7 @@ export class CachePump implements Pump {
     const maxCacheReadSize = this.#options.maxCacheReadSize
 
     for (let i = 0; i < ids.length; ) {
-      if (this.#writeQueue?.isDisposed()) break;
+      if (this.#writeQueue?.isDisposed()) break
       if ((this.#writeQueue?.count() ?? 0) > this.#options.maxWriteQueueSize) {
         this.#logger(
           'pausing reads (# in write queue: ' + this.#writeQueue?.count() + ')'
