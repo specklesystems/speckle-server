@@ -9,7 +9,7 @@
         <div v-if="workspace.description" class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <div class="flex flex-col gap-2 mt-1">
+        <div class="flex flex-col gap-2">
           <UserAvatarGroup
             v-if="members.length > 0 && requestStatus !== 'pending'"
             :users="members"
