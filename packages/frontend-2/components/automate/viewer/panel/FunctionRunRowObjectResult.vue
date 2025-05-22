@@ -13,7 +13,7 @@
           <Component :is="iconAndColor.icon" :class="`w-4 h-4 ${iconAndColor.color}`" />
         </div>
         <div :class="`text-xs ${iconAndColor.color}`">
-          {{ result.category }}: {{ resultObjectIds }} affected elements
+          {{ result.category }}: {{ resultObjectIds.length }} affected elements
         </div>
       </div>
       <div v-if="result.message" class="text-xs text-foreground-2 pl-5">
