@@ -65,11 +65,11 @@
       </LayoutTabsHorizontal>
     </div>
 
-    <WorkspaceMoveProjectManager
+    <WorkspaceMoveProject
       v-if="project && isWorkspacesEnabled"
       v-model:open="showMoveDialog"
       event-source="project-page"
-      :project-id="projectId"
+      :project="project"
     />
   </div>
 </template>
@@ -116,6 +116,7 @@ graphql(`
     ...ProjectPageTeamDialog
     ...WorkspaceMoveProjectManager_ProjectBase
     ...ProjectPageSettingsTab_Project
+    ...WorkspaceMoveProject_Project
   }
 `)
 

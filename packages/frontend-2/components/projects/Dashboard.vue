@@ -75,10 +75,10 @@
       v-if="projectsPanelResult?.activeUser"
       v-model:open="showCreateNewProjectDialog"
     />
-    <WorkspaceMoveProjectManager
+    <WorkspaceMoveProject
       v-if="showMoveProjectDialog"
       v-model:open="showMoveProjectDialog"
-      :project-id="emittedProjectId || undefined"
+      :project="emittedProject"
     />
   </div>
 </template>
@@ -93,6 +93,8 @@ import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useUserProjectsUpdatedTracking } from '~~/lib/user/composables/projectUpdates'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useCanCreatePersonalProject } from '~~/lib/projects/composables/permissions'
+import type { ProjectsDashboardQueryQuery } from '~/lib/common/generated/gql/graphql'
+import type { Get } from 'type-fest'
 
 graphql(`
   fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {
@@ -119,7 +121,8 @@ const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const filterProjectsToMove = ref(false)
 const showLoadingBar = ref(false)
 const showMoveProjectDialog = ref(false)
-const emittedProjectId = ref<Nullable<string>>(null)
+const emittedProject =
+  ref<Get<ProjectsDashboardQueryQuery, 'activeUser.projects.items[0]'>>()
 const areQueriesLoading = useQueryLoading()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const showCreateNewProjectDialog = ref(false)
@@ -199,13 +202,16 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
 
 const mixpanel = useMixpanel()
 
-const onMoveProject = (projectId: string, location: string) => {
-  emittedProjectId.value = projectId
+const onMoveProject = (projectId: string | undefined, location: string) => {
+  const project = projectId
+    ? projects.value?.items.find((p) => p.id === projectId)
+    : undefined
+  emittedProject.value = project || undefined
+
   mixpanel.track('Move Project CTA Clicked', {
     location,
     // eslint-disable-next-line camelcase
-    workspace_id:
-      projects.value?.items.find((p) => p.id === projectId)?.workspace?.id || undefined
+    workspace_id: project?.workspace?.id || undefined
   })
   showMoveProjectDialog.value = true
 }

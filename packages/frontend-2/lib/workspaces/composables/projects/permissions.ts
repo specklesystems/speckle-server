@@ -96,6 +96,9 @@ export const useCanMoveProjectIntoWorkspace = (params: {
   // errors that have special disclaimers on click
   const disclaimerErrors: string[] = [WorkspaceLimitsReachedError.code]
 
+  /**
+   * If no check, neither workspace nor project set, should be fine to open manager
+   */
   const check = computed(() => {
     const checks = [
       unref(params.workspace)?.permissions?.canMoveProjectToWorkspace,
@@ -111,7 +114,7 @@ export const useCanMoveProjectIntoWorkspace = (params: {
   })
 
   const canClickMove = computed(() => {
-    if (!check.value) return false
+    if (!check.value) return true // neither workspace nor project set
 
     if (disclaimerErrors.includes(check.value.code)) {
       return true // we block the user downstream w/ a modal
@@ -120,9 +123,7 @@ export const useCanMoveProjectIntoWorkspace = (params: {
     return check.value.authorized
   })
 
-  const canActuallyMove = computed(
-    () => !!unref(params.workspace)?.permissions?.canMoveProjectToWorkspace.authorized
-  )
+  const canActuallyMove = computed(() => (!check.value ? true : check.value.authorized))
 
   const cantClickMoveCode = computed(() => {
     if (check.value?.authorized) return undefined

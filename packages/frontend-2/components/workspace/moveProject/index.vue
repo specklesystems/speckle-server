@@ -10,7 +10,6 @@
       location="move_project"
     />
     <WorkspaceMoveProjectManager
-      v-if="workspace || project"
       v-model:open="openMoveManager"
       :workspace-slug="workspace?.slug"
       :workspace-id="workspace?.id"

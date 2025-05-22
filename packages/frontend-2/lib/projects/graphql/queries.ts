@@ -23,6 +23,7 @@ export const projectsDashboardQuery = graphql(`
         totalCount
         items {
           ...ProjectDashboardItem
+          ...WorkspaceMoveProject_Project
         }
       }
       ...ProjectsHiddenProjectWarning_User
