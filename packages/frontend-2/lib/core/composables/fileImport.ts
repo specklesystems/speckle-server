@@ -10,12 +10,35 @@ import { importFile } from '~~/lib/core/api/fileImport'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { BlobUploadStatus } from '~~/lib/core/api/blobStorage'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { graphql } from '~/lib/common/generated/gql'
+import type {
+  UseFileImport_ModelFragment,
+  UseFileImport_ProjectFragment
+} from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment UseFileImport_Project on Project {
+    id
+  }
+`)
+
+graphql(`
+  fragment UseFileImport_Model on Model {
+    id
+    name
+  }
+`)
 
 export function useFileImport(params: {
-  projectId: MaybeRef<string>
+  project: MaybeRef<UseFileImport_ProjectFragment>
+  model?: MaybeRef<MaybeNullOrUndefined<UseFileImport_ModelFragment>>
+  /**
+   * Sometimes we don't have a model, but we still want to specify a target model name (e.g. for
+   * model list view uploads, where list items don't necessarily represent real models)
+   */
   modelName?: MaybeRef<MaybeNullOrUndefined<string>>
 }) {
-  const { projectId, modelName } = params
+  const { project, model } = params
 
   const { maxSizeInBytes } = useServerFileUploadLimit()
   const authToken = useAuthCookie()
@@ -24,6 +47,8 @@ export function useFileImport(params: {
   const accept = ref('.ifc,.stl,.obj')
   const upload = ref(null as Nullable<UploadFileItem>)
   const isUploading = ref(false)
+
+  const modelName = computed(() => unref(params.modelName) || unref(model)?.name)
 
   let onFileUploadedCb: Optional<(file: UploadFileItem) => void> = undefined
   const onFileUploaded = (cb: (file: UploadFileItem) => void) => {
@@ -58,8 +83,8 @@ export function useFileImport(params: {
       const res = await importFile(
         {
           file: upload.value.file,
-          projectId: unref(projectId),
-          modelName: unref(modelName) || undefined,
+          projectId: unref(project).id,
+          modelName: modelName.value || undefined,
           authToken: authToken.value,
           apiOrigin
         },
@@ -75,7 +100,7 @@ export function useFileImport(params: {
       mp.track('Upload Action', {
         type: 'action',
         name: 'create',
-        source: unref(modelName) ? 'model card' : 'empty card'
+        source: modelName.value ? 'model card' : 'empty card'
         // extension
       })
 
