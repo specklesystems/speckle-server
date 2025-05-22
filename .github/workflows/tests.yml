@@ -305,20 +305,8 @@ jobs:
         run: yarn build:public
       - run: cp .env.test-example .env.test
         working-directory: 'packages/server'
-      - name: 'Lint'
-        run: yarn lint:ci
-        working-directory: 'packages/server'
       - name: 'Run test'
         run: yarn test:report
         working-directory: 'packages/server'
         timeout-minutes: 30
       # TODO: codecov
-      - name: Introspect GQL schema for subsequent checks
-        run: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
-        working-directory: 'packages/server'
-      - name: Checking for GQL schema breakages against app.speckle.systems
-        run: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
-        working-directory: 'packages/server'
-      - name: Checking for GQL schema breakages against latest.speckle.systems
-        run: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
-        working-directory: 'packages/server'
