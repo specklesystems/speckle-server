@@ -113,6 +113,23 @@
               :show-label="false"
             />
           </div>
+          <div v-if="isDomainDiscoverabilityEnabled" class="flex items-center">
+            <div class="flex-1 flex-col pr-6 gap-y-1">
+              <p class="text-body-xs font-medium text-foreground">
+                How do people join?
+              </p>
+              <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+                When enabled, users with a verified email address from your verified
+                domain list will be able to request to join this workspace.
+              </p>
+            </div>
+            <FormSwitch
+              v-model="isDomainDiscoverabilityEnabled"
+              name="domain-discoverability"
+              :disabled="!hasWorkspaceDomains"
+              :show-label="false"
+            />
+          </div>
         </div>
       </section>
     </div>
