@@ -532,6 +532,9 @@ const getStream = () => {
 
     // Large topological stuff
     // 'https://app.speckle.systems/projects/7a489ac0d4/models/146d5fbe27,3e481c9a58,65b4cf97d5,6d07577256,903850fa6f'
+
+    // Small (microscopic) building
+    // 'https://app.speckle.systems/projects/26e4c4aab5/models/7d5ff72f5b'
   )
 }
 
