@@ -21,6 +21,8 @@ aliases:
 
   - &cache-key v4-yarn-packages-cachebust24-{{ checksum "yarn.lock" }}
 
+  - &cache-key-global npm-global-cachebust3-{{ checksum "yarn.lock" }}
+
   # This is a workaround for the fact that some packages run postinstall scripts
   # and do not respect the NPM_CONFIG_PREFIX setting.
   # And we cannot store ~/.npm in the workspace, because it is not a sub-directory of our working directory
@@ -29,12 +31,12 @@ aliases:
     restore_cache:
       name: Restore NPM global directory (workaround)
       keys:
-        - npm-global-cachebust3-{{ checksum "yarn.lock" }}
+        - *cache-key-global
 
   - &push-npm-global
     save_cache:
       name: Save NPM global directory (workaround)
-      key: npm-global-cachebust3-{{ checksum "yarn.lock" }}
+      key: *cache-key-global
       paths:
         - ~/.npm
         - ~/.yarn/berry
@@ -96,6 +98,27 @@ aliases:
       name: Restore Env Vars
       command: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
 
+  - &build-public-paths
+    - packages/frontend-2/.nuxt
+    - packages/objectloader/dist
+    - packages/objectloader2/.tshy
+    - packages/objectloader2/dist
+    - packages/objectsender/dist
+    - packages/shared/dist
+    - packages/tailwind-theme/dist
+    - packages/tailwind-theme/dist-cjs
+    - packages/ui-components/dist
+    - packages/viewer/dist
+
+  - &save-build-public
+    persist_to_workspace:
+      root: *default-working-dir
+      paths: *build-public-paths
+
+  - &restore-build-public
+    attach_workspace:
+      at: *default-working-dir
+
   - &yarn
     run:
       name: Install Dependencies
@@ -113,6 +136,11 @@ aliases:
         PUPPETEER_SKIP_DOWNLOAD=true \
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
         yarn --immutable --immutable-cache
+
+  - &build-public
+    run:
+      name: Build public packages
+      command: yarn build:public
 
 workflows:
   test-build:
@@ -530,6 +558,8 @@ jobs:
       - *yarn
       - *save-yarn-cache # to workspace
       - *push-npm-global # populate the workaround
+      - *build-public
+      - *save-build-public # to workspace
 
   cache-dependencies:
     <<: *docker-node-image
@@ -573,10 +603,9 @@ jobs:
             - ~/.cache/pre-commit
       - *restore-yarn-cache
       - *pull-npm-global # workaround
-      - *yarn
-      - run:
-          name: Build public packages
-          command: yarn build:public
+      - *yarn-from-cache
+      - *restore-build-public
+      - *build-public
       - run:
           name: Run pre-commit
           command: ./.husky/pre-commit
@@ -625,9 +654,8 @@ jobs:
       - *restore-yarn-cache
       - *pull-npm-global # workaround
       - *yarn-from-cache
-      - run:
-          name: Build public packages
-          command: yarn build:public
+      - *restore-build-public
+      - *build-public
       - run:
           name: Wait for dependencies to start
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
@@ -761,9 +789,8 @@ jobs:
       - *restore-yarn-cache
       - *pull-npm-global # workaround
       - *yarn-from-cache
-      - run:
-          name: Build public packages
-          command: yarn build:public
+      - *restore-build-public
+      - *build-public
       - run:
           name: Lint everything
           command: yarn lint:ci
@@ -777,9 +804,8 @@ jobs:
       - *restore-yarn-cache
       - *pull-npm-global # workaround
       - *yarn-from-cache
-      - run:
-          name: Build public packages
-          command: yarn build:public
+      - *restore-build-public
+      - *build-public
       - run:
           name: Lint viewer
           command: yarn lint:ci
@@ -840,9 +866,8 @@ jobs:
       - *restore-yarn-cache
       - *pull-npm-global # workaround
       - *yarn-from-cache
-      - run:
-          name: Build public packages
-          command: yarn build:public
+      - *restore-build-public
+      - *build-public
       - run:
           name: Run tests
           command: yarn test:ci
@@ -855,14 +880,13 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      # - *restore-yarn-cache # fails because the cache does not have the playwright browsers
+      - *restore-yarn-cache
       - *pull-npm-global # workaround
       - run:
           name: Install Dependencies and download Puppeteer browsers
           command: PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable
-      - run:
-          name: Build public packages
-          command: yarn build:public
+      - *restore-build-public
+      - *build-public
       - run:
           name: Lint tailwind theme
           command: yarn lint:ci
@@ -888,9 +912,8 @@ jobs:
       - *restore-yarn-cache
       - *pull-npm-global # workaround
       - *yarn-from-cache
-      - run:
-          name: Build shared packages
-          command: yarn build:public
+      - *restore-build-public
+      - *build-public
       - run:
           name: Run chromatic
           command: yarn chromatic
@@ -1221,9 +1244,8 @@ jobs:
       - *restore-yarn-cache
       - *pull-npm-global # workaround
       - *yarn-from-cache
-      - run:
-          name: Build public packages
-          command: yarn build:public
+      - *restore-build-public
+      - *build-public
       - run:
           name: Lint viewer-sandbox
           command: yarn lint:ci
