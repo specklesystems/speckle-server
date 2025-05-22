@@ -603,7 +603,6 @@ jobs:
       - *pull-npm-global # workaround
       - *yarn-from-cache
       - *restore-build-public
-      - *build-public
       - run:
           name: Run pre-commit
           command: ./.husky/pre-commit
@@ -653,7 +652,6 @@ jobs:
       - *pull-npm-global # workaround
       - *yarn-from-cache
       - *restore-build-public
-      - *build-public
       - run:
           name: Wait for dependencies to start
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
@@ -788,7 +786,6 @@ jobs:
       - *pull-npm-global # workaround
       - *yarn-from-cache
       - *restore-build-public
-      - *build-public
       - run:
           name: Lint everything
           command: yarn lint:ci
@@ -803,7 +800,6 @@ jobs:
       - *pull-npm-global # workaround
       - *yarn-from-cache
       - *restore-build-public
-      - *build-public
       - run:
           name: Lint viewer
           command: yarn lint:ci
@@ -865,7 +861,6 @@ jobs:
       - *pull-npm-global # workaround
       - *yarn-from-cache
       - *restore-build-public
-      - *build-public
       - run:
           name: Run tests
           command: yarn test:ci
@@ -884,7 +879,6 @@ jobs:
           name: Install Dependencies and download Puppeteer browsers
           command: PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable
       - *restore-build-public
-      - *build-public
       - run:
           name: Lint tailwind theme
           command: yarn lint:ci
@@ -911,7 +905,6 @@ jobs:
       - *pull-npm-global # workaround
       - *yarn-from-cache
       - *restore-build-public
-      - *build-public
       - run:
           name: Run chromatic
           command: yarn chromatic
@@ -1243,7 +1236,6 @@ jobs:
       - *pull-npm-global # workaround
       - *yarn-from-cache
       - *restore-build-public
-      - *build-public
       - run:
           name: Lint viewer-sandbox
           command: yarn lint:ci
