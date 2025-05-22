@@ -4,7 +4,7 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaces
 } from '@/modules/workspaces/domain/operations'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { LimitedWorkspace, Workspace } from '@/modules/workspacesCore/domain/types'
 
 type GetDiscoverableWorkspaceForUserArgs = {
   userId: string
@@ -20,9 +20,7 @@ export const getDiscoverableWorkspacesForUserFactory =
   }) =>
   async ({
     userId
-  }: GetDiscoverableWorkspaceForUserArgs): Promise<
-    Pick<Workspace, 'id' | 'name' | 'slug' | 'description' | 'logo'>[]
-  > => {
+  }: GetDiscoverableWorkspaceForUserArgs): Promise<LimitedWorkspace[]> => {
     const userEmails = await findEmailsByUserId({ userId })
     const userVerifiedDomains = userEmails
       .filter((email) => email.verified)
