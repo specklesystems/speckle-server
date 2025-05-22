@@ -26,7 +26,8 @@ export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
           'hideSelectionInfo',
           'disableModelLink',
           'noScroll',
-          'manualLoad'
+          'manualLoad',
+          'hideSpeckleBranding'
         ].includes(key) &&
         typeof possibleOptions[key as keyof EmbedOptions] === 'boolean'
     )
@@ -101,6 +102,7 @@ export function useEmbed() {
     const isEnabled = createComputed('isEnabled')
     const isTransparent = createComputed('isTransparent')
     const disableModelLink = createComputed('disableModelLink')
+    const hideSpeckleBranding = createComputed('hideSpeckleBranding')
     const hideSelectionInfo = createComputed('hideSelectionInfo')
     const noScroll = createComputed('noScroll')
     const manualLoad = createComputed('manualLoad')
@@ -125,6 +127,7 @@ export function useEmbed() {
       showControls: showControlsNew,
       hideSelectionInfo,
       disableModelLink,
+      hideSpeckleBranding,
       noScroll,
       manualLoad
     }
