@@ -41,24 +41,17 @@
         </div>
 
         <div>
-          <p v-if="showEmptyState" class="text-foreground-2 text-heading-sm p-0 m-0">
-            {{
-              emptyStateVariant === 'modelsSection'
-                ? 'The project has no models, yet.'
-                : 'No models, yet.'
-            }}
+          <p v-if="emptyStateHeading" :class="emptyStateHeadingClasses">
+            {{ emptyStateHeading }}
           </p>
-          <p :class="paragraphClasses">
-            <template v-if="!isDisabled">
-              Use
-              <NuxtLink :to="connectorsRoute" class="font-medium">
-                <span class="underline">connectors</span>
-              </NuxtLink>
-              to publish a {{ modelName ? '' : 'new model' }} version to
-              {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-              IFC/OBJ/STL file here.
-            </template>
-            <template v-else>TODO: Disabled</template>
+          <p v-if="!isDisabled" :class="paragraphClasses">
+            Use
+            <NuxtLink :to="connectorsRoute" class="font-medium">
+              <span class="underline">connectors</span>
+            </NuxtLink>
+            to publish a {{ modelName ? '' : 'new model' }} version to
+            {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
+            IFC/OBJ/STL file here.
           </p>
           <div v-if="showEmptyState && !isDisabled" :class="buttonsClasses">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
@@ -150,6 +143,31 @@ const showEmptyState = computed(
   () =>
     props.emptyStateVariant !== 'modelGrid' && props.emptyStateVariant !== 'modelList'
 )
+const emptyStateHeading = computed(() => {
+  if (showEmptyState.value) {
+    return props.emptyStateVariant === 'modelsSection'
+      ? 'The project has no models, yet.'
+      : 'No models, yet.'
+  }
+
+  if (isDisabled.value) {
+    return modelName.value
+      ? 'The model has no versions, yet.'
+      : 'The project has no models, yet.'
+  }
+
+  return undefined
+})
+
+const emptyStateHeadingClasses = computed(() => {
+  const classParts = ['text-foreground-2 text-heading-sm p-0 m-0 ']
+
+  if (isDisabled.value) {
+    classParts.push('text-balance text-center')
+  }
+
+  return classParts.join(' ')
+})
 
 const containerClasses = computed(() => {
   const classParts = ['w-full flex justify-center items-center']
