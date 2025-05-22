@@ -14,19 +14,12 @@
           >
             View all in 3D
           </FormButton>
-          <FormButton
-            v-tippy="
-              canCreateModel?.authorized
-                ? undefined
-                : canCreateModel?.message ||
-                  'You do not have permission to create models'
-            "
-            :disabled="!canCreateModel?.authorized"
-            class="grow inline-flex sm:grow-0 lg:hidden"
-            @click="showNewDialog = true"
-          >
-            New model
-          </FormButton>
+
+          <div v-tippy="newModelTooltip" class="grow inline-flex sm:grow-0 lg:hidden">
+            <FormButton :disabled="isNewModelDisabled" @click="handleCreateModelClick">
+              New model
+            </FormButton>
+          </div>
         </div>
       </div>
       <div
@@ -79,16 +72,9 @@
           >
             View all in 3D
           </FormButton>
-          <div
-            v-tippy="
-              canCreateModel?.authorized || limitReached
-                ? undefined
-                : canCreateModel?.message ||
-                  'You do not have permission to create models'
-            "
-          >
+          <div v-tippy="newModelTooltip">
             <FormButton
-              :disabled="!canCreateModel?.authorized || limitReached"
+              :disabled="isNewModelDisabled"
               class="hidden lg:inline-flex shrink-0"
               @click="handleCreateModelClick"
             >
@@ -193,6 +179,15 @@ const onViewAllClick = () => {
 const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const showNewDialog = ref(false)
 const showLimitDialog = ref(false)
+
+const newModelTooltip = computed(() => {
+  return canCreateModel.value?.authorized || limitReached
+    ? undefined
+    : canCreateModel.value?.message || 'You do not have permission to create models'
+})
+const isNewModelDisabled = computed(() => {
+  return !canCreateModel.value?.authorized && !limitReached.value
+})
 
 const debouncedSearch = computed({
   get: () => props.search,

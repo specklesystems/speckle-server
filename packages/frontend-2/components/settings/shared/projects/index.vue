@@ -12,7 +12,7 @@
           v-on="on"
         />
       </div>
-      <div :key="createDisabledTooltip" v-tippy="createDisabledTooltip">
+      <div v-tippy="createDisabledTooltip">
         <FormButton :disabled="isCreateDisabled" @click="openNewProject = true">
           Create
         </FormButton>
@@ -265,12 +265,4 @@ const onActionChosen = (
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
-
-// const handleCreateProject = () => {
-//   if (props.limitReached) {
-//     emit('project-limit-reached')
-//   } else {
-//     openNewProject.value = true
-//   }
-// }
 </script>
