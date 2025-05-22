@@ -19,7 +19,7 @@ aliases:
     docker:
       - image: cimg/node:22.6.0-browsers
 
-  - &cache-key v4-yarn-packages-cachebust7-{{ checksum "yarn.lock" }}
+  - &cache-key v4-yarn-packages-cachebust21-{{ checksum "yarn.lock" }}
 
   # This is a workaround for the fact that some packages run postinstall scripts
   # and do not respect the NPM_CONFIG_PREFIX setting.
