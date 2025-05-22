@@ -9,7 +9,7 @@
     "node": "^22.6.0"
   },
   "scripts": {
-    "build": "yarn workspaces foreach --parallel --topological --verbose --worktree run build",
+    "build": "yarn ensure:tailwind-deps && yarn workspace @speckle/frontend-2 build:postinstall && yarn workspaces foreach --parallel --topological --verbose --worktree run build",
     "build:public": "yarn ensure:tailwind-deps && yarn workspace @speckle/frontend-2 build:postinstall && yarn workspaces foreach --parallel --topological --verbose --worktree --no-private run build",
     "build:tailwind-deps": "yarn workspaces foreach --interlaced --verbose --worktree --jobs unlimited --include '{@speckle/shared,@speckle/tailwind-theme,@speckle/ui-components}' run build",
     "ensure:tailwind-deps": "node ./utils/ensure-tailwind-deps.mjs",
