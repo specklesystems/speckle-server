@@ -12,6 +12,7 @@ import {
   CreateWorkspaceJoinRequest,
   DenyWorkspaceJoinRequest,
   GetWorkspace,
+  GetWorkspaceCollaborators,
   GetWorkspaceJoinRequest,
   GetWorkspaceWithDomains,
   SendWorkspaceJoinRequestApprovedEmail,
@@ -50,14 +51,18 @@ export const requestToJoinWorkspaceFactory =
   ({
     createWorkspaceJoinRequest,
     sendWorkspaceJoinRequestReceivedEmail,
+    addOrUpdateWorkspaceRole,
     getUserById,
     getWorkspaceWithDomains,
+    getWorkspaceTeam,
     getUserEmails
   }: {
     createWorkspaceJoinRequest: CreateWorkspaceJoinRequest
     sendWorkspaceJoinRequestReceivedEmail: SendWorkspaceJoinRequestReceivedEmail
+    addOrUpdateWorkspaceRole: AddOrUpdateWorkspaceRole
     getUserById: GetUser
     getWorkspaceWithDomains: GetWorkspaceWithDomains
+    getWorkspaceTeam: GetWorkspaceCollaborators
     getUserEmails: FindEmailsByUserId
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
@@ -82,6 +87,23 @@ export const requestToJoinWorkspaceFactory =
     })
     if (!canJoinWorkspace) {
       throw new WorkspaceProtectedError()
+    }
+
+    if (workspace.discoverabilityAutoJoinEnabled) {
+      const [workspaceAdmin] = await getWorkspaceTeam({
+        workspaceId,
+        limit: 1,
+        filter: {
+          roles: [Roles.Workspace.Admin]
+        }
+      })
+      await addOrUpdateWorkspaceRole({
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        updatedByUserId: workspaceAdmin.id
+      })
+      return true
     }
 
     const joinRequest = await createWorkspaceJoinRequest({
