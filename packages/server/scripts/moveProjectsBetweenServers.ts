@@ -32,17 +32,40 @@ import {
   getProjectFactory,
   storeProjectFactory
 } from '@/modules/core/repositories/projects'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getStreamCollaboratorsFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import { findEmailFactory } from '@/modules/core/repositories/userEmails'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import {
   getAvailableRegionConfig,
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { getStringFromEnv } from '@/modules/shared/helpers/envHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalStreamCountFactory } from '@/modules/stats/repositories'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
@@ -123,7 +146,49 @@ const main = async () => {
       // Optionally, provision users from source server on target server
       // TODO: This is only possible if the target workspace has SSO enabled
       if (ENABLE_USER_PROVISIONING) {
-        // TODO: Skipping for now
+        const targetServerUserEmail = await findEmailFactory({ db: targetMainDb })({
+          email: user.email.toLowerCase()
+        })
+
+        if (targetServerUserEmail?.userId) {
+          // User with email already exists in target server
+          continue
+        }
+
+        await createUserFactory({
+          getServerInfo: getServerInfoFactory({ db: targetMainDb }),
+          findEmail: findEmailFactory({ db: targetMainDb }),
+          storeUser: storeUserFactory({ db: targetMainDb }),
+          countAdminUsers: countAdminUsersFactory({ db: targetMainDb }),
+          storeUserAcl: storeUserAclFactory({ db: targetMainDb }),
+          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+            createUserEmail: createUserEmailFactory({ db: targetMainDb }),
+            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
+              db: targetMainDb
+            }),
+            findEmail: findEmailFactory({ db: targetMainDb }),
+            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({
+                db: targetMainDb
+              }),
+              updateAllInviteTargets: updateAllInviteTargetsFactory({
+                db: targetMainDb
+              })
+            }),
+            requestNewEmailVerification: requestNewEmailVerificationFactory({
+              findEmail: findEmailFactory({ db: targetMainDb }),
+              getUser: getUserFactory({ db: targetMainDb }),
+              getServerInfo: getServerInfoFactory({ db: targetMainDb }),
+              deleteOldAndInsertNewVerification:
+                deleteOldAndInsertNewVerificationFactory({
+                  db: targetMainDb
+                }),
+              renderEmail,
+              sendEmail
+            })
+          }),
+          emitEvent: getEventBus().emit
+        })
       }
     }
   }
@@ -145,7 +210,9 @@ const main = async () => {
 
   const skippedProjects: StreamRecord[] = []
 
-  const { targetRegionDb: largeProjectDb } = await getTargetServerConnection(TARGET_WORKSPACE_ID)
+  const { targetRegionDb: largeProjectDb } = await getTargetServerConnection(
+    TARGET_WORKSPACE_ID
+  )
 
   for await (const sourceProjects of executeBatchedSelect(
     sourceDb.table<StreamRecord>('streams').select('*')
@@ -155,15 +222,20 @@ const main = async () => {
       const logKey = `(${currentProjectIndex
         .toString()
         .padStart(4, '0')}/${sourceServerProjectCount
-          .toString()
-          .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
+        .toString()
+        .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
 
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
 
-      const existingProject = await getProjectFactory({ db: targetRegionDb })({ projectId: sourceProject.id })
+      const existingProject = await getProjectFactory({ db: targetRegionDb })({
+        projectId: sourceProject.id
+      })
 
-      if (sourceProject.id !== '80643e0e3c' && (existingProject || sourceProject.name.includes("First Project"))) {
+      if (
+        sourceProject.id !== '80643e0e3c' &&
+        (existingProject || sourceProject.name.includes('First Project'))
+      ) {
         console.log(`${logKey} Skipping ${sourceProject.name} ${sourceProject.id}`)
         if (existingProject) {
           skippedProjects.push(existingProject)
@@ -175,38 +247,36 @@ const main = async () => {
       const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
 
       // TODO: Why is initial write wrapped in a transaction?
-      if (sourceProject.id !== '80643e0e3c') {
-        await storeProjectFactory({ db: targetRegionDb })({
-          project: {
-            ...sourceProject,
-            regionKey: targetWorkspaceRegionKey,
-            workspaceId: TARGET_WORKSPACE_ID
-          }
-        })
+      await storeProjectFactory({ db: targetRegionDb })({
+        project: {
+          ...sourceProject,
+          regionKey: targetWorkspaceRegionKey,
+          workspaceId: TARGET_WORKSPACE_ID
+        }
+      })
 
-        try {
-          await retry(
-            async () => {
-              await getProjectFactory({ db: targetMainDb })({
-                projectId: sourceProject.id
-              })
-            },
-            { maxAttempts: 100 }
-          )
-        } catch (err) {
-          if (err instanceof StreamNotFoundError) {
-            // delete from region
-            await deleteProjectFactory({ db: targetRegionDb })({
+      try {
+        await retry(
+          async () => {
+            await getProjectFactory({ db: targetMainDb })({
               projectId: sourceProject.id
             })
-            throw new RegionalProjectCreationError()
-          }
-          // else throw as is
-          throw err
+          },
+          { maxAttempts: 100 }
+        )
+      } catch (err) {
+        if (err instanceof StreamNotFoundError) {
+          // delete from region
+          await deleteProjectFactory({ db: targetRegionDb })({
+            projectId: sourceProject.id
+          })
+          throw new RegionalProjectCreationError()
         }
-
-        console.log(`${logKey} Replicated ${sourceProject.name}`)
+        // else throw as is
+        throw err
       }
+
+      console.log(`${logKey} Replicated ${sourceProject.name}`)
 
       // Move project data
       const regionTrx = await targetRegionDb.transaction()
@@ -221,7 +291,8 @@ const main = async () => {
         })({ streamId: sourceProject.id })
         let movedObjectsCount = 0
 
-        const objectDb = sourceProjectObjectCount > 1_000_000 ? largeProjectDb : regionTrx
+        const objectDb =
+          sourceProjectObjectCount > 1_000_000 ? largeProjectDb : regionTrx
 
         for await (const objectsBatch of getBatchedStreamObjectsFactory({
           db: sourceDb
@@ -233,8 +304,8 @@ const main = async () => {
             `${logKey} ${movedObjectsCount
               .toString()
               .padStart(6, '0')}/${sourceProjectObjectCount
-                .toString()
-                .padStart(6, '0')} objects moved`
+              .toString()
+              .padStart(6, '0')} objects moved`
           )
         }
 
@@ -347,7 +418,11 @@ const main = async () => {
         })(sourceProject.id, undefined, { limit: 100 })
 
         // Give admin role
-        await grantStreamPermissions({ userId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID, streamId: sourceProject.id, role: Roles.Stream.Owner })
+        await grantStreamPermissions({
+          userId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID,
+          streamId: sourceProject.id,
+          role: Roles.Stream.Owner
+        })
 
         // Try to assign roles
         for (const user of sourceUsers) {
