@@ -74,6 +74,7 @@ import { authorizeResolver } from '@/modules/shared'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import cryptoRandomString from 'crypto-random-string'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -691,7 +692,8 @@ describe('Auth @auth', () => {
         strategy: 'wotStrategy',
         req,
         res,
-        next
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
       })
 
       const userId = cryptoRandomString({ length: 4 })
@@ -709,7 +711,7 @@ describe('Auth @auth', () => {
         'next request handler should have been called'
       ).to.equal(1)
     })
-    it('Should handle case where there is an unexpected error and a user', async () => {
+    it('Should handle case where there is an unexpected error but also a user', async () => {
       const req = httpMocks.createRequest()
       req.log = logger
       const res = httpMocks.createResponse()
@@ -725,7 +727,8 @@ describe('Auth @auth', () => {
         strategy: 'wotStrategy',
         req,
         res,
-        next
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
       })
 
       SUT(
@@ -745,7 +748,7 @@ describe('Auth @auth', () => {
         'next request handler should have been called'
       ).to.equal(1)
     })
-    it('Should handle case where there is a user-derived error and a user', async () => {
+    it('Should handle case where there is a user-derived failure but also a user', async () => {
       const req = httpMocks.createRequest()
       req.log = logger
       const res = httpMocks.createResponse()
@@ -761,13 +764,14 @@ describe('Auth @auth', () => {
         strategy: 'wotStrategy',
         req,
         res,
-        next
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
       })
 
       SUT(
-        new UserInputError('I brrrrroke'),
+        null,
         { id: cryptoRandomString({ length: 4 }), email: createRandomEmail() },
-        undefined
+        { failureType: 'UserInputError' }
       )
       expect(
         res._getRedirectUrl().includes('/error'),
@@ -799,7 +803,8 @@ describe('Auth @auth', () => {
         strategy: 'wotStrategy',
         req,
         res,
-        next
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
       })
 
       SUT(null, undefined, undefined)
@@ -817,7 +822,7 @@ describe('Auth @auth', () => {
         'next request handler should not have been called'
       ).to.equal(0)
     })
-    it('Should handle case where there is a user-derived error but no user', async () => {
+    it('Should handle case where there is a user-derived failure and no user', async () => {
       const req = httpMocks.createRequest()
       req.log = logger
       const res = httpMocks.createResponse()
@@ -833,10 +838,11 @@ describe('Auth @auth', () => {
         strategy: 'wotStrategy',
         req,
         res,
-        next
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
       })
 
-      SUT(new UserInputError('I brrrrroke'), undefined, undefined)
+      SUT(null, undefined, { failureType: 'UserInputError' })
       expect(
         res._getRedirectUrl().includes('/error'),
         `Redirect url was '${res._getRedirectUrl()}'`
@@ -867,7 +873,8 @@ describe('Auth @auth', () => {
         strategy: 'wotStrategy',
         req,
         res,
-        next
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
       })
 
       SUT(new Error('surprise!!!'), undefined, undefined)
@@ -880,6 +887,80 @@ describe('Auth @auth', () => {
         errorCalledCounter,
         'next request handler should have been called with an error "next(err)"'
       ).to.equal(1)
+    })
+    it('should handle invalid grant user-derived failure and no user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'google',
+        req,
+        res,
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
+      })
+
+      SUT(null, undefined, {
+        failureType: 'InvalidGrantError',
+        message: 'Some kind of invalid grant'
+      })
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
+    })
+    //TODO remove this if we upgrade to openid-client >=6.0.0
+    it('should handle case for OIDC with a user-derived error and no user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'oidc',
+        req,
+        res,
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
+      })
+
+      SUT(new UserInputError('oidc version <6 is special'), undefined, undefined)
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
     })
   })
 })
