@@ -19,9 +19,9 @@ const props = defineProps<{
 const { activeWorkspaceSlug } = useNavigation()
 const mixpanel = useMixpanel()
 
-const { commentLimitFormatted, versionLimitFormatted } = useWorkspaceLimits(
-  activeWorkspaceSlug.value || ''
-)
+const { commentLimitFormatted, versionLimitFormatted } = useWorkspaceLimits({
+  slug: computed(() => activeWorkspaceSlug.value || '')
+})
 
 const text = computed(() => {
   if (props.limitType === 'comment') {

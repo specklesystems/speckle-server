@@ -55,11 +55,9 @@
           <ViewerControls v-if="showControls" class="relative z-20" />
 
           <ViewerLimitsDialog
-            v-if="project?.workspace"
+            v-if="project"
             v-model:open="showLimitsDialog"
-            :workspace-slug="project?.workspace.slug"
-            :workspace-role="project?.workspace.role"
-            :project-id="project?.id"
+            :project="project"
             :resource-id-string="resourceIdString"
             :limit-type="limitsDialogType"
           />
@@ -142,6 +140,7 @@ graphql(`
     embedOptions {
       hideSpeckleBranding
     }
+    ...ViewerLimitsDialog_Project
   }
 `)
 

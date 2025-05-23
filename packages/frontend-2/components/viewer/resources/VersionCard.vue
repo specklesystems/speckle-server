@@ -142,7 +142,9 @@ const emit = defineEmits<{
 
 const mp = useMixpanel()
 const { activeWorkspaceSlug } = useNavigation()
-const { versionLimitFormatted } = useWorkspaceLimits(activeWorkspaceSlug.value || '')
+const { versionLimitFormatted } = useWorkspaceLimits({
+  slug: computed(() => activeWorkspaceSlug.value || '')
+})
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)

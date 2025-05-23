@@ -15777,7 +15777,7 @@ __metadata:
     ua-parser-js: "npm:^1.0.38"
     vee-validate: "npm:4.7.0"
     vue-advanced-cropper: "npm:^2.8.8"
-    vue-tippy: "npm:@speckle/vue-tippy@6.7.1-alpha.0"
+    vue-tippy: "npm:^6.7.1"
     vue-tsc: "npm:^2.2.2"
     wait-on: "npm:^6.0.1"
     ws: "npm:^8.17.1"
@@ -16302,7 +16302,7 @@ __metadata:
     vite-plugin-dts: "npm:^4.5.0"
     vue: "npm:^3.5.13"
     vue-advanced-cropper: "npm:^2.8.8"
-    vue-tippy: "npm:@speckle/vue-tippy@6.7.1-alpha.0"
+    vue-tippy: "npm:^6.7.1"
     vue-tsc: "npm:^2.2.2"
     wait-on: "npm:^6.0.1"
   peerDependencies:
@@ -49601,14 +49601,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-tippy@npm:@speckle/vue-tippy@6.7.1-alpha.0":
-  version: 6.7.1-alpha.0
-  resolution: "@speckle/vue-tippy@npm:6.7.1-alpha.0"
+"vue-tippy@npm:^6.7.1":
+  version: 6.7.1
+  resolution: "vue-tippy@npm:6.7.1"
   dependencies:
     tippy.js: "npm:^6.3.7"
   peerDependencies:
     vue: ^3.2.0
-  checksum: 10/ff1b99f9e74c6ac217d94e11efa4419a7eeef9fbddaa51507fede249c4f322c2906f013f5d425a5fc33719e6d00256a12614e0abbb757441127046e0e1596ad6
+  checksum: 10/23c601a8aab5ced793a645710eeb63f829039c7693d8f564e1a97b936de5aefe5d4992b479f212b22b0142b6a61ce56febb13cf925a9e2d0565f761997ba9ce6
   languageName: node
   linkType: hard
 

@@ -1,6 +1,7 @@
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import {
   PersonalProjectsLimitedError,
+  PersonalProjectsLimits,
   WorkspaceLimitsReachedError
 } from '@speckle/shared/authz'
 import { usePermissionedAction } from '~/lib/common/composables/permissions'
@@ -111,5 +112,36 @@ export const useCanInviteToProject = (params: {
     canActuallyInvite,
     cantClickInviteReason,
     cantClickInviteCode
+  }
+}
+
+export const usePersonalProjectLimits = () => {
+  const {
+    public: { FF_PERSONAL_PROJECTS_LIMITS_ENABLED }
+  } = useRuntimeConfig()
+
+  const limits = computed(() =>
+    FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? PersonalProjectsLimits : null
+  )
+  const versionLimitFormatted = computed(() => {
+    const versionsHistory = limits.value?.versionsHistory
+    if (!versionsHistory) return 'Unlimited'
+
+    const { value, unit } = versionsHistory
+    return `${value} ${unit}`
+  })
+
+  const commentLimitFormatted = computed(() => {
+    const commentHistory = limits.value?.commentHistory
+    if (!commentHistory) return 'Unlimited'
+
+    const { value, unit } = commentHistory
+    return `${value} ${unit}`
+  })
+
+  return {
+    limits,
+    versionLimitFormatted,
+    commentLimitFormatted
   }
 }
