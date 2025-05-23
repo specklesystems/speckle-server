@@ -28,8 +28,10 @@ export interface SectionBoxData {
  * - ui.spotlightUserId swapped for spotlightUserSessionId
  * v1.1 -> v1.2
  * - ui.diff added
+ * v1.2 -> v1.3
+ * - ui.filters.selectedObjectApplicationIds added
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.2
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.3
 
 export type SerializedViewerState = {
   projectId: string
@@ -69,6 +71,7 @@ export type SerializedViewerState = {
       isolatedObjectIds: string[]
       hiddenObjectIds: string[]
       selectedObjectIds: string[]
+      selectedObjectApplicationIds: string[]
       propertyFilter: {
         key: Nullable<string>
         isApplied: boolean
@@ -189,6 +192,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
         hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
         selectedObjectIds: state.ui?.filters?.selectedObjectIds || [],
+        selectedObjectApplicationIds:
+          state.ui?.filters?.selectedObjectApplicationIds || [],
         propertyFilter: {
           ...(state.ui?.filters?.propertyFilter || {}),
           key: state.ui?.filters?.propertyFilter?.key || null,
