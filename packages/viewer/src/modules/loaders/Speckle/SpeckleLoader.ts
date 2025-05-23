@@ -86,9 +86,9 @@ export class SpeckleLoader extends Loader {
   public async load(): Promise<boolean> {
     const start = performance.now()
     let first = true
-    let current = 0
+    let dataloading = 0
     const total = await this.loader.getTotalObjectCount()
-    let viewerLoads = 0
+    let traversals = 0
     let firstObjectPromise = null
 
     Logger.warn('Downloading object ', this.resource)
@@ -103,14 +103,17 @@ export class SpeckleLoader extends Loader {
           this.resource,
           obj as SpeckleObject,
           async () => {
-            viewerLoads++
+            traversals++
+            this.emit(LoaderEvent.Traversed, {
+              count: traversals
+            })
           }
         )
         first = false
       }
-      current++
+      dataloading++
       this.emit(LoaderEvent.LoadProgress, {
-        progress: current / (total + 1),
+        progress: dataloading / (total + 1),
         id: this.resource
       })
     }
@@ -125,7 +128,7 @@ export class SpeckleLoader extends Loader {
       } seconds. Node count: ${this.tree.nodeCount}`
     )
 
-    if (viewerLoads === 0) {
+    if (traversals === 0) {
       Logger.warn(`Viewer: no 3d objects found in object ${this.resource}`)
       this.emit(LoaderEvent.LoadWarning, {
         message: `No displayable objects found in object ${this.resource}.`
@@ -144,7 +147,17 @@ export class SpeckleLoader extends Loader {
 
     const renderTree = this.tree.getRenderTree(this.resource)
     if (!renderTree) return Promise.resolve(false)
-    const p = renderTree.buildRenderTree(geometryConverter)
+    let converted = 0
+    const p = renderTree.buildRenderTree(geometryConverter, () => {
+      converted++
+      this.emit(LoaderEvent.Converted, {
+        count: converted
+      })
+    })
+
+    Logger.warn(
+      `Finished rendering object . Node count: ${this.tree.nodeCount} Total: ${total}`
+    )
 
     void p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)

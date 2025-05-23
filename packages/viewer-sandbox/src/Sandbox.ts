@@ -1330,15 +1330,33 @@ export default class Sandbox {
         true,
         undefined
       )
-      let progress = 0
+      let dataProgress = 0
+      let renderedCount = 0
+      let traversedCount = 0
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)
-        if (p > progress) {
+        if (p > dataProgress) {
           if (colorImage)
             colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
-          progress = p
+          dataProgress = p
           console.log(`Loading ${p}%`)
+        }
+      })
+      loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
+        if (arg.count > traversedCount) {
+          traversedCount = arg.count
+          if (traversedCount % 777 === 0) {
+            console.log(`Traversed Data ${traversedCount}`)
+          }
+        }
+      })
+      loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
+        if (arg.count > renderedCount) {
+          renderedCount = arg.count
+          if (renderedCount % 777 === 0) {
+            console.log(`Rendering Data ${renderedCount}`)
+          }
         }
       })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
