@@ -367,9 +367,13 @@ const main = async () => {
         }
 
         // stream_commits
-        await insertStreamCommitsFactory({ db: regionTrx })(sc)
+        if (sc.length) {
+          await insertStreamCommitsFactory({ db: regionTrx })(sc)
+        }
         // branch_commits
-        await insertBranchCommitsFactory({ db: regionTrx })(bc)
+        if (bc.length) {
+          await insertBranchCommitsFactory({ db: regionTrx })(bc)
+        }
 
         // Move comments
         const commentIds: string[] = []
