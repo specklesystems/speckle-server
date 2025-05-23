@@ -129,37 +129,37 @@ const onChangeMeasurementPrecision = () => {
   setMeasurementOptions(measurementParams.value)
 }
 
-const IconPointToPoint = resolveComponent(
+const IconMeasurePointToPoint = resolveComponent(
   'IconMeasurePointToPoint'
 ) as ConcreteComponent
-const IconPerpendicular = resolveComponent(
+const IconMeasurePerpendicular = resolveComponent(
   'IconMeasurePerpendicular'
 ) as ConcreteComponent
+const IconMeasurePoint = resolveComponent('IconMeasurePoint') as ConcreteComponent
+const IconMeasureArea = resolveComponent('IconMeasureArea') as ConcreteComponent
 
 const measurementTypeOptions = [
   {
     title: 'Point to Point',
-    icon: IconPointToPoint,
+    icon: IconMeasurePointToPoint,
     value: MeasurementType.POINTTOPOINT,
     description: 'Measure between two points'
   },
   {
     title: 'Perpendicular',
-    icon: IconPerpendicular,
+    icon: IconMeasurePerpendicular,
     value: MeasurementType.PERPENDICULAR,
     description: 'Tip: Double-click to quick-measure'
   },
-  // TODO: Add area measurement descripion and icon
   {
     title: 'Area',
-    icon: IconPerpendicular,
+    icon: IconMeasureArea,
     value: MeasurementType.AREA,
     description: 'Area description'
   },
-  // TODO: Add area measurement descripion and icon
   {
     title: 'Point',
-    icon: IconPointToPoint,
+    icon: IconMeasurePoint,
     value: MeasurementType.POINT,
     description: 'Point description'
   }
