@@ -75,26 +75,17 @@
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
         <div class="flex min-w-0 items-center space-x-1">
-          <div
+          <ViewerResourcesUpgradeLimitAlert
             v-if="isLimited"
-            class="text-body-3xs text-foreground-2 pr-8 select-none"
-          >
-            Upgrade to view versions older than the {{ versionLimitFormatted }} limit.
-          </div>
+            limit-type="version"
+            variant="inline"
+          />
           <div v-else class="truncate text-xs">
             {{ version.message || 'no message' }}
           </div>
         </div>
-        <FormButton
-          v-if="isLimited"
-          color="outline"
-          size="sm"
-          @click="handleUpgradeClick"
-        >
-          Upgrade
-        </FormButton>
         <div
-          v-else
+          v-if="!isLimited"
           class="text-primary inline-block rounded-full pl-1 text-xs font-medium"
         >
           {{ version.sourceApplication }}
@@ -110,9 +101,6 @@ import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
-import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 dayjs.extend(localizedFormat)
 
@@ -141,10 +129,6 @@ const emit = defineEmits<{
 }>()
 
 const mp = useMixpanel()
-const { activeWorkspaceSlug } = useNavigation()
-const { versionLimitFormatted } = useWorkspaceLimits({
-  slug: computed(() => activeWorkspaceSlug.value || '')
-})
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
@@ -179,14 +163,5 @@ const handleViewChanges = () => {
     name: 'diffs',
     action: 'enable'
   })
-}
-
-const handleUpgradeClick = () => {
-  mp.track('Hidden Version Upgrade Button Clicked', {
-    location: 'viewer',
-    // eslint-disable-next-line camelcase
-    workspace_id: activeWorkspaceSlug.value
-  })
-  navigateTo(settingsWorkspaceRoutes.billing.route(activeWorkspaceSlug.value || ''))
 }
 </script>
