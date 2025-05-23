@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     title="Confirm new user policy"
-    max-width="sm"
+    max-width="xs"
     :buttons="dialogButtons"
   >
     <p class="text-body-xs text-foreground">

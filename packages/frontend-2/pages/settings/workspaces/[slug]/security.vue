@@ -113,20 +113,35 @@
               :show-label="false"
             />
           </div>
-          <div v-if="isDomainDiscoverabilityEnabled" class="flex flex-col gap-y-1 pb-8">
-            <p class="text-body-xs font-medium text-foreground mb-1">
-              How do people join?
-            </p>
-            <FormRadio
-              v-for="option in radioOptions"
-              :key="option.value"
-              :label="option.title"
-              :value="option.value"
-              name="measurementType"
-              :checked="getCheckedValue === option.value"
-              size="sm"
-              @change="handleJoinPolicyChange(option.value)"
-            />
+          <div class="flex flex-col gap-y-1 pb-8">
+            <div class="flex items-center">
+              <div class="flex-1 flex-col pr-6 gap-y-1">
+                <p class="text-body-xs font-medium text-foreground">
+                  Allow verified domain users to auto-join
+                </p>
+                <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+                  When enabled, users with an email address from your verified domain
+                  list will be able to join without admin approval.
+                </p>
+              </div>
+              <FormSwitch
+                v-tippy="
+                  !isDomainDiscoverabilityEnabled
+                    ? 'Domain-based discoverability must be enabled'
+                    : undefined
+                "
+                :model-value="getCheckedValue === JoinPolicy.AutoJoin"
+                name="auto-join"
+                :disabled="!hasWorkspaceDomains || !isDomainDiscoverabilityEnabled"
+                :show-label="false"
+                @update:model-value="
+                  (val) =>
+                    handleJoinPolicyChange(
+                      val ? JoinPolicy.AutoJoin : JoinPolicy.AdminApproval
+                    )
+                "
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -142,7 +157,7 @@
       v-if="showConfirmJoinPolicyDialog"
       v-model:open="showConfirmJoinPolicyDialog"
       @confirm="handleJoinPolicyConfirm"
-      @cancel="pendingJoinPolicy = joinPolicy"
+      @cancel="pendingJoinPolicy = undefined"
     />
   </section>
 </template>
@@ -223,7 +238,6 @@ const showRemoveDomainDialog = ref(false)
 const removeDialogDomain =
   ref<SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment>()
 const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
-const joinPolicy = ref<JoinPolicy>(JoinPolicy.AdminApproval)
 const showConfirmJoinPolicyDialog = ref(false)
 const pendingJoinPolicy = ref<JoinPolicy>()
 
@@ -290,6 +304,28 @@ const isDomainDiscoverabilityEnabled = computed({
         // eslint-disable-next-line camelcase
         workspace_id: workspace.value?.id
       })
+
+      // If turning off discoverability, also turn off auto-join
+      if (!newVal && workspace.value.discoverabilityAutoJoinEnabled) {
+        const autoJoinResult = await updateAutoJoin({
+          input: {
+            id: workspace.value.id,
+            discoverabilityAutoJoinEnabled: false
+          }
+        }).catch(convertThrowIntoFetchResult)
+
+        if (autoJoinResult?.data) {
+          workspace.value = {
+            ...workspace.value,
+            discoverabilityAutoJoinEnabled: false
+          }
+          mixpanel.track('Workspace Join Policy Updated', {
+            value: 'admin-approval',
+            // eslint-disable-next-line camelcase
+            workspace_id: workspace.value.id
+          })
+        }
+      }
     }
   }
 })
@@ -310,10 +346,12 @@ const tooltipText = computed(() => {
 })
 
 const getCheckedValue = computed(() => {
-  if (showConfirmJoinPolicyDialog.value) {
+  if (pendingJoinPolicy.value) {
     return pendingJoinPolicy.value
   }
-  return joinPolicy.value
+  return workspace.value?.discoverabilityAutoJoinEnabled
+    ? JoinPolicy.AutoJoin
+    : JoinPolicy.AdminApproval
 })
 
 const addDomain = async () => {
@@ -374,13 +412,12 @@ const handleJoinPolicyChange = async (newValue: JoinPolicy) => {
         // eslint-disable-next-line camelcase
         workspace_id: workspace.value.id
       })
-      joinPolicy.value = newValue
     }
   }
 }
 
 const handleJoinPolicyConfirm = async () => {
-  if (!workspace.value?.id) return
+  if (!workspace.value?.id || !pendingJoinPolicy.value) return
 
   const result = await updateAutoJoin({
     input: {
@@ -389,7 +426,15 @@ const handleJoinPolicyConfirm = async () => {
     }
   }).catch(convertThrowIntoFetchResult)
 
-  if (result?.data && pendingJoinPolicy.value) {
+  if (result?.data) {
+    workspace.value = {
+      ...workspace.value,
+      discoverabilityAutoJoinEnabled: true
+    }
+
+    showConfirmJoinPolicyDialog.value = false
+    pendingJoinPolicy.value = undefined
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'New user policy updated',
@@ -400,26 +445,6 @@ const handleJoinPolicyConfirm = async () => {
       // eslint-disable-next-line camelcase
       workspace_id: workspace.value.id
     })
-    joinPolicy.value = pendingJoinPolicy.value
   }
 }
-
-const radioOptions = [
-  {
-    title: 'Admin has to accept the request',
-    value: JoinPolicy.AdminApproval
-  },
-  {
-    title: 'Allow people to auto-join',
-    value: JoinPolicy.AutoJoin
-  }
-] as const
-
-watch(
-  () => workspace.value?.discoverabilityAutoJoinEnabled,
-  (newVal) => {
-    joinPolicy.value = newVal ? JoinPolicy.AutoJoin : JoinPolicy.AdminApproval
-  },
-  { immediate: true }
-)
 </script>
