@@ -74,7 +74,8 @@ export const useCanMoveProjectIntoWorkspace = (params: {
     canClickAction: canClickMove,
     canActuallyInvokeAction: canActuallyMove,
     cantClickErrorReason: cantClickMoveReason,
-    cantClickErrorCode: cantClickMoveCode
+    cantClickErrorCode: cantClickMoveCode,
+    check
   } = usePermissionedAction({
     checks: computed(() => [
       unref(params.workspace)?.permissions?.canMoveProjectToWorkspace,
@@ -89,6 +90,7 @@ export const useCanMoveProjectIntoWorkspace = (params: {
     canClickMove,
     canActuallyMove,
     cantClickMoveReason,
-    cantClickMoveCode
+    cantClickMoveCode,
+    check
   }
 }

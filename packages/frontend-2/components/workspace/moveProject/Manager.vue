@@ -13,9 +13,7 @@
     <WorkspaceMoveProjectSelectWorkspace
       v-if="selectedProject && step.id === DialogStepId.workspace"
       :project="selectedProject"
-      :workspace-permissions="
-        workspaceResult?.workspaceBySlug.permissions.canMoveProjectToWorkspace
-      "
+      :checker="(w) => w.permissions.canMoveProjectToWorkspace"
       @workspace-selected="onWorkspaceSelected"
     />
 
@@ -52,7 +50,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
   WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment
+  WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import {
   workspaceMoveProjectManagerProjectQuery,
@@ -132,6 +130,7 @@ graphql(`
         }
       }
     }
+    ...WorkspaceMoveProjectSelectWorkspace_Workspace
   }
 `)
 
@@ -145,9 +144,8 @@ const open = defineModel<boolean>('open', { required: true })
 
 // Internal state management
 const selectedProject = ref<WorkspaceMoveProjectManager_ProjectFragment | null>(null)
-const selectedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
-  null
-)
+const selectedWorkspace =
+  ref<WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment | null>(null)
 
 const { goToPreviousStep, step, goToNextStep, resetStep } =
   useMultiStepDialog<DialogStepId>({
@@ -240,7 +238,7 @@ const onProjectSelected = (project: WorkspaceMoveProjectManager_ProjectFragment)
 }
 
 const onWorkspaceSelected = (
-  workspace: WorkspaceMoveProjectManager_WorkspaceFragment
+  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
 ) => {
   selectedWorkspace.value = workspace
   goToNextStep()

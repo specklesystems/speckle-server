@@ -26,15 +26,65 @@ export const useMultiStepDialog = <ID extends string = string>(params: {
     return currentStep
   })
 
-  const walkToAdjacentStep = (forward: boolean) => {
+  const nextOrderedStep = computed(() => {
     const currentIndex = steps.value.findIndex((s) => s.id === stepId.value)
     if (currentIndex === -1) {
-      return
+      return undefined
     }
 
-    const nextIndex = forward ? currentIndex + 1 : currentIndex - 1
-    if (nextIndex >= 0 && nextIndex < steps.value.length) {
-      stepId.value = steps.value[nextIndex].id
+    const nextStep = steps.value[currentIndex + 1]
+    if (nextStep?.id === stepId.value) {
+      return undefined
+    }
+
+    return nextStep
+  })
+
+  const previousOrderedStep = computed(() => {
+    const currentIndex = steps.value.findIndex((s) => s.id === stepId.value)
+    if (currentIndex === -1) {
+      return undefined
+    }
+
+    const previousStep = steps.value[currentIndex - 1]
+    if (previousStep?.id === stepId.value) {
+      return undefined
+    }
+
+    return previousStep
+  })
+
+  const nextStep = computed(() => {
+    if (params.resolveNextStep) {
+      const nextStepId = params.resolveNextStep({ currentStep: step.value })
+      const nextStep = steps.value.find((s) => s.id === nextStepId)
+      if (nextStep?.id === stepId.value) {
+        return undefined
+      }
+
+      return nextStep
+    } else {
+      return nextOrderedStep.value
+    }
+  })
+
+  const previousStep = computed(() => {
+    if (params.resolvePreviousStep) {
+      const previousStepId = params.resolvePreviousStep({ currentStep: step.value })
+      const previousStep = steps.value.find((s) => s.id === previousStepId)
+      if (previousStep?.id === stepId.value) {
+        return undefined
+      }
+      return previousStep
+    } else {
+      return previousOrderedStep.value
+    }
+  })
+
+  const walkToAdjacentStep = (forward: boolean) => {
+    const adjacentStep = forward ? nextOrderedStep.value : previousOrderedStep.value
+    if (adjacentStep) {
+      stepId.value = adjacentStep.id
     }
   }
 
@@ -49,19 +99,16 @@ export const useMultiStepDialog = <ID extends string = string>(params: {
     stepId.value = steps.value[stepIndex].id
   }
   const goToNextStep = () => {
-    if (params.resolveNextStep) {
-      const nextStepId = params.resolveNextStep({ currentStep: step.value })
+    const nextStepId = nextStep.value?.id
+    if (nextStepId) {
       goToStep(nextStepId)
-    } else {
-      goToNextOrderedStep()
     }
   }
+
   const goToPreviousStep = () => {
-    if (params.resolvePreviousStep) {
-      const previousStepId = params.resolvePreviousStep({ currentStep: step.value })
+    const previousStepId = previousStep.value?.id
+    if (previousStepId) {
       goToStep(previousStepId)
-    } else {
-      goToPreviousOrderedStep()
     }
   }
 
@@ -73,6 +120,10 @@ export const useMultiStepDialog = <ID extends string = string>(params: {
   return {
     stepId,
     step,
+    nextStep,
+    previousStep,
+    nextOrderedStep,
+    previousOrderedStep,
     goToNextOrderedStep,
     goToPreviousOrderedStep,
     goToStep,

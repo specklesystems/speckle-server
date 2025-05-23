@@ -82,6 +82,7 @@ export const usePermissionedAction = (
     canClickAction,
     canActuallyInvokeAction,
     cantClickErrorCode,
-    cantClickErrorReason
+    cantClickErrorReason,
+    check
   }
 }

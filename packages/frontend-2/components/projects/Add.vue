@@ -16,19 +16,14 @@
     </template>
     <template v-else>
       <ProjectsAddDialog v-model:open="openNewPersonalProject" />
-      <ProjectsAddInWorkspaceDialog v-model:open="openChoosePersonalProjectWorkspace" />
     </template>
   </div>
 </template>
 <script setup lang="ts">
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import {
-  PersonalProjectsLimitedError,
-  WorkspaceLimitsReachedError
-} from '@speckle/shared/authz'
+import { WorkspaceLimitsReachedError } from '@speckle/shared/authz'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectsAdd_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
-import { useCanCreatePersonalProject } from '~/lib/projects/composables/permissions'
 import { useCanCreateWorkspaceProject } from '~/lib/workspaces/composables/projects/permissions'
 
 graphql(`
@@ -73,10 +68,6 @@ const props = withDefaults(
 )
 
 const workspaceId = computed(() => props.workspace?.id || undefined)
-const { activeUser } = useActiveUser()
-const canCreatePersonal = useCanCreatePersonalProject({
-  activeUser: computed(() => activeUser.value)
-})
 
 const canCreateWorkspace = useCanCreateWorkspaceProject({
   workspace: computed(() => props.workspace)
@@ -118,33 +109,13 @@ const openWorkspaceProjectLimitsHit = computed({
 
 const openNewPersonalProject = computed({
   get: () => {
-    if (workspaceId.value || !canCreatePersonal.canActuallyCreate.value) return false
-    return open.value
-  },
-  set(val) {
-    if (workspaceId.value || !canCreatePersonal.canActuallyCreate.value) return false
-    open.value = val
-  }
-})
-
-const openChoosePersonalProjectWorkspace = computed({
-  get: () => {
-    if (
-      workspaceId.value ||
-      canCreatePersonal.cantClickCreateCode.value !== PersonalProjectsLimitedError.code
-    ) {
-      return false
-    }
+    if (workspaceId.value) return false
 
     return open.value
   },
   set(val) {
-    if (
-      workspaceId.value ||
-      canCreatePersonal.cantClickCreateCode.value !== PersonalProjectsLimitedError.code
-    ) {
-      return false
-    }
+    if (workspaceId.value) return false
+
     open.value = val
   }
 })
