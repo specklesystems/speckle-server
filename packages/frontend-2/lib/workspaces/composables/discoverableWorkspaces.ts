@@ -30,6 +30,13 @@ graphql(`
         }
       }
     }
+    adminTeam {
+      user {
+        id
+        name
+        avatar
+      }
+    }
   }
 `)
 
@@ -42,6 +49,13 @@ graphql(`
       name
       logo
       slug
+      adminTeam {
+        user {
+          id
+          name
+          avatar
+        }
+      }
       team {
         totalCount
         items {
