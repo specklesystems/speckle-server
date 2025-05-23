@@ -391,7 +391,6 @@ const handleJoinPolicyChange = async (newValue: JoinPolicy) => {
     showConfirmJoinPolicyDialog.value = true
     pendingJoinPolicy.value = newValue
   } else {
-    // Direct update for admin approval
     if (!workspace.value?.id) return
 
     const result = await updateAutoJoin({
