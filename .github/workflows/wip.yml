@@ -7,7 +7,7 @@ jobs:
   # TODO: move to blacksmith
   pre-commit:
     name: Precommit check
-    runs-on: ubuntu-latest
+    runs-on: blacksmith
     container:
       image: speckle/pre-commit-runner:latest
     defaults:
@@ -21,7 +21,7 @@ jobs:
         with:
           repository: bitnami-labs/readme-generator-for-helm
           path: readme-generator-for-helm
-      - uses: actions/setup-node@v4
+      - uses: useblacksmith/setup-node@v4
         with:
           node-version: 22
           cache-dependency-path: ./speckle/yarn.lock
