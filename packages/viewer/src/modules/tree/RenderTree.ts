@@ -31,7 +31,7 @@ export class RenderTree {
 
   public buildRenderTree(
     geometryConverter: GeometryConverter,
-    callback: () => void
+    callback?: () => void
   ): Promise<boolean> {
     const p = this.tree.walkAsync((node: TreeNode): boolean => {
       let start = performance.now()
@@ -75,12 +75,12 @@ export class RenderTree {
   private buildRenderNode(
     node: TreeNode,
     geometryConverter: GeometryConverter,
-    callback: () => void
+    callback?: () => void
   ): NodeRenderData | null {
     let ret: NodeRenderData | null = null
     let start = performance.now()
     const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
-    callback()
+    if (callback) callback()
     this.convertTime += performance.now() - start
     if (geometryData) {
       start = performance.now()
