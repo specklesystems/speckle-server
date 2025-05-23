@@ -339,8 +339,8 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/0cf9e393c4/commits/cef3f40be2'
     // 'https://latest.speckle.systems/streams/0cf9e393c4/commits/f4e11a8b01'
 
-    // Far away instances
-    // 'https://latest.speckle.systems/streams/ee5346d3e1/commits/576310a6d5'
+    // Instance with both far away geometry and far away transform
+    'https://latest.speckle.systems/streams/ee5346d3e1/commits/576310a6d5'
 
     // Door+wall instances
     // 'https://latest.speckle.systems/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
@@ -547,9 +547,13 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/7a489ac0d4/models/146d5fbe27,3e481c9a58,65b4cf97d5,6d07577256,903850fa6f'
 
     // Instance with far away transform
-    'https://app.speckle.systems/projects/40d439576e/models/759c1b2d20@b0a8ae1f81'
+    // 'https://app.speckle.systems/projects/40d439576e/models/759c1b2d20@b0a8ae1f81'
+
     // Small (microscopic) building
     // 'https://app.speckle.systems/projects/26e4c4aab5/models/7d5ff72f5b'
+
+    // Instances with far away transform
+    // 'https://app.speckle.systems/projects/9d0ce16ba8/models/3c079572ea'
   )
 }
 
