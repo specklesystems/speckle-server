@@ -39,51 +39,50 @@ workflows:
             - speckle-server-licensing
             - stripe-integration
             - speckle-server-codecov
-          filters: &filters-allow-all
-            tags:
-              # run tests for any commit on any branch, including any tags
-              ignore: /.*/
+          filters: &filters-only-main-hotfix-testing
+            branches:
+              only: &branches-special
+                - main
+                - /^hotfix.*$/
+                - /^testing\d*$/
           requires:
             - docker-build-postgres-container
 
       - test-server-no-ff:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-postgres-container
 
       - test-server-multiregion: *test-server-job-definition
 
       - test-frontend-2:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-viewer:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-objectsender:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-shared:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-preview-service:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-ui-components:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - deployment-testing-approval:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
             branches:
-              ignore: &branches-special
-                - main
-                - /^hotfix.*$/
-                - /^testing\d*$/
+              ignore: *branches-special
             tags:
               ignore: /.*/
 
@@ -123,10 +122,10 @@ workflows:
             - docker-build-monitor-container
 
       - get-version:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - pre-commit:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - docker-build-server:
           context: &build-context
@@ -693,9 +692,6 @@ jobs:
           name: Lint everything
           command: yarn lint:ci
           working_directory: 'packages/preview-service'
-
-      # delete all this:>
-
       - run:
           name: Copy .env.example to .env
           command: |
@@ -798,7 +794,6 @@ jobs:
           command: yarn chromatic
           working_directory: 'packages/ui-components'
 
-  # ignore this one
   vulnerability-scan:
     # snyk can undertake most types of scans through GitHub integration
     # which does not require integration with the CI
@@ -815,7 +810,6 @@ jobs:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
 
-  # ignore this one
   deployment-test-docker-compose:
     machine:
       image: ubuntu-2204:2024.05.1
@@ -850,7 +844,6 @@ jobs:
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
 
-  # ignore this one
   deployment-test-helm-chart:
     machine:
       image: ubuntu-2204:2024.01.1
@@ -1007,7 +1000,6 @@ jobs:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
-  # we ignore this ones and the one refrenced
   docker-publish: &publish-job
     <<: *docker-base-image
     resource_class: medium
@@ -1101,7 +1093,6 @@ jobs:
           name: publish to npm
           command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
 
-  # no need for now
   publish-helm-chart:
     docker:
       - image: cimg/python:3.12.1
@@ -1118,7 +1109,6 @@ jobs:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
 
-  # no need for now
   update-helm-documentation:
     <<: *docker-node-image
     working_directory: *work-dir

@@ -1,7 +1,5 @@
 name: Run all builds
 
-# temporarely diabled while working on the rest
-# on: workflow_dispatch
 on:
   workflow_call:
     inputs:

@@ -1,7 +1,5 @@
 name: Run all tests
 
-# temporarely diabled while working on the rest
-# on: workflow_dispatch
 on:
   workflow_call:
     inputs:
@@ -155,7 +153,6 @@ jobs:
           POSTGRES_USER: speckle
         ports:
           - 5432:5432
-        # TODO: add it in the dockerfile as a separate mr
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -245,7 +242,6 @@ jobs:
           POSTGRES_USER: speckle
         ports:
           - 5432:5432
-        # TODO: add it in the dockerfile as a separate mr
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -284,7 +280,6 @@ jobs:
       STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
       STRIPE_ENDPOINT_SIGNING_KEY: ${{ secrets.STRIPE_ENDPOINT_SIGNING_KEY }}
       APOLLO_KEY: ${{ secrets.APOLLO_KEY }}
-      # These are the only different env keys:
 
     steps:
       - uses: actions/checkout@v4.2.2
@@ -327,7 +322,6 @@ jobs:
           POSTGRES_USER: speckle
         ports:
           - 5432:5432
-        # TODO: add it in the dockerfile as a separate mr
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -342,7 +336,6 @@ jobs:
           POSTGRES_USER: speckle
         ports:
           - 5433:5432
-        # TODO: add it in the dockerfile as a separate mr
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -357,7 +350,6 @@ jobs:
           POSTGRES_USER: speckle
         ports:
           - 5434:5432
-        # TODO: add it in the dockerfile as a separate mr
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
