@@ -17,6 +17,7 @@ import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/cre
 import { assign } from 'lodash'
 import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/creation'
 import { getFeatureFlags } from '@speckle/shared/environment'
+import { JobPayload } from '@speckle/shared/workers/fileimport'
 
 const { createStream, createUser, garbageCollector } = initUploadTestEnvironment()
 
@@ -110,7 +111,6 @@ describe('FileUploads @fileuploads', () => {
           getServerOrigin: () => serverOrigin,
           scheduleJob: async (jobData) => {
             assign(result, jobData)
-            return Promise.resolve(cryptoRandomString({ length: 10 }))
           },
           createAppToken: (args) => {
             usedUserId = args.userId
@@ -121,18 +121,18 @@ describe('FileUploads @fileuploads', () => {
         await pushJobToFileImporter(upload)
 
         expect(usedUserId).to.equal(upload.userId)
-        expect(result).to.deep.equal({
-          type: 'file-import',
-          payload: {
-            token,
-            url: `${serverOrigin}/projects/${upload.projectId}/fileimporter/jobs/${upload.jobId}/results`,
-            modelId: upload.modelId,
-            fileType: upload.fileType,
-            projectId: upload.projectId,
-            timeOutSeconds: 1200,
-            blobId: upload.blobId
-          }
-        })
+        const expected: JobPayload = {
+          jobId: upload.jobId,
+          fileName: upload.fileName,
+          token,
+          serverUrl: serverOrigin,
+          modelId: upload.modelId,
+          fileType: upload.fileType,
+          projectId: upload.projectId,
+          timeOutSeconds: 1200,
+          blobId: upload.blobId
+        }
+        expect(result).to.deep.equal(expected)
       })
     }
   )

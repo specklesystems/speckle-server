@@ -20,9 +20,8 @@ import { BranchRecord } from '@/modules/core/helpers/types'
 const { createUser, createStream, createToken, createBranch } =
   initUploadTestEnvironment()
 
-const fileImporterUrl = (projectOneId: string, modelId?: string) =>
-  `/api/projects/${projectOneId}/fileimporter/jobs` +
-  (modelId ? `?modelId=${modelId}` : ``)
+const fileImporterUrl = (projectOneId: string, modelId: string) =>
+  `/api/projects/${projectOneId}/models/${modelId}/fileimporter/jobs`
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
