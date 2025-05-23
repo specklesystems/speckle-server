@@ -113,6 +113,36 @@
               :show-label="false"
             />
           </div>
+          <div class="flex flex-col gap-y-1 pb-8">
+            <div class="flex items-center">
+              <div class="flex-1 flex-col pr-6 gap-y-1">
+                <p class="text-body-xs font-medium text-foreground">
+                  Allow verified domain users to auto-join
+                </p>
+                <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+                  When enabled, users with an email address from your verified domain
+                  list will be able to join without admin approval.
+                </p>
+              </div>
+              <FormSwitch
+                v-tippy="
+                  !isDomainDiscoverabilityEnabled
+                    ? 'Domain-based discoverability must be enabled'
+                    : undefined
+                "
+                :model-value="getCheckedValue === JoinPolicy.AutoJoin"
+                name="auto-join"
+                :disabled="!hasWorkspaceDomains || !isDomainDiscoverabilityEnabled"
+                :show-label="false"
+                @update:model-value="
+                  (val) =>
+                    handleJoinPolicyChange(
+                      val ? JoinPolicy.AutoJoin : JoinPolicy.AdminApproval
+                    )
+                "
+              />
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -122,6 +152,12 @@
       v-model:open="showRemoveDomainDialog"
       :workspace-id="workspace?.id"
       :domain="removeDialogDomain"
+    />
+    <SettingsWorkspacesSecurityConfirmJoinPolicyDialog
+      v-if="showConfirmJoinPolicyDialog"
+      v-model:open="showConfirmJoinPolicyDialog"
+      @confirm="handleJoinPolicyConfirm"
+      @cancel="pendingJoinPolicy = undefined"
     />
   </section>
 </template>
@@ -138,9 +174,15 @@ import { blockedDomains } from '@speckle/shared'
 import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 import {
   workspaceUpdateDomainProtectionMutation,
-  workspaceUpdateDiscoverabilityMutation
+  workspaceUpdateDiscoverabilityMutation,
+  workspaceUpdateAutoJoinMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
+
+enum JoinPolicy {
+  AdminApproval = 'admin-approval',
+  AutoJoin = 'auto-join'
+}
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -158,6 +200,7 @@ graphql(`
     ...SettingsWorkspacesSecuritySsoWrapper_Workspace
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
+    discoverabilityAutoJoinEnabled
     hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
       featureName: domainBasedSecurityPolicies
     )
@@ -187,12 +230,16 @@ const { mutate: updateDomainProtection } = useMutation(
 const { mutate: updateDiscoverability } = useMutation(
   workspaceUpdateDiscoverabilityMutation
 )
+const { mutate: updateAutoJoin } = useMutation(workspaceUpdateAutoJoinMutation)
+const { triggerNotification } = useGlobalToast()
 
 const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
 const removeDialogDomain =
   ref<SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment>()
 const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
+const showConfirmJoinPolicyDialog = ref(false)
+const pendingJoinPolicy = ref<JoinPolicy>()
 
 const { result } = useQuery(settingsWorkspacesSecurityQuery, {
   slug: slug.value
@@ -257,6 +304,28 @@ const isDomainDiscoverabilityEnabled = computed({
         // eslint-disable-next-line camelcase
         workspace_id: workspace.value?.id
       })
+
+      // If turning off discoverability, also turn off auto-join
+      if (!newVal && workspace.value.discoverabilityAutoJoinEnabled) {
+        const autoJoinResult = await updateAutoJoin({
+          input: {
+            id: workspace.value.id,
+            discoverabilityAutoJoinEnabled: false
+          }
+        }).catch(convertThrowIntoFetchResult)
+
+        if (autoJoinResult?.data) {
+          workspace.value = {
+            ...workspace.value,
+            discoverabilityAutoJoinEnabled: false
+          }
+          mixpanel.track('Workspace Join Policy Updated', {
+            value: 'admin-approval',
+            // eslint-disable-next-line camelcase
+            workspace_id: workspace.value.id
+          })
+        }
+      }
     }
   }
 })
@@ -274,6 +343,15 @@ const tooltipText = computed(() => {
   if (!hasWorkspaceDomains.value)
     return 'Your workspace must have at least one verified domain'
   return undefined
+})
+
+const getCheckedValue = computed(() => {
+  if (pendingJoinPolicy.value) {
+    return pendingJoinPolicy.value
+  }
+  return workspace.value?.discoverabilityAutoJoinEnabled
+    ? JoinPolicy.AutoJoin
+    : JoinPolicy.AdminApproval
 })
 
 const addDomain = async () => {
@@ -308,12 +386,64 @@ const disabledItemPredicate = (item: string) => {
   return blockedDomainItems.value.includes(item)
 }
 
-watch(
-  () => workspaceDomains.value,
-  () => {
-    if (!hasWorkspaceDomains.value) {
-      isDomainDiscoverabilityEnabled.value = false
+const handleJoinPolicyChange = async (newValue: JoinPolicy) => {
+  if (newValue === JoinPolicy.AutoJoin) {
+    showConfirmJoinPolicyDialog.value = true
+    pendingJoinPolicy.value = newValue
+  } else {
+    if (!workspace.value?.id) return
+
+    const result = await updateAutoJoin({
+      input: {
+        id: workspace.value.id,
+        discoverabilityAutoJoinEnabled: false
+      }
+    }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'New user policy updated',
+        description: 'Admin approval is now required for new users to join'
+      })
+      mixpanel.track('Workspace Join Policy Updated', {
+        value: 'admin-approval',
+        // eslint-disable-next-line camelcase
+        workspace_id: workspace.value.id
+      })
     }
   }
-)
+}
+
+const handleJoinPolicyConfirm = async () => {
+  if (!workspace.value?.id || !pendingJoinPolicy.value) return
+
+  const result = await updateAutoJoin({
+    input: {
+      id: workspace.value.id,
+      discoverabilityAutoJoinEnabled: true
+    }
+  }).catch(convertThrowIntoFetchResult)
+
+  if (result?.data) {
+    workspace.value = {
+      ...workspace.value,
+      discoverabilityAutoJoinEnabled: true
+    }
+
+    showConfirmJoinPolicyDialog.value = false
+    pendingJoinPolicy.value = undefined
+
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'New user policy updated',
+      description: 'Users with a verified domain can now join without admin approval'
+    })
+    mixpanel.track('Workspace Join Policy Updated', {
+      value: 'auto-join',
+      // eslint-disable-next-line camelcase
+      workspace_id: workspace.value.id
+    })
+  }
+}
 </script>
