@@ -81,6 +81,7 @@ export const useCanMoveProjectIntoWorkspace = (params: {
       unref(params.project)?.permissions?.canMoveToWorkspace
     ]),
     disclaimerErrorCodes: [WorkspaceLimitsReachedError.code],
+    allowOnMissingCheck: true,
     fallbackReason: 'Cannot move project into workspace'
   })
 

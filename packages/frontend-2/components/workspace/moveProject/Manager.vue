@@ -1,8 +1,8 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :title="dialogTitle">
+  <LayoutDialog v-model:open="open" max-width="sm" :title="step.title">
     <!-- Project Selection -->
     <WorkspaceMoveProjectSelectProject
-      v-if="!selectedProject"
+      v-if="step.id === DialogStepId.project"
       :workspace="workspaceResult?.workspaceBySlug"
       :project-permissions="projectResult?.project.permissions.canMoveToWorkspace"
       :workspace-id="workspaceId"
@@ -11,7 +11,7 @@
 
     <!-- Workspace Selection -->
     <WorkspaceMoveProjectSelectWorkspace
-      v-if="selectedProject && activeDialog === 'workspace'"
+      v-if="selectedProject && step.id === DialogStepId.workspace"
       :project="selectedProject"
       :workspace-permissions="
         workspaceResult?.workspaceBySlug.permissions.canMoveProjectToWorkspace
@@ -21,7 +21,9 @@
 
     <!-- Confirmation -->
     <WorkspaceMoveProjectConfirm
-      v-if="selectedProject && selectedWorkspace && activeDialog === 'confirmation'"
+      v-if="
+        selectedProject && selectedWorkspace && step.id === DialogStepId.confirmation
+      "
       :project="selectedProject"
       :workspace="selectedWorkspace"
       @move-complete="onMoveComplete"
@@ -57,6 +59,14 @@ import {
   workspaceMoveProjectManagerWorkspaceQuery
 } from '~/lib/workspaces/graphql/queries'
 import { workspaceCreateRoute } from '~/lib/common/helpers/route'
+import { useMultiStepDialog } from '~/lib/common/composables/dialog'
+
+const DialogStepId = {
+  project: 'project',
+  workspace: 'workspace',
+  confirmation: 'confirmation'
+} as const
+type DialogStepId = (typeof DialogStepId)[keyof typeof DialogStepId]
 
 graphql(`
   fragment WorkspaceMoveProjectManager_ProjectBase on Project {
@@ -139,15 +149,43 @@ const selectedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | nu
   null
 )
 
-// Dialog states based on what we have
-const activeDialog = computed(() => {
-  if (!selectedProject.value) return 'project'
-  if (!selectedWorkspace.value) return 'workspace'
-  return 'confirmation'
-})
+const { goToPreviousStep, step, goToNextStep, resetStep } =
+  useMultiStepDialog<DialogStepId>({
+    steps: computed(() => [
+      {
+        id: DialogStepId.project,
+        title: 'Choose project to move'
+      },
+      {
+        id: DialogStepId.workspace,
+        title: 'Choose workspace'
+      },
+      {
+        id: DialogStepId.confirmation,
+        title: 'Confirm move'
+      }
+    ]),
+    resolveNextStep: () => {
+      if (!selectedProject.value) {
+        return DialogStepId.project
+      }
+      if (!selectedWorkspace.value) {
+        return DialogStepId.workspace
+      }
+
+      return DialogStepId.confirmation
+    },
+    resolvePreviousStep: () => {
+      if (props.workspaceSlug) {
+        return DialogStepId.project
+      } else {
+        return DialogStepId.workspace
+      }
+    }
+  })
 
 // Fetch project data if provided
-const { result: projectResult } = useQuery(
+const { result: projectResult, onResult: onProjectResult } = useQuery(
   workspaceMoveProjectManagerProjectQuery,
   () => ({
     projectId: props.projectId || '',
@@ -159,7 +197,7 @@ const { result: projectResult } = useQuery(
 )
 
 // Fetch workspace data if provided
-const { result: workspaceResult } = useQuery(
+const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   workspaceMoveProjectManagerWorkspaceQuery,
   () => ({
     workspaceSlug: props.workspaceSlug || '',
@@ -171,30 +209,24 @@ const { result: workspaceResult } = useQuery(
   })
 )
 
-// Initialize from props if available
-if (projectResult.value?.project) {
-  selectedProject.value = projectResult.value.project
-}
-if (workspaceResult.value?.workspaceBySlug) {
-  selectedWorkspace.value = workspaceResult.value.workspaceBySlug
-}
-
-watch(projectResult, (newVal) => {
-  if (newVal?.project) {
-    selectedProject.value = newVal.project
+onProjectResult((res) => {
+  if (res.data?.project) {
+    selectedProject.value = res.data.project
   }
+
+  resetStep()
+})
+onWorkspaceResult((res) => {
+  if (res.data?.workspaceBySlug) {
+    selectedWorkspace.value = res.data.workspaceBySlug
+  }
+
+  resetStep()
 })
 
-const dialogTitle = computed(() => {
-  switch (activeDialog.value) {
-    case 'confirmation':
-      return 'Confirm move'
-    case 'project':
-      return 'Choose project to move'
-    case 'workspace':
-      return 'Choose workspace'
-    default:
-      return 'Ready to move your project? '
+watch(open, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    resetStep()
   }
 })
 
@@ -204,12 +236,14 @@ const onProjectSelected = (project: WorkspaceMoveProjectManager_ProjectFragment)
   if (props.workspaceSlug && workspaceResult.value?.workspaceBySlug) {
     selectedWorkspace.value = workspaceResult.value.workspaceBySlug
   }
+  goToNextStep()
 }
 
 const onWorkspaceSelected = (
   workspace: WorkspaceMoveProjectManager_WorkspaceFragment
 ) => {
   selectedWorkspace.value = workspace
+  goToNextStep()
 }
 
 const onMoveComplete = () => {
@@ -219,15 +253,6 @@ const onMoveComplete = () => {
 }
 
 const onBack = () => {
-  if (activeDialog.value === 'confirmation') {
-    // If we started with a workspace (props.workspaceSlug exists),
-    // go back to project selection
-    if (props.workspaceSlug) {
-      selectedProject.value = null
-    } else {
-      // Otherwise go back to workspace selection
-      selectedWorkspace.value = null
-    }
-  }
+  goToPreviousStep()
 }
 </script>
