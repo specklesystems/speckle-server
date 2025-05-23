@@ -22,26 +22,38 @@
 </template>
 <script setup lang="ts">
 import type { AlertAction } from '@speckle/ui-components'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 import { settingsWorkspaceRoutes } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import type {
+  ViewerLimitAlertType,
+  ViewerLimitAlertVariant
+} from '~/lib/common/helpers/permissions'
+import { graphql } from '~/lib/common/generated/gql'
+import type { ViewerResourcesWorkspaceLimitAlert_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment ViewerResourcesWorkspaceLimitAlert_Workspace on Workspace {
+    id
+    slug
+  }
+`)
 
 const props = withDefaults(
   defineProps<{
-    limitType: 'comment' | 'version'
-    variant?: 'alert' | 'inline'
+    limitType: ViewerLimitAlertType
+    variant?: ViewerLimitAlertVariant
+    workspace: ViewerResourcesWorkspaceLimitAlert_WorkspaceFragment
   }>(),
   {
     variant: 'alert'
   }
 )
 
-const { activeWorkspaceSlug } = useNavigation()
 const mixpanel = useMixpanel()
 
 const { commentLimitFormatted, versionLimitFormatted } = useWorkspaceLimits({
-  slug: computed(() => activeWorkspaceSlug.value || '')
+  slug: computed(() => props.workspace.slug || '')
 })
 
 const text = computed(() => {
@@ -67,11 +79,9 @@ const handleUpgradeClick = () => {
     {
       location: 'viewer',
       // eslint-disable-next-line camelcase
-      workspace_id: activeWorkspaceSlug.value
+      workspace_id: props.workspace.slug
     }
   )
-  return navigateTo(
-    settingsWorkspaceRoutes.billing.route(activeWorkspaceSlug.value || '')
-  )
+  return navigateTo(settingsWorkspaceRoutes.billing.route(props.workspace.slug))
 }
 </script>

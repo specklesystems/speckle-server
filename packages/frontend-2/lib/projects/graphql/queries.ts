@@ -146,6 +146,7 @@ export const latestCommentThreadsQuery = graphql(`
           ...ProjectPageLatestItemsCommentItem
         }
       }
+      ...ViewerResourcesLimitAlert_Project
     }
   }
 `)

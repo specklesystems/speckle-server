@@ -75,10 +75,11 @@
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
         <div class="flex min-w-0 items-center space-x-1">
-          <ViewerResourcesUpgradeLimitAlert
+          <ViewerResourcesLimitAlert
             v-if="isLimited"
             limit-type="version"
             variant="inline"
+            :project="project"
           />
           <div v-else class="truncate text-xs">
             {{ version.message || 'no message' }}
@@ -99,6 +100,7 @@ import { ChevronDownIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
 import { keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
+import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -129,6 +131,11 @@ const emit = defineEmits<{
 }>()
 
 const mp = useMixpanel()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
