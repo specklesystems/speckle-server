@@ -10,7 +10,7 @@ on:
 jobs:
   docker-build-server:
     runs-on: blacksmith
-    name: server
+    name: Server
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
@@ -21,7 +21,7 @@ jobs:
 
   docker-build-frontend2:
     runs-on: blacksmith
-    name: frontend2
+    name: Frontend2
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
@@ -32,7 +32,7 @@ jobs:
 
   docker-build-preview-service:
     runs-on: blacksmith
-    name: preview service
+    name: Preview service
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
@@ -43,7 +43,7 @@ jobs:
 
   docker-build-webhook-service:
     runs-on: blacksmith
-    name: webhook service
+    name: Webhook service
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
@@ -54,7 +54,7 @@ jobs:
 
   docker-build-fileimport-service:
     runs-on: blacksmith
-    name: file import service
+    name: File import service
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
@@ -65,7 +65,7 @@ jobs:
 
   docker-build-test-deploy:
     runs-on: blacksmith
-    name: test deploy util
+    name: Test deploy util
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
@@ -75,7 +75,7 @@ jobs:
           file: ./utils/test-deployment/Dockerfile
 
   docker-build-monitor-deployment:
-    runs-on: blacksmith
+    runs-on: Blacksmith
     name: monitor container
     steps:
       - name: Build and push
@@ -87,7 +87,7 @@ jobs:
 
   docker-build-docker-compose-ingress:
     runs-on: blacksmith
-    name: docker compose ingress
+    name: Docker compose ingress
     steps:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1

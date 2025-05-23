@@ -22,23 +22,6 @@ jobs:
         run: yarn chromatic
         working-directory: 'packages/ui-components'
 
-  test-preview-service:
-    name: Test preview service
-    runs-on: blacksmith
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: useblacksmith/setup-node@v5
-        with:
-          node-version: 22
-          cache: yarn
-      - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-      - name: Build public packages
-        run: yarn build:public
-      - name: Lint everything
-        run: yarn lint:ci
-        working-directory: 'packages/preview-service'
-
   # TODO: fix, shh error on cloning helmjson schema at .helm-readme-configuration.json
   # TODO: move to blacksmith
   pre-commit:
@@ -52,6 +35,8 @@ jobs:
         GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          path: speckle
       - uses: actions/checkout@v4.2.2
         with:
           repository: bitnami-labs/readme-generator-for-helm
@@ -62,15 +47,20 @@ jobs:
           cache: yarn
       - name: Set precommit
         run: pre-commit install-hooks --config ./.pre-commit-config.yaml
+        working-directory: speckle
       - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        working-directory: speckle
       - name: Build public packages
         run: yarn build:public
+        working-directory: speckle
       - name: Run precommit
         run: ./.husky/pre-commit
+        working-directory: speckle
       - name: Diff on failure
         if: failure()
         run: git --no-pager diff
+        working-directory: speckle
 
   # TODO: codecov
 

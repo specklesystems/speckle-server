@@ -77,7 +77,7 @@ jobs:
         working-directory: 'packages/shared'
 
   test-objectsender:
-    name: Test Object Sender
+    name: Object Sender
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -119,6 +119,23 @@ jobs:
       - name: Test via Storybook
         run: yarn storybook:test:ci
         working-directory: 'packages/ui-components'
+
+  test-preview-service:
+    name: Preview service
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/preview-service'
 
   docker-build-postgres-container:
     runs-on: blacksmith
