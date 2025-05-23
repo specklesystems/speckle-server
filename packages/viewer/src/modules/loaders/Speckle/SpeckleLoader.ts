@@ -86,7 +86,7 @@ export class SpeckleLoader extends Loader {
   public async load(): Promise<boolean> {
     const start = performance.now()
     let first = true
-    let current = 0
+    let dataloading = 0
     const total = await this.loader.getTotalObjectCount()
     let traversals = 0
     let firstObjectPromise = null
@@ -111,9 +111,9 @@ export class SpeckleLoader extends Loader {
         )
         first = false
       }
-      current++
+      dataloading++
       this.emit(LoaderEvent.LoadProgress, {
-        progress: current / (total + 1),
+        progress: dataloading / (total + 1),
         id: this.resource
       })
     }
@@ -147,11 +147,11 @@ export class SpeckleLoader extends Loader {
 
     const renderTree = this.tree.getRenderTree(this.resource)
     if (!renderTree) return Promise.resolve(false)
-    current = 0
+    let converted = 0
     const p = renderTree.buildRenderTree(geometryConverter, () => {
-      current++
+      converted++
       this.emit(LoaderEvent.Converted, {
-        count: current
+        count: converted
       })
     })
 
