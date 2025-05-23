@@ -68,6 +68,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: speckle/pre-commit-runner:latest
+      env:
+        BLACKSMITH_CACHE_TOKEN: ${{ env.BLACKSMITH_CACHE_TOKEN }}
+        BLACKSMITH_CACHE_URL: ${{ env.BLACKSMITH_CACHE_URL }}
+        GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-node@v4
