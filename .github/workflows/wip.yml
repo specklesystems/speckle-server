@@ -25,22 +25,6 @@ jobs:
   test-preview-service:
     name: Test preview service
     runs-on: blacksmith
-    container:
-      image: cimg/node:22.6.0-browsers # TODO: find replacement
-    services:
-      postgres0:
-        image: speckle/speckle-postgres
-        env:
-          POSTGRES_DB: speckle2_test
-          POSTGRES_PASSWORD: speckle
-          POSTGRES_USER: speckle
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -57,7 +41,7 @@ jobs:
 
   # TODO: fix, shh error on cloning helmjson schema at .helm-readme-configuration.json
   # TODO: move to blacksmith
-  prepre-commit:
+  pre-commit:
     name: Precommit check
     runs-on: ubuntu-latest
     container:
