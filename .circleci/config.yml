@@ -106,10 +106,7 @@ workflows:
       #       - docker-build-docker-compose-ingress
 
       - deployment-test-helm-chart:
-          filters: &filters-deployment-testing
-            tags:
-              # run tests for any commit on any branch, including any tags
-              ignore: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
             - deployment-testing-approval
@@ -131,57 +128,55 @@ workflows:
           context: &build-context
             - github-readonly-public-repos
             - docker-hub
-          filters: &filters-build
-            tags:
-              ignore: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-frontend-2:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-webhooks:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-file-imports:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-previews:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-test-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-postgres-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-monitor-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-docker-compose-ingress:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
@@ -192,11 +187,7 @@ workflows:
       - docker-publish-server:
           context: &docker-hub-context
             - docker-hub
-          filters: &filters-publish
-            branches:
-              ignore: /pull\/[0-9]+/
-            tags:
-              ignore: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-server
             - get-version
@@ -213,7 +204,7 @@ workflows:
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-frontend-2
             - get-version
@@ -232,14 +223,14 @@ workflows:
           context:
             - github-readonly-public-repos
             - datadog-sourcemaps-publish
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
             - publish-approval
 
       - docker-publish-webhooks:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-webhooks
             - get-version
@@ -256,7 +247,7 @@ workflows:
 
       - docker-publish-file-imports:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-file-imports
             - get-version
@@ -273,7 +264,7 @@ workflows:
 
       - docker-publish-previews:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-previews
             - get-version
@@ -290,7 +281,7 @@ workflows:
 
       - docker-publish-test-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-test-container
             - get-version
@@ -307,7 +298,7 @@ workflows:
 
       - docker-publish-postgres-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-monitor-container
             - get-version
@@ -319,7 +310,7 @@ workflows:
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-monitor-container
             - get-version
@@ -336,7 +327,7 @@ workflows:
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-docker-compose-ingress
             - get-version
@@ -372,7 +363,7 @@ workflows:
             - publish-approval
 
       - update-helm-documentation:
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - publish-helm-chart
 
