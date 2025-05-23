@@ -29,6 +29,7 @@ export const buildFileUploadMessage = (
     modelId: cryptoRandomString({ length: 10 }),
     projectId: cryptoRandomString({ length: 10 }),
     fileType: cryptoRandomString({ length: 10 }),
+    fileName: cryptoRandomString({ length: 10 }),
     blobId: cryptoRandomString({ length: 10 }),
     userId: cryptoRandomString({ length: 10 }),
     jobId: cryptoRandomString({ length: 10 })
