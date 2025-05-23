@@ -149,19 +149,19 @@ const measurementTypeOptions = [
     title: 'Perpendicular',
     icon: IconMeasurePerpendicular,
     value: MeasurementType.PERPENDICULAR,
-    description: 'Tip: Double-click to quick-measure'
+    description: 'Measure at a 90° angle'
   },
   {
     title: 'Area',
     icon: IconMeasureArea,
     value: MeasurementType.AREA,
-    description: 'Area description'
+    description: 'Measure area between points'
   },
   {
-    title: 'Point',
+    title: 'Point coordinates',
     icon: IconMeasurePoint,
     value: MeasurementType.POINT,
-    description: 'Point description'
+    description: 'Measure XYZ coordinates'
   }
 ]
 </script>
