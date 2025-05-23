@@ -19,7 +19,7 @@
     />
 
     <div class="mt-6 flex flex-col gap-2">
-      <p class="text-body-xs font-medium text-foreground">New user policy</p>
+      <p class="text-body-xs font-medium text-foreground">How do people join?</p>
       <FormRadio
         v-for="option in radioOptions"
         :key="option.value"
@@ -169,14 +169,11 @@ const openRemoveDialog = (
 
 const radioOptions = [
   {
-    title: 'Admin approval required',
-    description: 'Users must be approved by an admin to join the workspace.',
+    title: 'Admin has to accept the request',
     value: JoinPolicy.AdminApproval
   },
   {
-    title: 'Auto-join',
-    description:
-      'Users with a verified email address can join the workspace without admin approval.',
+    title: 'Allow people to auto-join',
     value: JoinPolicy.AutoJoin
   }
 ] as const
