@@ -172,7 +172,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               return await canWorkspaceAccessFeatureFactory({
                 getWorkspacePlan: getWorkspacePlanFactory({ db })
               })({
-                workspaceId: parent.id,
+                workspaceId: parent.workspaceId,
                 workspaceFeature: args.featureName
               })
             }
