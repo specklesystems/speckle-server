@@ -1,6 +1,6 @@
 name: Pipeline test build
 
-on: workflow_dispatch
+on: pull_request
 
 jobs:
   ui-components-chromatic:
@@ -68,6 +68,10 @@ jobs:
         GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
     steps:
       - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4.2.2
+        with:
+          repository: bitnami-labs/readme-generator-for-helm
+          path: readme-generator-for-helm
       - uses: actions/setup-node@v4
         with:
           node-version: 22
