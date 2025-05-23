@@ -10,10 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: speckle/pre-commit-runner:latest
-      env:
-        BLACKSMITH_CACHE_TOKEN: ${{ env.BLACKSMITH_CACHE_TOKEN }}
-        BLACKSMITH_CACHE_URL: ${{ env.BLACKSMITH_CACHE_URL }}
-        GITHUB_REPO_NAME: ${{ env.GITHUB_REPO_NAME }}
     defaults:
       run:
         working-directory: speckle
@@ -37,7 +33,7 @@ jobs:
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
         working-directory: speckle
       - name: Build public packages
-        run: yarn build:publicw
+        run: yarn build:public
         working-directory: speckle
       - name: Run precommit
         run: ./.husky/pre-commit
