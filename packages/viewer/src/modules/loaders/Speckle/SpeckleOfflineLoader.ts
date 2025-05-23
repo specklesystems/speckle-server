@@ -1,7 +1,7 @@
-import ObjectLoader from '@speckle/objectloader'
 import { SpeckleLoader } from './SpeckleLoader.js'
 import { WorldTree } from '../../tree/WorldTree.js'
 import Logger from '../../utils/Logger.js'
+import { ObjectLoader2, ObjectLoader2Factory } from '@speckle/objectloader2'
 
 export class SpeckleOfflineLoader extends SpeckleLoader {
   constructor(targetTree: WorldTree, resourceData: unknown, resourceId?: string) {
@@ -13,8 +13,13 @@ export class SpeckleOfflineLoader extends SpeckleLoader {
     _authToken?: string,
     _enableCaching?: boolean,
     resourceData?: unknown
-  ): ObjectLoader {
-    return ObjectLoader.createFromJSON(resourceData as string)
+  ): ObjectLoader2 {
+    _resource
+    _authToken
+    _enableCaching
+    resourceData
+    /** TO DO: Implement either as part of ObjectLoader2 either separate */
+    return ObjectLoader2Factory.createFromObjects([])
   }
 
   public async load(): Promise<boolean> {
@@ -24,7 +29,8 @@ export class SpeckleOfflineLoader extends SpeckleLoader {
       return false
     }
     /** If not id is provided, we make one up based on the root object id */
-    this._resource = this._resource || `/json/${rootObject.id as string}`
+    this._resource =
+      this._resource || `/json/${(rootObject?.baseId as string) ?? 'unnamed'}`
     return super.load()
   }
 }

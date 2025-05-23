@@ -3,7 +3,7 @@ import crs from 'crypto-random-string'
 import bcrypt from 'bcrypt'
 import { chunk } from 'lodash-es'
 import { logger as parentLogger } from '@/observability/logging.js'
-import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import * as Observability from '@speckle/shared/observability'
 import type { Knex } from 'knex'
 import type { Logger } from 'pino'
 
@@ -313,7 +313,7 @@ export class ServerAPI {
       .where({ id: tokenId.slice(0, 10) })
       .del()
 
-    if (delCount === 0) throw new Error('Token revokation failed')
+    if (delCount === 0) throw new Error('Token revocation failed')
     return true
   }
 }

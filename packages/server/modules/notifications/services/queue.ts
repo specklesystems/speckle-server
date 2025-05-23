@@ -12,9 +12,9 @@ import {
   NotificationType,
   NotificationTypeHandlers
 } from '@/modules/notifications/helpers/types'
-import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { getRedisUrl, isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
-import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
+import { initializeQueue as setupQueue } from '@speckle/shared/queue'
 import cryptoRandomString from 'crypto-random-string'
 import { logger, notificationsLogger, Observability } from '@/observability/logging'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
@@ -47,22 +47,25 @@ if (isTestEnv()) {
 
 let queue: Optional<Bull.Queue>
 
-export const buildNotificationsQueue = (queueName: string) =>
-  new Bull(queueName, {
-    ...buildBaseQueueOptions(),
-    ...(!isTestEnv()
-      ? {
-          limiter: {
-            max: 10,
-            duration: TIME_MS.second
+export const buildNotificationsQueue = async (queueName: string) =>
+  await setupQueue({
+    queueName,
+    redisUrl: getRedisUrl(),
+    options: {
+      ...(!isTestEnv()
+        ? {
+            limiter: {
+              max: 10,
+              duration: TIME_MS.second
+            }
           }
-        }
-      : {}),
-    defaultJobOptions: {
-      attempts: 1,
-      timeout: 10 * TIME_MS.second,
-      removeOnComplete: isProdEnv(),
-      removeOnFail: isProdEnv()
+        : {}),
+      defaultJobOptions: {
+        attempts: 1,
+        timeout: 10 * TIME_MS.second,
+        removeOnComplete: isProdEnv(),
+        removeOnFail: isProdEnv()
+      }
     }
   })
 
@@ -82,8 +85,8 @@ export function getQueue(): Bull.Queue {
 /**
  * Initialize notifications queue
  */
-export function initializeQueue() {
-  queue = buildNotificationsQueue(NOTIFICATIONS_QUEUE)
+export async function initializeQueue() {
+  queue = await buildNotificationsQueue(NOTIFICATIONS_QUEUE)
 }
 
 /**

@@ -1,20 +1,31 @@
 <template>
   <div>
-    <CommonCard class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full">
+    <CommonCard
+      class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full hover:bg-foundation"
+    >
       <div class="flex gap-2 items-center">
-        <img
-          v-if="connector.image"
-          :src="connector.image"
-          :alt="`${connector.title} logo`"
-          class="w-[48px] -ml-1"
-        />
+        <div v-if="connector.images" class="relative flex items-start mr-2">
+          <div
+            v-for="(image, index) in connector.images"
+            :key="image"
+            :class="[
+              'relative -ml-2 -mr-4',
+              `-mb-[${index * 2}]`,
+              `z-[${connector.images.length - index}]`
+            ]"
+          >
+            <img :src="image" :alt="`${connector.title} logo`" class="w-[48px]" />
+          </div>
+        </div>
         <div class="flex flex-col gap-y-1.5">
           <h2 class="text-body-xs text-foreground font-medium leading-none">
             {{ connector.title }}
           </h2>
         </div>
       </div>
-      <p class="text-body-2xs text-foreground-2 line-clamp-2 leading-5">
+      <p
+        class="text-body-2xs text-foreground-2 line-clamp-5 leading-5 lg:min-h-20 md:min-h-14 sm:min-h-8"
+      >
         {{ connector.description }}
       </p>
       <div class="flex gap-1 mt-2">
@@ -45,7 +56,7 @@
             })
           "
         >
-          Documentation
+          Docs
         </FormButton>
       </div>
     </CommonCard>

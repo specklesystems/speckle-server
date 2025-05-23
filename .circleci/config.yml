@@ -11,26 +11,11 @@ aliases:
 
   - &docker-node-image
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0
 
   - &docker-node-image-w-browsers
     docker:
-      - image: cimg/node:18.19.0-browsers
-
-  - &cache-key yarn-packages-server-{{ checksum "yarn.lock" }}
-
-  - &restore-yarn-cache
-    restore_cache:
-      name: Restore Yarn Package Cache
-      key: *cache-key
-
-  - &save-yarn-cache
-    save_cache:
-      name: Save Yarn Package Cache
-      key: *cache-key
-      paths:
-        - .yarn/cache
-        - .yarn/unplugged
+      - image: cimg/node:22.6.0-browsers
 
   - &yarn
     run:
@@ -48,8 +33,6 @@ workflows:
               only:
                 - main
                 - hotfix*
-          requires: &yarn-install
-            - install-and-cache-dependencies
 
       - test-server: &test-server-job-definition
           context:
@@ -61,46 +44,37 @@ workflows:
               # run tests for any commit on any branch, including any tags
               only: /.*/
           requires:
-            - docker-publish-postgres-container
+            - docker-build-postgres-container
 
       - test-server-no-ff:
           filters: *filters-allow-all
           requires:
-            - docker-publish-postgres-container
-            - install-and-cache-dependencies
+            - docker-build-postgres-container
 
       - test-server-multiregion: *test-server-job-definition
 
       - test-frontend-2:
           filters: *filters-allow-all
-          requires:
-            - install-and-cache-dependencies
 
       - test-viewer:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - test-objectsender:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - test-shared:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - test-preview-service:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - test-ui-components:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - deployment-testing-approval:
           type: approval
@@ -153,14 +127,11 @@ workflows:
 
       - pre-commit:
           filters: *filters-allow-all
-          requires: *yarn-install
-
-      - install-and-cache-dependencies:
-          filters: *filters-allow-all
 
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
+            - docker-hub
           filters: &filters-build
             tags:
               only: /.*/
@@ -339,7 +310,13 @@ workflows:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - docker-build-postgres-container
+            - docker-build-monitor-container
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-server
+            - test-server-no-ff
+            - test-server-multiregion
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -445,14 +422,6 @@ jobs:
           paths:
             - env-vars
 
-  install-and-cache-dependencies:
-    <<: *docker-node-image
-    steps:
-      - checkout
-      - *restore-yarn-cache
-      - *yarn
-      - *save-yarn-cache
-
   pre-commit:
     parameters:
       config_file:
@@ -487,7 +456,6 @@ jobs:
           paths:
             - ~/.cache/pre-commit
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -501,7 +469,7 @@ jobs:
 
   test-server: &test-server-job
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0
       - image: cimg/redis:7.2.4
       - image: 'speckle/speckle-postgres'
         environment:
@@ -536,9 +504,7 @@ jobs:
       RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -660,8 +626,10 @@ jobs:
       FF_BILLING_INTEGRATION_ENABLED: 'true'
       # These are the only different env keys:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      FF_GATEKEEPER_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
+      FF_MOVE_PROJECT_REGION_ENABLED: 'true'
       RUN_TESTS_IN_MULTIREGION_MODE: true
       RATELIMITER_ENABLED: 'false'
 
@@ -670,9 +638,7 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -686,9 +652,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -711,7 +675,7 @@ jobs:
 
   test-preview-service:
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0-browsers
       - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: preview_service_test
@@ -721,9 +685,7 @@ jobs:
     environment: {}
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -747,16 +709,18 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Lint
           command: yarn lint:ci
           working_directory: 'packages/shared'
       - run:
-          name: Run tests
-          command: yarn test:ci
+          name: Run tests (all FFs)
+          command: ENABLE_ALL_FFS=1 yarn test:ci
+          working_directory: 'packages/shared'
+      - run:
+          name: Run tests (no FFs)
+          command: DISABLE_ALL_FFS=1 yarn test:ci
           working_directory: 'packages/shared'
       - codecov/upload:
           files: packages/shared/coverage/coverage-final.json
@@ -778,9 +742,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -796,11 +758,9 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -826,9 +786,7 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build shared packages
           command: yarn build:public
@@ -844,13 +802,11 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     <<: *docker-node-image
-    resource_class: medium
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -975,12 +931,8 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Push
           command: ./.circleci/build.sh
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - speckle*
 
   docker-build-server:
     <<: *build-job
@@ -1008,7 +960,7 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Publish sourcemaps
           command: ./.circleci/build_publish_fe2_sourcemaps.sh
 
   docker-build-previews:
@@ -1116,14 +1068,13 @@ jobs:
   publish-npm:
     <<: *docker-node-image
     working_directory: *work-dir
+    resource_class: large
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1180,9 +1131,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public

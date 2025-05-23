@@ -44,8 +44,10 @@ import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import { useDeleteProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
-import type { ProjectsDeleteDialog_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { Roles } from '@speckle/shared'
+import type {
+  FullPermissionCheckResultFragment,
+  ProjectsDeleteDialog_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ProjectsDeleteDialog_Project on Project {
@@ -62,6 +64,11 @@ graphql(`
     versions(limit: 0) {
       totalCount
     }
+    permissions {
+      canDelete {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -75,7 +82,6 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteProject = useDeleteProject()
 const mixpanel = useMixpanel()
-const { isAdmin } = useActiveUser()
 
 const projectNameInput = ref('')
 
@@ -91,6 +97,18 @@ const versionsText = computed(
       props.project.versions.totalCount === 1 ? 'version' : 'versions'
     }`
 )
+
+const canDelete = computed((): FullPermissionCheckResultFragment => {
+  if (projectNameInput.value !== props.project.name)
+    return {
+      authorized: false,
+      code: 'NAME_MISMATCH',
+      message: 'Entered project name does not match the actual project name'
+    }
+
+  return props.project.permissions.canDelete
+})
+
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
@@ -105,27 +123,25 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     props: {
       color: 'danger',
 
-      disabled: projectNameInput.value !== props.project.name
+      disabled: !canDelete.value.authorized
     },
+    disabledMessage: canDelete.value.message,
     onClick: async () => {
-      if (
-        projectNameInput.value === props.project.name &&
-        (props.project.role === Roles.Stream.Owner || isAdmin.value)
-      ) {
-        const options = {
-          goHome: props.redirectOnComplete,
-          workspaceSlug: props.project.workspace?.slug
-        }
+      if (!canDelete.value.authorized) return
 
-        await deleteProject(props.project.id, options)
-        isOpen.value = false
-        mixpanel.track('Stream Action', {
-          type: 'action',
-          name: 'delete',
-          // eslint-disable-next-line camelcase
-          workspace_id: props.project.workspace?.id
-        })
+      const options = {
+        goHome: props.redirectOnComplete,
+        workspaceSlug: props.project.workspace?.slug
       }
+
+      await deleteProject(props.project.id, options)
+      isOpen.value = false
+      mixpanel.track('Stream Action', {
+        type: 'action',
+        name: 'delete',
+        // eslint-disable-next-line camelcase
+        workspace_id: props.project.workspace?.id
+      })
     }
   }
 ])

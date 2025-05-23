@@ -64,6 +64,7 @@ input WorkspaceUpdateInput {
     @deprecated(reason: "Always the reviewer role. Will be removed in the future.")
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
+  discoverabilityAutoJoinEnabled: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -141,7 +142,6 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:update")
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
-  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
     @hasScope(scope: "workspace:update")
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
@@ -150,12 +150,18 @@ type WorkspaceMutations {
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
   updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+  updateEmbedOptions(input: WorkspaceUpdateEmbedOptionsInput!): WorkspaceEmbedOptions!
   """
   Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
   """
   dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
   requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
+}
+
+input WorkspaceUpdateEmbedOptionsInput {
+  workspaceId: String!
+  hideSpeckleBranding: Boolean!
 }
 
 input WorkspaceDismissInput {
@@ -301,9 +307,17 @@ type Workspace {
   """
   discoverabilityEnabled: Boolean!
   """
+  If true, allow users to automatically join discoverable workspaces (instead of requesting to join)
+  """
+  discoverabilityAutoJoinEnabled: Boolean!
+  """
   Info about the workspace creation state
   """
   creationState: WorkspaceCreationState
+  """
+  Workspace-level configuration for models in embedded viewer
+  """
+  embedOptions: WorkspaceEmbedOptions!
   """
   Get all join requests for all the workspaces the user is an admin of
   """
@@ -315,6 +329,10 @@ type Workspace {
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
+}
+
+type WorkspaceEmbedOptions {
+  hideSpeckleBranding: Boolean!
 }
 
 type WorkspaceTeamByRole {
@@ -377,9 +395,17 @@ type LimitedWorkspace {
   """
   logo: String
   """
+  If true, the users with a matching domain may join the workspace directly
+  """
+  discoverabilityAutoJoinEnabled: Boolean!
+  """
   Workspace members visible to people with verified email domain
   """
   team(cursor: String, limit: Int! = 25): LimitedWorkspaceCollaboratorCollection
+  """
+  Workspace admins ordered by join date
+  """
+  adminTeam: [LimitedWorkspaceCollaborator!]!
 }
 
 type LimitedWorkspaceCollaboratorCollection {
@@ -552,9 +578,17 @@ extend type User {
 extend type Project {
   workspace: Workspace
   """
+  Public project-level configuration for embedded viewer
+  """
+  embedOptions: ProjectEmbedOptions!
+  """
   Returns information about the potential effects of moving a project to a given workspace.
   """
   moveToWorkspaceDryRun(workspaceId: String!): ProjectMoveToWorkspaceDryRun!
+}
+
+type ProjectEmbedOptions {
+  hideSpeckleBranding: Boolean!
 }
 
 type ProjectMoveToWorkspaceDryRun {
@@ -584,6 +618,7 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
+  completed: Boolean
 }
 
 extend type Project {

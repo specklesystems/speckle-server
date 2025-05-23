@@ -1,11 +1,30 @@
 <template>
-  <WorkspaceCard :logo="workspace.logo ?? ''" :name="workspace.name">
+  <WorkspaceCard
+    :logo="workspace.logo ?? ''"
+    :name="workspace.name"
+    :class="requestStatus === 'pending' ? '' : 'bg-foundation'"
+  >
     <template #text>
       <div class="flex flex-col gap-y-1">
-        <div class="text-body-2xs line-clamp-3">
+        <div v-if="workspace.description" class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <UserAvatarGroup :users="users" :max-count="5" size="sm" />
+        <div class="flex flex-col gap-2">
+          <UserAvatarGroup
+            v-if="members.length > 0 && requestStatus !== 'pending'"
+            :users="members"
+            :max-count="5"
+            size="base"
+          />
+          <div class="flex gap-1 text-body-3xs text-foreground-2">
+            <span class="font-medium">Admins:</span>
+            <span v-for="(admin, index) in adminTeam.slice(0, 3)" :key="admin.id">
+              {{ admin.name
+              }}{{ index < 2 && index < adminTeam.length - 1 ? ', ' : '' }}
+            </span>
+            <span v-if="adminTeam.length > 3">+{{ adminTeam.length - 3 }}</span>
+          </div>
+        </div>
       </div>
     </template>
     <template #actions>
@@ -45,7 +64,13 @@ const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
   useDiscoverableWorkspaces()
 const mixpanel = useMixpanel()
 
-const users = computed(() => props.workspace.team?.items?.map((u) => u.user) ?? [])
+const adminTeam = computed(() => props.workspace.adminTeam?.map((t) => t.user) ?? [])
+const adminIds = computed(() => new Set(adminTeam.value.map((admin) => admin.id)))
+const members = computed(() =>
+  (props.workspace.team?.items?.map((u) => u.user) ?? []).filter(
+    (user) => !adminIds.value.has(user.id)
+  )
+)
 
 const onRequest = () => {
   requestToJoinWorkspace(props.workspace.id, props.location || 'discovery_card')

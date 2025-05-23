@@ -4,7 +4,7 @@ dotenv.config({ path: `./.env.test` })
 dotenv.config({ path: `./.env` })
 
 // Resolve FF values for ignore patterns
-const Environment = require('@speckle/shared/dist/commonjs/environment/index.js')
+const Environment = require('@speckle/shared/environment')
 const featureFlags = Environment.getFeatureFlags()
 const ignore = [
   ...(!featureFlags.FF_AUTOMATE_MODULE_ENABLED ? ['modules/automate/**/*'] : []),
@@ -13,7 +13,7 @@ const ignore = [
 
 /** @type {import("mocha").MochaOptions} */
 const config = {
-  spec: ['modules/**/*.spec.js', 'modules/**/*.spec.ts', 'observability/**/*.spec.ts'],
+  spec: ['modules/**/*.spec.ts', 'observability/**/*.spec.ts'],
   require: ['test/hooks.ts'],
   ...(ignore.length ? { ignore } : {}),
   slow: 0,

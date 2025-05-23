@@ -175,7 +175,6 @@ export const createAndSendInviteFactory =
         finalizerResourceAccessLimits: inviterResourceAccessLimits,
         accept: true,
         token: invite.token,
-        resourceType: finalPrimaryResource.resourceType,
         trueFinalizerId: inviterId
       })
       return

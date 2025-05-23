@@ -13,7 +13,7 @@
           <Component :is="iconAndColor.icon" :class="`w-4 h-4 ${iconAndColor.color}`" />
         </div>
         <div :class="`text-xs ${iconAndColor.color}`">
-          {{ result.category }}: {{ result.objectIds.length }} affected elements
+          {{ result.category }}: {{ resultObjectIds.length }} affected elements
         </div>
       </div>
       <div v-if="result.message" class="text-xs text-foreground-2 pl-5">
@@ -71,8 +71,13 @@ const isIsolated = computed(() => {
     filteringState.value?.activePropFilterKey === props.functionId
   )
     return false
-  const ids = props.result.objectIds
+  const ids = resultObjectIds.value
   return containsAll(ids, isolatedObjects.value)
+})
+
+const resultObjectIds = computed(() => {
+  if ('objectIds' in props.result) return props.result.objectIds
+  return Object.keys(props.result.objectAppIds)
 })
 
 const handleClick = () => {
@@ -85,7 +90,7 @@ const handleClick = () => {
 }
 
 const isolateOrUnisolateObjects = () => {
-  const ids = props.result.objectIds
+  const ids = resultObjectIds.value
   const isCurrentlyIsolated = isIsolated.value
 
   resetFilters()

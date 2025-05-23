@@ -10,6 +10,7 @@ import {
   countInvitableCollaboratorsByProjectIdFactory,
   getInvitableCollaboratorsByProjectIdFactory
 } from '@/modules/workspaces/repositories/users'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { getMoveProjectToWorkspaceDryRunFactory } from '@/modules/workspaces/services/projects'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
@@ -61,6 +62,21 @@ export default FF_WORKSPACES_MODULE_ENABLED
           })({ projectId, workspaceId })
 
           return addedToWorkspace
+        },
+        embedOptions: async (parent) => {
+          const { workspaceId } = parent
+
+          if (!workspaceId) {
+            return {
+              hideSpeckleBranding: false
+            }
+          }
+
+          const workspace = await getWorkspaceFactory({ db })({ workspaceId })
+
+          return {
+            hideSpeckleBranding: workspace?.isEmbedSpeckleBrandingHidden ?? false
+          }
         }
       },
       ProjectMoveToWorkspaceDryRun: {

@@ -45,25 +45,6 @@ export async function addToMailchimpAudience(user: UserRecord, listId: string) {
   })
 }
 
-export async function triggerMailchimpCustomerJourney(
-  user: UserRecord,
-  {
-    listId,
-    journeyId,
-    stepId
-  }: {
-    listId: string
-    journeyId: number
-    stepId: number
-  }
-) {
-  await addToMailchimpAudience(user, listId)
-  // @ts-expect-error the mailchimp api typing sucks
-  await mailchimp.customerJourneys.trigger(journeyId, stepId, {
-    email_address: user.email
-  })
-}
-
 export async function updateMailchimpMemberTags(
   user: UserRecord,
   listId: string,
@@ -72,14 +53,8 @@ export async function updateMailchimpMemberTags(
   initializeMailchimp()
   const subscriberHash = md5(user.email.toLowerCase())
 
-  // Check if user is already in audience (meaning they consented to marketing emails)
-  try {
-    await mailchimp.lists.getListMember(listId, subscriberHash)
-  } catch {
-    throw new Error(
-      `User ${user.email} not found in Mailchimp audience. They should have been added during registration.`
-    )
-  }
+  // Add user to audience if they are not already in it
+  await addToMailchimpAudience(user, listId)
 
   const tags: { name: string; status: 'active' | 'inactive' }[] = []
 

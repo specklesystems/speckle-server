@@ -443,7 +443,7 @@ const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
   renderEmail
 })
 
-const handler: NotificationHandler<ActivityDigestMessage> = async (msg) => {
+export const handler: NotificationHandler<ActivityDigestMessage> = async (msg) => {
   const {
     targetUserId,
     data: { streamIds, start, end }
