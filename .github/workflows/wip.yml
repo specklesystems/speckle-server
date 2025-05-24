@@ -21,11 +21,10 @@ jobs:
         working-directory: 'packages/objectsender'
       - uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: packages/objectsender/coverage/coverage-final.json
           verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   # TODO: codecov
 

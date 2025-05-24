@@ -7,6 +7,20 @@ on:
         required: true
         type: string
 
+    secrets:
+      LICENSE_TOKEN:
+        required: true
+      CHROMATIC_PROJECT_TOKEN:
+        required: true
+      STRIPE_API_KEY:
+        required: true
+      STRIPE_ENDPOINT_SIGNING_KEY:
+        required: true
+      APOLLO_KEY:
+        required: true
+      CODECOV_TOKEN:
+        required: true
+
 jobs:
   pre-commit:
     name: Precommit check
