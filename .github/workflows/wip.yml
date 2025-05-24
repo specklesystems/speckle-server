@@ -19,7 +19,13 @@ jobs:
       - name: Lint everything
         run: yarn test:ci
         working-directory: 'packages/objectsender'
-      # TODO: (codecov) store artifact
+      - uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: true
+          files: packages/objectsender/coverage
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   # TODO: codecov
 
