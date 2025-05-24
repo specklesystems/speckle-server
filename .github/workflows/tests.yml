@@ -8,6 +8,45 @@ on:
         type: string
 
 jobs:
+  pre-commit:
+    name: Precommit check
+    runs-on: blacksmith
+    container:
+      # TODO: a github friendly image here
+      image: speckle/pre-commit-runner:latest
+    defaults:
+      run:
+        working-directory: speckle
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          path: speckle
+      - uses: actions/checkout@v4.2.2
+        with:
+          repository: bitnami-labs/readme-generator-for-helm
+          path: readme-generator-for-helm
+      - uses: useblacksmith/setup-node@v4
+        with:
+          node-version: 22
+          cache-dependency-path: ./speckle/yarn.lock
+          cache: yarn
+      - name: Set precommit
+        run: pre-commit install-hooks --config ./.pre-commit-config.yaml
+        working-directory: speckle
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        working-directory: speckle
+      - name: Build public packages
+        run: yarn build:public
+        working-directory: speckle
+      - name: Run precommit
+        run: ./.husky/pre-commit
+        working-directory: speckle
+      - name: Diff on failure
+        if: failure()
+        run: git --no-pager diff
+        working-directory: speckle
+
   test-frontend-2:
     name: Frontend
     runs-on: blacksmith
