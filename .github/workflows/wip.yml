@@ -23,8 +23,9 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-          files: packages/objectsender/coverage/coverage-final.json
+          files: coverage/coverage-final.json
           verbose: true
+          working-directory: packages/objectsender
 
   # TODO: codecov
 
