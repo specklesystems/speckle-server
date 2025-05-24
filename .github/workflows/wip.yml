@@ -22,11 +22,6 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-          files: coverage/coverage-final.json
-          verbose: true
-          name: speckle-server
-          working-directory: packages/objectsender
 
   # TODO: codecov
 
