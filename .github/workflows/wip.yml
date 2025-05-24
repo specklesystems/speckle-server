@@ -3,9 +3,122 @@ name: Pipeline test build
 on: pull_request
 
 jobs:
-  test-objectsender:
-    name: Object Sender
+  test-server-multiregion:
+    name: Server multiregion
+    needs: [docker-build-postgres-container]
     runs-on: blacksmith
+    services:
+      redis:
+        image: redis:7.2.4
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      postgres0:
+        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres1:
+        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres2:
+        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      minio0:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9000:9000
+
+      minio1:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9001:9000
+
+      minio2:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9002:9000
+
+    env:
+      NODE_ENV: test
+      POSTGRES_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
+      POSTGRES_MAX_CONNECTIONS_SERVER: 50
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://localhost:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://localhost:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
+      LICENSE_TOKEN: ${{ secrets.LICENSE_TOKEN }}
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+      STRIPE_ENDPOINT_SIGNING_KEY: ${{ secrets.STRIPE_ENDPOINT_SIGNING_KEY }}
+      #
+      # This are the only different keys:
+      #
+      MULTI_REGION_CONFIG_PATH: '../../.github/workflows/config/multiregion.test-ci.json'
+      FF_GATEKEEPER_MODULE_ENABLED: 'true'
+      FF_WORKSPACES_MODULE_ENABLED: 'true'
+      FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
+      FF_MOVE_PROJECT_REGION_ENABLED: 'true'
+      RUN_TESTS_IN_MULTIREGION_MODE: true
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -16,17 +129,13 @@ jobs:
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
-      - name: Lint everything
-        run: yarn test:ci
-        working-directory: 'packages/objectsender'
-      - uses: codecov/codecov-action@v5
-        with:
-          disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-          files: packages/objectsender/coverage/coverage-final.json
-          verbose: true
-          name: objectsender
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/server'
+      - name: 'Run test'
+        run: yarn test:report
+        working-directory: 'packages/server'
+        timeout-minutes: 30
+      # TODO: codecov
 
   # TODO: codecov
 

@@ -166,7 +166,14 @@ jobs:
       - name: Lint everything
         run: yarn test:ci
         working-directory: 'packages/objectsender'
-      # TODO: (codecov) store artifact
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/objectsender/coverage/coverage-final.json
+          verbose: true
+          name: objectsender
 
   test-ui-components:
     name: UI Components
@@ -388,7 +395,7 @@ jobs:
         run: yarn test:report
         working-directory: 'packages/server'
         timeout-minutes: 30
-      # TODO: codecov
+        # TODO: codecov
 
   test-server-multiregion:
     name: Server multiregion
