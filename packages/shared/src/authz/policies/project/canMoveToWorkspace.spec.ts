@@ -47,6 +47,7 @@ const buildCanMoveToWorkspace = (
         status: 'valid',
         workspaceId: 'workspace-id',
         createdAt: new Date(),
+        updatedAt: new Date(),
         name: 'team'
       }
     },

@@ -27,6 +27,7 @@ export const updateWorkspacePlanFactory =
     })
     if (!workspace) throw new WorkspaceNotFoundError()
     const createdAt = new Date()
+    const updatedAt = new Date()
     switch (name) {
       case 'team':
       case 'teamUnlimited':
@@ -38,7 +39,7 @@ export const updateWorkspacePlanFactory =
           case 'canceled':
           case 'paymentFailed':
             await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
+              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
             })
             break
           default:
@@ -54,7 +55,7 @@ export const updateWorkspacePlanFactory =
         switch (status) {
           case 'valid':
             await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
+              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
             })
             break
           case 'cancelationScheduled':

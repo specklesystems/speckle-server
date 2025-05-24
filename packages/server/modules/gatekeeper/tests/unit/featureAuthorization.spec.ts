@@ -38,7 +38,8 @@ describe('featureAuthorization @gatekeeper', () => {
             name: plan,
             status,
             workspaceId,
-            createdAt: new Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
           })
         })
         const result = await canWorkspaceAccessFeature({

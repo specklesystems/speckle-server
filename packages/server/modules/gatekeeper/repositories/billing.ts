@@ -105,7 +105,7 @@ export const upsertWorkspacePlanFactory =
       .workspacePlans(db)
       .insert(workspacePlan)
       .onConflict('workspaceId')
-      .merge(['name', 'status'])
+      .merge(['name', 'status', 'updatedAt'])
   }
 
 // this is a typed rebrand of the generic workspace plan upsert

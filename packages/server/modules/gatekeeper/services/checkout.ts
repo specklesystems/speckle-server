@@ -56,6 +56,7 @@ export const completeCheckoutSessionFactory =
     // a plan determines the workspace feature set
     const workspacePlan = {
       createdAt: new Date(),
+      updatedAt: new Date(),
       workspaceId: checkoutSession.workspaceId,
       name: checkoutSession.workspacePlan,
       status: 'valid'
