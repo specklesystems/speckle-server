@@ -72,6 +72,8 @@ import {
   getWorkspaceFactory,
   getWorkspaceRolesFactory
 } from '@/modules/workspaces/repositories/workspaces'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import { getWorkspaceRoleAndSeatFactory } from '@/modules/workspacesCore/repositories/rolesSeats'
 import { retry } from '@lifeomic/attempt'
 import { Roles, StreamRoles } from '@speckle/shared'
 import knex from 'knex'
@@ -83,7 +85,7 @@ const TARGET_WORKSPACE_ID = ''
 // The workspace admin to grant fallback ownership to for all assets (e.g.)
 const TARGET_WORKSPACE_ROOT_ADMIN_USER_ID = ''
 
-const ENABLE_USER_PROVISIONING = true
+const ENABLE_USER_PROVISIONING = false
 
 // Note: source connection is configured with connection string in named env variable
 const getSourceServerConnection = async () => {
@@ -222,8 +224,8 @@ const main = async () => {
       const logKey = `(${currentProjectIndex
         .toString()
         .padStart(4, '0')}/${sourceServerProjectCount
-        .toString()
-        .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
+          .toString()
+          .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
 
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
@@ -304,8 +306,8 @@ const main = async () => {
             `${logKey} ${movedObjectsCount
               .toString()
               .padStart(6, '0')}/${sourceProjectObjectCount
-              .toString()
-              .padStart(6, '0')} objects moved`
+                .toString()
+                .padStart(6, '0')} objects moved`
           )
         }
 
@@ -449,7 +451,23 @@ const main = async () => {
             role = Roles.Stream.Owner
           }
           if (!role && workspaceAcl.role === Roles.Workspace.Member) {
-            role = Roles.Stream.Contributor
+            const seatType = await getWorkspaceRoleAndSeatFactory({ db: targetMainDb })({
+              workspaceId: TARGET_WORKSPACE_ID,
+              userId
+            })
+            if (!seatType) {
+              continue
+            }
+            switch (seatType.seat.type) {
+              case WorkspaceSeatType.Editor: {
+                role = Roles.Stream.Contributor
+                break
+              }
+              case WorkspaceSeatType.Viewer: {
+                role = Roles.Stream.Reviewer
+                break
+              }
+            }
           }
 
           // guest can be ignored, they get roles from the original project role
