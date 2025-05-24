@@ -263,6 +263,9 @@ const getStream = () => {
     // Lines with numeric filter
     // 'https://app.speckle.systems/streams/16a7ca997a/commits/91d82f4ea1'
 
+    // Lines with numeric filter far away
+    'https://latest.speckle.systems/projects/8a2c865c93/models/a5c1339f73@cda204df97'
+
     // Type inheritence
     // 'https://app.speckle.systems/streams/4063469c0b/objects/ce831723f2a3a56a30dfbca54a53c90f'
     // Sum groups
@@ -340,7 +343,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/0cf9e393c4/commits/f4e11a8b01'
 
     // Instance with both far away geometry and far away transform
-    'https://latest.speckle.systems/streams/ee5346d3e1/commits/576310a6d5'
+    // 'https://latest.speckle.systems/streams/ee5346d3e1/commits/576310a6d5'
 
     // Door+wall instances
     // 'https://latest.speckle.systems/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'

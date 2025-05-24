@@ -250,7 +250,7 @@ export default class SpeckleInstancedMesh extends Group {
         {
           depthPacking: RGBADepthPacking
         },
-        ['USE_RTE', 'ALPHATEST_REJECTION']
+        ['ALPHATEST_REJECTION']
       )
       group.castShadow = !material.transparent
       group.receiveShadow = !material.transparent

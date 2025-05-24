@@ -389,17 +389,14 @@ export default class Materials {
   }
 
   private async createLineDefaultMaterials() {
-    this.lineGhostMaterial = new SpeckleLineMaterial(
-      {
-        color: 0xffffff,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    this.lineGhostMaterial = new SpeckleLineMaterial({
+      color: 0xffffff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).color = new Color(0xffffff)
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).worldUnits = true
@@ -410,17 +407,14 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).opacity = 0.1
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).transparent = true
 
-    this.lineColoredMaterial = new SpeckleLineMaterial(
-      {
-        color: 0xffffff,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    this.lineColoredMaterial = new SpeckleLineMaterial({
+      color: 0xffffff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).color = new Color(0xffffff)
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).worldUnits = false
@@ -429,17 +423,14 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).resolution = new Vector2()
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).toneMapped = false
 
-    this.lineHiddenMaterial = new SpeckleLineMaterial(
-      {
-        color: 0xffffff,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    this.lineHiddenMaterial = new SpeckleLineMaterial({
+      color: 0xffffff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).color = new Color(0xff0000)
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).worldUnits = false
@@ -563,17 +554,14 @@ export default class Materials {
     ).color.convertSRGBToLinear()
 
     const hash = Materials.NullDisplayStyleHash // So prettier doesn't fuck up everything
-    this.materialMap[hash] = new SpeckleLineMaterial(
-      {
-        color: 0x7f7f7f,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    this.materialMap[hash] = new SpeckleLineMaterial({
+      color: 0x7f7f7f,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     ;(<SpeckleLineMaterial>this.materialMap[hash]).color = new Color(0x7f7f7f)
     ;(<SpeckleLineMaterial>this.materialMap[hash]).color.convertSRGBToLinear()
     ;(<SpeckleLineMaterial>this.materialMap[hash]).linewidth = 1
@@ -686,17 +674,14 @@ export default class Materials {
   }
 
   private makeLineMaterial(materialData: DisplayStyle): Material {
-    const mat: SpeckleLineMaterial = new SpeckleLineMaterial(
-      {
-        color: materialData.color,
-        linewidth: materialData.lineWeight > 0 ? materialData.lineWeight : 1,
-        worldUnits: materialData.lineWeight > 0 ? true : false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    const mat: SpeckleLineMaterial = new SpeckleLineMaterial({
+      color: materialData.color,
+      linewidth: materialData.lineWeight > 0 ? materialData.lineWeight : 1,
+      worldUnits: materialData.lineWeight > 0 ? true : false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     mat.color = new Color(materialData.color)
     mat.color.convertSRGBToLinear()
     mat.opacity = materialData.opacity !== undefined ? materialData.opacity : 1
