@@ -441,16 +441,13 @@ export default class Materials {
   }
 
   private async createDefaultPointMaterials() {
-    this.pointGhostMaterial = new SpecklePointMaterial(
-      {
-        color: 0xffffff,
-        vertexColors: false,
-        size: 2,
-        opacity: 0.01,
-        sizeAttenuation: false
-      },
-      ['USE_RTE']
-    )
+    this.pointGhostMaterial = new SpecklePointMaterial({
+      color: 0xffffff,
+      vertexColors: false,
+      size: 2,
+      opacity: 0.01,
+      sizeAttenuation: false
+    })
 
     this.pointCloudColouredMaterial = new SpecklePointColouredMaterial(
       {
@@ -459,7 +456,7 @@ export default class Materials {
         size: 2,
         sizeAttenuation: false
       },
-      ['USE_RTE', 'USE_GRADIENT_RAMP']
+      ['USE_GRADIENT_RAMP']
     )
     ;(this.pointCloudColouredMaterial as SpecklePointMaterial).toneMapped = false
     this.pointCloudGradientMaterial = new SpecklePointColouredMaterial(
@@ -469,7 +466,7 @@ export default class Materials {
         size: 2,
         sizeAttenuation: false
       },
-      ['USE_RTE', 'USE_GRADIENT_RAMP']
+      ['USE_GRADIENT_RAMP']
     )
     ;(
       this.pointCloudGradientMaterial as SpecklePointColouredMaterial
@@ -582,38 +579,29 @@ export default class Materials {
       this.materialMap[Materials.NullTextDisplayStyle] as SpeckleTextMaterial
     ).color.convertSRGBToLinear()
 
-    this.materialMap[Materials.NullPointMaterialHash] = new SpecklePointMaterial(
-      {
-        color: 0x7f7f7f,
-        vertexColors: false,
-        size: 2,
-        sizeAttenuation: false
-      },
-      ['USE_RTE']
-    )
+    this.materialMap[Materials.NullPointMaterialHash] = new SpecklePointMaterial({
+      color: 0x7f7f7f,
+      vertexColors: false,
+      size: 2,
+      sizeAttenuation: false
+    })
     ;(
       this.materialMap[Materials.NullPointMaterialHash] as SpecklePointMaterial
     ).color.convertSRGBToLinear()
 
     this.materialMap[Materials.NullPointCloudVertexColorsMaterialHash] =
-      new SpecklePointMaterial(
-        {
-          color: 0xffffff,
-          vertexColors: true,
-          size: 2,
-          sizeAttenuation: false
-        },
-        ['USE_RTE']
-      )
-    this.materialMap[Materials.NullPointCloudMaterialHash] = new SpecklePointMaterial(
-      {
+      new SpecklePointMaterial({
         color: 0xffffff,
-        vertexColors: false,
+        vertexColors: true,
         size: 2,
         sizeAttenuation: false
-      },
-      ['USE_RTE']
-    )
+      })
+    this.materialMap[Materials.NullPointCloudMaterialHash] = new SpecklePointMaterial({
+      color: 0xffffff,
+      vertexColors: false,
+      size: 2,
+      sizeAttenuation: false
+    })
 
     this.materialMap[Materials.NullRenderMaterialInstancedHash] =
       new SpeckleStandardMaterial({
@@ -708,18 +696,15 @@ export default class Materials {
         ? 0xffffff
         : materialData.color
       : materialData.color
-    const mat = new SpecklePointMaterial(
-      {
-        color: safeColor,
-        ...(materialData.opacity !== undefined && { opacity: materialData.opacity }),
-        ...(materialData.vertexColors !== undefined && {
-          vertexColors: materialData.vertexColors
-        }),
-        size: 2,
-        sizeAttenuation: false
-      },
-      ['USE_RTE']
-    )
+    const mat = new SpecklePointMaterial({
+      color: safeColor,
+      ...(materialData.opacity !== undefined && { opacity: materialData.opacity }),
+      ...(materialData.vertexColors !== undefined && {
+        vertexColors: materialData.vertexColors
+      }),
+      size: 2,
+      sizeAttenuation: false
+    })
     if (mat.opacity !== undefined) mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
     mat.toneMapped = false

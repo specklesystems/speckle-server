@@ -79,9 +79,9 @@ class SpeckleLineMaterial extends ExtendedLineMaterial {
       object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
       this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
-      this.needsUpdate = true
     }
     _this.getDrawingBufferSize(this.resolution)
+    this.needsUpdate = true
   }
 }
 

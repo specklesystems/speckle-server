@@ -132,9 +132,9 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
       this.userData.rteShadowMatrix.value.copy(_this.RTEBuffers.rteShadowMatrix)
       this.userData.uShadowViewer_low.value.copy(_this.RTEBuffers.shadowViewerLow)
       this.userData.uShadowViewer_high.value.copy(_this.RTEBuffers.shadowViewerHigh)
-    }
 
-    this.needsUpdate = true
+      this.needsUpdate = true
+    }
   }
 }
 

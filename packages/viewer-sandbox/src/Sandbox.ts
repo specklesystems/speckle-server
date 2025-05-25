@@ -1334,7 +1334,7 @@ export default class Sandbox {
         console.error(`Loader warning: ${arg.message}`)
       })
 
-      void this.viewer.loadObject(loader, true)
+      await this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
   }

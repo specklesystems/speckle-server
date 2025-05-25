@@ -111,7 +111,7 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -264,7 +264,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/streams/16a7ca997a/commits/91d82f4ea1'
 
     // Lines with numeric filter far away
-    'https://latest.speckle.systems/projects/8a2c865c93/models/a5c1339f73@cda204df97'
+    // 'https://latest.speckle.systems/projects/8a2c865c93/models/a5c1339f73@cda204df97'
 
     // Type inheritence
     // 'https://app.speckle.systems/streams/4063469c0b/objects/ce831723f2a3a56a30dfbca54a53c90f'
