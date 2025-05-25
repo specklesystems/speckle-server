@@ -85,6 +85,12 @@ spec:
           - name: SPECKLE_SERVER_URL
             value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
 
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
+                key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
+
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
