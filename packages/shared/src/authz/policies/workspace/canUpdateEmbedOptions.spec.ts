@@ -139,7 +139,8 @@ describe('canUpdateEmbedOptions', () => {
         workspaceId: cryptoRandomString({ length: 9 }),
         name: 'free',
         status: 'valid',
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
       })
     })
 
