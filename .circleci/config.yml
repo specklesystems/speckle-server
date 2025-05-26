@@ -475,7 +475,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Run pre-commit
-          command: ./.husky/pre-commit
+          command: pre-commit run --all-files --config <<parameters.config_file>>
       - run:
           command: git --no-pager diff
           name: git diff
