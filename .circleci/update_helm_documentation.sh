@@ -21,7 +21,8 @@ HELM_GIT_TARGET_BRANCH="gh-pages"
 if [ ! -d "${README_GENERATOR_DIR}" ]; then
   echo "🔭 Could not find 'readme-generator-for-helm' in a sibling directory"
   echo "👩‍👩‍👧‍👧 Proceeding with cloning readme-generator-for-helm to a sibling directory, 'readme-generator-for-helm'"
-  if ssh -T git@github.com 2>/dev/null | grep -q 'successfully authenticated'; then
+  SSH_OUTPUT="$(ssh -T git@github.com 2>&1 || true)"
+  if echo "${SSH_OUTPUT}" | grep -q 'successfully authenticated'; then
     echo "🔑 SSH authentication successful, cloning using SSH"
     git clone git@github.com:bitnami-labs/readme-generator-for-helm.git "${README_GENERATOR_DIR}"
   else
