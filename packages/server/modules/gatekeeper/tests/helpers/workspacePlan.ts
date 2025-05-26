@@ -1,4 +1,5 @@
 import { WorkspacePlan } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
 import { assign } from 'lodash'
 
 export const buildTestWorkspacePlan = (
@@ -6,11 +7,11 @@ export const buildTestWorkspacePlan = (
 ): WorkspacePlan =>
   assign(
     {
-      workspaceId: '',
-      createdAt: '',
-      updatedAt: '',
-      name: '',
-      status: ''
+      workspaceId: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: 'free',
+      status: 'valid'
     },
     overrides
   )
