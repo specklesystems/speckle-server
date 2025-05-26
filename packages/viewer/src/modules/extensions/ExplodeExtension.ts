@@ -2,6 +2,14 @@ import { Vector3 } from 'three'
 import { Extension } from './Extension.js'
 import { UpdateFlags } from '../../IViewer.js'
 
+export enum ExplodeEvent {
+  Finshed = 'explode-finished'
+}
+
+export interface ViewModeEventPayload {
+  [ExplodeEvent.Finshed]: void
+}
+
 export class ExplodeExtension extends Extension {
   protected _enabled: boolean = true
 
@@ -40,5 +48,6 @@ export class ExplodeExtension extends Extension {
       objects[i].transformTRS(dir, undefined, undefined, undefined)
     }
     this.viewer.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
+    this.emit(ExplodeEvent.Finshed)
   }
 }

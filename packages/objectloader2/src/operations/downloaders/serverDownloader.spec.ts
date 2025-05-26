@@ -48,7 +48,8 @@ describe('downloader', () => {
       fetch: fetchMocker
     })
     downloader.initializePool({ results: pump, total: 2, maxDownloadBatchWait: 200 })
-    downloader.add('id')
+    downloader.add('id1')
+    downloader.add('id2')
     await downloader.disposeAsync()
     const r = []
     for await (const x of pump.gather([i1.baseId, i2.baseId])) {
@@ -83,8 +84,10 @@ describe('downloader', () => {
 
       fetch: fetchMocker
     })
-    downloader.initializePool({ results: pump, total: 2, maxDownloadBatchWait: 200 })
-    downloader.add('id')
+    downloader.initializePool({ results: pump, total: 3, maxDownloadBatchWait: 200 })
+    downloader.add('id1')
+    downloader.add('id2')
+    downloader.add('id3')
     await downloader.disposeAsync()
     const r = []
     for await (const x of pump.gather([i1.baseId, i2.baseId, i3.baseId])) {

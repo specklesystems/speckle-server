@@ -59,7 +59,10 @@ import {
   type FilteringState
 } from './modules/extensions/FilteringExtension.js'
 import { Extension } from './modules/extensions/Extension.js'
-import { ExplodeExtension } from './modules/extensions/ExplodeExtension.js'
+import {
+  ExplodeEvent,
+  ExplodeExtension
+} from './modules/extensions/ExplodeExtension.js'
 import {
   DiffExtension,
   type DiffResult,
@@ -163,6 +166,14 @@ import {
   EdgesPassOptions
 } from './modules/pipeline/Passes/EdgesPass.js'
 import {
+  Measurement,
+  MeasurementState
+} from './modules/extensions/measurements/Measurement.js'
+import { PointToPointMeasurement } from './modules/extensions/measurements/PointToPointMeasurement.js'
+import { PerpendicularMeasurement } from './modules/extensions/measurements/PerpendicularMeasurement.js'
+import { AreaMeasurement } from './modules/extensions/measurements/AreaMeasurement.js'
+import { PointMeasurement } from './modules/extensions/measurements/PointMeasurement.js'
+import {
   DefaultEdgesPipelineOptions,
   EdgesPipeline
 } from './modules/pipeline/Pipelines/EdgesPipeline.js'
@@ -181,7 +192,13 @@ export {
   WorldTree,
   RenderTree,
   VisualDiffMode,
+  Measurement,
+  PointToPointMeasurement,
+  PerpendicularMeasurement,
+  AreaMeasurement,
+  PointMeasurement,
   MeasurementType,
+  MeasurementState,
   Units,
   Extension,
   SelectionExtension,
@@ -193,6 +210,7 @@ export {
   FilteringExtension,
   CameraEvent,
   ExplodeExtension,
+  ExplodeEvent,
   DiffExtension,
   Loader,
   SpeckleConverter,

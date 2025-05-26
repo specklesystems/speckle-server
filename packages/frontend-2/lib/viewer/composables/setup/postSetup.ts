@@ -1,6 +1,8 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
+  ExplodeEvent,
+  ExplodeExtension,
   LoaderEvent,
   type PropertyInfo,
   type StringPropertyInfo,
@@ -702,6 +704,20 @@ function useExplodeFactorIntegration() {
     ui: { explodeFactor },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  const updateOutlines = () => {
+    const sectionOutlines = instance.getExtension(SectionOutlines)
+    if (sectionOutlines && sectionOutlines.enabled) sectionOutlines.requestUpdate(true)
+  }
+  onMounted(() => {
+    instance.getExtension(ExplodeExtension).on(ExplodeEvent.Finshed, updateOutlines)
+  })
+
+  onBeforeUnmount(() => {
+    instance
+      .getExtension(ExplodeExtension)
+      .removeListener(ExplodeEvent.Finshed, updateOutlines)
+  })
 
   // state -> viewer only. we don't need the reverse.
   watch(

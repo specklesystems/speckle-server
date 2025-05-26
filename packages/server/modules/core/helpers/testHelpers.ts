@@ -1,5 +1,8 @@
 import crs from 'crypto-random-string'
 
+/**
+ * Returns a random email from example.org domain
+ */
 export function createRandomEmail() {
   return randomizeCase(`${crs({ length: 6 })}@example.org`)
 }

@@ -1204,6 +1204,8 @@ export type LimitedWorkspace = {
   adminTeam: Array<LimitedWorkspaceCollaborator>;
   /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, the users with a matching domain may join the workspace directly */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Workspace id */
   id: Scalars['ID']['output'];
   /** Optional base64 encoded workspace logo image */
@@ -2036,6 +2038,7 @@ export type Project = {
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
+  hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
   /** Collaborators who have been invited, but not yet accepted. */
@@ -2114,6 +2117,11 @@ export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectHasAccessToFeatureArgs = {
+  featureName: WorkspaceFeatureName;
 };
 
 
@@ -4483,6 +4491,8 @@ export type Workspace = {
    */
   defaultRegion?: Maybe<ServerRegionItem>;
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable discovery of the workspace */
   discoverabilityEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable restriction to invite users to workspace as Guests only */
@@ -4649,6 +4659,7 @@ export type WorkspaceEmbedOptions = {
 
 export const WorkspaceFeatureName = {
   DomainBasedSecurityPolicies: 'domainBasedSecurityPolicies',
+  HideSpeckleBranding: 'hideSpeckleBranding',
   OidcSso: 'oidcSso',
   WorkspaceDataRegionSpecificity: 'workspaceDataRegionSpecificity'
 } as const;
@@ -5124,6 +5135,7 @@ export type WorkspaceUpdateInput = {
   /** @deprecated Always the reviewer role. Will be removed in the future. */
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  discoverabilityAutoJoinEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];

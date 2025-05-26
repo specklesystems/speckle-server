@@ -10,7 +10,7 @@ export default class BatchingQueue<T> {
   #maxInterval: number
 
   #processingLoop: Promise<void>
-  #finished = false
+  #disposed = false
 
   constructor(params: {
     batchSize: number
@@ -26,7 +26,7 @@ export default class BatchingQueue<T> {
   }
 
   async disposeAsync(): Promise<void> {
-    this.#finished = true
+    this.#disposed = true
     await this.#processingLoop
   }
 
@@ -42,13 +42,17 @@ export default class BatchingQueue<T> {
     return this.#queue.size
   }
 
+  isDisposed(): boolean {
+    return this.#disposed
+  }
+
   #getBatch(batchSize: number): T[] {
     return this.#queue.spliceValues(0, Math.min(batchSize, this.#queue.size))
   }
 
   async #loop(): Promise<void> {
     let interval = this.#baseInterval
-    while (!this.#finished || this.#queue.size > 0) {
+    while (!this.#disposed || this.#queue.size > 0) {
       const startTime = performance.now()
       if (this.#queue.size > 0) {
         const batch = this.#getBatch(this.#batchSize)

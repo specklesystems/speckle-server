@@ -164,8 +164,9 @@ export const createWorkspaceFactory =
       updatedAt: new Date(),
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false,
+      discoverabilityAutoJoinEnabled: false,
       isEmbedSpeckleBrandingHidden: false
-    }
+    } satisfies Workspace
     await upsertWorkspace({ workspace })
 
     // assign the creator as workspace administrator

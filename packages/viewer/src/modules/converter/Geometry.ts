@@ -6,9 +6,11 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Matrix4,
+  Vector2,
   Vector3
 } from 'three'
 import { type SpeckleObject } from '../../IViewer.js'
+import earcut from 'earcut'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -422,5 +424,12 @@ export class Geometry {
 
       normalAttribute.needsUpdate = true
     }
+  }
+
+  public static triangulatePolygon(points: Vector2[]): number[] {
+    const flatArray = new Array<number>(points.length * 2)
+    points.forEach((point: Vector2, index) => point.toArray(flatArray, index * 2))
+
+    return earcut(flatArray)
   }
 }
