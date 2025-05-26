@@ -13,6 +13,8 @@ export const GatekeeperEvents = {
 export type GatekeeperEventPayloads = {
   [GatekeeperEvents.WorkspaceTrialExpired]: { workspaceId: string }
   [GatekeeperEvents.WorkspacePlanUpdated]: {
-    workspacePlan: Pick<WorkspacePlan, 'name' | 'status' | 'workspaceId'>
+    workspacePlan: Pick<WorkspacePlan, 'name' | 'status' | 'workspaceId'> & {
+      previousPlanName: WorkspacePlan['name']
+    }
   }
 }

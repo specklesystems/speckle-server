@@ -83,7 +83,11 @@ import { WorkspacesNotAuthorizedError } from '@/modules/workspaces/errors/worksp
 import { publish, WorkspaceSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { isWorkspaceResourceTarget } from '@/modules/workspaces/services/invites'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import { getBaseTrackingProperties, getClient } from '@/modules/shared/utils/mixpanel'
+import {
+  getBaseTrackingProperties,
+  getClient,
+  MixpanelEvents
+} from '@/modules/shared/utils/mixpanel'
 import {
   GetWorkspacePlan,
   GetWorkspaceSubscription,
@@ -545,11 +549,21 @@ export const workspaceTrackingFactory =
           workspaceId: payload.workspacePlan.workspaceId
         })
         if (!updatedPlanWorkspace) break
+        const subscription = await getWorkspaceSubscription({
+          workspaceId: payload.workspacePlan.workspaceId
+        })
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
           payload.workspacePlan.workspaceId,
           await buildWorkspaceTrackingProperties(updatedPlanWorkspace)
         )
+        mixpanel.track(MixpanelEvents.WorkspaceUpdated, {
+          // eslint-disable-next-line camelcase
+          workspace_id: payload.workspacePlan.workspaceId,
+          plan: payload.workspacePlan.name,
+          cycle: subscription?.billingInterval,
+          previousPlan: payload.workspacePlan.previousPlanName
+        })
         break
       case 'gatekeeper.workspace-trial-expired':
         break
@@ -560,6 +574,12 @@ export const workspaceTrackingFactory =
         mixpanel.groups.set(WORKSPACE_TRACKING_ID_KEY, payload.workspace.id, {
           ...(await buildWorkspaceTrackingProperties(payload.workspace)),
           ...(await checkForSpeckleMembers({ userId: payload.createdByUserId }))
+        })
+        mixpanel.track(MixpanelEvents.WorkspaceCreated, {
+          // eslint-disable-next-line camelcase
+          workspace_id: payload.workspace.id,
+          // eslint-disable-next-line camelcase
+          user_id: payload.createdByUserId
         })
         break
       case 'workspace.updated':
