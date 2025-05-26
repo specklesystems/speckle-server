@@ -126,6 +126,7 @@ export const buildWorkspaceTrackingPropertiesFactory =
       planName: plan?.name || '',
       planStatus: plan?.status || '',
       planCreatedAt: plan?.createdAt || null,
+      planUpdatedAt: plan?.updatedAt || null,
       subscriptionCreatedAt,
       subscriptionBillingInterval,
       subscriptionCurrentBillingCycleEnd,

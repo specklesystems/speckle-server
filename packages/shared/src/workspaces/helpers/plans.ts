@@ -131,6 +131,7 @@ export type WorkspacePlanStatuses =
 type BaseWorkspacePlan = {
   workspaceId: string
   createdAt: Date
+  updatedAt: Date
 }
 
 export type PaidWorkspacePlan = BaseWorkspacePlan & {

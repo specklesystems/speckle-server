@@ -186,7 +186,8 @@ export const upgradeWorkspaceSubscriptionFactory =
         status: workspacePlan.status,
         workspaceId,
         name: targetPlan,
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     })
     await updateWorkspaceSubscription({ workspaceSubscription })
