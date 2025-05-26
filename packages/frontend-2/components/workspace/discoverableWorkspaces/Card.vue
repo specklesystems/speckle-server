@@ -16,8 +16,8 @@
             :max-count="5"
             size="base"
           />
-          <div class="flex gap-1 text-body-3xs text-foreground-2">
-            <span class="font-medium">Admins:</span>
+          <div class="text-body-3xs text-foreground-2">
+            <span class="font-medium">Admins:&nbsp;</span>
             <span v-for="(admin, index) in adminTeam.slice(0, 3)" :key="admin.id">
               {{ admin.name
               }}{{ index < 2 && index < adminTeam.length - 1 ? ', ' : '' }}

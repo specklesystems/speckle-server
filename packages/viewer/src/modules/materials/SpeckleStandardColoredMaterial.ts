@@ -17,7 +17,7 @@ class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
     return { ...super.uniformsDef, gradientRamp: null }
   }
 
-  constructor(parameters: MeshStandardMaterialParameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshStandardMaterialParameters, defines = []) {
     super(parameters, defines)
   }
 

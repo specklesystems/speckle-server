@@ -37,6 +37,15 @@
       />
       <span class="text-body-2xs font-medium">Snap to vertices</span>
     </div>
+    <div class="py-1.5 px-3 flex items-center border-b border-outline-2">
+      <FormCheckbox
+        name="Chain Measurements"
+        hide-label
+        :model-value="measurementParams.chain"
+        @update:model-value="() => toggleMeasurementsChaining()"
+      />
+      <span class="text-body-2xs font-medium">Chain Measurements</span>
+    </div>
     <div class="pb-3 flex flex-col">
       <div class="flex flex-col gap-1.5 p-3 pt-2 pb-3">
         <h6 class="text-body-2xs font-medium">Units</h6>
@@ -87,6 +96,7 @@ const measurementParams = ref({
   visible: true,
   type: MeasurementType.POINTTOPOINT,
   vertexSnap: true,
+  chain: false,
   units: selectedUnit.value,
   precision: measurementPrecision.value
 })
@@ -109,30 +119,49 @@ const toggleMeasurementsSnap = () => {
   setMeasurementOptions(measurementParams.value)
 }
 
+const toggleMeasurementsChaining = () => {
+  measurementParams.value.chain = !measurementParams.value.chain
+  setMeasurementOptions(measurementParams.value)
+}
+
 const onChangeMeasurementPrecision = () => {
   measurementParams.value.precision = measurementPrecision.value
   setMeasurementOptions(measurementParams.value)
 }
 
-const IconPointToPoint = resolveComponent(
+const IconMeasurePointToPoint = resolveComponent(
   'IconMeasurePointToPoint'
 ) as ConcreteComponent
-const IconPerpendicular = resolveComponent(
+const IconMeasurePerpendicular = resolveComponent(
   'IconMeasurePerpendicular'
 ) as ConcreteComponent
+const IconMeasurePoint = resolveComponent('IconMeasurePoint') as ConcreteComponent
+const IconMeasureArea = resolveComponent('IconMeasureArea') as ConcreteComponent
 
 const measurementTypeOptions = [
   {
     title: 'Point to Point',
-    icon: IconPointToPoint,
+    icon: IconMeasurePointToPoint,
     value: MeasurementType.POINTTOPOINT,
     description: 'Measure between two points'
   },
   {
     title: 'Perpendicular',
-    icon: IconPerpendicular,
+    icon: IconMeasurePerpendicular,
     value: MeasurementType.PERPENDICULAR,
-    description: 'Tip: Double-click to quick-measure'
+    description: 'Measure at a 90° angle'
+  },
+  {
+    title: 'Area',
+    icon: IconMeasureArea,
+    value: MeasurementType.AREA,
+    description: 'Measure area between points'
+  },
+  {
+    title: 'Point coordinates',
+    icon: IconMeasurePoint,
+    value: MeasurementType.POINT,
+    description: 'Measure XYZ coordinates'
   }
 ]
 </script>

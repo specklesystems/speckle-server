@@ -56,35 +56,18 @@
       stroke-linejoin="round"
       stroke-dasharray="2 2"
     />
+    <path opacity="0.4" d="M33.5 11.75V32L12.5 33.5L33.5 11.75Z" fill="#136CFF" />
     <path
-      d="M8.05 19.38L29.05 17.88"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      d="M33.5 14C34.7426 14 35.75 12.9926 35.75 11.75C35.75 10.5074 34.7426 9.5 33.5 9.5C32.2574 9.5 31.25 10.5074 31.25 11.75C31.25 12.9926 32.2574 14 33.5 14Z"
+      fill="#136CFF"
     />
     <path
-      d="M6.38 21.39L9.11 17.39"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      d="M33.5 34.25C34.7426 34.25 35.75 33.2426 35.75 32C35.75 30.7574 34.7426 29.75 33.5 29.75C32.2574 29.75 31.25 30.7574 31.25 32C31.25 33.2426 32.2574 34.25 33.5 34.25Z"
+      fill="#136CFF"
     />
     <path
-      d="M27.63 19.89L30.36 15.89"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M6.97 16.09L9.03 22.66"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M28.23 14.59L30.29 21.16"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      d="M12.5 35.75C13.7426 35.75 14.75 34.7426 14.75 33.5C14.75 32.2574 13.7426 31.25 12.5 31.25C11.2574 31.25 10.25 32.2574 10.25 33.5C10.25 34.7426 11.2574 35.75 12.5 35.75Z"
+      fill="#136CFF"
     />
   </svg>
 </template>

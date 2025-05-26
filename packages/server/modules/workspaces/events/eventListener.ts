@@ -775,7 +775,8 @@ export const initializeEventListenersFactory =
             name: 'free',
             status: 'valid',
             workspaceId: payload.workspace.id,
-            createdAt: new Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
           }
         })
       }),

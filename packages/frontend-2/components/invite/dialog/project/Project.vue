@@ -8,7 +8,7 @@
     <template #header>
       {{ isInWorkspace && !isAdmin ? 'Add to project' : 'Invite to project' }}
     </template>
-    <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
+    <p v-if="isInWorkspace" class="text-foreground text-body-xs mb-3">
       {{
         isAdmin
           ? 'Search for existing workspace users or invite new users.'
