@@ -19,7 +19,7 @@ class SpecklePointColouredMaterial extends SpecklePointMaterial {
 
   constructor(
     parameters: PointsMaterialParameters,
-    defines: string[] = ['USE_RTE', 'USE_GRADIENT_RAMP']
+    defines: string[] = ['USE_GRADIENT_RAMP']
   ) {
     super(parameters, defines)
   }

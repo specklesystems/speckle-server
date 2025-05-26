@@ -524,7 +524,7 @@ export default class Sandbox {
 
     const pipeline = {
       output: 0,
-      edges: false,
+      edges: true,
       outlineThickness: 1,
       outlineColor: 0x323232,
       outlineOpacity: 0.75
@@ -1343,7 +1343,7 @@ export default class Sandbox {
         console.error(`Loader warning: ${arg.message}`)
       })
 
-      void this.viewer.loadObject(loader, true)
+      await this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
   }

@@ -177,6 +177,7 @@ import {
   DefaultEdgesPipelineOptions,
   EdgesPipeline
 } from './modules/pipeline/Pipelines/EdgesPipeline.js'
+import { Geometry } from './modules/converter/Geometry.js'
 
 export {
   Viewer,
@@ -215,6 +216,7 @@ export {
   Loader,
   SpeckleConverter,
   GeometryConverter,
+  Geometry,
   SpeckleLoader,
   ObjLoader,
   LoaderEvent,
