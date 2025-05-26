@@ -457,13 +457,13 @@ jobs:
       - restore_cache:
           name: Restore pre-commit & Yarn Package cache
           keys:
-            - cache-pre-commit-{{ checksum "<<parameters.config_file>>" }}
+            - cache-pre-commit-2-{{ checksum "<<parameters.config_file>>" }}
             - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
       - save_cache:
-          key: cache-pre-commit-{{ checksum "<<parameters.config_file>>" }}
+          key: cache-pre-commit-2-{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
       - run:
