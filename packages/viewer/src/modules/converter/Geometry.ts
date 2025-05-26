@@ -13,9 +13,11 @@ import {
 } from 'three'
 import { type SpeckleObject } from '../../IViewer.js'
 import { getRelativeOffset, makePerspectiveProjection } from '../Helpers.js'
+import earcut from 'earcut'
 
 const vecBuff0: Vector3 = new Vector3()
 const floatArrayBuff: Float32Array = new Float32Array(16)
+Vector3
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -511,5 +513,12 @@ export class Geometry {
 
       normalAttribute.needsUpdate = true
     }
+  }
+
+  public static triangulatePolygon(points: Vector2[]): number[] {
+    const flatArray = new Array<number>(points.length * 2)
+    points.forEach((point: Vector2, index) => point.toArray(flatArray, index * 2))
+
+    return earcut(flatArray)
   }
 }

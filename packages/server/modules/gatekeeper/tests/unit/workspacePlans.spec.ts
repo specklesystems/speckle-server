@@ -192,7 +192,9 @@ describe('workspacePlan services @gatekeeper', () => {
               status
             })
             const expectedPlan = { workspaceId, name: planName, status }
-            expect(omit(storedWorkspacePlan, 'createdAt')).to.deep.equal(expectedPlan)
+            expect(omit(storedWorkspacePlan, 'createdAt', 'updatedAt')).to.deep.equal(
+              expectedPlan
+            )
             expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
             expect(eventPayload).to.deep.equal({ workspacePlan: expectedPlan })
           }

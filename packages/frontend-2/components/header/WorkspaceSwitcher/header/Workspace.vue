@@ -23,18 +23,13 @@
               Settings
             </FormButton>
           </MenuItem>
-          <MenuItem v-if="workspace?.role !== Roles.Workspace.Guest">
-            <div
-              v-tippy="
-                isAdmin ? undefined : 'Only admins can invite people to the workspace'
-              "
-              class="w-full"
-            >
+          <MenuItem v-if="!isWorkspaceGuest">
+            <div v-tippy="inviteTooltipText" class="w-full">
               <FormButton
                 full-width
                 color="outline"
                 size="sm"
-                :disabled="!isAdmin"
+                :disabled="!canInvite"
                 @click="$emit('show-invite-dialog')"
               >
                 Invite members
@@ -62,6 +57,11 @@ graphql(`
     name
     logo
     role
+    permissions {
+      canInvite {
+        ...FullPermissionCheckResult
+      }
+    }
     plan {
       name
     }
@@ -79,5 +79,9 @@ const props = defineProps<{
 
 const { activeWorkspaceSlug } = useNavigation()
 
-const isAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
+const canInvite = computed(() => props.workspace?.permissions.canInvite.authorized)
+const inviteTooltipText = computed(() =>
+  canInvite.value ? undefined : props.workspace?.permissions.canInvite.message
+)
 </script>
