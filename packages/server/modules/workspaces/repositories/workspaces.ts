@@ -1,4 +1,5 @@
 import {
+  LimitedWorkspace,
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
@@ -102,6 +103,7 @@ export const getUserDiscoverableWorkspacesFactory =
         'slug',
         'description',
         'logo',
+        'discoverabilityAutoJoinEnabled',
         tables
           .workspacesAcl(db)
           .select(knex.raw('count(*)::integer'))
@@ -129,10 +131,10 @@ export const getUserDiscoverableWorkspacesFactory =
       .where('discoverabilityEnabled', true)
       .where('verified', true)
       .where('role', null)
-      .orderBy([{ column: 'teamCount', order: 'desc' }, 'workspaces.id'])) as Pick<
-      Workspace,
-      'id' | 'name' | 'slug' | 'description' | 'logo'
-    >[]
+      .orderBy([
+        { column: 'teamCount', order: 'desc' },
+        'workspaces.id'
+      ])) as LimitedWorkspace[]
 
     return workspaces
   }
@@ -300,6 +302,7 @@ export const upsertWorkspaceFactory =
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
         'discoverabilityEnabled',
+        'discoverabilityAutoJoinEnabled',
         'isEmbedSpeckleBrandingHidden'
       ])
   }

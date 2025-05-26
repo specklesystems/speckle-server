@@ -27,6 +27,7 @@ describe('downloader', () => {
     }
 
     expect(r).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('download batch of two', async () => {
@@ -47,7 +48,8 @@ describe('downloader', () => {
       fetch: fetchMocker
     })
     downloader.initializePool({ results: pump, total: 2, maxDownloadBatchWait: 200 })
-    downloader.add('id')
+    downloader.add('id1')
+    downloader.add('id2')
     await downloader.disposeAsync()
     const r = []
     for await (const x of pump.gather([i1.baseId, i2.baseId])) {
@@ -55,6 +57,7 @@ describe('downloader', () => {
     }
 
     expect(r).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('download batch of three', async () => {
@@ -81,8 +84,10 @@ describe('downloader', () => {
 
       fetch: fetchMocker
     })
-    downloader.initializePool({ results: pump, total: 2, maxDownloadBatchWait: 200 })
-    downloader.add('id')
+    downloader.initializePool({ results: pump, total: 3, maxDownloadBatchWait: 200 })
+    downloader.add('id1')
+    downloader.add('id2')
+    downloader.add('id3')
     await downloader.disposeAsync()
     const r = []
     for await (const x of pump.gather([i1.baseId, i2.baseId, i3.baseId])) {
@@ -90,6 +95,7 @@ describe('downloader', () => {
     }
 
     expect(r).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('download single exists', async () => {
@@ -109,6 +115,7 @@ describe('downloader', () => {
     })
     const x = await downloader.downloadSingle()
     expect(x).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('add extra header', async () => {
@@ -134,5 +141,21 @@ describe('downloader', () => {
     })
     const x = await downloader.downloadSingle()
     expect(x).toMatchSnapshot()
+    await downloader.disposeAsync()
+  })
+
+  test('can dispose used', async () => {
+    const fetchMocker = createFetchMock(vi)
+    const headers = new Headers()
+    const downloader = new ServerDownloader({
+      serverUrl: 'http://speckle.test',
+      headers,
+      streamId: 'streamId',
+      objectId: 'objectId',
+      token: 'token',
+
+      fetch: fetchMocker
+    })
+    await downloader.disposeAsync()
   })
 })

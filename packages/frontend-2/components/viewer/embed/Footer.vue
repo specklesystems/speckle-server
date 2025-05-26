@@ -48,7 +48,7 @@ defineProps<{
   date?: string
   name?: string
   url?: string
-  hideSpeckleBranding?: boolean
+  hideSpeckleBranding?: MaybeNullOrUndefined<boolean>
   disableModelLink?: MaybeNullOrUndefined<boolean>
 }>()
 
