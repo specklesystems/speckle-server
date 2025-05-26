@@ -22,7 +22,7 @@
           :value="option.value.toString()"
           name="measurementType"
           :icon="option.icon"
-          :checked="localParams.type === option.value"
+          :checked="measurementOptions.type === option.value"
           size="sm"
           @change="updateMeasurementsType(option)"
         />
@@ -32,16 +32,25 @@
       <FormCheckbox
         name="Snap to vertices"
         hide-label
-        :model-value="localParams.vertexSnap"
+        :model-value="measurementOptions.vertexSnap"
         @update:model-value="toggleMeasurementsSnap"
       />
       <span class="text-body-2xs font-medium">Snap to vertices</span>
+    </div>
+    <div class="py-1.5 px-3 flex items-center border-b border-outline-2">
+      <FormCheckbox
+        name="Chain Measurements"
+        hide-label
+        :model-value="measurementOptions.chain"
+        @update:model-value="toggleMeasurementsChaining"
+      />
+      <span class="text-body-2xs font-medium">Chain Measurements</span>
     </div>
     <div class="pb-3 flex flex-col">
       <div class="flex flex-col gap-1.5 p-3 pt-2 pb-3">
         <h6 class="text-body-2xs font-medium">Units</h6>
         <ViewerMeasurementsUnitSelect
-          v-model="selectedUnit"
+          v-model="measurementOptions.units"
           mount-menu-on-body
           class="w-1/2"
           @update:model-value="onChangeMeasurementUnits"
@@ -52,7 +61,7 @@
         <div class="flex gap-2 items-center">
           <input
             id="precision"
-            v-model="measurementPrecision"
+            v-model="measurementOptions.precision"
             class="h-2 mr-2 flex-1"
             type="range"
             min="1"
@@ -60,7 +69,7 @@
             step="1"
             @change="onChangeMeasurementPrecision"
           />
-          <span class="text-xs w-4">{{ measurementPrecision }}</span>
+          <span class="text-xs w-4">{{ measurementOptions.precision }}</span>
         </div>
       </div>
     </div>
@@ -70,7 +79,7 @@
 import { FormRadio } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
-import { resolveComponent, watch } from 'vue'
+import { resolveComponent } from 'vue'
 import type { ConcreteComponent } from 'vue'
 
 interface MeasurementTypeOption {
@@ -83,40 +92,39 @@ defineEmits(['close'])
 const { measurementOptions, setMeasurementOptions, clearMeasurements } =
   useMeasurementUtilities()
 
-const defaultOptions = {
-  visible: true,
-  type: MeasurementType.POINTTOPOINT,
-  vertexSnap: true,
-  units: 'm',
-  precision: 2
-}
-const localParams = ref({
-  ...defaultOptions,
-  ...(measurementOptions.value || {})
-})
-
-const measurementPrecision = ref(localParams.value.precision)
-const selectedUnit = ref(localParams.value.units)
-
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
-  localParams.value.type = selectedOption.value
-  setMeasurementOptions(localParams.value)
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    type: selectedOption.value
+  })
 }
 
 const onChangeMeasurementUnits = (newUnit: string) => {
-  selectedUnit.value = newUnit
-  localParams.value.units = newUnit
-  setMeasurementOptions(localParams.value)
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    units: newUnit
+  })
+}
+
+const toggleMeasurementsChaining = () => {
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    chain: !measurementOptions.value.chain
+  })
 }
 
 const toggleMeasurementsSnap = () => {
-  localParams.value.vertexSnap = !localParams.value.vertexSnap
-  setMeasurementOptions(localParams.value)
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    vertexSnap: !measurementOptions.value.vertexSnap
+  })
 }
 
 const onChangeMeasurementPrecision = () => {
-  localParams.value.precision = measurementPrecision.value
-  setMeasurementOptions(localParams.value)
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    precision: measurementPrecision.value
+  })
 }
 
 const IconMeasurePointToPoint = resolveComponent(
@@ -154,19 +162,4 @@ const measurementTypeOptions = [
     description: 'Measure XYZ coordinates'
   }
 ]
-
-watch(
-  measurementOptions,
-  (newOptions) => {
-    if (newOptions) {
-      localParams.value = {
-        ...defaultOptions,
-        ...newOptions
-      }
-      measurementPrecision.value = localParams.value.precision
-      selectedUnit.value = localParams.value.units
-    }
-  },
-  { immediate: true }
-)
 </script>
