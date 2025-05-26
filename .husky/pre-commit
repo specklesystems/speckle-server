@@ -2,15 +2,8 @@
 # shellcheck disable=SC1091
 set -e
 
-if [ -n "$CI" ]
+if [ -z "$CI" ]
 then
-  echo "running eslint"
-  yarn eslint:projectwide
-  echo "...eslint done"
-  echo "running prettier"
-  yarn prettier:check
-  echo "...prettier done"
-else
 # shellcheck disable=SC1090
   . "$(dirname "$0")/_/husky.sh"
   yarn lint-staged

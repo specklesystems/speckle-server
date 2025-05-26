@@ -205,6 +205,7 @@ workflows:
             - docker-build-server
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -222,6 +223,7 @@ workflows:
             - docker-build-frontend-2
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -248,6 +250,7 @@ workflows:
             - docker-build-webhooks
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -265,6 +268,7 @@ workflows:
             - docker-build-file-imports
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -282,6 +286,7 @@ workflows:
             - docker-build-previews
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -299,6 +304,7 @@ workflows:
             - docker-build-test-container
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -328,6 +334,7 @@ workflows:
             - docker-build-monitor-container
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -468,7 +475,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Run pre-commit
-          command: pre-commit run --all-files --config <<parameters.config_file>>
+          command: ./.husky/pre-commit
       - run:
           command: git --no-pager diff
           name: git diff
