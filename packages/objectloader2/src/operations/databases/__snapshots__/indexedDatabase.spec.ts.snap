@@ -29,24 +29,3 @@ exports[`database cache > write two items to queue use getItem 2`] = `
   "baseId": "id2",
 }
 `;
-
-exports[`database cache > write two items to queue use processItems 1`] = `
-[
-  {
-    "base": {
-      "id": "id",
-      "speckle_type": "type",
-    },
-    "baseId": "id1",
-  },
-  {
-    "base": {
-      "id": "id",
-      "speckle_type": "type",
-    },
-    "baseId": "id2",
-  },
-]
-`;
-
-exports[`database cache > write two items to queue use processItems 2`] = `[]`;

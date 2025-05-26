@@ -228,6 +228,13 @@ export = {
       })
       return !!metaVal?.value
     },
+    speckleConBannerDismissed: async (parent, _args, ctx) => {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.userId,
+        key: UsersMeta.metaKey.speckleConBannerDismissed
+      })
+      return !!metaVal?.value
+    },
     legacyProjectsExplainerCollapsed: async (parent, _args, ctx) => {
       const metaVal = await ctx.loaders.users.getUserMeta.load({
         userId: parent.userId,
@@ -408,6 +415,16 @@ export = {
       const res = await meta.set(
         ctx.userId!,
         UsersMeta.metaKey.newWorkspaceExplainerDismissed,
+        args.value
+      )
+
+      return !!res.value
+    },
+    setSpeckleConBannerDismissed: async (_parent, args, ctx) => {
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(
+        ctx.userId!,
+        UsersMeta.metaKey.speckleConBannerDismissed,
         args.value
       )
 

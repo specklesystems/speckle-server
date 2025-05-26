@@ -66,6 +66,7 @@ export const useWorkspacesWizard = () => {
     updateWorkspaceCreationStateMutation
   )
   const { mutateActiveWorkspaceSlug } = useNavigation()
+  const { $intercom } = useNuxtApp()
 
   const isLoading = computed({
     get: () => wizardState.value.isLoading,
@@ -272,18 +273,24 @@ export const useWorkspacesWizard = () => {
     ).catch(convertThrowIntoFetchResult)
 
     if (result?.data?.workspaceMutations.updateCreationState) {
-      mixpanel.track('Workspace Created', {
+      const metaPayload = {
         plan: state.plan,
-        billingInterval: state.billingInterval,
+        billingInterval:
+          state.plan === WorkspacePlans.Free ? undefined : state.billingInterval,
         source: 'wizard',
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      }
+
+      mixpanel.track('Workspace Created', {
+        ...metaPayload,
         fields: Object.keys(state).filter(
           (key) =>
             key !== 'id' &&
             (key !== 'invites' || (state.invites && state.invites.length > 0))
-        ) as Array<keyof WorkspaceWizardState>,
-        // eslint-disable-next-line camelcase
-        workspace_id: workspaceId
+        ) as Array<keyof WorkspaceWizardState>
       })
+      $intercom.track('Workspace Created', metaPayload)
     }
 
     if (

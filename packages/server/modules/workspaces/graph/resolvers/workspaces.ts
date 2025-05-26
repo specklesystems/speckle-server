@@ -1136,7 +1136,20 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 sendWorkspaceJoinRequestReceivedEmail,
                 getUserById: getUserFactory({ db }),
                 getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-                getUserEmails: findEmailsByUserIdFactory({ db })
+                getUserEmails: findEmailsByUserIdFactory({ db }),
+                addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                  findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                  emitWorkspaceEvent: getEventBus().emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    eventEmit: getEventBus().emit
+                  })
+                }),
+                getWorkspaceTeam: getWorkspaceCollaboratorsFactory({ db })
               })
             }
           })
@@ -1984,6 +1997,16 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceId: parent.id,
             limit: args.limit ?? 100,
             cursor: args.cursor ?? undefined
+          })
+          return team
+        },
+        adminTeam: async (parent) => {
+          const team = await getWorkspaceCollaboratorsFactory({ db })({
+            workspaceId: parent.id,
+            limit: 100,
+            filter: {
+              roles: [Roles.Workspace.Admin]
+            }
           })
           return team
         }

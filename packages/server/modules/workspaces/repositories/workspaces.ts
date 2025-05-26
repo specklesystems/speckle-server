@@ -1,4 +1,5 @@
 import {
+  LimitedWorkspace,
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
@@ -93,10 +94,23 @@ export const getUserDiscoverableWorkspacesFactory =
     if (domains.length === 0) {
       return []
     }
-    return (await tables
+
+    const workspaces = (await tables
       .workspaces(db)
-      .select('workspaces.id as id', 'name', 'slug', 'description', 'logo')
-      .distinctOn('workspaces.id')
+      .select(
+        'workspaces.id as id',
+        'name',
+        'slug',
+        'description',
+        'logo',
+        'discoverabilityAutoJoinEnabled',
+        tables
+          .workspacesAcl(db)
+          .select(knex.raw('count(*)::integer'))
+          .where(DbWorkspaceAcl.col.workspaceId, knex.ref(Workspaces.col.id))
+          .as('teamCount')
+      )
+      .distinctOn(['teamCount', 'workspaces.id'])
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
         tables.workspacesAcl(db).select('*').where({ userId }).as('acl'),
@@ -116,10 +130,13 @@ export const getUserDiscoverableWorkspacesFactory =
       .whereIn('domain', domains)
       .where('discoverabilityEnabled', true)
       .where('verified', true)
-      .where('role', null)) as Pick<
-      Workspace,
-      'id' | 'name' | 'slug' | 'description' | 'logo'
-    >[]
+      .where('role', null)
+      .orderBy([
+        { column: 'teamCount', order: 'desc' },
+        'workspaces.id'
+      ])) as LimitedWorkspace[]
+
+    return workspaces
   }
 
 const workspaceWithRoleBaseQuery = ({
@@ -285,6 +302,7 @@ export const upsertWorkspaceFactory =
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
         'discoverabilityEnabled',
+        'discoverabilityAutoJoinEnabled',
         'isEmbedSpeckleBrandingHidden'
       ])
   }
