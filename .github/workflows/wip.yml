@@ -137,6 +137,30 @@ jobs:
         timeout-minutes: 30
       # TODO: codecov
 
+  test-objectsender:
+    name: Object Sender
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn test:ci
+        working-directory: 'packages/objectsender'
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/objectsender/coverage/coverage-final.json
+          verbose: true
+          name: objectsender
   # TODO: codecov
 
   # TODO: fix db error on multiregion test
