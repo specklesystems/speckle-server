@@ -21,7 +21,13 @@ HELM_GIT_TARGET_BRANCH="gh-pages"
 if [ ! -d "${README_GENERATOR_DIR}" ]; then
   echo "🔭 Could not find 'readme-generator-for-helm' in a sibling directory"
   echo "👩‍👩‍👧‍👧 Proceeding with cloning readme-generator-for-helm to a sibling directory, 'readme-generator-for-helm'"
-  git clone git@github.com:bitnami-labs/readme-generator-for-helm.git "${README_GENERATOR_DIR}"
+  if ssh -T git@github.com 2>/dev/null | grep -q 'successfully authenticated'; then
+    echo "🔑 SSH authentication successful, cloning using SSH"
+    git clone git@github.com:bitnami-labs/readme-generator-for-helm.git "${README_GENERATOR_DIR}"
+  else
+    echo "🔑 SSH authentication failed, cloning using HTTPS"
+    git clone https://github.com/bitnami-labs/readme-generator-for-helm "${README_GENERATOR_DIR}"
+  fi
 fi
 
 if [ -n "${CI}" ]; then
@@ -39,7 +45,13 @@ popd
 if [ ! -d "${HELM_DIR}" ]; then
   echo "🔭 Could not find Speckle Helm in a sibling directory (named 'speckle-helm')"
   echo "👩‍👩‍👧‍👧 Proceeding with cloning Speckle's helm repository to a sibling directory, 'speckle-helm'"
-  git clone git@github.com:specklesystems/helm.git "${HELM_DIR}"
+  if ssh -T git@github.com 2>/dev/null | grep -q 'successfully authenticated'; then
+    echo "🔑 SSH authentication successful, cloning using SSH"
+    git clone git@github.com:specklesystems/helm.git "${HELM_DIR}"
+  else
+    echo "🔑 SSH authentication failed, cloning using HTTPS"
+    git clone https://github.com/specklesystems/helm.git "${HELM_DIR}"
+  fi
 fi
 
 pushd "${HELM_DIR}"
