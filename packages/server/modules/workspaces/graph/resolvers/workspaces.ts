@@ -173,7 +173,6 @@ import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regio
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
-  getWorkspacePlansByWorkspaceIdFactory,
   getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
@@ -567,9 +566,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const updateWorkspacePlan = updateWorkspacePlanFactory({
             getWorkspace: getWorkspaceFactory({ db }),
             upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
-            getWorkspacePlansByWorkspaceId: getWorkspacePlansByWorkspaceIdFactory({
-              db
-            }),
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
             emitEvent: getEventBus().emit
           })
 

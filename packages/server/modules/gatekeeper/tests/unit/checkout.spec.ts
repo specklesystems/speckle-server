@@ -37,7 +37,7 @@ describe('checkout @gatekeeper', () => {
           upsertPaidWorkspacePlan: async () => {
             expect.fail()
           },
-          getWorkspacePlansByWorkspaceId: () => Promise.resolve({}),
+          getWorkspacePlan: async () => null,
           getSubscriptionData: async () => {
             expect.fail()
           },
@@ -74,7 +74,7 @@ describe('checkout @gatekeeper', () => {
           upsertPaidWorkspacePlan: async () => {
             expect.fail()
           },
-          getWorkspacePlansByWorkspaceId: () => Promise.resolve({}),
+          getWorkspacePlan: async () => null,
           getSubscriptionData: async () => {
             expect.fail()
           },
@@ -139,10 +139,8 @@ describe('checkout @gatekeeper', () => {
             upsertPaidWorkspacePlan: async ({ workspacePlan }) => {
               storedWorkspacePlan = workspacePlan
             },
-            getWorkspacePlansByWorkspaceId: () =>
-              Promise.resolve({
-                [workspaceId]: buildTestWorkspacePlan({ workspaceId, name: 'free' })
-              }),
+            getWorkspacePlan: async () =>
+              buildTestWorkspacePlan({ workspaceId, name: 'free' }),
             getSubscriptionData: async () => subscriptionData,
             upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
               storedWorkspaceSubscriptionData = workspaceSubscription

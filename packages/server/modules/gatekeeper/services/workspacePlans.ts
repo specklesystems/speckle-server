@@ -1,5 +1,5 @@
 import {
-  GetWorkspacePlansByWorkspaceId,
+  GetWorkspacePlan,
   UpsertWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
@@ -12,14 +12,14 @@ export const updateWorkspacePlanFactory =
   ({
     getWorkspace,
     upsertWorkspacePlan,
-    getWorkspacePlansByWorkspaceId,
+    getWorkspacePlan,
     emitEvent
   }: {
     getWorkspace: GetWorkspace
     // im using the generic function here, cause the service is
     // responsible for protecting the permutations
     upsertWorkspacePlan: UpsertWorkspacePlan
-    getWorkspacePlansByWorkspaceId: GetWorkspacePlansByWorkspaceId
+    getWorkspacePlan: GetWorkspacePlan
     emitEvent: EventBusEmit
   }) =>
   async ({
@@ -31,9 +31,7 @@ export const updateWorkspacePlanFactory =
       workspaceId
     })
     if (!workspace) throw new WorkspaceNotFoundError()
-    const previousPlan = (
-      await getWorkspacePlansByWorkspaceId({ workspaceIds: [workspaceId] })
-    )[workspaceId]
+    const previousPlan = await getWorkspacePlan({ workspaceId })
     const createdAt = new Date()
     const updatedAt = new Date()
     switch (name) {

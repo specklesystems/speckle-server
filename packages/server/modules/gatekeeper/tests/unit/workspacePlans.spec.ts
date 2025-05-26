@@ -24,7 +24,7 @@ describe('workspacePlan services @gatekeeper', () => {
         upsertWorkspacePlan: () => {
           expect.fail()
         },
-        getWorkspacePlansByWorkspaceId: () => Promise.resolve({}),
+        getWorkspacePlan: async () => null,
         emitEvent: () => {
           expect.fail()
         }
@@ -154,7 +154,7 @@ describe('workspacePlan services @gatekeeper', () => {
                   return { id: workspaceId } as WorkspaceWithOptionalRole
                 },
                 upsertWorkspacePlan: fail,
-                getWorkspacePlansByWorkspaceId: () => Promise.resolve({}),
+                getWorkspacePlan: async () => null,
                 emitEvent: fail
               })
               await updateWorkspacePlan({
@@ -187,7 +187,7 @@ describe('workspacePlan services @gatekeeper', () => {
                 return { id: workspaceId } as WorkspaceWithOptionalRole
               },
               upsertWorkspacePlan,
-              getWorkspacePlansByWorkspaceId: () => Promise.resolve({}),
+              getWorkspacePlan: async () => null,
               emitEvent
             })
             await updateWorkspacePlan({
@@ -227,12 +227,10 @@ describe('workspacePlan services @gatekeeper', () => {
           return { id: workspaceId } as WorkspaceWithOptionalRole
         },
         upsertWorkspacePlan: async () => {},
-        getWorkspacePlansByWorkspaceId: () =>
-          Promise.resolve({
-            [workspaceId]: buildTestWorkspacePlan({
-              workspaceId,
-              name: PaidWorkspacePlans.Team
-            })
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            workspaceId,
+            name: PaidWorkspacePlans.Team
           }),
         emitEvent
       })

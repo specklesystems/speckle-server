@@ -14,7 +14,7 @@ export type GatekeeperEventPayloads = {
   [GatekeeperEvents.WorkspaceTrialExpired]: { workspaceId: string }
   [GatekeeperEvents.WorkspacePlanUpdated]: {
     workspacePlan: Pick<WorkspacePlan, 'name' | 'status' | 'workspaceId'> & {
-      previousPlanName: WorkspacePlan['name']
+      previousPlanName: WorkspacePlan['name'] | undefined
     }
   }
 }

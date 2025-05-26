@@ -6,7 +6,7 @@ import {
 } from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
 import {
-  getWorkspacePlansByWorkspaceIdFactory,
+  getWorkspacePlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
@@ -56,7 +56,7 @@ const command: CommandModule<
     const updateWorkspacePlan = updateWorkspacePlanFactory({
       getWorkspace: getWorkspaceFactory({ db }),
       upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
-      getWorkspacePlansByWorkspaceId: getWorkspacePlansByWorkspaceIdFactory({ db }),
+      getWorkspacePlan: getWorkspacePlanFactory({ db }),
       emitEvent: getEventBus().emit
     })
     await updateWorkspacePlan({
