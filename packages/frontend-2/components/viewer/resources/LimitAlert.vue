@@ -3,6 +3,7 @@
     v-if="isPersonalLimit"
     :limit-type="limitType"
     :variant="variant"
+    :project="project"
   />
   <ViewerResourcesUpgradeLimitAlert
     v-else-if="project?.workspace"
@@ -30,6 +31,7 @@ graphql(`
       slug
       ...ViewerResourcesWorkspaceLimitAlert_Workspace
     }
+    ...WorkspaceMoveProject_Project
   }
 `)
 
