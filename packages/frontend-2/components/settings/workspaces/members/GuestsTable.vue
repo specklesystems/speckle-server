@@ -14,7 +14,6 @@
       v-model:seat-type="seatTypeFilter"
       search-placeholder="Search guests..."
       :workspace="workspace"
-      show-invite-button
       show-seat-filter
     />
     <LayoutTable
