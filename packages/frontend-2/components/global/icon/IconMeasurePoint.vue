@@ -57,34 +57,8 @@
       stroke-dasharray="2 2"
     />
     <path
-      d="M8.05 19.38L29.05 17.88"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M6.38 21.39L9.11 17.39"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M27.63 19.89L30.36 15.89"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M6.97 16.09L9.03 22.66"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M28.23 14.59L30.29 21.16"
-      stroke="#136CFF"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      d="M25.25 14.5C26.4926 14.5 27.5 13.4926 27.5 12.25C27.5 11.0074 26.4926 10 25.25 10C24.0074 10 23 11.0074 23 12.25C23 13.4926 24.0074 14.5 25.25 14.5Z"
+      fill="#136CFF"
     />
   </svg>
 </template>
