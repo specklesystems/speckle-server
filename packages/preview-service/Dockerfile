@@ -1,7 +1,10 @@
+ARG NODE_ENV=production
+
 # NOTE: Docker context should be set to git root directory, to include the viewer
 FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
 
-ARG NODE_ENV=production
+# Consume the ARG from the global scope
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
@@ -80,6 +83,7 @@ RUN apt-get update && \
 
 COPY --link --from=build-stage /speckle-server/wait /wait
 
+# Consume the ARG from the global scope
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
