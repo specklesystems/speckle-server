@@ -1808,13 +1808,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const token = parent.token
           const authedUserId = ctx.userId
+          const canReadMemberEmail =
+            await ctx.authPolicies.workspace.canReadMemberEmail({
+              workspaceId: parent.workspaceId,
+              userId: ctx.userId
+            })
           const targetUserId = parent.user?.id
-
           // Only returning it for the user that is the pending stream collaborator
           // OR if the token was specified
+          // OR if the policy allows
           if (
             (!authedUserId || !targetUserId || authedUserId !== targetUserId) &&
-            !token
+            !token &&
+            !canReadMemberEmail.isOk
           ) {
             return null
           }
