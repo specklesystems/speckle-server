@@ -16,16 +16,17 @@ else
   yarn lint-staged
 fi
 
-echo "🔍 looking for additional linter dependencies"
 
 check_dependencies_available() {
+  echo "🔍 looking for additional linter dependencies"
   for i in "${@}"
   do
-    if ! command -v "${i}"; then
+    if ! command "${i}"; then
       echo "No ${i} executable found skipping additional checks" >&2
       exit 0
     fi
   done
+  echo "✅ All additional dependencies found"
 }
 
 additional_dependencies=""
@@ -36,5 +37,5 @@ fi
 # shellcheck disable=SC2086
 check_dependencies_available pre-commit hadolint helm shellcheck circleci${additional_dependencies}
 
-echo "All systems functional, running additional pre-commit checks..."
+echo "▶️ Running pre-commit hooks"
 pre-commit run --all-files
