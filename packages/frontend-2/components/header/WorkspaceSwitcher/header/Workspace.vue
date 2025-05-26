@@ -23,7 +23,7 @@
               Settings
             </FormButton>
           </MenuItem>
-          <MenuItem v-if="workspace?.role !== Roles.Workspace.Guest">
+          <MenuItem v-if="!isWorkspaceGuest">
             <div v-tippy="inviteTooltipText" class="w-full">
               <FormButton
                 full-width
@@ -56,6 +56,7 @@ graphql(`
     id
     name
     logo
+    role
     permissions {
       canInvite {
         ...FullPermissionCheckResult
@@ -78,6 +79,7 @@ const props = defineProps<{
 
 const { activeWorkspaceSlug } = useNavigation()
 
+const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
 const canInvite = computed(() => props.workspace?.permissions.canInvite.authorized)
 const inviteTooltipText = computed(() =>
   canInvite.value ? undefined : props.workspace?.permissions.canInvite.message
