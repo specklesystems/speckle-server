@@ -15,12 +15,22 @@
         location="models"
         type="model"
       />
+      <WorkspaceMoveProject
+        v-model:open="openMoveProjectDialog"
+        :project="project"
+        location="add_model"
+        show-intro
+        @done="open = false"
+      />
     </template>
   </div>
 </template>
 <script setup lang="ts">
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { WorkspaceLimitsReachedError } from '@speckle/shared/authz'
+import {
+  PersonalProjectsLimitedError,
+  WorkspaceLimitsReachedError
+} from '@speckle/shared/authz'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectModelsAdd_ProjectFragment } from '~/lib/common/generated/gql/graphql'
 import { useCanCreateModel } from '~/lib/projects/composables/permissions'
@@ -37,8 +47,10 @@ graphql(`
       }
     }
     ...UseCanCreateModel_Project
+    ...WorkspaceMoveProject_Project
   }
 `)
+
 const props = defineProps<{
   project: MaybeNullOrUndefined<ProjectModelsAdd_ProjectFragment>
   /**
@@ -60,6 +72,7 @@ const openNewModelDialog = computed({
     return open.value
   },
   set: (newVal) => {
+    if (!newVal) return (open.value = false)
     if (!canCreateModel.canActuallyCreate.value) return false
     open.value = newVal
   }
@@ -73,10 +86,27 @@ const openWorkspaceLimitsHit = computed({
     return open.value
   },
   set: (value) => {
+    if (!value) return (open.value = false)
     if (canCreateModel.cantClickCreateCode.value !== WorkspaceLimitsReachedError.code)
       return false
 
     open.value = value
+  }
+})
+
+const openMoveProjectDialog = computed({
+  get: () => {
+    if (canCreateModel.cantClickCreateCode.value !== PersonalProjectsLimitedError.code)
+      return false
+
+    return open.value
+  },
+  set: (newVal) => {
+    if (!newVal) return (open.value = false)
+    if (canCreateModel.cantClickCreateCode.value !== PersonalProjectsLimitedError.code)
+      return false
+
+    open.value = newVal
   }
 })
 </script>

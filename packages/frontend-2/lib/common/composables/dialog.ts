@@ -11,7 +11,7 @@ export type DialogStep<ID extends string = string> = {
 
 export const useMultiStepDialog = <ID extends string = string>(params: {
   steps: MaybeRef<Array<DialogStep<ID>>>
-  resolveNextStep?: (params: { currentStep: DialogStep<ID> }) => ID
+  resolveNextStep?: (params: { currentStep: DialogStep<ID>; reset: boolean }) => ID
   resolvePreviousStep?: (params: { currentStep: DialogStep<ID> }) => ID
 }) => {
   const steps = computed(() => unref(params.steps).filter((s) => !s.skippable))
@@ -56,7 +56,10 @@ export const useMultiStepDialog = <ID extends string = string>(params: {
 
   const nextStep = computed(() => {
     if (params.resolveNextStep) {
-      const nextStepId = params.resolveNextStep({ currentStep: step.value })
+      const nextStepId = params.resolveNextStep({
+        currentStep: step.value,
+        reset: false
+      })
       const nextStep = steps.value.find((s) => s.id === nextStepId)
       if (nextStep?.id === stepId.value) {
         return undefined
@@ -113,8 +116,15 @@ export const useMultiStepDialog = <ID extends string = string>(params: {
   }
 
   const resetStep = () => {
-    if (params.resolveNextStep) return goToNextStep()
-    stepId.value = steps.value[0]!.id
+    if (params.resolveNextStep) {
+      const nextStepId = params.resolveNextStep({
+        currentStep: step.value,
+        reset: true
+      })
+      goToStep(nextStepId)
+    } else {
+      stepId.value = steps.value[0]!.id
+    }
   }
 
   return {

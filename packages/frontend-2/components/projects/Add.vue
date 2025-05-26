@@ -79,6 +79,7 @@ const openNewWorkspaceProject = computed({
     return open.value
   },
   set(val) {
+    if (!val) return (open.value = false)
     if (!workspaceId.value || !canCreateWorkspace.canActuallyCreate.value) return false
     open.value = val
   }
@@ -96,6 +97,7 @@ const openWorkspaceProjectLimitsHit = computed({
     return open.value
   },
   set(val) {
+    if (!val) return (open.value = false)
     if (
       !workspaceId.value ||
       canCreateWorkspace.cantClickCreateCode.value !== WorkspaceLimitsReachedError.code
@@ -114,6 +116,7 @@ const openNewPersonalProject = computed({
     return open.value
   },
   set(val) {
+    if (!val) return (open.value = false)
     if (workspaceId.value) return false
 
     open.value = val

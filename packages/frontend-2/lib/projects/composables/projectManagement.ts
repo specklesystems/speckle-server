@@ -553,6 +553,7 @@ export function useMoveProjectToWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
   const { mutate } = useMutation(useMoveProjectToWorkspaceMutation)
+  const { activeUser } = useActiveUser()
 
   return async (params: {
     projectId: string
@@ -560,6 +561,8 @@ export function useMoveProjectToWorkspace() {
     workspaceName: string
     eventSource?: string
   }) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
     const { projectId, workspaceId, workspaceName, eventSource } = params
 
     const res = await mutate(
@@ -569,6 +572,7 @@ export function useMoveProjectToWorkspace() {
           if (!data?.workspaceMutations.projects.moveToWorkspace) return
           if (!workspaceId) return
 
+          // Add to workspace.projects
           modifyObjectField(
             cache,
             getCacheId('Workspace', workspaceId),
@@ -576,6 +580,21 @@ export function useMoveProjectToWorkspace() {
             ({ helpers: { createUpdatedValue, ref } }) => {
               return createUpdatedValue(({ update }) => {
                 update('items', (items) => [ref('Project', projectId), ...items])
+              })
+            }
+          )
+
+          // Remove from personalOnly user projects
+          modifyObjectField(
+            cache,
+            getCacheId('User', userId),
+            'projects',
+            ({ variables, helpers: { createUpdatedValue, ref } }) => {
+              if (!variables.filter?.personalOnly) return
+              return createUpdatedValue(({ update }) => {
+                update('items', (items) =>
+                  items.filter((item) => item.__ref !== ref('Project', projectId).__ref)
+                )
               })
             }
           )

@@ -3,6 +3,7 @@
     <WorkspaceMoveProjectSelectWorkspace
       :project="undefined"
       :checker="(w) => w.permissions.canCreateProject"
+      subheading="New projects can only be created within a workspace."
       @workspace-selected="onWorkspaceSelected"
     />
     <div class="flex justify-end gap-2 my-2 mt-6">

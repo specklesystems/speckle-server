@@ -365,6 +365,7 @@ export const projectBlobInfoQuery = graphql(`
 export const moveToWorkspaceDryRunQuery = graphql(`
   query MoveToWorkspaceDryRun($workspaceId: String!, $projectId: String!, $limit: Int) {
     project(id: $projectId) {
+      id
       moveToWorkspaceDryRun(workspaceId: $workspaceId) {
         addedToWorkspaceTotalCount
         addedToWorkspace(limit: $limit) {

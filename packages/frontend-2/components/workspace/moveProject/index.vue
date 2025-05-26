@@ -14,6 +14,8 @@
       :workspace-slug="workspace?.slug"
       :workspace-id="workspace?.id"
       :project-id="project?.id"
+      :show-intro="showIntro"
+      @done="onDone"
     />
   </div>
 </template>
@@ -60,12 +62,17 @@ graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  done: []
+}>()
+
 const open = defineModel<boolean>('open', { required: true })
 const props = withDefaults(
   defineProps<{
     project?: MaybeNullOrUndefined<WorkspaceMoveProject_ProjectFragment>
     workspace?: MaybeNullOrUndefined<WorkspaceMoveProject_WorkspaceFragment>
     location?: string
+    showIntro?: boolean
   }>(),
   {
     location: 'move_project'
@@ -77,33 +84,39 @@ const canMoveProjectIntoWorkspace = useCanMoveProjectIntoWorkspace({
   workspace: computed(() => props.workspace)
 })
 
-const openMoveManager = computed({
-  get: () => {
-    if (!canMoveProjectIntoWorkspace.canActuallyMove.value) return false
-    return open.value
-  },
-  set: (value) => {
-    if (!canMoveProjectIntoWorkspace.canActuallyMove.value) return false
-    open.value = value
-  }
+const isWorkspaceLimitsError = computed(() => {
+  return (
+    canMoveProjectIntoWorkspace.cantClickMoveCode.value ===
+    WorkspaceLimitsReachedError.code
+  )
 })
 
 const openWorkspaceLimitsHit = computed({
   get: () => {
-    if (
-      canMoveProjectIntoWorkspace.cantClickMoveCode.value !==
-      WorkspaceLimitsReachedError.code
-    )
-      return false
+    if (!isWorkspaceLimitsError.value) return false
     return open.value
   },
   set: (value) => {
-    if (
-      canMoveProjectIntoWorkspace.cantClickMoveCode.value !==
-      WorkspaceLimitsReachedError.code
-    )
-      return false
+    if (!value) return (open.value = false)
+    if (!isWorkspaceLimitsError.value) return false
     open.value = value
   }
 })
+
+const openMoveManager = computed({
+  get: () => {
+    if (isWorkspaceLimitsError.value) return false
+    return open.value
+  },
+  set: (value) => {
+    if (!value) return (open.value = false)
+    if (isWorkspaceLimitsError.value) return false
+    open.value = value
+  }
+})
+
+const onDone = () => {
+  open.value = false
+  emit('done')
+}
 </script>

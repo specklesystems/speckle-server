@@ -1,5 +1,20 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :title="step.title">
+  <LayoutDialog
+    v-model:open="open"
+    max-width="sm"
+    :title="step.title"
+    :fullscreen="isSmallDialog ? 'none' : 'mobile'"
+    :hide-title="isSmallDialog"
+    :is-transparent="isSmallDialog"
+  >
+    <!-- Intro -->
+    <WorkspaceMoveProjectIntro
+      v-if="step.id === DialogStepId.intro"
+      :project="selectedProject"
+      @cancel="onCancel"
+      @continue="goToNextStep"
+    />
+
     <!-- Project Selection -->
     <WorkspaceMoveProjectSelectProject
       v-if="step.id === DialogStepId.project"
@@ -27,13 +42,20 @@
       @move-complete="onMoveComplete"
       @back="onBack"
     />
-    <template #buttons>
+    <template
+      v-if="([DialogStepId.project, DialogStepId.workspace] as string[]).includes(step.id)"
+      #buttons
+    >
       <div class="-my-1 w-full flex justify-end">
-        <FormButton v-if="!selectedProject" color="outline" @click="open = false">
+        <FormButton
+          v-if="step.id === DialogStepId.project"
+          color="outline"
+          @click="onCancel"
+        >
           Cancel
         </FormButton>
         <FormButton
-          v-else-if="!selectedWorkspace"
+          v-else-if="step.id === DialogStepId.workspace"
           color="outline"
           full-width
           @click="navigateTo(workspaceCreateRoute)"
@@ -60,6 +82,7 @@ import { workspaceCreateRoute } from '~/lib/common/helpers/route'
 import { useMultiStepDialog } from '~/lib/common/composables/dialog'
 
 const DialogStepId = {
+  intro: 'intro',
   project: 'project',
   workspace: 'workspace',
   confirmation: 'confirmation'
@@ -134,10 +157,15 @@ graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  done: []
+}>()
+
 const props = defineProps<{
   projectId?: string
   workspaceSlug?: string
   workspaceId?: string
+  showIntro?: boolean
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -150,6 +178,14 @@ const selectedWorkspace =
 const { goToPreviousStep, step, goToNextStep, resetStep } =
   useMultiStepDialog<DialogStepId>({
     steps: computed(() => [
+      ...(props.showIntro
+        ? [
+            {
+              id: DialogStepId.intro,
+              title: 'Move your projects to a workspace'
+            }
+          ]
+        : []),
       {
         id: DialogStepId.project,
         title: 'Choose project to move'
@@ -163,7 +199,11 @@ const { goToPreviousStep, step, goToNextStep, resetStep } =
         title: 'Confirm move'
       }
     ]),
-    resolveNextStep: () => {
+    resolveNextStep: ({ reset }) => {
+      if (props.showIntro && reset) {
+        return DialogStepId.intro
+      }
+
       if (!selectedProject.value) {
         return DialogStepId.project
       }
@@ -187,7 +227,7 @@ const { result: projectResult, onResult: onProjectResult } = useQuery(
   workspaceMoveProjectManagerProjectQuery,
   () => ({
     projectId: props.projectId || '',
-    workspaceId: props.workspaceId || ''
+    workspaceId: props.workspaceId
   }),
   () => ({
     enabled: !!props.projectId
@@ -199,13 +239,14 @@ const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   workspaceMoveProjectManagerWorkspaceQuery,
   () => ({
     workspaceSlug: props.workspaceSlug || '',
-    projectId: props.projectId,
-    workspaceId: props.workspaceId || ''
+    projectId: props.projectId
   }),
   () => ({
     enabled: !!props.workspaceSlug
   })
 )
+
+const isSmallDialog = computed(() => step.value.id === DialogStepId.intro)
 
 onProjectResult((res) => {
   if (res.data?.project) {
@@ -224,6 +265,12 @@ onWorkspaceResult((res) => {
 
 watch(open, (newVal, oldVal) => {
   if (newVal && !oldVal) {
+    if (workspaceResult.value?.workspaceBySlug) {
+      selectedWorkspace.value = workspaceResult.value.workspaceBySlug
+    }
+    if (projectResult.value?.project) {
+      selectedProject.value = projectResult.value.project
+    }
     resetStep()
   }
 })
@@ -245,6 +292,7 @@ const onWorkspaceSelected = (
 }
 
 const onMoveComplete = () => {
+  emit('done')
   selectedProject.value = null
   selectedWorkspace.value = null
   open.value = false
@@ -252,5 +300,11 @@ const onMoveComplete = () => {
 
 const onBack = () => {
   goToPreviousStep()
+}
+
+const onCancel = () => {
+  open.value = false
+  selectedProject.value = null
+  selectedWorkspace.value = null
 }
 </script>
