@@ -33,11 +33,10 @@
       @workspace-selected="onWorkspaceSelected"
     />
 
-    <!-- Confirmation -->
+    <!-- Confirmation (v-show cause if it unmounts, we wont get the move-complete event) -->
     <WorkspaceMoveProjectConfirm
-      v-if="
-        selectedProject && selectedWorkspace && step.id === DialogStepId.confirmation
-      "
+      v-if="selectedProject && selectedWorkspace"
+      v-show="step.id === DialogStepId.confirmation"
       :project="selectedProject"
       :workspace="selectedWorkspace"
       @move-complete="onMoveComplete"
