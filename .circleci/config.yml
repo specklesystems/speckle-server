@@ -448,6 +448,11 @@ jobs:
       - run:
           name: Run prettier check
           command: yarn prettier:check
+      - run:
+          name: Check JSON Schema is up to date
+          command: |
+            yarn helm:jsonschema:generate
+            git status --porcelain | grep -q 'utils/helm/speckle-server/schema.json' || (echo "JSON Schema is not up to date. Please run 'yarn helm:jsonschema:generate' and commit the changes." && exit 1)
 
   pre-commit:
     parameters:
@@ -465,7 +470,6 @@ jobs:
           name: Restore pre-commit & Yarn Package cache
           keys:
             - cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
-            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>

@@ -30,5 +30,8 @@ fi
 # shellcheck disable=SC2086
 check_dependencies_available pre-commit hadolint helm shellcheck circleci${additional_dependencies}
 
+echo "🍵 Updating JSON schema for Helm chart"
+yarn helm:jsonschema:generate
+
 echo "▶️ Running pre-commit hooks"
 pre-commit run --all-files
