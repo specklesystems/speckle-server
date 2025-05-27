@@ -26,11 +26,7 @@
             class="border-x border-b first:border-t first:rounded-t-lg border-outline-2 last:rounded-b-lg p-6 py-4 flex items-center"
           >
             <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
-            <FormButton
-              :disabled="workspaceDomains.length === 1 && isDomainProtectionEnabled"
-              color="outline"
-              @click="openRemoveDialog(domain)"
-            >
+            <FormButton color="outline" @click="openRemoveDialog(domain)">
               Delete
             </FormButton>
           </li>
@@ -434,4 +430,37 @@ const handleJoinPolicyConfirm = async () => {
     })
   }
 }
+
+watch(
+  () => workspaceDomains.value.length,
+  async (newLength) => {
+    // If last domain was removed, disable all domain features
+    if (newLength === 0 && workspace.value?.id) {
+      if (workspace.value.discoverabilityEnabled) {
+        await updateDiscoverability({
+          input: {
+            id: workspace.value.id,
+            discoverabilityEnabled: false
+          }
+        })
+      }
+      if (workspace.value.discoverabilityAutoJoinEnabled) {
+        await updateAutoJoin({
+          input: {
+            id: workspace.value.id,
+            discoverabilityAutoJoinEnabled: false
+          }
+        })
+      }
+      if (workspace.value.domainBasedMembershipProtectionEnabled) {
+        await updateDomainProtection({
+          input: {
+            id: workspace.value.id,
+            domainBasedMembershipProtectionEnabled: false
+          }
+        })
+      }
+    }
+  }
+)
 </script>
