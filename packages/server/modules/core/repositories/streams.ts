@@ -7,6 +7,7 @@ import _, {
   isObjectLike,
   isUndefined,
   mapValues,
+  omit,
   omitBy,
   reduce,
   toNumber
@@ -25,6 +26,7 @@ import {
 import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
+  ProjectRecordVisibility,
   StreamAclRecord,
   StreamCommitRecord,
   StreamFavoriteRecord,
@@ -47,7 +49,10 @@ import {
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
-import { isProjectCreateInput } from '@/modules/core/helpers/stream'
+import {
+  isProjectCreateInput,
+  mapGqlToDbProjectVisibility
+} from '@/modules/core/helpers/project'
 import {
   StreamAccessUpdateError,
   StreamNotFoundError,
@@ -59,8 +64,7 @@ import {
   DeleteProjectRole,
   UpdateProject,
   GetRolesByUserId,
-  UpsertProjectRole,
-  ProjectVisibility
+  UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 import {
   StreamWithCommitId,
@@ -102,9 +106,11 @@ import {
   MarkOnboardingBaseStream,
   GetUserDeletableStreams,
   GetStreamsCollaborators,
-  GetStreamsCollaboratorCounts
+  GetStreamsCollaboratorCounts,
+  GetImplicitUserProjectsCountFactory
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
+import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
 const tables = {
@@ -241,7 +247,9 @@ const getFavoritedStreamsQueryBaseFactory =
           .andOnVal(StreamAcl.col.userId, userId)
       )
       .andWhere((q) =>
-        q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
+        q
+          .where(Streams.col.visibility, ProjectRecordVisibility.Public)
+          .orWhereNotNull(StreamAcl.col.resourceId)
       )
 
     if (streamIdWhitelist?.length) {
@@ -404,7 +412,10 @@ export const canUserFavoriteStreamFactory =
       })
       .where(Streams.col.id, streamId)
       .andWhere(function () {
-        this.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
+        this.where(
+          Streams.col.visibility,
+          ProjectRecordVisibility.Public
+        ).orWhereNotNull(StreamAcl.col.resourceId)
       })
       .limit(1)
 
@@ -467,8 +478,8 @@ const buildDiscoverableStreamsBaseQueryFactory =
     const q = tables
       .streams(deps.db)
       .select<Result>(Streams.cols)
-      .where(Streams.col.isDiscoverable, true)
-      .andWhere(Streams.col.isPublic, true)
+      .andWhere(Streams.col.visibility, ProjectRecordVisibility.Public)
+      .andWhere(false) // TODO: No such thing as discoverability anymore, just return nothing
 
     if (params.streamIdWhitelist?.length) {
       q.whereIn(Streams.col.id, params.streamIdWhitelist)
@@ -699,19 +710,51 @@ const getUserStreamsQueryBaseFactory =
     streamIdWhitelist,
     workspaceId,
     onlyWithActiveSsoSession,
-    personalOnly
+    personalOnly,
+    includeImplicitAccess
   }: BaseUserStreamsQueryParams) => {
-    const query = tables
-      .streamAcl(deps.db)
-      .where(StreamAcl.col.userId, userId)
-      .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
+    const query = tables.streams(deps.db).leftJoin(StreamAcl.name, (j1) => {
+      j1.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+        StreamAcl.col.userId,
+        userId
+      )
+    })
 
-    // select * from stream_acl sa
-    // join streams s on s.id = sa."resourceId"
-    // left join workspace_sso_providers wp on wp."workspaceId" = s."workspaceId"
-    // left join user_sso_sessions us on (us."userId" = sa."userId" and us."providerId" = wp."providerId")
-    // where sa."userId" = '7f1f8aa286'
-    // and ((wp."providerId" is not null and us."validUntil" > now()) or wp."providerId" is null)
+    if (includeImplicitAccess) {
+      /**
+       * implicit access rules:
+       * 1. user must have an explicit stream role OR
+       * 2. if project is in a workspace that the user is in:
+       *  - user must be a workspace admin OR
+       *  - project must not be fully private and user is non-workspace-guest
+       */
+      query
+        .leftJoin(WorkspaceAcl.name, (j2) => {
+          j2.on(WorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOnVal(
+            WorkspaceAcl.col.userId,
+            userId
+          )
+        })
+        .andWhere((w1) => {
+          w1.whereNotNull(StreamAcl.col.role).orWhere((w2) => {
+            // Implicit workspace role conditions
+            w2.whereNotNull(WorkspaceAcl.col.role).andWhere((w2) => {
+              w2.andWhere(WorkspaceAcl.col.role, Roles.Workspace.Admin).orWhere(
+                (w4) => {
+                  w4.where(
+                    WorkspaceAcl.col.role,
+                    '!=',
+                    Roles.Workspace.Guest
+                  ).andWhereNot(Streams.col.visibility, ProjectRecordVisibility.Private)
+                }
+              )
+            })
+          })
+        })
+    } else {
+      // expect explicit stream role
+      query.whereNotNull(StreamAcl.col.role)
+    }
 
     if (onlyWithActiveSsoSession) {
       query
@@ -749,9 +792,8 @@ const getUserStreamsQueryBaseFactory =
     }
 
     if (forOtherUser) {
-      query
-        .andWhere(Streams.col.isDiscoverable, true)
-        .andWhere(Streams.col.isPublic, true)
+      // TODO: How did this work before discoverability?
+      query.andWhere(Streams.col.visibility, ProjectRecordVisibility.Public)
     }
 
     if (searchQuery) {
@@ -768,6 +810,12 @@ const getUserStreamsQueryBaseFactory =
 
     return query
   }
+
+function addSortByProjectRoleCondition(query: Knex.QueryBuilder) {
+  return query.orderByRaw(
+    `CASE WHEN stream_acl."role" = '${Roles.Stream.Owner}' THEN 1 WHEN stream_acl."role" = '${Roles.Stream.Contributor}' THEN 2 WHEN stream_acl."role" = '${Roles.Stream.Reviewer}' THEN 3 end asc`
+  )
+}
 
 /**
  * Get streams the user is a collaborator on
@@ -797,6 +845,15 @@ export const getUserStreamsPageFactory =
       ])
     }
 
+    if (params.sortBy && params.sortBy?.length > 0) {
+      for (const key of params.sortBy) {
+        if (key === 'role') {
+          addSortByProjectRoleCondition(query)
+          continue
+        }
+        query.orderBy(key, 'asc')
+      }
+    }
     query
       .orderBy(Streams.col.updatedAt, 'desc')
       .orderBy(Streams.col.id, 'desc')
@@ -836,15 +893,16 @@ export const createStreamFactory =
     const { name, description } = input
     const { ownerId, trx } = options || {}
 
-    let shouldBePublic: boolean, shouldBeDiscoverable: boolean
+    let visibility: ProjectRecordVisibility
     if (isProjectCreateInput(input)) {
-      shouldBeDiscoverable = input.visibility === 'PUBLIC'
-      const publicVisibilities: ProjectVisibility[] = ['PUBLIC', 'UNLISTED']
-      shouldBePublic =
-        !input.visibility || publicVisibilities.includes(input.visibility)
+      visibility = mapGqlToDbProjectVisibility(
+        input.visibility || (input.workspaceId ? 'WORKSPACE' : 'PRIVATE')
+      )
     } else {
-      shouldBePublic = input.isPublic !== false
-      shouldBeDiscoverable = input.isDiscoverable !== false && shouldBePublic
+      visibility =
+        input.isPublic !== false
+          ? ProjectRecordVisibility.Public
+          : ProjectRecordVisibility.Private
     }
 
     const workspaceId = 'workspaceId' in input ? input.workspaceId : null
@@ -855,8 +913,7 @@ export const createStreamFactory =
       id,
       name: name || generateProjectName(),
       description: description || '',
-      isPublic: shouldBePublic,
-      isDiscoverable: shouldBeDiscoverable,
+      visibility,
       updatedAt: knex.fn.now(),
       workspaceId: workspaceId || null,
       regionKey
@@ -905,7 +962,7 @@ export const getUserStreamCountsFactory =
 
     if (publicOnly) {
       q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId).andWhere((q1) => {
-        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+        q1.where(Streams.col.visibility, ProjectRecordVisibility.Public)
       })
     }
 
@@ -977,18 +1034,23 @@ export const updateStreamFactory =
     )
 
     if (isProjectUpdateInput(update)) {
-      if (has(validUpdate, 'visibility')) {
-        validUpdate.isPublic = update.visibility !== 'PRIVATE'
-        validUpdate.isDiscoverable = update.visibility === 'PUBLIC'
-        delete validUpdate['visibility'] // cause it's not a real column
+      if (has(update, 'visibility')) {
+        validUpdate.visibility = mapGqlToDbProjectVisibility(
+          update.visibility || 'PRIVATE'
+        )
       }
     } else {
-      if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
-        validUpdate.isDiscoverable = false
+      if (has(update, 'isPublic')) {
+        validUpdate.visibility = update.isPublic
+          ? ProjectRecordVisibility.Public
+          : ProjectRecordVisibility.Private
       }
     }
 
-    if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+    if (
+      has(validUpdate, 'visibility') &&
+      validUpdate.visibility !== ProjectRecordVisibility.Public
+    ) {
       validUpdate.allowPublicComments = false
     } else if (
       has(validUpdate, 'allowPublicComments') &&
@@ -997,8 +1059,9 @@ export const updateStreamFactory =
       validUpdate.isPublic = true
     }
 
-    // Ignore discoverability for now
+    // Remove non-existant fields
     delete validUpdate['isDiscoverable']
+    delete validUpdate['isPublic']
 
     if (!Object.keys(validUpdate).length) return null
 
@@ -1017,7 +1080,14 @@ export const updateStreamFactory =
 export const updateProjectFactory =
   ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {
-    const updatedStream = await updateStreamFactory({ db })(projectUpdate)
+    const [updatedStream] = await tables
+      .streams(db)
+      .returning('*')
+      .where({ id: projectUpdate.id })
+      .update<StreamRecord[]>({
+        ...omit(projectUpdate, ['id']),
+        updatedAt: knex.fn.now()
+      })
 
     if (!updatedStream) {
       throw new StreamUpdateError('Stream was not updated.')
@@ -1104,7 +1174,7 @@ export const grantStreamPermissionsFactory =
         .count()
       if (parseInt(countObj.count as string) === 1)
         throw new StreamAccessUpdateError(
-          'Could not revoke permissions for last admin',
+          'A project needs at least one project owner',
           {
             info: { streamId, userId }
           }
@@ -1167,10 +1237,9 @@ export const revokeStreamPermissionsFactory =
       .count<{ count: string }[]>()
 
     if (parseInt(streamAclEntriesCount.count) === 1)
-      throw new StreamAccessUpdateError(
-        'Stream has only one ownership link left - cannot revoke permissions.',
-        { info: { streamId, userId } }
-      )
+      throw new StreamAccessUpdateError('A project needs at least one project owner', {
+        info: { streamId, userId }
+      })
 
     const aclEntry = existingPermission
     if (aclEntry?.role === Roles.Stream.Owner) {
@@ -1183,7 +1252,7 @@ export const revokeStreamPermissionsFactory =
         .count()
       if (parseInt(countObj.count as string) === 1)
         throw new StreamAccessUpdateError(
-          'Could not revoke permissions for last admin',
+          'A project needs at least one project owner',
           {
             info: { streamId, userId }
           }
@@ -1298,13 +1367,18 @@ export const legacyGetStreamsFactory =
     }
 
     if (visibility && visibility !== 'all') {
-      if (!['private', 'public'].includes(visibility))
+      if (
+        ![
+          ProjectRecordVisibility.Private,
+          ProjectRecordVisibility.Public,
+          ProjectRecordVisibility.Workspace
+        ].includes(visibility)
+      )
         throw new LogicError(
-          'Stream visibility should be either private, public or all'
+          'Stream visibility should be either private, public, workspace or all'
         )
-      const isPublic = visibility === 'public'
       const publicFunc: Knex.QueryCallback = function () {
-        this.where({ isPublic })
+        this.where({ visibility })
       }
       query.andWhere(publicFunc)
     }
@@ -1387,4 +1461,33 @@ export const getUserDeletableStreamsFactory =
     )) as { rows: { id: string }[] }
 
     return streams.rows.map((s) => s.id)
+  }
+
+/**
+ * Get count of projects user explicitly or implicitly (through workspaces) has access to
+ */
+export const getImplicitUserProjectsCountFactory =
+  (deps: { db: Knex }): GetImplicitUserProjectsCountFactory =>
+  async (params) => {
+    const q = tables
+      .streams(deps.db)
+      .select<{ count: string }[]>(knex.raw('COUNT(??) as count', [Streams.col.id]))
+      .leftJoin(StreamAcl.name, (j) => {
+        j.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          params.userId
+        )
+      })
+      .leftJoin(WorkspaceAcl.name, (j) => {
+        j.on(WorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOnVal(
+          WorkspaceAcl.col.userId,
+          params.userId
+        )
+      })
+      .where((w) => {
+        w.whereNotNull(StreamAcl.col.userId).orWhereNotNull(WorkspaceAcl.col.userId)
+      })
+
+    const [{ count }] = await q
+    return parseInt(count)
   }

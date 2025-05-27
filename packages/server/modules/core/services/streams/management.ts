@@ -8,9 +8,10 @@ import {
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   StreamInvalidAccessError,
+  StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
-import { isProjectCreateInput } from '@/modules/core/helpers/stream'
+import { isProjectCreateInput } from '@/modules/core/helpers/project'
 import { has } from 'lodash'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
@@ -37,7 +38,6 @@ import {
 } from '@/modules/core/domain/streams/operations'
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import { LogicError } from '@/modules/shared/errors'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 
@@ -118,7 +118,9 @@ export const deleteStreamAndNotifyFactory =
   async (streamId: string, deleterId: string) => {
     const stream = await deps.getStream({ streamId })
     if (!stream)
-      throw new LogicError('Unexpectedly stream that should exist is not found...')
+      throw new StreamNotFoundError(
+        'Stream which we are attempting to delete cannot been found.'
+      )
 
     await deps.emitEvent({
       eventName: ProjectEvents.Deleted,
@@ -131,6 +133,8 @@ export const deleteStreamAndNotifyFactory =
 
     // TODO: this has been around since before my time, we should get rid of it...
     // delay deletion by a bit so we can do auth checks
+    // (essentially: ensure authorizeResolver/authPolicies can retrieve the stream and
+    // validate a user's access in subscription field resolvers. we can do w/o it tho...)
     await wait(250)
 
     // Delete after event so we can do authz

@@ -7,10 +7,13 @@ import {
 } from '../domain/policies.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { Roles, StreamRoles } from '../../core/constants.js'
@@ -21,11 +24,16 @@ import {
   checkIfAdminOverrideEnabledFragment,
   ensureMinimumServerRoleFragment
 } from './server.js'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
-const workspaceRoleImplicitProjectRoleMap = <const>{
-  [Roles.Workspace.Admin]: Roles.Stream.Owner,
-  [Roles.Workspace.Member]: Roles.Stream.Reviewer,
-  [Roles.Workspace.Guest]: null
+const workspaceRoleImplicitProjectRoleMap = (projectVisibility: ProjectVisibility) => {
+  const isFullyPrivate = projectVisibility === ProjectVisibility.Private
+
+  return <const>{
+    [Roles.Workspace.Admin]: Roles.Stream.Owner,
+    [Roles.Workspace.Member]: isFullyPrivate ? null : Roles.Stream.Reviewer,
+    [Roles.Workspace.Guest]: null
+  }
 }
 
 /**
@@ -54,39 +62,56 @@ export const ensureMinimumProjectRoleFragment: AuthPolicyEnsureFragment<
   InstanceType<
     | typeof ProjectNoAccessError
     | typeof ProjectNotFoundError
-    | typeof WorkspaceNoAccessError
+    | typeof ProjectNotEnoughPermissionsError
   >
 > =
   (loaders) =>
   async ({ userId, projectId, role, explicit }) => {
     const requiredProjectRole = role || Roles.Stream.Reviewer
+    const isTestingForMinimumAccess = requiredProjectRole === Roles.Stream.Reviewer
+
     const env = await loaders.getEnv()
     const project = await loaders.getProject({ projectId })
     if (!project) return err(new ProjectNotFoundError())
 
-    const { workspaceId } = project
-    if (env.FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
-      // Check for implicit workspace project role
-      const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
-      if (!userWorkspaceRole) return err(new WorkspaceNoAccessError())
-
-      const implicitProjectRole = explicit
-        ? null
-        : workspaceRoleImplicitProjectRoleMap[userWorkspaceRole]
-      if (implicitProjectRole) {
-        // Does it fit minimum?
-        if (isMinimumProjectRole(implicitProjectRole, requiredProjectRole)) return ok()
-      }
-    }
-
-    // Check explicit project role
-    return (await hasMinimumProjectRole(loaders)({
+    // Check for explicit project role first
+    const hasExplicitProjectRole = await hasMinimumProjectRole(loaders)({
       userId,
       projectId,
       role: requiredProjectRole
-    }))
-      ? ok()
-      : err(new ProjectNoAccessError())
+    })
+    if (hasExplicitProjectRole) return ok()
+
+    // Now check if there's an implicit one
+    const { workspaceId } = project
+
+    if (env.FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
+      // Check for implicit workspace project role
+      const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
+      if (userWorkspaceRole) {
+        const implicitProjectRole = explicit
+          ? null
+          : workspaceRoleImplicitProjectRoleMap(project.visibility)[userWorkspaceRole]
+        if (implicitProjectRole) {
+          // Does it fit minimum?
+          if (isMinimumProjectRole(implicitProjectRole, requiredProjectRole)) {
+            return ok()
+          } else {
+            // Have some permissions, but not enough
+            return err(new ProjectNotEnoughPermissionsError())
+          }
+        }
+      }
+    }
+
+    // Do we have any role at all?
+    const anyRoleFound = await loaders.getProjectRole({ userId, projectId })
+
+    return err(
+      isTestingForMinimumAccess || !anyRoleFound
+        ? new ProjectNoAccessError()
+        : new ProjectNotEnoughPermissionsError()
+    )
   }
 
 /**
@@ -103,6 +128,7 @@ export const ensureProjectWorkspaceAccessFragment: AuthPolicyEnsureFragment<
   InstanceType<
     | typeof WorkspaceSsoSessionNoAccessError
     | typeof WorkspaceNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
     | typeof ProjectNotFoundError
   >
 > =
@@ -119,6 +145,19 @@ export const ensureProjectWorkspaceAccessFragment: AuthPolicyEnsureFragment<
       userId,
       workspaceId
     })
+    if (memberWithSsoSession.isErr) {
+      switch (memberWithSsoSession.error.code) {
+        case WorkspaceNoAccessError.code:
+          return err(
+            new WorkspaceNoAccessError(
+              "You do not have access to this project's workspace"
+            )
+          )
+        default:
+          return err(memberWithSsoSession.error)
+      }
+    }
+
     return memberWithSsoSession
   }
 
@@ -162,9 +201,12 @@ export const ensureImplicitProjectMemberWithReadAccessFragment: AuthPolicyEnsure
     | typeof ProjectNotFoundError
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
+    | typeof ServerNotEnoughPermissionsError
     | typeof ProjectNoAccessError
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof WorkspaceNotEnoughPermissionsError
   >
 > =
   (loaders) =>
@@ -236,6 +278,9 @@ export const ensureImplicitProjectMemberWithWriteAccessFragment: AuthPolicyEnsur
     | typeof ProjectNoAccessError
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof ServerNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof WorkspaceNotEnoughPermissionsError
   >
 > =
   (loaders) =>

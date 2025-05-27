@@ -1,13 +1,16 @@
 import { db } from '@/db/knex'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { intersectProjectCollaboratorsAndWorkspaceCollaboratorsFactory } from '@/modules/workspaces/repositories/projects'
 import {
   countInvitableCollaboratorsByProjectIdFactory,
   getInvitableCollaboratorsByProjectIdFactory
 } from '@/modules/workspaces/repositories/users'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { getMoveProjectToWorkspaceDryRunFactory } from '@/modules/workspaces/services/projects'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
@@ -59,6 +62,21 @@ export default FF_WORKSPACES_MODULE_ENABLED
           })({ projectId, workspaceId })
 
           return addedToWorkspace
+        },
+        embedOptions: async (parent) => {
+          const { workspaceId } = parent
+
+          if (!workspaceId) {
+            return {
+              hideSpeckleBranding: false
+            }
+          }
+
+          const workspace = await getWorkspaceFactory({ db })({ workspaceId })
+
+          return {
+            hideSpeckleBranding: workspace?.isEmbedSpeckleBrandingHidden ?? false
+          }
         }
       },
       ProjectMoveToWorkspaceDryRun: {
@@ -67,6 +85,28 @@ export default FF_WORKSPACES_MODULE_ENABLED
         },
         addedToWorkspaceTotalCount: async (parent) => {
           return parent.length
+        }
+      },
+      PendingStreamCollaborator: {
+        workspaceSlug: async (parent, _args, ctx) => {
+          const project = await ctx.loaders.streams.getStream.load(parent.streamId)
+          if (!project) {
+            throw new StreamNotFoundError(null, {
+              info: { projectId: parent.streamId }
+            })
+          }
+          if (!project.workspaceId) {
+            return null
+          }
+          const workspace = await ctx.loaders.workspaces?.getWorkspace.load(
+            project.workspaceId
+          )
+          if (!workspace) {
+            throw new WorkspaceNotFoundError(null, {
+              info: { workspaceId: project.workspaceId }
+            })
+          }
+          return workspace.slug
         }
       }
     } as Resolvers)

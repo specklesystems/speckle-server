@@ -14,7 +14,7 @@ import {
   getFullAutomationRunByIdFactory,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
-import { isNonNullable, Scopes } from '@speckle/shared'
+import { isNonNullable, Scopes, TIME_MS } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import {
   getFunctionFactory,
@@ -58,7 +58,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
 import { LogicError } from '@/modules/shared/errors'
-import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
+import { loggerWithMaybeContext } from '@/observability/utils/requestContext'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -311,7 +311,7 @@ const initializeEventListeners = () => {
           functionType: fn?.isFeatured ? 'public' : 'private',
           functionRunId: functionRun.id,
           status: functionRun.status,
-          durationInSeconds: functionRun.elapsed / 1000,
+          durationInSeconds: functionRun.elapsed / TIME_MS.second,
           durationInMilliseconds: functionRun.elapsed,
           /* eslint-disable-next-line camelcase */
           workspace_id: project?.workspaceId

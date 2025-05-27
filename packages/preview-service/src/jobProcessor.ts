@@ -1,13 +1,13 @@
 import { Page, Browser } from 'puppeteer'
 import type { Logger } from 'pino'
 
-import type { PreviewGenerator } from '@speckle/shared/dist/esm/previews/interface.js'
 import type {
+  PreviewGenerator,
   JobPayload,
   PreviewResultPayload
-} from '@speckle/shared/dist/esm/previews/job.js'
-
-import { AppState } from '@/const.js'
+} from '@speckle/shared/workers/previews'
+import { AppState } from '@speckle/shared/workers'
+import { TIME_MS } from '@speckle/shared'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -40,7 +40,7 @@ export const jobProcessor = async ({
 }: JobArgs): Promise<PreviewResultPayload> => {
   const elapsed = (() => {
     const start = new Date().getTime()
-    return () => (new Date().getTime() - start) / 1000
+    return () => (new Date().getTime() - start) / TIME_MS.second
   })()
 
   logger.info('Picked up job {jobId} for {serverUrl}')
@@ -112,7 +112,8 @@ const pageFunction = async ({
   page.setDefaultTimeout(timeout)
   const previewResult = await page.evaluate(async (job: JobPayload) => {
     // ====================
-    // This code runs in the browser context and has no access to the outer scope
+    // This code runs in the browser context and has no access to the outer scope.
+    // Puppeteer and window are available here, but @speckle/shared is not.
     // ====================
     const start = new Date().getTime()
     let loadDone = start

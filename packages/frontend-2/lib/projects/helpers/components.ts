@@ -16,7 +16,7 @@ export type ProjectCollaboratorListItem = {
   role: string
   inviteId: Nullable<string>
   serverRole: Nullable<ServerRoles>
-  workspaceRole: Nullable<WorkspaceRoles>
+  workspaceRole: MaybeNullOrUndefined<WorkspaceRoles>
   seatType: MaybeNullOrUndefined<WorkspaceSeatType>
 }
 
@@ -46,6 +46,33 @@ export const roleSelectItems: Record<
     description: RoleInfo.Stream[Roles.Stream.Reviewer].description
   }
 }
+
+export enum AccessSelectItems {
+  NoAccess = 'no-access',
+  Reviewer = 'reviewer'
+}
+
+export type SelectableAccessSelectItem = {
+  id: AccessSelectItems
+  title: string
+  description?: string
+}
+
+export const accessSelectItems: Record<AccessSelectItems, SelectableAccessSelectItem> =
+  {
+    [AccessSelectItems.Reviewer]: {
+      id: AccessSelectItems.Reviewer,
+      title: 'Can view',
+      description:
+        'All workspace members can view and comment. Add them as project members to give them edit rights. Make the project private to remove their access.'
+    },
+    [AccessSelectItems.NoAccess]: {
+      id: AccessSelectItems.NoAccess,
+      title: 'No access',
+      description:
+        'Workspace members can only access the project if they are added as project members, because the project is set to Private.'
+    }
+  }
 
 export enum CommentPermissions {
   Anyone = 'anyone',

@@ -5,6 +5,7 @@ import { getModelFake, getProjectFake } from '../../../../tests/fakes.js'
 import {
   ModelNotFoundError,
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ReservedModelNotDeletableError,
   ServerNoAccessError,
@@ -12,15 +13,14 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { canDeleteModelPolicy } from './canDelete.js'
+import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
 
 const buildSUT = (overrides?: Partial<Parameters<typeof canDeleteModelPolicy>[0]>) =>
   canDeleteModelPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getProject: getProjectFake({
       id: 'project-id',
-      workspaceId: null,
-      isDiscoverable: false,
-      isPublic: false
+      workspaceId: null
     }),
     getModel: getModelFake({
       id: 'model-id',
@@ -43,9 +43,7 @@ const buildWorkspaceSUT = (
   buildSUT({
     getProject: getProjectFake({
       id: 'project-id',
-      workspaceId: 'workspace-id',
-      isDiscoverable: false,
-      isPublic: false
+      workspaceId: 'workspace-id'
     }),
     getWorkspace: async () => ({
       id: 'workspace-id',
@@ -58,7 +56,7 @@ const buildWorkspaceSUT = (
     getWorkspaceSsoSession: async () => ({
       userId: 'user-id',
       providerId: 'provider-id',
-      validUntil: new Date()
+      validUntil: new Date(Date.now() + TIME_MS.day)
     }),
     ...overrides
   })
@@ -159,6 +157,26 @@ describe('canDeleteModelPolicy', () => {
       modelId: 'model-id'
     })
     expect(result).toBeAuthErrorResult({
+      code: ProjectNotEnoughPermissionsError.code
+    })
+  })
+
+  it('returns error if no project role at all', async () => {
+    const sut = buildSUT({
+      getModel: getModelFake({
+        id: 'model-id',
+        projectId: 'project-id',
+        authorId: 'other-user-id'
+      }),
+      getProjectRole: async () => null
+    })
+
+    const result = await sut({
+      userId: 'user-id',
+      projectId: 'project-id',
+      modelId: 'model-id'
+    })
+    expect(result).toBeAuthErrorResult({
       code: ProjectNoAccessError.code
     })
   })
@@ -173,7 +191,7 @@ describe('canDeleteModelPolicy', () => {
       modelId: 'model-id'
     })
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -247,7 +265,7 @@ describe('canDeleteModelPolicy', () => {
       expect(result).toBeAuthOKResult()
     })
 
-    it('returns error if invalid workspace and project role', async () => {
+    it('returns error if no implicit project role', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceRole: async () => Roles.Workspace.Member,
         getProjectRole: async () => Roles.Stream.Reviewer
@@ -258,7 +276,7 @@ describe('canDeleteModelPolicy', () => {
         modelId: 'model-id'
       })
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 
@@ -294,7 +312,7 @@ describe('canDeleteModelPolicy', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(new Date().getTime() - 1000)
+          validUntil: new Date(new Date().getTime() - TIME_MS.second)
         })
       })
       const result = await sut({

@@ -30,7 +30,11 @@ import {
   purgeNotifications
 } from '@/test/notificationsHelper'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { EmailSendingServiceMock, CommentsRepositoryMock } from '@/test/mocks/global'
+import {
+  EmailSendingServiceMock,
+  CommentsRepositoryMock,
+  StreamsRepositoryMock
+} from '@/test/mocks/global'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import {
   checkStreamResourceAccessFactory,
@@ -51,7 +55,8 @@ import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import {
   getStreamFactory,
   createStreamFactory,
-  markCommitStreamUpdatedFactory
+  markCommitStreamUpdatedFactory,
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
   createCommitByBranchIdFactory,
@@ -84,7 +89,9 @@ import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
@@ -107,7 +114,10 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import type express from 'express'
@@ -118,13 +128,23 @@ import {
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import { MaybeNullOrUndefined, TIME_MS } from '@speckle/shared'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import {
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
+import { StreamRecord } from '@/modules/core/helpers/types'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 type LegacyCommentRecord = CommentRecord & {
   total_count: string
@@ -218,6 +238,51 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -236,7 +301,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -287,6 +353,7 @@ function generateRandomCommentText() {
 
 const mailerMock = EmailSendingServiceMock
 const commentRepoMock = CommentsRepositoryMock
+const streamsRepoMock = StreamsRepositoryMock
 
 describe('Comments @comments', () => {
   let app: express.Express
@@ -366,6 +433,7 @@ describe('Comments @comments', () => {
   after(() => {
     notificationsState.destroy()
     commentRepoMock.destroy()
+    streamsRepoMock.destroy()
   })
 
   afterEach(() => {
@@ -383,7 +451,7 @@ describe('Comments @comments', () => {
         expect(payload.payload.comment.data).to.deep.equal(threadFakeData)
         threadEventFired = true
       },
-      { timeout: 1000 }
+      { timeout: TIME_MS.second }
     )
 
     const thread = await createComment({
@@ -409,7 +477,7 @@ describe('Comments @comments', () => {
         expect(payload.payload.comment.parentComment).to.equal(thread.id)
         replyEventFired = true
       },
-      { timeout: 1000 }
+      { timeout: TIME_MS.second }
     )
 
     const reply = await createCommentReply({
@@ -1144,7 +1212,7 @@ describe('Comments @comments', () => {
         )
         editEventFired = true
       },
-      { timeout: 1000 }
+      { timeout: TIME_MS.second }
     )
 
     await editComment({
@@ -1688,8 +1756,8 @@ describe('Comments @comments', () => {
 
         expect(errors?.length || 0).to.eq(0)
         expect(data?.comment).to.be.ok
-        expect(data?.comment?.text.doc).to.be.null
-        expect(data?.comment?.text.attachments?.length).to.be.greaterThan(0)
+        expect(data?.comment?.text?.doc).to.be.null
+        expect(data?.comment?.text?.attachments?.length).to.be.greaterThan(0)
       })
 
       const unexpectedValDataset = [
@@ -1698,9 +1766,18 @@ describe('Comments @comments', () => {
       ]
       unexpectedValDataset.forEach(({ display, value }) => {
         it(`unexpected text value (${display}) in DB throw sanitized errors`, async () => {
+          streamsRepoMock.enable()
+          streamsRepoMock.mockFunction('getStreamsFactory', () => async () => [
+            {
+              id: stream.id,
+              workspaceId: ''
+            } as unknown as StreamRecord
+          ])
           const item = {
             id: '1',
-            text: value
+            text: value,
+            streamId: stream.id,
+            createdAt: new Date()
           } as unknown as LegacyCommentRecord
 
           commentRepoMock.enable()
@@ -1710,12 +1787,13 @@ describe('Comments @comments', () => {
             totalCount: 1
           }))
 
-          const { data, errors } = await readComments()
+          const { errors } = await readComments()
 
-          expect(data?.comments).to.not.be.ok
           expect((errors || []).map((e) => e.message).join(';')).to.contain(
             'Unexpected comment schema format'
           )
+          streamsRepoMock.disable()
+          streamsRepoMock.resetMockedFunctions()
         })
       })
     })

@@ -8,7 +8,7 @@
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
                 :to="workspaceRoute(project?.workspace.slug)"
-                :name="isWorkspaceNewPlansEnabled ? 'Home' : project?.workspace.name"
+                name="Projects"
                 :separator="false"
               />
             </template>
@@ -102,6 +102,8 @@
       :name="modelName || 'Loading...'"
       :date="lastUpdate"
       :url="route.path"
+      :hide-speckle-branding="hideSpeckleLogo"
+      :disable-model-link="disableModelLink"
     />
     <Portal to="primary-actions">
       <HeaderNavShare
@@ -124,6 +126,7 @@ import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
+import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/route'
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -137,6 +140,10 @@ graphql(`
       name
       role
     }
+    embedOptions {
+      hideSpeckleBranding
+    }
+    hasAccessToFeature(featureName: hideSpeckleBranding)
   }
 `)
 
@@ -161,7 +168,6 @@ const projectId = writableAsyncComputed({
   asyncRead: false
 })
 
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const state = useSetupViewer({
   projectId
 })
@@ -172,7 +178,9 @@ const {
   isEnabled: isEmbedEnabled,
   hideSelectionInfo,
   isTransparent,
-  showControls
+  showControls,
+  disableModelLink,
+  hideSpeckleBranding
 } = useEmbed()
 const mp = useMixpanel()
 
@@ -190,15 +198,20 @@ const limitsDialogType = ref<'version' | 'comment' | 'federated'>('version')
 
 // Check for missing referencedObject in url referenced versions (out of plan limits)
 const hasMissingReferencedObject = computed(() => {
-  const resourceIds = resourceIdString.value.split(',')
+  const resources = parseUrlParameters(resourceIdString.value)
 
   const result = modelsAndVersionIds.value.some((item) => {
-    const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
+    const version = item.model?.loadedVersion?.items?.find(
+      (v) => v.id === item.versionId
+    )
 
-    if (version && version.referencedObject === null) {
-      // Check if this model+version is in the URL (latest version always available)
-      const modelVersionString = `${item.model.id}@${item.versionId}`.toLowerCase()
-      const isInUrl = resourceIds.some((r) => r.toLowerCase() === modelVersionString)
+    if (!version || version.referencedObject === null) {
+      const modelVersionString = resourceBuilder()
+        .addModel(item.model.id, item.versionId)
+        .toString()
+      const isInUrl = resources.some(
+        (r) => r.toString().toLowerCase() === modelVersionString
+      )
 
       return isInUrl
     }
@@ -257,6 +270,17 @@ const lastUpdate = computed(() => {
   } else return undefined
 })
 
+const canEditEmbedOptions = computed(() => {
+  return project.value?.hasAccessToFeature
+})
+
+const hideSpeckleLogo = computed(() => {
+  if (!project.value?.workspace) return true
+  if (!canEditEmbedOptions.value) return false
+  if (project.value?.embedOptions?.hideSpeckleBranding) return true
+  else return hideSpeckleBranding.value
+})
+
 useHead({ title })
 
 onMounted(() => {
@@ -280,15 +304,7 @@ watch(
       }
       showLimitsDialog.value = true
       return
-    }
-
-    // If no workspace and no missing objects, don't show dialog
-    if (!project.value?.workspace) {
-      showLimitsDialog.value = false
-      return
-    }
-
-    if (missingThread) {
+    } else if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
       limitsDialogType.value = 'comment'
       showLimitsDialog.value = true
     } else {

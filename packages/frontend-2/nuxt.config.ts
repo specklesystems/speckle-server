@@ -60,7 +60,6 @@ export default defineNuxtConfig({
       baseUrl: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
-      survicateWorkspaceKey: '',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
       logCsrEmitProps: false,
@@ -75,7 +74,7 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      ghostApiKey: ''
+      intercomAppId: ''
     }
   },
 
@@ -144,10 +143,6 @@ export default defineNuxtConfig({
       // // optionally enable sourcemaps for debugging
       // sourcemap: 'inline'
     }
-  },
-
-  app: {
-    pageTransition: { name: 'page', mode: 'out-in' }
   },
 
   routeRules: {
@@ -232,6 +227,12 @@ export default defineNuxtConfig({
     '/downloads': {
       redirect: {
         to: 'https://www.speckle.systems/connectors',
+        statusCode: 301
+      }
+    },
+    '/workspaces': {
+      redirect: {
+        to: '/workspaces/actions/create',
         statusCode: 301
       }
     }

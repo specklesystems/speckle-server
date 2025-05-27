@@ -17,7 +17,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
-import { Roles, WorkspacePlans } from '@speckle/shared'
+import { Roles, TIME_MS, WorkspacePlans } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 
@@ -36,6 +36,7 @@ const steps: readonly WizardSteps[] = [
   WizardSteps.Details,
   WizardSteps.Invites,
   WizardSteps.Pricing,
+  WizardSteps.AddOns,
   WizardSteps.Region
 ] as const
 
@@ -65,6 +66,7 @@ export const useWorkspacesWizard = () => {
     updateWorkspaceCreationStateMutation
   )
   const { mutateActiveWorkspaceSlug } = useNavigation()
+  const { $intercom } = useNuxtApp()
 
   const isLoading = computed({
     get: () => wizardState.value.isLoading,
@@ -89,10 +91,26 @@ export const useWorkspacesWizard = () => {
   })
 
   const goToNextStep = () => {
-    const shouldComplete =
-      wizardState.value.currentStepIndex === steps.length - 1 ||
-      (wizardState.value.currentStep === WizardSteps.Pricing &&
-        wizardState.value.state.plan !== PaidWorkspacePlans.Business)
+    let shouldComplete = false
+
+    if (wizardState.value.currentStep === WizardSteps.Pricing) {
+      if (state.value.plan === WorkspacePlans.Free) {
+        shouldComplete = true
+      }
+    }
+
+    if (wizardState.value.currentStep === WizardSteps.AddOns) {
+      if (
+        state.value.plan === WorkspacePlans.Team ||
+        state.value.plan === WorkspacePlans.TeamUnlimited
+      ) {
+        shouldComplete = true
+      }
+    }
+
+    if (wizardState.value.currentStep === WizardSteps.Region) {
+      shouldComplete = true
+    }
 
     if (!shouldComplete) {
       wizardState.value.currentStepIndex++
@@ -151,7 +169,7 @@ export const useWorkspacesWizard = () => {
           ...wizardState.value.state,
           invites: wizardState.value.state.invites.filter((invite) => !!invite),
           region:
-            wizardState.value.state.plan === PaidWorkspacePlans.Business
+            wizardState.value.state.plan === PaidWorkspacePlans.Pro
               ? wizardState.value.state.region
               : null
         },
@@ -184,10 +202,10 @@ export const useWorkspacesWizard = () => {
       })
     } else {
       // Keep loading state for a second
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, TIME_MS.second))
       mutateActiveWorkspaceSlug(wizardState.value.state.slug)
       await router.push(workspaceRoute(wizardState.value.state.slug))
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, TIME_MS.second))
       isLoading.value = false
       resetWizardState()
     }
@@ -196,7 +214,11 @@ export const useWorkspacesWizard = () => {
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
     isLoading.value = true
 
-    if (state.region?.key && state.plan === PaidWorkspacePlans.Business) {
+    if (
+      state.region?.key &&
+      (state.plan === PaidWorkspacePlans.Pro ||
+        state.plan === PaidWorkspacePlans.ProUnlimited)
+    ) {
       await updateWorkspaceDefaultRegion({
         workspaceId,
         regionKey: state.region.key
@@ -251,18 +273,24 @@ export const useWorkspacesWizard = () => {
     ).catch(convertThrowIntoFetchResult)
 
     if (result?.data?.workspaceMutations.updateCreationState) {
-      mixpanel.track('Workspace Created', {
+      const metaPayload = {
         plan: state.plan,
-        billingInterval: state.billingInterval,
+        billingInterval:
+          state.plan === WorkspacePlans.Free ? undefined : state.billingInterval,
         source: 'wizard',
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      }
+
+      mixpanel.track('Workspace Created', {
+        ...metaPayload,
         fields: Object.keys(state).filter(
           (key) =>
             key !== 'id' &&
             (key !== 'invites' || (state.invites && state.invites.length > 0))
-        ) as Array<keyof WorkspaceWizardState>,
-        // eslint-disable-next-line camelcase
-        workspace_id: workspaceId
+        ) as Array<keyof WorkspaceWizardState>
       })
+      $intercom.track('Workspace Created', metaPayload)
     }
 
     if (

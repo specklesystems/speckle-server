@@ -1,8 +1,8 @@
 import fetch from 'cross-fetch'
-import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
+import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core/core.cjs'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateCommentInput } from '@/test/graphql/generated/graphql'
-import { Roles, timeoutAt } from '@speckle/shared'
+import { Roles, TIME_MS, timeoutAt } from '@speckle/shared'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { crossServerSyncLogger } from '@/observability/logging'
@@ -393,13 +393,13 @@ const saveNewThreadsFactory =
 
     const threadInputs: { originalComment: ViewerThread; input: CreateCommentInput }[] =
       threads
-        .filter((t) => !!t.text.doc)
+        .filter((t) => !!t.text?.doc)
         .map((t) => ({
           originalComment: t,
           input: {
             projectId: targetStream.id,
             content: {
-              doc: t.text.doc,
+              doc: t.text?.doc,
               blobIds: [] // TODO: Currently not supported
             },
             viewerState: t.viewerState
@@ -436,12 +436,12 @@ const saveNewThreadsFactory =
       )
       await Promise.all(
         replies.items
-          .filter((i) => !!i.text.doc)
+          .filter((i) => !!i.text?.doc)
           .map((r) =>
             deps.createCommentReplyAndNotify(
               {
                 content: {
-                  doc: r.text.doc,
+                  doc: r.text?.doc,
                   blobIds: []
                 },
                 threadId: newComment.id,
@@ -576,7 +576,7 @@ const loadAllObjectsFromParentFactory =
           () =>
             Promise.race([
               deps.createNewObject(typedObj, targetStreamId, { logger }),
-              timeoutAt(10 * 1000, `Object create timed out! - ${id}`)
+              timeoutAt(10 * TIME_MS.second, `Object create timed out! - ${id}`)
             ]),
           3
         )

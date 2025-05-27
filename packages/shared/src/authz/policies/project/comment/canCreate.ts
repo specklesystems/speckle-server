@@ -5,14 +5,18 @@ import { ensureMinimumServerRoleFragment } from '../../../fragments/server.js'
 import { Loaders } from '../../../domain/loaders.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fragments/projects.js'
 import { Roles } from '../../../../core/constants.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 export const canCreateProjectCommentPolicy: AuthPolicy<
   | typeof Loaders.getProject
@@ -31,6 +35,9 @@ export const canCreateProjectCommentPolicy: AuthPolicy<
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>
@@ -47,7 +54,7 @@ export const canCreateProjectCommentPolicy: AuthPolicy<
     const project = await loaders.getProject({ projectId })
     if (!project) return err(new ProjectNotFoundError())
     const allowPublicCommenting =
-      (project.isPublic || project.isDiscoverable) && project.allowPublicComments
+      project.visibility === ProjectVisibility.Public && project.allowPublicComments
     if (allowPublicCommenting) return ok()
 
     // Not public, ensure proper project write access

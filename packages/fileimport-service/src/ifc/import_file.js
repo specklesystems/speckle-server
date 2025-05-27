@@ -1,7 +1,7 @@
 import fs from 'fs'
-import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import * as Observability from '@speckle/shared/observability'
 import { logger as parentLogger } from '@/observability/logging.js'
-import { getDbClients } from '@/knex.js'
+import { getDbClients } from '@/clients/knex.js'
 import { parseAndCreateCommitFactory } from '@/ifc/index.js'
 
 async function main() {

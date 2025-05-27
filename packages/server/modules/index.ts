@@ -11,7 +11,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema'
 import { moduleLogger } from '@/observability/logging'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { isNonNullable, Optional, Authz } from '@speckle/shared'
+import { isNonNullable, Optional, TIME_MS } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import type { Express } from 'express'
 import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
@@ -36,6 +36,11 @@ import {
 } from '@/modules/shared/utils/caching'
 import TTLCache from '@isaacs/ttlcache'
 import { buildRequestLoaders, RequestDataLoaders } from '@/modules/core/loaders'
+import {
+  AllAuthCheckContextLoaders,
+  AuthCheckContextLoaderKeys,
+  AuthCheckContextLoaders
+} from '@speckle/shared/authz'
 
 /**
  * Cached speckle module requires
@@ -60,7 +65,6 @@ function autoloadFromDirectory(dirPath: string) {
       const ext = path.extname(file)
       if (['.js', '.ts'].includes(ext)) {
         const name = camelCase(path.basename(file, ext))
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
         results[name] = require(pathToFile)
       }
     }
@@ -112,8 +116,19 @@ async function getSpeckleModules() {
   const moduleNames = getEnabledModuleNames()
 
   for (const dir of moduleNames) {
-    const moduleIndex = await import(`./${dir}/index`)
-    const moduleDefinition = 'init' in moduleIndex ? moduleIndex : moduleIndex.default
+    const moduleIndex = require(`./${dir}/index`)
+
+    // CJS/ESM interop is weird
+    let moduleDefinition: SpeckleModule
+    if ('init' in moduleIndex) {
+      moduleDefinition = moduleIndex
+    } else {
+      // .default.default may be needed, I dunno why...
+      const moduleDefault = moduleIndex.default
+      moduleDefinition =
+        'default' in moduleDefault ? moduleDefault.default : moduleDefault
+    }
+
     if (!('init' in moduleDefinition)) {
       throw new LogicError(`Module ${dir} does not have an init function`)
     }
@@ -332,7 +347,7 @@ export const moduleAuthLoaders = async (params: {
 }) => {
   const enabledModuleNames = getEnabledModuleNames()
 
-  let loaders: Partial<Authz.AuthCheckContextLoaders> = {}
+  let loaders: Partial<AuthCheckContextLoaders> = {}
   const dataLoaders = params.dataLoaders || (await buildRequestLoaders({ auth: false }))
   const ctx: ServerLoadersContext = {
     dataLoaders
@@ -353,10 +368,10 @@ export const moduleAuthLoaders = async (params: {
 
     // Load the actual loaders
     const newLoaders = await moduleLoadersBuilderFn?.()
-    const newServerLoaders: Partial<Authz.AuthCheckContextLoaders> = Object.entries(
+    const newServerLoaders: Partial<AuthCheckContextLoaders> = Object.entries(
       newLoaders || {}
     ).reduce((acc, entry) => {
-      const key = entry[0] as Authz.AuthCheckContextLoaderKeys
+      const key = entry[0] as AuthCheckContextLoaderKeys
       const loader = entry[1] as Required<ServerLoaders>[typeof key]
 
       // Feed in ctx to all loader functions
@@ -369,7 +384,7 @@ export const moduleAuthLoaders = async (params: {
       set(acc, key, wrappedLoader)
 
       return acc
-    }, {} as Partial<Authz.AuthCheckContextLoaders>)
+    }, {} as Partial<AuthCheckContextLoaders>)
 
     loaders = {
       ...loaders,
@@ -379,7 +394,7 @@ export const moduleAuthLoaders = async (params: {
 
   // validate that all were loaded
   const notFoundKeys = difference(
-    Object.values(Authz.AuthCheckContextLoaderKeys),
+    Object.values(AuthCheckContextLoaderKeys),
     Object.keys(loaders)
   )
   if (notFoundKeys.length) {
@@ -388,7 +403,7 @@ export const moduleAuthLoaders = async (params: {
     )
   }
 
-  const allLoaders = loaders as Authz.AuthCheckContextLoaders
+  const allLoaders = loaders as AuthCheckContextLoaders
 
   /**
    * Add inmemory caching to all loaders. Since the loaders & their caches are scoped to each request and these checks
@@ -397,30 +412,32 @@ export const moduleAuthLoaders = async (params: {
    * In edge cases - the caches can be cleared
    */
   const cache = new TTLCache<string, unknown>()
-  const loadersWithCache: Authz.AuthCheckContextLoaders = Object.entries(
-    allLoaders
-  ).reduce((acc, entry) => {
-    const key = entry[0] as Authz.AuthCheckContextLoaderKeys
-    const loader = entry[1] as Authz.AllAuthCheckContextLoaders[typeof key]
+  const loadersWithCache: AuthCheckContextLoaders = Object.entries(allLoaders).reduce(
+    (acc, entry) => {
+      const key = entry[0] as AuthCheckContextLoaderKeys
+      const loader = entry[1] as AllAuthCheckContextLoaders[typeof key]
 
-    const newLoader = wrapWithCache<any, any>({
-      resolver: loader,
-      name: `authzLoader:${key}`,
-      // since its the inmemory cache, we dont have to worry about true-myth results being
-      // serialized and deserialized as they would be with redis
-      cacheProvider: inMemoryCacheProviderFactory({ cache }),
-      ttlMs: 1000 * 60 * 60 // 1 hour (longer than any req will be)
-    })
-    acc[key] = newLoader
+      const newLoader = wrapWithCache<any, any>({
+        resolver: loader,
+        name: `authzLoader:${key}`,
+        // since its the inmemory cache, we dont have to worry about true-myth results being
+        // serialized and deserialized as they would be with redis
+        cacheProvider: inMemoryCacheProviderFactory({ cache }),
+        ttlMs: 1 * TIME_MS.hour // (longer than any req will be),
+      })
+      acc[key] = newLoader
 
-    return acc
-  }, {} as Authz.AuthCheckContextLoaders)
+      return acc
+    },
+    {} as AuthCheckContextLoaders
+  )
 
   return {
     loaders: loadersWithCache,
     clearCache: () => {
       cache.clear()
       dataLoaders.clearAll()
-    }
+    },
+    internalCache: cache
   }
 }

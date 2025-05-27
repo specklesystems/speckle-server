@@ -119,6 +119,7 @@ describe('Batch commits', () => {
       return {
         id: '',
         objectId: '',
+        branchId: '',
         streamId,
         authorId: me.id
       }
@@ -128,6 +129,7 @@ describe('Batch commits', () => {
       (): BasicTestCommit => ({
         id: '',
         objectId: '',
+        branchId: '',
         streamId: otherStream.id,
         authorId: otherGuy.id
       })
@@ -175,7 +177,9 @@ describe('Batch commits', () => {
           otherCommits.map((c) => c.id)
         )
 
-        expect(result).to.haveGraphQLErrors('you must either own them or their streams')
+        expect(result).to.haveGraphQLErrors({
+          code: 'FORBIDDEN'
+        })
       })
 
       it(`can't batch ${display} an empty commit array`, async () => {
@@ -190,7 +194,9 @@ describe('Batch commits', () => {
           'aaaaaaaa'
         ])
 
-        expect(result).to.haveGraphQLErrors('one of the commits does not exist')
+        expect(result).to.haveGraphQLErrors({
+          code: 'NOT_FOUND_ERROR'
+        })
       })
     })
 
@@ -204,6 +210,7 @@ describe('Batch commits', () => {
           streamId = i % 2 === 0 ? myStream.id : otherStream.id
           return {
             id: '',
+            branchId: '',
             streamId,
             objectId: '',
             authorId: me.id
@@ -241,6 +248,7 @@ describe('Batch commits', () => {
           streamId = i % 2 === 0 ? myStream.id : otherStream.id
           return {
             id: '',
+            branchId: '',
             objectId: '',
             streamId,
             authorId: me.id

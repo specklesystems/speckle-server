@@ -85,6 +85,12 @@ spec:
           - name: SPECKLE_SERVER_URL
             value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
 
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
+                key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
+
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
@@ -119,6 +125,10 @@ spec:
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
           - name: MULTI_REGION_CONFIG_PATH
             value: "/multi-region-config/multi-region-config.json"
+          {{- end }}
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+            value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
           {{- end }}
           {{- with .Values.fileimport_service.additionalEnvVars }}
           {{- toYaml . | nindent 10}}

@@ -2,11 +2,10 @@
   <div>
     <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
       <template #description>
-        Workspace members can have a viewer or editor seat. Admins must be editors. Read
-        more about
-        <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
-          Speckle roles and seats.
-        </NuxtLink>
+        Workspace members can view all projects by default. If on a Viewer seat, they
+        can view projects on web and comment. If on an Editor seat, they can create new
+        projects in the workspace and fully contribute to other projects if given the
+        permission.
       </template>
     </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
@@ -17,15 +16,14 @@
       :workspace="workspace"
       show-role-filter
       show-seat-filter
-      show-invite-button
     />
     <LayoutTable
       class="mt-6 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-4' },
-        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
-        { id: 'joined', header: 'Joined', classes: 'col-span-3' },
-        { id: 'projects', header: 'Projects', classes: 'col-span-2' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-3' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-4' },
+        // { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
@@ -33,9 +31,11 @@
         }
       ]"
       :items="members"
-      :loading="searchResultLoading"
+      :loading="loading"
       :empty-message="
-        hasNoResults ? 'No members found' : 'This workspace has no members'
+        search.length || seatTypeFilter || roleFilter
+          ? 'No results'
+          : 'This workspace has no members'
       "
     >
       <template #name="{ item }">
@@ -85,7 +85,7 @@
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
-      <template #projects="{ item }">
+      <!-- <template #projects="{ item }">
         <FormButton
           v-if="
             item.projectRoles.length > 0 &&
@@ -109,7 +109,7 @@
           {{ item.projectRoles.length }}
           {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
         </div>
-      </template>
+      </template> -->
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
@@ -118,6 +118,12 @@
         />
       </template>
     </LayoutTable>
+    <InfiniteLoading
+      v-if="members?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
     <SettingsWorkspacesMembersActionsProjectPermissionsDialog
       v-model:open="showProjectPermissionsDialog"
       :user="targetUser"
@@ -127,18 +133,16 @@
 </template>
 
 <script setup lang="ts">
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type Nullable, type WorkspaceRoles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
 import {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersTable_WorkspaceFragment,
   type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
-import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 import type { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 graphql(`
   fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
@@ -152,23 +156,7 @@ graphql(`
   }
 `)
 
-graphql(`
-  fragment SettingsWorkspacesMembersTable_Workspace on Workspace {
-    id
-    slug
-    name
-    ...SettingsWorkspacesMembersTableHeader_Workspace
-    team(limit: 250) {
-      items {
-        id
-        ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
-      }
-    }
-  }
-`)
-
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
@@ -182,9 +170,16 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
 
 const { activeUser } = useActiveUser()
 
-const { result: searchResult, loading: searchResultLoading } = useQuery(
-  settingsWorkspacesMembersSearchQuery,
-  () => ({
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result, loading }
+} = usePaginatedQuery({
+  query: settingsWorkspacesMembersSearchQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 10,
+    slug: props.workspaceSlug,
     filter: {
       search: search.value,
       roles: roleFilter.value
@@ -192,19 +187,21 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
         : [Roles.Workspace.Admin, Roles.Workspace.Member],
       seatType: seatTypeFilter.value
     },
-    slug: props.workspaceSlug,
-    workspaceId: props.workspace?.id || ''
+    cursor: null as Nullable<string>
+  })),
+  resolveKey: (vars) => [vars.query || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.team,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
   }),
-  () => ({
-    enabled: !!search.value.length || !!roleFilter.value || !!seatTypeFilter.value
-  })
-)
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
+
+const workspace = computed(() => result.value?.workspaceBySlug)
 
 const members = computed(() => {
-  const memberArray =
-    search.value.length || roleFilter.value || seatTypeFilter.value
-      ? searchResult.value?.workspaceBySlug?.team.items
-      : props.workspace?.team.items
+  const memberArray = workspace.value?.team.items
   return (memberArray || [])
     .map((member) => ({
       ...member,
@@ -212,14 +209,6 @@ const members = computed(() => {
     }))
     .filter((user) => user.role !== Roles.Workspace.Guest)
 })
-
-const hasNoResults = computed(
-  () =>
-    (search.value.length || roleFilter.value || seatTypeFilter.value) &&
-    searchResult.value?.workspaceBySlug?.team.items.length === 0
-)
-
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 
 const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 </script>

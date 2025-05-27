@@ -7,7 +7,11 @@ import {
   WorkspaceLimitsReachedError,
   ServerNoSessionError,
   ServerNoAccessError,
-  WorkspaceReadOnlyError
+  WorkspaceReadOnlyError,
+  WorkspaceNotEnoughPermissionsError,
+  ProjectNotEnoughPermissionsError,
+  ServerNotEnoughPermissionsError,
+  PersonalProjectsLimitedError
 } from '../../../domain/authErrors.js'
 import { MaybeUserContext, ProjectContext } from '../../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../../domain/loaders.js'
@@ -39,6 +43,12 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceLimitsReachedError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+  | InstanceType<
+      | typeof WorkspaceNotEnoughPermissionsError
+      | typeof ProjectNotEnoughPermissionsError
+      | typeof ServerNotEnoughPermissionsError
+      | typeof PersonalProjectsLimitedError
+    >
 
 export const canCreateModelPolicy: AuthPolicy<
   PolicyLoaderKeys,
@@ -65,6 +75,17 @@ export const canCreateModelPolicy: AuthPolicy<
     })
     if (ensuredModelsAccepted.isErr) {
       return err(ensuredModelsAccepted.error)
+    }
+
+    // Prevent personal project models, if personal projects limited
+    const project = await loaders.getProject({ projectId })
+    const env = await loaders.getEnv()
+    if (project && !project.workspaceId && env.FF_PERSONAL_PROJECTS_LIMITS_ENABLED) {
+      return err(
+        new PersonalProjectsLimitedError(
+          'No new models can be added to personal projects'
+        )
+      )
     }
 
     return ok()

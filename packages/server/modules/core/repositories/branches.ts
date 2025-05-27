@@ -41,6 +41,7 @@ import {
   GetStreamBranchCounts,
   GetStreamBranchesByName,
   GetStructuredProjectModels,
+  GetTotalModelCount,
   InsertBranches,
   MarkCommitBranchUpdated,
   StoreBranch,
@@ -664,7 +665,7 @@ export const getModelTreeItemsTotalCountFactory =
 export const validateBranchName = (name: string) => {
   name = (name || '').trim()
   if (!name) {
-    throw new BranchNameError('Branch name is required')
+    throw new BranchNameError('Model name is required')
   }
 
   if (
@@ -677,7 +678,7 @@ export const validateBranchName = (name: string) => {
     name.indexOf('\\') !== -1
   )
     throw new BranchNameError(
-      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas or backwards slashes.',
+      'Model names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas or backwards slashes.',
       {
         info: {
           name
@@ -765,4 +766,13 @@ export const getLatestStreamBranchFactory =
       .limit(1)
     const [branch] = await q
     return branch
+  }
+
+export const getTotalModelCountFactory =
+  (deps: { db: Knex }): GetTotalModelCount =>
+  async () => {
+    const query = tables.branches(deps.db).count()
+    const [{ count }] = await query
+
+    return parseInt(String(count))
   }

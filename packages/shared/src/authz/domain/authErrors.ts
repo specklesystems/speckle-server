@@ -64,6 +64,16 @@ export const ProjectNoAccessError = defineAuthError({
   message: 'You do not have access to the project'
 })
 
+export const PersonalProjectsLimitedError = defineAuthError({
+  code: 'PersonalProjectsLimited',
+  message: 'Non-workspaced/personal projects are limited'
+})
+
+export const ProjectNotEnoughPermissionsError = defineAuthError({
+  code: 'ProjectNotEnoughPermissions',
+  message: 'You do not have enough permissions in the project to perform this action'
+})
+
 export const ProjectLastOwnerError = defineAuthError({
   code: 'ProjectLastOwner',
   message: 'You are the last owner of this project'
@@ -97,6 +107,11 @@ export const WorkspaceLimitsReachedError = defineAuthError<
   message: 'Workspace limits have been reached'
 })
 
+export const WorkspaceNoFeatureAccessError = defineAuthError({
+  code: 'WorkspaceNoFeatureAccess',
+  message: 'Your workspace plan does not have access to this feature.'
+})
+
 export const WorkspaceProjectMoveInvalidError = defineAuthError({
   code: 'WorkspaceProjectMoveInvalid',
   message: 'Projects already in a workspace cannot be moved to another workspace.'
@@ -122,6 +137,11 @@ export const ServerNoAccessError = defineAuthError({
   message: 'You do not have access to this server'
 })
 
+export const ServerNotEnoughPermissionsError = defineAuthError({
+  code: 'ServerNotEnoughPermissions',
+  message: 'You do not have enough permissions in the server to perform this action'
+})
+
 export const ServerNoSessionError = defineAuthError({
   code: 'ServerNoSession',
   message: 'You are not logged in to this server'
@@ -145,6 +165,11 @@ export const ModelNotFoundError = defineAuthError({
 export const ReservedModelNotDeletableError = defineAuthError({
   code: 'ReservedModelNotDeletable',
   message: 'This model is reserved and cannot be deleted'
+})
+
+export const VersionNotFoundError = defineAuthError({
+  code: 'VersionNotFound',
+  message: 'Version not found'
 })
 
 // Resolve all exported error types

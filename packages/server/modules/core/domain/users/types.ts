@@ -29,3 +29,9 @@ export type UserSignUpContext = {
    */
   newsletterConsent: boolean
 }
+
+export type UserOnboardingChoices = {
+  plans?: string[]
+  role?: string
+  source?: string
+}

@@ -7,11 +7,13 @@
       :uischema="finalUiSchema"
       :data="data || {}"
       :readonly="readonly"
+      :ajv="ajv"
       @change="onChange"
     />
   </form>
 </template>
 <script setup lang="ts">
+import { createAjv } from '@jsonforms/core'
 import type { JsonSchema, UISchemaElement } from '@jsonforms/core'
 import { JsonForms, type JsonFormsChangeEvent } from '@jsonforms/vue'
 import type { Nullable, Optional } from '@speckle/shared'
@@ -39,6 +41,7 @@ const { validate } = useForm()
 const isMounted = useMounted()
 const internalRef = ref<Nullable<{ jsonforms: { core: JsonFormsChangeEvent } }>>(null)
 const data = defineModel<Record<string, unknown>>('data')
+const ajv = createAjv({ useDefaults: true })
 
 const finalSchema = computed(() => {
   const base = props.schema

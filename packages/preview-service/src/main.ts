@@ -2,11 +2,10 @@ import express from 'express'
 import puppeteer, { Browser } from 'puppeteer'
 import { createTerminus } from '@godaddy/terminus'
 import type { Logger } from 'pino'
-import { Redis, type RedisOptions } from 'ioredis'
-import Bull from 'bull'
+import type Bull from 'bull'
 
-import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
-
+import { JobPayload, PreviewResultPayload } from '@speckle/shared/workers/previews'
+import { AppState } from '@speckle/shared/workers'
 import {
   REDIS_URL,
   HOST,
@@ -19,8 +18,10 @@ import {
 } from '@/config.js'
 import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
-import { AppState } from '@/const.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
+import { ensureError } from '@speckle/shared'
+import { initializeQueue } from '@speckle/shared/queue'
+import { isRedisReady } from '@speckle/shared/redis'
 
 const app = express()
 const host = HOST
@@ -33,40 +34,7 @@ let appState: AppState = AppState.STARTING
 // serve the preview-frontend
 app.use(express.static('public'))
 await initMetrics({ app, registry: initPrometheusRegistry() })
-
-let client: Redis
-let subscriber: Redis
-
-const opts = {
-  // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
-  createClient(type: string, redisOpts: RedisOptions) {
-    switch (type) {
-      case 'client':
-        if (!client) {
-          client = new Redis(REDIS_URL, redisOpts)
-        }
-        return client
-      case 'subscriber':
-        if (!subscriber) {
-          subscriber = new Redis(REDIS_URL, {
-            ...redisOpts,
-            maxRetriesPerRequest: null,
-            enableReadyCheck: false
-          })
-        }
-        return subscriber
-      case 'bclient':
-        return new Redis(REDIS_URL, {
-          ...redisOpts,
-          maxRetriesPerRequest: null,
-          enableReadyCheck: false
-        })
-      default:
-        throw new Error('Unexpected connection type: ' + type)
-    }
-  }
-}
-const jobQueue = new Bull(JobQueueName, opts)
+let jobQueue: Bull.Queue<JobPayload> | undefined = undefined
 
 // store this callback, so on shutdown we can error the job
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
@@ -112,6 +80,22 @@ const server = app.listen(port, host, async () => {
       handleSIGTERM: false
     })
   }
+
+  try {
+    jobQueue = await initializeQueue<JobPayload>({
+      queueName: JobQueueName,
+      redisUrl: REDIS_URL
+    })
+  } catch (e) {
+    const err = ensureError(e, 'Unknown error creating job queue')
+    logger.error({ err }, 'Error creating job queue')
+
+    // the callback to server.listen has failed, so we need to exit the process and not just return
+    await beforeShutdown() // handle the shutdown gracefully
+    await onShutdown()
+    process.exit(1)
+  }
+
   logger.debug(`Starting processing of "${JobQueueName}" message queue`)
 
   // nothing after this line is getting called, this blocks
@@ -130,21 +114,15 @@ const server = app.listen(port, host, async () => {
 
     try {
       currentJob = { done, logger: jobLogger }
-      const parseResult = jobPayload.safeParse(payload.data)
-      if (!parseResult.success) {
-        jobLogger.error(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          { parseError: parseResult.error, payload: payload.data },
-          'Invalid job payload'
-        )
-        return done(parseResult.error)
-      }
-      const job = parseResult.data
+      const job = payload.data
       jobLogger = jobLogger.child({
         jobId: job.jobId,
         serverUrl: job.url
       })
-      const resultsQueue = new Bull(job.responseQueue, opts)
+      const resultsQueue = await initializeQueue<PreviewResultPayload>({
+        queueName: job.responseQueue,
+        redisUrl: REDIS_URL
+      })
 
       browser = await launchBrowser()
       const result = await jobProcessor({
@@ -185,10 +163,12 @@ const beforeShutdown = async () => {
   logger.info('🛑 Beginning shut down, pausing all jobs')
   appState = AppState.SHUTTINGDOWN
   // stop accepting new jobs and kill any running jobs
-  await jobQueue.pause(
-    true, // just pausing this local worker of the queue
-    true // do not wait for active jobs to finish
-  )
+  if (jobQueue) {
+    await jobQueue.pause(
+      true, // just pausing this local worker of the queue
+      true // do not wait for active jobs to finish
+    )
+  }
 
   if (currentJob) {
     currentJob.logger.warn('Cancelling job due to preview-service shutdown')
@@ -202,6 +182,7 @@ const beforeShutdown = async () => {
     await browser.close()
     browser = undefined
   }
+  // no need to close the job queue and redis client, when the process exits they will be closed automatically
 }
 
 const onShutdown = async () => {
@@ -217,6 +198,17 @@ createTerminus(server, {
         return Promise.reject(new Error('Preview service is shutting down'))
       }
 
+      if (!jobQueue) {
+        return Promise.reject(new Error('Job queue is not initialized'))
+      }
+
+      try {
+        await isRedisReady(jobQueue.client)
+      } catch (e) {
+        return Promise.reject(
+          ensureError(e, 'Unknown error when checking Redis client')
+        )
+      }
       const isReady = await jobQueue.isReady()
       if (!isReady)
         return Promise.reject(

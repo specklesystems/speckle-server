@@ -1,9 +1,11 @@
 import { err, ok } from 'true-myth/result'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
@@ -22,6 +24,7 @@ import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
 import { Roles } from '../../../core/constants.js'
 import {
+  ensureModelCanBeCreatedFragment,
   ensureWorkspaceProjectCanBeCreatedFragment,
   ensureWorkspaceRoleAndSessionFragment,
   ensureWorkspacesEnabledFragment
@@ -41,6 +44,8 @@ type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getWorkspacePlan
   | typeof AuthCheckContextLoaderKeys.getWorkspaceLimits
   | typeof AuthCheckContextLoaderKeys.getWorkspaceProjectCount
+  | typeof AuthCheckContextLoaderKeys.getProjectModelCount
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceModelCount
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSeat
 
 type PolicyArgs = MaybeUserContext & MaybeProjectContext & MaybeWorkspaceContext
@@ -56,8 +61,10 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceProjectMoveInvalidError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+  | InstanceType<typeof ServerNotEnoughPermissionsError>
   | InstanceType<typeof WorkspaceNoEditorSeatError>
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
+  | InstanceType<typeof ProjectNotEnoughPermissionsError>
 
 export const canMoveToWorkspacePolicy: AuthPolicy<
   PolicyLoaderKeys,
@@ -86,7 +93,9 @@ export const canMoveToWorkspacePolicy: AuthPolicy<
         projectId,
         role: Roles.Stream.Owner
       })
-      if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
+      if (ensuredProjectRole.isErr) {
+        return err(ensuredProjectRole.error)
+      }
     }
 
     if (workspaceId) {
@@ -108,6 +117,23 @@ export const canMoveToWorkspacePolicy: AuthPolicy<
       })
       if (ensuredProjectsAccepted.isErr) {
         return err(ensuredProjectsAccepted.error)
+      }
+    }
+
+    if (workspaceId && projectId) {
+      // Check whether this specific project can be moved to the workspace
+      // Does it maybe have too many models?
+      const projectModelCount = await loaders.getProjectModelCount({
+        projectId
+      })
+      const ensuredModelsAccepted = await ensureModelCanBeCreatedFragment(loaders)({
+        projectId,
+        userId,
+        addedModelCount: projectModelCount,
+        workspaceId
+      })
+      if (ensuredModelsAccepted.isErr) {
+        return err(ensuredModelsAccepted.error)
       }
     }
 

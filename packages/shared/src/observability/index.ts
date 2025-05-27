@@ -1,11 +1,17 @@
 import { pino } from 'pino'
 import type { LoggerOptions } from 'pino'
 import { toClef, toClefLogLevel } from './pinoClef.js'
+import { TIME_MS } from '../core/index.js'
+import inspector from 'node:inspector'
 
 let logger: pino.Logger
 export type MixinFn = (mergeObject: object, level: number) => object
 type LogLevelFormatter = (label: string, number: number) => object
 type LogFormatter = (logObject: Record<string, unknown>) => Record<string, unknown>
+
+const allowPrettyDebugger = ['1', 'true'].includes(
+  process.env.ALLOW_PRETTY_DEBUGGER || 'false'
+)
 
 const defaultLevelFormatterFactory =
   (pretty: boolean): LogLevelFormatter =>
@@ -39,7 +45,8 @@ export function getLogger(
     timestamp: pretty ? pino.stdTimeFunctions.isoTime : false
   }
 
-  if (pretty) {
+  // pino-pretty hangs in debugger mode in node 22 for some (Ubuntu/WSL2?), dunno why
+  if (pretty && (allowPrettyDebugger || !inspector.url())) {
     pinoOptions.transport = {
       target: '@speckle/shared/pinoPrettyTransport.cjs',
       options: {
@@ -78,7 +85,7 @@ export function simpleRpmCounter() {
 
   const validateHits = () => {
     const timestamp = getTimestamp()
-    if (timestamp > lastDateTimestamp + 60 * 1000) {
+    if (timestamp > lastDateTimestamp + TIME_MS.minute) {
       hits = 0
       lastDateTimestamp = timestamp
     }

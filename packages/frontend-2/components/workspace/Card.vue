@@ -1,17 +1,20 @@
 <template>
   <CommonCard
-    class="w-full bg-foundation border-outline-2 !p-4"
+    class="w-full border-outline-2 !py-3 px-4"
     :class="{
-      'cursor-pointer hover:border-outline-3 shadow-sm hover:border-zinc-400': clickable
+      'cursor-pointer hover:border-outline-3 shadow-sm hover:border-zinc-400 bg-foundation':
+        clickable
     }"
     @click="clickable && onClick"
   >
-    <div class="flex justify-between gap-4">
-      <div class="flex gap-4">
-        <WorkspaceAvatar :name="name" :logo="logo" size="xl" />
+    <div class="flex flex-col sm:flex-row justify-between gap-4">
+      <div class="flex gap-3">
+        <WorkspaceAvatar :name="name" :logo="logo" size="lg" />
         <div class="flex flex-col sm:flex-row gap-4 justify-between flex-1">
           <div class="flex flex-col items-start text-body-2xs text-foreground-2">
-            <h6 class="text-heading-sm text-foreground">{{ name }}</h6>
+            <h6 class="text-foreground text-body-sm font-medium">
+              {{ name }}
+            </h6>
             <slot name="text"></slot>
           </div>
         </div>

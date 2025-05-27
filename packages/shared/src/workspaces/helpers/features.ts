@@ -6,6 +6,7 @@ import {
   WorkspacePlanBillingIntervals,
   WorkspacePlans
 } from './plans.js'
+import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
 
 /**
  * WORKSPACE FEATURES
@@ -18,7 +19,8 @@ export const WorkspacePlanFeatures = <const>{
   // Optional/plan specific
   DomainSecurity: 'domainBasedSecurityPolicies',
   SSO: 'oidcSso',
-  CustomDataRegion: 'workspaceDataRegionSpecificity'
+  CustomDataRegion: 'workspaceDataRegionSpecificity',
+  HideSpeckleBranding: 'hideSpeckleBranding'
 }
 
 export type WorkspacePlanFeatures =
@@ -27,23 +29,28 @@ export type WorkspacePlanFeatures =
 export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.AutomateBeta]: {
     displayName: 'Automate beta access',
-    description: 'Some automate text'
+    description: 'Run custom automations on every new model version'
   },
   [WorkspacePlanFeatures.DomainDiscoverability]: {
     displayName: 'Domain discoverability',
-    description: 'Some domain discoverability text'
+    description:
+      'Allow people to discover your workspace if they use a verified company email'
   },
   [WorkspacePlanFeatures.DomainSecurity]: {
-    displayName: 'Domain security',
+    displayName: 'Domain protection',
     description: 'Require workspace members to use a verified company email'
   },
   [WorkspacePlanFeatures.SSO]: {
     displayName: 'Single Sign-On (SSO)',
-    description: 'Require workspace members to log in with your SSO provider'
+    description: 'Require workspace members to authenticate with your SSO provider'
   },
   [WorkspacePlanFeatures.CustomDataRegion]: {
     displayName: 'Custom data residency',
-    description: 'Store the workspace data in a custom region'
+    description: 'Store your data in EU, UK, North America, or Asia Pacific'
+  },
+  [WorkspacePlanFeatures.HideSpeckleBranding]: {
+    displayName: 'Customised viewer',
+    description: 'Hide the Speckle branding in embedded viewer'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -66,7 +73,8 @@ export type WorkspacePlanPriceStructure = {
 const unlimited: WorkspaceLimits = {
   projectCount: null,
   modelCount: null,
-  versionsHistory: null
+  versionsHistory: null,
+  commentHistory: null
 }
 
 export type WorkspacePlanConfig<Plan extends WorkspacePlans = WorkspacePlans> = {
@@ -83,43 +91,24 @@ const baseFeatures = [
 export const WorkspacePaidPlanConfigs: {
   [plan in PaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
-  // Old
-  [PaidWorkspacePlans.Starter]: {
-    plan: PaidWorkspacePlans.Starter,
-    features: [...baseFeatures],
-    limits: unlimited
-  },
-  [PaidWorkspacePlans.Plus]: {
-    plan: PaidWorkspacePlans.Plus,
-    features: [...baseFeatures, WorkspacePlanFeatures.SSO],
-    limits: unlimited
-  },
-  [PaidWorkspacePlans.Business]: {
-    plan: PaidWorkspacePlans.Business,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
-    ],
-    limits: unlimited
-  },
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
     features: [...baseFeatures],
     limits: {
       projectCount: 5,
       modelCount: 25,
-      versionsHistory: { value: 30, unit: 'day' }
+      versionsHistory: { value: 30, unit: 'day' },
+      commentHistory: { value: 30, unit: 'day' }
     }
   },
-  // New
   [PaidWorkspacePlans.TeamUnlimited]: {
     plan: PaidWorkspacePlans.TeamUnlimited,
     features: [...baseFeatures],
     limits: {
       projectCount: null,
       modelCount: null,
-      versionsHistory: { value: 30, unit: 'day' }
+      versionsHistory: { value: 30, unit: 'day' },
+      commentHistory: { value: 30, unit: 'day' }
     }
   },
   [PaidWorkspacePlans.Pro]: {
@@ -128,12 +117,14 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: {
       projectCount: 10,
       modelCount: 50,
-      versionsHistory: null
+      versionsHistory: null,
+      commentHistory: null
     }
   },
   [PaidWorkspacePlans.ProUnlimited]: {
@@ -142,12 +133,14 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: {
       projectCount: null,
       modelCount: null,
-      versionsHistory: null
+      versionsHistory: null,
+      commentHistory: null
     }
   }
 }
@@ -155,14 +148,14 @@ export const WorkspacePaidPlanConfigs: {
 export const WorkspaceUnpaidPlanConfigs: {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
-  // Old
   [UnpaidWorkspacePlans.Unlimited]: {
     plan: UnpaidWorkspacePlans.Unlimited,
     features: [
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: unlimited
   },
@@ -172,23 +165,11 @@ export const WorkspaceUnpaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: unlimited
   },
-  [UnpaidWorkspacePlans.StarterInvoiced]: {
-    ...WorkspacePaidPlanConfigs.starter,
-    plan: UnpaidWorkspacePlans.StarterInvoiced
-  },
-  [UnpaidWorkspacePlans.PlusInvoiced]: {
-    ...WorkspacePaidPlanConfigs.plus,
-    plan: UnpaidWorkspacePlans.PlusInvoiced
-  },
-  [UnpaidWorkspacePlans.BusinessInvoiced]: {
-    ...WorkspacePaidPlanConfigs.business,
-    plan: UnpaidWorkspacePlans.BusinessInvoiced
-  },
-  // New
   [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
     ...WorkspacePaidPlanConfigs.teamUnlimited,
     plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
@@ -203,7 +184,8 @@ export const WorkspaceUnpaidPlanConfigs: {
     limits: {
       projectCount: 1,
       modelCount: 5,
-      versionsHistory: { value: 7, unit: 'day' }
+      versionsHistory: { value: 7, unit: 'day' },
+      commentHistory: { value: 7, unit: 'day' }
     }
   }
 }
@@ -211,4 +193,43 @@ export const WorkspaceUnpaidPlanConfigs: {
 export const WorkspacePlanConfigs = {
   ...WorkspacePaidPlanConfigs,
   ...WorkspaceUnpaidPlanConfigs
+}
+
+/**
+ * Checks if a workspace exceeds its plan limits for projects and models
+ */
+export const workspaceExceedsPlanLimit = (
+  plan: MaybeNullOrUndefined<WorkspacePlans>,
+  projectCount: MaybeNullOrUndefined<number>,
+  modelCount: MaybeNullOrUndefined<number>
+): boolean => {
+  if (!plan) return false
+
+  const planConfig = WorkspacePlanConfigs[plan]
+  if (!planConfig) return false
+
+  const limits = planConfig.limits
+  if (!limits.projectCount || !limits.modelCount) return false
+  if (!projectCount || !modelCount) return false
+
+  return projectCount > limits.projectCount || modelCount > limits.modelCount
+}
+
+/**
+ * Checks if a workspace reached its plan limits for projects and models
+ */
+export const workspaceReachedPlanLimit = (
+  plan: MaybeNullOrUndefined<WorkspacePlans>,
+  projectCount: MaybeNullOrUndefined<number>,
+  modelCount: MaybeNullOrUndefined<number>
+): boolean => {
+  if (!plan) return false
+
+  const planConfig = WorkspacePlanConfigs[plan]
+  if (!planConfig) return false
+
+  const limits = planConfig.limits
+  if (!limits.projectCount || !limits.modelCount) return false
+
+  return projectCount === limits.projectCount || modelCount === limits.modelCount
 }

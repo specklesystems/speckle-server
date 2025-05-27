@@ -29,7 +29,7 @@
           <CommonAlert v-if="!activeUser" color="danger" size="2xs">
             <template #title>Sign in required</template>
           </CommonAlert>
-          <CommonAlert v-else-if="!canContribute" color="danger" size="2xs">
+          <CommonAlert v-else-if="!canContribute?.authorized" color="danger" size="2xs">
             <template #title>You do not have permission</template>
           </CommonAlert>
           <CommonAlert v-else-if="!limits" color="neutral" size="2xs">
@@ -62,7 +62,7 @@
                   <ArrowTopRightOnSquareIcon class="h-3 w-3" />
                 </div>
               </FormButton>
-              <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
+              <div v-tippy="tooltipMessage">
                 <FormButton :disabled="buttonDisabled" size="sm" @click="enqueMagic()">
                   Generate
                 </FormButton>
@@ -77,11 +77,6 @@
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
       >
-        <FormButton color="subtle" size="sm" @click="isFeedbackOpen = true">
-          <div class="flex items-center gap-1 text-foreground-2 font-normal">
-            <span>Give us feedback</span>
-          </div>
-        </FormButton>
         <FormButton
           color="subtle"
           size="sm"
@@ -95,12 +90,6 @@
         </FormButton>
       </div>
     </div>
-
-    <FeedbackDialog
-      v-model:open="isFeedbackOpen"
-      intro="Help us improve Gendo AI renders. What did you like or dislike? How could we improve the experience for you and your workflow?"
-      type="gendo"
-    />
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
@@ -117,6 +106,18 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment ViewerGendoPanel_Project on Project {
+    id
+    permissions {
+      canRequestRender {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 const {
   projectId,
@@ -136,7 +137,6 @@ const { activeUser } = useActiveUser()
 const prompt = ref<string>()
 const isLoading = ref(false)
 const timeOutWait = ref(false)
-const isFeedbackOpen = ref(false)
 
 const suggestedPrompts = ref<string[]>([
   'Example: Minimalist Scandinavian interior with warm natural lighting...',
@@ -148,8 +148,7 @@ const suggestedPrompts = ref<string[]>([
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
-// TODO: Auth policy
-const canContribute = computed(() => project.value?.role)
+const canContribute = computed(() => project.value?.permissions.canRequestRender)
 
 const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
 
@@ -166,7 +165,7 @@ const textAreaDisabled = computed(() => {
     isLoading.value ||
     timeOutWait.value ||
     isOutOfCredits.value ||
-    !canContribute.value ||
+    !canContribute.value?.authorized ||
     !activeUser.value ||
     !limits.value
   )
@@ -178,7 +177,8 @@ const buttonDisabled = computed(() => {
 
 const tooltipMessage = computed(() => {
   if (!activeUser.value) return 'You must be logged in'
-  if (!canContribute.value) return 'Project permissions required'
+  if (!canContribute.value?.authorized)
+    return canContribute.value?.message || 'Project permissions required'
   if (isOutOfCredits.value) return 'No credits remaining'
   if (!limits.value) return 'No credits available'
   return undefined

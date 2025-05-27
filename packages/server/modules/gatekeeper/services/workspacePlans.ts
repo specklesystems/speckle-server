@@ -27,39 +27,19 @@ export const updateWorkspacePlanFactory =
     })
     if (!workspace) throw new WorkspaceNotFoundError()
     const createdAt = new Date()
+    const updatedAt = new Date()
     switch (name) {
-      case 'starter':
-        switch (status) {
-          case 'trial':
-          case 'expired':
-          case 'valid':
-          case 'cancelationScheduled':
-          case 'canceled':
-          case 'paymentFailed':
-            await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
-            })
-            break
-          default:
-            throwUncoveredError(status)
-        }
-        break
-      case 'business':
-      case 'plus':
       case 'team':
       case 'teamUnlimited':
       case 'pro':
       case 'proUnlimited':
         switch (status) {
-          case 'trial':
-          case 'expired':
-            throw new InvalidWorkspacePlanStatus()
           case 'valid':
           case 'cancelationScheduled':
           case 'canceled':
           case 'paymentFailed':
             await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
+              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
             })
             break
           default:
@@ -70,22 +50,17 @@ export const updateWorkspacePlanFactory =
       case 'free':
       case 'academia':
       case 'unlimited':
-      case 'starterInvoiced':
-      case 'plusInvoiced':
-      case 'businessInvoiced':
       case 'teamUnlimitedInvoiced':
       case 'proUnlimitedInvoiced':
         switch (status) {
           case 'valid':
             await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
+              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
             })
             break
           case 'cancelationScheduled':
           case 'canceled':
-          case 'expired':
           case 'paymentFailed':
-          case 'trial':
             throw new InvalidWorkspacePlanStatus()
           default:
             throwUncoveredError(status)

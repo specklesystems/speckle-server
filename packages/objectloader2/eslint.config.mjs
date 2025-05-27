@@ -29,7 +29,9 @@ const configs = [
       }
     },
     rules: {
-      '@typescript-eslint/restrict-template-expressions': 'off'
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'error'
     }
   },
   {
@@ -49,6 +51,7 @@ const configs = [
   {
     files: ['**/*.spec.ts'],
     rules: {
+      camelcase: 'off',
       '@typescript-eslint/no-unused-expressions': 'off'
     }
   }

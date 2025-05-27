@@ -19,3 +19,15 @@ export type BlobStorageItemInput = SetOptional<
   BlobStorageItem,
   'fileSize' | 'fileType' | 'uploadStatus' | 'uploadError' | 'createdAt' | 'fileHash'
 >
+
+export type UploadResult = ProcessingResult & {
+  formKey: string
+}
+
+export type ProcessingResult = {
+  uploadStatus?: number
+  uploadError?: Nullable<Error | string>
+  blobId: string
+  fileName: string
+  fileSize: Nullable<number>
+}

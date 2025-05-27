@@ -25,6 +25,7 @@ export type ActiveUserMutations = {
   emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
+  meta: UserMetaMutations;
   setActiveWorkspace: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
@@ -360,8 +361,10 @@ export type AutomateFunctionToken = {
 };
 
 export type AutomateFunctionsFilter = {
-  /** By default we skip functions without releases. Set this to true to include them. */
-  functionsWithoutReleases?: InputMaybe<Scalars['Boolean']['input']>;
+  /** By default, we include featured ("public") functions. Set this to false to exclude them. */
+  includeFeatured?: InputMaybe<Scalars['Boolean']['input']>;
+  /** By default, we exclude functions without releases. Set this to false to include them. */
+  requireRelease?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -433,6 +436,7 @@ export type Automation = {
   id: Scalars['ID']['output'];
   isTestAutomation: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  permissions: AutomationPermissionChecks;
   runs: AutomateRunCollection;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -448,6 +452,13 @@ export type AutomationCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<Automation>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type AutomationPermissionChecks = {
+  __typename?: 'AutomationPermissionChecks';
+  canDelete: PermissionCheckResult;
+  canRead: PermissionCheckResult;
+  canUpdate: PermissionCheckResult;
 };
 
 export type AutomationRevision = {
@@ -614,7 +625,7 @@ export type Comment = {
   parent?: Maybe<Comment>;
   permissions: CommentPermissionChecks;
   /** Plain-text version of the comment text, ideal for previews */
-  rawText: Scalars['String']['output'];
+  rawText?: Maybe<Scalars['String']['output']>;
   /** @deprecated Not actually implemented */
   reactions?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   /** Gets the replies to this comment. */
@@ -624,7 +635,7 @@ export type Comment = {
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
   resources: Array<ResourceIdentifier>;
   screenshot?: Maybe<Scalars['String']['output']>;
-  text: SmartTextEditorValue;
+  text?: Maybe<SmartTextEditorValue>;
   /** The time this comment was last updated. Corresponds also to the latest reply to this comment, if any. */
   updatedAt: Scalars['DateTime']['output'];
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
@@ -982,18 +993,6 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
-export type DiscoverableWorkspaceCollaborator = {
-  __typename?: 'DiscoverableWorkspaceCollaborator';
-  avatar?: Maybe<Scalars['String']['output']>;
-};
-
-export type DiscoverableWorkspaceCollaboratorCollection = {
-  __typename?: 'DiscoverableWorkspaceCollaboratorCollection';
-  cursor?: Maybe<Scalars['String']['output']>;
-  items: Array<DiscoverableWorkspaceCollaborator>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -1201,8 +1200,12 @@ export type LimitedUserWorkspaceRoleArgs = {
 /** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
+  /** Workspace admins ordered by join date */
+  adminTeam: Array<LimitedWorkspaceCollaborator>;
   /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, the users with a matching domain may join the workspace directly */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Workspace id */
   id: Scalars['ID']['output'];
   /** Optional base64 encoded workspace logo image */
@@ -1212,7 +1215,7 @@ export type LimitedWorkspace = {
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
   /** Workspace members visible to people with verified email domain */
-  team?: Maybe<DiscoverableWorkspaceCollaboratorCollection>;
+  team?: Maybe<LimitedWorkspaceCollaboratorCollection>;
 };
 
 
@@ -1220,6 +1223,18 @@ export type LimitedWorkspace = {
 export type LimitedWorkspaceTeamArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
+};
+
+export type LimitedWorkspaceCollaborator = {
+  __typename?: 'LimitedWorkspaceCollaborator';
+  user: LimitedUser;
+};
+
+export type LimitedWorkspaceCollaboratorCollection = {
+  __typename?: 'LimitedWorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<LimitedWorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type LimitedWorkspaceJoinRequest = {
@@ -1328,6 +1343,7 @@ export type ModelMutationsUpdateArgs = {
 
 export type ModelPermissionChecks = {
   __typename?: 'ModelPermissionChecks';
+  canCreateVersion: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
@@ -1910,11 +1926,8 @@ export type OnboardingCompletionInput = {
 };
 
 export const PaidWorkspacePlans = {
-  Business: 'business',
-  Plus: 'plus',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',
-  Starter: 'starter',
   Team: 'team',
   TeamUnlimited: 'teamUnlimited'
 } as const;
@@ -1959,6 +1972,7 @@ export type PendingStreamCollaborator = {
   token?: Maybe<Scalars['String']['output']>;
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
+  workspaceSlug?: Maybe<Scalars['String']['output']>;
 };
 
 export type PendingWorkspaceCollaborator = {
@@ -2022,6 +2036,9 @@ export type Project = {
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  /** Public project-level configuration for embedded viewer */
+  embedOptions: ProjectEmbedOptions;
+  hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
   /** Collaborators who have been invited, but not yet accepted. */
@@ -2060,7 +2077,7 @@ export type Project = {
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
-  visibility: SimpleProjectVisibility;
+  visibility: ProjectVisibility;
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
@@ -2100,6 +2117,11 @@ export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectHasAccessToFeatureArgs = {
+  featureName: WorkspaceFeatureName;
 };
 
 
@@ -2218,6 +2240,7 @@ export type ProjectAutomationMutations = {
   createRevision: AutomationRevision;
   createTestAutomation: Automation;
   createTestAutomationRun: TestAutomationRun;
+  delete: Scalars['Boolean']['output'];
   /**
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
@@ -2243,6 +2266,11 @@ export type ProjectAutomationMutationsCreateTestAutomationArgs = {
 
 
 export type ProjectAutomationMutationsCreateTestAutomationRunArgs = {
+  automationId: Scalars['ID']['input'];
+};
+
+
+export type ProjectAutomationMutationsDeleteArgs = {
   automationId: Scalars['ID']['input'];
 };
 
@@ -2292,6 +2320,8 @@ export type ProjectCollaborator = {
   /** The collaborator's workspace seat type for the workspace this project is in */
   seatType?: Maybe<WorkspaceSeatType>;
   user: LimitedUser;
+  /** The collaborator's workspace role for the workspace this project is in, if any */
+  workspaceRole?: Maybe<Scalars['String']['output']>;
 };
 
 export type ProjectCollection = {
@@ -2345,6 +2375,11 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectEmbedOptions = {
+  __typename?: 'ProjectEmbedOptions';
+  hideSpeckleBranding: Scalars['Boolean']['output'];
 };
 
 export type ProjectFileImportUpdatedMessage = {
@@ -2567,13 +2602,19 @@ export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVers
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
   canBroadcastActivity: PermissionCheckResult;
+  canCreateAutomation: PermissionCheckResult;
   canCreateComment: PermissionCheckResult;
   canCreateModel: PermissionCheckResult;
+  canDelete: PermissionCheckResult;
+  canInvite: PermissionCheckResult;
   canLeave: PermissionCheckResult;
+  canLoad: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
+  canPublish: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
+  canRequestRender: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
   canUpdateAllowPublicComments: PermissionCheckResult;
 };
@@ -2590,7 +2631,6 @@ export type ProjectRole = {
 };
 
 export type ProjectTestAutomationCreateInput = {
-  functionId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
@@ -2668,9 +2708,14 @@ export const ProjectVersionsUpdatedMessageType = {
 
 export type ProjectVersionsUpdatedMessageType = typeof ProjectVersionsUpdatedMessageType[keyof typeof ProjectVersionsUpdatedMessageType];
 export const ProjectVisibility = {
+  /** Only accessible to explicit collaborators */
   Private: 'PRIVATE',
+  /** Accessible to everyone (even non-logged in users) */
   Public: 'PUBLIC',
-  Unlisted: 'UNLISTED'
+  /** Legacy - same as public */
+  Unlisted: 'UNLISTED',
+  /** Accessible to everyone in the project's workspace */
+  Workspace: 'WORKSPACE'
 } as const;
 
 export type ProjectVisibility = typeof ProjectVisibility[keyof typeof ProjectVisibility];
@@ -3220,13 +3265,6 @@ export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
 
-/** Visbility without the "discoverable" option */
-export const SimpleProjectVisibility = {
-  Private: 'PRIVATE',
-  Unlisted: 'UNLISTED'
-} as const;
-
-export type SimpleProjectVisibility = typeof SimpleProjectVisibility[keyof typeof SimpleProjectVisibility];
 export type SmartTextEditorValue = {
   __typename?: 'SmartTextEditorValue';
   /** File attachments, if any */
@@ -3303,6 +3341,7 @@ export type Stream = {
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
    * and searches
+   * @deprecated Discoverability as a feature has been removed.
    */
   isDiscoverable: Scalars['Boolean']['output'];
   /** Whether the stream can be viewed by non-contributors */
@@ -3873,6 +3912,7 @@ export type User = {
   isOnboardingFinished?: Maybe<Scalars['Boolean']['output']>;
   /** Returns `true` if last visited project was "legacy" "personal project" outside of a workspace */
   isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
+  meta: UserMeta;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   permissions: RootPermissionChecks;
@@ -3977,6 +4017,7 @@ export type UserProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<UserProjectsFilter>;
   limit?: Scalars['Int']['input'];
+  sortBy?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -4093,6 +4134,35 @@ export type UserGendoAiCredits = {
   used: Scalars['Int']['output'];
 };
 
+export type UserMeta = {
+  __typename?: 'UserMeta';
+  legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
+  newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  speckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+export type UserMetaMutations = {
+  __typename?: 'UserMetaMutations';
+  setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
+  setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs = {
+  value: Scalars['Boolean']['input'];
+};
+
+
+export type UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
+};
+
+
+export type UserMetaMutationsSetSpeckleConBannerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
+};
+
 export type UserProjectCollection = {
   __typename?: 'UserProjectCollection';
   cursor?: Maybe<Scalars['String']['output']>;
@@ -4102,6 +4172,11 @@ export type UserProjectCollection = {
 };
 
 export type UserProjectsFilter = {
+  /**
+   * If set to true, will also include streams that the user may not have an explicit role on,
+   * but has implicit access to because of workspaces
+   */
+  includeImplicitAccess?: InputMaybe<Scalars['Boolean']['input']>;
   /** Only include projects where user has the specified roles */
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Only include personal projects (not in any workspace) */
@@ -4155,6 +4230,7 @@ export type UserUpdateInput = {
 };
 
 export type UserWorkspacesFilter = {
+  completed?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4188,6 +4264,7 @@ export type Version = {
   message?: Maybe<Scalars['String']['output']>;
   model: Model;
   parents?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  permissions: VersionPermissionChecks;
   previewUrl: Scalars['String']['output'];
   referencedObject?: Maybe<Scalars['String']['output']>;
   sourceApplication?: Maybe<Scalars['String']['output']>;
@@ -4263,6 +4340,12 @@ export type VersionMutationsRequestGendoAiRenderArgs = {
 
 export type VersionMutationsUpdateArgs = {
   input: UpdateVersionInput;
+};
+
+export type VersionPermissionChecks = {
+  __typename?: 'VersionPermissionChecks';
+  canReceive: PermissionCheckResult;
+  canUpdate: PermissionCheckResult;
 };
 
 export type ViewerResourceGroup = {
@@ -4408,12 +4491,16 @@ export type Workspace = {
    */
   defaultRegion?: Maybe<ServerRegionItem>;
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable discovery of the workspace */
   discoverabilityEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable restriction to invite users to workspace as Guests only */
   domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
   /** Verified workspace domains */
   domains?: Maybe<Array<WorkspaceDomain>>;
+  /** Workspace-level configuration for models in embedded viewer */
+  embedOptions: WorkspaceEmbedOptions;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   /** Only available to workspace owners/members */
@@ -4432,6 +4519,7 @@ export type Workspace = {
   role?: Maybe<Scalars['String']['output']>;
   /** Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   seatType?: Maybe<WorkspaceSeatType>;
+  seats?: Maybe<WorkspaceSubscriptionSeats>;
   slug: Scalars['String']['output'];
   /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
   sso?: Maybe<WorkspaceSso>;
@@ -4564,8 +4652,14 @@ export type WorkspaceDomainDeleteInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type WorkspaceEmbedOptions = {
+  __typename?: 'WorkspaceEmbedOptions';
+  hideSpeckleBranding: Scalars['Boolean']['output'];
+};
+
 export const WorkspaceFeatureName = {
   DomainBasedSecurityPolicies: 'domainBasedSecurityPolicies',
+  HideSpeckleBranding: 'hideSpeckleBranding',
   OidcSso: 'oidcSso',
   WorkspaceDataRegionSpecificity: 'workspaceDataRegionSpecificity'
 } as const;
@@ -4693,7 +4787,6 @@ export type WorkspaceMutations = {
   /** Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed" */
   dismiss: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
-  join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
   requestToJoin: Scalars['Boolean']['output'];
@@ -4701,6 +4794,7 @@ export type WorkspaceMutations = {
   setDefaultRegion: Workspace;
   update: Workspace;
   updateCreationState: Scalars['Boolean']['output'];
+  updateEmbedOptions: WorkspaceEmbedOptions;
   updateRole: Workspace;
   updateSeatType: Workspace;
 };
@@ -4736,11 +4830,6 @@ export type WorkspaceMutationsDismissArgs = {
 };
 
 
-export type WorkspaceMutationsJoinArgs = {
-  input: JoinWorkspaceInput;
-};
-
-
 export type WorkspaceMutationsLeaveArgs = {
   id: Scalars['ID']['input'];
 };
@@ -4764,6 +4853,11 @@ export type WorkspaceMutationsUpdateArgs = {
 
 export type WorkspaceMutationsUpdateCreationStateArgs = {
   input: WorkspaceCreationStateInput;
+};
+
+
+export type WorkspaceMutationsUpdateEmbedOptionsArgs = {
+  input: WorkspaceUpdateEmbedOptionsInput;
 };
 
 
@@ -4794,6 +4888,8 @@ export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof 
 export type WorkspacePermissionChecks = {
   __typename?: 'WorkspacePermissionChecks';
   canCreateProject: PermissionCheckResult;
+  canEditEmbedOptions: PermissionCheckResult;
+  canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
 };
 
@@ -4820,9 +4916,7 @@ export type WorkspacePlanPrice = {
 export const WorkspacePlanStatuses = {
   CancelationScheduled: 'cancelationScheduled',
   Canceled: 'canceled',
-  Expired: 'expired',
   PaymentFailed: 'paymentFailed',
-  Trial: 'trial',
   Valid: 'valid'
 } as const;
 
@@ -4835,16 +4929,10 @@ export type WorkspacePlanUsage = {
 
 export const WorkspacePlans = {
   Academia: 'academia',
-  Business: 'business',
-  BusinessInvoiced: 'businessInvoiced',
   Free: 'free',
-  Plus: 'plus',
-  PlusInvoiced: 'plusInvoiced',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',
   ProUnlimitedInvoiced: 'proUnlimitedInvoiced',
-  Starter: 'starter',
-  StarterInvoiced: 'starterInvoiced',
   Team: 'team',
   TeamUnlimited: 'teamUnlimited',
   TeamUnlimitedInvoiced: 'teamUnlimitedInvoiced',
@@ -5038,10 +5126,16 @@ export type WorkspaceTeamFilter = {
   seatType?: InputMaybe<WorkspaceSeatType>;
 };
 
+export type WorkspaceUpdateEmbedOptionsInput = {
+  hideSpeckleBranding: Scalars['Boolean']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
 export type WorkspaceUpdateInput = {
   /** @deprecated Always the reviewer role. Will be removed in the future. */
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  discoverabilityAutoJoinEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
@@ -5105,9 +5199,9 @@ export type CrossSyncDownloadableCommitViewerThreadsQueryVariables = Exact<{
 }>;
 
 
-export type CrossSyncDownloadableCommitViewerThreadsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, commentThreads: { __typename?: 'ProjectCommentCollection', totalCount: number, totalArchivedCount: number, items: Array<{ __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, replies: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } }> }, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } }> } } };
+export type CrossSyncDownloadableCommitViewerThreadsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, commentThreads: { __typename?: 'ProjectCommentCollection', totalCount: number, totalArchivedCount: number, items: Array<{ __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, replies: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, text?: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } | null }> }, text?: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } | null }> } } };
 
-export type DownloadbleCommentMetadataFragment = { __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } };
+export type DownloadbleCommentMetadataFragment = { __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, text?: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } | null };
 
 export type CrossSyncProjectMetadataQueryVariables = Exact<{
   id: Scalars['String']['input'];
@@ -5115,7 +5209,7 @@ export type CrossSyncProjectMetadataQueryVariables = Exact<{
 }>;
 
 
-export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: SimpleProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, createdAt: string, model: { __typename?: 'Model', id: string, name: string } }> } } };
+export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, createdAt: string, model: { __typename?: 'Model', id: string, name: string } }> } } };
 
 export type CrossSyncClientTestQueryVariables = Exact<{ [key: string]: never; }>;
 

@@ -7,12 +7,13 @@
   "author": "AEC Systems",
   "license": "SEE LICENSE IN readme.md",
   "main": "./bin/www",
+  "type": "commonjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/specklesystems/Server.git"
   },
   "engines": {
-    "node": "^18.19.0"
+    "node": "^22.6.0"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
@@ -114,7 +115,7 @@
     "pg-query-stream": "^4.2.3",
     "pino": "^8.7.0",
     "pino-http": "^8.6.1",
-    "pino-pretty": "^9.1.1",
+    "pino-pretty": "^13.0.0",
     "prom-client": "^14.0.1",
     "rate-limiter-flexible": "^2.4.1",
     "request": "^2.88.2",

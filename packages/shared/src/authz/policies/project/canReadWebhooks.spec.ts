@@ -4,6 +4,7 @@ import { parseFeatureFlags } from '../../../environment/index.js'
 import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceNoAccessError,
@@ -11,16 +12,16 @@ import {
 } from '../../domain/authErrors.js'
 import { canReadProjectWebhooksPolicy } from './canReadWebhooks.js'
 import { getProjectFake } from '../../../tests/fakes.js'
+import { TIME_MS } from '../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canReadProjectWebhooksPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectWebhooksPolicy>) =>
     canReadProjectWebhooksPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Owner,
@@ -39,8 +40,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({
@@ -54,7 +54,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })
@@ -139,7 +139,7 @@ describe('canReadProjectWebhooksPolicy', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -155,9 +155,9 @@ describe('canReadProjectWebhooksPolicy', () => {
       expect(result).toBeOKResult()
     })
 
-    it('fails w/o workspace & project role', async () => {
+    it('fails w/o workspace role, even w/ project role', async () => {
       const sut = buildWorkspaceSUT({
-        getProjectRole: async () => null,
+        getProjectRole: async () => Roles.Stream.Owner,
         getWorkspaceRole: async () => null
       })
 
@@ -171,7 +171,23 @@ describe('canReadProjectWebhooksPolicy', () => {
       })
     })
 
-    it('fails if workspace guest, even w/ explicit project role', async () => {
+    it('fails w/o workspace & project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => null,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
+
+    it('fails if workspace guest, even w/ explicit project role, when its too low', async () => {
       const sut = buildWorkspaceSUT({
         getProjectRole: async () => Roles.Stream.Reviewer,
         getWorkspaceRole: async () => Roles.Workspace.Guest
@@ -183,7 +199,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 
@@ -263,7 +279,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
   })

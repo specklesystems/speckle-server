@@ -13,7 +13,7 @@ import {
   useSelectionEvents,
   useViewerCameraControlEndTracker
 } from '~~/lib/viewer/composables/viewer'
-import { SpeckleViewer, xor } from '@speckle/shared'
+import { SpeckleViewer, xor, TIME_MS } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -41,7 +41,7 @@ import { graphql } from '~/lib/common/generated/gql'
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
  */
-const OWN_ACTIVITY_UPDATE_INTERVAL = 5 * 1000
+const OWN_ACTIVITY_UPDATE_INTERVAL = 5 * TIME_MS.second
 /**
  * How often we check for user staleness
  */

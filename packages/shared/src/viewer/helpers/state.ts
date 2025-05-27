@@ -3,9 +3,12 @@ import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityT
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors/index.js'
 
+/** Redefining these is unfortunate. Especially since they are not part of viewer-core */
 enum MeasurementType {
   PERPENDICULAR = 0,
-  POINTTOPOINT = 1
+  POINTTOPOINT = 1,
+  AREA = 2,
+  POINT = 3
 }
 
 interface MeasurementOptions {
@@ -14,6 +17,13 @@ interface MeasurementOptions {
   vertexSnap?: boolean
   units?: string
   precision?: number
+  chain?: boolean
+}
+
+export interface SectionBoxData {
+  min: number[]
+  max: number[]
+  rotation?: number[]
 }
 
 /**
@@ -75,10 +85,7 @@ export type SerializedViewerState = {
       zoom: number
     }
     viewMode: number
-    sectionBox: Nullable<{
-      min: number[]
-      max: number[]
-    }>
+    sectionBox: Nullable<SectionBoxData>
     lightConfig: {
       intensity?: number
       indirectLightIntensity?: number
@@ -202,10 +209,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       viewMode: state.ui?.viewMode || 0,
       sectionBox:
         state.ui?.sectionBox?.min?.length && state.ui?.sectionBox.max?.length
-          ? {
-              min: state.ui.sectionBox.min,
-              max: state.ui.sectionBox.max
-            }
+          ? // Complains otherwise
+            (state.ui.sectionBox as SectionBoxData)
           : null,
       lightConfig: {
         ...(state.ui?.lightConfig || {}),

@@ -16,7 +16,7 @@
           <span class="font-medium">
             {{ planPrice }}
           </span>
-          per seat/month
+          per editor seat/month
         </p>
         <template v-if="plan !== WorkspacePlans.Free">
           <div class="flex items-center gap-x-2 mt-3 px-1">
@@ -24,9 +24,6 @@
               v-model="isYearlyIntervalSelected"
               :show-label="false"
               name="billing-interval"
-              @update:model-value="
-                (newValue) => $emit('onYearlyIntervalSelected', newValue)
-              "
             />
             <span class="text-body-2xs">Billed yearly</span>
             <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
@@ -39,11 +36,7 @@
         <div v-if="hasCta">
           <slot name="cta" />
         </div>
-        <div
-          v-else
-          :key="`tooltip-${yearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
-          v-tippy="buttonTooltip"
-        >
+        <div v-else v-tippy="buttonTooltip">
           <FormButton
             :color="buttonColor"
             :disabled="!isSelectable"
@@ -57,36 +50,11 @@
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <PricingTablePlanFeature
+        v-for="feature in commonFeatures"
+        :key="feature.displayName"
+        :display-name="feature.displayName"
+        :description="feature.description"
         is-included
-        display-name="Unlimited editor and viewer seats"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        display-name="Unlimited guests"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.projectCount} project${
-          planLimits.projectCount === 1 ? '' : 's'
-        }`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.modelCount} models per workspace`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.versionsHistory?.value} day version history`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.versionsHistory?.value} day comment history`"
-        description="Some tooltip text"
       />
       <PricingTablePlanFeature
         v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadata"
@@ -96,6 +64,21 @@
         :description="featureMetadata.description"
       />
     </ul>
+    <div v-if="showAddons && displayAddons.length > 0" class="mt-auto lg:h-72 pt-8">
+      <h5 class="text-body-2xs mb-2 text-foreground-2">Available add-ons</h5>
+      <div class="flex flex-col gap-y-2">
+        <PricingTableAddon
+          v-for="addon in displayAddons"
+          :key="addon.title"
+          :title="addon.title"
+          :base-plan="props.plan === WorkspacePlans.Team ? 'team' : 'pro'"
+          :is-yearly-interval-selected="isYearlyIntervalSelected"
+          :currency="props.currency"
+          :tooltip="addon.tooltip"
+          :fixed-price="addon.fixedPrice"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -104,8 +87,7 @@ import {
   type MaybeNullOrUndefined,
   WorkspacePlans,
   WorkspacePlanFeaturesMetadata,
-  WorkspacePlanConfigs,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanConfigs
 } from '@speckle/shared'
 import {
   type WorkspacePlan,
@@ -115,44 +97,90 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
-import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { SetupContext } from 'vue'
 
-defineEmits<{
-  (e: 'onYearlyIntervalSelected', value: boolean): void
+const emit = defineEmits<{
+  (e: 'onUpgradeClick'): void
 }>()
 
 const props = defineProps<{
   plan: WorkspacePlans
-  yearlyIntervalSelected: boolean
   canUpgrade: boolean
   workspaceId?: MaybeNullOrUndefined<string>
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   activeBillingInterval?: MaybeNullOrUndefined<BillingInterval>
   hasSubscription?: MaybeNullOrUndefined<boolean>
   currency?: Currency
+  showAddons?: boolean
 }>()
+
+const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
+  default: false
+})
 
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
-const { upgradePlan, redirectToCheckout } = useBillingActions()
-
-const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
 const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
+const commonFeatures = shallowRef([
+  {
+    displayName: 'Unlimited members and guests',
+    description: 'You can have unlimited people in your workspace'
+  },
+  {
+    displayName: 'Free viewer seats',
+    description:
+      'People on a viewer seat can view and comment on models in the web viewer free of charge.'
+  },
+  {
+    displayName: `${planLimits.value.projectCount} project${
+      planLimits.value.projectCount === 1 ? '' : 's'
+    }`,
+    description:
+      props.plan === WorkspacePlans.Free
+        ? 'Your maximum number of projects'
+        : 'Your maximum number of projects. Can be extended with the Unlimited projects and models add-on.'
+  },
+  {
+    displayName: `${planLimits.value.modelCount} models per workspace`,
+    description:
+      props.plan === WorkspacePlans.Free
+        ? 'Your maximum number of models'
+        : 'Your maximum number of models. Can be extended with the Unlimited projects and models add-on.'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day version history`
+      : 'Full version history',
+    description:
+      'Access and compare earlier versions of your models. Latest version is always accessible.'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day comment history`
+      : 'Full comment history',
+    description: 'Access past comments in the 3D web viewer'
+  }
+])
 const planPrice = computed(() => {
+  let basePrice = 0
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
-    return formatPrice(
+    basePrice =
       prices.value?.[props.currency || Currency.Usd]?.[props.plan]?.[
-        WorkspacePlanBillingIntervals.Monthly
-      ]
-    )
+        isYearlyIntervalSelected.value
+          ? BillingInterval.Yearly
+          : BillingInterval.Monthly
+      ].amount || 0
   }
 
   return formatPrice({
-    amount: 0,
-    currency: props.currency || 'usd'
+    amount: basePrice
+      ? isYearlyIntervalSelected.value
+        ? basePrice / 12
+        : basePrice
+      : 0,
+    currency: props.currency || Currency.Usd
   })
 })
 
@@ -163,7 +191,9 @@ const canUpgradeToPlan = computed(() => {
 
   const allowedUpgrades: Partial<Record<WorkspacePlans, WorkspacePlans[]>> = {
     [WorkspacePlans.Free]: [WorkspacePlans.Team, WorkspacePlans.Pro],
-    [WorkspacePlans.Team]: [WorkspacePlans.Pro]
+    [WorkspacePlans.Team]: [WorkspacePlans.Pro],
+    [WorkspacePlans.TeamUnlimited]: [WorkspacePlans.Team, WorkspacePlans.Pro],
+    [WorkspacePlans.ProUnlimited]: [WorkspacePlans.Pro]
   }
 
   return allowedUpgrades[props.currentPlan.name]?.includes(props.plan)
@@ -172,25 +202,46 @@ const canUpgradeToPlan = computed(() => {
 const isMatchingInterval = computed(
   () =>
     props.activeBillingInterval ===
-    (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
+    (isYearlyIntervalSelected.value ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
 
 const isDowngrade = computed(() => {
   return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan
 })
 
+const isMatchingTier = computed(() => {
+  return (
+    (props.currentPlan?.name === WorkspacePlans.Team &&
+      props.plan === WorkspacePlans.Team) ||
+    (props.currentPlan?.name === WorkspacePlans.Pro &&
+      props.plan === WorkspacePlans.Pro) ||
+    (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+      props.plan === WorkspacePlans.Team) ||
+    (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+      props.plan === WorkspacePlans.Pro)
+  )
+})
+
 const isCurrentPlan = computed(() => {
   if (props.plan === WorkspacePlans.Free) {
     return props.currentPlan?.name === props.plan
   }
-  return isMatchingInterval.value && props.currentPlan?.name === props.plan
+
+  return (
+    isMatchingInterval.value &&
+    (props.currentPlan?.name === props.plan || isMatchingTier.value)
+  )
 })
 
 const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
-    props.currentPlan?.name === props.plan &&
-    !props.yearlyIntervalSelected
+    !isYearlyIntervalSelected.value &&
+    (props.currentPlan?.name === props.plan ||
+      (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+        props.plan === WorkspacePlans.Team) ||
+      (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+        props.plan === WorkspacePlans.Pro))
   )
 })
 
@@ -198,7 +249,7 @@ const isMonthlyToAnnual = computed(() => {
   return (
     !isMatchingInterval.value &&
     props.currentPlan?.name === props.plan &&
-    props.yearlyIntervalSelected
+    isYearlyIntervalSelected.value
   )
 })
 
@@ -207,12 +258,15 @@ const isSelectable = computed(() => {
   // Free CTA has no clickable scenario
   if (props.plan === WorkspacePlans.Free) return false
 
-  // Always enable buttons during expired or canceled state
-  if (
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
-  )
-    return true
+  // Dont allow upgrades during cancelation
+  if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
+    return false
+  }
+
+  // Allow selection if current plan is canceled and plan is upgradeable or the same
+  if (props.currentPlan?.status === WorkspacePlanStatuses.Canceled) {
+    return canUpgradeToPlan.value || isMatchingTier.value
+  }
 
   // Allow selection if switching from monthly to yearly for the same plan
   if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan) return true
@@ -238,27 +292,30 @@ const isSelectable = computed(() => {
 
 const buttonColor = computed(() => {
   if (props.currentPlan?.name === WorkspacePlans.Free) {
-    return props.plan === WorkspacePlans.Pro ? 'primary' : 'outline'
+    return props.plan === WorkspacePlans.Team ? 'primary' : 'outline'
   }
   return 'outline'
 })
 
 const buttonText = computed(() => {
   // Current plan case
-  if (isCurrentPlan.value) {
+  if (
+    isCurrentPlan.value &&
+    props.currentPlan?.status !== WorkspacePlanStatuses.Canceled
+  ) {
     return 'Current plan'
   }
+
   // Allow if current plan is Free, or the current plan is expired/canceled
   if (
     props.currentPlan?.name === WorkspacePlans.Free ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
     return `Subscribe to ${formatName(props.plan)}`
   }
   // Billing interval and lower plan case
   if (isDowngrade.value) {
-    return `Downgrade to ${props.plan}`
+    return `Downgrade to ${formatName(props.plan)}`
   }
   // Billing interval change and current plan
   if (isAnnualToMonthly.value) {
@@ -272,16 +329,25 @@ const buttonText = computed(() => {
 })
 
 const buttonTooltip = computed(() => {
+  if (
+    props.plan === WorkspacePlans.Free &&
+    props.currentPlan?.name === WorkspacePlans.Free
+  )
+    return undefined
+
   if (!props.canUpgrade) {
     return 'You must be a workspace admin.'
   }
 
-  if (
-    isCurrentPlan.value ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
-  )
-    return undefined
+  if (props.currentPlan?.status === WorkspacePlanStatuses.Canceled) {
+    if (!canUpgradeToPlan.value && !isMatchingTier.value) {
+      return 'You can only resubcribe to the same or higher plan'
+    }
+  }
+
+  if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
+    return 'You must renew your subscription first'
+  }
 
   if (isDowngrade.value) {
     return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'
@@ -293,7 +359,7 @@ const buttonTooltip = computed(() => {
 
   if (
     props.activeBillingInterval === BillingInterval.Yearly &&
-    !props.yearlyIntervalSelected &&
+    !isYearlyIntervalSelected.value &&
     canUpgradeToPlan.value
   ) {
     return 'Upgrading from an annual plan to a monthly plan is not supported. Please contact billing@speckle.systems.'
@@ -303,36 +369,45 @@ const buttonTooltip = computed(() => {
 })
 
 const badgeText = computed(() =>
-  props.currentPlan?.name === props.plan ? 'Current plan' : ''
+  props.currentPlan?.name === props.plan &&
+  props.currentPlan?.status !== WorkspacePlanStatuses.Canceled &&
+  props.currentPlan?.status !== WorkspacePlanStatuses.CancelationScheduled
+    ? 'Current plan'
+    : ''
 )
+
+const displayAddons = computed(() => {
+  if (props.plan === WorkspacePlans.Team) {
+    return [
+      {
+        title: 'Unlimited projects and models',
+        tooltip: 'You can purchase this in the next step'
+      }
+    ]
+  } else if (props.plan === WorkspacePlans.Pro) {
+    return [
+      {
+        title: 'Unlimited projects and models',
+        tooltip: 'You can purchase this in the next step'
+      },
+      {
+        title: 'Extra data regions',
+        fixedPrice: '$500 per region / month',
+        tooltip: 'Available upon request'
+      },
+      {
+        title: 'Priority support',
+        fixedPrice: 'Contact us for pricing',
+        tooltip: 'Available upon request'
+      }
+    ]
+  }
+  return []
+})
 
 const handleUpgradeClick = () => {
   if (!props.workspaceId) return
   if (props.plan !== WorkspacePlans.Team && props.plan !== WorkspacePlans.Pro) return
-
-  if (props.hasSubscription) {
-    upgradePlan({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  } else {
-    redirectToCheckout({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  }
+  emit('onUpgradeClick')
 }
-
-watch(
-  () => props.yearlyIntervalSelected,
-  (newValue) => {
-    isYearlyIntervalSelected.value = newValue
-  }
-)
 </script>

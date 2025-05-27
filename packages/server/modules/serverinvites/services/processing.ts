@@ -11,10 +11,7 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import {
-  InviteResourceTargetType,
-  ServerInviteRecord
-} from '@/modules/serverinvites/domain/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   DeleteInvite,
   DeleteInvitesByTarget,
@@ -200,16 +197,14 @@ export const finalizeResourceInviteFactory =
       finalizerUserId,
       accept,
       token,
-      resourceType,
       finalizerResourceAccessLimits,
-      allowAttachingNewEmail
+      allowAttachingNewEmail,
+      trueFinalizerId
     } = params
 
     const finalizerUserTarget = buildUserTarget(finalizerUserId)
     const invite = await findInvite({
-      token,
-      // target: allowAttachingNewEmail ? undefined : finalizerUserTarget,
-      resourceFilter: resourceType ? { resourceType } : undefined
+      token
     })
     if (!invite) {
       throw new InviteNotFoundError('Attempted to finalize nonexistant invite', {
@@ -318,7 +313,8 @@ export const finalizeResourceInviteFactory =
       payload: {
         invite,
         accept,
-        finalizerUserId
+        finalizerUserId,
+        trueFinalizerUserId: trueFinalizerId || finalizerUserId
       }
     })
   }
@@ -336,26 +332,14 @@ export const cancelResourceInviteFactory =
   }) =>
   async (params: {
     inviteId: string
-    resourceId: string
-    resourceType: InviteResourceTargetType
     cancelerId: string
     cancelerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   }) => {
     const { findInvite, validateResourceAccess, deleteInvite, emitEvent } = deps
-    const {
-      inviteId,
-      resourceId,
-      resourceType,
-      cancelerId,
-      cancelerResourceAccessLimits
-    } = params
+    const { inviteId, cancelerId, cancelerResourceAccessLimits } = params
 
     const invite = await findInvite({
-      inviteId,
-      resourceFilter: {
-        resourceId,
-        resourceType
-      }
+      inviteId
     })
     if (!invite) {
       throw new InviteNotFoundError('Attempted to cancel nonexistant invite', {

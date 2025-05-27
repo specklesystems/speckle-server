@@ -13,7 +13,13 @@
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+        :help="
+          emailIsBlocked
+            ? 'A work email makes it easier to discover and collaborate with your coworkers on Speckle.'
+            : ''
+        "
         autocomplete="email"
+        @blur="onEmailChange"
       />
       <FormTextInput
         type="text"
@@ -69,13 +75,11 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginRoute } from '~~/lib/common/helpers/route'
-import {
-  passwordRules,
-  doesNotContainBlockedDomain
-} from '~~/lib/auth/helpers/validation'
+import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMounted } from '@vueuse/core'
+import { checkIfEmailIsBlocked } from '~~/lib/auth/helpers/checkBlockedDomain'
 
 graphql(`
   fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {
@@ -96,18 +100,15 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const isMounted = useMounted()
-const isNoPersonalEmailsEnabled = useIsNoPersonalEmailsEnabled()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
+const emailIsBlocked = ref(false)
 
-const emailRules = computed(() =>
-  inviteToken.value || !isNoPersonalEmailsEnabled.value
-    ? [isEmail]
-    : [isEmail, doesNotContainBlockedDomain]
-)
+const emailRules = [isEmail]
 const nameRules = [isRequired]
 
 const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)
@@ -119,6 +120,11 @@ const finalLoginRoute = computed(() => {
   })
   return result.fullPath
 })
+
+const onEmailChange = () => {
+  if (!isWorkspacesEnabled.value) return
+  emailIsBlocked.value = checkIfEmailIsBlocked(email.value)
+}
 
 const onSubmit = handleSubmit(async (fullUser) => {
   try {

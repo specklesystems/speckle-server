@@ -25,10 +25,21 @@
         {{ description }}
       </p>
       <WorkspaceDiscoverableWorkspacesCard
-        v-for="workspace in discoverableWorkspacesAndJoinRequests"
+        v-for="workspace in workspacesToShow"
         :key="`discoverable-${workspace.id}`"
         :workspace="workspace"
+        :request-status="workspace.requestStatus"
+        location="workspace_join_page"
       />
+      <FormButton
+        v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 3"
+        color="subtle"
+        size="lg"
+        full-width
+        @click="showAllWorkspaces = true"
+      >
+        Show all ({{ discoverableWorkspacesAndJoinRequestsCount }})
+      </FormButton>
       <div class="mt-2 w-full flex flex-col gap-2">
         <FormButton
           v-if="hasDiscoverableJoinRequests && !isWorkspaceNewPlansEnabled"
@@ -43,7 +54,7 @@
           size="lg"
           full-width
           color="outline"
-          @click="navigateTo(workspaceCreateRoute())"
+          @click="navigateTo(workspaceCreateRoute)"
         >
           Create a new workspace
         </FormButton>
@@ -74,6 +85,14 @@ const {
   discoverableWorkspacesAndJoinRequests,
   hasDiscoverableJoinRequests
 } = useDiscoverableWorkspaces()
+
+const showAllWorkspaces = ref(false)
+
+const workspacesToShow = computed(() => {
+  return showAllWorkspaces.value
+    ? discoverableWorkspacesAndJoinRequests.value
+    : discoverableWorkspacesAndJoinRequests.value.slice(0, 3)
+})
 
 const description = computed(() => {
   if (discoverableWorkspacesAndJoinRequestsCount.value === 1) {

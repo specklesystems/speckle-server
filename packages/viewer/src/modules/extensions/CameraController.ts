@@ -507,7 +507,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       return
     }
 
-    const box = this.viewer.getRenderer().clippingVolume
+    const box = new Box3().fromOBB(this.viewer.getRenderer().clippingVolume)
     /** This is for special cases like when the stream will only have one point
      *  which three will not consider it's size when computing the bounding box
      *  resulting in a zero size bounding box. That's why we make sure the bounding
@@ -705,7 +705,12 @@ export class CameraController extends Extension implements SpeckleCamera {
         break
 
       case '3d':
-      case '3D':
+        this._activeControls.fromPositionAndTarget(
+          new Vector3().copy(this.viewer.World.worldBox.max),
+          canonicalTarget
+        )
+        this.zoomExtents()
+        break
       default: {
         this.enableRotations()
         break

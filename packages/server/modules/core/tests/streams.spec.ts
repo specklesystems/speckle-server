@@ -73,8 +73,12 @@ import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/pr
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   deleteAllResourceInvitesFactory,
+  deleteInvitesByTargetFactory,
+  deleteServerOnlyInvitesFactory,
+  findInviteFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
@@ -94,6 +98,24 @@ import {
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -129,6 +151,51 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -147,7 +214,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -348,7 +416,7 @@ describe('Streams @core-streams', () => {
           throw new Error('This should have thrown')
         })
         .catch((err) => {
-          expect(err.message).to.include('cannot revoke permissions.')
+          expect(err.message).to.include('A project needs at least one project owner')
         })
     })
 
@@ -534,7 +602,7 @@ describe('Streams @core-streams', () => {
     const TOTAL_OWN_STREAM_COUNT = OWNED_STREAM_COUNT + SHARED_STREAM_COUNT
 
     const PUBLIC_STREAM_COUNT = 15
-    const DISCOVERABLE_STREAM_COUNT = PUBLIC_STREAM_COUNT - 5
+    const DISCOVERABLE_STREAM_COUNT = PUBLIC_STREAM_COUNT
 
     let userOneStreams: BasicTestStream[]
     let userTwoStreams: BasicTestStream[]
@@ -545,7 +613,6 @@ describe('Streams @core-streams', () => {
 
       async function setupStreams(user: BasicTestUser): Promise<BasicTestStream[]> {
         let remainingPublicStreams = PUBLIC_STREAM_COUNT
-        let remainingDiscoverableStreams = DISCOVERABLE_STREAM_COUNT
 
         // creating test streams
         const streamDefinitions = times(
@@ -553,7 +620,6 @@ describe('Streams @core-streams', () => {
           (i): BasicTestStream => ({
             name: `${user.name} test stream #${i}`,
             isPublic: remainingPublicStreams-- > 0,
-            isDiscoverable: remainingDiscoverableStreams-- > 0,
             id: '',
             ownerId: ''
           })
@@ -615,7 +681,7 @@ describe('Streams @core-streams', () => {
     ) => {
       const { limitedUserQuery } = options
       const expectedTotalCount = isOtherUser
-        ? SHARED_STREAM_COUNT + DISCOVERABLE_STREAM_COUNT // only shared streams + discoverable ones
+        ? SHARED_STREAM_COUNT + DISCOVERABLE_STREAM_COUNT // only public
         : TOTAL_OWN_STREAM_COUNT // all owned & shared streams
 
       const requestPage = async (cursor?: Nullable<string>) => {

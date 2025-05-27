@@ -11,16 +11,16 @@ import {
   ServerNoSessionError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
+import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canCreateProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canCreateProjectCommentPolicy>) =>
     canCreateProjectCommentPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.User,
@@ -38,9 +38,8 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false,
-        allowPublicComments: false
+        allowPublicComments: false,
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({
@@ -54,7 +53,7 @@ describe('canCreateProjectCommentPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })
@@ -75,8 +74,7 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true,
+        visibility: ProjectVisibility.Public,
         allowPublicComments: true
       }),
       getProjectRole: async () => null
@@ -111,8 +109,7 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true,
+        visibility: ProjectVisibility.Public,
         allowPublicComments: false
       })
     })
@@ -277,7 +274,7 @@ describe('canCreateProjectCommentPolicy', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(Date.now() - 1000)
+          validUntil: new Date(Date.now() - TIME_MS.second)
         })
       })
 

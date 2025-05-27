@@ -12,3 +12,5 @@ export type GetProjectRoleCounts = (args: {
   projectId: string
   role: StreamRoles
 }) => Promise<number>
+
+export type GetProjectModelCount = (args: { projectId: string }) => Promise<number>

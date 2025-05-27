@@ -1,20 +1,16 @@
 import { WorkspacePlans } from '@speckle/shared'
-import { z } from 'zod'
 
-const WorkspacePlansUpgradeMapping = z.union([
-  z.object({
-    current: z.literal('free'),
-    upgrade: z.union([z.literal('team'), z.literal('pro')])
-  }),
-  z.object({
-    current: z.literal('team'),
-    upgrade: z.union([z.literal('team'), z.literal('pro')])
-  }),
-  z.object({
-    current: z.literal('pro'),
-    upgrade: z.literal('pro')
-  })
-])
+const WorkspacePlansUpgradeMapping: Record<WorkspacePlans, WorkspacePlans[]> = {
+  academia: [],
+  unlimited: [],
+  free: ['team', 'teamUnlimited', 'pro', 'proUnlimited'],
+  team: ['team', 'teamUnlimited', 'pro', 'proUnlimited'],
+  teamUnlimited: ['teamUnlimited', 'pro', 'proUnlimited'],
+  teamUnlimitedInvoiced: [],
+  pro: ['pro', 'proUnlimited'],
+  proUnlimited: ['proUnlimited'],
+  proUnlimitedInvoiced: []
+}
 
 export const isUpgradeWorkspacePlanValid = ({
   current,
@@ -23,5 +19,5 @@ export const isUpgradeWorkspacePlanValid = ({
   current: WorkspacePlans
   upgrade: WorkspacePlans
 }): boolean => {
-  return WorkspacePlansUpgradeMapping.safeParse({ current, upgrade }).success
+  return WorkspacePlansUpgradeMapping[current].includes(upgrade)
 }

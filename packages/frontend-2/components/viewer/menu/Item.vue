@@ -1,5 +1,6 @@
 <template>
   <button
+    v-tippy="description ? description : undefined"
     class="flex items-center justify-between hover:bg-highlight-1 text-foreground w-full h-full text-body-2xs py-1.5 pr-2 pl-1 rounded-md"
     :class="{ 'bg-highlight-1': active }"
   >
@@ -17,6 +18,7 @@
 <script setup lang="ts">
 defineProps<{
   label: string
+  description?: string
   active?: boolean
   hideActiveTick?: boolean
   shortcut?: string

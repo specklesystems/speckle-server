@@ -8,9 +8,15 @@
 
     <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 w-full">
       <div
-        class="col-span-1 grid gap-6 mb-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1"
+        class="col-span-1 grid gap-6 mb-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1 auto-rows-min"
       >
+        <ProjectPageAutomationTestAutomationInfo
+          v-if="isTestAutomation"
+          :automation-id="automation.id"
+          :project-id="projectId"
+        />
         <ProjectPageAutomationFunctions
+          v-else
           :automation="automation"
           :workspace-id="workspaceId"
           :project-id="projectId"
@@ -27,10 +33,9 @@
     </div>
   </div>
   <CommonLoadingBar v-else-if="loading" loading />
-  <div v-else />
+  <CommonGenericEmptyState v-else message="Automation not found." />
 </template>
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { projectAutomationPageQuery } from '~/lib/projects/graphql/queries'
@@ -38,6 +43,11 @@ import { projectAutomationPageQuery } from '~/lib/projects/graphql/queries'
 graphql(`
   fragment ProjectPageAutomationPage_Automation on Automation {
     id
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
     ...ProjectPageAutomationHeader_Automation
     ...ProjectPageAutomationFunctions_Automation
     ...ProjectPageAutomationRuns_Automation
@@ -71,7 +81,9 @@ const automation = computed(() => result.value?.project.automation || null)
 const project = computed(() => result.value?.project)
 const workspaceId = computed(() => project.value?.workspaceId ?? undefined)
 const isEditable = computed(() => {
-  const allowedRoles: string[] = [Roles.Stream.Owner]
-  return allowedRoles.includes(result.value?.project.role ?? '')
+  return result?.value?.project?.automation?.permissions?.canUpdate.authorized ?? false
 })
+const isTestAutomation = computed(
+  () => result.value?.project.automation.isTestAutomation
+)
 </script>

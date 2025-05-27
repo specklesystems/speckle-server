@@ -2,6 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     :buttons="dialogButtons"
+    prevent-close-on-click-outside
     max-width="md"
     @update:open="isOpen = false"
   >
@@ -18,6 +19,18 @@
       :allowed-domains="allowedDomains"
       :target-role="selectedRole"
     >
+      <template #project>
+        <FormSelectProjects
+          v-if="selectedRole === Roles.Workspace.Guest"
+          v-model="project"
+          label="Project (optional)"
+          show-label
+          mount-menu-on-body
+          allow-unset
+          :workspace-id="workspace?.id"
+          class="mb-4"
+        />
+      </template>
       <p class="text-body-2xs text-foreground-2 leading-5">
         {{ infoText }}
       </p>
@@ -30,17 +43,19 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   InviteDialogWorkspace_WorkspaceFragment,
-  WorkspaceInviteCreateInput
+  WorkspaceInviteCreateInput,
+  ProjectInviteCreateInput,
+  FormSelectProjects_ProjectFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { InviteWorkspaceItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
 import { Roles, type MaybeNullOrUndefined, type WorkspaceRoles } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
-import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/management'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 import { matchesDomainPolicy } from '~/lib/invites/helpers/validation'
+import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 
 graphql(`
   fragment InviteDialogWorkspace_Workspace on Workspace {
@@ -61,9 +76,11 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const mixpanel = useMixpanel()
 const inviteToWorkspace = useInviteUserToWorkspace()
+const inviteToProject = useInviteUserToProject()
 
 const isSelectingRole = ref(true)
 const selectedRole = ref<WorkspaceRoles>(Roles.Workspace.Member)
+const project = ref<FormSelectProjects_ProjectFragment>()
 const invites = ref<InviteWorkspaceItem[]>([
   {
     ...emptyInviteWorkspaceItem,
@@ -102,10 +119,10 @@ const allowedDomains = computed(() =>
 )
 const infoText = computed(() => {
   if (selectedRole.value === Roles.Workspace.Member) {
-    return 'Members can access all projects in the workspace and act as admins. Their seat type controls whether they can create and edit projects or just view them.'
+    return 'Inviting is free. Members join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to projects beyond viewing and commenting.'
   }
 
-  return `They don't work at ${props.workspace?.name}. They can collaborate on projects but can't create projects, invite others, add people, or be admins.`
+  return `Inviting is free. Guests join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to a project beyond viewing and commenting.`
 })
 
 const onBack = () => {
@@ -132,26 +149,36 @@ const canBeMember = (email: string) => matchesDomainPolicy(email, allowedDomains
 const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
   invites.value = updatedInvites
 
-  const inputs: WorkspaceInviteCreateInput[] = invites.value.map((invite) => ({
-    role: canBeMember(invite.email)
-      ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
-      : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest),
-    email: invite.email,
-    serverRole: invite.serverRole
-      ? mapServerRoleToGqlServerRole(invite.serverRole)
-      : undefined
-  }))
+  if (!invites.value.length || !props.workspace?.id) return
 
-  if (!inputs.length || !props.workspace?.id) return
+  if (selectedRole.value === Roles.Workspace.Guest && project.value) {
+    const inputs: ProjectInviteCreateInput[] = invites.value.map((invite) => ({
+      role: Roles.Stream.Reviewer,
+      email: invite.email,
+      workspaceRole: selectedRole.value
+    }))
 
-  await inviteToWorkspace({ workspaceId: props.workspace.id, inputs })
+    await inviteToProject(project.value.id, inputs)
+  } else {
+    const inputs: WorkspaceInviteCreateInput[] = invites.value.map((invite) => ({
+      role: canBeMember(invite.email)
+        ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
+        : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest),
+      email: invite.email
+    }))
+
+    await inviteToWorkspace({ workspaceId: props.workspace.id, inputs })
+  }
+
   isOpen.value = false
   mixpanel.track('Invite Action', {
     type: 'workspace invite',
     name: 'send',
-    multiple: inputs.length !== 1,
-    count: inputs.length,
+    multiple: invites.value.length !== 1,
+    count: invites.value.length,
     to: 'email',
+    hasProject: !!project.value,
+    workspaceRole: selectedRole.value,
     // eslint-disable-next-line camelcase
     workspace_id: props.workspace.id
   })
@@ -160,6 +187,8 @@ const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
 watch(isOpen, (newVal) => {
   if (newVal) {
     isSelectingRole.value = true
+    selectedRole.value = Roles.Workspace.Member
+    project.value = undefined
     invites.value = [
       {
         ...emptyInviteWorkspaceItem,

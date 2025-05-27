@@ -2,10 +2,12 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { workspacePlanQuery } from '~~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   UnpaidWorkspacePlans,
   WorkspacePlanBillingIntervals,
-  isPaidPlan
+  isPaidPlan as isPaidPlanShared,
+  isSelfServeAvailablePlan,
+  doesPlanIncludeUnlimitedProjectsAddon
 } from '@speckle/shared'
 import {
   WorkspacePlanStatuses,
@@ -17,6 +19,7 @@ import { useActiveWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 graphql(`
   fragment WorkspacesPlan_Workspace on Workspace {
     id
+    slug
     plan {
       status
       createdAt
@@ -27,19 +30,20 @@ graphql(`
         modelCount
       }
     }
+    seats {
+      editors {
+        assigned
+        available
+      }
+      viewers {
+        assigned
+        available
+      }
+    }
     subscription {
       billingInterval
       currentBillingCycleEnd
-      seats {
-        editors {
-          assigned
-          available
-        }
-        viewers {
-          assigned
-          available
-        }
-      }
+      currency
     }
   }
 `)
@@ -54,32 +58,36 @@ export const useWorkspacePlan = (slug: string) => {
       slug
     }),
     () => ({
-      enabled: isBillingIntegrationEnabled
+      enabled: isBillingIntegrationEnabled.value
     })
   )
 
   const subscription = computed(() => result.value?.workspaceBySlug?.subscription)
   const plan = computed(() => result.value?.workspaceBySlug?.plan)
+  const currency = computed(() => subscription.value?.currency || 'usd')
 
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
   const isBusinessPlan = computed(
     () =>
-      plan.value?.name === PaidWorkspacePlansNew.Pro ||
-      plan.value?.name === PaidWorkspacePlansNew.ProUnlimited
+      plan.value?.name === PaidWorkspacePlans.Pro ||
+      plan.value?.name === PaidWorkspacePlans.ProUnlimited
   )
   const isUnlimitedPlan = computed(
     () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
   )
-  const isPurchasablePlan = computed(() =>
-    Object.values(PaidWorkspacePlansNew).includes(
-      plan.value?.name as PaidWorkspacePlansNew
-    )
+  const isPaidPlan = computed(
+    () => plan.value?.name && isPaidPlanShared(plan.value?.name)
   )
+  const isSelfServePlan = computed(() => {
+    if (!plan.value?.name) return false
+    return isSelfServeAvailablePlan(plan.value.name)
+  })
+  const hasUnlimitedAddon = computed(() => {
+    if (!plan.value?.name) return false
+    return doesPlanIncludeUnlimitedProjectsAddon(plan.value.name)
+  })
 
   // Plan status information
-  const statusIsExpired = computed(
-    () => plan.value?.status === WorkspacePlanStatuses.Expired
-  )
   const statusIsCanceled = computed(
     () => plan.value?.status === WorkspacePlanStatuses.Canceled
   )
@@ -97,33 +105,33 @@ export const useWorkspacePlan = (slug: string) => {
   )
 
   // Seat information
-  const seats = computed(() => subscription.value?.seats)
+  const seats = computed(() => result.value?.workspaceBySlug?.seats)
   const hasAvailableEditorSeats = computed(() => {
-    if (seats.value?.editors.available && seats.value?.editors.assigned) {
-      return seats.value?.editors.available - seats.value?.editors.assigned > 0
+    if (seats.value?.editors.available) {
+      return seats.value.editors.available > 0
     }
     return false
   })
   const editorSeatPriceFormatted = computed(() => {
-    if (plan.value?.name && isPaidPlan(plan.value?.name)) {
+    if (plan.value?.name && isPaidPlanShared(plan.value?.name)) {
       return formatPrice(
-        prices.value?.[plan.value?.name as PaidWorkspacePlansNew]?.[
-          WorkspacePlanBillingIntervals.Monthly
+        prices.value?.[plan.value?.name as PaidWorkspacePlans]?.[
+          intervalIsYearly.value
+            ? WorkspacePlanBillingIntervals.Yearly
+            : WorkspacePlanBillingIntervals.Monthly
         ]
       )
     }
 
     return formatPrice({
       amount: 0,
-      currency: 'gbp'
+      currency: currency.value
     })
   })
 
   return {
     plan,
-    statusIsExpired,
     statusIsCanceled,
-    isPurchasablePlan,
     isFreePlan,
     billingInterval,
     intervalIsYearly,
@@ -134,6 +142,10 @@ export const useWorkspacePlan = (slug: string) => {
     hasAvailableEditorSeats,
     editorSeatPriceFormatted,
     isUnlimitedPlan,
-    isBusinessPlan
+    isBusinessPlan,
+    isPaidPlan,
+    currency,
+    hasUnlimitedAddon,
+    isSelfServePlan
   }
 }

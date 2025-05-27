@@ -12,10 +12,7 @@ class SpeckleGhostMaterial extends SpeckleBasicMaterial {
     return speckleGhostFrag
   }
 
-  constructor(
-    parameters: MeshBasicMaterialParameters,
-    defines: string[] = ['USE_RTE']
-  ) {
+  constructor(parameters: MeshBasicMaterialParameters, defines: string[] = []) {
     super(parameters, defines)
   }
 }

@@ -13,8 +13,8 @@
         <div v-if="!showRequired" class="text-body-2xs font-normal">(optional)</div>
       </label>
       <span
-        v-if="labelPosition === 'left' && helpTipId"
-        :id="`${helpTipId}-left`"
+        v-if="labelPosition === 'left' && helpTipIdLeft"
+        :id="helpTipIdLeft"
         :class="helpTipClasses"
       >
         {{ helpTip }}
@@ -39,7 +39,7 @@
         :placeholder="placeholder"
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
-        :aria-describedby="helpTipId"
+        :aria-describedby="labelPosition === 'left' ? helpTipIdLeft : helpTipIdTop"
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
@@ -57,8 +57,8 @@
       </a>
     </div>
     <p
-      v-if="labelPosition === 'top' && helpTipId"
-      :id="`${helpTipId}-top`"
+      v-if="labelPosition === 'top' && helpTipIdTop"
+      :id="helpTipIdTop"
       :class="['mt-1.5', helpTipClasses]"
     >
       {{ helpTip }}
@@ -125,7 +125,6 @@ const {
   coreClasses,
   title,
   value,
-  helpTipId,
   helpTipClasses,
   helpTip,
   errorMessage,
@@ -138,6 +137,9 @@ const {
   emit,
   inputEl: inputElement
 })
+
+const helpTipIdTop = computed(() => `${props.name}-help-top`)
+const helpTipIdLeft = computed(() => `${props.name}-help-left`)
 
 const iconClasses = computed(() => {
   const classParts: string[] = ['pl-2']
@@ -154,14 +156,14 @@ const iconClasses = computed(() => {
 const sizeClasses = computed((): string => {
   switch (props.size) {
     case 'sm':
-      return 'text-2xs !leading-tight'
+      return 'text-body sm:text-body-2xs'
     case 'lg':
-      return 'text-sm'
+      return 'text-body sm:text-sm'
     case 'xl':
-      return 'text-base'
+      return 'text-body sm:text-base'
     case 'base':
     default:
-      return 'text-body-xs'
+      return 'text-body sm:text-body-xs'
   }
 })
 

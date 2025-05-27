@@ -7,3 +7,4 @@ export {
 export * from './helpers/graphql.js'
 export * from './domain/authErrors.js'
 export { AuthPolicyResult } from './domain/policies.js'
+export { PersonalProjectsLimits } from './domain/projects/limits.js'

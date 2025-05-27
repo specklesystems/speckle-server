@@ -15,6 +15,8 @@ export const createAndStoreTestWorkspaceFactory =
       logo: null,
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false,
+      discoverabilityAutoJoinEnabled: false,
+      isEmbedSpeckleBrandingHidden: false,
       ...workspaceOverrides
     }
 

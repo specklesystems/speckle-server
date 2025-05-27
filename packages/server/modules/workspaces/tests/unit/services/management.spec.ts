@@ -2,6 +2,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceSeatType,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -10,7 +11,7 @@ import {
   deleteWorkspaceRoleFactory,
   generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory,
+  addOrUpdateWorkspaceRoleFactory,
   validateSlugFactory
 } from '@/modules/workspaces/services/management'
 import { Roles, validateWorkspaceSlug } from '@speckle/shared'
@@ -43,7 +44,7 @@ import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/ope
 
 type WorkspaceTestContext = {
   storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
-  storedRoles: WorkspaceAcl[]
+  storedRoles: Pick<WorkspaceAcl, 'role' | 'userId' | 'workspaceId'>[]
   eventData: {
     isCalled: boolean
     eventName: string
@@ -70,22 +71,13 @@ const buildCreateWorkspaceWithTestContext = (
     },
     validateSlug: async () => {},
     generateValidSlug: async () => cryptoRandomString({ length: 10 }),
-    upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
+    addOrUpdateWorkspaceRole: async (workspaceAcl) => {
       context.storedRoles.push(workspaceAcl)
     },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
       context.eventData.isCalled = true
       context.eventData.eventName = eventName
       context.eventData.payload = payload
-    },
-    ensureValidWorkspaceRoleSeat: async () => {
-      return {
-        type: 'editor',
-        workspaceId: 'test',
-        userId: 'test',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
     },
     ...dependencyOverrides
   }
@@ -267,7 +259,9 @@ describe('Workspace services', () => {
         updatedAt: new Date(),
         logo: null,
         discoverabilityEnabled: false,
+        discoverabilityAutoJoinEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
+        isEmbedSpeckleBrandingHidden: false,
         domains: []
       }
       return merge(workspace, input)
@@ -593,14 +587,16 @@ const buildDeleteWorkspaceRoleAndTestContext = (
 
 const buildUpdateWorkspaceRoleAndTestContext = (
   contextOverrides: Partial<WorkspaceRoleTestContext> = {},
-  dependencyOverrides: Partial<Parameters<typeof updateWorkspaceRoleFactory>[0]> = {}
+  dependencyOverrides: Partial<
+    Parameters<typeof addOrUpdateWorkspaceRoleFactory>[0]
+  > = {}
 ) => {
   const context = {
     ...getDefaultWorkspaceRoleTestContext(),
     ...contextOverrides
   }
 
-  const deps: Parameters<typeof updateWorkspaceRoleFactory>[0] = {
+  const deps: Parameters<typeof addOrUpdateWorkspaceRoleFactory>[0] = {
     getWorkspaceRoles: async () => context.workspaceRoles,
     getWorkspaceWithDomains: async () =>
       context.workspace as unknown as Workspace & { domains: WorkspaceDomain[] },
@@ -661,7 +657,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
     },
     ensureValidWorkspaceRoleSeat: async () => {
       return {
-        type: 'editor',
+        type: WorkspaceSeatType.Editor,
         workspaceId: 'test',
         userId: 'test',
         createdAt: new Date(),
@@ -671,7 +667,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
     ...dependencyOverrides
   }
 
-  const updateWorkspaceRole = updateWorkspaceRoleFactory(deps)
+  const updateWorkspaceRole = addOrUpdateWorkspaceRoleFactory(deps)
 
   return { updateWorkspaceRole, context }
 }
@@ -693,7 +689,11 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
+      const deletedRole = await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId: cryptoRandomString({ length: 10 })
+      })
 
       expect(context.workspaceRoles.length).to.equal(0)
       expect(deletedRole).to.deep.equal(role)
@@ -713,11 +713,19 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      await deleteWorkspaceRole({ userId, workspaceId })
+      const deletedByUserId = cryptoRandomString({ length: 10 })
+      await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId
+      })
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
-      expect(context.eventData.payload).to.deep.equal({ acl: role })
+      expect(context.eventData.payload).to.deep.equal({
+        acl: role,
+        updatedByUserId: deletedByUserId
+      })
     })
     it('throws if attempting to delete the last admin from a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
@@ -734,7 +742,13 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      await expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
+      await expectToThrow(() =>
+        deleteWorkspaceRole({
+          userId,
+          workspaceId,
+          deletedByUserId: cryptoRandomString({ length: 10 })
+        })
+      )
     })
     it('deletes workspace project roles', async () => {
       const userId = cryptoRandomString({ length: 10 })
@@ -757,7 +771,11 @@ describe('Workspace role services', () => {
         ]
       })
 
-      await deleteWorkspaceRole({ userId, workspaceId })
+      await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId: cryptoRandomString({ length: 10 })
+      })
 
       expect(context.workspaceProjectRoles.length).to.equal(0)
     })
@@ -807,7 +825,6 @@ describe('Workspace role services', () => {
         ...(context.eventData
           .payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
       }
-      delete payload.flags
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
@@ -1124,7 +1141,9 @@ describe('Workspace role services', () => {
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
-                  domainBasedMembershipProtectionEnabled: false
+                  discoverabilityAutoJoinEnabled: false,
+                  domainBasedMembershipProtectionEnabled: false,
+                  isEmbedSpeckleBrandingHidden: false
                 }
               },
               getDomains: async () => {
@@ -1163,7 +1182,9 @@ describe('Workspace role services', () => {
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false
+          discoverabilityAutoJoinEnabled: false,
+          domainBasedMembershipProtectionEnabled: false,
+          isEmbedSpeckleBrandingHidden: false
         }
 
         await addDomainToWorkspaceFactory({

@@ -1,8 +1,5 @@
 import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
-import {
-  discoverableWorkspacesQuery,
-  discoverableWorkspacesRequestsQuery
-} from '../graphql/queries'
+import { discoverableWorkspacesQuery } from '~/lib/workspaces/graphql/queries'
 import {
   dismissDiscoverableWorkspaceMutation,
   requestToJoinWorkspaceMutation
@@ -17,39 +14,55 @@ import {
 } from '~~/lib/common/helpers/graphql'
 
 graphql(`
-  fragment DiscoverableList_Discoverable on User {
-    discoverableWorkspaces {
-      id
-      name
-      logo
-      description
-      slug
-      team {
-        totalCount
-        items {
+  fragment DiscoverableWorkspace_LimitedWorkspace on LimitedWorkspace {
+    id
+    name
+    logo
+    description
+    slug
+    team {
+      totalCount
+      items {
+        user {
+          id
+          name
           avatar
         }
+      }
+    }
+    adminTeam {
+      user {
+        id
+        name
+        avatar
       }
     }
   }
 `)
 
 graphql(`
-  fragment DiscoverableList_Requests on User {
-    workspaceJoinRequests {
-      items {
-        id
-        status
-        workspace {
+  fragment WorkspaceJoinRequests_LimitedWorkspaceJoinRequest on LimitedWorkspaceJoinRequest {
+    id
+    status
+    workspace {
+      id
+      name
+      logo
+      slug
+      adminTeam {
+        user {
           id
           name
-          logo
-          slug
-          team {
-            totalCount
-            items {
-              avatar
-            }
+          avatar
+        }
+      }
+      team {
+        totalCount
+        items {
+          user {
+            id
+            name
+            avatar
           }
         }
       }
@@ -60,13 +73,8 @@ graphql(`
 export const useDiscoverableWorkspaces = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  const { result: discoverableResult, loading: discoverableLoading } = useQuery(
+  const { result, loading, refetch } = useQuery(
     discoverableWorkspacesQuery,
-    undefined,
-    { enabled: isWorkspacesEnabled }
-  )
-  const { result: requestsResult, loading: joinRequestsLoading } = useQuery(
-    discoverableWorkspacesRequestsQuery,
     undefined,
     {
       enabled: isWorkspacesEnabled
@@ -82,19 +90,21 @@ export const useDiscoverableWorkspaces = () => {
   const apollo = useApolloClient().client
 
   const discoverableWorkspaces = computed(
-    () => discoverableResult.value?.activeUser?.discoverableWorkspaces
+    () => result.value?.activeUser?.discoverableWorkspaces
   )
 
   const workspaceJoinRequests = computed(
-    () => requestsResult.value?.activeUser?.workspaceJoinRequests
+    () => result.value?.activeUser?.workspaceJoinRequests
   )
 
   const discoverableWorkspacesAndJoinRequests = computed(() => {
     const joinRequests =
-      workspaceJoinRequests.value?.items?.map((request) => ({
-        ...request.workspace,
-        requestStatus: request.status
-      })) || []
+      workspaceJoinRequests.value?.items
+        ?.filter((r) => r.status !== 'approved')
+        ?.map((request) => ({
+          ...request.workspace,
+          requestStatus: request.status
+        })) || []
 
     const discoverable =
       discoverableWorkspaces.value?.map((workspace) => ({
@@ -127,11 +137,10 @@ export const useDiscoverableWorkspaces = () => {
   )
 
   const discoverableWorkspacesAndJoinRequestsCount = computed(
-    () => discoverableWorkspacesCount.value + discoverableJoinRequestsCount.value
+    () => discoverableWorkspacesAndJoinRequests.value?.length || 0
   )
 
-  const requestToJoinWorkspace = async (workspaceId: string) => {
-    const cache = apollo.cache
+  const requestToJoinWorkspace = async (workspaceId: string, location: string) => {
     const activeUserId = activeUser.value?.id
 
     if (!activeUserId) return
@@ -141,23 +150,11 @@ export const useDiscoverableWorkspaces = () => {
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
-      cache.modify({
-        id: getCacheId('User', activeUserId),
-        fields: {
-          discoverableWorkspaces(existingRefs = [], { readField }) {
-            return existingRefs.filter(
-              (ref: CacheObjectReference<'LimitedWorkspace'>) => {
-                const id = readField('id', ref)
-                return id !== workspaceId
-              }
-            )
-          }
-        }
-      })
+      await refetch()
 
       mixpanel.track('Workspace Join Request Sent', {
         workspaceId,
-        location: 'onboarding',
+        location,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })
@@ -214,10 +211,6 @@ export const useDiscoverableWorkspaces = () => {
       })
     }
   }
-
-  const loading = computed(() => {
-    return discoverableLoading.value || joinRequestsLoading.value
-  })
 
   return {
     hasDiscoverableWorkspaces,

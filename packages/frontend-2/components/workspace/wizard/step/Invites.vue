@@ -21,6 +21,7 @@
           use-label-in-errors
           label="Email"
           :rules="[isEmailOrEmpty]"
+          @blur="field.value = field.value?.trim()"
         />
         <div>
           <FormButton color="subtle" :icon-left="PlusIcon" @click="onAddInvite">
@@ -28,15 +29,22 @@
           </FormButton>
         </div>
       </div>
-
-      <div class="flex flex-col gap-2 w-full">
-        <FormCheckbox
-          v-model="enableDomainDiscoverabilityModel"
-          name="enableDomainDiscoverability"
-          :label="`Allow users with the @${verifiedDomain} domain to request to join workspace`"
-        />
+      <div v-if="verifiedDomain" class="flex flex-col gap-2 w-full">
+        <CommonCard class="flex flex-col gap-1 !p-3">
+          <FormCheckbox
+            v-model="enableDomainDiscoverabilityModel"
+            name="enableDomainDiscoverability"
+            :label="`Make workspace discoverable to @${verifiedDomain} users`"
+          />
+          <div class="ml-6 text-body-2xs text-foreground-2 select-none">
+            <p>
+              Users signing up with a
+              <span class="font-medium">@{{ verifiedDomain }}</span>
+              email will be able to find and request to join this workspace.
+            </p>
+          </div>
+        </CommonCard>
       </div>
-
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <FormButton size="lg" submit full-width>{{ nextButtonText }}</FormButton>
         <FormButton color="subtle" size="lg" full-width @click.stop="goToPreviousStep">
@@ -70,13 +78,15 @@ const { handleSubmit } = useForm<InviteForm>({
 })
 const { fields, push } = useFieldArray<string>('fields')
 
-const enableDomainDiscoverabilityModel = ref<true | undefined>(
-  !isUndefined(state.value.enableDomainDiscoverabilityForDomain)
+const enableDomainDiscoverabilityModel = computed(() => {
+  if (!verifiedDomain.value) return false
+
+  return !isUndefined(state.value.enableDomainDiscoverabilityForDomain)
     ? state.value.enableDomainDiscoverabilityForDomain !== null
       ? true
       : undefined
     : true
-)
+})
 
 const nextButtonText = computed(() =>
   fields.value.filter((field) => !!field.value).length > 0
@@ -86,7 +96,7 @@ const nextButtonText = computed(() =>
 
 const verifiedDomain = computed(() => {
   // only support enabling domain discoverability if there's one verified unblocked domain
-  if (domains.value.length !== 1) return undefined
+  if (domains.value.length === 0) return undefined
   return domains.value[0]
 })
 

@@ -49,11 +49,11 @@ import {
   shutdownTimeoutSeconds,
   asyncRequestContextEnabled,
   getMaximumRequestBodySizeMB,
-  isCompressionEnabled
+  isCompressionEnabled,
+  isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
-import * as ModulesSetup from '@/modules'
+import * as ModulesSetup from '@/modules/index'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
-import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
@@ -81,11 +81,14 @@ import { SetOptional } from 'type-fest'
 import {
   enterNewRequestContext,
   getRequestContext,
-  initiateRequestContextMiddleware
-} from '@/observability/components/express/requestContext'
+  isRequestContext
+} from '@/observability/utils/requestContext'
 import { randomUUID } from 'crypto'
 import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
 import { initApolloSubscriptionMonitoring } from '@/observability/components/apollo/metrics/apolloSubscriptionMonitoring'
+import { initiateRequestContextMiddleware } from '@/observability/components/express/requestContextMiddleware'
+import { createRateLimiterMiddleware } from '@/modules/core/rest/ratelimiter'
+import { TIME_MS } from '@speckle/shared'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -223,7 +226,7 @@ export function buildApolloSubscriptionServer(params: {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
             headers: sanitizeHeaders(headers),
-            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
+            ...(isRequestContext(reqCtx) ? { req: { id: reqCtx.requestId } } : {})
           },
           'Websocket disconnected.'
         )
@@ -315,9 +318,9 @@ export async function init() {
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
+  app.use(LoggingExpressMiddleware)
   app.use(initiateRequestContextMiddleware)
   app.use(determineClientIpAddressMiddleware)
-  app.use(LoggingExpressMiddleware)
 
   if (asyncRequestContextEnabled()) {
     startupLogger.info('Async request context tracking enabled 👀')
@@ -339,7 +342,7 @@ export async function init() {
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
-  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
+  app.use(createRateLimiterMiddleware({ rateLimiterEnabled: isRateLimiterEnabled() })) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
   app.use(setContentSecurityPolicyHeaderMiddleware)
   if (enableMixpanel())
@@ -400,7 +403,8 @@ const shouldUseFrontendProxy = () => isDevEnv()
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'
   const frontendPort = process.env.FRONTEND_PORT || 8081
-  const { createProxyMiddleware } = await import('http-proxy-middleware')
+  const { createProxyMiddleware } =
+    require('http-proxy-middleware') as typeof import('http-proxy-middleware')
 
   // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
   // slowing everything down
@@ -454,7 +458,7 @@ export async function startHttp(params: {
   // large timeout to allow large downloads on slow connections to finish
   createTerminus(server, {
     signals: ['SIGTERM', 'SIGINT'],
-    timeout: shutdownTimeoutSeconds() * 1000,
+    timeout: shutdownTimeoutSeconds() * TIME_MS.second,
     beforeShutdown: async () => {
       shutdownLogger.info('Shutting down (signal received)...')
     },
@@ -494,8 +498,8 @@ export async function startHttp(params: {
 
   server.listen(port, bindAddress)
 
-  server.keepAliveTimeout = 61 * 1000
-  server.headersTimeout = 65 * 1000
+  server.keepAliveTimeout = 61 * TIME_MS.second
+  server.headersTimeout = 65 * TIME_MS.second
 
   return { server }
 }

@@ -23,13 +23,13 @@
         <CommonCard class="!py-3">
           <p class="text-body-xs font-medium text-foreground">
             {{
-              isFreePlan || isUnlimitedPlan
-                ? 'Seat upgrade required'
+              isFreePlan || hasAvailableEditorSeats || isUnlimitedPlan
+                ? 'Seat change required'
                 : 'Seat purchase required'
             }}
           </p>
-          <p class="text-body-2xs text-foreground mb-4">
-            All admins need to be on a paid Editor seat.
+          <p class="text-body-2xs text-foreground mb-4 mt-2">
+            Admins have to be on an Editor seat.
           </p>
           <SeatTransitionCards
             :is-upgrading="true"
@@ -38,6 +38,7 @@
             :is-guest="false"
             :has-available-seat="hasAvailableEditorSeats"
             :seat-price="editorSeatPriceFormatted"
+            :billing-interval="intervalIsYearly ? 'year' : 'month'"
           />
           <template v-if="needsEditorUpgrade && !isFreePlan && !isUnlimitedPlan">
             <p
@@ -47,50 +48,35 @@
               You have an unused Editor seat that is already paid for, so the change
               will not incur any charges.
             </p>
-            <p v-else class="text-foreground-2 text-body-xs mt-4">
-              Note that the Editor seat is a paid seat type and this change will incur
-              additional charges to your subscription.
+            <p v-else class="text-foreground-2 text-body-xs mt-4 leading-5">
+              You will be charged an adjusted amount for the partial period from today
+              until your plan renewal on
+              {{ dayjs(currentBillingCycleEnd).format('MMMM D, YYYY') }}.
             </p>
           </template>
         </CommonCard>
       </template>
-
-      <p class="text-foreground-2 text-body-2xs">
-        {{ roleInfo }} Learn more about
-        <NuxtLink
-          :to="LearnMoreRolesSeatsUrl"
-          target="_blank"
-          class="text-foreground-2 underline"
-        >
-          workspace roles.
-        </NuxtLink>
-      </p>
-
-      <p v-if="isPurchasablePlan" class="text-foreground-2 text-body-xs mt-3">
-        Note that the Editor seat is a paid seat type if your workspace is subscribed to
-        one of the paid plans.
-      </p>
     </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import { Roles, SeatTypes } from '@speckle/shared'
-import { WorkspaceRoleDescriptions } from '~/lib/settings/helpers/constants'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import SeatTransitionCards from './SeatTransitionCards.vue'
 import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment,
-  SettingsWorkspacesMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   user: SettingsWorkspacesMembersActionsMenu_UserFragment
-  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   isActiveUserTargetUser: boolean
   action?: 'make' | 'remove'
 }>()
@@ -101,17 +87,25 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { required: true })
 
+const isLoading = ref(false)
+
+const mixpanel = useMixpanel()
 const updateUserRole = useWorkspaceUpdateRole()
 const {
   hasAvailableEditorSeats,
   isFreePlan,
   isUnlimitedPlan,
-  isPurchasablePlan,
-  editorSeatPriceFormatted
+  editorSeatPriceFormatted,
+  intervalIsYearly,
+  currentBillingCycleEnd
 } = useWorkspacePlan(props.workspace?.slug || '')
 
 const needsEditorUpgrade = computed(() => {
   return props.action === 'make' && props.user.seatType === SeatTypes.Viewer
+})
+
+const isUnpaidPaidUpgrade = computed(() => {
+  return isFreePlan.value || hasAvailableEditorSeats.value || isUnlimitedPlan.value
 })
 
 const title = computed(() => {
@@ -128,7 +122,7 @@ const title = computed(() => {
 const buttonText = computed(() => {
   switch (props.action) {
     case 'make':
-      return needsEditorUpgrade.value ? 'Upgrade and make admin' : 'Make an admin'
+      return isUnpaidPaidUpgrade.value ? 'Make an admin' : 'Confirm and pay'
     case 'remove':
       return 'Revoke admin access'
     default:
@@ -147,23 +141,31 @@ const mainMessage = computed(() => {
   }
 })
 
-const roleInfo = computed(() => {
-  return props.action === 'make'
-    ? undefined
-    : WorkspaceRoleDescriptions[Roles.Workspace.Member]
-})
-
 const handleConfirm = async () => {
   if (!props.workspace?.id) return
 
-  await updateUserRole({
-    userId: props.user.id,
-    role: props.action === 'make' ? Roles.Workspace.Admin : Roles.Workspace.Member,
-    workspaceId: props.workspace.id
-  })
+  isLoading.value = true
+  try {
+    await updateUserRole({
+      userId: props.user.id,
+      role: props.action === 'make' ? Roles.Workspace.Admin : Roles.Workspace.Member,
+      workspaceId: props.workspace.id
+    })
 
-  open.value = false
-  emit('success')
+    if (!isUnpaidPaidUpgrade.value) {
+      mixpanel.track('Workspace Seat Purchased', {
+        location: 'upgrade_admin_dialog',
+        seatType: 'editor',
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspace.id
+      })
+    }
+
+    open.value = false
+    emit('success')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -175,7 +177,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: buttonText.value,
     props: {
-      color: 'primary'
+      color: 'primary',
+      loading: isLoading.value
     },
     onClick: handleConfirm
   }

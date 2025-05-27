@@ -83,7 +83,7 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 
-const { FF_BILLING_INTEGRATION_ENABLED, FF_WORKSPACES_MODULE_ENABLED } =
+const { FF_BILLING_INTEGRATION_ENABLED, FF_PERSONAL_PROJECTS_LIMITS_ENABLED } =
   getFeatureFlags()
 
 describe('Versions graphql @core', () => {
@@ -136,11 +136,11 @@ describe('Versions graphql @core', () => {
       }
     )
   })
-  ;(FF_WORKSPACES_MODULE_ENABLED ? describe : describe.skip)(
+  ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? describe : describe.skip)(
     'Version.referencedObject',
     () => {
+      const tenDaysAgo = dayjs().subtract(10, 'day').toDate()
       it('should return version referencedObject if version is the last model version', async () => {
-        const tenDaysAgo = dayjs().subtract(10, 'day').toDate()
         const user = await createTestUser({
           name: createRandomString(),
           email: createRandomEmail()
@@ -235,25 +235,14 @@ describe('Versions graphql @core', () => {
         })
       })
       it('should return version referencedObject if version is the last project version', async () => {
-        const tenDaysAgo = dayjs().subtract(10, 'day').toDate()
         const user = await createTestUser({
           name: createRandomString(),
           email: createRandomEmail()
         })
-        const workspace = {
-          id: createRandomString(),
-          name: createRandomString(),
-          slug: createRandomString(),
-          ownerId: user.id
-        }
-        await createTestWorkspace(workspace, user, {
-          addPlan: { name: 'free', status: 'valid' }
-        })
 
         const project1 = {
           id: '',
-          name: createRandomString(),
-          workspaceId: workspace.id
+          name: createRandomString()
         }
         await createTestStream(project1, user)
 

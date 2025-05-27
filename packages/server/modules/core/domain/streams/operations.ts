@@ -23,12 +23,13 @@ import type express from 'express'
 import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import type { Logger } from 'pino'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
   limit: number
   orderBy?: string | null | undefined
-  visibility?: string | null | undefined
+  visibility?: ProjectRecordVisibility | 'all' | null | undefined
   searchQuery?: string | null | undefined
   streamIdWhitelist?: string[] | null | undefined
   workspaceIdWhitelist?: string[] | null | undefined
@@ -96,6 +97,10 @@ export type GetStreamsCollaboratorCounts = (params: {
 }>
 
 export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
+
+export type GetImplicitUserProjectsCountFactory = (params: {
+  userId: string
+}) => Promise<number>
 
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateArgs,
@@ -189,6 +194,12 @@ export type BaseUserStreamsQueryParams = {
   personalOnly?: MaybeNullOrUndefined<boolean>
 
   /**
+   * If set to true, will also include streams that the user may not have an explicit role on,
+   * but has implicit access to because of workspaces
+   */
+  includeImplicitAccess?: MaybeNullOrUndefined<boolean>
+
+  /**
    * Only with active sso session
    */
   onlyWithActiveSsoSession?: boolean
@@ -203,6 +214,10 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
    * Pagination cursor
    */
   cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Fields used to sort the result (supports any UserRecord field plus role field of the StreamAcl)
+   */
+  sortBy?: MaybeNullOrUndefined<string[]>
 }
 
 export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams

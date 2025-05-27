@@ -12,18 +12,21 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { TIME_MS } from '../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canBroadcastProjectActivityPolicy', () => {
   const buildSUT = (
     overrides?: OverridesOf<typeof canBroadcastProjectActivityPolicy>
   ) =>
     canBroadcastProjectActivityPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
@@ -42,8 +45,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({
@@ -57,7 +59,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })
@@ -78,8 +80,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getProjectRole: async () => null
     })
@@ -186,8 +187,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
         getProject: getProjectFake({
           id: 'project-id',
           workspaceId: 'workspace-id',
-          isDiscoverable: false,
-          isPublic: true
+          visibility: ProjectVisibility.Public
         })
       })
 
@@ -199,7 +199,24 @@ describe('canBroadcastProjectActivityPolicy', () => {
       expect(result).toBeOKResult()
     })
 
-    it('fails if user has no workspace role', async () => {
+    it('fails w/o workspace role, even if has project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => Roles.Stream.Reviewer,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code,
+        message: /You do not have access to this project's workspace/i
+      })
+    })
+
+    it('fails if user has no implicit project role', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceRole: async () => null
       })
@@ -210,7 +227,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: WorkspaceNoAccessError.code
+        code: ProjectNoAccessError.code
       })
     })
 
@@ -248,7 +265,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(Date.now() - 1000)
+          validUntil: new Date(Date.now() - TIME_MS.second)
         })
       })
 

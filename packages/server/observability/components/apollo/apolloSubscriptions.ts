@@ -6,7 +6,10 @@ import { BaseError } from '@/modules/shared/errors'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/observability/utils/redact'
 import type { Counter } from 'prom-client'
-import { getRequestContext } from '@/observability/components/express/requestContext'
+import {
+  getRequestContext,
+  isRequestContext
+} from '@/observability/utils/requestContext'
 import { subscriptionLogger } from '@/observability/logging'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,13 +45,13 @@ export const onOperationHandlerFactory = (deps: {
         graphql_query: baseParams.query.toString(),
         graphql_variables: redactSensitiveVariables(baseParams.variables),
         graphql_operation_type: 'subscription',
-        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
+        ...(isRequestContext(reqCtx) ? { req: { id: reqCtx.requestId } } : {})
       },
       'Subscription event fired for {graphql_operation_name}'
     )
 
     baseParams.formatResponse = (val: SubscriptionResponse) => {
-      ctx.loaders.clearAll()
+      ctx.clearCache()
       logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
       metricSubscriptionTotalResponses.inc({
         subscriptionType: baseParams.operationName,
@@ -57,7 +60,7 @@ export const onOperationHandlerFactory = (deps: {
       return val
     }
     baseParams.formatError = (e: Error) => {
-      ctx.loaders.clearAll()
+      ctx.clearCache()
       logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
 
       metricSubscriptionTotalResponses.inc({
@@ -89,7 +92,7 @@ export function logSubscriptionOperation(params: {
     graphql_operation_name: execParams.operationName,
     graphql_operation_type: 'subscription',
     userId,
-    ...(reqCtx
+    ...(isRequestContext(reqCtx)
       ? {
           req: { id: reqCtx.requestId },
           dbMetrics: reqCtx.dbMetrics

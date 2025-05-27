@@ -3,6 +3,7 @@ import { MaybeAsync } from '../../core/index.js'
 import type { GetServerRole } from './core/operations.js'
 import type {
   GetProject,
+  GetProjectModelCount,
   GetProjectRole,
   GetProjectRoleCounts
 } from './projects/operations.js'
@@ -21,6 +22,7 @@ import type {
 } from './workspaces/operations.js'
 import { GetComment } from './comments/operations.js'
 import { GetModel } from './models/operations.js'
+import { GetVersion } from './versions/operations.js'
 
 // utility type that ensures all properties functions that return promises
 type PromiseAll<T> = {
@@ -55,6 +57,7 @@ export const AuthCheckContextLoaderKeys = <const>{
   getProject: 'getProject',
   getProjectRoleCounts: 'getProjectRoleCounts',
   getProjectRole: 'getProjectRole',
+  getProjectModelCount: 'getProjectModelCount',
   getServerRole: 'getServerRole',
   getWorkspace: 'getWorkspace',
   getWorkspaceRole: 'getWorkspaceRole',
@@ -67,7 +70,8 @@ export const AuthCheckContextLoaderKeys = <const>{
   getWorkspaceSsoSession: 'getWorkspaceSsoSession',
   getAdminOverrideEnabled: 'getAdminOverrideEnabled',
   getComment: 'getComment',
-  getModel: 'getModel'
+  getModel: 'getModel',
+  getVersion: 'getVersion'
 }
 export const Loaders = AuthCheckContextLoaderKeys // shorter alias
 /* v8 ignore end  */
@@ -81,6 +85,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getProject: GetProject
   getProjectRole: GetProjectRole
   getProjectRoleCounts: GetProjectRoleCounts
+  getProjectModelCount: GetProjectModelCount
   getServerRole: GetServerRole
   getWorkspace: GetWorkspace
   getWorkspaceRole: GetWorkspaceRole
@@ -93,6 +98,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getWorkspaceSsoSession: GetWorkspaceSsoSession
   getComment: GetComment
   getModel: GetModel
+  getVersion: GetVersion
 }>
 
 export type AuthCheckContextLoaders<

@@ -7,7 +7,6 @@ import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import {
   createAutomation as clientCreateAutomation,
-  getFunctionFactory,
   getFunctionReleaseFactory,
   getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
@@ -16,12 +15,10 @@ import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
-  ProjectAutomationUpdateInput,
-  ProjectTestAutomationCreateInput
+  ProjectAutomationUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
-  AutomationCreationError,
   AutomationFunctionInputEncryptionError,
   AutomationRevisionCreationError,
   AutomationUpdateError,
@@ -42,6 +39,7 @@ import { validateAutomationName } from '@/modules/automate/utils/automationConfi
 import {
   CreateAutomation,
   CreateStoredAuthCode,
+  MarkAutomationDeleted,
   GetAutomation,
   GetEncryptionKeyPair,
   GetLatestVersionAutomationRuns,
@@ -60,7 +58,6 @@ export type CreateAutomationDeps = {
   automateCreateAutomation: typeof clientCreateAutomation
   storeAutomation: StoreAutomation
   storeAutomationToken: StoreAutomationToken
-  validateStreamAccess: ValidateStreamAccess
   eventEmit: EventBusEmit
 }
 
@@ -75,26 +72,17 @@ export const createAutomationFactory =
     const {
       input: { name, enabled },
       projectId,
-      userId,
-      userResourceAccessRules
+      userId
     } = params
     const {
       createAuthCode,
       automateCreateAutomation,
       storeAutomation,
       storeAutomationToken,
-      validateStreamAccess,
       eventEmit
     } = deps
 
     validateAutomationName(name)
-
-    await validateStreamAccess(
-      userId,
-      projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
 
     const authCode = await createAuthCode({
       userId,
@@ -119,7 +107,8 @@ export const createAutomationFactory =
       enabled,
       projectId,
       executionEngineAutomationId,
-      isTestAutomation: false
+      isTestAutomation: false,
+      isDeleted: false
     })
 
     const automationTokenRecord = await storeAutomationToken({
@@ -139,7 +128,6 @@ export const createAutomationFactory =
 
 export type CreateTestAutomationDeps = {
   getEncryptionKeyPair: GetEncryptionKeyPair
-  getFunction: ReturnType<typeof getFunctionFactory>
   storeAutomation: StoreAutomation
   storeAutomationRevision: StoreAutomationRevision
   validateStreamAccess: ValidateStreamAccess
@@ -153,60 +141,35 @@ export type CreateTestAutomationDeps = {
 export const createTestAutomationFactory =
   (deps: CreateTestAutomationDeps) =>
   async (params: {
-    input: ProjectTestAutomationCreateInput
+    automationName: string
     projectId: string
+    modelId: string
     userId: string
-    userResourceAccessRules?: ContextResourceAccessRules
   }) => {
-    const {
-      input: { name, functionId, modelId },
-      projectId,
-      userId,
-      userResourceAccessRules
-    } = params
+    const { automationName, projectId, modelId, userId } = params
     const {
       getEncryptionKeyPair,
-      getFunction,
       storeAutomation,
       storeAutomationRevision,
-      validateStreamAccess,
       eventEmit
     } = deps
 
-    validateAutomationName(name)
-
-    await validateStreamAccess(
-      userId,
-      projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
-
-    // Get latest release for specified function
-    const fn = await getFunction({ functionId })
-
-    if (!fn || !fn.functionVersions || fn.functionVersions.length === 0) {
-      // TODO: This should probably be okay for test automations
-      throw new AutomationCreationError(
-        'The specified function does not have any releases'
-      )
-    }
-
-    const latestFunctionRelease = fn.functionVersions[0]
+    validateAutomationName(automationName)
 
     // Create and store the automation record
     const automationId = cryptoRandomString({ length: 10 })
 
     const automationRecord = await storeAutomation({
       id: automationId,
-      name,
+      name: automationName,
       userId,
       createdAt: new Date(),
       updatedAt: new Date(),
       enabled: true,
       projectId,
       executionEngineAutomationId: null,
-      isTestAutomation: true
+      isTestAutomation: true,
+      isDeleted: false
     })
 
     await eventEmit({
@@ -220,13 +183,7 @@ export const createTestAutomationFactory =
     const encryptionKeyPair = await getEncryptionKeyPair()
 
     const automationRevisionRecord = await storeAutomationRevision({
-      functions: [
-        {
-          functionId,
-          functionReleaseId: latestFunctionRelease.functionVersionId,
-          functionInputs: null
-        }
-      ],
+      functions: [],
       triggers: [
         {
           triggerType: VersionCreationTriggerType,
@@ -250,10 +207,16 @@ export const createTestAutomationFactory =
     return automationRecord
   }
 
+export const deleteAutomationFactory =
+  (deps: { deleteAutomation: MarkAutomationDeleted }) =>
+  async (params: { automationId: string }) => {
+    const { automationId } = params
+    return await deps.deleteAutomation({ automationId })
+  }
+
 export type ValidateAndUpdateAutomationDeps = {
   getAutomation: GetAutomation
   updateAutomation: UpdateAutomation
-  validateStreamAccess: ValidateStreamAccess
   eventEmit: EventBusEmit
 }
 
@@ -268,8 +231,8 @@ export const validateAndUpdateAutomationFactory =
      */
     projectId?: string
   }) => {
-    const { getAutomation, updateAutomation, validateStreamAccess, eventEmit } = deps
-    const { input, userId, userResourceAccessRules, projectId } = params
+    const { getAutomation, updateAutomation, eventEmit } = deps
+    const { input, projectId } = params
 
     const existingAutomation = await getAutomation({
       automationId: input.id,
@@ -278,13 +241,6 @@ export const validateAndUpdateAutomationFactory =
     if (!existingAutomation) {
       throw new AutomationUpdateError('Automation not found')
     }
-
-    await validateStreamAccess(
-      userId,
-      existingAutomation.projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
 
     // Filter out empty (null) values from input
     const updates = removeNullOrUndefinedKeys(input)

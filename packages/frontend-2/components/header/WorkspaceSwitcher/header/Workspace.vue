@@ -6,7 +6,8 @@
       :to="workspaceRoute(activeWorkspaceSlug || '')"
     >
       <p class="text-body-2xs text-foreground-2 capitalize truncate">
-        {{ workspace?.plan?.name }} · {{ workspace?.team?.totalCount ?? 0 }} member{{
+        {{ formatName(workspace?.plan?.name) }} ·
+        {{ workspace?.team?.totalCount ?? 0 }} member{{
           (workspace?.team?.totalCount ?? 0) > 1 ? 's' : ''
         }}
       </p>
@@ -22,22 +23,22 @@
               Settings
             </FormButton>
           </MenuItem>
-          <MenuItem>
-            <FormButton
-              full-width
-              color="outline"
-              size="sm"
-              :disabled="workspace?.role !== Roles.Workspace.Admin"
-              @click="showInviteDialog = true"
-            >
-              Invite members
-            </FormButton>
+          <MenuItem v-if="!isWorkspaceGuest">
+            <div v-tippy="inviteTooltipText" class="w-full">
+              <FormButton
+                full-width
+                color="outline"
+                size="sm"
+                :disabled="!canInvite"
+                @click="$emit('show-invite-dialog')"
+              >
+                Invite members
+              </FormButton>
+            </div>
           </MenuItem>
         </div>
       </template>
     </HeaderWorkspaceSwitcherHeader>
-
-    <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
   </div>
 </template>
 
@@ -48,14 +49,19 @@ import type { HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment } from '~
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { workspaceRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {
-    ...InviteDialogWorkspace_Workspace
     id
     name
     logo
     role
+    permissions {
+      canInvite {
+        ...FullPermissionCheckResult
+      }
+    }
     plan {
       name
     }
@@ -65,11 +71,17 @@ graphql(`
   }
 `)
 
-defineProps<{
+defineEmits(['show-invite-dialog'])
+
+const props = defineProps<{
   workspace: MaybeNullOrUndefined<HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment>
 }>()
 
 const { activeWorkspaceSlug } = useNavigation()
 
-const showInviteDialog = ref(false)
+const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
+const canInvite = computed(() => props.workspace?.permissions.canInvite.authorized)
+const inviteTooltipText = computed(() =>
+  canInvite.value ? undefined : props.workspace?.permissions.canInvite.message
+)
 </script>

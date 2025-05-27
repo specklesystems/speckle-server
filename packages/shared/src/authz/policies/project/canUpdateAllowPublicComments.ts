@@ -4,13 +4,17 @@ import { AuthPolicy } from '../../domain/policies.js'
 import { Loaders } from '../../domain/loaders.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { canUpdateProjectPolicy } from './canUpdate.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 export const canUpdateProjectAllowPublicCommentsPolicy: AuthPolicy<
   | typeof Loaders.getProject
@@ -28,7 +32,10 @@ export const canUpdateProjectAllowPublicCommentsPolicy: AuthPolicy<
     | typeof WorkspaceNoAccessError
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
+    | typeof ServerNotEnoughPermissionsError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
   >
 > =
   (loaders) =>
@@ -48,7 +55,7 @@ export const canUpdateProjectAllowPublicCommentsPolicy: AuthPolicy<
       return err(new ProjectNotFoundError())
     }
 
-    const isPublic = project.isPublic || project.isDiscoverable
+    const isPublic = project.visibility === ProjectVisibility.Public
     return isPublic
       ? ok()
       : err(

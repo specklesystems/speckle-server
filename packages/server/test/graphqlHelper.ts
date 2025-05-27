@@ -27,8 +27,8 @@ import * as MockSocket from 'mock-socket'
 import type ws from 'ws'
 import { createAuthTokenForUser } from '@/test/authHelper'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
-import { WebSocketLink } from '@apollo/client/link/ws'
-import { execute } from '@apollo/client/core'
+import { WebSocketLink } from '@apollo/client/link/ws/ws.cjs'
+import { execute } from '@apollo/client/core/core.cjs'
 import { PingPongDocument } from '@/test/graphql/generated/graphql'
 import { BaseError } from '@/modules/shared/errors'
 import EventEmitter from 'eventemitter2'
@@ -92,8 +92,8 @@ export async function executeOperation<
 
   const results = getResponseResults(res)
 
-  // Replicate clearing dataloaders after each request
-  contextValue.loaders.clearAll()
+  // Replicate clearing dataloaders/policies after each request
+  contextValue.clearCache()
 
   return {
     ...results,
@@ -237,7 +237,8 @@ export const testApolloServer = async (params?: {
           })
         : undefined
 
-    const ctx = operationCtx || baseCtx
+    // Re-apply createTestContext to reset dataloaders, authpolicy etc. state
+    const ctx = await createTestContext(operationCtx || baseCtx)
 
     const res = (await instance.executeOperation(
       {

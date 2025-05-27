@@ -47,6 +47,8 @@ import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationRunEvents } from '@/modules/automate/domain/events'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { getRequestLogger } from '@/observability/utils/requestContext'
+import { logWithErr } from '@/observability/utils/logLevels'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -63,6 +65,7 @@ export const onModelVersionCreateFactory =
   async (params: { modelId: string; versionId: string; projectId: string }) => {
     const { modelId, versionId, projectId } = params
     const { getAutomation, getAutomationRevision, getTriggers, triggerFunction } = deps
+    const logger = getRequestLogger() || automateLogger
 
     // get triggers where modelId matches
     const triggerDefinitions = await getTriggers({
@@ -94,8 +97,8 @@ export const onModelVersionCreateFactory =
             throw new AutomateInvalidTriggerError('Specified automation does not exist')
           }
 
-          if (automationRecord.isTestAutomation) {
-            // Do not trigger functions on test automations
+          if (automationRecord.isTestAutomation || automationRecord.isDeleted) {
+            // Do not trigger functions on test automations or deleted automations
             return
           }
 
@@ -111,8 +114,10 @@ export const onModelVersionCreateFactory =
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
-          automateLogger.error(
-            { error, params },
+          logWithErr(
+            logger,
+            error,
+            params,
             'Failure while triggering run onModelVersionCreate'
           )
         }
@@ -358,6 +363,12 @@ export const ensureRunConditionsFactory =
     if (automationWithRevision.isTestAutomation) {
       throw new AutomateInvalidTriggerError(
         'This is a test automation and cannot be triggered outside of local testing'
+      )
+    }
+
+    if (automationWithRevision.isDeleted) {
+      throw new AutomateInvalidTriggerError(
+        'This automation is deleted, cannot trigger it.'
       )
     }
 
@@ -622,10 +633,27 @@ export const createTestAutomationRunFactory =
       }
     })
 
+    // Create test automation function run with "empty" data
     const automationRunRecord = await createAutomationRunDataFactory(deps)({
       manifests: triggerManifests,
       automationWithRevision: automationRevisionRecord
     })
+    automationRunRecord.functionRuns = [
+      {
+        functionId: '',
+        id: cryptoRandomString({ length: 15 }),
+        status: 'pending' as const,
+        elapsed: 0,
+        results: null,
+        contextView: null,
+        statusMessage: null,
+        resultVersions: [],
+        functionReleaseId: '',
+        functionInputs: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ]
     await upsertAutomationRun(automationRunRecord)
 
     await emitEvent({

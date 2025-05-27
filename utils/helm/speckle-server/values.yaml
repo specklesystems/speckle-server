@@ -41,6 +41,8 @@ featureFlags:
   gendoAIModuleEnabled: false
   ## @param featureFlags.workspacesModuleEnabled High level flag fully toggles the workspaces module
   workspacesModuleEnabled: false
+  ## @param featureFlags.personalProjectLimitsEnabled High level flag toggles personal (non-workspace) project limits
+  personalProjectLimitsEnabled: false
   ## @param featureFlags.workspacesSSOEnabled High level flag fully toggles the workspaces dynamic sso
   workspacesSSOEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
@@ -55,12 +57,12 @@ featureFlags:
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
   forceOnboarding: false
-  ## @param featureFlags.noPersonalEmailsEnabled Disables the ability sign up with personal email addresses
-  noPersonalEmailsEnabled: false
   ## @param featureFlags.workspacesNewPlanEnabled Toggles whether the new (Q1 2025) plans for workspaces are available. workspacesModuleEnabled must also be enabled for this to take effect.
   workspacesNewPlanEnabled: false
   ## @param featureFlags.moveProjectRegionEnabled Enables the ability to move a project region (manually or automatically)
   moveProjectRegionEnabled: false
+  ## @param featureFlags.nextGenFileImporterEnabled Enables the next generation file importer
+  nextGenFileImporterEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -191,7 +193,7 @@ db:
   useCertificate: false
   ## @param db.maxConnectionsServer The number of connections to the Postgres database to provide in the connection pool
   ##
-  maxConnectionsServer: 4
+  maxConnectionsServer: 8
   ## @param db.certificate The x509 public certificate for SSL connections to the Postgres database. Use of this certificate requires db.useCertificate to be enabled and an appropriate value for db.PGSSLMODE provided.
   ## The value must be formatted as a multi-line string.  We recommend using the pipe-symbol and taking care to
   ##  indent all lines of the value correctly.
@@ -889,10 +891,6 @@ server:
     newsletterListId: ''
     ## @param server.mailchimp.onboardingListId Audience id for the onboarding list
     onboardingListId: ''
-    ## @param server.mailchimp.onboardingJourneyId Id of the onboarding journey
-    onboardingJourneyId: ''
-    ## @param server.mailchimp.onboardingStepId Id of the onboarding journey step we trigger
-    onboardingStepId: ''
 
   migration:
     ## @param server.migration.movedFrom Indicate the URL where the server moved from
@@ -1055,9 +1053,6 @@ frontend_2:
   ## @param frontend_2.image The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
   image: ''
-  ## @param frontend_2.webflowApiToken API Key for Webflow, which provides the blog content for the new web application frontend.
-  ##
-  webflowApiToken: ''
   ## @param frontend_2.logClientApiToken SEQ API token
   ##
   logClientApiToken: ''

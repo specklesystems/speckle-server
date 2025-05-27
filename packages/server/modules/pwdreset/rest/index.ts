@@ -17,6 +17,7 @@ import {
 import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
 import { BadRequestError } from '@/modules/shared/errors'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { ensureError } from '@speckle/shared'
 import { Express } from 'express'
 
@@ -26,6 +27,8 @@ export default function (app: Express) {
   // sends a password recovery email.
   app.post('/auth/pwdreset/request', async (req, res) => {
     try {
+      const email = req.body.email
+      const logger = req.log.child({ email })
       const requestPasswordRecovery = requestPasswordRecoveryFactory({
         getUserByEmail,
         getPendingToken: getPendingTokenFactory({ db }),
@@ -35,8 +38,11 @@ export default function (app: Express) {
         sendEmail
       })
 
-      const email = req.body.email
-      await requestPasswordRecovery(email)
+      await withOperationLogging(async () => await requestPasswordRecovery(email), {
+        logger,
+        operationName: 'requestPasswordRecovery',
+        operationDescription: `Requesting password recovery`
+      })
 
       return res.status(200).send('Password reset email sent.')
     } catch (e: unknown) {
@@ -47,6 +53,7 @@ export default function (app: Express) {
 
   // Finalizes password recovery.
   app.post('/auth/pwdreset/finalize', async (req, res) => {
+    const logger = req.log
     try {
       const finalizePasswordReset = finalizePasswordResetFactory({
         getUserByEmail,
@@ -61,7 +68,14 @@ export default function (app: Express) {
 
       if (!req.body.tokenId || !req.body.password)
         throw new BadRequestError('Invalid request.')
-      await finalizePasswordReset(req.body.tokenId, req.body.password)
+      await withOperationLogging(
+        async () => await finalizePasswordReset(req.body.tokenId, req.body.password),
+        {
+          logger,
+          operationName: 'finalizePasswordReset',
+          operationDescription: `Finalizing password reset`
+        }
+      )
 
       return res.status(200).send('Password reset. Please log in.')
     } catch (e: unknown) {

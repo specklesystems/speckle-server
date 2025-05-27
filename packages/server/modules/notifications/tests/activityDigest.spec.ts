@@ -8,7 +8,11 @@ import {
   StreamScopeActivity,
   AllActivityTypes
 } from '@/modules/activitystream/helpers/types'
-import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import {
+  ProjectRecordVisibility,
+  ServerInfo,
+  UserRecord
+} from '@/modules/core/helpers/types'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import {
   digestMostActiveStream,
@@ -57,8 +61,8 @@ describe('Activity digest notifications @notifications', () => {
     version: 'testing 1 2 3',
     guestModeEnabled: false,
     configuration: {
-      objectMultipartUploadSizeLimitBytes: 1000000,
-      objectSizeLimitBytes: 1000000,
+      objectMultipartUploadSizeLimitBytes: 1_000_000,
+      objectSizeLimitBytes: 1_000_000,
       isEmailEnabled: true
     }
   }
@@ -116,12 +120,11 @@ describe('Activity digest notifications @notifications', () => {
         id: streamName,
         description: 'tester',
         name: streamName,
-        isPublic: true,
+        visibility: ProjectRecordVisibility.Public,
         clonedFrom: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         allowPublicComments: true,
-        isDiscoverable: true,
         workspaceId: null,
         regionKey: null
       },

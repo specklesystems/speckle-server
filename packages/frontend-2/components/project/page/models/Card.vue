@@ -39,8 +39,6 @@
           v-model:open="showActionsMenu"
           :model="model"
           :project="project"
-          :can-edit="canEdit"
-          :can-delete="canDelete"
           @click.stop.prevent
           @upload-version="triggerVersionUpload"
         />
@@ -80,16 +78,16 @@
           </NuxtLink>
         </template>
         <div
-          v-if="!isPendingModelFragment(model)"
+          v-if="!isPendingModelFragment(model) && project"
           v-show="!previewUrl && !pendingVersion"
           class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
             ref="importArea"
-            :project-id="projectId"
-            :model-name="model.name"
+            empty-state-variant="modelGrid"
+            :project="project"
+            :model="model"
             class="w-full h-full"
-            :disabled="project?.workspace?.readOnly"
           />
         </div>
       </div>
@@ -141,9 +139,11 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
-    workspace {
-      id
-      readOnly
+    ...ProjectCardImportFileArea_Project
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -211,13 +211,6 @@ const updatedAtFullDate = computed(() => {
     ? props.model.convertedLastUpdate || props.model.uploadDate
     : props.model.updatedAt
 })
-
-const canEdit = computed(() =>
-  isPendingModelFragment(props.model) ? undefined : props.model.permissions.canUpdate
-)
-const canDelete = computed(() =>
-  isPendingModelFragment(props.model) ? undefined : props.model.permissions.canDelete
-)
 
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount

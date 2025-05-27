@@ -15,6 +15,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment BillingActions_Workspace on Workspace {
@@ -49,6 +50,7 @@ export const useBillingActions = () => {
     settingsBillingCancelCheckoutSessionMutation
   )
   const logger = useLogger()
+  const { $intercom } = useNuxtApp()
 
   const billingPortalRedirect = async (workspaceId: MaybeNullOrUndefined<string>) => {
     if (!workspaceId) {
@@ -119,12 +121,6 @@ export const useBillingActions = () => {
     workspaceId: string
   }) => {
     const { plan, cycle, workspaceId } = args
-    mixpanel.track('Workspace Upgrade Button Clicked', {
-      plan,
-      cycle,
-      // eslint-disable-next-line camelcase
-      workspace_id: workspaceId
-    })
 
     const result = await apollo
       .mutate({
@@ -161,19 +157,25 @@ export const useBillingActions = () => {
       .catch(convertThrowIntoFetchResult)
 
     if (result.data) {
-      mixpanel.track('Workspace Upgraded', {
+      const metaData = {
         plan,
         cycle,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
+      }
+      mixpanel.track('Workspace Upgraded', metaData)
+      $intercom.track('Workspace Upgraded', {
+        ...metaData,
+        isExistingSubscription: false
       })
+      $intercom.updateCompany()
 
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace plan upgraded',
         description: `Your workspace is now on ${
           cycle === BillingInterval.Yearly ? 'an annual' : 'a monthly'
-        } ${plan} plan`
+        } ${formatName(plan)} plan`
       })
     } else {
       const errMsg = getFirstGqlErrorMessage(result?.errors)
@@ -217,12 +219,19 @@ export const useBillingActions = () => {
           title: 'Your workspace plan was successfully updated'
         })
 
-        mixpanel.track('Workspace Upgraded', {
+        const metaData = {
           plan: workspace.plan?.name,
           cycle: workspace.subscription?.billingInterval,
           // eslint-disable-next-line camelcase
           workspace_id: workspace.id
+        }
+
+        mixpanel.track('Workspace Upgraded', metaData)
+        $intercom.track('Workspace Upgraded', {
+          ...metaData,
+          isExistingSubscription: false
         })
+        $intercom.updateCompany()
       }
 
       const currentQueryParams = { ...route.query }

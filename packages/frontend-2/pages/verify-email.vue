@@ -43,7 +43,6 @@
           Cancel
         </FormButton>
         <div
-          :key="cooldownRemaining"
           v-tippy="
             cooldownRemaining > 0
               ? `You can send another code in ${cooldownRemaining}s`
@@ -87,6 +86,7 @@ import { useRoute } from 'vue-router'
 import { useAuthManager, useRegisteredThisSession } from '~/lib/auth/composables/auth'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { UserEmail } from '~/lib/common/generated/gql/graphql'
+import { TIME_MS } from '@speckle/shared'
 
 useHead({
   title: 'Verify your email'
@@ -135,7 +135,7 @@ const { pause: stopInterval, resume: startInterval } = useIntervalFn(
       stopInterval()
     }
   },
-  1000,
+  TIME_MS.second,
   { immediate: false }
 )
 

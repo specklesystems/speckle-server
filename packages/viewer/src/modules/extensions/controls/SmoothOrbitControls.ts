@@ -316,7 +316,11 @@ export class SmoothOrbitControls extends SpeckleControls {
      */
     const targetPosition = this.getPosition()
     const targetTarget = this.getTarget()
-    if (position.equals(targetPosition) && target.equals(targetTarget)) return
+    const deltaTarget = vector3.subVectors(target, targetTarget).length()
+    const deltaPosition = vector3.subVectors(position, targetPosition).length()
+    const epsilon = 1e-7
+    if (deltaPosition < epsilon) return
+    if (deltaTarget < epsilon) return
 
     const v0 = new Vector3().copy(position)
     const v1 = new Vector3().copy(target)

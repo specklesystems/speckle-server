@@ -5,7 +5,7 @@ import {
 } from '~/lib/common/helpers/mp'
 import type Mixpanel from 'mixpanel'
 import type { Nullable } from '@speckle/shared'
-import * as ServerMixpanelUtils from '@speckle/shared/dist/esm/observability/mixpanel.js'
+import * as ServerMixpanelUtils from '@speckle/shared/observability/mixpanel'
 import { useApiOrigin } from '~/composables/env'
 import { useActiveUser } from '~/composables/globals'
 import { isFunction } from 'lodash-es'

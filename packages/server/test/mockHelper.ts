@@ -44,7 +44,6 @@ export function mockRequireModule<
     Record<MockTypeFunctionProp, MockedFunc<MockTypeFunctionProp>>
   > = {}
 
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const originalModule = require(modulePaths[0]) as MockType
   const mockDefinition = new Proxy<MockType>(originalModule, {
     get(target, prop) {

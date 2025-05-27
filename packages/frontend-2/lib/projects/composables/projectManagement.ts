@@ -213,7 +213,7 @@ export function useUpdateUserRole(
     } else {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Project permissions updated'
+        title: input.role ? 'Project role updated' : 'User removed from project'
       })
     }
 
@@ -247,7 +247,7 @@ export function useUpdateUserRole(
     } else {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Workspace project permissions updated'
+        title: input.role ? 'Project role updated' : 'User removed from project'
       })
     }
 
@@ -498,10 +498,6 @@ export function useProcessProjectInvite() {
           description: errMsg
         })
       }
-    }
-
-    if (data?.projectMutations.invites.use) {
-      navigateTo(projectRoute(input.projectId))
     }
 
     return data?.projectMutations.invites.use

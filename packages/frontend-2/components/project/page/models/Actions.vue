@@ -39,7 +39,6 @@
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
 import type {
-  FullPermissionCheckResultFragment,
   ProjectPageModelsActionsFragment,
   ProjectPageModelsActions_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -51,17 +50,33 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { modelVersionsRoute } from '~/lib/common/helpers/route'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment ProjectPageModelsActions on Model {
     id
     name
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canDelete {
+        ...FullPermissionCheckResult
+      }
+      canCreateVersion {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 graphql(`
   fragment ProjectPageModelsActions_Project on Project {
     id
+    workspace {
+      id
+      slug
+    }
     ...ProjectsModelPageEmbed_Project
   }
 `)
@@ -87,8 +102,6 @@ const props = defineProps<{
   open?: boolean
   model: ProjectPageModelsActionsFragment
   project: ProjectPageModelsActions_ProjectFragment
-  canEdit?: FullPermissionCheckResultFragment
-  canDelete?: FullPermissionCheckResultFragment
   menuPosition?: HorizontalDirection
 }>()
 
@@ -97,10 +110,43 @@ const { copy } = useClipboard()
 const menuId = useId()
 const { isLoggedIn } = useActiveUser()
 const router = useRouter()
+const mp = useMixpanel()
+const { statusIsCanceled } = useWorkspacePlan(props.project.workspace?.slug || '')
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
 const embedDialogOpen = ref(false)
+
+const canEdit = computed(() => props.model.permissions.canUpdate)
+const canDelete = computed(() => props.model.permissions.canDelete)
+const canCreateVersion = computed(() => props.model.permissions.canCreateVersion)
+
+const uploadVersionDisabled = computed(() => {
+  if (canCreateVersion.value.code === 'WORKSPACES_NOT_AUTHORIZED_ERROR') {
+    return {
+      disabled: true,
+      tooltip: `Your project role doesn't allow creating new model versions`
+    }
+  }
+  if (statusIsCanceled.value) {
+    return {
+      disabled: true,
+      tooltip:
+        "The workspace's subscription is cancelled, so no new model versions can be created"
+    }
+  }
+  if (!canCreateVersion.value.authorized) {
+    return {
+      disabled: true,
+      tooltip: canCreateVersion.value.message || 'Insufficient permissions'
+    }
+  }
+
+  return {
+    disabled: false,
+    tooltip: ''
+  }
+})
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ...(isLoggedIn.value
@@ -109,8 +155,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           {
             title: 'Edit model...',
             id: ActionTypes.Rename,
-            disabled: !props.canEdit?.authorized,
-            disabledTooltip: props.canEdit?.message || 'Insufficient permissions'
+            disabled: !canEdit.value.authorized,
+            disabledTooltip: canEdit.value.message || 'Insufficient permissions'
           }
         ]
       ]
@@ -125,8 +171,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           {
             title: 'Upload new version...',
             id: ActionTypes.UploadVersion,
-            disabled: !props.canEdit?.authorized,
-            disabledTooltip: props.canEdit?.message || 'Insufficient permissions'
+            disabled: uploadVersionDisabled.value.disabled,
+            disabledTooltip: uploadVersionDisabled.value.tooltip
           }
         ]
       : [])
@@ -143,8 +189,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
             title: 'Delete...',
             id: ActionTypes.Delete,
             // TODO:
-            disabled: !props.canDelete?.authorized,
-            disabledTooltip: props.canDelete?.message || 'Insufficient permissions'
+            disabled: !canDelete.value.authorized,
+            disabledTooltip: canDelete.value.message || 'Insufficient permissions'
           }
         ]
       ]
@@ -159,8 +205,6 @@ const isDeleteDialogOpen = computed({
   get: () => openDialog.value === ActionTypes.Delete,
   set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.Delete : null)
 })
-
-const mp = useMixpanel()
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params

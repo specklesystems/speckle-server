@@ -11,16 +11,19 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { getProjectFake } from '../../../tests/fakes.js'
+import { TIME_MS } from '../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canReadProjectSettingsPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>) =>
     canReadProjectSettingsPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
@@ -39,8 +42,7 @@ describe('canReadProjectSettingsPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({
@@ -54,7 +56,7 @@ describe('canReadProjectSettingsPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })
@@ -140,6 +142,22 @@ describe('canReadProjectSettingsPolicy', () => {
       expect(result).toBeOKResult()
     })
 
+    it('fails w/o workspace role role, even w/ project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
+    })
+
     it('fails w/o workspace & project role', async () => {
       const sut = buildWorkspaceSUT({
         getProjectRole: async () => null,
@@ -152,7 +170,7 @@ describe('canReadProjectSettingsPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: WorkspaceNoAccessError.code
+        code: ProjectNoAccessError.code
       })
     })
 

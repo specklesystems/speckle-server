@@ -46,7 +46,7 @@ export const getWorkspaceRolesAndSeatsFactory =
 
       acc[role.userId] = {
         role,
-        seat: formatJsonArrayRecords(row.seats || [])[0] || null,
+        seat: formatJsonArrayRecords(row.seats || [])[0],
         userId: role.userId
       }
       return acc
