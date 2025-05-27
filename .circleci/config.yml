@@ -447,7 +447,7 @@ jobs:
           name: Check JSON Schema is up to date
           command: |
             yarn helm:jsonschema:generate
-            git status --porcelain | grep -q 'utils/helm/speckle-server/schema.json' || (echo "JSON Schema is not up to date. Please run 'yarn helm:jsonschema:generate' and commit the changes." && exit 1)
+            git status --porcelain | grep -q 'utils/helm/speckle-server/schema.json' && echo "JSON Schema is not up to date. Please run 'yarn helm:jsonschema:generate' and commit the changes." && exit 1
 
   pre-commit:
     parameters:
