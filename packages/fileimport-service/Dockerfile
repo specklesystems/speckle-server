@@ -10,8 +10,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /speckle-server
 
-# configure wait & tini
-ARG WAIT_VERSION=2.8.0
+# configure tini
 ARG TINI_VERSION=v0.19.0
 
 # hadolint ignore=DL3008
@@ -21,8 +20,6 @@ RUN apt-get update -y \
      ca-certificates=20240203 \
      curl=8.5.0-2ubuntu10.6 \
      gosu=1.17-1ubuntu0.24.04.2 \
-    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o /usr/bin/wait \
-    && chmod +x /usr/bin/wait \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
@@ -79,5 +76,4 @@ ENV IFC_DOTNET_DLL_PATH='/speckle-server/packages/fileimport-service/src/ifc-dot
 
 WORKDIR /speckle-server/packages/fileimport-service
 
-ENV WAIT_COMMAND="tini -- node --loader=./dist/src/aliasLoader.js bin/www.js"
-ENTRYPOINT [ "wait"]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www.js"]

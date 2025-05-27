@@ -9,20 +9,6 @@ ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
 
-# install wait
-ARG WAIT_VERSION=2.12.1
-RUN apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-     --no-install-recommends \
-     ca-certificates=20230311 \
-     curl=7.88.1-10+deb12u12 \
-    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o /usr/bin/wait \
-    && chmod +x /usr/bin/wait \
-    && apt-get remove -y curl \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
@@ -79,8 +65,6 @@ RUN apt-get update && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-COPY --link --from=build-stage /usr/bin/wait /usr/bin/wait
 
 # Consume the ARG from the global scope
 ARG NODE_ENV
@@ -140,5 +124,4 @@ ENV USER_DATA_DIR='/tmp/puppeteer'
 
 # Run everything after as non-privileged user.
 USER pptruser
-ENV WAIT_COMMAND="tini -- node --loader=./dist/bootstrap.js ./dist/main.js"
-ENTRYPOINT [ "wait" ]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/bootstrap.js", "./dist/main.js" ]

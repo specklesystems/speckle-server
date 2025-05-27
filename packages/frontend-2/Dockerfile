@@ -25,16 +25,13 @@ COPY packages/ui-components-nuxt ./packages/ui-components-nuxt/
 COPY packages/tailwind-theme ./packages/tailwind-theme/
 COPY packages/frontend-2 ./packages/frontend-2/
 
-# install wait & tini
-ARG WAIT_VERSION=2.12.1
+# install tini
 ARG TINI_VERSION=v0.19.0
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20230311 \
      curl=7.88.1-10+deb12u12 \
-    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o /usr/bin/wait \
-    && chmod +x /usr/bin/wait \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && apt-get remove -y curl \
@@ -68,7 +65,6 @@ ENV NUXT_PUBLIC_MIXPANEL_API_HOST=https://analytics.speckle.systems
 
 WORKDIR /speckle-server
 COPY --link --from=build-stage  /speckle-server/packages/frontend-2/.output .
-COPY --link --from=build-stage  /usr/bin/wait /usr/bin/wait
 COPY --link --from=build-stage  /usr/bin/tini /usr/bin/tini
 
 EXPOSE ${PORT}
@@ -77,5 +73,4 @@ EXPOSE ${PORT}
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 USER nonroot
-ENV WAIT_COMMAND="tini -- /nodjs/bin/node ./server/index.mjs"
-ENTRYPOINT ["wait" ]
+ENTRYPOINT [ "tini",  "--", "/nodejs/bin/node", "./server/index.mjs" ]

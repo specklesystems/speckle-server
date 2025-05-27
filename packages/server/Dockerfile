@@ -4,16 +4,13 @@ FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34
 
 WORKDIR /speckle-server
 
-# install wait & tini
-ARG WAIT_VERSION=2.12.1
+# install tini
 ARG TINI_VERSION=v0.19.0
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20230311 \
      curl=7.88.1-10+deb12u12 \
-    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o /usr/bin/wait \
-    && chmod +x /usr/bin/wait \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && apt-get remove -y curl \
@@ -67,7 +64,6 @@ RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspa
 
 FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
 
-COPY --link --from=build-stage /usr/bin/wait /usr/bin/wait
 COPY --link --from=build-stage /usr/bin/tini /usr/bin/tini
 
 WORKDIR /speckle-server
@@ -91,5 +87,4 @@ ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV} \
   SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 
-ENV WAIT_COMMAND="tini -- /nodejs/bin/node ./bin/www"
-ENTRYPOINT ["wait"]
+ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "./bin/www" ]

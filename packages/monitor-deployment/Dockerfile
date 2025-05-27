@@ -5,16 +5,13 @@ FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856
 
 WORKDIR /speckle-server
 
-# Download wait & tini
-ARG WAIT_VERSION=2.12.1
+# Download tini
 ARG TINI_VERSION=v0.19.0
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20230311 \
      curl=7.88.1-10+deb12u12 \
-    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o /usr/bin/wait \
-    && chmod +x /usr/bin/wait \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && apt-get remove -y curl \
@@ -54,13 +51,11 @@ ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
-COPY --link --from=build-stage /speckle-server/wait /usr/bin/wait
-COPY --link --from=build-stage /speckle-server/tini /usr/bin/tini
+COPY --link --from=build-stage /usr/bin/tini /usr/bin/tini
 COPY --link --from=build-stage /speckle-server/packages/shared ./packages/shared
 COPY --link --from=build-stage /speckle-server/packages/monitor-deployment ./packages/monitor-deployment
 COPY --link --from=build-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/monitor-deployment
 
-ENV WAIT_COMMAND="tini -- /nodejs/bin/node --loader=./dist/src/aliasLoader.js ./bin/www.js"
-ENTRYPOINT [ "wait" ]
+ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "--loader=./dist/src/aliasLoader.js", "./bin/www.js" ]
