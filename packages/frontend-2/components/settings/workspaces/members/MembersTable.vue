@@ -16,7 +16,6 @@
       :workspace="workspace"
       show-role-filter
       show-seat-filter
-      show-invite-button
     />
     <LayoutTable
       class="mt-6 mb-12"

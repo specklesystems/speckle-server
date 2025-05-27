@@ -236,6 +236,9 @@ void main() {
         vec4 mvPosition = rteLocalPosition;
     #else
         vec4 mvPosition = vec4( transformed, 1.0 );
+        #ifdef TRANSFORM_STORAGE
+            mvPosition.xyz = rotate_scaled_vertex_position_delta(mvPosition, tPivotHigh, tScale, tQuaternion) + tPivotHigh.xyz + tTranslation.xyz;
+        #endif
         #ifdef USE_INSTANCING
             mvPosition = instanceMatrix * mvPosition;
         #endif

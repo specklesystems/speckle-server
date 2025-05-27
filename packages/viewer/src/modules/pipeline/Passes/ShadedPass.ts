@@ -75,14 +75,11 @@ export class ShadedPass extends BaseGPass {
       const rampTexture = Assets.generateDiscreetRampTexture(
         Array.from(colorMap.keys())
       )
-      const material = new SpeckleStandardColoredMaterial(
-        {
-          side: DoubleSide,
-          transparent: false,
-          wireframe: false
-        },
-        ['USE_RTE']
-      )
+      const material = new SpeckleStandardColoredMaterial({
+        side: DoubleSide,
+        transparent: false,
+        wireframe: false
+      })
       material.clipShadows = true
       material.setGradientTexture(rampTexture)
 

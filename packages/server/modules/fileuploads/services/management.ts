@@ -81,6 +81,7 @@ export const insertNewUploadAndNotifyFactoryV2 =
     })
 
     await deps.pushJobToFileImporter({
+      fileName: file.fileName,
       fileType: file.fileType,
       projectId: file.projectId,
       modelId: upload.modelId,
