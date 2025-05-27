@@ -33,7 +33,6 @@
         <!-- Empty model action -->
         <div
           v-if="itemType === StructureItemType.EmptyModel"
-          :key="`add-submodel-${canCreateModel.canClickCreate.value}`"
           v-tippy="canCreateModel.cantClickCreateReason.value"
         >
           <FormButton
