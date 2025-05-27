@@ -117,7 +117,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
 
     //bad commit! not all items uploaded to server
-    'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
+    // 'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
 
     // 'Super' heavy revit shit
     //  'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
@@ -527,7 +527,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/155101d3ca/models/b8d3b42787b2dc9fc412a8ae16af03ac385e48e6'
 
     // New text
-    // 'https://app.speckle.systems/projects/16ce7b208c/models/e9f8edeb13@dc0b9471e9'
+    'https://app.speckle.systems/projects/16ce7b208c/models/e9f8edeb13@dc0b9471e9'
 
     // Materials in blocks full
     // 'https://app.speckle.systems/projects/1b96a34aae/models/673312057e'

@@ -22,7 +22,7 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
 import { Geometry } from '../../converter/Geometry.js'
 import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
-import { SpeckleText } from '../../objects/SpeckleText.js'
+import { TextLabel } from '../../objects/TextLabel.js'
 import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial.js'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 import { ObjectLayers } from '../../../IViewer.js'
@@ -67,7 +67,7 @@ export class MeasurementPointGizmo extends Group {
   private normalIndicatorBitangent: Vector3 = new Vector3()
   private line: LineSegments2
   private point: Mesh
-  private text: SpeckleText
+  private text: TextLabel
   private _style: MeasurementPointGizmoStyle = Object.assign(
     {},
     DefaultMeasurementPointGizmoStyle
@@ -248,7 +248,7 @@ export class MeasurementPointGizmo extends Group {
     point2.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.add(point2)
 
-    this.text = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
+    this.text = new TextLabel(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
     this.text.textMesh.material = null
 
     this.add(this.point)

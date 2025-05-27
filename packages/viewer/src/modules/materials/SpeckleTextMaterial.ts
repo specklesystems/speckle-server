@@ -78,9 +78,12 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   }
 
   public getDerivedMaterial() {
-    const derived = createTextDerivedMaterial(this)
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const derived = this
     /** We rebind the uniforms */
     for (const k in this.userData) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       derived.uniforms[k] = this.userData[k]
     }
 

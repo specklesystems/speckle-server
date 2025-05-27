@@ -1,4 +1,5 @@
-import { Box3, Material, Object3D, WebGLRenderer } from 'three'
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { Box3, Material, Mesh, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
@@ -10,19 +11,21 @@ import {
   NoneBatchUpdateRange
 } from './Batch.js'
 
-import { SpeckleText } from '../objects/SpeckleText.js'
-import { ObjectLayers } from '../../IViewer.js'
 import Materials from '../materials/Materials.js'
+import { SpeckleText } from '../objects/SpeckleText.js'
+//@ts-ignore
+import { Text } from 'troika-three-text'
+import { ObjectLayers } from '../../index.js'
 
 export default class TextBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  public batchMaterial!: Material
+  public batchMaterial: Material
   public mesh: SpeckleText
 
   public get bounds(): Box3 {
-    return new Box3().setFromObject(this.mesh)
+    return new Box3().setFromObject(this.mesh as Mesh)
   }
 
   public get drawCalls(): number {
@@ -38,17 +41,10 @@ export default class TextBatch implements Batch {
   }
 
   public get vertCount(): number {
-    return (
-      this.mesh.textMesh.geometry.attributes.position.count +
-      this.mesh.backgroundMesh?.geometry.attributes.position.count
-    )
+    // TO DO
+    return 0
   }
 
-  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
-    this.id = id
-    this.subtreeId = subtreeId
-    this.renderViews = renderViews
-  }
   public get pointCount(): number {
     return 0
   }
@@ -56,23 +52,27 @@ export default class TextBatch implements Batch {
     return 0
   }
 
+  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
+    this.id = id
+    this.subtreeId = subtreeId
+    this.renderViews = renderViews
+  }
+
   public get geometryType(): GeometryType {
     return GeometryType.TEXT
   }
 
   public get renderObject(): Object3D {
-    return this.mesh
+    return this.mesh as Mesh
   }
 
   public getCount(): number {
-    return (
-      this.mesh.textMesh.geometry.index.count +
-      this.mesh.backgroundMesh?.geometry.index?.count
-    )
+    // TO DO
+    return 0
   }
 
   public get materials(): Material[] {
-    return this.mesh.material as Material[]
+    return (this.mesh as Mesh).material as Material[]
   }
 
   public get groups(): DrawGroup[] {
@@ -122,39 +122,36 @@ export default class TextBatch implements Batch {
   }
 
   public setDrawRanges(ranges: BatchUpdateRange[]) {
-    this.mesh.textMesh.material = ranges[0].material
-    if (ranges[0].materialOptions && ranges[0].materialOptions.rampIndexColor) {
-      this.mesh.textMesh.material.color.copy(ranges[0].materialOptions.rampIndexColor)
-    }
+    ranges
+    // this.mesh.textMesh.material = ranges[0].material
+    // if (ranges[0].materialOptions && ranges[0].materialOptions.rampIndexColor) {
+    //   this.mesh.textMesh.material.color.copy(ranges[0].materialOptions.rampIndexColor)
+    // }
   }
 
   public resetDrawRanges() {
-    this.mesh.textMesh.material = this.batchMaterial
-    this.mesh.textMesh.visible = true
+    // this.mesh.textMesh.material = this.batchMaterial
+    // this.mesh.textMesh.visible = true
   }
 
   public async buildBatch(): Promise<void> {
-    /** Catering to typescript
-     *  There is no unniverse where there is no metadata
-     */
-    if (!this.renderViews[0].renderData.geometry.metaData) {
-      throw new Error(`Cannot build batch ${this.id}. Metadata`)
+    this.mesh = new SpeckleText()
+    for (let k = 0; k < this.renderViews.length; k++) {
+      const text = new Text()
+      text.matrix.copy(this.renderViews[k].renderData.geometry.bakeTransform)
+      text.text = this.renderViews[k].renderData.geometry.metaData?.value
+      text.fontSize = 2
+      //@ts-ignore
+      this.mesh.addText(text)
     }
-    this.mesh = new SpeckleText(this.id, ObjectLayers.STREAM_CONTENT_TEXT)
-    this.mesh.matrixAutoUpdate = false
-    await this.mesh.update(
-      SpeckleText.SpeckleTextParamsFromMetadata(
-        this.renderViews[0].renderData.geometry.metaData
-      )
-    )
-    if (this.renderViews[0].renderData.geometry.bakeTransform)
-      this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
-    this.renderViews[0].setBatchData(
-      this.id,
-      0,
-      this.mesh.textMesh.geometry.index.count / 3
-    )
-    this.mesh.textMesh.material = this.batchMaterial
+    //@ts-ignore
+    this.mesh.material = this.mesh.createDerivedMaterial(this.batchMaterial)
+    //@ts-ignore
+    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
+    //@ts-ignore
+    this.mesh.frustumCulled = false
+    //@ts-ignore
+    await this.mesh.sync()
   }
 
   public getRenderView(index: number): NodeRenderView {
@@ -175,6 +172,7 @@ export default class TextBatch implements Batch {
   public purge() {
     this.renderViews.length = 0
     this.batchMaterial.dispose()
-    this.mesh.geometry.dispose()
+    //@ts-ignore
+    this.mesh.dispose()
   }
 }

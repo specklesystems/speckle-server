@@ -18,7 +18,7 @@ import {
 import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
-import { SpeckleText } from '../../objects/SpeckleText.js'
+import { TextLabel } from '../../objects/TextLabel.js'
 import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 
@@ -31,9 +31,9 @@ const _mat41 = new Matrix4()
 
 export class PointMeasurement extends Measurement {
   protected gizmo: MeasurementPointGizmo
-  protected xLabel: SpeckleText
-  protected yLabel: SpeckleText
-  protected zLabel: SpeckleText
+  protected xLabel: TextLabel
+  protected yLabel: TextLabel
+  protected zLabel: TextLabel
   protected xLabelPosition: Vector3 = new Vector3()
   protected yLabelPosition: Vector3 = new Vector3()
   protected zLabelPosition: Vector3 = new Vector3()
@@ -52,7 +52,7 @@ export class PointMeasurement extends Measurement {
     this.type = 'PointMeasurement'
     this.gizmo = new MeasurementPointGizmo()
     this.add(this.gizmo)
-    this.xLabel = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
+    this.xLabel = new TextLabel(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
     const xLabelMaterial = new SpeckleTextMaterial(
       {
         color: 0xffffff,
@@ -72,7 +72,7 @@ export class PointMeasurement extends Measurement {
     this.xLabel.textMesh.material = xLabelMaterial.getDerivedMaterial()
     this.add(this.xLabel)
 
-    this.yLabel = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
+    this.yLabel = new TextLabel(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
     const yLabelMaterial = new SpeckleTextMaterial(
       {
         color: 0xffffff,
@@ -92,7 +92,7 @@ export class PointMeasurement extends Measurement {
     this.yLabel.textMesh.material = yLabelMaterial.getDerivedMaterial()
     this.add(this.yLabel)
 
-    this.zLabel = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
+    this.zLabel = new TextLabel(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
     const zLabelMaterial = new SpeckleTextMaterial(
       {
         color: 0xffffff,
