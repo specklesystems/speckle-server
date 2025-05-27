@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col">
-    <div class="relative bg-primary h-32 md:h-48 select-none">
+    <div class="relative bg-primary h-48 select-none">
       <div
         class="bg-foundation dark:bg-foundation-2 w-full relative border-b border-outline-2 h-full overflow-clip flex justify-center"
       >
