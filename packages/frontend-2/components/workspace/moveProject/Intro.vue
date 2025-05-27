@@ -59,7 +59,9 @@
         </template>
       </CommonAlert>
       <div class="flex gap-2 justify-end">
-        <FormButton color="subtle" @click="$emit('cancel')">Cancel</FormButton>
+        <FormButton v-if="!preventClose" color="subtle" @click="$emit('cancel')">
+          Cancel
+        </FormButton>
         <div
           v-tippy="
             canMoveProject?.authorized || isNotOwner ? '' : canMoveProject?.message
@@ -91,6 +93,7 @@ defineEmits<{
 
 const props = defineProps<{
   project?: MaybeNullOrUndefined<WorkspaceMoveProjectManager_ProjectFragment>
+  preventClose?: boolean
 }>()
 
 const canMoveProject = computed(() => props.project?.permissions?.canMoveToWorkspace)

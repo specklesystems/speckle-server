@@ -199,7 +199,9 @@ const hasMissingReferencedObject = computed(() => {
   const resourceIds = resourceIdString.value.split(',')
 
   const result = modelsAndVersionIds.value.some((item) => {
-    const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
+    const version = item.model?.loadedVersion?.items?.find(
+      (v) => v.id === item.versionId
+    )
 
     if (version && version.referencedObject === null) {
       // Check if this model+version is in the URL (latest version always available)
@@ -299,11 +301,11 @@ watch(
       return
     }
 
-    // If no workspace and no missing objects, don't show dialog
-    if (!project.value?.workspace) {
-      showLimitsDialog.value = false
-      return
-    }
+    // // If no workspace and no missing objects, don't show dialog
+    // if (!project.value?.workspace) {
+    //   showLimitsDialog.value = false
+    //   return
+    // }
 
     // Only show comment dialog if it's a federated view AND we have a missing referenced object
     if (missingThread && isFederated.value && hasMissingReferencedObject.value) {

@@ -8,6 +8,7 @@
       :workspace-role="workspace.role"
       :workspace-slug="workspace.slug"
       :location="location"
+      :prevent-close="preventClose"
     />
     <WorkspaceMoveProjectManager
       v-model:open="openDefault"
@@ -15,6 +16,7 @@
       :workspace-id="workspace?.id"
       :project-id="project?.id"
       :show-intro="showIntro"
+      :prevent-close="preventClose"
       @done="onDone"
     />
   </div>
@@ -75,6 +77,7 @@ const props = withDefaults(
     workspace?: MaybeNullOrUndefined<WorkspaceMoveProject_WorkspaceFragment>
     location?: string
     showIntro?: boolean
+    preventClose?: boolean
   }>(),
   {
     location: 'move_project'

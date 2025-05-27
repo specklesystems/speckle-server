@@ -7,11 +7,14 @@
     :hide-title="isSmallDialog"
     :hide-buttons="!([DialogStepId.project, DialogStepId.workspace] as string[]).includes(step.id)"
     :is-transparent="isSmallDialog"
+    :hide-closer="preventClose"
+    :prevent-close-on-click-outside="preventClose"
   >
     <!-- Intro -->
     <WorkspaceMoveProjectIntro
       v-if="step.id === DialogStepId.intro"
       :project="selectedProject"
+      :prevent-close="preventClose"
       @cancel="onCancel"
       @continue="goToNextStep"
     />
@@ -45,7 +48,7 @@
     <template #buttons>
       <div class="-my-1 w-full flex justify-end">
         <FormButton
-          v-if="step.id === DialogStepId.project"
+          v-if="step.id === DialogStepId.project && !preventClose"
           color="outline"
           @click="onCancel"
         >
@@ -163,6 +166,7 @@ const props = defineProps<{
   workspaceSlug?: string
   workspaceId?: string
   showIntro?: boolean
+  preventClose?: boolean
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
