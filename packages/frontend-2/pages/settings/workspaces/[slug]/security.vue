@@ -46,7 +46,7 @@
       <section class="mt-8">
         <div class="grid grid-cols-2 gap-x-6 items-center">
           <div class="flex flex-col gap-y-1">
-            <p class="text-body-xs font-medium text-foreground">New domain</p>
+            <p class="text-body-xs font-medium text-foreground">Add domain</p>
             <p class="text-body-2xs text-foreground-2 leading-5">
               Add a domain from a list of email domains for your active account.
             </p>
@@ -75,6 +75,52 @@
         <div class="flex flex-col space-y-8">
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
+              <p class="text-body-xs font-medium text-foreground">
+                Domain-based discoverability
+              </p>
+              <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+                Allow users with verified domain emails to find and request access to
+                this workspace.
+              </p>
+            </div>
+            <FormSwitch
+              v-model="isDomainDiscoverabilityEnabled"
+              v-tippy="
+                !hasWorkspaceDomains
+                  ? 'Your workspace must have at least one verified domain'
+                  : undefined
+              "
+              name="domain-discoverability"
+              :disabled="!hasWorkspaceDomains"
+              :show-label="false"
+            />
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-center">
+              <div class="flex-1 flex-col pr-6 gap-y-1">
+                <p class="text-body-xs font-medium text-foreground">
+                  Join without admin approval
+                </p>
+                <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+                  Allow users with verified domain emails to join immediately without
+                  admin approval.
+                </p>
+              </div>
+              <FormSwitch
+                v-model="isAutoJoinEnabled"
+                v-tippy="
+                  !isDomainDiscoverabilityEnabled
+                    ? 'Domain-based discoverability must be enabled'
+                    : undefined
+                "
+                name="auto-join"
+                :disabled="!hasWorkspaceDomains || !isDomainDiscoverabilityEnabled"
+                :show-label="false"
+              />
+            </div>
+          </div>
+          <div class="flex items-center">
+            <div class="flex-1 flex-col pr-6 gap-y-1">
               <div class="flex items-center">
                 <p class="text-body-xs font-medium text-foreground">
                   Domain protection
@@ -93,52 +139,6 @@
                 :show-label="false"
                 :disabled="switchDisabled"
                 name="domain-protection"
-              />
-            </div>
-          </div>
-          <div class="flex items-center">
-            <div class="flex-1 flex-col pr-6 gap-y-1">
-              <p class="text-body-xs font-medium text-foreground">
-                Domain-based discoverability
-              </p>
-              <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-                When enabled, users with a verified email address from your verified
-                domain list will be able to request to join this workspace.
-              </p>
-            </div>
-            <FormSwitch
-              v-model="isDomainDiscoverabilityEnabled"
-              v-tippy="
-                !hasWorkspaceDomains
-                  ? 'Your workspace must have at least one verified domain'
-                  : undefined
-              "
-              name="domain-discoverability"
-              :disabled="!hasWorkspaceDomains"
-              :show-label="false"
-            />
-          </div>
-          <div class="flex flex-col gap-y-1 pb-8">
-            <div class="flex items-center">
-              <div class="flex-1 flex-col pr-6 gap-y-1">
-                <p class="text-body-xs font-medium text-foreground">
-                  Allow verified domain users to auto-join
-                </p>
-                <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-                  When enabled, users with an email address from your verified domain
-                  list will be able to join without admin approval.
-                </p>
-              </div>
-              <FormSwitch
-                v-model="isAutoJoinEnabled"
-                v-tippy="
-                  !isDomainDiscoverabilityEnabled
-                    ? 'Domain-based discoverability must be enabled'
-                    : undefined
-                "
-                name="auto-join"
-                :disabled="!hasWorkspaceDomains || !isDomainDiscoverabilityEnabled"
-                :show-label="false"
               />
             </div>
           </div>
@@ -424,7 +424,7 @@ const handleJoinPolicyConfirm = async () => {
 
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'New user policy updated',
+      title: 'Join without admin approval enabled',
       description: 'Users with a verified domain can now join without admin approval'
     })
     mixpanel.track('Workspace Join Policy Updated', {

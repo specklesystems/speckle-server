@@ -1,14 +1,15 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    title="Confirm new user policy"
+    title="Confirm change"
     max-width="xs"
     :buttons="dialogButtons"
   >
-    <p class="text-body-xs text-foreground">
-      Are you sure you want to allow users with a verified domain to join this workspace
-      without admin approval?
+    <p class="text-body-xs text-foreground mb-2">
+      This will allow users with verified domain emails to join automatically without
+      admin approval.
     </p>
+    <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
   </LayoutDialog>
 </template>
 
