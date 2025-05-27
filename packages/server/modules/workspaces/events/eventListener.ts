@@ -34,6 +34,7 @@ import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   MaybeNullOrUndefined,
+  resolveMixpanelUserId,
   Roles,
   StreamRoles,
   throwUncoveredError,
@@ -62,6 +63,7 @@ import {
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import {
   findEmailsByUserIdFactory,
+  findPrimaryEmailForUserFactory,
   findVerifiedEmailsByUserIdFactory
 } from '@/modules/core/repositories/userEmails'
 import {
@@ -94,7 +96,10 @@ import {
   GetWorkspaceWithPlan
 } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import {
+  FindEmailsByUserId,
+  FindPrimaryEmailForUser
+} from '@/modules/core/domain/userEmails/operations'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
   getWorkspacePlanFactory,
@@ -500,6 +505,7 @@ export const workspaceTrackingFactory =
     getDefaultRegion,
     getWorkspacePlan,
     getWorkspaceSubscription,
+    findPrimaryEmailForUser,
     getUserEmails,
     getWorkspaceModelCount,
     getWorkspacesProjectCount,
@@ -510,6 +516,7 @@ export const workspaceTrackingFactory =
     getDefaultRegion: GetDefaultRegion
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
+    findPrimaryEmailForUser: FindPrimaryEmailForUser
     getUserEmails: FindEmailsByUserId
     getWorkspaceModelCount: GetWorkspaceModelCount
     getWorkspacesProjectCount: GetWorkspacesProjectsCounts
@@ -533,6 +540,15 @@ export const workspaceTrackingFactory =
       getWorkspaceSeatCount
     })
 
+    const getUserTrackingProperties = async ({ userId }: { userId: string }) => {
+      const primaryEmail = await findPrimaryEmailForUser({ userId })
+      if (!primaryEmail) return {}
+      return {
+        // eslint-disable-next-line camelcase
+        user_id: resolveMixpanelUserId(primaryEmail.email)
+      }
+    }
+
     const checkForSpeckleMembers = async ({
       userId
     }: {
@@ -543,6 +559,7 @@ export const workspaceTrackingFactory =
         hasSpeckleMembers: userEmails.some((e) => e.email.endsWith('@speckle.systems'))
       }
     }
+
     switch (eventName) {
       case 'gatekeeper.workspace-plan-updated':
         const updatedPlanWorkspace = await getWorkspace({
@@ -558,11 +575,11 @@ export const workspaceTrackingFactory =
           await buildWorkspaceTrackingProperties(updatedPlanWorkspace)
         )
         mixpanel.track(MixpanelEvents.WorkspaceUpdated, {
-          // eslint-disable-next-line camelcase
-          workspace_id: payload.workspacePlan.workspaceId,
+          [WORKSPACE_TRACKING_ID_KEY]: payload.workspacePlan.workspaceId,
           plan: payload.workspacePlan.name,
           cycle: subscription?.billingInterval,
-          previousPlan: payload.workspacePlan.previousPlanName
+          previousPlan: payload.workspacePlan.previousPlanName,
+          ...getBaseTrackingProperties()
         })
         break
       case 'gatekeeper.workspace-trial-expired':
@@ -576,10 +593,9 @@ export const workspaceTrackingFactory =
           ...(await checkForSpeckleMembers({ userId: payload.createdByUserId }))
         })
         mixpanel.track(MixpanelEvents.WorkspaceCreated, {
-          // eslint-disable-next-line camelcase
-          workspace_id: payload.workspace.id,
-          // eslint-disable-next-line camelcase
-          user_id: payload.createdByUserId
+          [WORKSPACE_TRACKING_ID_KEY]: payload.workspace.id,
+          ...getBaseTrackingProperties(),
+          ...getUserTrackingProperties({ userId: payload.createdByUserId })
         })
         break
       case 'workspace.updated':
@@ -746,6 +762,7 @@ export const initializeEventListenersFactory =
         await workspaceTrackingFactory({
           countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
           getDefaultRegion: getDefaultRegionFactory({ db }),
+          findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
           getWorkspacePlan,
@@ -765,6 +782,7 @@ export const initializeEventListenersFactory =
         await workspaceTrackingFactory({
           countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
           getDefaultRegion: getDefaultRegionFactory({ db }),
+          findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
           getWorkspacePlan,

@@ -116,43 +116,29 @@ export const getBillingRouter = (): Router => {
             })
             logger.info(OperationStatus.start, '[{operationName} ({operationStatus})] ')
 
-            await withOperationLogging(
-              async () => {
+            await asOperation(
+              async ({ db, emit }) => {
                 try {
-                  await asOperation(
-                    async ({ db, emit }) => {
-                      const completeCheckout = completeCheckoutSessionFactory({
-                        getCheckoutSession: getCheckoutSessionFactory({ db }),
-                        updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory(
-                          {
-                            db
-                          }
-                        ),
-                        upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-                        upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory(
-                          {
-                            db
-                          }
-                        ),
-                        getWorkspacePlan: getWorkspacePlanFactory({ db }),
-                        getSubscriptionData: getSubscriptionDataFactory({
-                          stripe
-                        }),
-                        emitEvent: emit
-                      })
+                  const completeCheckout = completeCheckoutSessionFactory({
+                    getCheckoutSession: getCheckoutSessionFactory({ db }),
+                    updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory({
+                      db
+                    }),
+                    upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                    upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                      db
+                    }),
+                    getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                    getSubscriptionData: getSubscriptionDataFactory({
+                      stripe
+                    }),
+                    emitEvent: emit
+                  })
 
-                      return completeCheckout({
-                        sessionId: session.id,
-                        subscriptionId
-                      })
-                    },
-                    {
-                      logger,
-                      name: 'completeCheckout',
-                      description: 'Complete Checkout',
-                      transaction: true
-                    }
-                  )
+                  return completeCheckout({
+                    sessionId: session.id,
+                    subscriptionId
+                  })
                 } catch (e) {
                   if (e instanceof WorkspaceAlreadyPaidError) {
                     // ignore the request, this is prob a replay from stripe
@@ -164,9 +150,10 @@ export const getBillingRouter = (): Router => {
               },
               {
                 logger,
-                operationName: 'completeCheckoutSession',
-                operationDescription:
-                  'Payment succeeded or Stripe session completed, and payment was paid'
+                name: 'completeCheckoutSession',
+                description:
+                  'Payment succeeded or Stripe session completed, and payment was paid',
+                transaction: true
               }
             )
 
