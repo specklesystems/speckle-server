@@ -108,6 +108,11 @@
             </div>
             <FormSwitch
               v-model="isDomainDiscoverabilityEnabled"
+              v-tippy="
+                !hasWorkspaceDomains
+                  ? 'Your workspace must have at least one verified domain'
+                  : undefined
+              "
               name="domain-discoverability"
               :disabled="!hasWorkspaceDomains"
               :show-label="false"
