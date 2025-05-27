@@ -16,6 +16,7 @@
         :request-status="workspace.requestStatus"
         show-dismiss-button
         location="workspace_switcher"
+        @auto-joined="open = false"
       />
       <FormButton
         v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 3"

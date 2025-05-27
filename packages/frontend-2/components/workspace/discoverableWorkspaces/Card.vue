@@ -33,7 +33,7 @@
       </FormButton>
       <div v-else class="flex flex-col gap-2 sm:items-end">
         <FormButton color="outline" size="sm" @click="onRequest">
-          Request to join
+          {{ workspace.discoverabilityAutoJoinEnabled ? 'Join' : 'Request to join' }}
         </FormButton>
         <FormButton
           v-if="showDismissButton"
@@ -60,6 +60,10 @@ const props = defineProps<{
   requestStatus: string | null
 }>()
 
+const emit = defineEmits<{
+  (e: 'auto-joined'): void
+}>()
+
 const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
   useDiscoverableWorkspaces()
 const mixpanel = useMixpanel()
@@ -73,7 +77,10 @@ const members = computed(() =>
 )
 
 const onRequest = () => {
-  requestToJoinWorkspace(props.workspace.id, props.location || 'discovery_card')
+  requestToJoinWorkspace(props.workspace, props.location || 'discovery_card')
+  if (props.workspace.discoverabilityAutoJoinEnabled) {
+    emit('auto-joined')
+  }
 }
 
 const onDismiss = async () => {
