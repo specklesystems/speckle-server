@@ -52,9 +52,6 @@
           <template v-else-if="limitType === ViewerLimitsDialogType.Federated">
             The federated models couldn't be loaded
           </template>
-          <template v-else-if="limitType === ViewerLimitsDialogType.Comment">
-            The comment could not be loaded
-          </template>
         </h4>
         <template v-if="!limitType">
           → Create new projects and models,
@@ -73,11 +70,6 @@
           One of the models is older than the {{ versionLimitFormatted }} version
           history limit allowed for Personal projects. Move your project to a workspace
           to gain access.
-        </template>
-        <template v-else-if="limitType === ViewerLimitsDialogType.Comment">
-          Unable to load the comment because one or more of the referenced models is
-          older than the {{ versionLimitFormatted }} version history limit for Personal
-          projects. Move your project to a workspace to gain access.
         </template>
       </div>
       <CommonAlert v-if="isNotOwner" color="warning" hide-icon>
