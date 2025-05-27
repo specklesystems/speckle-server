@@ -1,7 +1,6 @@
 import { LogicError } from '@speckle/ui-components'
-import { upperFirst, toPairs, values } from 'lodash-es'
-import type { PascalCase } from 'type-fest'
-import type { ModelRef } from 'vue'
+import { upperFirst, values } from 'lodash-es'
+import type { ModelRef, Ref } from 'vue'
 
 export type DialogStep<ID extends string = string> = {
   id: ID
@@ -146,9 +145,14 @@ export const useMultiStepDialog = <ID extends string = string>(params: {
   }
 }
 
+// For some reason PascalCase off type-fest breaks vue-tsc in this scenario
+type UpperFirst<S extends string> = S extends `${infer T}${infer U}`
+  ? `${Uppercase<T>}${U}`
+  : S
+
 export const useMultipleDialogBranching = <SpecialConditions extends string>(params: {
   open: ModelRef<boolean, string, boolean, boolean>
-  conditions: Record<SpecialConditions, Ref<boolean>>
+  conditions: { [key in SpecialConditions]: Ref<boolean> }
   /**
    * Default condition is disabled and will always be false.
    * Default: false
@@ -156,11 +160,14 @@ export const useMultipleDialogBranching = <SpecialConditions extends string>(par
   noDefault?: boolean
 }) => {
   const open = params.open
-  const conditionOpenComputeds = toPairs<Ref<boolean>>(params.conditions).reduce(
-    (acc, [key, condition]) => {
-      const newKey = ('open' +
-        upperFirst(key)) as `open${PascalCase<SpecialConditions>}`
-      acc[newKey] = computed({
+  const conditionOpenComputeds = Object.entries(params.conditions).reduce(
+    (acc, entry) => {
+      const key = `open${upperFirst(
+        entry[0]
+      )}` as `open${UpperFirst<SpecialConditions>}`
+      const condition = entry[1] as Ref<boolean>
+
+      acc[key] = computed({
         get: () => {
           if (!condition.value) return false
 
@@ -175,7 +182,7 @@ export const useMultipleDialogBranching = <SpecialConditions extends string>(par
       })
       return acc
     },
-    {} as Record<`open${PascalCase<SpecialConditions>}`, WritableComputedRef<boolean>>
+    {} as Record<`open${UpperFirst<SpecialConditions>}`, WritableComputedRef<boolean>>
   )
 
   const isDefaultBranch = computed(() => {
