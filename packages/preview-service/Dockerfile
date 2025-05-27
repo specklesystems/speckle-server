@@ -10,15 +10,14 @@ ENV NODE_ENV=${NODE_ENV}
 WORKDIR /speckle-server
 
 # install wait
-ARG WAIT_VERSION=2.8.0
-ENV WAIT_VERSION=${WAIT_VERSION}
+ARG WAIT_VERSION=2.12.1
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20230311 \
      curl=7.88.1-10+deb12u12 \
-    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o ./wait \
-    && chmod +x ./wait \
+    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o /usr/bin/wait \
+    && chmod +x /usr/bin/wait \
     && apt-get remove -y curl \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -53,7 +52,7 @@ RUN yarn workspaces foreach -W run build
 FROM --platform=linux/amd64 node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS node
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-# Install tini and fonts
+# Install tini, and fonts
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
@@ -81,7 +80,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --link --from=build-stage /speckle-server/wait /wait
+COPY --link --from=build-stage /usr/bin/wait /usr/bin/wait
 
 # Consume the ARG from the global scope
 ARG NODE_ENV
@@ -141,5 +140,5 @@ ENV USER_DATA_DIR='/tmp/puppeteer'
 
 # Run everything after as non-privileged user.
 USER pptruser
-
-CMD [ "tini", "--", "node", "--loader=./dist/bootstrap.js", "dist/main.js" ]
+ENV WAIT_COMMAND="tini -- node --loader=./dist/bootstrap.js ./dist/main.js"
+ENTRYPOINT [ "wait" ]

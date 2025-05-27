@@ -5,15 +5,14 @@ WORKDIR /app
 COPY packages/fileimport-service/src/ifc-dotnet .
 RUN dotnet publish ifc-converter.csproj -c Release -o output/
 
-
 FROM mcr.microsoft.com/dotnet/runtime:8.0-noble AS runtime
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /speckle-server
 
-# configure tini
+# configure wait & tini
+ARG WAIT_VERSION=2.8.0
 ARG TINI_VERSION=v0.19.0
-ENV TINI_VERSION=${TINI_VERSION}
 
 # hadolint ignore=DL3008
 RUN apt-get update -y \
@@ -22,6 +21,8 @@ RUN apt-get update -y \
      ca-certificates=20240203 \
      curl=8.5.0-2ubuntu10.6 \
      gosu=1.17-1ubuntu0.24.04.2 \
+    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o /usr/bin/wait \
+    && chmod +x /usr/bin/wait \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
@@ -63,6 +64,7 @@ RUN apt-get update -y \
 COPY packages/fileimport-service/requirements.txt /speckle-server/
 RUN pip install --break-system-packages --disable-pip-version-check --no-cache-dir --requirement /speckle-server/requirements.txt
 
+# Consume the ARG from the global scope
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 ARG NODE_BINARY_PATH=/usr/bin/node
@@ -77,5 +79,5 @@ ENV IFC_DOTNET_DLL_PATH='/speckle-server/packages/fileimport-service/src/ifc-dot
 
 WORKDIR /speckle-server/packages/fileimport-service
 
-ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js" ]
-CMD ["bin/www.js"]
+ENV WAIT_COMMAND="tini -- node --loader=./dist/src/aliasLoader.js bin/www.js"
+ENTRYPOINT [ "wait"]
