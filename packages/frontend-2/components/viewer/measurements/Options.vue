@@ -67,7 +67,7 @@
             min="1"
             max="5"
             step="1"
-            @change="onChangeMeasurementPrecision"
+            @change="(e) => onChangeMeasurementPrecision(e.target.value)"
           />
           <span class="text-xs w-4">{{ measurementOptions.precision }}</span>
         </div>
