@@ -294,13 +294,7 @@ onMounted(() => {
 
 // Watch for plan limit conditions and show dialog if needed
 watch(
-  [
-    hasMissingReferencedObject,
-    hasMissingThread,
-    resourceItems,
-    project,
-    modelsAndVersionIds
-  ],
+  [hasMissingReferencedObject, hasMissingThread, resourceItems, project],
   ([missingObject, missingThread]) => {
     if (missingObject) {
       if (isFederated.value) {
@@ -310,16 +304,7 @@ watch(
       }
       showLimitsDialog.value = true
       return
-    }
-
-    // If no workspace and no missing objects, don't show dialog
-    if (!project.value?.workspace) {
-      showLimitsDialog.value = false
-      return
-    }
-
-    // Only show comment dialog if it's a federated view AND we have a missing referenced object
-    if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
+    } else if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
       limitsDialogType.value = 'comment'
       showLimitsDialog.value = true
     } else {
