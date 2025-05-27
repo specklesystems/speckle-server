@@ -315,10 +315,6 @@ const isDomainDiscoverabilityEnabled = computed({
         }).catch(convertThrowIntoFetchResult)
 
         if (autoJoinResult?.data) {
-          workspace.value = {
-            ...workspace.value,
-            discoverabilityAutoJoinEnabled: false
-          }
           mixpanel.track('Workspace Join Policy Updated', {
             value: 'admin-approval',
             // eslint-disable-next-line camelcase
@@ -328,6 +324,15 @@ const isDomainDiscoverabilityEnabled = computed({
       }
     }
   }
+})
+
+const getCheckedValue = computed(() => {
+  if (isDomainDiscoverabilityEnabled.value) {
+    return workspace.value?.discoverabilityAutoJoinEnabled
+      ? JoinPolicy.AutoJoin
+      : JoinPolicy.AdminApproval
+  }
+  return null
 })
 
 const switchDisabled = computed(() => {
@@ -343,15 +348,6 @@ const tooltipText = computed(() => {
   if (!hasWorkspaceDomains.value)
     return 'Your workspace must have at least one verified domain'
   return undefined
-})
-
-const getCheckedValue = computed(() => {
-  if (pendingJoinPolicy.value) {
-    return pendingJoinPolicy.value
-  }
-  return workspace.value?.discoverabilityAutoJoinEnabled
-    ? JoinPolicy.AutoJoin
-    : JoinPolicy.AdminApproval
 })
 
 const addDomain = async () => {
@@ -426,11 +422,6 @@ const handleJoinPolicyConfirm = async () => {
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
-    workspace.value = {
-      ...workspace.value,
-      discoverabilityAutoJoinEnabled: true
-    }
-
     showConfirmJoinPolicyDialog.value = false
     pendingJoinPolicy.value = undefined
 
