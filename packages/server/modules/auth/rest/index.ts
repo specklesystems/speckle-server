@@ -143,7 +143,11 @@ export default function (app: Express) {
       })
 
       // Token refresh
-      if (req.body.refreshToken) {
+      if ('refreshToken' in req.body) {
+        if (!req.body.refreshToken)
+          throw new BadRequestError(
+            'Invalid request - a valid refresh token is required.'
+          )
         if (!req.body.appId || !req.body.appSecret)
           throw new BadRequestError('Invalid request - App Id and Secret are required.')
 
