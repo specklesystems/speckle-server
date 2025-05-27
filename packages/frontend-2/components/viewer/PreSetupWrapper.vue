@@ -126,6 +126,7 @@ import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -200,11 +201,14 @@ const hasMissingReferencedObject = computed(() => {
   const resourceIds = resourceIdString.value.split(',')
 
   const result = modelsAndVersionIds.value.some((item) => {
-    const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
+    const version = item.model?.loadedVersion?.items?.find(
+      (v) => v.id === item.versionId
+    )
 
-    if (version && version.referencedObject === null) {
-      // Check if this model+version is in the URL (latest version always available)
-      const modelVersionString = `${item.model.id}@${item.versionId}`.toLowerCase()
+    if (!version || version.referencedObject === null) {
+      const modelVersionString = resourceBuilder()
+        .addModel(item.model.id, item.versionId)
+        .toString()
       const isInUrl = resourceIds.some((r) => r.toLowerCase() === modelVersionString)
 
       return isInUrl
