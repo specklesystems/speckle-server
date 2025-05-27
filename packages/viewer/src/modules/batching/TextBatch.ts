@@ -145,7 +145,7 @@ export default class TextBatch implements Batch {
       this.mesh.addText(text)
     }
     //@ts-ignore
-    this.mesh.material = this.mesh.createDerivedMaterial(this.batchMaterial)
+    this.mesh.material = this.batchMaterial
     //@ts-ignore
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
     //@ts-ignore

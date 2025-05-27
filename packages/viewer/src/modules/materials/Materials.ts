@@ -874,7 +874,7 @@ export default class Materials {
     if (!this.materialMap[hash]) {
       this.materialMap[hash] = this.makeTextMaterial(material as DisplayStyle)
     }
-    return (this.materialMap[hash] as SpeckleTextMaterial).getDerivedMaterial()
+    return (this.materialMap[hash] as SpeckleTextMaterial).getDerivedBatchedMaterial()
   }
 
   public getGhostMaterial(

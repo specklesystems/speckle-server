@@ -17,10 +17,17 @@ import {
 import { Matrix4 } from 'three'
 
 import { ExtendedMeshBasicMaterial, type Uniforms } from './SpeckleMaterial.js'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import { createDerivedMaterial } from 'troika-three-utils'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import { createTextDerivedMaterial } from 'troika-three-text'
-import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import { uniformToVarying } from 'troika-three-text/src/BatchedText.js'
 
 class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
@@ -77,17 +84,161 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     return this
   }
 
-  public getDerivedMaterial() {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const derived = this
+  protected copyCustomUniforms(material: Material) {
     /** We rebind the uniforms */
     for (const k in this.userData) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
-      derived.uniforms[k] = this.userData[k]
+      material.uniforms[k] = this.userData[k]
     }
-
+  }
+  public getDerivedMaterial() {
+    const derived = createTextDerivedMaterial(this)
+    this.copyCustomUniforms(derived)
     return derived
+  }
+
+  /*
+  Data texture packing strategy:
+
+  # Common:
+  0-15: matrix
+  16-19: uTroikaTotalBounds
+  20-23: uTroikaClipRect
+  24: diffuse (color/outlineColor)
+  25: uTroikaFillOpacity (fillOpacity/outlineOpacity)
+  26: uTroikaCurveRadius
+  27: <blank>
+
+  # Main:
+  28: uTroikaStrokeWidth
+  29: uTroikaStrokeColor
+  30: uTroikaStrokeOpacity
+
+  # Outline:
+  28-29: uTroikaPositionOffset
+  30: uTroikaEdgeOffset
+  31: uTroikaBlurRadius
+  */
+  /** Sadly, troika does not export this for no good reason so we neee to copy it over */
+  public getDerivedBatchedMaterial() {
+    const texUniformName = 'uTroikaMatricesTexture'
+    const texSizeUniformName = 'uTroikaMatricesTextureSize'
+    const memberIndexAttrName = 'aTroikaTextBatchMemberIndex'
+    const floatsPerMember = 32
+    // Due to how vertexTransform gets injected, the matrix transforms must happen
+    // in the base material of TextDerivedMaterial, but other transforms to its
+    // shader must come after, so we sandwich it between two derivations.
+
+    // Transform the vertex position
+    let batchMaterial = createDerivedMaterial(this, {
+      chained: true,
+      uniforms: {
+        [texSizeUniformName]: { value: new Vector2() },
+        [texUniformName]: { value: null }
+      },
+      // language=GLSL
+      vertexDefs: `
+      uniform highp sampler2D ${texUniformName};
+      uniform vec2 ${texSizeUniformName};
+      attribute float ${memberIndexAttrName};
+
+      vec4 troikaBatchTexel(float offset) {
+        offset += ${memberIndexAttrName} * ${floatsPerMember.toFixed(1)} / 4.0;
+        float w = ${texSizeUniformName}.x;
+        vec2 uv = (vec2(mod(offset, w), floor(offset / w)) + 0.5) / ${texSizeUniformName};
+        return texture2D(${texUniformName}, uv);
+      }
+    `,
+      // language=GLSL prefix="void main() {" suffix="}"
+      vertexTransform: `
+      mat4 matrix = mat4(
+        troikaBatchTexel(0.0),
+        troikaBatchTexel(1.0),
+        troikaBatchTexel(2.0),
+        troikaBatchTexel(3.0)
+      );
+      position.xyz = (matrix * vec4(position, 1.0)).xyz;
+    `
+    })
+
+    // Add the text shaders
+    batchMaterial = createTextDerivedMaterial(batchMaterial)
+
+    // Now make other changes to the derived text shader code
+    batchMaterial = createDerivedMaterial(batchMaterial, {
+      chained: true,
+      uniforms: {
+        uTroikaIsOutline: { value: false }
+      },
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      customRewriter(shaders) {
+        // Convert some text shader uniforms to varyings
+        const varyingUniforms = [
+          'uTroikaTotalBounds',
+          'uTroikaClipRect',
+          'uTroikaPositionOffset',
+          'uTroikaEdgeOffset',
+          'uTroikaBlurRadius',
+          'uTroikaStrokeWidth',
+          'uTroikaStrokeColor',
+          'uTroikaStrokeOpacity',
+          'uTroikaFillOpacity',
+          'uTroikaCurveRadius',
+          'diffuse'
+        ]
+        varyingUniforms.forEach((uniformName) => {
+          shaders = uniformToVarying(shaders, uniformName)
+        })
+        return shaders
+      },
+      // language=GLSL
+      vertexDefs: `
+      uniform bool uTroikaIsOutline;
+      vec3 troikaFloatToColor(float v) {
+        return mod(floor(vec3(v / 65536.0, v / 256.0, v)), 256.0) / 256.0;
+      }
+    `,
+      // language=GLSL prefix="void main() {" suffix="}"
+      vertexTransform: `
+      uTroikaTotalBounds = troikaBatchTexel(4.0);
+      uTroikaClipRect = troikaBatchTexel(5.0);
+      
+      vec4 data = troikaBatchTexel(6.0);
+      diffuse = troikaFloatToColor(data.x);
+      uTroikaFillOpacity = data.y;
+      uTroikaCurveRadius = data.z;
+      
+      data = troikaBatchTexel(7.0);
+      if (uTroikaIsOutline) {
+        if (data == vec4(0.0)) { // degenerate if zero outline
+          position = vec3(0.0);
+        } else {
+          uTroikaPositionOffset = data.xy;
+          uTroikaEdgeOffset = data.z;
+          uTroikaBlurRadius = data.w;
+        }
+      } else {
+        uTroikaStrokeWidth = data.x;
+        uTroikaStrokeColor = troikaFloatToColor(data.y);
+        uTroikaStrokeOpacity = data.z;
+      }
+    `
+    })
+
+    batchMaterial.setMatrixTexture = (texture: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      image: { width: any; height: any }
+    }) => {
+      batchMaterial.uniforms[texUniformName].value = texture
+      batchMaterial.uniforms[texSizeUniformName].value.set(
+        texture.image.width,
+        texture.image.height
+      )
+    }
+    this.copyCustomUniforms(batchMaterial)
+    return batchMaterial
   }
 
   public fastCopy(from: Material, to: Material) {
