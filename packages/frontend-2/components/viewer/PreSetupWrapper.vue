@@ -126,6 +126,7 @@ import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
+import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/route'
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -197,15 +198,20 @@ const limitsDialogType = ref<'version' | 'comment' | 'federated'>('version')
 
 // Check for missing referencedObject in url referenced versions (out of plan limits)
 const hasMissingReferencedObject = computed(() => {
-  const resourceIds = resourceIdString.value.split(',')
+  const resources = parseUrlParameters(resourceIdString.value)
 
   const result = modelsAndVersionIds.value.some((item) => {
-    const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
+    const version = item.model?.loadedVersion?.items?.find(
+      (v) => v.id === item.versionId
+    )
 
-    if (version && version.referencedObject === null) {
-      // Check if this model+version is in the URL (latest version always available)
-      const modelVersionString = `${item.model.id}@${item.versionId}`.toLowerCase()
-      const isInUrl = resourceIds.some((r) => r.toLowerCase() === modelVersionString)
+    if (!version || version.referencedObject === null) {
+      const modelVersionString = resourceBuilder()
+        .addModel(item.model.id, item.versionId)
+        .toString()
+      const isInUrl = resources.some(
+        (r) => r.toString().toLowerCase() === modelVersionString
+      )
 
       return isInUrl
     }
@@ -298,18 +304,11 @@ watch(
       }
       showLimitsDialog.value = true
       return
-    }
-
-    // If no workspace and no missing objects, don't show dialog
-    if (!project.value?.workspace) {
-      showLimitsDialog.value = false
-      return
-    }
-
-    // Only show comment dialog if it's a federated view AND we have a missing referenced object
-    if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
+    } else if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
       limitsDialogType.value = 'comment'
       showLimitsDialog.value = true
+    } else {
+      showLimitsDialog.value = false
     }
   },
   { immediate: true }
