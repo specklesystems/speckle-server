@@ -130,21 +130,15 @@
                 </p>
               </div>
               <FormSwitch
+                v-model="isAutoJoinEnabled"
                 v-tippy="
                   !isDomainDiscoverabilityEnabled
                     ? 'Domain-based discoverability must be enabled'
                     : undefined
                 "
-                :model-value="getCheckedValue === JoinPolicy.AutoJoin"
                 name="auto-join"
                 :disabled="!hasWorkspaceDomains || !isDomainDiscoverabilityEnabled"
                 :show-label="false"
-                @update:model-value="
-                  (val) =>
-                    handleJoinPolicyChange(
-                      val ? JoinPolicy.AutoJoin : JoinPolicy.AdminApproval
-                    )
-                "
               />
             </div>
           </div>
@@ -331,13 +325,11 @@ const isDomainDiscoverabilityEnabled = computed({
   }
 })
 
-const getCheckedValue = computed(() => {
-  if (isDomainDiscoverabilityEnabled.value) {
-    return workspace.value?.discoverabilityAutoJoinEnabled
-      ? JoinPolicy.AutoJoin
-      : JoinPolicy.AdminApproval
+const isAutoJoinEnabled = computed({
+  get: () => workspace.value?.discoverabilityAutoJoinEnabled || false,
+  set: (newVal) => {
+    handleJoinPolicyChange(newVal ? JoinPolicy.AutoJoin : JoinPolicy.AdminApproval)
   }
-  return null
 })
 
 const switchDisabled = computed(() => {
