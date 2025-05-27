@@ -48,7 +48,7 @@
     "prettier": "^3.3.2",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
-    "vite-plugin-dts": "^3.9.1",
+    "vite-plugin-dts": "^4.5.4",
     "vitest": "^1.6.0"
   },
   "exports": {
