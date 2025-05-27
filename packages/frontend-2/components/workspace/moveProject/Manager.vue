@@ -246,18 +246,16 @@ const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
 const isSmallDialog = computed(() => step.value.id === DialogStepId.intro)
 
 onProjectResult((res) => {
-  if (res.data?.project) {
+  if (res.data?.project?.id !== selectedProject.value?.id) {
     selectedProject.value = res.data.project
+    resetStep()
   }
-
-  resetStep()
 })
-onWorkspaceResult((res) => {
-  if (res.data?.workspaceBySlug) {
-    selectedWorkspace.value = res.data.workspaceBySlug
-  }
 
-  resetStep()
+onWorkspaceResult((res) => {
+  if (res.data?.workspaceBySlug?.id !== selectedWorkspace.value?.id) {
+    resetStep()
+  }
 })
 
 watch(open, (newVal, oldVal) => {
