@@ -62,6 +62,7 @@ To get started, run:
 
 1. `corepack enable`
 1. `yarn`
+1. `yarn build:public`
 1. `yarn build`
 
 After this, you can use the scripts in the individual packages or run them all in dev mode:

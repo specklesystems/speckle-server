@@ -100,7 +100,7 @@
       :name="modelName || 'Loading...'"
       :date="lastUpdate"
       :url="route.path"
-      :hide-speckle-branding="hideSpeckleBranding"
+      :hide-speckle-branding="hideSpeckleLogo"
       :disable-model-link="disableModelLink"
     />
     <Portal to="primary-actions">
@@ -140,6 +140,7 @@ graphql(`
     embedOptions {
       hideSpeckleBranding
     }
+    hasAccessToFeature(featureName: hideSpeckleBranding)
     ...ViewerLimitsDialog_Project
   }
 `)
@@ -176,7 +177,8 @@ const {
   hideSelectionInfo,
   isTransparent,
   showControls,
-  disableModelLink
+  disableModelLink,
+  hideSpeckleBranding
 } = useEmbed()
 const mp = useMixpanel()
 
@@ -261,8 +263,15 @@ const lastUpdate = computed(() => {
   } else return undefined
 })
 
-const hideSpeckleBranding = computed(() => {
-  return project.value ? project.value?.embedOptions?.hideSpeckleBranding : true
+const canEditEmbedOptions = computed(() => {
+  return project.value?.hasAccessToFeature
+})
+
+const hideSpeckleLogo = computed(() => {
+  if (!project.value?.workspace) return true
+  if (!canEditEmbedOptions.value) return false
+  if (project.value?.embedOptions?.hideSpeckleBranding) return true
+  else return hideSpeckleBranding.value
 })
 
 useHead({ title })

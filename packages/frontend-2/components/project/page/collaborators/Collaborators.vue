@@ -83,6 +83,11 @@ const projectPageCollaboratorsQuery = graphql(`
       ...InviteDialogProject_Project
       ...ProjectPageCollaborators_Project
       workspaceId
+      permissions {
+        canInvite {
+          ...FullPermissionCheckResult
+        }
+      }
       workspace {
         ...SettingsWorkspacesMembersTableHeader_Workspace
         name
@@ -114,17 +119,9 @@ const showInviteDialog = ref(false)
 const loading = ref(false)
 
 const canUpdate = computed(() => pageResult.value?.project?.permissions?.canUpdate)
-const canInvite = computed(() =>
-  project.value?.workspaceId
-    ? isOwner.value || workspace.value?.role === Roles.Workspace.Admin
-    : isOwner.value
-)
+const canInvite = computed(() => project.value?.permissions?.canInvite?.authorized)
 const tooltipText = computed(() =>
-  canInvite.value
-    ? undefined
-    : project.value?.workspaceId
-    ? 'Only project owners and workspace admins can manage the project members'
-    : 'Only project owners can manage the project members'
+  canInvite.value ? undefined : project.value?.permissions?.canInvite?.message
 )
 const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => project.value?.workspace)
@@ -132,7 +129,7 @@ const workspaceAdmins = computed(
   () => pageResult.value?.project?.workspace?.team?.items || []
 )
 const updateRole = useUpdateUserRole(project)
-const { collaboratorListItems, isOwner } = useTeamInternals(project)
+const { collaboratorListItems } = useTeamInternals(project)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
