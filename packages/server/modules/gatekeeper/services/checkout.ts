@@ -92,7 +92,7 @@ export const completeCheckoutSessionFactory =
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
         workspacePlan: {
-          workspaceId: workspacePlan.workspaceId,
+          workspaceId: checkoutSession.workspaceId,
           status: workspacePlan.status,
           name: workspacePlan.name,
           previousPlanName: previousPlan?.name

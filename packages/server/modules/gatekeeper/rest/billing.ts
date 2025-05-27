@@ -18,10 +18,8 @@ import {
   getWorkspaceSubscriptionBySubscriptionIdFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
-import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
 import { extendLoggerComponent } from '@/observability/logging'
 import {
@@ -30,6 +28,7 @@ import {
   stripeEventId
 } from '@/observability/domain/fields'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { asOperation } from '@/modules/shared/command'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -120,8 +119,8 @@ export const getBillingRouter = (): Router => {
             await withOperationLogging(
               async () => {
                 try {
-                  await withTransaction(
-                    async ({ db }) => {
+                  await asOperation(
+                    async ({ db, emit }) => {
                       const completeCheckout = completeCheckoutSessionFactory({
                         getCheckoutSession: getCheckoutSessionFactory({ db }),
                         updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory(
@@ -139,7 +138,7 @@ export const getBillingRouter = (): Router => {
                         getSubscriptionData: getSubscriptionDataFactory({
                           stripe
                         }),
-                        emitEvent: getEventBus().emit
+                        emitEvent: emit
                       })
 
                       return completeCheckout({
@@ -147,7 +146,12 @@ export const getBillingRouter = (): Router => {
                         subscriptionId
                       })
                     },
-                    { db }
+                    {
+                      logger,
+                      name: 'completeCheckout',
+                      description: 'Complete Checkout',
+                      transaction: true
+                    }
                   )
                 } catch (e) {
                   if (e instanceof WorkspaceAlreadyPaidError) {
