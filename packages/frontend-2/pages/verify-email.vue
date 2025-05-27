@@ -43,7 +43,6 @@
           Cancel
         </FormButton>
         <div
-          :key="cooldownRemaining"
           v-tippy="
             cooldownRemaining > 0
               ? `You can send another code in ${cooldownRemaining}s`
