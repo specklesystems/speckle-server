@@ -1,9 +1,9 @@
 <template>
   <div>
     <template v-if="project">
-      <InviteDialogProject v-model:open="openInviteDialog" :project="project" />
+      <InviteDialogProject v-model:open="openDefault" :project="project" />
       <WorkspaceMoveProject
-        v-model:open="openMoveProjectDialog"
+        v-model:open="openPersonalProjectsLimited"
         :project="project"
         location="invite_add"
         show-intro
@@ -14,6 +14,7 @@
 </template>
 <script setup lang="ts">
 import { PersonalProjectsLimitedError } from '@speckle/shared/authz'
+import { useMultipleDialogBranching } from '~/lib/common/composables/dialog'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectInviteAdd_ProjectFragment } from '~/lib/common/generated/gql/graphql'
 import { useCanInviteToProject } from '~/lib/projects/composables/permissions'
@@ -35,35 +36,14 @@ const canInviteToProject = useCanInviteToProject({
   project: computed(() => props.project)
 })
 
-const openInviteDialog = computed({
-  get: () => {
-    if (!canInviteToProject.canActuallyInvite.value) return false
-    return open.value
-  },
-  set: (value) => {
-    if (!value) return (open.value = false)
-    if (!canInviteToProject.canActuallyInvite.value) return false
-    open.value = value
-  }
-})
-
-const openMoveProjectDialog = computed({
-  get: () => {
-    if (
-      canInviteToProject.cantClickInviteCode.value !== PersonalProjectsLimitedError.code
+const { openDefault, openPersonalProjectsLimited } = useMultipleDialogBranching({
+  open,
+  conditions: {
+    personalProjectsLimited: computed(
+      () =>
+        canInviteToProject.cantClickInviteCode.value ===
+        PersonalProjectsLimitedError.code
     )
-      return false
-
-    return open.value
-  },
-  set: (newVal) => {
-    if (!newVal) return (open.value = false)
-    if (
-      canInviteToProject.cantClickInviteCode.value !== PersonalProjectsLimitedError.code
-    )
-      return false
-
-    open.value = newVal
   }
 })
 </script>

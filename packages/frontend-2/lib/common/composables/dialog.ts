@@ -1,4 +1,7 @@
 import { LogicError } from '@speckle/ui-components'
+import { upperFirst, toPairs, values } from 'lodash-es'
+import type { PascalCase } from 'type-fest'
+import type { ModelRef } from 'vue'
 
 export type DialogStep<ID extends string = string> = {
   id: ID
@@ -140,5 +143,79 @@ export const useMultiStepDialog = <ID extends string = string>(params: {
     goToNextStep,
     goToPreviousStep,
     resetStep
+  }
+}
+
+export const useMultipleDialogBranching = <SpecialConditions extends string>(params: {
+  open: ModelRef<boolean, string, boolean, boolean>
+  conditions: Record<SpecialConditions, Ref<boolean>>
+  /**
+   * Default condition is disabled and will always be false.
+   * Default: false
+   */
+  noDefault?: boolean
+}) => {
+  const open = params.open
+  const conditionOpenComputeds = toPairs<Ref<boolean>>(params.conditions).reduce(
+    (acc, [key, condition]) => {
+      const newKey = ('open' +
+        upperFirst(key)) as `open${PascalCase<SpecialConditions>}`
+      acc[newKey] = computed({
+        get: () => {
+          if (!condition.value) return false
+
+          return open.value
+        },
+        set: (value) => {
+          if (!value) return (open.value = false)
+          if (!condition.value) return false
+
+          condition.value = value
+        }
+      })
+      return acc
+    },
+    {} as Record<`open${PascalCase<SpecialConditions>}`, WritableComputedRef<boolean>>
+  )
+
+  const isDefaultBranch = computed(() => {
+    return (
+      !params.noDefault &&
+      values<Ref<boolean>>(conditionOpenComputeds).every((c) => !c.value)
+    )
+  })
+
+  const openDefault = computed({
+    get: () => {
+      if (!isDefaultBranch.value) return false
+      return open.value
+    },
+    set: (value) => {
+      if (!value) return (open.value = false)
+      if (!isDefaultBranch.value) return false
+
+      open.value = value
+    }
+  })
+
+  // If any of the conditions change, close opener
+  // (sometimes a flow may finish and update to 'open' may not have enough time to propagate,
+  // so some dialog may stay open)
+  watch(
+    () =>
+      values<Ref<boolean>>(params.conditions)
+        .map((c) => c.value.toString())
+        .join('-'),
+    (newVal, oldVal) => {
+      if (newVal !== oldVal && open.value) {
+        open.value = false
+      }
+    }
+  )
+
+  return {
+    open,
+    openDefault,
+    ...conditionOpenComputeds
   }
 }

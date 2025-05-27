@@ -10,7 +10,7 @@
       :location="location"
     />
     <WorkspaceMoveProjectManager
-      v-model:open="openMoveManager"
+      v-model:open="openDefault"
       :workspace-slug="workspace?.slug"
       :workspace-id="workspace?.id"
       :project-id="project?.id"
@@ -22,6 +22,7 @@
 <script setup lang="ts">
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { WorkspaceLimitsReachedError } from '@speckle/shared/authz'
+import { useMultipleDialogBranching } from '~/lib/common/composables/dialog'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   WorkspaceMoveProject_ProjectFragment,
@@ -53,6 +54,7 @@ graphql(`
 graphql(`
   fragment WorkspaceMoveProject_Project on Project {
     id
+    workspaceId
     permissions {
       canMoveToWorkspace {
         ...FullPermissionCheckResult
@@ -91,27 +93,10 @@ const isWorkspaceLimitsError = computed(() => {
   )
 })
 
-const openWorkspaceLimitsHit = computed({
-  get: () => {
-    if (!isWorkspaceLimitsError.value) return false
-    return open.value
-  },
-  set: (value) => {
-    if (!value) return (open.value = false)
-    if (!isWorkspaceLimitsError.value) return false
-    open.value = value
-  }
-})
-
-const openMoveManager = computed({
-  get: () => {
-    if (isWorkspaceLimitsError.value) return false
-    return open.value
-  },
-  set: (value) => {
-    if (!value) return (open.value = false)
-    if (isWorkspaceLimitsError.value) return false
-    open.value = value
+const { openDefault, openWorkspaceLimitsHit } = useMultipleDialogBranching({
+  open,
+  conditions: {
+    workspaceLimitsHit: computed(() => isWorkspaceLimitsError.value)
   }
 })
 

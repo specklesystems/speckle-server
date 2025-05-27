@@ -6,7 +6,7 @@
         :workspace-id="workspace.id"
       />
       <WorkspacePlanProjectModelLimitReachedDialog
-        v-model:open="openWorkspaceProjectLimitsHit"
+        v-model:open="openWorkspaceLimitsHit"
         :workspace-name="workspace.name"
         :plan="workspace.plan?.name"
         :workspace-role="workspace.role"
@@ -22,6 +22,7 @@
 <script setup lang="ts">
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { WorkspaceLimitsReachedError } from '@speckle/shared/authz'
+import { useMultipleDialogBranching } from '~/lib/common/composables/dialog'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectsAdd_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { useCanCreateWorkspaceProject } from '~/lib/workspaces/composables/projects/permissions'
@@ -72,54 +73,29 @@ const workspaceId = computed(() => props.workspace?.id || undefined)
 const canCreateWorkspace = useCanCreateWorkspaceProject({
   workspace: computed(() => props.workspace)
 })
-
-const openNewWorkspaceProject = computed({
-  get: () => {
-    if (!workspaceId.value || !canCreateWorkspace.canActuallyCreate.value) return false
-    return open.value
-  },
-  set(val) {
-    if (!val) return (open.value = false)
-    if (!workspaceId.value || !canCreateWorkspace.canActuallyCreate.value) return false
-    open.value = val
-  }
-})
-
-const openWorkspaceProjectLimitsHit = computed({
-  get: () => {
-    if (
-      !workspaceId.value ||
-      canCreateWorkspace.cantClickCreateCode.value !== WorkspaceLimitsReachedError.code
-    ) {
-      return false
+const { openNewWorkspaceProject, openWorkspaceLimitsHit, openNewPersonalProject } =
+  useMultipleDialogBranching({
+    noDefault: true,
+    open,
+    conditions: {
+      newWorkspaceProject: computed(
+        () =>
+          !!(
+            workspaceId.value &&
+            !([WorkspaceLimitsReachedError.code] as string[]).includes(
+              canCreateWorkspace.cantClickCreateCode.value || ''
+            )
+          )
+      ),
+      workspaceLimitsHit: computed(
+        () =>
+          !!(
+            workspaceId.value &&
+            canCreateWorkspace.cantClickCreateCode.value ===
+              WorkspaceLimitsReachedError.code
+          )
+      ),
+      newPersonalProject: computed(() => !workspaceId.value)
     }
-
-    return open.value
-  },
-  set(val) {
-    if (!val) return (open.value = false)
-    if (
-      !workspaceId.value ||
-      canCreateWorkspace.cantClickCreateCode.value !== WorkspaceLimitsReachedError.code
-    ) {
-      return false
-    }
-
-    open.value = val
-  }
-})
-
-const openNewPersonalProject = computed({
-  get: () => {
-    if (workspaceId.value) return false
-
-    return open.value
-  },
-  set(val) {
-    if (!val) return (open.value = false)
-    if (workspaceId.value) return false
-
-    open.value = val
-  }
-})
+  })
 </script>

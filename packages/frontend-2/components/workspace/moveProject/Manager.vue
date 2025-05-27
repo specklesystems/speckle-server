@@ -5,6 +5,7 @@
     :title="step.title"
     :fullscreen="isSmallDialog ? 'none' : 'mobile'"
     :hide-title="isSmallDialog"
+    :hide-buttons="!([DialogStepId.project, DialogStepId.workspace] as string[]).includes(step.id)"
     :is-transparent="isSmallDialog"
   >
     <!-- Intro -->
@@ -42,10 +43,7 @@
       @move-complete="onMoveComplete"
       @back="onBack"
     />
-    <template
-      v-if="([DialogStepId.project, DialogStepId.workspace] as string[]).includes(step.id)"
-      #buttons
-    >
+    <template #buttons>
       <div class="-my-1 w-full flex justify-end">
         <FormButton
           v-if="step.id === DialogStepId.project"

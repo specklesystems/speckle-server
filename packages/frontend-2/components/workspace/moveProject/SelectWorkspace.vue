@@ -6,7 +6,7 @@
     <template v-else>
       <div v-if="hasWorkspaces">
         <p class="mb-4">
-          {{ subheading || 'Select an existing workspaces or create a new one.' }}
+          {{ subheading || 'Select an existing workspace or create a new one.' }}
         </p>
         <div class="flex flex-col gap-2">
           <div

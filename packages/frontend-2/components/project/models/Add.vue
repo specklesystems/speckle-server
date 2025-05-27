@@ -2,7 +2,7 @@
   <div>
     <template v-if="project">
       <ProjectPageModelsNewDialog
-        v-model:open="openNewModelDialog"
+        v-model:open="openDefault"
         :project-id="project.id"
         :parent-model-name="parentModelName"
       />
@@ -16,7 +16,7 @@
         type="model"
       />
       <WorkspaceMoveProject
-        v-model:open="openMoveProjectDialog"
+        v-model:open="openPersonalProjectsLimited"
         :project="project"
         location="add_model"
         show-intro
@@ -31,6 +31,7 @@ import {
   PersonalProjectsLimitedError,
   WorkspaceLimitsReachedError
 } from '@speckle/shared/authz'
+import { useMultipleDialogBranching } from '~/lib/common/composables/dialog'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectModelsAdd_ProjectFragment } from '~/lib/common/generated/gql/graphql'
 import { useCanCreateModel } from '~/lib/projects/composables/permissions'
@@ -61,52 +62,22 @@ const props = defineProps<{
   parentModelName?: string
 }>()
 const open = defineModel<boolean>('open', { required: true })
-
 const canCreateModel = useCanCreateModel({
   project: computed(() => props.project)
 })
 
-const openNewModelDialog = computed({
-  get: () => {
-    if (!canCreateModel.canActuallyCreate.value) return false
-    return open.value
-  },
-  set: (newVal) => {
-    if (!newVal) return (open.value = false)
-    if (!canCreateModel.canActuallyCreate.value) return false
-    open.value = newVal
-  }
-})
-
-const openWorkspaceLimitsHit = computed({
-  get: () => {
-    if (canCreateModel.cantClickCreateCode.value !== WorkspaceLimitsReachedError.code)
-      return false
-
-    return open.value
-  },
-  set: (value) => {
-    if (!value) return (open.value = false)
-    if (canCreateModel.cantClickCreateCode.value !== WorkspaceLimitsReachedError.code)
-      return false
-
-    open.value = value
-  }
-})
-
-const openMoveProjectDialog = computed({
-  get: () => {
-    if (canCreateModel.cantClickCreateCode.value !== PersonalProjectsLimitedError.code)
-      return false
-
-    return open.value
-  },
-  set: (newVal) => {
-    if (!newVal) return (open.value = false)
-    if (canCreateModel.cantClickCreateCode.value !== PersonalProjectsLimitedError.code)
-      return false
-
-    open.value = newVal
-  }
-})
+const { openDefault, openWorkspaceLimitsHit, openPersonalProjectsLimited } =
+  useMultipleDialogBranching({
+    open,
+    conditions: {
+      workspaceLimitsHit: computed(
+        () =>
+          canCreateModel.cantClickCreateCode.value === WorkspaceLimitsReachedError.code
+      ),
+      personalProjectsLimited: computed(
+        () =>
+          canCreateModel.cantClickCreateCode.value === PersonalProjectsLimitedError.code
+      )
+    }
+  })
 </script>
