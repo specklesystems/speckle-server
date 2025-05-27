@@ -68,4 +68,4 @@ COPY --link --from=dependency-stage /speckle-server/node_modules ./node_modules
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
-ENTRYPOINT [ "tini", "--", "/nodejs/bin/node main.js" ]
+ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "main.js" ]
