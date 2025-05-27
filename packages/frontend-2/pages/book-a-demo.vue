@@ -35,7 +35,6 @@
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <div
           v-if="!showEmbed"
-          :key="`book-a-demo-cta-${bookDemoSelected}`"
           v-tippy="!bookDemoSelected ? 'Please select an option' : ''"
           class="w-full"
         >
