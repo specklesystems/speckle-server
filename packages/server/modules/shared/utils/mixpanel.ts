@@ -34,7 +34,7 @@ export function initialize() {
 }
 
 export const MixpanelEvents = {
-  WorkspaceUpdated: 'Workspace Updated',
+  WorkspaceUpgraded: 'Workspace Upgraded',
   WorkspaceCreated: 'Workspace Created'
 } as const
 

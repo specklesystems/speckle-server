@@ -133,6 +133,7 @@ import {
   buildWorkspaceTrackingPropertiesFactory,
   WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/workspaces/services/tracking'
+import { assign } from 'lodash'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -549,6 +550,9 @@ export const workspaceTrackingFactory =
       }
     }
 
+    // only marking has speckle members to true
+    // calculating this for speckle member removal would require getting all users
+    // that is too costly in here imho
     const checkForSpeckleMembers = async ({
       userId
     }: {
@@ -574,13 +578,18 @@ export const workspaceTrackingFactory =
           payload.workspacePlan.workspaceId,
           await buildWorkspaceTrackingProperties(updatedPlanWorkspace)
         )
-        mixpanel.track(MixpanelEvents.WorkspaceUpdated, {
-          [WORKSPACE_TRACKING_ID_KEY]: payload.workspacePlan.workspaceId,
-          plan: payload.workspacePlan.name,
-          cycle: subscription?.billingInterval,
-          previousPlan: payload.workspacePlan.previousPlanName,
-          ...getBaseTrackingProperties()
-        })
+        mixpanel.track(
+          MixpanelEvents.WorkspaceUpgraded,
+          assign(
+            {
+              [WORKSPACE_TRACKING_ID_KEY]: payload.workspacePlan.workspaceId,
+              plan: payload.workspacePlan.name,
+              cycle: subscription?.billingInterval,
+              previousPlan: payload.workspacePlan.previousPlanName
+            },
+            getBaseTrackingProperties()
+          )
+        )
         break
       case 'gatekeeper.workspace-trial-expired':
         break
@@ -588,15 +597,22 @@ export const workspaceTrackingFactory =
         break
       case 'workspace.created':
         // we're setting workspace props and attributing to speckle users
-        mixpanel.groups.set(WORKSPACE_TRACKING_ID_KEY, payload.workspace.id, {
-          ...(await buildWorkspaceTrackingProperties(payload.workspace)),
-          ...(await checkForSpeckleMembers({ userId: payload.createdByUserId }))
-        })
-        mixpanel.track(MixpanelEvents.WorkspaceCreated, {
-          [WORKSPACE_TRACKING_ID_KEY]: payload.workspace.id,
-          ...getBaseTrackingProperties(),
-          ...getUserTrackingProperties({ userId: payload.createdByUserId })
-        })
+        mixpanel.groups.set(
+          WORKSPACE_TRACKING_ID_KEY,
+          payload.workspace.id,
+          assign(
+            await buildWorkspaceTrackingProperties(payload.workspace),
+            await checkForSpeckleMembers({ userId: payload.createdByUserId })
+          )
+        )
+        mixpanel.track(
+          MixpanelEvents.WorkspaceCreated,
+          assign(
+            { [WORKSPACE_TRACKING_ID_KEY]: payload.workspace.id },
+            await getUserTrackingProperties({ userId: payload.createdByUserId }),
+            getBaseTrackingProperties()
+          )
+        )
         break
       case 'workspace.updated':
         // just updating workspace props
@@ -608,28 +624,27 @@ export const workspaceTrackingFactory =
         break
       case 'workspace.deleted':
         // just marking workspace deleted
-        mixpanel.groups.set(WORKSPACE_TRACKING_ID_KEY, payload.workspaceId, {
-          isDeleted: true,
-          ...getBaseTrackingProperties()
-        })
+        mixpanel.groups.set(
+          WORKSPACE_TRACKING_ID_KEY,
+          payload.workspaceId,
+          assign({ isDeleted: true }, getBaseTrackingProperties())
+        )
         break
       case 'workspace.role-deleted':
       case 'workspace.role-updated':
       case WorkspaceEvents.SeatUpdated:
         const entity = 'acl' in payload ? payload.acl : payload.seat
-
-        const speckleMembers = await checkForSpeckleMembers({
-          userId: entity.userId
-        })
         const workspace = await getWorkspace({ workspaceId: entity.workspaceId })
         if (!workspace) break
-        mixpanel.groups.set(WORKSPACE_TRACKING_ID_KEY, entity.workspaceId, {
-          ...(await buildWorkspaceTrackingProperties(workspace)),
-          // only marking has speckle members to true
-          // calculating this for speckle member removal would require getting all users
-          // that is too costly in here imho
-          ...(speckleMembers.hasSpeckleMembers ? speckleMembers : {})
-        })
+
+        mixpanel.groups.set(
+          WORKSPACE_TRACKING_ID_KEY,
+          entity.workspaceId,
+          assign(
+            await buildWorkspaceTrackingProperties(workspace),
+            await checkForSpeckleMembers({ userId: entity.userId })
+          )
+        )
         break
       default:
         throwUncoveredError(eventName)
