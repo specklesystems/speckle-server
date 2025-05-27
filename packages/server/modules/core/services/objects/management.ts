@@ -36,7 +36,7 @@ const prepInsertionObject = (
 
   if (!/^[a-f0-9]{32}$/.test(obj.id)) {
     throw new ObjectHandlingError(
-      `Invalid object ID. Object ID: ${obj.id}. Object ID's must be MD5 hashes, which are represented by 32 hexadecimal characters.`
+      `Invalid object ID. Object ID: ${obj.id}. Object ID's must be hashes represented by a string of 32 hexadecimal characters.`
     )
   }
 
