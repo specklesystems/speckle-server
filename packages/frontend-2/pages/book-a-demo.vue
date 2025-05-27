@@ -84,8 +84,7 @@ const options = computed(() => [
   },
   {
     value: 'no',
-    title: 'No, maybe later',
-    subtitle: 'You can also book a time later'
+    title: 'No, I will pass for now'
   }
 ])
 
