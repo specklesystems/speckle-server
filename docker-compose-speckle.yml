@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: utils/docker-compose-ingress/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-docker-compose-ingress:local
+    image: speckle/speckle-docker-compose-ingress:2
     restart: always
     ports:
       - '0.0.0.0:80:8080'
@@ -17,7 +17,7 @@ services:
       context: .
       dockerfile: packages/frontend-2/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-frontend-2:local
+    image: speckle/speckle-frontend-2:2
     restart: always
     environment:
       NUXT_PUBLIC_SERVER_NAME: 'local'
@@ -37,7 +37,7 @@ services:
       context: .
       dockerfile: packages/server/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-server:local
+    image: speckle/speckle-server:2
     restart: always
     healthcheck:
       test:
@@ -91,7 +91,7 @@ services:
       context: .
       dockerfile: packages/preview-service/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-preview-service:local
+    image: speckle/speckle-preview-service:2
     restart: always
     mem_limit: '3000m'
     memswap_limit: '3000m'
@@ -107,7 +107,7 @@ services:
       context: .
       dockerfile: packages/webhook-service/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-webhook-service:local
+    image: speckle/speckle-webhook-service:2
     restart: always
     environment:
       LOG_LEVEL: 'info'
@@ -119,7 +119,7 @@ services:
       context: .
       dockerfile: packages/fileimport-service/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-fileimport-service:local
+    image: speckle/speckle-fileimport-service:2
     restart: always
     environment:
       LOG_LEVEL: 'info'
