@@ -164,14 +164,21 @@ export default function (app: Express) {
       }
 
       // Access-code - token exchange
-      if (
-        !req.body.appId ||
-        !req.body.appSecret ||
-        !req.body.accessCode ||
-        !req.body.challenge
-      )
+      if (!req.body.appId)
         throw new BadRequestError(
-          `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
+          `Invalid request, insufficient information provided in the request. App Id is required.`
+        )
+      if (!req.body.appSecret)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided in the request. App Secret is required.`
+        )
+      if (!req.body.accessCode)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided in the request. Access Code is required.`
+        )
+      if (!req.body.challenge)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided in the request. Challenge is required.`
         )
 
       const authResponse = await withOperationLogging(
