@@ -294,7 +294,13 @@ onMounted(() => {
 
 // Watch for plan limit conditions and show dialog if needed
 watch(
-  [hasMissingReferencedObject, hasMissingThread, resourceItems, project],
+  [
+    hasMissingReferencedObject,
+    hasMissingThread,
+    resourceItems,
+    project,
+    modelsAndVersionIds
+  ],
   ([missingObject, missingThread]) => {
     if (missingObject) {
       if (isFederated.value) {
@@ -316,15 +322,9 @@ watch(
     if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
       limitsDialogType.value = 'comment'
       showLimitsDialog.value = true
+    } else {
+      showLimitsDialog.value = false
     }
-  },
-  { immediate: true }
-)
-
-watch(
-  [hasMissingReferencedObject, modelsAndVersionIds],
-  ([hasMissing]) => {
-    showLimitsDialog.value = hasMissing
   },
   { immediate: true }
 )
