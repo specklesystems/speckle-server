@@ -6,10 +6,7 @@
     <div class="flex flex-col gap-4 w-full max-w-lg items-center">
       <FormRadioGroup v-model="includeUnlimitedAddon" :options="options" is-stacked />
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
-        <div
-          :key="`add-on-${includeUnlimitedAddon}`"
-          v-tippy="!includeUnlimitedAddon ? 'Please choose an option' : ''"
-        >
+        <div v-tippy="!includeUnlimitedAddon ? 'Please choose an option' : ''">
           <FormButton
             :disabled="!includeUnlimitedAddon"
             size="lg"
