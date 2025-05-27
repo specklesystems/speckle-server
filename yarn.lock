@@ -15953,7 +15953,7 @@ __metadata:
     ua-parser-js: "npm:^1.0.38"
     vee-validate: "npm:4.7.0"
     vue-advanced-cropper: "npm:^2.8.8"
-    vue-tippy: "npm:^6.7.0"
+    vue-tippy: "npm:^6.7.1"
     vue-tsc: "npm:^2.2.2"
     wait-on: "npm:^6.0.1"
     ws: "npm:^8.17.1"
@@ -16478,7 +16478,7 @@ __metadata:
     vite-plugin-dts: "npm:^4.5.0"
     vue: "npm:^3.5.13"
     vue-advanced-cropper: "npm:^2.8.8"
-    vue-tippy: "npm:^6.0.0"
+    vue-tippy: "npm:^6.7.1"
     vue-tsc: "npm:^2.2.2"
     wait-on: "npm:^6.0.1"
   peerDependencies:
@@ -49920,25 +49920,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-tippy@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "vue-tippy@npm:6.0.0"
+"vue-tippy@npm:^6.7.1":
+  version: 6.7.1
+  resolution: "vue-tippy@npm:6.7.1"
   dependencies:
     tippy.js: "npm:^6.3.7"
   peerDependencies:
     vue: ^3.2.0
-  checksum: 10/6f6c79bcc85f5ed6f93745f5aa787336cac182a2b43b246c0b0856c6310bd1ee6028241921d4a781aac41ae8cb4a63348a199432e03d9def6a83b2eda3d7b90f
-  languageName: node
-  linkType: hard
-
-"vue-tippy@npm:^6.7.0":
-  version: 6.7.0
-  resolution: "vue-tippy@npm:6.7.0"
-  dependencies:
-    tippy.js: "npm:^6.3.7"
-  peerDependencies:
-    vue: ^3.2.0
-  checksum: 10/5794a740b1cde284150ae7ce873b2c60afa6f09607c96f38b800f12954e7dfa949f8c9b332f0db416f032b7fb32056b305179cb4ebbfa6613936c7150b98e293
+  checksum: 10/23c601a8aab5ced793a645710eeb63f829039c7693d8f564e1a97b936de5aefe5d4992b479f212b22b0142b6a61ce56febb13cf925a9e2d0565f761997ba9ce6
   languageName: node
   linkType: hard
 

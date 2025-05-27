@@ -21,7 +21,14 @@ JSON_SCHEMA_PATH="${GIT_ROOT}/utils/helm/speckle-server/values.schema.json"
 if [ ! -d "${README_GENERATOR_DIR}" ]; then
   echo "🔭 Could not find readme-generator-for-helm in a sibling directory to speckle-server"
   echo "👩‍👩‍👧‍👧 Proceeding with cloning readme-generator-for-helm to a sibling directory, readme-generator-for-helm"
-  git clone git@github.com:bitnami-labs/readme-generator-for-helm.git "${README_GENERATOR_DIR}"
+  SSH_OUTPUT="$(ssh -T git@github.com 2>&1 || true)"
+  if echo "${SSH_OUTPUT}" | grep -q 'successfully authenticated'; then
+    echo "🔑 SSH authentication successful, cloning using SSH"
+    git clone git@github.com:bitnami-labs/readme-generator-for-helm.git "${README_GENERATOR_DIR}"
+  else
+    echo "🔑 SSH authentication failed, cloning using HTTPS"
+    git clone https://github.com/bitnami-labs/readme-generator-for-helm "${README_GENERATOR_DIR}"
+  fi
 fi
 
 pushd "${README_GENERATOR_DIR}"
