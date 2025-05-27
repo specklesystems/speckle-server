@@ -45,7 +45,7 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     }
   }
 
-  constructor(parameters: MeshStandardMaterialParameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshStandardMaterialParameters, defines: string[] = []) {
     super(parameters)
     this.init(defines)
   }
@@ -124,7 +124,7 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     _geometry: BufferGeometry,
     object: Object3D
   ) {
-    if (this.defines['USE_RTE']) {
+    if (this.defines && this.defines['USE_RTE']) {
       object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
       this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
@@ -132,9 +132,9 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
       this.userData.rteShadowMatrix.value.copy(_this.RTEBuffers.rteShadowMatrix)
       this.userData.uShadowViewer_low.value.copy(_this.RTEBuffers.shadowViewerLow)
       this.userData.uShadowViewer_high.value.copy(_this.RTEBuffers.shadowViewerHigh)
-    }
 
-    this.needsUpdate = true
+      this.needsUpdate = true
+    }
   }
 }
 

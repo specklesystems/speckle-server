@@ -11,7 +11,6 @@ import {
   saveUploadFileFactoryV2,
   updateFileStatusFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
-import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/helpers/errors'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
@@ -32,26 +31,29 @@ import {
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
+import { ModelNotFoundError } from '@/modules/core/errors/model'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
   const app = Router()
 
   app.post(
-    '/api/projects/:streamId/fileimporter/jobs',
+    '/api/projects/:streamId/models/:modelId/fileimporter/jobs',
     authMiddlewareCreator(
       streamWritePermissionsPipelineFactory({
         getStream: getStreamFactory({ db })
       })
     ),
     validateRequest({
-      query: z.object({
+      params: z.object({
+        // needs to be streamId, due to the auth context building
+        streamId: z.string(),
         modelId: z.string()
       })
     }),
     async (req, res) => {
       const projectId = req.params.streamId
-      const modelId = req.query.modelId
+      const modelId = req.params.modelId
       const userId = req.context.userId
 
       if (!userId) throw new UnauthorizedError('User not authorized')
@@ -65,7 +67,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       const projectDb = await getProjectDbClient({ projectId })
       const getModelsByIds = getBranchesByIdsFactory({ db: projectDb })
       const [model] = await getModelsByIds([modelId], { streamId: projectId })
-      if (!model) throw new UnauthorizedError()
+      if (!model) throw new ModelNotFoundError(undefined, { statusCode: 401 })
 
       const pushJobToFileImporter = pushJobToFileImporterFactory({
         getServerOrigin,
@@ -142,6 +144,13 @@ export const nextGenFileImporterRouterFactory = (): Router => {
         getStream: getStreamFactory({ db })
       })
     ),
+    validateRequest({
+      params: z.object({
+        streamId: z.string(),
+        jobId: z.string()
+      }),
+      body: fileImportResultPayload
+    }),
     async (req, res) => {
       const userId = req.context.userId
       const projectId = req.params.streamId
@@ -153,15 +162,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
         jobId
       })
 
-      const parseJobOutput = fileImportResultPayload.safeParse(req.body)
-      if (!parseJobOutput.success) {
-        logger.error(
-          { err: parseJobOutput.error.format() },
-          'Error parsing file import job result'
-        )
-        throw new FileImportInvalidJobResultPayload(parseJobOutput.error.message)
-      }
-      const jobResult = parseJobOutput.data
+      const jobResult = req.body
 
       const projectDb = await getProjectDbClient({ projectId })
 
