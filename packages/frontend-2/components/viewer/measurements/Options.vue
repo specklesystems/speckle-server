@@ -120,10 +120,10 @@ const toggleMeasurementsSnap = () => {
   })
 }
 
-const onChangeMeasurementPrecision = () => {
+const onChangeMeasurementPrecision = (newPrecision: number) => {
   setMeasurementOptions({
     ...measurementOptions.value,
-    precision: measurementPrecision.value
+    precision: newPrecision
   })
 }
 
