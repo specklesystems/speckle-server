@@ -14,15 +14,15 @@
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { modelRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ViewerLimitsWorkspaceDialog_ProjectFragment } from '~/lib/common/generated/gql/graphql'
-
-type LimitType = 'version' | 'comment' | 'federated'
+import type { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
+import { useLoadLatestVersion } from '~/lib/viewer/composables/resources'
 
 graphql(`
   fragment ViewerLimitsWorkspaceDialog_Project on Project {
@@ -33,11 +33,12 @@ graphql(`
       slug
       ...WorkspacePlanLimits_Workspace
     }
+    ...UseLoadLatestVersion_Project
   }
 `)
 
 const props = defineProps<{
-  limitType: LimitType
+  limitType: ViewerLimitsDialogType
   project: ViewerLimitsWorkspaceDialog_ProjectFragment
   resourceIdString: string
 }>()
@@ -54,6 +55,11 @@ const { mutateActiveWorkspaceSlug } = useNavigation()
 
 const dialogOpen = defineModel<boolean>('open', {
   required: true
+})
+
+const { createButton: loadLatestButton } = useLoadLatestVersion({
+  project: computed(() => props.project),
+  resourceIdString: computed(() => props.resourceIdString)
 })
 
 const title = computed(() => {
@@ -82,37 +88,6 @@ const message = computed(() => {
   }
 })
 
-const stripVersionIds = (resourceIdString: string) => {
-  const resources = resourceIdString.split(',')
-
-  // For each resource, remove @versionId if present
-  const cleanedResources = resources.map((resource) => {
-    const atIndex = resource.indexOf('@')
-    return atIndex > -1 ? resource.substring(0, atIndex) : resource
-  })
-
-  return cleanedResources.join(',')
-}
-
-const loadLatestButton = (isPrimary = true): LayoutDialogButton => ({
-  text: 'Load latest version',
-  props: {
-    color: isPrimary ? 'primary' : 'outline'
-  },
-  onClick: () => {
-    mixpanel.track('Load Latest Version Button Clicked', {
-      location: 'viewer',
-      // eslint-disable-next-line camelcase
-      workspace_id: props.project.workspace?.slug
-    })
-
-    const latestResourceIdString = stripVersionIds(props.resourceIdString)
-
-    // Use the modelRoute but with the cleaned resource string that has no version IDs
-    navigateTo(modelRoute(props.project.id, latestResourceIdString))
-  }
-})
-
 const explorePlansButton: LayoutDialogButton = {
   text: 'Explore plans',
   disabled: props.project.workspace?.role === Roles.Workspace.Guest,
@@ -133,7 +108,7 @@ const explorePlansButton: LayoutDialogButton = {
 }
 
 const buttons = computed((): LayoutDialogButton[] => {
-  const buttons: Record<LimitType, LayoutDialogButton[]> = {
+  const buttons: Record<ViewerLimitsDialogType, LayoutDialogButton[]> = {
     version: isEmbedEnabled.value
       ? [loadLatestButton(false)]
       : [loadLatestButton(false), explorePlansButton],
@@ -144,17 +119,5 @@ const buttons = computed((): LayoutDialogButton[] => {
   }
 
   return buttons[props.limitType]
-})
-
-watch(dialogOpen, (value) => {
-  if (value) {
-    mixpanel.track('Limit Reached Dialog Viewed', {
-      type: props.limitType === 'version' ? 'version' : 'model',
-      location: 'viewer',
-      // eslint-disable-next-line camelcase
-      workspace_id: props.project.workspace?.slug,
-      limitType: props.limitType
-    })
-  }
 })
 </script>

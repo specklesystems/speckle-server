@@ -14,7 +14,7 @@
     <WorkspaceMoveProjectIntro
       v-if="step.id === DialogStepId.intro"
       :project="selectedProject"
-      :prevent-close="preventClose"
+      :limit-type="limitType"
       @cancel="onCancel"
       @continue="goToNextStep"
     />
@@ -80,6 +80,7 @@ import {
 } from '~/lib/workspaces/graphql/queries'
 import { workspaceCreateRoute } from '~/lib/common/helpers/route'
 import { useMultiStepDialog } from '~/lib/common/composables/dialog'
+import type { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
 
 const DialogStepId = {
   intro: 'intro',
@@ -166,7 +167,7 @@ const props = defineProps<{
   workspaceSlug?: string
   workspaceId?: string
   showIntro?: boolean
-  preventClose?: boolean
+  limitType?: ViewerLimitsDialogType
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -248,6 +249,7 @@ const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
 )
 
 const isSmallDialog = computed(() => step.value.id === DialogStepId.intro)
+const preventClose = computed(() => !!props.limitType)
 
 onProjectResult((res) => {
   if (res.data?.project?.id !== selectedProject.value?.id) {

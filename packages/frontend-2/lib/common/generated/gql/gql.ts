@@ -141,7 +141,7 @@ type Documents = {
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": typeof types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerGendoPanel_Project on Project {\n    id\n    permissions {\n      canRequestRender {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ViewerGendoPanel_ProjectFragmentDoc,
     "\n  fragment ViewerLimitsDialog_Project on Project {\n    id\n    workspaceId\n    ...ViewerLimitsWorkspaceDialog_Project\n    ...WorkspaceMoveProject_Project\n  }\n": typeof types.ViewerLimitsDialog_ProjectFragmentDoc,
-    "\n  fragment ViewerLimitsWorkspaceDialog_Project on Project {\n    id\n    workspace {\n      id\n      role\n      slug\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n": typeof types.ViewerLimitsWorkspaceDialog_ProjectFragmentDoc,
+    "\n  fragment ViewerLimitsWorkspaceDialog_Project on Project {\n    id\n    workspace {\n      id\n      role\n      slug\n      ...WorkspacePlanLimits_Workspace\n    }\n    ...UseLoadLatestVersion_Project\n  }\n": typeof types.ViewerLimitsWorkspaceDialog_ProjectFragmentDoc,
     "\n  fragment ViewerResourcesLimitAlert_Project on Project {\n    id\n    workspaceId\n    workspace {\n      id\n      slug\n      ...ViewerResourcesWorkspaceLimitAlert_Workspace\n    }\n    ...WorkspaceMoveProject_Project\n  }\n": typeof types.ViewerResourcesLimitAlert_ProjectFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": typeof types.ViewerModelVersionCardItemFragmentDoc,
     "\n  fragment ViewerResourcesPersonalLimitAlert_Project on Project {\n    id\n    ...WorkspaceMoveProject_Project\n  }\n": typeof types.ViewerResourcesPersonalLimitAlert_ProjectFragmentDoc,
@@ -361,6 +361,7 @@ type Documents = {
     "\n  fragment UseViewerUserActivityBroadcasting_Project on Project {\n    id\n    permissions {\n      canBroadcastActivity {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.UseViewerUserActivityBroadcasting_ProjectFragmentDoc,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    viewerState\n  }\n": typeof types.ViewerCommentBubblesDataFragmentDoc,
     "\n  fragment UseCheckViewerCommentingAccess_Project on Project {\n    id\n    permissions {\n      canCreateComment {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.UseCheckViewerCommentingAccess_ProjectFragmentDoc,
+    "\n  fragment UseLoadLatestVersion_Project on Project {\n    id\n    workspace {\n      slug\n    }\n  }\n": typeof types.UseLoadLatestVersion_ProjectFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": typeof types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": typeof types.ViewerCommentsReplyItemFragmentDoc,
     "\n  mutation BroadcastViewerUserActivity(\n    $projectId: String!\n    $resourceIdString: String!\n    $message: ViewerUserActivityMessageInput!\n  ) {\n    broadcastViewerUserActivity(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n      message: $message\n    )\n  }\n": typeof types.BroadcastViewerUserActivityDocument,
@@ -579,7 +580,7 @@ const documents: Documents = {
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerGendoPanel_Project on Project {\n    id\n    permissions {\n      canRequestRender {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ViewerGendoPanel_ProjectFragmentDoc,
     "\n  fragment ViewerLimitsDialog_Project on Project {\n    id\n    workspaceId\n    ...ViewerLimitsWorkspaceDialog_Project\n    ...WorkspaceMoveProject_Project\n  }\n": types.ViewerLimitsDialog_ProjectFragmentDoc,
-    "\n  fragment ViewerLimitsWorkspaceDialog_Project on Project {\n    id\n    workspace {\n      id\n      role\n      slug\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n": types.ViewerLimitsWorkspaceDialog_ProjectFragmentDoc,
+    "\n  fragment ViewerLimitsWorkspaceDialog_Project on Project {\n    id\n    workspace {\n      id\n      role\n      slug\n      ...WorkspacePlanLimits_Workspace\n    }\n    ...UseLoadLatestVersion_Project\n  }\n": types.ViewerLimitsWorkspaceDialog_ProjectFragmentDoc,
     "\n  fragment ViewerResourcesLimitAlert_Project on Project {\n    id\n    workspaceId\n    workspace {\n      id\n      slug\n      ...ViewerResourcesWorkspaceLimitAlert_Workspace\n    }\n    ...WorkspaceMoveProject_Project\n  }\n": types.ViewerResourcesLimitAlert_ProjectFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
     "\n  fragment ViewerResourcesPersonalLimitAlert_Project on Project {\n    id\n    ...WorkspaceMoveProject_Project\n  }\n": types.ViewerResourcesPersonalLimitAlert_ProjectFragmentDoc,
@@ -799,6 +800,7 @@ const documents: Documents = {
     "\n  fragment UseViewerUserActivityBroadcasting_Project on Project {\n    id\n    permissions {\n      canBroadcastActivity {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.UseViewerUserActivityBroadcasting_ProjectFragmentDoc,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    viewerState\n  }\n": types.ViewerCommentBubblesDataFragmentDoc,
     "\n  fragment UseCheckViewerCommentingAccess_Project on Project {\n    id\n    permissions {\n      canCreateComment {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.UseCheckViewerCommentingAccess_ProjectFragmentDoc,
+    "\n  fragment UseLoadLatestVersion_Project on Project {\n    id\n    workspace {\n      slug\n    }\n  }\n": types.UseLoadLatestVersion_ProjectFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
     "\n  mutation BroadcastViewerUserActivity(\n    $projectId: String!\n    $resourceIdString: String!\n    $message: ViewerUserActivityMessageInput!\n  ) {\n    broadcastViewerUserActivity(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n      message: $message\n    )\n  }\n": types.BroadcastViewerUserActivityDocument,
@@ -1415,7 +1417,7 @@ export function graphql(source: "\n  fragment ViewerLimitsDialog_Project on Proj
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ViewerLimitsWorkspaceDialog_Project on Project {\n    id\n    workspace {\n      id\n      role\n      slug\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n"): (typeof documents)["\n  fragment ViewerLimitsWorkspaceDialog_Project on Project {\n    id\n    workspace {\n      id\n      role\n      slug\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ViewerLimitsWorkspaceDialog_Project on Project {\n    id\n    workspace {\n      id\n      role\n      slug\n      ...WorkspacePlanLimits_Workspace\n    }\n    ...UseLoadLatestVersion_Project\n  }\n"): (typeof documents)["\n  fragment ViewerLimitsWorkspaceDialog_Project on Project {\n    id\n    workspace {\n      id\n      role\n      slug\n      ...WorkspacePlanLimits_Workspace\n    }\n    ...UseLoadLatestVersion_Project\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2292,6 +2294,10 @@ export function graphql(source: "\n  fragment ViewerCommentBubblesData on Commen
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment UseCheckViewerCommentingAccess_Project on Project {\n    id\n    permissions {\n      canCreateComment {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment UseCheckViewerCommentingAccess_Project on Project {\n    id\n    permissions {\n      canCreateComment {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment UseLoadLatestVersion_Project on Project {\n    id\n    workspace {\n      slug\n    }\n  }\n"): (typeof documents)["\n  fragment UseLoadLatestVersion_Project on Project {\n    id\n    workspace {\n      slug\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

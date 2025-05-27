@@ -45,13 +45,40 @@
     <div class="w-full bg-foundation-page flex flex-col gap-6 p-6">
       <div class="flex flex-col gap-y-4 select-none">
         <h4 class="text-heading-sm text-foreground">
-          Move your projects to a workspace to:
+          <template v-if="!limitType">Move your projects to a workspace to:</template>
+          <template v-else-if="limitType === ViewerLimitsDialogType.Version">
+            Personal projects limit reached
+          </template>
+          <template v-else-if="limitType === ViewerLimitsDialogType.Federated">
+            The federated models couldn't be loaded
+          </template>
+          <template v-else-if="limitType === ViewerLimitsDialogType.Comment">
+            The comment could not be loaded
+          </template>
         </h4>
-        → Create new projects and models,
-        <br />
-        → Invite new project collaborators,
-        <br />
-        → View comments and versions older than 7 days (paid plans only)
+        <template v-if="!limitType">
+          → Create new projects and models,
+          <br />
+          → Invite new project collaborators,
+          <br />
+          → View comments and versions older than {{ versionLimitFormatted }} (paid
+          plans only)
+        </template>
+        <template v-else-if="limitType === ViewerLimitsDialogType.Version">
+          The version you're trying to load is older than the
+          {{ versionLimitFormatted }} version history limit allowed for Personal
+          projects. Move your project to a workspace to gain access.
+        </template>
+        <template v-else-if="limitType === ViewerLimitsDialogType.Federated">
+          One of the models is older than the {{ versionLimitFormatted }} version
+          history limit allowed for Personal projects. Move your project to a workspace
+          to gain access.
+        </template>
+        <template v-else-if="limitType === ViewerLimitsDialogType.Comment">
+          Unable to load the comment because one or more of the referenced models is
+          older than the {{ versionLimitFormatted }} version history limit for Personal
+          projects. Move your project to a workspace to gain access.
+        </template>
       </div>
       <CommonAlert v-if="isNotOwner" color="warning" hide-icon>
         <template #title>
@@ -59,8 +86,11 @@
         </template>
       </CommonAlert>
       <div class="flex gap-2 justify-end">
-        <FormButton v-if="!preventClose" color="subtle" @click="$emit('cancel')">
+        <FormButton v-if="!limitType" color="subtle" @click="$emit('cancel')">
           Cancel
+        </FormButton>
+        <FormButton v-else color="subtle" @click="loadLatestVersion">
+          Load latest version
         </FormButton>
         <div
           v-tippy="
@@ -85,6 +115,9 @@ import {
   ProjectNotEnoughPermissionsError
 } from '@speckle/shared/authz'
 import type { WorkspaceMoveProjectManager_ProjectFragment } from '~/lib/common/generated/gql/graphql'
+import { usePersonalProjectLimits } from '~/lib/projects/composables/permissions'
+import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
+import { useLoadLatestVersion } from '~/lib/viewer/composables/resources'
 
 defineEmits<{
   cancel: []
@@ -93,10 +126,16 @@ defineEmits<{
 
 const props = defineProps<{
   project?: MaybeNullOrUndefined<WorkspaceMoveProjectManager_ProjectFragment>
-  preventClose?: boolean
+  limitType?: ViewerLimitsDialogType
 }>()
 
+const route = useRoute()
 const canMoveProject = computed(() => props.project?.permissions?.canMoveToWorkspace)
+const { load: loadLatestVersion } = useLoadLatestVersion({
+  project: computed(() => props.project),
+  resourceIdString: computed(() => route.params.modelId as string) // this should only be opened in the viewer anyway
+})
+const { versionLimitFormatted } = usePersonalProjectLimits()
 
 const isNotOwner = computed(() => {
   const check = canMoveProject.value

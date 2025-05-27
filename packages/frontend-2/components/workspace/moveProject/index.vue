@@ -16,7 +16,7 @@
       :workspace-id="workspace?.id"
       :project-id="project?.id"
       :show-intro="showIntro"
-      :prevent-close="preventClose"
+      :limit-type="limitType"
       @done="onDone"
     />
   </div>
@@ -30,6 +30,7 @@ import type {
   WorkspaceMoveProject_ProjectFragment,
   WorkspaceMoveProject_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
+import type { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
 import { useCanMoveProjectIntoWorkspace } from '~/lib/workspaces/composables/projects/permissions'
 
 graphql(`
@@ -77,7 +78,10 @@ const props = withDefaults(
     workspace?: MaybeNullOrUndefined<WorkspaceMoveProject_WorkspaceFragment>
     location?: string
     showIntro?: boolean
-    preventClose?: boolean
+    /**
+     * If used in the viewer for the limits dialog, set this to the correct variant.
+     */
+    limitType?: ViewerLimitsDialogType
   }>(),
   {
     location: 'move_project'
@@ -95,6 +99,8 @@ const isWorkspaceLimitsError = computed(() => {
     WorkspaceLimitsReachedError.code
   )
 })
+
+const preventClose = computed(() => !!props.limitType)
 
 const { openDefault, openWorkspaceLimitsHit } = useMultipleDialogBranching({
   open,

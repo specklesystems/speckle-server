@@ -299,18 +299,12 @@ watch(
       }
       showLimitsDialog.value = true
       return
-    }
-
-    // // If no workspace and no missing objects, don't show dialog
-    // if (!project.value?.workspace) {
-    //   showLimitsDialog.value = false
-    //   return
-    // }
-
-    // Only show comment dialog if it's a federated view AND we have a missing referenced object
-    if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
+    } else if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
+      // Only show comment dialog if it's a federated view AND we have a missing referenced object
       limitsDialogType.value = 'comment'
       showLimitsDialog.value = true
+    } else {
+      showLimitsDialog.value = false
     }
   },
   { immediate: true }
