@@ -34,9 +34,9 @@ const prepInsertionObject = (
     obj.id =
       obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
-  if (!/^[a-f0-9]{32}$/.test(obj.id)) {
+  if (obj.id.length !== 32) {
     throw new ObjectHandlingError(
-      `Invalid object ID. Object ID: ${obj.id}. Object ID's must be hashes represented by a string of 32 hexadecimal characters.`
+      `Invalid object ID. Object ID: ${obj.id}. Object ID's must be hashes represented by a string of 32 characters.`
     )
   }
 
