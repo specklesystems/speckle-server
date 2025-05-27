@@ -36,7 +36,7 @@ services:
       LOG_PRETTY: 'true'
     depends_on:
       - speckle-server
-      - redis
+      # - redis
 
   speckle-server:
     build:
@@ -92,9 +92,10 @@ services:
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
     depends_on:
-      - minio
-      - redis
-      - postgres
+      []
+      # - minio
+      # - redis
+      # - postgres
 
   preview-service:
     build:
@@ -112,7 +113,8 @@ services:
       LOG_PRETTY: 'true'
       REDIS_URL: 'redis://redis'
     depends_on:
-      - redis
+      []
+      # - redis
 
   webhook-service:
     build:
@@ -127,7 +129,7 @@ services:
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
     depends_on:
       - speckle-server
-      - postgres
+      # - postgres
 
   fileimport-service:
     build:
@@ -144,4 +146,4 @@ services:
       FILE_IMPORT_TIME_LIMIT_MIN: 10
     depends_on:
       - speckle-server
-      - postgres
+      # - postgres
