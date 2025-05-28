@@ -19,7 +19,7 @@
 
     <div class="flex flex-col items-center gap-2 w-full max-w-lg mx-auto">
       <h1 class="text-heading-xl text-foreground mb-2 font-normal mt-4">
-        Join teammates
+        Join your coworkers
       </h1>
       <p class="text-center text-body-sm text-foreground-2 mb-8">
         {{ description }}

@@ -3,13 +3,18 @@
     :logo="workspace.logo ?? ''"
     :name="workspace.name"
     :class="requestStatus === 'pending' ? '' : 'bg-foundation'"
+    :banner-text="
+      workspace.discoverabilityAutoJoinEnabled
+        ? 'You can join this workspace automatically. No admin approval needed.'
+        : null
+    "
   >
     <template #text>
       <div class="flex flex-col gap-y-1">
         <div v-if="workspace.description" class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-1">
           <UserAvatarGroup
             v-if="members.length > 0 && requestStatus !== 'pending'"
             :users="members"
@@ -33,7 +38,11 @@
       </FormButton>
       <div v-else class="flex flex-col gap-2 sm:items-end">
         <FormButton color="outline" size="sm" @click="onRequest">
-          {{ workspace.discoverabilityAutoJoinEnabled ? 'Join' : 'Request to join' }}
+          {{
+            workspace.discoverabilityAutoJoinEnabled
+              ? 'Join workspace'
+              : 'Request to join'
+          }}
         </FormButton>
         <FormButton
           v-if="showDismissButton"
