@@ -62,7 +62,7 @@
           Create a new workspace
         </FormButton>
         <FormButton v-else size="lg" full-width @click="navigateTo(homeRoute)">
-          Continue
+          Continue to workspace
         </FormButton>
         <FormButton
           v-if="!hasDiscoverableJoinRequests && !isWorkspaceNewPlansEnabled"
