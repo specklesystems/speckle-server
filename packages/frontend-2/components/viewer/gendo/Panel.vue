@@ -62,7 +62,7 @@
                   <ArrowTopRightOnSquareIcon class="h-3 w-3" />
                 </div>
               </FormButton>
-              <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
+              <div v-tippy="tooltipMessage">
                 <FormButton :disabled="buttonDisabled" size="sm" @click="enqueMagic()">
                   Generate
                 </FormButton>
@@ -77,11 +77,6 @@
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
       >
-        <FormButton color="subtle" size="sm" @click="isFeedbackOpen = true">
-          <div class="flex items-center gap-1 text-foreground-2 font-normal">
-            <span>Give us feedback</span>
-          </div>
-        </FormButton>
         <FormButton
           color="subtle"
           size="sm"
@@ -95,12 +90,6 @@
         </FormButton>
       </div>
     </div>
-
-    <FeedbackDialog
-      v-model:open="isFeedbackOpen"
-      intro="Help us improve Gendo AI renders. What did you like or dislike? How could we improve the experience for you and your workflow?"
-      type="gendo"
-    />
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
@@ -148,7 +137,6 @@ const { activeUser } = useActiveUser()
 const prompt = ref<string>()
 const isLoading = ref(false)
 const timeOutWait = ref(false)
-const isFeedbackOpen = ref(false)
 
 const suggestedPrompts = ref<string[]>([
   'Example: Minimalist Scandinavian interior with warm natural lighting...',

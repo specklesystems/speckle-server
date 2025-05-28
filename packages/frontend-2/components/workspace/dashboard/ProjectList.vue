@@ -20,17 +20,27 @@
 
     <section
       v-if="showEmptyState"
-      class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-4"
+      class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-3"
     >
-      <WorkspaceEmptyStateIllustration />
-      <span class="text-body-2xs text-foreground-2 text-center">
+      <IllustrationEmptystateWorkspace />
+      <h2 class="text-heading-sm text-foreground-2 text-center mb-1">
         Workspace is empty
-      </span>
+      </h2>
       <WorkspaceAddProjectMenu
         :workspace="workspace"
         :workspace-slug="workspaceSlug"
         cta-label="Add your first project"
       />
+      <FormButton
+        class="flex items-center gap-1"
+        color="subtle"
+        @click="openExplainerVideoDialog"
+      >
+        <IconPlay class="h-4 w-4 text-foreground-2" />
+        <span class="text-body-2xs text-foreground font-medium">
+          Speckle explained in 5 minutes →
+        </span>
+      </FormButton>
     </section>
 
     <section v-else-if="projects?.items?.length">
@@ -39,6 +49,7 @@
     </section>
 
     <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
+    <WorkspaceExplainerVideoDialog v-model:open="isExplainerVideoOpen" />
   </div>
 </template>
 
@@ -53,6 +64,7 @@ import type {
   WorkspaceProjectsQueryQueryVariables,
   WorkspaceDashboardProjectList_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment WorkspaceDashboardProjectList_ProjectCollection on ProjectCollection {
@@ -76,6 +88,8 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<WorkspaceDashboardProjectList_WorkspaceFragment>
 }>()
 
+const isExplainerVideoOpen = ref(false)
+
 const {
   on,
   bind,
@@ -84,6 +98,7 @@ const {
   debouncedBy: 800
 })
 
+const mixpanel = useMixpanel()
 const {
   query: projectsQuery,
   identifier,
@@ -117,6 +132,13 @@ const showLoadingBar = computed(() => projectsQuery.loading.value)
 const showEmptyState = computed(() =>
   search.value ? false : projects.value && !projects.value?.items?.length
 )
+
+const openExplainerVideoDialog = () => {
+  isExplainerVideoOpen.value = true
+  mixpanel.track('Getting Started Video Opened', {
+    location: 'project_list'
+  })
+}
 
 const clearSearch = () => {
   search.value = ''

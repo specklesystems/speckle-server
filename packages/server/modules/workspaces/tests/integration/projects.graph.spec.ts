@@ -1,4 +1,6 @@
 import { db } from '@/db/knex'
+import { StreamAcl } from '@/modules/core/dbSchema'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
@@ -10,16 +12,24 @@ import {
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { describeEach, itEach } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import {
+  BasicTestUser,
+  createTestUser,
+  createTestUsers,
+  login
+} from '@/test/authHelper'
+import {
+  ActiveUserProjectsDocument,
   ActiveUserProjectsWorkspaceDocument,
   CreateWorkspaceProjectDocument,
   GetProjectDocument,
+  GetWorkspaceDocument,
   GetWorkspaceProjectsDocument,
   GetWorkspaceProjectsQuery,
   GetWorkspaceTeamDocument,
   MoveProjectToWorkspaceDocument,
   ProjectUpdateRoleInput,
+  ProjectVisibility,
   UpdateProjectRoleDocument,
   UpdateWorkspaceProjectRoleDocument
 } from '@/test/graphql/generated/graphql'
@@ -41,7 +51,8 @@ import {
   Nullable,
   Optional,
   PaidWorkspacePlans,
-  Roles
+  Roles,
+  WorkspacePlans
 } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -95,6 +106,48 @@ describe('Workspace project GQL CRUD', () => {
         apollo.execute(CreateWorkspaceProjectDocument, { input })
       )
     )
+  })
+
+  describe('when creating project', () => {
+    it('should have workspace visibility by default', async () => {
+      const res = await apollo.execute(
+        CreateWorkspaceProjectDocument,
+        {
+          input: {
+            name: 'Test Default Project',
+            workspaceId: workspace.id
+          }
+        },
+        { assertNoErrors: true }
+      )
+
+      const project = res.data?.workspaceMutations?.projects.create
+      expect(project).to.be.ok
+      expect(project?.visibility).to.equal(ProjectVisibility.Workspace)
+    })
+
+    it('should create the project in that workspace', async () => {
+      const projectName = cryptoRandomString({ length: 6 })
+
+      const createRes = await apollo.execute(CreateWorkspaceProjectDocument, {
+        input: {
+          name: projectName,
+          workspaceId: workspace.id
+        }
+      })
+
+      const getRes = await apollo.execute(GetWorkspaceProjectsDocument, {
+        id: workspace.id
+      })
+
+      const workspaceProject = getRes.data?.workspace.projects.items.find(
+        (project) => project.name === projectName
+      )
+
+      expect(createRes).to.not.haveGraphQLErrors()
+      expect(getRes).to.not.haveGraphQLErrors()
+      expect(workspaceProject).to.exist
+    })
   })
 
   describe('when changing workspace project roles', () => {
@@ -240,31 +293,6 @@ describe('Workspace project GQL CRUD', () => {
     })
   })
 
-  describe('when specifying a workspace id during project creation', () => {
-    it('should create the project in that workspace', async () => {
-      const projectName = cryptoRandomString({ length: 6 })
-
-      const createRes = await apollo.execute(CreateWorkspaceProjectDocument, {
-        input: {
-          name: projectName,
-          workspaceId: workspace.id
-        }
-      })
-
-      const getRes = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: workspace.id
-      })
-
-      const workspaceProject = getRes.data?.workspace.projects.items.find(
-        (project) => project.name === projectName
-      )
-
-      expect(createRes).to.not.haveGraphQLErrors()
-      expect(getRes).to.not.haveGraphQLErrors()
-      expect(workspaceProject).to.exist
-    })
-  })
-
   describe('when querying projects', () => {
     const PAGE_SIZE = 5
     const PAGE_COUNT = 3
@@ -285,18 +313,36 @@ describe('Workspace project GQL CRUD', () => {
       email: '',
       name: 'Query Workspace Guest'
     }
+
     const workspaceAdmin = serverMemberUser
+    const workspaceAdmin2: BasicTestUser = {
+      id: '',
+      email: '',
+      name: 'Query Workspace Admin 2'
+    }
+
     const workspaceMember: BasicTestUser = {
       id: '',
       email: '',
       name: 'Query Workspace Member'
     }
+    const workspaceMemberNoExplicitRoles: BasicTestUser = {
+      id: '',
+      email: '',
+      name: 'Query Workspace Member w/ No Explicit Project Roles'
+    }
+
     let wsProjects: BasicTestStream[]
     let nonWorkspaceProjects: BasicTestStream[]
     let apollo: TestApolloServer
 
     before(async () => {
-      await createTestUsers([workspaceGuest, workspaceMember])
+      await createTestUsers([
+        workspaceGuest,
+        workspaceMember,
+        workspaceAdmin2,
+        workspaceMemberNoExplicitRoles
+      ])
       await createTestWorkspace(queryWorkspace, workspaceAdmin, {
         addPlan: { name: 'team', status: 'valid' }
       })
@@ -312,6 +358,18 @@ describe('Workspace project GQL CRUD', () => {
           workspaceMember,
           Roles.Workspace.Member,
           WorkspaceSeatType.Editor
+        ],
+        [
+          queryWorkspace,
+          workspaceAdmin2,
+          Roles.Workspace.Admin,
+          WorkspaceSeatType.Editor
+        ],
+        [
+          queryWorkspace,
+          workspaceMemberNoExplicitRoles,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
         ]
       ])
       wsProjects = times(
@@ -320,7 +378,11 @@ describe('Workspace project GQL CRUD', () => {
           id: '',
           ownerId: '',
           name: `Query Workspace Project - #${i}`,
-          isPublic: false, // have to be private for tests below
+          // Make all except the very last one workspace visibility
+          visibility:
+            i === TOTAL_WS_PROJECT_COUNT - 1
+              ? ProjectRecordVisibility.Private
+              : ProjectRecordVisibility.Workspace,
           workspaceId: queryWorkspace.id
         })
       )
@@ -330,7 +392,7 @@ describe('Workspace project GQL CRUD', () => {
           id: '',
           ownerId: '',
           name: `Non Workspace Project - #${i}`,
-          isPublic: false
+          visibility: ProjectRecordVisibility.Private
         })
       )
 
@@ -351,8 +413,9 @@ describe('Workspace project GQL CRUD', () => {
       )
 
       await Promise.all([
-        // Add explicit single assignment to workspaceMember to 1st non-workspace project
+        // Add explicit single assignment to workspaceMember & workspaceAdmin to 1st non-workspace project
         addToStream(nonWorkspaceProjects[0], workspaceMember, Roles.Stream.Contributor),
+        addToStream(nonWorkspaceProjects[0], workspaceAdmin, Roles.Stream.Contributor),
         // Add explicit single assignment to workspaceMember to 1st workspace project
         addToStream(wsProjects[0], workspaceMember, Roles.Stream.Contributor)
       ])
@@ -362,12 +425,18 @@ describe('Workspace project GQL CRUD', () => {
       })
     })
 
+    // projects at the end have no explicit project assignments (and very last one is fully private),
+    // and first X ones are explicitly assigned to guest user
+    const implicitPrivateProject = () => wsProjects.at(-1)!
+    const implicitWorkspaceVisibilityProject = () => wsProjects.at(-2)!
+    const explicitGuestProject = () => wsProjects.at(0)!
+
     afterEach(async () => {
       adminOverrideMock.disable()
     })
 
     describe('through Workspace.projects', () => {
-      it('should return all projects for workspace members', async () => {
+      it('should return all projects for workspace admin', async () => {
         const res = await apollo.execute(GetWorkspaceProjectsDocument, {
           id: queryWorkspace.id,
           limit: 999 // get everything
@@ -441,6 +510,24 @@ describe('Workspace project GQL CRUD', () => {
         expect(collection?.items.length).to.equal(GUEST_PROJECT_COUNT)
         expect(collection?.cursor).to.be.ok
         expect(collection?.totalCount).to.equal(GUEST_PROJECT_COUNT)
+      })
+
+      it('should return all non-private for members who may not even have any explicit project roles', async () => {
+        const apollo = await testApolloServer({
+          authUserId: workspaceMemberNoExplicitRoles.id
+        })
+        const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+          id: queryWorkspace.id,
+          limit: 999 // get everything
+        })
+
+        const nonPrivateCount = TOTAL_WS_PROJECT_COUNT - 1 // -1 for the fully private one
+
+        expect(res).to.not.haveGraphQLErrors()
+        const collection = res.data?.workspace.projects
+        expect(collection?.items.length).to.equal(nonPrivateCount)
+        expect(collection?.cursor).to.be.ok
+        expect(collection?.totalCount).to.equal(nonPrivateCount)
       })
 
       it('should respect limits', async () => {
@@ -542,17 +629,36 @@ describe('Workspace project GQL CRUD', () => {
         await createTestUser(randomServerGuy)
       })
 
-      // projects at the end have no explicit project assignments,
-      // and first X ones are explicitly assigned to guest user
-      const implicitProject = () => wsProjects.at(-1)!
-      const explicitGuestProject = () => wsProjects.at(0)!
-
-      it('it should be accessible to workspace member', async () => {
+      it('workspace visibility should be accessible to workspace member', async () => {
         const apollo = await testApolloServer({
           authUserId: workspaceMember.id
         })
         const res = await apollo.execute(GetProjectDocument, {
-          id: implicitProject().id
+          id: implicitWorkspaceVisibilityProject().id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.project.id).to.be.ok
+      })
+
+      it('private visibility should not be accessible to workspace member w/o explicit role', async () => {
+        const apollo = await testApolloServer({
+          authUserId: workspaceMember.id
+        })
+        const res = await apollo.execute(GetProjectDocument, {
+          id: implicitPrivateProject().id
+        })
+
+        expect(res).to.haveGraphQLErrors()
+        expect(res.data?.project).to.not.be.ok
+      })
+
+      it('private visibility should be accessible to workspace admin w/o explicit role', async () => {
+        const apollo = await testApolloServer({
+          authUserId: workspaceAdmin2.id
+        })
+        const res = await apollo.execute(GetProjectDocument, {
+          id: implicitPrivateProject().id
         })
 
         expect(res).to.not.haveGraphQLErrors()
@@ -564,7 +670,7 @@ describe('Workspace project GQL CRUD', () => {
           authUserId: randomServerGuy.id
         })
         const res = await apollo.execute(GetProjectDocument, {
-          id: implicitProject().id
+          id: implicitWorkspaceVisibilityProject().id
         })
 
         expect(res).to.haveGraphQLErrors()
@@ -582,7 +688,9 @@ describe('Workspace project GQL CRUD', () => {
             authUserId: workspaceGuest.id
           })
           const res = await apollo.execute(GetProjectDocument, {
-            id: explicit ? explicitGuestProject().id : implicitProject().id
+            id: explicit
+              ? explicitGuestProject().id
+              : implicitWorkspaceVisibilityProject().id
           })
 
           if (explicit) {
@@ -599,8 +707,8 @@ describe('Workspace project GQL CRUD', () => {
         [{ adminOverrideEnabled: true }, { adminOverrideEnabled: false }],
         ({ adminOverrideEnabled }) =>
           adminOverrideEnabled
-            ? 'it should return project for server admins if override enabled'
-            : 'it should not return project for server admins if override disabled',
+            ? 'it should return fully private project for server admins if override enabled'
+            : 'it should not return fully private project for server admins if override disabled',
         async ({ adminOverrideEnabled }) => {
           const apollo = await testApolloServer({
             authUserId: serverAdminUser.id
@@ -608,7 +716,7 @@ describe('Workspace project GQL CRUD', () => {
 
           adminOverrideMock.enable(adminOverrideEnabled)
           const res = await apollo.execute(GetProjectDocument, {
-            id: implicitProject().id
+            id: implicitPrivateProject().id
           })
 
           if (adminOverrideEnabled) {
@@ -671,28 +779,41 @@ describe('Workspace project GQL CRUD', () => {
         ]).to.deep.equalInAnyOrder([nonWorkspaceProjects[0].id, wsProjects[0].id])
       })
 
-      it('should return all projects user is explicitly or implicitly assigned to, if flag set', async () => {
-        const apolloMember = await testApolloServer({
-          authUserId: workspaceMember.id
-        })
-        const memberRes = await apolloMember.execute(
-          ActiveUserProjectsWorkspaceDocument,
-          { limit: 999, filter: { includeImplicitAccess: true } },
-          { assertNoErrors: true }
-        )
-        const memberCollection = memberRes.data?.activeUser?.projects
+      itEach(
+        [{ admin: true }, { admin: false }],
+        ({ admin }) =>
+          `should return all projects ${
+            admin ? 'ws admin' : 'ws member'
+          } is explicitly or implicitly assigned to, if flag set`,
+        async ({ admin }) => {
+          const apollo = await testApolloServer({
+            authUserId: admin ? workspaceAdmin.id : workspaceMember.id
+          })
+          const res = await apollo.execute(
+            ActiveUserProjectsWorkspaceDocument,
+            { limit: 999, filter: { includeImplicitAccess: true } },
+            { assertNoErrors: true }
+          )
+          const projects = res.data?.activeUser?.projects
 
-        // 1 non-workspace assignment + all workspace projects
-        const expectedMemberCount = TOTAL_WS_PROJECT_COUNT + 1
+          // 1 non-workspace assignment + all workspace projects
+          // (except the last one thats fully private, if not admin)
+          let expectedCount = TOTAL_WS_PROJECT_COUNT + 1
+          if (!admin) {
+            expectedCount -= 1
+          }
 
-        expect(memberCollection).to.be.ok
-        expect(memberCollection!.totalCount).to.equal(expectedMemberCount)
-        expect(memberCollection!.items.length).to.equal(expectedMemberCount)
-        expect(memberCollection!.items.map((i) => i.id)).to.deep.equalInAnyOrder([
-          nonWorkspaceProjects[0].id,
-          ...wsProjects.map((p) => p.id)
-        ])
-      })
+          expect(projects).to.be.ok
+          expect(projects!.totalCount).to.equal(expectedCount)
+          expect(projects!.items.length).to.equal(expectedCount)
+          expect(projects!.items.map((i) => i.id)).to.deep.equalInAnyOrder([
+            nonWorkspaceProjects[0].id,
+            ...wsProjects
+              .filter((p) => (admin ? true : p.id !== implicitPrivateProject().id))
+              .map((p) => p.id)
+          ])
+        }
+      )
 
       it('should only return workspace projects if filter set', async () => {
         const res = await apollo.execute(ActiveUserProjectsWorkspaceDocument, {
@@ -739,7 +860,7 @@ describe('Workspace project GQL CRUD', () => {
       id: '',
       ownerId: '',
       name: 'Test Project',
-      isPublic: false
+      visibility: ProjectRecordVisibility.Private
     }
 
     const targetWorkspace: BasicTestWorkspace = {
@@ -750,7 +871,9 @@ describe('Workspace project GQL CRUD', () => {
     }
 
     before(async () => {
-      await createTestWorkspace(targetWorkspace, serverAdminUser)
+      await createTestWorkspace(targetWorkspace, serverAdminUser, {
+        addPlan: WorkspacePlans.Unlimited
+      })
     })
 
     beforeEach(async () => {
@@ -762,17 +885,38 @@ describe('Workspace project GQL CRUD', () => {
       })
     })
 
-    it('should move the project to the target workspace', async () => {
+    it('should move the project to the target workspace and update visibility', async () => {
       const res = await apollo.execute(MoveProjectToWorkspaceDocument, {
         projectId: testProject.id,
         workspaceId: targetWorkspace.id
       })
 
-      const { workspaceId } =
-        res.data?.workspaceMutations.projects.moveToWorkspace ?? {}
+      const project = res.data?.workspaceMutations.projects.moveToWorkspace
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(workspaceId).to.equal(targetWorkspace.id)
+      expect(project?.workspaceId).to.equal(targetWorkspace.id)
+      expect(project?.visibility).to.equal(ProjectVisibility.Workspace)
+    })
+
+    it('should move a public project to the target workspace and keep same visibility', async () => {
+      const publicProject: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Public Project',
+        visibility: ProjectRecordVisibility.Public
+      }
+      await createTestStream(publicProject, serverAdminUser)
+
+      const res = await apollo.execute(MoveProjectToWorkspaceDocument, {
+        projectId: publicProject.id,
+        workspaceId: targetWorkspace.id
+      })
+
+      const project = res.data?.workspaceMutations.projects.moveToWorkspace
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(project?.workspaceId).to.equal(targetWorkspace.id)
+      expect(project?.visibility).to.equal(ProjectVisibility.Public)
     })
 
     it('should preserve project roles for project members with editor seats', async () => {
@@ -837,6 +981,233 @@ describe('Workspace project GQL CRUD', () => {
       expect(resA).to.not.haveGraphQLErrors()
       expect(resB).to.not.haveGraphQLErrors()
       expect(adminWorkspaceRole?.role).to.equal(Roles.Workspace.Admin)
+    })
+  })
+
+  // moved over Alessandro's tests from core to here, since they are all related to workspaces
+  // they're kind of a mess and need to be cleaned up
+  describe('query user.projects', () => {
+    it('should return projects not in a workspace', async () => {
+      const testAdminUser: BasicTestUser = {
+        id: '',
+        name: 'test',
+        email: '',
+        role: Roles.Server.Admin,
+        verified: true
+      }
+      await createTestUser(testAdminUser)
+      const workspace = {
+        id: '',
+        name: 'test ws',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+      await createTestWorkspace(workspace, testAdminUser)
+
+      const session = await login(testAdminUser)
+      const getWorkspaceRes = await session.execute(GetWorkspaceDocument, {
+        workspaceId: workspace.id
+      })
+
+      expect(getWorkspaceRes).to.not.haveGraphQLErrors()
+      const workspaceId = getWorkspaceRes.data!.workspace.id
+
+      const createProjectInWorkspaceRes = await session.execute(
+        CreateWorkspaceProjectDocument,
+        { input: { name: 'project', workspaceId } }
+      )
+      expect(createProjectInWorkspaceRes).to.not.haveGraphQLErrors()
+
+      // create w/o GQL, to not mess w/ personal project limits
+      const projectNonInWorkspace: BasicTestStream = {
+        id: '',
+        name: 'project',
+        ownerId: '',
+        isPublic: false
+      }
+      await createTestStream(projectNonInWorkspace, testAdminUser)
+
+      const userProjectsRes = await session.execute(ActiveUserProjectsDocument, {
+        filter: { personalOnly: true }
+      })
+      expect(userProjectsRes).to.not.haveGraphQLErrors()
+
+      const projects = userProjectsRes.data!.activeUser!.projects.items
+
+      expect(projects).to.have.length(1)
+      expect(projects[0].id).to.eq(projectNonInWorkspace.id)
+    })
+
+    it('should return projects in workspace', async () => {
+      const testAdminUser: BasicTestUser = {
+        id: '',
+        name: 'test',
+        email: '',
+        role: Roles.Server.Admin,
+        verified: true
+      }
+      await createTestUser(testAdminUser)
+      const workspace = {
+        id: '',
+        name: 'test ws',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+      await createTestWorkspace(workspace, testAdminUser)
+
+      const session = await login(testAdminUser)
+      const getWorkspaceRes = await session.execute(GetWorkspaceDocument, {
+        workspaceId: workspace.id
+      })
+
+      expect(getWorkspaceRes).to.not.haveGraphQLErrors()
+      const workspaceId = getWorkspaceRes.data!.workspace.id
+
+      const createProjectInWorkspaceRes = await session.execute(
+        CreateWorkspaceProjectDocument,
+        { input: { name: 'project', workspaceId } }
+      )
+      expect(createProjectInWorkspaceRes).to.not.haveGraphQLErrors()
+      const projectInWorkspace =
+        createProjectInWorkspaceRes.data!.workspaceMutations.projects.create
+
+      // create w/o GQL, to not mess w/ personal project limits
+      const projectNonInWorkspace: BasicTestStream = {
+        id: '',
+        name: 'project',
+        ownerId: '',
+        isPublic: false
+      }
+      await createTestStream(projectNonInWorkspace, testAdminUser)
+
+      const userProjectsRes = await session.execute(ActiveUserProjectsDocument, {
+        filter: { workspaceId }
+      })
+      expect(userProjectsRes).to.not.haveGraphQLErrors()
+
+      const projects = userProjectsRes.data!.activeUser!.projects.items
+
+      expect(projects).to.have.length(1)
+      expect(projects[0].id).to.eq(projectInWorkspace.id)
+    })
+
+    it('should return all user projects', async () => {
+      const testAdminUser: BasicTestUser = {
+        id: '',
+        name: 'test',
+        email: '',
+        role: Roles.Server.Admin,
+        verified: true
+      }
+      await createTestUser(testAdminUser)
+      const workspace = {
+        id: '',
+        name: 'test ws',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+      await createTestWorkspace(workspace, testAdminUser)
+
+      const session = await login(testAdminUser)
+      const getWorkspaceRes = await session.execute(GetWorkspaceDocument, {
+        workspaceId: workspace.id
+      })
+
+      expect(getWorkspaceRes).to.not.haveGraphQLErrors()
+      const workspaceId = getWorkspaceRes.data!.workspace.id
+
+      const createProjectInWorkspaceRes = await session.execute(
+        CreateWorkspaceProjectDocument,
+        { input: { name: 'project', workspaceId } }
+      )
+      expect(createProjectInWorkspaceRes).to.not.haveGraphQLErrors()
+
+      // create w/o GQL, to not mess w/ personal project limits
+      const projectNonInWorkspace: BasicTestStream = {
+        id: '',
+        name: 'project',
+        ownerId: '',
+        isPublic: false
+      }
+      await createTestStream(projectNonInWorkspace, testAdminUser)
+
+      const userProjectsRes = await session.execute(ActiveUserProjectsDocument, {
+        filter: {}
+      })
+      expect(userProjectsRes).to.not.haveGraphQLErrors()
+
+      const projects = userProjectsRes.data!.activeUser!.projects.items
+
+      expect(projects).to.have.length(2)
+    })
+
+    it('should return all user projects sorted by user role', async () => {
+      const testAdminUser: BasicTestUser = {
+        id: '',
+        name: 'test',
+        email: '',
+        role: Roles.Server.Admin,
+        verified: true
+      }
+      await createTestUser(testAdminUser)
+      const workspace = {
+        id: '',
+        name: 'test ws',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+      await createTestWorkspace(workspace, testAdminUser)
+
+      const session = await login(testAdminUser)
+      const getWorkspaceRes = await session.execute(GetWorkspaceDocument, {
+        workspaceId: workspace.id
+      })
+
+      expect(getWorkspaceRes).to.not.haveGraphQLErrors()
+      const workspaceId = getWorkspaceRes.data!.workspace.id
+
+      const createProjectInWorkspaceAsOwnerRes = await session.execute(
+        CreateWorkspaceProjectDocument,
+        { input: { name: 'project', workspaceId } }
+      )
+      expect(createProjectInWorkspaceAsOwnerRes).to.not.haveGraphQLErrors()
+      const createProjectInWorkspaceAsContributorRes = await session.execute(
+        CreateWorkspaceProjectDocument,
+        { input: { name: 'project 2', workspaceId } }
+      )
+      expect(createProjectInWorkspaceAsContributorRes).to.not.haveGraphQLErrors()
+      const projectContributorId =
+        createProjectInWorkspaceAsContributorRes.data?.workspaceMutations.projects
+          .create.id
+      await db(StreamAcl.name)
+        .update({ role: Roles.Stream.Contributor })
+        .where({ userId: testAdminUser.id, resourceId: projectContributorId })
+      const createProjectInWorkspaceAsReviewerRes = await session.execute(
+        CreateWorkspaceProjectDocument,
+        { input: { name: 'project 3', workspaceId } }
+      )
+      expect(createProjectInWorkspaceAsReviewerRes).to.not.haveGraphQLErrors()
+      const projectReviewerId =
+        createProjectInWorkspaceAsReviewerRes.data?.workspaceMutations.projects.create
+          .id
+      await db(StreamAcl.name)
+        .update({ role: Roles.Stream.Reviewer })
+        .where({ userId: testAdminUser.id, resourceId: projectReviewerId })
+
+      const userProjectsRes = await session.execute(ActiveUserProjectsDocument, {
+        filter: {},
+        sortBy: ['role']
+      })
+      expect(userProjectsRes).to.not.haveGraphQLErrors()
+
+      const projects = userProjectsRes.data!.activeUser!.projects.items
+
+      expect(projects).to.have.length(3)
+      expect(projects[0].id).to.eq(
+        createProjectInWorkspaceAsOwnerRes.data?.workspaceMutations.projects.create.id
+      )
+      expect(projects[1].id).to.eq(projectContributorId)
+      expect(projects[2].id).to.eq(projectReviewerId)
     })
   })
 })

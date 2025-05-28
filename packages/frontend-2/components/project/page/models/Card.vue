@@ -78,16 +78,16 @@
           </NuxtLink>
         </template>
         <div
-          v-if="!isPendingModelFragment(model)"
+          v-if="!isPendingModelFragment(model) && project"
           v-show="!previewUrl && !pendingVersion"
           class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
             ref="importArea"
-            :project-id="projectId"
-            :model-name="model.name"
+            empty-state-variant="modelGrid"
+            :project="project"
+            :model="model"
             class="w-full h-full"
-            :disabled="!canCreateModel?.authorized"
           />
         </div>
       </div>
@@ -139,6 +139,7 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
+    ...ProjectCardImportFileArea_Project
     permissions {
       canCreateModel {
         ...FullPermissionCheckResult
@@ -177,7 +178,6 @@ const importArea = ref(
 const showActionsMenu = ref(false)
 const hovered = ref(false)
 
-const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const containerClasses = computed(() => {
   const classParts = [
     'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full z-[0]'

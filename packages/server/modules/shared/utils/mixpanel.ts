@@ -1,5 +1,5 @@
 import { Optional, resolveMixpanelUserId } from '@speckle/shared'
-import * as MixpanelUtils from '@speckle/shared/dist/commonjs/observability/mixpanel.js'
+import * as MixpanelUtils from '@speckle/shared/observability/mixpanel'
 import {
   enableMixpanel,
   getServerOrigin,
@@ -32,6 +32,11 @@ export function initialize() {
     apiHostname: 'analytics.speckle.systems'
   })
 }
+
+export const MixpanelEvents = {
+  WorkspaceUpgraded: 'Workspace Upgraded',
+  WorkspaceCreated: 'Workspace Created'
+} as const
 
 /**
  * Mixpanel client. Can be undefined if not initialized or disabled. It's advised that you use the mixpanel() helper instead

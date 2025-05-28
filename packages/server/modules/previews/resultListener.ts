@@ -3,7 +3,7 @@ import { MessageType } from '@/modules/core/utils/dbNotificationListener'
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { PreviewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
+import { PreviewResultPayload } from '@speckle/shared/workers/previews'
 import { throwUncoveredError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import crypto from 'crypto'
@@ -86,7 +86,7 @@ export const consumePreviewResultFactory =
 
     switch (previewResult.status) {
       case 'error':
-        log.error({ reason: previewResult.reason }, previewMessage)
+        log.warn({ reason: previewResult.reason }, previewMessage)
         await upsertObjectPreview({
           objectPreview: {
             objectId,

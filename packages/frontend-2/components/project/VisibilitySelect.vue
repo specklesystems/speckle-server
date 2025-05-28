@@ -38,38 +38,44 @@
 </template>
 <script setup lang="ts">
 import { isArray } from 'lodash-es'
-import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { SupportedProjectVisibility } from '~/lib/projects/helpers/visibility'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: SimpleProjectVisibility): void
+  (e: 'update:modelValue', v: SupportedProjectVisibility): void
 }>()
 
 const props = defineProps<{
-  modelValue: SimpleProjectVisibility
+  modelValue: SupportedProjectVisibility
   showLabel?: boolean
   name?: string
   disabled?: boolean
+  workspaceId?: MaybeNullOrUndefined<string>
 }>()
 
 const labelId = useId()
 const buttonId = useId()
-const items = ref<
-  Record<
-    SimpleProjectVisibility,
-    { id: SimpleProjectVisibility; description: string; title: string }
-  >
->({
-  [SimpleProjectVisibility.Unlisted]: {
-    id: SimpleProjectVisibility.Unlisted,
+const items = computed(() => ({
+  [SupportedProjectVisibility.Public]: {
+    id: SupportedProjectVisibility.Public,
     description: 'Anyone with the link can view',
-    title: 'Link shareable'
+    title: 'Public'
   },
-  [SimpleProjectVisibility.Private]: {
-    id: SimpleProjectVisibility.Private,
-    description: 'Only collaborators can access',
+  ...(props.workspaceId
+    ? {
+        [SupportedProjectVisibility.Workspace]: {
+          id: SupportedProjectVisibility.Workspace,
+          description: 'All workspace members can view',
+          title: 'Workspace'
+        }
+      }
+    : {}),
+  [SupportedProjectVisibility.Private]: {
+    id: SupportedProjectVisibility.Private,
+    description: 'Only for project members and admins',
     title: 'Private'
   }
-})
+}))
 
 const selectedValue = computed({
   get: () => props.modelValue,
@@ -77,7 +83,8 @@ const selectedValue = computed({
 })
 
 const selectValue = computed({
-  get: () => items.value[selectedValue.value],
+  get: () =>
+    items.value[selectedValue.value] || items.value[SupportedProjectVisibility.Private],
   set: (newVal) => (selectedValue.value = newVal.id)
 })
 </script>

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Factory } from '@/modules/shared/helpers/factory'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
-import { getRequestLogger } from '@/observability/components/express/requestContext'
+import { getRequestLogger } from '@/observability/utils/requestContext'
 import { cacheLogger } from '@/observability/logging'
 import TTLCache from '@isaacs/ttlcache'
 import { MaybeAsync, TIME_MS } from '@speckle/shared'

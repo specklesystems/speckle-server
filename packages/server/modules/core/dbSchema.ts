@@ -114,11 +114,17 @@ type SchemaConfigParams = {
    * building subqueries or joining a table onto itself.
    */
   withCustomTablePrefix?: string
+
+  /**
+   * Will surround with quotes for putting directly in knex.raw() queries
+   */
+  quoted?: boolean
 }
 
 const createBaseInnerSchemaConfigBuilder =
   <T extends string, C extends string>(tableName: T, columns: C[]) =>
   (params: SchemaConfigParams = {}): BaseInnerSchemaConfig<T, C> => {
+    const quoted = params.quoted || false
     const aliasedTableName = params.withCustomTablePrefix
       ? `${tableName} as ${params.withCustomTablePrefix}`
       : tableName
@@ -141,7 +147,7 @@ const createBaseInnerSchemaConfigBuilder =
       col: reduce(
         columns,
         (prev, curr) => {
-          prev[curr] = colName(curr)
+          prev[curr] = colName(curr, { addQuotes: quoted })
           return prev
         },
         {} as Record<C, string>
@@ -154,7 +160,7 @@ const createBaseInnerSchemaConfigBuilder =
             (prefix?.length ? prefix + '.' : '') + '*'
           })) as "${name}"`
         ),
-      cols: columns.map((c) => colName(c))
+      cols: columns.map((c) => colName(c, { addQuotes: quoted }))
     }
   }
 
@@ -260,14 +266,13 @@ export const Streams = buildTableHelper(
     'id',
     'name',
     'description',
-    'isPublic',
     'clonedFrom',
     'createdAt',
     'updatedAt',
     'allowPublicComments',
-    'isDiscoverable',
     'workspaceId',
-    'regionKey'
+    'regionKey',
+    'visibility'
   ],
   StreamsMeta
 )
@@ -294,6 +299,7 @@ export const UsersMeta = buildMetaTableHelper(
     'activeWorkspace',
     'isProjectsActive',
     'newWorkspaceExplainerDismissed',
+    'speckleConBannerDismissed',
     'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',
@@ -492,6 +498,7 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'streamId',
   'branchName',
   'userId',
+  'modelId',
   'fileName',
   'fileType',
   'fileSize',

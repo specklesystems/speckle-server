@@ -82,7 +82,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
+          addOrUpdateWorkspaceRole: async () => {},
           findInvite: async () => null,
           deleteInvite: async () => true
         })
@@ -102,7 +102,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
+          addOrUpdateWorkspaceRole: async () => {},
           findInvite: async () => ({} as unknown as any),
           deleteInvite: async () => true
         })
@@ -122,7 +122,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
+          addOrUpdateWorkspaceRole: async () => {},
           findInvite: async () =>
             ({
               resource: {
@@ -155,7 +155,7 @@ describe('Workspace SSO services', () => {
             serverRole = role
             return ''
           },
-          upsertWorkspaceRole: async ({ role }) => {
+          addOrUpdateWorkspaceRole: async ({ role }) => {
             workspaceRole = role
           },
           findInvite: async () =>
@@ -189,7 +189,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
+          addOrUpdateWorkspaceRole: async () => {},
           findInvite: async () =>
             ({
               resource: {
@@ -383,6 +383,8 @@ describe('Workspace SSO services', () => {
               logo: null,
               domainBasedMembershipProtectionEnabled: false,
               discoverabilityEnabled: false,
+              discoverabilityAutoJoinEnabled: false,
+              isEmbedSpeckleBrandingHidden: false,
               createdAt: new Date(),
               updatedAt: new Date()
             }

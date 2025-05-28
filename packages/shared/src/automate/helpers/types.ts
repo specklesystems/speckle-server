@@ -1,46 +1,94 @@
-import { get, has, intersection, isArray, isNumber, isObjectLike } from '#lodash'
 import type { PartialDeep } from 'type-fest'
 import {
   UnformattableResultsSchemaError,
   UnformattableTriggerDefinitionSchemaError
 } from '../errors/index.js'
-import type { Nullable } from '../../core/index.js'
+import { z } from 'zod'
 
 export const TRIGGER_DEFINITIONS_SCHEMA_VERSION = 1.0
 export const RESULTS_SCHEMA_VERSION = 1.0
 export const REDACTED_VALUE = '******'
 
-export type VersionCreatedTriggerDefinition = {
-  type: 'VERSION_CREATED'
-  modelId: string
-}
+const versionCreatedTriggerDefinition = z.object({
+  type: z.literal('VERSION_CREATED'),
+  modelId: z.string()
+})
 
-export type TriggerDefinitionsSchema = {
-  version: number
-  definitions: Array<VersionCreatedTriggerDefinition>
-}
+export type VersionCreatedTriggerDefinition = z.infer<
+  typeof versionCreatedTriggerDefinition
+>
 
-export type ObjectResultLevel = 'SUCCESS' | 'INFO' | 'WARNING' | 'ERROR'
+const triggerDefinitionsSchema = z.object({
+  version: z.literal(1),
+  definitions: z.array(versionCreatedTriggerDefinition)
+})
 
-export type ResultsSchema = {
-  version: number
-  values: {
-    objectResults: Array<{
-      category: string
-      level: ObjectResultLevel
-      objectIds: string[]
-      message: Nullable<string>
-      metadata: Nullable<
-        Record<string, unknown> & {
-          gradient?: boolean
-          gradientValues?: Record<string, { gradientValue: number }>
-        }
-      >
-      visualOverrides: Nullable<Record<string, unknown>>
-    }>
-    blobIds?: string[]
-  }
-}
+export type TriggerDefinitionsSchema = z.infer<typeof triggerDefinitionsSchema>
+
+const objectResultLevel = z.union([
+  z.literal('SUCCESS'),
+  z.literal('INFO'),
+  z.literal('WARNING'),
+  z.literal('ERROR')
+])
+
+export type ObjectResultLevel = z.infer<typeof objectResultLevel>
+
+const objectResultCommon = z.object({
+  category: z.string(),
+  level: objectResultLevel,
+  message: z.string().nullable(),
+  metadata: z
+    .intersection(
+      z.object({
+        gradient: z.boolean().optional(),
+        gradientValues: z
+          .record(z.string(), z.object({ gradientValue: z.number() }))
+          .optional()
+      }),
+      z.record(z.string(), z.unknown())
+    )
+    .nullable(),
+  visualOverrides: z.record(z.string(), z.unknown()).nullable()
+})
+
+const objectResultV1 = objectResultCommon.merge(
+  z.object({
+    objectIds: z.string().array()
+  })
+)
+
+export const resultSchemaV1 = z.object({
+  version: z.literal(1),
+  values: z.object({
+    objectResults: objectResultV1.array(),
+    blobIds: z.string().array().optional()
+  })
+})
+
+export type ResultSchemaV1 = z.infer<typeof resultSchemaV1>
+
+const objectResultV2 = objectResultCommon.merge(
+  z.object({
+    objectAppIds: z.record(z.string(), z.string().nullable())
+  })
+)
+export const resultSchemaV2 = z.object({
+  version: z.literal(2),
+  values: z.object({
+    objectResults: objectResultV2.array(),
+    blobIds: z.string().array().optional()
+  })
+})
+
+export const resultSchema = z.discriminatedUnion('version', [
+  resultSchemaV1,
+  resultSchemaV2
+])
+
+export type ResultSchemaV2 = z.infer<typeof resultSchemaV2>
+
+export type ResultsSchema = z.infer<typeof resultSchema>
 
 type UnformattedTriggerDefinitionSchema = PartialDeep<TriggerDefinitionsSchema>
 type UnformattedResultsSchema = PartialDeep<ResultsSchema>
@@ -48,119 +96,41 @@ type UnformattedResultsSchema = PartialDeep<ResultsSchema>
 export const isVersionCreatedTriggerDefinition = (
   val: unknown
 ): val is VersionCreatedTriggerDefinition => {
-  if (!val) return false
-  if (!isObjectLike(val)) return false
-  return get(val, 'type') === 'VERSION_CREATED' && has(val, 'modelId')
+  const parseResult = versionCreatedTriggerDefinition.safeParse(val)
+  return parseResult.success
 }
 
 export const isTriggerDefinitionSchema = (
   val: unknown
 ): val is TriggerDefinitionsSchema => {
-  if (!val) return false
-  const keys: Array<keyof TriggerDefinitionsSchema> = ['version', 'definitions']
-  if (!isObjectLike(val)) return false
-
-  const valKeys = Object.keys(val as Record<string, unknown>)
-  if (intersection(valKeys, keys).length !== keys.length) return false
-
-  return true
+  const parseResult = triggerDefinitionsSchema.safeParse(val)
+  return parseResult.success
 }
 
 export const formatTriggerDefinitionSchema = (
   state: UnformattedTriggerDefinitionSchema
 ): TriggerDefinitionsSchema => {
-  const throwInvalidError = (missingPath: string): never => {
+  const parseResult = triggerDefinitionsSchema.safeParse(state)
+
+  if (!parseResult.success) {
     throw new UnformattableTriggerDefinitionSchemaError(
-      'Required data missing from TriggerDefinitionsSchema: ' + missingPath
+      `Invalid trigger definition schema: ${parseResult.error}`
     )
   }
-
-  if (!isTriggerDefinitionSchema(state)) {
-    throw new UnformattableTriggerDefinitionSchemaError(
-      'Invalid trigger definition schema'
-    )
-  }
-
-  const version = isNumber(state.version) ? state.version : throwInvalidError('version')
-  return {
-    version,
-    definitions: (state.definitions || throwInvalidError('definitions')).map((d) => {
-      if (!isObjectLike(d))
-        throw new UnformattableTriggerDefinitionSchemaError(
-          'Invalid non-object trigger definition'
-        )
-
-      switch (d.type || '') {
-        case 'VERSION_CREATED':
-          return {
-            type: d.type,
-            modelId: d.modelId || throwInvalidError('definitions.modelId')
-          }
-        default:
-          throw new UnformattableTriggerDefinitionSchemaError(
-            `Unknown trigger definition type: ${d.type}`
-          )
-      }
-    })
-  }
+  return parseResult.data
 }
 
 export const isResultsSchema = (val: unknown): val is ResultsSchema => {
-  if (!val) return false
-  const keys: Array<keyof ResultsSchema> = ['version', 'values']
-  if (!isObjectLike(val)) return false
-
-  const valKeys = Object.keys(val as Record<string, unknown>)
-  if (intersection(valKeys, keys).length !== keys.length) return false
-
-  if (!isArray(get(val, 'values.objectResults'))) return false
-  if (get(val, 'values.blobIds') && !isArray(get(val, 'values.blobIds'))) return false
-
-  return true
+  const parseResult = resultSchema.safeParse(val)
+  return parseResult.success
 }
 
 export const formatResultsSchema = (state: UnformattedResultsSchema): ResultsSchema => {
-  const throwInvalidError = (missingPath: string): never => {
+  const parseResult = resultSchema.safeParse(state)
+  if (!parseResult.success) {
     throw new UnformattableResultsSchemaError(
-      'Required data missing from ResultsSchema: ' + missingPath
+      `Invalid results schema: ${parseResult.error}`
     )
   }
-
-  if (!isResultsSchema(state)) {
-    throw new UnformattableResultsSchemaError('Invalid results schema')
-  }
-
-  const values = state.values || throwInvalidError('values')
-  if (!isObjectLike(values.objectResults)) {
-    throw new UnformattableResultsSchemaError(
-      'Invalid objectResults type. It should be a record.'
-    )
-  }
-
-  const version = isNumber(state.version) ? state.version : throwInvalidError('version')
-  return {
-    version,
-    values: {
-      objectResults: (values.objectResults || []).map((value, i) => {
-        if (!isObjectLike(value)) {
-          throw new UnformattableResultsSchemaError(
-            `Invalid objectResults entry for index: ${i}. It should be a record.`
-          )
-        }
-
-        return {
-          category:
-            value.category || throwInvalidError(`values.[${i}].objectResults.category`),
-          level: value.level || throwInvalidError(`values.[${i}].objectResults.level`),
-          objectIds:
-            value.objectIds ||
-            throwInvalidError(`values.[${i}].objectResults.objectIds`),
-          message: value.message || null,
-          metadata: value.metadata || null,
-          visualOverrides: value.visualOverrides || null
-        }
-      }),
-      blobIds: values.blobIds || undefined
-    }
-  }
+  return parseResult.data
 }

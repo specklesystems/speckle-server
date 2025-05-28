@@ -1,5 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <LayoutDialog
     v-model:open="isOpen"
@@ -7,9 +5,15 @@
     :buttons="dialogButtons"
     max-width="md"
   >
-    <template #header>Invite to project</template>
-    <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
-      Search existing workspace members or invite entirely new.
+    <template #header>
+      {{ isInWorkspace && !isAdmin ? 'Add to project' : 'Invite to project' }}
+    </template>
+    <p v-if="isInWorkspace" class="text-foreground text-body-xs mb-3">
+      {{
+        isAdmin
+          ? 'Search for existing workspace users or invite new users.'
+          : 'Search for existing workspace users.'
+      }}
     </p>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-3 text-foreground">
@@ -36,16 +40,17 @@
       </div>
     </form>
     <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      As a project owner you can only add existing workspace members to the project. Ask
-      a workspace admin if you need to invite new people to the workspace.
+      As a project owner you can only add existing workspace users to the project. Ask a
+      workspace admin if you need to invite new users to the workspace.
     </p>
     <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      New people you invite will join as workspace guests on a free Viewer seat with
+      New users you invite will join as workspace guests on a free Viewer seat with
       access only to this project. Give them an Editor seat later if they need to
       contribute to this project beyond just viewing and commenting.
     </p>
   </LayoutDialog>
 </template>
+
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
@@ -114,7 +119,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
 
   {
-    text: 'Invite',
+    text: isInWorkspace.value && !isAdmin.value ? 'Add' : 'Invite',
     props: {
       submit: true
     },

@@ -11,7 +11,7 @@
     show-label
     allow-unset
     clearable
-    :items="plans"
+    :items="shuffledPlans"
   >
     <template #option="{ item }">
       <div class="label label--light">
@@ -33,6 +33,7 @@ import { useFormSelectChildInternals } from '@speckle/ui-components'
 import { PlanTitleMap } from '~/lib/auth/helpers/onboarding'
 import { OnboardingPlan } from '@speckle/shared'
 import { isRequired } from '~~/lib/common/helpers/validation'
+import { shuffle } from 'lodash-es'
 
 const props = defineProps<{
   modelValue?: OnboardingPlan[]
@@ -48,4 +49,6 @@ const { selectedValue, isArrayValue } = useFormSelectChildInternals<OnboardingPl
   props: toRefs(props),
   emit
 })
+
+const shuffledPlans = computed(() => shuffle([...plans]))
 </script>

@@ -7,6 +7,7 @@ import { Workspace } from '../../../domain/workspaces/types.js'
 import { WorkspacePlan } from '../../../../workspaces/index.js'
 import { Project } from '../../../domain/projects/types.js'
 import {
+  PersonalProjectsLimitedError,
   ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
@@ -23,8 +24,6 @@ const buildCanCreateModelPolicy = (
     getEnv: async () => parseFeatureFlags({}),
     getProject: getProjectFake({
       id: cryptoRandomString({ length: 9 }),
-      isPublic: false,
-      isDiscoverable: false,
       workspaceId: cryptoRandomString({ length: 9 })
     }),
     getProjectRole: async () => {
@@ -117,15 +116,38 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })
   })
 
+  it('forbids if personal project limits are enabled', async () => {
+    const sut = buildCanCreateModelPolicy({
+      getEnv: async () =>
+        parseFeatureFlags({ FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'true' }),
+      getProject: getProjectFake({
+        workspaceId: null
+      })
+    })
+    const result = await sut(canCreateArgs())
+
+    expect(result).toBeAuthErrorResult({
+      code: PersonalProjectsLimitedError.code
+    })
+  })
+
   it('allows stream contributors to create personal projects when project is not in a workspace', async () => {
     const result = await buildCanCreateModelPolicy({
       getProject: async () => {
         return {} as Project
-      }
+      },
+      getEnv: async () =>
+        parseFeatureFlags(
+          {
+            FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
+          },
+          { forceInputs: true }
+        )
     })(canCreateArgs())
 
     expect(result).toBeAuthOKResult()
   })
+
   // Hold the workspace to a higher standard than myself
   it('requires the workspace to have a plan', async () => {
     const result = await buildCanCreateModelPolicy({

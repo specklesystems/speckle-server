@@ -2,6 +2,7 @@ import { StreamRoles } from '../../core/index.js'
 import { AuthPolicyCheck } from '../domain/policies.js'
 import { isMinimumProjectRole } from '../domain/logic/roles.js'
 import { ProjectContext, UserContext } from '../domain/context.js'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
 export const hasMinimumProjectRole: AuthPolicyCheck<
   'getProjectRole',
@@ -19,5 +20,5 @@ export const isPubliclyReadableProject: AuthPolicyCheck<'getProject', ProjectCon
   async ({ projectId }) => {
     const project = await loaders.getProject({ projectId })
     if (!project) return false
-    return project.isPublic || project.isDiscoverable
+    return project.visibility === ProjectVisibility.Public
   }

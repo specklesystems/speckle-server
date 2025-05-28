@@ -17,12 +17,10 @@ import { TIME_MS } from '../../../core/helpers/timeConstants.js'
 describe('canLeaveProjectPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canLeaveProjectPolicy>) =>
     canLeaveProjectPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.Guest,
@@ -38,9 +36,7 @@ describe('canLeaveProjectPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspace-id'
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getWorkspace: async () => ({

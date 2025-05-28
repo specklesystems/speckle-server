@@ -23,6 +23,7 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly vecBuff: Vector2 = new Vector2()
 
   private _billboardPixelHeight: number
+  private _billboardOffset: Vector2 = new Vector2()
 
   protected get vertexProgram(): string {
     return speckleBasicVert
@@ -44,6 +45,7 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       tTransforms: null,
       billboardPos: new Vector3(),
       billboardSize: new Vector2(),
+      billboardOffset: new Vector2(),
       invProjection: new Matrix4(),
       objCount: 1
     }
@@ -51,6 +53,10 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
 
   public set billboardPixelHeight(value: number) {
     this._billboardPixelHeight = value
+  }
+
+  public set billboardOffset(value: Vector2) {
+    this._billboardOffset.copy(value)
   }
 
   constructor(parameters: MeshBasicMaterialParameters, defines: string[] = []) {
@@ -93,19 +99,20 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
         (this._billboardPixelHeight / resolution.y) * 2
       )
       this.userData.billboardSize.value.copy(SpeckleBasicMaterial.vecBuff)
+      this.userData.billboardOffset.value.copy(this._billboardOffset)
       SpeckleBasicMaterial.matBuff.copy(camera.projectionMatrix).invert()
       this.userData.invProjection.value.copy(SpeckleBasicMaterial.matBuff)
       /** TO DO: Revisit and Enable this */
       // this.userData.billboardPos.value.copy(object.position)
+      this.needsUpdate = true
     }
 
     if (this.defines && this.defines['USE_RTE']) {
       object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
       this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
+      this.needsUpdate = true
     }
-
-    this.needsUpdate = true
   }
 }
 

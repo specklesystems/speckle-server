@@ -6,7 +6,8 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
   RGBADepthPacking,
-  Side
+  Side,
+  Texture
 } from 'three'
 import { PassOptions } from './GPass.js'
 import SpeckleDepthMaterial from '../../materials/SpeckleDepthMaterial.js'
@@ -36,6 +37,10 @@ export class DepthPass extends GeometryPass {
 
   get displayName(): string {
     return 'DEPTH'
+  }
+
+  get depthTexture(): Texture | undefined {
+    return this._outputTarget?.texture
   }
 
   get overrideMaterial(): Material {
@@ -75,7 +80,7 @@ export class DepthPass extends GeometryPass {
       {
         depthPacking: RGBADepthPacking
       },
-      ['USE_RTE', 'ALPHATEST_REJECTION']
+      ['ALPHATEST_REJECTION']
     )
     this.depthMaterial.blending = NoBlending
     this.depthMaterial.side = DoubleSide

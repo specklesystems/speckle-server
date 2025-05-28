@@ -22,7 +22,7 @@ export class NormalsPass extends GeometryPass {
       magFilter: NearestFilter
     })
 
-    this.normalsMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
+    this.normalsMaterial = new SpeckleNormalMaterial({})
     this.normalsMaterial.blending = NoBlending
     this.normalsMaterial.side = DoubleSide
   }

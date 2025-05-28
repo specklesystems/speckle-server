@@ -30,6 +30,13 @@ graphql(`
         }
       }
     }
+    adminTeam {
+      user {
+        id
+        name
+        avatar
+      }
+    }
   }
 `)
 
@@ -42,6 +49,13 @@ graphql(`
       name
       logo
       slug
+      adminTeam {
+        user {
+          id
+          name
+          avatar
+        }
+      }
       team {
         totalCount
         items {
@@ -59,9 +73,13 @@ graphql(`
 export const useDiscoverableWorkspaces = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  const { result, loading } = useQuery(discoverableWorkspacesQuery, undefined, {
-    enabled: isWorkspacesEnabled
-  })
+  const { result, loading, refetch } = useQuery(
+    discoverableWorkspacesQuery,
+    undefined,
+    {
+      enabled: isWorkspacesEnabled
+    }
+  )
 
   const { mutate: requestToJoin } = useMutation(requestToJoinWorkspaceMutation)
   const { mutate: dismissWorkspace } = useMutation(dismissDiscoverableWorkspaceMutation)
@@ -123,7 +141,6 @@ export const useDiscoverableWorkspaces = () => {
   )
 
   const requestToJoinWorkspace = async (workspaceId: string, location: string) => {
-    const cache = apollo.cache
     const activeUserId = activeUser.value?.id
 
     if (!activeUserId) return
@@ -133,39 +150,7 @@ export const useDiscoverableWorkspaces = () => {
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
-      cache.modify({
-        id: getCacheId('User', activeUserId),
-        fields: {
-          discoverableWorkspaces(existingRefs = [], { readField }) {
-            return existingRefs.filter(
-              (ref: CacheObjectReference<'LimitedWorkspace'>) => {
-                const id = readField('id', ref)
-                return id !== workspaceId
-              }
-            )
-          },
-          workspaceJoinRequests(existingRefs = []) {
-            // Add the workspace to join requests with Pending status
-            const workspace = discoverableWorkspaces.value?.find(
-              (w) => w.id === workspaceId
-            )
-            if (workspace) {
-              return {
-                ...existingRefs,
-                items: [
-                  ...(existingRefs?.items || []),
-                  {
-                    id: workspaceId,
-                    status: 'Pending',
-                    workspace
-                  }
-                ]
-              }
-            }
-            return existingRefs
-          }
-        }
-      })
+      await refetch()
 
       mixpanel.track('Workspace Join Request Sent', {
         workspaceId,

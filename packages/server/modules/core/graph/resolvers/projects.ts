@@ -5,9 +5,7 @@ import {
   insertCommentLinksFactory,
   insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import {
-  ProjectVisibility,
   Resolvers,
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
@@ -51,10 +49,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -89,6 +84,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
@@ -116,6 +112,8 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -247,10 +245,19 @@ const createOnboardingStream = createOnboardingStreamFactory({
 })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = {
   Query: {
     async project(_parent, args, context) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.id,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+
       const canQuery = await context.authPolicies.project.canRead({
         projectId: args.id,
         userId: context.userId
@@ -259,8 +266,7 @@ export = {
 
       const project = await getStream({ streamId: args.id })
 
-      // TODO: Should scopes & token resource access rules be checked in authz policy?
-      if (!project?.isPublic && !project?.isDiscoverable) {
+      if (project?.visibility !== ProjectRecordVisibility.Public) {
         await validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
@@ -412,10 +418,10 @@ export = {
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
-      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
+      await throwIfRateLimited({
+        action: 'STREAM_CREATE',
+        source: context.userId!
+      })
 
       const logger = context.log
 
@@ -614,12 +620,9 @@ export = {
           .streams.getSourceApps.load(parent.id) || []
       )
     },
-
     async visibility(parent) {
-      const { isPublic } = parent
-
-      // Ignore discoverability for now
-      return isPublic ? ProjectVisibility.Unlisted : ProjectVisibility.Private
+      const { visibility } = parent
+      return mapDbToGqlProjectVisibility(visibility)
     }
   },
   PendingStreamCollaborator: {

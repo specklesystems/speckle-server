@@ -16,8 +16,8 @@ if IS_LOAD_DOCKER:
 else:
   symbols = load_dynamic('./Tiltfile.build')
 
-# Prepare the Speckle images
-# (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
+# # Prepare the Speckle images
+# # (builds the images or pulls them from remote)
 speckle_image = symbols['speckle_image']
 speckle_image('fileimport-service')
 speckle_image('frontend-2')
@@ -66,14 +66,14 @@ helm_resource('minio',
             deps=['./values/minio.values.yaml'],
             labels=['speckle-dependencies'])
 
-helm_resource('redis',
-            release_name='redis',
-            namespace='redis',
-            chart='oci://registry-1.docker.io/bitnamicharts/redis',
-            flags=['--version=18.7.1',
-                    '--values=./values/redis.values.yaml',
+helm_resource('valkey',
+            release_name='valkey',
+            namespace='valkey',
+            chart='oci://registry-1.docker.io/bitnamicharts/valkey',
+            flags=['--version=3.0.8',
+                    '--values=./values/valkey.values.yaml',
                     '--kube-context=kind-speckle-server'],
-            deps=['./values/redis.values.yaml'],
+            deps=['./values/valkey.values.yaml'],
             labels=['speckle-dependencies'])
 
 #FIXME this helm chart does not deploy any containers, so tilt incorrectly believes it never gets to a final state
@@ -98,11 +98,11 @@ helm_resource('ingress-nginx',
             release_name='ingress-nginx',
             namespace='ingress-nginx',
             chart='ingress-nginx-repo/ingress-nginx',
-            flags=['--version=^4.8.0',
+            flags=['--version=4.8.0',
                     '--values=./values/nginx.values.yaml',
                     '--kube-context=kind-speckle-server'],
             deps=['./values/nginx.values.yaml'],
-            resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx-repo'],
+            resource_deps=['postgresql', 'minio', 'valkey', 'ingress-nginx-repo'],
             labels=['speckle-dependencies'])
 
 # Uncomment the below, and comment out the other helm_resource('speckle-server'...) to use the speckle-server helm chart
@@ -113,7 +113,7 @@ helm_resource('ingress-nginx',
 #             namespace='speckle-server',
 #             chart='speckle-server-repo/speckle-server',
 #             deps=['./values/speckle-server.values.yaml'],
-#             resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx','speckle-server-repo'],
+#             resource_deps=['postgresql', 'minio', 'valkey', 'ingress-nginx','speckle-server-repo'],
 #             flags=['--values=./values/speckle-server.values.yaml', '--devel'],
 #             labels=['speckle-server'])
 
@@ -144,7 +144,7 @@ helm_resource('speckle-server',
                           'webhook_service.image',
                           ],
               deps=['../../utils/helm', './values/speckle-server.values.yaml'],
-              resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx'],
+              resource_deps=['postgresql', 'minio', 'valkey', 'ingress-nginx'],
               labels=['speckle-server'])
 
   # TODO this is not yet working as it is expecting the updated version of the test container which is not yet released as of 2.17.16

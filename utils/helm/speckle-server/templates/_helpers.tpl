@@ -566,8 +566,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
-- name: FF_NO_PERSONAL_EMAILS_ENABLED
-  value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
+- name: FF_PERSONAL_PROJECTS_LIMITS_ENABLED
+  value: {{ .Values.featureFlags.personalProjectLimitsEnabled | quote }}
 
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
@@ -578,7 +578,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_MOVE_PROJECT_REGION_ENABLED
   value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
 
-{{- if .Values.featureFlags.workspacesModuleEnabled }}
+{{- if .Values.featureFlags.gatekeeperModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
     secretKeyRef:
@@ -962,12 +962,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: MAILCHIMP_ONBOARDING_LIST_ID
   value: "{{ .Values.server.mailchimp.onboardingListId}}"
-
-- name: MAILCHIMP_ONBOARDING_JOURNEY_ID
-  value: "{{ .Values.server.mailchimp.onboardingJourneyId}}"
-
-- name: MAILCHIMP_ONBOARDING_STEP_ID
-  value: "{{ .Values.server.mailchimp.onboardingStepId}}"
 {{- end }}
 
 # Monitoring - Apollo
@@ -1107,5 +1101,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
 - name: MULTI_REGION_CONFIG_PATH
   value: "/multi-region-config/multi-region-config.json"
+{{- end }}
+
+{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+- name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+  value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
 {{- end }}
 {{- end }}

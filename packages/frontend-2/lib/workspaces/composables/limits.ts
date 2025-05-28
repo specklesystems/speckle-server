@@ -1,7 +1,8 @@
 import { graphql } from '~/lib/common/generated/gql/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { workspaceLimitsQuery } from '~/lib/workspaces/graphql/queries'
-import { WorkspacePlanConfigs } from '@speckle/shared'
+import { WorkspacePlanConfigs, type MaybeNullOrUndefined } from '@speckle/shared'
+import type { WorkspacePlanLimits_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspacePlanLimits_Workspace on Workspace {
@@ -13,20 +14,28 @@ graphql(`
   }
 `)
 
-export const useWorkspaceLimits = (slug: string) => {
+export const useWorkspaceLimits = (params: {
+  slug: MaybeRef<MaybeNullOrUndefined<string>>
+  workspace?: MaybeRef<MaybeNullOrUndefined<WorkspacePlanLimits_WorkspaceFragment>>
+}) => {
+  const { slug } = params
   const { result } = useQuery(
     workspaceLimitsQuery,
     () => ({
-      slug
+      slug: unref(slug) || ''
     }),
     () => ({
-      enabled: !!slug
+      enabled: !!unref(slug)?.length
     })
+  )
+
+  const workspace = computed(
+    () => unref(params.workspace) || result.value?.workspaceBySlug
   )
 
   // Plan limits
   const limits = computed(() => {
-    const planName = result.value?.workspaceBySlug?.plan?.name
+    const planName = workspace.value?.plan?.name
     if (!planName)
       return {
         projectCount: 0,

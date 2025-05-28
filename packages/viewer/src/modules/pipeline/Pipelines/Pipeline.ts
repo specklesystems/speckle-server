@@ -12,8 +12,18 @@ import { GPass, ObjectVisibility } from '../Passes/GPass.js'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { BatchUpdateRange } from '../../batching/Batch.js'
 
+export interface BasePipelineOptions {}
+export interface PipelineOptions extends BasePipelineOptions {
+  edges?: boolean
+}
+
+export const DefaultPipelineOptions = {
+  edges: true
+}
+
 export abstract class Pipeline {
   protected speckleRenderer: SpeckleRenderer
+  protected _options: BasePipelineOptions = Object.assign({}, DefaultPipelineOptions)
   protected passList: Array<GPass> = []
 
   protected drawingSize: Vector2 = new Vector2()
@@ -22,8 +32,17 @@ export abstract class Pipeline {
   protected jitterIndex: number = 0
   protected jitterOffsets: number[][] = this.generateHaltonJiters(16)
 
-  constructor(renderer: SpeckleRenderer) {
+  public get options(): BasePipelineOptions {
+    return this._options
+  }
+
+  public set options(value: BasePipelineOptions) {
+    Object.assign(this.options, value)
+  }
+
+  constructor(renderer: SpeckleRenderer, options: BasePipelineOptions = {}) {
     this.speckleRenderer = renderer
+    this.options = options
   }
 
   public get passes(): Array<GPass> {
