@@ -123,6 +123,8 @@ spec:
             value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_MODULE_ENABLED
             value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_PERSONAL_PROJECTS_LIMITS_ENABLED
+            value: {{ .Values.featureFlags.personalProjectLimitsEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_SSO_ENABLED
             value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
           - name: NUXT_PUBLIC_FF_MULTIPLE_EMAILS_MODULE_ENABLED
