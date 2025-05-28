@@ -116,7 +116,14 @@ const description = computed(() => {
   return 'We found workspaces that match your email domain'
 })
 
-onMounted(() => {
-  localWorkspaces.value = discoverableWorkspacesAndJoinRequests.value
-})
+watch(
+  discoverableWorkspacesAndJoinRequests,
+  (newWorkspaces) => {
+    // Only update if localWorkspaces is empty (initial load) or if we don't have any local modifications
+    if (localWorkspaces.value.length === 0) {
+      localWorkspaces.value = [...newWorkspaces]
+    }
+  },
+  { immediate: true }
+)
 </script>
