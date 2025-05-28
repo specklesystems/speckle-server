@@ -49,7 +49,8 @@ describe('FileUploads @fileuploads', () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish
+        publish,
+        emit: async () => {} // TODO
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
@@ -75,7 +76,8 @@ describe('FileUploads @fileuploads', () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish
+        publish,
+        emit: async () => {} // TODO
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
