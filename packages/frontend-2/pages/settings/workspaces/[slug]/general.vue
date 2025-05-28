@@ -84,7 +84,6 @@
           <div class="flex h-full flex-col justify-center gap-y-2">
             <ClientOnly>
               <div
-                :key="`canEditEmbedOptions-${canEditEmbedOptions?.code}`"
                 v-tippy="
                   !canEditEmbedOptions?.authorized
                     ? canEditEmbedOptions?.message
