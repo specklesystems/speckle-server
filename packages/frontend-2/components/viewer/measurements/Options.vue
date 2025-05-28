@@ -67,7 +67,7 @@
             min="1"
             max="5"
             step="1"
-            @change="(e) => onChangeMeasurementPrecision(e.target.value)"
+            @change="(e: Event) => onChangeMeasurementPrecision((e.target as HTMLInputElement).value)"
           />
           <span class="text-xs w-4">{{ measurementOptions.precision }}</span>
         </div>
@@ -120,10 +120,11 @@ const toggleMeasurementsSnap = () => {
   })
 }
 
-const onChangeMeasurementPrecision = (newPrecision: number) => {
+const onChangeMeasurementPrecision = (newPrecision?: string) => {
+  if (!newPrecision) return
   setMeasurementOptions({
     ...measurementOptions.value,
-    precision: newPrecision
+    precision: Number(newPrecision)
   })
 }
 
