@@ -25,7 +25,7 @@
     </div>
     <div
       v-if="bannerText"
-      class="mt-3 text-body-3xs text-center text-success-700 bg-success-50 rounded px-2 py-1 w-full bg-foundation-page rounded-md border-outline-3 border"
+      class="mt-3 text-body-3xs text-center text-success-700 bg-success-50 px-2 py-1 w-full bg-foundation-page rounded-md border-outline-3 border"
     >
       {{ bannerText }}
     </div>

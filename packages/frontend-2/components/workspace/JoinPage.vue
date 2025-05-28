@@ -30,6 +30,8 @@
         :workspace="workspace"
         :request-status="workspace.requestStatus"
         location="workspace_join_page"
+        @auto-joined="workspace.requestStatus = 'approved'"
+        @request="workspace.requestStatus = 'pending'"
       />
       <FormButton
         v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 3"
@@ -51,12 +53,16 @@
           Continue
         </FormButton>
         <FormButton
+          v-if="!hasApprovedWorkspace"
           size="lg"
           full-width
           color="outline"
           @click="navigateTo(workspaceCreateRoute)"
         >
           Create a new workspace
+        </FormButton>
+        <FormButton v-else size="lg" full-width @click="navigateTo(homeRoute)">
+          Continue
         </FormButton>
         <FormButton
           v-if="!hasDiscoverableJoinRequests && !isWorkspaceNewPlansEnabled"
@@ -76,6 +82,7 @@
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { workspaceCreateRoute, homeRoute } from '~~/lib/common/helpers/route'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
+import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 const { logout } = useAuthManager()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
@@ -86,12 +93,20 @@ const {
   hasDiscoverableJoinRequests
 } = useDiscoverableWorkspaces()
 
+const hasApprovedWorkspace = computed(() =>
+  localWorkspaces.value.some((workspace) => workspace.requestStatus === 'approved')
+)
+
 const showAllWorkspaces = ref(false)
+
+const localWorkspaces = ref<
+  (DiscoverableWorkspace_LimitedWorkspaceFragment & { requestStatus: string | null })[]
+>([])
 
 const workspacesToShow = computed(() => {
   return showAllWorkspaces.value
-    ? discoverableWorkspacesAndJoinRequests.value
-    : discoverableWorkspacesAndJoinRequests.value.slice(0, 3)
+    ? localWorkspaces.value
+    : localWorkspaces.value.slice(0, 3)
 })
 
 const description = computed(() => {
@@ -99,5 +114,9 @@ const description = computed(() => {
     return 'We found a workspace that matches your email domain'
   }
   return 'We found workspaces that match your email domain'
+})
+
+onMounted(() => {
+  localWorkspaces.value = discoverableWorkspacesAndJoinRequests.value
 })
 </script>
