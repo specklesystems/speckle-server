@@ -145,7 +145,7 @@ enum ActionTypes {
   Move = 'move'
 }
 
-const { mutateActiveWorkspaceSlug } = useNavigation()
+const { mutateActiveWorkspaceSlug, mutateIsProjectsActive } = useNavigation()
 const route = useRoute()
 const router = useRouter()
 const copyProjectLink = useCopyProjectLink()
@@ -353,8 +353,12 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
 watch(
   project,
   (newVal) => {
-    if (newVal) {
-      mutateActiveWorkspaceSlug(newVal.workspace?.slug || null)
+    if (newVal && isWorkspacesEnabled.value) {
+      if (newVal.workspace?.slug) {
+        mutateActiveWorkspaceSlug(newVal.workspace.slug)
+      } else {
+        mutateIsProjectsActive(true)
+      }
     }
   },
   { immediate: true }
