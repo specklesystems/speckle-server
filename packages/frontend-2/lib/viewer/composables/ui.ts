@@ -393,6 +393,8 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
+  const measurementOptions = computed(() => state.ui.measurement.options.value)
+
   const enableMeasurements = (enabled: boolean) => {
     state.ui.measurement.enabled.value = enabled
   }
@@ -419,6 +421,7 @@ export function useMeasurementUtilities() {
   }
 
   return {
+    measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
     removeMeasurement,
