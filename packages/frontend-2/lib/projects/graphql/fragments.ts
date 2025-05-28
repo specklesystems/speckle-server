@@ -165,6 +165,7 @@ export const projectPageLatestItemsModelsFragment = graphql(`
     }
     ...ProjectPageModelsStructureItem_Project
     ...ProjectCardImportFileArea_Project
+    ...ProjectModelsAdd_Project
   }
 `)
 

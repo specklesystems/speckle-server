@@ -17,7 +17,7 @@
         <ProjectModelPageVersionsCardActions
           v-if="!isPendingVersionFragment(version)"
           v-model:open="showActionsMenu"
-          :project-id="projectId"
+          :project-id="project.id"
           :model-id="modelId"
           :version-id="version.id"
           :selection-disabled="!isSelectionDisabled.authorized"
@@ -44,9 +44,10 @@
               v-else
               class="h-full w-full diagonal-stripes flex items-center justify-center p-2"
             >
-              <ViewerResourcesUpgradeLimitAlert
+              <ViewerResourcesLimitAlert
                 class="!bg-foundation !text-foreground-2"
                 limit-type="version"
+                :project="project"
               />
             </div>
             <div
@@ -58,7 +59,7 @@
               class="absolute top-1 left-0 p-2"
             >
               <AutomateRunsTriggerStatus
-                :project-id="projectId"
+                :project-id="project.id"
                 :status="version.automationsStatus"
                 :model-id="modelId"
                 :version-id="version.id"
@@ -107,6 +108,7 @@
 import type {
   FullPermissionCheckResultFragment,
   PendingFileUploadFragment,
+  ProjectModelPageVersionsCard_ProjectFragment,
   ProjectModelPageVersionsCardVersionFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
@@ -114,6 +116,17 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
 import type { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
+
+graphql(`
+  fragment ProjectModelPageVersionsCard_Project on Project {
+    id
+    workspace {
+      id
+      slug
+    }
+    ...ViewerResourcesLimitAlert_Project
+  }
+`)
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {
@@ -152,11 +165,10 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   version: ProjectModelPageVersionsCardVersionFragment | PendingFileUploadFragment
-  projectId: string
+  project: ProjectModelPageVersionsCard_ProjectFragment
   modelId: string
   selectable?: boolean
   selected?: boolean
-  workspaceSlug?: string
 }>()
 
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
@@ -188,7 +200,7 @@ const viewerRoute = computed(() => {
   const resourceIdString = SpeckleViewer.ViewerRoute.resourceBuilder()
     .addModel(props.modelId, props.version.id)
     .toString()
-  return modelRoute(props.projectId, resourceIdString)
+  return modelRoute(props.project.id, resourceIdString)
 })
 
 const sourceApp = computed(() =>
