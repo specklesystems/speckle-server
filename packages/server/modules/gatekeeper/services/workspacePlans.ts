@@ -1,4 +1,7 @@
-import { UpsertWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import {
+  GetWorkspacePlan,
+  UpsertWorkspacePlan
+} from '@/modules/gatekeeper/domain/billing'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GetWorkspace } from '@/modules/workspaces/domain/operations'
@@ -9,12 +12,14 @@ export const updateWorkspacePlanFactory =
   ({
     getWorkspace,
     upsertWorkspacePlan,
+    getWorkspacePlan,
     emitEvent
   }: {
     getWorkspace: GetWorkspace
     // im using the generic function here, cause the service is
     // responsible for protecting the permutations
     upsertWorkspacePlan: UpsertWorkspacePlan
+    getWorkspacePlan: GetWorkspacePlan
     emitEvent: EventBusEmit
   }) =>
   async ({
@@ -26,7 +31,9 @@ export const updateWorkspacePlanFactory =
       workspaceId
     })
     if (!workspace) throw new WorkspaceNotFoundError()
+    const previousPlan = await getWorkspacePlan({ workspaceId })
     const createdAt = new Date()
+    const updatedAt = new Date()
     switch (name) {
       case 'team':
       case 'teamUnlimited':
@@ -38,7 +45,7 @@ export const updateWorkspacePlanFactory =
           case 'canceled':
           case 'paymentFailed':
             await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
+              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
             })
             break
           default:
@@ -54,7 +61,7 @@ export const updateWorkspacePlanFactory =
         switch (status) {
           case 'valid':
             await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
+              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
             })
             break
           case 'cancelationScheduled':
@@ -68,8 +75,16 @@ export const updateWorkspacePlanFactory =
       default:
         throwUncoveredError(name)
     }
+
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
-      payload: { workspacePlan: { name, status, workspaceId } }
+      payload: {
+        workspacePlan: {
+          name,
+          status,
+          workspaceId,
+          previousPlanName: previousPlan?.name
+        }
+      }
     })
   }

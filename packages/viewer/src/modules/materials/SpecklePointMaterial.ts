@@ -36,7 +36,7 @@ class SpecklePointMaterial extends ExtendedPointsMaterial {
     }
   }
 
-  constructor(parameters: PointsMaterialParameters, defines = ['USE_RTE']) {
+  constructor(parameters: PointsMaterialParameters, defines: string[] = []) {
     super(parameters)
     this.init(defines)
   }
@@ -68,11 +68,13 @@ class SpecklePointMaterial extends ExtendedPointsMaterial {
     _geometry: BufferGeometry,
     object: Object3D
   ) {
-    object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
-    this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
-    this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
+    if (this.defines && this.defines['USE_RTE']) {
+      object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+      this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+      this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
 
-    this.needsUpdate = true
+      this.needsUpdate = true
+    }
   }
 }
 

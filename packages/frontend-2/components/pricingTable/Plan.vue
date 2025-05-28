@@ -36,11 +36,7 @@
         <div v-if="hasCta">
           <slot name="cta" />
         </div>
-        <div
-          v-else
-          :key="`tooltip-${isYearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
-          v-tippy="buttonTooltip"
-        >
+        <div v-else v-tippy="buttonTooltip">
           <FormButton
             :color="buttonColor"
             :disabled="!isSelectable"

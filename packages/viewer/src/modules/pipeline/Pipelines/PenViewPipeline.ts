@@ -51,15 +51,12 @@ export class PenViewPipeline extends ProgressivePipeline {
 
       constructor() {
         super()
-        this.hiddenMaterial = new SpeckleStandardMaterial(
-          {
-            side: DoubleSide,
-            transparent: false,
-            opacity: 1,
-            wireframe: false
-          },
-          ['USE_RTE']
-        )
+        this.hiddenMaterial = new SpeckleStandardMaterial({
+          side: DoubleSide,
+          transparent: false,
+          opacity: 1,
+          wireframe: false
+        })
         this.hiddenMaterial.colorWrite = false
       }
 
