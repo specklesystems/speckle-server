@@ -64,6 +64,7 @@ export const viewerLoadedResourcesQuery = graphql(`
       ...UseCheckViewerCommentingAccess_Project
       ...UseViewerUserActivityBroadcasting_Project
       ...ViewerGendoPanel_Project
+      ...ViewerResourcesLimitAlert_Project
     }
   }
 `)

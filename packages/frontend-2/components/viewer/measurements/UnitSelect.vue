@@ -31,7 +31,7 @@ type UnitDisplayNames = {
 const emit = defineEmits(['update:modelValue'])
 
 const props = defineProps<{
-  modelValue: string
+  modelValue: string | undefined
   name?: string
 }>()
 
@@ -54,7 +54,7 @@ function getFullUnitName(unit: string): string {
   return unitDisplayNames.value[unit] || unit
 }
 
-const fullUnitName = computed(() => getFullUnitName(props.modelValue))
+const fullUnitName = computed(() => getFullUnitName(props.modelValue || ''))
 
 const units = computed(() => Object.keys(unitDisplayNames.value))
 

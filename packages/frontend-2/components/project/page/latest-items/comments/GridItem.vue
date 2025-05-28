@@ -19,7 +19,7 @@
       v-else
       class="w-full h-48 flex items-center justify-center diagonal-stripes px-3 pb-8"
     >
-      <ViewerResourcesUpgradeLimitAlert limit-type="comment" />
+      <ViewerResourcesLimitAlert limit-type="comment" :project="project" />
     </div>
     <div class="flex items-center w-full px-3 h-8 -mt-10">
       <UserAvatarGroup
@@ -55,7 +55,10 @@
   </NuxtLink>
 </template>
 <script setup lang="ts">
-import type { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ProjectPageLatestItemsCommentItemFragment,
+  ViewerResourcesLimitAlert_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { times } from 'lodash-es'
 import { getLightLinkToThread } from '~~/lib/viewer/helpers/comments'
@@ -64,6 +67,7 @@ import type { AvatarUserWithId } from '@speckle/ui-components'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
+  project: ViewerResourcesLimitAlert_ProjectFragment
   projectId: string
 }>()
 
