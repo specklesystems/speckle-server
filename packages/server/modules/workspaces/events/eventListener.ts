@@ -134,6 +134,7 @@ import {
   WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/workspaces/services/tracking'
 import { assign } from 'lodash'
+import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -591,6 +592,19 @@ export const workspaceTrackingFactory =
           )
         )
         break
+      case 'gatekeeper.workspace-subscription-updated':
+        if (payload.status === WorkspacePlanStatuses.Canceled) {
+          mixpanel.track(MixpanelEvents.WorkspaceSubscriptionCanceled, {
+            [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId
+          })
+        }
+
+        if (payload.status === WorkspacePlanStatuses.CancelationScheduled) {
+          mixpanel.track(MixpanelEvents.WorkspaceSubscriptionCancelationScheduled, {
+            [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId
+          })
+        }
+        break
       case 'gatekeeper.workspace-trial-expired':
         break
       case WorkspaceEvents.Authorizing:
@@ -629,6 +643,9 @@ export const workspaceTrackingFactory =
           payload.workspaceId,
           assign({ isDeleted: true }, getBaseTrackingProperties())
         )
+        mixpanel.track(MixpanelEvents.WorkspaceDeleted, {
+          [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId
+        })
         break
       case 'workspace.role-deleted':
       case 'workspace.role-updated':
