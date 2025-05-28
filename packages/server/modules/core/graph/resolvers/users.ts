@@ -131,7 +131,7 @@ export = {
       await validateScopes(context.scopes, Scopes.Users.Read)
 
       if (args.query.length < 3)
-        throw new BadRequestError('Search query must be at least 3 carachters.')
+        throw new BadRequestError('Search query must be at least 3 characters.')
 
       if (args.limit && args.limit > 100)
         throw new BadRequestError(
