@@ -1,12 +1,16 @@
 /* eslint-disable camelcase */
 import { Mixpanel } from 'mixpanel'
 
+export type MixpanelFakeEventRecord = Array<{ event: string; payload: unknown }>
+
 type MixpanelFakeStorage = {
+  events?: MixpanelFakeEventRecord
   people?: Record<string, object | string>
   groups?: Record<string, object | string>
 }
 
 export const buildMixpanelFake = ({
+  events,
   people,
   groups
 }: MixpanelFakeStorage = {}): Mixpanel => {
@@ -16,7 +20,11 @@ export const buildMixpanelFake = ({
 
   return {
     init: notImplemented,
-    track: notImplemented,
+    track: (event, payload) => {
+      if (events) {
+        events.push({ event, payload })
+      }
+    },
     track_batch: notImplemented,
     import: notImplemented,
     import_batch: notImplemented,
