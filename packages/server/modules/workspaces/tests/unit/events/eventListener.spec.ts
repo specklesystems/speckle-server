@@ -109,8 +109,10 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
           workspacePlan: {
             workspaceId: workspacePlan.workspaceId,
             name: workspacePlan.name,
-            status: workspacePlan.status,
-            previousPlanName: 'free'
+            status: workspacePlan.status
+          },
+          previousPlan: {
+            name: 'free'
           }
         }
       })

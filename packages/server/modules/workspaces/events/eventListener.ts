@@ -591,7 +591,7 @@ export const workspaceTrackingFactory =
               [WORKSPACE_TRACKING_ID_KEY]: payload.workspacePlan.workspaceId,
               plan: payload.workspacePlan.name,
               cycle: subscription?.billingInterval,
-              previousPlan: payload.workspacePlan.previousPlanName
+              previousPlan: payload.previousPlan?.name
             },
             getServerTrackingProperties()
           )

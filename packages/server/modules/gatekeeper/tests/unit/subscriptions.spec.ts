@@ -1495,8 +1495,10 @@ describe('subscriptions @gatekeeper', () => {
         workspacePlan: {
           workspaceId,
           status: 'valid',
-          name: 'pro',
-          previousPlanName: 'team'
+          name: 'pro'
+        },
+        previousPlan: {
+          name: 'team'
         }
       })
     })

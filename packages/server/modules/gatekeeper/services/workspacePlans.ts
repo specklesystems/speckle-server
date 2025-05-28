@@ -31,7 +31,7 @@ export const updateWorkspacePlanFactory =
       workspaceId
     })
     if (!workspace) throw new WorkspaceNotFoundError()
-    const previousPlan = await getWorkspacePlan({ workspaceId })
+    const previousWorkspacePlan = await getWorkspacePlan({ workspaceId })
     const createdAt = new Date()
     const updatedAt = new Date()
     switch (name) {
@@ -75,16 +75,18 @@ export const updateWorkspacePlanFactory =
       default:
         throwUncoveredError(name)
     }
-
+    const previousPlan = previousWorkspacePlan
+      ? { previousPlan: { name: previousWorkspacePlan.name } }
+      : {}
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
         workspacePlan: {
           name,
           status,
-          workspaceId,
-          previousPlanName: previousPlan?.name
-        }
+          workspaceId
+        },
+        ...previousPlan
       }
     })
   }
