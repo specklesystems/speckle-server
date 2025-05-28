@@ -136,6 +136,7 @@ import {
 import { assign } from 'lodash'
 import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { Mixpanel } from 'mixpanel'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -570,7 +571,7 @@ export const workspaceTrackingFactory =
     }
 
     switch (eventName) {
-      case 'gatekeeper.workspace-plan-updated':
+      case GatekeeperEvents.WorkspacePlanUpdated:
         const updatedPlanWorkspace = await getWorkspace({
           workspaceId: payload.workspacePlan.workspaceId
         })
@@ -596,7 +597,7 @@ export const workspaceTrackingFactory =
           )
         )
         break
-      case 'gatekeeper.workspace-subscription-updated':
+      case GatekeeperEvents.WorkspaceSubscriptionUpdated:
         if (payload.status === WorkspacePlanStatuses.Canceled) {
           mixpanel.track(
             MixpanelEvents.WorkspaceSubscriptionCanceled,
@@ -617,11 +618,11 @@ export const workspaceTrackingFactory =
           )
         }
         break
-      case 'gatekeeper.workspace-trial-expired':
+      case GatekeeperEvents.WorkspaceTrialExpired:
         break
       case WorkspaceEvents.Authorizing:
         break
-      case 'workspace.created':
+      case WorkspaceEvents.Created:
         // we're setting workspace props and attributing to speckle users
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
@@ -640,7 +641,7 @@ export const workspaceTrackingFactory =
           )
         )
         break
-      case 'workspace.updated':
+      case WorkspaceEvents.Updated:
         // just updating workspace props
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
@@ -648,19 +649,23 @@ export const workspaceTrackingFactory =
           await buildWorkspaceTrackingProperties(payload.workspace)
         )
         break
-      case 'workspace.deleted':
+      case WorkspaceEvents.Deleted:
         // just marking workspace deleted
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
           payload.workspaceId,
           assign({ isDeleted: true }, getServerTrackingProperties())
         )
-        mixpanel.track(MixpanelEvents.WorkspaceDeleted, {
-          [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId
-        })
+        mixpanel.track(
+          MixpanelEvents.WorkspaceDeleted,
+          assign(
+            { [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId },
+            getServerTrackingProperties()
+          )
+        )
         break
-      case 'workspace.role-deleted':
-      case 'workspace.role-updated':
+      case WorkspaceEvents.RoleDeleted:
+      case WorkspaceEvents.RoleUpdated:
       case WorkspaceEvents.SeatUpdated:
         const entity = 'acl' in payload ? payload.acl : payload.seat
         const workspace = await getWorkspace({ workspaceId: entity.workspaceId })

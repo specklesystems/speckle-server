@@ -31,6 +31,7 @@ import { MixpanelEvents } from '@/modules/shared/utils/mixpanel'
 import { expect } from 'chai'
 import { WORKSPACE_TRACKING_ID_KEY } from '@/modules/workspaces/services/tracking'
 import { WorkspacePlanStatuses } from '@speckle/shared'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -97,10 +98,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
     it('pushes a Mixpanel Upgrade event when workspace plan was upgraded', async () => {
       const events: MixpanelFakeEventRecord = []
-      const groups = {}
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
-        mixpanel: buildMixpanelFake({ events, groups })
+        mixpanel: buildMixpanelFake({ events })
       })
 
       await workspaceTracking({
@@ -133,10 +133,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
         (status) => {
           it(`does not send anything to mixpanel on subscription update regarding the status ${status}`, async () => {
             const events: MixpanelFakeEventRecord = []
-            const groups = {}
             const workspaceTracking = workspaceTrackingFactory({
               ...defaults,
-              mixpanel: buildMixpanelFake({ events, groups })
+              mixpanel: buildMixpanelFake({ events })
             })
 
             await workspaceTracking({
@@ -154,10 +153,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
     it(`sends a canceled event to mixpanel on subscription cancelation`, async () => {
       const events: MixpanelFakeEventRecord = []
-      const groups = {}
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
-        mixpanel: buildMixpanelFake({ events, groups })
+        mixpanel: buildMixpanelFake({ events })
       })
 
       await workspaceTracking({
@@ -180,12 +178,11 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       })
     })
 
-    it(`sends a cancel schedule event to mixpanel on subscription cancel schedule`, async () => {
+    it(`sends a CancelSchedule event to mixpanel when a subscription is scheduled to be canceled`, async () => {
       const events: MixpanelFakeEventRecord = []
-      const groups = {}
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
-        mixpanel: buildMixpanelFake({ events, groups })
+        mixpanel: buildMixpanelFake({ events })
       })
 
       await workspaceTracking({
@@ -201,6 +198,32 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       expect(event.event).to.be.eq(
         MixpanelEvents.WorkspaceSubscriptionCancelationScheduled
       )
+      expect(event.payload).to.be.deep.eq({
+        [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
+        hostApp: 'serverside',
+        speckleVersion: 'test',
+        // eslint-disable-next-line camelcase
+        server_id: 'tracking_server_id'
+      })
+    })
+
+    it('sends a custom delete mixpanel event on Workspace Delete', async () => {
+      const events: MixpanelFakeEventRecord = []
+      const workspaceTracking = workspaceTrackingFactory({
+        ...defaults,
+        mixpanel: buildMixpanelFake({ events })
+      })
+
+      await workspaceTracking({
+        eventName: WorkspaceEvents.Deleted,
+        payload: {
+          workspaceId: workspace.id
+        }
+      })
+
+      const event = events[0]
+      expect(events).to.have.lengthOf(1)
+      expect(event.event).to.be.eq(MixpanelEvents.WorkspaceDeleted)
       expect(event.payload).to.be.deep.eq({
         [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
         hostApp: 'serverside',
