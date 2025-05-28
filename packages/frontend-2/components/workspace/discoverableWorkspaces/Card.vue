@@ -16,13 +16,15 @@
         </div>
         <div class="flex flex-col gap-1">
           <UserAvatarGroup
-            v-if="members.length > 0 && requestStatus !== 'pending'"
+            v-if="members.length > 0"
             :users="members"
             :max-count="5"
             size="base"
           />
           <div class="text-body-3xs text-foreground-2">
-            <span class="font-medium">Admins:&nbsp;</span>
+            <span class="font-medium">
+              {{ adminTeam.length === 1 ? 'Admin' : 'Admins' }}:&nbsp;
+            </span>
             <span v-for="(admin, index) in adminTeam.slice(0, 3)" :key="admin.id">
               {{ admin.name
               }}{{ index < 2 && index < adminTeam.length - 1 ? ', ' : '' }}
@@ -90,11 +92,22 @@ const mixpanel = useMixpanel()
 
 const adminTeam = computed(() => props.workspace.adminTeam?.map((t) => t.user) ?? [])
 const adminIds = computed(() => new Set(adminTeam.value.map((admin) => admin.id)))
-const members = computed(() =>
-  (props.workspace.team?.items?.map((u) => u.user) ?? []).filter(
-    (user) => !adminIds.value.has(user.id)
-  )
-)
+const allMembers = computed(() => props.workspace.team?.items?.map((u) => u.user) ?? [])
+const members = computed(() => {
+  // Only deduplicate if there's exactly one person total (admin who is also the only member)
+  const totalUniqueUsers = new Set([
+    ...adminTeam.value.map((admin) => admin.id),
+    ...allMembers.value.map((member) => member.id)
+  ]).size
+
+  if (totalUniqueUsers === 1) {
+    // Single user case: filter out admins from members to avoid duplication
+    return allMembers.value.filter((user) => !adminIds.value.has(user.id))
+  } else {
+    // Multiple users: show all members including those who are also admins
+    return allMembers.value
+  }
+})
 
 const onRequest = () => {
   requestToJoinWorkspace(props.workspace, props.location || 'discovery_card')
