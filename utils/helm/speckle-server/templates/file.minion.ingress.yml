@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: speckle-server-minion
+  name: speckle-server-minion-api-file
   namespace: {{ .Values.namespace }}
   labels:
 {{ include "speckle.labels" . | indent 4 }}
