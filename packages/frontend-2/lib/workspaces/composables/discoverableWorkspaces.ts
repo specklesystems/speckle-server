@@ -12,9 +12,7 @@ import {
   getFirstErrorMessage,
   getCacheId
 } from '~~/lib/common/helpers/graphql'
-import { workspaceRoute } from '~/lib/common/helpers/route'
 import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 graphql(`
   fragment DiscoverableWorkspace_LimitedWorkspace on LimitedWorkspace {
@@ -151,8 +149,6 @@ export const useDiscoverableWorkspaces = () => {
   ) => {
     const activeUserId = activeUser.value?.id
 
-    const { mutateActiveWorkspaceSlug } = useNavigation()
-
     if (!activeUserId) return
 
     const result = await requestToJoin({
@@ -175,8 +171,6 @@ export const useDiscoverableWorkspaces = () => {
           description: `You have joined ${workspace.name}.`,
           type: ToastNotificationType.Success
         })
-        mutateActiveWorkspaceSlug(workspace.slug)
-        navigateTo(workspaceRoute(workspace.slug))
       } else {
         mixpanel.track('Workspace Join Request Sent', {
           workspaceId: workspace.id,
