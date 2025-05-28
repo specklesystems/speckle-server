@@ -13,6 +13,7 @@ import {
   getCacheId
 } from '~~/lib/common/helpers/graphql'
 import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 
 graphql(`
   fragment DiscoverableWorkspace_LimitedWorkspace on LimitedWorkspace {
@@ -157,6 +158,14 @@ export const useDiscoverableWorkspaces = () => {
 
     if (result?.data) {
       await refetch()
+
+      apollo.query({
+        query: activeUserWorkspaceExistenceCheckQuery,
+        variables: {
+          filter: { personalOnly: true }
+        },
+        fetchPolicy: 'network-only'
+      })
 
       if (workspace.discoverabilityAutoJoinEnabled) {
         mixpanel.track('Workspace Auto Joined', {
