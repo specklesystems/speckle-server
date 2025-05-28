@@ -192,9 +192,6 @@ const getWorkspaceTooltip = (
   if (permission.code === WorkspaceLimitsReachedError.code) {
     return undefined
   }
-  // if (!isWorkspaceAdmin.value(workspace)) {
-  //   return 'Only workspace administrators can move projects to this workspace'
-  // }
 
   return permission?.message
 }
