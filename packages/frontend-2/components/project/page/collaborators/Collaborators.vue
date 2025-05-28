@@ -3,7 +3,7 @@
     <div v-if="project" class="pt-3">
       <div class="flex justify-between space-x-2 items-center">
         <h1 class="block text-heading-lg">Collaborators</h1>
-        <div v-tippy="tooltipText">
+        <div v-tippy="canInviteTooltip">
           <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
             Invite to project
           </FormButton>
@@ -40,11 +40,7 @@
           </div>
         </div>
       </div>
-      <InviteDialogProject
-        v-if="project"
-        v-model:open="showInviteDialog"
-        :project="project"
-      />
+      <ProjectInviteAdd v-model:open="showInviteDialog" :project="project" />
     </div>
   </div>
 </template>
@@ -65,6 +61,8 @@ import {
   useCancelProjectInvite,
   useUpdateUserRole
 } from '~~/lib/projects/composables/projectManagement'
+import { useCanInviteToProject } from '~/lib/projects/composables/permissions'
+import { PersonalProjectsLimitedError } from '@speckle/shared/authz'
 
 graphql(`
   fragment ProjectPageCollaborators_Project on Project {
@@ -74,6 +72,7 @@ graphql(`
         ...FullPermissionCheckResult
       }
     }
+    ...ProjectInviteAdd_Project
   }
 `)
 
@@ -111,19 +110,28 @@ const route = useRoute()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 const cancelInvite = useCancelProjectInvite()
+
 const { result: pageResult } = useQuery(projectPageCollaboratorsQuery, () => ({
   projectId: projectId.value,
   filter: {
     roles: [Roles.Workspace.Admin]
   }
 }))
+const canInviteToProject = useCanInviteToProject({
+  project: computed(() => pageResult.value?.project)
+})
 
 const showInviteDialog = ref(false)
 const loading = ref(false)
 
 const canUpdate = computed(() => pageResult.value?.project?.permissions?.canUpdate)
-const canInvite = computed(() => project.value?.permissions?.canInvite?.authorized)
-const tooltipText = computed(() =>
+const canInvite = computed(() => {
+  return (
+    canInviteToProject.canActuallyInvite.value ||
+    canInviteToProject.cantClickInviteCode.value === PersonalProjectsLimitedError.code
+  )
+})
+const canInviteTooltip = computed(() =>
   canInvite.value ? undefined : project.value?.permissions?.canInvite?.message
 )
 const project = computed(() => pageResult.value?.project)

@@ -14,19 +14,18 @@
           >
             View all in 3D
           </FormButton>
-          <FormButton
-            v-tippy="
-              canCreateModel?.authorized
-                ? undefined
-                : canCreateModel?.message ||
-                  'You do not have permission to create models'
-            "
-            :disabled="!canCreateModel?.authorized"
+
+          <div
+            v-tippy="canCreateModel.cantClickCreateReason.value"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            @click="showNewDialog = true"
           >
-            New model
-          </FormButton>
+            <FormButton
+              :disabled="!canCreateModel.canClickCreate.value"
+              @click="handleCreateModelClick"
+            >
+              New model
+            </FormButton>
+          </div>
         </div>
       </div>
       <div
@@ -79,16 +78,9 @@
           >
             View all in 3D
           </FormButton>
-          <div
-            v-tippy="
-              canCreateModel?.authorized || limitReached
-                ? undefined
-                : canCreateModel?.message ||
-                  'You do not have permission to create models'
-            "
-          >
+          <div v-tippy="canCreateModel.cantClickCreateReason.value" class="test123">
             <FormButton
-              :disabled="!canCreateModel?.authorized || limitReached"
+              :disabled="!canCreateModel.canClickCreate.value"
               class="hidden lg:inline-flex shrink-0"
               @click="handleCreateModelClick"
             >
@@ -98,16 +90,7 @@
         </div>
       </div>
     </div>
-    <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="projectId" />
-    <WorkspacePlanProjectModelLimitReachedDialog
-      v-model:open="showLimitDialog"
-      :workspace-name="project?.workspace?.name"
-      :plan="project?.workspace?.plan?.name"
-      :workspace-role="project?.workspace?.role"
-      :workspace-slug="project?.workspace?.slug || ''"
-      location="models"
-      limit-type="model"
-    />
+    <ProjectModelsAdd v-model:open="showNewDialog" :project="project" />
   </div>
 </template>
 <script setup lang="ts">
@@ -122,6 +105,7 @@ import type {
 import { modelRoute } from '~~/lib/common/helpers/route'
 import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useCanCreateModel } from '~/lib/projects/composables/permissions'
 
 const emit = defineEmits<{
   (e: 'update:selected-members', val: FormUsersSelectItemFragment[]): void
@@ -129,6 +113,10 @@ const emit = defineEmits<{
   (e: 'update:grid-or-list', val: GridListToggleValue): void
   (e: 'update:search', val: string): void
 }>()
+
+/**
+ * TODO: Bug, tooltip shows old version sometimes
+ */
 
 graphql(`
   fragment ProjectModelsPageHeader_Project on Project {
@@ -160,6 +148,7 @@ graphql(`
         ...FullPermissionCheckResult
       }
     }
+    ...ProjectModelsAdd_Project
   }
 `)
 
@@ -190,9 +179,11 @@ const onViewAllClick = () => {
   })
 }
 
-const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const showNewDialog = ref(false)
-const showLimitDialog = ref(false)
+
+const canCreateModel = useCanCreateModel({
+  project: computed(() => props.project)
+})
 
 const debouncedSearch = computed({
   get: () => props.search,
@@ -228,10 +219,6 @@ const allModelsRoute = computed(() => {
 
 const team = computed(() => props.project?.team.map((t) => t.user) || [])
 
-const limitReached = computed(() => {
-  return canCreateModel.value?.code === 'WorkspaceLimitsReached'
-})
-
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = localSearch.value.trim()
 }, 500)
@@ -242,11 +229,7 @@ const updateSearchImmediately = (val?: string) => {
 }
 
 const handleCreateModelClick = () => {
-  if (limitReached.value) {
-    showLimitDialog.value = true
-  } else {
-    showNewDialog.value = true
-  }
+  showNewDialog.value = true
 }
 
 watch(debouncedSearch, (newVal) => {
