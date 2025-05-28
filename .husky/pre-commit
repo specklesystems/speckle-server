@@ -2,13 +2,9 @@
 # shellcheck disable=SC1091
 set -e
 
-if [ -z "$CI" ]
-then
 # shellcheck disable=SC1090
-  . "$(dirname "$0")/_/husky.sh"
-  yarn lint-staged
-fi
-
+. "$(dirname "$0")/_/husky.sh"
+yarn lint-staged
 
 check_dependencies_available() {
   echo "🔍 looking for additional linter dependencies"
@@ -22,13 +18,8 @@ check_dependencies_available() {
   echo "✅ All additional dependencies found"
 }
 
-additional_dependencies=""
-if [ -z "${CI}" ]; then
-  additional_dependencies=" ggshield"
-fi
-
 # shellcheck disable=SC2086
-check_dependencies_available pre-commit hadolint helm shellcheck circleci${additional_dependencies}
+check_dependencies_available pre-commit hadolint helm shellcheck circleci ggshield
 
 echo "🍵 Updating JSON schema for Helm chart"
 yarn helm:jsonschema:generate
