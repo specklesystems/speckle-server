@@ -23,6 +23,7 @@ import { isPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { calculateNewBillingCycleEnd } from '@/modules/gatekeeper/services/subscriptions/calculateNewBillingCycleEnd'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgrades'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   PaidWorkspacePlans,
   throwUncoveredError,
@@ -39,7 +40,8 @@ export const upgradeWorkspaceSubscriptionFactory =
     reconcileSubscriptionData,
     updateWorkspaceSubscription,
     countSeatsByTypeInWorkspace,
-    upsertWorkspacePlan
+    upsertWorkspacePlan,
+    emitEvent
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspacePlanProductId: GetWorkspacePlanProductId
@@ -49,6 +51,7 @@ export const upgradeWorkspaceSubscriptionFactory =
     updateWorkspaceSubscription: UpsertWorkspaceSubscription
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
     upsertWorkspacePlan: UpsertPaidWorkspacePlan
+    emitEvent: EventBusEmit
   }) =>
   async ({
     workspaceId,
@@ -191,4 +194,15 @@ export const upgradeWorkspaceSubscriptionFactory =
       }
     })
     await updateWorkspaceSubscription({ workspaceSubscription })
+    await emitEvent({
+      eventName: 'gatekeeper.workspace-plan-updated',
+      payload: {
+        workspacePlan: {
+          workspaceId,
+          status: workspacePlan.status,
+          name: targetPlan,
+          previousPlanName: workspacePlan.name
+        }
+      }
+    })
   }

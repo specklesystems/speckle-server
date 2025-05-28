@@ -11,6 +11,7 @@ import {
 } from '@/modules/gatekeeper/errors/billing'
 import { throwUncoveredError } from '@speckle/shared'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { GetWorkspacePlan } from '@speckle/shared/dist/commonjs/authz/domain/workspaces/operations.js'
 
 export const completeCheckoutSessionFactory =
   ({
@@ -18,12 +19,14 @@ export const completeCheckoutSessionFactory =
     updateCheckoutSessionStatus,
     upsertWorkspaceSubscription,
     upsertPaidWorkspacePlan,
+    getWorkspacePlan,
     getSubscriptionData,
     emitEvent
   }: {
     getCheckoutSession: GetCheckoutSession
     updateCheckoutSessionStatus: UpdateCheckoutSessionStatus
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
+    getWorkspacePlan: GetWorkspacePlan
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getSubscriptionData: GetSubscriptionData
     emitEvent: EventBusEmit
@@ -53,6 +56,9 @@ export const completeCheckoutSessionFactory =
     // TODO: make sure, the subscription data price plan matches the checkout session workspacePlan
 
     await updateCheckoutSessionStatus({ sessionId, paymentStatus: 'paid' })
+    const previousPlan = await getWorkspacePlan({
+      workspaceId: checkoutSession.workspaceId
+    })
     // a plan determines the workspace feature set
     const workspacePlan = {
       createdAt: new Date(),
@@ -86,9 +92,10 @@ export const completeCheckoutSessionFactory =
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
         workspacePlan: {
-          workspaceId: workspacePlan.workspaceId,
+          workspaceId: checkoutSession.workspaceId,
           status: workspacePlan.status,
-          name: workspacePlan.name
+          name: workspacePlan.name,
+          previousPlanName: previousPlan?.name
         }
       }
     })

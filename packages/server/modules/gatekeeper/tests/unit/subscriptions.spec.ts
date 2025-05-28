@@ -980,6 +980,9 @@ describe('subscriptions @gatekeeper', () => {
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
+        },
+        emitEvent: () => {
+          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
@@ -1022,6 +1025,9 @@ describe('subscriptions @gatekeeper', () => {
             expect.fail()
           },
           countSeatsByTypeInWorkspace: () => {
+            expect.fail()
+          },
+          emitEvent: () => {
             expect.fail()
           }
         })
@@ -1069,6 +1075,9 @@ describe('subscriptions @gatekeeper', () => {
               },
               countSeatsByTypeInWorkspace: () => {
                 expect.fail()
+              },
+              emitEvent: () => {
+                expect.fail()
               }
             })
             const err = await expectToThrow(async () => {
@@ -1114,6 +1123,9 @@ describe('subscriptions @gatekeeper', () => {
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
+        },
+        emitEvent: () => {
+          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
@@ -1157,6 +1169,9 @@ describe('subscriptions @gatekeeper', () => {
           expect.fail()
         },
         countSeatsByTypeInWorkspace: () => {
+          expect.fail()
+        },
+        emitEvent: () => {
           expect.fail()
         }
       })
@@ -1204,6 +1219,9 @@ describe('subscriptions @gatekeeper', () => {
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
+        },
+        emitEvent: () => {
+          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
@@ -1248,6 +1266,9 @@ describe('subscriptions @gatekeeper', () => {
           expect.fail()
         },
         countSeatsByTypeInWorkspace: () => {
+          expect.fail()
+        },
+        emitEvent: () => {
           expect.fail()
         }
       })
@@ -1302,6 +1323,9 @@ describe('subscriptions @gatekeeper', () => {
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
+        },
+        emitEvent: () => {
+          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
@@ -1339,6 +1363,8 @@ describe('subscriptions @gatekeeper', () => {
       let reconciledSubscriptionData: SubscriptionDataInput | undefined = undefined
       let updatedWorkspacePlan: WorkspacePlan | undefined = undefined
       let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
+      let emitedEventName: string | undefined = undefined
+      let emitedEventPayload: unknown = undefined
       const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => ({
           workspaceId,
@@ -1376,6 +1402,10 @@ describe('subscriptions @gatekeeper', () => {
         },
         countSeatsByTypeInWorkspace: async () => {
           return 4
+        },
+        emitEvent: async ({ eventName, payload }) => {
+          emitedEventName = eventName
+          emitedEventPayload = payload
         }
       })
       await upgradeWorkspaceSubscription({
@@ -1385,11 +1415,8 @@ describe('subscriptions @gatekeeper', () => {
       })
 
       expect(updatedWorkspacePlan!.name).to.equal('pro')
-
       expect(reconciledSubscriptionData!.products.length).to.equal(1)
-
       expect(updatedWorkspaceSubscription!.billingInterval === 'yearly')
-
       expect(
         reconciledSubscriptionData!.products.find((p) => p.productId === 'proProduct')!
           .quantity
@@ -1397,9 +1424,17 @@ describe('subscriptions @gatekeeper', () => {
       const newProduct = reconciledSubscriptionData!.products.find(
         (p) => p.productId === 'proProduct'
       )
-
       expect(newProduct!.quantity).to.equal(4)
       expect(newProduct!.priceId).to.equal('newPlanPrice')
+      expect(emitedEventName).to.eq('gatekeeper.workspace-plan-updated')
+      expect(emitedEventPayload).to.deep.eq({
+        workspacePlan: {
+          workspaceId,
+          status: 'valid',
+          name: 'pro',
+          previousPlanName: 'team'
+        }
+      })
     })
   })
   describe('getTotalSeatsCountByPlanFactory returns a function that, ', () => {
