@@ -10,7 +10,7 @@ check_dependencies_available() {
   echo "🔍 looking for additional linter dependencies"
   for i in "${@}"
   do
-    if ! command "${i}"; then
+    if ! command -v "${i}"; then
       echo "No ${i} executable found skipping additional checks" >&2
       exit 0
     fi
