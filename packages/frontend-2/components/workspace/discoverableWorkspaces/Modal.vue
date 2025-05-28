@@ -16,7 +16,9 @@
         :request-status="workspace.requestStatus"
         show-dismiss-button
         location="workspace_switcher"
-        @auto-joined="open = false"
+        @auto-joined="workspace.requestStatus = 'approved'"
+        @request="workspace.requestStatus = 'pending'"
+        @go-to-workspace="open = false"
       />
       <FormButton
         v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 3"
@@ -41,14 +43,15 @@ const {
 } = useDiscoverableWorkspaces()
 
 const open = defineModel<boolean>('open', { required: true })
-
 const showAllWorkspaces = ref(false)
+const localWorkspaces = ref(discoverableWorkspacesAndJoinRequests.value)
 
 const workspacesToShow = computed(() => {
   return showAllWorkspaces.value
-    ? discoverableWorkspacesAndJoinRequests.value
-    : discoverableWorkspacesAndJoinRequests.value.slice(0, 3)
+    ? localWorkspaces.value
+    : localWorkspaces.value.slice(0, 3)
 })
+
 const dialogButtons = computed((): LayoutDialogButton[] => {
   return [
     {
@@ -62,5 +65,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
 
 watch(open, () => {
   showAllWorkspaces.value = false
+  if (!open.value) {
+    localWorkspaces.value = discoverableWorkspacesAndJoinRequests.value
+  }
 })
 </script>

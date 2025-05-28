@@ -19,7 +19,7 @@
           </div>
         </div>
       </div>
-      <div class="flex flex-col gap-y-2" @click.stop>
+      <div class="flex flex-col gap-y-2 items-end" @click.stop>
         <slot name="actions"></slot>
       </div>
     </div>

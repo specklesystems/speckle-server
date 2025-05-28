@@ -4,7 +4,7 @@
     :name="workspace.name"
     :class="requestStatus === 'pending' ? '' : 'bg-foundation'"
     :banner-text="
-      workspace.discoverabilityAutoJoinEnabled
+      workspace.discoverabilityAutoJoinEnabled && requestStatus !== 'approved'
         ? 'You can join this workspace automatically. No admin approval needed.'
         : null
     "
@@ -33,9 +33,16 @@
       </div>
     </template>
     <template #actions>
-      <FormButton v-if="requestStatus" color="outline" size="sm" disabled>
+      <FormButton v-if="requestStatus === 'pending'" color="outline" size="sm" disabled>
         Join request sent
       </FormButton>
+      <div
+        v-else-if="requestStatus === 'approved'"
+        class="flex gap-1 items-center text-body-2xs font-medium"
+      >
+        <IconCheck class="w-4 h-4" />
+        Workspace joined
+      </div>
       <div v-else class="flex flex-col gap-2 sm:items-end">
         <FormButton color="outline" size="sm" @click="onRequest">
           {{
@@ -53,6 +60,14 @@
           Dismiss
         </FormButton>
       </div>
+      <FormButton
+        v-if="requestStatus === 'approved'"
+        color="outline"
+        size="sm"
+        @click="handleGoToWorkspace"
+      >
+        Go to workspace
+      </FormButton>
     </template>
   </WorkspaceCard>
 </template>
@@ -61,6 +76,7 @@
 import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 const props = defineProps<{
   workspace: DiscoverableWorkspace_LimitedWorkspaceFragment
@@ -70,7 +86,9 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  (e: 'go-to-workspace'): void
   (e: 'auto-joined'): void
+  (e: 'request'): void
 }>()
 
 const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
@@ -89,6 +107,8 @@ const onRequest = () => {
   requestToJoinWorkspace(props.workspace, props.location || 'discovery_card')
   if (props.workspace.discoverabilityAutoJoinEnabled) {
     emit('auto-joined')
+  } else {
+    emit('request')
   }
 }
 
@@ -100,5 +120,10 @@ const onDismiss = async () => {
     // eslint-disable-next-line camelcase
     workspace_id: props.workspace.id
   })
+}
+
+const handleGoToWorkspace = () => {
+  navigateTo(workspaceRoute(props.workspace.slug))
+  emit('go-to-workspace')
 }
 </script>
