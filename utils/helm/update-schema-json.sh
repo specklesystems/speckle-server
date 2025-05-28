@@ -45,5 +45,6 @@ pushd "${GIT_ROOT}"
     --values "${GIT_ROOT}/utils/helm/speckle-server/values.yaml" \
     --schema "${JSON_SCHEMA_PATH}"
 
+  echo "📄 Formatting the generated JSON schema"
   yarn prettier:fix:file "${JSON_SCHEMA_PATH}"
 popd

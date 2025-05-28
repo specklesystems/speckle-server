@@ -40,6 +40,7 @@
     "cm": "cz",
     "eslint:inspect": "eslint-config-inspector",
     "eslint:projectwide": "node ./utils/eslint-projectwide.mjs",
+    "helm:jsonschema:generate": "./utils/helm/update-schema-json.sh",
     "npkill": "npkill"
   },
   "devDependencies": {
