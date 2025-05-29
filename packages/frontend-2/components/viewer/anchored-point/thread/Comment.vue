@@ -22,7 +22,7 @@
         :class="isEmbedEnabled ? 'mt-2' : 'mt-3'"
       >
         <template v-if="isLimited">
-          <ViewerResourcesUpgradeLimitAlert limit-type="comment" />
+          <ViewerResourcesLimitAlert limit-type="comment" :project="project" />
         </template>
         <template v-else>
           <CommonTiptapTextEditor
@@ -47,6 +47,7 @@
 <script setup lang="ts">
 import type { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
 const props = defineProps<{
   comment: ViewerCommentsReplyItemFragment
@@ -58,6 +59,11 @@ const emit = defineEmits<{
 }>()
 
 const { isEmbedEnabled } = useEmbed()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
 
 const createdAt = computed(() => {
   return {

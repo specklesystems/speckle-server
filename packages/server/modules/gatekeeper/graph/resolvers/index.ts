@@ -455,7 +455,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
             updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
               db
-            })
+            }),
+            emitEvent: getEventBus().emit
           })
           await withOperationLogging(
             async () =>

@@ -94,9 +94,14 @@ ingress:
   ##
   enabled: true
   ## @param ingress.namespace The namespace in which the ingress controller is deployed.
+  ##
   namespace: ingress-nginx
   ## @param ingress.controllerName The name of the Kubernetes pod in which the ingress controller is deployed.
+  ##
   controllerName: ingress-nginx
+  ## @param ingress.client_max_body_size_mb This maximum size of the body of any request (except file uploads) that can be sent to Speckle. For file uploads, the maximum size is defined by the `.file_size_limit_mb` parameter.
+  ##
+  client_max_body_size_mb: 10
 
 ## @section Common parameters
 ##

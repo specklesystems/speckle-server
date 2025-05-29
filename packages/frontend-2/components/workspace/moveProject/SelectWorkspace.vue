@@ -5,7 +5,9 @@
     </div>
     <template v-else>
       <div v-if="hasWorkspaces">
-        <p class="mb-4">Select an existing workspaces or create a new one.</p>
+        <p class="mb-4">
+          {{ subheading || 'Select an existing workspace or create a new one.' }}
+        </p>
         <div class="flex flex-col gap-2">
           <div
             v-for="ws in sortedWorkspaces"
@@ -75,15 +77,39 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
-  PermissionCheckResult,
+  FullPermissionCheckResultFragment,
   WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment
+  WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { UserAvatarGroup } from '@speckle/ui-components'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
 import { formatName } from '~/lib/billing/helpers/plan'
-import { Roles } from '@speckle/shared'
+import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  WorkspaceLimitsReachedError,
+  WorkspaceSsoSessionNoAccessError
+} from '@speckle/shared/authz'
+
+graphql(`
+  fragment WorkspaceMoveProjectSelectWorkspace_Workspace on Workspace {
+    id
+    name
+    role
+    slug
+    plan {
+      name
+    }
+    permissions {
+      canMoveProjectToWorkspace(projectId: $projectId) {
+        ...FullPermissionCheckResult
+      }
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 graphql(`
   fragment WorkspaceMoveProjectSelectWorkspace_User on User {
@@ -103,14 +129,17 @@ graphql(`
 `)
 
 const props = defineProps<{
-  project: WorkspaceMoveProjectManager_ProjectFragment
-  workspacePermissions?: PermissionCheckResult
+  project: MaybeNullOrUndefined<WorkspaceMoveProjectManager_ProjectFragment>
+  checker: (
+    workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+  ) => FullPermissionCheckResultFragment
+  subheading?: string
 }>()
 
 const emit = defineEmits<{
   (
     e: 'workspace-selected',
-    workspace: WorkspaceMoveProjectManager_WorkspaceFragment
+    workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
   ): void
 }>()
 
@@ -119,7 +148,7 @@ const { result, loading: initialLoading } = useQuery(
   () => ({
     cursor: null,
     filter: {},
-    projectId: props.project.id
+    projectId: props.project?.id
   })
 )
 
@@ -130,55 +159,51 @@ const showLoading = computed(
 )
 
 const showLimitDialog = ref(false)
-const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
-  null
-)
+const limitReachedWorkspace =
+  ref<WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment | null>(null)
 
 const isWorkspaceAdmin = computed(
-  () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment | null) => {
+  () => (workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment | null) => {
     if (!workspace) return false
     return workspace.role === Roles.Workspace.Admin
   }
 )
 
-const isWorkspaceDisabled = computed(
-  () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment) => {
-    if (!isWorkspaceAdmin.value(workspace)) {
-      return true
-    }
-
-    const permission = workspace.permissions?.canMoveProjectToWorkspace
-    return !permission?.authorized && permission?.code !== 'WorkspaceLimitsReached'
+const isWorkspaceDisabled = (
+  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+) => {
+  if (!isWorkspaceAdmin.value(workspace)) {
+    return true
   }
-)
 
-const getWorkspaceTooltip = computed(
-  () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment) => {
-    if (workspace.permissions.canMoveProjectToWorkspace.authorized) {
-      return undefined
-    }
-    if (
-      workspace.permissions.canMoveProjectToWorkspace.code === 'WorkspaceLimitsReached'
-    ) {
-      return undefined
-    }
-    if (!isWorkspaceAdmin.value(workspace)) {
-      return 'Only workspace administrators can move projects to this workspace'
-    }
+  const permission = props.checker(workspace)
+  return (
+    !permission?.authorized && permission?.code !== WorkspaceLimitsReachedError.code
+  )
+}
 
-    const permission = workspace.permissions?.canMoveProjectToWorkspace
-    return permission?.message
+const getWorkspaceTooltip = (
+  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+) => {
+  const permission = props.checker(workspace)
+  if (permission.authorized) {
+    return undefined
   }
-)
+  if (permission.code === WorkspaceLimitsReachedError.code) {
+    return undefined
+  }
+
+  return permission?.message
+}
 
 const sortedWorkspaces = computed(() => {
   return [...workspaces.value].sort((a, b) => {
     const aEnabled =
-      a.permissions?.canMoveProjectToWorkspace?.authorized ||
-      a.permissions?.canMoveProjectToWorkspace?.code === 'WorkspaceLimitsReached'
+      props.checker(a).authorized ||
+      props.checker(a).code === WorkspaceLimitsReachedError.code
     const bEnabled =
-      b.permissions?.canMoveProjectToWorkspace?.authorized ||
-      b.permissions?.canMoveProjectToWorkspace?.code === 'WorkspaceLimitsReached'
+      props.checker(b).authorized ||
+      props.checker(b).code === WorkspaceLimitsReachedError.code
 
     if (aEnabled && !bEnabled) return -1
     if (!aEnabled && bEnabled) return 1
@@ -187,10 +212,10 @@ const sortedWorkspaces = computed(() => {
 })
 
 const handleWorkspaceClick = (
-  workspace: WorkspaceMoveProjectManager_WorkspaceFragment
+  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
 ) => {
-  const permission = workspace.permissions?.canMoveProjectToWorkspace
-  if (permission?.code === 'WorkspaceLimitsReached') {
+  const permission = props.checker(workspace)
+  if (permission?.code === WorkspaceLimitsReachedError.code) {
     limitReachedWorkspace.value = workspace
     showLimitDialog.value = true
     return
@@ -201,12 +226,9 @@ const handleWorkspaceClick = (
   }
 }
 
-const isSsoRequired = computed(
-  () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment) => {
-    return (
-      workspace.permissions?.canMoveProjectToWorkspace?.code ===
-      'WorkspaceSsoSessionNoAccess'
-    )
-  }
-)
+const isSsoRequired = (
+  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+) => {
+  return props.checker(workspace).code === WorkspaceSsoSessionNoAccessError.code
+}
 </script>
