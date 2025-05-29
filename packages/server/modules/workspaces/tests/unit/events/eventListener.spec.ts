@@ -27,9 +27,13 @@ import {
 } from '@/modules/shared/test/helpers/mixpanel'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import { MixpanelEvents } from '@/modules/shared/utils/mixpanel'
+import {
+  getUserTrackingPropertiesFactory,
+  MixpanelEvents,
+  SERVER_TRACKING_ID_KEY,
+  WORKSPACE_TRACKING_ID_KEY
+} from '@/modules/shared/utils/mixpanel'
 import { expect } from 'chai'
-import { WORKSPACE_TRACKING_ID_KEY } from '@/modules/workspaces/services/tracking'
 import { WorkspacePlanStatuses } from '@speckle/shared'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
@@ -56,12 +60,11 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       createdAt: new Date(),
       updatedAt: new Date()
     }
-    const baseTrackingProperties = {
-      // eslint-disable-next-line camelcase
-      server_id: 'tracking_server_id',
+    const getServerTrackingProperties = () => ({
+      [SERVER_TRACKING_ID_KEY]: 'tracking_server_id',
       speckleVersion: 'test',
       hostApp: 'serverside'
-    }
+    })
 
     const workspacePlan = buildTestWorkspacePlan({ workspaceId: workspace.id })
     const workspaceSubscribtion = buildTestWorkspaceSubscription({
@@ -88,12 +91,14 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       getDefaultRegion,
       getWorkspacePlan,
       getWorkspaceSubscription,
-      findPrimaryEmailForUser,
+      getUserTrackingProperties: getUserTrackingPropertiesFactory({
+        findPrimaryEmailForUser
+      }),
       getUserEmails,
       getWorkspaceModelCount,
       getWorkspacesProjectCount,
       getWorkspaceSeatCount,
-      getServerTrackingProperties: () => baseTrackingProperties
+      getServerTrackingProperties
     }
 
     it('pushes a Mixpanel Upgrade event when workspace plan was upgraded', async () => {
@@ -122,13 +127,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       expect(event.event).to.be.eq(MixpanelEvents.WorkspaceUpgraded)
       expect(event.payload).to.be.deep.eq({
         [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
+        [SERVER_TRACKING_ID_KEY]: 'tracking_server_id',
         plan: workspacePlan.name,
         cycle: workspaceSubscribtion.billingInterval,
         previousPlan: 'free',
         hostApp: 'serverside',
-        speckleVersion: 'test',
-        // eslint-disable-next-line camelcase
-        server_id: 'tracking_server_id'
+        speckleVersion: 'test'
       })
     }),
       [WorkspacePlanStatuses.PaymentFailed, WorkspacePlanStatuses.Valid].forEach(
@@ -173,10 +177,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       expect(event.event).to.be.eq(MixpanelEvents.WorkspaceSubscriptionCanceled)
       expect(event.payload).to.be.deep.eq({
         [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
+        [SERVER_TRACKING_ID_KEY]: 'tracking_server_id',
         hostApp: 'serverside',
-        speckleVersion: 'test',
-        // eslint-disable-next-line camelcase
-        server_id: 'tracking_server_id'
+        speckleVersion: 'test'
       })
     })
 
@@ -202,10 +205,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       )
       expect(event.payload).to.be.deep.eq({
         [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
+        [SERVER_TRACKING_ID_KEY]: 'tracking_server_id',
         hostApp: 'serverside',
-        speckleVersion: 'test',
-        // eslint-disable-next-line camelcase
-        server_id: 'tracking_server_id'
+        speckleVersion: 'test'
       })
     })
 
@@ -228,10 +230,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       expect(event.event).to.be.eq(MixpanelEvents.WorkspaceDeleted)
       expect(event.payload).to.be.deep.eq({
         [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
+        [SERVER_TRACKING_ID_KEY]: 'tracking_server_id',
         hostApp: 'serverside',
-        speckleVersion: 'test',
-        // eslint-disable-next-line camelcase
-        server_id: 'tracking_server_id'
+        speckleVersion: 'test'
       })
     })
   }

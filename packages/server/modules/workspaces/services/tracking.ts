@@ -4,7 +4,10 @@ import {
   GetWorkspacePlan,
   GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { getBaseTrackingProperties } from '@/modules/shared/utils/mixpanel'
+import {
+  getBaseTrackingProperties,
+  WORKSPACE_TRACKING_ID_KEY
+} from '@/modules/shared/utils/mixpanel'
 import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
@@ -33,8 +36,6 @@ import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { Mixpanel } from 'mixpanel'
-
-export const WORKSPACE_TRACKING_ID_KEY = 'workspace_id'
 
 export type WorkspaceTrackingProperties = {
   name: string

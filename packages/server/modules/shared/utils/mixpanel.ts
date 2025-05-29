@@ -9,9 +9,15 @@ import Mixpanel from 'mixpanel'
 import type express from 'express'
 import type http from 'http'
 import { mixpanelLogger } from '@/observability/logging'
+import { FindPrimaryEmailForUser } from '@/modules/core/domain/userEmails/operations'
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined
+
+export const WORKSPACE_TRACKING_ID_KEY = 'workspace_id' as const
+export const SERVER_TRACKING_ID_KEY = 'server_id' as const
+export const USER_TRACKING_ID_KEY = 'distinct_id' as const
 
 export function getBaseTrackingProperties() {
   if (baseTrackingProperties) return baseTrackingProperties
@@ -23,6 +29,23 @@ export function getBaseTrackingProperties() {
 
   return baseTrackingProperties
 }
+
+export type GetUserTrackingProperties = ({
+  userId
+}: Pick<UserEmail, 'userId'>) => Promise<{ [USER_TRACKING_ID_KEY]?: string }>
+export const getUserTrackingPropertiesFactory =
+  (deps: {
+    findPrimaryEmailForUser: FindPrimaryEmailForUser
+  }): GetUserTrackingProperties =>
+  async ({ userId }) => {
+    const primaryEmail = await deps.findPrimaryEmailForUser({ userId })
+    if (!primaryEmail) return {}
+    const mixpanelUserId = resolveMixpanelUserId(primaryEmail.email)
+
+    return {
+      [USER_TRACKING_ID_KEY]: mixpanelUserId
+    }
+  }
 
 export function initialize() {
   if (client || !enableMixpanel()) return
@@ -39,7 +62,8 @@ export const MixpanelEvents = {
   WorkspaceDeleted: 'Workspace Deleted',
   WorkspaceSubscriptionCanceled: 'Workspace Subscription Canceled',
   WorkspaceSubscriptionCancelationScheduled:
-    'Workspace Subscription Cancelation Scheduled'
+    'Workspace Subscription Cancelation Scheduled',
+  FileUploadStarted: 'File Upload Started'
 } as const
 
 /**

@@ -34,7 +34,6 @@ import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   MaybeNullOrUndefined,
-  resolveMixpanelUserId,
   Roles,
   StreamRoles,
   throwUncoveredError,
@@ -88,7 +87,10 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   getBaseTrackingProperties,
   getClient,
-  MixpanelEvents
+  GetUserTrackingProperties,
+  getUserTrackingPropertiesFactory,
+  MixpanelEvents,
+  WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/shared/utils/mixpanel'
 import {
   GetWorkspacePlan,
@@ -96,10 +98,7 @@ import {
   GetWorkspaceWithPlan
 } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
-import {
-  FindEmailsByUserId,
-  FindPrimaryEmailForUser
-} from '@/modules/core/domain/userEmails/operations'
+import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
   getWorkspacePlanFactory,
@@ -129,10 +128,7 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getProjectWorkspaceFactory } from '@/modules/workspaces/repositories/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
-import {
-  buildWorkspaceTrackingPropertiesFactory,
-  WORKSPACE_TRACKING_ID_KEY
-} from '@/modules/workspaces/services/tracking'
+import { buildWorkspaceTrackingPropertiesFactory } from '@/modules/workspaces/services/tracking'
 import { assign } from 'lodash'
 import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { Mixpanel } from 'mixpanel'
@@ -509,11 +505,11 @@ export const workspaceTrackingFactory =
     getDefaultRegion,
     getWorkspacePlan,
     getWorkspaceSubscription,
-    findPrimaryEmailForUser,
     getUserEmails,
     getWorkspaceModelCount,
     getWorkspacesProjectCount,
     getWorkspaceSeatCount,
+    getUserTrackingProperties,
     mixpanel = getClient(),
     getServerTrackingProperties = getBaseTrackingProperties
   }: {
@@ -522,11 +518,11 @@ export const workspaceTrackingFactory =
     getDefaultRegion: GetDefaultRegion
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
-    findPrimaryEmailForUser: FindPrimaryEmailForUser
     getUserEmails: FindEmailsByUserId
     getWorkspaceModelCount: GetWorkspaceModelCount
     getWorkspacesProjectCount: GetWorkspacesProjectsCounts
     getWorkspaceSeatCount: GetWorkspaceSeatCount
+    getUserTrackingProperties: GetUserTrackingProperties
     mixpanel?: Mixpanel
     getServerTrackingProperties?: typeof getBaseTrackingProperties
   }) =>
@@ -546,20 +542,6 @@ export const workspaceTrackingFactory =
       getWorkspacesProjectCount,
       getWorkspaceSeatCount
     })
-
-    const getUserTrackingProperties = async ({ userId }: { userId: string }) => {
-      const primaryEmail = await findPrimaryEmailForUser({ userId })
-      if (!primaryEmail) return {}
-      const mixpanelUserId = resolveMixpanelUserId(primaryEmail.email)
-
-      return {
-        // eslint-disable-next-line camelcase
-        user_id: mixpanelUserId,
-        // eslint-disable-next-line camelcase
-        distinct_id: mixpanelUserId
-      }
-    }
-
     // only marking has speckle members to true
     // calculating this for speckle member removal would require getting all users
     // that is too costly in here imho
@@ -815,7 +797,6 @@ export const initializeEventListenersFactory =
         await workspaceTrackingFactory({
           countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
           getDefaultRegion: getDefaultRegionFactory({ db }),
-          findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
           getWorkspacePlan,
@@ -828,14 +809,16 @@ export const initializeEventListenersFactory =
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
           getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
-          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
+          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db }),
+          getUserTrackingProperties: getUserTrackingPropertiesFactory({
+            findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+          })
         })(payload)
       }),
       eventBus.listen('gatekeeper.*', async (payload) => {
         await workspaceTrackingFactory({
           countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
           getDefaultRegion: getDefaultRegionFactory({ db }),
-          findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
           getWorkspacePlan,
@@ -848,7 +831,10 @@ export const initializeEventListenersFactory =
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
           getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
-          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
+          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db }),
+          getUserTrackingProperties: getUserTrackingPropertiesFactory({
+            findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+          })
         })(payload)
       }),
       eventBus.listen(WorkspaceEvents.Authorizing, async ({ payload }) => {
