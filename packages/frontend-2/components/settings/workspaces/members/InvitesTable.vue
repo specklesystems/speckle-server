@@ -4,7 +4,6 @@
       v-model:search="search"
       search-placeholder="Search pending invites..."
       :workspace="workspace"
-      show-invite-button
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"

@@ -313,7 +313,7 @@ export class ServerAPI {
       .where({ id: tokenId.slice(0, 10) })
       .del()
 
-    if (delCount === 0) throw new Error('Token revokation failed')
+    if (delCount === 0) throw new Error('Token revocation failed')
     return true
   }
 }

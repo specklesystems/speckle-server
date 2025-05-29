@@ -119,6 +119,7 @@ describe('Batch commits', () => {
       return {
         id: '',
         objectId: '',
+        branchId: '',
         streamId,
         authorId: me.id
       }
@@ -128,6 +129,7 @@ describe('Batch commits', () => {
       (): BasicTestCommit => ({
         id: '',
         objectId: '',
+        branchId: '',
         streamId: otherStream.id,
         authorId: otherGuy.id
       })
@@ -208,6 +210,7 @@ describe('Batch commits', () => {
           streamId = i % 2 === 0 ? myStream.id : otherStream.id
           return {
             id: '',
+            branchId: '',
             streamId,
             objectId: '',
             authorId: me.id
@@ -245,6 +248,7 @@ describe('Batch commits', () => {
           streamId = i % 2 === 0 ? myStream.id : otherStream.id
           return {
             id: '',
+            branchId: '',
             objectId: '',
             streamId,
             authorId: me.id

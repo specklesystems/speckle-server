@@ -18,7 +18,10 @@
 <script setup lang="ts">
 import { UserGroupIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
-import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import {
+  castToSupportedVisibility,
+  SupportedProjectVisibility
+} from '~/lib/projects/helpers/visibility'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsGeneralBlockDiscussions_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -69,7 +72,8 @@ const radioOptions = computed(() => [
     introduction: 'Only collaborators can comment',
     icon: UserCircleIcon,
     help:
-      props.project.visibility === SimpleProjectVisibility.Private
+      castToSupportedVisibility(props.project.visibility) !==
+      SupportedProjectVisibility.Public
         ? 'Only collaborators can comment on private projects'
         : undefined
   }
@@ -78,7 +82,9 @@ const radioOptions = computed(() => [
 watch(
   () => props.project.visibility,
   (newVisibility) => {
-    if (newVisibility === SimpleProjectVisibility.Private) {
+    if (
+      castToSupportedVisibility(newVisibility) !== SupportedProjectVisibility.Public
+    ) {
       selectedOption.value = CommentPermission.TeamMembers
     }
   },

@@ -9,6 +9,7 @@ import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commi
 import dayjs from 'dayjs'
 import { times } from 'lodash'
 import { CommandModule } from 'yargs'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 const command: CommandModule<
   unknown,
@@ -49,7 +50,7 @@ const command: CommandModule<
     if (!stream?.id) {
       throw new StreamNotFoundError(`Stream with ID ${streamId} not found`)
     }
-    if (!stream.isPublic && !stream.role) {
+    if (stream.visibility !== ProjectRecordVisibility.Public && !stream.role) {
       throw new ForbiddenError(
         `Commit author does not have access to the specified stream ${streamId}`
       )
@@ -62,6 +63,7 @@ const command: CommandModule<
         (i): BasicTestCommit => ({
           id: '',
           objectId: '',
+          branchId: '',
           streamId,
           authorId,
           message: `#${i} - ${date} - Fake commit batch`

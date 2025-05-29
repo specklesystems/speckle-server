@@ -6,7 +6,7 @@ export default class BatchedPool<T> {
   #baseInterval: number
 
   #processingLoop: Promise<void>
-  #finished = false
+  #disposed = false
 
   constructor(params: {
     concurrencyAndSizes: number[]
@@ -27,22 +27,18 @@ export default class BatchedPool<T> {
     return this.#queue.splice(0, Math.min(batchSize, this.#queue.length))
   }
 
-  async #runWorker(batchSize: number) {
-    while (!this.#finished || this.#queue.length > 0) {
+  async #runWorker(batchSize: number): Promise<void> {
+    while (!this.#disposed || this.#queue.length > 0) {
       if (this.#queue.length > 0) {
         const batch = this.getBatch(batchSize)
-        try {
-          await this.#processFunction(batch)
-        } catch (e) {
-          console.error(e)
-        }
+        await this.#processFunction(batch)
       }
       await this.#delay(this.#baseInterval)
     }
   }
 
   async disposeAsync(): Promise<void> {
-    this.#finished = true
+    this.#disposed = true
     await this.#processingLoop
   }
 

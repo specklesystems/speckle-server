@@ -8,6 +8,7 @@ export type Fetcher = (
 export interface Item {
   baseId: string
   base: Base
+  size?: number
 }
 
 export interface Base {
@@ -57,4 +58,14 @@ export function isScalar(
     type === 'symbol' ||
     type === 'undefined'
   )
+}
+
+export function take<T>(it: Iterator<T>, count: number): T[] {
+  const result: T[] = []
+  for (let i = 0; i < count; i++) {
+    const itr = it.next()
+    if (itr.done) break
+    result.push(itr.value)
+  }
+  return result
 }

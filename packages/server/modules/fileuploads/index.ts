@@ -34,6 +34,10 @@ import { TIME } from '@speckle/shared'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
+import {
+  initializeQueue,
+  shutdownQueue
+} from '@/modules/fileuploads/queues/fileimports'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -93,6 +97,7 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   app.use(fileuploadRouterFactory())
 
   if (isInitial) {
+    if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) await initializeQueue()
     const scheduleExecution = scheduleExecutionFactory({
       acquireTaskLock: acquireTaskLockFactory({ db }),
       releaseTaskLock: releaseTaskLockFactory({ db })
@@ -130,7 +135,6 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
-  scheduledTasks.forEach((task) => {
-    task.stop()
-  })
+  scheduledTasks.forEach((task) => task.stop())
+  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) await shutdownQueue()
 }

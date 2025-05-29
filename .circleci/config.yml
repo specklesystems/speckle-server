@@ -44,12 +44,12 @@ workflows:
               # run tests for any commit on any branch, including any tags
               only: /.*/
           requires:
-            - docker-publish-postgres-container
+            - docker-build-postgres-container
 
       - test-server-no-ff:
           filters: *filters-allow-all
           requires:
-            - docker-publish-postgres-container
+            - docker-build-postgres-container
 
       - test-server-multiregion: *test-server-job-definition
 
@@ -128,9 +128,13 @@ workflows:
       - pre-commit:
           filters: *filters-allow-all
 
+      - lint-and-prettier:
+          filters: *filters-allow-all
+
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
+            - docker-hub
           filters: &filters-build
             tags:
               only: /.*/
@@ -201,6 +205,7 @@ workflows:
             - docker-build-server
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -218,6 +223,7 @@ workflows:
             - docker-build-frontend-2
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -244,6 +250,7 @@ workflows:
             - docker-build-webhooks
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -261,6 +268,7 @@ workflows:
             - docker-build-file-imports
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -278,6 +286,7 @@ workflows:
             - docker-build-previews
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -295,6 +304,7 @@ workflows:
             - docker-build-test-container
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -309,7 +319,13 @@ workflows:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - docker-build-postgres-container
+            - docker-build-monitor-container
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-server
+            - test-server-no-ff
+            - test-server-multiregion
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -318,6 +334,7 @@ workflows:
             - docker-build-monitor-container
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -365,11 +382,6 @@ workflows:
             - get-version
             - publish-approval
 
-      - update-helm-documentation:
-          filters: *filters-publish
-          requires:
-            - publish-helm-chart
-
       - publish-npm:
           filters:
             tags:
@@ -415,46 +427,54 @@ jobs:
           paths:
             - env-vars
 
+  lint-and-prettier:
+    <<: *docker-node-image
+    resource_class: xlarge
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - *yarn
+      - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
+          name: Lint everything
+          command: yarn eslint:projectwide
+      - run:
+          name: Run prettier check
+          command: yarn prettier:check
+      - run:
+          name: Check JSON Schema is up to date
+          command: |
+            yarn helm:jsonschema:generate
+            git diff --exit-code
+
   pre-commit:
     parameters:
       config_file:
         default: ./.pre-commit-config.yaml
         description: Optional, path to pre-commit config file.
         type: string
-      deployment_config_file:
-        default: ./.pre-commit-config.deployment.yaml
-        description: Optional, path to additional pre-commit config file.
-        type: string
-      cache_prefix:
-        default: ''
-        description: |
-          Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
-        type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: xlarge
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
       - restore_cache:
           name: Restore pre-commit & Yarn Package cache
           keys:
-            - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
-            - yarn-packages-{{ checksum "yarn.lock" }}
+            - cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
       - save_cache:
-          key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+          key: cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
-      - *yarn
-      - run:
-          name: Build public packages
-          command: yarn build:public
       - run:
           name: Run pre-commit
-          command: ./.husky/pre-commit
+          command: pre-commit run --all-files --config <<parameters.config_file>>
       - run:
           command: git --no-pager diff
           name: git diff
@@ -619,8 +639,10 @@ jobs:
       FF_BILLING_INTEGRATION_ENABLED: 'true'
       # These are the only different env keys:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      FF_GATEKEEPER_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
+      FF_MOVE_PROJECT_REGION_ENABLED: 'true'
       RUN_TESTS_IN_MULTIREGION_MODE: true
       RATELIMITER_ENABLED: 'false'
 
@@ -706,8 +728,12 @@ jobs:
           command: yarn lint:ci
           working_directory: 'packages/shared'
       - run:
-          name: Run tests
-          command: yarn test:ci
+          name: Run tests (all FFs)
+          command: ENABLE_ALL_FFS=1 yarn test:ci
+          working_directory: 'packages/shared'
+      - run:
+          name: Run tests (no FFs)
+          command: DISABLE_ALL_FFS=1 yarn test:ci
           working_directory: 'packages/shared'
       - codecov/upload:
           files: packages/shared/coverage/coverage-final.json
@@ -918,12 +944,8 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Push
           command: ./.circleci/build.sh
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - speckle*
 
   docker-build-server:
     <<: *build-job
@@ -951,7 +973,7 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Publish sourcemaps
           command: ./.circleci/build_publish_fe2_sourcemaps.sh
 
   docker-build-previews:
@@ -1059,6 +1081,7 @@ jobs:
   publish-npm:
     <<: *docker-node-image
     working_directory: *work-dir
+    resource_class: large
     steps:
       - checkout
       - attach_workspace:
@@ -1099,21 +1122,6 @@ jobs:
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
-
-  update-helm-documentation:
-    <<: *docker-node-image
-    working_directory: *work-dir
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
-      - add_ssh_keys:
-          fingerprints:
-            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
-      - run:
-          name: Update Helm Documentation
-          command: ./.circleci/update_helm_documentation.sh
 
   publish-viewer-sandbox-cloudflare-pages:
     <<: *docker-node-image

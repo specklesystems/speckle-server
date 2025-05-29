@@ -9,7 +9,8 @@ import {
   NotifyChangeInFileStatus,
   SaveUploadFileV2,
   SaveUploadFileInput,
-  SaveUploadFileInputV2
+  PushJobToFileImporter,
+  InsertNewUploadAndNotify
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileImportSubscriptions,
@@ -58,11 +59,36 @@ export const insertNewUploadAndNotifyFactory =
   }
 
 export const insertNewUploadAndNotifyFactoryV2 =
-  (deps: { saveUploadFile: SaveUploadFileV2; publish: PublishSubscription }) =>
-  async (upload: SaveUploadFileInputV2) => {
-    await deps.saveUploadFile(upload)
+  (deps: {
+    pushJobToFileImporter: PushJobToFileImporter
+    saveUploadFile: SaveUploadFileV2
+    publish: PublishSubscription
+  }): InsertNewUploadAndNotify =>
+  async (upload) => {
+    const file = await deps.saveUploadFile(upload)
 
-    // TODO: add FE notification
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: file.id,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: {
+          ...file,
+          streamId: upload.projectId,
+          branchName: upload.modelName
+        }
+      },
+      projectId: file.projectId
+    })
+
+    await deps.pushJobToFileImporter({
+      fileName: file.fileName,
+      fileType: file.fileType,
+      projectId: file.projectId,
+      modelId: upload.modelId,
+      blobId: file.id,
+      jobId: file.id,
+      userId: upload.userId
+    })
   }
 
 export const notifyChangeInFileStatus =

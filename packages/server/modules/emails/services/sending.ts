@@ -6,7 +6,7 @@ import { resolveMixpanelUserId } from '@speckle/shared'
 import {
   getRequestLogger,
   loggerWithMaybeContext
-} from '@/observability/components/express/requestContext'
+} from '@/observability/utils/requestContext'
 
 export type { SendEmailParams } from '@/modules/emails/domain/operations'
 /**

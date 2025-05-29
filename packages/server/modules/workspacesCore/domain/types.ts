@@ -29,11 +29,14 @@ export type Workspace = {
   logo: string | null
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
+  discoverabilityAutoJoinEnabled: boolean
+  // TODO: Create new table/structure if embeds get more workspace-level configuration
+  isEmbedSpeckleBrandingHidden: boolean
 }
 
 export type LimitedWorkspace = Pick<
   Workspace,
-  'id' | 'slug' | 'name' | 'description' | 'logo'
+  'id' | 'slug' | 'name' | 'description' | 'logo' | 'discoverabilityAutoJoinEnabled'
 >
 
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }

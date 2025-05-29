@@ -1,10 +1,12 @@
 type UserMeta {
   newWorkspaceExplainerDismissed: Boolean!
+  speckleConBannerDismissed: Boolean!
   legacyProjectsExplainerCollapsed: Boolean!
 }
 
 type UserMetaMutations {
   setNewWorkspaceExplainerDismissed(value: Boolean!): Boolean!
+  setSpeckleConBannerDismissed(value: Boolean!): Boolean!
   setLegacyProjectsExplainerCollapsed(value: Boolean!): Boolean!
 }
 

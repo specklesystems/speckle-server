@@ -14,7 +14,6 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         workspace: async () => {
           throw new WorkspacesModuleDisabledError()
         },
-
         workspaceBySlug: async () => {
           throw new WorkspacesModuleDisabledError()
         },
@@ -24,6 +23,11 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       Mutation: {
         workspaceMutations: () => ({})
+      },
+      ActiveUserMutations: {
+        setActiveWorkspace: async () => {
+          throw new WorkspacesModuleDisabledError()
+        }
       },
       WorkspaceMutations: {
         create: async () => {
@@ -42,9 +46,6 @@ export = !FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesModuleDisabledError()
         },
         deleteDomain: async () => {
-          throw new WorkspacesModuleDisabledError()
-        },
-        join: async () => {
           throw new WorkspacesModuleDisabledError()
         },
         leave: async () => {
@@ -112,6 +113,11 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         workspace: async () => {
           // Return type is always workspace or null, to make the FE implementation easier we force return null in this case
           return null
+        },
+        embedOptions: async () => {
+          return {
+            hideSpeckleBranding: false
+          }
         }
       },
       AdminQueries: {

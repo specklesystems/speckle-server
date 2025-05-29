@@ -91,6 +91,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { type MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { SupportedProjectVisibility } from '~~/lib/projects/helpers/visibility'
 
 const invitableCollaboratorsQuery = graphql(`
   query InvitableCollaborators(
@@ -118,6 +119,7 @@ const invitableCollaboratorsQuery = graphql(`
 const props = defineProps<{
   canEdit: boolean
   workspaceId: MaybeNullOrUndefined<string>
+  projectVisibility: string
 }>()
 
 const { triggerNotification } = useGlobalToast()
@@ -142,7 +144,11 @@ const { result, loading, refetch } = useQuery(
   })
 )
 
-const generalAccessRole = ref<AccessSelectItems>(AccessSelectItems.Reviewer)
+const generalAccessRole = computed(() =>
+  props.projectVisibility === SupportedProjectVisibility.Private
+    ? AccessSelectItems.NoAccess
+    : AccessSelectItems.Reviewer
+)
 const showAllMembers = ref(false)
 
 const members = computed(() => {

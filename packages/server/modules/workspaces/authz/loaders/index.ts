@@ -11,7 +11,6 @@ import {
 import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
-import { WorkspacePaidPlanConfigs, WorkspaceUnpaidPlanConfigs } from '@speckle/shared'
 
 // TODO: Move everything to use dataLoaders
 export default defineModuleLoaders(async () => {
@@ -72,11 +71,8 @@ export default defineModuleLoaders(async () => {
     getWorkspacePlan: async ({ workspaceId }) => {
       return await getWorkspacePlan({ workspaceId })
     },
-    getWorkspaceLimits: async ({ workspaceId }) => {
-      const plan = await getWorkspacePlan({ workspaceId })
-      if (!plan) return null
-      const config = { ...WorkspacePaidPlanConfigs, ...WorkspaceUnpaidPlanConfigs }
-      return config[plan.name]?.limits ?? null
+    getWorkspaceLimits: async ({ workspaceId }, { dataLoaders }) => {
+      return await dataLoaders.gatekeeper!.getWorkspaceLimits.load(workspaceId)
     }
   }
 })

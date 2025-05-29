@@ -51,6 +51,7 @@ describe('Project Comments', () => {
     objectId: '',
     streamId: '',
     authorId: '',
+    branchId: '',
     message: 'this is my nice commit :)))',
     branchName: myBranch.name
   }

@@ -13,6 +13,8 @@ import {
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'
+import { buildTestWorkspacePlan } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
+import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 describe('workspacePlan services @gatekeeper', () => {
   describe('updateWorkspacePlanFactory creates a function, that', () => {
@@ -22,10 +24,12 @@ describe('workspacePlan services @gatekeeper', () => {
         upsertWorkspacePlan: () => {
           expect.fail()
         },
+        getWorkspacePlan: async () => null,
         emitEvent: () => {
           expect.fail()
         }
       })
+
       const err = await expectToThrow(async () => {
         await updateWorkspacePlan({
           workspaceId: cryptoRandomString({ length: 10 }),
@@ -150,6 +154,7 @@ describe('workspacePlan services @gatekeeper', () => {
                   return { id: workspaceId } as WorkspaceWithOptionalRole
                 },
                 upsertWorkspacePlan: fail,
+                getWorkspacePlan: async () => null,
                 emitEvent: fail
               })
               await updateWorkspacePlan({
@@ -182,6 +187,7 @@ describe('workspacePlan services @gatekeeper', () => {
                 return { id: workspaceId } as WorkspaceWithOptionalRole
               },
               upsertWorkspacePlan,
+              getWorkspacePlan: async () => null,
               emitEvent
             })
             await updateWorkspacePlan({
@@ -192,12 +198,59 @@ describe('workspacePlan services @gatekeeper', () => {
               status
             })
             const expectedPlan = { workspaceId, name: planName, status }
-            expect(omit(storedWorkspacePlan, 'createdAt')).to.deep.equal(expectedPlan)
+            expect(omit(storedWorkspacePlan, 'createdAt', 'updatedAt')).to.deep.equal(
+              expectedPlan
+            )
             expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
-            expect(eventPayload).to.deep.equal({ workspacePlan: expectedPlan })
+            expect(eventPayload).to.deep.equal({
+              workspacePlan: {
+                ...expectedPlan
+              }
+            })
           }
         })
       )
+    })
+
+    it('sends the previous workspace plan in the event payload when present', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      let emittedEventName: string | undefined = undefined
+      let eventPayload: unknown = undefined
+      const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        eventPayload = payload
+      }
+
+      const updateWorkspacePlan = updateWorkspacePlanFactory({
+        getWorkspace: async () => {
+          return { id: workspaceId } as WorkspaceWithOptionalRole
+        },
+        upsertWorkspacePlan: async () => {},
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            workspaceId,
+            name: PaidWorkspacePlans.Team
+          }),
+        emitEvent
+      })
+
+      await updateWorkspacePlan({
+        status: WorkspacePlanStatuses.Valid,
+        workspaceId,
+        name: PaidWorkspacePlans.ProUnlimited
+      })
+
+      expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
+      expect(eventPayload).to.deep.equal({
+        workspacePlan: {
+          workspaceId,
+          status: WorkspacePlanStatuses.Valid,
+          name: PaidWorkspacePlans.ProUnlimited
+        },
+        previousPlan: {
+          name: PaidWorkspacePlans.Team
+        }
+      })
     })
   })
 })

@@ -104,6 +104,10 @@ export function getFileImportTimeLimitMinutes() {
   return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '10')
 }
 
+export function getFileUploadTimeLimitMinutes() {
+  return getIntFromEnv('FILE_UPLOAD_TIME_LIMIT_MIN', '10')
+}
+
 export function getMaximumRequestBodySizeMB() {
   return getIntFromEnv('MAX_REQUEST_BODY_SIZE_MB', '100')
 }
@@ -191,16 +195,10 @@ export function getMailchimpConfig() {
 }
 
 export function getMailchimpOnboardingIds() {
-  if (
-    !process.env.MAILCHIMP_ONBOARDING_LIST_ID ||
-    !process.env.MAILCHIMP_ONBOARDING_JOURNEY_ID ||
-    !process.env.MAILCHIMP_ONBOARDING_STEP_ID
-  )
+  if (!process.env.MAILCHIMP_ONBOARDING_LIST_ID)
     throw new MisconfiguredEnvironmentError('Mailchimp onboarding is not configured')
   return {
-    listId: process.env.MAILCHIMP_ONBOARDING_LIST_ID,
-    journeyId: parseInt(process.env.MAILCHIMP_ONBOARDING_JOURNEY_ID),
-    stepId: parseInt(process.env.MAILCHIMP_ONBOARDING_STEP_ID)
+    listId: process.env.MAILCHIMP_ONBOARDING_LIST_ID
   }
 }
 
@@ -471,4 +469,8 @@ export function enableImprovedKnexTelemetryStackTraces() {
 
 export function disablePreviews() {
   return getBooleanFromEnv('DISABLE_PREVIEWS')
+}
+
+export const isRateLimiterEnabled = (): boolean => {
+  return getBooleanFromEnv('RATELIMITER_ENABLED', true)
 }

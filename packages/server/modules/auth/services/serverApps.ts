@@ -89,13 +89,18 @@ export const createAppTokenFromAccessCodeFactory =
       throw new AppTokenCreateError('Access code expired')
     }
 
-    if (code.challenge !== challenge) throw new AppTokenCreateError('Invalid request')
+    if (code.challenge !== challenge)
+      throw new AppTokenCreateError(
+        'Code challenge mismatch. Ensure the same challenge is used for authentication and token exchange.`'
+      )
 
     const app = await deps.getApp({ id: appId })
 
     if (!app) throw new AppTokenCreateError('Invalid app')
     if (app.secret !== appSecret)
-      throw new AppTokenCreateError('Invalid app credentials')
+      throw new AppTokenCreateError(
+        'Invalid app secret. Ensure the app secret is correct.'
+      )
 
     const appScopes = app.scopes.map((s) => s.name)
 

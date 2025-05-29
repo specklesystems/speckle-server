@@ -14,6 +14,7 @@ import {
 import { getProjectFake } from '../../../tests/fakes.js'
 import cryptoRandomString from 'crypto-random-string'
 import { AuthCheckContextLoaders } from '../../domain/loaders.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 const canReadProjectArgs = () => {
   const projectId = crs({ length: 10 })
@@ -32,7 +33,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       const result = canReadProjectPolicy({
         getWorkspace,
         getAdminOverrideEnabled: async () => false,
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
         getProject: async () => null,
         getProjectRole: () => {
           assert.fail()
@@ -61,7 +65,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       const canReadProject = canReadProjectPolicy({
         getAdminOverrideEnabled: async () => false,
         getEnv: async () => parseFeatureFlags({}),
-        getProject: getProjectFake({ isPublic: true }),
+        getProject: getProjectFake({ visibility: ProjectVisibility.Public }),
         getProjectRole: () => {
           assert.fail()
         },
@@ -70,31 +74,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
         },
         getWorkspace,
 
-        getWorkspaceRole: () => {
-          assert.fail()
-        },
-        getWorkspaceSsoSession: () => {
-          assert.fail()
-        },
-        getWorkspaceSsoProvider: () => {
-          assert.fail()
-        }
-      })
-      const canQuery = await canReadProject(canReadProjectArgs())
-      expect(canQuery).toBeAuthOKResult()
-    })
-    it('allows anyone on a linkShareable project', async () => {
-      const canReadProject = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
-        getEnv: async () => parseFeatureFlags({}),
-        getProject: getProjectFake({ isDiscoverable: true }),
-        getProjectRole: () => {
-          assert.fail()
-        },
-        getServerRole: () => {
-          assert.fail()
-        },
-        getWorkspace,
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -116,7 +95,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
         getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
-        getProject: getProjectFake({ isDiscoverable: false, isPublic: true }),
+        getProject: getProjectFake({ visibility: ProjectVisibility.Public }),
         getProjectRole: async () => Roles.Stream.Owner,
         getServerRole: async () => Roles.Server.ArchivedUser,
         getWorkspace,
@@ -138,7 +117,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
         getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
-        getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
+        getProject: getProjectFake({}),
         getProjectRole: async () => Roles.Stream.Owner,
         getServerRole: async () => Roles.Server.ArchivedUser,
         getWorkspace,
@@ -162,7 +141,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
         getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
-        getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
+        getProject: getProjectFake({}),
         getProjectRole: async () => Roles.Stream.Owner,
         getServerRole: async () => null,
         getWorkspace,
@@ -192,7 +171,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
           getAdminOverrideEnabled: async () => false,
           getEnv: async () =>
             parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
-          getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
+          getProject: getProjectFake({}),
           getProjectRole: async () => role,
           getServerRole: async () => Roles.Server.User,
           getWorkspace,
@@ -216,7 +195,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
         getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
-        getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
+        getProject: getProjectFake({}),
         getProjectRole: async () => null,
         getWorkspace,
         getServerRole: async () => Roles.Server.Admin,
@@ -241,7 +220,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       const result = canReadProjectPolicy({
         getAdminOverrideEnabled: async () => true,
         getEnv: async () => parseFeatureFlags({}),
-        getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
+        getProject: getProjectFake({}),
         getServerRole: async () => Roles.Server.Admin,
         getProjectRole: () => {
           assert.fail()
@@ -268,7 +247,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'false'
           }),
-        getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
+        getProject: getProjectFake({}),
         getServerRole: async () => Roles.Server.Admin,
         getProjectRole: async () => null,
         getWorkspace,
@@ -296,8 +275,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
         getProjectRole: async () => Roles.Stream.Contributor,
@@ -325,8 +302,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
         getProjectRole: async () => Roles.Stream.Contributor,
@@ -347,7 +322,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       })
     })
 
-    it('allows project access via workspace role if user does not have project role', async () => {
+    it('allows project access via workspace admin role if user does not have project role, even if private project', async () => {
       const result = canReadProjectPolicy({
         getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
@@ -355,9 +330,8 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
-          workspaceId: crs({ length: 10 })
+          workspaceId: crs({ length: 10 }),
+          visibility: ProjectVisibility.Private
         }),
         getProjectRole: async () => null,
         getServerRole: async () => Roles.Server.User,
@@ -371,6 +345,31 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
 
       await expect(result).resolves.toBeAuthOKResult()
     })
+
+    it('allows project access via workspace role if user does not have project role on workspace visibility', async () => {
+      const result = canReadProjectPolicy({
+        getAdminOverrideEnabled: async () => false,
+        getEnv: async () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
+        getProject: getProjectFake({
+          workspaceId: crs({ length: 10 }),
+          visibility: ProjectVisibility.Workspace
+        }),
+        getProjectRole: async () => null,
+        getServerRole: async () => Roles.Server.User,
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getWorkspaceSsoSession: () => {
+          assert.fail()
+        },
+        getWorkspace,
+        getWorkspaceSsoProvider: async () => null
+      })(canReadProjectArgs())
+
+      await expect(result).resolves.toBeAuthOKResult()
+    })
+
     it('does not check SSO sessions if user is workspace guest', async () => {
       const result = canReadProjectPolicy({
         getAdminOverrideEnabled: async () => false,
@@ -379,8 +378,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
         getProjectRole: async () => Roles.Stream.Contributor,
@@ -405,8 +402,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
         getProjectRole: async () => Roles.Stream.Contributor,
@@ -429,8 +424,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
         getProjectRole: async () => Roles.Stream.Contributor,
@@ -457,8 +450,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
         getProjectRole: async () => Roles.Stream.Contributor,
@@ -485,8 +476,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
         getProjectRole: async () => Roles.Stream.Contributor,
@@ -517,8 +506,6 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          isDiscoverable: false,
-          isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
         getProjectRole: async () => Roles.Stream.Contributor,
