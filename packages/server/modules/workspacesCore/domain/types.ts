@@ -30,6 +30,7 @@ export type Workspace = {
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
   discoverabilityAutoJoinEnabled: boolean
+  defaultSeatType: WorkspaceSeatType | null
   // TODO: Create new table/structure if embeds get more workspace-level configuration
   isEmbedSpeckleBrandingHidden: boolean
 }

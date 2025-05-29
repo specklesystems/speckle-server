@@ -9,7 +9,11 @@ import {
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import {
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
@@ -112,6 +116,9 @@ describe('Workspace workspaceSeat services', () => {
     const sut = ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat,
       getWorkspaceUserSeat,
+      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: getWorkspaceFactory({ db })
+      }),
       eventEmit: getEventBus().emit
     })
 

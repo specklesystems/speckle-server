@@ -65,6 +65,7 @@ input WorkspaceUpdateInput {
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
   discoverabilityAutoJoinEnabled: Boolean
+  defaultSeatType: WorkspaceSeatType
 }
 
 input WorkspaceRoleUpdateInput {
@@ -310,6 +311,8 @@ type Workspace {
   If true, allow users to automatically join discoverable workspaces (instead of requesting to join)
   """
   discoverabilityAutoJoinEnabled: Boolean!
+
+  defaultSeatType: WorkspaceSeatType!
   """
   Info about the workspace creation state
   """

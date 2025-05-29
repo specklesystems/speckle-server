@@ -48,4 +48,10 @@ describe('Workspace workspaceSeat services', () => {
       expect(result).to.be.true
     })
   })
+  describe('getWorkspaceDefaultSeatType', () => {
+    it('returns the global default if not set on workspace', () => {})
+    it('overrides the global default if user is workspace admin', () => {})
+    it('returns the value set on the workspace', () => {})
+    it('overrides the value set on the workspace if user is workspace admin', () => {})
+  })
 })
