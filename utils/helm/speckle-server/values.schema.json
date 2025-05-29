@@ -158,7 +158,7 @@
         "client_max_body_size_mb": {
           "type": "number",
           "description": "This maximum size of the body of any request (except file uploads) that can be sent to Speckle. For file uploads, the maximum size is defined by the `.file_size_limit_mb` parameter.",
-          "default": 100
+          "default": 10
         }
       }
     },
