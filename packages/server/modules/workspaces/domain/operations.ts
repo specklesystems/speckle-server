@@ -143,6 +143,7 @@ export type GetWorkspaceCollaboratorsArgs = {
      */
     excludeUserIds?: string[]
   }
+  hasAccessToEmail?: boolean
 }
 
 export type GetWorkspaceCollaborators = (
