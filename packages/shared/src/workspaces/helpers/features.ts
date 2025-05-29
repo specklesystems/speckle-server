@@ -244,3 +244,15 @@ export const workspaceReachedPlanLimit = (
 
   return projectCount === limits.projectCount || modelCount === limits.modelCount
 }
+
+export const workspacePlanHasAccessToFeature = ({
+  plan,
+  feature
+}: {
+  plan: WorkspacePlans
+  feature: WorkspacePlanFeatures
+}): boolean => {
+  const planConfig = WorkspacePlanConfigs[plan]
+  const hasAccess = planConfig.features.includes(feature)
+  return hasAccess
+}

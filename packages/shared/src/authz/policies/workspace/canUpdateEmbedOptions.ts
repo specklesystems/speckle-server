@@ -20,8 +20,10 @@ import {
 } from '../../fragments/workspaces.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import { Roles } from '../../../core/constants.js'
-import { WorkspacePlans } from '../../../workspaces/index.js'
-import { throwUncoveredError } from '../../../core/index.js'
+import {
+  WorkspacePlanFeatures,
+  workspacePlanHasAccessToFeature
+} from '../../../workspaces/index.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -77,20 +79,9 @@ export const canUpdateEmbedOptionsPolicy: AuthPolicy<
 
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
     if (!workspacePlan) return err(new WorkspaceNoFeatureAccessError())
-    switch (workspacePlan.name) {
-      case WorkspacePlans.Free:
-      case WorkspacePlans.Team:
-      case WorkspacePlans.TeamUnlimited:
-      case WorkspacePlans.TeamUnlimitedInvoiced:
-        return err(new WorkspaceNoFeatureAccessError())
-      case WorkspacePlans.Pro:
-      case WorkspacePlans.ProUnlimited:
-      case WorkspacePlans.ProUnlimitedInvoiced:
-      case WorkspacePlans.Enterprise:
-      case WorkspacePlans.Unlimited:
-      case WorkspacePlans.Academia:
-        return ok()
-      default:
-        throwUncoveredError(workspacePlan)
-    }
+    const canUpdateEmbedOptions = workspacePlanHasAccessToFeature({
+      plan: workspacePlan.name,
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
+    })
+    return canUpdateEmbedOptions ? ok() : err(new WorkspaceNoFeatureAccessError())
   }
