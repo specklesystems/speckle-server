@@ -1577,7 +1577,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
           const hasAccessToEmail = await ctx.authPolicies.workspace.canReadMemberEmail({
             workspaceId: parent.id,
-            userId: ctx.userId!
+            userId: ctx.userId
           })
           const filter = removeNullOrUndefinedKeys({
             ...args?.filter,
