@@ -75,16 +75,17 @@ export const updateWorkspacePlanFactory =
       default:
         throwUncoveredError(name)
     }
-
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
         workspacePlan: {
           name,
           status,
-          workspaceId,
-          previousPlanName: previousPlan?.name
-        }
+          workspaceId
+        },
+        ...(previousPlan && {
+          previousPlan: { name: previousPlan.name }
+        })
       }
     })
   }

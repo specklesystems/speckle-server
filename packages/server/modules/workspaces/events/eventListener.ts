@@ -134,6 +134,9 @@ import {
   WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/workspaces/services/tracking'
 import { assign } from 'lodash'
+import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { Mixpanel } from 'mixpanel'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -510,7 +513,9 @@ export const workspaceTrackingFactory =
     getUserEmails,
     getWorkspaceModelCount,
     getWorkspacesProjectCount,
-    getWorkspaceSeatCount
+    getWorkspaceSeatCount,
+    mixpanel = getClient(),
+    getServerTrackingProperties = getBaseTrackingProperties
   }: {
     getWorkspace: GetWorkspace
     countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
@@ -522,14 +527,15 @@ export const workspaceTrackingFactory =
     getWorkspaceModelCount: GetWorkspaceModelCount
     getWorkspacesProjectCount: GetWorkspacesProjectsCounts
     getWorkspaceSeatCount: GetWorkspaceSeatCount
+    mixpanel?: Mixpanel
+    getServerTrackingProperties?: typeof getBaseTrackingProperties
   }) =>
   async (params: EventPayload<'workspace.*'> | EventPayload<'gatekeeper.*'>) => {
     // temp ignoring tracking for this, if billing is not enabled
     // this should be sorted with a better separation between workspaces and the gatekeeper module
     if (!FF_BILLING_INTEGRATION_ENABLED) return
-    const { eventName, payload } = params
-    const mixpanel = getClient()
     if (!mixpanel) return
+    const { eventName, payload } = params
 
     const buildWorkspaceTrackingProperties = buildWorkspaceTrackingPropertiesFactory({
       countWorkspaceRole,
@@ -569,7 +575,7 @@ export const workspaceTrackingFactory =
     }
 
     switch (eventName) {
-      case 'gatekeeper.workspace-plan-updated':
+      case GatekeeperEvents.WorkspacePlanUpdated:
         const updatedPlanWorkspace = await getWorkspace({
           workspaceId: payload.workspacePlan.workspaceId
         })
@@ -589,17 +595,38 @@ export const workspaceTrackingFactory =
               [WORKSPACE_TRACKING_ID_KEY]: payload.workspacePlan.workspaceId,
               plan: payload.workspacePlan.name,
               cycle: subscription?.billingInterval,
-              previousPlan: payload.workspacePlan.previousPlanName
+              previousPlan: payload.previousPlan?.name
             },
-            getBaseTrackingProperties()
+            getServerTrackingProperties()
           )
         )
         break
-      case 'gatekeeper.workspace-trial-expired':
+      case GatekeeperEvents.WorkspaceSubscriptionUpdated:
+        if (payload.status === WorkspacePlanStatuses.Canceled) {
+          mixpanel.track(
+            MixpanelEvents.WorkspaceSubscriptionCanceled,
+            assign(
+              { [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId },
+              getServerTrackingProperties()
+            )
+          )
+        }
+
+        if (payload.status === WorkspacePlanStatuses.CancelationScheduled) {
+          mixpanel.track(
+            MixpanelEvents.WorkspaceSubscriptionCancelationScheduled,
+            assign(
+              { [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId },
+              getServerTrackingProperties()
+            )
+          )
+        }
+        break
+      case GatekeeperEvents.WorkspaceTrialExpired:
         break
       case WorkspaceEvents.Authorizing:
         break
-      case 'workspace.created':
+      case WorkspaceEvents.Created:
         // we're setting workspace props and attributing to speckle users
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
@@ -614,11 +641,11 @@ export const workspaceTrackingFactory =
           assign(
             { [WORKSPACE_TRACKING_ID_KEY]: payload.workspace.id },
             await getUserTrackingProperties({ userId: payload.createdByUserId }),
-            getBaseTrackingProperties()
+            getServerTrackingProperties()
           )
         )
         break
-      case 'workspace.updated':
+      case WorkspaceEvents.Updated:
         // just updating workspace props
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
@@ -626,16 +653,23 @@ export const workspaceTrackingFactory =
           await buildWorkspaceTrackingProperties(payload.workspace)
         )
         break
-      case 'workspace.deleted':
+      case WorkspaceEvents.Deleted:
         // just marking workspace deleted
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
           payload.workspaceId,
-          assign({ isDeleted: true }, getBaseTrackingProperties())
+          assign({ isDeleted: true }, getServerTrackingProperties())
+        )
+        mixpanel.track(
+          MixpanelEvents.WorkspaceDeleted,
+          assign(
+            { [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId },
+            getServerTrackingProperties()
+          )
         )
         break
-      case 'workspace.role-deleted':
-      case 'workspace.role-updated':
+      case WorkspaceEvents.RoleDeleted:
+      case WorkspaceEvents.RoleUpdated:
       case WorkspaceEvents.SeatUpdated:
         const entity = 'acl' in payload ? payload.acl : payload.seat
         const workspace = await getWorkspace({ workspaceId: entity.workspaceId })

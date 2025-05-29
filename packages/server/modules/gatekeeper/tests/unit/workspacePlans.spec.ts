@@ -204,8 +204,7 @@ describe('workspacePlan services @gatekeeper', () => {
             expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
             expect(eventPayload).to.deep.equal({
               workspacePlan: {
-                ...expectedPlan,
-                ...{ previousPlanName: undefined }
+                ...expectedPlan
               }
             })
           }
@@ -246,8 +245,10 @@ describe('workspacePlan services @gatekeeper', () => {
         workspacePlan: {
           workspaceId,
           status: WorkspacePlanStatuses.Valid,
-          name: PaidWorkspacePlans.ProUnlimited,
-          previousPlanName: PaidWorkspacePlans.Team
+          name: PaidWorkspacePlans.ProUnlimited
+        },
+        previousPlan: {
+          name: PaidWorkspacePlans.Team
         }
       })
     })

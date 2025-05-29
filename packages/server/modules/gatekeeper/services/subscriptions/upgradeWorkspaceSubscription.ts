@@ -200,9 +200,11 @@ export const upgradeWorkspaceSubscriptionFactory =
         workspacePlan: {
           workspaceId,
           status: workspacePlan.status,
-          name: targetPlan,
-          previousPlanName: workspacePlan.name
-        }
+          name: targetPlan
+        },
+        ...(workspacePlan && {
+          previousPlan: { name: workspacePlan.name }
+        })
       }
     })
   }
