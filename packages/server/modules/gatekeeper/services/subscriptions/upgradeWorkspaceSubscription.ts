@@ -194,9 +194,6 @@ export const upgradeWorkspaceSubscriptionFactory =
       }
     })
     await updateWorkspaceSubscription({ workspaceSubscription })
-    const previousPlan = workspacePlan
-      ? { previousPlan: { name: workspacePlan.name } }
-      : {}
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
@@ -205,7 +202,9 @@ export const upgradeWorkspaceSubscriptionFactory =
           status: workspacePlan.status,
           name: targetPlan
         },
-        ...previousPlan
+        ...(workspacePlan && {
+          previousPlan: { name: workspacePlan.name }
+        })
       }
     })
   }

@@ -56,7 +56,7 @@ export const completeCheckoutSessionFactory =
     // TODO: make sure, the subscription data price plan matches the checkout session workspacePlan
 
     await updateCheckoutSessionStatus({ sessionId, paymentStatus: 'paid' })
-    const previousWorkspacePlan = await getWorkspacePlan({
+    const previousPlan = await getWorkspacePlan({
       workspaceId: checkoutSession.workspaceId
     })
     // a plan determines the workspace feature set
@@ -88,10 +88,6 @@ export const completeCheckoutSessionFactory =
     await upsertWorkspaceSubscription({
       workspaceSubscription
     })
-
-    const previousPlan = previousWorkspacePlan
-      ? { previousPlan: { name: previousWorkspacePlan.name } }
-      : {}
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
@@ -100,7 +96,9 @@ export const completeCheckoutSessionFactory =
           status: workspacePlan.status,
           name: workspacePlan.name
         },
-        ...previousPlan
+        ...(previousPlan && {
+          previousPlan: { name: previousPlan.name }
+        })
       }
     })
   }
