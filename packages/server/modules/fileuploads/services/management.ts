@@ -61,7 +61,7 @@ export const insertNewUploadAndNotifyFactory =
     })
 
     await deps.emit({
-      eventName: FileuploadEvents.Stated,
+      eventName: FileuploadEvents.Started,
       payload: {
         userId: file.userId,
         projectId: file.streamId,
@@ -105,7 +105,7 @@ export const insertNewUploadAndNotifyFactoryV2 =
     })
 
     await deps.emit({
-      eventName: FileuploadEvents.Stated,
+      eventName: FileuploadEvents.Started,
       payload: {
         userId: file.userId,
         projectId: file.projectId,

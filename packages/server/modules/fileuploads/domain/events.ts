@@ -5,7 +5,7 @@ export const fileuploadEventNamespace = 'fileupload' as const
 const eventPrefix = `${fileuploadEventNamespace}.` as const
 
 export const FileuploadEvents = {
-  Stated: `${eventPrefix}started`
+  Started: `${eventPrefix}started`
 } as const
 
 export type FileuploadEvents = (typeof FileuploadEvents)[keyof typeof FileuploadEvents]
@@ -16,5 +16,5 @@ type FileuploadStartedPayload = Pick<
 >
 
 export type FileuploadEventsPayloads = {
-  [FileuploadEvents.Stated]: FileuploadStartedPayload
+  [FileuploadEvents.Started]: FileuploadStartedPayload
 }
