@@ -24,6 +24,11 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       Mutation: {
         workspaceMutations: () => ({})
       },
+      ActiveUserMutations: {
+        setActiveWorkspace: async () => {
+          throw new WorkspacesModuleDisabledError()
+        }
+      },
       WorkspaceMutations: {
         create: async () => {
           throw new WorkspacesModuleDisabledError()
