@@ -61,7 +61,8 @@ export const AuthCheckContextLoaderKeys = <const>{
   getProjectModelCount: 'getProjectModelCount',
   getServerRole: 'getServerRole',
   getWorkspace: 'getWorkspace',
-  getUserEligibleWorkspaces: 'getUserEligibleWorkspaces',
+  getUsersCurrentAndEligibleToBecomeAMemberWorkspaces:
+    'getUsersCurrentAndEligibleToBecomeAMemberWorkspaces',
   getWorkspaceRole: 'getWorkspaceRole',
   getWorkspaceSeat: 'getWorkspaceSeat',
   getWorkspaceModelCount: 'getWorkspaceModelCount',
@@ -90,7 +91,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getProjectModelCount: GetProjectModelCount
   getServerRole: GetServerRole
   getWorkspace: GetWorkspace
-  getUserEligibleWorkspaces: GetUserWorkspaces
+  getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: GetUserWorkspaces
   getWorkspaceRole: GetWorkspaceRole
   getWorkspaceLimits: GetWorkspaceLimits
   getWorkspacePlan: GetWorkspacePlan

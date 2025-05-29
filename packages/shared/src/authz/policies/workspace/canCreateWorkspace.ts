@@ -17,7 +17,7 @@ import { throwUncoveredError } from '../../../core/index.js'
 type PolicyArgs = MaybeUserContext
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
-  | typeof AuthCheckContextLoaderKeys.getUserEligibleWorkspaces
+  | typeof AuthCheckContextLoaderKeys.getUsersCurrentAndEligibleToBecomeAMemberWorkspaces
   | typeof AuthCheckContextLoaderKeys.getServerRole
 
 type PolicyErrors = InstanceType<
@@ -45,7 +45,10 @@ export const canCreateWorkspacePolicy: AuthPolicy<
     if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
 
     // userId is not null here, ensured by the serverRoleFragment
-    const workspaces = await loaders.getUserEligibleWorkspaces({ userId: userId! })
+    const workspaces =
+      await loaders.getUsersCurrentAndEligibleToBecomeAMemberWorkspaces({
+        userId: userId!
+      })
     const isUserEligibleForExclusiveWorkspaces = workspaces.some((w) => {
       if (w.isExclusive) {
         // if the user has no role in the workspace, means they are eligible

@@ -49,7 +49,7 @@ export type GetUserDiscoverableWorkspaces = (args: {
 }) => Promise<LimitedWorkspace[]>
 
 export type EligibleWorkspace = LimitedWorkspace & { role?: WorkspaceRoles }[]
-export type GetUserEligibleWorkspaces = (args: {
+export type GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces = (args: {
   domains: string[]
   userId: string
 }) => Promise<EligibleWorkspace[]>

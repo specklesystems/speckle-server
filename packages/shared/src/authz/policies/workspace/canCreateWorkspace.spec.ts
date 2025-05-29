@@ -26,7 +26,7 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           assert.fail()
         },
-        getUserEligibleWorkspaces: async () => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async () => {
           assert.fail()
         }
       })(createTestArgs())
@@ -44,7 +44,7 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return null
         },
-        getUserEligibleWorkspaces: async () => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async () => {
           assert.fail()
         }
       })({})
@@ -60,7 +60,7 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return null
         },
-        getUserEligibleWorkspaces: async () => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async () => {
           assert.fail()
         }
       })({ userId: cryptoRandomString({ length: 10 }) })
@@ -76,7 +76,7 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.Guest
         },
-        getUserEligibleWorkspaces: async () => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async () => {
           assert.fail()
         }
       })(createTestArgs())
@@ -95,7 +95,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {
@@ -126,7 +128,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {
@@ -155,7 +159,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return []
         }
@@ -171,7 +177,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.Admin
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {
@@ -195,7 +203,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {
@@ -219,7 +229,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {
@@ -243,7 +255,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {
@@ -269,7 +283,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {
@@ -302,7 +318,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {
@@ -333,7 +351,9 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
         getServerRole: async () => {
           return Roles.Server.User
         },
-        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+        getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({
+          userId: queriedUserId
+        }) => {
           expect(queriedUserId).toBe(userId)
           return [
             {

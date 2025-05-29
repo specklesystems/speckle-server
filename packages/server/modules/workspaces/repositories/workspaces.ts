@@ -20,7 +20,7 @@ import {
   GetPaginatedWorkspaceProjectsItems,
   GetPaginatedWorkspaceProjectsTotalCount,
   GetUserDiscoverableWorkspaces,
-  GetUserEligibleWorkspaces,
+  GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
   GetWorkspaceBySlug,
@@ -100,7 +100,7 @@ const tables = {
 }
 
 export const getUserEligibleWorkspacesFactory =
-  ({ db }: { db: Knex }): GetUserEligibleWorkspaces =>
+  ({ db }: { db: Knex }): GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces =>
   async ({ userId, domains }) => {
     const q = tables
       .workspaces(db)
