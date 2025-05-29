@@ -169,6 +169,8 @@ const props = withDefaults(
     onSubmit?: (e: SubmitEvent) => void
     isTransparent?: boolean
     closerClasses?: string
+    hideTitle?: boolean
+    hideButtons?: boolean
   }>(),
   {
     fullscreen: 'mobile'
@@ -191,8 +193,10 @@ useResizeObserver(
 )
 
 const isForm = computed(() => !!props.onSubmit)
-const hasButtons = computed(() => props.buttons || slots.buttons)
-const hasTitle = computed(() => !!props.title || !!slots.header)
+const hasButtons = computed(
+  () => (props.buttons || slots.buttons) && !props.hideButtons
+)
+const hasTitle = computed(() => !props.hideTitle && (!!props.title || !!slots.header))
 
 const open = computed({
   get: () => props.open,

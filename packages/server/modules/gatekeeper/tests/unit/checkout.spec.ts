@@ -20,6 +20,7 @@ import {
 } from '@speckle/shared'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
 import { NotFoundError } from '@/modules/shared/errors'
+import { buildTestWorkspacePlan } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
 
 describe('checkout @gatekeeper', () => {
   describe('completeCheckoutSessionFactory creates a function, that', () => {
@@ -36,6 +37,7 @@ describe('checkout @gatekeeper', () => {
           upsertPaidWorkspacePlan: async () => {
             expect.fail()
           },
+          getWorkspacePlan: async () => null,
           getSubscriptionData: async () => {
             expect.fail()
           },
@@ -72,6 +74,7 @@ describe('checkout @gatekeeper', () => {
           upsertPaidWorkspacePlan: async () => {
             expect.fail()
           },
+          getWorkspacePlan: async () => null,
           getSubscriptionData: async () => {
             expect.fail()
           },
@@ -136,6 +139,8 @@ describe('checkout @gatekeeper', () => {
             upsertPaidWorkspacePlan: async ({ workspacePlan }) => {
               storedWorkspacePlan = workspacePlan
             },
+            getWorkspacePlan: async () =>
+              buildTestWorkspacePlan({ workspaceId, name: 'free' }),
             getSubscriptionData: async () => subscriptionData,
             upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
               storedWorkspaceSubscriptionData = workspaceSubscription
@@ -157,7 +162,8 @@ describe('checkout @gatekeeper', () => {
             workspacePlan: {
               workspaceId,
               name: storedCheckoutSession.workspacePlan,
-              status: 'valid'
+              status: 'valid',
+              previousPlanName: 'free'
             }
           })
           expect(storedWorkspaceSubscriptionData!.billingInterval).to.equal(
