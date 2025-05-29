@@ -7,6 +7,7 @@ export class DefermentManager {
   private timer?: ReturnType<typeof setTimeout>
   private logger: CustomLogger
   private currentSize = 0
+  private disposed = false
 
   constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()
@@ -22,10 +23,12 @@ export class DefermentManager {
   }
 
   get(id: string): DeferredBase | undefined {
+    if (this.disposed) throw new Error('DefermentManager is disposed')
     return this.deferments.get(id)
   }
 
   async defer(params: { id: string }): Promise<Base> {
+    if (this.disposed) throw new Error('DefermentManager is disposed')
     const now = this.now()
     const deferredBase = this.deferments.get(params.id)
     if (deferredBase) {
@@ -42,6 +45,7 @@ export class DefermentManager {
   }
 
   undefer(item: Item): void {
+    if (this.disposed) throw new Error('DefermentManager is disposed')
     const now = this.now()
     this.currentSize += item.size || 0
     //order matters here with found before undefer
@@ -65,6 +69,8 @@ export class DefermentManager {
   }
 
   dispose(): void {
+    if (this.disposed) return
+    this.disposed = true
     if (this.timer) {
       clearTimeout(this.timer)
       this.timer = undefined

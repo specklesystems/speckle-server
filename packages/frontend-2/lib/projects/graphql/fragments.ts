@@ -52,6 +52,7 @@ export const projectDashboardItemFragment = graphql(`
   fragment ProjectDashboardItem on Project {
     id
     ...ProjectDashboardItemNoModels
+    ...ProjectCardImportFileArea_Project
     models(limit: 4) {
       totalCount
       items {
@@ -105,6 +106,7 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     ...ProjectPageModelsCardRenameDialog
     ...ProjectPageModelsCardDeleteDialog
     ...ProjectPageModelsActions
+    ...ProjectCardImportFileArea_Model
     automationsStatus {
       ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
     }
@@ -162,6 +164,8 @@ export const projectPageLatestItemsModelsFragment = graphql(`
       totalCount
     }
     ...ProjectPageModelsStructureItem_Project
+    ...ProjectCardImportFileArea_Project
+    ...ProjectModelsAdd_Project
   }
 `)
 

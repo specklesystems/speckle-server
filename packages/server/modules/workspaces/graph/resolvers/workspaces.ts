@@ -566,6 +566,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const updateWorkspacePlan = updateWorkspacePlanFactory({
             getWorkspace: getWorkspaceFactory({ db }),
             upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
             emitEvent: getEventBus().emit
           })
 

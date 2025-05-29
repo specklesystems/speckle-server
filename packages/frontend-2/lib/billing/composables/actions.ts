@@ -163,7 +163,6 @@ export const useBillingActions = () => {
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       }
-      mixpanel.track('Workspace Upgraded', metaData)
       $intercom.track('Workspace Upgraded', {
         ...metaData,
         isExistingSubscription: false
@@ -226,7 +225,6 @@ export const useBillingActions = () => {
           workspace_id: workspace.id
         }
 
-        mixpanel.track('Workspace Upgraded', metaData)
         $intercom.track('Workspace Upgraded', {
           ...metaData,
           isExistingSubscription: false

@@ -74,9 +74,6 @@ export const adminPanelProjectsQuery = graphql(`
         ...SettingsServerProjects_ProjectCollection
       }
     }
-    activeUser {
-      ...SettingsServerProjects_User
-    }
   }
 `)
 

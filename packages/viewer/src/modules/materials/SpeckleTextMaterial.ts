@@ -26,7 +26,7 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff: Vector2 = new Vector2()
 
-  private _billboardPixelHeight!: number
+  private _billboardPixelHeight: number
 
   protected get vertexProgram(): string {
     return speckleTextVert

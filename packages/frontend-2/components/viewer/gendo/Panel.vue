@@ -62,7 +62,7 @@
                   <ArrowTopRightOnSquareIcon class="h-3 w-3" />
                 </div>
               </FormButton>
-              <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
+              <div v-tippy="tooltipMessage">
                 <FormButton :disabled="buttonDisabled" size="sm" @click="enqueMagic()">
                   Generate
                 </FormButton>

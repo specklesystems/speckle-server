@@ -10,27 +10,14 @@ import { Optional, TIME_MS } from '@speckle/shared'
 import Bull from 'bull'
 import cryptoRandomString from 'crypto-random-string'
 import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
+import { JobPayload } from '@speckle/shared/workers/fileimport'
+import { ScheduleFileimportJob } from '@/modules/fileuploads/domain/operations'
 
 const FILE_IMPORT_SERVICE_QUEUE_NAME = isTestEnv()
   ? `test:fileimport-service-jobs:${cryptoRandomString({ length: 5 })}`
   : 'fileimport-service-jobs'
 
-export type JobFileImportPayload = {
-  blobId: string
-  modelId: string
-  projectId: string
-  url: string
-  token: string
-  fileType: string
-  timeOutSeconds: number
-}
-
-export type FileImportJob = {
-  type: 'file-import'
-  payload: JobFileImportPayload
-}
-
-let queue: Optional<Bull.Queue<FileImportJob>>
+let queue: Optional<Bull.Queue<JobPayload>>
 
 if (isTestEnv()) {
   logger.info(`Fileimport service test queue ID: ${FILE_IMPORT_SERVICE_QUEUE_NAME}`)
@@ -71,13 +58,12 @@ export const shutdownQueue = async () => {
   await queue.close()
 }
 
-export const scheduleJob = async (jobData: FileImportJob): Promise<string> => {
+export const scheduleJob: ScheduleFileimportJob = async (jobData) => {
   if (!queue) {
     throw new UninitializedResourceAccessError(
       'Attempting to use uninitialized Bull queue'
     )
   }
 
-  const job = await queue.add(jobData, { removeOnComplete: true, attempts: 3 })
-  return job.id.toString()
+  await queue.add(jobData, { removeOnComplete: true, attempts: 3 })
 }

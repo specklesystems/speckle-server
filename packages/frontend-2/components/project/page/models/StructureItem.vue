@@ -33,18 +33,13 @@
         <!-- Empty model action -->
         <div
           v-if="itemType === StructureItemType.EmptyModel"
-          :key="`add-submodel-${canCreateModel?.authorized}`"
-          v-tippy="
-            canCreateModel?.authorized
-              ? undefined
-              : canCreateModel?.message || 'You do not have permission to create models'
-          "
+          v-tippy="canCreateModel.cantClickCreateReason.value"
         >
           <FormButton
             color="subtle"
             :icon-left="PlusIcon"
             size="sm"
-            :disabled="!canCreateModel.authorized"
+            :disabled="!canCreateModel.canClickCreate.value"
             @click.stop="$emit('create-submodel', model?.name || '')"
           >
             submodel
@@ -55,9 +50,9 @@
         <ProjectCardImportFileArea
           v-if="!isPendingFileUpload(item)"
           ref="importArea"
-          :project-id="project.id"
+          :project="project"
           :model-name="item.fullName"
-          :disabled="!canCreateModel.authorized"
+          :model="item.model || undefined"
           class="hidden"
         />
         <div
@@ -78,9 +73,9 @@
             :empty-state-variant="
               props.gridOrList === GridListToggleValue.Grid ? 'modelGrid' : 'modelList'
             "
-            :project-id="project.id"
+            :project="project"
             :model-name="item.fullName"
-            :disabled="!canCreateModel.authorized"
+            :model="item.model || undefined"
             class="h-full w-full"
           />
         </div>
@@ -242,6 +237,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import { useCanCreateModel } from '~/lib/projects/composables/permissions'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -259,6 +255,8 @@ graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
     ...ProjectPageModelsActions_Project
+    ...ProjectCardImportFileArea_Project
+    ...UseCanCreateModel_Project
     permissions {
       canCreateModel {
         ...FullPermissionCheckResult
@@ -274,6 +272,7 @@ graphql(`
     fullName
     model {
       ...ProjectPageLatestItemsModelItem
+      ...ProjectCardImportFileArea_Model
     }
     hasChildren
     updatedAt
@@ -315,7 +314,10 @@ const trackFederateModels = () =>
 
 const showActionsMenu = ref(false)
 
-const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
+const canCreateModel = useCanCreateModel({
+  project: computed(() => props.project)
+})
+
 const canEdit = computed(() =>
   isPendingFileUpload(props.item) ? undefined : props.item.model?.permissions.canUpdate
 )

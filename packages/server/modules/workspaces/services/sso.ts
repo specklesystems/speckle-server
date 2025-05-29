@@ -38,27 +38,30 @@ import {
   getEmailFromOidcProfile,
   isValidSsoSession
 } from '@/modules/workspaces/domain/sso/logic'
-import type { Logger } from '@/observability/logging'
+import { logger, type Logger } from '@/observability/logging'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
   // client,
   issuer
 }: OidcProviderAttributes): void => {
-  if (!issuer.grantTypesSupported.includes('authorization_code'))
+  // Validate issuer
+  if (!issuer.grantTypesSupported.includes('authorization_code')) {
+    logger.info(
+      {
+        supportedGrantTypes: issuer.grantTypesSupported
+      },
+      'OIDC provider does not support required grant types.'
+    )
     throw new OidcProviderMissingGrantTypeError()
-  /*
-validate issuer:
-authorization_signing_alg_values_supported
-claims_supported: ['email', 'name', 'given_name', 'family_name']
-scopes_supported: ['openid', 'profile', 'email']
-grant_types_supported: ['authorization_code']
-response_types_supported: //TODO figure out which
+  }
+  // authorization_signing_alg_values_supported
+  // claims_supported: ['email', 'name', 'given_name', 'family_name']
+  // scopes_supported: ['openid', 'profile', 'email']
+  // response_types_supported: //TODO figure out which
 
-validate client:
-grant_types: ['authorization_code'],
-
-  */
+  // Validate client
+  // grant_types: ['authorization_code']
 }
 
 /**

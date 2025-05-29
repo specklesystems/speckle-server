@@ -88,6 +88,10 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
+import {
+  ProjectNotEnoughPermissionsError,
+  WorkspaceLimitsReachedError
+} from '@speckle/shared/authz'
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
@@ -136,7 +140,7 @@ const isProjectDisabled = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
     if (
       project.permissions.canMoveToWorkspace.authorized ||
-      project.permissions.canMoveToWorkspace.code === 'WorkspaceLimitsReached'
+      project.permissions.canMoveToWorkspace.code === WorkspaceLimitsReachedError.code
     ) {
       return false
     }
@@ -148,11 +152,14 @@ const getProjectTooltip = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
     if (
       project.permissions.canMoveToWorkspace.authorized ||
-      project.permissions.canMoveToWorkspace.code === 'WorkspaceLimitsReached'
+      project.permissions.canMoveToWorkspace.code === WorkspaceLimitsReachedError.code
     ) {
       return undefined
     }
-    if (project.permissions.canMoveToWorkspace.code === 'ProjectNotEnoughPermissions') {
+    if (
+      project.permissions.canMoveToWorkspace.code ===
+      ProjectNotEnoughPermissionsError.code
+    ) {
       return 'Only the project owner can move this project'
     }
     return project.permissions.canMoveToWorkspace.message
@@ -161,7 +168,7 @@ const getProjectTooltip = computed(
 
 const handleProjectClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
   const permission = project.permissions?.canMoveToWorkspace
-  if (permission?.code === 'WorkspaceLimitsReached') {
+  if (permission?.code === WorkspaceLimitsReachedError.code) {
     showLimitDialog.value = true
     return
   }

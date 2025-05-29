@@ -590,7 +590,7 @@ export class InstancedMeshBatch implements Batch {
     if (!indices || !positions) {
       throw new Error(`Cannot build batch ${this.id}. Undefined indices or positions`)
     }
-    this.makeInstancedMeshGeometry(
+    this.geometry = this.makeInstancedMeshGeometry(
       positions.length >= 65535 || indices.length >= 65535
         ? new Uint32Array(indices)
         : new Uint16Array(indices),
@@ -598,6 +598,7 @@ export class InstancedMeshBatch implements Batch {
       normals ? new Float32Array(normals) : undefined,
       colors ? new Float32Array(colors) : undefined
     )
+
     this.mesh = new SpeckleInstancedMesh(this.geometry)
     this.mesh.setBatchObjects(batchObjects)
     this.mesh.setBatchMaterial(this.batchMaterial)
@@ -658,17 +659,17 @@ export class InstancedMeshBatch implements Batch {
     normal?: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
-    this.geometry = new BufferGeometry()
+    const geometry = new BufferGeometry()
     if (position) {
       /** When RTE enabled, we'll be storing the high component of the encoding here,
        * which considering our current encoding method is actually the original casted
        * down float32 position!
        */
-      this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
+      geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 
     if (color) {
-      this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
+      geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
     }
     let indexBuffer = null
     if (position.length >= 65535 || indices.length >= 65535) {
@@ -676,19 +677,17 @@ export class InstancedMeshBatch implements Batch {
     } else {
       indexBuffer = new Uint16BufferAttribute(indices, 1)
     }
-    this.geometry.setIndex(indexBuffer)
+    geometry.setIndex(indexBuffer)
 
     this.instanceGradientBuffer = new Float32Array(this.renderViews.length)
 
     if (normal) {
-      this.geometry
+      geometry
         .setAttribute('normal', new Float32BufferAttribute(normal, 3))
         .normalizeNormals()
-    } else Geometry.computeVertexNormals(this.geometry, position)
+    } else Geometry.computeVertexNormals(geometry, position)
 
-    Geometry.updateRTEGeometry(this.geometry, position)
-
-    return this.geometry
+    return geometry
   }
 
   private updateGradientIndexBufferData(index: number, value: number): void {
