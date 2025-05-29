@@ -1861,7 +1861,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await listExpiredSsoSessions({ userId: context.userId })
         },
-        workspaces: async (_parent, args, context) => {
+        workspaces: async (parent, args, context) => {
           if (!context.userId) {
             throw new WorkspacesNotAuthorizedError()
           }
@@ -1872,7 +1872,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
 
           const workspaces = await getWorkspaces({
-            userId: context.userId,
+            userId: parent.id,
             search: args.filter?.search ?? undefined,
             completed: args.filter?.completed ?? undefined
           })
