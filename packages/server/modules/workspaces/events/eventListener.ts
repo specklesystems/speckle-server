@@ -550,9 +550,13 @@ export const workspaceTrackingFactory =
     const getUserTrackingProperties = async ({ userId }: { userId: string }) => {
       const primaryEmail = await findPrimaryEmailForUser({ userId })
       if (!primaryEmail) return {}
+      const mixpanelUserId = resolveMixpanelUserId(primaryEmail.email)
+
       return {
         // eslint-disable-next-line camelcase
-        user_id: resolveMixpanelUserId(primaryEmail.email)
+        user_id: mixpanelUserId,
+        // eslint-disable-next-line camelcase
+        distinct_id: mixpanelUserId
       }
     }
 
