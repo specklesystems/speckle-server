@@ -17,6 +17,7 @@ let appState: AppState = AppState.STARTING
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
 
 export const main = async () => {
+  logger.info('Starting FileUploads Service (nextGen 🚀)...')
   // we discussed doing push based metrics from here
   // await initMetrics({ app, registry: initPrometheusRegistry() })
 

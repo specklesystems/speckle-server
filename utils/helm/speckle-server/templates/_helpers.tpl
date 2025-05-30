@@ -779,6 +779,14 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
 {{- end }}
 
+{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+- name: FILEIMPORT_SERVICE_REDIS_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.redis.fileimportServiceConnectionString.secretName }}
+      key: {{ default "fileimport_service_redis_url" .Values.redis.fileimportServiceConnectionString.secretKey }}
+{{- end }}
+
 # *** PostgreSQL Database ***
 - name: POSTGRES_URL
   valueFrom:
