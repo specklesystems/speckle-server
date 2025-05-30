@@ -2,9 +2,10 @@
   <WorkspaceCard
     :logo="workspace.logo ?? ''"
     :name="workspace.name"
-    :class="requestStatus === 'pending' ? '' : 'bg-foundation'"
+    :class="requestStatus === WorkspaceJoinRequestStatus.Pending ? '' : 'bg-foundation'"
     :banner-text="
-      workspace.discoverabilityAutoJoinEnabled && requestStatus !== 'approved'
+      workspace.discoverabilityAutoJoinEnabled &&
+      requestStatus !== WorkspaceJoinRequestStatus.Approved
         ? 'You can join this workspace automatically. No admin approval needed.'
         : null
     "
@@ -35,11 +36,16 @@
       </div>
     </template>
     <template #actions>
-      <FormButton v-if="requestStatus === 'pending'" color="outline" size="sm" disabled>
+      <FormButton
+        v-if="requestStatus === WorkspaceJoinRequestStatus.Pending"
+        color="outline"
+        size="sm"
+        disabled
+      >
         Join request sent
       </FormButton>
       <FormButton
-        v-else-if="requestStatus === 'approved'"
+        v-else-if="requestStatus === WorkspaceJoinRequestStatus.Approved"
         color="outline"
         size="sm"
         :icon-left="CheckIcon"
@@ -73,6 +79,7 @@ import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~~/lib/comm
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { CheckIcon } from '@heroicons/vue/20/solid'
+import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   workspace: DiscoverableWorkspace_LimitedWorkspaceFragment

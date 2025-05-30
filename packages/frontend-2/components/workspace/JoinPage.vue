@@ -30,8 +30,8 @@
         :workspace="workspace"
         :request-status="workspace.requestStatus"
         location="workspace_join_page"
-        @auto-joined="workspace.requestStatus = 'approved'"
-        @request="workspace.requestStatus = 'pending'"
+        @auto-joined="workspace.requestStatus = WorkspaceJoinRequestStatus.Approved"
+        @request="workspace.requestStatus = WorkspaceJoinRequestStatus.Pending"
       />
       <FormButton
         v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 3"
@@ -83,6 +83,7 @@ import { useAuthManager } from '~/lib/auth/composables/auth'
 import { workspaceCreateRoute, homeRoute } from '~~/lib/common/helpers/route'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 const { logout } = useAuthManager()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
@@ -94,7 +95,9 @@ const {
 } = useDiscoverableWorkspaces()
 
 const hasApprovedWorkspace = computed(() =>
-  localWorkspaces.value.some((workspace) => workspace.requestStatus === 'approved')
+  localWorkspaces.value.some(
+    (workspace) => workspace.requestStatus === WorkspaceJoinRequestStatus.Approved
+  )
 )
 
 const showAllWorkspaces = ref(false)

@@ -16,8 +16,8 @@
         :request-status="workspace.requestStatus"
         show-dismiss-button
         location="workspace_switcher"
-        @auto-joined="workspace.requestStatus = 'approved'"
-        @request="workspace.requestStatus = 'pending'"
+        @auto-joined="workspace.requestStatus = WorkspaceJoinRequestStatus.Approved"
+        @request="workspace.requestStatus = WorkspaceJoinRequestStatus.Pending"
         @go-to-workspace="open = false"
       />
       <FormButton
@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
+import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 const {
   discoverableWorkspacesAndJoinRequests,
