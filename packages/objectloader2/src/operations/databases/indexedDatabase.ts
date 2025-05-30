@@ -5,7 +5,7 @@ import { isSafari } from '@speckle/shared'
 import { Dexie, DexieOptions, Table } from 'dexie'
 import { Database } from '../interfaces.js'
 
-class ObjectStore extends Dexie {
+export class ObjectStore extends Dexie {
   static #databaseName: string = 'speckle-cache'
   objects!: Table<Item, string> // Table type: <entity, primaryKey>
 
@@ -88,22 +88,6 @@ export default class IndexedDatabase implements Database {
     await this.#setupCacheDb()
     await this.#cacheDB!.transaction('rw', this.#cacheDB!.objects, async () => {
       return await this.#cacheDB?.objects.add(item)
-    })
-  }
-
-  async getItem(params: { id: string }): Promise<Item | undefined> {
-    const { id } = params
-    await this.#setupCacheDb()
-    //might not be in the real DB yet, so check the write queue first
-    if (this.#writeQueue) {
-      const item = this.#writeQueue.get(id)
-      if (item) {
-        return item
-      }
-    }
-
-    return this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
-      return await this.#cacheDB?.objects.get(id)
     })
   }
 
