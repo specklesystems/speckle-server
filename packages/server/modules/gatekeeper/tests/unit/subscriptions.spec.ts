@@ -699,7 +699,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async () => {
           expect.fail()
-        }
+        },
+        eventBusEmit: async () => {}
       })
       const err = await expectToThrow(async () => {
         await downscaleSubscription({ workspaceSubscription })
@@ -729,7 +730,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async () => {
           expect.fail()
-        }
+        },
+        eventBusEmit: async () => {}
       })
       const err = await expectToThrow(async () => {
         await downscaleSubscription({ workspaceSubscription })
@@ -759,7 +761,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async () => {
           expect.fail()
-        }
+        },
+        eventBusEmit: async () => {}
       })
       const hasDownscaled = await downscaleSubscription({ workspaceSubscription })
       expect(hasDownscaled).to.be.false
@@ -798,7 +801,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async () => {
           expect.fail()
-        }
+        },
+        eventBusEmit: async () => {}
       })
       await downscaleSubscription({ workspaceSubscription })
     })
@@ -841,7 +845,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async ({ subscriptionData }) => {
           reconciledSub = subscriptionData
-        }
+        },
+        eventBusEmit: async () => {}
       })
       await downscaleSubscription({ workspaceSubscription: testWorkspaceSubscription })
 
@@ -866,7 +871,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async () => {
           expect.fail()
-        }
+        },
+        eventBusEmit: async () => {}
       })
       const err = await expectToThrow(async () => {
         await downscaleSubscription({ workspaceSubscription })
@@ -896,7 +902,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async () => {
           expect.fail()
-        }
+        },
+        eventBusEmit: async () => {}
       })
       const err = await expectToThrow(async () => {
         await downscaleSubscription({ workspaceSubscription })
@@ -926,7 +933,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async () => {
           expect.fail()
-        }
+        },
+        eventBusEmit: async () => {}
       })
       const hasDownscaled = await downscaleSubscription({ workspaceSubscription })
       expect(hasDownscaled).to.be.false
@@ -965,7 +973,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async () => {
           expect.fail()
-        }
+        },
+        eventBusEmit: async () => {}
       })
       await downscaleSubscription({ workspaceSubscription })
     })
@@ -1009,7 +1018,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         reconcileSubscriptionData: async ({ subscriptionData }) => {
           reconciledSub = subscriptionData
-        }
+        },
+        eventBusEmit: async () => {}
       })
       await downscaleSubscription({ workspaceSubscription: testWorkspaceSubscription })
 

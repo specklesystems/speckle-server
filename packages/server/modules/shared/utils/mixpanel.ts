@@ -28,7 +28,11 @@ export const MixpanelEvents = {
   FileUploadStarted: 'File Upload Started',
   AutomateFunctionRunFinished: 'Automate Function Run Finished',
   AutomationRunTriggered: 'Automation Run Triggered',
-  SignUp: 'Sign Up'
+  SignUp: 'Sign Up',
+  EditorSeatsPurchased: 'Editor Seats Purchased',
+  EditorSeatsDownscaled: 'Editor Seats Downscaled',
+  EditorSeatAssigned: 'Editor Seat Assigned',
+  EditorSeatUnassigned: 'Editor Seat Unassigned'
 } as const
 
 type TrackParameters = {
