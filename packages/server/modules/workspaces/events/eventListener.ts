@@ -104,7 +104,10 @@ import {
   getWorkspaceWithPlanFactory,
   upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
   deleteWorkspaceSeatFactory,
@@ -758,6 +761,9 @@ export const initializeEventListenersFactory =
     const ensureValidWorkspaceRoleSeat = ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat,
       getWorkspaceUserSeat,
+      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace
+      }),
       eventEmit: eventBus.emit
     })
 

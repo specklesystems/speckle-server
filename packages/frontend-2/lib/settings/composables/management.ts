@@ -92,7 +92,8 @@ export function useAddWorkspaceDomain() {
                 discoverabilityEnabled,
                 domainBasedMembershipProtectionEnabled,
                 hasAccessToSSO,
-                hasAccessToDomainBasedSecurityPolicies
+                hasAccessToDomainBasedSecurityPolicies,
+                discoverabilityAutoJoinEnabled: false
               }
             }
           },

@@ -154,6 +154,11 @@
           "type": "string",
           "description": "The name of the Kubernetes pod in which the ingress controller is deployed.",
           "default": "ingress-nginx"
+        },
+        "client_max_body_size_mb": {
+          "type": "number",
+          "description": "This maximum size of the body of any request (except file uploads) that can be sent to Speckle. For file uploads, the maximum size is defined by the `.file_size_limit_mb` parameter.",
+          "default": 10
         }
       }
     },

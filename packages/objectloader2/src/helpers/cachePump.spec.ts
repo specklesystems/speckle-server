@@ -78,7 +78,8 @@ describe('CachePump testing', () => {
     const i2: Item = { baseId: 'id2', base: { id: 'id', speckle_type: 'type' } }
 
     const db: Database = {
-      getAll: async () => Promise.resolve([])
+      getAll: async () => Promise.resolve([]),
+      disposeAsync: async (): Promise<void> => {}
     } as unknown as Database
     const gathered = new AsyncGeneratorQueue<Item>()
     const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
