@@ -5,7 +5,8 @@
       <SettingsSharedProjects
         v-model:search="search"
         :projects="projects"
-        :disable-create="!canCreatePersonalProject?.authorized"
+        :workspace-id="null"
+        :workspace="null"
       />
       <InfiniteLoading
         v-if="projects?.length"
@@ -29,16 +30,6 @@ graphql(`
     totalCount
     items {
       ...SettingsSharedProjects_Project
-    }
-  }
-`)
-
-graphql(`
-  fragment SettingsServerProjects_User on User {
-    permissions {
-      canCreatePersonalProject {
-        ...FullPermissionCheckResult
-      }
     }
   }
 `)
@@ -74,7 +65,4 @@ const {
 })
 
 const projects = computed(() => result.value?.admin.projectList.items || [])
-const canCreatePersonalProject = computed(
-  () => result.value?.activeUser?.permissions.canCreatePersonalProject
-)
 </script>

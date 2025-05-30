@@ -20,6 +20,7 @@ import {
 } from '@speckle/shared'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
 import { NotFoundError } from '@/modules/shared/errors'
+import { buildTestWorkspacePlan } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
 
 describe('checkout @gatekeeper', () => {
   describe('completeCheckoutSessionFactory creates a function, that', () => {
@@ -36,6 +37,7 @@ describe('checkout @gatekeeper', () => {
           upsertPaidWorkspacePlan: async () => {
             expect.fail()
           },
+          getWorkspacePlan: async () => null,
           getSubscriptionData: async () => {
             expect.fail()
           },
@@ -72,6 +74,7 @@ describe('checkout @gatekeeper', () => {
           upsertPaidWorkspacePlan: async () => {
             expect.fail()
           },
+          getWorkspacePlan: async () => null,
           getSubscriptionData: async () => {
             expect.fail()
           },
@@ -136,6 +139,8 @@ describe('checkout @gatekeeper', () => {
             upsertPaidWorkspacePlan: async ({ workspacePlan }) => {
               storedWorkspacePlan = workspacePlan
             },
+            getWorkspacePlan: async () =>
+              buildTestWorkspacePlan({ workspaceId, name: 'free' }),
             getSubscriptionData: async () => subscriptionData,
             upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
               storedWorkspaceSubscriptionData = workspaceSubscription
@@ -147,7 +152,7 @@ describe('checkout @gatekeeper', () => {
           })({ sessionId, subscriptionId })
 
           expect(storedCheckoutSession.paymentStatus).to.equal('paid')
-          expect(omit(storedWorkspacePlan, 'createdAt')).to.deep.equal({
+          expect(omit(storedWorkspacePlan, 'createdAt', 'updatedAt')).to.deep.equal({
             workspaceId,
             name: storedCheckoutSession.workspacePlan,
             status: 'valid'
@@ -158,6 +163,9 @@ describe('checkout @gatekeeper', () => {
               workspaceId,
               name: storedCheckoutSession.workspacePlan,
               status: 'valid'
+            },
+            previousPlan: {
+              name: 'free'
             }
           })
           expect(storedWorkspaceSubscriptionData!.billingInterval).to.equal(
@@ -228,6 +236,7 @@ describe('checkout @gatekeeper', () => {
             name: 'team',
             status: 'valid',
             createdAt: new Date(),
+            updatedAt: new Date(),
             workspaceId
           }),
           getWorkspaceCheckoutSession: () => {
@@ -264,6 +273,7 @@ describe('checkout @gatekeeper', () => {
             name: 'team',
             status: 'paymentFailed',
             createdAt: new Date(),
+            updatedAt: new Date(),
             workspaceId
           }),
           getWorkspaceCheckoutSession: () => {
@@ -300,7 +310,7 @@ describe('checkout @gatekeeper', () => {
             name: 'free',
             status: 'valid',
             createdAt: new Date(),
-
+            updatedAt: new Date(),
             workspaceId
           }),
           getWorkspaceCheckoutSession: async () => ({
@@ -362,6 +372,7 @@ describe('checkout @gatekeeper', () => {
           workspaceId,
           name: 'free',
           createdAt: new Date(),
+          updatedAt: new Date(),
           status: 'valid'
         }),
         getWorkspaceCheckoutSession: async () => null,
@@ -417,7 +428,8 @@ describe('checkout @gatekeeper', () => {
           workspaceId,
           name: 'free',
           status: 'valid',
-          createdAt: new Date()
+          createdAt: new Date(),
+          updatedAt: new Date()
         }),
         getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
         countSeatsByTypeInWorkspace: async () => 1,
@@ -462,6 +474,7 @@ describe('checkout @gatekeeper', () => {
             workspaceId,
             name: 'free',
             createdAt: new Date(),
+            updatedAt: new Date(),
             status: 'valid'
           }),
           getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
@@ -517,6 +530,7 @@ describe('checkout @gatekeeper', () => {
           name: 'team',
           workspaceId,
           createdAt: new Date(),
+          updatedAt: new Date(),
           status: 'canceled'
         }),
         getWorkspaceCheckoutSession: async () => existingCheckoutSession!,

@@ -44,7 +44,7 @@ class SpeckleLineMaterial extends ExtendedLineMaterial {
     this.needsUpdate = true
   }
 
-  constructor(parameters: LineMaterialParameters, defines = ['USE_RTE']) {
+  constructor(parameters: LineMaterialParameters, defines: string[] = []) {
     super(parameters)
     this.init(defines)
   }
@@ -75,9 +75,11 @@ class SpeckleLineMaterial extends ExtendedLineMaterial {
     _geometry: BufferGeometry,
     object: Object3D
   ) {
-    object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
-    this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
-    this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
+    if (this.defines && this.defines['USE_RTE']) {
+      object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+      this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+      this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
+    }
     _this.getDrawingBufferSize(this.resolution)
     this.needsUpdate = true
   }

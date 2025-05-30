@@ -152,3 +152,14 @@ export const dismissDiscoverableWorkspaceMutation = graphql(`
     }
   }
 `)
+
+export const workspaceUpdateAutoJoinMutation = graphql(`
+  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        discoverabilityAutoJoinEnabled
+      }
+    }
+  }
+`)

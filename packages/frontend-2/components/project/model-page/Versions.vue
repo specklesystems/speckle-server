@@ -38,8 +38,7 @@
           v-model:selected="itemsSelectedState[item.id]"
           :version="item"
           :model-id="project.model.id"
-          :project-id="project.id"
-          :workspace-slug="project.workspace?.slug"
+          :project="project"
           :style="`z-index: ${items.length - i};`"
           :selectable="!!selectedItems.length"
           :selection-disabled="disabledSelections[item.id]"
@@ -51,8 +50,7 @@
           v-else
           :version="item"
           :model-id="project.model.id"
-          :project-id="project.id"
-          :workspace-slug="project.workspace?.slug"
+          :project="project"
           :style="`z-index: ${items.length - i};`"
         />
       </template>
@@ -130,6 +128,7 @@ graphql(`
     }
     ...ProjectsModelPageEmbed_Project
     ...ProjectCardImportFileArea_Project
+    ...ProjectModelPageVersionsCard_Project
   }
 `)
 

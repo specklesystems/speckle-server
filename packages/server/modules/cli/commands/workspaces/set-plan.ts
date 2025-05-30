@@ -5,7 +5,10 @@ import {
   getWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
-import { upsertWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import {
+  getWorkspacePlanFactory,
+  upsertWorkspacePlanFactory
+} from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { PaidWorkspacePlans, PaidWorkspacePlanStatuses } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -53,6 +56,7 @@ const command: CommandModule<
     const updateWorkspacePlan = updateWorkspacePlanFactory({
       getWorkspace: getWorkspaceFactory({ db }),
       upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
+      getWorkspacePlan: getWorkspacePlanFactory({ db }),
       emitEvent: getEventBus().emit
     })
     await updateWorkspacePlan({

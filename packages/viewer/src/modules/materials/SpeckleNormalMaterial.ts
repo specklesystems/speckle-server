@@ -38,7 +38,7 @@ class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
     }
   }
 
-  constructor(parameters: MeshNormalMaterialParameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshNormalMaterialParameters, defines: string[] = []) {
     super(parameters)
     this.init(defines)
   }

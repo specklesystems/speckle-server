@@ -126,6 +126,7 @@ export const buildWorkspaceTrackingPropertiesFactory =
       planName: plan?.name || '',
       planStatus: plan?.status || '',
       planCreatedAt: plan?.createdAt || null,
+      planUpdatedAt: plan?.updatedAt || null,
       subscriptionCreatedAt,
       subscriptionBillingInterval,
       subscriptionCurrentBillingCycleEnd,
@@ -136,6 +137,7 @@ export const buildWorkspaceTrackingPropertiesFactory =
       createdAt: workspace.createdAt,
       projectCount: workspacesProjectCount[workspace.id] || 0,
       modelCount,
+      lastSyncAt: new Date(),
       ...getBaseTrackingProperties()
     }
   }

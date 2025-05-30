@@ -190,6 +190,9 @@ void main() {
         vec4 mvPosition = rteLocalPosition;
     #else
         vec4 mvPosition = vec4( transformed, 1.0 );
+        #ifdef TRANSFORM_STORAGE
+            mvPosition.xyz = rotate_scaled_vertex_position_delta(mvPosition, tPivotHigh, tScale, tQuaternion) + tPivotHigh.xyz + tTranslation.xyz;
+        #endif
         #ifdef USE_INSTANCING
             mvPosition = instanceMatrix * mvPosition;
         #endif
@@ -223,14 +226,21 @@ void main() {
         #ifdef USE_RTE
             shadowPosition = computeRelativePosition(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
             shadowMatrix = rteShadowMatrix;
-        #endif
-        #ifdef TRANSFORM_STORAGE
-            highp vec4 rtePivotShadow = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
-            shadowPosition.xyz = rotate_scaled_vertex_position_delta(shadowPosition, rtePivotShadow, tScale, tQuaternion) + rtePivotShadow.xyz + tTranslation.xyz;
-        #endif
-        #ifdef USE_INSTANCING
-            vec4 rtePivotShadow = computeRelativePosition(ZERO3, ZERO3, uShadowViewer_low, uShadowViewer_high);
-            shadowPosition.xyz = (mat3(instanceMatrix) * (shadowPosition - rtePivotShadow).xyz) + rtePivotShadow.xyz + instanceMatrix[3].xyz;
+            #ifdef TRANSFORM_STORAGE
+                highp vec4 rtePivotShadow = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
+                shadowPosition.xyz = rotate_scaled_vertex_position_delta(shadowPosition, rtePivotShadow, tScale, tQuaternion) + rtePivotShadow.xyz + tTranslation.xyz;
+            #endif
+            #ifdef USE_INSTANCING
+                vec4 rtePivotShadow = computeRelativePosition(ZERO3, ZERO3, uShadowViewer_low, uShadowViewer_high);
+                shadowPosition.xyz = (mat3(instanceMatrix) * (shadowPosition - rtePivotShadow).xyz) + rtePivotShadow.xyz + instanceMatrix[3].xyz;
+            #endif
+        #else
+            #ifdef TRANSFORM_STORAGE
+                shadowPosition.xyz = rotate_vertex_position(shadowPosition.xyz * tScale.xyz, tQuaternion) + tTranslation.xyz;
+            #endif
+            #ifdef USE_INSTANCING
+                shadowPosition = instanceMatrix * shadowPosition;
+            #endif
         #endif
         shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
         vDirectionalShadowCoord[ i ] = shadowMatrix * shadowWorldPosition;

@@ -23,18 +23,21 @@ import {
 } from '@speckle/shared'
 import { cloneDeep } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 
 export const handleSubscriptionUpdateFactory =
   ({
     upsertPaidWorkspacePlan,
     getWorkspacePlan,
     getWorkspaceSubscriptionBySubscriptionId,
-    upsertWorkspaceSubscription
+    upsertWorkspaceSubscription,
+    emitEvent
   }: {
     getWorkspacePlan: GetWorkspacePlan
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getWorkspaceSubscriptionBySubscriptionId: GetWorkspaceSubscriptionBySubscriptionId
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
+    emitEvent: EventBusEmit
   }) =>
   async ({ subscriptionData }: { subscriptionData: SubscriptionData }) => {
     // we're only handling marking the sub scheduled for cancelation right now
@@ -99,6 +102,14 @@ export const handleSubscriptionUpdateFactory =
           ...subscription,
           updatedAt: new Date(),
           subscriptionData
+        }
+      })
+
+      await emitEvent({
+        eventName: 'gatekeeper.workspace-subscription-updated',
+        payload: {
+          workspaceId: subscription.workspaceId,
+          status
         }
       })
     }

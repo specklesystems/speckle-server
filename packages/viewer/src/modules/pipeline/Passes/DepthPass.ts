@@ -80,7 +80,7 @@ export class DepthPass extends GeometryPass {
       {
         depthPacking: RGBADepthPacking
       },
-      ['USE_RTE', 'ALPHATEST_REJECTION']
+      ['ALPHATEST_REJECTION']
     )
     this.depthMaterial.blending = NoBlending
     this.depthMaterial.side = DoubleSide

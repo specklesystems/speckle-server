@@ -11,7 +11,7 @@
       <div class="flex gap-3">
         <WorkspaceAvatar :name="name" :logo="logo" size="lg" />
         <div class="flex flex-col sm:flex-row gap-4 justify-between flex-1">
-          <div class="flex flex-col items-start text-body-2xs text-foreground-2">
+          <div class="flex flex-col items-start text-body-2xs text-foreground-2 gap-1">
             <h6 class="text-foreground text-body-sm font-medium">
               {{ name }}
             </h6>
@@ -19,9 +19,15 @@
           </div>
         </div>
       </div>
-      <div class="flex flex-col gap-y-2" @click.stop>
+      <div class="flex flex-col gap-y-2 items-end" @click.stop>
         <slot name="actions"></slot>
       </div>
+    </div>
+    <div
+      v-if="bannerText"
+      class="mt-3 text-body-3xs text-center text-success-700 bg-success-50 px-2 py-1 w-full bg-foundation-page rounded-md border-outline-3 border"
+    >
+      {{ bannerText }}
     </div>
   </CommonCard>
 </template>
@@ -31,6 +37,7 @@ const props = defineProps<{
   logo: string
   name: string
   clickable?: boolean
+  bannerText?: string | null
 }>()
 
 const emit = defineEmits<{

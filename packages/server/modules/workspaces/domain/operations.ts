@@ -143,6 +143,7 @@ export type GetWorkspaceCollaboratorsArgs = {
      */
     excludeUserIds?: string[]
   }
+  hasAccessToEmail?: boolean
 }
 
 export type GetWorkspaceCollaborators = (
@@ -439,7 +440,7 @@ export type UpdateWorkspaceJoinRequestStatus = (params: {
 }) => Promise<number[]>
 
 export type CreateWorkspaceJoinRequest = (params: {
-  workspaceJoinRequest: Omit<WorkspaceJoinRequest, 'createdAt' | 'updatedAt'>
+  workspaceJoinRequest: Omit<WorkspaceJoinRequest, 'createdAt' | 'updatedAt' | 'email'>
 }) => Promise<WorkspaceJoinRequest>
 
 export type SendWorkspaceJoinRequestReceivedEmail = (params: {
