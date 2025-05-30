@@ -41,7 +41,10 @@ import {
   approveWorkspaceJoinRequestFactory,
   denyWorkspaceJoinRequestFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
@@ -186,6 +189,9 @@ export default FF_WORKSPACES_MODULE_ENABLED
                     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                       getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                        getWorkspace: getWorkspaceFactory({ db })
+                      }),
                       eventEmit: emit
                     })
                   })

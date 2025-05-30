@@ -35,6 +35,7 @@ import {
 } from '@/modules/workspaces/domain/sso/types'
 import {
   getWorkspaceBySlugFactory,
+  getWorkspaceFactory,
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
@@ -129,7 +130,10 @@ import cryptoRandomString from 'crypto-random-string'
 import { base64Encode } from '@/modules/shared/helpers/cryptoHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
   getWorkspaceUserSeatFactory
@@ -354,6 +358,9 @@ export const getSsoRouter = (): Router => {
                     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                       createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
                       getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
+                      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                        getWorkspace: getWorkspaceFactory({ db: trx })
+                      }),
                       eventEmit: getEventBus().emit
                     })
                   }),
