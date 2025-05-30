@@ -137,6 +137,7 @@ export const buildWorkspaceTrackingPropertiesFactory =
       createdAt: workspace.createdAt,
       projectCount: workspacesProjectCount[workspace.id] || 0,
       modelCount,
+      lastSyncAt: new Date(),
       ...getBaseTrackingProperties()
     }
   }

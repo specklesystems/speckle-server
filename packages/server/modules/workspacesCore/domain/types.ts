@@ -71,6 +71,7 @@ export type WorkspaceJoinRequestStatus = 'pending' | 'approved' | 'denied' | 'di
 export type WorkspaceJoinRequest = {
   workspaceId: string
   userId: string
+  email: string
   status: WorkspaceJoinRequestStatus
   createdAt: Date
   updatedAt: Date

@@ -4593,6 +4593,7 @@ export type WorkspaceBillingMutationsUpgradePlanArgs = {
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** Date that the user joined the workspace. */
   joinDate: Scalars['DateTime']['output'];
@@ -4737,6 +4738,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceJoinRequest = {
   __typename?: 'WorkspaceJoinRequest';
   createdAt: Scalars['DateTime']['output'];
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   status: WorkspaceJoinRequestStatus;
   user: LimitedUser;

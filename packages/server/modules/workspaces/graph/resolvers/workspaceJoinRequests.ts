@@ -88,6 +88,14 @@ export default FF_WORKSPACES_MODULE_ENABLED
         user: async (parent, _args, ctx) => {
           return await ctx.loaders.users.getUser.load(parent.userId)
         },
+        email: async (parent, _args, ctx) => {
+          const hasAccessToEmail = await ctx.authPolicies.workspace.canReadMemberEmail({
+            workspaceId: parent.workspaceId,
+            userId: ctx.userId
+          })
+          if (!hasAccessToEmail.isOk) return null
+          return parent.email
+        },
         workspace: async (parent, _args, ctx) => {
           return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
         }
