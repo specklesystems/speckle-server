@@ -21,10 +21,11 @@
       class="mt-6 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
-        { id: 'email', header: 'Email', classes: 'col-span-4' },
+        ...(canReadMemberEmail
+          ? [{ id: 'email', header: 'Email', classes: 'col-span-4' }]
+          : []),
         { id: 'seat', header: 'Seat', classes: 'col-span-2' },
         { id: 'joined', header: 'Joined', classes: 'col-span-2' },
-        // { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
@@ -91,31 +92,6 @@
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
-      <!-- <template #projects="{ item }">
-        <FormButton
-          v-if="
-            item.projectRoles.length > 0 &&
-            isWorkspaceAdmin &&
-            item.role !== Roles.Workspace.Admin
-          "
-          color="subtle"
-          size="sm"
-          class="!font-normal !text-foreground-2 -ml-2"
-          @click="
-            () => {
-              targetUser = item
-              showProjectPermissionsDialog = true
-            }
-          "
-        >
-          {{ item.projectRoles.length }}
-          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
-        </FormButton>
-        <div v-else class="text-foreground-2 max-w-max text-body-2xs select-none">
-          {{ item.projectRoles.length }}
-          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
-        </div>
-      </template> -->
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
@@ -140,7 +116,10 @@
 
 <script setup lang="ts">
 import { Roles, type Nullable, type WorkspaceRoles } from '@speckle/shared'
-import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
+import {
+  settingsWorkspacesMembersSearchQuery,
+  settingsWorkspacesMembersTableQuery
+} from '~~/lib/settings/graphql/queries'
 import type {
   WorkspaceSeatType,
   SettingsWorkspacesMembersActionsMenu_UserFragment
@@ -149,16 +128,12 @@ import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import type { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { useQuery } from '@vue/apollo-composable'
 
 graphql(`
   fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
     email
-    # projectRoles {
-    #   project {
-    #     id
-    #   }
-    # }
     ...SettingsWorkspacesMembersActionsMenu_User
   }
 `)
@@ -166,6 +141,11 @@ graphql(`
 const props = defineProps<{
   workspaceSlug: string
 }>()
+
+const { activeUser } = useActiveUser()
+const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
+  slug: props.workspaceSlug
+}))
 
 const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 const search = ref('')
@@ -176,12 +156,10 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
-const { activeUser } = useActiveUser()
-
 const {
   identifier,
   onInfiniteLoad,
-  query: { result, loading }
+  query: { result: membersResult, loading }
 } = usePaginatedQuery({
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
@@ -207,5 +185,8 @@ const {
 })
 
 const workspace = computed(() => result.value?.workspaceBySlug)
-const members = computed(() => workspace.value?.team.items)
+const canReadMemberEmail = computed(
+  () => workspace.value?.permissions.canReadMemberEmail.authorized
+)
+const members = computed(() => membersResult.value?.workspaceBySlug.team.items)
 </script>

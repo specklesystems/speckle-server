@@ -20,7 +20,9 @@
       class="mt-6 md:mt-8"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
-        { id: 'email', header: 'Email', classes: 'col-span-3' },
+        ...(canReadMemberEmail
+          ? [{ id: 'email', header: 'Email', classes: 'col-span-3' }]
+          : []),
         { id: 'seat', header: 'Seat', classes: 'col-span-1' },
         { id: 'joined', header: 'Joined', classes: 'col-span-2' },
         { id: 'projects', header: 'Projects', classes: 'col-span-2' },
@@ -120,12 +122,20 @@ import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Roles, type Nullable } from '@speckle/shared'
-import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
+import {
+  settingsWorkspacesMembersSearchQuery,
+  settingsWorkspacesMembersTableQuery
+} from '~~/lib/settings/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { useQuery } from '@vue/apollo-composable'
 
 const props = defineProps<{
   workspaceSlug: string
 }>()
+
+const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
+  slug: props.workspaceSlug
+}))
 
 const search = ref('')
 const seatTypeFilter = ref<WorkspaceSeatType>()
@@ -137,7 +147,7 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
 const {
   identifier,
   onInfiniteLoad,
-  query: { result, loading }
+  query: { result: membersResult, loading }
 } = usePaginatedQuery({
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
@@ -161,7 +171,11 @@ const {
 })
 
 const workspace = computed(() => result.value?.workspaceBySlug)
-const guests = computed(() => workspace.value?.team.items)
+const guests = computed(() => membersResult.value?.workspaceBySlug?.team?.items)
 
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
+
+const canReadMemberEmail = computed(
+  () => workspace.value?.permissions.canReadMemberEmail.authorized
+)
 </script>
