@@ -21,7 +21,11 @@ const buildCanCreateModelPolicy = (
   overrides?: Partial<Parameters<typeof canCreateModelPolicy>[0]>
 ) =>
   canCreateModelPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () =>
+      parseFeatureFlags({
+        FF_WORKSPACES_MODULE_ENABLED: 'true',
+        FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
+      }),
     getProject: getProjectFake({
       id: cryptoRandomString({ length: 9 }),
       workspaceId: cryptoRandomString({ length: 9 })
@@ -182,6 +186,24 @@ describe('canCreateModelPolicy returns a function, that', () => {
   })
   it('allows new model creation if workspace is within limits', async () => {
     const result = await buildCanCreateModelPolicy({})(canCreateArgs())
+    expect(result).toBeAuthOKResult()
+  })
+
+  it('allows even if workspaceId is set, but workspace module is disabled', async () => {
+    const result = await buildCanCreateModelPolicy({
+      getWorkspace: async () => {
+        assert.fail()
+      },
+      getWorkspaceRole: async () => {
+        assert.fail()
+      },
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'false',
+          FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
+        })
+    })(canCreateArgs())
+
     expect(result).toBeAuthOKResult()
   })
 })

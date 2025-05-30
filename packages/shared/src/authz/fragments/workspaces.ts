@@ -5,6 +5,7 @@ import {
   hasMinimumWorkspaceRole
 } from '../checks/workspaceRole.js'
 import {
+  PersonalProjectsLimitedError,
   ProjectNotFoundError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
@@ -214,6 +215,7 @@ export const ensureWorkspaceProjectCanBeCreatedFragment: AuthPolicyEnsureFragmen
  * If userId is specified, will also check for appropriate user role & seat
  */
 export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
+  | typeof Loaders.getEnv
   | typeof Loaders.getWorkspacePlan
   | typeof Loaders.getWorkspaceRole
   | typeof Loaders.getWorkspaceLimits
@@ -232,55 +234,72 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
     | typeof WorkspaceReadOnlyError
     | typeof WorkspaceLimitsReachedError
     | typeof ProjectNotFoundError
+    | typeof PersonalProjectsLimitedError
   >
 > =
   (loaders) =>
   async ({ projectId, userId, addedModelCount, workspaceId }) => {
     addedModelCount = addedModelCount ?? 1
+
+    const { FF_WORKSPACES_MODULE_ENABLED, FF_PERSONAL_PROJECTS_LIMITS_ENABLED } =
+      await loaders.getEnv()
     const project = await loaders.getProject({ projectId })
     if (!project) return err(new ProjectNotFoundError())
 
     // Project may not be attached to a workspace yet, then we use the specified workspaceId
     workspaceId = workspaceId || project.workspaceId || undefined
-    if (!workspaceId) return ok()
 
-    if (userId) {
-      // Has workspace role
-      const isInWorkspace = await hasAnyWorkspaceRole(loaders)({
-        userId,
+    // If workspace
+    if (workspaceId && FF_WORKSPACES_MODULE_ENABLED) {
+      if (userId) {
+        // Has workspace role
+        const isInWorkspace = await hasAnyWorkspaceRole(loaders)({
+          userId,
+          workspaceId
+        })
+        if (!isInWorkspace) {
+          return err(new WorkspaceNoAccessError())
+        }
+      }
+
+      const ensuredNotReadOnly = await ensureWorkspaceNotReadOnlyFragment(loaders)({
         workspaceId
       })
-      if (!isInWorkspace) {
-        return err(new WorkspaceNoAccessError())
-      }
-    }
+      if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
 
-    const ensuredNotReadOnly = await ensureWorkspaceNotReadOnlyFragment(loaders)({
-      workspaceId
-    })
-    if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
+      const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
+      if (!workspacePlan) return err(new WorkspaceNoAccessError())
 
-    const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-    if (!workspacePlan) return err(new WorkspaceNoAccessError())
+      const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
+      if (!workspaceLimits) return err(new WorkspaceNoAccessError())
 
-    const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
-    if (!workspaceLimits) return err(new WorkspaceNoAccessError())
+      if (workspaceLimits.modelCount === null) return ok()
 
-    if (workspaceLimits.modelCount === null) return ok()
+      const currentModelCount = await loaders.getWorkspaceModelCount({ workspaceId })
 
-    const currentModelCount = await loaders.getWorkspaceModelCount({ workspaceId })
+      if (currentModelCount === null) return err(new WorkspaceNoAccessError())
 
-    if (currentModelCount === null) return err(new WorkspaceNoAccessError())
-
-    return currentModelCount + addedModelCount <= workspaceLimits.modelCount
-      ? ok()
-      : err(
-          new WorkspaceLimitsReachedError({
-            message:
-              'You have reached the maximum number of models for your plan. Upgrade to increase it.',
-            payload: {
-              limit: 'modelCount'
-            }
-          })
+      return currentModelCount + addedModelCount <= workspaceLimits.modelCount
+        ? ok()
+        : err(
+            new WorkspaceLimitsReachedError({
+              message:
+                'You have reached the maximum number of models for your plan. Upgrade to increase it.',
+              payload: {
+                limit: 'modelCount'
+              }
+            })
+          )
+    } else {
+      // If not - check personal project limits
+      if (FF_PERSONAL_PROJECTS_LIMITS_ENABLED) {
+        return err(
+          new PersonalProjectsLimitedError(
+            'No new models can be added to personal projects'
+          )
         )
+      }
+
+      return ok()
+    }
   }
