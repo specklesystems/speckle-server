@@ -23,7 +23,8 @@ const buildCanCreateModelPolicy = (
   canCreateModelPolicy({
     getEnv: async () =>
       parseFeatureFlags({
-        FF_WORKSPACES_MODULE_ENABLED: 'true'
+        FF_WORKSPACES_MODULE_ENABLED: 'true',
+        FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
       }),
     getProject: getProjectFake({
       id: cryptoRandomString({ length: 9 }),
@@ -198,7 +199,8 @@ describe('canCreateModelPolicy returns a function, that', () => {
       },
       getEnv: async () =>
         parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'false'
+          FF_WORKSPACES_MODULE_ENABLED: 'false',
+          FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
         })
     })(canCreateArgs())
 
