@@ -14,6 +14,8 @@ import {
   WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Logger } from '@/observability/logging'
 import { throwUncoveredError } from '@speckle/shared'
 import { cloneDeep, isEqual } from 'lodash'
@@ -27,12 +29,14 @@ export const downscaleWorkspaceSubscriptionFactory =
     getWorkspacePlan,
     countSeatsByTypeInWorkspace,
     getWorkspacePlanProductId,
-    reconcileSubscriptionData
+    reconcileSubscriptionData,
+    eventBusEmit
   }: {
     getWorkspacePlan: GetWorkspacePlan
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
     getWorkspacePlanProductId: GetWorkspacePlanProductId
     reconcileSubscriptionData: ReconcileSubscriptionData
+    eventBusEmit: EventBusEmit
   }): DownscaleWorkspaceSubscription =>
   async ({ workspaceSubscription }) => {
     const workspaceId = workspaceSubscription.workspaceId
@@ -63,7 +67,8 @@ export const downscaleWorkspaceSubscriptionFactory =
       type: WorkspaceSeatType.Editor
     })
 
-    const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+    const previousSubscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+    const subscriptionData = cloneDeep(previousSubscriptionData)
 
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: editorsCount,
@@ -76,6 +81,16 @@ export const downscaleWorkspaceSubscriptionFactory =
       await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
       return true
     }
+
+    await eventBusEmit({
+      eventName: GatekeeperEvents.WorkspaceSubscriptionDownscaled,
+      payload: {
+        workspacePlan,
+        subscriptionData,
+        previousSubscriptionData
+      }
+    })
+
     return false
   }
 

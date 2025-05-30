@@ -582,7 +582,29 @@ export const workspaceTrackingFactory =
         })
 
         break
+      case GatekeeperEvents.WorkspaceSubscriptionDownscaled:
+        const seatsBefore = payload.previousSubscriptionData.products.reduce(
+          (acc, product) => acc + product.quantity,
+          0
+        )
+        const seatsAfter = payload.subscriptionData.products.reduce(
+          (acc, product) => acc + product.quantity,
+          0
+        )
+
+        await mixpanel.track({
+          eventName: MixpanelEvents.EditorSeatsDownscaled,
+          workspaceId: payload.workspacePlan.workspaceId,
+          payload: {
+            amount: seatsBefore - seatsAfter
+          }
+        })
+        break
       case GatekeeperEvents.WorkspaceSubscriptionUpdated:
+        // TODO: get subscription data, and previous subscription data
+        // from there, calculate the increase and push it as increase
+        // (not sure about under what status)
+
         if (payload.status === WorkspacePlanStatuses.Canceled) {
           await mixpanel.track({
             eventName: MixpanelEvents.WorkspaceSubscriptionCanceled,
@@ -641,17 +663,34 @@ export const workspaceTrackingFactory =
         break
       case WorkspaceEvents.RoleDeleted:
       case WorkspaceEvents.RoleUpdated:
-      case WorkspaceEvents.SeatUpdated:
-        const entity = 'acl' in payload ? payload.acl : payload.seat
-        const workspace = await getWorkspace({ workspaceId: entity.workspaceId })
-        if (!workspace) break
+        const aclWorkspace = await getWorkspace({
+          workspaceId: payload.acl.workspaceId
+        })
+        if (!aclWorkspace) break
 
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
-          entity.workspaceId,
+          payload.acl.workspaceId,
           assign(
-            await buildWorkspaceTrackingProperties(workspace),
-            await checkForSpeckleMembers({ userId: entity.userId })
+            await buildWorkspaceTrackingProperties(aclWorkspace),
+            await checkForSpeckleMembers({ userId: payload.acl.workspaceId })
+          )
+        )
+        break
+      case WorkspaceEvents.SeatUpdated:
+        // TODO: get previous seat, and current seat
+        // from there, depending on the change, track the Editor change
+        const seatWorkspace = await getWorkspace({
+          workspaceId: payload.seat.workspaceId
+        })
+        if (!seatWorkspace) break
+
+        mixpanel.groups.set(
+          WORKSPACE_TRACKING_ID_KEY,
+          payload.seat.workspaceId,
+          assign(
+            await buildWorkspaceTrackingProperties(seatWorkspace),
+            await checkForSpeckleMembers({ userId: payload.seat.userId })
           )
         )
         break
