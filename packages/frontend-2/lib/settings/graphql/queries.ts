@@ -46,7 +46,10 @@ export const settingsWorkspaceRegionsQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersQuery = graphql(`
-  query SettingsWorkspacesMembers($slug: String!) {
+  query SettingsWorkspacesMembers(
+    $slug: String!
+    $filter: AdminWorkspaceJoinRequestFilter
+  ) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersCounts_Workspace
     }
@@ -77,6 +80,7 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
       ...SettingsWorkspacesMembersTableHeader_Workspace
       team(filter: $filter, limit: 250) {
         items {
+          email
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
         }

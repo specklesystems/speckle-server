@@ -22,7 +22,6 @@ import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
@@ -32,7 +31,19 @@ graphql(`
     invitedTeam {
       id
     }
-    adminWorkspacesJoinRequests {
+    teamByRole {
+      admins {
+        totalCount
+      }
+      members {
+        totalCount
+      }
+      guests {
+        totalCount
+      }
+    }
+    adminWorkspacesJoinRequests(filter: $filter) {
+      totalCount
       items {
         id
         status
@@ -53,26 +64,32 @@ const route = useRoute()
 const router = useRouter()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const { memberCount, guestCount, adminCount } = useWorkspaceUsage(slug.value)
 const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
-  slug: slug.value
+  slug: slug.value,
+  filter: {
+    status: WorkspaceJoinRequestStatus.Pending
+  }
 }))
 
 const workspace = computed(() => result.value?.workspaceBySlug)
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
-const memberTotalCount = computed(() => memberCount.value + adminCount.value)
+const memberTotalCount = computed(
+  () =>
+    (workspace.value?.teamByRole.members?.totalCount ?? 0) +
+    (workspace.value?.teamByRole.admins?.totalCount ?? 0)
+)
+const guestTotalCount = computed(
+  () => workspace.value?.teamByRole.guests?.totalCount ?? 0
+)
 const invitedCount = computed(() => workspace.value?.invitedTeam?.length)
 const joinRequestCount = computed(
-  () =>
-    workspace.value?.adminWorkspacesJoinRequests?.items.filter(
-      (item) => item.status === WorkspaceJoinRequestStatus.Pending
-    ).length
+  () => workspace.value?.adminWorkspacesJoinRequests?.totalCount
 )
 
 const tabItems = computed<LayoutPageTabItem[]>(() => [
   { title: 'Members', id: 'members', count: memberTotalCount.value },
-  { title: 'Guests', id: 'guests', count: guestCount.value },
+  { title: 'Guests', id: 'guests', count: guestTotalCount.value },
   {
     title: 'Pending invites',
     id: 'invites',

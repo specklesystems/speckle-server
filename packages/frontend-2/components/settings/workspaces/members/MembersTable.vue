@@ -20,9 +20,10 @@
     <LayoutTable
       class="mt-6 mb-12"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-4' },
-        { id: 'seat', header: 'Seat', classes: 'col-span-3' },
-        { id: 'joined', header: 'Joined', classes: 'col-span-4' },
+        { id: 'name', header: 'Name', classes: 'col-span-3' },
+        { id: 'email', header: 'Email', classes: 'col-span-4' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-2' },
         // { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         {
           id: 'actions',
@@ -74,6 +75,11 @@
           >
             <ExclamationCircleIcon class="text-danger w-5" />
           </div>
+        </div>
+      </template>
+      <template #email="{ item }">
+        <div class="flex">
+          <span class="text-foreground-2 truncate">{{ item.email }}</span>
         </div>
       </template>
       <template #seat="{ item }">
@@ -135,9 +141,9 @@
 <script setup lang="ts">
 import { Roles, type Nullable, type WorkspaceRoles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import {
+import type {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersActionsMenu_UserFragment
+  SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
@@ -147,11 +153,12 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 graphql(`
   fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
-    projectRoles {
-      project {
-        id
-      }
-    }
+    email
+    # projectRoles {
+    #   project {
+    #     id
+    #   }
+    # }
     ...SettingsWorkspacesMembersActionsMenu_User
   }
 `)
@@ -160,6 +167,7 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
+const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 const search = ref('')
 const roleFilter = ref<WorkspaceRoles>()
 const seatTypeFilter = ref<WorkspaceSeatType>()
@@ -199,16 +207,5 @@ const {
 })
 
 const workspace = computed(() => result.value?.workspaceBySlug)
-
-const members = computed(() => {
-  const memberArray = workspace.value?.team.items
-  return (memberArray || [])
-    .map((member) => ({
-      ...member,
-      seatType: member.seatType || WorkspaceSeatType.Viewer
-    }))
-    .filter((user) => user.role !== Roles.Workspace.Guest)
-})
-
-const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
+const members = computed(() => workspace.value?.team.items)
 </script>
