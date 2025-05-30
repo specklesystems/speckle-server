@@ -6,6 +6,7 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import {
   getBaseTrackingProperties,
+  MixpanelClient,
   WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/shared/utils/mixpanel'
 import {
@@ -35,7 +36,6 @@ import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repos
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
-import { Mixpanel } from 'mixpanel'
 
 export type WorkspaceTrackingProperties = {
   name: string
@@ -157,7 +157,7 @@ export const updateAllWorkspacesTackingPropertiesFactory =
     mixpanel
   }: {
     logger: Logger
-    mixpanel: Mixpanel
+    mixpanel: MixpanelClient
   }) => Promise<void>) =>
   async ({ logger, mixpanel }) => {
     logger.info('Start full workspace tracking update')
@@ -205,7 +205,7 @@ export const scheduleUpdateAllWorkspacesTracking = ({
   mixpanel
 }: {
   scheduleExecution: ScheduleExecution
-  mixpanel: Mixpanel
+  mixpanel: MixpanelClient
 }) => {
   const updateAllWorkspacesTackingProperties =
     updateAllWorkspacesTackingPropertiesFactory({

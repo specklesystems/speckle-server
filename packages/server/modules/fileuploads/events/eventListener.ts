@@ -1,32 +1,26 @@
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import {
-  getBaseTrackingProperties,
   getClient,
-  GetUserTrackingProperties,
-  getUserTrackingPropertiesFactory,
-  MixpanelEvents,
-  WORKSPACE_TRACKING_ID_KEY
+  MixpanelClient,
+  MixpanelEvents
 } from '@/modules/shared/utils/mixpanel'
-import { Mixpanel } from 'mixpanel'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import { throwUncoveredError } from '@speckle/shared'
-import { assign } from 'lodash'
 import { GetProject } from '@/modules/core/domain/projects/operations'
 import { Knex } from 'knex'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
-import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 export const fileuploadTrackingFactory =
   ({
     getProject,
-    getUserTrackingProperties,
-    mixpanel = getClient(),
-    getServerTrackingProperties = getBaseTrackingProperties
+    getUser,
+    mixpanel = getClient()
   }: {
     getProject: GetProject
-    getUserTrackingProperties: GetUserTrackingProperties
-    mixpanel?: Mixpanel
-    getServerTrackingProperties?: typeof getBaseTrackingProperties
+    getUser: GetUser
+    mixpanel?: MixpanelClient
   }) =>
   async (params: EventPayload<'fileupload.*'>) => {
     if (!mixpanel) return
@@ -35,21 +29,16 @@ export const fileuploadTrackingFactory =
     switch (eventName) {
       case FileuploadEvents.Started:
         const project = await getProject({ projectId: payload.projectId })
-
-        mixpanel.track(
-          MixpanelEvents.FileUploadStarted,
-          assign(
-            {
-              fileSize: payload.fileSize,
-              fileType: payload.fileType
-            },
-            project?.workspaceId && {
-              [WORKSPACE_TRACKING_ID_KEY]: project?.workspaceId
-            },
-            await getUserTrackingProperties({ userId: payload.userId }),
-            getServerTrackingProperties()
-          )
-        )
+        const user = await getUser(payload.userId)
+        await mixpanel.track({
+          eventName: MixpanelEvents.FileUploadStarted,
+          userEmail: user?.email,
+          workspaceId: project?.workspaceId,
+          payload: {
+            fileSize: payload.fileSize,
+            fileType: payload.fileType
+          }
+        })
         break
       default:
         throwUncoveredError(eventName)
@@ -64,9 +53,7 @@ export const initializeEventListenersFactory =
       eventBus.listen('fileupload.*', async (payload) => {
         await fileuploadTrackingFactory({
           getProject: getProjectFactory({ db }),
-          getUserTrackingProperties: getUserTrackingPropertiesFactory({
-            findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
-          })
+          getUser: getUserFactory({ db })
         })(payload)
       })
     ]
