@@ -111,7 +111,7 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -120,7 +120,7 @@ const getStream = () => {
     //'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
 
     // 'Super' heavy revit shit
-    'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
+    //'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
     // IFC building (good for a tree based structure)
     // 'https://latest.speckle.systems/streams/92b620fb17/commits/2ebd336223'
     // IFC story, a subtree of the above
