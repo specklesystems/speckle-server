@@ -1,3 +1,5 @@
+import { RelativeURL } from '@speckle/shared'
+
 const corsRoutes = ['/', '/authn/login']
 
 /**
@@ -7,8 +9,11 @@ const corsRoutes = ['/', '/authn/login']
 export default defineEventHandler((event) => {
   const optionsResponse = (code: number) => new Response(null, { status: code })
 
+  // Get path w/o querystring
+  const path = new RelativeURL(event.path).pathname
+
   // For CORS routes - allow all origins on GET (necessary for authentication fetch calls)
-  if (corsRoutes.includes(event.path)) {
+  if (corsRoutes.includes(path)) {
     setHeaders(event, {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET',
