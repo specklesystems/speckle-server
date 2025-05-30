@@ -1,6 +1,6 @@
-import { Text } from 'troika-three-text'
 import { Material } from 'three'
 import SpeckleTextMaterial from '../modules/materials/SpeckleTextMaterial.ts'
+import { Text } from 'troika-three-text'
 
 declare module 'troika-three-text' {
   interface BatchedText {

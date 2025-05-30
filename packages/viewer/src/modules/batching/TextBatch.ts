@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box3, Material, Mesh, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Matrix4, Mesh, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
@@ -15,17 +15,19 @@ import Materials from '../materials/Materials.js'
 import { SpeckleText } from '../objects/SpeckleText.js'
 //@ts-ignore
 import { Text } from 'troika-three-text'
-import { ObjectLayers } from '../../index.js'
+import { AccelerationStructure, ObjectLayers } from '../../index.js'
+import { DefaultBVHOptions } from '../objects/AccelerationStructure.js'
+import { TextBatchObject } from './TextBatchObject.js'
 
 export default class TextBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
   public batchMaterial: Material
-  public mesh: SpeckleText
+  public textBatch: SpeckleText
 
   public get bounds(): Box3 {
-    return new Box3().setFromObject(this.mesh as Mesh)
+    return this.textBatch.TAS.getBoundingBox(new Box3())
   }
 
   public get drawCalls(): number {
@@ -63,7 +65,7 @@ export default class TextBatch implements Batch {
   }
 
   public get renderObject(): Object3D {
-    return this.mesh as Mesh
+    return this.textBatch as unknown as Object3D
   }
 
   public getCount(): number {
@@ -72,7 +74,7 @@ export default class TextBatch implements Batch {
   }
 
   public get materials(): Material[] {
-    return (this.mesh as Mesh).material as Material[]
+    return (this.textBatch as unknown as Mesh).material as Material[]
   }
 
   public get groups(): DrawGroup[] {
@@ -135,23 +137,46 @@ export default class TextBatch implements Batch {
   }
 
   public async buildBatch(): Promise<void> {
-    this.mesh = new SpeckleText()
+    this.textBatch = new SpeckleText()
+    const batchObjects = []
     for (let k = 0; k < this.renderViews.length; k++) {
+      const textMeta = this.renderViews[k].renderData.geometry.metaData
       const text = new Text()
       text.matrix.copy(this.renderViews[k].renderData.geometry.bakeTransform)
-      text.text = this.renderViews[k].renderData.geometry.metaData?.value
-      text.fontSize = 2
+      text.text = textMeta?.value
+      text.fontSize = textMeta?.height
+      await text.sync()
+
+      /** Per instance data stride, even though it's written to a tex */
+      this.renderViews[k].setBatchData(this.id, k * 32, 32)
+
+      const geometry = text.geometry
+      geometry.computeBoundingBox()
+      const textBvh = AccelerationStructure.buildBVH(
+        geometry.index.array,
+        geometry.attributes.position.array,
+        DefaultBVHOptions,
+        this.renderViews[k].renderData.geometry.bakeTransform as Matrix4
+      )
+      const batchObject = new TextBatchObject(this.renderViews[k], k)
+      batchObject.buildAccelerationStructure(textBvh)
+      batchObjects.push(batchObject)
       //@ts-ignore
-      this.mesh.addText(text)
+      this.textBatch.addText(text)
     }
+
+    this.textBatch.setBatchObjects(batchObjects)
+    this.textBatch.setBatchMaterial(this.batchMaterial)
+    this.textBatch.buildTAS()
+
     //@ts-ignore
-    this.mesh.material = this.batchMaterial
+    this.textBatch.uuid = this.id
     //@ts-ignore
-    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
+    this.textBatch.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
     //@ts-ignore
-    this.mesh.frustumCulled = false
+    this.textBatch.frustumCulled = false
     //@ts-ignore
-    await this.mesh.sync()
+    await this.textBatch.sync()
   }
 
   public getRenderView(index: number): NodeRenderView {
@@ -173,6 +198,6 @@ export default class TextBatch implements Batch {
     this.renderViews.length = 0
     this.batchMaterial.dispose()
     //@ts-ignore
-    this.mesh.dispose()
+    this.textBatch.dispose()
   }
 }
