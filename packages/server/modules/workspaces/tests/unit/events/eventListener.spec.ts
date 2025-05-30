@@ -1,5 +1,5 @@
 import { workspaceTrackingFactory } from '@/modules/workspaces/events/eventListener'
-import { buildBasicTestUser } from '@/test/authHelper'
+import { buildTestUserWithOptionalRole } from '@/test/authHelper'
 import { buildTestWorkspaceWithOptionalRole } from '@/modules/workspaces/tests/helpers/creation'
 import {
   CountWorkspaceRoleWithOptionalProjectRole,
@@ -17,10 +17,7 @@ import {
   GetWorkspacePlan,
   GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import {
-  FindEmailsByUserId,
-  FindPrimaryEmailForUser
-} from '@/modules/core/domain/userEmails/operations'
+import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import {
   buildMixpanelFake,
   MixpanelFakeEventRecord
@@ -29,9 +26,9 @@ import { getFeatureFlags } from '@speckle/shared/environment'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import { MixpanelEvents } from '@/modules/shared/utils/mixpanel'
 import { expect } from 'chai'
-import { WORKSPACE_TRACKING_ID_KEY } from '@/modules/workspaces/services/tracking'
 import { WorkspacePlanStatuses } from '@speckle/shared'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -39,7 +36,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
   'workspaceTrackingFactory creates a function, that @workspaceEventListener',
   () => {
     const workspace = buildTestWorkspaceWithOptionalRole()
-    const user = buildBasicTestUser()
+    const user = buildTestUserWithOptionalRole()
     const email = {
       id: user.id,
       email: user.email,
@@ -56,25 +53,19 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       createdAt: new Date(),
       updatedAt: new Date()
     }
-    const baseTrackingProperties = {
-      // eslint-disable-next-line camelcase
-      server_id: 'tracking_server_id',
-      speckleVersion: 'test',
-      hostApp: 'serverside'
-    }
 
     const workspacePlan = buildTestWorkspacePlan({ workspaceId: workspace.id })
     const workspaceSubscribtion = buildTestWorkspaceSubscription({
       workspaceId: workspace.id
     })
 
+    const getUser: GetUser = async () => user
     const getWorkspace: GetWorkspace = async () => workspace
     const countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole = async () => 0
     const getDefaultRegion: GetDefaultRegion = async () => region
     const getWorkspacePlan: GetWorkspacePlan = async () => workspacePlan
     const getWorkspaceSubscription: GetWorkspaceSubscription = async () =>
       workspaceSubscribtion
-    const findPrimaryEmailForUser: FindPrimaryEmailForUser = async () => email
     const getUserEmails: FindEmailsByUserId = async () => [email]
     const getWorkspaceModelCount: GetWorkspaceModelCount = async () => 20
     const getWorkspacesProjectCount: GetWorkspacesProjectsCounts = async () => ({
@@ -88,12 +79,11 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       getDefaultRegion,
       getWorkspacePlan,
       getWorkspaceSubscription,
-      findPrimaryEmailForUser,
       getUserEmails,
+      getUser,
       getWorkspaceModelCount,
       getWorkspacesProjectCount,
-      getWorkspaceSeatCount,
-      getServerTrackingProperties: () => baseTrackingProperties
+      getWorkspaceSeatCount
     }
 
     it('pushes a Mixpanel Upgrade event when workspace plan was upgraded', async () => {
@@ -119,16 +109,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
       const event = events[0]
       expect(events).to.have.lengthOf(1)
-      expect(event.event).to.be.eq(MixpanelEvents.WorkspaceUpgraded)
+      expect(event.eventName).to.be.eq(MixpanelEvents.WorkspaceUpgraded)
+      expect(event.workspaceId).to.be.eq(workspace.id)
       expect(event.payload).to.be.deep.eq({
-        [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
         plan: workspacePlan.name,
         cycle: workspaceSubscribtion.billingInterval,
-        previousPlan: 'free',
-        hostApp: 'serverside',
-        speckleVersion: 'test',
-        // eslint-disable-next-line camelcase
-        server_id: 'tracking_server_id'
+        previousPlan: 'free'
       })
     }),
       [WorkspacePlanStatuses.PaymentFailed, WorkspacePlanStatuses.Valid].forEach(
@@ -170,14 +156,8 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
       const event = events[0]
       expect(events).to.have.lengthOf(1)
-      expect(event.event).to.be.eq(MixpanelEvents.WorkspaceSubscriptionCanceled)
-      expect(event.payload).to.be.deep.eq({
-        [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
-        hostApp: 'serverside',
-        speckleVersion: 'test',
-        // eslint-disable-next-line camelcase
-        server_id: 'tracking_server_id'
-      })
+      expect(event.eventName).to.be.eq(MixpanelEvents.WorkspaceSubscriptionCanceled)
+      expect(event.workspaceId).to.be.eq(workspace.id)
     })
 
     it(`sends a CancelSchedule event to mixpanel when a subscription is scheduled to be canceled`, async () => {
@@ -197,16 +177,10 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
       const event = events[0]
       expect(events).to.have.lengthOf(1)
-      expect(event.event).to.be.eq(
+      expect(event.eventName).to.be.eq(
         MixpanelEvents.WorkspaceSubscriptionCancelationScheduled
       )
-      expect(event.payload).to.be.deep.eq({
-        [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
-        hostApp: 'serverside',
-        speckleVersion: 'test',
-        // eslint-disable-next-line camelcase
-        server_id: 'tracking_server_id'
-      })
+      expect(event.workspaceId).to.be.eq(workspace.id)
     })
 
     it('sends a custom delete mixpanel event on Workspace Delete', async () => {
@@ -225,14 +199,8 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
       const event = events[0]
       expect(events).to.have.lengthOf(1)
-      expect(event.event).to.be.eq(MixpanelEvents.WorkspaceDeleted)
-      expect(event.payload).to.be.deep.eq({
-        [WORKSPACE_TRACKING_ID_KEY]: workspace.id,
-        hostApp: 'serverside',
-        speckleVersion: 'test',
-        // eslint-disable-next-line camelcase
-        server_id: 'tracking_server_id'
-      })
+      expect(event.eventName).to.be.eq(MixpanelEvents.WorkspaceDeleted)
+      expect(event.workspaceId).to.be.eq(workspace.id)
     })
   }
 )

@@ -25,14 +25,12 @@ import {
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
 import { Authz, wait } from '@speckle/shared'
-import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import * as Observability from '@speckle/shared/observability'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
 import { subscriptionLogger } from '@/observability/logging'
-import { GetUser } from '@/modules/core/domain/users/operations'
 import { validateTokenFactory } from '@/modules/core/services/tokens'
 import {
   getApiTokenByIdFactory,
@@ -229,20 +227,6 @@ export async function buildContext(params?: {
     }
   }
 }
-
-/**
- * Adds a .mixpanel helper onto the req object that is already pre-identified with the active user's identity
- */
-export const mixpanelTrackerHelperMiddlewareFactory =
-  (deps: { getUser: GetUser }): RequestHandler =>
-  async (req, _res, next) => {
-    const ctx = req.context
-    const user = ctx.userId ? await deps.getUser(ctx.userId) : null
-    const mp = mixpanel({ userEmail: user?.email, req })
-
-    req.mixpanel = mp
-    next()
-  }
 
 const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
 /**

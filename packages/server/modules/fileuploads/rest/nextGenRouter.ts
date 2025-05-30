@@ -32,6 +32,7 @@ import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/cre
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -86,7 +87,8 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
         pushJobToFileImporter,
         saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-        publish
+        publish,
+        emit: getEventBus().emit
       })
 
       const onError = () => {
