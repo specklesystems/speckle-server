@@ -51,24 +51,6 @@ export const connectorItems: ConnectorItem[] = [
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
   },
   {
-    title: 'QGIS',
-    slug: 'qgis',
-    description:
-      'Publish QGIS models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/qgis',
-    images: ['/images/connectors/qgis.png'],
-    categories: [ConnectorCategory.GIS]
-  },
-  {
-    title: 'ArcGIS',
-    slug: 'arcgis',
-    description:
-      'Publish ArcGIS models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/arcgis',
-    images: ['/images/connectors/arcgis.png'],
-    categories: [ConnectorCategory.GIS]
-  },
-  {
     title: 'AutoCAD',
     slug: 'autocad',
     description:
