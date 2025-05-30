@@ -1,5 +1,8 @@
-import { isWorkspaceRoleWorkspaceSeatTypeValid } from '@/modules/workspaces/services/workspaceSeat'
-import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import {
+  getWorkspaceDefaultSeatTypeFactory,
+  isWorkspaceRoleWorkspaceSeatTypeValid
+} from '@/modules/workspaces/services/workspaceSeat'
+import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
@@ -46,6 +49,72 @@ describe('Workspace workspaceSeat services', () => {
         workspaceSeatType: WorkspaceSeatType.Viewer
       })
       expect(result).to.be.true
+    })
+  })
+  describe('getWorkspaceDefaultSeatType', () => {
+    it('returns the global default if not set on workspace', async () => {
+      const getWorkspaceDefaultSeatType = getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: async () => {
+          return {
+            defaultSeatType: null
+          } as Workspace
+        }
+      })
+
+      const defaultSeat = await getWorkspaceDefaultSeatType({
+        workspaceId: '',
+        workspaceRole: Roles.Workspace.Member
+      })
+
+      expect(defaultSeat).to.equal(WorkspaceSeatType.Viewer)
+    })
+    it('overrides the global default if user is workspace admin', async () => {
+      const getWorkspaceDefaultSeatType = getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: async () => {
+          return {
+            defaultSeatType: null
+          } as Workspace
+        }
+      })
+
+      const defaultSeat = await getWorkspaceDefaultSeatType({
+        workspaceId: '',
+        workspaceRole: Roles.Workspace.Admin
+      })
+
+      expect(defaultSeat).to.equal(WorkspaceSeatType.Editor)
+    })
+    it('returns the value set on the workspace', async () => {
+      const getWorkspaceDefaultSeatType = getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: async () => {
+          return {
+            defaultSeatType: WorkspaceSeatType.Editor
+          } as Workspace
+        }
+      })
+
+      const defaultSeat = await getWorkspaceDefaultSeatType({
+        workspaceId: '',
+        workspaceRole: Roles.Workspace.Member
+      })
+
+      expect(defaultSeat).to.equal(WorkspaceSeatType.Editor)
+    })
+    it('overrides the value set on the workspace if user is workspace admin', async () => {
+      const getWorkspaceDefaultSeatType = getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: async () => {
+          return {
+            defaultSeatType: WorkspaceSeatType.Viewer
+          } as Workspace
+        }
+      })
+
+      const defaultSeat = await getWorkspaceDefaultSeatType({
+        workspaceId: '',
+        workspaceRole: Roles.Workspace.Admin
+      })
+
+      expect(defaultSeat).to.equal(WorkspaceSeatType.Editor)
     })
   })
 })

@@ -1,0 +1,16 @@
+[
+  {
+    "adapter": "JavaScript",
+    "label": "yarn (JavaScript)",
+    "request": "launch",
+    "console": "integratedTerminal",
+    "program": "dev",
+    "runtimeExecutable": "yarn",
+    "args": [],
+    "type": "pwa-node",
+    "cwd": "$ZED_WORKTREE_ROOT/packages/server",
+    "skipFiles": ["<node_internals>/**"],
+    "env": {},
+    "stop_on_entry": false
+  }
+]

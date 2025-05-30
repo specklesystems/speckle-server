@@ -57,7 +57,10 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
   getWorkspaceUserSeatFactory
@@ -390,6 +393,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
               createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                getWorkspace: getWorkspaceFactory({ db })
+              }),
               eventEmit: getEventBus().emit
             })
           }),
