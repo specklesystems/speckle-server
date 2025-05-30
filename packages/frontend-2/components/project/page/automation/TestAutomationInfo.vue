@@ -80,9 +80,9 @@ const environment = computed(() => {
     case 'dotnet': {
       return [
         '{',
-        '  "SpeckleToken": "YOUR-TOKEN-HERE"',
-        `  "SpeckleServerUrl": "${origin}"`,
-        `  "SpeckleProjectId": "${props.projectId}"`,
+        '  "SpeckleToken": "YOUR-TOKEN-HERE",',
+        `  "SpeckleServerUrl": "${origin}",`,
+        `  "SpeckleProjectId": "${props.projectId}",`,
         `  "SpeckleAutomationId": "${props.automationId}"`,
         '}'
       ].join('\n')
