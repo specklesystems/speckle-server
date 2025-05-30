@@ -1,22 +1,19 @@
 <template>
   <div>
-    <template v-if="workspace">
-      <ProjectsAddDialog
-        v-model:open="openNewWorkspaceProject"
-        :workspace-id="workspace.id"
-      />
-      <WorkspacePlanProjectModelLimitReachedDialog
-        v-model:open="openWorkspaceLimitsHit"
-        :workspace-name="workspace.name"
-        :plan="workspace.plan?.name"
-        :workspace-role="workspace.role"
-        :workspace-slug="workspace.slug || ''"
-        :location="location"
-      />
-    </template>
-    <template v-else>
-      <ProjectsAddDialog v-model:open="openNewPersonalProject" />
-    </template>
+    <ProjectsAddDialog
+      v-model:open="openNewWorkspaceProject"
+      :workspace-id="workspace?.id"
+    />
+    <WorkspacePlanProjectModelLimitReachedDialog
+      v-if="workspace"
+      v-model:open="openWorkspaceLimitsHit"
+      :workspace-name="workspace.name"
+      :plan="workspace.plan?.name"
+      :workspace-role="workspace.role"
+      :workspace-slug="workspace.slug || ''"
+      :location="location"
+    />
+    <ProjectsAddDialog v-model:open="openNewPersonalProject" />
   </div>
 </template>
 <script setup lang="ts">
