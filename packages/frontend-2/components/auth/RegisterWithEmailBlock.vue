@@ -13,6 +13,7 @@
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+        auto-focus
         :help="
           emailIsBlocked
             ? 'A work email makes it easier to discover and collaborate with your coworkers on Speckle.'
@@ -31,7 +32,6 @@
         color="foundation"
         show-label
         :disabled="loading"
-        auto-focus
         autocomplete="name"
       />
       <FormTextInput

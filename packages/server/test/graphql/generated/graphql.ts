@@ -4491,6 +4491,8 @@ export type Workspace = {
    * region.
    */
   defaultRegion?: Maybe<ServerRegionItem>;
+  /** The default seat assigned to users that join a workspace. Used during workspace discovery or on invites without seat types. */
+  defaultSeatType: WorkspaceSeatType;
   description?: Maybe<Scalars['String']['output']>;
   /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
   discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
@@ -4894,6 +4896,7 @@ export type WorkspacePermissionChecks = {
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
+  canReadMemberEmail: PermissionCheckResult;
 };
 
 
@@ -5137,6 +5140,7 @@ export type WorkspaceUpdateEmbedOptionsInput = {
 export type WorkspaceUpdateInput = {
   /** @deprecated Always the reviewer role. Will be removed in the future. */
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
+  defaultSeatType?: InputMaybe<WorkspaceSeatType>;
   description?: InputMaybe<Scalars['String']['input']>;
   discoverabilityAutoJoinEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;

@@ -4510,6 +4510,8 @@ export type Workspace = {
    * region.
    */
   defaultRegion?: Maybe<ServerRegionItem>;
+  /** The default seat assigned to users that join a workspace. Used during workspace discovery or on invites without seat types. */
+  defaultSeatType: WorkspaceSeatType;
   description?: Maybe<Scalars['String']['output']>;
   /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
   discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
@@ -4913,6 +4915,7 @@ export type WorkspacePermissionChecks = {
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
+  canReadMemberEmail: PermissionCheckResult;
 };
 
 
@@ -5156,6 +5159,7 @@ export type WorkspaceUpdateEmbedOptionsInput = {
 export type WorkspaceUpdateInput = {
   /** @deprecated Always the reviewer role. Will be removed in the future. */
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
+  defaultSeatType?: InputMaybe<WorkspaceSeatType>;
   description?: InputMaybe<Scalars['String']['input']>;
   discoverabilityAutoJoinEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -7481,6 +7485,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   customerPortalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   defaultProjectRole?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   defaultRegion?: Resolver<Maybe<ResolversTypes['ServerRegionItem']>, ParentType, ContextType>;
+  defaultSeatType?: Resolver<ResolversTypes['WorkspaceSeatType'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   discoverabilityAutoJoinEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   discoverabilityEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -7624,6 +7629,7 @@ export type WorkspacePermissionChecksResolvers<ContextType = GraphQLContext, Par
   canEditEmbedOptions?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canInvite?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs>>;
+  canReadMemberEmail?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

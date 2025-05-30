@@ -7,4 +7,5 @@ type WorkspacePermissionChecks {
   canInvite: PermissionCheckResult!
   canMoveProjectToWorkspace(projectId: String): PermissionCheckResult!
   canEditEmbedOptions: PermissionCheckResult!
+  canReadMemberEmail: PermissionCheckResult!
 }

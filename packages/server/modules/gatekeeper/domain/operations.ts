@@ -1,11 +1,12 @@
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import {
   Optional,
   WorkspacePlan,
   WorkspacePlanFeatures,
   WorkspacePlans,
-  WorkspacePlanStatuses
+  WorkspacePlanStatuses,
+  WorkspaceRoles
 } from '@speckle/shared'
 
 export type CanWorkspaceAccessFeature = (args: {
@@ -55,6 +56,11 @@ export type GetWorkspaceUserSeat = (params: {
   workspaceId: string
   userId: string
 }) => Promise<Optional<WorkspaceSeat>>
+
+export type GetWorkspaceDefaultSeatType = (params: {
+  workspaceId: string
+  workspaceRole: WorkspaceRoles
+}) => Promise<WorkspaceSeatType>
 
 export type GetWorkspacesUsersSeats = (params: {
   requests: Array<{

@@ -165,7 +165,8 @@ export const createWorkspaceFactory =
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false,
       discoverabilityAutoJoinEnabled: false,
-      isEmbedSpeckleBrandingHidden: false
+      isEmbedSpeckleBrandingHidden: false,
+      defaultSeatType: null
     } satisfies Workspace
     await upsertWorkspace({ workspace })
 

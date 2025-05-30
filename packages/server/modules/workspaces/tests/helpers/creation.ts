@@ -95,7 +95,8 @@ import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   assignWorkspaceSeatFactory,
-  ensureValidWorkspaceRoleSeatFactory
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
@@ -206,6 +207,9 @@ export const createTestWorkspace = async (
       ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
         createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
         getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+        getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+          getWorkspace: getWorkspaceFactory({ db })
+        }),
         eventEmit: getEventBus().emit
       })
     })
@@ -400,6 +404,9 @@ export const assignToWorkspace = async (
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
       getWorkspaceUserSeat,
+      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: getWorkspaceFactory({ db })
+      }),
       eventEmit: getEventBus().emit
     })
   })
@@ -532,6 +539,9 @@ export const createWorkspaceInviteDirectly = async (
           ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
             createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
             getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+            getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+              getWorkspace: getWorkspaceFactory({ db })
+            }),
             eventEmit: getEventBus().emit
           })
         }),

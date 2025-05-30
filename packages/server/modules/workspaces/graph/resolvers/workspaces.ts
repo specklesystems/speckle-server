@@ -46,7 +46,10 @@ import {
   isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+import {
+  WorkspaceDefaultSeatType,
+  WorkspaceInviteResourceType
+} from '@/modules/workspacesCore/domain/constants'
 import {
   WorkspaceInvalidRoleError,
   WorkspaceNotFoundError,
@@ -201,7 +204,10 @@ import {
   AuthCodePayloadAction,
   createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
   getWorkspaceRoleAndSeatFactory,
@@ -282,6 +288,9 @@ const buildFinalizeWorkspaceInvite = () =>
         ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+          getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+            getWorkspace: getWorkspaceFactory({ db })
+          }),
           eventEmit: getEventBus().emit
         })
       }),
@@ -615,6 +624,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                     getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                      getWorkspace: getWorkspaceFactory({ db })
+                    }),
                     eventEmit: emit
                   })
                 })
@@ -853,6 +865,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
                     getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
+                    getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                      getWorkspace: getWorkspaceFactory({ db })
+                    }),
                     eventEmit: emit
                   })
                 })
@@ -1147,6 +1162,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                     getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                      getWorkspace: getWorkspaceFactory({ db })
+                    }),
                     eventEmit: getEventBus().emit
                   })
                 }),
@@ -1506,6 +1524,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                     getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                      getWorkspace: getWorkspaceFactory({ db })
+                    }),
                     eventEmit: emit
                   })
                 }),
@@ -1555,6 +1576,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       Workspace: {
         defaultProjectRole: () => Roles.Stream.Reviewer,
+        defaultSeatType: (parent) => {
+          return parent.defaultSeatType ?? WorkspaceDefaultSeatType
+        },
         creationState: async (parent) => {
           return getWorkspaceCreationStateFactory({ db })({ workspaceId: parent.id })
         },
