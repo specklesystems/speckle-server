@@ -94,9 +94,11 @@ export const completeCheckoutSessionFactory =
         workspacePlan: {
           workspaceId: checkoutSession.workspaceId,
           status: workspacePlan.status,
-          name: workspacePlan.name,
-          previousPlanName: previousPlan?.name
-        }
+          name: workspacePlan.name
+        },
+        ...(previousPlan && {
+          previousPlan: { name: previousPlan.name }
+        })
       }
     })
   }

@@ -29,6 +29,7 @@ import {
 } from '@/observability/domain/fields'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { asOperation } from '@/modules/shared/command'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -200,7 +201,8 @@ export const getBillingRouter = (): Router => {
               upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
               getWorkspaceSubscriptionBySubscriptionId:
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
+              emitEvent: getEventBus().emit
             })({ subscriptionData: parseSubscriptionData(event.data.object) }),
           {
             logger,
@@ -222,7 +224,8 @@ export const getBillingRouter = (): Router => {
               upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
               getWorkspaceSubscriptionBySubscriptionId:
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
+              emitEvent: getEventBus().emit
             })({ subscriptionData }),
           {
             logger,

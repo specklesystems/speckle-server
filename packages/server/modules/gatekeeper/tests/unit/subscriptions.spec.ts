@@ -27,6 +27,7 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 
 describe('subscriptions @gatekeeper', () => {
   describe('handleSubscriptionUpdateFactory creates a function, that', () => {
@@ -42,6 +43,9 @@ describe('subscriptions @gatekeeper', () => {
             expect.fail()
           },
           upsertPaidWorkspacePlan: async () => {
+            expect.fail()
+          },
+          emitEvent: async () => {
             expect.fail()
           }
         })({ subscriptionData })
@@ -61,6 +65,9 @@ describe('subscriptions @gatekeeper', () => {
         },
         upsertPaidWorkspacePlan: async () => {
           expect.fail()
+        },
+        emitEvent: async () => {
+          expect.fail()
         }
       })({ subscriptionData })
     })
@@ -75,6 +82,9 @@ describe('subscriptions @gatekeeper', () => {
             expect.fail()
           },
           upsertPaidWorkspacePlan: async () => {
+            expect.fail()
+          },
+          emitEvent: async () => {
             expect.fail()
           }
         })({ subscriptionData })
@@ -104,6 +114,9 @@ describe('subscriptions @gatekeeper', () => {
             },
             upsertPaidWorkspacePlan: async () => {
               expect.fail()
+            },
+            emitEvent: async () => {
+              expect.fail()
             }
           })({ subscriptionData })
         })
@@ -123,6 +136,12 @@ describe('subscriptions @gatekeeper', () => {
 
       let updatedSubscription: WorkspaceSubscription | undefined = undefined
       let updatedPlan: WorkspacePlan | undefined = undefined
+      let emittedEventName: string | undefined = undefined
+      let emittedEventPayload: unknown = undefined
+      const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        emittedEventPayload = payload
+      }
 
       await handleSubscriptionUpdateFactory({
         getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
@@ -138,7 +157,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         upsertPaidWorkspacePlan: async ({ workspacePlan }) => {
           updatedPlan = workspacePlan
-        }
+        },
+        emitEvent
       })({ subscriptionData })
       expect(updatedPlan!.status).to.be.equal('cancelationScheduled')
       expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
@@ -147,6 +167,11 @@ describe('subscriptions @gatekeeper', () => {
       expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
         omit(workspaceSubscription, 'updatedAt')
       )
+      expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
+      expect(emittedEventPayload).to.deep.eq({
+        workspaceId,
+        status: 'cancelationScheduled'
+      })
     })
     it('sets the status to valid', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -166,6 +191,12 @@ describe('subscriptions @gatekeeper', () => {
 
       let updatedSubscription: WorkspaceSubscription | undefined = undefined
       let updatedPlan: WorkspacePlan | undefined = undefined
+      let emittedEventName: string | undefined = undefined
+      let emittedEventPayload: unknown = undefined
+      const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        emittedEventPayload = payload
+      }
 
       await handleSubscriptionUpdateFactory({
         getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
@@ -181,7 +212,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         upsertPaidWorkspacePlan: async ({ workspacePlan }) => {
           updatedPlan = workspacePlan
-        }
+        },
+        emitEvent
       })({ subscriptionData })
       expect(updatedPlan!.status).to.be.equal('valid')
       expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
@@ -190,6 +222,11 @@ describe('subscriptions @gatekeeper', () => {
       expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
         omit(workspaceSubscription, 'updatedAt')
       )
+      expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
+      expect(emittedEventPayload).to.deep.eq({
+        workspaceId,
+        status: 'valid'
+      })
     })
     it('sets the state to paymentFailed', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -204,6 +241,12 @@ describe('subscriptions @gatekeeper', () => {
 
       let updatedSubscription: WorkspaceSubscription | undefined = undefined
       let updatedPlan: WorkspacePlan | undefined = undefined
+      let emittedEventName: string | undefined = undefined
+      let emittedEventPayload: unknown = undefined
+      const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        emittedEventPayload = payload
+      }
 
       await handleSubscriptionUpdateFactory({
         getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
@@ -219,7 +262,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         upsertPaidWorkspacePlan: async ({ workspacePlan }) => {
           updatedPlan = workspacePlan
-        }
+        },
+        emitEvent
       })({ subscriptionData })
       expect(updatedPlan!.status).to.be.equal('paymentFailed')
       expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
@@ -228,6 +272,11 @@ describe('subscriptions @gatekeeper', () => {
       expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
         omit(workspaceSubscription, 'updatedAt')
       )
+      expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
+      expect(emittedEventPayload).to.deep.eq({
+        workspaceId,
+        status: 'paymentFailed'
+      })
     })
     it('sets the state to canceled', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -246,6 +295,12 @@ describe('subscriptions @gatekeeper', () => {
 
       let updatedSubscription: WorkspaceSubscription | undefined = undefined
       let updatedPlan: WorkspacePlan | undefined = undefined
+      let emittedEventName: string | undefined = undefined
+      let emittedEventPayload: unknown = undefined
+      const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        emittedEventPayload = payload
+      }
 
       await handleSubscriptionUpdateFactory({
         getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
@@ -261,7 +316,8 @@ describe('subscriptions @gatekeeper', () => {
         },
         upsertPaidWorkspacePlan: async ({ workspacePlan }) => {
           updatedPlan = workspacePlan
-        }
+        },
+        emitEvent
       })({ subscriptionData })
       expect(updatedPlan!.status).to.be.equal('canceled')
       expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
@@ -270,6 +326,11 @@ describe('subscriptions @gatekeeper', () => {
       expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
         omit(workspaceSubscription, 'updatedAt')
       )
+      expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
+      expect(emittedEventPayload).to.deep.eq({
+        workspaceId,
+        status: 'canceled'
+      })
     })
     ;(
       ['incomplete', 'incomplete_expired', 'trialing', 'unpaid', 'paused'] as const
@@ -298,6 +359,9 @@ describe('subscriptions @gatekeeper', () => {
             expect.fail()
           },
           upsertPaidWorkspacePlan: async () => {
+            expect.fail()
+          },
+          emitEvent: async () => {
             expect.fail()
           }
         })({ subscriptionData })
@@ -1431,8 +1495,10 @@ describe('subscriptions @gatekeeper', () => {
         workspacePlan: {
           workspaceId,
           status: 'valid',
-          name: 'pro',
-          previousPlanName: 'team'
+          name: 'pro'
+        },
+        previousPlan: {
+          name: 'team'
         }
       })
     })

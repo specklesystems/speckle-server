@@ -162,8 +162,10 @@ describe('checkout @gatekeeper', () => {
             workspacePlan: {
               workspaceId,
               name: storedCheckoutSession.workspacePlan,
-              status: 'valid',
-              previousPlanName: 'free'
+              status: 'valid'
+            },
+            previousPlan: {
+              name: 'free'
             }
           })
           expect(storedWorkspaceSubscriptionData!.billingInterval).to.equal(
