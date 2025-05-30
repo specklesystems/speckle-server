@@ -1105,7 +1105,8 @@ jobs:
           command: yarn workspaces foreach -tvW version $IMAGE_VERSION_TAG
       - run:
           name: publish to npm
-          command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
+          # TODO: publish dry run while we figure out build/bundle issue
+          command: 'yarn workspaces foreach -pvW --no-private npm publish --access public --dry-run'
 
   publish-helm-chart:
     docker:
