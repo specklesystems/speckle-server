@@ -7,7 +7,6 @@ import {
   MixpanelEvents,
   WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/shared/utils/mixpanel'
-import { getFeatureFlags } from '@speckle/shared/environment'
 import { Mixpanel } from 'mixpanel'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import { throwUncoveredError } from '@speckle/shared'
@@ -16,8 +15,6 @@ import { GetProject } from '@/modules/core/domain/projects/operations'
 import { Knex } from 'knex'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
-
-const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
 export const fileuploadTrackingFactory =
   ({
@@ -32,7 +29,6 @@ export const fileuploadTrackingFactory =
     getServerTrackingProperties?: typeof getBaseTrackingProperties
   }) =>
   async (params: EventPayload<'fileupload.*'>) => {
-    if (!FF_BILLING_INTEGRATION_ENABLED) return
     if (!mixpanel) return
     const { eventName, payload } = params
 
