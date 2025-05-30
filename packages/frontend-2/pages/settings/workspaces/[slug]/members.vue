@@ -44,10 +44,6 @@ graphql(`
     }
     adminWorkspacesJoinRequests(filter: $filter) {
       totalCount
-      items {
-        id
-        status
-      }
     }
   }
 `)
