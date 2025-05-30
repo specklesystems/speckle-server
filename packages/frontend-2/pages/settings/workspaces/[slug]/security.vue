@@ -324,7 +324,7 @@ const isDomainDiscoverabilityEnabled = computed({
 const isAutoJoinEnabled = computed({
   get: () => workspace.value?.discoverabilityAutoJoinEnabled || false,
   set: (newVal) => {
-    handleJoinPolicyChange(newVal ? JoinPolicy.AutoJoin : JoinPolicy.AdminApproval)
+    handleJoinPolicyUpdate(newVal ? JoinPolicy.AutoJoin : JoinPolicy.AdminApproval)
   }
 })
 
@@ -375,60 +375,59 @@ const disabledItemPredicate = (item: string) => {
   return blockedDomainItems.value.includes(item)
 }
 
-const handleJoinPolicyChange = async (newValue: JoinPolicy) => {
-  if (newValue === JoinPolicy.AutoJoin) {
+const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) => {
+  if (!workspace.value?.id) return
+
+  // If enabling auto-join and not yet confirmed, show confirmation dialog
+  if (newValue === JoinPolicy.AutoJoin && !confirmed) {
     showConfirmJoinPolicyDialog.value = true
     pendingJoinPolicy.value = newValue
-  } else {
-    if (!workspace.value?.id) return
-
-    const result = await updateAutoJoin({
-      input: {
-        id: workspace.value.id,
-        discoverabilityAutoJoinEnabled: false
-      }
-    }).catch(convertThrowIntoFetchResult)
-
-    if (result?.data) {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'New user policy updated',
-        description: 'Admin approval is now required for new users to join'
-      })
-      mixpanel.track('Workspace Join Policy Updated', {
-        value: 'admin-approval',
-        // eslint-disable-next-line camelcase
-        workspace_id: workspace.value.id
-      })
-    }
+    return
   }
-}
 
-const handleJoinPolicyConfirm = async () => {
-  if (!workspace.value?.id || !pendingJoinPolicy.value) return
+  const isAutoJoinEnabled = newValue === JoinPolicy.AutoJoin
 
   const result = await updateAutoJoin({
     input: {
       id: workspace.value.id,
-      discoverabilityAutoJoinEnabled: true
+      discoverabilityAutoJoinEnabled: isAutoJoinEnabled
     }
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
-    showConfirmJoinPolicyDialog.value = false
-    pendingJoinPolicy.value = undefined
+    // Reset dialog state if it was open
+    if (showConfirmJoinPolicyDialog.value) {
+      showConfirmJoinPolicyDialog.value = false
+      pendingJoinPolicy.value = undefined
+    }
+
+    const notificationConfig = isAutoJoinEnabled
+      ? {
+          title: 'Join without admin approval enabled',
+          description:
+            'Users with a verified domain can now join without admin approval'
+        }
+      : {
+          title: 'New user policy updated',
+          description: 'Admin approval is now required for new users to join'
+        }
 
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Join without admin approval enabled',
-      description: 'Users with a verified domain can now join without admin approval'
+      ...notificationConfig
     })
+
     mixpanel.track('Workspace Join Policy Updated', {
-      value: 'auto-join',
+      value: isAutoJoinEnabled ? 'auto-join' : 'admin-approval',
       // eslint-disable-next-line camelcase
       workspace_id: workspace.value.id
     })
   }
+}
+
+const handleJoinPolicyConfirm = async () => {
+  if (!pendingJoinPolicy.value) return
+  await handleJoinPolicyUpdate(pendingJoinPolicy.value, true)
 }
 
 watch(
