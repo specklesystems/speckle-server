@@ -1565,7 +1565,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
           return acl?.role || null
         },
-        team: async (parent, args) => {
+        team: async (parent, args, ctx) => {
           const roles = args.filter?.roles?.map((r) => {
             const role = r as WorkspaceRoles
             if (!Object.values(Roles.Workspace).includes(role)) {
@@ -1574,6 +1574,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
               )
             }
             return role
+          })
+          const hasAccessToEmail = await ctx.authPolicies.workspace.canReadMemberEmail({
+            workspaceId: parent.id,
+            userId: ctx.userId
           })
           const filter = removeNullOrUndefinedKeys({
             ...args?.filter,
@@ -1586,7 +1590,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceId: parent.id,
             filter,
             limit: args.limit,
-            cursor: args.cursor ?? undefined
+            cursor: args.cursor ?? undefined,
+            hasAccessToEmail: hasAccessToEmail.isOk
           })
           return team
         },
@@ -1809,13 +1814,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const token = parent.token
           const authedUserId = ctx.userId
+          const canReadMemberEmail =
+            await ctx.authPolicies.workspace.canReadMemberEmail({
+              workspaceId: parent.workspaceId,
+              userId: ctx.userId
+            })
           const targetUserId = parent.user?.id
-
           // Only returning it for the user that is the pending stream collaborator
           // OR if the token was specified
+          // OR if the policy allows
           if (
             (!authedUserId || !targetUserId || authedUserId !== targetUserId) &&
-            !token
+            !token &&
+            !canReadMemberEmail.isOk
           ) {
             return null
           }
