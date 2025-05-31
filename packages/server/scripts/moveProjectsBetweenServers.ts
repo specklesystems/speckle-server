@@ -40,7 +40,8 @@ import {
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
+  findEmailFactory,
+  findVerifiedEmailsByUserIdFactory
 } from '@/modules/core/repositories/userEmails'
 import {
   countAdminUsersFactory,
@@ -54,6 +55,10 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 import {
   getAvailableRegionConfig,
   getMainRegionConfig
@@ -70,8 +75,12 @@ import { getTotalStreamCountFactory } from '@/modules/stats/repositories'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
   getWorkspaceFactory,
-  getWorkspaceRolesFactory
+  getWorkspaceRolesFactory,
+  getWorkspaceWithDomainsFactory,
+  upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { getWorkspaceRoleAndSeatFactory } from '@/modules/workspacesCore/repositories/rolesSeats'
 import { retry } from '@lifeomic/attempt'
@@ -157,7 +166,7 @@ const main = async () => {
           continue
         }
 
-        await createUserFactory({
+        const newUserId = await createUserFactory({
           getServerInfo: getServerInfoFactory({ db: targetMainDb }),
           findEmail: findEmailFactory({ db: targetMainDb }),
           storeUser: storeUserFactory({ db: targetMainDb }),
@@ -190,6 +199,31 @@ const main = async () => {
             })
           }),
           emitEvent: getEventBus().emit
+        })({
+          ...user
+        })
+
+        userIdMapping[user.id] = newUserId
+
+        await addOrUpdateWorkspaceRoleFactory({
+          getWorkspaceRoles: getWorkspaceRolesFactory({ db: targetMainDb }),
+          getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: targetMainDb }),
+          findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+            db: targetMainDb
+          }),
+          upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: targetMainDb }),
+          emitWorkspaceEvent: getEventBus().emit,
+          ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db: targetMainDb }),
+            getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: targetMainDb }),
+            eventEmit: getEventBus().emit
+          })
+        })({
+          userId: newUserId,
+          workspaceId: TARGET_WORKSPACE_ID,
+          role: Roles.Workspace.Member,
+          preventRoleDowngrade: true,
+          updatedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
         })
       }
     }
@@ -224,8 +258,8 @@ const main = async () => {
       const logKey = `(${currentProjectIndex
         .toString()
         .padStart(4, '0')}/${sourceServerProjectCount
-          .toString()
-          .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
+        .toString()
+        .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
 
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
@@ -306,8 +340,8 @@ const main = async () => {
             `${logKey} ${movedObjectsCount
               .toString()
               .padStart(6, '0')}/${sourceProjectObjectCount
-                .toString()
-                .padStart(6, '0')} objects moved`
+              .toString()
+              .padStart(6, '0')} objects moved`
           )
         }
 
@@ -451,10 +485,12 @@ const main = async () => {
             role = Roles.Stream.Owner
           }
           if (!role && workspaceAcl.role === Roles.Workspace.Member) {
-            const seatType = await getWorkspaceRoleAndSeatFactory({ db: targetMainDb })({
-              workspaceId: TARGET_WORKSPACE_ID,
-              userId
-            })
+            const seatType = await getWorkspaceRoleAndSeatFactory({ db: targetMainDb })(
+              {
+                workspaceId: TARGET_WORKSPACE_ID,
+                userId
+              }
+            )
             if (!seatType) {
               continue
             }
