@@ -161,6 +161,16 @@ const main = async () => {
       // Optionally, provision users from source server on target server
       // TODO: This is only possible if the target workspace has SSO enabled
       if (ENABLE_USER_PROVISIONING) {
+        const existingUserEmail = await findEmailFactory({ db: targetMainDb })({
+          email: user.email.toLowerCase(),
+          verified: false
+        })
+
+        if (!!existingUserEmail) {
+          // Someone already has this email
+          continue
+        }
+
         const pendingWorkspaceInvites = await getPendingWorkspaceCollaboratorsFactory({
           queryAllResourceInvites: queryAllResourceInvitesFactory({ db: targetMainDb }),
           getInvitationTargetUsers: getInvitationTargetUsersFactory({
