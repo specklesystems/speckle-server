@@ -46,6 +46,7 @@ import {
 import {
   countAdminUsersFactory,
   getUserFactory,
+  getUsersFactory,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
@@ -65,9 +66,11 @@ import {
 } from '@/modules/multiregion/regionConfig'
 import {
   deleteServerOnlyInvitesFactory,
+  queryAllResourceInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { getStringFromEnv } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -79,6 +82,7 @@ import {
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
+import { getPendingWorkspaceCollaboratorsFactory } from '@/modules/workspaces/services/invites'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
@@ -157,12 +161,17 @@ const main = async () => {
       // Optionally, provision users from source server on target server
       // TODO: This is only possible if the target workspace has SSO enabled
       if (ENABLE_USER_PROVISIONING) {
-        const targetServerUserEmail = await findEmailFactory({ db: targetMainDb })({
-          email: user.email.toLowerCase()
+        const pendingWorkspaceInvites = await getPendingWorkspaceCollaboratorsFactory({
+          queryAllResourceInvites: queryAllResourceInvitesFactory({ db: targetMainDb }),
+          getInvitationTargetUsers: getInvitationTargetUsersFactory({
+            getUsers: getUsersFactory({ db: targetMainDb })
+          })
+        })({
+          workspaceId: TARGET_WORKSPACE_ID
         })
 
-        if (targetServerUserEmail?.userId) {
-          // User with email already exists in target server
+        if (!pendingWorkspaceInvites.some((invite) => invite.email === user.email)) {
+          // User does not have an active invite
           continue
         }
 
@@ -258,8 +267,8 @@ const main = async () => {
       const logKey = `(${currentProjectIndex
         .toString()
         .padStart(4, '0')}/${sourceServerProjectCount
-        .toString()
-        .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
+          .toString()
+          .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
 
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
@@ -340,8 +349,8 @@ const main = async () => {
             `${logKey} ${movedObjectsCount
               .toString()
               .padStart(6, '0')}/${sourceProjectObjectCount
-              .toString()
-              .padStart(6, '0')} objects moved`
+                .toString()
+                .padStart(6, '0')} objects moved`
           )
         }
 
