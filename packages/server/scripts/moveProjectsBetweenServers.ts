@@ -303,9 +303,6 @@ const main = async () => {
         continue
       }
 
-      const mainTrx = await targetMainDb.transaction()
-      const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
-
       // TODO: Why is initial write wrapped in a transaction?
       await storeProjectFactory({ db: targetRegionDb })({
         project: {
@@ -335,6 +332,9 @@ const main = async () => {
         // else throw as is
         throw err
       }
+
+      const mainTrx = await targetMainDb.transaction()
+      const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
 
       console.log(`${logKey} Replicated ${sourceProject.name}`)
 
