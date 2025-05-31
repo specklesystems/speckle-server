@@ -185,375 +185,379 @@ const main = async () => {
           continue
         }
 
-        const newUserId = await createUserFactory({
-          getServerInfo: getServerInfoFactory({ db: targetMainDb }),
-          findEmail: findEmailFactory({ db: targetMainDb }),
-          storeUser: storeUserFactory({ db: targetMainDb }),
-          countAdminUsers: countAdminUsersFactory({ db: targetMainDb }),
-          storeUserAcl: storeUserAclFactory({ db: targetMainDb }),
-          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-            createUserEmail: createUserEmailFactory({ db: targetMainDb }),
-            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
-              db: targetMainDb
-            }),
+        try {
+          const newUserId = await createUserFactory({
+            getServerInfo: getServerInfoFactory({ db: targetMainDb }),
             findEmail: findEmailFactory({ db: targetMainDb }),
-            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({
+            storeUser: storeUserFactory({ db: targetMainDb }),
+            countAdminUsers: countAdminUsersFactory({ db: targetMainDb }),
+            storeUserAcl: storeUserAclFactory({ db: targetMainDb }),
+            validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+              createUserEmail: createUserEmailFactory({ db: targetMainDb }),
+              ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
                 db: targetMainDb
               }),
-              updateAllInviteTargets: updateAllInviteTargetsFactory({
-                db: targetMainDb
-              })
-            }),
-            requestNewEmailVerification: requestNewEmailVerificationFactory({
               findEmail: findEmailFactory({ db: targetMainDb }),
-              getUser: getUserFactory({ db: targetMainDb }),
-              getServerInfo: getServerInfoFactory({ db: targetMainDb }),
-              deleteOldAndInsertNewVerification:
-                deleteOldAndInsertNewVerificationFactory({
+              updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({
                   db: targetMainDb
                 }),
-              renderEmail,
-              sendEmail
-            })
-          }),
-          emitEvent: getEventBus().emit
-        })({
-          ...user
-        })
-
-        userIdMapping[user.id] = newUserId
-
-        await addOrUpdateWorkspaceRoleFactory({
-          getWorkspaceRoles: getWorkspaceRolesFactory({ db: targetMainDb }),
-          getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: targetMainDb }),
-          findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-            db: targetMainDb
-          }),
-          upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: targetMainDb }),
-          emitWorkspaceEvent: getEventBus().emit,
-          ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-            createWorkspaceSeat: createWorkspaceSeatFactory({ db: targetMainDb }),
-            getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: targetMainDb }),
-            eventEmit: getEventBus().emit
+                updateAllInviteTargets: updateAllInviteTargetsFactory({
+                  db: targetMainDb
+                })
+              }),
+              requestNewEmailVerification: requestNewEmailVerificationFactory({
+                findEmail: findEmailFactory({ db: targetMainDb }),
+                getUser: getUserFactory({ db: targetMainDb }),
+                getServerInfo: getServerInfoFactory({ db: targetMainDb }),
+                deleteOldAndInsertNewVerification:
+                  deleteOldAndInsertNewVerificationFactory({
+                    db: targetMainDb
+                  }),
+                renderEmail,
+                sendEmail
+              })
+            }),
+            emitEvent: getEventBus().emit
+          })({
+            ...user
           })
-        })({
-          userId: newUserId,
-          workspaceId: TARGET_WORKSPACE_ID,
-          role: Roles.Workspace.Member,
-          preventRoleDowngrade: true,
-          updatedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
-        })
+
+          userIdMapping[user.id] = newUserId
+
+          await addOrUpdateWorkspaceRoleFactory({
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: targetMainDb }),
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: targetMainDb }),
+            findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+              db: targetMainDb
+            }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: targetMainDb }),
+            emitWorkspaceEvent: getEventBus().emit,
+            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db: targetMainDb }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: targetMainDb }),
+              eventEmit: getEventBus().emit
+            })
+          })({
+            userId: newUserId,
+            workspaceId: TARGET_WORKSPACE_ID,
+            role: Roles.Workspace.Member,
+            preventRoleDowngrade: true,
+            updatedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
+          })
+        } catch {
+          continue
+        }
+
       }
     }
-  }
 
-  const workspaceAcls = await getWorkspaceRolesFactory({ db: targetMainDb })({
-    workspaceId: TARGET_WORKSPACE_ID
-  })
+    const workspaceAcls = await getWorkspaceRolesFactory({ db: targetMainDb })({
+      workspaceId: TARGET_WORKSPACE_ID
+    })
 
-  const sourceServerUserCount = Object.keys(userIdMapping).length
-  const targetServerUserCount = Object.values(userIdMapping).filter((id) => !!id).length
+    const sourceServerUserCount = Object.keys(userIdMapping).length
+    const targetServerUserCount = Object.values(userIdMapping).filter((id) => !!id).length
 
-  console.log(
-    `${targetServerUserCount} of ${sourceServerUserCount} users provisioned on target server.`
-  )
+    console.log(
+      `${targetServerUserCount} of ${sourceServerUserCount} users provisioned on target server.`
+    )
 
-  // Begin moving project data
-  const sourceServerProjectCount = await getTotalStreamCountFactory({ db: sourceDb })()
-  let currentProjectIndex = 0
+    // Begin moving project data
+    const sourceServerProjectCount = await getTotalStreamCountFactory({ db: sourceDb })()
+    let currentProjectIndex = 0
 
-  const skippedProjects: StreamRecord[] = []
+    const skippedProjects: StreamRecord[] = []
 
-  const { targetRegionDb: largeProjectDb } = await getTargetServerConnection(
-    TARGET_WORKSPACE_ID
-  )
+    const { targetRegionDb: largeProjectDb } = await getTargetServerConnection(
+      TARGET_WORKSPACE_ID
+    )
 
-  for await (const sourceProjects of executeBatchedSelect(
-    sourceDb.table<StreamRecord>('streams').select('*')
-  )) {
-    for (const sourceProject of sourceProjects) {
-      currentProjectIndex++
-      const logKey = `(${currentProjectIndex
-        .toString()
-        .padStart(4, '0')}/${sourceServerProjectCount
+    for await (const sourceProjects of executeBatchedSelect(
+      sourceDb.table<StreamRecord>('streams').select('*')
+    )) {
+      for (const sourceProject of sourceProjects) {
+        currentProjectIndex++
+        const logKey = `(${currentProjectIndex
           .toString()
-          .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
+          .padStart(4, '0')}/${sourceServerProjectCount
+            .toString()
+            .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
 
-      // Move project and await replication
-      console.log(`${logKey} Moving ${sourceProject.name}`)
+        // Move project and await replication
+        console.log(`${logKey} Moving ${sourceProject.name}`)
 
-      const existingProject = await getProjectFactory({ db: targetRegionDb })({
-        projectId: sourceProject.id
-      })
+        const existingProject = await getProjectFactory({ db: targetRegionDb })({
+          projectId: sourceProject.id
+        })
 
-      if (
-        sourceProject.id !== '80643e0e3c' &&
-        (existingProject || sourceProject.name.includes('First Project'))
-      ) {
-        console.log(`${logKey} Skipping ${sourceProject.name} ${sourceProject.id}`)
-        if (existingProject) {
-          skippedProjects.push(existingProject)
+        if (
+          sourceProject.id !== '80643e0e3c' &&
+          (existingProject || sourceProject.name.includes('First Project'))
+        ) {
+          console.log(`${logKey} Skipping ${sourceProject.name} ${sourceProject.id}`)
+          if (existingProject) {
+            skippedProjects.push(existingProject)
+          }
+          continue
         }
-        continue
-      }
 
-      const mainTrx = await targetMainDb.transaction()
-      const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
+        const mainTrx = await targetMainDb.transaction()
+        const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
 
-      // TODO: Why is initial write wrapped in a transaction?
-      await storeProjectFactory({ db: targetRegionDb })({
-        project: {
-          ...sourceProject,
-          regionKey: targetWorkspaceRegionKey,
-          workspaceId: TARGET_WORKSPACE_ID
-        }
-      })
+        // TODO: Why is initial write wrapped in a transaction?
+        await storeProjectFactory({ db: targetRegionDb })({
+          project: {
+            ...sourceProject,
+            regionKey: targetWorkspaceRegionKey,
+            workspaceId: TARGET_WORKSPACE_ID
+          }
+        })
 
-      try {
-        await retry(
-          async () => {
-            await getProjectFactory({ db: targetMainDb })({
+        try {
+          await retry(
+            async () => {
+              await getProjectFactory({ db: targetMainDb })({
+                projectId: sourceProject.id
+              })
+            },
+            { maxAttempts: 100 }
+          )
+        } catch (err) {
+          if (err instanceof StreamNotFoundError) {
+            // delete from region
+            await deleteProjectFactory({ db: targetRegionDb })({
               projectId: sourceProject.id
             })
-          },
-          { maxAttempts: 100 }
-        )
-      } catch (err) {
-        if (err instanceof StreamNotFoundError) {
-          // delete from region
+            throw new RegionalProjectCreationError()
+          }
+          // else throw as is
+          throw err
+        }
+
+        console.log(`${logKey} Replicated ${sourceProject.name}`)
+
+        // Move project data
+        const regionTrx = await targetRegionDb.transaction()
+
+        try {
+          // stream meta not needed, currently it only holds info about the onboarding project
+          // stream favorites is ignored
+
+          // Move objects
+          const sourceProjectObjectCount = await getStreamObjectCountFactory({
+            db: sourceDb
+          })({ streamId: sourceProject.id })
+          let movedObjectsCount = 0
+
+          const objectDb =
+            sourceProjectObjectCount > 1_000_000 ? largeProjectDb : regionTrx
+
+          for await (const objectsBatch of getBatchedStreamObjectsFactory({
+            db: sourceDb
+          })(sourceProject.id, { batchSize: 500 })) {
+            await insertObjectsFactory({ db: objectDb })(objectsBatch)
+
+            movedObjectsCount = movedObjectsCount + objectsBatch.length
+            console.log(
+              `${logKey} ${movedObjectsCount
+                .toString()
+                .padStart(6, '0')}/${sourceProjectObjectCount
+                  .toString()
+                  .padStart(6, '0')} objects moved`
+            )
+          }
+
+          // object previews are ignored, they will be regenerated when requested
+
+          // Move branches
+          const branchIds: string[] = []
+          let movedBranchCount = 0
+
+          for await (const branchBatch of getBatchedStreamBranchesFactory({
+            db: sourceDb
+          })(sourceProject.id)) {
+            const branchesAuthorRemapped = branchBatch.map((b) => {
+              branchIds.push(b.id)
+              if (!b.authorId) return b
+              if (!(b.authorId in userIdMapping)) throw new Error('Unknown branch author')
+              return {
+                ...b,
+                authorId: userIdMapping[b.authorId] ?? TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
+              }
+            })
+            if (branchesAuthorRemapped.length) {
+              await insertBranchesFactory({ db: regionTrx })(branchesAuthorRemapped)
+            }
+            movedBranchCount = movedBranchCount + branchesAuthorRemapped.length
+            console.log(`${logKey} ${movedBranchCount} branches moved`)
+          }
+
+          // Move commits
+          const sc: { streamId: string; commitId: string }[] = []
+          const bc: { branchId: string; commitId: string }[] = []
+
+          const branchCommits = await getAllBranchCommitsFactory({ db: sourceDb })({
+            projectId: sourceProject.id
+          })
+          for (const [branchId, commitBatch] of Object.entries(branchCommits)) {
+            if (commitBatch.length === 0) {
+              continue
+            }
+
+            const commitsRemapped = commitBatch.map((c) => {
+              sc.push({ streamId: sourceProject.id, commitId: c.id })
+              bc.push({ branchId, commitId: c.id })
+              if (!c.author) return omit(c, 'branchId')
+              const commit = {
+                ...c,
+                author: userIdMapping[c.author] ?? TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
+              }
+
+              // yeah, that is added by the repo function...
+              return omit(commit, 'branchId')
+            })
+            console.log(commitsRemapped.length)
+            if (commitsRemapped.length) {
+              await insertCommitsFactory({ db: regionTrx })(commitsRemapped)
+            }
+
+            console.log(`${logKey} ${Object.keys(sc).length} commits moved`)
+          }
+
+          // stream_commits
+          if (sc.length) {
+            await insertStreamCommitsFactory({ db: regionTrx })(sc)
+          }
+          // branch_commits
+          if (bc.length) {
+            await insertBranchCommitsFactory({ db: regionTrx })(bc)
+          }
+
+          // Move comments
+          const commentIds: string[] = []
+          for await (const commentBatch of getBatchedStreamCommentsFactory({
+            db: sourceDb
+          })(sourceProject.id)) {
+            const commentsRemapped = commentBatch
+              .map((c) => {
+                if (c.text)
+                  return {
+                    ...c,
+                    authorId:
+                      userIdMapping?.[c.authorId] ?? TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
+                  }
+              })
+              .filter((c) => c !== undefined)
+            // TODO: this borks the createdAt date !!!!!
+            // TODO: why is the text null in the return object?
+            if (commentsRemapped.length) {
+              // @ts-expect-error comments are always text
+              await insertCommentsFactory({ db: regionTrx })(commentsRemapped)
+              commentIds.push(...commentsRemapped.map((comment) => comment.id))
+            }
+            console.log(`${logKey} ${commentIds.length} comments moved`)
+          }
+
+          // comment links
+          if (commentIds.length) {
+            const commentLinks = await getCommentLinksFactory({ db: sourceDb })(
+              commentIds
+            )
+            await insertCommentLinksFactory({ db: regionTrx })(commentLinks)
+          }
+
+          // skipping file uploads and blobs, there is none of that in the current source
+          // file uploads
+          // blobs
+
+          // skipping webhooks, there is not of that in the current source
+          // webhooks_config
+          // webhooks_events
+
+          // Assign project roles
+          const existingStreamCollaborators = await getStreamCollaboratorsFactory({
+            db: sourceDb
+          })(sourceProject.id, undefined, { limit: 100 })
+
+          // Give admin role
+          await grantStreamPermissions({
+            userId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID,
+            streamId: sourceProject.id,
+            role: Roles.Stream.Owner
+          })
+
+          // Try to assign roles
+          for (const user of sourceUsers) {
+            // stream_acl is calculated based on the users workspace role and the original role
+            if (!(user.id in userIdMapping))
+              throw new Error('cannot find source user in mapping')
+            const userId = userIdMapping[user.id]
+            if (!userId) continue
+            let role: StreamRoles | null = null
+
+            const existingCollaborator = existingStreamCollaborators.find(
+              (c) => c.id === user.id
+            )
+            if (existingCollaborator) {
+              role = existingCollaborator.streamRole
+            }
+            const workspaceAcl = workspaceAcls.find((w) => w.userId === userId)
+            if (!workspaceAcl) continue
+            if (workspaceAcl.role === Roles.Workspace.Admin) {
+              role = Roles.Stream.Owner
+            }
+            if (!role && workspaceAcl.role === Roles.Workspace.Member) {
+              const seatType = await getWorkspaceRoleAndSeatFactory({ db: targetMainDb })(
+                {
+                  workspaceId: TARGET_WORKSPACE_ID,
+                  userId
+                }
+              )
+              if (!seatType) {
+                continue
+              }
+              switch (seatType.seat.type) {
+                case WorkspaceSeatType.Editor: {
+                  role = Roles.Stream.Contributor
+                  break
+                }
+                case WorkspaceSeatType.Viewer: {
+                  role = Roles.Stream.Reviewer
+                  break
+                }
+              }
+            }
+
+            // guest can be ignored, they get roles from the original project role
+            if (role)
+              await grantStreamPermissions({ userId, streamId: sourceProject.id, role })
+          }
+
+          await mainTrx.commit()
+          await regionTrx.commit()
+        } catch (err) {
+          await regionTrx.rollback()
+          // Rollback ?
+          await mainTrx.rollback()
+          // cleanup the project from the DB
           await deleteProjectFactory({ db: targetRegionDb })({
             projectId: sourceProject.id
           })
-          throw new RegionalProjectCreationError()
+          throw err
         }
-        // else throw as is
-        throw err
       }
+    }
 
-      console.log(`${logKey} Replicated ${sourceProject.name}`)
-
-      // Move project data
-      const regionTrx = await targetRegionDb.transaction()
-
-      try {
-        // stream meta not needed, currently it only holds info about the onboarding project
-        // stream favorites is ignored
-
-        // Move objects
-        const sourceProjectObjectCount = await getStreamObjectCountFactory({
-          db: sourceDb
-        })({ streamId: sourceProject.id })
-        let movedObjectsCount = 0
-
-        const objectDb =
-          sourceProjectObjectCount > 1_000_000 ? largeProjectDb : regionTrx
-
-        for await (const objectsBatch of getBatchedStreamObjectsFactory({
-          db: sourceDb
-        })(sourceProject.id, { batchSize: 500 })) {
-          await insertObjectsFactory({ db: objectDb })(objectsBatch)
-
-          movedObjectsCount = movedObjectsCount + objectsBatch.length
-          console.log(
-            `${logKey} ${movedObjectsCount
-              .toString()
-              .padStart(6, '0')}/${sourceProjectObjectCount
-                .toString()
-                .padStart(6, '0')} objects moved`
-          )
-        }
-
-        // object previews are ignored, they will be regenerated when requested
-
-        // Move branches
-        const branchIds: string[] = []
-        let movedBranchCount = 0
-
-        for await (const branchBatch of getBatchedStreamBranchesFactory({
-          db: sourceDb
-        })(sourceProject.id)) {
-          const branchesAuthorRemapped = branchBatch.map((b) => {
-            branchIds.push(b.id)
-            if (!b.authorId) return b
-            if (!(b.authorId in userIdMapping)) throw new Error('Unknown branch author')
-            return {
-              ...b,
-              authorId: userIdMapping[b.authorId] ?? TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
-            }
-          })
-          if (branchesAuthorRemapped.length) {
-            await insertBranchesFactory({ db: regionTrx })(branchesAuthorRemapped)
-          }
-          movedBranchCount = movedBranchCount + branchesAuthorRemapped.length
-          console.log(`${logKey} ${movedBranchCount} branches moved`)
-        }
-
-        // Move commits
-        const sc: { streamId: string; commitId: string }[] = []
-        const bc: { branchId: string; commitId: string }[] = []
-
-        const branchCommits = await getAllBranchCommitsFactory({ db: sourceDb })({
-          projectId: sourceProject.id
-        })
-        for (const [branchId, commitBatch] of Object.entries(branchCommits)) {
-          if (commitBatch.length === 0) {
-            continue
-          }
-
-          const commitsRemapped = commitBatch.map((c) => {
-            sc.push({ streamId: sourceProject.id, commitId: c.id })
-            bc.push({ branchId, commitId: c.id })
-            if (!c.author) return omit(c, 'branchId')
-            const commit = {
-              ...c,
-              author: userIdMapping[c.author] ?? TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
-            }
-
-            // yeah, that is added by the repo function...
-            return omit(commit, 'branchId')
-          })
-          console.log(commitsRemapped.length)
-          if (commitsRemapped.length) {
-            await insertCommitsFactory({ db: regionTrx })(commitsRemapped)
-          }
-
-          console.log(`${logKey} ${Object.keys(sc).length} commits moved`)
-        }
-
-        // stream_commits
-        if (sc.length) {
-          await insertStreamCommitsFactory({ db: regionTrx })(sc)
-        }
-        // branch_commits
-        if (bc.length) {
-          await insertBranchCommitsFactory({ db: regionTrx })(bc)
-        }
-
-        // Move comments
-        const commentIds: string[] = []
-        for await (const commentBatch of getBatchedStreamCommentsFactory({
-          db: sourceDb
-        })(sourceProject.id)) {
-          const commentsRemapped = commentBatch
-            .map((c) => {
-              if (c.text)
-                return {
-                  ...c,
-                  authorId:
-                    userIdMapping?.[c.authorId] ?? TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
-                }
-            })
-            .filter((c) => c !== undefined)
-          // TODO: this borks the createdAt date !!!!!
-          // TODO: why is the text null in the return object?
-          if (commentsRemapped.length) {
-            // @ts-expect-error comments are always text
-            await insertCommentsFactory({ db: regionTrx })(commentsRemapped)
-            commentIds.push(...commentsRemapped.map((comment) => comment.id))
-          }
-          console.log(`${logKey} ${commentIds.length} comments moved`)
-        }
-
-        // comment links
-        if (commentIds.length) {
-          const commentLinks = await getCommentLinksFactory({ db: sourceDb })(
-            commentIds
-          )
-          await insertCommentLinksFactory({ db: regionTrx })(commentLinks)
-        }
-
-        // skipping file uploads and blobs, there is none of that in the current source
-        // file uploads
-        // blobs
-
-        // skipping webhooks, there is not of that in the current source
-        // webhooks_config
-        // webhooks_events
-
-        // Assign project roles
-        const existingStreamCollaborators = await getStreamCollaboratorsFactory({
-          db: sourceDb
-        })(sourceProject.id, undefined, { limit: 100 })
-
-        // Give admin role
-        await grantStreamPermissions({
-          userId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID,
-          streamId: sourceProject.id,
-          role: Roles.Stream.Owner
-        })
-
-        // Try to assign roles
-        for (const user of sourceUsers) {
-          // stream_acl is calculated based on the users workspace role and the original role
-          if (!(user.id in userIdMapping))
-            throw new Error('cannot find source user in mapping')
-          const userId = userIdMapping[user.id]
-          if (!userId) continue
-          let role: StreamRoles | null = null
-
-          const existingCollaborator = existingStreamCollaborators.find(
-            (c) => c.id === user.id
-          )
-          if (existingCollaborator) {
-            role = existingCollaborator.streamRole
-          }
-          const workspaceAcl = workspaceAcls.find((w) => w.userId === userId)
-          if (!workspaceAcl) continue
-          if (workspaceAcl.role === Roles.Workspace.Admin) {
-            role = Roles.Stream.Owner
-          }
-          if (!role && workspaceAcl.role === Roles.Workspace.Member) {
-            const seatType = await getWorkspaceRoleAndSeatFactory({ db: targetMainDb })(
-              {
-                workspaceId: TARGET_WORKSPACE_ID,
-                userId
-              }
-            )
-            if (!seatType) {
-              continue
-            }
-            switch (seatType.seat.type) {
-              case WorkspaceSeatType.Editor: {
-                role = Roles.Stream.Contributor
-                break
-              }
-              case WorkspaceSeatType.Viewer: {
-                role = Roles.Stream.Reviewer
-                break
-              }
-            }
-          }
-
-          // guest can be ignored, they get roles from the original project role
-          if (role)
-            await grantStreamPermissions({ userId, streamId: sourceProject.id, role })
-        }
-
-        await mainTrx.commit()
-        await regionTrx.commit()
-      } catch (err) {
-        await regionTrx.rollback()
-        // Rollback ?
-        await mainTrx.rollback()
-        // cleanup the project from the DB
-        await deleteProjectFactory({ db: targetRegionDb })({
-          projectId: sourceProject.id
-        })
-        throw err
-      }
+    console.log(`Skipped ${skippedProjects.length} projects:`)
+    for (const project of skippedProjects) {
+      console.log(`${project.id} ${project.name}`)
     }
   }
 
-  console.log(`Skipped ${skippedProjects.length} projects:`)
-  for (const project of skippedProjects) {
-    console.log(`${project.id} ${project.name}`)
-  }
-}
-
-main()
-  .then(() => console.log('done'))
-  .catch((e) => console.log(e))
+  main()
+    .then(() => console.log('done'))
+    .catch((e) => console.log(e))
 
 //   // getting users here, to make sure they all exist
 //   // const sourceUsers = await getUsersFactory({ db: sourceDb })(
