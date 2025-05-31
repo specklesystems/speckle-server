@@ -88,7 +88,7 @@ import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/servic
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { getWorkspaceRoleAndSeatFactory } from '@/modules/workspacesCore/repositories/rolesSeats'
 import { retry } from '@lifeomic/attempt'
-import { Roles, StreamRoles } from '@speckle/shared'
+import { Roles, StreamRoles, wait } from '@speckle/shared'
 import knex from 'knex'
 import { omit } from 'lodash'
 
@@ -332,6 +332,8 @@ const main = async () => {
         // else throw as is
         throw err
       }
+
+      await wait(5000)
 
       const mainTrx = await targetMainDb.transaction()
       const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
