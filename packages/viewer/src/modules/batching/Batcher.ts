@@ -512,6 +512,15 @@ export default class Batcher {
   public getBatches<K extends GeometryType>(
     subtreeId?: string,
     geometryType?: K
+  ): BatchTypeMap[K][]
+  public getBatches<K extends GeometryType>(
+    subtreeId?: string,
+    geometryType?: Array<K>
+  ): BatchTypeMap[K][]
+
+  public getBatches<K extends GeometryType>(
+    subtreeId?: string,
+    geometryType?: K | Array<K>
   ): BatchTypeMap[K][] {
     const batches: Batch[] = Object.values(this.batches)
     return batches.filter((value: Batch) => {
@@ -524,23 +533,34 @@ export default class Batcher {
 
   private isBatchType<K extends GeometryType>(
     batch: Batch,
-    geometryType?: K
+    geometryType?: K | Array<K>
   ): batch is BatchTypeMap[K] {
     if (geometryType === undefined) return true
-    switch (geometryType) {
-      case GeometryType.MESH:
-        return batch instanceof MeshBatch || batch instanceof InstancedMeshBatch
-      case GeometryType.LINE:
-        return batch instanceof LineBatch
-      case GeometryType.POINT:
-        return batch instanceof PointBatch
-      case GeometryType.POINT_CLOUD:
-        return batch instanceof PointBatch
-      case GeometryType.TEXT:
-        return batch instanceof TextBatch
-      default:
-        return false
-    }
+    let isBatchType = false
+    const array = Array.isArray(geometryType) ? geometryType : [geometryType]
+    array.forEach((value: K) => {
+      switch (value) {
+        case GeometryType.MESH:
+          isBatchType ||=
+            batch instanceof MeshBatch || batch instanceof InstancedMeshBatch
+          break
+        case GeometryType.LINE:
+          isBatchType ||= batch instanceof LineBatch
+          break
+        case GeometryType.POINT:
+          isBatchType ||= batch instanceof PointBatch
+          break
+        case GeometryType.POINT_CLOUD:
+          isBatchType ||= batch instanceof PointBatch
+          break
+        case GeometryType.TEXT:
+          isBatchType ||= batch instanceof TextBatch
+          break
+        default:
+          isBatchType = false
+      }
+    })
+    return isBatchType
   }
 
   public getBatch(rv: NodeRenderView): Batch | undefined {

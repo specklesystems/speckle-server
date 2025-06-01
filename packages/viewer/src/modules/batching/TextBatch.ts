@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box3, Material, Matrix4, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
@@ -28,10 +28,10 @@ export default class TextBatch implements Batch {
   public subtreeId: string
   public renderViews: NodeRenderView[]
   public batchMaterial: Material
-  public textBatch: SpeckleText
+  public mesh: SpeckleText
 
   public get bounds(): Box3 {
-    return this.textBatch.TAS.getBoundingBox(new Box3())
+    return this.mesh.TAS.getBoundingBox(new Box3())
   }
 
   public get drawCalls(): number {
@@ -68,7 +68,7 @@ export default class TextBatch implements Batch {
   }
 
   public get renderObject(): Object3D {
-    return this.textBatch as unknown as Object3D
+    return this.mesh as unknown as Object3D
   }
 
   public getCount(): number {
@@ -76,11 +76,11 @@ export default class TextBatch implements Batch {
   }
 
   public get materials(): Material[] {
-    return this.textBatch.materials
+    return this.mesh.materials
   }
 
   public get groups(): Array<DrawGroup> {
-    return this.textBatch.groups
+    return this.mesh.groups
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -146,7 +146,7 @@ export default class TextBatch implements Batch {
 
   public async buildBatch(): Promise<void> {
     return new Promise((resolve) => {
-      this.textBatch = new SpeckleText()
+      this.mesh = new SpeckleText()
       const batchObjects: BatchObject[] = []
       let textSynced = this.renderViews.length
       for (let k = 0; k < this.renderViews.length; k++) {
@@ -157,7 +157,8 @@ export default class TextBatch implements Batch {
         text.fontSize = textMeta?.height
         text.sync(() => {
           const { textRenderInfo } = text
-          const bounds = textRenderInfo.blockBounds
+          /** We're using visibleBounds for a better fit */
+          const bounds = textRenderInfo.visibleBounds
           const vertices = []
           vertices.push(
             bounds[0],
@@ -173,32 +174,30 @@ export default class TextBatch implements Batch {
             bounds[1],
             0
           )
-
           const geometry = text.geometry
           geometry.computeBoundingBox()
           const textBvh = AccelerationStructure.buildBVH(
             geometry.index.array,
             vertices,
-            DefaultBVHOptions,
-            this.renderViews[k].renderData.geometry.bakeTransform as Matrix4
+            DefaultBVHOptions
           )
           const batchObject = new TextBatchObject(this.renderViews[k], k)
           batchObject.buildAccelerationStructure(textBvh)
           batchObjects.push(batchObject)
           //@ts-ignore
-          this.textBatch.addText(text)
+          this.mesh.addText(text)
           textSynced--
           if (!textSynced) {
-            this.textBatch.setBatchObjects(batchObjects)
-            this.textBatch.setBatchMaterial(this.batchMaterial)
-            this.textBatch.buildTAS()
+            this.mesh.setBatchObjects(batchObjects)
+            this.mesh.setBatchMaterial(this.batchMaterial)
+            this.mesh.buildTAS()
 
             //@ts-ignore
-            this.textBatch.uuid = this.id
+            this.mesh.uuid = this.id
             //@ts-ignore
-            this.textBatch.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
+            this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
             //@ts-ignore
-            this.textBatch.frustumCulled = false
+            this.mesh.frustumCulled = false
 
             this.groups.push({
               start: 0,
@@ -206,7 +205,7 @@ export default class TextBatch implements Batch {
               materialIndex: 0
             })
             //@ts-ignore
-            this.textBatch.sync(() => {
+            this.mesh.sync(() => {
               resolve()
             })
           }
@@ -237,6 +236,6 @@ export default class TextBatch implements Batch {
     this.renderViews.length = 0
     this.batchMaterial.dispose()
     //@ts-ignore
-    this.textBatch.dispose()
+    this.mesh.dispose()
   }
 }
