@@ -30,7 +30,7 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
-import { TIME } from '@speckle/shared'
+import { Optional, TIME } from '@speckle/shared'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
@@ -38,9 +38,11 @@ import {
   initializeQueue,
   shutdownQueue
 } from '@/modules/fileuploads/queues/fileimports'
+import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
+let quitListeners: Optional<() => void> = undefined
 let scheduledTasks: cron.ScheduledTask[] = []
 
 const scheduleFileImportExpiry = async ({
@@ -131,10 +133,13 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
       })(parsedMessage)
     })
     // }
+
+    quitListeners = initializeEventListenersFactory({ db })()
   }
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
+  quitListeners?.()
   scheduledTasks.forEach((task) => task.stop())
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) await shutdownQueue()
 }

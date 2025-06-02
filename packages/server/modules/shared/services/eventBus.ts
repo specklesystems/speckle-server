@@ -49,6 +49,10 @@ import {
   multiregionEventNamespace,
   MultiregionEventsPayloads
 } from '@/modules/multiregion/domain/events'
+import {
+  fileuploadEventNamespace,
+  FileuploadEventsPayloads
+} from '@/modules/fileuploads/domain/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -78,6 +82,7 @@ type EventsByNamespace = {
   [automationEventsNamespace]: AutomationEventsPayloads
   [automationRunEventsNamespace]: AutomationRunEventsPayloads
   [multiregionEventNamespace]: MultiregionEventsPayloads
+  [fileuploadEventNamespace]: FileuploadEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>

@@ -1,9 +1,6 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
-import {
-  createRandomString,
-  createRandomEmail
-} from '@/modules/core/helpers/testHelpers'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -21,7 +18,8 @@ import {
   countAdminUsersFactory,
   getUserFactory,
   storeUserAclFactory,
-  storeUserFactory
+  storeUserFactory,
+  UserWithOptionalRole
 } from '@/modules/core/repositories/users'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
@@ -159,10 +157,29 @@ export type CreateTestUsersParams = {
 export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>): BasicTestUser =>
   assign(
     {
-      id: createRandomString(),
-      name: createRandomString(),
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
       email: createRandomEmail(),
       verified: true
+    },
+    overrides
+  )
+
+export const buildTestUserWithOptionalRole = (
+  overrides?: Partial<UserWithOptionalRole>
+): UserWithOptionalRole =>
+  assign(
+    {
+      suuid: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      id: cryptoRandomString({ length: 10 }),
+      bio: cryptoRandomString({ length: 10 }),
+      company: cryptoRandomString({ length: 10 }),
+      avatar: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      email: createRandomEmail(),
+      verified: true,
+      role: null
     },
     overrides
   )

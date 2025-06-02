@@ -12,16 +12,19 @@ import {
   PushJobToFileImporter,
   InsertNewUploadAndNotify
 } from '@/modules/fileuploads/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   FileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
+import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
     saveUploadFile: SaveUploadFile
     publish: PublishSubscription
+    emit: EventBusEmit
   }) =>
   async (upload: SaveUploadFileInput) => {
     const branch = await deps.getStreamBranchByName(upload.streamId, upload.branchName)
@@ -56,6 +59,16 @@ export const insertNewUploadAndNotifyFactory =
       },
       projectId: file.streamId
     })
+
+    await deps.emit({
+      eventName: FileuploadEvents.Started,
+      payload: {
+        userId: file.userId,
+        projectId: file.streamId,
+        fileSize: file.fileSize,
+        fileType: file.fileType
+      }
+    })
   }
 
 export const insertNewUploadAndNotifyFactoryV2 =
@@ -63,6 +76,7 @@ export const insertNewUploadAndNotifyFactoryV2 =
     pushJobToFileImporter: PushJobToFileImporter
     saveUploadFile: SaveUploadFileV2
     publish: PublishSubscription
+    emit: EventBusEmit
   }): InsertNewUploadAndNotify =>
   async (upload) => {
     const file = await deps.saveUploadFile(upload)
@@ -88,6 +102,16 @@ export const insertNewUploadAndNotifyFactoryV2 =
       blobId: file.id,
       jobId: file.id,
       userId: upload.userId
+    })
+
+    await deps.emit({
+      eventName: FileuploadEvents.Started,
+      payload: {
+        userId: file.userId,
+        projectId: file.projectId,
+        fileSize: file.fileSize,
+        fileType: file.fileType
+      }
     })
   }
 
