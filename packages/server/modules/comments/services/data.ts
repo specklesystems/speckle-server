@@ -153,7 +153,7 @@ export const convertLegacyDataToStateFactory =
           isolatedObjectIds: data.filters?.isolatedIds || [],
           hiddenObjectIds: data.filters?.hiddenIds || [],
           selectedObjectIds: [],
-          selectedObjectApplicationIds: [],
+          selectedObjectApplicationIds: {},
           propertyFilter: {
             key: data.filters?.propertyInfoKey || null,
             isApplied: true

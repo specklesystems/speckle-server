@@ -2,6 +2,7 @@ import { intersection, isObjectLike } from '#lodash'
 import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes.js'
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors/index.js'
+import { coerceUndefinedValuesToNull } from '../../core/index.js'
 
 /** Redefining these is unfortunate. Especially since they are not part of viewer-core */
 enum MeasurementType {
@@ -33,7 +34,7 @@ export interface SectionBoxData {
  * v1.1 -> v1.2
  * - ui.diff added
  * v1.2 -> v1.3
- * - ui.filters.selectedObjectApplicationIds added
+ * - ui.filters.selectedObjectIds deprecated in favor of ui.filters.selectedObjectApplicationIds
  */
 export const SERIALIZED_VIEWER_STATE_VERSION = 1.3
 
@@ -74,8 +75,10 @@ export type SerializedViewerState = {
     filters: {
       isolatedObjectIds: string[]
       hiddenObjectIds: string[]
+      /** @deprecated Use `selectedObjectApplicationIds */
       selectedObjectIds: string[]
-      selectedObjectApplicationIds: string[]
+      /** Map of object id => application id or null, if no application id */
+      selectedObjectApplicationIds: Record<string, string | null>
       propertyFilter: {
         key: Nullable<string>
         isApplied: boolean
@@ -147,6 +150,18 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     ...state.ui?.measurement?.options
   }
 
+  const selectedObjectApplicationIds = {
+    // Parse legacy object ids array as object
+    ...(state.ui?.filters?.selectedObjectIds?.reduce((ret, id) => {
+      ret[id] = null
+      return ret
+    }, {} as Record<string, string | null>) ?? {}),
+    // Sanitize incoming object
+    ...coerceUndefinedValuesToNull(
+      state.ui?.filters?.selectedObjectApplicationIds || {}
+    )
+  }
+
   return {
     projectId: state.projectId || throwInvalidError('projectId'),
     sessionId: state.sessionId || `nullSessionId-${Math.random() * 1000}`,
@@ -196,8 +211,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
         hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
         selectedObjectIds: state.ui?.filters?.selectedObjectIds || [],
-        selectedObjectApplicationIds:
-          state.ui?.filters?.selectedObjectApplicationIds || [],
+        selectedObjectApplicationIds,
         propertyFilter: {
           ...(state.ui?.filters?.propertyFilter || {}),
           key: state.ui?.filters?.propertyFilter?.key || null,
