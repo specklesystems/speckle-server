@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box3, Material, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Matrix4, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
@@ -152,7 +152,11 @@ export default class TextBatch implements Batch {
       for (let k = 0; k < this.renderViews.length; k++) {
         const textMeta = this.renderViews[k].renderData.geometry.metaData
         const text = new Text()
-        text.matrix.copy(this.renderViews[k].renderData.geometry.bakeTransform)
+        this.renderViews[k].renderData.geometry.bakeTransform?.decompose(
+          text.position,
+          text.quaternion,
+          text.scale
+        )
         text.text = textMeta?.value
         text.fontSize = textMeta?.height
         text.sync(() => {
@@ -179,7 +183,8 @@ export default class TextBatch implements Batch {
           const textBvh = AccelerationStructure.buildBVH(
             geometry.index.array,
             vertices,
-            DefaultBVHOptions
+            DefaultBVHOptions,
+            this.renderViews[k].renderData.geometry.bakeTransform ?? new Matrix4()
           )
           const batchObject = new TextBatchObject(this.renderViews[k], k)
           batchObject.buildAccelerationStructure(textBvh)
