@@ -78,14 +78,16 @@ const environment = computed(() => {
       ].join('\n')
     }
     case 'dotnet': {
-      return [
-        '{',
-        '  "SpeckleToken": "YOUR-TOKEN-HERE",',
-        `  "SpeckleServerUrl": "${origin}",`,
-        `  "SpeckleProjectId": "${props.projectId}",`,
-        `  "SpeckleAutomationId": "${props.automationId}"`,
-        '}'
-      ].join('\n')
+      return JSON.stringify(
+        {
+          SpeckleToken: 'YOUR-TOKEN-HERE',
+          SpeckleServerUrl: origin,
+          SpeckleProjectId: props.projectId,
+          SpeckleAutomationId: props.automationId
+        },
+        null,
+        2
+      )
     }
     default: {
       return ''
