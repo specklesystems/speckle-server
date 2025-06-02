@@ -678,8 +678,6 @@ export const workspaceTrackingFactory =
         )
         break
       case WorkspaceEvents.SeatUpdated:
-        // TODO: get previous seat, and current seat
-        // from there, depending on the change, track the Editor change
         const seatWorkspace = await getWorkspace({
           workspaceId: payload.seat.workspaceId
         })
@@ -693,6 +691,28 @@ export const workspaceTrackingFactory =
             await checkForSpeckleMembers({ userId: payload.seat.userId })
           )
         )
+
+        const userSeated = await getUser(payload.seat.userId)
+        if (payload.seat.type === WorkspaceSeatType.Editor) {
+          await mixpanel.track({
+            eventName: MixpanelEvents.EditorSeatAssigned,
+            workspaceId: payload.seat.workspaceId,
+            userEmail: userSeated?.email
+          })
+        }
+
+        if (payload.seat.type === WorkspaceSeatType.Viewer) {
+          // TODO: test this
+          //
+          // how we assure that this does not get triggered the first time?
+          // we might need actually the prev seat
+          await mixpanel.track({
+            eventName: MixpanelEvents.EditorSeatUnassigned,
+            workspaceId: payload.seat.workspaceId,
+            userEmail: userSeated?.email
+          })
+        }
+
         break
       default:
         throwUncoveredError(eventName)
