@@ -10,6 +10,7 @@ import {
   GetWorkspacesProjectsCounts
 } from '@/modules/workspaces/domain/operations'
 import {
+  buildTestSubscriptionData,
   buildTestWorkspacePlan,
   buildTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
@@ -129,8 +130,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             await workspaceTracking({
               eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
               payload: {
-                workspaceId: workspace.id,
-                status
+                workspacePlan: buildTestWorkspacePlan({
+                  workspaceId: workspace.id,
+                  status
+                }),
+                subscriptionData: buildTestSubscriptionData(),
+                previousSubscriptionData: buildTestSubscriptionData()
               }
             })
 
@@ -149,8 +154,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
-          workspaceId: workspace.id,
-          status: WorkspacePlanStatuses.Canceled
+          workspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Canceled
+          }),
+          subscriptionData: buildTestSubscriptionData(),
+          previousSubscriptionData: buildTestSubscriptionData()
         }
       })
 
@@ -170,8 +179,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
-          workspaceId: workspace.id,
-          status: WorkspacePlanStatuses.CancelationScheduled
+          workspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.CancelationScheduled
+          }),
+          subscriptionData: buildTestSubscriptionData(),
+          previousSubscriptionData: buildTestSubscriptionData()
         }
       })
 

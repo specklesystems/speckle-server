@@ -18,10 +18,11 @@ export type GatekeeperEventPayloads = {
     workspacePlan: Pick<WorkspacePlan, 'name' | 'status' | 'workspaceId'>
     previousPlan?: Pick<WorkspacePlan, 'name'>
   }
-  [GatekeeperEvents.WorkspaceSubscriptionUpdated]: Pick<
-    WorkspacePlan,
-    'workspaceId' | 'status'
-  >
+  [GatekeeperEvents.WorkspaceSubscriptionUpdated]: {
+    workspacePlan: WorkspacePlan
+    subscriptionData: SubscriptionData
+    previousSubscriptionData: SubscriptionData
+  }
   [GatekeeperEvents.WorkspaceSubscriptionDownscaled]: {
     workspacePlan: WorkspacePlan
     subscriptionData: SubscriptionData

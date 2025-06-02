@@ -93,7 +93,8 @@ import {
 import {
   GetWorkspacePlan,
   GetWorkspaceSubscription,
-  GetWorkspaceWithPlan
+  GetWorkspaceWithPlan,
+  SubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
@@ -557,6 +558,9 @@ export const workspaceTrackingFactory =
       }
     }
 
+    const countEditorSeats = (subscriptionData: SubscriptionData) =>
+      subscriptionData.products.reduce((acc, product) => acc + product.quantity, 0)
+
     switch (eventName) {
       case GatekeeperEvents.WorkspacePlanUpdated:
         const updatedPlanWorkspace = await getWorkspace({
@@ -583,39 +587,43 @@ export const workspaceTrackingFactory =
 
         break
       case GatekeeperEvents.WorkspaceSubscriptionDownscaled:
-        const seatsBefore = payload.previousSubscriptionData.products.reduce(
-          (acc, product) => acc + product.quantity,
-          0
-        )
-        const seatsAfter = payload.subscriptionData.products.reduce(
-          (acc, product) => acc + product.quantity,
-          0
-        )
-
         await mixpanel.track({
           eventName: MixpanelEvents.EditorSeatsDownscaled,
           workspaceId: payload.workspacePlan.workspaceId,
           payload: {
-            amount: seatsBefore - seatsAfter
+            amount:
+              countEditorSeats(payload.previousSubscriptionData) -
+              countEditorSeats(payload.subscriptionData)
           }
         })
         break
       case GatekeeperEvents.WorkspaceSubscriptionUpdated:
-        // TODO: get subscription data, and previous subscription data
-        // from there, calculate the increase and push it as increase
-        // (not sure about under what status)
-
-        if (payload.status === WorkspacePlanStatuses.Canceled) {
+        const editorSeatChange =
+          countEditorSeats(payload.subscriptionData) -
+          countEditorSeats(payload.previousSubscriptionData)
+        if (editorSeatChange >= 0) {
           await mixpanel.track({
-            eventName: MixpanelEvents.WorkspaceSubscriptionCanceled,
-            workspaceId: payload.workspaceId
+            eventName: MixpanelEvents.EditorSeatsPurchased,
+            workspaceId: payload.workspacePlan.workspaceId,
+            payload: {
+              amount: editorSeatChange
+            }
           })
         }
 
-        if (payload.status === WorkspacePlanStatuses.CancelationScheduled) {
+        if (payload.workspacePlan.status === WorkspacePlanStatuses.Canceled) {
+          await mixpanel.track({
+            eventName: MixpanelEvents.WorkspaceSubscriptionCanceled,
+            workspaceId: payload.workspacePlan.workspaceId
+          })
+        }
+
+        if (
+          payload.workspacePlan.status === WorkspacePlanStatuses.CancelationScheduled
+        ) {
           await mixpanel.track({
             eventName: MixpanelEvents.WorkspaceSubscriptionCancelationScheduled,
-            workspaceId: payload.workspaceId
+            workspaceId: payload.workspacePlan.workspaceId
           })
         }
         break
