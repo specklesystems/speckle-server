@@ -16,9 +16,9 @@ export abstract class Primitive<
   TGeometry extends BufferGeometry = BufferGeometry,
   TMaterial extends Material | Material[] = Material | Material[]
 > extends Object3D {
-  geometry!: TGeometry
-  material!: TMaterial
-  visible!: boolean
+  geometry: TGeometry
+  material: TMaterial
+  visible: boolean
 }
 
 export abstract class PrimitiveBatch implements Batch {

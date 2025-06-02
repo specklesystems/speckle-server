@@ -20,16 +20,16 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Publish and load Revit models to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/revit',
-    image: '/images/connectors/revit.png',
+    images: ['/images/connectors/revit.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
   {
-    title: 'Rhino',
+    title: 'Rhino + Grasshopper',
     slug: 'rhino',
     description:
-      'Publish and load Rhino models for high-quality design coordination and business intelligence workflows.',
+      'Publish and load Rhino and Grasshopper models for high-quality design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/rhino',
-    image: '/images/connectors/rhino.png',
+    images: ['/images/connectors/rhino.png', '/images/connectors/grasshopper.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
   },
   {
@@ -38,7 +38,7 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Load your models into Power BI to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/power-bi',
-    image: '/images/connectors/powerbi.png',
+    images: ['/images/connectors/powerbi.png'],
     categories: [ConnectorCategory.BusinessIntelligence]
   },
   {
@@ -47,26 +47,8 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Publish and load SketchUp models for high-quality design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/sketchup-beta',
-    image: '/images/connectors/sketchup.png',
+    images: ['/images/connectors/sketchup.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
-  },
-  {
-    title: 'QGIS',
-    slug: 'qgis',
-    description:
-      'Publish QGIS models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/qgis',
-    image: '/images/connectors/qgis.png',
-    categories: [ConnectorCategory.GIS]
-  },
-  {
-    title: 'ArcGIS',
-    slug: 'arcgis',
-    description:
-      'Publish ArcGIS models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/arcgis',
-    image: '/images/connectors/arcgis.png',
-    categories: [ConnectorCategory.GIS]
   },
   {
     title: 'AutoCAD',
@@ -74,7 +56,7 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Publish and load AutoCAD models for high-quality design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/autocad',
-    image: '/images/connectors/autocad.png',
+    images: ['/images/connectors/autocad.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
   },
   {
@@ -83,7 +65,7 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Publish and load Civil 3D models to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/civil3d',
-    image: '/images/connectors/civil3d.png',
+    images: ['/images/connectors/civil3d.png'],
     categories: [
       ConnectorCategory.NextGen,
       ConnectorCategory.Infrastructure,
@@ -96,7 +78,7 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Publish ETABS models to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/etabs',
-    image: '/images/connectors/etabs.png',
+    images: ['/images/connectors/etabs.png'],
     categories: [ConnectorCategory.Structural]
   },
   {
@@ -105,7 +87,7 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Publish Navisworks models to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/navisworks',
-    image: '/images/connectors/navisworks.png',
+    images: ['/images/connectors/navisworks.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
   {
@@ -114,7 +96,7 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Publish Archicad models to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/archicad',
-    image: '/images/connectors/archicad.png',
+    images: ['/images/connectors/archicad.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
   {
@@ -123,14 +105,14 @@ export const connectorItems: ConnectorItem[] = [
     description:
       'Publish Tekla Structures models to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/teklastructures-alpha',
-    image: '/images/connectors/teklastructures.png',
+    images: ['/images/connectors/teklastructures.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.Structural]
   },
   {
     title: 'Blender',
     slug: 'blender',
     description: 'Load models into Blender to boost design coordination workflows.',
-    image: '/images/connectors/blender.png',
+    images: ['/images/connectors/blender.png'],
     url: 'https://www.speckle.systems/connectors/blender',
     categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling]
   },
@@ -139,17 +121,8 @@ export const connectorItems: ConnectorItem[] = [
     title: 'Excel',
     slug: 'excel',
     description: "Create geometry, schedules and analyse your geometry's metadata.",
-    image: '/images/connectors/excel.png',
+    images: ['/images/connectors/excel.png'],
     categories: [ConnectorCategory.BusinessIntelligence],
-    isComingSoon: true
-  },
-  {
-    title: 'Grasshopper',
-    slug: 'grasshopper',
-    description:
-      'Publish and load models to boost design coordination and BI workflows.',
-    image: '/images/connectors/grasshopper.png',
-    categories: [ConnectorCategory.VisualProgramming],
     isComingSoon: true
   }
 ]

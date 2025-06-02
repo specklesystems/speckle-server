@@ -38,7 +38,7 @@ import {
 } from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
-  updateWorkspaceRoleFactory,
+  addOrUpdateWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory,
   updateWorkspaceFactory,
   addDomainToWorkspaceFactory,
@@ -95,7 +95,8 @@ import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   assignWorkspaceSeatFactory,
-  ensureValidWorkspaceRoleSeatFactory
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
@@ -108,7 +109,7 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
-import { isBoolean, isString } from 'lodash'
+import { assign, isBoolean, isString } from 'lodash'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -119,8 +120,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { WorkspaceCreationState } from '@/modules/cross-server-sync/graph/generated/graphql'
-import { buildTestObject, createRandomString } from '@/modules/core/helpers/testHelpers'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
@@ -130,6 +129,9 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
+import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceRole } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -151,6 +153,7 @@ export type BasicTestWorkspace = {
   description?: string
   logo?: string
   discoverabilityEnabled?: boolean
+  discoverabilityAutoJoinEnabled?: boolean
   domainBasedMembershipProtectionEnabled?: boolean
 }
 
@@ -192,12 +195,23 @@ export const createTestWorkspace = async (
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
     }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
-    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-      createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-      eventEmit: getEventBus().emit
+    addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+      getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+        db
+      }),
+      getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+      upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit,
+      ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+        getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+          getWorkspace: getWorkspaceFactory({ db })
+        }),
+        eventEmit: getEventBus().emit
+      })
     })
   })
   const upsertSubscription = upsertWorkspaceSubscriptionFactory({ db })
@@ -318,13 +332,14 @@ export const createTestWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
-  if (workspace.discoverabilityEnabled) {
+  if (workspace.discoverabilityEnabled || workspace.discoverabilityAutoJoinEnabled) {
     if (!domain) throw new Error('Domain is needed for discoverability')
 
     await updateWorkspace({
       workspaceId: newWorkspace.id,
       workspaceInput: {
-        discoverabilityEnabled: true
+        discoverabilityEnabled: workspace.discoverabilityEnabled,
+        discoverabilityAutoJoinEnabled: workspace.discoverabilityAutoJoinEnabled
       }
     })
   }
@@ -338,13 +353,36 @@ export const createTestWorkspace = async (
   }
 }
 
-export const buildBasicTestWorkspace = (overrides?: Partial<BasicTestWorkspace>) =>
-  buildTestObject(
+export const buildBasicTestWorkspace = (
+  overrides?: Partial<BasicTestWorkspace>
+): BasicTestWorkspace =>
+  assign(
     {
-      id: createRandomString(),
-      name: createRandomString(),
-      slug: createRandomString(),
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
       ownerId: ''
+    },
+    overrides
+  )
+
+export const buildTestWorkspaceWithOptionalRole = (
+  overrides?: Partial<WorkspaceWithOptionalRole>
+): WorkspaceWithOptionalRole =>
+  assign(
+    {
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
+      description: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      logo: cryptoRandomString({ length: 10 }),
+      domainBasedMembershipProtectionEnabled: false,
+      discoverabilityEnabled: true,
+      discoverabilityAutoJoinEnabled: true,
+      isEmbedSpeckleBrandingHidden: true,
+      role: WorkspaceRole.Member
     },
     overrides
   )
@@ -357,7 +395,7 @@ export const assignToWorkspace = async (
 ) => {
   const getWorkspaceUserSeat = getWorkspaceUserSeatFactory({ db })
 
-  const updateWorkspaceRole = updateWorkspaceRoleFactory({
+  const updateWorkspaceRole = addOrUpdateWorkspaceRoleFactory({
     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -366,6 +404,9 @@ export const assignToWorkspace = async (
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
       getWorkspaceUserSeat,
+      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: getWorkspaceFactory({ db })
+      }),
       eventEmit: getEventBus().emit
     })
   })
@@ -489,7 +530,7 @@ export const createWorkspaceInviteDirectly = async (
       }),
       processInvite: processFinalizedWorkspaceInviteFactory({
         getWorkspace: getWorkspaceFactory({ db }),
-        updateWorkspaceRole: updateWorkspaceRoleFactory({
+        updateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
           getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
           findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -498,6 +539,9 @@ export const createWorkspaceInviteDirectly = async (
           ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
             createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
             getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+            getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+              getWorkspace: getWorkspaceFactory({ db })
+            }),
             eventEmit: getEventBus().emit
           })
         }),

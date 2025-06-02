@@ -24,7 +24,7 @@ import {
 import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
-import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
+import { AddOrUpdateWorkspaceRole } from '@/modules/workspaces/domain/operations'
 import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
 import {
   OidcProviderMissingGrantTypeError,
@@ -38,27 +38,30 @@ import {
   getEmailFromOidcProfile,
   isValidSsoSession
 } from '@/modules/workspaces/domain/sso/logic'
-import type { Logger } from '@/observability/logging'
+import { logger, type Logger } from '@/observability/logging'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
   // client,
   issuer
 }: OidcProviderAttributes): void => {
-  if (!issuer.grantTypesSupported.includes('authorization_code'))
+  // Validate issuer
+  if (!issuer.grantTypesSupported.includes('authorization_code')) {
+    logger.info(
+      {
+        supportedGrantTypes: issuer.grantTypesSupported
+      },
+      'OIDC provider does not support required grant types.'
+    )
     throw new OidcProviderMissingGrantTypeError()
-  /*
-validate issuer:
-authorization_signing_alg_values_supported
-claims_supported: ['email', 'name', 'given_name', 'family_name']
-scopes_supported: ['openid', 'profile', 'email']
-grant_types_supported: ['authorization_code']
-response_types_supported: //TODO figure out which
+  }
+  // authorization_signing_alg_values_supported
+  // claims_supported: ['email', 'name', 'given_name', 'family_name']
+  // scopes_supported: ['openid', 'profile', 'email']
+  // response_types_supported: //TODO figure out which
 
-validate client:
-grant_types: ['authorization_code'],
-
-  */
+  // Validate client
+  // grant_types: ['authorization_code']
 }
 
 /**
@@ -124,14 +127,14 @@ export const saveSsoProviderRegistrationFactory =
 export const createWorkspaceUserFromSsoProfileFactory =
   ({
     createUser,
-    upsertWorkspaceRole,
     findInvite,
-    deleteInvite
+    deleteInvite,
+    addOrUpdateWorkspaceRole
   }: {
     createUser: CreateValidatedUser
-    upsertWorkspaceRole: UpsertWorkspaceRole
     findInvite: FindInvite
     deleteInvite: DeleteInvite
+    addOrUpdateWorkspaceRole: AddOrUpdateWorkspaceRole
   }) =>
   async (args: {
     ssoProfile: UserinfoResponse<OidcProfile>
@@ -173,11 +176,11 @@ export const createWorkspaceUserFromSsoProfileFactory =
 
     if (!isWorkspaceRole(workspaceRole)) throw new WorkspaceInvalidRoleError()
 
-    await upsertWorkspaceRole({
+    await addOrUpdateWorkspaceRole({
       userId: newSpeckleUserId,
       workspaceId: args.workspaceId,
       role: workspaceRole,
-      createdAt: new Date()
+      updatedByUserId: newSpeckleUserId
     })
 
     // Delete invite (i.e. we implicitly "use" the invite during this sign up flow)

@@ -9,8 +9,8 @@ import { canReadProjectSettingsPolicy } from './project/canReadSettings.js'
 import { canReadProjectWebhooksPolicy } from './project/canReadWebhooks.js'
 import { canUpdateProjectAllowPublicCommentsPolicy } from './project/canUpdateAllowPublicComments.js'
 import { canLeaveProjectPolicy } from './project/canLeave.js'
-import { canInvitePolicy as canInviteToWorkspacePolicy } from './workspace/canInvite.js'
-import { canInvitePolicy as canInviteToProjectPolicy } from './project/canInvite.js'
+import { canInviteToWorkspacePolicy } from './workspace/canInvite.js'
+import { canInviteToProjectPolicy } from './project/canInvite.js'
 import { canBroadcastProjectActivityPolicy } from './project/canBroadcastActivity.js'
 import { canCreateProjectCommentPolicy } from './project/comment/canCreate.js'
 import { canArchiveProjectCommentPolicy } from './project/comment/canArchive.js'
@@ -29,6 +29,8 @@ import { canDeleteProjectPolicy } from './project/canDelete.js'
 import { canDeleteAutomationPolicy } from './project/automation/canDelete.js'
 import { canPublishPolicy } from './project/canPublish.js'
 import { canLoadPolicy } from './project/canLoad.js'
+import { canUpdateEmbedOptionsPolicy } from './workspace/canUpdateEmbedOptions.js'
+import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -72,7 +74,9 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canCreateProject: canCreateWorkspaceProjectPolicy(loaders),
     canInvite: canInviteToWorkspacePolicy(loaders),
     canReceiveProjectsUpdatedMessage:
-      canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders)
+      canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders),
+    canUpdateEmbedOptions: canUpdateEmbedOptionsPolicy(loaders),
+    canReadMemberEmail: canReadMemberEmailPolicy(loaders)
   }
 })
 

@@ -13,7 +13,7 @@ export class StencilPass extends GeometryPass {
 
   public constructor() {
     super()
-    this.stencilMaterial = new SpeckleDisplaceMaterial({ color: 0xff0000 }, ['USE_RTE'])
+    this.stencilMaterial = new SpeckleDisplaceMaterial({ color: 0xff0000 })
     this.stencilMaterial.userData.displacement.value = 2
     this.stencilMaterial.colorWrite = false
     this.stencilMaterial.depthWrite = false

@@ -22,7 +22,7 @@ export const jobResultToConvertedMessage = (jobResult: FileImportResultPayload) 
     case 'success':
       return jobResult.warnings.join('; ')
     case 'error':
-      return jobResult.reasons.join('; ')
+      return jobResult.reason
     default:
       throw new FileImportInvalidJobResultPayload('Unknown job result status')
   }

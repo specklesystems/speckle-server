@@ -108,8 +108,8 @@
         />
         <ProjectCardImportFileArea
           v-if="hasNoModels"
-          :project-id="project.id"
-          :disabled="project?.workspace?.readOnly"
+          empty-state-variant="modelsSection"
+          :project="project"
           class="h-28 col-span-4"
         />
       </div>

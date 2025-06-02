@@ -1,3 +1,4 @@
+import { UserEmails } from '@/modules/core/dbSchema'
 import {
   CreateWorkspaceJoinRequest,
   GetWorkspaceJoinRequest,
@@ -23,7 +24,11 @@ const tables = {
 export const createWorkspaceJoinRequestFactory =
   ({ db }: { db: Knex }): CreateWorkspaceJoinRequest =>
   async ({ workspaceJoinRequest }) => {
-    const res = await tables.workspaceJoinRequests(db).insert(workspaceJoinRequest, '*')
+    const res = await tables
+      .workspaceJoinRequests(db)
+      .insert(workspaceJoinRequest, '*')
+      .onConflict()
+      .ignore()
     return res[0]
   }
 
@@ -66,6 +71,12 @@ const adminWorkspaceJoinRequestsBaseQueryFactory =
         WorkspaceAcl.col.workspaceId,
         WorkspaceJoinRequests.col.workspaceId
       )
+      .join(UserEmails.name, UserEmails.col.userId, WorkspaceJoinRequests.col.userId)
+      // returning the primary here as a shortcut
+      // should be doing an intersection with the workspace domains, the users emails
+      // and be distincted to a single user
+      // but for now, multi email usage is low enough to not warrant that here
+      .where(UserEmails.col.primary, '=', true)
       .where(WorkspaceAcl.col.role, Roles.Workspace.Admin)
       .where(WorkspaceAcl.col.userId, filter.userId)
       .where(WorkspaceJoinRequests.col.workspaceId, filter.workspaceId)
@@ -91,7 +102,10 @@ export const getAdminWorkspaceJoinRequestsFactory =
       query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
     }
     return await query
-      .select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols)
+      .select<WorkspaceJoinRequest[]>([
+        ...WorkspaceJoinRequests.cols,
+        UserEmails.col.email
+      ])
       .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
       .limit(limit)
   }

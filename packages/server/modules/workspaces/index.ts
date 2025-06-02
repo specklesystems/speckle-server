@@ -29,8 +29,14 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
+import { scheduleUpdateAllWorkspacesTracking } from '@/modules/workspaces/services/tracking'
+import { getClient } from '@/modules/shared/utils/mixpanel'
 
-const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
+const {
+  FF_WORKSPACES_MODULE_ENABLED,
+  FF_WORKSPACES_SSO_ENABLED,
+  FF_BILLING_INTEGRATION_ENABLED
+} = getFeatureFlags()
 
 let quitListeners: Optional<() => void> = undefined
 let scheduledTasks: cron.ScheduledTask[] = []
@@ -90,12 +96,17 @@ const workspacesModule: SpeckleModule = {
     if (FF_WORKSPACES_SSO_ENABLED) app.use(getSsoRouter())
 
     if (isInitial) {
+      const mixpanel = getClient()
       const scheduleExecution = scheduleExecutionFactory({
         acquireTaskLock: acquireTaskLockFactory({ db }),
         releaseTaskLock: releaseTaskLockFactory({ db })
       })
 
       scheduledTasks = [scheduleDeleteWorkspacesNonComplete({ scheduleExecution })]
+      if (FF_BILLING_INTEGRATION_ENABLED && mixpanel)
+        scheduledTasks.push(
+          scheduleUpdateAllWorkspacesTracking({ scheduleExecution, mixpanel })
+        )
 
       quitListeners = initializeEventListenersFactory({ db })()
     }

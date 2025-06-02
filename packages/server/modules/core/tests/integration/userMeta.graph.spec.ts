@@ -2,8 +2,10 @@ import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   GetLegacyProjectsExplainerCollapsedDocument,
   GetNewWorkspaceExplainerDismissedDocument,
+  GetSpeckleConBannerDismissedDocument,
   SetLegacyProjectsExplainerCollapsedDocument,
-  SetNewWorkspaceExplainerDismissedDocument
+  SetNewWorkspaceExplainerDismissedDocument,
+  SetSpeckleConBannerDismissedDocument
 } from '@/test/graphql/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
@@ -39,6 +41,23 @@ describe('UserMeta GraphQL', () => {
     const getRes2 = await apollo.execute(GetNewWorkspaceExplainerDismissedDocument, {})
     expect(getRes2).to.not.haveGraphQLErrors()
     expect(getRes2.data?.activeUser?.meta.newWorkspaceExplainerDismissed).to.be.true
+  })
+
+  it('speckleConBannerDismissed get/set works', async () => {
+    const getRes = await apollo.execute(GetSpeckleConBannerDismissedDocument, {})
+    expect(getRes).to.not.haveGraphQLErrors()
+    expect(getRes.data?.activeUser?.meta.speckleConBannerDismissed).to.be.false
+
+    const setRes = await apollo.execute(SetSpeckleConBannerDismissedDocument, {
+      input: true
+    })
+    expect(setRes).to.not.haveGraphQLErrors()
+    expect(setRes.data?.activeUserMutations?.meta.setSpeckleConBannerDismissed).to.be
+      .true
+
+    const getRes2 = await apollo.execute(GetSpeckleConBannerDismissedDocument, {})
+    expect(getRes2).to.not.haveGraphQLErrors()
+    expect(getRes2.data?.activeUser?.meta.speckleConBannerDismissed).to.be.true
   })
 
   it('setLegacyProjectsExplainerCollapsed get/set works', async () => {

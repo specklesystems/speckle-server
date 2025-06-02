@@ -300,7 +300,11 @@ const testResult = (
   ) => void
 ) => {
   if (shouldSucceed) {
-    expect(result.errors, 'This should not have failed').to.not.exist
+    expect(
+      result.errors,
+      'This should not have failed and yet we found errors: ' +
+        JSON.stringify(result.errors)
+    ).to.not.exist
     successTests(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       result as SetNonNullable<ExecuteOperationResponse<Record<string, any>>, 'data'>

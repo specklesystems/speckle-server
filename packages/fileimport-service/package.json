@@ -13,7 +13,7 @@
     "url": "git+https://github.com/specklesystems/speckle-server.git"
   },
   "engines": {
-    "node": "^18.19.0"
+    "node": "^22.6.0"
   },
   "scripts": {
     "build:tsc:watch": "tsc -p ./tsconfig.build.json --watch",
@@ -28,7 +28,8 @@
     "lint:eslint": "eslint .",
     "start": "node --loader=./dist/src/aliasLoader.js ./bin/www.js",
     "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest run --sequence.shuffle",
-    "downloadBlob": "node scripts/downloadBlob.js"
+    "downloadBlob": "node scripts/downloadBlob.js",
+    "publishTask": "tsx --env-file=.env scripts/publishTask.ts"
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
@@ -63,6 +64,7 @@
     "nodemon": "^2.0.20",
     "prettier": "^2.5.1",
     "rimraf": "^5.0.7",
+    "tsx": "^4.19.4",
     "typescript": "^4.6.4",
     "typescript-eslint": "^7.12.0",
     "vitest": "^1.6.0"

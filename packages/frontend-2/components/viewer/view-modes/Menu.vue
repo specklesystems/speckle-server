@@ -62,14 +62,23 @@
           <div class="text-body-2xs">Color</div>
           <div class="flex items-center gap-1">
             <button
-              v-for="color in edgesColorOptions"
+              v-for="(color, index) in edgesColorOptions"
               :key="color"
               class="w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-110"
               :class="[
                 edgesColor === color ? 'ring-2 ring-primary' : '',
                 'border-[1.5px] border-outline-2'
               ]"
-              :style="{ backgroundColor: `#${color.toString(16).padStart(6, '0')}` }"
+              :style="
+                index === 0
+                  ? {
+                      background:
+                        'linear-gradient(to top left, #1a1a1a 50%, #ffffff 50%)'
+                    }
+                  : {
+                      backgroundColor: `#${color.toString(16).padStart(6, '0')}`
+                    }
+              "
               @click="setEdgesColor(color)"
             />
           </div>
@@ -85,6 +94,8 @@ import { ViewMode } from '@speckle/viewer'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import { FormSwitch } from '@speckle/ui-components'
+import { useTheme } from '~/lib/core/composables/theme'
+
 const open = defineModel<boolean>('open', { default: false })
 
 const {
@@ -98,6 +109,7 @@ const {
   edgesColor
 } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
+const { isLightTheme } = useTheme()
 
 const isManuallyOpened = ref(false)
 
@@ -130,6 +142,7 @@ const emit = defineEmits<{
 }>()
 
 const edgesColorOptions = computed(() => [
+  isLightTheme.value || currentViewMode.value !== ViewMode.PEN ? 0x1a1a1a : 0xffffff, // black or white
   0x3b82f6, // blue-500
   0x8b5cf6, // violet-500
   0x65a30d, // lime-600

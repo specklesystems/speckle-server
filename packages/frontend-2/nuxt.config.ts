@@ -24,6 +24,7 @@ const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
+  // ssr: false, // for debugging set to false (prod should always be true)
   ...(buildSourceMaps ? { sourcemap: true } : {}),
   modulesDir: ['./node_modules'],
   typescript: {
@@ -60,7 +61,6 @@ export default defineNuxtConfig({
       baseUrl: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
-      survicateWorkspaceKey: '',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
       logCsrEmitProps: false,
@@ -75,7 +75,7 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      ghostApiKey: ''
+      intercomAppId: ''
     }
   },
 
@@ -146,26 +146,7 @@ export default defineNuxtConfig({
     }
   },
 
-  app: {
-    pageTransition: { name: 'page', mode: 'out-in' }
-  },
-
   routeRules: {
-    // Necessary because of redirects from backend in auth flows
-    '/': {
-      cors: true,
-      headers: {
-        'access-control-allow-methods': 'GET',
-        'Access-Control-Expose-Headers': '*'
-      }
-    },
-    '/authn/login': {
-      cors: true,
-      headers: {
-        'access-control-allow-methods': 'GET',
-        'Access-Control-Expose-Headers': '*'
-      }
-    },
     '/functions': {
       redirect: {
         to: '/',

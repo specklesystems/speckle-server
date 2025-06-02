@@ -4,7 +4,11 @@ import { type Knex } from 'knex'
 import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
-import { getRequestContext } from '@/observability/components/express/requestContext'
+import {
+  getRequestContext,
+  isRequestContext,
+  isTaskContext
+} from '@/observability/utils/requestContext'
 import { collectLongTrace, TIME, TIME_MS } from '@speckle/shared'
 
 let metricQueryDuration: Summary<string>
@@ -269,7 +273,8 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
         sqlNumberBindings: data.bindings?.length || -1,
         trace,
-        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
+        ...(isRequestContext(reqCtx) ? { req: { id: reqCtx.requestId } } : {}),
+        ...(isTaskContext(reqCtx) ? { taskId: { id: reqCtx.taskId } } : {})
       },
       'DB query successfully completed after {sqlQueryDurationMs} ms'
     )
@@ -312,7 +317,8 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
         sqlNumberBindings: data.bindings?.length || -1,
         trace,
-        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
+        ...(isRequestContext(reqCtx) ? { req: { id: reqCtx.requestId } } : {}),
+        ...(isTaskContext(reqCtx) ? { taskId: { id: reqCtx.taskId } } : {})
       },
       'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
     )

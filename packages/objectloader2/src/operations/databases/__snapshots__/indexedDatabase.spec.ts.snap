@@ -1,0 +1,31 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`database cache > write single item to queue use getItem 1`] = `
+{
+  "base": {
+    "id": "id",
+    "speckle_type": "type",
+  },
+  "baseId": "id",
+}
+`;
+
+exports[`database cache > write two items to queue use getItem 1`] = `
+{
+  "base": {
+    "id": "id",
+    "speckle_type": "type",
+  },
+  "baseId": "id1",
+}
+`;
+
+exports[`database cache > write two items to queue use getItem 2`] = `
+{
+  "base": {
+    "id": "id",
+    "speckle_type": "type",
+  },
+  "baseId": "id2",
+}
+`;

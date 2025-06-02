@@ -9,18 +9,22 @@ import {
   NotifyChangeInFileStatus,
   SaveUploadFileV2,
   SaveUploadFileInput,
-  SaveUploadFileInputV2
+  PushJobToFileImporter,
+  InsertNewUploadAndNotify
 } from '@/modules/fileuploads/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   FileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
+import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
     saveUploadFile: SaveUploadFile
     publish: PublishSubscription
+    emit: EventBusEmit
   }) =>
   async (upload: SaveUploadFileInput) => {
     const branch = await deps.getStreamBranchByName(upload.streamId, upload.branchName)
@@ -55,14 +59,60 @@ export const insertNewUploadAndNotifyFactory =
       },
       projectId: file.streamId
     })
+
+    await deps.emit({
+      eventName: FileuploadEvents.Started,
+      payload: {
+        userId: file.userId,
+        projectId: file.streamId,
+        fileSize: file.fileSize,
+        fileType: file.fileType
+      }
+    })
   }
 
 export const insertNewUploadAndNotifyFactoryV2 =
-  (deps: { saveUploadFile: SaveUploadFileV2; publish: PublishSubscription }) =>
-  async (upload: SaveUploadFileInputV2) => {
-    await deps.saveUploadFile(upload)
+  (deps: {
+    pushJobToFileImporter: PushJobToFileImporter
+    saveUploadFile: SaveUploadFileV2
+    publish: PublishSubscription
+    emit: EventBusEmit
+  }): InsertNewUploadAndNotify =>
+  async (upload) => {
+    const file = await deps.saveUploadFile(upload)
 
-    // TODO: add FE notification
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: file.id,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: {
+          ...file,
+          streamId: upload.projectId,
+          branchName: upload.modelName
+        }
+      },
+      projectId: file.projectId
+    })
+
+    await deps.pushJobToFileImporter({
+      fileName: file.fileName,
+      fileType: file.fileType,
+      projectId: file.projectId,
+      modelId: upload.modelId,
+      blobId: file.id,
+      jobId: file.id,
+      userId: upload.userId
+    })
+
+    await deps.emit({
+      eventName: FileuploadEvents.Started,
+      payload: {
+        userId: file.userId,
+        projectId: file.projectId,
+        fileSize: file.fileSize,
+        fileType: file.fileType
+      }
+    })
   }
 
 export const notifyChangeInFileStatus =

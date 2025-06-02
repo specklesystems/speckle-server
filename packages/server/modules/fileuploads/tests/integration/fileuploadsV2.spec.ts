@@ -20,9 +20,8 @@ import { BranchRecord } from '@/modules/core/helpers/types'
 const { createUser, createStream, createToken, createBranch } =
   initUploadTestEnvironment()
 
-const fileImporterUrl = (projectOneId: string, modelId?: string) =>
-  `/api/projects/${projectOneId}/fileimporter/jobs` +
-  (modelId ? `?modelId=${modelId}` : ``)
+const fileImporterUrl = (projectOneId: string, modelId: string) =>
+  `/api/projects/${projectOneId}/models/${modelId}/fileimporter/jobs`
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -37,8 +36,8 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
     let userOneToken: string
     let projectOneId: string
     let projectTwoId: string
-    let model: BranchRecord
-    let model2: BranchRecord
+    let modelOne: BranchRecord
+    let modelTwo: BranchRecord
 
     let existingCanonicalUrl: string
     let existingPort: string
@@ -79,14 +78,14 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         scopes: [Scopes.Streams.Write]
       }))
 
-      model = await createBranch({
+      modelOne = await createBranch({
         name: createRandomString(),
         description: createRandomString(),
         streamId: projectOneId,
         authorId: userOneId
       })
 
-      model2 = await createBranch({
+      modelTwo = await createBranch({
         name: createRandomString(),
         description: createRandomString(),
         streamId: projectTwoId,
@@ -115,6 +114,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
                     id
                     fileName
                     convertedStatus
+                    branchName
                   }
                 }
               }`,
@@ -123,7 +123,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
     it('should 403 if no auth token is provided', async () => {
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Content-type', 'multipart/form-data')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
@@ -132,7 +132,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
     it('should 403 if an invalid auth token is provided', async () => {
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Authorization', `Bearer ${cryptoRandomString({ length: 20 })}`)
         .set('Content-type', 'multipart/form-data')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
@@ -147,7 +147,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         scopes: [Scopes.Streams.Read]
       })
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Authorization', `Bearer ${badToken.token}`)
         .set('Content-type', 'multipart/form-data')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
@@ -167,7 +167,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         scopes: [Scopes.Streams.Read]
       })
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${userTwoToken.token}`)
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
@@ -177,7 +177,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
     it('should 400 if file is not sent', async () => {
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Content-type', 'multipart/form-data')
       // .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc') // on purpose
@@ -197,7 +197,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
     it('should 401 if the model exist but not in the queried project', async () => {
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model2.id))
+        .post(fileImporterUrl(projectOneId, modelTwo.id))
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Content-type', 'multipart/form-data')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
@@ -207,7 +207,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
     it('sucessfuly uploads a file with 201', async () => {
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Content-type', 'multipart/form-data')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
@@ -216,14 +216,15 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
       const gqlResponse = await getFileUploads(projectOneId, userOneToken)
       expect(noErrors(gqlResponse))
       expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
-      expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
-        FileUploadConvertedStatus.Queued
-      )
+      const uploadedFile = gqlResponse.body.data.stream.fileUploads[0]
+      expect(uploadedFile.convertedStatus).to.equal(FileUploadConvertedStatus.Queued)
+      expect(uploadedFile.fileName).to.equal('test.ifc')
+      expect(uploadedFile.branchName).to.eq(modelOne.name)
     })
 
     it('supports multiple attachments', async () => {
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
         .attach('test1.ifc', require.resolve('@/readme.md'), 'test1.ifc')
@@ -243,7 +244,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
     it('says OK with errors for too big files', async () => {
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Authorization', `Bearer ${userOneToken}`)
         .attach('toolarge.ifc', Buffer.alloc(114_857_601, 'asdf'), 'toolarge.ifc')
 
@@ -258,7 +259,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
     it('says OK to empty files', async () => {
       const response = await request(app)
-        .post(fileImporterUrl(projectOneId, model.id))
+        .post(fileImporterUrl(projectOneId, modelOne.id))
         .set('Authorization', `Bearer ${userOneToken}`)
         .attach('empty.ifc', Buffer.alloc(0), 'empty.ifc')
 

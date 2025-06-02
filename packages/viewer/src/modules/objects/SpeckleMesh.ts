@@ -70,6 +70,7 @@ export default class SpeckleMesh extends Mesh {
 
   private _batchObjects: BatchObject[]
   private _batchIndex: number
+  private _needsRTE: boolean
   private transformsBuffer: Float32Array | undefined = undefined
   private transformStorage: TransformStorage
 
@@ -88,9 +89,14 @@ export default class SpeckleMesh extends Mesh {
     return this._batchIndex
   }
 
-  constructor(geometry: BufferGeometry) {
+  public get needsRTE(): boolean {
+    return this._needsRTE
+  }
+
+  constructor(geometry: BufferGeometry, RTE = false) {
     super(geometry)
     this._batchIndex = getNextBatchIndex()
+    this._needsRTE = RTE
   }
 
   public setBatchMaterial(material: Material) {
@@ -161,6 +167,10 @@ export default class SpeckleMesh extends Mesh {
     let cachedMaterial = this.lookupMaterial(material)
     if (!cachedMaterial) {
       const clone = material.clone()
+      if (this._needsRTE) {
+        if (!clone.defines) clone.defines = {}
+        clone.defines['USE_RTE'] = ' '
+      }
       this.materialCache[material.id] = clone
       this.materialCacheLUT[clone.id] = material.id
       cachedMaterial = clone

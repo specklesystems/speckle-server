@@ -1,6 +1,9 @@
 import crs from 'crypto-random-string'
 import { assign } from 'lodash'
 
+/**
+ * Returns a random email from example.org domain
+ */
 export function createRandomEmail() {
   return randomizeCase(`${crs({ length: 6 })}@example.org`)
 }

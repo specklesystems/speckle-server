@@ -52,18 +52,17 @@ import {
 import { type InlineView } from './modules/extensions/CameraController.js'
 import { type CanonicalView } from './modules/extensions/CameraController.js'
 import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
-import {
-  SectionTool,
-  SectionToolEvent,
-  SectionToolEventPayload
-} from './modules/extensions/SectionTool.js'
-import { SectionOutlines } from './modules/extensions/SectionOutlines.js'
+
+import { SectionOutlines } from './modules/extensions/sections/SectionOutlines.js'
 import {
   FilteringExtension,
   type FilteringState
 } from './modules/extensions/FilteringExtension.js'
 import { Extension } from './modules/extensions/Extension.js'
-import { ExplodeExtension } from './modules/extensions/ExplodeExtension.js'
+import {
+  ExplodeEvent,
+  ExplodeExtension
+} from './modules/extensions/ExplodeExtension.js'
 import {
   DiffExtension,
   type DiffResult,
@@ -153,6 +152,12 @@ import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewMo
 import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
+import { OrientedSectionTool } from './modules/extensions/sections/OrientedSectionTool.js'
+import {
+  SectionTool,
+  SectionToolEvent,
+  SectionToolEventPayload
+} from './modules/extensions/sections/SectionTool.js'
 import { WebXrViewer } from './modules/WebXrViewer.js'
 import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
 import {
@@ -161,9 +166,18 @@ import {
   EdgesPassOptions
 } from './modules/pipeline/Passes/EdgesPass.js'
 import {
+  Measurement,
+  MeasurementState
+} from './modules/extensions/measurements/Measurement.js'
+import { PointToPointMeasurement } from './modules/extensions/measurements/PointToPointMeasurement.js'
+import { PerpendicularMeasurement } from './modules/extensions/measurements/PerpendicularMeasurement.js'
+import { AreaMeasurement } from './modules/extensions/measurements/AreaMeasurement.js'
+import { PointMeasurement } from './modules/extensions/measurements/PointMeasurement.js'
+import {
   DefaultEdgesPipelineOptions,
   EdgesPipeline
 } from './modules/pipeline/Pipelines/EdgesPipeline.js'
+import { Geometry } from './modules/converter/Geometry.js'
 
 export {
   Viewer,
@@ -179,21 +193,30 @@ export {
   WorldTree,
   RenderTree,
   VisualDiffMode,
+  Measurement,
+  PointToPointMeasurement,
+  PerpendicularMeasurement,
+  AreaMeasurement,
+  PointMeasurement,
   MeasurementType,
+  MeasurementState,
   Units,
   Extension,
   SelectionExtension,
   CameraController,
   SectionTool,
+  OrientedSectionTool,
   SectionOutlines,
   MeasurementsExtension,
   FilteringExtension,
   CameraEvent,
   ExplodeExtension,
+  ExplodeEvent,
   DiffExtension,
   Loader,
   SpeckleConverter,
   GeometryConverter,
+  Geometry,
   SpeckleLoader,
   ObjLoader,
   LoaderEvent,

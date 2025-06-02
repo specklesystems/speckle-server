@@ -18,6 +18,7 @@ export function useUserProjectsUpdatedTracking() {
           id
           project {
             ...ProjectDashboardItem
+            workspaceId
           }
         }
       }
@@ -41,14 +42,25 @@ export function useUserProjectsUpdatedTracking() {
         cache,
         getCacheId('User', activeUserId),
         'projects',
-        ({ helpers: { ref, createUpdatedValue } }) =>
-          createUpdatedValue(({ update }) => {
+        ({ helpers: { ref, createUpdatedValue }, variables }) => {
+          if (incomingProject.workspaceId && variables.filter?.personalOnly) {
+            return // skip, not a personal project
+          }
+          if (
+            variables.filter?.workspaceId &&
+            variables.filter?.workspaceId !== incomingProject.workspaceId
+          ) {
+            return // skip, not in the workspace
+          }
+
+          return createUpdatedValue(({ update }) => {
             update('items', (items) => [
               ref('Project', incomingProject.id),
               ...(items || [])
             ])
             update('totalCount', (count) => count + 1)
-          }),
+          })
+        },
         { autoEvictFiltered: true }
       )
     }

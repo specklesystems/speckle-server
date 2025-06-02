@@ -30,14 +30,14 @@ COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-aug
 COPY packages/preview-frontend/package.json ./packages/preview-frontend/
 COPY packages/preview-service/package.json ./packages/preview-service/
 COPY packages/viewer/package.json ./packages/viewer/
-COPY packages/objectloader/package.json ./packages/objectloader/
+COPY packages/objectloader2/package.json ./packages/objectloader2/
 COPY packages/shared/package.json ./packages/shared/
 
 RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus -A
 
-# Onyl copy in the relevant source files for the dependencies
+# Only copy in the relevant source files for the dependencies
 COPY packages/shared ./packages/shared/
-COPY packages/objectloader ./packages/objectloader/
+COPY packages/objectloader2 ./packages/objectloader2/
 COPY packages/viewer ./packages/viewer/
 COPY packages/preview-frontend ./packages/preview-frontend/
 COPY packages/preview-service ./packages/preview-service/
@@ -47,7 +47,7 @@ RUN yarn workspaces foreach -W run build
 
 # google-chrome-stable is only available for amd64 so we have to fix the platform
 # hadolint ignore=DL3029
-FROM --platform=linux/amd64 node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS node
+FROM --platform=linux/amd64 node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS node
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install tini and fonts

@@ -13,23 +13,23 @@ import {
 } from '../../../domain/authErrors.js'
 import { canReceiveProjectVersionPolicy } from './canReceive.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canReceiveProjectVersionPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReceiveProjectVersionPolicy>) =>
     canReceiveProjectVersionPolicy({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isPublic: false,
-        isDiscoverable: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getServerRole: async () => Roles.Server.Guest,
       getWorkspaceRole: async () => null,
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
+      getAdminOverrideEnabled: async () => false,
       ...overrides
     })
 
@@ -40,8 +40,7 @@ describe('canReceiveProjectVersionPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isPublic: false,
-        isDiscoverable: false
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'
@@ -61,6 +60,21 @@ describe('canReceiveProjectVersionPolicy', () => {
 
   it('should allow for reviewers+', async () => {
     const sut = buildSUT()
+
+    const result = await sut({
+      userId: 'user-id',
+      projectId: 'project-id'
+    })
+
+    expect(result).toBeOKResult()
+  })
+
+  it('should allow for server admin when god mode on', async () => {
+    const sut = buildSUT({
+      getServerRole: async () => Roles.Server.Admin,
+      getAdminOverrideEnabled: async () => true,
+      getProjectRole: async () => null
+    })
 
     const result = await sut({
       userId: 'user-id',

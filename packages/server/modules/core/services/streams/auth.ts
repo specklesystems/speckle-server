@@ -3,6 +3,7 @@ import {
   ValidatePermissionsReadStream,
   ValidatePermissionsWriteStream
 } from '@/modules/core/domain/streams/operations'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { AuthorizeResolver, ValidateScopes } from '@/modules/shared/domain/operations'
 import { DatabaseError } from '@/modules/shared/errors'
@@ -16,7 +17,8 @@ export const validatePermissionsReadStreamFactory =
   }): ValidatePermissionsReadStream =>
   async (streamId, req) => {
     const stream = await deps.getStream({ streamId, userId: req.context.userId })
-    if (stream?.isPublic) return { result: true, status: 200 }
+    if (stream?.visibility === ProjectRecordVisibility.Public)
+      return { result: true, status: 200 }
 
     try {
       await throwForNotHavingServerRole(req.context, Roles.Server.Guest)
@@ -28,31 +30,29 @@ export const validatePermissionsReadStreamFactory =
 
     if (!stream) return { result: false, status: 404 }
 
-    if (!stream.isPublic && req.context.auth === false) {
+    if (req.context.auth === false) {
       req.log.debug('User is not authenticated, so cannot read from non-public stream.')
       return { result: false, status: 401 }
     }
 
-    if (!stream.isPublic) {
-      try {
-        await deps.validateScopes(req.context.scopes, Scopes.Streams.Read)
-      } catch (e) {
-        req.log.info({ err: e }, 'Error while validating scopes')
-        return { result: false, status: 401 }
-      }
+    try {
+      await deps.validateScopes(req.context.scopes, Scopes.Streams.Read)
+    } catch (e) {
+      req.log.info({ err: e }, 'Error while validating scopes')
+      return { result: false, status: 401 }
+    }
 
-      try {
-        await deps.authorizeResolver(
-          req.context.userId,
-          streamId,
-          Roles.Stream.Reviewer,
-          req.context.resourceAccessRules
-        )
-      } catch (e) {
-        if (e instanceof DatabaseError) return { result: false, status: 500 }
-        req.log.info({ err: e }, 'Error while checking stream contributor role')
-        return { result: false, status: 401 }
-      }
+    try {
+      await deps.authorizeResolver(
+        req.context.userId,
+        streamId,
+        Roles.Stream.Reviewer,
+        req.context.resourceAccessRules
+      )
+    } catch (e) {
+      if (e instanceof DatabaseError) return { result: false, status: 500 }
+      req.log.info({ err: e }, 'Error while checking stream contributor role')
+      return { result: false, status: 401 }
     }
     return { result: true, status: 200 }
   }

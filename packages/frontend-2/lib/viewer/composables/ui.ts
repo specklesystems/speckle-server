@@ -18,7 +18,6 @@ import {
   type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
-import { Vector3, Box3 } from 'three'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import type {
@@ -46,8 +45,12 @@ export function useSectionBoxUtilities() {
 
   const resolveSectionBoxFromSelection = () => {
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
-    const box = instance.getSectionBoxFromObjects(objectIds)
-    sectionBox.value = box
+    const box = instance.getRenderer().boxFromObjects(objectIds)
+    /** When generating a section box from selection we don't apply any rotation */
+    sectionBox.value = {
+      min: box.min.toArray(),
+      max: box.max.toArray()
+    }
   }
 
   const toggleSectionBox = () => {
@@ -69,18 +72,11 @@ export function useSectionBoxUtilities() {
 
     if (serializedSectionBox) {
       // Same logic we have in deserialization
-      sectionBox.value = new Box3(
-        new Vector3(
-          serializedSectionBox.min[0],
-          serializedSectionBox.min[1],
-          serializedSectionBox.min[2]
-        ),
-        new Vector3(
-          serializedSectionBox.max[0],
-          serializedSectionBox.max[1],
-          serializedSectionBox.max[2]
-        )
-      )
+      sectionBox.value = {
+        min: serializedSectionBox.min,
+        max: serializedSectionBox.max,
+        rotation: serializedSectionBox.rotation
+      }
     }
   }
 
@@ -397,6 +393,8 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
+  const measurementOptions = computed(() => state.ui.measurement.options.value)
+
   const enableMeasurements = (enabled: boolean) => {
     state.ui.measurement.enabled.value = enabled
   }
@@ -423,6 +421,7 @@ export function useMeasurementUtilities() {
   }
 
   return {
+    measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
     removeMeasurement,
@@ -494,10 +493,9 @@ export function useViewModeUtilities() {
 
   const edgesEnabled = ref(true)
   const edgesWeight = ref(1)
-  const outlineOpacity = ref(1)
+  const outlineOpacity = ref(0.75)
   const defaultColor = ref(0x1a1a1a)
   const edgesColor = ref(defaultColor.value)
-  const hasChangedEdgesColor = ref(false)
 
   const currentViewMode = computed(() => viewMode.value)
 
@@ -518,15 +516,15 @@ export function useViewModeUtilities() {
     if (mode === ViewMode.PEN) {
       outlineOpacity.value = 1
       edgesEnabled.value = true
-      if (!hasChangedEdgesColor.value) {
+      if (edgesColor.value === defaultColor.value) {
         if (!isLightTheme.value) {
           edgesColor.value = 0xffffff
         }
       }
     } else {
       outlineOpacity.value = 0.75
-      if (!hasChangedEdgesColor.value) {
-        edgesColor.value = defaultColor.value
+      if (edgesColor.value === 0xffffff) {
+        edgesColor.value = isLightTheme.value ? 0xffffff : defaultColor.value
       }
     }
 
@@ -559,7 +557,6 @@ export function useViewModeUtilities() {
   }
 
   const setEdgesColor = (color: number) => {
-    hasChangedEdgesColor.value = true
     edgesColor.value = color
     updateViewMode()
     mp.track('Viewer Action', {
@@ -568,6 +565,18 @@ export function useViewModeUtilities() {
       color: color.toString(16).padStart(6, '0')
     })
   }
+
+  onBeforeUnmount(() => {
+    // Reset edges settings
+    edgesEnabled.value = true
+    edgesWeight.value = 1
+    outlineOpacity.value = 0.75
+    edgesColor.value = defaultColor.value
+
+    // Reset view mode to default
+    viewMode.value = ViewMode.DEFAULT
+    updateViewMode()
+  })
 
   return {
     currentViewMode,
