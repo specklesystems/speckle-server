@@ -23,7 +23,7 @@ export class MemoryDownloader implements Downloader {
     if (root) {
       return Promise.resolve({ baseId: this.#rootId, base: root })
     }
-    throw new Error('Method not implemented.')
+    return Promise.reject(new Error('Method not implemented.'))
   }
   disposeAsync(): Promise<void> {
     return Promise.resolve()
