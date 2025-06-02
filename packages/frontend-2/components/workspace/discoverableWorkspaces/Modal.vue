@@ -18,6 +18,7 @@
         location="workspace_switcher"
         @auto-joined="workspace.requestStatus = WorkspaceJoinRequestStatus.Approved"
         @request="workspace.requestStatus = WorkspaceJoinRequestStatus.Pending"
+        @dismissed="onWorkspaceDismissed"
         @go-to-workspace="open = false"
       />
       <FormButton
@@ -63,6 +64,10 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
     }
   ]
 })
+
+const onWorkspaceDismissed = (workspaceId: string) => {
+  localWorkspaces.value = localWorkspaces.value.filter((w) => w.id !== workspaceId)
+}
 
 watch(open, () => {
   showAllWorkspaces.value = false
