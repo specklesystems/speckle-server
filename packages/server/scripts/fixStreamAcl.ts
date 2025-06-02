@@ -122,6 +122,10 @@ const main = async () => {
 
       console.log(`   deleted ${deleted.length} old acl records`)
 
+      if (!newAcl.length) {
+        console.log(`   no new acl records to insert`)
+        continue
+      }
       await targetMainDb.table<StreamAclRecord>('stream_acl').insert(newAcl)
 
       console.log(`   inserted ${newAcl.length} new acl records`)
