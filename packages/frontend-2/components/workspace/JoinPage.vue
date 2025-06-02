@@ -101,9 +101,9 @@ const actionedWorkspaces = ref<
 >([])
 
 const remainingWorkspaces = computed(() => {
-  const topIds = new Set(actionedWorkspaces.value.map((w) => w.id))
+  const actionedIds = new Set(actionedWorkspaces.value.map((w) => w.id))
   return (discoverableWorkspacesAndJoinRequests.value || []).filter(
-    (workspace) => !topIds.has(workspace.id)
+    (workspace) => !actionedIds.has(workspace.id)
   )
 })
 

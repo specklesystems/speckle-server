@@ -52,9 +52,9 @@ const actionedWorkspaces = ref<typeof discoverableWorkspacesAndJoinRequests.valu
 
 // Remaining workspaces (excludes ones moved to top or dismissed)
 const remainingWorkspaces = computed(() => {
-  const topIds = new Set(actionedWorkspaces.value.map((w) => w.id))
+  const actionedIds = new Set(actionedWorkspaces.value.map((w) => w.id))
   return (discoverableWorkspacesAndJoinRequests.value || []).filter(
-    (workspace) => !topIds.has(workspace.id)
+    (workspace) => !actionedIds.has(workspace.id)
   )
 })
 
