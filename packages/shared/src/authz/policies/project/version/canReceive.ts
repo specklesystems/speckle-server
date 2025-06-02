@@ -46,7 +46,7 @@ export const canReceiveProjectVersionPolicy: AuthPolicy<
     const hasAdminAccess = await checkIfAdminOverrideEnabledFragment(loaders)({
       userId
     })
-    if (hasAdminAccess.isOk) {
+    if (hasAdminAccess.isOk && hasAdminAccess.value) {
       return ok()
     }
 
