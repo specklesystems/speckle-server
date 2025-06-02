@@ -83,14 +83,6 @@ export default class IndexedDatabase implements Database {
     this.#cacheDB = await this.#openDatabase()
   }
 
-  //this is for testing only - in the real world we will not use this
-  async add(item: Item): Promise<void> {
-    await this.#setupCacheDb()
-    await this.#cacheDB!.transaction('rw', this.#cacheDB!.objects, async () => {
-      return await this.#cacheDB?.objects.add(item)
-    })
-  }
-
   async cacheSaveBatch(params: { batch: Item[] }): Promise<void> {
     await this.#setupCacheDb()
     const { batch } = params
