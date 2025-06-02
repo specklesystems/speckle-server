@@ -115,7 +115,7 @@
                 </NuxtLink>
 
                 <NuxtLink
-                  to="https://speckle.guide/"
+                  :to="docsPageUrl"
                   target="_blank"
                   @click="isOpenMobile = false"
                 >
@@ -160,7 +160,8 @@ import {
   projectsRoute,
   connectorsRoute,
   workspaceRoute,
-  tutorialsRoute
+  tutorialsRoute,
+  docsPageUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
