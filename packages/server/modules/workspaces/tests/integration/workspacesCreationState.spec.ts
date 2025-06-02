@@ -79,27 +79,34 @@ describe('WorkspaceCreationState services', () => {
   it('does not show completed/impcompleted workspaces when they are recent', async () => {
     await updateAWorkspaceCreatedAt(completeWorkspace.id, dayjs())
     await updateAWorkspaceCreatedAt(nonCompleteWorkspace.id, dayjs())
+    const thirtyMinutesAgo = dayjs().subtract(30, 'minutes')
 
-    const workspaces = await getWorkspacesNonComplete()
+    const workspaces = await getWorkspacesNonComplete({
+      createdAtBefore: thirtyMinutesAgo.toDate()
+    })
 
     expect(workspaces).to.have.lengthOf(0)
   })
 
   it('hits workspaces with complete false when they are 30 mins older', async () => {
-    const fortyMinutesInThePast = dayjs().subtract(40, 'minutes')
-    await updateAWorkspaceCreatedAt(completeWorkspace.id, fortyMinutesInThePast)
-    await updateAWorkspaceCreatedAt(nonCompleteWorkspace.id, fortyMinutesInThePast)
+    const fortyMinutesAgo = dayjs().subtract(40, 'minutes')
+    const thirtyMinutesAgo = dayjs().subtract(30, 'minutes')
 
-    const workspaces = await getWorkspacesNonComplete()
+    await updateAWorkspaceCreatedAt(completeWorkspace.id, fortyMinutesAgo)
+    await updateAWorkspaceCreatedAt(nonCompleteWorkspace.id, fortyMinutesAgo)
+
+    const workspaces = await getWorkspacesNonComplete({
+      createdAtBefore: thirtyMinutesAgo.toDate()
+    })
 
     expect(workspaces).to.have.lengthOf(1)
     expect(workspaces).to.deep.eq([{ workspaceId: nonCompleteWorkspace.id }])
   })
 
   it('deletes only those workspaces that are not completed', async () => {
-    const fortyMinutesInThePast = dayjs().subtract(40, 'minutes')
-    await updateAWorkspaceCreatedAt(completeWorkspace.id, fortyMinutesInThePast)
-    await updateAWorkspaceCreatedAt(nonCompleteWorkspace.id, fortyMinutesInThePast)
+    const fortyMinutesAgo = dayjs().subtract(40, 'minutes')
+    await updateAWorkspaceCreatedAt(completeWorkspace.id, fortyMinutesAgo)
+    await updateAWorkspaceCreatedAt(nonCompleteWorkspace.id, fortyMinutesAgo)
 
     await deleteWorkspacesNonComplete({ logger })
 

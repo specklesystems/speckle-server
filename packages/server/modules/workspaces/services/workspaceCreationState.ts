@@ -3,6 +3,7 @@ import {
   DeleteWorkspace,
   GetWorkspacesNonComplete
 } from '@/modules/workspaces/domain/operations'
+import dayjs from 'dayjs'
 
 export const deleteWorkspacesNonCompleteFactory =
   ({
@@ -13,7 +14,11 @@ export const deleteWorkspacesNonCompleteFactory =
     deleteWorkspace: DeleteWorkspace
   }) =>
   async ({ logger }: { logger: Logger }): Promise<void> => {
-    const workspaces = await getWorkspacesNonComplete()
+    const thirtyMinutesAgo = dayjs().subtract(30, 'minutes')
+
+    const workspaces = await getWorkspacesNonComplete({
+      createdAtBefore: thirtyMinutesAgo.toDate()
+    })
     if (!workspaces?.length) return
 
     const workspaceIds = workspaces.map((workspace) => workspace.workspaceId)
