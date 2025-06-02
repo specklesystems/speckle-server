@@ -134,17 +134,6 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   return baseUser
 }
 
-export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>): BasicTestUser =>
-  assign(
-    {
-      id: cryptoRandomString({ length: 10 }),
-      name: cryptoRandomString({ length: 10 }),
-      email: createRandomEmail(),
-      verified: true
-    },
-    overrides
-  )
-
 export type CreateTestUsersParams = {
   /**
    * Number of users to create. Either this or `users` must be set
@@ -164,6 +153,17 @@ export type CreateTestUsersParams = {
    */
   serial?: boolean
 }
+
+export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>): BasicTestUser =>
+  assign(
+    {
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      email: createRandomEmail(),
+      verified: true
+    },
+    overrides
+  )
 
 export const buildTestUserWithOptionalRole = (
   overrides?: Partial<UserWithOptionalRole>

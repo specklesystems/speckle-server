@@ -705,10 +705,8 @@ describe('Workspaces GQL CRUD', () => {
     describe('query activeUser.workspaces', () => {
       const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
 
-      before(async () => await truncateTables([Workspaces.name]))
-
-      it('should return all workspaces for a user', async () => {
-        const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
+      before(async () => {
+        await truncateTables([Workspaces.name])
         await createTestUser(testUser)
 
         await createTestWorkspace(buildBasicTestWorkspace(), testUser)
@@ -1278,11 +1276,6 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
-      beforeEach(async () => {
-        // db is polluted from prev tests
-        await db.table(Workspaces.name).delete()
-      })
-
       describe('leave', () => {
         it('allows the active user to leave a workspace', async () => {
           const name = cryptoRandomString({ length: 6 })
@@ -1327,7 +1320,6 @@ describe('Workspaces GQL CRUD', () => {
               .includes(name)
           ).to.be.false
         })
-
         it('stops the last workspace admin from leaving the workspace', async () => {
           const name = cryptoRandomString({ length: 6 })
           const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {

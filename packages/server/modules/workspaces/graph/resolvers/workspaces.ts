@@ -1906,7 +1906,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspaceRolesForUser: getWorkspaceRolesForUserFactory({ db })
           })
 
-          // const getWorkspaces = getWorkspacesFactory({ db })
           const workspaces = await getWorkspaces({
             userId: context.userId,
             search: args.filter?.search ?? undefined,

@@ -1,5 +1,4 @@
 import crs from 'crypto-random-string'
-import { assign } from 'lodash'
 
 /**
  * Returns a random email from example.org domain
@@ -10,13 +9,6 @@ export function createRandomEmail() {
 
 export function createRandomPassword(length?: number) {
   return crs({ length: length ?? 10 })
-}
-
-/**
- * @desc Generic utility to create builder fn with custom defaults for testing purposes
- */
-export const buildTestObject = <T>(defaults: T, overrides?: Partial<T>): T => {
-  return assign(defaults, overrides || {})
 }
 
 /**
