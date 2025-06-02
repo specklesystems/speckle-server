@@ -28,6 +28,7 @@ export const activeUserQuery = graphql(`
       versions(limit: 0) {
         totalCount
       }
+      ...ProjectsAdd_User
     }
   }
 `)

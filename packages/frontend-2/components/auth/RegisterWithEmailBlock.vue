@@ -13,7 +13,14 @@
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+        auto-focus
+        :help="
+          emailIsBlocked
+            ? 'A work email makes it easier to discover and collaborate with your coworkers on Speckle.'
+            : ''
+        "
         autocomplete="email"
+        @blur="onEmailChange"
       />
       <FormTextInput
         type="text"
@@ -25,7 +32,6 @@
         color="foundation"
         show-label
         :disabled="loading"
-        auto-focus
         autocomplete="name"
       />
       <FormTextInput
@@ -73,6 +79,7 @@ import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMounted } from '@vueuse/core'
+import { checkIfEmailIsBlocked } from '~~/lib/auth/helpers/checkBlockedDomain'
 
 graphql(`
   fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {
@@ -93,11 +100,13 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const isMounted = useMounted()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
+const emailIsBlocked = ref(false)
 
 const emailRules = [isEmail]
 const nameRules = [isRequired]
@@ -111,6 +120,11 @@ const finalLoginRoute = computed(() => {
   })
   return result.fullPath
 })
+
+const onEmailChange = () => {
+  if (!isWorkspacesEnabled.value) return
+  emailIsBlocked.value = checkIfEmailIsBlocked(email.value)
+}
 
 const onSubmit = handleSubmit(async (fullUser) => {
   try {

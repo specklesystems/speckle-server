@@ -19,6 +19,8 @@ export class CachePump implements Pump {
 
   #options: CacheOptions
 
+  #disposed = false
+
   constructor(
     database: Database,
     gathered: AsyncGeneratorQueue<Item>,
@@ -46,6 +48,12 @@ export class CachePump implements Pump {
 
   async disposeAsync(): Promise<void> {
     await this.#writeQueue?.disposeAsync()
+    await this.#database.disposeAsync()
+    this.#disposed = true
+  }
+
+  get isDisposed(): boolean {
+    return this.#disposed
   }
 
   async pumpItems(params: {
@@ -57,6 +65,7 @@ export class CachePump implements Pump {
     const maxCacheReadSize = this.#options.maxCacheReadSize
 
     for (let i = 0; i < ids.length; ) {
+      if (this.isDisposed) break
       if ((this.#writeQueue?.count() ?? 0) > this.#options.maxWriteQueueSize) {
         this.#logger(
           'pausing reads (# in write queue: ' + this.#writeQueue?.count() + ')'

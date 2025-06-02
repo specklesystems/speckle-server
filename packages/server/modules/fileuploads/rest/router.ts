@@ -13,6 +13,7 @@ import { processNewFileStreamFactory } from '@/modules/blobstorage/services/stre
 import { UnauthorizedError } from '@/modules/shared/errors'
 import { ensureError, Nullable } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -44,7 +45,8 @@ export const fileuploadRouterFactory = (): Router => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-        publish
+        publish,
+        emit: getEventBus().emit
       })
       const saveFileUploads = async ({
         userId,

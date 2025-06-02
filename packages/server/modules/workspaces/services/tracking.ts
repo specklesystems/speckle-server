@@ -4,7 +4,11 @@ import {
   GetWorkspacePlan,
   GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { getBaseTrackingProperties } from '@/modules/shared/utils/mixpanel'
+import {
+  getBaseTrackingProperties,
+  MixpanelClient,
+  WORKSPACE_TRACKING_ID_KEY
+} from '@/modules/shared/utils/mixpanel'
 import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
@@ -32,9 +36,6 @@ import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repos
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
-import { Mixpanel } from 'mixpanel'
-
-export const WORKSPACE_TRACKING_ID_KEY = 'workspace_id'
 
 export type WorkspaceTrackingProperties = {
   name: string
@@ -126,6 +127,7 @@ export const buildWorkspaceTrackingPropertiesFactory =
       planName: plan?.name || '',
       planStatus: plan?.status || '',
       planCreatedAt: plan?.createdAt || null,
+      planUpdatedAt: plan?.updatedAt || null,
       subscriptionCreatedAt,
       subscriptionBillingInterval,
       subscriptionCurrentBillingCycleEnd,
@@ -136,6 +138,7 @@ export const buildWorkspaceTrackingPropertiesFactory =
       createdAt: workspace.createdAt,
       projectCount: workspacesProjectCount[workspace.id] || 0,
       modelCount,
+      lastSyncAt: new Date(),
       ...getBaseTrackingProperties()
     }
   }
@@ -155,7 +158,7 @@ export const updateAllWorkspacesTackingPropertiesFactory =
     mixpanel
   }: {
     logger: Logger
-    mixpanel: Mixpanel
+    mixpanel: MixpanelClient
   }) => Promise<void>) =>
   async ({ logger, mixpanel }) => {
     logger.info('Start full workspace tracking update')
@@ -203,7 +206,7 @@ export const scheduleUpdateAllWorkspacesTracking = ({
   mixpanel
 }: {
   scheduleExecution: ScheduleExecution
-  mixpanel: Mixpanel
+  mixpanel: MixpanelClient
 }) => {
   const updateAllWorkspacesTackingProperties =
     updateAllWorkspacesTackingPropertiesFactory({

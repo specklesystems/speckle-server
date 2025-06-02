@@ -3,9 +3,12 @@ import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityT
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors/index.js'
 
+/** Redefining these is unfortunate. Especially since they are not part of viewer-core */
 enum MeasurementType {
   PERPENDICULAR = 0,
-  POINTTOPOINT = 1
+  POINTTOPOINT = 1,
+  AREA = 2,
+  POINT = 3
 }
 
 interface MeasurementOptions {
@@ -14,6 +17,7 @@ interface MeasurementOptions {
   vertexSnap?: boolean
   units?: string
   precision?: number
+  chain?: boolean
 }
 
 export interface SectionBoxData {

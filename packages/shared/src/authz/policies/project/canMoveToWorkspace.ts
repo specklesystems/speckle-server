@@ -1,5 +1,6 @@
 import { err, ok } from 'true-myth/result'
 import {
+  PersonalProjectsLimitedError,
   ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
@@ -65,6 +66,7 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceNoEditorSeatError>
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
   | InstanceType<typeof ProjectNotEnoughPermissionsError>
+  | InstanceType<typeof PersonalProjectsLimitedError>
 
 export const canMoveToWorkspacePolicy: AuthPolicy<
   PolicyLoaderKeys,

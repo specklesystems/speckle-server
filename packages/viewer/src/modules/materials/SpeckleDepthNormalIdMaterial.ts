@@ -32,13 +32,13 @@ class SpeckleDepthNormalIdMaterial extends SpeckleDepthNormalMaterial {
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
       this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
       this.userData.rteModelViewMatrix.value.copy(_this.RTEBuffers.rteViewModelMatrix)
+      this.needsUpdate = true
     }
 
     if (object instanceof SpeckleMesh || object instanceof ExtendedInstancedMesh) {
       this.userData.batchIndex.value = object.batchIndex
+      this.needsUpdate = true
     }
-
-    this.needsUpdate = true
   }
 }
 

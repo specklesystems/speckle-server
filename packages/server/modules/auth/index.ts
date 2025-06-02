@@ -120,7 +120,9 @@ const commonBuilderDeps = {
   validateServerInvite,
   finalizeInvitedServerRegistration,
   resolveAuthRedirectPath,
-  passportAuthenticateHandlerBuilder: passportAuthenticateHandlerBuilderFactory()
+  passportAuthenticateHandlerBuilder: passportAuthenticateHandlerBuilderFactory({
+    resolveAuthRedirectPath
+  })
 }
 const setupStrategies = setupStrategiesFactory({
   githubStrategyBuilder: githubStrategyBuilderFactory({

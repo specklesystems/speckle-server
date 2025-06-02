@@ -1,20 +1,65 @@
 <template>
-  <WorkspaceCard :logo="workspace.logo ?? ''" :name="workspace.name">
+  <WorkspaceCard
+    :logo="workspace.logo ?? ''"
+    :name="workspace.name"
+    :class="requestStatus === WorkspaceJoinRequestStatus.Pending ? '' : 'bg-foundation'"
+    :banner-text="
+      workspace.discoverabilityAutoJoinEnabled &&
+      requestStatus !== WorkspaceJoinRequestStatus.Approved
+        ? 'You can join this workspace automatically. No admin approval needed.'
+        : null
+    "
+  >
     <template #text>
       <div class="flex flex-col gap-y-1">
-        <div class="text-body-2xs line-clamp-3">
+        <div v-if="workspace.description" class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <UserAvatarGroup :users="users" :max-count="5" size="sm" />
+        <div class="flex flex-col gap-1">
+          <UserAvatarGroup
+            v-if="members.length > 0"
+            :users="members"
+            :max-count="5"
+            size="base"
+          />
+          <div class="text-body-3xs text-foreground-2">
+            <span class="font-medium">
+              {{ adminTeam.length === 1 ? 'Admin' : 'Admins' }}:&nbsp;
+            </span>
+            <span v-for="(admin, index) in adminTeam.slice(0, 3)" :key="admin.id">
+              {{ admin.name
+              }}{{ index < 2 && index < adminTeam.length - 1 ? ', ' : '' }}
+            </span>
+            <span v-if="adminTeam.length > 3">+{{ adminTeam.length - 3 }}</span>
+          </div>
+        </div>
       </div>
     </template>
     <template #actions>
-      <FormButton v-if="requestStatus" color="outline" size="sm" disabled>
+      <FormButton
+        v-if="requestStatus === WorkspaceJoinRequestStatus.Pending"
+        color="outline"
+        size="sm"
+        disabled
+      >
         Join request sent
+      </FormButton>
+      <FormButton
+        v-else-if="requestStatus === WorkspaceJoinRequestStatus.Approved"
+        color="outline"
+        size="sm"
+        :icon-left="CheckIcon"
+        disabled
+      >
+        Workspace joined
       </FormButton>
       <div v-else class="flex flex-col gap-2 sm:items-end">
         <FormButton color="outline" size="sm" @click="onRequest">
-          Request to join
+          {{
+            workspace.discoverabilityAutoJoinEnabled
+              ? 'Join workspace'
+              : 'Request to join'
+          }}
         </FormButton>
         <FormButton
           v-if="showDismissButton"
@@ -33,6 +78,8 @@
 import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { CheckIcon } from '@heroicons/vue/20/solid'
+import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   workspace: DiscoverableWorkspace_LimitedWorkspaceFragment
@@ -41,18 +88,47 @@ const props = defineProps<{
   requestStatus: string | null
 }>()
 
+const emit = defineEmits<{
+  (e: 'auto-joined'): void
+  (e: 'request'): void
+  (e: 'dismissed', workspaceId: string): void
+}>()
+
 const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
   useDiscoverableWorkspaces()
 const mixpanel = useMixpanel()
 
-const users = computed(() => props.workspace.team?.items?.map((u) => u.user) ?? [])
+const adminTeam = computed(() => props.workspace.adminTeam?.map((t) => t.user) ?? [])
+const adminIds = computed(() => new Set(adminTeam.value.map((admin) => admin.id)))
+const allMembers = computed(() => props.workspace.team?.items?.map((u) => u.user) ?? [])
+const members = computed(() => {
+  // Only deduplicate if there's exactly one person total (admin who is also the only member)
+  const totalUniqueUsers = new Set([
+    ...adminTeam.value.map((admin) => admin.id),
+    ...allMembers.value.map((member) => member.id)
+  ]).size
+
+  if (totalUniqueUsers === 1) {
+    // Single user case: filter out admins from members to avoid duplication
+    return allMembers.value.filter((user) => !adminIds.value.has(user.id))
+  } else {
+    // Multiple users: show all members including those who are also admins
+    return allMembers.value
+  }
+})
 
 const onRequest = () => {
-  requestToJoinWorkspace(props.workspace.id, props.location || 'discovery_card')
+  requestToJoinWorkspace(props.workspace, props.location || 'discovery_card')
+  if (props.workspace.discoverabilityAutoJoinEnabled) {
+    emit('auto-joined')
+  } else {
+    emit('request')
+  }
 }
 
 const onDismiss = async () => {
   await dismissDiscoverableWorkspace(props.workspace.id)
+  emit('dismissed', props.workspace.id)
   mixpanel.track('Workspace Discovery Banner Dismissed', {
     workspaceId: props.workspace.id,
     location: 'discovery_card',
