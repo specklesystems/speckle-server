@@ -91,6 +91,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'auto-joined'): void
   (e: 'request'): void
+  (e: 'dismissed', workspaceId: string): void
 }>()
 
 const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
@@ -127,6 +128,7 @@ const onRequest = () => {
 
 const onDismiss = async () => {
   await dismissDiscoverableWorkspace(props.workspace.id)
+  emit('dismissed', props.workspace.id)
   mixpanel.track('Workspace Discovery Banner Dismissed', {
     workspaceId: props.workspace.id,
     location: 'discovery_card',
