@@ -4896,6 +4896,7 @@ export type WorkspacePermissionChecks = {
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
+  canReadMemberEmail: PermissionCheckResult;
 };
 
 

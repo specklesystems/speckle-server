@@ -211,6 +211,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     this._basisTransform.makeRotationFromQuaternion(
       new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), this._up)
     )
+
     this._basisTransformInv.copy(this._basisTransform)
     this._basisTransformInv.invert()
   }
@@ -318,9 +319,8 @@ export class SmoothOrbitControls extends SpeckleControls {
     const targetTarget = this.getTarget()
     const deltaTarget = vector3.subVectors(target, targetTarget).length()
     const deltaPosition = vector3.subVectors(position, targetPosition).length()
-    const epsilon = 1e-7
-    if (deltaPosition < epsilon) return
-    if (deltaTarget < epsilon) return
+    const epsilon = 1e-6
+    if (deltaPosition < epsilon && deltaTarget < epsilon) return
 
     const v0 = new Vector3().copy(position)
     const v1 = new Vector3().copy(target)
