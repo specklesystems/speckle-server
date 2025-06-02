@@ -15,6 +15,7 @@ import { Loaders } from '../../../domain/loaders.js'
 import { AuthPolicy } from '../../../domain/policies.js'
 import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fragments/projects.js'
 import { Roles } from '../../../../core/constants.js'
+import { checkIfAdminOverrideEnabledFragment } from '../../../fragments/server.js'
 
 export const canReceiveProjectVersionPolicy: AuthPolicy<
   | typeof Loaders.getProject
@@ -24,6 +25,7 @@ export const canReceiveProjectVersionPolicy: AuthPolicy<
   | typeof Loaders.getWorkspace
   | typeof Loaders.getWorkspaceSsoProvider
   | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getAdminOverrideEnabled
   | typeof Loaders.getProjectRole,
   MaybeUserContext & ProjectContext,
   InstanceType<
@@ -40,6 +42,14 @@ export const canReceiveProjectVersionPolicy: AuthPolicy<
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
+    // Allow if admin override is on
+    const hasAdminAccess = await checkIfAdminOverrideEnabledFragment(loaders)({
+      userId
+    })
+    if (hasAdminAccess.isOk) {
+      return ok()
+    }
+
     // Ensure user has at least implicit membership & write access
     const hasWriteAccess = await ensureImplicitProjectMemberWithWriteAccessFragment(
       loaders
