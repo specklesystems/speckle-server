@@ -93,10 +93,10 @@ import knex from 'knex'
 import { omit } from 'lodash'
 
 // The workspace on the target server to migrate source server projects to
-const TARGET_WORKSPACE_ID = ''
+const TARGET_WORKSPACE_ID = '725392a6d1'
 
 // The workspace admin to grant fallback ownership to for all assets (e.g.)
-const TARGET_WORKSPACE_ROOT_ADMIN_USER_ID = ''
+const TARGET_WORKSPACE_ROOT_ADMIN_USER_ID = 'dcf5325207'
 
 const ENABLE_USER_PROVISIONING = false
 
