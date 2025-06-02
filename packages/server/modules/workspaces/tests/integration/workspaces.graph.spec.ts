@@ -707,6 +707,7 @@ describe('Workspaces GQL CRUD', () => {
 
       before(async () => {
         await truncateTables([Workspaces.name])
+
         await createTestUser(testUser)
 
         await createTestWorkspace(buildBasicTestWorkspace(), testUser)

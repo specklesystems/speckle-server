@@ -58,13 +58,10 @@ describe('WorkspaceCreationState services', () => {
 
   before(async () => {
     adminUser = buildBasicTestUser()
-    await createTestUser(adminUser)
-  })
-
-  beforeEach(async () => {
     completeWorkspace = buildBasicTestWorkspace()
     nonCompleteWorkspace = buildBasicTestWorkspace()
 
+    await createTestUser(adminUser)
     await createTestWorkspace(completeWorkspace, adminUser, {
       addCreationState: {
         state: {},
