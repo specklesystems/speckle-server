@@ -413,6 +413,7 @@ export const assignToWorkspace = async (
   const assignWorkspaceSeat = assignWorkspaceSeatFactory({
     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
     eventEmit: getEventBus().emit
   })
 

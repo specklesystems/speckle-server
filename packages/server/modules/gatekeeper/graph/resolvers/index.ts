@@ -44,7 +44,8 @@ import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/check
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
 import {
   countSeatsByTypeInWorkspaceFactory,
-  createWorkspaceSeatFactory
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -337,6 +338,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const assignSeat = assignWorkspaceSeatFactory({
             createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
             getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+            getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
             eventEmit: getEventBus().emit
           })
           await withOperationLogging(

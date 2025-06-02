@@ -33,6 +33,7 @@ import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/m
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
+  isPaidPlan,
   MaybeNullOrUndefined,
   Roles,
   StreamRoles,
@@ -86,6 +87,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   getBaseTrackingProperties,
   getClient,
+  mapPlanNameToMixpanelEvent as mapPlanNameToMixpanelEventName,
   MixpanelClient,
   MixpanelEvents,
   WORKSPACE_TRACKING_ID_KEY
@@ -587,45 +589,45 @@ export const workspaceTrackingFactory =
 
         break
       case GatekeeperEvents.WorkspaceSubscriptionDownscaled:
-        await mixpanel.track({
-          eventName: MixpanelEvents.EditorSeatsDownscaled,
-          workspaceId: payload.workspacePlan.workspaceId,
-          payload: {
-            amount:
-              countEditorSeats(payload.previousSubscriptionData) -
-              countEditorSeats(payload.subscriptionData)
-          }
-        })
+        const editorSeatsLost =
+          countEditorSeats(payload.previousSubscriptionData) -
+          countEditorSeats(payload.subscriptionData)
+
+        if (editorSeatsLost > 0 && isPaidPlan(payload.workspacePlan.name)) {
+          await mixpanel.track({
+            eventName: MixpanelEvents.EditorSeatsDownscaled,
+            workspaceId: payload.workspacePlan.workspaceId,
+            payload: {
+              amount: editorSeatsLost,
+              planName: payload.workspacePlan.name
+            }
+          })
+        }
         break
       case GatekeeperEvents.WorkspaceSubscriptionUpdated:
-        const editorSeatChange =
+        const editorSeatAdded =
           countEditorSeats(payload.subscriptionData) -
           countEditorSeats(payload.previousSubscriptionData)
-        if (editorSeatChange >= 0) {
+
+        if (editorSeatAdded > 0 && isPaidPlan(payload.workspacePlan.name)) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatsPurchased,
             workspaceId: payload.workspacePlan.workspaceId,
             payload: {
-              amount: editorSeatChange
+              amount: editorSeatAdded,
+              planName: payload.workspacePlan.name
             }
           })
         }
 
-        if (payload.workspacePlan.status === WorkspacePlanStatuses.Canceled) {
-          await mixpanel.track({
-            eventName: MixpanelEvents.WorkspaceSubscriptionCanceled,
-            workspaceId: payload.workspacePlan.workspaceId
-          })
-        }
-
-        if (
-          payload.workspacePlan.status === WorkspacePlanStatuses.CancelationScheduled
-        ) {
-          await mixpanel.track({
-            eventName: MixpanelEvents.WorkspaceSubscriptionCancelationScheduled,
-            workspaceId: payload.workspacePlan.workspaceId
-          })
-        }
+        if (payload.workspacePlan.status === WorkspacePlanStatuses.Valid) break
+        await mixpanel.track({
+          eventName: mapPlanNameToMixpanelEventName[payload.workspacePlan.status],
+          workspaceId: payload.workspacePlan.workspaceId,
+          payload: {
+            planName: payload.workspacePlan.name
+          }
+        })
         break
       case GatekeeperEvents.WorkspaceTrialExpired:
         break
@@ -701,7 +703,10 @@ export const workspaceTrackingFactory =
         )
 
         const userSeated = await getUser(payload.seat.userId)
-        if (payload.seat.type === WorkspaceSeatType.Editor) {
+        if (
+          payload.previousSeat?.type === WorkspaceSeatType.Viewer &&
+          payload.seat.type === WorkspaceSeatType.Editor
+        ) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatAssigned,
             workspaceId: payload.seat.workspaceId,
@@ -709,11 +714,10 @@ export const workspaceTrackingFactory =
           })
         }
 
-        if (payload.seat.type === WorkspaceSeatType.Viewer) {
-          // TODO: test this
-          //
-          // how we assure that this does not get triggered the first time?
-          // we might need actually the prev seat
+        if (
+          payload.previousSeat?.type === WorkspaceSeatType.Editor &&
+          payload.seat.type === WorkspaceSeatType.Viewer
+        ) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatUnassigned,
             workspaceId: payload.seat.workspaceId,
