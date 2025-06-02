@@ -9,8 +9,7 @@ export const GatekeeperEvents = {
   WorkspaceTrialExpired: `${eventPrefix}workspace-trial-expired`,
   WorkspacePlanUpdated: `${eventPrefix}workspace-plan-updated`,
   WorkspaceSubscriptionUpdated: `${eventPrefix}workspace-subscription-updated`,
-  WorkspaceSubscriptionDownscaled: `${eventPrefix}workspace-subscription-downscaled`,
-  WorkspaceSeatUpdated: `${eventPrefix}workspace-seat-updated`
+  WorkspaceSubscriptionDownscaled: `${eventPrefix}workspace-subscription-downscaled`
 } as const
 
 export type GatekeeperEventPayloads = {
