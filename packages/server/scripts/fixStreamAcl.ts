@@ -86,10 +86,10 @@ const main = async () => {
       const targetProject = await getProjectFactory({ db: targetMainDb })({
         projectId: sourceProject.id
       })
-      if (!targetProject)
-        throw new Error(
-          `target project ${sourceProject.name} not found in target server`
-        )
+      if (!targetProject) {
+        console.log(`target project ${sourceProject.name} not found in target server`)
+        continue
+      }
       if (!(targetProject.workspaceId === TARGET_WORKSPACE_ID)) {
         throw new Error(`target project is not in the target workspace`)
       }
