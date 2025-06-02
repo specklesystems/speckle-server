@@ -140,4 +140,40 @@ export class SpeckleText extends BatchedText {
       super.raycast(raycaster, intersects)
     }
   }
+
+  /**
+   * @override
+   * Patched version that allows:
+   * - Individual text opacities
+   */
+  //@ts-ignore
+  _prepareForRender(material) {
+    // For the non-member-specific uniforms:
+    super._prepareForRender(material)
+
+    // Resize the texture to fit in powers of 2
+    const isOutline = material.isTextOutlineMaterial
+    //@ts-ignore
+    const texture = this._dataTextures[isOutline ? 'outline' : 'main']
+
+    const texData = texture.image.data
+    //@ts-ignore
+    const setTexData = (index, value) => {
+      if (value !== texData[index]) {
+        texData[index] = value
+        texture.needsUpdate = true
+      }
+    }
+    //@ts-ignore
+    this._members.forEach(({ index }, text) => {
+      if (index > -1) {
+        const startIndex = index * 32
+        setTexData(
+          startIndex + 25,
+          //@ts-ignore
+          text.material.opacity ?? material.uniforms.uTroikaFillOpacity.value
+        )
+      }
+    })
+  }
 }

@@ -15,11 +15,17 @@ import Materials from '../materials/Materials.js'
 import { SpeckleText } from '../objects/SpeckleText.js'
 //@ts-ignore
 import { Text } from 'troika-three-text'
-import { AccelerationStructure, BatchObject, ObjectLayers } from '../../index.js'
+import {
+  AccelerationStructure,
+  BatchObject,
+  ObjectLayers,
+  SpeckleTextMaterial
+} from '../../index.js'
 import { DefaultBVHOptions } from '../objects/AccelerationStructure.js'
 import { TextBatchObject } from './TextBatchObject.js'
+import { DrawRanges } from './DrawRanges.js'
+import Logger from '../utils/Logger.js'
 
-const INSTANCE_TEXT_BUFFER_STRIDE = 32
 const INSTANCE_TEXT_TRIS_COUNT = 2
 const INSTANCE_TEXT_VERT_COUNT = 4
 
@@ -29,6 +35,7 @@ export default class TextBatch implements Batch {
   public renderViews: NodeRenderView[]
   public batchMaterial: Material
   public mesh: SpeckleText
+  protected drawRanges: DrawRanges = new DrawRanges()
 
   public get bounds(): Box3 {
     return this.mesh.TAS.getBoundingBox(new Box3())
@@ -126,17 +133,69 @@ export default class TextBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(range: BatchUpdateRange[]): void {
-    range
-    throw new Error('Method not implemented.')
+  public setBatchBuffers(ranges: BatchUpdateRange[]): void {
+    console.warn(' Groups -> ', this.mesh.groups)
+    console.warn(' Ranges -> ', ranges)
+    //@ts-ignore
+
+    this.mesh._members.forEach((packingInfo, text) => {
+      const range = ranges.find((val) => val.offset === packingInfo.index)
+      if (!range) return
+
+      //@ts-ignore
+      text.color = range.material?.color
+      //@ts-ignore
+      text.material.opacity = range.material?.opacity
+      packingInfo.dirty = true
+    })
+    //@ts-ignore
+    this.mesh.sync()
   }
 
   public setDrawRanges(ranges: BatchUpdateRange[]) {
-    ranges
-    // this.mesh.textMesh.material = ranges[0].material
-    // if (ranges[0].materialOptions && ranges[0].materialOptions.rampIndexColor) {
-    //   this.mesh.textMesh.material.color.copy(ranges[0].materialOptions.rampIndexColor)
-    // }
+    const materials: Array<Material> = ranges.map((val: BatchUpdateRange) => {
+      return val.material as Material
+    })
+    const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
+
+    for (let k = 0; k < uniqueMaterials.length; k++) {
+      if (!this.materials.includes(uniqueMaterials[k]))
+        this.materials.push(uniqueMaterials[k])
+    }
+
+    this.mesh.groups = this.drawRanges.integrateRanges(
+      this.groups,
+      this.materials,
+      ranges
+    )
+
+    let count = 0
+    this.groups.forEach((value) => (count += value.count))
+    if (count !== this.renderViews.length) {
+      Logger.error(`Draw groups invalid on ${this.id}`)
+    }
+    this.setBatchBuffers(ranges)
+    this.cleanMaterials()
+  }
+
+  private cleanMaterials() {
+    const materialsInUse = [
+      ...Array.from(
+        new Set(this.groups.map((value) => this.materials[value.materialIndex]))
+      )
+    ]
+    let k = 0
+    while (this.materials.length > materialsInUse.length) {
+      if (!materialsInUse.includes(this.materials[k])) {
+        this.materials.splice(k, 1)
+        this.groups.forEach((value: DrawGroup) => {
+          if (value.materialIndex > k) value.materialIndex--
+        })
+        k = 0
+        continue
+      }
+      k++
+    }
   }
 
   public resetDrawRanges() {
@@ -147,6 +206,7 @@ export default class TextBatch implements Batch {
   public async buildBatch(): Promise<void> {
     return new Promise((resolve) => {
       this.mesh = new SpeckleText()
+      const textMap = new Map()
       const batchObjects: BatchObject[] = []
       let textSynced = this.renderViews.length
       for (let k = 0; k < this.renderViews.length; k++) {
@@ -159,6 +219,10 @@ export default class TextBatch implements Batch {
         )
         text.text = textMeta?.value
         text.fontSize = textMeta?.height
+        text.material = new SpeckleTextMaterial({
+          color: 0xff0000
+        }).getDerivedMaterial()
+        textMap.set(text, this.renderViews[k])
         text.sync(() => {
           const { textRenderInfo } = text
           /** We're using visibleBounds for a better fit */
@@ -206,18 +270,20 @@ export default class TextBatch implements Batch {
 
             this.groups.push({
               start: 0,
-              count: this.renderViews.length * INSTANCE_TEXT_BUFFER_STRIDE,
+              count: this.renderViews.length,
               materialIndex: 0
             })
             //@ts-ignore
             this.mesh.sync(() => {
+              /** We assign the allocated packing info to the text render views as we'll be using the same batch indices for simplicity */
+              //@ts-ignore
+              this.mesh._members.forEach((packingInfo, text) => {
+                textMap.get(text).setBatchData(this.id, packingInfo.index, 1)
+              })
               resolve()
             })
           }
         })
-
-        /** Per instance data stride, even though it's written to a tex */
-        this.renderViews[k].setBatchData(this.id, k * 32, 32)
       }
     })
   }
