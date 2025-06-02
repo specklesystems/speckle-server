@@ -196,6 +196,12 @@ export default defineNuxtConfig({
         statusCode: 301
       }
     },
+    '/settings/workspaces/:slug': {
+      redirect: {
+        to: '/settings/workspaces/:slug/general',
+        statusCode: 301
+      }
+    },
     '/settings/**': {
       appMiddleware: ['auth', 'settings']
     },
