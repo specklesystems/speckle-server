@@ -34,7 +34,6 @@ import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   MaybeNullOrUndefined,
-  resolveMixpanelUserId,
   Roles,
   StreamRoles,
   throwUncoveredError,
@@ -63,7 +62,6 @@ import {
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import {
   findEmailsByUserIdFactory,
-  findPrimaryEmailForUserFactory,
   findVerifiedEmailsByUserIdFactory
 } from '@/modules/core/repositories/userEmails'
 import {
@@ -88,7 +86,9 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   getBaseTrackingProperties,
   getClient,
-  MixpanelEvents
+  MixpanelClient,
+  MixpanelEvents,
+  WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/shared/utils/mixpanel'
 import {
   GetWorkspacePlan,
@@ -96,10 +96,7 @@ import {
   GetWorkspaceWithPlan
 } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
-import {
-  FindEmailsByUserId,
-  FindPrimaryEmailForUser
-} from '@/modules/core/domain/userEmails/operations'
+import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
   getWorkspacePlanFactory,
@@ -107,7 +104,10 @@ import {
   getWorkspaceWithPlanFactory,
   upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
   deleteWorkspaceSeatFactory,
@@ -129,14 +129,11 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getProjectWorkspaceFactory } from '@/modules/workspaces/repositories/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
-import {
-  buildWorkspaceTrackingPropertiesFactory,
-  WORKSPACE_TRACKING_ID_KEY
-} from '@/modules/workspaces/services/tracking'
+import { buildWorkspaceTrackingPropertiesFactory } from '@/modules/workspaces/services/tracking'
 import { assign } from 'lodash'
 import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
-import { Mixpanel } from 'mixpanel'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -509,11 +506,11 @@ export const workspaceTrackingFactory =
     getDefaultRegion,
     getWorkspacePlan,
     getWorkspaceSubscription,
-    findPrimaryEmailForUser,
     getUserEmails,
     getWorkspaceModelCount,
     getWorkspacesProjectCount,
     getWorkspaceSeatCount,
+    getUser,
     mixpanel = getClient(),
     getServerTrackingProperties = getBaseTrackingProperties
   }: {
@@ -522,12 +519,12 @@ export const workspaceTrackingFactory =
     getDefaultRegion: GetDefaultRegion
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
-    findPrimaryEmailForUser: FindPrimaryEmailForUser
     getUserEmails: FindEmailsByUserId
     getWorkspaceModelCount: GetWorkspaceModelCount
     getWorkspacesProjectCount: GetWorkspacesProjectsCounts
     getWorkspaceSeatCount: GetWorkspaceSeatCount
-    mixpanel?: Mixpanel
+    getUser: GetUser
+    mixpanel?: MixpanelClient
     getServerTrackingProperties?: typeof getBaseTrackingProperties
   }) =>
   async (params: EventPayload<'workspace.*'> | EventPayload<'gatekeeper.*'>) => {
@@ -546,20 +543,6 @@ export const workspaceTrackingFactory =
       getWorkspacesProjectCount,
       getWorkspaceSeatCount
     })
-
-    const getUserTrackingProperties = async ({ userId }: { userId: string }) => {
-      const primaryEmail = await findPrimaryEmailForUser({ userId })
-      if (!primaryEmail) return {}
-      const mixpanelUserId = resolveMixpanelUserId(primaryEmail.email)
-
-      return {
-        // eslint-disable-next-line camelcase
-        user_id: mixpanelUserId,
-        // eslint-disable-next-line camelcase
-        distinct_id: mixpanelUserId
-      }
-    }
-
     // only marking has speckle members to true
     // calculating this for speckle member removal would require getting all users
     // that is too costly in here imho
@@ -588,38 +571,30 @@ export const workspaceTrackingFactory =
           payload.workspacePlan.workspaceId,
           await buildWorkspaceTrackingProperties(updatedPlanWorkspace)
         )
-        mixpanel.track(
-          MixpanelEvents.WorkspaceUpgraded,
-          assign(
-            {
-              [WORKSPACE_TRACKING_ID_KEY]: payload.workspacePlan.workspaceId,
-              plan: payload.workspacePlan.name,
-              cycle: subscription?.billingInterval,
-              previousPlan: payload.previousPlan?.name
-            },
-            getServerTrackingProperties()
-          )
-        )
+        await mixpanel.track({
+          eventName: MixpanelEvents.WorkspaceUpgraded,
+          workspaceId: payload.workspacePlan.workspaceId,
+          payload: {
+            plan: payload.workspacePlan.name,
+            cycle: subscription?.billingInterval,
+            previousPlan: payload.previousPlan?.name
+          }
+        })
+
         break
       case GatekeeperEvents.WorkspaceSubscriptionUpdated:
         if (payload.status === WorkspacePlanStatuses.Canceled) {
-          mixpanel.track(
-            MixpanelEvents.WorkspaceSubscriptionCanceled,
-            assign(
-              { [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId },
-              getServerTrackingProperties()
-            )
-          )
+          await mixpanel.track({
+            eventName: MixpanelEvents.WorkspaceSubscriptionCanceled,
+            workspaceId: payload.workspaceId
+          })
         }
 
         if (payload.status === WorkspacePlanStatuses.CancelationScheduled) {
-          mixpanel.track(
-            MixpanelEvents.WorkspaceSubscriptionCancelationScheduled,
-            assign(
-              { [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId },
-              getServerTrackingProperties()
-            )
-          )
+          await mixpanel.track({
+            eventName: MixpanelEvents.WorkspaceSubscriptionCancelationScheduled,
+            workspaceId: payload.workspaceId
+          })
         }
         break
       case GatekeeperEvents.WorkspaceTrialExpired:
@@ -627,6 +602,7 @@ export const workspaceTrackingFactory =
       case WorkspaceEvents.Authorizing:
         break
       case WorkspaceEvents.Created:
+        const user = await getUser(payload.createdByUserId)
         // we're setting workspace props and attributing to speckle users
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
@@ -636,14 +612,12 @@ export const workspaceTrackingFactory =
             await checkForSpeckleMembers({ userId: payload.createdByUserId })
           )
         )
-        mixpanel.track(
-          MixpanelEvents.WorkspaceCreated,
-          assign(
-            { [WORKSPACE_TRACKING_ID_KEY]: payload.workspace.id },
-            await getUserTrackingProperties({ userId: payload.createdByUserId }),
-            getServerTrackingProperties()
-          )
-        )
+        await mixpanel.track({
+          eventName: MixpanelEvents.WorkspaceCreated,
+          workspaceId: payload.workspace.id,
+          userEmail: user?.email
+        })
+
         break
       case WorkspaceEvents.Updated:
         // just updating workspace props
@@ -660,13 +634,10 @@ export const workspaceTrackingFactory =
           payload.workspaceId,
           assign({ isDeleted: true }, getServerTrackingProperties())
         )
-        mixpanel.track(
-          MixpanelEvents.WorkspaceDeleted,
-          assign(
-            { [WORKSPACE_TRACKING_ID_KEY]: payload.workspaceId },
-            getServerTrackingProperties()
-          )
-        )
+        await mixpanel.track({
+          eventName: MixpanelEvents.WorkspaceDeleted,
+          workspaceId: payload.workspaceId
+        })
         break
       case WorkspaceEvents.RoleDeleted:
       case WorkspaceEvents.RoleUpdated:
@@ -790,6 +761,9 @@ export const initializeEventListenersFactory =
     const ensureValidWorkspaceRoleSeat = ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat,
       getWorkspaceUserSeat,
+      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace
+      }),
       eventEmit: eventBus.emit
     })
 
@@ -815,7 +789,6 @@ export const initializeEventListenersFactory =
         await workspaceTrackingFactory({
           countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
           getDefaultRegion: getDefaultRegionFactory({ db }),
-          findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
           getWorkspacePlan,
@@ -828,14 +801,14 @@ export const initializeEventListenersFactory =
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
           getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
-          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
+          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db }),
+          getUser: getUserFactory({ db })
         })(payload)
       }),
       eventBus.listen('gatekeeper.*', async (payload) => {
         await workspaceTrackingFactory({
           countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
           getDefaultRegion: getDefaultRegionFactory({ db }),
-          findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
           getWorkspacePlan,
@@ -848,7 +821,8 @@ export const initializeEventListenersFactory =
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
           getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
-          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
+          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db }),
+          getUser: getUserFactory({ db })
         })(payload)
       }),
       eventBus.listen(WorkspaceEvents.Authorizing, async ({ payload }) => {

@@ -55,7 +55,11 @@ export class ObjectLoader2 {
   }
 
   async disposeAsync(): Promise<void> {
-    await Promise.all([this.#downloader.disposeAsync(), this.#cache.disposeAsync()])
+    await Promise.all([
+      this.#downloader.disposeAsync(),
+      this.#cache.disposeAsync(),
+      this.#pump.disposeAsync()
+    ])
     this.#deferments.dispose()
   }
 
