@@ -124,6 +124,13 @@ const workspacesToShow = computed(() => {
     : localWorkspaces.value.slice(0, 3)
 })
 
+const description = computed(() => {
+  if (discoverableWorkspacesAndJoinRequestsCount.value === 1) {
+    return 'We found a workspace that matches your email domain'
+  }
+  return 'We found workspaces that match your email domain'
+})
+
 const moveToTop = (workspaceId: string, newStatus: WorkspaceJoinRequestStatus) => {
   const workspace = remainingWorkspaces.value.find((w) => w.id === workspaceId)
   if (workspace) {
@@ -133,11 +140,4 @@ const moveToTop = (workspaceId: string, newStatus: WorkspaceJoinRequestStatus) =
     })
   }
 }
-
-const description = computed(() => {
-  if (discoverableWorkspacesAndJoinRequestsCount.value === 1) {
-    return 'We found a workspace that matches your email domain'
-  }
-  return 'We found workspaces that match your email domain'
-})
 </script>
