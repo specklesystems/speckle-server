@@ -63,6 +63,7 @@ import type {
 import { SeatTypes } from '@speckle/shared'
 import { workspaceUpdateDefaultSeatTypeMutation } from '~/lib/workspaces/graphql/mutations'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 const props = defineProps<{
   workspace: SettingsWorkspacesSecurity_WorkspaceFragment
@@ -73,6 +74,7 @@ const { mutate: updateDefaultSeatType } = useMutation(
   workspaceUpdateDefaultSeatTypeMutation
 )
 const { triggerNotification } = useGlobalToast()
+const { isPaidPlan } = useWorkspacePlan(props.workspace.slug)
 
 const currentSeatType = ref<WorkspaceSeatType>(props.workspace.defaultSeatType)
 
@@ -89,8 +91,12 @@ const seatTypeModel = computed({
 const handleSeatTypeChange = (newValue: WorkspaceSeatType) => {
   if (newValue === currentSeatType.value) return
 
-  // If setting to Editor with auto-join enabled, show confirmation
-  if (newValue === SeatTypes.Editor && props.workspace.discoverabilityAutoJoinEnabled) {
+  // If setting to Editor with auto-join enabled on paid plan, show confirmation
+  if (
+    newValue === SeatTypes.Editor &&
+    props.workspace.discoverabilityAutoJoinEnabled &&
+    isPaidPlan
+  ) {
     pendingNewSeatType.value = newValue
     showConfirmSeatTypeDialog.value = true
     return
