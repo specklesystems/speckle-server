@@ -74,7 +74,7 @@ const { mutate: updateDefaultSeatType } = useMutation(
   workspaceUpdateDefaultSeatTypeMutation
 )
 const { triggerNotification } = useGlobalToast()
-const { isPaidPlan } = useWorkspacePlan(props.workspace.slug)
+const { isSelfServePlan } = useWorkspacePlan(props.workspace.slug)
 
 const currentSeatType = ref<WorkspaceSeatType>(props.workspace.defaultSeatType)
 
@@ -95,7 +95,7 @@ const handleSeatTypeChange = (newValue: WorkspaceSeatType) => {
   if (
     newValue === SeatTypes.Editor &&
     props.workspace.discoverabilityAutoJoinEnabled &&
-    isPaidPlan
+    isSelfServePlan
   ) {
     pendingNewSeatType.value = newValue
     showConfirmSeatTypeDialog.value = true
