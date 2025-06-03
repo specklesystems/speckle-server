@@ -1,6 +1,10 @@
 import { MaybeNullOrUndefined, Optional, resolveMixpanelUserId } from '@speckle/shared'
 import * as MixpanelUtils from '@speckle/shared/observability/mixpanel'
-import { getServerOrigin, getServerVersion } from '@/modules/shared/helpers/envHelper'
+import {
+  enableMixpanel,
+  getServerOrigin,
+  getServerVersion
+} from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
 import type express from 'express'
 import type http from 'http'
@@ -33,7 +37,7 @@ export const MixpanelEvents = {
   EditorSeatUnassigned: 'Editor Seat Unassigned'
 } as const
 
-export const mapPlanNameToMixpanelEvent = {
+export const mapPlanStatusToMixpanelEvent = {
   [WorkspacePlanStatuses.CancelationScheduled]:
     MixpanelEvents.WorkspaceSubscriptionCancelationScheduled,
   [WorkspacePlanStatuses.Canceled]: MixpanelEvents.WorkspaceSubscriptionCanceled,
@@ -61,7 +65,7 @@ export function getBaseTrackingProperties() {
 }
 
 export function initialize() {
-  if (client) return
+  if (client || !enableMixpanel()) return
 
   const mixpanel = MixpanelUtils.buildServerMixpanelClient({
     tokenId: 'acd87c5a50b56df91a795e999812a3a4',

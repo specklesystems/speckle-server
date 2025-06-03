@@ -87,7 +87,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   getBaseTrackingProperties,
   getClient,
-  mapPlanNameToMixpanelEvent as mapPlanNameToMixpanelEventName,
+  mapPlanStatusToMixpanelEvent as mapPlanNameToMixpanelEventName,
   MixpanelClient,
   MixpanelEvents,
   WORKSPACE_TRACKING_ID_KEY

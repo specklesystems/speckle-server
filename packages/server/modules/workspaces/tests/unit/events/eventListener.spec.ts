@@ -1,6 +1,9 @@
 import { workspaceTrackingFactory } from '@/modules/workspaces/events/eventListener'
 import { buildTestUserWithOptionalRole } from '@/test/authHelper'
-import { buildTestWorkspaceWithOptionalRole } from '@/modules/workspaces/tests/helpers/creation'
+import {
+  buildTestWorkspaceSeat,
+  buildTestWorkspaceWithOptionalRole
+} from '@/modules/workspaces/tests/helpers/creation'
 import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
@@ -11,12 +14,14 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   buildTestSubscriptionData,
+  buildTestSubscriptionProduct,
   buildTestWorkspacePlan,
   buildTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
 import {
   GetWorkspacePlan,
-  GetWorkspaceSubscription
+  GetWorkspaceSubscription,
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import {
@@ -25,11 +30,15 @@ import {
 } from '@/modules/shared/test/helpers/mixpanel'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import { MixpanelEvents } from '@/modules/shared/utils/mixpanel'
+import {
+  mapPlanStatusToMixpanelEvent,
+  MixpanelEvents
+} from '@/modules/shared/utils/mixpanel'
 import { expect } from 'chai'
-import { WorkspacePlanStatuses } from '@speckle/shared'
+import { WorkspacePlans, WorkspacePlanStatuses } from '@speckle/shared'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import cryptoRandomString from 'crypto-random-string'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -117,59 +126,79 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
         cycle: workspaceSubscribtion.billingInterval,
         previousPlan: 'free'
       })
-    }),
-      [WorkspacePlanStatuses.PaymentFailed, WorkspacePlanStatuses.Valid].forEach(
-        (status) => {
-          it(`does not send anything to mixpanel on subscription update regarding the status ${status}`, async () => {
-            const events: MixpanelFakeEventRecord = []
-            const workspaceTracking = workspaceTrackingFactory({
-              ...defaults,
-              mixpanel: buildMixpanelFake({ events })
-            })
-
-            await workspaceTracking({
-              eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
-              payload: {
-                workspacePlan: buildTestWorkspacePlan({
-                  workspaceId: workspace.id,
-                  status
-                }),
-                subscriptionData: buildTestSubscriptionData(),
-                previousSubscriptionData: buildTestSubscriptionData()
-              }
-            })
-
-            expect(events).to.have.lengthOf(0)
-          })
-        }
-      )
-
-    it(`sends a canceled event to mixpanel on subscription cancelation`, async () => {
-      const events: MixpanelFakeEventRecord = []
-      const workspaceTracking = workspaceTrackingFactory({
-        ...defaults,
-        mixpanel: buildMixpanelFake({ events })
-      })
-
-      await workspaceTracking({
-        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
-        payload: {
-          workspacePlan: buildTestWorkspacePlan({
-            workspaceId: workspace.id,
-            status: WorkspacePlanStatuses.Canceled
-          }),
-          subscriptionData: buildTestSubscriptionData(),
-          previousSubscriptionData: buildTestSubscriptionData()
-        }
-      })
-
-      const event = events[0]
-      expect(events).to.have.lengthOf(1)
-      expect(event.eventName).to.be.eq(MixpanelEvents.WorkspaceSubscriptionCanceled)
-      expect(event.workspaceId).to.be.eq(workspace.id)
     })
 
-    it(`sends a CancelSchedule event to mixpanel when a subscription is scheduled to be canceled`, async () => {
+    it('pushes an event on a subscription downscale (seats reduction on workspace)', async () => {
+      const events: MixpanelFakeEventRecord = []
+      const workspaceTracking = workspaceTrackingFactory({
+        ...defaults,
+        mixpanel: buildMixpanelFake({ events })
+      })
+
+      await workspaceTracking({
+        eventName: GatekeeperEvents.WorkspaceSubscriptionDownscaled,
+        payload: {
+          workspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Pro
+          }),
+          subscriptionData: buildTestSubscriptionData({
+            products: [
+              buildTestSubscriptionProduct({ quantity: 10 }),
+              buildTestSubscriptionProduct({ quantity: 5 })
+            ]
+          }),
+          previousSubscriptionData: buildTestSubscriptionData({
+            products: [
+              buildTestSubscriptionProduct({ quantity: 10 }),
+              buildTestSubscriptionProduct({ quantity: 10 })
+            ]
+          })
+        }
+      })
+
+      const event = events[0]
+      expect(events).to.have.lengthOf(1)
+      expect(event.eventName).to.be.eq(MixpanelEvents.EditorSeatsDownscaled)
+      expect(event.workspaceId).to.be.eq(workspace.id)
+      expect(event.payload).to.be.deep.eq({
+        amount: 5, // 20 - 15
+        planName: 'pro'
+      })
+    }),
+      [
+        WorkspacePlanStatuses.PaymentFailed,
+        WorkspacePlanStatuses.CancelationScheduled,
+        WorkspacePlanStatuses.Canceled
+      ].forEach((status) => {
+        it(`sends a canceled event to mixpanel on subscription cancelation`, async () => {
+          const events: MixpanelFakeEventRecord = []
+          const workspaceTracking = workspaceTrackingFactory({
+            ...defaults,
+            mixpanel: buildMixpanelFake({ events })
+          })
+
+          await workspaceTracking({
+            eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+            payload: {
+              workspacePlan: buildTestWorkspacePlan({
+                workspaceId: workspace.id,
+                status
+              }),
+              subscriptionData: buildTestSubscriptionData(),
+              previousSubscriptionData: buildTestSubscriptionData()
+            }
+          })
+
+          const event = events[0]
+          expect(events).to.have.lengthOf(1)
+          expect(event.eventName).to.be.eq(mapPlanStatusToMixpanelEvent[status])
+          expect(event.workspaceId).to.be.eq(workspace.id)
+        })
+      })
+
+    it('does not send anything to mixpanel on subscription update regarding the valid status upgrade', async () => {
       const events: MixpanelFakeEventRecord = []
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
@@ -181,19 +210,75 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
         payload: {
           workspacePlan: buildTestWorkspacePlan({
             workspaceId: workspace.id,
-            status: WorkspacePlanStatuses.CancelationScheduled
+            status: WorkspacePlanStatuses.Valid
           }),
           subscriptionData: buildTestSubscriptionData(),
           previousSubscriptionData: buildTestSubscriptionData()
         }
       })
 
+      expect(events).to.have.lengthOf(0)
+    })
+
+    it('sends an event when subscription increases the seat numbers', async () => {
+      const events: MixpanelFakeEventRecord = []
+      const workspaceTracking = workspaceTrackingFactory({
+        ...defaults,
+        mixpanel: buildMixpanelFake({ events })
+      })
+
+      await workspaceTracking({
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+        payload: {
+          workspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Team
+          }),
+          subscriptionData: buildTestSubscriptionData({
+            products: [buildTestSubscriptionProduct({ quantity: 2 })]
+          }),
+          previousSubscriptionData: buildTestSubscriptionData({
+            products: [buildTestSubscriptionProduct({ quantity: 1 })]
+          })
+        }
+      })
+
       const event = events[0]
       expect(events).to.have.lengthOf(1)
-      expect(event.eventName).to.be.eq(
-        MixpanelEvents.WorkspaceSubscriptionCancelationScheduled
-      )
+      expect(event.eventName).to.be.eq(MixpanelEvents.EditorSeatsPurchased)
       expect(event.workspaceId).to.be.eq(workspace.id)
+      expect(event.payload).to.be.deep.eq({
+        amount: 1, // 2 - 1
+        planName: 'team'
+      })
+    })
+
+    it('skips the seat increases event of non paid plans', async () => {
+      const events: MixpanelFakeEventRecord = []
+      const workspaceTracking = workspaceTrackingFactory({
+        ...defaults,
+        mixpanel: buildMixpanelFake({ events })
+      })
+
+      await workspaceTracking({
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+        payload: {
+          workspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Academia
+          }),
+          subscriptionData: buildTestSubscriptionData({
+            products: [buildTestSubscriptionProduct({ quantity: 2 })]
+          }),
+          previousSubscriptionData: buildTestSubscriptionData({
+            products: [buildTestSubscriptionProduct({ quantity: 1 })]
+          })
+        }
+      })
+
+      expect(events).to.have.lengthOf(0)
     })
 
     it('sends a custom delete mixpanel event on Workspace Delete', async () => {
@@ -215,5 +300,85 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       expect(event.eventName).to.be.eq(MixpanelEvents.WorkspaceDeleted)
       expect(event.workspaceId).to.be.eq(workspace.id)
     })
+
+    it('sets the workspace properties as deleted in mixpanel on Workspace Deletetion', async () => {
+      const events: MixpanelFakeEventRecord = []
+      const groups: Record<string, { isDeleted: boolean }> = {}
+      const workspaceTracking = workspaceTrackingFactory({
+        ...defaults,
+        mixpanel: buildMixpanelFake({ events, groups })
+      })
+
+      await workspaceTracking({
+        eventName: WorkspaceEvents.Deleted,
+        payload: {
+          workspaceId: workspace.id
+        }
+      })
+
+      const upatedWorkspaceProperties = groups[workspace.id]
+      expect(upatedWorkspaceProperties).not.to.be.undefined
+      expect(upatedWorkspaceProperties.isDeleted).to.be.true
+    }),
+      [
+        {
+          previousSeat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Viewer }),
+          seat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Editor }),
+          expectedEvent: MixpanelEvents.EditorSeatAssigned
+        },
+        {
+          previousSeat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Editor }),
+          seat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Viewer }),
+          expectedEvent: MixpanelEvents.EditorSeatUnassigned
+        },
+        {
+          previousSeat: undefined,
+          seat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Viewer }),
+          expectedEvent: undefined
+        },
+        {
+          previousSeat: undefined,
+          seat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Editor }),
+          expectedEvent: undefined
+        },
+        {
+          previousSeat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Editor }),
+          seat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Editor }),
+          expectedEvent: undefined
+        }
+      ].forEach(({ previousSeat, seat, expectedEvent }) => {
+        const title = expectedEvent
+          ? 'sends a ' + expectedEvent
+          : ' does not send anything'
+
+        it(`${title} on seat ${previousSeat?.type} changed to ${seat.type}`, async () => {
+          const events: MixpanelFakeEventRecord = []
+          const updatedByUserId = cryptoRandomString({ length: 10 })
+          const workspaceTracking = workspaceTrackingFactory({
+            ...defaults,
+            mixpanel: buildMixpanelFake({ events })
+          })
+
+          await workspaceTracking({
+            eventName: WorkspaceEvents.SeatUpdated,
+            payload: {
+              updatedByUserId,
+              seat,
+              previousSeat
+            }
+          })
+
+          if (!expectedEvent) {
+            expect(events).to.have.lengthOf(0)
+            return
+          }
+
+          const event = events[0]
+          expect(events).to.have.lengthOf(1)
+          expect(event.eventName).to.be.eq(expectedEvent)
+          expect(event.workspaceId).to.be.eq(seat.workspaceId)
+          expect(event.userEmail).to.be.eq(user.email)
+        })
+      })
   }
 )
