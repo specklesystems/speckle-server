@@ -73,6 +73,7 @@ services:
       REDIS_URL: 'redis://redis'
       PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'true'
       PREVIEW_SERVICE_REDIS_URL: 'redis://redis'
+      FILEIMPORT_SERVICE_REDIS_URL: 'redis://redis'
 
       S3_ENDPOINT: 'http://minio:9000'
       S3_ACCESS_KEY: 'minioadmin'

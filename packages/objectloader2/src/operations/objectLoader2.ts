@@ -55,13 +55,17 @@ export class ObjectLoader2 {
   }
 
   async disposeAsync(): Promise<void> {
-    await Promise.all([this.#downloader.disposeAsync(), this.#cache.disposeAsync()])
+    await Promise.all([
+      this.#downloader.disposeAsync(),
+      this.#cache.disposeAsync(),
+      this.#pump.disposeAsync()
+    ])
     this.#deferments.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {
     if (!this.#root) {
-      this.#root = await this.#database.getItem({ id: this.#rootId })
+      this.#root = (await this.#database.getAll([this.#rootId]))[0]
       if (!this.#root) {
         this.#root = await this.#downloader.downloadSingle()
       }

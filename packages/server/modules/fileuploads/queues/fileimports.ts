@@ -1,5 +1,6 @@
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import {
+  getFileimportServiceRedisUrl,
   getFileUploadTimeLimitMinutes,
   getRedisUrl,
   isProdEnv,
@@ -45,7 +46,7 @@ const defaultJobOptions = {
 export const initializeQueue = async () => {
   queue = await setupQueue({
     queueName: FILE_IMPORT_SERVICE_QUEUE_NAME,
-    redisUrl: getRedisUrl(),
+    redisUrl: getFileimportServiceRedisUrl() ?? getRedisUrl(),
     options: {
       ...(!isTestEnv() ? { limiter } : {}),
       defaultJobOptions

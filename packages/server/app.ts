@@ -35,7 +35,7 @@ import type { ConnectionContext } from 'subscriptions-transport-ws'
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
-import knex, { db } from '@/db/knex'
+import knex from '@/db/knex'
 import { monitorActiveConnections } from '@/observability/components/httpServer/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import {
@@ -43,7 +43,6 @@ import {
   isDevEnv,
   isTestEnv,
   isApolloMonitoringEnabled,
-  enableMixpanel,
   getPort,
   getBindAddress,
   shutdownTimeoutSeconds,
@@ -62,7 +61,6 @@ import {
   buildContext,
   compressionMiddlewareFactory,
   determineClientIpAddressMiddleware,
-  mixpanelTrackerHelperMiddlewareFactory,
   requestBodyParsingMiddlewareFactory,
   setContentSecurityPolicyHeaderMiddleware
 } from '@/modules/shared/middleware'
@@ -72,7 +70,6 @@ import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
-import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
 import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
@@ -345,8 +342,6 @@ export async function init() {
   app.use(createRateLimiterMiddleware({ rateLimiterEnabled: isRateLimiterEnabled() })) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
   app.use(setContentSecurityPolicyHeaderMiddleware)
-  if (enableMixpanel())
-    app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init({ app, metricsRegister: prometheusClient.register })

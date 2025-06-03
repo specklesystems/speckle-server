@@ -8,7 +8,9 @@ import { DefermentManager } from './defermentManager.js'
 const makeDatabase = (): Database =>
   ({
     cacheSaveBatch: async (): Promise<void> => {},
-    getAll: async (): Promise<(Item | undefined)[]> => Promise.resolve([])
+    getAll: async (): Promise<(Item | undefined)[]> => Promise.resolve([]),
+    getItem: async (): Promise<Item | undefined> => Promise.resolve(undefined),
+    disposeAsync: async (): Promise<void> => {}
   } as unknown as Database)
 const makeGathered = (): AsyncGeneratorQueue<Item> =>
   ({

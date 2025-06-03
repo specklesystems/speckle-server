@@ -53,7 +53,7 @@ export default class ServerDownloader implements Downloader {
       return [total]
     }
 
-    return [10000, 30000, 10000, 1000]
+    return [10000, 25000, 10000, 1000]
   }
 
   initializePool(params: {

@@ -95,7 +95,8 @@ import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   assignWorkspaceSeatFactory,
-  ensureValidWorkspaceRoleSeatFactory
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
@@ -128,8 +129,9 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { createRandomString } from '@/modules/core/helpers/testHelpers'
 import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
+import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceRole } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -205,6 +207,9 @@ export const createTestWorkspace = async (
       ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
         createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
         getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+        getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+          getWorkspace: getWorkspaceFactory({ db })
+        }),
         eventEmit: getEventBus().emit
       })
     })
@@ -353,10 +358,31 @@ export const buildBasicTestWorkspace = (
 ): BasicTestWorkspace =>
   assign(
     {
-      id: createRandomString(),
-      name: createRandomString(),
-      slug: createRandomString(),
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
       ownerId: ''
+    },
+    overrides
+  )
+
+export const buildTestWorkspaceWithOptionalRole = (
+  overrides?: Partial<WorkspaceWithOptionalRole>
+): WorkspaceWithOptionalRole =>
+  assign(
+    {
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
+      description: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      logo: cryptoRandomString({ length: 10 }),
+      domainBasedMembershipProtectionEnabled: false,
+      discoverabilityEnabled: true,
+      discoverabilityAutoJoinEnabled: true,
+      isEmbedSpeckleBrandingHidden: true,
+      role: WorkspaceRole.Member
     },
     overrides
   )
@@ -378,6 +404,9 @@ export const assignToWorkspace = async (
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
       getWorkspaceUserSeat,
+      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: getWorkspaceFactory({ db })
+      }),
       eventEmit: getEventBus().emit
     })
   })
@@ -510,6 +539,9 @@ export const createWorkspaceInviteDirectly = async (
           ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
             createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
             getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+            getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+              getWorkspace: getWorkspaceFactory({ db })
+            }),
             eventEmit: getEventBus().emit
           })
         }),

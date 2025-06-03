@@ -46,6 +46,7 @@
           :items="actionItems"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          :menu-id="`invite-actions-${item.id}`"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
