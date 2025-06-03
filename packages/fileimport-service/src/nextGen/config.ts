@@ -10,7 +10,7 @@ export const {
   PYTHON_BINARY_PATH,
   RHINO_IMPORTER_PATH
 } = parseEnv(process.env, {
-  REDIS_URL: z.string().url(),
+  REDIS_URL: z.string().url().optional(),
   FILEIMPORT_TIMEOUT: z.number().default(3600000),
   LOG_LEVEL: z.string().default('info'),
   LOG_PRETTY: z.boolean().default(false),
