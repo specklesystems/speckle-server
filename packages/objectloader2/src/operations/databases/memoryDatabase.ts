@@ -29,14 +29,6 @@ export class MemoryDatabase implements Database {
     return Promise.resolve()
   }
 
-  getItem(params: { id: string }): Promise<Item | undefined> {
-    const item = this.items.get(params.id)
-    if (item) {
-      return Promise.resolve({ baseId: params.id, base: item })
-    }
-    return Promise.resolve(undefined)
-  }
-
   disposeAsync(): Promise<void> {
     return Promise.resolve()
   }

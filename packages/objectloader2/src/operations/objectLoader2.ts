@@ -65,7 +65,7 @@ export class ObjectLoader2 {
 
   async getRootObject(): Promise<Item | undefined> {
     if (!this.#root) {
-      this.#root = await this.#database.getItem({ id: this.#rootId })
+      this.#root = (await this.#database.getAll([this.#rootId]))[0]
       if (!this.#root) {
         this.#root = await this.#downloader.downloadSingle()
       }

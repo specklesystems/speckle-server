@@ -24,7 +24,8 @@ import {
   type SunLightConfiguration,
   type ViewerParams,
   StencilOutlineType,
-  UpdateFlags
+  UpdateFlags,
+  ViewerEvent
 } from '../IViewer.js'
 import { Viewer } from './Viewer.js'
 import { SectionOutlines } from './extensions/sections/SectionOutlines.js'
@@ -45,8 +46,7 @@ import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
 import Logger from './utils/Logger.js'
 import { ViewModes } from './extensions/ViewModes.js'
 import { HybridCameraController } from './extensions/HybridCameraController.js'
-import { OrientedSectionTool } from './extensions/sections/OrientedSectionTool.js'
-import { SectionTool, ViewerEvent } from '../index.js'
+import { SectionTool } from './extensions/sections/SectionTool.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
 import { SpeckleViewer } from '@speckle/shared'
 
@@ -127,7 +127,7 @@ export class LegacyViewer extends Viewer {
     super(container, params)
     this.cameraController = this.createExtension(HybridCameraController)
     this.selection = this.createExtension(LegacySelectionExtension)
-    this.sections = this.createExtension(OrientedSectionTool)
+    this.sections = this.createExtension(SectionTool)
     this.createExtension(SectionOutlines)
     this.measurements = this.createExtension(MeasurementsExtension)
     this.filtering = this.createExtension(FilteringExtension)
