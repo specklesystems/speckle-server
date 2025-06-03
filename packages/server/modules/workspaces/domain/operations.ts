@@ -232,6 +232,10 @@ export type AddOrUpdateWorkspaceRole = (
     skipEvent?: boolean
 
     updatedByUserId: string
+    /**
+     * Optionally set Workspace seat type to ensure
+     */
+    seatType?: WorkspaceSeatType
   }
 ) => Promise<void>
 
@@ -531,6 +535,7 @@ export type AssignWorkspaceSeat = (
   params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {
     type: WorkspaceSeatType
     assignedByUserId: string
+    skipEvent?: boolean
   }
 ) => Promise<WorkspaceSeat>
 

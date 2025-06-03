@@ -1066,6 +1066,7 @@ describe('Workspaces Invites GQL', () => {
         shouldHaveAccess: boolean | { workspace: boolean; project: boolean }
         expectedWorkspaceRole?: WorkspaceRoles
         expectedProjectRole?: StreamRoles
+        expectedWorkspaceSeatType?: WorkspaceSeatType
         streamId: string
       }) => {
         return gqlHelpers.validateResourceAccess({
@@ -1418,6 +1419,110 @@ describe('Workspaces Invites GQL', () => {
           await validateResourceAccess({
             shouldHaveAccess: { workspace: accept, project: false },
             streamId: myInviteTargetPrivateWorkspaceStream1.id
+          })
+        }
+      )
+
+      itEach(
+        [WorkspaceSeatType.Editor, WorkspaceSeatType.Viewer],
+        (seatType) => `can specify ${seatType} seat type in workspace invite`,
+        async (seatType) => {
+          const workspaceInvite = await captureCreatedInvite(async () => {
+            await gqlHelpers.createInvite(
+              {
+                workspaceId: myInviteTargetWorkspace.id,
+                input: {
+                  userId: otherGuy.id,
+                  role: WorkspaceRole.Member,
+                  seatType
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+          expect(workspaceInvite.id).to.be.ok
+          expect(workspaceInvite.resource.workspaceSeatType).to.equal(seatType)
+
+          const res = await gqlHelpers.useInvite(
+            {
+              input: {
+                accept: true,
+                token: workspaceInvite.token
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspaceMutations?.invites?.use).to.be.ok
+
+          const invite = await findInviteFactory({ db })({
+            inviteId: processableWorkspaceInvite.inviteId
+          })
+          expect(invite).to.be.not.ok
+
+          // Should have access to workspace visibility stream, not the other one
+          await validateResourceAccess({
+            shouldHaveAccess: true,
+            streamId: myInviteTargetWorkspaceStream1.id,
+            expectedWorkspaceSeatType: seatType
+          })
+          await validateResourceAccess({
+            shouldHaveAccess: { workspace: true, project: false },
+            streamId: myInviteTargetPrivateWorkspaceStream1.id,
+            expectedWorkspaceSeatType: seatType
+          })
+        }
+      )
+
+      itEach(
+        [WorkspaceSeatType.Editor, WorkspaceSeatType.Viewer],
+        (seatType) => `can specify ${seatType} seat type in workspace project invite`,
+        async (seatType) => {
+          const projectInvite = await captureCreatedInvite(
+            async () =>
+              await gqlHelpers.createWorkspaceProjectInvite(
+                {
+                  projectId: myInviteTargetWorkspaceStream1.id,
+                  inputs: [
+                    {
+                      userId: otherGuy.id,
+                      role: Roles.Stream.Reviewer,
+                      seatType
+                    }
+                  ]
+                },
+                { assertNoErrors: true }
+              )
+          )
+          expect(projectInvite.id).to.be.ok
+          expect(projectInvite.resource.workspaceSeatType).to.equal(seatType)
+
+          const res = await gqlHelpers.useInvite(
+            {
+              input: {
+                accept: true,
+                token: projectInvite.token
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspaceMutations.invites.use).to.be.ok
+
+          await validateResourceAccess({
+            shouldHaveAccess: true,
+            streamId: myInviteTargetWorkspaceStream1.id,
+            expectedWorkspaceSeatType: seatType
           })
         }
       )
