@@ -28,6 +28,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 describe('subscriptions @gatekeeper', () => {
   describe('handleSubscriptionUpdateFactory creates a function, that', () => {
@@ -168,10 +169,11 @@ describe('subscriptions @gatekeeper', () => {
         omit(workspaceSubscription, 'updatedAt')
       )
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
-      expect(emittedEventPayload)
-        .to.have.nested.include({ 'workspacePlan.status': 'cancelationScheduled' })
-        .and.to.have.ownProperty('subscriptionData')
-        .and.to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'workspacePlan.status': 'cancelationScheduled'
+      })
+      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
+      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
     })
     it('sets the status to valid', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -223,10 +225,11 @@ describe('subscriptions @gatekeeper', () => {
         omit(workspaceSubscription, 'updatedAt')
       )
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
-      expect(emittedEventPayload)
-        .to.have.nested.include({ 'workspacePlan.status': 'valid' })
-        .and.to.have.ownProperty('subscriptionData')
-        .and.to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'workspacePlan.status': 'valid'
+      })
+      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
+      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
     })
     it('sets the state to paymentFailed', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -273,10 +276,11 @@ describe('subscriptions @gatekeeper', () => {
         omit(workspaceSubscription, 'updatedAt')
       )
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
-      expect(emittedEventPayload)
-        .to.have.nested.include({ 'workspacePlan.status': 'paymentFailed' })
-        .and.to.have.ownProperty('subscriptionData')
-        .and.to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'workspacePlan.status': 'paymentFailed'
+      })
+      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
+      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
     })
     it('sets the state to canceled', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -327,10 +331,11 @@ describe('subscriptions @gatekeeper', () => {
         omit(workspaceSubscription, 'updatedAt')
       )
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
-      expect(emittedEventPayload)
-        .to.have.nested.include({ 'workspacePlan.status': 'canceled' })
-        .and.to.have.ownProperty('subscriptionData')
-        .and.to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'workspacePlan.status': 'canceled'
+      })
+      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
+      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
     })
     ;(
       ['incomplete', 'incomplete_expired', 'trialing', 'unpaid', 'paused'] as const
@@ -555,7 +560,6 @@ describe('subscriptions @gatekeeper', () => {
 
     it('updates the sub existing product quantity if the one matching the new seat type, does not have enough quantities', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-
       const priceId = cryptoRandomString({ length: 10 })
       const productId = cryptoRandomString({ length: 10 })
       const subscriptionItemId = cryptoRandomString({ length: 10 })
@@ -1001,6 +1005,13 @@ describe('subscriptions @gatekeeper', () => {
       })
       const workspacePlanName = 'pro'
 
+      let emittedEventName: string | undefined = undefined
+      let emittedEventPayload: unknown = undefined
+      const eventBusEmit: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        emittedEventPayload = payload
+      }
+
       let reconciledSub: SubscriptionDataInput | undefined = undefined
       const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => ({
@@ -1019,13 +1030,24 @@ describe('subscriptions @gatekeeper', () => {
         reconcileSubscriptionData: async ({ subscriptionData }) => {
           reconciledSub = subscriptionData
         },
-        eventBusEmit: async () => {}
+        eventBusEmit
       })
-      await downscaleSubscription({ workspaceSubscription: testWorkspaceSubscription })
+      const hasDownscaled = await downscaleSubscription({
+        workspaceSubscription: testWorkspaceSubscription
+      })
 
+      expect(hasDownscaled).to.be.true
       expect(
         reconciledSub!.products.find((p) => p.productId === proProductId)?.quantity
       ).to.be.equal(5)
+      expect(emittedEventName).to.equal(
+        GatekeeperEvents.WorkspaceSubscriptionDownscaled
+      )
+      expect(emittedEventPayload).to.have.nested.include({
+        'workspacePlan.status': 'valid'
+      })
+      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
+      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
     })
   })
 

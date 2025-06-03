@@ -77,11 +77,11 @@ export const downscaleWorkspaceSubscriptionFactory =
       subscriptionData
     })
 
-    if (!isEqual(subscriptionData, workspaceSubscription.subscriptionData)) {
-      await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
-      return true
+    if (isEqual(subscriptionData, workspaceSubscription.subscriptionData)) {
+      return false
     }
 
+    await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
     await eventBusEmit({
       eventName: GatekeeperEvents.WorkspaceSubscriptionDownscaled,
       payload: {
@@ -91,7 +91,7 @@ export const downscaleWorkspaceSubscriptionFactory =
       }
     })
 
-    return false
+    return true
   }
 
 export const manageSubscriptionDownscaleFactory =
