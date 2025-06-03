@@ -1,6 +1,6 @@
 <template>
   <section class="flex flex-col space-y-3">
-    <div class="flex items-center">
+    <div class="flex flex-col sm:flex-row gap-y-3 sm:items-center">
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">
           Default seat for new members
@@ -34,7 +34,7 @@
     </div>
 
     <SettingsConfirmDialog
-      :open="showConfirmSeatTypeDialog"
+      v-model:open="showConfirmSeatTypeDialog"
       title="Confirm change"
       @confirm="handleSeatTypeConfirm"
       @cancel="handleSeatTypeCancel"
@@ -47,7 +47,7 @@
       <p class="text-body-xs text-foreground mb-2">
         Setting the default seat type to
         <span class="font-medium">Editor</span>
-        means each user who joins will consume a paid seat and incur charges.
+        means each user who joins will consume a paid seat and possibly incur charges.
       </p>
       <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
     </SettingsConfirmDialog>
