@@ -5,29 +5,34 @@
         <p class="text-body-xs font-medium text-foreground">
           Default seat for new members
         </p>
-        <p class="text-body-2xs text-foreground-2 leading-5 max-w-sm">
+        <p class="text-body-2xs text-foreground-2 leading-5 max-w-[250px]">
           Set the default seat type assigned to new workspace members.
         </p>
       </div>
       <FormSelectBase
         v-model="seatTypeModel"
+        v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
         :items="defaultSeatTypeOptions"
+        :disabled="!isWorkspaceAdmin"
         name="defaultSeatType"
         label="Default seat type"
-        class="min-w-[140px]"
+        class="min-w-[240px]"
         :allow-unset="false"
         :show-label="false"
         fully-control-value
       >
         <template #nothing-selected>Select default</template>
         <template #something-selected="{ value }">
-          <div class="truncate text-foreground capitalize">
+          <div class="text-foreground font-medium capitalize">
             {{ Array.isArray(value) ? value[0] : value }}
           </div>
         </template>
         <template #option="{ item }">
           <div class="flex flex-col space-y-0.5">
-            <span class="truncate capitalize">{{ item }}</span>
+            <span class="capitalize">{{ item }}</span>
+            <span class="text-body-3xs text-foreground-2">
+              {{ WorkspaceSeatTypeDescription[Roles.Workspace.Member][item] }}
+            </span>
           </div>
         </template>
       </FormSelectBase>
@@ -60,10 +65,11 @@ import type {
   WorkspaceSeatType,
   SettingsWorkspacesSecurity_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
-import { SeatTypes } from '@speckle/shared'
+import { Roles, SeatTypes } from '@speckle/shared'
 import { workspaceUpdateDefaultSeatTypeMutation } from '~/lib/workspaces/graphql/mutations'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
+import { WorkspaceSeatTypeDescription } from '~/lib/settings/helpers/constants'
 
 const props = defineProps<{
   workspace: SettingsWorkspacesSecurity_WorkspaceFragment
@@ -80,6 +86,10 @@ const currentSeatType = ref<WorkspaceSeatType>(props.workspace.defaultSeatType)
 
 const showConfirmSeatTypeDialog = ref(false)
 const pendingNewSeatType = ref<WorkspaceSeatType>()
+
+const isWorkspaceAdmin = computed(() => {
+  return props.workspace.role === Roles.Workspace.Admin
+})
 
 const seatTypeModel = computed({
   get: () => currentSeatType.value,
