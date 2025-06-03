@@ -52,3 +52,11 @@ export type UploadFileStream = (
 ) => Promise<{ blobId: string; fileName: string; fileHash: string }>
 
 export { StoreFileStream }
+
+export type GeneratePresignedUrl = (params: {
+  projectId: string
+  userId: string
+  blobId: string
+  fileName: string
+  urlExpiryDurationSeconds: number
+}) => Promise<string>

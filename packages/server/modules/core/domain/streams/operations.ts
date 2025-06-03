@@ -3,6 +3,7 @@ import {
   StreamWithOptionalRole,
   LimitedUserWithStreamRole,
   Stream,
+  Project,
   StreamFavoriteMetadata
 } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
@@ -299,6 +300,27 @@ export type GrantStreamPermissions = (
     trackProjectUpdate?: boolean
   }
 ) => Promise<Optional<Stream>>
+
+export type GrantProjectPermissions = (
+  params: {
+    projectId: string
+    userId: string
+    role: StreamRoles
+  },
+  options?: {
+    trackProjectUpdate?: boolean
+  }
+) => Promise<Optional<Project>>
+
+/**
+ * Convenience wrapper around grantStreamPermissions, renaming streams -> projects
+ */
+export const grantPermissionsOnProjectFactory = (deps: {
+  grantStreamPermissions: GrantStreamPermissions
+}): GrantProjectPermissions => {
+  return (params) =>
+    deps.grantStreamPermissions({ ...params, streamId: params.projectId })
+}
 
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateArgs) & {

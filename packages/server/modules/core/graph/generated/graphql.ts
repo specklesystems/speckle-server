@@ -542,6 +542,17 @@ export type BlobMetadataCollection = {
   totalSize: Scalars['Int']['output'];
 };
 
+export type BlobMutations = {
+  __typename?: 'BlobMutations';
+  /** Generate a pre-signed url to which a blob can be uploaded. */
+  generateUploadUrl: Scalars['String']['output'];
+};
+
+
+export type BlobMutationsGenerateUploadUrlArgs = {
+  input: GenerateUploadUrlInput;
+};
+
 export type Branch = {
   __typename?: 'Branch';
   /**
@@ -1087,6 +1098,11 @@ export type GendoAiRenderInput = {
   versionId: Scalars['ID']['input'];
 };
 
+export type GenerateUploadUrlInput = {
+  fileName: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type InvitableCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1430,6 +1446,7 @@ export type Mutation = {
   appUpdate: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
+  blobMutations: BlobMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.create instead. */
   branchCreate: Scalars['String']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.delete instead. */
@@ -5309,6 +5326,7 @@ export type ResolversTypes = {
   BillingInterval: BillingInterval;
   BlobMetadata: ResolverTypeWrapper<BlobStorageItem>;
   BlobMetadataCollection: ResolverTypeWrapper<Omit<BlobMetadataCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['BlobMetadata']>> }>;
+  BlobMutations: ResolverTypeWrapper<BlobMutations>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Branch: ResolverTypeWrapper<BranchGraphQLReturn>;
   BranchCollection: ResolverTypeWrapper<Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Branch']>> }>;
@@ -5364,6 +5382,7 @@ export type ResolversTypes = {
   GendoAIRender: ResolverTypeWrapper<GendoAIRenderGraphQLReturn>;
   GendoAIRenderCollection: ResolverTypeWrapper<Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversTypes['GendoAIRender']>> }>;
   GendoAIRenderInput: GendoAiRenderInput;
+  GenerateUploadUrlInput: GenerateUploadUrlInput;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   InvitableCollaboratorsFilter: InvitableCollaboratorsFilter;
@@ -5647,6 +5666,7 @@ export type ResolversParentTypes = {
   BigInt: Scalars['BigInt']['output'];
   BlobMetadata: BlobStorageItem;
   BlobMetadataCollection: Omit<BlobMetadataCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['BlobMetadata']>> };
+  BlobMutations: BlobMutations;
   Boolean: Scalars['Boolean']['output'];
   Branch: BranchGraphQLReturn;
   BranchCollection: Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Branch']>> };
@@ -5700,6 +5720,7 @@ export type ResolversParentTypes = {
   GendoAIRender: GendoAIRenderGraphQLReturn;
   GendoAIRenderCollection: Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversParentTypes['GendoAIRender']>> };
   GendoAIRenderInput: GendoAiRenderInput;
+  GenerateUploadUrlInput: GenerateUploadUrlInput;
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   InvitableCollaboratorsFilter: InvitableCollaboratorsFilter;
@@ -6225,6 +6246,11 @@ export type BlobMetadataCollectionResolvers<ContextType = GraphQLContext, Parent
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type BlobMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlobMutations'] = ResolversParentTypes['BlobMutations']> = {
+  generateUploadUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<BlobMutationsGenerateUploadUrlArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type BranchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Branch'] = ResolversParentTypes['Branch']> = {
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<BranchActivityArgs, 'limit'>>;
   author?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
@@ -6558,6 +6584,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   appUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAppUpdateArgs, 'app'>>;
   automateFunctionRunStatusReport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAutomateFunctionRunStatusReportArgs, 'input'>>;
   automateMutations?: Resolver<ResolversTypes['AutomateMutations'], ParentType, ContextType>;
+  blobMutations?: Resolver<ResolversTypes['BlobMutations'], ParentType, ContextType>;
   branchCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationBranchCreateArgs, 'branch'>>;
   branchDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchDeleteArgs, 'branch'>>;
   branchUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchUpdateArgs, 'branch'>>;
@@ -7776,6 +7803,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   BigInt?: GraphQLScalarType;
   BlobMetadata?: BlobMetadataResolvers<ContextType>;
   BlobMetadataCollection?: BlobMetadataCollectionResolvers<ContextType>;
+  BlobMutations?: BlobMutationsResolvers<ContextType>;
   Branch?: BranchResolvers<ContextType>;
   BranchCollection?: BranchCollectionResolvers<ContextType>;
   CheckoutSession?: CheckoutSessionResolvers<ContextType>;

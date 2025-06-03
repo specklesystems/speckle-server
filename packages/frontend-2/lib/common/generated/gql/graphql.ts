@@ -524,6 +524,17 @@ export type BlobMetadataCollection = {
   totalSize: Scalars['Int']['output'];
 };
 
+export type BlobMutations = {
+  __typename?: 'BlobMutations';
+  /** Generate a pre-signed url to which a blob can be uploaded. */
+  generateUploadUrl: Scalars['String']['output'];
+};
+
+
+export type BlobMutationsGenerateUploadUrlArgs = {
+  input: GenerateUploadUrlInput;
+};
+
 export type Branch = {
   __typename?: 'Branch';
   /**
@@ -1064,6 +1075,11 @@ export type GendoAiRenderInput = {
   versionId: Scalars['ID']['input'];
 };
 
+export type GenerateUploadUrlInput = {
+  fileName: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type InvitableCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1407,6 +1423,7 @@ export type Mutation = {
   appUpdate: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
+  blobMutations: BlobMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.create instead. */
   branchCreate: Scalars['String']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.delete instead. */
@@ -7712,6 +7729,7 @@ export type AllObjectTypes = {
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata,
   BlobMetadata: BlobMetadata,
   BlobMetadataCollection: BlobMetadataCollection,
+  BlobMutations: BlobMutations,
   Branch: Branch,
   BranchCollection: BranchCollection,
   CheckoutSession: CheckoutSession,
@@ -8074,6 +8092,9 @@ export type BlobMetadataCollectionFieldArgs = {
   totalCount: {},
   totalSize: {},
 }
+export type BlobMutationsFieldArgs = {
+  generateUploadUrl: BlobMutationsGenerateUploadUrlArgs,
+}
 export type BranchFieldArgs = {
   activity: BranchActivityArgs,
   author: {},
@@ -8337,6 +8358,7 @@ export type MutationFieldArgs = {
   appUpdate: MutationAppUpdateArgs,
   automateFunctionRunStatusReport: MutationAutomateFunctionRunStatusReportArgs,
   automateMutations: {},
+  blobMutations: {},
   branchCreate: MutationBranchCreateArgs,
   branchDelete: MutationBranchDeleteArgs,
   branchUpdate: MutationBranchUpdateArgs,
@@ -9319,6 +9341,7 @@ export type AllObjectFieldArgTypes = {
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadataFieldArgs,
   BlobMetadata: BlobMetadataFieldArgs,
   BlobMetadataCollection: BlobMetadataCollectionFieldArgs,
+  BlobMutations: BlobMutationsFieldArgs,
   Branch: BranchFieldArgs,
   BranchCollection: BranchCollectionFieldArgs,
   CheckoutSession: CheckoutSessionFieldArgs,

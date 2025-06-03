@@ -41,6 +41,22 @@ extend type Project {
   blob(id: String!): BlobMetadata
 }
 
+input GenerateUploadUrlInput {
+  projectId: String!
+  fileName: String!
+}
+
+type BlobMutations {
+  """
+  Generate a pre-signed url to which a blob can be uploaded.
+  """
+  generateUploadUrl(input: GenerateUploadUrlInput!): String!
+}
+
+extend type Mutation {
+  blobMutations: BlobMutations!
+}
+
 type BlobMetadataCollection {
   totalCount: Int!
   totalSize: Int!

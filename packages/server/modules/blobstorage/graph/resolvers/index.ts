@@ -1,7 +1,8 @@
 import {
   blobCollectionSummaryFactory,
   getBlobMetadataCollectionFactory,
-  getBlobMetadataFactory
+  getBlobMetadataFactory,
+  upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import {
@@ -15,9 +16,16 @@ import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   BadRequestError,
+  ForbiddenError,
   NotFoundError,
   ResourceMismatch
 } from '@/modules/shared/errors'
+import { generatePresignedUrlFactory } from '@/modules/blobstorage/services/presigned'
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { getSignedUrl } from '@/modules/blobstorage/clients/objectStorage'
+import cryptoRandomString from 'crypto-random-string'
+import { TIME } from '@speckle/shared'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
@@ -82,5 +90,39 @@ export = {
   },
   Project: {
     ...streamBlobResolvers
+  },
+  BlobMutations: {
+    async generateUploadUrl(_parent, args, ctx) {
+      const { projectId } = args.input
+      if (!ctx.userId) {
+        throw new ForbiddenError('No userId provided')
+      }
+      const canUpload = await ctx.authPolicies.project.blob.canUpload({
+        userId: ctx.userId,
+        projectId
+      })
+      throwIfAuthNotOk(canUpload)
+
+      const [projectDb, projectStorage] = await Promise.all([
+        getProjectDbClient({ projectId }),
+        getProjectObjectStorage({ projectId })
+      ])
+
+      const generatePresignedUrl = generatePresignedUrlFactory({
+        objectStorage: projectStorage,
+        getSignedUrl,
+        upsertBlob: upsertBlobFactory({
+          db: projectDb
+        })
+      })
+
+      return generatePresignedUrl({
+        projectId: args.input.projectId,
+        blobId: cryptoRandomString({ length: 10 }),
+        userId: ctx.userId,
+        fileName: args.input.fileName,
+        urlExpiryDurationSeconds: 10 * TIME.minute
+      })
+    }
   }
 } as Resolvers
