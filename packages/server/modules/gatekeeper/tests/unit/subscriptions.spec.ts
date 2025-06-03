@@ -168,10 +168,10 @@ describe('subscriptions @gatekeeper', () => {
         omit(workspaceSubscription, 'updatedAt')
       )
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
-      expect(emittedEventPayload).to.deep.eq({
-        workspaceId,
-        status: 'cancelationScheduled'
-      })
+      expect(emittedEventPayload)
+        .to.have.nested.include({ 'workspacePlan.status': 'cancelationScheduled' })
+        .and.to.have.ownProperty('subscriptionData')
+        .and.to.have.ownProperty('previousSubscriptionData')
     })
     it('sets the status to valid', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -223,10 +223,10 @@ describe('subscriptions @gatekeeper', () => {
         omit(workspaceSubscription, 'updatedAt')
       )
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
-      expect(emittedEventPayload).to.deep.eq({
-        workspaceId,
-        status: 'valid'
-      })
+      expect(emittedEventPayload)
+        .to.have.nested.include({ 'workspacePlan.status': 'valid' })
+        .and.to.have.ownProperty('subscriptionData')
+        .and.to.have.ownProperty('previousSubscriptionData')
     })
     it('sets the state to paymentFailed', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -273,10 +273,10 @@ describe('subscriptions @gatekeeper', () => {
         omit(workspaceSubscription, 'updatedAt')
       )
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
-      expect(emittedEventPayload).to.deep.eq({
-        workspaceId,
-        status: 'paymentFailed'
-      })
+      expect(emittedEventPayload)
+        .to.have.nested.include({ 'workspacePlan.status': 'paymentFailed' })
+        .and.to.have.ownProperty('subscriptionData')
+        .and.to.have.ownProperty('previousSubscriptionData')
     })
     it('sets the state to canceled', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -327,10 +327,10 @@ describe('subscriptions @gatekeeper', () => {
         omit(workspaceSubscription, 'updatedAt')
       )
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
-      expect(emittedEventPayload).to.deep.eq({
-        workspaceId,
-        status: 'canceled'
-      })
+      expect(emittedEventPayload)
+        .to.have.nested.include({ 'workspacePlan.status': 'canceled' })
+        .and.to.have.ownProperty('subscriptionData')
+        .and.to.have.ownProperty('previousSubscriptionData')
     })
     ;(
       ['incomplete', 'incomplete_expired', 'trialing', 'unpaid', 'paused'] as const
