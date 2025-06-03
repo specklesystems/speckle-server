@@ -76,20 +76,20 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (!workspacePlan) return null
           let paymentMethod: WorkspacePaymentMethod
           switch (workspacePlan.name) {
-            case 'team':
-            case 'teamUnlimited':
-            case 'pro':
-            case 'proUnlimited':
+            case WorkspacePlans.Team:
+            case WorkspacePlans.TeamUnlimited:
+            case WorkspacePlans.Pro:
+            case WorkspacePlans.ProUnlimited:
               paymentMethod = WorkspacePaymentMethod.Billing
               break
-            case 'unlimited':
-            case 'academia':
-            case 'free':
+            case WorkspacePlans.Unlimited:
+            case WorkspacePlans.Academia:
+            case WorkspacePlans.Free:
               paymentMethod = WorkspacePaymentMethod.Unpaid
               break
-            case 'proUnlimitedInvoiced':
-            case 'teamUnlimitedInvoiced':
-            case 'enterprise':
+            case WorkspacePlans.ProUnlimitedInvoiced:
+            case WorkspacePlans.TeamUnlimitedInvoiced:
+            case WorkspacePlans.Enterprise:
               paymentMethod = WorkspacePaymentMethod.Invoice
               break
             default:
