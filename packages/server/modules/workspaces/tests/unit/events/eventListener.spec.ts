@@ -172,7 +172,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
         WorkspacePlanStatuses.CancelationScheduled,
         WorkspacePlanStatuses.Canceled
       ].forEach((status) => {
-        it(`sends a canceled event to mixpanel on subscription cancelation`, async () => {
+        it(`sends a canceled event to mixpanel on subscription ${status}`, async () => {
           const events: MixpanelFakeEventRecord = []
           const workspaceTracking = workspaceTrackingFactory({
             ...defaults,
