@@ -30,7 +30,7 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
-import { Optional, TIME } from '@speckle/shared'
+import { Optional, Roles, TIME } from '@speckle/shared'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
@@ -39,6 +39,11 @@ import {
   shutdownQueue
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
+import { createBullBoard } from 'bull-board'
+import { BullMQAdapter } from 'bull-board/bullMQAdapter'
+import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
+import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -99,7 +104,21 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   app.use(fileuploadRouterFactory())
 
   if (isInitial) {
-    if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) await initializeQueue()
+    if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+      const queue = await initializeQueue()
+      const router = createBullBoard([new BullMQAdapter(queue)]).router
+      app.use(
+        '/api/admin/fileimport-jobs',
+        async (req, res, next) => {
+          await authMiddlewareCreator([
+            validateServerRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
+              requiredRole: Roles.Server.Admin
+            })
+          ])(req, res, next)
+        },
+        router
+      )
+    }
     const scheduleExecution = scheduleExecutionFactory({
       acquireTaskLock: acquireTaskLockFactory({ db }),
       releaseTaskLock: releaseTaskLockFactory({ db })
