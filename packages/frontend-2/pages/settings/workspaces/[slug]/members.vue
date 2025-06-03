@@ -1,12 +1,33 @@
 <template>
   <section>
     <div class="md:max-w-5xl md:mx-auto pb-16">
-      <SettingsSectionHeader
-        hide-divider
-        title="People"
-        text="Manage users in your workspace"
-        class="mb-6"
-      />
+      <div class="flex justify-between w-full">
+        <div>
+          <div class="flex flex-col md:flex-row gap-3 md:gap-0 justify-between">
+            <h1 class="text-heading-xl">People</h1>
+          </div>
+          <p class="text-body-xs text-foreground-2 pt-1">
+            Manage users in your workspace
+          </p>
+        </div>
+        <div>
+          <div class="flex gap-4">
+            <SettingsWorkspacesMembersStat
+              v-if="seats?.editors.assigned"
+              :icon="PencilIcon"
+              :count="seats?.editors.assigned"
+              tooltip="Editor seats"
+            />
+            <SettingsWorkspacesMembersStat
+              v-if="seats?.viewers.assigned"
+              :icon="EyeIcon"
+              :count="seats?.viewers.assigned || 8"
+              tooltip="Viewer seats"
+            />
+          </div>
+        </div>
+      </div>
+      <hr class="my-6 border-outline-2" />
       <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
         <NuxtPage />
       </LayoutTabsHorizontal>
@@ -23,6 +44,8 @@ import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
+import { EyeIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment SettingsWorkspacesMembersCounts_Workspace on Workspace {
@@ -66,6 +89,8 @@ const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
     status: WorkspaceJoinRequestStatus.Pending
   }
 }))
+
+const { seats } = useWorkspacePlan(slug.value)
 
 const workspace = computed(() => result.value?.workspaceBySlug)
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
