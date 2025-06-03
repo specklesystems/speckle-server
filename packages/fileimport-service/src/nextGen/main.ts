@@ -26,7 +26,7 @@ export const main = async () => {
   try {
     jobQueue = await initializeQueue<JobPayload>({
       queueName: JobQueueName,
-      redisUrl: REDIS_URL!
+      redisUrl: REDIS_URL
     })
   } catch (e) {
     const err = ensureError(e, 'Unknown error creating job queue')
