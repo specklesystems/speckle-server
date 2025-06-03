@@ -1,9 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 //@ts-ignore
+import { Text } from 'troika-three-text'
+//@ts-ignore
 import { BatchedText } from 'troika-three-text/src/BatchedText.js'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.js'
 import {
   Box3,
+  Color,
+  DataTexture,
+  FloatType,
   Intersection,
   Material,
   Matrix4,
@@ -11,6 +16,7 @@ import {
   Object3D,
   Ray,
   Raycaster,
+  RGBAFormat,
   Sphere
 } from 'three'
 import { BatchObject } from '../batching/BatchObject.js'
@@ -28,6 +34,8 @@ export class SpeckleText extends BatchedText {
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
+
+  public dirty: boolean = false
 
   public get TAS(): TopLevelAccelerationStructure {
     return this.tas
@@ -142,19 +150,60 @@ export class SpeckleText extends BatchedText {
   }
 
   /**
+   * @param {Text} text
+   */
+  addText(text: Text) {
+    //@ts-ignore
+    if (!this._members.has(text)) {
+      //@ts-ignore
+      this._members.set(text, {
+        index: -1,
+        glyphCount: -1,
+        dirty: true,
+        needsUpdate: true
+      })
+      //@ts-ignore
+      text.addEventListener('synccomplete', this._onMemberSynced)
+    }
+  }
+
+  /**
    * @override
    * Patched version that allows:
    * - Individual text opacities
    */
   //@ts-ignore
   _prepareForRender(material) {
-    // For the non-member-specific uniforms:
-    super._prepareForRender(material)
+    if (!this.dirty) return
+
+    this.dirty = false
+
+    const floatsPerMember = 32
+    const tempColor = new Color()
+    const isOutline = material.isTextOutlineMaterial
+    material.uniforms.uTroikaIsOutline.value = isOutline
 
     // Resize the texture to fit in powers of 2
-    const isOutline = material.isTextOutlineMaterial
     //@ts-ignore
-    const texture = this._dataTextures[isOutline ? 'outline' : 'main']
+    let texture = this._dataTextures[isOutline ? 'outline' : 'main']
+    const dataLength = Math.pow(
+      2,
+      //@ts-ignore
+      Math.ceil(Math.log2(this._members.size * floatsPerMember))
+    )
+    if (!texture || dataLength !== texture.image.data.length) {
+      // console.log(`resizing: ${dataLength}`);
+      if (texture) texture.dispose()
+      const width = Math.min(dataLength / 4, 1024)
+      //@ts-ignore
+      texture = this._dataTextures[isOutline ? 'outline' : 'main'] = new DataTexture(
+        new Float32Array(dataLength),
+        width,
+        dataLength / 4 / width,
+        RGBAFormat,
+        FloatType
+      )
+    }
 
     const texData = texture.image.data
     //@ts-ignore
@@ -165,15 +214,76 @@ export class SpeckleText extends BatchedText {
       }
     }
     //@ts-ignore
-    this._members.forEach(({ index }, text) => {
-      if (index > -1) {
-        const startIndex = index * 32
-        setTexData(
-          startIndex + 25,
-          //@ts-ignore
-          text.material.opacity ?? material.uniforms.uTroikaFillOpacity.value
-        )
+    this._members.forEach((packingInfo, text) => {
+      if (packingInfo.index > -1 && packingInfo.needsUpdate) {
+        packingInfo.needsUpdate = false
+        const startIndex = packingInfo.index * floatsPerMember
+
+        // Matrix
+        const matrix = text.matrix.elements
+        for (let i = 0; i < 16; i++) {
+          setTexData(startIndex + i, matrix[i])
+        }
+
+        // Let the member populate the uniforms, since that does all the appropriate
+        // logic and handling of defaults, and we'll just grab the results from there
+        text._prepareForRender(material)
+        const {
+          uTroikaTotalBounds,
+          uTroikaClipRect,
+          uTroikaPositionOffset,
+          uTroikaEdgeOffset,
+          uTroikaBlurRadius,
+          uTroikaStrokeWidth,
+          uTroikaStrokeColor,
+          uTroikaStrokeOpacity,
+          uTroikaFillOpacity,
+          uTroikaCurveRadius
+        } = material.uniforms
+
+        // Total bounds for uv
+        for (let i = 0; i < 4; i++) {
+          setTexData(startIndex + 16 + i, uTroikaTotalBounds.value.getComponent(i))
+        }
+
+        // Clip rect
+        for (let i = 0; i < 4; i++) {
+          setTexData(startIndex + 20 + i, uTroikaClipRect.value.getComponent(i))
+        }
+
+        // Color
+        let color = isOutline ? text.outlineColor || 0 : text.color
+        //@ts-ignore
+        if (color === null) color = this.color
+        //@ts-ignore
+        if (color === null) color = this.material.color
+        if (color === null) color = 0xffffff
+        setTexData(startIndex + 24, tempColor.set(color).getHex())
+
+        // Fill opacity / outline opacity
+        setTexData(startIndex + 25, text.material.opacity ?? uTroikaFillOpacity.value)
+
+        // Curve radius
+        setTexData(startIndex + 26, uTroikaCurveRadius.value)
+
+        if (isOutline) {
+          // Outline properties
+          setTexData(startIndex + 28, uTroikaPositionOffset.value.x)
+          setTexData(startIndex + 29, uTroikaPositionOffset.value.y)
+          setTexData(startIndex + 30, uTroikaEdgeOffset.value)
+          setTexData(startIndex + 31, uTroikaBlurRadius.value)
+        } else {
+          // Stroke properties
+          setTexData(startIndex + 28, uTroikaStrokeWidth.value)
+          setTexData(startIndex + 29, tempColor.set(uTroikaStrokeColor.value).getHex())
+          setTexData(startIndex + 30, uTroikaStrokeOpacity.value)
+        }
       }
     })
+    material.setMatrixTexture(texture)
+
+    // For the non-member-specific uniforms:
+    //@ts-ignore
+    Text.prototype._prepareForRender.call(this, material)
   }
 }

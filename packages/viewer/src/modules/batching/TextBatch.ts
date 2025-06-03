@@ -146,8 +146,10 @@ export default class TextBatch implements Batch {
       text.color = range.material?.color
       //@ts-ignore
       text.material.opacity = range.material?.opacity
-      packingInfo.dirty = true
+      packingInfo.needsUpdate = true
     })
+    //@ts-ignore
+    this.mesh.dirty = true
     //@ts-ignore
     this.mesh.sync()
   }
@@ -220,13 +222,14 @@ export default class TextBatch implements Batch {
         text.text = textMeta?.value
         text.fontSize = textMeta?.height
         text.material = new SpeckleTextMaterial({
-          color: 0xff0000
+          color: 0xff0000 // control color
         }).getDerivedMaterial()
         textMap.set(text, this.renderViews[k])
         text.sync(() => {
           const { textRenderInfo } = text
           /** We're using visibleBounds for a better fit */
           const bounds = textRenderInfo.visibleBounds
+          // console.log('bounds -> ', bounds)
           const vertices = []
           vertices.push(
             bounds[0],
@@ -250,12 +253,15 @@ export default class TextBatch implements Batch {
             DefaultBVHOptions,
             this.renderViews[k].renderData.geometry.bakeTransform ?? new Matrix4()
           )
+          /** The bounds bug. <Sigh> it needs a refit to report the correct bounds */
+          textBvh.refit()
           const batchObject = new TextBatchObject(this.renderViews[k], k)
           batchObject.buildAccelerationStructure(textBvh)
           batchObjects.push(batchObject)
           //@ts-ignore
           this.mesh.addText(text)
           textSynced--
+          // console.log('remaining -> ', textSynced)
           if (!textSynced) {
             this.mesh.setBatchObjects(batchObjects)
             this.mesh.setBatchMaterial(this.batchMaterial)
@@ -268,6 +274,8 @@ export default class TextBatch implements Batch {
             //@ts-ignore
             this.mesh.frustumCulled = false
 
+            this.mesh.dirty = true
+
             this.groups.push({
               start: 0,
               count: this.renderViews.length,
@@ -279,6 +287,7 @@ export default class TextBatch implements Batch {
               //@ts-ignore
               this.mesh._members.forEach((packingInfo, text) => {
                 textMap.get(text).setBatchData(this.id, packingInfo.index, 1)
+                packingInfo.needsUpdate = true
               })
               resolve()
             })

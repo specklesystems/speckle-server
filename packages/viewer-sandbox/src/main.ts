@@ -527,7 +527,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/155101d3ca/models/b8d3b42787b2dc9fc412a8ae16af03ac385e48e6'
 
     // New text
-    'https://app.speckle.systems/projects/16ce7b208c/models/e9f8edeb13@dc0b9471e9'
+    // 'https://app.speckle.systems/projects/16ce7b208c/models/e9f8edeb13@dc0b9471e9'
 
     // Materials in blocks full
     // 'https://app.speckle.systems/projects/1b96a34aae/models/673312057e'
@@ -541,6 +541,11 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/40d439576e/models/759c1b2d20@b0a8ae1f81'
     // Small (microscopic) building
     // 'https://app.speckle.systems/projects/26e4c4aab5/models/7d5ff72f5b'
+
+    // Text grid
+    // 'https://app.speckle.systems/projects/dcab71b3de/models/5ff99aa4e1'
+    // Text grid with a LOT of text
+    'https://app.speckle.systems/projects/dcab71b3de/models/5f02df011d'
   )
 }
 
