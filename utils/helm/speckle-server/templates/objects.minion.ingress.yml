@@ -39,4 +39,11 @@ spec:
             name: speckle-objects
             port:
               name: web
+      - pathType: Prefix
+        path: "/objects/"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web
 {{- end }}
