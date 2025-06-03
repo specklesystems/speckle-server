@@ -105,6 +105,7 @@ import {
   upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
+  assignWorkspaceSeatFactory,
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
@@ -179,7 +180,8 @@ export const onInviteFinalizedFactory =
       userId: targetUserId,
       workspaceId: project.workspaceId,
       preventRoleDowngrade: true,
-      updatedByUserId: invite.inviterId
+      updatedByUserId: invite.inviterId,
+      seatType: invite.resource.workspaceSeatType
     })
 
     // Automatically promote user to project owner if workspace admin
@@ -778,7 +780,14 @@ export const initializeEventListenersFactory =
             getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-            ensureValidWorkspaceRoleSeat
+            ensureValidWorkspaceRoleSeat,
+            assignWorkspaceSeat: assignWorkspaceSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                db
+              }),
+              eventEmit: eventBus.emit
+            })
           }),
           getWorkspaceRole: getWorkspaceRoleForUserFactory({ db }),
           upsertProjectRole: upsertProjectRoleFactory({ db })

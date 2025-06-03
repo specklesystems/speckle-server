@@ -126,7 +126,7 @@ export const assignWorkspaceSeatFactory =
     getWorkspaceRoleForUser: GetWorkspaceRoleForUser
     eventEmit: EventBusEmit
   }): AssignWorkspaceSeat =>
-  async ({ workspaceId, userId, type, assignedByUserId }) => {
+  async ({ workspaceId, userId, type, assignedByUserId, skipEvent }) => {
     const workspaceAcl = await getWorkspaceRoleForUser({ workspaceId, userId })
     if (!workspaceAcl) {
       throw new NotFoundError('User does not have a role in the workspace')
@@ -155,13 +155,15 @@ export const assignWorkspaceSeatFactory =
       type
     })
 
-    await eventEmit({
-      eventName: WorkspaceEvents.SeatUpdated,
-      payload: {
-        seat,
-        updatedByUserId: assignedByUserId
-      }
-    })
+    if (!skipEvent) {
+      await eventEmit({
+        eventName: WorkspaceEvents.SeatUpdated,
+        payload: {
+          seat,
+          updatedByUserId: assignedByUserId
+        }
+      })
+    }
 
     return seat
   }

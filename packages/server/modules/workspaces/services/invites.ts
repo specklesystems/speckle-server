@@ -111,7 +111,8 @@ export const createWorkspaceInviteFactory =
           ...(input.serverRole
             ? { [ServerInviteResourceType]: mapServerRoleToValue(input.serverRole) }
             : {})
-        }
+        },
+        workspaceSeatType: input.seatType || undefined
       }
 
     return await deps.createAndSendInvite(
@@ -156,6 +157,8 @@ export const collectAndValidateWorkspaceTargetsFactory =
     )
       ? primaryResourceTarget
       : null
+    const chosenWorkspaceSeatType =
+      primaryResourceTarget.workspaceSeatType || WorkspaceSeatType.Viewer
 
     const targetWorkspaceRole =
       primaryWorkspaceResourceTarget?.role ||
@@ -166,7 +169,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
     const targetWorkspaceSeatType =
       targetWorkspaceRole === Roles.Workspace.Admin
         ? WorkspaceSeatType.Editor
-        : WorkspaceSeatType.Viewer
+        : chosenWorkspaceSeatType
 
     // Role based checks
     if (!Object.values(Roles.Workspace).includes(targetWorkspaceRole)) {
@@ -631,7 +634,8 @@ export const processFinalizedWorkspaceInviteFactory =
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member,
         preventRoleDowngrade: true,
-        updatedByUserId: invite.inviterId
+        updatedByUserId: invite.inviterId,
+        seatType: invite.resource.workspaceSeatType
       })
     }
   }
