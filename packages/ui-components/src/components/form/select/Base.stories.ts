@@ -5,7 +5,7 @@ import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import { isRequired } from '~~/src/helpers/common/validation'
 import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import FormButton from '~~/src/components/form/Button.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 type FakeItemType = { id: string; name: string }
 
@@ -88,6 +88,9 @@ export default {
     buttonStyle: {
       options: ['base', 'simple', 'tinted'],
       control: { type: 'select' }
+    },
+    menuMaxWidth: {
+      type: 'string'
     }
   }
 } as Meta
@@ -126,7 +129,8 @@ export const Default: StoryType = {
     clearable: true,
     buttonStyle: 'base',
     disabled: false,
-    mountMenuOnBody: false
+    mountMenuOnBody: false,
+    menuMaxWidth: undefined
   }
 }
 
@@ -273,6 +277,54 @@ export const WithFilter: StoryType = {
   args: {
     ...Default.args,
     search: true
+  }
+}
+
+export const WithWiderMenu: StoryType = {
+  render: (args, ctx) => ({
+    components: { FormSelectBase, FormButton },
+    setup: () => {
+      const location = ref(0) // -1 = left, 0 = center, 1 = right
+      const wrapperClasses = computed(() => {
+        const classParts = ['flex flex-col h-72 gap-32']
+
+        if (location.value === -1) {
+          classParts.push('items-start')
+        } else if (location.value === 1) {
+          classParts.push('items-end')
+        } else {
+          classParts.push('items-center')
+        }
+
+        return classParts.join(' ')
+      })
+
+      const swap = () => {
+        const newValue = location.value >= 1 ? -1 : location.value + 1
+        location.value = newValue
+      }
+
+      return { args, wrapperClasses, swap, location }
+    },
+    template: `
+      <div :class="wrapperClasses">
+        <div class="flex justify-center h-72 w-32">
+          <FormSelectBase v-bind="args" class="max-w-xs w-full" @update:modelValue="onModelUpdate"/>
+        </div>
+        <FormButton @click="swap">Swap locations</FormButton>
+      </div>
+    `,
+    methods: {
+      onModelUpdate(val: FakeItemType) {
+        args['update:modelValue'](val)
+        ctx.updateArgs({ ...args, modelValue: val })
+      }
+    }
+  }),
+  args: {
+    ...Default.args,
+    mountMenuOnBody: true,
+    menuMaxWidth: 350
   }
 }
 
