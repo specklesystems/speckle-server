@@ -23,6 +23,8 @@ import { BatchObject } from '../batching/BatchObject.js'
 import { SpeckleRaycaster } from './SpeckleRaycaster.js'
 import { DrawGroup } from '../batching/Batch.js'
 import Logger from '../utils/Logger.js'
+import Materials from '../materials/Materials.js'
+import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 
 const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
@@ -35,6 +37,8 @@ export class SpeckleText extends BatchedText {
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
 
+  private materialCache: { [id: string]: Material } = {}
+  private materialCacheLUT: { [id: string]: number } = {}
   public dirty: boolean = false
 
   public get TAS(): TopLevelAccelerationStructure {
@@ -46,14 +50,40 @@ export class SpeckleText extends BatchedText {
   }
 
   public setBatchMaterial(material: Material) {
-    this.batchMaterial = material
+    this.batchMaterial = this.getCachedMaterial(material)
     //@ts-ignore
-    this.material = material
+    this.material = this.batchMaterial
     this.materials.push(this.batchMaterial)
   }
 
   public setBatchObjects(batchObjects: BatchObject[]) {
     this._batchObjects = batchObjects
+  }
+
+  private lookupMaterial(material: Material) {
+    return (
+      this.materialCache[material.id] ||
+      this.materialCache[this.materialCacheLUT[material.id]]
+    )
+  }
+
+  public getCachedMaterial(material: Material, copy = false): Material {
+    let cachedMaterial = this.lookupMaterial(material)
+    if (!cachedMaterial) {
+      const clone = new SpeckleTextMaterial({})
+        .copy(material)
+        .getDerivedBatchedMaterial()
+      this.materialCache[material.id] = clone
+      this.materialCacheLUT[clone.id] = material.id
+      cachedMaterial = clone
+    } else if (
+      copy ||
+      (material as never)['needsCopy'] ||
+      (cachedMaterial as never)['needsCopy']
+    ) {
+      Materials.fastCopy(material, cachedMaterial)
+    }
+    return cachedMaterial
   }
 
   public buildTAS() {
@@ -147,6 +177,27 @@ export class SpeckleText extends BatchedText {
     } else {
       super.raycast(raycaster, intersects)
     }
+  }
+
+  /**
+   * Update the batched geometry bounds to hold all members
+   */
+  updateBounds() {
+    if (!this.dirty) return
+    // Update member local matrices and the overall bounds
+    const tempBox3 = new Box3()
+    //@ts-ignore
+    const bbox = this.geometry.boundingBox.makeEmpty()
+    //@ts-ignore
+    this._members.forEach((_, text) => {
+      if (text.matrixAutoUpdate) text.updateMatrix() // ignore world matrix
+      //@ts-ignore
+      tempBox3.copy(text.geometry.boundingBox).applyMatrix4(text.matrix)
+      //@ts-ignore
+      bbox.union(tempBox3)
+    })
+    //@ts-ignore
+    bbox.getBoundingSphere(this.geometry.boundingSphere)
   }
 
   /**

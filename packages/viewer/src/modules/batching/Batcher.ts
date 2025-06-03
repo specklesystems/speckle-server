@@ -40,6 +40,7 @@ export default class Batcher {
   private maxBatchObjects = 0
   private maxBatchVertices = 500000
   private minInstancedBatchVertices = 10000
+  private maxBatchTextObjects = 5000
   public materials: Materials
   public batches: { [id: string]: Batch } = {}
 
@@ -257,16 +258,17 @@ export default class Batcher {
     }
     /** Finally we're splitting again based on the batch's max object count */
     const geometryType = renderViews[0].geometryType
-    if (geometryType === GeometryType.MESH) {
+    const maxCount = this.getMaxObjectCount(geometryType)
+    if (maxCount) {
       const oSplit = []
       for (let i = 0; i < vSplit.length; i++) {
         const objCount = vSplit[i].length
-        const div = Math.floor(objCount / this.maxBatchObjects)
-        const mod = objCount % this.maxBatchObjects
+        const div = Math.floor(objCount / maxCount)
+        const mod = objCount % maxCount
         let index = 0
         for (let k = 0; k < div; k++) {
-          oSplit.push(vSplit[i].slice(index, index + this.maxBatchObjects))
-          index += this.maxBatchObjects
+          oSplit.push(vSplit[i].slice(index, index + maxCount))
+          index += maxCount
         }
         if (mod > 0) {
           oSplit.push(vSplit[i].slice(index, index + mod))
@@ -276,6 +278,17 @@ export default class Batcher {
     }
 
     return vSplit
+  }
+
+  private getMaxObjectCount(geometryType: GeometryType) {
+    switch (geometryType) {
+      case GeometryType.MESH:
+        return this.maxBatchObjects
+      case GeometryType.TEXT:
+        return this.maxBatchTextObjects
+      default:
+        return 0
+    }
   }
 
   private async buildInstancedBatch(
