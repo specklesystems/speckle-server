@@ -13,6 +13,7 @@ export type PaidWorkspacePlans =
 export const UnpaidWorkspacePlans = <const>{
   TeamUnlimitedInvoiced: 'teamUnlimitedInvoiced',
   ProUnlimitedInvoiced: 'proUnlimitedInvoiced',
+  Enterprise: 'enterprise',
   Unlimited: 'unlimited',
   Academia: 'academia',
   Free: 'free'
@@ -42,6 +43,7 @@ export const doesPlanIncludeUnlimitedProjectsAddon = (
     case 'proUnlimitedInvoiced':
     case 'unlimited':
     case 'academia':
+    case 'enterprise':
       return false
 
     default:
@@ -61,6 +63,7 @@ export const isSelfServeAvailablePlan = (plan: WorkspacePlans): boolean => {
     case 'proUnlimitedInvoiced':
     case 'unlimited':
     case 'academia':
+    case 'enterprise':
       return false
 
     default:
@@ -80,6 +83,7 @@ export const isPaidPlan = (plan: WorkspacePlans): boolean => {
     case 'proUnlimitedInvoiced':
     case 'unlimited':
     case 'academia':
+    case 'enterprise':
       return false
 
     default:
