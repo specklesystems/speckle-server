@@ -21,7 +21,7 @@
             <SettingsWorkspacesMembersStat
               v-if="seats?.viewers.assigned"
               :icon="EyeIcon"
-              :count="seats?.viewers.assigned || 8"
+              :count="seats?.viewers.assigned"
               tooltip="Viewer seats"
             />
           </div>
