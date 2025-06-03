@@ -163,3 +163,14 @@ export const workspaceUpdateAutoJoinMutation = graphql(`
     }
   }
 `)
+
+export const workspaceUpdateDefaultSeatTypeMutation = graphql(`
+  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        defaultSeatType
+      }
+    }
+  }
+`)

@@ -5,6 +5,12 @@
         title="Security"
         text="Manage verified workspace domains and associated features."
       />
+      <SettingsWorkspacesSecurityDefaultSeat
+        v-if="workspace"
+        :workspace="workspace"
+        :is-auto-join-enabled="isAutoJoinEnabled"
+        class="mb-8 border-b border-outline-2 pb-8"
+      />
       <template v-if="isSsoEnabled">
         <SettingsWorkspacesSecuritySsoWrapper v-if="workspace" :workspace="workspace" />
         <hr class="my-6 md:my-8 border-outline-2" />
@@ -196,6 +202,7 @@ graphql(`
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
     discoverabilityAutoJoinEnabled
+    defaultSeatType
     hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
       featureName: domainBasedSecurityPolicies
     )
