@@ -10,7 +10,7 @@
         </p>
       </div>
       <FormSelectBase
-        v-model="internalDefaultSeatType"
+        v-model="seatTypeModel"
         :items="defaultSeatTypeOptions"
         name="defaultSeatType"
         label="Default seat type"
@@ -18,7 +18,6 @@
         :allow-unset="false"
         :show-label="false"
         fully-control-value
-        @update:model-value="onChange"
       >
         <template #nothing-selected>Select default</template>
         <template #something-selected="{ value }">
@@ -36,7 +35,7 @@
 
     <SettingsConfirmDialog
       :open="showConfirmSeatTypeDialog"
-      title="Confirm seat type change"
+      title="Confirm change"
       @confirm="handleSeatTypeConfirm"
       @cancel="handleSeatTypeCancel"
     >
@@ -64,7 +63,6 @@ import type {
 import { SeatTypes } from '@speckle/shared'
 import { workspaceUpdateDefaultSeatTypeMutation } from '~/lib/workspaces/graphql/mutations'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 const props = defineProps<{
   workspace: SettingsWorkspacesSecurity_WorkspaceFragment
@@ -75,35 +73,30 @@ const { mutate: updateDefaultSeatType } = useMutation(
   workspaceUpdateDefaultSeatTypeMutation
 )
 const { triggerNotification } = useGlobalToast()
-const { isPaidPlan } = useWorkspacePlan(props.workspace.slug)
 
-const internalDefaultSeatType = ref<WorkspaceSeatType>(props.workspace.defaultSeatType)
+const currentSeatType = ref<WorkspaceSeatType>(props.workspace.defaultSeatType)
 
 const showConfirmSeatTypeDialog = ref(false)
-const pendingSeatType = ref<WorkspaceSeatType>()
+const pendingNewSeatType = ref<WorkspaceSeatType>()
 
-const onChange = (newVal: WorkspaceSeatType | WorkspaceSeatType[] | undefined) => {
-  if (!newVal) return
+const seatTypeModel = computed({
+  get: () => currentSeatType.value,
+  set: (newValue: WorkspaceSeatType) => {
+    handleSeatTypeChange(newValue)
+  }
+})
 
-  const seatTypeValue = Array.isArray(newVal) ? newVal[0] : newVal
-  if (!seatTypeValue) return
+const handleSeatTypeChange = (newValue: WorkspaceSeatType) => {
+  if (newValue === currentSeatType.value) return
 
-  const currentSeatType = props.workspace.defaultSeatType
-  if (seatTypeValue === currentSeatType) return
-
-  // If setting to Editor with auto-join enabled on paid plan, show confirmation
-  if (
-    seatTypeValue === SeatTypes.Editor &&
-    props.workspace.discoverabilityAutoJoinEnabled &&
-    isPaidPlan.value
-  ) {
+  // If setting to Editor with auto-join enabled, show confirmation
+  if (newValue === SeatTypes.Editor && props.workspace.discoverabilityAutoJoinEnabled) {
+    pendingNewSeatType.value = newValue
     showConfirmSeatTypeDialog.value = true
-    pendingSeatType.value = seatTypeValue
-    internalDefaultSeatType.value = props.workspace.defaultSeatType
     return
   }
-
-  applySeatTypeChange(seatTypeValue)
+  // Otherwise, apply the change directly
+  applySeatTypeChange(newValue)
 }
 
 const applySeatTypeChange = async (seatTypeValue: WorkspaceSeatType) => {
@@ -115,7 +108,7 @@ const applySeatTypeChange = async (seatTypeValue: WorkspaceSeatType) => {
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
-    internalDefaultSeatType.value = seatTypeValue
+    currentSeatType.value = seatTypeValue
 
     triggerNotification({
       type: ToastNotificationType.Success,
@@ -134,14 +127,14 @@ const applySeatTypeChange = async (seatTypeValue: WorkspaceSeatType) => {
 }
 
 const handleSeatTypeConfirm = async () => {
-  if (!pendingSeatType.value) return
-  await applySeatTypeChange(pendingSeatType.value)
-  pendingSeatType.value = undefined
+  if (!pendingNewSeatType.value) return
+  await applySeatTypeChange(pendingNewSeatType.value)
+  pendingNewSeatType.value = undefined
 }
 
 const handleSeatTypeCancel = () => {
-  pendingSeatType.value = undefined
-  internalDefaultSeatType.value = props.workspace.defaultSeatType
+  pendingNewSeatType.value = undefined
+  showConfirmSeatTypeDialog.value = false
 }
 
 const defaultSeatTypeOptions: WorkspaceSeatType[] = Object.values(SeatTypes)
@@ -149,7 +142,9 @@ const defaultSeatTypeOptions: WorkspaceSeatType[] = Object.values(SeatTypes)
 watch(
   () => props.workspace.defaultSeatType,
   (newVal) => {
-    internalDefaultSeatType.value = newVal
+    if (newVal) {
+      currentSeatType.value = newVal
+    }
   }
 )
 </script>
