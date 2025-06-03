@@ -5,9 +5,8 @@
         <p class="text-body-xs font-medium text-foreground">
           Default seat for new members
         </p>
-        <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-          Set the default seat type assigned to new workspace members through invites,
-          auto-join, and join requests.
+        <p class="text-body-2xs text-foreground-2 leading-5 max-w-sm">
+          Set the default seat type assigned to new workspace members.
         </p>
       </div>
       <FormSelectBase
@@ -16,40 +15,43 @@
         name="defaultSeatType"
         label="Default seat type"
         class="min-w-[140px]"
+        :allow-unset="false"
         :show-label="false"
+        fully-control-value
         @update:model-value="onChange"
       >
         <template #nothing-selected>Select default</template>
         <template #something-selected="{ value }">
           <div class="truncate text-foreground capitalize">
-            {{ getSeatTypeLabel(Array.isArray(value) ? value[0] : value) }}
+            {{ Array.isArray(value) ? value[0] : value }}
           </div>
         </template>
         <template #option="{ item }">
           <div class="flex flex-col space-y-0.5">
-            <span class="truncate capitalize">{{ getSeatTypeLabel(item) }}</span>
+            <span class="truncate capitalize">{{ item }}</span>
           </div>
         </template>
       </FormSelectBase>
     </div>
-    <!-- Warning for editor + auto-join combination -->
-    <CommonCard
-      v-if="showEditorAutoJoinWarning"
-      class="bg-warning-lighter border-warning"
+
+    <SettingsConfirmDialog
+      :open="showConfirmSeatTypeDialog"
+      title="Confirm seat type change"
+      @confirm="handleSeatTypeConfirm"
+      @cancel="handleSeatTypeCancel"
     >
-      <div class="flex items-start space-x-3">
-        <ExclamationTriangleIcon class="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
-        <div class="flex-1">
-          <p class="text-body-xs font-medium text-warning-darker">
-            Editor seats will be charged automatically
-          </p>
-          <p class="text-body-2xs text-warning-darker mt-1">
-            With auto-join enabled and default seat set to Editor, each user who joins
-            will consume a paid seat and incur charges.
-          </p>
-        </div>
-      </div>
-    </CommonCard>
+      <p class="text-body-xs text-foreground mb-2">
+        You have
+        <span class="font-medium">Join without admin approval</span>
+        enabled.
+      </p>
+      <p class="text-body-xs text-foreground mb-2">
+        Setting the default seat type to
+        <span class="font-medium">Editor</span>
+        means each user who joins will consume a paid seat and incur charges.
+      </p>
+      <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
+    </SettingsConfirmDialog>
   </section>
 </template>
 
@@ -57,13 +59,12 @@
 import { useMutation } from '@vue/apollo-composable'
 import type {
   WorkspaceSeatType,
-  WorkspacePlans,
   SettingsWorkspacesSecurity_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
-import { isPaidPlan } from '@speckle/shared'
+import { SeatTypes } from '@speckle/shared'
 import { workspaceUpdateDefaultSeatTypeMutation } from '~/lib/workspaces/graphql/mutations'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 const props = defineProps<{
   workspace: SettingsWorkspacesSecurity_WorkspaceFragment
@@ -74,22 +75,38 @@ const { mutate: updateDefaultSeatType } = useMutation(
   workspaceUpdateDefaultSeatTypeMutation
 )
 const { triggerNotification } = useGlobalToast()
+const { isPaidPlan } = useWorkspacePlan(props.workspace.slug)
 
 const internalDefaultSeatType = ref<WorkspaceSeatType>(props.workspace.defaultSeatType)
 
-const isStripeLinkedPlan = computed(() => {
-  const planName = props.workspace?.plan?.name
-  return planName ? isPaidPlan(planName as WorkspacePlans) : false
-})
+const showConfirmSeatTypeDialog = ref(false)
+const pendingSeatType = ref<WorkspaceSeatType>()
 
-const onChange = async (
-  newVal: WorkspaceSeatType | WorkspaceSeatType[] | undefined
-) => {
-  if (!props.workspace?.id || !newVal) return
+const onChange = (newVal: WorkspaceSeatType | WorkspaceSeatType[] | undefined) => {
+  if (!newVal) return
 
   const seatTypeValue = Array.isArray(newVal) ? newVal[0] : newVal
   if (!seatTypeValue) return
 
+  const currentSeatType = props.workspace.defaultSeatType
+  if (seatTypeValue === currentSeatType) return
+
+  // If setting to Editor with auto-join enabled on paid plan, show confirmation
+  if (
+    seatTypeValue === SeatTypes.Editor &&
+    props.workspace.discoverabilityAutoJoinEnabled &&
+    isPaidPlan.value
+  ) {
+    showConfirmSeatTypeDialog.value = true
+    pendingSeatType.value = seatTypeValue
+    internalDefaultSeatType.value = props.workspace.defaultSeatType
+    return
+  }
+
+  applySeatTypeChange(seatTypeValue)
+}
+
+const applySeatTypeChange = async (seatTypeValue: WorkspaceSeatType) => {
   const result = await updateDefaultSeatType({
     input: {
       id: props.workspace.id,
@@ -98,12 +115,14 @@ const onChange = async (
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    internalDefaultSeatType.value = seatTypeValue
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Default seat type updated',
-      description: `New members will now be assigned ${getSeatTypeLabel(
-        seatTypeValue
-      )} seats by default`
+      description: `New members will now be assigned ${
+        seatTypeValue.charAt(0).toUpperCase() + seatTypeValue.slice(1)
+      } seats by default`
     })
 
     mixpanel.track('Workspace Default Seat Type Updated', {
@@ -114,17 +133,23 @@ const onChange = async (
   }
 }
 
-const showEditorAutoJoinWarning = computed(() => {
-  return (
-    internalDefaultSeatType.value === 'editor' &&
-    props.workspace.discoverabilityAutoJoinEnabled &&
-    isStripeLinkedPlan.value
-  )
-})
-
-const defaultSeatTypeOptions: WorkspaceSeatType[] = ['viewer', 'editor']
-
-const getSeatTypeLabel = (seatType: WorkspaceSeatType): string => {
-  return seatType.charAt(0).toUpperCase() + seatType.slice(1)
+const handleSeatTypeConfirm = async () => {
+  if (!pendingSeatType.value) return
+  await applySeatTypeChange(pendingSeatType.value)
+  pendingSeatType.value = undefined
 }
+
+const handleSeatTypeCancel = () => {
+  pendingSeatType.value = undefined
+  internalDefaultSeatType.value = props.workspace.defaultSeatType
+}
+
+const defaultSeatTypeOptions: WorkspaceSeatType[] = Object.values(SeatTypes)
+
+watch(
+  () => props.workspace.defaultSeatType,
+  (newVal) => {
+    internalDefaultSeatType.value = newVal
+  }
+)
 </script>

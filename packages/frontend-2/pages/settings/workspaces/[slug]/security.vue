@@ -8,7 +8,6 @@
       <SettingsWorkspacesSecurityDefaultSeat
         v-if="workspace"
         :workspace="workspace"
-        :is-auto-join-enabled="isAutoJoinEnabled"
         class="mb-8 border-b border-outline-2 pb-8"
       />
       <template v-if="isSsoEnabled">
