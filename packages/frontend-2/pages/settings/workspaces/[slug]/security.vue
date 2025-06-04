@@ -358,17 +358,10 @@ const tooltipText = computed(() => {
 
 const addDomain = async () => {
   if (!selectedDomain.value || !workspace.value) return
-  await addWorkspaceDomain.mutate(
-    {
-      domain: selectedDomain.value,
-      workspaceId: workspace.value.id
-    },
-    workspace.value.domains ?? [],
-    workspace.value.discoverabilityEnabled,
-    workspace.value.domainBasedMembershipProtectionEnabled,
-    workspace.value.hasAccessToSSO,
-    workspace.value.hasAccessToDomainBasedSecurityPolicies
-  )
+  await addWorkspaceDomain.mutate({
+    domain: selectedDomain.value,
+    workspaceId: workspace.value.id
+  })
 
   mixpanel.track('Workspace Domain Added', {
     // eslint-disable-next-line camelcase
