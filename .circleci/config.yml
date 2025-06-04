@@ -550,14 +550,15 @@ jobs:
           name: Introspect GQL schema for subsequent checks
           command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
-      - run:
-          name: Checking for GQL schema breakages against app.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
-      - run:
-          name: Checking for GQL schema breakages against latest.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
+      # Temporarily disabled while Apollo Studio is down - https://status.apollographql.com/
+      # - run:
+      #     name: Checking for GQL schema breakages against app.speckle.systems
+      #     command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
+      #     working_directory: 'packages/server'
+      # - run:
+      #     name: Checking for GQL schema breakages against latest.speckle.systems
+      #     command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+      #     working_directory: 'packages/server'
       - store_test_results:
           path: packages/server/reports
 
