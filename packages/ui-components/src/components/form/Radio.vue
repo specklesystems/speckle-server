@@ -39,7 +39,7 @@
           />
         </div>
         <div class="flex flex-col">
-          <span class="font-medium">{{ title }}</span>
+          <span :class="labelClasses ? labelClasses : 'font-medium'">{{ title }}</span>
           <p
             v-if="descriptionText && !inlineDescription"
             :id="descriptionId"
@@ -105,6 +105,13 @@ const props = defineProps({
    * Set label text
    */
   label: {
+    type: String as PropType<Optional<string>>,
+    default: undefined
+  },
+  /**
+   * Set label text classes
+   */
+  labelClasses: {
     type: String as PropType<Optional<string>>,
     default: undefined
   },
