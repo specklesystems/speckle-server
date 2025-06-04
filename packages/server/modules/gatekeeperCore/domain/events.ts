@@ -1,4 +1,3 @@
-import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePlan } from '@speckle/shared'
 
 export const gatekeeperEventNamespace = 'gatekeeper' as const
@@ -8,9 +7,12 @@ const eventPrefix = `${gatekeeperEventNamespace}.` as const
 export const GatekeeperEvents = {
   WorkspaceTrialExpired: `${eventPrefix}workspace-trial-expired`,
   WorkspacePlanUpdated: `${eventPrefix}workspace-plan-updated`,
-  WorkspaceSubscriptionUpdated: `${eventPrefix}workspace-subscription-updated`,
-  WorkspaceSubscriptionDownscaled: `${eventPrefix}workspace-subscription-downscaled`
+  WorkspaceSubscriptionUpdated: `${eventPrefix}workspace-subscription-updated`
 } as const
+
+type SubscriptionStats = {
+  totalEditorSeats: number
+}
 
 export type GatekeeperEventPayloads = {
   [GatekeeperEvents.WorkspaceTrialExpired]: { workspaceId: string }
@@ -20,12 +22,7 @@ export type GatekeeperEventPayloads = {
   }
   [GatekeeperEvents.WorkspaceSubscriptionUpdated]: {
     workspacePlan: WorkspacePlan
-    subscriptionData: SubscriptionData
-    previousSubscriptionData: SubscriptionData
-  }
-  [GatekeeperEvents.WorkspaceSubscriptionDownscaled]: {
-    workspacePlan: WorkspacePlan
-    subscriptionData: SubscriptionData
-    previousSubscriptionData: SubscriptionData
+    subscription: SubscriptionStats
+    previousSubscription: SubscriptionStats
   }
 }

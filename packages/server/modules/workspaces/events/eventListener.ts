@@ -95,8 +95,7 @@ import {
 import {
   GetWorkspacePlan,
   GetWorkspaceSubscription,
-  GetWorkspaceWithPlan,
-  SubscriptionData
+  GetWorkspaceWithPlan
 } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
@@ -560,9 +559,6 @@ export const workspaceTrackingFactory =
       }
     }
 
-    const countEditorSeats = (subscriptionData: SubscriptionData) =>
-      subscriptionData.products.reduce((acc, product) => acc + product.quantity, 0)
-
     switch (eventName) {
       case GatekeeperEvents.WorkspacePlanUpdated:
         const updatedPlanWorkspace = await getWorkspace({
@@ -588,33 +584,28 @@ export const workspaceTrackingFactory =
         })
 
         break
-      case GatekeeperEvents.WorkspaceSubscriptionDownscaled:
-        const editorSeatsLost =
-          countEditorSeats(payload.previousSubscriptionData) -
-          countEditorSeats(payload.subscriptionData)
-
-        if (editorSeatsLost > 0 && isPaidPlan(payload.workspacePlan.name)) {
-          await mixpanel.track({
-            eventName: MixpanelEvents.EditorSeatsDownscaled,
-            workspaceId: payload.workspacePlan.workspaceId,
-            payload: {
-              amount: editorSeatsLost,
-              planName: payload.workspacePlan.name
-            }
-          })
-        }
-        break
       case GatekeeperEvents.WorkspaceSubscriptionUpdated:
-        const editorSeatAdded =
-          countEditorSeats(payload.subscriptionData) -
-          countEditorSeats(payload.previousSubscriptionData)
+        const editorSeatsChanged =
+          payload.subscription.totalEditorSeats -
+          payload.previousSubscription.totalEditorSeats
 
-        if (editorSeatAdded > 0 && isPaidPlan(payload.workspacePlan.name)) {
+        if (editorSeatsChanged > 0 && isPaidPlan(payload.workspacePlan.name)) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatsPurchased,
             workspaceId: payload.workspacePlan.workspaceId,
             payload: {
-              amount: editorSeatAdded,
+              amount: editorSeatsChanged,
+              planName: payload.workspacePlan.name
+            }
+          })
+        }
+
+        if (editorSeatsChanged < 0 && isPaidPlan(payload.workspacePlan.name)) {
+          await mixpanel.track({
+            eventName: MixpanelEvents.EditorSeatsDownscaled,
+            workspaceId: payload.workspacePlan.workspaceId,
+            payload: {
+              amount: Math.abs(editorSeatsChanged),
               planName: payload.workspacePlan.name
             }
           })

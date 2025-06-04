@@ -13,8 +13,6 @@ import {
   GetWorkspacesProjectsCounts
 } from '@/modules/workspaces/domain/operations'
 import {
-  buildTestSubscriptionData,
-  buildTestSubscriptionProduct,
   buildTestWorkspacePlan,
   buildTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
@@ -136,25 +134,19 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       })
 
       await workspaceTracking({
-        eventName: GatekeeperEvents.WorkspaceSubscriptionDownscaled,
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
           workspacePlan: buildTestWorkspacePlan({
             workspaceId: workspace.id,
             status: WorkspacePlanStatuses.Valid,
             name: WorkspacePlans.Pro
           }),
-          subscriptionData: buildTestSubscriptionData({
-            products: [
-              buildTestSubscriptionProduct({ quantity: 10 }),
-              buildTestSubscriptionProduct({ quantity: 5 })
-            ]
-          }),
-          previousSubscriptionData: buildTestSubscriptionData({
-            products: [
-              buildTestSubscriptionProduct({ quantity: 10 }),
-              buildTestSubscriptionProduct({ quantity: 10 })
-            ]
-          })
+          subscription: {
+            totalEditorSeats: 15
+          },
+          previousSubscription: {
+            totalEditorSeats: 20
+          }
         }
       })
 
@@ -186,8 +178,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
                 workspaceId: workspace.id,
                 status
               }),
-              subscriptionData: buildTestSubscriptionData(),
-              previousSubscriptionData: buildTestSubscriptionData()
+              subscription: {
+                totalEditorSeats: 10
+              },
+              previousSubscription: {
+                totalEditorSeats: 10
+              }
             }
           })
 
@@ -212,8 +208,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             workspaceId: workspace.id,
             status: WorkspacePlanStatuses.Valid
           }),
-          subscriptionData: buildTestSubscriptionData(),
-          previousSubscriptionData: buildTestSubscriptionData()
+          subscription: {
+            totalEditorSeats: 10
+          },
+          previousSubscription: {
+            totalEditorSeats: 10
+          }
         }
       })
 
@@ -235,12 +235,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             status: WorkspacePlanStatuses.Valid,
             name: WorkspacePlans.Team
           }),
-          subscriptionData: buildTestSubscriptionData({
-            products: [buildTestSubscriptionProduct({ quantity: 2 })]
-          }),
-          previousSubscriptionData: buildTestSubscriptionData({
-            products: [buildTestSubscriptionProduct({ quantity: 1 })]
-          })
+          subscription: {
+            totalEditorSeats: 2
+          },
+          previousSubscription: {
+            totalEditorSeats: 1
+          }
         }
       })
 
@@ -269,12 +269,12 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             status: WorkspacePlanStatuses.Valid,
             name: WorkspacePlans.Academia
           }),
-          subscriptionData: buildTestSubscriptionData({
-            products: [buildTestSubscriptionProduct({ quantity: 2 })]
-          }),
-          previousSubscriptionData: buildTestSubscriptionData({
-            products: [buildTestSubscriptionProduct({ quantity: 1 })]
-          })
+          subscription: {
+            totalEditorSeats: 2
+          },
+          previousSubscription: {
+            totalEditorSeats: 1
+          }
         }
       })
 

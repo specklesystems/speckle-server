@@ -1,4 +1,5 @@
 import {
+  calculateSubscriptionSeats,
   GetSubscriptionData,
   GetWorkspacePlan,
   GetWorkspacePlanProductId,
@@ -83,11 +84,17 @@ export const downscaleWorkspaceSubscriptionFactory =
 
     await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
     await eventBusEmit({
-      eventName: GatekeeperEvents.WorkspaceSubscriptionDownscaled,
+      eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
       payload: {
         workspacePlan,
-        subscriptionData,
-        previousSubscriptionData
+        subscription: {
+          totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
+        },
+        previousSubscription: {
+          totalEditorSeats: calculateSubscriptionSeats({
+            subscriptionData: previousSubscriptionData
+          })
+        }
       }
     })
 

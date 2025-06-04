@@ -172,8 +172,12 @@ describe('subscriptions @gatekeeper', () => {
       expect(emittedEventPayload).to.have.nested.include({
         'workspacePlan.status': 'cancelationScheduled'
       })
-      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
-      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'subscription.totalEditorSeats': 3
+      })
+      expect(emittedEventPayload).to.have.nested.include({
+        'previousSubscription.totalEditorSeats': 3
+      })
     })
     it('sets the status to valid', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -228,8 +232,12 @@ describe('subscriptions @gatekeeper', () => {
       expect(emittedEventPayload).to.have.nested.include({
         'workspacePlan.status': 'valid'
       })
-      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
-      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'subscription.totalEditorSeats': 3
+      })
+      expect(emittedEventPayload).to.have.nested.include({
+        'previousSubscription.totalEditorSeats': 3
+      })
     })
     it('sets the state to paymentFailed', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -279,8 +287,12 @@ describe('subscriptions @gatekeeper', () => {
       expect(emittedEventPayload).to.have.nested.include({
         'workspacePlan.status': 'paymentFailed'
       })
-      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
-      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'subscription.totalEditorSeats': 3
+      })
+      expect(emittedEventPayload).to.have.nested.include({
+        'previousSubscription.totalEditorSeats': 3
+      })
     })
     it('sets the state to canceled', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -334,8 +346,12 @@ describe('subscriptions @gatekeeper', () => {
       expect(emittedEventPayload).to.have.nested.include({
         'workspacePlan.status': 'canceled'
       })
-      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
-      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'subscription.totalEditorSeats': 3
+      })
+      expect(emittedEventPayload).to.have.nested.include({
+        'previousSubscription.totalEditorSeats': 3
+      })
     })
     ;(
       ['incomplete', 'incomplete_expired', 'trialing', 'unpaid', 'paused'] as const
@@ -1040,14 +1056,16 @@ describe('subscriptions @gatekeeper', () => {
       expect(
         reconciledSub!.products.find((p) => p.productId === proProductId)?.quantity
       ).to.be.equal(5)
-      expect(emittedEventName).to.equal(
-        GatekeeperEvents.WorkspaceSubscriptionDownscaled
-      )
+      expect(emittedEventName).to.equal(GatekeeperEvents.WorkspaceSubscriptionUpdated)
       expect(emittedEventPayload).to.have.nested.include({
         'workspacePlan.status': 'valid'
       })
-      expect(emittedEventPayload).to.have.ownProperty('subscriptionData')
-      expect(emittedEventPayload).to.have.ownProperty('previousSubscriptionData')
+      expect(emittedEventPayload).to.have.nested.include({
+        'subscription.totalEditorSeats': 5
+      })
+      expect(emittedEventPayload).to.have.nested.include({
+        'previousSubscription.totalEditorSeats': 10
+      })
     })
   })
 
