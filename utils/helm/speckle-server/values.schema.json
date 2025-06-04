@@ -187,6 +187,11 @@
       "description": "The maximum time (unit is minutes) that a file import can take before it is considered to have failed",
       "default": 10
     },
+    "objects_size_limit_mb": {
+      "type": "number",
+      "description": "This maximum size of the POST request body (unit is Megabytes) that can be sent to the Speckle Objects REST APIs.",
+      "default": 100
+    },
     "enable_prometheus_monitoring": {
       "type": "boolean",
       "description": "If enabled, Speckle deploys a Prometheus ServiceMonitor resource",

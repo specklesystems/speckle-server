@@ -134,18 +134,23 @@ export = {
         project
       })
 
-      let lastVersion: Version | null
+      let latestVersion: Version | null = null
+      let latestVersions: Array<Version> | null = null
       if (getTypeFromPath(info) === 'Model') {
-        lastVersion = await ctx.loaders
+        latestVersion = await ctx.loaders
           .forRegion({ db: projectDB })
           .branches.getLatestCommit.load(parent.branchId)
       } else {
-        lastVersion = await ctx.loaders
+        latestVersions = await ctx.loaders
           .forRegion({ db: projectDB })
-          .streams.getLastVersion.load(parent.streamId)
+          .streams.getLatestVersions.load(parent.streamId)
       }
 
-      if (lastVersion?.id === parent.id) return parent.referencedObject
+      if (
+        latestVersion?.id === parent.id ||
+        latestVersions?.find((lv) => lv.id === parent.id)
+      )
+        return parent.referencedObject
       if (isBeyondLimit) return null
       return parent.referencedObject
     }
