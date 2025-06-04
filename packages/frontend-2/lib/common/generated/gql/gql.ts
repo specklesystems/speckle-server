@@ -319,7 +319,6 @@ type Documents = {
     "\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n": typeof types.UsersCountDocument,
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": typeof types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": typeof types.InviteServerUserDocument,
-    "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": typeof types.AddDomainWorkspaceFragmentDoc,
     "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": typeof types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": typeof types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsUpdateWorkspaceEmbedOptions(\n    $input: WorkspaceUpdateEmbedOptionsInput!\n  ) {\n    workspaceMutations {\n      updateEmbedOptions(input: $input) {\n        hideSpeckleBranding\n      }\n    }\n  }\n": typeof types.SettingsUpdateWorkspaceEmbedOptionsDocument,
@@ -412,6 +411,7 @@ type Documents = {
     "\n  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n": typeof types.RequestToJoinWorkspaceDocument,
     "\n  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {\n    workspaceMutations {\n      dismiss(input: $input)\n    }\n  }\n": typeof types.DismissDiscoverableWorkspaceDocument,
     "\n  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityAutoJoinEnabled\n      }\n    }\n  }\n": typeof types.WorkspaceUpdateAutoJoinMutationDocument,
+    "\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n": typeof types.WorkspaceUpdateDefaultSeatTypeMutationDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": typeof types.WorkspaceAccessCheckDocument,
     "\n  query WorkspaceSidebar(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceSidebar_Workspace\n    }\n  }\n": typeof types.WorkspaceSidebarDocument,
     "\n  query WorkspaceDashboard(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceDashboard_Workspace\n    }\n  }\n": typeof types.WorkspaceDashboardDocument,
@@ -763,7 +763,6 @@ const documents: Documents = {
     "\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n": types.UsersCountDocument,
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
-    "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": types.AddDomainWorkspaceFragmentDoc,
     "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsUpdateWorkspaceEmbedOptions(\n    $input: WorkspaceUpdateEmbedOptionsInput!\n  ) {\n    workspaceMutations {\n      updateEmbedOptions(input: $input) {\n        hideSpeckleBranding\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceEmbedOptionsDocument,
@@ -856,6 +855,7 @@ const documents: Documents = {
     "\n  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n": types.RequestToJoinWorkspaceDocument,
     "\n  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {\n    workspaceMutations {\n      dismiss(input: $input)\n    }\n  }\n": types.DismissDiscoverableWorkspaceDocument,
     "\n  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityAutoJoinEnabled\n      }\n    }\n  }\n": types.WorkspaceUpdateAutoJoinMutationDocument,
+    "\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n": types.WorkspaceUpdateDefaultSeatTypeMutationDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
     "\n  query WorkspaceSidebar(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceSidebar_Workspace\n    }\n  }\n": types.WorkspaceSidebarDocument,
     "\n  query WorkspaceDashboard(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceDashboard_Workspace\n    }\n  }\n": types.WorkspaceDashboardDocument,
@@ -2139,10 +2139,6 @@ export function graphql(source: "\n  mutation InviteServerUser($input: [ServerIn
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    "): (typeof documents)["\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    "];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function graphql(source: "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -2508,6 +2504,10 @@ export function graphql(source: "\n  mutation DismissDiscoverableWorkspace($inpu
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityAutoJoinEnabled\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityAutoJoinEnabled\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

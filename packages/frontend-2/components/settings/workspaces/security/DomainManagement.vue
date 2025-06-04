@@ -118,17 +118,10 @@ const disabledItemPredicate = (item: string) => {
 const handleAddDomain = async () => {
   if (!selectedDomain.value || !props.workspace?.id) return
 
-  await addWorkspaceDomain.mutate(
-    {
-      domain: selectedDomain.value,
-      workspaceId: props.workspace.id
-    },
-    workspaceDomains.value,
-    props.workspace?.discoverabilityEnabled || false,
-    props.workspace?.domainBasedMembershipProtectionEnabled || false,
-    props.workspace?.hasAccessToSSO || false,
-    props.workspace?.hasAccessToDomainBasedSecurityPolicies || false
-  )
+  await addWorkspaceDomain.mutate({
+    domain: selectedDomain.value,
+    workspaceId: props.workspace.id
+  })
 
   selectedDomain.value = undefined
 }
