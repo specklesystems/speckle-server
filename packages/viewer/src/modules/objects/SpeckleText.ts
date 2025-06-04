@@ -33,6 +33,7 @@ export class SpeckleText extends BatchedText {
   private tas: TopLevelAccelerationStructure
   private batchMaterial: Material
   private _batchObjects: BatchObject[]
+  private _textObjects: { [id: string]: Text } = {}
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
@@ -56,8 +57,12 @@ export class SpeckleText extends BatchedText {
     this.materials.push(this.batchMaterial)
   }
 
-  public setBatchObjects(batchObjects: BatchObject[]) {
+  public setBatchObjects(batchObjects: BatchObject[], textObjects: Text[]) {
     this._batchObjects = batchObjects
+    for (let k = 0; k < batchObjects.length; k++) {
+      const id = batchObjects[k].renderView.renderData.id
+      this._textObjects[id] = textObjects[k]
+    }
   }
 
   private lookupMaterial(material: Material) {
@@ -103,6 +108,60 @@ export class SpeckleText extends BatchedText {
     ).geometry.boundingBox.getBoundingSphere(new Sphere())
   }
 
+  /** This could be made faster. BUT, as this point in time it's not worth the effort */
+  public updateTransformsUniform() {
+    let needsUpdate = false
+    for (let k = 0; k < this._batchObjects.length; k++) {
+      const batchObject = this._batchObjects[k]
+      if (!(needsUpdate ||= batchObject.transformDirty)) continue
+      const textObject = this._textObjects[batchObject.renderView.renderData.id]
+      batchObject.transform.decompose(
+        textObject.position,
+        textObject.rotation,
+        textObject.scale
+      )
+      textObject.updateMatrix()
+      // Matrix
+      const matrix = textObject.matrix.elements
+      //@ts-ignore
+      const texture =
+        //@ts-ignore
+        this._dataTextures[
+          textObject.material.isTextOutlineMaterial ? 'outline' : 'main'
+        ]
+      //@ts-ignore
+      const packingInfo = this._members.get(textObject)
+      const startIndex = packingInfo.index * 32
+      for (let i = 0; i < 16; i++) {
+        this.setTexData(texture, startIndex + i, matrix[i])
+      }
+      batchObject.transformDirty = false
+    }
+    if (this.tas && needsUpdate) {
+      this.tas.refit()
+      this.tas.getBoundingBox(this.tas.bounds)
+    }
+  }
+
+  public updateMaterialTransformsUniform(material: Material) {
+    material
+  }
+
+  public getBatchObjectMaterial(batchObject: BatchObject) {
+    const rv = batchObject.renderView
+    const group = this.groups.find((value) => {
+      return (
+        rv.batchStart >= value.start &&
+        rv.batchStart + rv.batchCount <= value.count + value.start
+      )
+    })
+    if (!group) {
+      Logger.warn(`Could not get material for ${batchObject.renderView.renderData.id}`)
+      return null
+    }
+    return this.materials[group.materialIndex]
+  }
+
   // converts the given BVH raycast intersection to align with the three.js raycast
   // structure (include object, world space distance and point).
   private convertRaycastIntersect(
@@ -123,21 +182,6 @@ export class SpeckleText extends BatchedText {
     } else {
       return hit
     }
-  }
-
-  public getBatchObjectMaterial(batchObject: BatchObject) {
-    const rv = batchObject.renderView
-    const group = this.groups.find((value) => {
-      return (
-        rv.batchStart >= value.start &&
-        rv.batchStart + rv.batchCount <= value.count + value.start
-      )
-    })
-    if (!group) {
-      Logger.warn(`Could not get material for ${batchObject.renderView.renderData.id}`)
-      return null
-    }
-    return this.materials[group.materialIndex]
   }
 
   raycast(raycaster: SpeckleRaycaster, intersects: Array<Intersection>) {
@@ -218,6 +262,15 @@ export class SpeckleText extends BatchedText {
     }
   }
 
+  private setTexData(texture: DataTexture, index: number, value: number) {
+    const texData = texture.image.data
+    //@ts-ignore
+    if (value !== texData[index]) {
+      texData[index] = value
+      texture.needsUpdate = true
+    }
+  }
+
   /**
    * @override
    * Patched version that allows:
@@ -256,14 +309,6 @@ export class SpeckleText extends BatchedText {
       )
     }
 
-    const texData = texture.image.data
-    //@ts-ignore
-    const setTexData = (index, value) => {
-      if (value !== texData[index]) {
-        texData[index] = value
-        texture.needsUpdate = true
-      }
-    }
     //@ts-ignore
     this._members.forEach((packingInfo, text) => {
       if (packingInfo.index > -1 && packingInfo.needsUpdate) {
@@ -273,7 +318,7 @@ export class SpeckleText extends BatchedText {
         // Matrix
         const matrix = text.matrix.elements
         for (let i = 0; i < 16; i++) {
-          setTexData(startIndex + i, matrix[i])
+          this.setTexData(texture, startIndex + i, matrix[i])
         }
 
         // Let the member populate the uniforms, since that does all the appropriate
@@ -294,12 +339,20 @@ export class SpeckleText extends BatchedText {
 
         // Total bounds for uv
         for (let i = 0; i < 4; i++) {
-          setTexData(startIndex + 16 + i, uTroikaTotalBounds.value.getComponent(i))
+          this.setTexData(
+            texture,
+            startIndex + 16 + i,
+            uTroikaTotalBounds.value.getComponent(i)
+          )
         }
 
         // Clip rect
         for (let i = 0; i < 4; i++) {
-          setTexData(startIndex + 20 + i, uTroikaClipRect.value.getComponent(i))
+          this.setTexData(
+            texture,
+            startIndex + 20 + i,
+            uTroikaClipRect.value.getComponent(i)
+          )
         }
 
         // Color
@@ -309,25 +362,33 @@ export class SpeckleText extends BatchedText {
         //@ts-ignore
         if (color === null) color = this.material.color
         if (color === null) color = 0xffffff
-        setTexData(startIndex + 24, tempColor.set(color).getHex())
+        this.setTexData(texture, startIndex + 24, tempColor.set(color).getHex())
 
         // Fill opacity / outline opacity
-        setTexData(startIndex + 25, text.material.opacity ?? uTroikaFillOpacity.value)
+        this.setTexData(
+          texture,
+          startIndex + 25,
+          text.material.opacity ?? uTroikaFillOpacity.value
+        )
 
         // Curve radius
-        setTexData(startIndex + 26, uTroikaCurveRadius.value)
+        this.setTexData(texture, startIndex + 26, uTroikaCurveRadius.value)
 
         if (isOutline) {
           // Outline properties
-          setTexData(startIndex + 28, uTroikaPositionOffset.value.x)
-          setTexData(startIndex + 29, uTroikaPositionOffset.value.y)
-          setTexData(startIndex + 30, uTroikaEdgeOffset.value)
-          setTexData(startIndex + 31, uTroikaBlurRadius.value)
+          this.setTexData(texture, startIndex + 28, uTroikaPositionOffset.value.x)
+          this.setTexData(texture, startIndex + 29, uTroikaPositionOffset.value.y)
+          this.setTexData(texture, startIndex + 30, uTroikaEdgeOffset.value)
+          this.setTexData(texture, startIndex + 31, uTroikaBlurRadius.value)
         } else {
           // Stroke properties
-          setTexData(startIndex + 28, uTroikaStrokeWidth.value)
-          setTexData(startIndex + 29, tempColor.set(uTroikaStrokeColor.value).getHex())
-          setTexData(startIndex + 30, uTroikaStrokeOpacity.value)
+          this.setTexData(texture, startIndex + 28, uTroikaStrokeWidth.value)
+          this.setTexData(
+            texture,
+            startIndex + 29,
+            tempColor.set(uTroikaStrokeColor.value).getHex()
+          )
+          this.setTexData(texture, startIndex + 30, uTroikaStrokeOpacity.value)
         }
       }
     })

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box3, Material, Matrix4, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
@@ -210,6 +210,7 @@ export default class TextBatch implements Batch {
       this.mesh = new SpeckleText()
       const textMap = new Map()
       const batchObjects: BatchObject[] = []
+      const textObjects: Text[] = []
       let textSynced = this.renderViews.length
       for (let k = 0; k < this.renderViews.length; k++) {
         const textMeta = this.renderViews[k].renderData.geometry.metaData
@@ -250,20 +251,21 @@ export default class TextBatch implements Batch {
           const textBvh = AccelerationStructure.buildBVH(
             geometry.index.array,
             vertices,
-            DefaultBVHOptions,
-            this.renderViews[k].renderData.geometry.bakeTransform ?? new Matrix4()
+            DefaultBVHOptions
+            // this.renderViews[k].renderData.geometry.bakeTransform ?? new Matrix4()
           )
           /** The bounds bug. <Sigh> it needs a refit to report the correct bounds */
           textBvh.refit()
           const batchObject = new TextBatchObject(this.renderViews[k], k)
           batchObject.buildAccelerationStructure(textBvh)
           batchObjects.push(batchObject)
+          textObjects.push(text)
           //@ts-ignore
           this.mesh.addText(text)
           textSynced--
           // console.log('remaining -> ', textSynced)
           if (!textSynced) {
-            this.mesh.setBatchObjects(batchObjects)
+            this.mesh.setBatchObjects(batchObjects, textObjects)
             this.mesh.setBatchMaterial(this.batchMaterial)
             this.mesh.buildTAS()
 

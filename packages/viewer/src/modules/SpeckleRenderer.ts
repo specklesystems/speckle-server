@@ -520,13 +520,16 @@ export default class SpeckleRenderer {
   }
 
   private updateTransforms() {
-    const meshBatches: MeshBatch[] = this.batcher.getBatches(
-      undefined,
-      GeometryType.MESH
-    )
+    const meshBatches: (MeshBatch | TextBatch)[] = this.batcher.getBatches(undefined, [
+      GeometryType.MESH,
+      GeometryType.TEXT
+    ])
     for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k].mesh
+      const meshBatch: SpeckleMesh | SpeckleInstancedMesh | SpeckleText =
+        meshBatches[k].mesh
       meshBatch.updateTransformsUniform()
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       meshBatch.traverse((obj: Object3D) => {
         const depthMaterial: SpeckleDepthMaterial =
           obj.customDepthMaterial as SpeckleDepthMaterial
@@ -636,6 +639,12 @@ export default class SpeckleRenderer {
       batchRenderable instanceof SpeckleText
     ) {
       if (batchRenderable.TAS.bvhHelper) parent.add(batchRenderable.TAS.bvhHelper)
+    }
+
+    if (
+      batchRenderable instanceof SpeckleMesh ||
+      batchRenderable instanceof SpeckleInstancedMesh
+    ) {
       useRTE = batchRenderable.needsRTE
     }
     if (batch.geometryType === GeometryType.MESH) {
