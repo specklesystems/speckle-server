@@ -33,7 +33,7 @@ describe('Presigned @blobstorage', async () => {
         projectId,
         userId: cryptoRandomString({ length: 10 }),
         blobId,
-        fileName: `test-file-${cryptoRandomString({ length: 10 })}.txt`,
+        fileName: `test-file-${cryptoRandomString({ length: 10 })}.stl`,
         urlExpiryDurationSeconds: 60
       })
       expect(response).to.equal(
