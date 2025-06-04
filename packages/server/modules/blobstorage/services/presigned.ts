@@ -1,23 +1,26 @@
 import type {
   GeneratePresignedUrl,
+  GetBlobMetadataFromStorage,
+  RegisterCompletedUpload,
+  GetSignedUrl,
+  UpdateBlob,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
-import type {
-  GetSignedUrl,
-  ObjectStorage
-} from '@/modules/blobstorage/clients/objectStorage'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { UserInputError } from '@/modules/core/errors/userinput'
+import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
+import { Logger } from '@/observability/logging'
+import { ensureError, Optional } from '@speckle/shared'
+import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
 // import { acceptedFileExtensions } from '@speckle/shared'
 
 export const generatePresignedUrlFactory =
   (deps: {
-    objectStorage: ObjectStorage
     getSignedUrl: GetSignedUrl
     upsertBlob: UpsertBlob
   }): GeneratePresignedUrl =>
   async (params) => {
-    const { objectStorage, getSignedUrl, upsertBlob } = deps
+    const { getSignedUrl, upsertBlob } = deps
     const { projectId, userId, blobId, fileName, urlExpiryDurationSeconds } = params
 
     const fileType = fileName.split('.').pop()
@@ -50,9 +53,53 @@ export const generatePresignedUrlFactory =
     // with no metadata in the database; this could make garbage collection hard
     await upsertBlob(dbFile)
     const url = getSignedUrl({
-      objectStorage,
       objectKey,
       urlExpiryDurationSeconds
     })
     return url
+  }
+
+export const registerCompletedUploadFactory =
+  (deps: {
+    updateBlob: UpdateBlob
+    getBlobMetadata: GetBlobMetadataFromStorage
+    logger: Logger
+  }): RegisterCompletedUpload =>
+  async (params) => {
+    const { updateBlob, getBlobMetadata, logger } = deps
+    const { blobId, projectId, expectedETag } = params
+    if (!expectedETag) {
+      throw new UserInputError('ETag is required to register a completed upload')
+    }
+
+    const objectKey = getObjectKey(projectId, blobId)
+    let blobMetadata: { eTag: Optional<string>; contentLength: Optional<number> }
+    try {
+      blobMetadata = await getBlobMetadata({
+        objectKey
+      })
+    } catch (e) {
+      throw new StoredBlobAccessError(
+        `Failed to get blob metadata for blob ${blobId} in project ${projectId}`,
+        { cause: ensureError(e, 'Failed to get blob metadata from storage') }
+      )
+    }
+
+    if (blobMetadata.eTag !== expectedETag) {
+      logger.warn(
+        `ETag mismatch for blob ${blobId} in project ${projectId}: expected ${expectedETag}, got ${blobMetadata.eTag}`
+      )
+      // we don't want to leak the actual ETag to the user for security reasons, but we log it for debugging purposes
+      throw new UserInputError(`ETag mismatch: expected ${expectedETag}`)
+    }
+
+    return await updateBlob({
+      id: blobId,
+      streamId: projectId,
+      item: {
+        uploadStatus: BlobUploadStatus.Completed,
+        fileSize: blobMetadata.contentLength,
+        fileHash: blobMetadata.eTag //FIXME verify if this is the correct field to use. Is the etag the file hash? Or should we use `ChecksumSHA256` or similar?
+      }
+    })
   }

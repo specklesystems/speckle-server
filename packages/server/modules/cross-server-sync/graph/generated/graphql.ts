@@ -526,11 +526,21 @@ export type BlobMutations = {
   __typename?: 'BlobMutations';
   /** Generate a pre-signed url to which a blob can be uploaded. */
   generateUploadUrl: GenerateUploadUrlOutput;
+  /**
+   * Once the upload to the pre-signed url is completed, this mutation should be called
+   * to register the completed upload and create the blob metadata.
+   */
+  registerCompletedUpload: BlobMetadata;
 };
 
 
 export type BlobMutationsGenerateUploadUrlArgs = {
   input: GenerateUploadUrlInput;
+};
+
+
+export type BlobMutationsRegisterCompletedUploadArgs = {
+  input: RegisterCompletedUploadInput;
 };
 
 export type Branch = {
@@ -3028,6 +3038,16 @@ export type QueryWorkspaceInviteArgs = {
 
 export type QueryWorkspaceSsoByEmailArgs = {
   email: Scalars['String']['input'];
+};
+
+export type RegisterCompletedUploadInput = {
+  blobId: Scalars['String']['input'];
+  /**
+   * The etag is returned by the blob storage provider in the response body after a successful upload.
+   * It is used to verify the integrity of the uploaded file.
+   */
+  etag: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
 };
 
 /** Deprecated: Used by old stream-based mutations */

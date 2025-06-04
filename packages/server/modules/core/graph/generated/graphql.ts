@@ -546,11 +546,21 @@ export type BlobMutations = {
   __typename?: 'BlobMutations';
   /** Generate a pre-signed url to which a blob can be uploaded. */
   generateUploadUrl: GenerateUploadUrlOutput;
+  /**
+   * Once the upload to the pre-signed url is completed, this mutation should be called
+   * to register the completed upload and create the blob metadata.
+   */
+  registerCompletedUpload: BlobMetadata;
 };
 
 
 export type BlobMutationsGenerateUploadUrlArgs = {
   input: GenerateUploadUrlInput;
+};
+
+
+export type BlobMutationsRegisterCompletedUploadArgs = {
+  input: RegisterCompletedUploadInput;
 };
 
 export type Branch = {
@@ -3050,6 +3060,16 @@ export type QueryWorkspaceSsoByEmailArgs = {
   email: Scalars['String']['input'];
 };
 
+export type RegisterCompletedUploadInput = {
+  blobId: Scalars['String']['input'];
+  /**
+   * The etag is returned by the blob storage provider in the response body after a successful upload.
+   * It is used to verify the integrity of the uploaded file.
+   */
+  etag: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 /** Deprecated: Used by old stream-based mutations */
 export type ReplyCreateInput = {
   /** IDs of uploaded blobs that should be attached to this reply */
@@ -5471,6 +5491,7 @@ export type ResolversTypes = {
   ProjectVersionsUpdatedMessageType: ProjectVersionsUpdatedMessageType;
   ProjectVisibility: ProjectVisibility;
   Query: ResolverTypeWrapper<{}>;
+  RegisterCompletedUploadInput: RegisterCompletedUploadInput;
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResolverTypeWrapper<ResourceIdentifier>;
   ResourceIdentifierInput: ResourceIdentifierInput;
@@ -5799,6 +5820,7 @@ export type ResolversParentTypes = {
   ProjectVersionsPreviewGeneratedMessage: ProjectVersionsPreviewGeneratedMessage;
   ProjectVersionsUpdatedMessage: Omit<ProjectVersionsUpdatedMessage, 'version'> & { version?: Maybe<ResolversParentTypes['Version']> };
   Query: {};
+  RegisterCompletedUploadInput: RegisterCompletedUploadInput;
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResourceIdentifier;
   ResourceIdentifierInput: ResourceIdentifierInput;
@@ -6256,6 +6278,7 @@ export type BlobMetadataCollectionResolvers<ContextType = GraphQLContext, Parent
 
 export type BlobMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlobMutations'] = ResolversParentTypes['BlobMutations']> = {
   generateUploadUrl?: Resolver<ResolversTypes['GenerateUploadUrlOutput'], ParentType, ContextType, RequireFields<BlobMutationsGenerateUploadUrlArgs, 'input'>>;
+  registerCompletedUpload?: Resolver<ResolversTypes['BlobMetadata'], ParentType, ContextType, RequireFields<BlobMutationsRegisterCompletedUploadArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

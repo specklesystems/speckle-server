@@ -2,6 +2,7 @@ import {
   blobCollectionSummaryFactory,
   getBlobMetadataCollectionFactory,
   getBlobMetadataFactory,
+  updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
@@ -21,9 +22,15 @@ import {
   NotFoundError,
   ResourceMismatch
 } from '@/modules/shared/errors'
-import { generatePresignedUrlFactory } from '@/modules/blobstorage/services/presigned'
+import {
+  generatePresignedUrlFactory,
+  registerCompletedUploadFactory
+} from '@/modules/blobstorage/services/presigned'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
-import { getSignedUrl } from '@/modules/blobstorage/clients/objectStorage'
+import {
+  getBlobMetadataFromStorage,
+  getSignedUrlFactory
+} from '@/modules/blobstorage/clients/objectStorage'
 import cryptoRandomString from 'crypto-random-string'
 import { TIME } from '@speckle/shared'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
@@ -32,6 +39,7 @@ import {
   getFileUploadUrlExpiryMinutes,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
+import { BlobMutationsRegisterCompletedUploadArgs } from '@/test/graphql/generated/graphql'
 
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
@@ -104,8 +112,9 @@ const blobMutations = {
     ])
 
     const generatePresignedUrl = generatePresignedUrlFactory({
-      objectStorage: projectStorage,
-      getSignedUrl,
+      getSignedUrl: getSignedUrlFactory({
+        objectStorage: projectStorage
+      }),
       upsertBlob: upsertBlobFactory({
         db: projectDb
       })
@@ -121,6 +130,47 @@ const blobMutations = {
     })
 
     return { url, blobId }
+  },
+  async registerCompletedUpload(
+    _parent: unknown,
+    args: BlobMutationsRegisterCompletedUploadArgs,
+    ctx: GraphQLContext
+  ) {
+    const { projectId } = args.input
+    if (!ctx.userId) {
+      throw new ForbiddenError('No userId provided')
+    }
+    const canUpload = await ctx.authPolicies.project.blob.canUpload({
+      userId: ctx.userId,
+      projectId
+    })
+    throwIfAuthNotOk(canUpload)
+
+    if (!isFileUploadsEnabled())
+      throw new BadRequestError('File uploads are not enabled for this server')
+
+    const [projectDb, projectStorage] = await Promise.all([
+      getProjectDbClient({ projectId }),
+      getProjectObjectStorage({ projectId })
+    ])
+
+    const registerCompletedUpload = registerCompletedUploadFactory({
+      logger: ctx.log,
+      updateBlob: updateBlobFactory({
+        db: projectDb
+      }),
+      getBlobMetadata: getBlobMetadataFromStorage({
+        objectStorage: projectStorage
+      })
+    })
+
+    const updatedBlobData = await registerCompletedUpload({
+      projectId: args.input.projectId,
+      blobId: args.input.blobId,
+      expectedETag: args.input.etag
+    })
+
+    return { ...updatedBlobData }
   }
 }
 

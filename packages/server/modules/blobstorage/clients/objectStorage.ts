@@ -5,9 +5,18 @@ import {
   getS3Region,
   getS3SecretKey
 } from '@/modules/shared/helpers/envHelper'
-import { PutObjectCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3'
+import {
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  S3ClientConfig
+} from '@aws-sdk/client-s3'
 import { getSignedUrl as s3GetSignedUrl } from '@aws-sdk/s3-request-presigner'
 import type { Optional } from '@speckle/shared'
+import {
+  GetBlobMetadataFromStorage,
+  GetSignedUrl
+} from '@/modules/blobstorage/domain/operations'
 
 //FIXME these types should move to domain directory, except we want to avoid having a dependency on S3Client from the domain
 export type ObjectStorage = {
@@ -25,12 +34,6 @@ export type GetObjectStorageParams = {
   region: S3ClientConfig['region']
   bucket: string
 }
-
-export type GetSignedUrl = (params: {
-  objectStorage: ObjectStorage
-  objectKey: string
-  urlExpiryDurationSeconds: number
-}) => Promise<string>
 
 /**
  * Get object storage client
@@ -70,9 +73,33 @@ export const getMainObjectStorage = (): ObjectStorage => {
   return mainObjectStorage
 }
 
-export const getSignedUrl: GetSignedUrl = async (params) => {
-  const { objectStorage, objectKey, urlExpiryDurationSeconds } = params
+export const getSignedUrlFactory = (deps: {
+  objectStorage: ObjectStorage
+}): GetSignedUrl => {
+  const { objectStorage } = deps
   const { client, bucket } = objectStorage
-  const command = new PutObjectCommand({ Bucket: bucket, Key: objectKey })
-  return s3GetSignedUrl(client, command, { expiresIn: urlExpiryDurationSeconds })
+  return async (params) => {
+    const { objectKey, urlExpiryDurationSeconds } = params
+    const command = new PutObjectCommand({ Bucket: bucket, Key: objectKey })
+    return s3GetSignedUrl(client, command, { expiresIn: urlExpiryDurationSeconds })
+  }
+}
+
+export const getBlobMetadataFromStorage = (deps: {
+  objectStorage: ObjectStorage
+}): GetBlobMetadataFromStorage => {
+  const { objectStorage } = deps
+  const { client, bucket } = objectStorage
+
+  return async (params) => {
+    const { objectKey } = params
+
+    // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/s3/command/HeadObjectCommand/
+    const headObjectCommand = new HeadObjectCommand({ Bucket: bucket, Key: objectKey })
+    const metadata = await client.send(headObjectCommand)
+    return {
+      contentLength: metadata.ContentLength,
+      eTag: metadata.ETag
+    }
+  }
 }

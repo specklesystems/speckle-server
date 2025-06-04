@@ -1,21 +1,30 @@
-import { generatePresignedUrlFactory } from '@/modules/blobstorage/services/presigned'
+import {
+  generatePresignedUrlFactory,
+  registerCompletedUploadFactory
+} from '@/modules/blobstorage/services/presigned'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
-  getSignedUrl,
+  getBlobMetadataFromStorage,
+  getSignedUrlFactory,
   ObjectStorage
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobMetadataFactory,
+  updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
-import { Roles } from '@speckle/shared'
+import { Roles, TIME } from '@speckle/shared'
 import { createProject } from '@/test/projectHelper'
 import { createTestUser } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { Knex } from 'knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
+import { testLogger } from '@/observability/logging'
+import { post } from 'axios'
+import { expectToThrow } from '@/test/assertionHelper'
+import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
 
 describe('Presigned integration @blobstorage', async () => {
   const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
@@ -28,7 +37,6 @@ describe('Presigned integration @blobstorage', async () => {
   let projectDb: Knex
   let projectStorage: ObjectStorage
   let getBlobMetadata: ReturnType<typeof getBlobMetadataFactory>
-  let SUT: ReturnType<typeof generatePresignedUrlFactory>
 
   before(async () => {
     await beforeEachContext()
@@ -44,16 +52,21 @@ describe('Presigned integration @blobstorage', async () => {
       getProjectObjectStorage({ projectId: ownedProject.id })
     ])
     getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
-    SUT = generatePresignedUrlFactory({
-      objectStorage: projectStorage,
-      getSignedUrl,
-      upsertBlob: upsertBlobFactory({
-        db: projectDb
-      })
-    })
   })
 
   describe('generate a presigned URL', () => {
+    let SUT: ReturnType<typeof generatePresignedUrlFactory>
+    before(() => {
+      SUT = generatePresignedUrlFactory({
+        getSignedUrl: getSignedUrlFactory({
+          objectStorage: projectStorage
+        }),
+        upsertBlob: upsertBlobFactory({
+          db: projectDb
+        })
+      })
+    })
+
     it('should provision a blob with uploadStatus 0 and return a presigned URL', async () => {
       const blobId = cryptoRandomString({ length: 10 })
       const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
@@ -77,6 +90,65 @@ describe('Presigned integration @blobstorage', async () => {
       expect(storedBlob.fileName).to.equal(fileName)
       expect(storedBlob.streamId).to.equal(ownedProject.id)
       expect(storedBlob.fileType).to.equal('stl')
+    })
+  })
+
+  describe('register completed upload', () => {
+    let generatePresignedUrl: ReturnType<typeof generatePresignedUrlFactory>
+    let SUT: ReturnType<typeof registerCompletedUploadFactory>
+    before(() => {
+      generatePresignedUrl = generatePresignedUrlFactory({
+        getSignedUrl: getSignedUrlFactory({
+          objectStorage: projectStorage
+        }),
+        upsertBlob: upsertBlobFactory({
+          db: projectDb
+        })
+      })
+      SUT = registerCompletedUploadFactory({
+        getBlobMetadata: getBlobMetadataFromStorage({ objectStorage: projectStorage }),
+        updateBlob: updateBlobFactory({ db: projectDb }),
+        logger: testLogger
+      })
+    })
+    it('should update the blob with uploadStatus 1 and the correct ETag', async () => {
+      const blobId = cryptoRandomString({ length: 10 })
+      const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+      const expiryDuration = 1 * TIME.minute
+      const url = await generatePresignedUrl({
+        blobId,
+        fileName,
+        projectId: ownedProject.id,
+        userId: serverAdmin.id,
+        urlExpiryDurationSeconds: expiryDuration
+      })
+
+      const response = await post(url, 'test content')
+      expect(response.status, JSON.stringify(response)).to.equal(200)
+      expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
+
+      const expectedETag = response.headers['etag']
+      const storedBlob = await SUT({
+        blobId,
+        projectId: ownedProject.id,
+        expectedETag
+      })
+
+      expect(storedBlob).to.exist
+      expect(storedBlob.uploadStatus).to.equal(1)
+      expect(storedBlob.fileHash).to.equal(expectedETag)
+      expect(storedBlob.fileSize).to.be.greaterThan(0)
+    })
+    it('should throw an StoredBlobAccessError if the blob cannot be found', async () => {
+      const thrownError = await expectToThrow(
+        async () =>
+          await SUT({
+            blobId: cryptoRandomString({ length: 10 }),
+            projectId: ownedProject.id,
+            expectedETag: cryptoRandomString({ length: 32 })
+          })
+      )
+      expect(thrownError).to.be.instanceOf(StoredBlobAccessError)
     })
   })
 })

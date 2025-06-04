@@ -1,6 +1,12 @@
 import { Nullable } from '@speckle/shared'
 import { SetOptional } from 'type-fest'
 
+export enum BlobUploadStatus {
+  Pending = 0,
+  Completed = 1,
+  Error = 2
+}
+
 export type BlobStorageItem = {
   id: string
   streamId: string
@@ -9,7 +15,7 @@ export type BlobStorageItem = {
   fileName: string
   fileType: string
   fileSize: Nullable<number>
-  uploadStatus: number
+  uploadStatus: number | BlobUploadStatus
   uploadError: Nullable<string>
   createdAt: Date
   fileHash: Nullable<string>

@@ -2,7 +2,7 @@ import {
   BlobStorageItem,
   BlobStorageItemInput
 } from '@/modules/blobstorage/domain/types'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import type { Readable } from 'stream'
 import { StoreFileStream } from '@/modules/blobstorage/domain/storageOperations'
 
@@ -60,3 +60,18 @@ export type GeneratePresignedUrl = (params: {
   fileName: string
   urlExpiryDurationSeconds: number
 }) => Promise<string>
+
+export type GetSignedUrl = (params: {
+  objectKey: string
+  urlExpiryDurationSeconds: number
+}) => Promise<string>
+
+export type GetBlobMetadataFromStorage = (params: {
+  objectKey: string
+}) => Promise<{ eTag: Optional<string>; contentLength: Optional<number> }>
+
+export type RegisterCompletedUpload = (params: {
+  projectId: string
+  blobId: string
+  expectedETag: string
+}) => Promise<BlobStorageItem>
