@@ -556,9 +556,9 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/26e4c4aab5/models/7d5ff72f5b'
 
     // Text grid
-    // 'https://app.speckle.systems/projects/dcab71b3de/models/5ff99aa4e1'
+    'https://app.speckle.systems/projects/dcab71b3de/models/5ff99aa4e1'
     // Text grid with a LOT of text
-    'https://app.speckle.systems/projects/dcab71b3de/models/5f02df011d'
+    // 'https://app.speckle.systems/projects/dcab71b3de/models/5f02df011d'
 
     // Instances with far away transform
     // 'https://app.speckle.systems/projects/9d0ce16ba8/models/3c079572ea'
