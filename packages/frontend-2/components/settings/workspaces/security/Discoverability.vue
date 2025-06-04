@@ -2,7 +2,7 @@
   <section class="pt-8">
     <SettingsSectionHeader title="Workspace discoverability" subheading />
     <p class="text-body-xs text-foreground-2 mt-2 mb-6">
-      Let users discover the workspace if they sign up with a matching email.
+      Make it easy for coworkers to join the workspace
     </p>
     <CommonCard v-if="workspace?.sso?.provider?.id" class="bg-foundation mb-4">
       With SSO enabled, allowed domains are configured on your identity provider's side.

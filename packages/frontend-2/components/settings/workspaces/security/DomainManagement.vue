@@ -1,5 +1,5 @@
 <template>
-  <section class="pb-8">
+  <section class="py-8">
     <SettingsSectionHeader subheading title="Connect domains to workspace" />
     <p class="text-body-xs text-foreground-2 mt-2 mb-6">
       Connect verified domains to the workspace to enable various features below.

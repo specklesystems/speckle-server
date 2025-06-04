@@ -1,5 +1,5 @@
 <template>
-  <section class="flex flex-col space-y-3">
+  <section class="flex flex-col space-y-3 pb-8">
     <div class="flex flex-col sm:flex-row gap-y-3 sm:items-center">
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">
@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
 import type {
   WorkspaceSeatType,
   SettingsWorkspacesSecurity_WorkspaceFragment
@@ -74,6 +75,16 @@ import {
   getFirstErrorMessage,
   convertThrowIntoFetchResult
 } from '~/lib/common/helpers/graphql'
+
+graphql(`
+  fragment SettingsWorkspacesSecurityDefaultSeat_Workspace on Workspace {
+    id
+    slug
+    defaultSeatType
+    discoverabilityAutoJoinEnabled
+    role
+  }
+`)
 
 const props = defineProps<{
   workspace: SettingsWorkspacesSecurity_WorkspaceFragment
