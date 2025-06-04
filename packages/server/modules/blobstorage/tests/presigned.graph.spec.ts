@@ -71,11 +71,14 @@ const generateUploadUrl = async (params: TestContext) => {
     }
   )
   testResult(shouldSucceed, res, (res) => {
-    expect(res.data.blobId).to.be.string
-    expect(res.data.blobId.length).to.equal(10)
-    expect(res.data.url).to.be.string
-    expect(res.data.url).to.be.not.empty
-    expect(res.data.url.startsWith('https://')).to.be.true
+    expect(res.data.blobMutations.generateUploadUrl.blobId).to.be.string
+    expect(res.data.blobMutations.generateUploadUrl.blobId.length).to.equal(10)
+    expect(res.data.blobMutations.generateUploadUrl.url).to.be.string
+    expect(res.data.blobMutations.generateUploadUrl.url).to.be.not.empty
+    expect(res.data.blobMutations.generateUploadUrl.url).to.contain(projectId)
+    expect(res.data.blobMutations.generateUploadUrl.url).to.contain(
+      res.data.blobMutations.generateUploadUrl.blobId
+    )
   })
 }
 

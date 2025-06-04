@@ -135,9 +135,10 @@ export = {
   Project: {
     ...streamBlobResolvers
   },
-  // Mutation: {
-  //   blobMutations: () => ({})
-  // },
+  Mutation: {
+    //NOTE if editing this, see corresponding `BlobMutations` map in codegen.yml
+    blobMutations: () => ({})
+  },
   BlobMutations: {
     ...blobMutations
   }
