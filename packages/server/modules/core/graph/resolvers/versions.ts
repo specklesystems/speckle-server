@@ -118,8 +118,6 @@ export = {
         project
       })
 
-      // TODO: not load all commits
-
       const latestVersions = await ctx.loaders
         .forRegion({ db: projectDB })
         .streams.getLatestVersions.load(parent.streamId)
