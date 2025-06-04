@@ -24,9 +24,9 @@ export const generatePresignedUrlFactory =
     if (!fileType || fileType === fileName) {
       throw new UserInputError('File name must have a valid extension')
     }
-    if (!acceptedFileTypes.includes(fileType)) {
+    if (!acceptedFileTypes.includes(`.${fileType}`)) {
       throw new UserInputError(
-        `File type "${fileType}" is not supported. Supported types are: ${acceptedFileTypes.join(
+        `File type ".${fileType}" is not supported. Supported types are: ${acceptedFileTypes.join(
           ', '
         )}`
       )
