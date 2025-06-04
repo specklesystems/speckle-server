@@ -14,7 +14,7 @@ const testForbiddenResponse = (
 ) => {
   expect(result.errors, 'This should have failed').to.exist
   expect(result.errors!.length).to.be.above(0)
-  expect(result.errors![0].extensions!.code).to.match(
+  expect(result.errors![0].extensions!.code, JSON.stringify(result.errors)).to.match(
     /(STREAM_INVALID_ACCESS_ERROR|FORBIDDEN|UNAUTHORIZED_ACCESS_ERROR)/
   )
 }
@@ -56,7 +56,10 @@ const generateUploadUrl = async (params: TestContext) => {
     gql`
       mutation ($input: GenerateUploadUrlInput!) {
         blobMutations {
-          generateUploadUrl(input: $input)
+          generateUploadUrl(input: $input) {
+            url
+            blobId
+          }
         }
       }
     `,
@@ -200,17 +203,17 @@ describe('Presigned graph @blobstorage', async () => {
         {
           project: ownedProject,
           projectRole: Roles.Stream.Owner,
-          cases: [[generateUploadUrl, true]]
+          cases: [[generateUploadUrl, false]]
         },
         {
           project: contributorProject,
           projectRole: Roles.Stream.Contributor,
-          cases: [[generateUploadUrl, true]]
+          cases: [[generateUploadUrl, false]]
         },
         {
           project: reviewerProject,
           projectRole: Roles.Stream.Reviewer,
-          cases: [[generateUploadUrl, true]]
+          cases: [[generateUploadUrl, false]]
         },
         {
           project: noAccessProject,
