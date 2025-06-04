@@ -70,6 +70,10 @@ import { workspaceUpdateDefaultSeatTypeMutation } from '~/lib/workspaces/graphql
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { WorkspaceSeatTypeDescription } from '~/lib/settings/helpers/constants'
+import {
+  getFirstErrorMessage,
+  convertThrowIntoFetchResult
+} from '~/lib/common/helpers/graphql'
 
 const props = defineProps<{
   workspace: SettingsWorkspacesSecurity_WorkspaceFragment
@@ -138,6 +142,12 @@ const applySeatTypeChange = async (seatTypeValue: WorkspaceSeatType) => {
       value: seatTypeValue,
       // eslint-disable-next-line camelcase
       workspace_id: props.workspace.id
+    })
+  } else {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to update default seat type',
+      description: getFirstErrorMessage(result?.errors)
     })
   }
 }

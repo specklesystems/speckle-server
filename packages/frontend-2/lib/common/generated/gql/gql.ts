@@ -316,7 +316,7 @@ type Documents = {
     "\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n": typeof types.UsersCountDocument,
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": typeof types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": typeof types.InviteServerUserDocument,
-    "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": typeof types.AddDomainWorkspaceFragmentDoc,
+    "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                        defaultSeatType\n                      }\n                    ": typeof types.AddDomainWorkspaceFragmentDoc,
     "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": typeof types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": typeof types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsUpdateWorkspaceEmbedOptions(\n    $input: WorkspaceUpdateEmbedOptionsInput!\n  ) {\n    workspaceMutations {\n      updateEmbedOptions(input: $input) {\n        hideSpeckleBranding\n      }\n    }\n  }\n": typeof types.SettingsUpdateWorkspaceEmbedOptionsDocument,
@@ -758,7 +758,7 @@ const documents: Documents = {
     "\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n": types.UsersCountDocument,
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
-    "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": types.AddDomainWorkspaceFragmentDoc,
+    "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                        defaultSeatType\n                      }\n                    ": types.AddDomainWorkspaceFragmentDoc,
     "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsUpdateWorkspaceEmbedOptions(\n    $input: WorkspaceUpdateEmbedOptionsInput!\n  ) {\n    workspaceMutations {\n      updateEmbedOptions(input: $input) {\n        hideSpeckleBranding\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceEmbedOptionsDocument,
@@ -2123,7 +2123,7 @@ export function graphql(source: "\n  mutation InviteServerUser($input: [ServerIn
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    "): (typeof documents)["\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    "];
+export function graphql(source: "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                        defaultSeatType\n                      }\n                    "): (typeof documents)["\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                        defaultSeatType\n                      }\n                    "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

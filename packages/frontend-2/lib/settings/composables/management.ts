@@ -77,10 +77,22 @@ export function useAddWorkspaceDomain() {
                     fragment: gql`
                       fragment AddDomainWorkspace on Workspace {
                         slug
+                        defaultSeatType
                       }
                     `
                   }) as Workspace
                 ).slug,
+                defaultSeatType: (
+                  apollo.readFragment({
+                    id: getCacheId('Workspace', input.workspaceId),
+                    fragment: gql`
+                      fragment AddDomainWorkspace on Workspace {
+                        slug
+                        defaultSeatType
+                      }
+                    `
+                  }) as Workspace
+                ).defaultSeatType,
                 domains: [
                   ...domains,
                   {
