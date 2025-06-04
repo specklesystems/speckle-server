@@ -28,7 +28,10 @@ import cryptoRandomString from 'crypto-random-string'
 import { TIME } from '@speckle/shared'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { getFileUploadUrlExpiryMinutes } from '@/modules/shared/helpers/envHelper'
+import {
+  getFileUploadUrlExpiryMinutes,
+  isFileUploadsEnabled
+} from '@/modules/shared/helpers/envHelper'
 
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
@@ -91,6 +94,9 @@ const blobMutations = {
       projectId
     })
     throwIfAuthNotOk(canUpload)
+
+    if (!isFileUploadsEnabled())
+      throw new BadRequestError('File uploads are not enabled for this server')
 
     const [projectDb, projectStorage] = await Promise.all([
       getProjectDbClient({ projectId }),
