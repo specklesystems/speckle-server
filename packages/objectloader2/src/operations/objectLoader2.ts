@@ -95,7 +95,9 @@ export class ObjectLoader2 {
     if (!rootItem.base.__closure) return
 
     //sort the closures by their values descending
-    const sortedClosures = Object.entries(rootItem.base.__closure).sort((a, b) => b[1] - a[1])
+    const sortedClosures = Object.entries(rootItem.base.__closure).sort(
+      (a, b) => b[1] - a[1]
+    )
     const children = sortedClosures.map((x) => x[0])
     const total = children.length
     this.#downloader.initializePool({
