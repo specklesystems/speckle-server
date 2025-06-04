@@ -1,4 +1,4 @@
-import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
+import { buildTestProject } from '@/modules/core/tests/helpers/creation'
 import {
   buildMixpanelFake,
   MixpanelFakeEventRecord
@@ -11,7 +11,7 @@ import { expect } from 'chai'
 
 describe('fileuploadsTrackingFactory creates a function, that @fileuploads', () => {
   const workspaceId = 'some_workspace_id'
-  const project = buildBasicTestProject({ workspaceId })
+  const project = buildTestProject({ workspaceId })
   const user = buildTestUserWithOptionalRole()
   const getProject = async () => project
   const getUser = async () => user
@@ -45,7 +45,7 @@ describe('fileuploadsTrackingFactory creates a function, that @fileuploads', () 
   })
 
   it('does not include workspace_id if project does not belong to a workspace', async () => {
-    const projectWithoutWorkspace = buildBasicTestProject({ workspaceId: null })
+    const projectWithoutWorkspace = buildTestProject({ workspaceId: null })
     const events: MixpanelFakeEventRecord = []
     const workspaceTracking = fileuploadTrackingFactory({
       getProject: async () => projectWithoutWorkspace,
