@@ -20,13 +20,12 @@
         <template v-for="(item, index) in fields" :key="item.key">
           <InviteDialogProjectRow
             v-model="item.value"
+            :project="project"
             :item="item"
             :index="index"
             :show-delete="fields.length > 1"
-            :can-invite-new-members="isAdmin || !isInWorkspace"
-            :show-project-roles="!isInWorkspace"
+            show-project-roles
             :show-label="index === 0"
-            :is-in-workspace="isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
             @add-multiple-emails="addMultipleEmails"
@@ -82,6 +81,7 @@ graphql(`
         id
       }
     }
+    ...InviteDialogProjectRow_Project
   }
 `)
 

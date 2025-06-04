@@ -27,7 +27,6 @@
               />
               <FormSelectWorkspaceSeatType
                 v-model="item.value.seatType"
-                class="min-w-[100px]"
                 :allow-unset="false"
                 :name="`seatType-${item.key}`"
                 :show-label="index === 0"

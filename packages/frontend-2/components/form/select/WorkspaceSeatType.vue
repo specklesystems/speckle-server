@@ -4,6 +4,7 @@
     :items="Object.values(SeatTypes)"
     :multiple="multiple"
     name="seatTypes"
+    class="min-w-[100px]"
     :label="label"
     :label-id="labelId"
     :button-id="buttonId"
