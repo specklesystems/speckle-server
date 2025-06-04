@@ -545,7 +545,7 @@ export type BlobMetadataCollection = {
 export type BlobMutations = {
   __typename?: 'BlobMutations';
   /** Generate a pre-signed url to which a blob can be uploaded. */
-  generateUploadUrl: Scalars['String']['output'];
+  generateUploadUrl: GenerateUploadUrlOutput;
 };
 
 
@@ -1101,6 +1101,12 @@ export type GendoAiRenderInput = {
 export type GenerateUploadUrlInput = {
   fileName: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
+};
+
+export type GenerateUploadUrlOutput = {
+  __typename?: 'GenerateUploadUrlOutput';
+  blobId: Scalars['String']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type InvitableCollaboratorsFilter = {
@@ -5383,6 +5389,7 @@ export type ResolversTypes = {
   GendoAIRenderCollection: ResolverTypeWrapper<Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversTypes['GendoAIRender']>> }>;
   GendoAIRenderInput: GendoAiRenderInput;
   GenerateUploadUrlInput: GenerateUploadUrlInput;
+  GenerateUploadUrlOutput: ResolverTypeWrapper<GenerateUploadUrlOutput>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   InvitableCollaboratorsFilter: InvitableCollaboratorsFilter;
@@ -5721,6 +5728,7 @@ export type ResolversParentTypes = {
   GendoAIRenderCollection: Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversParentTypes['GendoAIRender']>> };
   GendoAIRenderInput: GendoAiRenderInput;
   GenerateUploadUrlInput: GenerateUploadUrlInput;
+  GenerateUploadUrlOutput: GenerateUploadUrlOutput;
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   InvitableCollaboratorsFilter: InvitableCollaboratorsFilter;
@@ -6247,7 +6255,7 @@ export type BlobMetadataCollectionResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type BlobMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlobMutations'] = ResolversParentTypes['BlobMutations']> = {
-  generateUploadUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<BlobMutationsGenerateUploadUrlArgs, 'input'>>;
+  generateUploadUrl?: Resolver<ResolversTypes['GenerateUploadUrlOutput'], ParentType, ContextType, RequireFields<BlobMutationsGenerateUploadUrlArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6438,6 +6446,12 @@ export type GendoAiRenderResolvers<ContextType = GraphQLContext, ParentType exte
 export type GendoAiRenderCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GendoAIRenderCollection'] = ResolversParentTypes['GendoAIRenderCollection']> = {
   items?: Resolver<Array<Maybe<ResolversTypes['GendoAIRender']>>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type GenerateUploadUrlOutputResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateUploadUrlOutput'] = ResolversParentTypes['GenerateUploadUrlOutput']> = {
+  blobId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7823,6 +7837,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   FileUpload?: FileUploadResolvers<ContextType>;
   GendoAIRender?: GendoAiRenderResolvers<ContextType>;
   GendoAIRenderCollection?: GendoAiRenderCollectionResolvers<ContextType>;
+  GenerateUploadUrlOutput?: GenerateUploadUrlOutputResolvers<ContextType>;
   JSONObject?: GraphQLScalarType;
   LegacyCommentViewerData?: LegacyCommentViewerDataResolvers<ContextType>;
   LimitedUser?: LimitedUserResolvers<ContextType>;

@@ -6,6 +6,7 @@ import {
 } from '@/modules/blobstorage/repositories'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import {
+  BlobMutationsGenerateUploadUrlArgs,
   ProjectBlobArgs,
   ProjectBlobsArgs,
   Resolvers,
@@ -26,6 +27,7 @@ import { getSignedUrl } from '@/modules/blobstorage/clients/objectStorage'
 import cryptoRandomString from 'crypto-random-string'
 import { TIME } from '@speckle/shared'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
@@ -73,6 +75,48 @@ const streamBlobResolvers = {
   }
 }
 
+const blobMutations = {
+  async generateUploadUrl(
+    _parent: unknown,
+    args: BlobMutationsGenerateUploadUrlArgs,
+    ctx: GraphQLContext
+  ) {
+    const { projectId } = args.input
+    if (!ctx.userId) {
+      throw new ForbiddenError('No userId provided')
+    }
+    const canUpload = await ctx.authPolicies.project.blob.canUpload({
+      userId: ctx.userId,
+      projectId
+    })
+    throwIfAuthNotOk(canUpload)
+
+    const [projectDb, projectStorage] = await Promise.all([
+      getProjectDbClient({ projectId }),
+      getProjectObjectStorage({ projectId })
+    ])
+
+    const generatePresignedUrl = generatePresignedUrlFactory({
+      objectStorage: projectStorage,
+      getSignedUrl,
+      upsertBlob: upsertBlobFactory({
+        db: projectDb
+      })
+    })
+    const blobId = cryptoRandomString({ length: 10 })
+
+    const url = await generatePresignedUrl({
+      projectId: args.input.projectId,
+      blobId: cryptoRandomString({ length: 10 }),
+      userId: ctx.userId,
+      fileName: args.input.fileName,
+      urlExpiryDurationSeconds: 10 * TIME.minute
+    })
+
+    return { url, blobId }
+  }
+}
+
 export = {
   ServerInfo: {
     //deprecated
@@ -91,38 +135,10 @@ export = {
   Project: {
     ...streamBlobResolvers
   },
+  // Mutation: {
+  //   blobMutations: () => ({})
+  // },
   BlobMutations: {
-    async generateUploadUrl(_parent, args, ctx) {
-      const { projectId } = args.input
-      if (!ctx.userId) {
-        throw new ForbiddenError('No userId provided')
-      }
-      const canUpload = await ctx.authPolicies.project.blob.canUpload({
-        userId: ctx.userId,
-        projectId
-      })
-      throwIfAuthNotOk(canUpload)
-
-      const [projectDb, projectStorage] = await Promise.all([
-        getProjectDbClient({ projectId }),
-        getProjectObjectStorage({ projectId })
-      ])
-
-      const generatePresignedUrl = generatePresignedUrlFactory({
-        objectStorage: projectStorage,
-        getSignedUrl,
-        upsertBlob: upsertBlobFactory({
-          db: projectDb
-        })
-      })
-
-      return generatePresignedUrl({
-        projectId: args.input.projectId,
-        blobId: cryptoRandomString({ length: 10 }),
-        userId: ctx.userId,
-        fileName: args.input.fileName,
-        urlExpiryDurationSeconds: 10 * TIME.minute
-      })
-    }
+    ...blobMutations
   }
 } as Resolvers

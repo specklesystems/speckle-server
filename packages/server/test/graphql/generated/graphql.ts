@@ -526,7 +526,7 @@ export type BlobMetadataCollection = {
 export type BlobMutations = {
   __typename?: 'BlobMutations';
   /** Generate a pre-signed url to which a blob can be uploaded. */
-  generateUploadUrl: Scalars['String']['output'];
+  generateUploadUrl: GenerateUploadUrlOutput;
 };
 
 
@@ -1082,6 +1082,12 @@ export type GendoAiRenderInput = {
 export type GenerateUploadUrlInput = {
   fileName: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
+};
+
+export type GenerateUploadUrlOutput = {
+  __typename?: 'GenerateUploadUrlOutput';
+  blobId: Scalars['String']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type InvitableCollaboratorsFilter = {

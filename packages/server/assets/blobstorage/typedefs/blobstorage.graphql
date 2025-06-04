@@ -46,15 +46,20 @@ input GenerateUploadUrlInput {
   fileName: String!
 }
 
+type GenerateUploadUrlOutput {
+  url: String!
+  blobId: String!
+}
+
 type BlobMutations {
   """
   Generate a pre-signed url to which a blob can be uploaded.
   """
-  generateUploadUrl(input: GenerateUploadUrlInput!): String!
+  generateUploadUrl(input: GenerateUploadUrlInput!): GenerateUploadUrlOutput!
 }
 
 extend type Mutation {
-  blobMutations: BlobMutations!
+  blobMutations: BlobMutations! @hasServerRole(role: SERVER_GUEST)
 }
 
 type BlobMetadataCollection {

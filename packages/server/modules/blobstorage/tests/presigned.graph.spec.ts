@@ -68,12 +68,15 @@ const generateUploadUrl = async (params: TestContext) => {
     }
   )
   testResult(shouldSucceed, res, (res) => {
-    expect(res.data.commentCreate).to.be.string
-    expect(res.data.commentCreate.length).to.equal(10)
+    expect(res.data.blobId).to.be.string
+    expect(res.data.blobId.length).to.equal(10)
+    expect(res.data.url).to.be.string
+    expect(res.data.url).to.be.not.empty
+    expect(res.data.url.startsWith('https://')).to.be.true
   })
 }
 
-describe('Presigned @blobstorage', async () => {
+describe('Presigned graph @blobstorage', async () => {
   const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
   const regularServerUser = {
     id: '',
@@ -322,7 +325,9 @@ describe('Presigned @blobstorage', async () => {
               await testCase({
                 apollo,
                 projectId: project.id,
-                fileName: cryptoRandomString({ length: 10 }),
+                fileName: `${cryptoRandomString({ length: 10 })}.${cryptoRandomString({
+                  length: 3
+                })}`,
                 shouldSucceed
               })
             })
