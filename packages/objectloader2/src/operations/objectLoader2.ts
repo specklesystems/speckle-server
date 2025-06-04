@@ -41,7 +41,7 @@ export class ObjectLoader2 {
     this.#database = options.database
     this.#deferments = new DefermentManager({
       maxSizeInMb: 2_000, // 2 GBs
-      ttlms: 5_000, // 5 seconds
+      ttlms: 15_000, // 15 seconds
       logger: this.#logger
     })
     this.#cache = new CacheReader(this.#database, this.#deferments, cacheOptions)
@@ -94,7 +94,9 @@ export class ObjectLoader2 {
     yield rootItem.base
     if (!rootItem.base.__closure) return
 
-    const children = Object.keys(rootItem.base.__closure)
+    //sort the closures by their values descending
+    const sortedClosures = Object.entries(rootItem.base.__closure).sort((a, b) => b[1] - a[1])
+    const children = sortedClosures.map((x) => x[0])
     const total = children.length
     this.#downloader.initializePool({
       results: new AggregateQueue(this.#gathered, this.#pump),
