@@ -6,6 +6,11 @@
         text="Manage verified workspace domains and associated features."
       />
       <div class="flex flex-col divide-y divide-outline-2">
+        <SettingsWorkspacesSecurityDomainManagement
+          v-if="workspace"
+          :workspace="workspace"
+        />
+
         <SettingsWorkspacesSecurityDiscoverability
           v-if="workspace"
           :workspace="workspace"
@@ -35,6 +40,7 @@ import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
+    ...SettingsWorkspacesSecurityDomainManagement_Workspace
     ...SettingsWorkspacesSecurityDiscoverability_Workspace
     ...SettingsWorkspacesSecuritySsoWrapper_Workspace
     ...SettingsWorkspacesSecurityDomainProtection_Workspace

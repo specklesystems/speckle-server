@@ -1,86 +1,146 @@
 <template>
-  <div>
-    <ul v-if="domains.length > 0">
-      <li
-        v-for="domain in domains"
-        :key="domain.id"
-        class="border-x border-b first:border-t first:rounded-t-lg border-outline-2 last:rounded-b-lg p-6 py-4 flex items-center"
-      >
-        <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
-        <FormButton color="outline" size="sm" @click="$emit('remove', domain)">
-          Delete
-        </FormButton>
-      </li>
-    </ul>
-
-    <p
-      v-else
-      class="text-body-xs text-center text-foreground-2 border border-outline-2 p-6 rounded-lg"
-    >
-      No verified domains yet
+  <section class="pb-8">
+    <SettingsSectionHeader subheading title="Connect domains to workspace" />
+    <p class="text-body-xs text-foreground-2 mt-2 mb-6">
+      Connect verified domains to the workspace to enable various features below.
     </p>
 
-    <div class="grid grid-cols-2 gap-x-6 mt-6">
-      <div class="flex flex-col gap-y-1">
-        <p class="text-body-xs font-medium text-foreground">{{ addDomainTitle }}</p>
-        <p class="text-body-2xs text-foreground-2 leading-5">
-          {{ addDomainDescription }}
-        </p>
-      </div>
-      <div class="flex gap-x-3">
-        <FormSelectBase
-          v-model="selectedDomain"
-          :items="availableDomains"
-          :disabled-item-predicate="disabledItemPredicate"
-          disabled-item-tooltip="This domain can't be used for verified workspace domains"
-          :name="selectName"
-          label="Verified domains"
-          class="w-full"
+    <div>
+      <div class="border border-outline-2 rounded-lg">
+        <ul v-if="workspaceDomains.length > 0" class="divide-y divide-outline-3">
+          <li
+            v-for="domain in workspaceDomains"
+            :key="domain.id"
+            class="px-6 py-3 flex items-center"
+          >
+            <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
+            <FormButton color="outline" size="sm" @click="handleRemoveDomain(domain)">
+              Delete
+            </FormButton>
+          </li>
+        </ul>
+
+        <p
+          v-else
+          class="text-body-xs text-center text-foreground-2 px-6 py-12 rounded-lg"
         >
-          <template #nothing-selected>Select domain</template>
-          <template #something-selected="{ value }">@{{ value }}</template>
-          <template #option="{ item }">
-            <div class="flex items-center">@{{ item }}</div>
-          </template>
-        </FormSelectBase>
-        <FormButton :disabled="!selectedDomain" @click="handleAdd">Add</FormButton>
+          No verified domains yet
+        </p>
+
+        <div
+          class="flex justify-between items-center gap-8 border-t border-outline-2 rounded-b-lg px-6 py-3"
+        >
+          <p class="text-body-2xs text-foreground-2">
+            Add a domain from your verified email addresses
+          </p>
+          <div class="flex gap-1 min-w-[210px]">
+            <FormSelectBase
+              v-model="selectedDomain"
+              :items="verifiedUserDomains"
+              :disabled-item-predicate="disabledItemPredicate"
+              disabled-item-tooltip="This domain can't be used for verified workspace domains"
+              name="workspaceDomains"
+              label="Verified domains"
+              class="w-full"
+              size="sm"
+            >
+              <template #nothing-selected>Select domain</template>
+              <template #something-selected="{ value }">@{{ value }}</template>
+              <template #option="{ item }">
+                <div class="flex items-center">@{{ item }}</div>
+              </template>
+            </FormSelectBase>
+            <FormButton :disabled="!selectedDomain" size="sm" @click="handleAddDomain">
+              Add
+            </FormButton>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
+import { useMutation } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
 import type { ShallowRef } from 'vue'
 import { blockedDomains } from '@speckle/shared'
+import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
+import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
+import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
+import type { SettingsWorkspacesSecurityDomainManagement_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
-type Domain = {
-  id: string
-  domain: string
-}
+graphql(`
+  fragment SettingsWorkspacesSecurityDomainManagement_Workspace on Workspace {
+    id
+    discoverabilityEnabled
+    domainBasedMembershipProtectionEnabled
+    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
+      featureName: domainBasedSecurityPolicies
+    )
+    hasAccessToSSO: hasAccessToFeature(featureName: oidcSso)
+    domains {
+      id
+      domain
+    }
+  }
+`)
 
-defineProps<{
-  domains: Domain[]
-  availableDomains: string[]
-  addDomainTitle: string
-  addDomainDescription: string
-  selectName: string
+const props = defineProps<{
+  workspace: SettingsWorkspacesSecurityDomainManagement_WorkspaceFragment
 }>()
 
-const emit = defineEmits<{
-  (e: 'add', domain: string): void
-  (e: 'remove', domain: Domain): void
-}>()
+const { mutate: deleteDomain } = useMutation(settingsDeleteWorkspaceDomainMutation)
+const addWorkspaceDomain = useAddWorkspaceDomain()
+const { domains: userEmailDomains } = useVerifiedUserEmailDomains({
+  filterBlocked: false
+})
 
 const selectedDomain = ref<string>()
 const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
+
+const workspaceDomains = computed(() => props.workspace?.domains || [])
+
+const verifiedUserDomains = computed(() => {
+  const workspaceDomainSet = new Set(workspaceDomains.value.map((item) => item.domain))
+
+  return [
+    ...new Set(
+      userEmailDomains.value.filter((domain) => !workspaceDomainSet.has(domain))
+    )
+  ]
+})
 
 const disabledItemPredicate = (item: string) => {
   return blockedDomainItems.value.includes(item)
 }
 
-const handleAdd = () => {
-  if (!selectedDomain.value) return
-  emit('add', selectedDomain.value)
+const handleAddDomain = async () => {
+  if (!selectedDomain.value || !props.workspace?.id) return
+
+  await addWorkspaceDomain.mutate(
+    {
+      domain: selectedDomain.value,
+      workspaceId: props.workspace.id
+    },
+    workspaceDomains.value,
+    props.workspace?.discoverabilityEnabled || false,
+    props.workspace?.domainBasedMembershipProtectionEnabled || false,
+    props.workspace?.hasAccessToSSO || false,
+    props.workspace?.hasAccessToDomainBasedSecurityPolicies || false
+  )
+
   selectedDomain.value = undefined
+}
+
+const handleRemoveDomain = async (domain: { id: string; domain: string }) => {
+  if (!props.workspace?.id) return
+
+  await deleteDomain({
+    input: {
+      workspaceId: props.workspace.id,
+      id: domain.id
+    }
+  }).catch(convertThrowIntoFetchResult)
 }
 </script>
