@@ -1,4 +1,9 @@
-import type { ServerRoles, WorkspaceRoles, StreamRoles } from '@speckle/shared'
+import type {
+  ServerRoles,
+  WorkspaceRoles,
+  StreamRoles,
+  WorkspaceSeatType
+} from '@speckle/shared'
 import type { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
 // Server
@@ -28,6 +33,7 @@ export interface InviteProjectForm {
 // Workspace
 export type InviteWorkspaceItem = {
   email: string
+  seatType?: WorkspaceSeatType
   workspaceRole?: WorkspaceRoles
   projectRole?: StreamRoles
   serverRole?: ServerRoles

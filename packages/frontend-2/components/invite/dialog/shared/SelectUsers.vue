@@ -5,7 +5,7 @@
       <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
         <div class="flex flex-col gap-y-3 flex-1">
           <div class="flex flex-row gap-x-3">
-            <div class="flex-1">
+            <div class="flex-1 flex gap-2">
               <FormTextInput
                 v-model="item.value.email"
                 :name="`email-${item.key}`"
@@ -24,6 +24,13 @@
                   })
                 ]"
                 @paste="handlePaste($event, index)"
+              />
+              <FormSelectWorkspaceSeatType
+                v-model="item.value.seatType"
+                class="min-w-[100px]"
+                :allow-unset="false"
+                :name="`seatType-${item.key}`"
+                :show-label="index === 0"
               />
             </div>
           </div>
@@ -60,8 +67,18 @@ import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { canHaveRole } from '~/lib/invites/helpers/validation'
 import { parsePastedEmails } from '~/lib/invites/helpers/helpers'
+import { graphql } from '~/lib/common/generated/gql'
+import type { InviteDialogSharedSelectUsers_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment InviteDialogSharedSelectUsers_Workspace on Workspace {
+    id
+    defaultSeatType
+  }
+`)
 
 const props = defineProps<{
+  workspace: MaybeNullOrUndefined<InviteDialogSharedSelectUsers_WorkspaceFragment>
   invites: InviteWorkspaceItem[]
   allowedDomains: MaybeNullOrUndefined<string[]>
   targetRole?: WorkspaceRoles
