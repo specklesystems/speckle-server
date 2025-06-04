@@ -107,7 +107,7 @@ const blobMutations = {
 
     const url = await generatePresignedUrl({
       projectId: args.input.projectId,
-      blobId: cryptoRandomString({ length: 10 }),
+      blobId,
       userId: ctx.userId,
       fileName: args.input.fileName,
       urlExpiryDurationSeconds: 10 * TIME.minute

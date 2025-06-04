@@ -76,9 +76,10 @@ const generateUploadUrl = async (params: TestContext) => {
     expect(res.data.blobMutations.generateUploadUrl.url).to.be.string
     expect(res.data.blobMutations.generateUploadUrl.url).to.be.not.empty
     expect(res.data.blobMutations.generateUploadUrl.url).to.contain(projectId)
-    expect(res.data.blobMutations.generateUploadUrl.url).to.contain(
-      res.data.blobMutations.generateUploadUrl.blobId
-    )
+    expect(
+      res.data.blobMutations.generateUploadUrl.url,
+      res.data.blobMutations.generateUploadUrl.url
+    ).to.contain(res.data.blobMutations.generateUploadUrl.blobId)
   })
 }
 
