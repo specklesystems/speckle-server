@@ -70,16 +70,6 @@ export const getMainObjectStorage = (): ObjectStorage => {
   return mainObjectStorage
 }
 
-/**
- * For project-specific object storage, use the equivalent from the multiregion module.
- * This function is intended to maintain compatibility where multiregion is disabled.
- * @returns Main object storage client, ignoring parameters
- */
-export const getProjectObjectStorage: GetProjectObjectStorage =
-  async (/* purposefully ignoring parameters */) => {
-    return getMainObjectStorage()
-  }
-
 export const getSignedUrl: GetSignedUrl = async (params) => {
   const { objectStorage, objectKey, urlExpiryDurationSeconds } = params
   const { client, bucket } = objectStorage
