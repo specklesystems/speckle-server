@@ -10,8 +10,7 @@
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">Domain protection</p>
         <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-          Only users with email addresses from your verified domains can be added as
-          workspace members or administrators.
+          Only allow users with verified domains to join the workspace
         </p>
       </div>
       <div key="tooltipText" v-tippy="switchDisabled ? tooltipText : undefined">

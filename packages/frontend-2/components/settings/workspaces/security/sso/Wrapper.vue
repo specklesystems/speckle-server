@@ -1,8 +1,8 @@
 <template>
-  <section class="flex flex-col gap-2 border-t border-outline-2 py-8 mt-8">
+  <section class="flex flex-col gap-2 border-t border-outline-2 py-8">
     <div class="flex justify-between items-start">
       <div class="flex flex-col">
-        <h4 class="text-heading-lg">SSO</h4>
+        <h4 class="text-heading-lg">Single sign-on</h4>
         <p class="text-body-xs text-foreground-2">
           Allow logins through your OpenID identity provider.
         </p>

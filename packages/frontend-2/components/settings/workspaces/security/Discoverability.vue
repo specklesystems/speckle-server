@@ -1,5 +1,5 @@
 <template>
-  <section class="pt-8">
+  <section class="py-8">
     <SettingsSectionHeader title="Workspace discoverability" subheading />
     <p class="text-body-xs text-foreground-2 mt-2 mb-6">
       Make it easy for coworkers to join the workspace

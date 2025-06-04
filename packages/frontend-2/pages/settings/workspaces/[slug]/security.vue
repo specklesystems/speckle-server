@@ -9,10 +9,10 @@
         <SettingsWorkspacesSecurityDefaultSeat :workspace="workspace" />
         <SettingsWorkspacesSecurityDomainManagement :workspace="workspace" />
         <SettingsWorkspacesSecurityDiscoverability :workspace="workspace" />
+        <SettingsWorkspacesSecurityDomainProtection :workspace="workspace" />
         <template v-if="isSsoEnabled">
           <SettingsWorkspacesSecuritySsoWrapper :workspace="workspace" />
         </template>
-        <SettingsWorkspacesSecurityDomainProtection :workspace="workspace" />
       </div>
     </div>
   </section>
