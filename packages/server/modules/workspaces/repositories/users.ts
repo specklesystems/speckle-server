@@ -107,7 +107,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
       )[0] as WorkspaceAclRecord
       const serverAcl = formatJsonArrayRecords(row.serverAcl)[0] as StreamAclRecord
       const emails = formatJsonArrayRecords(row.emails) as UserEmail[]
-      const email = emails.find((e) => e.primary)!.email
+      const email = emails.find((e) => e.primary)?.email
 
       return {
         ...removePrivateFields(row),
@@ -115,7 +115,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
         workspaceRoleCreatedAt: workspaceAcl.createdAt,
         workspaceId: workspaceAcl.workspaceId,
         role: serverAcl.role as ServerRoles,
-        email
+        email: email!
       }
     })
 
