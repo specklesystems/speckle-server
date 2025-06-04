@@ -62,6 +62,7 @@ graphql(`
     id
     name
     domainBasedMembershipProtectionEnabled
+    defaultSeatType
     domains {
       domain
       id
@@ -118,11 +119,20 @@ const allowedDomains = computed(() =>
     : null
 )
 const infoText = computed(() => {
+  const defaultSeatType = props.workspace?.defaultSeatType || 'viewer'
+  const defaultSeatLabel = defaultSeatType === 'editor' ? 'Editor' : 'Viewer'
+
   if (selectedRole.value === Roles.Workspace.Member) {
-    return 'Inviting is free. Members join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to projects beyond viewing and commenting.'
+    if (defaultSeatType === 'editor') {
+      return `Members join your workspace on an Editor seat by default. Editor seats may incur charges based on your workspace plan. You can change their seat type to Viewer after they join if they only need to view and comment.`
+    }
+    return `Inviting is free. Members join your workspace on a free ${defaultSeatLabel} seat. You can give them an Editor seat later if they need to contribute to projects beyond viewing and commenting.`
   }
 
-  return `Inviting is free. Guests join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to a project beyond viewing and commenting.`
+  if (defaultSeatType === 'editor') {
+    return `Guests join your workspace on an Editor seat by default. Editor seats may incur charges based on your workspace plan. You can change their seat type to Viewer after they join if they only need to view and comment.`
+  }
+  return `Inviting is free. Guests join your workspace on a free ${defaultSeatLabel} seat. You can give them an Editor seat later if they need to contribute to a project beyond viewing and commenting.`
 })
 
 const onBack = () => {
