@@ -148,12 +148,19 @@
       :workspace-id="workspace?.id"
       :domain="removeDialogDomain"
     />
-    <SettingsWorkspacesSecurityConfirmJoinPolicyDialog
+    <SettingsConfirmDialog
       v-if="showConfirmJoinPolicyDialog"
       v-model:open="showConfirmJoinPolicyDialog"
+      title="Confirm change"
       @confirm="handleJoinPolicyConfirm"
       @cancel="pendingJoinPolicy = undefined"
-    />
+    >
+      <p class="text-body-xs text-foreground mb-2">
+        This will allow users with verified domain emails to join automatically without
+        admin approval.
+      </p>
+      <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
+    </SettingsConfirmDialog>
   </section>
 </template>
 

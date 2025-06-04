@@ -16,8 +16,8 @@
         :request-status="workspace.requestStatus"
         show-dismiss-button
         location="workspace_switcher"
-        @auto-joined="workspace.requestStatus = WorkspaceJoinRequestStatus.Approved"
-        @request="workspace.requestStatus = WorkspaceJoinRequestStatus.Pending"
+        @auto-joined="moveToTop(workspace.id, WorkspaceJoinRequestStatus.Approved)"
+        @request="moveToTop(workspace.id, WorkspaceJoinRequestStatus.Pending)"
         @dismissed="onWorkspaceDismissed"
         @go-to-workspace="open = false"
       />
@@ -46,7 +46,23 @@ const {
 
 const open = defineModel<boolean>('open', { required: true })
 const showAllWorkspaces = ref(false)
-const localWorkspaces = ref(discoverableWorkspacesAndJoinRequests.value)
+
+// Workspaces that have been interacted with (moved to top)
+const actionedWorkspaces = ref<typeof discoverableWorkspacesAndJoinRequests.value>([])
+
+// Remaining workspaces (excludes ones moved to top or dismissed)
+const remainingWorkspaces = computed(() => {
+  const actionedIds = new Set(actionedWorkspaces.value.map((w) => w.id))
+  return (discoverableWorkspacesAndJoinRequests.value || []).filter(
+    (workspace) => !actionedIds.has(workspace.id)
+  )
+})
+
+// Combined list: top workspaces first, then remaining
+const localWorkspaces = computed(() => [
+  ...actionedWorkspaces.value,
+  ...remainingWorkspaces.value
+])
 
 const workspacesToShow = computed(() => {
   return showAllWorkspaces.value
@@ -65,14 +81,26 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
   ]
 })
 
+const moveToTop = (workspaceId: string, newStatus: WorkspaceJoinRequestStatus) => {
+  const workspace = remainingWorkspaces.value.find((w) => w.id === workspaceId)
+  if (workspace) {
+    actionedWorkspaces.value.unshift({
+      ...workspace,
+      requestStatus: newStatus
+    })
+  }
+}
+
 const onWorkspaceDismissed = (workspaceId: string) => {
-  localWorkspaces.value = localWorkspaces.value.filter((w) => w.id !== workspaceId)
+  actionedWorkspaces.value = actionedWorkspaces.value.filter(
+    (w) => w.id !== workspaceId
+  )
 }
 
 watch(open, () => {
   showAllWorkspaces.value = false
   if (!open.value) {
-    localWorkspaces.value = discoverableWorkspacesAndJoinRequests.value
+    actionedWorkspaces.value = []
   }
 })
 </script>

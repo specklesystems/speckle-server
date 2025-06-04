@@ -91,6 +91,10 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.fileimportServiceConnectionString.secretName }}
                 key: {{ default "fileimport_service_redis_url" .Values.redis.fileimportServiceConnectionString.secretKey }}
+          {{- else }}
+          # Dummy value for backwards compatibility
+          - name: REDIS_URL
+            value: "redis://redis"
           {{- end }}
 
           - name: PG_CONNECTION_STRING

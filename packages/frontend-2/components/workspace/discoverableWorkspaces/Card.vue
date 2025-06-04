@@ -2,7 +2,7 @@
   <WorkspaceCard
     :logo="workspace.logo ?? ''"
     :name="workspace.name"
-    :class="requestStatus === WorkspaceJoinRequestStatus.Pending ? '' : 'bg-foundation'"
+    :class="isActioned ? '' : 'bg-foundation'"
     :banner-text="
       workspace.discoverabilityAutoJoinEnabled &&
       requestStatus !== WorkspaceJoinRequestStatus.Approved
@@ -115,6 +115,13 @@ const members = computed(() => {
     // Multiple users: show all members including those who are also admins
     return allMembers.value
   }
+})
+
+const isActioned = computed(() => {
+  return (
+    props.requestStatus === WorkspaceJoinRequestStatus.Approved ||
+    props.requestStatus === WorkspaceJoinRequestStatus.Pending
+  )
 })
 
 const onRequest = () => {
