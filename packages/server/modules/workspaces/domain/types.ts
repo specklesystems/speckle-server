@@ -3,6 +3,7 @@ import { LimitedUserRecord, UserWithRole } from '@/modules/core/helpers/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
 export type WorkspaceTeamMember = UserWithRole<LimitedUserRecord> & {
+  email: string | null
   workspaceRole: WorkspaceRoles
   workspaceRoleCreatedAt: Date
   workspaceId: string

@@ -29,6 +29,7 @@ describe('canReceiveProjectVersionPolicy', () => {
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
+      getAdminOverrideEnabled: async () => false,
       ...overrides
     })
 
@@ -59,6 +60,21 @@ describe('canReceiveProjectVersionPolicy', () => {
 
   it('should allow for reviewers+', async () => {
     const sut = buildSUT()
+
+    const result = await sut({
+      userId: 'user-id',
+      projectId: 'project-id'
+    })
+
+    expect(result).toBeOKResult()
+  })
+
+  it('should allow for server admin when god mode on', async () => {
+    const sut = buildSUT({
+      getServerRole: async () => Roles.Server.Admin,
+      getAdminOverrideEnabled: async () => true,
+      getProjectRole: async () => null
+    })
 
     const result = await sut({
       userId: 'user-id',

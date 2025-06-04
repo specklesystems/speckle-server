@@ -5,6 +5,14 @@ import { MemoryDownloader } from './downloaders/memoryDownloader.js'
 import ServerDownloader from './downloaders/serverDownloader.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 
+export interface ObjectLoader2FactoryOptions {
+  useMemoryCache?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+  keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
+  indexedDB?: IDBFactory
+  logger?: CustomLogger
+}
+
 export class ObjectLoader2Factory {
   static createFromObjects(objects: Base[]): ObjectLoader2 {
     const root = objects[0]
@@ -31,26 +39,40 @@ export class ObjectLoader2Factory {
     objectId: string
     token?: string
     headers?: Headers
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
-    indexedDB?: IDBFactory
-    logger?: CustomLogger
+    options?: ObjectLoader2FactoryOptions
   }): ObjectLoader2 {
-    const loader = new ObjectLoader2({
-      rootId: params.objectId,
-      downloader: new ServerDownloader({
-        serverUrl: params.serverUrl,
-        streamId: params.streamId,
-        objectId: params.objectId,
-        token: params.token,
-        headers: params.headers
-      }),
-      database: new IndexedDatabase({
-        logger: params.logger,
-        indexedDB: params.indexedDB,
-        keyRange: params.keyRange
+    let loader: ObjectLoader2
+    if (params.options?.useMemoryCache) {
+      loader = new ObjectLoader2({
+        rootId: params.objectId,
+        downloader: new ServerDownloader({
+          serverUrl: params.serverUrl,
+          streamId: params.streamId,
+          objectId: params.objectId,
+          token: params.token,
+          headers: params.headers
+        }),
+        database: new MemoryDatabase({
+          items: new Map<string, Base>()
+        })
       })
-    })
+    } else {
+      loader = new ObjectLoader2({
+        rootId: params.objectId,
+        downloader: new ServerDownloader({
+          serverUrl: params.serverUrl,
+          streamId: params.streamId,
+          objectId: params.objectId,
+          token: params.token,
+          headers: params.headers
+        }),
+        database: new IndexedDatabase({
+          logger: params.options?.logger,
+          indexedDB: params.options?.indexedDB,
+          keyRange: params.options?.keyRange
+        })
+      })
+    }
     return loader
   }
 }

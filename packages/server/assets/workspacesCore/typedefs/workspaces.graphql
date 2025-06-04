@@ -65,6 +65,7 @@ input WorkspaceUpdateInput {
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
   discoverabilityAutoJoinEnabled: Boolean
+  defaultSeatType: WorkspaceSeatType
 }
 
 input WorkspaceRoleUpdateInput {
@@ -310,6 +311,8 @@ type Workspace {
   If true, allow users to automatically join discoverable workspaces (instead of requesting to join)
   """
   discoverabilityAutoJoinEnabled: Boolean!
+
+  defaultSeatType: WorkspaceSeatType!
   """
   Info about the workspace creation state
   """
@@ -318,17 +321,6 @@ type Workspace {
   Workspace-level configuration for models in embedded viewer
   """
   embedOptions: WorkspaceEmbedOptions!
-  """
-  Get all join requests for all the workspaces the user is an admin of
-  """
-  adminWorkspacesJoinRequests(
-    filter: AdminWorkspaceJoinRequestFilter
-    cursor: String
-    limit: Int! = 25
-  ): WorkspaceJoinRequestCollection
-    @hasServerRole(role: SERVER_USER)
-    @hasScope(scope: "workspace:read")
-    @hasWorkspaceRole(role: ADMIN)
 }
 
 type WorkspaceEmbedOptions {
@@ -465,6 +457,7 @@ type WorkspaceCollaborator {
   id: ID!
   role: String!
   user: LimitedUser!
+  email: String
   projectRoles: [ProjectRole!]!
   """
   Date that the user joined the workspace.
@@ -508,30 +501,6 @@ type WorkspaceCollection {
   totalCount: Int!
   cursor: String
   items: [Workspace!]!
-}
-
-type WorkspaceJoinRequestCollection {
-  totalCount: Int!
-  cursor: String
-  items: [WorkspaceJoinRequest!]!
-}
-
-type WorkspaceJoinRequest {
-  id: String!
-  workspace: Workspace!
-  user: LimitedUser!
-  status: WorkspaceJoinRequestStatus!
-  createdAt: DateTime!
-}
-
-enum WorkspaceJoinRequestStatus {
-  pending
-  approved
-  denied
-}
-
-input AdminWorkspaceJoinRequestFilter {
-  status: WorkspaceJoinRequestStatus
 }
 
 extend type User {
@@ -625,7 +594,7 @@ extend type Project {
   workspaceId: String
 }
 
-# case of using userSearch, and we alway expose this
+# case of using userSearch, and we always expose this
 extend type LimitedUser {
   workspaceDomainPolicyCompliant(workspaceSlug: String): Boolean
   workspaceRole(workspaceId: String): String

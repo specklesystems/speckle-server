@@ -55,11 +55,9 @@
           <ViewerControls v-if="showControls" class="relative z-20" />
 
           <ViewerLimitsDialog
-            v-if="project?.workspace"
+            v-if="project"
             v-model:open="showLimitsDialog"
-            :workspace-slug="project?.workspace.slug"
-            :workspace-role="project?.workspace.role"
-            :project-id="project?.id"
+            :project="project"
             :resource-id-string="resourceIdString"
             :limit-type="limitsDialogType"
           />
@@ -126,6 +124,8 @@ import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
+import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/route'
+import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -143,6 +143,7 @@ graphql(`
       hideSpeckleBranding
     }
     hasAccessToFeature(featureName: hideSpeckleBranding)
+    ...ViewerLimitsDialog_Project
   }
 `)
 
@@ -187,25 +188,29 @@ emit('setup', state)
 
 const {
   resources: {
-    response: { project, resourceItems, modelsAndVersionIds }
-  },
-  urlHashState: { focusedThreadId }
+    response: { project, modelsAndVersionIds }
+  }
 } = state
 
 const showLimitsDialog = ref(false)
-const limitsDialogType = ref<'version' | 'comment' | 'federated'>('version')
+const limitsDialogType = ref<ViewerLimitsDialogType>(ViewerLimitsDialogType.Version)
 
 // Check for missing referencedObject in url referenced versions (out of plan limits)
 const hasMissingReferencedObject = computed(() => {
-  const resourceIds = resourceIdString.value.split(',')
+  const resources = parseUrlParameters(resourceIdString.value)
 
   const result = modelsAndVersionIds.value.some((item) => {
-    const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
+    const version = item.model?.loadedVersion?.items?.find(
+      (v) => v.id === item.versionId
+    )
 
-    if (version && version.referencedObject === null) {
-      // Check if this model+version is in the URL (latest version always available)
-      const modelVersionString = `${item.model.id}@${item.versionId}`.toLowerCase()
-      const isInUrl = resourceIds.some((r) => r.toLowerCase() === modelVersionString)
+    if (!version || version.referencedObject === null) {
+      const modelVersionString = resourceBuilder()
+        .addModel(item.model.id, item.versionId)
+        .toString()
+      const isInUrl = resources.some(
+        (r) => r.toString().toLowerCase() === modelVersionString
+      )
 
       return isInUrl
     }
@@ -214,19 +219,6 @@ const hasMissingReferencedObject = computed(() => {
   })
 
   return result
-})
-
-// Check for missing thread when a specific threadId is present in URL
-const hasMissingThread = computed(() => {
-  const threadIdFromUrl = focusedThreadId.value
-
-  if (!threadIdFromUrl) return false
-
-  const thread = state.resources.response.commentThreads.value.find(
-    (thread) => thread.id === threadIdFromUrl
-  )
-
-  return !thread || !thread.rawText
 })
 
 const isFederated = computed(
@@ -288,8 +280,8 @@ onMounted(() => {
 
 // Watch for plan limit conditions and show dialog if needed
 watch(
-  [hasMissingReferencedObject, hasMissingThread, resourceItems, project],
-  ([missingObject, missingThread]) => {
+  [hasMissingReferencedObject],
+  ([missingObject]) => {
     if (missingObject) {
       if (isFederated.value) {
         limitsDialogType.value = 'federated'
@@ -297,19 +289,8 @@ watch(
         limitsDialogType.value = 'version'
       }
       showLimitsDialog.value = true
-      return
-    }
-
-    // If no workspace and no missing objects, don't show dialog
-    if (!project.value?.workspace) {
+    } else {
       showLimitsDialog.value = false
-      return
-    }
-
-    // Only show comment dialog if it's a federated view AND we have a missing referenced object
-    if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
-      limitsDialogType.value = 'comment'
-      showLimitsDialog.value = true
     }
   },
   { immediate: true }

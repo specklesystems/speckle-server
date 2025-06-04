@@ -37,9 +37,9 @@
       :settings="{ identifier: infiniteLoaderId }"
       @infinite="infiniteLoad"
     />
-    <ProjectPageModelsNewDialog
+    <ProjectModelsAdd
       v-model:open="showNewDialog"
-      :project-id="projectId"
+      :project="project"
       :parent-model-name="newSubmodelParent || undefined"
     />
   </div>

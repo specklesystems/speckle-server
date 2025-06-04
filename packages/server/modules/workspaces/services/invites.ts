@@ -518,7 +518,6 @@ export const getPendingWorkspaceCollaboratorsFactory =
 
       results.push(buildPendingWorkspaceCollaboratorModel(invite, user))
     }
-
     return results
   }
 

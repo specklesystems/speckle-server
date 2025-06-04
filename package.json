@@ -40,6 +40,7 @@
     "cm": "cz",
     "eslint:inspect": "eslint-config-inspector",
     "eslint:projectwide": "node ./utils/eslint-projectwide.mjs",
+    "helm:jsonschema:generate": "./utils/helm/update-schema-json.sh",
     "npkill": "npkill"
   },
   "devDependencies": {
@@ -94,7 +95,6 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "wait-on": ">=7.2.0",
-    "vue-tsc@npm:2.2.2/@vue/language-core": "2.2.0",
     "vitest": "^3.0.7"
   },
   "config": {

@@ -92,14 +92,17 @@ export class MeasurementPointGizmo extends Group {
   }
 
   private getNormalIndicatorMaterial() {
-    const material = new SpeckleLineMaterial({
-      color: 0x047efb,
-      linewidth: 1,
-      worldUnits: false,
-      vertexColors: false,
-      alphaToCoverage: false,
-      resolution: new Vector2(1, 1)
-    })
+    const material = new SpeckleLineMaterial(
+      {
+        color: 0x047efb,
+        linewidth: 1,
+        worldUnits: false,
+        vertexColors: false,
+        alphaToCoverage: false,
+        resolution: new Vector2(1, 1)
+      },
+      ['USE_RTE']
+    )
     material.color = new Color(this._style.normalIndicatorColor)
     material.color.convertSRGBToLinear()
     material.toneMapped = false
@@ -175,7 +178,7 @@ export class MeasurementPointGizmo extends Group {
         opacity: 1,
         side: DoubleSide
       },
-      ['USE_RTE', 'BILLBOARD_FIXED']
+      ['BILLBOARD_FIXED']
     )
     material.toneMapped = false
     material.color.convertSRGBToLinear()

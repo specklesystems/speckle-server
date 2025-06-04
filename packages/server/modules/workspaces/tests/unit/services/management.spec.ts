@@ -261,6 +261,7 @@ describe('Workspace services', () => {
         discoverabilityEnabled: false,
         discoverabilityAutoJoinEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
+        defaultSeatType: null,
         isEmbedSpeckleBrandingHidden: false,
         domains: []
       }
@@ -1143,6 +1144,7 @@ describe('Workspace role services', () => {
                   discoverabilityEnabled: false,
                   discoverabilityAutoJoinEnabled: false,
                   domainBasedMembershipProtectionEnabled: false,
+                  defaultSeatType: null,
                   isEmbedSpeckleBrandingHidden: false
                 }
               },
@@ -1184,6 +1186,7 @@ describe('Workspace role services', () => {
           discoverabilityEnabled: false,
           discoverabilityAutoJoinEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
+          defaultSeatType: null,
           isEmbedSpeckleBrandingHidden: false
         }
 

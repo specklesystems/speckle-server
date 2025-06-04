@@ -629,12 +629,14 @@ export default class SpeckleRenderer {
   private addBatch(batch: Batch, parent: Object3D) {
     const batchRenderable = batch.renderObject
     parent.add(batchRenderable)
+    let useRTE = false
     if (
       batchRenderable instanceof SpeckleMesh ||
       batchRenderable instanceof SpeckleInstancedMesh ||
       batchRenderable instanceof SpeckleText
     ) {
       if (batchRenderable.TAS.bvhHelper) parent.add(batchRenderable.TAS.bvhHelper)
+      useRTE = batchRenderable.needsRTE
     }
     if (batch.geometryType === GeometryType.MESH) {
       batchRenderable.traverse((obj: Object3D) => {
@@ -647,7 +649,7 @@ export default class SpeckleRenderer {
             {
               depthPacking: RGBADepthPacking
             },
-            ['USE_RTE', 'ALPHATEST_REJECTION']
+            useRTE ? ['USE_RTE', 'ALPHATEST_REJECTION'] : ['ALPHATEST_REJECTION']
           )
         }
       })
