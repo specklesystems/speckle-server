@@ -1,8 +1,6 @@
-import cryptoRandomString from 'crypto-random-string'
 import { Roles } from '../../../core/constants.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
-import { Workspace } from '../../domain/workspaces/types.js'
-import { WorkspacePlan } from '../../../workspaces/index.js'
+import cryptoRandomString from 'crypto-random-string'
 import { describe, expect, it } from 'vitest'
 import {
   ServerNoAccessError,
@@ -14,44 +12,44 @@ import {
 } from '../../domain/authErrors.js'
 import { canReadMemberEmailPolicy } from './canReadMemberEmail.js'
 
-const buildCanReadMemberEmailPolicy = (
-  overrides?: Partial<Parameters<typeof canReadMemberEmailPolicy>[0]>
-) => {
-  const workspaceId = cryptoRandomString({ length: 9 })
-
-  return canReadMemberEmailPolicy({
-    getEnv: async () =>
-      parseFeatureFlags({
-        FF_WORKSPACES_MODULE_ENABLED: 'true'
-      }),
-    getServerRole: async () => Roles.Server.Admin,
-    getWorkspace: async () => {
-      return {
-        id: workspaceId,
-        slug: cryptoRandomString({ length: 9 })
-      } as Workspace
-    },
-    getWorkspaceRole: async () => Roles.Workspace.Admin,
-    getWorkspaceSsoProvider: async () => null,
-    getWorkspaceSsoSession: async () => null,
-    getWorkspacePlan: async () => {
-      return {
-        workspaceId,
-        name: 'unlimited',
-        status: 'valid',
-        createdAt: new Date()
-      } as WorkspacePlan
-    },
-    ...overrides
-  })
-}
-
-const getPolicyArgs = () => ({
-  userId: cryptoRandomString({ length: 9 }),
-  workspaceId: cryptoRandomString({ length: 9 })
-})
-
 describe('canReadMemberEmailPolicy', () => {
+  const buildCanReadMemberEmailPolicy = (
+    overrides?: Partial<Parameters<typeof canReadMemberEmailPolicy>[0]>
+  ) => {
+    const workspaceId = cryptoRandomString({ length: 9 })
+
+    return canReadMemberEmailPolicy({
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
+      getServerRole: async () => Roles.Server.Admin,
+      getWorkspace: async () => {
+        return {
+          id: workspaceId,
+          slug: cryptoRandomString({ length: 9 })
+        }
+      },
+      getWorkspaceRole: async () => Roles.Workspace.Admin,
+      getWorkspaceSsoProvider: async () => null,
+      getWorkspaceSsoSession: async () => null,
+      getWorkspacePlan: async () => {
+        return {
+          workspaceId,
+          name: 'unlimited' as const,
+          status: 'valid' as const,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      },
+      ...overrides
+    })
+  }
+
+  const getPolicyArgs = () => ({
+    userId: cryptoRandomString({ length: 9 }),
+    workspaceId: cryptoRandomString({ length: 9 })
+  })
   it('returns error if workspaces is not enabled', async () => {
     const policy = buildCanReadMemberEmailPolicy({
       getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' })
