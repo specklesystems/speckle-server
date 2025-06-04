@@ -28,6 +28,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { TIME } from '@speckle/shared'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { getFileUploadUrlExpiryMinutes } from '@/modules/shared/helpers/envHelper'
 
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
@@ -110,7 +111,7 @@ const blobMutations = {
       blobId,
       userId: ctx.userId,
       fileName: args.input.fileName,
-      urlExpiryDurationSeconds: 10 * TIME.minute
+      urlExpiryDurationSeconds: getFileUploadUrlExpiryMinutes() * TIME.minute
     })
 
     return { url, blobId }

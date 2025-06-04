@@ -1115,4 +1115,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
   value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
 {{- end }}
+- name: FILE_UPLOAD_URL_EXPIRY_MINUTES
+  value: {{ .Values.file_upload_url_expiry_minutes | quote }}
 {{- end }}
