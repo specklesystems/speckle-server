@@ -433,7 +433,9 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
-      - *yarn
+      - run:
+          name: Install Hardened Dependencies
+          command: YARN_ENABLE_HARDENED_MODE=1 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
       - run:
           name: Build public packages
           command: yarn build:public
