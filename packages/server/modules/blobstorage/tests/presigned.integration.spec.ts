@@ -22,7 +22,7 @@ import { Knex } from 'knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { testLogger } from '@/observability/logging'
-import { post } from 'axios'
+import { put } from 'axios'
 import { expectToThrow } from '@/test/assertionHelper'
 import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
 
@@ -123,8 +123,11 @@ describe('Presigned integration @blobstorage', async () => {
         urlExpiryDurationSeconds: expiryDuration
       })
 
-      const response = await post(url, 'test content')
-      expect(response.status, JSON.stringify(response)).to.equal(200)
+      const response = await put(url, 'test content')
+      expect(
+        response.status,
+        JSON.stringify({ statusText: response.statusText, body: response.data })
+      ).to.equal(200)
       expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
 
       const expectedETag = response.headers['etag']

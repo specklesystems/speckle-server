@@ -7,7 +7,10 @@ import type {
   UploadFileStream,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
-import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import {
+  BlobUploadStatus,
+  type BlobStorageItem
+} from '@/modules/blobstorage/domain/types'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { BadRequestError } from '@/modules/shared/errors'
 import { getFileSizeLimitMB } from '@/modules/shared/helpers/envHelper'
@@ -109,7 +112,7 @@ export const markUploadSuccessFactory =
     const updateBlobMetadata = updateBlobMetadataFactory(deps)
     return await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
       const { fileSize } = await getObjectAttributes({ objectKey })
-      return { uploadStatus: 1, fileSize }
+      return { uploadStatus: BlobUploadStatus.Completed, fileSize }
     })
   }
 
@@ -127,7 +130,7 @@ export const markUploadErrorFactory =
     const updateBlobMetadata = updateBlobMetadataFactory(deps)
     return await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
       await deleteObject({ objectKey })
-      return { uploadStatus: 2, uploadError: error }
+      return { uploadStatus: BlobUploadStatus.Error, uploadError: error }
     })
   }
 

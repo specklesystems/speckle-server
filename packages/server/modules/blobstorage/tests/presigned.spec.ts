@@ -3,6 +3,7 @@ import { UserInputError } from '@/modules/core/errors/userinput'
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 
 describe('Presigned @blobstorage', async () => {
   describe('generate a presigned URL', () => {
@@ -17,7 +18,7 @@ describe('Presigned @blobstorage', async () => {
           ...blob,
           fileSize: 0,
           fileType: blob.fileType || 'unknown',
-          uploadStatus: 0,
+          uploadStatus: BlobUploadStatus.Pending,
           uploadError: null,
           createdAt: new Date(),
           fileHash: null
@@ -45,7 +46,7 @@ describe('Presigned @blobstorage', async () => {
           ...blob,
           fileSize: 0,
           fileType: blob.fileType || 'unknown',
-          uploadStatus: 0,
+          uploadStatus: BlobUploadStatus.Pending,
           uploadError: null,
           createdAt: new Date(),
           fileHash: null
@@ -74,7 +75,7 @@ describe('Presigned @blobstorage', async () => {
           ...blob,
           fileSize: 0,
           fileType: blob.fileType || 'unknown',
-          uploadStatus: 0,
+          uploadStatus: BlobUploadStatus.Pending,
           uploadError: null,
           createdAt: new Date(),
           fileHash: null
