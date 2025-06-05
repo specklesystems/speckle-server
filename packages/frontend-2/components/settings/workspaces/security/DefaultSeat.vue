@@ -120,7 +120,7 @@ const handleSeatTypeChange = (newValue: WorkspaceSeatType) => {
   if (
     newValue === SeatTypes.Editor &&
     props.workspace.discoverabilityAutoJoinEnabled &&
-    isSelfServePlan
+    isSelfServePlan.value
   ) {
     pendingNewSeatType.value = newValue
     showConfirmSeatTypeDialog.value = true

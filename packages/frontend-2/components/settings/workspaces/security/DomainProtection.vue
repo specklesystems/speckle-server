@@ -107,6 +107,12 @@ const isDomainProtectionEnabled = computed({
         // eslint-disable-next-line camelcase
         workspace_id: props.workspace?.id
       })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to update domain protection',
+        description: 'Please try again later'
+      })
     }
   }
 })

@@ -111,6 +111,7 @@ const addWorkspaceDomain = useAddWorkspaceDomain()
 const { domains: userEmailDomains } = useVerifiedUserEmailDomains({
   filterBlocked: false
 })
+const { triggerNotification } = useGlobalToast()
 
 const selectedDomain = ref<string>()
 const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
@@ -146,11 +147,25 @@ const handleAddDomain = async () => {
 const handleRemoveDomain = async (domain: { id: string; domain: string }) => {
   if (!props.workspace?.id) return
 
-  await deleteDomain({
+  const result = await deleteDomain({
     input: {
       workspaceId: props.workspace.id,
       id: domain.id
     }
   }).catch(convertThrowIntoFetchResult)
+
+  if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Domain removed',
+      description: `Successfully removed @${domain.domain} from workspace`
+    })
+  } else {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to remove domain',
+      description: 'Please try again later'
+    })
+  }
 }
 </script>
