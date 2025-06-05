@@ -12,6 +12,7 @@ export function ensureError(
   let stringifiedError = ''
   if (e !== null && e !== undefined) {
     try {
+      console.log('Error', { e })
       stringifiedError = JSON.stringify(e)
     } catch {
       //ignore
