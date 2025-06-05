@@ -1,15 +1,15 @@
 import { AppState } from '@speckle/shared/workers'
 import { initializeQueue } from '@speckle/shared/queue'
-import { FILEIMPORT_TIMEOUT, REDIS_URL } from '@/nextGen/config.js'
 import type {
   JobPayload,
   FileImportResultPayload
 } from '@speckle/shared/workers/fileimport'
 import type Bull from 'bull'
-import { logger } from '@/observability/logging.js'
 import { Logger } from 'pino'
 import { ensureError, TIME_MS } from '@speckle/shared'
-import { jobProcessor } from './jobProcessor.js'
+import { logger } from '../observability/logging.js'
+import { FILEIMPORT_TIMEOUT, REDIS_URL } from '../nextGen/config.js'
+import { jobProcessor } from '../nextGen/jobProcessor.js'
 
 const JobQueueName = 'fileimport-service-jobs'
 let jobQueue: Bull.Queue<JobPayload> | undefined = undefined
