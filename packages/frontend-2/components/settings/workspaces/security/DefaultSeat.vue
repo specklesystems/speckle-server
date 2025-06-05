@@ -44,7 +44,10 @@
       @confirm="handleSeatTypeConfirm"
       @cancel="handleSeatTypeCancel"
     >
-      <p class="text-body-xs text-foreground mb-2">
+      <p
+        v-if="workspace.discoverabilityAutoJoinEnabled"
+        class="text-body-xs text-foreground mb-2"
+      >
         You have
         <span class="font-medium">Join without admin approval</span>
         enabled.
@@ -52,7 +55,7 @@
       <p class="text-body-xs text-foreground mb-2">
         Setting the default seat type to
         <span class="font-medium">Editor</span>
-        means each user who joins will consume a paid seat and possibly incur charges.
+        means each user who joins will consume a paid seat and incur charges.
       </p>
       <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
     </SettingsConfirmDialog>
@@ -116,12 +119,8 @@ const seatTypeModel = computed({
 const handleSeatTypeChange = (newValue: WorkspaceSeatType) => {
   if (newValue === currentSeatType.value) return
 
-  // If setting to Editor with auto-join enabled on paid plan, show confirmation
-  if (
-    newValue === SeatTypes.Editor &&
-    props.workspace.discoverabilityAutoJoinEnabled &&
-    isSelfServePlan.value
-  ) {
+  // If setting to Editor on paid plan, show confirmation
+  if (newValue === SeatTypes.Editor && isSelfServePlan) {
     pendingNewSeatType.value = newValue
     showConfirmSeatTypeDialog.value = true
     return
