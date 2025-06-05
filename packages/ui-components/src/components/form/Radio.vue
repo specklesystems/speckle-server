@@ -27,8 +27,8 @@
     >
       <label
         :for="finalId"
-        class="text-foreground flex space-x-2 items-center"
-        :class="{ 'sr-only': hideLabel }"
+        class="text-foreground flex space-x-2 items-center cursor-pointer"
+        :class="{ 'sr-only': hideLabel, '!cursor-not-allowed opacity-70': disabled }"
       >
         <div v-if="icon">
           <component

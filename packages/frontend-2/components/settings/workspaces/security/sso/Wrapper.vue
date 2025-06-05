@@ -254,7 +254,6 @@ const onButtonClick = () => {
 const handleSsoToggle = (enabled: boolean) => {
   logger.info('SSO toggle:', enabled)
   // TODO: Implement actual SSO enable/disable logic here
-  // This would typically involve API calls to enable/disable the SSO provider
 }
 
 // Handle configuration mode toggle for new SSO setup

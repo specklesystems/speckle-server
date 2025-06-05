@@ -39,7 +39,6 @@
         </p>
         <div
           v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
-          :class="!isWorkspaceAdmin ? 'opacity-70' : ''"
           class="max-w-max"
         >
           <FormRadio
@@ -51,11 +50,7 @@
             name="joinPolicy"
             :checked="joinPolicy === option.value"
             size="sm"
-            :label-classes="
-              !isWorkspaceAdmin
-                ? '!font-normal !cursor-not-allowed'
-                : '!font-normal cursor-pointer'
-            "
+            label-classes="!font-normal"
             @change="handleRadioChange(option.value)"
           />
         </div>
