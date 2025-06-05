@@ -115,14 +115,5 @@ export const connectorItems: ConnectorItem[] = [
     images: ['/images/connectors/blender.png'],
     url: 'https://docs.speckle.systems/connectors/blender',
     categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling]
-  },
-  // Non-available connectors
-  {
-    title: 'Excel',
-    slug: 'excel',
-    description: "Create geometry, schedules and analyse your geometry's metadata.",
-    images: ['/images/connectors/excel.png'],
-    categories: [ConnectorCategory.BusinessIntelligence],
-    isComingSoon: true
   }
 ]
