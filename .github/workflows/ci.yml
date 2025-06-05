@@ -26,13 +26,13 @@ jobs:
     uses: ./.github/workflows/tests.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      LICENSE_TOKEN: ${{ secrets.LICENSE_TOKEN }}
-      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
-      STRIPE_ENDPOINT_SIGNING_KEY: ${{ secrets.STRIPE_ENDPOINT_SIGNING_KEY }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      LICENSE_TOKEN: ${{ env.LICENSE_TOKEN }}
+      CHROMATIC_PROJECT_TOKEN: ${{ env.CHROMATIC_PROJECT_TOKEN }}
+      STRIPE_API_KEY: ${{ env.STRIPE_API_KEY }}
+      STRIPE_ENDPOINT_SIGNING_KEY: ${{ env.STRIPE_ENDPOINT_SIGNING_KEY }}
+      CODECOV_TOKEN: ${{ env.CODECOV_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ env.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ env.DOCKERHUB_TOKEN }}
 
   builds:
     needs: get-version
