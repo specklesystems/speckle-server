@@ -4934,6 +4934,7 @@ export type WorkspacePlanUsage = {
 
 export const WorkspacePlans = {
   Academia: 'academia',
+  Enterprise: 'enterprise',
   Free: 'free',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',

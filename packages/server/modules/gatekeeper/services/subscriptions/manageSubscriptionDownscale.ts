@@ -15,7 +15,7 @@ import {
 } from '@/modules/gatekeeper/errors/billing'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { Logger } from '@/observability/logging'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
 import { cloneDeep, isEqual } from 'lodash'
 
 type DownscaleWorkspaceSubscription = (args: {
@@ -41,16 +41,17 @@ export const downscaleWorkspaceSubscriptionFactory =
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
     switch (workspacePlan.name) {
-      case 'team':
-      case 'teamUnlimited':
-      case 'pro':
-      case 'proUnlimited':
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
         break
-      case 'unlimited':
-      case 'academia':
-      case 'proUnlimitedInvoiced':
-      case 'teamUnlimitedInvoiced':
-      case 'free':
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.Enterprise:
+      case WorkspacePlans.Unlimited:
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)

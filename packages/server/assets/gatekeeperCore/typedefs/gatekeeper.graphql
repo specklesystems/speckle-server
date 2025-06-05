@@ -64,6 +64,7 @@ enum WorkspacePlans {
   pro
   proUnlimited
   proUnlimitedInvoiced
+  enterprise
 }
 
 enum WorkspacePlanStatuses {
