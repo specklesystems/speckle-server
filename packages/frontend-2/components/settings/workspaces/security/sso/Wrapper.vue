@@ -18,11 +18,20 @@
       </div>
       <div>
         <!-- Case 1: User doesn't have SSO access/plan -->
-        <div v-if="!workspace.hasAccessToSSO">
-          <p class="text-body-xs text-foreground-2 mb-2">
-            SSO requires a Business subscription
-          </p>
-          <FormButton :to="settingsWorkspaceRoutes.billing.route(workspace.slug)">
+        <div
+          v-if="!workspace.hasAccessToSSO"
+          v-tippy="
+            props.workspace?.role !== Roles.Workspace.Admin
+              ? 'You must be a workspace admin'
+              : undefined
+          "
+        >
+          <FormButton
+            :to="settingsWorkspaceRoutes.billing.route(workspace.slug)"
+            size="sm"
+            color="outline"
+            :disabled="props.workspace?.role !== Roles.Workspace.Admin"
+          >
             Upgrade to Business
           </FormButton>
         </div>
@@ -63,13 +72,6 @@
     </div>
 
     <template v-else>
-      <CommonCard
-        v-if="!workspace.hasAccessToSSO && workspace.sso?.provider?.id"
-        class="bg-foundation"
-      >
-        SSO access requires an active Business subscription.
-      </CommonCard>
-
       <!-- Existing Provider Configuration -->
       <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
         <div v-if="!isEditing" class="flex items-center justify-between">

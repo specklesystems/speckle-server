@@ -18,16 +18,17 @@
             Lets users discover the workspace if they sign up with a matching email.
           </p>
         </div>
-        <div>
+        <div
+          v-tippy="
+            !isWorkspaceAdmin
+              ? 'You must be a workspace admin'
+              : !hasWorkspaceDomains
+              ? 'Your workspace must have at least one verified domain'
+              : undefined
+          "
+        >
           <FormSwitch
             v-model="isDomainDiscoverabilityEnabled"
-            v-tippy="
-              !isWorkspaceAdmin
-                ? 'You must be a workspace admin'
-                : !hasWorkspaceDomains
-                ? 'Your workspace must have at least one verified domain'
-                : undefined
-            "
             name="domain-discoverability"
             :disabled="!hasWorkspaceDomains || !isWorkspaceAdmin"
             :show-label="false"
@@ -112,10 +113,6 @@ graphql(`
     discoverabilityEnabled
     discoverabilityAutoJoinEnabled
     domainBasedMembershipProtectionEnabled
-    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
-      featureName: domainBasedSecurityPolicies
-    )
-    hasAccessToSSO: hasAccessToFeature(featureName: oidcSso)
   }
 `)
 
@@ -154,6 +151,13 @@ const isDomainDiscoverabilityEnabled = computed({
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace discoverability updated',
+        description: `Workspace discoverability has been ${
+          newVal ? 'enabled' : 'disabled'
+        }`
+      })
       mixpanel.track('Workspace Discoverability Toggled', {
         value: newVal,
         // eslint-disable-next-line camelcase

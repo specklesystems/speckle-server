@@ -13,7 +13,11 @@
           Only allow users with verified domains to join the workspace
         </p>
       </div>
-      <div key="tooltipText" v-tippy="switchDisabled ? tooltipText : undefined">
+      <div
+        v-if="props.workspace?.hasAccessToDomainBasedSecurityPolicies"
+        key="tooltipText"
+        v-tippy="switchDisabled ? tooltipText : undefined"
+      >
         <!-- Never disable switch when domain protection is enabled to
          allow expired workspaces ability to downgrade-->
         <FormSwitch
@@ -22,6 +26,23 @@
           :disabled="switchDisabled"
           name="domain-protection"
         />
+      </div>
+      <div
+        v-else
+        v-tippy="
+          props.workspace?.role !== Roles.Workspace.Admin
+            ? 'You must be a workspace admin'
+            : undefined
+        "
+      >
+        <FormButton
+          :to="settingsWorkspaceRoutes.billing.route(workspace.slug)"
+          size="sm"
+          color="outline"
+          :disabled="props.workspace?.role !== Roles.Workspace.Admin"
+        >
+          Upgrade to Business
+        </FormButton>
       </div>
     </div>
   </section>
@@ -34,10 +55,12 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecurityDomainProtection_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { workspaceUpdateDomainProtectionMutation } from '~/lib/workspaces/graphql/mutations'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesSecurityDomainProtection_Workspace on Workspace {
     id
+    slug
     role
     domainBasedMembershipProtectionEnabled
     hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
@@ -57,6 +80,7 @@ const mixpanel = useMixpanel()
 const { mutate: updateDomainProtection } = useMutation(
   workspaceUpdateDomainProtectionMutation
 )
+const { triggerNotification } = useGlobalToast()
 
 const hasWorkspaceDomains = computed(() => (props.workspace?.domains?.length || 0) > 0)
 
@@ -73,6 +97,11 @@ const isDomainProtectionEnabled = computed({
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Domain protection updated',
+        description: `Domain protection has been ${newVal ? 'enabled' : 'disabled'}`
+      })
       mixpanel.track('Workspace Domain Protection Toggled', {
         value: newVal,
         // eslint-disable-next-line camelcase
@@ -85,7 +114,6 @@ const isDomainProtectionEnabled = computed({
 const switchDisabled = computed(() => {
   if (props.workspace?.role !== Roles.Workspace.Admin) return true
   if (isDomainProtectionEnabled.value) return false
-  if (!props.workspace?.hasAccessToDomainBasedSecurityPolicies) return true
   if (!hasWorkspaceDomains.value) return true
   return false
 })
@@ -94,8 +122,6 @@ const tooltipText = computed(() => {
   if (props.workspace?.role !== Roles.Workspace.Admin)
     return 'You must be a workspace admin'
   if (isDomainProtectionEnabled.value) return undefined
-  if (!props.workspace?.hasAccessToDomainBasedSecurityPolicies)
-    return 'Business plan required'
   if (!hasWorkspaceDomains.value)
     return 'Your workspace must have at least one verified domain'
   return undefined
