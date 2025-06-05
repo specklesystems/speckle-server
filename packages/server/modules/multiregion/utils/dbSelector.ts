@@ -287,7 +287,15 @@ const setUpUserReplication = async ({
     if (
       !err.message.includes('already exists') &&
       !err.message.includes('duplicate key value violates unique constraint')
-    )
+    ) {
+      console.log({
+        cause: ensureError(
+          sanitizeError(err),
+          'Unknown database error when creating subscription'
+        ),
+        info: { subName, pubName, regionName }
+      })
+
       throw new DatabaseError(
         'Unknown error while creating subscription {subName} to {pubName} when setting up user replication for region {regionName}',
         to.public,
@@ -299,6 +307,7 @@ const setUpUserReplication = async ({
           info: { subName, pubName, regionName }
         }
       )
+    }
   }
 }
 
