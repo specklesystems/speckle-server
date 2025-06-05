@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable camelcase */
 import { speckleTextVert } from './shaders/speckle-text-vert.js'
 import { speckleTextFrag } from './shaders/speckle-text-frag.js'
@@ -152,13 +151,14 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     `,
       // language=GLSL prefix="void main() {" suffix="}"
       vertexTransform: `
-      mat4 matrix = mat4(
-        troikaBatchTexel(0.0),
-        troikaBatchTexel(1.0),
-        troikaBatchTexel(2.0),
-        troikaBatchTexel(3.0)
-      );
-      position.xyz = (matrix * vec4(position, 1.0)).xyz;
+      /** We don't need this. We're transforming ourselves in our shader to allow for RTE*/
+      // mat4 matrix = mat4(
+      //   troikaBatchTexel(0.0),
+      //   troikaBatchTexel(1.0),
+      //   troikaBatchTexel(2.0),
+      //   troikaBatchTexel(3.0)
+      // );
+      // position.xyz = (matrix * vec4(position, 1.0)).xyz;
     `
     })
 
@@ -267,12 +267,14 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
       this.userData.billboardSize.value.copy(SpeckleTextMaterial.vecBuff)
       SpeckleTextMaterial.matBuff.copy(camera.projectionMatrix).invert()
       this.userData.invProjection.value.copy(SpeckleTextMaterial.matBuff)
+      this.needsUpdate = true
     }
-    /** TO ENABLE */
-    // object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
-    // this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
-    // this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
-    this.needsUpdate = true
+    if (this.defines && this.defines['USE_RTE']) {
+      _object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+      this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+      this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
+      this.needsUpdate = true
+    }
   }
 }
 

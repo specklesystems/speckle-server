@@ -17,7 +17,8 @@ import {
   Ray,
   Raycaster,
   RGBAFormat,
-  Sphere
+  Sphere,
+  Vector3
 } from 'three'
 import { BatchObject } from '../batching/BatchObject.js'
 import { SpeckleRaycaster } from './SpeckleRaycaster.js'
@@ -25,6 +26,7 @@ import { DrawGroup } from '../batching/Batch.js'
 import Logger from '../utils/Logger.js'
 import Materials from '../materials/Materials.js'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
+import { Geometry } from '../converter/Geometry.js'
 
 const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
@@ -317,10 +319,19 @@ export class SpeckleText extends BatchedText {
 
         // Matrix
         const matrix = text.matrix.elements
+
         for (let i = 0; i < 16; i++) {
           this.setTexData(texture, startIndex + i, matrix[i])
         }
-
+        if (material.defines && material.defines['USE_RTE'] !== undefined) {
+          const translation = new Vector3(matrix[12], matrix[13], matrix[14])
+          const translationLow = new Vector3()
+          const translationHigh = new Vector3()
+          Geometry.DoubleToHighLowVector(translation, translationLow, translationHigh)
+          this.setTexData(texture, startIndex + 3, translationLow.x)
+          this.setTexData(texture, startIndex + 7, translationLow.y)
+          this.setTexData(texture, startIndex + 11, translationLow.z)
+        }
         // Let the member populate the uniforms, since that does all the appropriate
         // logic and handling of defaults, and we'll just grab the results from there
         text._prepareForRender(material)

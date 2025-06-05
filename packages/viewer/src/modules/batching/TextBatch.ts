@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box3, Material, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Matrix4, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
@@ -18,6 +18,7 @@ import { Text } from 'troika-three-text'
 import {
   AccelerationStructure,
   BatchObject,
+  Geometry,
   ObjectLayers,
   SpeckleTextMaterial
 } from '../../index.js'
@@ -211,6 +212,8 @@ export default class TextBatch implements Batch {
       const textMap = new Map()
       const batchObjects: BatchObject[] = []
       const textObjects: Text[] = []
+      const box = new Box3()
+      let needsRTE = false
       let textSynced = this.renderViews.length
       for (let k = 0; k < this.renderViews.length; k++) {
         const textMeta = this.renderViews[k].renderData.geometry.metaData
@@ -222,10 +225,17 @@ export default class TextBatch implements Batch {
         )
         text.text = textMeta?.value
         text.fontSize = textMeta?.height
+        box.setFromBufferAttribute(text.geometry.attributes.position)
+        box.applyMatrix4(
+          this.renderViews[k].renderData.geometry.bakeTransform || new Matrix4()
+        )
+        needsRTE ||= Geometry.needsRTE(box)
         text.material = new SpeckleTextMaterial({
           color: 0xff0000 // control color
         }).getDerivedMaterial()
+
         textMap.set(text, this.renderViews[k])
+
         text.sync(() => {
           const { textRenderInfo } = text
           /** We're using visibleBounds for a better fit */
@@ -252,10 +262,10 @@ export default class TextBatch implements Batch {
             geometry.index.array,
             vertices,
             DefaultBVHOptions
-            // this.renderViews[k].renderData.geometry.bakeTransform ?? new Matrix4()
           )
           /** The bounds bug. <Sigh> it needs a refit to report the correct bounds */
           textBvh.refit()
+
           const batchObject = new TextBatchObject(this.renderViews[k], k)
           batchObject.buildAccelerationStructure(textBvh)
           batchObjects.push(batchObject)
@@ -263,8 +273,11 @@ export default class TextBatch implements Batch {
           //@ts-ignore
           this.mesh.addText(text)
           textSynced--
-          // console.log('remaining -> ', textSynced)
           if (!textSynced) {
+            if (needsRTE) {
+              if (!this.batchMaterial.defines) this.batchMaterial.defines = {}
+              this.batchMaterial.defines['USE_RTE'] = ' '
+            }
             this.mesh.setBatchObjects(batchObjects, textObjects)
             this.mesh.setBatchMaterial(this.batchMaterial)
             this.mesh.buildTAS()
