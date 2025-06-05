@@ -10,6 +10,9 @@ jobs:
       image: speckle/pre-commit-runner:latest
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - run: git config --global --add safe.directory $PWD
       - name: Set precommit
         run: |
           echo $PWD &&
