@@ -316,6 +316,7 @@ type Documents = {
     "\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n": typeof types.UsersCountDocument,
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": typeof types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": typeof types.InviteServerUserDocument,
+    "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": typeof types.AddDomainWorkspaceFragmentDoc,
     "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": typeof types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": typeof types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsUpdateWorkspaceEmbedOptions(\n    $input: WorkspaceUpdateEmbedOptionsInput!\n  ) {\n    workspaceMutations {\n      updateEmbedOptions(input: $input) {\n        hideSpeckleBranding\n      }\n    }\n  }\n": typeof types.SettingsUpdateWorkspaceEmbedOptionsDocument,
@@ -408,7 +409,6 @@ type Documents = {
     "\n  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n": typeof types.RequestToJoinWorkspaceDocument,
     "\n  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {\n    workspaceMutations {\n      dismiss(input: $input)\n    }\n  }\n": typeof types.DismissDiscoverableWorkspaceDocument,
     "\n  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityAutoJoinEnabled\n      }\n    }\n  }\n": typeof types.WorkspaceUpdateAutoJoinMutationDocument,
-    "\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n": typeof types.WorkspaceUpdateDefaultSeatTypeMutationDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": typeof types.WorkspaceAccessCheckDocument,
     "\n  query WorkspaceSidebar(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceSidebar_Workspace\n    }\n  }\n": typeof types.WorkspaceSidebarDocument,
     "\n  query WorkspaceDashboard(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceDashboard_Workspace\n    }\n  }\n": typeof types.WorkspaceDashboardDocument,
@@ -452,7 +452,7 @@ type Documents = {
     "\n  fragment SettingsWorkspacesProjects_Workspace on Workspace {\n    id\n    name\n    slug\n    plan {\n      name\n    }\n    role\n    permissions {\n      canCreateProject {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesProjects_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_Workspace on Workspace {\n    id\n    role\n    defaultRegion {\n      id\n      ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n    }\n    hasAccessToMultiRegion: hasAccessToFeature(\n      featureName: workspaceDataRegionSpecificity\n    )\n    hasProjects: projects(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.SettingsWorkspacesRegions_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
-    "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    plan {\n      name\n      status\n    }\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    discoverabilityAutoJoinEnabled\n    defaultSeatType\n    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(\n      featureName: domainBasedSecurityPolicies\n    )\n  }\n": typeof types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    plan {\n      name\n      status\n    }\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    discoverabilityAutoJoinEnabled\n    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(\n      featureName: domainBasedSecurityPolicies\n    )\n  }\n": typeof types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
 };
 const documents: Documents = {
     "\n  fragment AuthLoginWithEmailBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    email\n    user {\n      id\n    }\n  }\n": types.AuthLoginWithEmailBlock_PendingWorkspaceCollaboratorFragmentDoc,
@@ -757,6 +757,7 @@ const documents: Documents = {
     "\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n": types.UsersCountDocument,
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
+    "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": types.AddDomainWorkspaceFragmentDoc,
     "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsUpdateWorkspaceEmbedOptions(\n    $input: WorkspaceUpdateEmbedOptionsInput!\n  ) {\n    workspaceMutations {\n      updateEmbedOptions(input: $input) {\n        hideSpeckleBranding\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceEmbedOptionsDocument,
@@ -849,7 +850,6 @@ const documents: Documents = {
     "\n  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n": types.RequestToJoinWorkspaceDocument,
     "\n  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {\n    workspaceMutations {\n      dismiss(input: $input)\n    }\n  }\n": types.DismissDiscoverableWorkspaceDocument,
     "\n  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityAutoJoinEnabled\n      }\n    }\n  }\n": types.WorkspaceUpdateAutoJoinMutationDocument,
-    "\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n": types.WorkspaceUpdateDefaultSeatTypeMutationDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
     "\n  query WorkspaceSidebar(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceSidebar_Workspace\n    }\n  }\n": types.WorkspaceSidebarDocument,
     "\n  query WorkspaceDashboard(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceDashboard_Workspace\n    }\n  }\n": types.WorkspaceDashboardDocument,
@@ -893,7 +893,7 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspacesProjects_Workspace on Workspace {\n    id\n    name\n    slug\n    plan {\n      name\n    }\n    role\n    permissions {\n      canCreateProject {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.SettingsWorkspacesProjects_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_Workspace on Workspace {\n    id\n    role\n    defaultRegion {\n      id\n      ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n    }\n    hasAccessToMultiRegion: hasAccessToFeature(\n      featureName: workspaceDataRegionSpecificity\n    )\n    hasProjects: projects(limit: 0) {\n      totalCount\n    }\n  }\n": types.SettingsWorkspacesRegions_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
-    "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    plan {\n      name\n      status\n    }\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    discoverabilityAutoJoinEnabled\n    defaultSeatType\n    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(\n      featureName: domainBasedSecurityPolicies\n    )\n  }\n": types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    plan {\n      name\n      status\n    }\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    discoverabilityAutoJoinEnabled\n    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(\n      featureName: domainBasedSecurityPolicies\n    )\n  }\n": types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
 };
 
 /**
@@ -2121,6 +2121,10 @@ export function graphql(source: "\n  mutation InviteServerUser($input: [ServerIn
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    "): (typeof documents)["\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -2489,10 +2493,6 @@ export function graphql(source: "\n  mutation WorkspaceUpdateAutoJoinMutation($i
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function graphql(source: "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -2665,7 +2665,7 @@ export function graphql(source: "\n  fragment SettingsWorkspacesRegions_ServerIn
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    plan {\n      name\n      status\n    }\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    discoverabilityAutoJoinEnabled\n    defaultSeatType\n    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(\n      featureName: domainBasedSecurityPolicies\n    )\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    plan {\n      name\n      status\n    }\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    discoverabilityAutoJoinEnabled\n    defaultSeatType\n    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(\n      featureName: domainBasedSecurityPolicies\n    )\n  }\n"];
+export function graphql(source: "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    plan {\n      name\n      status\n    }\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    discoverabilityAutoJoinEnabled\n    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(\n      featureName: domainBasedSecurityPolicies\n    )\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    plan {\n      name\n      status\n    }\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    discoverabilityAutoJoinEnabled\n    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(\n      featureName: domainBasedSecurityPolicies\n    )\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
