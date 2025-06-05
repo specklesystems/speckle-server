@@ -112,7 +112,6 @@ graphql(`
     }
     discoverabilityEnabled
     discoverabilityAutoJoinEnabled
-    domainBasedMembershipProtectionEnabled
   }
 `)
 
