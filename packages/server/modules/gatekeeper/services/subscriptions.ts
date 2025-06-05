@@ -19,7 +19,8 @@ import {
 import {
   PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
-  throwUncoveredError
+  throwUncoveredError,
+  WorkspacePlans
 } from '@speckle/shared'
 import { cloneDeep } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
@@ -78,16 +79,17 @@ export const handleSubscriptionUpdateFactory =
 
     if (status) {
       switch (workspacePlan.name) {
-        case 'team':
-        case 'teamUnlimited':
-        case 'pro':
-        case 'proUnlimited':
+        case WorkspacePlans.Team:
+        case WorkspacePlans.TeamUnlimited:
+        case WorkspacePlans.Pro:
+        case WorkspacePlans.ProUnlimited:
           break
-        case 'unlimited':
-        case 'academia':
-        case 'proUnlimitedInvoiced':
-        case 'teamUnlimitedInvoiced':
-        case 'free':
+        case WorkspacePlans.Unlimited:
+        case WorkspacePlans.Academia:
+        case WorkspacePlans.ProUnlimitedInvoiced:
+        case WorkspacePlans.TeamUnlimitedInvoiced:
+        case WorkspacePlans.Free:
+        case WorkspacePlans.Enterprise:
           throw new WorkspacePlanMismatchError()
         default:
           throwUncoveredError(workspacePlan)
@@ -146,21 +148,22 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
     switch (workspacePlan.name) {
-      case 'team':
-      case 'teamUnlimited':
-      case 'pro':
-      case 'proUnlimited':
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
         // If viewer seat type, we don't need to do anything
         if (seatType === WorkspaceSeatType.Viewer) {
           return
         } else {
           break
         }
-      case 'unlimited':
-      case 'academia':
-      case 'proUnlimitedInvoiced':
-      case 'teamUnlimitedInvoiced':
-      case 'free':
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Enterprise:
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)

@@ -109,3 +109,16 @@ export const getProjectCollaboratorsQuery = gql`
     }
   }
 `
+
+export const getProjectVersionsQuery = gql`
+  query GetProjectVersions($projectId: String!) {
+    project(id: $projectId) {
+      versions {
+        items {
+          id
+          referencedObject
+        }
+      }
+    }
+  }
+`

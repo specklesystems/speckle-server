@@ -1,7 +1,12 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { Roles, throwUncoveredError, WorkspacePlanFeatures } from '@speckle/shared'
+import {
+  Roles,
+  throwUncoveredError,
+  WorkspacePlanFeatures,
+  WorkspacePlans
+} from '@speckle/shared'
 import {
   getWorkspaceFactory,
   getWorkspaceRoleForUserFactory,
@@ -71,19 +76,20 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (!workspacePlan) return null
           let paymentMethod: WorkspacePaymentMethod
           switch (workspacePlan.name) {
-            case 'team':
-            case 'teamUnlimited':
-            case 'pro':
-            case 'proUnlimited':
+            case WorkspacePlans.Team:
+            case WorkspacePlans.TeamUnlimited:
+            case WorkspacePlans.Pro:
+            case WorkspacePlans.ProUnlimited:
               paymentMethod = WorkspacePaymentMethod.Billing
               break
-            case 'unlimited':
-            case 'academia':
-            case 'free':
+            case WorkspacePlans.Unlimited:
+            case WorkspacePlans.Academia:
+            case WorkspacePlans.Free:
               paymentMethod = WorkspacePaymentMethod.Unpaid
               break
-            case 'proUnlimitedInvoiced':
-            case 'teamUnlimitedInvoiced':
+            case WorkspacePlans.ProUnlimitedInvoiced:
+            case WorkspacePlans.TeamUnlimitedInvoiced:
+            case WorkspacePlans.Enterprise:
               paymentMethod = WorkspacePaymentMethod.Invoice
               break
             default:
@@ -248,17 +254,18 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (subscription) {
             let purchased = 0
             switch (workspacePlan.name) {
-              case 'unlimited':
-              case 'academia':
-              case 'free':
-              case 'proUnlimitedInvoiced':
-              case 'teamUnlimitedInvoiced':
+              case WorkspacePlans.Unlimited:
+              case WorkspacePlans.Academia:
+              case WorkspacePlans.Free:
+              case WorkspacePlans.ProUnlimitedInvoiced:
+              case WorkspacePlans.TeamUnlimitedInvoiced:
+              case WorkspacePlans.Enterprise:
                 // not stripe paid plans and old plans do not have seats available
                 break
-              case 'team':
-              case 'teamUnlimited':
-              case 'pro':
-              case 'proUnlimited':
+              case WorkspacePlans.Team:
+              case WorkspacePlans.TeamUnlimited:
+              case WorkspacePlans.Pro:
+              case WorkspacePlans.ProUnlimited:
                 purchased = getTotalSeatsCountByPlanFactory({
                   getWorkspacePlanProductId
                 })({
