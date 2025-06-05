@@ -64,7 +64,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   WorkspaceSeatType,
-  SettingsWorkspacesSecurity_WorkspaceFragment
+  SettingsWorkspacesSecurityDefaultSeat_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Roles, SeatTypes } from '@speckle/shared'
 import { workspaceUpdateDefaultSeatTypeMutation } from '~/lib/workspaces/graphql/mutations'
@@ -87,7 +87,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: SettingsWorkspacesSecurity_WorkspaceFragment
+  workspace: SettingsWorkspacesSecurityDefaultSeat_WorkspaceFragment
 }>()
 
 const mixpanel = useMixpanel()
