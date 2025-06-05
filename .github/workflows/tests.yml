@@ -22,44 +22,52 @@ on:
         required: true
 
 jobs:
+  lint-and-prettier:
+    name: Lint and prettier
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install hardened dependencies
+        run: YARN_ENABLE_HARDENED_MODE=1 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn eslint:projectwide
+      - name: Run prettier check
+        run: yarn prettier:check
+      - name: Check JSON Schema is up to date
+        run: |
+          yarn helm:jsonschema:generate
+          git diff --exit-code
+
   pre-commit:
     name: Precommit check
     runs-on: blacksmith
     container:
-      # TODO: a github friendly image here
       image: speckle/pre-commit-runner:latest
-    defaults:
-      run:
-        working-directory: speckle
     steps:
       - uses: actions/checkout@v4.2.2
         with:
           path: speckle
-      - uses: actions/checkout@v4.2.2
-        with:
-          repository: bitnami-labs/readme-generator-for-helm
-          path: readme-generator-for-helm
       - uses: useblacksmith/setup-node@v4
         with:
           node-version: 22
-          cache-dependency-path: ./speckle/yarn.lock
           cache: yarn
       - name: Set precommit
         run: pre-commit install-hooks --config ./.pre-commit-config.yaml
-        working-directory: speckle
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-        working-directory: speckle
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
-        working-directory: speckle
       - name: Run precommit
         run: ./.husky/pre-commit
-        working-directory: speckle
       - name: Diff on failure
         if: failure()
         run: git --no-pager diff
-        working-directory: speckle
 
   test-frontend-2:
     name: Frontend
@@ -71,7 +79,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - name: Lint everything
@@ -88,7 +96,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - name: Lint viewer
@@ -106,7 +114,7 @@ jobs:
 
   ui-components-chromatic:
     env:
-      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }} # TODO: fix envbar
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     name: UI components chromatic
     runs-on: blacksmith
     steps:
@@ -118,7 +126,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - name: Run chromatic
@@ -135,11 +143,22 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Lint
         run: yarn lint:ci
         working-directory: 'packages/shared'
-      # TODO: (codecov)
+      - name: Run tests (all FFs)
+        run: ENABLE_ALL_FFS=1 yarn test:ci
+        working-directory: 'packages/shared'
+      - name: Run tests (no FFs)
+        run: DISABLE_ALL_FFS=1 yarn test:ci
+        working-directory: 'packages/shared'
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/shared/coverage/coverage-final.json
       - name: Build
         run: yarn build
         working-directory: 'packages/shared'
@@ -160,7 +179,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - name: Lint everything
@@ -172,8 +191,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: packages/objectsender/coverage/coverage-final.json
-          verbose: true
-          name: objectsender
 
   test-ui-components:
     name: UI Components
@@ -185,7 +202,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable # we need PLAYWRIGHT
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable # we need PLAYWRIGHT
       - name: Build public packages
         run: yarn build:public
       - name: Lint tailwind theme
@@ -211,7 +228,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - name: Lint everything
@@ -222,6 +239,11 @@ jobs:
     runs-on: blacksmith
     name: Docker build postgres container
     steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
@@ -295,7 +317,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - run: cp .env.test-example .env.test
@@ -307,7 +329,12 @@ jobs:
         run: yarn test:report
         working-directory: 'packages/server'
         timeout-minutes: 30
-      # TODO: codecov
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/server/coverage/lcov.info
       - name: Introspect GQL schema for subsequent checks
         run: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
         working-directory: 'packages/server'
@@ -386,7 +413,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - run: cp .env.test-example .env.test
@@ -520,7 +547,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - run: cp .env.test-example .env.test
