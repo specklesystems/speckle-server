@@ -271,6 +271,7 @@ const setUpUserReplication = async ({
     })
 
     await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
+    console.log('extension?')
     await to.public.raw(rawSqeel, [
       subName,
       `dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}`,
