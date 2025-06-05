@@ -13,6 +13,7 @@ import { Logger } from '@/observability/logging'
 import { ensureError, Optional } from '@speckle/shared'
 import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
 import { isEmpty } from 'lodash'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 // import { acceptedFileExtensions } from '@speckle/shared'
 
 export const generatePresignedUrlFactory =
@@ -71,6 +72,11 @@ export const registerCompletedUploadFactory =
     const { blobId, projectId, expectedETag, maximumFileSize } = params
     if (isEmpty(expectedETag)) {
       throw new UserInputError('ETag is required to register a completed upload')
+    }
+    if (maximumFileSize <= 0) {
+      throw new MisconfiguredEnvironmentError(
+        'Maximum file size must be greater than 0'
+      )
     }
 
     const objectKey = getObjectKey(projectId, blobId)

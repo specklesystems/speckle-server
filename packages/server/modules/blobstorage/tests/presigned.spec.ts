@@ -8,6 +8,7 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 import { testLogger } from '@/observability/logging'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 
 describe('Presigned @blobstorage', async () => {
   describe('generate a presigned URL', () => {
@@ -166,7 +167,7 @@ describe('Presigned @blobstorage', async () => {
       const projectId = cryptoRandomString({ length: 10 })
       const fileHash = cryptoRandomString({ length: 10 })
       const blobId = cryptoRandomString({ length: 10 })
-      const maximumFileSize = 1000 // 100 bytes for this test
+      const maximumFileSize = 100
       const SUT = registerCompletedUploadFactory({
         getBlobMetadata: async () => ({
           contentLength: maximumFileSize + 1,
@@ -187,6 +188,32 @@ describe('Presigned @blobstorage', async () => {
       )
       expect(thrownError).to.be.instanceOf(UserInputError)
       expect(thrownError.message).to.contain('File size exceeds maximum')
+    })
+    it('should error if the maximum file size is not logical', async () => {
+      const projectId = cryptoRandomString({ length: 10 })
+      const fileHash = cryptoRandomString({ length: 10 })
+      const blobId = cryptoRandomString({ length: 10 })
+      const maximumFileSize = -22 // negative file size for this test
+      const SUT = registerCompletedUploadFactory({
+        getBlobMetadata: async () => ({
+          contentLength: 100,
+          eTag: fileHash
+        }),
+        updateBlob: fakeUpdateBlob,
+        logger: testLogger
+      })
+
+      const thrownError = await expectToThrow(
+        async () =>
+          await SUT({
+            projectId,
+            blobId,
+            expectedETag: fileHash,
+            maximumFileSize
+          })
+      )
+      expect(thrownError).to.be.instanceOf(MisconfiguredEnvironmentError)
+      expect(thrownError.message).to.contain('Maximum file size must be greater than')
     })
   })
 })

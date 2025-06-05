@@ -10,7 +10,6 @@ import {
   ObjectStorage
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
-  getBlobMetadataFactory,
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
@@ -26,19 +25,41 @@ import { put } from 'axios'
 import { expectToThrow } from '@/test/assertionHelper'
 import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
-import { GetBlobMetadata } from '@/modules/blobstorage/domain/operations'
+import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
+import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
+import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
+import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
+import { saveUploadFileFactoryV2 } from '@/modules/fileuploads/repositories/fileUploads'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
+import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 
-describe('Presigned integration @blobstorage', async () => {
+describe('Presigned integration @fileuploads', async () => {
   const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
   const ownedProject = {
     id: '',
     name: 'owned stream',
     isPublic: false
   }
+  const model: BasicTestBranch = {
+    name: cryptoRandomString({ length: 10 }),
+    id: '',
+    streamId: '',
+    authorId: ''
+  }
 
   let projectDb: Knex
   let projectStorage: ObjectStorage
-  let getBlobMetadata: GetBlobMetadata
 
   before(async () => {
     await beforeEachContext()
@@ -49,55 +70,30 @@ describe('Presigned integration @blobstorage', async () => {
         ownerId: serverAdmin.id
       })
     ).id
+
+    await createTestBranch({
+      branch: model,
+      stream: {
+        id: ownedProject.id,
+        name: '', //ignored
+        isPublic: false, //ignored
+        ownerId: '' //ignored
+      },
+      owner: {
+        name: '', //ignored
+        email: '', //ignored
+        id: serverAdmin.id
+      }
+    })
     ;[projectDb, projectStorage] = await Promise.all([
       getProjectDbClient({ projectId: ownedProject.id }),
       getProjectObjectStorage({ projectId: ownedProject.id })
     ])
-    getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
   })
 
-  describe('generate a presigned URL', () => {
-    let SUT: ReturnType<typeof generatePresignedUrlFactory>
-    before(() => {
-      SUT = generatePresignedUrlFactory({
-        getSignedUrl: getSignedUrlFactory({
-          objectStorage: projectStorage
-        }),
-        upsertBlob: upsertBlobFactory({
-          db: projectDb
-        })
-      })
-    })
-
-    it('should provision a blob with uploadStatus 0 and return a presigned URL', async () => {
-      const blobId = cryptoRandomString({ length: 10 })
-      const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
-      const expiryDuration = 20
-      const url = await SUT({
-        blobId,
-        fileName,
-        projectId: ownedProject.id,
-        userId: serverAdmin.id,
-        urlExpiryDurationSeconds: expiryDuration
-      })
-
-      expect(url).to.contain(`/assets/${ownedProject.id}/${blobId}?`)
-      expect(url).to.contain(`X-Amz-Expires=${expiryDuration}`)
-      expect(url).to.contain('X-Amz-Credential') // we don't need to check the whole url, we can trust S3; only that it appears to be signed
-
-      const storedBlob = await getBlobMetadata({ blobId, streamId: ownedProject.id })
-      expect(storedBlob).to.exist
-      expect(storedBlob.id).to.equal(blobId)
-      expect(storedBlob.uploadStatus).to.equal(0)
-      expect(storedBlob.fileName).to.equal(fileName)
-      expect(storedBlob.streamId).to.equal(ownedProject.id)
-      expect(storedBlob.fileType).to.equal('stl')
-    })
-  })
-
-  describe('register completed upload', () => {
+  describe('register completed upload and start file import', () => {
     let generatePresignedUrl: ReturnType<typeof generatePresignedUrlFactory>
-    let SUT: ReturnType<typeof registerCompletedUploadFactory>
+    let SUT: RegisterUploadCompleteAndStartFileImport
     before(() => {
       generatePresignedUrl = generatePresignedUrlFactory({
         getSignedUrl: getSignedUrlFactory({
@@ -107,25 +103,48 @@ describe('Presigned integration @blobstorage', async () => {
           db: projectDb
         })
       })
-      SUT = registerCompletedUploadFactory({
-        getBlobMetadata: getBlobMetadataFromStorage({ objectStorage: projectStorage }),
-        updateBlob: updateBlobFactory({ db: projectDb }),
-        logger: testLogger
+      SUT = registerUploadCompleteAndStartFileImportFactory({
+        registerCompletedUpload: registerCompletedUploadFactory({
+          getBlobMetadata: getBlobMetadataFromStorage({
+            objectStorage: projectStorage
+          }),
+          updateBlob: updateBlobFactory({ db: projectDb }),
+          logger: testLogger
+        }),
+        insertNewUploadAndNotify: insertNewUploadAndNotifyFactoryV2({
+          pushJobToFileImporter: pushJobToFileImporterFactory({
+            getServerOrigin,
+            scheduleJob,
+            createAppToken: createAppTokenFactory({
+              storeApiToken: storeApiTokenFactory({ db: projectDb }),
+              storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
+              storeTokenResourceAccessDefinitions:
+                storeTokenResourceAccessDefinitionsFactory({
+                  db: projectDb
+                }),
+              storeUserServerAppToken: storeUserServerAppTokenFactory({ db: projectDb })
+            })
+          }),
+          saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+          publish,
+          emit: getEventBus().emit
+        }),
+        getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
     })
-    it('should update the blob with uploadStatus 1 and the correct ETag', async () => {
-      const blobId = cryptoRandomString({ length: 10 })
+    it('should create a record for the uploaded file', async () => {
+      const fileId = cryptoRandomString({ length: 10 })
       const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
       const expiryDuration = 1 * TIME.minute
       const url = await generatePresignedUrl({
-        blobId,
+        blobId: fileId,
         fileName,
         projectId: ownedProject.id,
         userId: serverAdmin.id,
         urlExpiryDurationSeconds: expiryDuration
       })
 
-      const response = await put(url, 'test content')
+      const response = await put(url, cryptoRandomString({ length: 10 }))
       expect(
         response.status,
         JSON.stringify({ statusText: response.statusText, body: response.data })
@@ -133,36 +152,39 @@ describe('Presigned integration @blobstorage', async () => {
       expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
 
       const expectedETag = response.headers['etag']
-      const storedBlob = await SUT({
-        blobId,
+      const storedFile = await SUT({
+        fileId,
+        modelId: model.id,
+        userId: serverAdmin.id,
         projectId: ownedProject.id,
         expectedETag,
         maximumFileSize: 1 * 1024 * 1024 // 1 MB
       })
 
-      expect(storedBlob).to.exist
-      expect(storedBlob.uploadStatus).to.equal(1)
-      expect(storedBlob.fileHash).to.equal(expectedETag)
-      expect(storedBlob.fileSize).to.be.greaterThan(0)
+      expect(storedFile).to.exist
+      expect(storedFile.fileType).to.equal('stl')
+      expect(storedFile.fileSize).to.equal(10)
     })
-    it('should throw an StoredBlobAccessError if the blob cannot be found', async () => {
+    it('should throw a StoredBlobAccessError if the blob cannot be found', async () => {
       const thrownError = await expectToThrow(
         async () =>
           await SUT({
-            blobId: cryptoRandomString({ length: 10 }),
+            fileId: cryptoRandomString({ length: 10 }),
             projectId: ownedProject.id,
+            modelId: model.id,
+            userId: serverAdmin.id,
             expectedETag: cryptoRandomString({ length: 32 }),
             maximumFileSize: 1 * 1024 * 1024 // 1 MB
           })
       )
       expect(thrownError).to.be.instanceOf(StoredBlobAccessError)
     })
-    it('should throw an UserInputError if the blob exceeds the maximum allowed size', async () => {
-      const blobId = cryptoRandomString({ length: 10 })
+    it('should throw an UserInputError if the file exceeds the maximum allowed size', async () => {
+      const fileId = cryptoRandomString({ length: 10 })
       const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
       const expiryDuration = 1 * TIME.minute
       const url = await generatePresignedUrl({
-        blobId,
+        blobId: fileId,
         fileName,
         projectId: ownedProject.id,
         userId: serverAdmin.id,
@@ -180,7 +202,9 @@ describe('Presigned integration @blobstorage', async () => {
       const thrownError = await expectToThrow(
         async () =>
           await SUT({
-            blobId,
+            fileId,
+            modelId: model.id,
+            userId: serverAdmin.id,
             projectId: ownedProject.id,
             expectedETag,
             maximumFileSize: 1 // 1 byte max
