@@ -4,6 +4,7 @@ import { DefermentManagerOptions } from '../operations/options.js'
 
 export class DefermentManager {
   private deferments: Map<string, DeferredBase> = new Map()
+  private timer?: ReturnType<typeof setTimeout>
   private logger: CustomLogger
   private currentSize = 0
   private disposed = false
@@ -12,6 +13,7 @@ export class DefermentManager {
   private totalDefermentRequests: Map<string, number> = new Map()
 
   constructor(private options: DefermentManagerOptions) {
+    this.resetGlobalTimer()
     this.logger = options.logger || ((): void => {})
   }
 
@@ -59,14 +61,6 @@ export class DefermentManager {
     if (this.disposed) throw new Error('DefermentManager is disposed')
     const now = this.now()
     this.currentSize += item.size || 0
-    if (this.currentSize > this.options.maxSizeInMb * 1024 * 1024) {
-      this.logger(
-        'deferments size exceeded, cleaning up',
-        this.currentSize,
-        this.options.maxSizeInMb
-      )
-      this.cleanDeferments()
-    }
     //order matters here with found before undefer
     const deferredBase = this.deferments.get(item.baseId)
     if (deferredBase) {
@@ -79,9 +73,21 @@ export class DefermentManager {
     }
   }
 
+  private resetGlobalTimer(): void {
+    const run = (): void => {
+      this.cleanDeferments()
+      this.timer = setTimeout(run, this.options.ttlms)
+    }
+    this.timer = setTimeout(run, this.options.ttlms)
+  }
+
   dispose(): void {
     if (this.disposed) return
     this.disposed = true
+    if (this.timer) {
+      clearTimeout(this.timer)
+      this.timer = undefined
+    }
     this.clearDeferments()
   }
 
@@ -99,6 +105,15 @@ export class DefermentManager {
   }
 
   private cleanDeferments(): void {
+    const maxSizeBytes = this.options.maxSizeInMb * 1024 * 1024
+    if (this.currentSize < maxSizeBytes) {
+      this.logger(
+        'deferments size is ok, no need to clean',
+        this.currentSize,
+        maxSizeBytes
+      )
+      return
+    }
     const now = this.now()
     let cleaned = 0
     const start = performance.now()
@@ -115,6 +130,9 @@ export class DefermentManager {
         this.currentSize -= deferredBase.getItem()?.size || 0
         this.deferments.delete(deferredBase.getId())
         cleaned++
+        if (this.currentSize < maxSizeBytes) {
+          break
+        }
       }
     }
     this.logger(
