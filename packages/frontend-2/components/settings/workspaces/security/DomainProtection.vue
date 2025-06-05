@@ -8,7 +8,7 @@
 
     <div class="flex">
       <div class="flex-1 flex-col pr-6 gap-y-1">
-        <p class="text-body-xs font-medium text-foreground">Domain protection</p>
+        <p class="text-body-xs font-medium text-foreground">Enable domain protection</p>
         <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
           Only allow users with verified domains to join the workspace
         </p>
@@ -28,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecurityDomainProtection_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
@@ -37,6 +38,7 @@ import { workspaceUpdateDomainProtectionMutation } from '~/lib/workspaces/graphq
 graphql(`
   fragment SettingsWorkspacesSecurityDomainProtection_Workspace on Workspace {
     id
+    role
     domainBasedMembershipProtectionEnabled
     hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
       featureName: domainBasedSecurityPolicies
@@ -81,6 +83,7 @@ const isDomainProtectionEnabled = computed({
 })
 
 const switchDisabled = computed(() => {
+  if (props.workspace?.role !== Roles.Workspace.Admin) return true
   if (isDomainProtectionEnabled.value) return false
   if (!props.workspace?.hasAccessToDomainBasedSecurityPolicies) return true
   if (!hasWorkspaceDomains.value) return true
@@ -88,6 +91,8 @@ const switchDisabled = computed(() => {
 })
 
 const tooltipText = computed(() => {
+  if (props.workspace?.role !== Roles.Workspace.Admin)
+    return 'You must be a workspace admin'
   if (isDomainProtectionEnabled.value) return undefined
   if (!props.workspace?.hasAccessToDomainBasedSecurityPolicies)
     return 'Business plan required'

@@ -9,44 +9,58 @@
     </CommonCard>
 
     <div class="flex flex-col space-y-8">
-      <div class="flex items-center">
+      <div class="flex">
         <div class="flex-1 flex-col pr-6 gap-y-1">
           <p class="text-body-xs font-medium text-foreground">
-            Domain-based discoverability
+            Enable workspace discoverability
           </p>
           <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-            Allow users with verified domain emails to find and request access to this
-            workspace.
+            Lets users discover the workspace if they sign up with a matching email.
           </p>
         </div>
-        <FormSwitch
-          v-model="isDomainDiscoverabilityEnabled"
-          v-tippy="
-            !hasWorkspaceDomains
-              ? 'Your workspace must have at least one verified domain'
-              : undefined
-          "
-          name="domain-discoverability"
-          :disabled="!hasWorkspaceDomains"
-          :show-label="false"
-        />
+        <div>
+          <FormSwitch
+            v-model="isDomainDiscoverabilityEnabled"
+            v-tippy="
+              !isWorkspaceAdmin
+                ? 'You must be a workspace admin'
+                : !hasWorkspaceDomains
+                ? 'Your workspace must have at least one verified domain'
+                : undefined
+            "
+            name="domain-discoverability"
+            :disabled="!hasWorkspaceDomains || !isWorkspaceAdmin"
+            :show-label="false"
+          />
+        </div>
       </div>
 
       <div v-if="isDomainDiscoverabilityEnabled" class="flex flex-col gap-2">
         <p class="text-body-xs font-medium text-foreground">
           When someone wants to join
         </p>
-        <FormRadio
-          v-for="option in radioOptions"
-          :key="option.value"
-          :label="option.title"
-          :value="option.value"
-          name="joinPolicy"
-          :checked="joinPolicy === option.value"
-          size="sm"
-          label-classes="!font-normal"
-          @change="joinPolicy = option.value"
-        />
+        <div
+          v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
+          :class="!isWorkspaceAdmin ? 'opacity-70' : ''"
+          class="max-w-max"
+        >
+          <FormRadio
+            v-for="option in radioOptions"
+            :key="option.value"
+            :disabled="!isWorkspaceAdmin"
+            :label="option.title"
+            :value="option.value"
+            name="joinPolicy"
+            :checked="joinPolicy === option.value"
+            size="sm"
+            :label-classes="
+              !isWorkspaceAdmin
+                ? '!font-normal !cursor-not-allowed'
+                : '!font-normal cursor-pointer'
+            "
+            @change="joinPolicy = option.value"
+          />
+        </div>
       </div>
     </div>
 
@@ -66,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecurityDiscoverability_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
@@ -84,6 +99,7 @@ graphql(`
   fragment SettingsWorkspacesSecurityDiscoverability_Workspace on Workspace {
     id
     slug
+    role
     domains {
       id
       domain
@@ -120,6 +136,8 @@ const pendingJoinPolicy = ref<JoinPolicy>()
 const workspaceDomains = computed(() => {
   return props.workspace?.domains || []
 })
+
+const isWorkspaceAdmin = computed(() => props.workspace.role === Roles.Workspace.Admin)
 
 const hasWorkspaceDomains = computed(() => workspaceDomains.value.length > 0)
 

@@ -14,9 +14,18 @@
             class="px-6 py-3 flex items-center"
           >
             <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
-            <FormButton color="outline" size="sm" @click="handleRemoveDomain(domain)">
-              Delete
-            </FormButton>
+            <div
+              v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
+            >
+              <FormButton
+                :disabled="!isWorkspaceAdmin"
+                color="outline"
+                size="sm"
+                @click="handleRemoveDomain(domain)"
+              >
+                Delete
+              </FormButton>
+            </div>
           </li>
         </ul>
 
@@ -34,22 +43,28 @@
             Add a domain from your verified email addresses
           </p>
           <div class="flex gap-1 min-w-[210px]">
-            <FormSelectBase
-              v-model="selectedDomain"
-              :items="verifiedUserDomains"
-              :disabled-item-predicate="disabledItemPredicate"
-              disabled-item-tooltip="This domain can't be used for verified workspace domains"
-              name="workspaceDomains"
-              label="Verified domains"
+            <div
+              v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
               class="w-full"
-              size="sm"
             >
-              <template #nothing-selected>Select domain</template>
-              <template #something-selected="{ value }">@{{ value }}</template>
-              <template #option="{ item }">
-                <div class="flex items-center">@{{ item }}</div>
-              </template>
-            </FormSelectBase>
+              <FormSelectBase
+                v-model="selectedDomain"
+                :items="verifiedUserDomains"
+                :disabled="!isWorkspaceAdmin"
+                :disabled-item-predicate="disabledItemPredicate"
+                disabled-item-tooltip="This domain can't be used for verified workspace domains"
+                name="workspaceDomains"
+                label="Verified domains"
+                class="w-full"
+                size="sm"
+              >
+                <template #nothing-selected>Select domain</template>
+                <template #something-selected="{ value }">@{{ value }}</template>
+                <template #option="{ item }">
+                  <div class="flex items-center">@{{ item }}</div>
+                </template>
+              </FormSelectBase>
+            </div>
             <FormButton :disabled="!selectedDomain" size="sm" @click="handleAddDomain">
               Add
             </FormButton>
@@ -64,7 +79,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ShallowRef } from 'vue'
-import { blockedDomains } from '@speckle/shared'
+import { blockedDomains, Roles } from '@speckle/shared'
 import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
@@ -73,6 +88,7 @@ import type { SettingsWorkspacesSecurityDomainManagement_WorkspaceFragment } fro
 graphql(`
   fragment SettingsWorkspacesSecurityDomainManagement_Workspace on Workspace {
     id
+    role
     discoverabilityEnabled
     domainBasedMembershipProtectionEnabled
     hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
@@ -100,6 +116,7 @@ const selectedDomain = ref<string>()
 const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
 
 const workspaceDomains = computed(() => props.workspace?.domains || [])
+const isWorkspaceAdmin = computed(() => props.workspace.role === Roles.Workspace.Admin)
 
 const verifiedUserDomains = computed(() => {
   const workspaceDomainSet = new Set(workspaceDomains.value.map((item) => item.domain))
