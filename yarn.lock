@@ -15898,6 +15898,7 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     fake-indexeddb: "npm:^6.0.0"
     prettier: "npm:^3.3.2"
+    ringbuf.js: "npm:^0.4.0"
     tshy: "npm:^3.0.2"
     typescript: "npm:^5.2.2"
     vitest: "npm:^3.0.7"
@@ -19664,8 +19665,8 @@ __metadata:
 
 "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react::locator=root%40workspace%3A.":
   version: 0.0.0
-  resolution: "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react#./packages/frontend-2/type-augmentations/stubs/types__react::hash=2ea486&locator=root%40workspace%3A."
-  checksum: 10/500d185a1e5fc9e977520f4704194ad2e4391cfb8ef7747ca9f2a59bc7a52b555726e6d59e212f4a6b11ee08f06737615224031f80b7da3e216a8905642280fe
+  resolution: "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react#./packages/frontend-2/type-augmentations/stubs/types__react::hash=3341b8&locator=root%40workspace%3A."
+  checksum: 10/e8bc37abe6beea68fddb76a579cc3fac358b3603c587c1b740589544a2338a0acd98193b9b83c6cac90de61bb97435e673d4255e7698c33385d3f28dc6fc5aed
   languageName: node
   linkType: hard
 
@@ -43806,6 +43807,13 @@ __metadata:
   bin:
     rimraf: ./bin.js
   checksum: 10/756419f2fa99aa119c46a9fc03e09d84ecf5421a80a72d1944c5088c9e4671e77128527a900a313ed9d3fdbdd37e2ae05486cd7e9116d5812d8c31f2399d7c86
+  languageName: node
+  linkType: hard
+
+"ringbuf.js@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "ringbuf.js@npm:0.4.0"
+  checksum: 10/c9c5f8585f857ed882a06740dd6d13847e04b1f3b692eadc98a9bf384dc36ee3504813313bc8922005e36bf62f261d92d77bb4b96186a0ef8fabfbbe543a2e2f
   languageName: node
   linkType: hard
 
