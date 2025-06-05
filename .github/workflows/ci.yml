@@ -26,7 +26,7 @@ jobs:
     uses: ./.github/workflows/tests.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      DOCKERHUB_USER: 'speckledevops'
+      DOCKERHUB_USERNAME: 'speckledevops'
     secrets: inherit
 
   builds:
