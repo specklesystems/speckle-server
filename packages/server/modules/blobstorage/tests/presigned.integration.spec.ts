@@ -25,6 +25,7 @@ import { testLogger } from '@/observability/logging'
 import { put } from 'axios'
 import { expectToThrow } from '@/test/assertionHelper'
 import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 describe('Presigned integration @blobstorage', async () => {
   const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
@@ -134,7 +135,8 @@ describe('Presigned integration @blobstorage', async () => {
       const storedBlob = await SUT({
         blobId,
         projectId: ownedProject.id,
-        expectedETag
+        expectedETag,
+        maximumFileSize: 1 * 1024 * 1024 // 1 MB
       })
 
       expect(storedBlob).to.exist
@@ -148,10 +150,42 @@ describe('Presigned integration @blobstorage', async () => {
           await SUT({
             blobId: cryptoRandomString({ length: 10 }),
             projectId: ownedProject.id,
-            expectedETag: cryptoRandomString({ length: 32 })
+            expectedETag: cryptoRandomString({ length: 32 }),
+            maximumFileSize: 1 * 1024 * 1024 // 1 MB
           })
       )
       expect(thrownError).to.be.instanceOf(StoredBlobAccessError)
+    })
+    it('should throw an UserInputError if the blob exceeds the maximum allowed size', async () => {
+      const blobId = cryptoRandomString({ length: 10 })
+      const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+      const expiryDuration = 1 * TIME.minute
+      const url = await generatePresignedUrl({
+        blobId,
+        fileName,
+        projectId: ownedProject.id,
+        userId: serverAdmin.id,
+        urlExpiryDurationSeconds: expiryDuration
+      })
+
+      const response = await put(url, 'test content') // more than 1 byte long
+      expect(
+        response.status,
+        JSON.stringify({ statusText: response.statusText, body: response.data })
+      ).to.equal(200)
+      expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
+
+      const expectedETag = response.headers['etag']
+      const thrownError = await expectToThrow(
+        async () =>
+          await SUT({
+            blobId,
+            projectId: ownedProject.id,
+            expectedETag,
+            maximumFileSize: 1 // 1 byte max
+          })
+      )
+      expect(thrownError).to.be.instanceOf(UserInputError)
     })
   })
 })

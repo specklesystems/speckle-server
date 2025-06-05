@@ -100,7 +100,7 @@ export const registerCompletedUploadFactory =
       )
     }
 
-    return await updateBlob({
+    const updatedBlob = await updateBlob({
       id: blobId,
       streamId: projectId,
       item: {
@@ -109,4 +109,5 @@ export const registerCompletedUploadFactory =
         fileHash: blobMetadata.eTag
       }
     })
+    return updatedBlob
   }

@@ -1,9 +1,13 @@
-import { generatePresignedUrlFactory } from '@/modules/blobstorage/services/presigned'
+import {
+  generatePresignedUrlFactory,
+  registerCompletedUploadFactory
+} from '@/modules/blobstorage/services/presigned'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
+import { testLogger } from '@/observability/logging'
 
 describe('Presigned @blobstorage', async () => {
   describe('generate a presigned URL', () => {
@@ -91,6 +95,98 @@ describe('Presigned @blobstorage', async () => {
         })
       )
       expect(thrownError).to.be.instanceOf(UserInputError)
+    })
+  })
+  describe('register a completed blob upload', () => {
+    const fakeUpdateBlob = async () => ({
+      // this returned data is never used
+      id: cryptoRandomString({ length: 10 }),
+      streamId: cryptoRandomString({ length: 10 }),
+      fileName: `test-file-${cryptoRandomString({ length: 10 })}.stl`,
+      fileType: 'stl',
+      fileSize: 101,
+      uploadStatus: BlobUploadStatus.Completed,
+      uploadError: null,
+      createdAt: new Date(),
+      fileHash: cryptoRandomString({ length: 32 }),
+      userId: cryptoRandomString({ length: 10 }),
+      objectKey: cryptoRandomString({ length: 10 })
+    })
+    it('should error if the etag is not provided', async () => {
+      const projectId = cryptoRandomString({ length: 10 })
+      const fileHash = cryptoRandomString({ length: 10 })
+      const blobId = cryptoRandomString({ length: 10 })
+      const SUT = registerCompletedUploadFactory({
+        getBlobMetadata: async () => ({
+          contentLength: 1000,
+          eTag: fileHash
+        }),
+        updateBlob: fakeUpdateBlob,
+        logger: testLogger
+      })
+
+      const thrownError = await expectToThrow(
+        async () =>
+          await SUT({
+            projectId,
+            blobId,
+            expectedETag: '', // no etag provided
+            maximumFileSize: 10_000
+          })
+      )
+      expect(thrownError).to.be.instanceOf(UserInputError)
+      expect(thrownError.message).to.contain('ETag is required')
+    })
+    it('should error if the etag does not match the uploaded blob', async () => {
+      const projectId = cryptoRandomString({ length: 10 })
+      const fileHash = cryptoRandomString({ length: 10 })
+      const blobId = cryptoRandomString({ length: 10 })
+      const SUT = registerCompletedUploadFactory({
+        getBlobMetadata: async () => ({
+          contentLength: 1000,
+          eTag: fileHash // the etag to match
+        }),
+        updateBlob: fakeUpdateBlob,
+        logger: testLogger
+      })
+
+      const thrownError = await expectToThrow(
+        async () =>
+          await SUT({
+            projectId,
+            blobId,
+            expectedETag: cryptoRandomString({ length: 32 }), // mismatched etag
+            maximumFileSize: 10_000
+          })
+      )
+      expect(thrownError).to.be.instanceOf(UserInputError)
+      expect(thrownError.message).to.contain('ETag mismatch')
+    })
+    it('should error if the content length is greater than the maximum file size', async () => {
+      const projectId = cryptoRandomString({ length: 10 })
+      const fileHash = cryptoRandomString({ length: 10 })
+      const blobId = cryptoRandomString({ length: 10 })
+      const maximumFileSize = 1000 // 100 bytes for this test
+      const SUT = registerCompletedUploadFactory({
+        getBlobMetadata: async () => ({
+          contentLength: maximumFileSize + 1,
+          eTag: fileHash
+        }),
+        updateBlob: fakeUpdateBlob,
+        logger: testLogger
+      })
+
+      const thrownError = await expectToThrow(
+        async () =>
+          await SUT({
+            projectId,
+            blobId,
+            expectedETag: fileHash,
+            maximumFileSize
+          })
+      )
+      expect(thrownError).to.be.instanceOf(UserInputError)
+      expect(thrownError.message).to.contain('File size exceeds maximum')
     })
   })
 })

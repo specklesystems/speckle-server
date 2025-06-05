@@ -3,6 +3,7 @@ import { ExecuteOperationResponse, testApolloServer } from '@/test/graphqlHelper
 import { beforeEachContext } from '@/test/hooks'
 import { createProject, grantPermissionsOnProject } from '@/test/projectHelper'
 import { Roles } from '@speckle/shared'
+import { put } from 'axios'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import gql from 'graphql-tag'
@@ -50,11 +51,13 @@ type TestContext = {
   fileName: string
 }
 
+const FILE_TYPE = 'stl'
+
 const generateUploadUrl = async (params: TestContext) => {
   const { apollo, projectId, fileName, shouldSucceed } = params
   const res = await apollo.execute(
     gql`
-      mutation ($input: GenerateUploadUrlInput!) {
+      mutation ($input: GenerateBlobUploadUrlInput!) {
         blobMutations {
           generateUploadUrl(input: $input) {
             url
@@ -80,6 +83,86 @@ const generateUploadUrl = async (params: TestContext) => {
       res.data.blobMutations.generateUploadUrl.url,
       res.data.blobMutations.generateUploadUrl.url
     ).to.contain(res.data.blobMutations.generateUploadUrl.blobId)
+  })
+}
+
+const registerCompletedUpload = async (params: TestContext) => {
+  const { apollo, projectId, fileName, shouldSucceed } = params
+
+  let blobId = cryptoRandomString({ length: 10 })
+  let etag = cryptoRandomString({ length: 32 })
+
+  // we want the auth test to check the registerCompletedUpload,
+  // so we will only prepare the upload URL if we expect the test to succeed
+  if (shouldSucceed) {
+    const uploadDetails = await apollo.execute(
+      gql`
+        mutation ($input: GenerateBlobUploadUrlInput!) {
+          blobMutations {
+            generateUploadUrl(input: $input) {
+              url
+              blobId
+            }
+          }
+        }
+      `,
+      {
+        input: {
+          projectId,
+          fileName
+        }
+      }
+    )
+
+    if (!uploadDetails.data) {
+      expect(true, `Upload details are undefined: ${JSON.stringify(uploadDetails)}`).to
+        .be.false
+      return //HACK to make typescript happy
+    }
+
+    blobId = uploadDetails.data.blobMutations.generateUploadUrl.blobId
+
+    const putResult = await put(
+      uploadDetails.data.blobMutations.generateUploadUrl.url,
+      cryptoRandomString({ length: 100 }) //test content
+    )
+    expect(putResult.status).to.equal(200)
+    etag = putResult.headers.etag
+  }
+
+  const res = await apollo.execute(
+    gql`
+      mutation ($input: RegisterCompletedUploadInput!) {
+        blobMutations {
+          registerCompletedUpload(input: $input) {
+            id
+            fileSize
+            fileHash
+            fileType
+            streamId
+            userId
+            createdAt
+            uploadStatus
+            uploadError
+          }
+        }
+      }
+    `,
+    {
+      input: {
+        projectId,
+        blobId,
+        etag
+      }
+    }
+  )
+
+  testResult(shouldSucceed, res, (res) => {
+    expect(res.data.blobMutations.registerCompletedUpload.id).to.be.string
+    expect(res.data.blobMutations.registerCompletedUpload.id).to.equal(blobId)
+    expect(res.data.blobMutations.registerCompletedUpload.fileSize).to.equal(100)
+    expect(res.data.blobMutations.registerCompletedUpload.fileHash).to.equal(etag)
+    expect(res.data.blobMutations.registerCompletedUpload.fileType).to.equal(FILE_TYPE)
   })
 }
 
@@ -177,27 +260,42 @@ describe('Presigned graph @blobstorage', async () => {
         {
           project: ownedProject,
           projectRole: Roles.Stream.Owner,
-          cases: [[generateUploadUrl, true]]
+          cases: [
+            [generateUploadUrl, true],
+            [registerCompletedUpload, true]
+          ]
         },
         {
           project: contributorProject,
           projectRole: Roles.Stream.Contributor,
-          cases: [[generateUploadUrl, true]]
+          cases: [
+            [generateUploadUrl, true],
+            [registerCompletedUpload, true]
+          ]
         },
         {
           project: reviewerProject,
           projectRole: Roles.Stream.Reviewer,
-          cases: [[generateUploadUrl, true]]
+          cases: [
+            [generateUploadUrl, true],
+            [registerCompletedUpload, true]
+          ]
         },
         {
           project: noAccessProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: publicProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         }
       ]
     },
@@ -207,27 +305,42 @@ describe('Presigned graph @blobstorage', async () => {
         {
           project: ownedProject,
           projectRole: Roles.Stream.Owner,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: contributorProject,
           projectRole: Roles.Stream.Contributor,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: reviewerProject,
           projectRole: Roles.Stream.Reviewer,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: noAccessProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: publicProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         }
       ]
     },
@@ -237,27 +350,42 @@ describe('Presigned graph @blobstorage', async () => {
         {
           project: ownedProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: contributorProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: reviewerProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: noAccessProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: publicProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         }
       ]
     },
@@ -267,27 +395,42 @@ describe('Presigned graph @blobstorage', async () => {
         {
           project: ownedProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: contributorProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: reviewerProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: noAccessProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         },
         {
           project: publicProject,
           projectRole: null,
-          cases: [[generateUploadUrl, false]]
+          cases: [
+            [generateUploadUrl, false],
+            [registerCompletedUpload, false]
+          ]
         }
       ]
     }
@@ -332,9 +475,7 @@ describe('Presigned graph @blobstorage', async () => {
               await testCase({
                 apollo,
                 projectId: project.id,
-                fileName: `${cryptoRandomString({ length: 10 })}.${cryptoRandomString({
-                  length: 3
-                })}`,
+                fileName: `${cryptoRandomString({ length: 10 })}.${FILE_TYPE}`,
                 shouldSucceed
               })
             })

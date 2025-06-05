@@ -174,7 +174,7 @@ const blobMutations = {
       maximumFileSize
     })
 
-    return { ...updatedBlobData }
+    return updatedBlobData
   }
 }
 
