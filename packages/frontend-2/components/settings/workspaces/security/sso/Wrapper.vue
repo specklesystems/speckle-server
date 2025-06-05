@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <div class="flex mt-6">
+    <div class="flex items-center mt-6">
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">Enable SSO</p>
         <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">

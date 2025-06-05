@@ -6,7 +6,7 @@
       as members.
     </p>
 
-    <div class="flex">
+    <div class="flex items-center">
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">Enable domain protection</p>
         <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">

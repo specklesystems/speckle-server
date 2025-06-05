@@ -6,7 +6,7 @@
     </p>
 
     <div class="flex flex-col space-y-8">
-      <div class="flex">
+      <div class="flex items-center">
         <div class="flex-1 flex-col pr-6 gap-y-1">
           <p class="text-body-xs font-medium text-foreground">
             Enable workspace discoverability
