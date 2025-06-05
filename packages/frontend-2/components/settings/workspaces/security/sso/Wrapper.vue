@@ -18,23 +18,14 @@
       </div>
       <div>
         <!-- Case 1: User doesn't have SSO access/plan -->
-        <div
+        <FormButton
           v-if="!workspace.hasAccessToSSO"
-          v-tippy="
-            props.workspace?.role !== Roles.Workspace.Admin
-              ? 'You must be a workspace admin'
-              : undefined
-          "
+          :to="settingsWorkspaceRoutes.billing.route(workspace.slug)"
+          size="sm"
+          color="outline"
         >
-          <FormButton
-            :to="settingsWorkspaceRoutes.billing.route(workspace.slug)"
-            size="sm"
-            color="outline"
-            :disabled="props.workspace?.role !== Roles.Workspace.Admin"
-          >
-            Upgrade to Business
-          </FormButton>
-        </div>
+          Upgrade to Business
+        </FormButton>
 
         <!-- Case 2: User has SSO access -->
         <div v-else-if="isWorkspaceAdmin" class="flex flex-col items-end gap-2">
