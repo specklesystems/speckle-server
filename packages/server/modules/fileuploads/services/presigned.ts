@@ -13,10 +13,10 @@ export const registerUploadCompleteAndStartFileImportFactory = (deps: {
 }): RegisterUploadCompleteAndStartFileImport => {
   const { registerCompletedUpload, insertNewUploadAndNotify, getModelsByIds } = deps
   return async (params) => {
-    const { projectId, modelId, blobId, userId, expectedETag, maximumFileSize } = params
+    const { projectId, modelId, fileId, userId, expectedETag, maximumFileSize } = params
     const storedBlob = await registerCompletedUpload({
       projectId,
-      blobId,
+      blobId: fileId,
       expectedETag,
       maximumFileSize
     })

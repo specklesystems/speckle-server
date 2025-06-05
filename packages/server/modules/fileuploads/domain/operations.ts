@@ -65,7 +65,7 @@ export type PushJobToFileImporter = (args: FileImportMessage) => Promise<void>
 export type RegisterUploadCompleteAndStartFileImport = (args: {
   projectId: string
   modelId: string
-  blobId: string
+  fileId: string
   userId: string
   expectedETag: string
   maximumFileSize: number

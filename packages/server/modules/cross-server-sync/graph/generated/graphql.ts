@@ -525,7 +525,7 @@ export type BlobMetadataCollection = {
 export type BlobMutations = {
   __typename?: 'BlobMutations';
   /** Generate a pre-signed url to which a blob can be uploaded. */
-  generateUploadUrl: GenerateUploadUrlOutput;
+  generateUploadUrl: GenerateBlobUploadUrlOutput;
   /**
    * Once the upload to the pre-signed url is completed, this mutation should be called
    * to register the completed upload and create the blob metadata.
@@ -535,7 +535,7 @@ export type BlobMutations = {
 
 
 export type BlobMutationsGenerateUploadUrlArgs = {
-  input: GenerateUploadUrlInput;
+  input: GenerateBlobUploadUrlInput;
 };
 
 
@@ -1056,12 +1056,22 @@ export type FileUpload = {
 export type FileUploadMutations = {
   __typename?: 'FileUploadMutations';
   /**
-   * Before calling this mutation, call blobMutations.generateUploadUrl to get the
+   * Generate a pre-signed url to which a file can be uploaded.
+   * After uploading the file, call mutation startFileImport to register the completed upload.
+   */
+  generateUploadUrl: GenerateFileUploadUrlOutput;
+  /**
+   * Before calling this mutation, call generateUploadUrl to get the
    * pre-signed url and blobId. Then upload the file to that url.
    * Once the upload to the pre-signed url is completed, this mutation should be
    * called to register the completed upload and create the blob metadata.
    */
   startFileImport: FileUpload;
+};
+
+
+export type FileUploadMutationsGenerateUploadUrlArgs = {
+  input: GenerateFileUploadUrlInput;
 };
 
 
@@ -1104,14 +1114,25 @@ export type GendoAiRenderInput = {
   versionId: Scalars['ID']['input'];
 };
 
-export type GenerateUploadUrlInput = {
+export type GenerateBlobUploadUrlInput = {
   fileName: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
 };
 
-export type GenerateUploadUrlOutput = {
-  __typename?: 'GenerateUploadUrlOutput';
+export type GenerateBlobUploadUrlOutput = {
+  __typename?: 'GenerateBlobUploadUrlOutput';
   blobId: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type GenerateFileUploadUrlInput = {
+  fileName: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+export type GenerateFileUploadUrlOutput = {
+  __typename?: 'GenerateFileUploadUrlOutput';
+  fileId: Scalars['String']['output'];
   url: Scalars['String']['output'];
 };
 
@@ -3347,12 +3368,12 @@ export const SortDirection = {
 
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
 export type StartFileImportInput = {
-  blobId: Scalars['String']['input'];
   /**
    * The etag is returned by the blob storage provider in the response body after a successful upload.
    * It is used to verify the integrity of the uploaded file.
    */
   etag: Scalars['String']['input'];
+  fileId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
 };

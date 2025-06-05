@@ -41,12 +41,12 @@ extend type Project {
   blob(id: String!): BlobMetadata
 }
 
-input GenerateUploadUrlInput {
+input GenerateBlobUploadUrlInput {
   projectId: String!
   fileName: String!
 }
 
-type GenerateUploadUrlOutput {
+type GenerateBlobUploadUrlOutput {
   url: String!
   blobId: String!
 }
@@ -66,7 +66,7 @@ type BlobMutations {
   """
   Generate a pre-signed url to which a blob can be uploaded.
   """
-  generateUploadUrl(input: GenerateUploadUrlInput!): GenerateUploadUrlOutput!
+  generateUploadUrl(input: GenerateBlobUploadUrlInput!): GenerateBlobUploadUrlOutput!
   """
   Once the upload to the pre-signed url is completed, this mutation should be called
   to register the completed upload and create the blob metadata.

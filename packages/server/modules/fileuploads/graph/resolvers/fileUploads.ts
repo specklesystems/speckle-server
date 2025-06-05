@@ -1,4 +1,4 @@
-import { Roles } from '@speckle/shared'
+import { Roles, TIME } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchPendingVersionsFactory,
@@ -17,15 +17,28 @@ import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
+  getFileUploadUrlExpiryMinutes,
   getServerOrigin,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
-import { updateBlobFactory } from '@/modules/blobstorage/repositories'
-import { getBlobMetadataFromStorage } from '@/modules/blobstorage/clients/objectStorage'
-import { FileUploadMutationsStartFileImportArgs } from '@/test/graphql/generated/graphql'
+import {
+  updateBlobFactory,
+  upsertBlobFactory
+} from '@/modules/blobstorage/repositories'
+import {
+  getBlobMetadataFromStorage,
+  getSignedUrlFactory
+} from '@/modules/blobstorage/clients/objectStorage'
+import {
+  FileUploadMutationsGenerateUploadUrlArgs,
+  FileUploadMutationsStartFileImportArgs
+} from '@/test/graphql/generated/graphql'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
-import { registerCompletedUploadFactory } from '@/modules/blobstorage/services/presigned'
+import {
+  generatePresignedUrlFactory,
+  registerCompletedUploadFactory
+} from '@/modules/blobstorage/services/presigned'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
 import {
@@ -40,8 +53,52 @@ import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/cre
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
+import cryptoRandomString from 'crypto-random-string'
 
 const fileUploadMutations = {
+  async generateUploadUrl(
+    _parent: unknown,
+    args: FileUploadMutationsGenerateUploadUrlArgs,
+    ctx: GraphQLContext
+  ) {
+    const { projectId } = args.input
+    if (!ctx.userId) {
+      throw new ForbiddenError('No userId provided')
+    }
+    const canImport = await ctx.authPolicies.project.files.canImport({
+      userId: ctx.userId,
+      projectId
+    })
+    throwIfAuthNotOk(canImport)
+
+    if (!isFileUploadsEnabled())
+      throw new BadRequestError('File uploads are not enabled for this server')
+
+    const [projectDb, projectStorage] = await Promise.all([
+      getProjectDbClient({ projectId }),
+      getProjectObjectStorage({ projectId })
+    ])
+
+    const generatePresignedUrl = generatePresignedUrlFactory({
+      getSignedUrl: getSignedUrlFactory({
+        objectStorage: projectStorage
+      }),
+      upsertBlob: upsertBlobFactory({
+        db: projectDb
+      })
+    })
+    const blobId = cryptoRandomString({ length: 10 })
+
+    const url = await generatePresignedUrl({
+      projectId: args.input.projectId,
+      blobId,
+      userId: ctx.userId,
+      fileName: args.input.fileName,
+      urlExpiryDurationSeconds: getFileUploadUrlExpiryMinutes() * TIME.minute
+    })
+
+    return { url, fileId: blobId }
+  },
   async startFileImport(
     _parent: unknown,
     args: FileUploadMutationsStartFileImportArgs,
@@ -107,7 +164,7 @@ const fileUploadMutations = {
 
     const uploadedFileData = await registerUploadCompleteAndStartFileImport({
       projectId: args.input.projectId,
-      blobId: args.input.blobId,
+      fileId: args.input.fileId,
       modelId: args.input.modelId,
       userId: ctx.userId,
       expectedETag: args.input.etag,
