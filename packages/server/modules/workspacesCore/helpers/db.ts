@@ -10,6 +10,8 @@ export const Workspaces = buildTableHelper('workspaces', [
   'logo',
   'domainBasedMembershipProtectionEnabled',
   'discoverabilityEnabled',
+  'discoverabilityAutoJoinEnabled',
+  'defaultSeatType',
   'isEmbedSpeckleBrandingHidden'
 ])
 

@@ -12,6 +12,8 @@ import {
   getFirstErrorMessage,
   getCacheId
 } from '~~/lib/common/helpers/graphql'
+import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 
 graphql(`
   fragment DiscoverableWorkspace_LimitedWorkspace on LimitedWorkspace {
@@ -20,6 +22,7 @@ graphql(`
     logo
     description
     slug
+    discoverabilityAutoJoinEnabled
     team {
       totalCount
       items {
@@ -28,6 +31,13 @@ graphql(`
           name
           avatar
         }
+      }
+    }
+    adminTeam {
+      user {
+        id
+        name
+        avatar
       }
     }
   }
@@ -42,6 +52,14 @@ graphql(`
       name
       logo
       slug
+      discoverabilityAutoJoinEnabled
+      adminTeam {
+        user {
+          id
+          name
+          avatar
+        }
+      }
       team {
         totalCount
         items {
@@ -126,30 +144,56 @@ export const useDiscoverableWorkspaces = () => {
     () => discoverableWorkspacesAndJoinRequests.value?.length || 0
   )
 
-  const requestToJoinWorkspace = async (workspaceId: string, location: string) => {
+  const requestToJoinWorkspace = async (
+    workspace: DiscoverableWorkspace_LimitedWorkspaceFragment,
+    location: string
+  ) => {
     const activeUserId = activeUser.value?.id
 
     if (!activeUserId) return
 
     const result = await requestToJoin({
-      input: { workspaceId }
+      input: { workspaceId: workspace.id }
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
       await refetch()
 
-      mixpanel.track('Workspace Join Request Sent', {
-        workspaceId,
-        location,
-        // eslint-disable-next-line camelcase
-        workspace_id: workspaceId
+      apollo.query({
+        query: activeUserWorkspaceExistenceCheckQuery,
+        variables: {
+          filter: { personalOnly: true }
+        },
+        fetchPolicy: 'network-only'
       })
 
-      triggerNotification({
-        title: 'Request sent',
-        description: 'Your request to join the workspace has been sent.',
-        type: ToastNotificationType.Success
-      })
+      if (workspace.discoverabilityAutoJoinEnabled) {
+        mixpanel.track('Workspace Auto Joined', {
+          workspaceId: workspace.id,
+          location,
+          // eslint-disable-next-line camelcase
+          workspace_id: workspace.id
+        })
+
+        triggerNotification({
+          title: 'Workspace joined',
+          description: `You have joined ${workspace.name}.`,
+          type: ToastNotificationType.Success
+        })
+      } else {
+        mixpanel.track('Workspace Join Request Sent', {
+          workspaceId: workspace.id,
+          location,
+          // eslint-disable-next-line camelcase
+          workspace_id: workspace.id
+        })
+
+        triggerNotification({
+          title: 'Request sent',
+          description: 'Your request to join the workspace has been sent.',
+          type: ToastNotificationType.Success
+        })
+      }
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({

@@ -3,9 +3,13 @@ import { db } from '@/db/knex'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import {
   getFileInfoFactory,
-  saveUploadFileFactory
+  saveUploadFileFactory,
+  saveUploadFileFactoryV2
 } from '@/modules/fileuploads/repositories/fileUploads'
-import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
+import {
+  insertNewUploadAndNotifyFactory,
+  insertNewUploadAndNotifyFactoryV2
+} from '@/modules/fileuploads/services/management'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { testLogger as logger } from '@/observability/logging'
 import { sleep } from '@/test/helpers'
@@ -17,8 +21,13 @@ import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/cre
 import { assign } from 'lodash'
 import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/creation'
 import { getFeatureFlags } from '@speckle/shared/environment'
+import { JobPayload } from '@speckle/shared/workers/fileimport'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
+import { BranchRecord } from '@/modules/core/helpers/types'
 
-const { createStream, createUser, garbageCollector } = initUploadTestEnvironment()
+const { createStream, createBranch, createUser, garbageCollector } =
+  initUploadTestEnvironment()
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -31,6 +40,7 @@ describe('FileUploads @fileuploads', () => {
 
   let userOneId: string
   let createdStreamId: string
+  let createdBranch: BranchRecord
 
   before(async () => {
     userOneId = await createUser(userOne)
@@ -48,7 +58,8 @@ describe('FileUploads @fileuploads', () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish
+        publish,
+        emit: async () => {}
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
@@ -74,7 +85,8 @@ describe('FileUploads @fileuploads', () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish
+        publish,
+        emit: async () => {}
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
@@ -95,43 +107,135 @@ describe('FileUploads @fileuploads', () => {
       }
       expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
     })
+
+    it('sends a Started event with the file information', async () => {
+      let emittedEventName: string | undefined = undefined
+      let emittedEventPayload: unknown = undefined
+      const emit: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        emittedEventPayload = payload
+      }
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+        getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+        saveUploadFile: saveUploadFileFactory({ db }),
+        publish,
+        emit
+      })
+      const fileId = cryptoRandomString({ length: 10 })
+      await insertNewUploadAndNotify({
+        streamId: createdStreamId,
+        branchName: 'main',
+        userId: userOneId,
+        fileId,
+        fileName: 'testfile.txt',
+        fileSize: 100,
+        fileType: 'text/plain'
+      })
+
+      const results = await getFileInfoFactory({ db })({ fileId })
+      if (!results) {
+        expect(results).to.not.be.undefined
+        return //HACK to appease typescript
+      }
+      expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
+      expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
+      expect(emittedEventPayload).to.be.deep.equal({
+        userId: userOneId,
+        projectId: createdStreamId,
+        fileSize: 100,
+        fileType: 'text/plain'
+      })
+    })
   })
   ;(FF_NEXT_GEN_FILE_IMPORTER_ENABLED ? describe : describe.skip)(
     'how file upload pushes a message to file-import service',
     () => {
+      const token = cryptoRandomString({ length: 40 })
+      const serverOrigin = `https://${cryptoRandomString({ length: 10 })}`
+      const upload = buildFileUploadMessage()
+
+      beforeEach(async () => {
+        createdBranch = await createBranch({
+          name: cryptoRandomString({ length: 10 }),
+          description: cryptoRandomString({ length: 10 }),
+          streamId: createdStreamId,
+          authorId: userOneId
+        })
+      })
+
       it('uses a fn that given the necessary ids, tokens and url pushes a message to the queue', async () => {
         let usedUserId = undefined
         const result = {}
-        const token = cryptoRandomString({ length: 40 })
-        const serverOrigin = `https://${cryptoRandomString({ length: 10 })}`
-        const upload = buildFileUploadMessage()
 
         const pushJobToFileImporter = pushJobToFileImporterFactory({
           getServerOrigin: () => serverOrigin,
           scheduleJob: async (jobData) => {
             assign(result, jobData)
-            return Promise.resolve(cryptoRandomString({ length: 10 }))
           },
-          createAppToken: (args) => {
+          createAppToken: async (args) => {
             usedUserId = args.userId
-            return Promise.resolve(token)
+            return token
           }
         })
 
         await pushJobToFileImporter(upload)
 
         expect(usedUserId).to.equal(upload.userId)
-        expect(result).to.deep.equal({
-          type: 'file-import',
-          payload: {
-            token,
-            url: `${serverOrigin}/projects/${upload.projectId}/fileimporter/jobs/${upload.jobId}/results`,
-            modelId: upload.modelId,
-            fileType: upload.fileType,
-            projectId: upload.projectId,
-            timeOutSeconds: 1200,
-            blobId: upload.blobId
-          }
+        const expected: JobPayload = {
+          jobId: upload.jobId,
+          fileName: upload.fileName,
+          token,
+          serverUrl: serverOrigin,
+          modelId: upload.modelId,
+          fileType: upload.fileType,
+          projectId: upload.projectId,
+          timeOutSeconds: 1200,
+          blobId: upload.blobId
+        }
+        expect(result).to.deep.equal(expected)
+      })
+
+      it('sends a Started event with the file information', async () => {
+        let emittedEventName: string | undefined = undefined
+        let emittedEventPayload: unknown = undefined
+        const emit: EventBusEmit = async ({ eventName, payload }) => {
+          emittedEventName = eventName
+          emittedEventPayload = payload
+        }
+        const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+          pushJobToFileImporter: pushJobToFileImporterFactory({
+            getServerOrigin: () => serverOrigin,
+            scheduleJob: async () => {},
+            createAppToken: async () => token
+          }),
+          saveUploadFile: saveUploadFileFactoryV2({ db }),
+          publish,
+          emit
+        })
+        const fileId = cryptoRandomString({ length: 10 })
+        await insertNewUploadAndNotify({
+          projectId: createdStreamId,
+          userId: userOneId,
+          fileId,
+          fileName: 'testfile.txt',
+          fileSize: 100,
+          fileType: 'text/plain',
+          modelId: createdBranch.id,
+          modelName: createdBranch.name
+        })
+
+        const results = await getFileInfoFactory({ db })({ fileId })
+        if (!results) {
+          expect(results).to.not.be.undefined
+          return //HACK to appease typescript
+        }
+        expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
+        expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
+        expect(emittedEventPayload).to.be.deep.equal({
+          userId: userOneId,
+          projectId: createdStreamId,
+          fileSize: 100,
+          fileType: 'text/plain'
         })
       })
     }

@@ -1,4 +1,5 @@
 import {
+  LimitedWorkspace,
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
@@ -32,6 +33,7 @@ import {
   GetWorkspaceSeatCount,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesNonComplete,
   GetWorkspacesProjectsCounts,
   GetWorkspacesRolesForUsers,
   QueryWorkspaces,
@@ -57,7 +59,14 @@ import {
   Workspaces,
   WorkspaceSeats
 } from '@/modules/workspaces/helpers/db'
-import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
+import {
+  knex,
+  ServerAcl,
+  StreamAcl,
+  Streams,
+  UserEmails,
+  Users
+} from '@/modules/core/dbSchema'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 
 import { clamp, has, isObjectLike } from 'lodash'
@@ -93,10 +102,23 @@ export const getUserDiscoverableWorkspacesFactory =
     if (domains.length === 0) {
       return []
     }
-    return (await tables
+
+    const workspaces = (await tables
       .workspaces(db)
-      .select('workspaces.id as id', 'name', 'slug', 'description', 'logo')
-      .distinctOn('workspaces.id')
+      .select(
+        'workspaces.id as id',
+        'name',
+        'slug',
+        'description',
+        'logo',
+        'discoverabilityAutoJoinEnabled',
+        tables
+          .workspacesAcl(db)
+          .select(knex.raw('count(*)::integer'))
+          .where(DbWorkspaceAcl.col.workspaceId, knex.ref(Workspaces.col.id))
+          .as('teamCount')
+      )
+      .distinctOn(['teamCount', 'workspaces.id'])
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
         tables.workspacesAcl(db).select('*').where({ userId }).as('acl'),
@@ -116,10 +138,13 @@ export const getUserDiscoverableWorkspacesFactory =
       .whereIn('domain', domains)
       .where('discoverabilityEnabled', true)
       .where('verified', true)
-      .where('role', null)) as Pick<
-      Workspace,
-      'id' | 'name' | 'slug' | 'description' | 'logo'
-    >[]
+      .where('role', null)
+      .orderBy([
+        { column: 'teamCount', order: 'desc' },
+        'workspaces.id'
+      ])) as LimitedWorkspace[]
+
+    return workspaces
   }
 
 const workspaceWithRoleBaseQuery = ({
@@ -285,6 +310,8 @@ export const upsertWorkspaceFactory =
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
         'discoverabilityEnabled',
+        'discoverabilityAutoJoinEnabled',
+        'defaultSeatType',
         'isEmbedSpeckleBrandingHidden'
       ])
   }
@@ -390,7 +417,7 @@ export const getWorkspaceCollaboratorsTotalCountFactory =
 
 export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
-  async ({ workspaceId, filter = {}, cursor, limit = 25 }) => {
+  async ({ workspaceId, filter = {}, cursor, limit = 25, hasAccessToEmail }) => {
     const query = db
       .from(Users.name)
       .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
@@ -401,8 +428,14 @@ export const getWorkspaceCollaboratorsFactory =
         DbWorkspaceAcl.colAs('createdAt', 'workspaceRoleCreatedAt')
       )
       .join(DbWorkspaceAcl.name, DbWorkspaceAcl.col.userId, Users.col.id)
+      .join(UserEmails.name, Users.col.id, UserEmails.col.userId)
       .join(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
+      // this will only get the primary email of a user
+      // if the user has a secondary email matching the workspace's domain
+      // it will not be surfaced by this query
+      //
+      .andWhere(UserEmails.col.primary, true)
       .orderBy('workspaceRoleCreatedAt', 'desc')
 
     const { search, roles, seatType, excludeUserIds } = filter || {}
@@ -444,6 +477,7 @@ export const getWorkspaceCollaboratorsFactory =
 
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
+      email: hasAccessToEmail ? i.email : null,
       workspaceRole: i.workspaceRole,
       workspaceRoleCreatedAt: i.workspaceRoleCreatedAt,
       workspaceId: i.workspaceId,
@@ -499,6 +533,21 @@ export const getWorkspaceWithDomainsFactory =
         (domain: WorkspaceDomain | null) => domain !== null
       )
     } as Workspace & { domains: WorkspaceDomain[] }
+  }
+
+export const getWorkspacesNonCompleteFactory =
+  ({ db }: { db: Knex }): GetWorkspacesNonComplete =>
+  async ({ createdAtBefore }) => {
+    return tables
+      .workspaceCreationState(db)
+      .where({ [DbWorkspaceCreationState.col.completed]: false })
+      .innerJoin(
+        Workspaces.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      )
+      .where(Workspaces.col.createdAt, '<', createdAtBefore.toISOString())
+      .select([DbWorkspaceCreationState.col.workspaceId])
   }
 
 export const getUserIdsWithRoleInWorkspaceFactory =

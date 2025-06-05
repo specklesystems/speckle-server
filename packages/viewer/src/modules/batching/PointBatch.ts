@@ -18,7 +18,7 @@ import { ObjectLayers } from '../../IViewer.js'
 import Logger from '../utils/Logger.js'
 
 export class PointBatch extends PrimitiveBatch {
-  protected primitive!: Points
+  protected primitive: Points
   protected drawRanges: DrawRanges = new DrawRanges()
 
   public get geometryType(): GeometryType {
@@ -158,6 +158,7 @@ export class PointBatch extends PrimitiveBatch {
 
   public buildBatch(): Promise<void> {
     let attributeCount = 0
+    const bounds = new Box3()
     for (let k = 0; k < this.renderViews.length; k++) {
       const ervee = this.renderViews[k]
       /** Catering to typescript
@@ -167,6 +168,7 @@ export class PointBatch extends PrimitiveBatch {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
       }
       attributeCount += ervee.renderData.geometry.attributes.POSITION.length
+      bounds.union(ervee.aabb)
     }
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
@@ -198,6 +200,13 @@ export class PointBatch extends PrimitiveBatch {
       this.renderViews[k].disposeGeometry()
     }
     const geometry = this.makePointGeometry(index, position, color)
+
+    if (Geometry.needsRTE(bounds)) {
+      Geometry.updateRTEGeometry(geometry, position)
+      if (!this.batchMaterial.defines) this.batchMaterial.defines = {}
+      this.batchMaterial.defines['USE_RTE'] = ' '
+    }
+
     this.primitive = new Points(geometry, this.batchMaterial)
     this.primitive.material = [this.batchMaterial]
     this.primitive.geometry.addGroup(0, this.getCount(), 0)
@@ -233,8 +242,6 @@ export class PointBatch extends PrimitiveBatch {
 
     geometry.computeBoundingSphere()
     geometry.computeBoundingBox()
-
-    Geometry.updateRTEGeometry(geometry, position)
 
     return geometry
   }

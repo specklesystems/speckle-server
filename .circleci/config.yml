@@ -124,6 +124,9 @@ workflows:
       - pre-commit:
           filters: *filters-only-main-hotfix-testing
 
+      - lint-and-prettier:
+          filters: *filters-only-main-hotfix-testing
+
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
@@ -192,6 +195,7 @@ workflows:
             - docker-build-server
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -209,6 +213,7 @@ workflows:
             - docker-build-frontend-2
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -235,6 +240,7 @@ workflows:
             - docker-build-webhooks
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -252,6 +258,7 @@ workflows:
             - docker-build-file-imports
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -269,6 +276,7 @@ workflows:
             - docker-build-previews
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -286,6 +294,7 @@ workflows:
             - docker-build-test-container
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -315,6 +324,7 @@ workflows:
             - docker-build-monitor-container
             - get-version
             - pre-commit
+            - lint-and-prettier
             - publish-approval
             - test-frontend-2
             - test-viewer
@@ -362,11 +372,6 @@ workflows:
             - get-version
             - publish-approval
 
-      - update-helm-documentation:
-          filters: *filters-only-main-hotfix-testing
-          requires:
-            - publish-helm-chart
-
       - publish-npm:
           filters:
             tags:
@@ -412,46 +417,54 @@ jobs:
           paths:
             - env-vars
 
+  lint-and-prettier:
+    <<: *docker-node-image
+    resource_class: xlarge
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - *yarn
+      - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
+          name: Lint everything
+          command: yarn eslint:projectwide
+      - run:
+          name: Run prettier check
+          command: yarn prettier:check
+      - run:
+          name: Check JSON Schema is up to date
+          command: |
+            yarn helm:jsonschema:generate
+            git diff --exit-code
+
   pre-commit:
     parameters:
       config_file:
         default: ./.pre-commit-config.yaml
         description: Optional, path to pre-commit config file.
         type: string
-      deployment_config_file:
-        default: ./.pre-commit-config.deployment.yaml
-        description: Optional, path to additional pre-commit config file.
-        type: string
-      cache_prefix:
-        default: ''
-        description: |
-          Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
-        type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: xlarge
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
       - restore_cache:
           name: Restore pre-commit & Yarn Package cache
           keys:
-            - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
-            - yarn-packages-{{ checksum "yarn.lock" }}
+            - cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
       - save_cache:
-          key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+          key: cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
-      - *yarn
-      - run:
-          name: Build public packages
-          command: yarn build:public
       - run:
           name: Run pre-commit
-          command: ./.husky/pre-commit
+          command: pre-commit run --all-files --config <<parameters.config_file>>
       - run:
           command: git --no-pager diff
           name: git diff
@@ -527,14 +540,15 @@ jobs:
           name: Introspect GQL schema for subsequent checks
           command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
-      - run:
-          name: Checking for GQL schema breakages against app.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
-      - run:
-          name: Checking for GQL schema breakages against latest.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
+      # Temporarily disabled while Apollo Studio is down - https://status.apollographql.com/
+      # - run:
+      #     name: Checking for GQL schema breakages against app.speckle.systems
+      #     command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
+      #     working_directory: 'packages/server'
+      # - run:
+      #     name: Checking for GQL schema breakages against latest.speckle.systems
+      #     command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+      #     working_directory: 'packages/server'
       - store_test_results:
           path: packages/server/reports
 
@@ -1099,21 +1113,6 @@ jobs:
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
-
-  update-helm-documentation:
-    <<: *docker-node-image
-    working_directory: *work-dir
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
-      - add_ssh_keys:
-          fingerprints:
-            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
-      - run:
-          name: Update Helm Documentation
-          command: ./.circleci/update_helm_documentation.sh
 
   publish-viewer-sandbox-cloudflare-pages:
     <<: *docker-node-image

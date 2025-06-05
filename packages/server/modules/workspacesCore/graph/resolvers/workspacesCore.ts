@@ -5,6 +5,7 @@ import {
   filteredSubscribe,
   WorkspaceSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { WorkspaceDefaultSeatType } from '@/modules/workspacesCore/domain/constants'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -23,6 +24,11 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       Mutation: {
         workspaceMutations: () => ({})
+      },
+      ActiveUserMutations: {
+        setActiveWorkspace: async () => {
+          throw new WorkspacesModuleDisabledError()
+        }
       },
       WorkspaceMutations: {
         create: async () => {
@@ -69,6 +75,7 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         }
       },
       Workspace: {
+        defaultSeatType: () => WorkspaceDefaultSeatType,
         role: async () => {
           throw new WorkspacesModuleDisabledError()
         },

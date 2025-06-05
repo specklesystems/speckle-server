@@ -15,17 +15,25 @@
         <div class="h-6 w-px bg-outline-3"></div>
       </template>
       <div class="flex flex-col">
-        <NuxtLink :to="url" target="_blank" class="leading-3">
+        <component
+          :is="disableModelLink ? 'div' : 'NuxtLink'"
+          :to="url"
+          target="_blank"
+          class="leading-3"
+          :class="disableModelLink ? 'cursor-default' : 'cursor-pointer'"
+        >
           <div class="flex items-center gap-1 w-full">
             <h2 class="text-heading-sm truncate text-foreground">
               {{ name }}
             </h2>
-            <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+            <template v-if="!disableModelLink">
+              <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+            </template>
           </div>
           <span v-if="date" class="text-body-2xs text-foreground-2">
             {{ date }}
           </span>
-        </NuxtLink>
+        </component>
       </div>
     </div>
   </ClientOnly>
@@ -34,12 +42,14 @@
 <script setup lang="ts">
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
   date?: string
   name?: string
   url?: string
-  hideSpeckleBranding?: boolean
+  hideSpeckleBranding?: MaybeNullOrUndefined<boolean>
+  disableModelLink?: MaybeNullOrUndefined<boolean>
 }>()
 
 const { isEmbedEnabled } = useEmbed()

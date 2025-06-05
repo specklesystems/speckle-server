@@ -7,6 +7,7 @@
       mount-menu-on-body
       size="lg"
       :menu-position="HorizontalDirection.Left"
+      :menu-id="`member-actions-${targetUser.id}`"
       @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
     >
       <FormButton

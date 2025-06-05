@@ -19,7 +19,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'revit',
     description:
       'Publish and load Revit models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/revit',
+    url: 'https://docs.speckle.systems/connectors/revit',
     images: ['/images/connectors/revit.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
@@ -28,7 +28,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'rhino',
     description:
       'Publish and load Rhino and Grasshopper models for high-quality design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/rhino',
+    url: 'https://docs.speckle.systems/connectors/rhino',
     images: ['/images/connectors/rhino.png', '/images/connectors/grasshopper.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
   },
@@ -37,7 +37,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'powerbi',
     description:
       'Load your models into Power BI to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/power-bi',
+    url: 'https://docs.speckle.systems/connectors/power-bi',
     images: ['/images/connectors/powerbi.png'],
     categories: [ConnectorCategory.BusinessIntelligence]
   },
@@ -46,34 +46,16 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'sketchup',
     description:
       'Publish and load SketchUp models for high-quality design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/sketchup-beta',
+    url: 'https://docs.speckle.systems/connectors/sketchup',
     images: ['/images/connectors/sketchup.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
-  },
-  {
-    title: 'QGIS',
-    slug: 'qgis',
-    description:
-      'Publish QGIS models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/qgis',
-    images: ['/images/connectors/qgis.png'],
-    categories: [ConnectorCategory.GIS]
-  },
-  {
-    title: 'ArcGIS',
-    slug: 'arcgis',
-    description:
-      'Publish ArcGIS models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/arcgis',
-    images: ['/images/connectors/arcgis.png'],
-    categories: [ConnectorCategory.GIS]
   },
   {
     title: 'AutoCAD',
     slug: 'autocad',
     description:
       'Publish and load AutoCAD models for high-quality design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/autocad',
+    url: 'https://docs.speckle.systems/connectors/autocad',
     images: ['/images/connectors/autocad.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
   },
@@ -82,7 +64,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'civil3d',
     description:
       'Publish and load Civil 3D models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/civil3d',
+    url: 'https://docs.speckle.systems/connectors/civil3d',
     images: ['/images/connectors/civil3d.png'],
     categories: [
       ConnectorCategory.NextGen,
@@ -95,7 +77,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'etabs',
     description:
       'Publish ETABS models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/etabs',
+    url: 'https://docs.speckle.systems/connectors/etabs',
     images: ['/images/connectors/etabs.png'],
     categories: [ConnectorCategory.Structural]
   },
@@ -104,7 +86,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'navisworks',
     description:
       'Publish Navisworks models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/navisworks',
+    url: 'https://docs.speckle.systems/connectors/navisworks',
     images: ['/images/connectors/navisworks.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
@@ -113,7 +95,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'archicad',
     description:
       'Publish Archicad models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/archicad',
+    url: 'https://docs.speckle.systems/connectors/archicad',
     images: ['/images/connectors/archicad.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
@@ -122,7 +104,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'teklastructures',
     description:
       'Publish Tekla Structures models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/teklastructures-alpha',
+    url: 'https://docs.speckle.systems/connectors/tekla',
     images: ['/images/connectors/teklastructures.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.Structural]
   },
@@ -131,7 +113,7 @@ export const connectorItems: ConnectorItem[] = [
     slug: 'blender',
     description: 'Load models into Blender to boost design coordination workflows.',
     images: ['/images/connectors/blender.png'],
-    url: 'https://www.speckle.systems/connectors/blender',
+    url: 'https://docs.speckle.systems/connectors/blender',
     categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling]
   },
   // Non-available connectors

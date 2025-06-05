@@ -1,5 +1,6 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
+  LimitedWorkspace,
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
@@ -45,7 +46,7 @@ export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
-}) => Promise<Pick<Workspace, 'id' | 'name' | 'slug' | 'description' | 'logo'>[]>
+}) => Promise<LimitedWorkspace[]>
 
 export type GetWorkspace = (args: {
   workspaceId: string
@@ -81,6 +82,10 @@ export type GetWorkspacesBySlug = (args: {
   workspaceIds: string[]
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
+
+export type GetWorkspacesNonComplete = (args: {
+  createdAtBefore: Date
+}) => Promise<{ workspaceId: string }[]>
 
 export type StoreWorkspaceDomain = (args: {
   workspaceDomain: WorkspaceDomain
@@ -142,6 +147,7 @@ export type GetWorkspaceCollaboratorsArgs = {
      */
     excludeUserIds?: string[]
   }
+  hasAccessToEmail?: boolean
 }
 
 export type GetWorkspaceCollaborators = (
@@ -438,7 +444,7 @@ export type UpdateWorkspaceJoinRequestStatus = (params: {
 }) => Promise<number[]>
 
 export type CreateWorkspaceJoinRequest = (params: {
-  workspaceJoinRequest: Omit<WorkspaceJoinRequest, 'createdAt' | 'updatedAt'>
+  workspaceJoinRequest: Omit<WorkspaceJoinRequest, 'createdAt' | 'updatedAt' | 'email'>
 }) => Promise<WorkspaceJoinRequest>
 
 export type SendWorkspaceJoinRequestReceivedEmail = (params: {

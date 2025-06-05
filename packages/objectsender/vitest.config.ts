@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     coverage: {
       exclude: ['**/src/examples/**', ...coverageConfigDefaults.exclude]
-    }
+    },
+    passWithNoTests: true
   }
 })

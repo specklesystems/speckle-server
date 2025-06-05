@@ -65,6 +65,59 @@
                   <span>{{ option.label }}</span>
                 </label>
               </div>
+              <div v-if="isWorkspacesEnabled">
+                <label
+                  :for="`option-hide-logo`"
+                  class="flex items-center gap-1 cursor-pointer max-w-max"
+                >
+                  <FormCheckbox
+                    id="option-hide-logo"
+                    v-model="hideSpeckleBranding"
+                    name="Hide Speckle logo"
+                    hide-label
+                    class="cursor-pointer"
+                    :disabled="
+                      workspaceHideSpeckleBrandingEnabled ||
+                      !canEditEmbedOptions?.authorized
+                    "
+                  />
+                  <div class="flex flex-col gap-0.5">
+                    <span
+                      :key="`hide-branding-tooltip-${workspaceHideSpeckleBrandingEnabled}`"
+                      v-tippy="hideSpeckleBrandingTooltip"
+                    >
+                      Hide Speckle logo
+                    </span>
+                    <span
+                      v-if="
+                        !canEditEmbedOptions?.authorized &&
+                        canEditEmbedOptions?.code === 'WorkspaceNoFeatureAccess'
+                      "
+                      class="text-body-2xs text-foreground-2"
+                    >
+                      This feature is only available on the business plan
+                      <NuxtLink
+                        :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
+                        class="underline"
+                      >
+                        upgrade now
+                      </NuxtLink>
+                    </span>
+                    <span
+                      v-if="hideSpeckleBranding && !workspaceHideSpeckleBrandingEnabled"
+                      class="text-body-2xs text-foreground-2"
+                    >
+                      Tip: You can also hide the logo for all embeds in
+                      <NuxtLink
+                        :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
+                        class="underline"
+                      >
+                        workspace settings.
+                      </NuxtLink>
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
           </LayoutDialogSection>
           <LayoutDialogSection
@@ -100,11 +153,24 @@ import {
   castToSupportedVisibility,
   SupportedProjectVisibility
 } from '~/lib/projects/helpers/visibility'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
     id
     ...ProjectsPageTeamDialogManagePermissions_Project
+    workspace {
+      id
+      slug
+      embedOptions {
+        hideSpeckleBranding
+      }
+      permissions {
+        canEditEmbedOptions {
+          ...FullPermissionCheckResult
+        }
+      }
+    }
   }
 `)
 
@@ -123,6 +189,7 @@ const {
   public: { baseUrl }
 } = useRuntimeConfig()
 
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const updateProject = useUpdateProject()
 const mp = useMixpanel()
@@ -130,9 +197,11 @@ const mp = useMixpanel()
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
+const disableModelLink = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const projectVisibility = ref(props.project.visibility)
+const hideSpeckleBranding = ref(false)
 
 const routeModelId = computed(() => route.params.modelId as string)
 
@@ -174,6 +243,14 @@ const updatedUrl = computed(() => {
       embedOptions[option.id] = true
     }
   })
+
+  if (
+    hideSpeckleBranding.value &&
+    isWorkspacesEnabled.value &&
+    !workspaceHideSpeckleBrandingEnabled.value
+  ) {
+    embedOptions['hideSpeckleBranding'] = true
+  }
 
   // Serialize the embedOptions into a hash fragment
   const hashFragment = encodeURIComponent(JSON.stringify(embedOptions))
@@ -227,6 +304,25 @@ const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   }
 ])
 
+const workspaceSlug = computed(() => {
+  return props.project.workspace?.slug
+})
+const canEditEmbedOptions = computed(() => {
+  return props.project.workspace?.permissions?.canEditEmbedOptions
+})
+const workspaceHideSpeckleBrandingEnabled = computed(() => {
+  if (!isWorkspacesEnabled.value) return false
+  return props.project.workspace?.embedOptions?.hideSpeckleBranding
+})
+
+const hideSpeckleBrandingTooltip = computed(() => {
+  if (!isWorkspacesEnabled.value) return ''
+  if (workspaceHideSpeckleBrandingEnabled.value) {
+    return 'Speckle branding is disabled for all embeds in this workspace'
+  }
+  return ''
+})
+
 const handleEmbedCodeCopy = async (value: string) => {
   await copy(value, {
     successMessage: 'Embed code copied to clipboard',
@@ -276,6 +372,11 @@ const embedDialogOptions = [
     value: hideSelectionInfo
   },
   {
+    id: 'disableModelLink',
+    label: 'No link back to web viewer',
+    value: disableModelLink
+  },
+  {
     id: 'noScroll',
     label: 'Prevent scrolling (zooming)',
     value: preventScrolling
@@ -286,4 +387,15 @@ const embedDialogOptions = [
     value: manuallyLoadModel
   }
 ]
+
+watch(
+  () => props.project.workspace?.embedOptions?.hideSpeckleBranding,
+  () => {
+    if (isWorkspacesEnabled.value) {
+      hideSpeckleBranding.value =
+        props.project.workspace?.embedOptions?.hideSpeckleBranding ?? false
+    }
+  },
+  { immediate: true }
+)
 </script>
