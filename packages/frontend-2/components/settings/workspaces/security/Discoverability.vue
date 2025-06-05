@@ -4,9 +4,6 @@
     <p class="text-body-xs text-foreground-2 mt-2 mb-6">
       Make it easy for coworkers to join the workspace
     </p>
-    <CommonCard v-if="workspace?.sso?.provider?.id" class="bg-foundation mb-4">
-      With SSO enabled, allowed domains are configured on your identity provider's side.
-    </CommonCard>
 
     <div class="flex flex-col space-y-8">
       <div class="flex">
@@ -104,11 +101,6 @@ graphql(`
     domains {
       id
       domain
-    }
-    sso {
-      provider {
-        id
-      }
     }
     discoverabilityEnabled
     discoverabilityAutoJoinEnabled
