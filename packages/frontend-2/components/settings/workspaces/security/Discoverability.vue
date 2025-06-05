@@ -66,6 +66,9 @@
       <p class="text-body-xs text-foreground mb-2">
         This will allow users with verified domain emails to join automatically without
         admin approval.
+        <span v-if="workspace.defaultSeatType === SeatTypes.Editor && isSelfServePlan">
+          They will join on a paid Editor seat.
+        </span>
       </p>
       <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
     </SettingsConfirmDialog>
@@ -73,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
+import { Roles, SeatTypes } from '@speckle/shared'
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecurityDiscoverability_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
@@ -82,6 +85,7 @@ import {
   workspaceUpdateDiscoverabilityMutation,
   workspaceUpdateAutoJoinMutation
 } from '~/lib/workspaces/graphql/mutations'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 enum JoinPolicy {
   AdminApproval = 'admin-approval',
@@ -99,6 +103,7 @@ graphql(`
     }
     discoverabilityEnabled
     discoverabilityAutoJoinEnabled
+    defaultSeatType
   }
 `)
 
@@ -112,6 +117,7 @@ const { mutate: updateDiscoverability } = useMutation(
 )
 const { mutate: updateAutoJoin } = useMutation(workspaceUpdateAutoJoinMutation)
 const { triggerNotification } = useGlobalToast()
+const { isSelfServePlan } = useWorkspacePlan(props.workspace.slug)
 
 const showConfirmJoinPolicyDialog = ref(false)
 const pendingIsAutoJoinEnabled = ref(false)

@@ -120,7 +120,7 @@ const handleSeatTypeChange = (newValue: WorkspaceSeatType) => {
   if (newValue === currentSeatType.value) return
 
   // If setting to Editor on paid plan, show confirmation
-  if (newValue === SeatTypes.Editor && isSelfServePlan) {
+  if (newValue === SeatTypes.Editor && isSelfServePlan.value) {
     pendingNewSeatType.value = newValue
     showConfirmSeatTypeDialog.value = true
     return
