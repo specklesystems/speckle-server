@@ -29,7 +29,7 @@ export const withOperationLogging = async <T>(
     logger.info(
       { ...OperationStatus.start, operationDescription },
       `${OperationLogLinePrefix}${
-        operationDescription ? ` {operationDescription}` : ''
+        operationDescription ? ' {operationDescription}' : ''
       }`
     )
     const results = await operation()
