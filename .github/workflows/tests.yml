@@ -20,6 +20,10 @@ on:
         required: true
       CODECOV_TOKEN:
         required: true
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
 
 jobs:
   lint-and-prettier:
