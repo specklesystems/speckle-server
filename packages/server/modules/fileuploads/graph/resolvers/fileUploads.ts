@@ -4,7 +4,8 @@ import {
   getBranchPendingVersionsFactory,
   getFileInfoFactory,
   getStreamFileUploadsFactory,
-  getStreamPendingModelsFactory
+  getStreamPendingModelsFactory,
+  saveUploadFileFactoryV2
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { authorizeResolver } from '@/modules/shared'
 import {
@@ -12,6 +13,114 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import {
+  getServerOrigin,
+  isFileUploadsEnabled
+} from '@/modules/shared/helpers/envHelper'
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { updateBlobFactory } from '@/modules/blobstorage/repositories'
+import { getBlobMetadataFromStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { FileUploadMutationsStartFileImportArgs } from '@/test/graphql/generated/graphql'
+import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
+import { registerCompletedUploadFactory } from '@/modules/blobstorage/services/presigned'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
+import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
+import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
+
+const fileUploadMutations = {
+  async startFileImport(
+    _parent: unknown,
+    args: FileUploadMutationsStartFileImportArgs,
+    ctx: GraphQLContext
+  ) {
+    const { projectId } = args.input
+    if (!ctx.userId) {
+      throw new ForbiddenError('No userId provided')
+    }
+    const canImport = await ctx.authPolicies.project.files.canImport({
+      userId: ctx.userId,
+      projectId
+    })
+    throwIfAuthNotOk(canImport)
+
+    if (!isFileUploadsEnabled())
+      throw new BadRequestError('File uploads are not enabled for this server')
+
+    const [projectDb, projectStorage] = await Promise.all([
+      getProjectDbClient({ projectId }),
+      getProjectObjectStorage({ projectId })
+    ])
+
+    const pushJobToFileImporter = pushJobToFileImporterFactory({
+      getServerOrigin,
+      scheduleJob,
+      createAppToken: createAppTokenFactory({
+        storeApiToken: storeApiTokenFactory({ db: projectDb }),
+        storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
+        storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory(
+          {
+            db: projectDb
+          }
+        ),
+        storeUserServerAppToken: storeUserServerAppTokenFactory({ db: projectDb })
+      })
+    })
+
+    const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+      pushJobToFileImporter,
+      saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+      publish,
+      emit: getEventBus().emit
+    })
+
+    const registerUploadCompleteAndStartFileImport =
+      registerUploadCompleteAndStartFileImportFactory({
+        registerCompletedUpload: registerCompletedUploadFactory({
+          logger: ctx.log,
+          updateBlob: updateBlobFactory({
+            db: projectDb
+          }),
+          getBlobMetadata: getBlobMetadataFromStorage({
+            objectStorage: projectStorage
+          })
+        }),
+        insertNewUploadAndNotify,
+        getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
+      })
+
+    //TODO get the workspace plan and get a limit for the file size that can be uploaded
+    const maximumFileSize = getFileSizeLimit()
+
+    const uploadedFileData = await registerUploadCompleteAndStartFileImport({
+      projectId: args.input.projectId,
+      blobId: args.input.blobId,
+      modelId: args.input.modelId,
+      userId: ctx.userId,
+      expectedETag: args.input.etag,
+      maximumFileSize
+    })
+
+    return {
+      ...uploadedFileData,
+      streamId: uploadedFileData.projectId,
+      branchName: uploadedFileData.modelName
+    }
+  }
+}
 
 export = {
   Stream: {
@@ -53,6 +162,13 @@ export = {
         .streams.getStreamBranchByName.forStream(parent.streamId)
         .load(parent.branchName.toLowerCase())
     }
+  },
+  Mutation: {
+    //NOTE if editing this, see corresponding `BlobMutations` map in codegen.yml
+    fileUploadMutations: () => ({})
+  },
+  FileUploadMutations: {
+    ...fileUploadMutations
   },
   Subscription: {
     projectPendingModelsUpdated: {

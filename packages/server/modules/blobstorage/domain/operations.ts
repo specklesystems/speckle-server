@@ -74,4 +74,5 @@ export type RegisterCompletedUpload = (params: {
   projectId: string
   blobId: string
   expectedETag: string
+  maximumFileSize: number
 }) => Promise<BlobStorageItem>

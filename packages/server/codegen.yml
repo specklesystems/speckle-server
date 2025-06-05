@@ -32,6 +32,7 @@ generates:
         ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         VersionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         BlobMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        FileUploadMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         CommentMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AutomateMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AdminMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'

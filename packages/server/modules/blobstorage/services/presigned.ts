@@ -12,6 +12,7 @@ import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 import { Logger } from '@/observability/logging'
 import { ensureError, Optional } from '@speckle/shared'
 import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
+import { isEmpty } from 'lodash'
 // import { acceptedFileExtensions } from '@speckle/shared'
 
 export const generatePresignedUrlFactory =
@@ -67,8 +68,8 @@ export const registerCompletedUploadFactory =
   }): RegisterCompletedUpload =>
   async (params) => {
     const { updateBlob, getBlobMetadata, logger } = deps
-    const { blobId, projectId, expectedETag } = params
-    if (!expectedETag) {
+    const { blobId, projectId, expectedETag, maximumFileSize } = params
+    if (isEmpty(expectedETag)) {
       throw new UserInputError('ETag is required to register a completed upload')
     }
 
@@ -93,13 +94,19 @@ export const registerCompletedUploadFactory =
       throw new UserInputError(`ETag mismatch: expected ${expectedETag}`)
     }
 
+    if (!blobMetadata.contentLength || blobMetadata.contentLength > maximumFileSize) {
+      throw new UserInputError(
+        `File size exceeds maximum allowed size of ${maximumFileSize} bytes. Actual size: ${blobMetadata.contentLength} bytes`
+      )
+    }
+
     return await updateBlob({
       id: blobId,
       streamId: projectId,
       item: {
         uploadStatus: BlobUploadStatus.Completed,
         fileSize: blobMetadata.contentLength,
-        fileHash: blobMetadata.eTag //FIXME verify if this is the correct field to use. Is the etag the file hash? Or should we use `ChecksumSHA256` or similar?
+        fileHash: blobMetadata.eTag
       }
     })
   }

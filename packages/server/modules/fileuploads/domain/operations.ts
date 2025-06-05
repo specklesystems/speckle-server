@@ -25,7 +25,7 @@ export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRe
 
 export type InsertNewUploadAndNotify = (
   uploadResults: SaveUploadFileInputV2
-) => Promise<void>
+) => Promise<FileUploadRecordV2>
 
 export type SaveUploadFileV2 = (
   args: SaveUploadFileInputV2
@@ -61,3 +61,12 @@ export type FileImportMessage = Pick<
 export type ScheduleFileimportJob = (args: JobPayload) => Promise<void>
 
 export type PushJobToFileImporter = (args: FileImportMessage) => Promise<void>
+
+export type RegisterUploadCompleteAndStartFileImport = (args: {
+  projectId: string
+  modelId: string
+  blobId: string
+  userId: string
+  expectedETag: string
+  maximumFileSize: number
+}) => Promise<FileUploadRecordV2 & { modelName: string }>

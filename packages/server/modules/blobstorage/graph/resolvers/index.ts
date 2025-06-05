@@ -164,10 +164,14 @@ const blobMutations = {
       })
     })
 
+    //TODO: with reference to the project's workspace plan, we should adjust the maximum file size
+    const maximumFileSize = getFileSizeLimit()
+
     const updatedBlobData = await registerCompletedUpload({
       projectId: args.input.projectId,
       blobId: args.input.blobId,
-      expectedETag: args.input.etag
+      expectedETag: args.input.etag,
+      maximumFileSize
     })
 
     return { ...updatedBlobData }
