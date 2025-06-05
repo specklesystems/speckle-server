@@ -3,15 +3,33 @@ name: Pipeline test build
 on: pull_request
 
 jobs:
+  pre-commit:
+    name: Precommit check
+    runs-on: blacksmith
+    container:
+      image: speckle/pre-commit-runner:latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Set precommit
+        run: pre-commit install-hooks --config ./.pre-commit-config.yaml
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Run precommit
+        run: ./.husky/pre-commit
+      - name: Diff on failure
+        if: failure()
+        run: git --no-pager diff
+
   docker-build-postgres-container:
     runs-on: blacksmith
     name: Docker build postgres container
-    env:
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      DOCKERHUB_USERNAME: 'speckledevops'
     steps:
-      - run: 'echo "${DOCKERHUB_TOKEN: -3}"'
-      - run: 'echo "${DOCKERHUB_USERNAME: -3}"'
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
