@@ -119,7 +119,7 @@ const { mutate: updateAutoJoin } = useMutation(workspaceUpdateAutoJoinMutation)
 const { triggerNotification } = useGlobalToast()
 
 const showConfirmJoinPolicyDialog = ref(false)
-const pendingJoinPolicy = ref<JoinPolicy>()
+const pendingIsAutoJoinEnabled = ref(false)
 const currentJoinPolicy = ref<JoinPolicy>()
 
 const workspaceDomains = computed(() => {
@@ -209,7 +209,7 @@ const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) =
   // If enabling auto-join and not yet confirmed, show confirmation dialog
   if (newValue === JoinPolicy.AutoJoin && !confirmed) {
     showConfirmJoinPolicyDialog.value = true
-    pendingJoinPolicy.value = newValue
+    pendingIsAutoJoinEnabled.value = true
     return
   }
 
@@ -227,7 +227,7 @@ const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) =
     // Reset dialog state if it was open
     if (showConfirmJoinPolicyDialog.value) {
       showConfirmJoinPolicyDialog.value = false
-      pendingJoinPolicy.value = undefined
+      pendingIsAutoJoinEnabled.value = false
     }
 
     const notificationConfig =
@@ -256,8 +256,8 @@ const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) =
 }
 
 const handleJoinPolicyConfirm = async () => {
-  if (!pendingJoinPolicy.value) return
-  await handleJoinPolicyUpdate(pendingJoinPolicy.value, true)
+  if (!pendingIsAutoJoinEnabled.value) return
+  await handleJoinPolicyUpdate(JoinPolicy.AutoJoin, true)
 }
 
 const handleJoinPolicyCancel = () => {
@@ -268,7 +268,7 @@ const handleJoinPolicyCancel = () => {
 
   // Close dialog and reset pending state
   showConfirmJoinPolicyDialog.value = false
-  pendingJoinPolicy.value = undefined
+  pendingIsAutoJoinEnabled.value = false
 }
 
 const handleRadioChange = (newValue: JoinPolicy) => {
