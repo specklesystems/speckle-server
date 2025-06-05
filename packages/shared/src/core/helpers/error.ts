@@ -8,11 +8,11 @@ export function ensureError(
   e: unknown,
   fallbackMessage?: string
 ): Error | UnexpectedErrorStructureError {
+  console.log('What is Error', { e })
   if (e instanceof Error) return e
   let stringifiedError = ''
   if (e !== null && e !== undefined) {
     try {
-      console.log('Error', { e })
       stringifiedError = JSON.stringify(e)
     } catch {
       //ignore
