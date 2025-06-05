@@ -1,8 +1,29 @@
 name: Pipeline test build
 
-on: workflow_dispatch
+on: pull_request
 
 jobs:
+  docker-build-postgres-container:
+    runs-on: blacksmith
+    name: Docker build postgres container
+    env:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: 'speckledevops'
+    steps:
+      - run: 'echo "${DOCKERHUB_TOKEN: -3}"'
+      - run: 'echo "${DOCKERHUB_USERNAME: -3}"'
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ inputs.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: true
+          tags: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./utils/postgres/Dockerfile
+
   test-server-multiregion:
     name: Server multiregion
     #needs: [docker-build-postgres-container]
@@ -135,6 +156,11 @@ jobs:
         run: yarn test:report
         working-directory: 'packages/server'
         timeout-minutes: 30
-      # TODO: codecov
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/server/coverage/lcov.info
 
   # TODO: fix db error on multiregion test

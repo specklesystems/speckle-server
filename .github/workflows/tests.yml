@@ -242,7 +242,12 @@ jobs:
   docker-build-postgres-container:
     runs-on: blacksmith
     name: Docker build postgres container
+    env:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ inputs.DOCKERHUB_USERNAME }}
     steps:
+      - run: 'echo "${DOCKERHUB_TOKEN: -3}"'
+      - run: 'echo "${DOCKERHUB_USERNAME: -3}"'
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -426,7 +431,12 @@ jobs:
         run: yarn test:report
         working-directory: 'packages/server'
         timeout-minutes: 30
-        # TODO: codecov
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/shared/coverage/lcov.info
 
   test-server-multiregion:
     name: Server multiregion
@@ -560,4 +570,9 @@ jobs:
         run: yarn test:report
         working-directory: 'packages/server'
         timeout-minutes: 30
-      # TODO: codecov
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/shared/coverage/lcov.info
