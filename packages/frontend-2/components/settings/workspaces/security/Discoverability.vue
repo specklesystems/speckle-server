@@ -59,7 +59,7 @@
                 ? '!font-normal !cursor-not-allowed'
                 : '!font-normal cursor-pointer'
             "
-            @change="joinPolicy = option.value"
+            @change="handleRadioChange(option.value)"
           />
         </div>
       </div>
@@ -69,7 +69,7 @@
       v-model:open="showConfirmJoinPolicyDialog"
       title="Confirm change"
       @confirm="handleJoinPolicyConfirm"
-      @cancel="pendingJoinPolicy = undefined"
+      @cancel="handleJoinPolicyCancel"
     >
       <p class="text-body-xs text-foreground mb-2">
         This will allow users with verified domain emails to join automatically without
@@ -129,6 +129,7 @@ const { triggerNotification } = useGlobalToast()
 
 const showConfirmJoinPolicyDialog = ref(false)
 const pendingJoinPolicy = ref<JoinPolicy>()
+const currentJoinPolicy = ref<JoinPolicy>()
 
 const workspaceDomains = computed(() => {
   return props.workspace?.domains || []
@@ -186,10 +187,15 @@ const isDomainDiscoverabilityEnabled = computed({
 })
 
 const joinPolicy = computed({
-  get: () =>
-    props.workspace?.discoverabilityAutoJoinEnabled
+  get: () => {
+    // Use currentJoinPolicy if it's been set, otherwise use workspace state
+    if (currentJoinPolicy.value !== undefined) {
+      return currentJoinPolicy.value
+    }
+    return props.workspace?.discoverabilityAutoJoinEnabled
       ? JoinPolicy.AutoJoin
-      : JoinPolicy.AdminApproval,
+      : JoinPolicy.AdminApproval
+  },
   set: (newVal) => {
     handleJoinPolicyUpdate(newVal)
   }
@@ -224,6 +230,9 @@ const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) =
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    // Update our local state to match the successful change
+    currentJoinPolicy.value = newValue
+
     // Reset dialog state if it was open
     if (showConfirmJoinPolicyDialog.value) {
       showConfirmJoinPolicyDialog.value = false
@@ -258,6 +267,24 @@ const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) =
 const handleJoinPolicyConfirm = async () => {
   if (!pendingJoinPolicy.value) return
   await handleJoinPolicyUpdate(pendingJoinPolicy.value, true)
+}
+
+const handleJoinPolicyCancel = () => {
+  // Revert the radio selection back to the current actual state
+  currentJoinPolicy.value = props.workspace?.discoverabilityAutoJoinEnabled
+    ? JoinPolicy.AutoJoin
+    : JoinPolicy.AdminApproval
+
+  // Close dialog and reset pending state
+  showConfirmJoinPolicyDialog.value = false
+  pendingJoinPolicy.value = undefined
+}
+
+const handleRadioChange = (newValue: JoinPolicy) => {
+  // Immediately update our local state to show the selection
+  currentJoinPolicy.value = newValue
+  // Then handle the policy update (which may show confirmation dialog)
+  handleJoinPolicyUpdate(newValue)
 }
 
 watch(
