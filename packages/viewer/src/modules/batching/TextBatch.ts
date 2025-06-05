@@ -206,6 +206,32 @@ export default class TextBatch implements Batch {
     // this.mesh.textMesh.visible = true
   }
 
+  protected alignmentXToAnchorX(value: number): string {
+    switch (value) {
+      case 0:
+        return 'left'
+      case 1:
+        return 'center'
+      case 2:
+        return 'right'
+      default:
+        return 'center'
+    }
+  }
+
+  protected alignmentYToAnchorY(value: number): string {
+    switch (value) {
+      case 0:
+        return 'left'
+      case 1:
+        return 'middle'
+      case 2:
+        return 'bottom'
+      default:
+        return 'middle'
+    }
+  }
+
   public async buildBatch(): Promise<void> {
     return new Promise((resolve) => {
       this.mesh = new SpeckleText()
@@ -223,8 +249,14 @@ export default class TextBatch implements Batch {
           text.quaternion,
           text.scale
         )
-        text.text = textMeta?.value
-        text.fontSize = textMeta?.height
+        if (textMeta) {
+          text.text = textMeta.value
+          text.fontSize = textMeta.height
+          text.maxWidth =
+            textMeta.maxWidth !== null ? textMeta.maxWidth : Number.POSITIVE_INFINITY
+          text.anchorX = this.alignmentXToAnchorX(textMeta.alignmentH as number)
+          text.anchorY = this.alignmentYToAnchorY(textMeta.alignmentV as number)
+        }
         box.setFromBufferAttribute(text.geometry.attributes.position)
         box.applyMatrix4(
           this.renderViews[k].renderData.geometry.bakeTransform || new Matrix4()

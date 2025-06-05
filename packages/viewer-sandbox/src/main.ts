@@ -565,7 +565,9 @@ const getStream = () => {
 
     // Far away text
     // 'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04'
-    'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04@fac9360249'
+    // 'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04@fac9360249'
+
+    'https://latest.speckle.systems/projects/109e01c8c0/models/1eee4edbe6'
   )
 }
 
