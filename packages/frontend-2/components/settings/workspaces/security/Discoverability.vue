@@ -192,7 +192,7 @@ const joinPolicy = computed({
   }
 })
 
-const radioOptions = [
+const radioOptions = shallowRef([
   {
     title: 'Workspace admins have to accept a join request',
     value: JoinPolicy.AdminApproval
@@ -201,7 +201,7 @@ const radioOptions = [
     title: 'Users can join immediately without admin approval',
     value: JoinPolicy.AutoJoin
   }
-] as const
+] as const)
 
 const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) => {
   if (!props.workspace?.id) return
@@ -284,20 +284,7 @@ watch(
     // If last domain was removed, disable discoverability features
     if (newLength === 0 && props.workspace?.id) {
       if (props.workspace.discoverabilityEnabled) {
-        await updateDiscoverability({
-          input: {
-            id: props.workspace.id,
-            discoverabilityEnabled: false
-          }
-        })
-      }
-      if (props.workspace.discoverabilityAutoJoinEnabled) {
-        await updateAutoJoin({
-          input: {
-            id: props.workspace.id,
-            discoverabilityAutoJoinEnabled: false
-          }
-        })
+        isDomainDiscoverabilityEnabled.value = false
       }
     }
   }
