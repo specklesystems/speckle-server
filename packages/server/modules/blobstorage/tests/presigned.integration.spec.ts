@@ -25,7 +25,10 @@ import { expect } from 'chai'
 import { testLogger } from '@/observability/logging'
 import { put } from 'axios'
 import { expectToThrow } from '@/test/assertionHelper'
-import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
+import {
+  AlreadyRegisteredBlobError,
+  StoredBlobAccessError
+} from '@/modules/blobstorage/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import {
   GeneratePresignedUrl,
@@ -252,19 +255,18 @@ describe('Presigned integration @blobstorage', async () => {
       expect(storedBlob.uploadStatus).to.equal(BlobUploadStatus.Completed)
       expect(storedBlob.fileHash).to.equal(expectedETag)
 
-      const secondAttempt = await SUT({
-        blobId,
-        projectId: ownedProject.id,
-        expectedETag,
-        maximumFileSize: 1 * 1024 * 1024 // 1 MB
-      })
-
-      expect(secondAttempt).to.exist
-      expect(secondAttempt.uploadStatus).to.equal(BlobUploadStatus.Completed)
-      expect(secondAttempt.fileHash).to.equal(expectedETag)
-      expect(secondAttempt.createdAt.toISOString()).to.equal(
-        storedBlob.createdAt.toISOString()
+      const secondAttempt = await expectToThrow(
+        async () =>
+          await SUT({
+            blobId,
+            projectId: ownedProject.id,
+            expectedETag,
+            maximumFileSize: 1 * 1024 * 1024 // 1 MB
+          })
       )
+
+      expect(secondAttempt).to.be.instanceOf(AlreadyRegisteredBlobError)
+      expect(secondAttempt.message).to.include('Blob already registered and completed')
     })
     it('re-registering with increased maximum file size after failure does not change anything', async () => {
       const blobId = cryptoRandomString({ length: 10 })
@@ -297,16 +299,18 @@ describe('Presigned integration @blobstorage', async () => {
       )
       expect(thrownError).to.be.instanceOf(UserInputError)
 
-      const secondAttempt = await SUT({
-        blobId,
-        projectId: ownedProject.id,
-        expectedETag,
-        maximumFileSize: 1 * 1024 * 1024 // bigger allowed size, because maybe some environment variables changed
-      })
+      const secondAttempt = await expectToThrow(
+        async () =>
+          await SUT({
+            blobId,
+            projectId: ownedProject.id,
+            expectedETag,
+            maximumFileSize: 1 * 1024 * 1024 // bigger allowed size, because maybe some environment variables changed
+          })
+      )
 
-      expect(secondAttempt).to.exist
-      expect(secondAttempt.uploadStatus).to.equal(BlobUploadStatus.Error)
-      expect(secondAttempt.uploadError).to.contain('[FILE_SIZE_EXCEEDED]')
+      expect(secondAttempt).to.be.instanceOf(AlreadyRegisteredBlobError)
+      expect(secondAttempt.message).to.contain('[FILE_SIZE_EXCEEDED]')
     })
     it('re-registering with decreased maximum file size does not change anything', async () => {
       const blobId = cryptoRandomString({ length: 10 })
@@ -342,19 +346,18 @@ describe('Presigned integration @blobstorage', async () => {
       expect(storedBlob.fileHash).to.equal(expectedETag)
       expect(storedBlob.fileSize).to.equal(fileSize)
 
-      const secondAttempt = await SUT({
-        blobId,
-        projectId: ownedProject.id,
-        expectedETag,
-        maximumFileSize: 1 // smaller than our content. But as we're already registered, this should not change anything
-      })
-
-      expect(secondAttempt).to.exist
-      expect(secondAttempt.uploadStatus).to.equal(BlobUploadStatus.Completed)
-      expect(secondAttempt.fileHash).to.equal(expectedETag)
-      expect(secondAttempt.createdAt.toISOString()).to.equal(
-        storedBlob.createdAt.toISOString()
+      const secondAttempt = await expectToThrow(
+        async () =>
+          await SUT({
+            blobId,
+            projectId: ownedProject.id,
+            expectedETag,
+            maximumFileSize: 1 // smaller than our content. But as we're already registered, we should throw an error regardless of this
+          })
       )
+
+      expect(secondAttempt).to.be.instanceOf(AlreadyRegisteredBlobError)
+      expect(secondAttempt.message).to.contain('Blob already registered and completed')
     })
   })
 })

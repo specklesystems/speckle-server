@@ -24,7 +24,10 @@ import { expect } from 'chai'
 import { testLogger } from '@/observability/logging'
 import { put } from 'axios'
 import { expectToThrow } from '@/test/assertionHelper'
-import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
+import {
+  AlreadyRegisteredBlobError,
+  StoredBlobAccessError
+} from '@/modules/blobstorage/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
 import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
@@ -285,22 +288,19 @@ describe('Presigned integration @fileuploads', async () => {
         expect(storedFile.fileSize).to.equal(fileSize)
         expect(storedFile.uploadComplete).to.be.true
 
-        const secondAttempt = await SUT({
-          fileId,
-          modelId: model.id,
-          userId: serverAdmin.id,
-          projectId: ownedProject.id,
-          expectedETag,
-          maximumFileSize: 1 * 1024 * 1024 // 1 MB
-        })
-
-        expect(secondAttempt).to.exist
-        expect(secondAttempt.fileType).to.equal('stl')
-        expect(secondAttempt.fileSize).to.equal(fileSize)
-        expect(storedFile.uploadComplete).to.be.true
-        expect(secondAttempt.uploadDate.toISOString()).to.equal(
-          storedFile.uploadDate.toISOString()
-        ) // it's the same file
+        const thrownError = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              projectId: ownedProject.id,
+              expectedETag,
+              maximumFileSize: 1 * 1024 * 1024 // 1 MB
+            })
+        )
+        expect(thrownError).to.be.instanceOf(AlreadyRegisteredBlobError)
+        expect(thrownError.message).to.include('Blob already registered and completed')
       })
       it('re-registering with increased maximum file size after failure results in the file being processed', async () => {
         const fileId = cryptoRandomString({ length: 10 })
@@ -336,19 +336,20 @@ describe('Presigned integration @fileuploads', async () => {
         )
         expect(thrownError).to.be.instanceOf(UserInputError)
 
-        const secondAttempt = await SUT({
-          fileId,
-          modelId: model.id,
-          userId: serverAdmin.id,
-          projectId: ownedProject.id,
-          expectedETag,
-          maximumFileSize: fileSize + 100 // an increased size, greater than the fileSize
-        })
+        const secondAttempt = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              projectId: ownedProject.id,
+              expectedETag,
+              maximumFileSize: fileSize + 100 // an increased size, greater than the fileSize
+            })
+        )
 
-        expect(secondAttempt).to.exist
-        expect(secondAttempt.fileType).to.equal('stl')
-        expect(secondAttempt.fileSize).to.equal(fileSize)
-        expect(secondAttempt.uploadComplete).to.be.true // the file is now being processed
+        expect(secondAttempt).to.be.instanceOf(AlreadyRegisteredBlobError)
+        expect(secondAttempt.message).to.contain('[FILE_SIZE_EXCEEDED]')
       })
       it('re-registering with decreased maximum file size does not change anything', async () => {
         const fileId = cryptoRandomString({ length: 10 })
@@ -385,22 +386,20 @@ describe('Presigned integration @fileuploads', async () => {
         expect(storedFile.fileSize).to.equal(fileSize)
         expect(storedFile.uploadComplete).to.be.true
 
-        const secondAttempt = await SUT({
-          fileId,
-          modelId: model.id,
-          userId: serverAdmin.id,
-          projectId: ownedProject.id,
-          expectedETag,
-          maximumFileSize: 1 // smaller than our fileSize, but it is already registered so should not throw
-        })
+        const thrownError = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              projectId: ownedProject.id,
+              expectedETag,
+              maximumFileSize: 1 // smaller than our fileSize, but it is already registered so should throw
+            })
+        )
 
-        expect(secondAttempt).to.exist
-        expect(secondAttempt.fileType).to.equal('stl')
-        expect(secondAttempt.fileSize).to.equal(fileSize)
-        expect(secondAttempt.uploadComplete).to.be.true
-        expect(storedFile.uploadDate.toISOString()).to.equal(
-          secondAttempt.uploadDate.toISOString()
-        ) // it's the same file, so upload date should not change
+        expect(thrownError).to.be.instanceOf(AlreadyRegisteredBlobError)
+        expect(thrownError.message).to.include('Blob already registered and completed')
       })
     }
   )

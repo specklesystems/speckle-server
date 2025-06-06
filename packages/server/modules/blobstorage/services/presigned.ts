@@ -10,11 +10,17 @@ import type {
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
-import { Logger } from '@/observability/logging'
-import { ensureError, Optional } from '@speckle/shared'
-import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
+import type { Logger } from '@/observability/logging'
+import { ensureError, type Optional } from '@speckle/shared'
+import {
+  AlreadyRegisteredBlobError,
+  StoredBlobAccessError
+} from '@/modules/blobstorage/errors'
 import { isEmpty } from 'lodash'
-import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import {
+  MisconfiguredEnvironmentError,
+  NotImplementedError
+} from '@/modules/shared/errors'
 // import { acceptedFileExtensions } from '@speckle/shared'
 
 export const generatePresignedUrlFactory =
@@ -92,8 +98,19 @@ export const registerCompletedUploadFactory =
     }
 
     // If the blob already exists and is not pending, we can return it directly as it has already been registered
-    if (existingBlobs[0].uploadStatus !== BlobUploadStatus.Pending) {
-      return existingBlobs[0]
+    switch (existingBlobs[0].uploadStatus) {
+      case BlobUploadStatus.Completed:
+        throw new AlreadyRegisteredBlobError('Blob already registered and completed')
+      case BlobUploadStatus.Error:
+        throw new AlreadyRegisteredBlobError(
+          existingBlobs[0].uploadError || 'Blob already registered with an error'
+        )
+      case BlobUploadStatus.Pending:
+        break //continue on to register the completed upload
+      default:
+        throw new NotImplementedError(
+          `Blob upload status ${existingBlobs[0].uploadStatus} is not implemented`
+        )
     }
 
     const objectKey = getObjectKey(projectId, blobId)
