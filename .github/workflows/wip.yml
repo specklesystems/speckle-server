@@ -164,7 +164,7 @@ jobs:
       # pubs - sub
       - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5432 -c 'CREATE PUBLICATION test_userspub FOR TABLE users';
       - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5433 -c 'CREATE EXTENSION IF NOT EXISTS "aiven_extras";'
-      - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5433 -c 'SELECT * FROM aiven_extras.pg_create_subscription(\'test_userssub_region1\', \'dbname=speckle2_test host=postgres0 port=5432 sslmode=disable user=speckle password=speckle\', \'test_userspub\',\'test_userssub_region1\', TRUE, TRUE);'
+      - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5433 -c "SELECT * FROM aiven_extras.pg_create_subscription('test_userssub_region1', 'dbname=speckle2_test host=postgres0 port=5432 sslmode=disable user=speckle password=speckle', 'test_userspub','test_userssub_region1', TRUE, TRUE);"
 
       # - uses: useblacksmith/setup-node@v5
       #   with:
