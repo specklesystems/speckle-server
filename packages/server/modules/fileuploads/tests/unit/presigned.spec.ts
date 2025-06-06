@@ -62,7 +62,7 @@ describe('Presigned @blobstorage', async () => {
       const SUT = registerUploadCompleteAndStartFileImportFactory({
         registerCompletedUpload: fakeRegisterCompletedUpload,
         insertNewUploadAndNotify: fakeInsertNewUploadAndNotify,
-        getModelsByIds: async () => []
+        getModelsByIds: async () => [] // return an empty array to simulate no models found
       })
 
       const thrownError = await expectToThrow(
@@ -72,12 +72,11 @@ describe('Presigned @blobstorage', async () => {
             fileId,
             modelId,
             userId: cryptoRandomString({ length: 10 }),
-            expectedETag: '', // no etag provided
+            expectedETag: cryptoRandomString({ length: 32 }),
             maximumFileSize: 10_000
           })
       )
       expect(thrownError).to.be.instanceOf(ModelNotFoundError)
-      expect(thrownError.message).to.contain('ETag is required')
     })
   })
 })
