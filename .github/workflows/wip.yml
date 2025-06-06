@@ -40,7 +40,7 @@ jobs:
 
   test-server-multiregion:
     name: Server multiregion
-    needs: [docker-build-postgres-container]
+    needs: [get-version, docker-build-postgres-container]
     runs-on: blacksmith
     services:
       redis:
@@ -54,7 +54,7 @@ jobs:
           - 6379:6379
 
       postgres0:
-        image: speckle/speckle-postgres:${{ needs.get-version.outputs.IMAGE_VERSION_TAG  }}
+        image: speckle/speckle-postgres:${{needs.get-version.outputs.IMAGE_VERSION_TAG}}
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -69,7 +69,7 @@ jobs:
           --health-retries 5
 
       postgres1:
-        image: speckle/speckle-postgres:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+        image: speckle/speckle-postgres:${{needs.get-version.outputs.IMAGE_VERSION_TAG}}
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -84,7 +84,7 @@ jobs:
           --health-retries 5
 
       postgres2:
-        image: speckle/speckle-postgres:${{  needs.get-version.outputs.IMAGE_VERSION_TAG  }}
+        image: speckle/speckle-postgres:${{needs.get-version.outputs.IMAGE_VERSION_TAG}}
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
