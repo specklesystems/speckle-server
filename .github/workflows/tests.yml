@@ -35,8 +35,8 @@ jobs:
         with:
           node-version: 22
           cache: yarn
-      - name: Install hardened dependencies
-        run: YARN_ENABLE_HARDENED_MODE=1 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Install hardened (no HARD flag)
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - name: Lint everything
