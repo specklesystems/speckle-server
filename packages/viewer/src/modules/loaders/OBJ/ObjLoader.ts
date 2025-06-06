@@ -35,7 +35,7 @@ export class ObjLoader extends Loader {
             this._resource,
             (group: Group) => {
               this.converter
-                .traverse(this._resource, group, async () => {})
+                .traverse(this._resource, group, () => {})
                 .then(() => {
                   loadResolve()
                 })
@@ -59,7 +59,7 @@ export class ObjLoader extends Loader {
             .traverse(
               this._resource,
               this.baseLoader.parse(this._resourceData as string),
-              async () => {}
+              () => {}
             )
             .then(() => loadResolve())
             .catch((err) => {
@@ -72,7 +72,10 @@ export class ObjLoader extends Loader {
           const t0 = performance.now()
           const renderTree = this.tree.getRenderTree(this._resource)
           if (renderTree) {
-            const res = await renderTree.buildRenderTree(new ObjGeometryConverter())
+            const res = await renderTree.buildRenderTree(
+              new ObjGeometryConverter(),
+              () => {}
+            )
             Logger.log('Tree build time -> ', performance.now() - t0)
             this.isFinished = true
             resolve(res)
