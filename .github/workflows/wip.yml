@@ -54,7 +54,7 @@ jobs:
           - 6379:6379
 
       postgres0:
-        image: speckle/speckle-postgres:${{  needs.get-version.outputs.IMAGE_VERSION_TAG  }}
+        image: speckle/speckle-postgres:${{ needs.get-version.outputs.IMAGE_VERSION_TAG  }}
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -62,14 +62,14 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --entrypoint "posgres -c 'max_connections=1000' -c 'wal_level=logical'"
+          --entrypoint "postgres -c 'max_connections=1000' -c 'wal_level=logical'"
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
       postgres1:
-        image: speckle/speckle-postgres:${{  needs.get-version.outputs.IMAGE_VERSION_TAG  }}
+        image: speckle/speckle-postgres:${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -77,7 +77,7 @@ jobs:
         ports:
           - 5433:5432
         options: >-
-          --entrypoint "posgres -c 'max_connections=1000' -c 'wal_level=logical'"
+          --entrypoint "postgres -c 'max_connections=1000' -c 'wal_level=logical'"
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
@@ -92,7 +92,7 @@ jobs:
         ports:
           - 5434:5432
         options: >-
-          --entrypoint "posgres -c 'max_connections=1000' -c 'wal_level=logical'"
+          --entrypoint "postgres -c 'max_connections=1000' -c 'wal_level=logical'"
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
