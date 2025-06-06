@@ -1,30 +1,34 @@
 <template>
-  <section class="flex flex-col gap-3">
-    <SettingsSectionHeader title="Authentication" subheading class="mb-3" />
-
-    <div v-if="loading" class="flex justify-center">
-      <CommonLoadingIcon />
+  <section class="flex flex-col gap-2 border-t border-outline-2 py-8">
+    <div class="flex justify-between items-start">
+      <div class="flex flex-col">
+        <h4 class="text-heading-lg">Single sign-on</h4>
+        <p class="text-body-xs text-foreground-2">
+          Use your existing identity provider to authenticate users.
+        </p>
+      </div>
     </div>
 
-    <template v-else>
-      <div class="flex items-center mb-4">
-        <div class="flex-1 flex-col pr-6 gap-y-1">
-          <p class="text-body-xs font-medium text-foreground">Enable SSO</p>
-          <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-            Allow logins through your OpenID identity provider.
-          </p>
-        </div>
+    <div class="flex items-center mt-6">
+      <div class="flex-1 flex-col pr-6 gap-y-1">
+        <p class="text-body-xs font-medium text-foreground">Enable SSO</p>
+        <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+          Allow logins through your OpenID identity provider
+        </p>
+      </div>
+      <div>
         <div v-if="workspace.hasAccessToSSO">
-          <FormButton
+          <FormSwitch
             v-if="isWorkspaceAdmin"
-            :disabled="isFormVisible || !!provider"
-            @click="handleConfigureClick"
-          >
-            Configure
-          </FormButton>
+            v-model="isFormVisible"
+            name="sso-configuration"
+            :show-label="false"
+            :disabled="loading || !!provider"
+            @update:model-value="handleConfigurationToggle"
+          />
 
           <div v-else v-tippy="`You must be a workspace admin`">
-            <FormButton disabled>Configure</FormButton>
+            <FormSwitch disabled name="sso-configuration" :show-label="false" />
           </div>
         </div>
 
@@ -32,17 +36,16 @@
           Upgrade to Business
         </FormButton>
       </div>
+    </div>
 
-      <CommonCard
-        v-if="!workspace.hasAccessToSSO && workspace.sso?.provider?.id"
-        class="bg-foundation"
-      >
-        SSO access requires an active Business subscription.
-      </CommonCard>
+    <div v-if="loading" class="flex justify-center">
+      <CommonLoadingIcon />
+    </div>
 
+    <template v-else>
       <!-- Existing Provider Configuration -->
       <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
-        <div v-if="!isEditing" class="flex items-center justify-between">
+        <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h3 class="text-body-xs font-medium text-foreground">
               {{ provider.name }}
@@ -73,14 +76,6 @@
             />
           </LayoutMenu>
         </div>
-
-        <SettingsWorkspacesSecuritySsoForm
-          v-else
-          :workspace-slug="workspace.slug"
-          :provider-info="errorProviderInfo"
-          @cancel="handleCancel"
-          @submit="handleFormSubmit"
-        />
       </div>
 
       <!-- Configuration Instructions -->
@@ -179,7 +174,6 @@ const { provider, loading, isSsoAuthenticated } = useWorkspaceSsoStatus({
 })
 
 const isFormVisible = ref(false)
-const isEditing = ref(false)
 const showActionsMenu = ref(false)
 const isDeleteDialogOpen = ref(false)
 
@@ -216,19 +210,22 @@ const onButtonClick = () => {
   showActionsMenu.value = !showActionsMenu.value
 }
 
-const handleConfigureClick = () => {
-  isFormVisible.value = true
+const handleConfigurationToggle = (enabled: boolean) => {
+  isFormVisible.value = enabled
+  if (!enabled) {
+    errorProviderInfo.value = undefined
+  }
 }
 
 const handleFormSubmit = (data: SsoFormValues) => {
   logger.info('Form submitted:', data)
-  isEditing.value = false
   isFormVisible.value = false
+  errorProviderInfo.value = undefined
 }
 
 const handleCancel = () => {
   isFormVisible.value = false
-  isEditing.value = false
+  errorProviderInfo.value = undefined
 }
 
 const redirectUrl = computed(() => {
@@ -261,6 +258,8 @@ onMounted(() => {
       title: 'SSO Configuration Successful',
       description: 'Your SSO settings have been successfully configured.'
     })
+    isFormVisible.value = false
+    errorProviderInfo.value = undefined
   } else if (ssoValidationSuccess === 'false' || ssoError) {
     triggerNotification({
       type: ToastNotificationType.Danger,
