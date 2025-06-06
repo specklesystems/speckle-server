@@ -48,23 +48,23 @@ jobs:
           yarn helm:jsonschema:generate
           git diff --exit-code
 
-    pre-commit:
-      name: Precommit check
-      runs-on: blacksmith
-      container:
-        image: speckle/pre-commit-runner:latest
-      steps:
-        - uses: actions/checkout@v4.2.2
-          with:
-            fetch-depth: 0
-        - run: git config --global --add safe.directory $PWD
-        - name: Set precommit
-          run: pre-commit install-hooks --config ./.pre-commit-config.yaml
-        - name: Run precommit
-          run: pre-commit run --all-files --config ./.pre-commit-config.yaml
-        - name: Diff on failure
-          if: failure()
-          run: git --no-pager diff
+  pre-commit:
+    name: Precommit check
+    runs-on: blacksmith
+    container:
+      image: speckle/pre-commit-runner:latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - run: git config --global --add safe.directory $PWD
+      - name: Set precommit
+        run: pre-commit install-hooks --config ./.pre-commit-config.yaml
+      - name: Run precommit
+        run: pre-commit run --all-files --config ./.pre-commit-config.yaml
+      - name: Diff on failure
+        if: failure()
+        run: git --no-pager diff
 
   test-frontend-2:
     name: Frontend
