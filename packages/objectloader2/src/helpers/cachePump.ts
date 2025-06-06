@@ -74,14 +74,15 @@ export class CachePump implements Pump {
         continue
       }
       const batch = ids.slice(i, i + maxCacheReadSize)
-      const cachedData = await this.#database.getAll(batch)
+      await this.#database.findBatch(batch, foundItems, notFoundItems)
+      /*const cachedData = await this.#database.getAll(batch)
       for (let i = 0; i < cachedData.length; i++) {
         if (cachedData[i]) {
           foundItems.add(cachedData[i]!)
         } else {
           notFoundItems.add(batch[i])
         }
-      }
+      }*/
       i += maxCacheReadSize
     }
   }

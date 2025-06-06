@@ -1,39 +1,37 @@
-// WorkerManager.ts
-import { RingBufferQueue } from './RingBufferQueue.js'
-import { LogErrorFunction, WorkerMessageType } from './WorkerMessageType.js'
-import { StringQueue } from './StringQueue.js'
-import { ItemQueue } from './ItemQueue.js'
+import { Item } from '../../types/types.js'
+import { ItemQueue } from '../../workers/ItemQueue.js'
+import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
+import { StringQueue } from '../../workers/StringQueue.js'
+import { handleError, WorkerMessageType } from '../../workers/WorkerMessageType.js'
+import { Database } from '../interfaces.js'
+import IndexedDatabase from './indexedDatabase.js'
 
 const BUFFER_CAPACITY_BYTES = 1024 * 16 // 16KB capacity for each queue
 
-type LogFunction = (message: string) => void
-type SetButtonDisabledFunction = (disabled: boolean) => void
-type SetInputDisabledFunction = (disabled: boolean) => void
-
-export class WorkerManager {
+export class WorkerDatabase implements Database {
   private indexedDbReaderWorker: Worker | null = null
   private mainToWorkerQueue: StringQueue | null = null
   private workerToMainQueue: ItemQueue | null = null
   private workerCheckInterval: number | null = null
 
-  private logToMainUI: LogFunction
-  private logErrorToMainUI: LogErrorFunction
-  private logToWorkerResponseUI: (itemAsJson: string) => void
-  private setSendMessageButtonDisabled: SetButtonDisabledFunction
-  private setMessageInputDisabled: SetInputDisabledFunction
+  private idb: Database = new IndexedDatabase({})
 
-  constructor(
-    logToMainUI: LogFunction,
-    logErrorToMainUI: LogErrorFunction,
-    logToWorkerResponseUI: (itemAsJson: string) => void,
-    setSendMessageButtonDisabled: SetButtonDisabledFunction,
-    setMessageInputDisabled: SetInputDisabledFunction
-  ) {
-    this.logToMainUI = logToMainUI
-    this.logErrorToMainUI = logErrorToMainUI
-    this.logToWorkerResponseUI = logToWorkerResponseUI
-    this.setSendMessageButtonDisabled = setSendMessageButtonDisabled
-    this.setMessageInputDisabled = setMessageInputDisabled
+  getAll(keys: string[]): Promise<(Item | undefined)[]> {
+    throw new Error('Method not implemented.')
+  }
+  cacheSaveBatch(params: { batch: Item[] }): Promise<void> {
+    return this.idb.cacheSaveBatch(params)
+  }
+  disposeAsync(): Promise<void> {
+    return this.idb.disposeAsync()
+  }
+
+  private logToMainUI(message: string): void {
+    console.log(`[Main] ${message}`)
+  }
+
+  private logToWorkerResponseUI(message: string): void {
+    console.log(`[FromWorker] ${message}`)
   }
 
   public initialize(): void {
@@ -41,8 +39,6 @@ export class WorkerManager {
       this.logToMainUI(
         'Error: SharedArrayBuffer is not available. This feature requires specific HTTP headers (COOP/COEP). Communication disabled.'
       )
-      this.setSendMessageButtonDisabled(true)
-      this.setMessageInputDisabled(true)
       // Consider a more robust way to inform the UI about this critical error
       const commSection = document.querySelector('.communication-section h2')
       if (commSection) {
@@ -57,15 +53,11 @@ export class WorkerManager {
 
     if (typeof Worker === 'undefined') {
       this.logToMainUI('Error: Web Workers are not supported in this browser.')
-      this.setSendMessageButtonDisabled(true)
-      this.setMessageInputDisabled(true)
       return
     }
 
     this.initializeIndexedDbReaderWorker()
 
-    this.setSendMessageButtonDisabled(true) // Initially disabled until worker is ready
-    this.setMessageInputDisabled(true)
     this.logToMainUI('Web Worker communication setup initiated.')
   }
 
@@ -110,18 +102,21 @@ export class WorkerManager {
     worker.onmessage = (event): void => {
       if (event.data && event.data.type === 'WORKER_READY') {
         this.logToMainUI('Worker is ready and has initialized both queues.')
-        this.setSendMessageButtonDisabled(false)
-        this.setMessageInputDisabled(false)
         if (this.workerCheckInterval === null) {
           this.workerCheckInterval = window.setInterval(
-            () => this.processWorkerMessages(),
-            200
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            () =>
+              this.processWorkerMessages().catch((e) =>
+                handleError(
+                  e,
+                  (err) => `Error processing worker messages: ${err.message}`
+                )
+              ),
+            1000
           )
         }
       } else if (event.data && event.data.type === 'WORKER_INIT_FAILED') {
         this.logToMainUI(`Worker failed to initialize: ${event.data.error}`)
-        this.setSendMessageButtonDisabled(true)
-        this.setMessageInputDisabled(true)
       } else if (event.data && event.data.type === 'WORKER_LOG') {
         // this.logToMainUI(`[Worker Log] ${event.data.message}`); // Can be noisy
       } else {
@@ -134,8 +129,6 @@ export class WorkerManager {
     worker.onerror = (error): void => {
       this.logToMainUI(`Error from worker: ${error.message}`)
       console.error('Worker error:', error)
-      this.setSendMessageButtonDisabled(true)
-      this.setMessageInputDisabled(true)
       if (this.workerCheckInterval !== null) {
         clearInterval(this.workerCheckInterval)
         this.workerCheckInterval = null
@@ -153,44 +146,7 @@ export class WorkerManager {
         }
       }
     } catch (e: unknown) {
-      this.logErrorToMainUI(
-        e,
-        (err) => `Error dequeueing message from worker: ${err.message}`
-      )
-    }
-  }
-
-  public async sendMessage(messageText: string): Promise<boolean> {
-    if (!this.mainToWorkerQueue) {
-      this.logToMainUI('Error: Main-to-Worker queue not initialized.')
-      return false
-    }
-    if (!messageText) {
-      this.logToMainUI('Cannot send empty message.')
-      return false
-    }
-    this.logToMainUI(`Original input: "${messageText}"`)
-    this.setSendMessageButtonDisabled(true)
-    try {
-      const success = await this.mainToWorkerQueue.enqueue([messageText], 5000)
-      if (success) {
-        this.logToMainUI(`Message enqueued successfully.`)
-        return true
-      } else {
-        this.logToMainUI(`Failed to enqueue message. Queue might be full or timed out.`)
-        return false
-      }
-    } catch (e) {
-      this.logToMainUI(`Error sending message: ${e.message}`)
-      console.error('Error enqueuing message:', e)
-      return false
-    } finally {
-      // Re-enable button if worker is still considered ready
-      // This logic might need refinement based on worker state
-      if (this.indexedDbReaderWorker && this.indexedDbReaderWorker.onmessage) {
-        // A proxy for "worker seems operational"
-        this.setSendMessageButtonDisabled(false)
-      }
+      handleError(e, (err) => `Error dequeueing message from worker: ${err.message}`)
     }
   }
 
@@ -204,8 +160,6 @@ export class WorkerManager {
       clearInterval(this.workerCheckInterval)
       this.workerCheckInterval = null
     }
-    this.setSendMessageButtonDisabled(true)
-    this.setMessageInputDisabled(true)
     this.logToMainUI('WorkerManager disposed.')
   }
 }

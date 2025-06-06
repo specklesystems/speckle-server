@@ -1,9 +1,10 @@
 import { RingBufferQueue } from './RingBufferQueue.js'
-import { Item } from './RingBufferState.js'
 import { StringQueue } from './StringQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import { handleError, WorkerMessageType } from './WorkerMessageType.js'
 import { InitQueuesMessage } from './InitQueuesMessage.js'
+import IndexedDatabase from '../operations/databases/indexedDatabase.js'
+import { Item } from '../types/types.js'
 
 let workerToMainQueue: ItemQueue | null = null
 let mainToWorkerQueue: StringQueue | null = null
@@ -27,39 +28,27 @@ async function processMessages(): Promise<void> {
     })
     return
   }
+  const db = new IndexedDatabase({})
   log('Starting to listen for messages from main thread...')
   while (true) {
     try {
-      // Dequeue 1 string message. StringDataMessage is now just string.
       const receivedMessages = await mainToWorkerQueue.dequeue(1, 500) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
-        for (const receivedString of receivedMessages) {
-          // receivedString is a string
-          log(`Received message (string): "${receivedString}"`)
-
-          // Use the receivedString (which is already processed to 32-byte representation)
-          // to generate the Item.
-
-          const newItem: Item = {
-            baseId: `item-${receivedString.substring(0, 16)}-${Date.now()}`,
-            base: {
-              id: `base-${receivedString.length}-${Date.now()}`, // or use receivedString.length
-              speckle_type: 'ProcessedStringItem',
-              __closure: {
-                sourceStringLengthAfter32ByteProcessing: receivedString.length
-              }
-            },
-            size: receivedString.length // or receivedString.length (UTF-8 bytes can differ from char length)
-          }
-
-          log(`Constructed Item: ${JSON.stringify(newItem)}`)
-
-          const success = await workerToMainQueue.enqueue([newItem], 500)
-          if (success) {
-            log(`Item enqueued to workerToMainQueue successfully.`)
+        const items = await db.getAll(receivedMessages)
+        const processedItems: Item[] = []
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i]
+          if (item) {
+            processedItems.push(item)
           } else {
-            log(`Failed to enqueue Item to workerToMainQueue.`)
+            processedItems.push({ baseId: receivedMessages[i] })
           }
+        }
+        const success = await workerToMainQueue.enqueue(processedItems, 500)
+        if (success) {
+          log(`Item enqueued to workerToMainQueue successfully.`)
+        } else {
+          log(`Failed to enqueue Item to workerToMainQueue.`)
         }
       }
     } catch (e: unknown) {

@@ -79,13 +79,13 @@ export class ObjectLoader2 {
 
   async getTotalObjectCount(): Promise<number> {
     const rootObj = await this.getRootObject()
-    const totalChildrenCount = Object.keys(rootObj?.base.__closure || {}).length
+    const totalChildrenCount = Object.keys(rootObj?.base?.__closure || {}).length
     return totalChildrenCount + 1 //count the root
   }
 
   async *getObjectIterator(): AsyncGenerator<Base> {
     const rootItem = await this.getRootObject()
-    if (rootItem === undefined) {
+    if (rootItem?.base === undefined) {
       this.#logger('No root object found!')
       return
     }
@@ -105,7 +105,9 @@ export class ObjectLoader2 {
       total
     })
     for await (const item of this.#pump.gather(children, this.#downloader)) {
-      yield item.base
+      if (item.base) {
+        yield item.base
+      }
     }
   }
 

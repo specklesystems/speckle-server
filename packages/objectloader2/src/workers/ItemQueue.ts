@@ -1,6 +1,5 @@
-// ItemQueue.ts
+import { Item } from '../types/types.js'
 import { RingBufferQueue } from './RingBufferQueue.js'
-import { Item } from './RingBufferState.js'
 import { handleError } from './WorkerMessageType.js'
 
 export class ItemQueue {
