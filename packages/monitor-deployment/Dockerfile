@@ -7,19 +7,19 @@ WORKDIR /speckle-server
 
 # Download tini
 ARG TINI_VERSION=v0.19.0
-ENV TINI_VERSION=${TINI_VERSION}
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20230311 \
      curl=7.88.1-10+deb12u12 \
-    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o ./tini \
-    && chmod +x ./tini \
+    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
+    && chmod +x /usr/bin/tini \
     && apt-get remove -y curl \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Consume the ARG from the global scope
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
@@ -46,15 +46,16 @@ RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspa
 
 FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
 
+# Consume the ARG from the global scope
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
-COPY --link --from=build-stage /speckle-server/tini /usr/bin/tini
+COPY --link --from=build-stage /usr/bin/tini /usr/bin/tini
 COPY --link --from=build-stage /speckle-server/packages/shared ./packages/shared
 COPY --link --from=build-stage /speckle-server/packages/monitor-deployment ./packages/monitor-deployment
 COPY --link --from=build-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/monitor-deployment
 
-ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]
+ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "--loader=./dist/src/aliasLoader.js", "./bin/www.js" ]
