@@ -4,7 +4,8 @@ import type {
   RegisterCompletedUpload,
   GetSignedUrl,
   UpdateBlob,
-  UpsertBlob
+  UpsertBlob,
+  GetBlobs
 } from '@/modules/blobstorage/domain/operations'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { UserInputError } from '@/modules/core/errors/userinput'
@@ -63,12 +64,13 @@ export const generatePresignedUrlFactory =
 
 export const registerCompletedUploadFactory =
   (deps: {
-    updateBlob: UpdateBlob
+    getBlobs: GetBlobs
     getBlobMetadata: GetBlobMetadataFromStorage
+    updateBlobWhereStatusPending: UpdateBlob
     logger: Logger
   }): RegisterCompletedUpload =>
   async (params) => {
-    const { updateBlob, getBlobMetadata, logger } = deps
+    const { getBlobs, updateBlobWhereStatusPending, getBlobMetadata, logger } = deps
     const { blobId, projectId, expectedETag, maximumFileSize } = params
     if (isEmpty(expectedETag)) {
       throw new UserInputError('ETag is required to register a completed upload')
@@ -77,6 +79,21 @@ export const registerCompletedUploadFactory =
       throw new MisconfiguredEnvironmentError(
         'Maximum file size must be greater than 0'
       )
+    }
+
+    const existingBlobs = await getBlobs({
+      streamId: projectId,
+      blobIds: [blobId]
+    })
+    if (!existingBlobs || existingBlobs.length === 0) {
+      throw new UserInputError(
+        'Please use mutation generateUploadUrl to create a blob before registering a completed upload'
+      )
+    }
+
+    // If the blob already exists and is not pending, we can return it directly as it has already been registered
+    if (existingBlobs[0].uploadStatus !== BlobUploadStatus.Pending) {
+      return existingBlobs[0]
     }
 
     const objectKey = getObjectKey(projectId, blobId)
@@ -104,7 +121,7 @@ export const registerCompletedUploadFactory =
     }
 
     if (!blobMetadata.contentLength || blobMetadata.contentLength > maximumFileSize) {
-      await updateBlob({
+      await updateBlobWhereStatusPending({
         id: blobId,
         streamId: projectId,
         item: {
@@ -120,7 +137,7 @@ export const registerCompletedUploadFactory =
       )
     }
 
-    const updatedBlob = await updateBlob({
+    const updatedBlob = await updateBlobWhereStatusPending({
       id: blobId,
       streamId: projectId,
       item: {

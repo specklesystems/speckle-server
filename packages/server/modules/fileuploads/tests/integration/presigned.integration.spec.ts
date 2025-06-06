@@ -11,7 +11,7 @@ import {
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobsFactory,
-  updateBlobFactory,
+  updateBlobWhereStatusPendingFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { Roles, TIME } from '@speckle/shared'
@@ -110,10 +110,13 @@ describe('Presigned integration @fileuploads', async () => {
         })
         SUT = registerUploadCompleteAndStartFileImportFactory({
           registerCompletedUpload: registerCompletedUploadFactory({
+            getBlobs: getBlobsFactory({ db: projectDb }),
             getBlobMetadata: getBlobMetadataFromStorage({
               objectStorage: projectStorage
             }),
-            updateBlob: updateBlobFactory({ db: projectDb }),
+            updateBlobWhereStatusPending: updateBlobWhereStatusPendingFactory({
+              db: projectDb
+            }),
             logger: testLogger
           }),
           insertNewUploadAndNotify: insertNewUploadAndNotifyFactoryV2({
@@ -173,10 +176,23 @@ describe('Presigned integration @fileuploads', async () => {
         expect(storedFile.fileSize).to.equal(10)
       })
       it('should throw a StoredBlobAccessError if the blob cannot be found', async () => {
+        const fileId = cryptoRandomString({ length: 10 })
+        const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+        const expiryDuration = 1 * TIME.minute
+        await generatePresignedUrl({
+          blobId: fileId,
+          fileName,
+          projectId: ownedProject.id,
+          userId: serverAdmin.id,
+          urlExpiryDurationSeconds: expiryDuration
+        })
+
+        // Do not upload any file, and skip straight to requesting the file be imported
+
         const thrownError = await expectToThrow(
           async () =>
             await SUT({
-              fileId: cryptoRandomString({ length: 10 }),
+              fileId,
               projectId: ownedProject.id,
               modelId: model.id,
               userId: serverAdmin.id,

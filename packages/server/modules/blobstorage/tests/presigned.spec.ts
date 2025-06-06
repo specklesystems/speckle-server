@@ -99,6 +99,22 @@ describe('Presigned @blobstorage', async () => {
     })
   })
   describe('register a completed blob upload', () => {
+    const fakeGetBlobs = async () => [
+      {
+        // this returned data is never used
+        id: cryptoRandomString({ length: 10 }),
+        streamId: cryptoRandomString({ length: 10 }),
+        fileName: `test-file-${cryptoRandomString({ length: 10 })}.stl`,
+        fileType: 'stl',
+        fileSize: null,
+        uploadStatus: BlobUploadStatus.Pending,
+        uploadError: null,
+        createdAt: new Date(),
+        fileHash: null,
+        userId: cryptoRandomString({ length: 10 }),
+        objectKey: cryptoRandomString({ length: 10 })
+      }
+    ]
     const fakeUpdateBlob = async () => ({
       // this returned data is never used
       id: cryptoRandomString({ length: 10 }),
@@ -118,11 +134,12 @@ describe('Presigned @blobstorage', async () => {
       const fileHash = cryptoRandomString({ length: 10 })
       const blobId = cryptoRandomString({ length: 10 })
       const SUT = registerCompletedUploadFactory({
+        getBlobs: fakeGetBlobs,
         getBlobMetadata: async () => ({
           contentLength: 1000,
           eTag: fileHash
         }),
-        updateBlob: fakeUpdateBlob,
+        updateBlobWhereStatusPending: fakeUpdateBlob,
         logger: testLogger
       })
 
@@ -143,11 +160,12 @@ describe('Presigned @blobstorage', async () => {
       const fileHash = cryptoRandomString({ length: 10 })
       const blobId = cryptoRandomString({ length: 10 })
       const SUT = registerCompletedUploadFactory({
+        getBlobs: fakeGetBlobs,
         getBlobMetadata: async () => ({
           contentLength: 1000,
           eTag: fileHash // the etag to match
         }),
-        updateBlob: fakeUpdateBlob,
+        updateBlobWhereStatusPending: fakeUpdateBlob,
         logger: testLogger
       })
 
@@ -169,11 +187,12 @@ describe('Presigned @blobstorage', async () => {
       const blobId = cryptoRandomString({ length: 10 })
       const maximumFileSize = 100
       const SUT = registerCompletedUploadFactory({
+        getBlobs: fakeGetBlobs,
         getBlobMetadata: async () => ({
           contentLength: maximumFileSize + 1,
           eTag: fileHash
         }),
-        updateBlob: fakeUpdateBlob,
+        updateBlobWhereStatusPending: fakeUpdateBlob,
         logger: testLogger
       })
 
@@ -195,11 +214,12 @@ describe('Presigned @blobstorage', async () => {
       const blobId = cryptoRandomString({ length: 10 })
       const maximumFileSize = -22 // negative file size for this test
       const SUT = registerCompletedUploadFactory({
+        getBlobs: fakeGetBlobs,
         getBlobMetadata: async () => ({
           contentLength: 100,
           eTag: fileHash
         }),
-        updateBlob: fakeUpdateBlob,
+        updateBlobWhereStatusPending: fakeUpdateBlob,
         logger: testLogger
       })
 
@@ -214,6 +234,33 @@ describe('Presigned @blobstorage', async () => {
       )
       expect(thrownError).to.be.instanceOf(MisconfiguredEnvironmentError)
       expect(thrownError.message).to.contain('Maximum file size must be greater than')
+    })
+    it('should throw an error if there is no existing blob with the given ID', async () => {
+      const projectId = cryptoRandomString({ length: 10 })
+      const fileHash = cryptoRandomString({ length: 10 })
+      const blobId = cryptoRandomString({ length: 10 })
+      const SUT = registerCompletedUploadFactory({
+        getBlobs: async () => [],
+        getBlobMetadata: async () => ({
+          contentLength: 1000,
+          eTag: fileHash
+        }),
+        updateBlobWhereStatusPending: fakeUpdateBlob,
+        logger: testLogger
+      })
+      const thrownError = await expectToThrow(
+        async () =>
+          await SUT({
+            projectId,
+            blobId,
+            expectedETag: fileHash,
+            maximumFileSize: 10_000
+          })
+      )
+      expect(thrownError).to.be.instanceOf(UserInputError)
+      expect(thrownError.message).to.contain(
+        'Please use mutation generateUploadUrl to create a blob before registering a completed upload'
+      )
     })
   })
 })

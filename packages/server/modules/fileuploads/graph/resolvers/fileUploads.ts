@@ -23,7 +23,8 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import {
-  updateBlobFactory,
+  getBlobsFactory,
+  updateBlobWhereStatusPendingFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import {
@@ -148,7 +149,8 @@ const fileUploadMutations = {
       registerUploadCompleteAndStartFileImportFactory({
         registerCompletedUpload: registerCompletedUploadFactory({
           logger: ctx.log,
-          updateBlob: updateBlobFactory({
+          getBlobs: getBlobsFactory({ db: projectDb }),
+          updateBlobWhereStatusPending: updateBlobWhereStatusPendingFactory({
             db: projectDb
           }),
           getBlobMetadata: getBlobMetadataFromStorage({
