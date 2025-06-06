@@ -29,6 +29,11 @@ export class RenderTree {
   public constructor(tree: WorldTree, subtreeRoot: TreeNode) {
     this.tree = tree
     this.root = subtreeRoot
+    /** Technically, this isn't corret as rendertrees can be built to wrap subtrees, not the entire tree.
+     *  The second argument is the root of tree it wraps around.
+     *  For building the render tree, we always currently do it on the entire tree, but this will need to change
+     *  once/if we introduce tree building in parallel with downloading/converting
+     */
     this.total = this.tree.nodeCount
   }
 
