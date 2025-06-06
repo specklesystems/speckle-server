@@ -157,7 +157,7 @@ export default class SpeckleConverter {
     if (this.directNodeConverterExists(obj)) {
       try {
         await this.convertToNode(obj, childNode)
-       // callback()
+        // callback()
         return
       } catch (e) {
         Logger.warn(
@@ -194,7 +194,7 @@ export default class SpeckleConverter {
           })
           this.tree.addNode(nestedNode, childNode)
           await this.convertToNode(displayValue, nestedNode)
-       //   callback()
+          //   callback()
         } catch (e) {
           Logger.warn(
             `(Traversing) Failed to convert obj with id: ${obj.id} — ${
@@ -214,7 +214,7 @@ export default class SpeckleConverter {
           })
           this.tree.addNode(nestedNode, childNode)
           await this.convertToNode(val, nestedNode)
-         // callback()
+          // callback()
         }
       }
 

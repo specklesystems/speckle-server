@@ -15,8 +15,8 @@ export class RenderTree {
   public convertTime = 0
   public getNodeTime = 0
   public otherTime = 0
-  private count = 0;
-  private total;
+  private count = 0
+  private total
 
   public get id(): string {
     return this.root.model.id
@@ -29,7 +29,7 @@ export class RenderTree {
   public constructor(tree: WorldTree, subtreeRoot: TreeNode) {
     this.tree = tree
     this.root = subtreeRoot
-    this.total = this.tree.nodeCount;
+    this.total = this.tree.nodeCount
   }
 
   public buildRenderTree(
