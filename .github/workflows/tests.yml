@@ -251,7 +251,7 @@ jobs:
   test-server:
     name: Server
     needs: [docker-build-postgres-container]
-    runs-on: blacksmith
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     services:
       redis:
         image: redis:7.2.4
@@ -345,7 +345,7 @@ jobs:
   test-server-no-ff:
     name: Server no ff
     needs: [docker-build-postgres-container]
-    runs-on: blacksmith
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     services:
       redis:
         image: redis:7.2.4
