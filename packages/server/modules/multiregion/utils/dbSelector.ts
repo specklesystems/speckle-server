@@ -264,12 +264,6 @@ const setUpUserReplication = async ({
     TRUE
   );`
   try {
-    console.log({
-      subName,
-      db: `dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}`,
-      pubName
-    })
-
     await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
     await to.public.raw(rawSqeel, [
       subName,
