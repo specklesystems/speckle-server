@@ -1,6 +1,7 @@
 export type Workspace = {
   id: string
   slug: string
+  isExclusive: boolean
 }
 
 export type WorkspaceSsoProvider = {
