@@ -8,7 +8,8 @@ import {
 } from '@/modules/blobstorage/domain/operations'
 import {
   BlobStorageItem,
-  BlobStorageItemInput
+  BlobStorageItemInput,
+  BlobUploadStatus
 } from '@/modules/blobstorage/domain/types'
 import { cursorFromRows, decodeCursor } from '@/modules/blobstorage/helpers/db'
 import { buildTableHelper } from '@/modules/core/dbSchema'
@@ -88,6 +89,22 @@ export const updateBlobFactory =
     const q = tables
       .blobStorage(deps.db)
       .where(BlobStorage.col.id, id)
+      .update(item, '*')
+
+    if (streamId) q.andWhere(BlobStorage.col.streamId, streamId)
+
+    const [res] = await q
+    return res
+  }
+
+export const updateBlobWhereStatusPendingFactory =
+  (deps: { db: Knex }): UpdateBlob =>
+  async (params: { id: string; item: Partial<BlobStorageItem>; streamId?: string }) => {
+    const { id, item, streamId } = params
+    const q = tables
+      .blobStorage(deps.db)
+      .where(BlobStorage.col.id, id)
+      .andWhere(BlobStorage.col.uploadStatus, BlobUploadStatus.Pending)
       .update(item, '*')
 
     if (streamId) q.andWhere(BlobStorage.col.streamId, streamId)

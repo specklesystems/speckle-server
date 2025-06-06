@@ -30,6 +30,7 @@ import { canPublishPolicy } from './project/canPublish.js'
 import { canLoadPolicy } from './project/canLoad.js'
 import { canUpdateEmbedOptionsPolicy } from './workspace/canUpdateEmbedOptions.js'
 import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
+import { canImportProjectFilesPolicy } from './project/files/canImport.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -38,6 +39,9 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canRead: canReadAutomationPolicy(loaders),
       canUpdate: canUpdateAutomationPolicy(loaders),
       canDelete: canDeleteAutomationPolicy(loaders)
+    },
+    files: {
+      canImport: canImportProjectFilesPolicy(loaders)
     },
     model: {
       canCreate: canCreateModelPolicy(loaders),

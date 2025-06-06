@@ -113,6 +113,8 @@ export const insertNewUploadAndNotifyFactoryV2 =
         fileType: file.fileType
       }
     })
+
+    return file
   }
 
 export const notifyChangeInFileStatus =
