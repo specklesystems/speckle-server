@@ -314,7 +314,11 @@ export default class Materials {
       renderView.geometryType.toString() +
       geometry +
       mat +
-      //(renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '') +
+      (renderView.geometryType === GeometryType.TEXT
+        ? (
+            renderView.renderData.geometry.metaData?.screenOriented as boolean
+          ).toString()
+        : '') +
       (renderView.renderData.geometry.instanced ? 'instanced' : '')
     return Materials.hashCode(s)
   }

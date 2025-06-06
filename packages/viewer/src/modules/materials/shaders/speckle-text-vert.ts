@@ -5,6 +5,15 @@ export const speckleTextVert = /* glsl */ `
     uniform vec3 uViewer_low;
 #endif
 
+#ifdef BILLBOARD
+    uniform vec2 screenSize;
+    uniform mat4 invProjection;
+    #ifdef BILLBOARD_PIXEL_HEIGHT
+        uniform float billboardPixelHeight;
+    #endif
+#endif
+
+
 
 #include <uv_pars_vertex>
 #include <uv2_pars_vertex>
@@ -39,14 +48,18 @@ export const speckleTextVert = /* glsl */ `
     }
 #endif
 
-
-#if defined(BILLBOARD) || defined(BILLBOARD_FIXED)
-    uniform vec3 billboardPos;
-    uniform mat4 invProjection;
-#endif
-#ifdef BILLBOARD_FIXED
-    uniform vec2 billboardSize;
-#endif
+// mat4 getTextTransform(){
+//     #ifdef BATCHED_TEXT
+//         return mat4(
+//             troikaBatchTexel(0.0), 
+//             troikaBatchTexel(1.0), 
+//             troikaBatchTexel(2.0), 
+//             troikaBatchTexel(3.0)
+//         );
+//     #else
+//         return modelMatrix;
+//     #endif
+// }
 
 void main() {
 	#include <uv_vertex>
@@ -64,35 +77,84 @@ void main() {
 	#include <morphtarget_vertex>
 	#include <skinning_vertex>
 
-    mat4 matrix = mat4(
-    troikaBatchTexel(0.0), troikaBatchTexel(1.0), troikaBatchTexel(2.0), troikaBatchTexel(3.0)
-    );
     vec4 mvPosition;
+    mat4 matrix;
+
+    #ifdef BATCHED_TEXT
+        matrix = mat4(
+            troikaBatchTexel(0.0), 
+            troikaBatchTexel(1.0), 
+            troikaBatchTexel(2.0), 
+            troikaBatchTexel(3.0)
+        );
+    #else
+        matrix =  modelMatrix;
+    #endif
+
     #ifdef USE_RTE
         /* We store the high part normally as the translation component */
         vec3 translationHigh = matrix[3].xyz;
         /** We store the low part of the translation in row4 ofthe matrix */
         vec3 translationLow = vec3(matrix[0][3], matrix[1][3], matrix[2][3]);
         highp vec4 rteTranslation = computeRelativePosition(translationLow, translationHigh, uViewer_low, uViewer_high);
-        mvPosition = vec4(mat3(matrix) * transformed + rteTranslation.xyz, 1.);
+        #if defined(BILLBOARD)
+            mvPosition = (modelViewMatrix * rteTranslation + vec4(position.x, position.y, 0., 0.0));
+        #else
+             mvPosition = vec4(mat3(matrix) * transformed + rteTranslation.xyz, 1.);
+             mvPosition = modelViewMatrix * mvPosition;
+        #endif
     #else
-        mvPosition = matrix * vec4(transformed, 1.);
+        #if defined(BILLBOARD)
+            #if defined(BILLBOARD_FIXED)
+                vec3 billboardPosition = matrix[3].xyz;
+                vec2 billboardPixelSize = troikaBatchTexel(9.0).y / screenSize;
+                gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPosition, 1.0));
+                float div = gl_Position.w;
+                gl_Position /= gl_Position.w;
+                gl_Position.xy += position.xy * billboardPixelSize;
+            #else
+                mvPosition = (modelViewMatrix * matrix[3].xyz + vec4(position.x, position.y, 0., 0.0));
+            #endif
+        #else
+             mvPosition = matrix * vec4(transformed, 1.);
+             mvPosition = modelViewMatrix * mvPosition;
+        #endif
     #endif
-    
-    mvPosition = modelViewMatrix * mvPosition;
+
     gl_Position = projectionMatrix * mvPosition;
 
     // #if defined(BILLBOARD)
     //     float div = 1.;
-    //     gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0) + vec4(position.x, position.y, 0., 0.0));
-    // #elif defined(BILLBOARD_FIXED)
-    //     gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0));
-    //     float div = gl_Position.w;
-    //     gl_Position /= gl_Position.w;
-    //     gl_Position.xy += position.xy * billboardSize;
+    //     /* We store the high part normally as the translation component */
+    //     vec3 translationHigh = matrix[3].xyz;
+    //     /** We store the low part of the translation in row4 ofthe matrix */
+    //     vec3 translationLow = vec3(matrix[0][3], matrix[1][3], matrix[2][3]);
+    //     highp vec4 rteTranslation = computeRelativePosition(translationLow, translationHigh, uViewer_low, uViewer_high);
+    //     gl_Position = projectionMatrix * (modelViewMatrix * rteTranslation + vec4(position.x, position.y, 0., 0.0));
+    //     #if defined(BILLBOARD_FIXED)
+    //         vec3 billboardPosition = matrix[3].xyz;
+    //         vec2 billboardPixelSize = troikaBatchTexel(9.0).y / screenSize;
+    //         gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPosition, 1.0));
+    //         float div = gl_Position.w;
+    //         gl_Position /= gl_Position.w;
+    //         gl_Position.xy += position.xy * billboardPixelSize;
+    //     #endif
     // #else
+    //     #ifdef USE_RTE
+    //         /* We store the high part normally as the translation component */
+    //         vec3 translationHigh = matrix[3].xyz;
+    //         /** We store the low part of the translation in row4 ofthe matrix */
+    //         vec3 translationLow = vec3(matrix[0][3], matrix[1][3], matrix[2][3]);
+    //         highp vec4 rteTranslation = computeRelativePosition(translationLow, translationHigh, uViewer_low, uViewer_high);
+    //         mvPosition = vec4(mat3(matrix) * transformed + rteTranslation.xyz, 1.);
+    //     #else
+    //         mvPosition = matrix * vec4(transformed, 1.);
+    //     #endif
+        
+    //     mvPosition = modelViewMatrix * mvPosition;
     //     gl_Position = projectionMatrix * mvPosition;
     // #endif
+
 	#include <logdepthbuf_vertex>
 	// #include <clipping_planes_vertex> COMMENTED CHUNK
     #if NUM_CLIPPING_PLANES > 0

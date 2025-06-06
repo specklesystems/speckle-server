@@ -28,6 +28,10 @@ import { createTextDerivedMaterial } from 'troika-three-text'
 //@ts-ignore
 import { uniformToVarying } from 'troika-three-text/src/BatchedText.js'
 
+interface SpeckleTextMaterialParameters extends MeshBasicMaterialParameters {
+  billboardPixelHeight?: number
+}
+
 class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff: Vector2 = new Vector2()
@@ -67,8 +71,9 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     return this._billboardPixelHeight
   }
 
-  constructor(parameters: MeshBasicMaterialParameters, defines: Array<string> = []) {
+  constructor(parameters: SpeckleTextMaterialParameters, defines: Array<string> = []) {
     super(parameters)
+    this.billboardPixelHeight = parameters.billboardPixelHeight ?? 0
     this.init(defines)
   }
 
@@ -238,6 +243,7 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
       )
     }
     this.copyCustomUniforms(batchMaterial)
+    ;(batchMaterial.defines ??= {})['BATCHED_TEXT'] = ' '
     return batchMaterial
   }
 
@@ -258,13 +264,13 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     _geometry: BufferGeometry,
     _object: Object3D
   ) {
-    if (this.defines && this.defines['BILLBOARD_FIXED']) {
-      const resolution = _this.getDrawingBufferSize(SpeckleTextMaterial.vecBuff)
-      SpeckleTextMaterial.vecBuff.set(
-        (this._billboardPixelHeight / resolution.x) * 2,
-        (this._billboardPixelHeight / resolution.y) * 2
-      )
-      this.userData.billboardSize.value.copy(SpeckleTextMaterial.vecBuff)
+    if (this.defines && this.defines['BILLBOARD']) {
+      // const resolution = _this.getDrawingBufferSize(SpeckleTextMaterial.vecBuff)
+      // SpeckleTextMaterial.vecBuff.set(
+      //   (this._billboardPixelHeight / resolution.x) * 2,
+      //   (this._billboardPixelHeight / resolution.y) * 2
+      // )
+      // this.userData.billboardSize.value.copy(SpeckleTextMaterial.vecBuff)
       SpeckleTextMaterial.matBuff.copy(camera.projectionMatrix).invert()
       this.userData.invProjection.value.copy(SpeckleTextMaterial.matBuff)
       this.needsUpdate = true

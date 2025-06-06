@@ -240,6 +240,7 @@ export default class TextBatch implements Batch {
       const textObjects: Text[] = []
       const box = new Box3()
       let needsRTE = false
+      let needsBillboard = false
       let textSynced = this.renderViews.length
       for (let k = 0; k < this.renderViews.length; k++) {
         const textMeta = this.renderViews[k].renderData.geometry.metaData
@@ -262,6 +263,8 @@ export default class TextBatch implements Batch {
           this.renderViews[k].renderData.geometry.bakeTransform || new Matrix4()
         )
         needsRTE ||= Geometry.needsRTE(box)
+        needsBillboard ||=
+          textMeta !== undefined ? (textMeta.screenOriented as boolean) : false
         text.material = new SpeckleTextMaterial({
           color: 0xff0000 // control color
         }).getDerivedMaterial()
@@ -306,10 +309,11 @@ export default class TextBatch implements Batch {
           this.mesh.addText(text)
           textSynced--
           if (!textSynced) {
+            if (!this.batchMaterial.defines) this.batchMaterial.defines = {}
             if (needsRTE) {
-              if (!this.batchMaterial.defines) this.batchMaterial.defines = {}
               this.batchMaterial.defines['USE_RTE'] = ' '
             }
+            if (needsBillboard) this.batchMaterial.defines['BILLBOARD'] = ' '
             this.mesh.setBatchObjects(batchObjects, textObjects)
             this.mesh.setBatchMaterial(this.batchMaterial)
             this.mesh.buildTAS()

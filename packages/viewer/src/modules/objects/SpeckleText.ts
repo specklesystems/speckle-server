@@ -384,6 +384,8 @@ export class SpeckleText extends BatchedText {
 
         // Curve radius
         this.setTexData(texture, startIndex + 26, uTroikaCurveRadius.value)
+        // Billboard height
+        this.setTexData(texture, startIndex + 27, text.material.billboardPixelHeight)
 
         if (isOutline) {
           // Outline properties
