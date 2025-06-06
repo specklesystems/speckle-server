@@ -1,6 +1,6 @@
 name: CI Pipeline
 
-on: workflow_dispatch
+on: pull_request
 
 jobs:
   get-version:
