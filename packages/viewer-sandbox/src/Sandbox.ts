@@ -1338,11 +1338,11 @@ export default class Sandbox {
           console.log(`Loading ${p}%`)
         }
       })
-      loader.on(LoaderEvent.Traversed, (arg: { count: number; total: number }) => {
+      loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
         if (arg.count > traversedCount) {
           traversedCount = arg.count
           if (traversedCount % 500 === 0) {
-            console.log(`Traversed ${traversedCount} / ${arg.total}`)
+            console.log(`Traversed ${traversedCount}`)
           }
         }
       })
