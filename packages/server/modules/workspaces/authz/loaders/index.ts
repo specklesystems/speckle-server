@@ -8,9 +8,14 @@ import {
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderRecordFactory
 } from '@/modules/workspaces/repositories/sso'
-import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
+import {
+  getUserEligibleWorkspacesFactory,
+  getWorkspaceRoleForUserFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
+import { getEligileWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
+import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 
 // TODO: Move everything to use dataLoaders
 export default defineModuleLoaders(async () => {
@@ -70,6 +75,12 @@ export default defineModuleLoaders(async () => {
     },
     getWorkspacePlan: async ({ workspaceId }) => {
       return await getWorkspacePlan({ workspaceId })
+    },
+    getUserEligibleWorkspaces: async ({ userId }) => {
+      return await getEligileWorkspacesForUserFactory({
+        findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+        getUserEligibleWorkspaces: getUserEligibleWorkspacesFactory({ db })
+      })({ userId })
     },
     getWorkspaceLimits: async ({ workspaceId }, { dataLoaders }) => {
       return await dataLoaders.gatekeeper!.getWorkspaceLimits.load(workspaceId)

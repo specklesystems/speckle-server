@@ -19,6 +19,7 @@ import {
   GetPaginatedWorkspaceProjectsItems,
   GetPaginatedWorkspaceProjectsTotalCount,
   GetUserDiscoverableWorkspaces,
+  GetUserEligibleWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
   GetWorkspaceBySlug,
@@ -95,6 +96,17 @@ const tables = {
     db<WorkspaceJoinRequest>('workspace_join_requests')
 }
 
+export const getUserEligibleWorkspacesFactory =
+  ({ db }: { db: Knex }): GetUserEligibleWorkspaces =>
+  async () => {
+    console.log(db)
+    return []
+    // async ({ domains, userId }) => {
+    // await db.raw(`
+    //   select distinct
+    //   `)
+  }
+
 export const getUserDiscoverableWorkspacesFactory =
   ({ db }: { db: Knex }): GetUserDiscoverableWorkspaces =>
   async ({ domains, userId }) => {
@@ -111,6 +123,7 @@ export const getUserDiscoverableWorkspacesFactory =
         'description',
         'logo',
         'discoverabilityAutoJoinEnabled',
+        'isExclusive',
         tables
           .workspacesAcl(db)
           .select(knex.raw('count(*)::integer'))
@@ -311,7 +324,8 @@ export const upsertWorkspaceFactory =
         'discoverabilityEnabled',
         'discoverabilityAutoJoinEnabled',
         'defaultSeatType',
-        'isEmbedSpeckleBrandingHidden'
+        'isEmbedSpeckleBrandingHidden',
+        'isExclusive'
       ])
   }
 
