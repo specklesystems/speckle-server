@@ -22,6 +22,18 @@ aliases:
       name: Install Dependencies
       command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
+  - &filters-allow-all
+    tags:
+      # run tests for any commit on any branch, including any tags
+      only: /.*/
+
+  - &filters-only-main-hotfix-testing
+    branches:
+      only: &branches-special
+        - main
+        - /^hotfix.*$/
+        - /^testing\d*$/
+
 workflows:
   test-build:
     jobs:
@@ -39,12 +51,7 @@ workflows:
             - speckle-server-licensing
             - stripe-integration
             - speckle-server-codecov
-          filters: &filters-only-main-hotfix-testing
-            branches:
-              only: &branches-special
-                - main
-                - /^hotfix.*$/
-                - /^testing\d*$/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-postgres-container
 
@@ -53,7 +60,14 @@ workflows:
           requires:
             - docker-build-postgres-container
 
-      - test-server-multiregion: *test-server-job-definition
+      - test-server-multiregion:
+          context:
+            - speckle-server-licensing
+            - stripe-integration
+            - speckle-server-codecov
+          filters: *filters-allow-all
+          requires:
+            - docker-build-postgres-container
 
       - test-frontend-2:
           filters: *filters-only-main-hotfix-testing
@@ -119,7 +133,7 @@ workflows:
             - docker-build-monitor-container
 
       - get-version:
-          filters: *filters-only-main-hotfix-testing
+          filters: *filters-allow-all
 
       - pre-commit:
           filters: *filters-only-main-hotfix-testing
@@ -167,7 +181,7 @@ workflows:
 
       - docker-build-postgres-container:
           context: *build-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *filters-allow-all
           requires:
             - get-version
 
