@@ -522,27 +522,6 @@ export type BlobMetadataCollection = {
   totalSize: Scalars['Int']['output'];
 };
 
-export type BlobMutations = {
-  __typename?: 'BlobMutations';
-  /** Generate a pre-signed url to which a blob can be uploaded. */
-  generateUploadUrl: GenerateBlobUploadUrlOutput;
-  /**
-   * Once the upload to the pre-signed url is completed, this mutation should be called
-   * to register the completed upload and create the blob metadata.
-   */
-  registerCompletedUpload: BlobMetadata;
-};
-
-
-export type BlobMutationsGenerateUploadUrlArgs = {
-  input: GenerateBlobUploadUrlInput;
-};
-
-
-export type BlobMutationsRegisterCompletedUploadArgs = {
-  input: RegisterCompletedUploadInput;
-};
-
 export type Branch = {
   __typename?: 'Branch';
   /**
@@ -1114,17 +1093,6 @@ export type GendoAiRenderInput = {
   versionId: Scalars['ID']['input'];
 };
 
-export type GenerateBlobUploadUrlInput = {
-  fileName: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
-};
-
-export type GenerateBlobUploadUrlOutput = {
-  __typename?: 'GenerateBlobUploadUrlOutput';
-  blobId: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};
-
 export type GenerateFileUploadUrlInput = {
   fileName: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
@@ -1479,7 +1447,6 @@ export type Mutation = {
   appUpdate: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
-  blobMutations: BlobMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.create instead. */
   branchCreate: Scalars['String']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.delete instead. */
@@ -3076,16 +3043,6 @@ export type QueryWorkspaceInviteArgs = {
 
 export type QueryWorkspaceSsoByEmailArgs = {
   email: Scalars['String']['input'];
-};
-
-export type RegisterCompletedUploadInput = {
-  blobId: Scalars['String']['input'];
-  /**
-   * The etag is returned by the blob storage provider in the response body after a successful upload.
-   * It is used to verify the integrity of the uploaded file.
-   */
-  etag: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
 };
 
 /** Deprecated: Used by old stream-based mutations */

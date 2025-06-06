@@ -542,27 +542,6 @@ export type BlobMetadataCollection = {
   totalSize: Scalars['Int']['output'];
 };
 
-export type BlobMutations = {
-  __typename?: 'BlobMutations';
-  /** Generate a pre-signed url to which a blob can be uploaded. */
-  generateUploadUrl: GenerateBlobUploadUrlOutput;
-  /**
-   * Once the upload to the pre-signed url is completed, this mutation should be called
-   * to register the completed upload and create the blob metadata.
-   */
-  registerCompletedUpload: BlobMetadata;
-};
-
-
-export type BlobMutationsGenerateUploadUrlArgs = {
-  input: GenerateBlobUploadUrlInput;
-};
-
-
-export type BlobMutationsRegisterCompletedUploadArgs = {
-  input: RegisterCompletedUploadInput;
-};
-
 export type Branch = {
   __typename?: 'Branch';
   /**
@@ -1134,17 +1113,6 @@ export type GendoAiRenderInput = {
   versionId: Scalars['ID']['input'];
 };
 
-export type GenerateBlobUploadUrlInput = {
-  fileName: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
-};
-
-export type GenerateBlobUploadUrlOutput = {
-  __typename?: 'GenerateBlobUploadUrlOutput';
-  blobId: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};
-
 export type GenerateFileUploadUrlInput = {
   fileName: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
@@ -1499,7 +1467,6 @@ export type Mutation = {
   appUpdate: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
-  blobMutations: BlobMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.create instead. */
   branchCreate: Scalars['String']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.delete instead. */
@@ -3096,16 +3063,6 @@ export type QueryWorkspaceInviteArgs = {
 
 export type QueryWorkspaceSsoByEmailArgs = {
   email: Scalars['String']['input'];
-};
-
-export type RegisterCompletedUploadInput = {
-  blobId: Scalars['String']['input'];
-  /**
-   * The etag is returned by the blob storage provider in the response body after a successful upload.
-   * It is used to verify the integrity of the uploaded file.
-   */
-  etag: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
 };
 
 /** Deprecated: Used by old stream-based mutations */
@@ -5401,7 +5358,6 @@ export type ResolversTypes = {
   BillingInterval: BillingInterval;
   BlobMetadata: ResolverTypeWrapper<BlobStorageItem>;
   BlobMetadataCollection: ResolverTypeWrapper<Omit<BlobMetadataCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['BlobMetadata']>> }>;
-  BlobMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Branch: ResolverTypeWrapper<BranchGraphQLReturn>;
   BranchCollection: ResolverTypeWrapper<Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Branch']>> }>;
@@ -5458,8 +5414,6 @@ export type ResolversTypes = {
   GendoAIRender: ResolverTypeWrapper<GendoAIRenderGraphQLReturn>;
   GendoAIRenderCollection: ResolverTypeWrapper<Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversTypes['GendoAIRender']>> }>;
   GendoAIRenderInput: GendoAiRenderInput;
-  GenerateBlobUploadUrlInput: GenerateBlobUploadUrlInput;
-  GenerateBlobUploadUrlOutput: ResolverTypeWrapper<GenerateBlobUploadUrlOutput>;
   GenerateFileUploadUrlInput: GenerateFileUploadUrlInput;
   GenerateFileUploadUrlOutput: ResolverTypeWrapper<GenerateFileUploadUrlOutput>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
@@ -5543,7 +5497,6 @@ export type ResolversTypes = {
   ProjectVersionsUpdatedMessageType: ProjectVersionsUpdatedMessageType;
   ProjectVisibility: ProjectVisibility;
   Query: ResolverTypeWrapper<{}>;
-  RegisterCompletedUploadInput: RegisterCompletedUploadInput;
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResolverTypeWrapper<ResourceIdentifier>;
   ResourceIdentifierInput: ResourceIdentifierInput;
@@ -5747,7 +5700,6 @@ export type ResolversParentTypes = {
   BigInt: Scalars['BigInt']['output'];
   BlobMetadata: BlobStorageItem;
   BlobMetadataCollection: Omit<BlobMetadataCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['BlobMetadata']>> };
-  BlobMutations: MutationsObjectGraphQLReturn;
   Boolean: Scalars['Boolean']['output'];
   Branch: BranchGraphQLReturn;
   BranchCollection: Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Branch']>> };
@@ -5802,8 +5754,6 @@ export type ResolversParentTypes = {
   GendoAIRender: GendoAIRenderGraphQLReturn;
   GendoAIRenderCollection: Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversParentTypes['GendoAIRender']>> };
   GendoAIRenderInput: GendoAiRenderInput;
-  GenerateBlobUploadUrlInput: GenerateBlobUploadUrlInput;
-  GenerateBlobUploadUrlOutput: GenerateBlobUploadUrlOutput;
   GenerateFileUploadUrlInput: GenerateFileUploadUrlInput;
   GenerateFileUploadUrlOutput: GenerateFileUploadUrlOutput;
   ID: Scalars['ID']['output'];
@@ -5876,7 +5826,6 @@ export type ResolversParentTypes = {
   ProjectVersionsPreviewGeneratedMessage: ProjectVersionsPreviewGeneratedMessage;
   ProjectVersionsUpdatedMessage: Omit<ProjectVersionsUpdatedMessage, 'version'> & { version?: Maybe<ResolversParentTypes['Version']> };
   Query: {};
-  RegisterCompletedUploadInput: RegisterCompletedUploadInput;
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResourceIdentifier;
   ResourceIdentifierInput: ResourceIdentifierInput;
@@ -6333,12 +6282,6 @@ export type BlobMetadataCollectionResolvers<ContextType = GraphQLContext, Parent
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type BlobMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlobMutations'] = ResolversParentTypes['BlobMutations']> = {
-  generateUploadUrl?: Resolver<ResolversTypes['GenerateBlobUploadUrlOutput'], ParentType, ContextType, RequireFields<BlobMutationsGenerateUploadUrlArgs, 'input'>>;
-  registerCompletedUpload?: Resolver<ResolversTypes['BlobMetadata'], ParentType, ContextType, RequireFields<BlobMutationsRegisterCompletedUploadArgs, 'input'>>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type BranchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Branch'] = ResolversParentTypes['Branch']> = {
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<BranchActivityArgs, 'limit'>>;
   author?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
@@ -6535,12 +6478,6 @@ export type GendoAiRenderCollectionResolvers<ContextType = GraphQLContext, Paren
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type GenerateBlobUploadUrlOutputResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateBlobUploadUrlOutput'] = ResolversParentTypes['GenerateBlobUploadUrlOutput']> = {
-  blobId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type GenerateFileUploadUrlOutputResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateFileUploadUrlOutput'] = ResolversParentTypes['GenerateFileUploadUrlOutput']> = {
   fileId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -6690,7 +6627,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   appUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAppUpdateArgs, 'app'>>;
   automateFunctionRunStatusReport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAutomateFunctionRunStatusReportArgs, 'input'>>;
   automateMutations?: Resolver<ResolversTypes['AutomateMutations'], ParentType, ContextType>;
-  blobMutations?: Resolver<ResolversTypes['BlobMutations'], ParentType, ContextType>;
   branchCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationBranchCreateArgs, 'branch'>>;
   branchDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchDeleteArgs, 'branch'>>;
   branchUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchUpdateArgs, 'branch'>>;
@@ -7910,7 +7846,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   BigInt?: GraphQLScalarType;
   BlobMetadata?: BlobMetadataResolvers<ContextType>;
   BlobMetadataCollection?: BlobMetadataCollectionResolvers<ContextType>;
-  BlobMutations?: BlobMutationsResolvers<ContextType>;
   Branch?: BranchResolvers<ContextType>;
   BranchCollection?: BranchCollectionResolvers<ContextType>;
   CheckoutSession?: CheckoutSessionResolvers<ContextType>;
@@ -7931,7 +7866,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   FileUploadMutations?: FileUploadMutationsResolvers<ContextType>;
   GendoAIRender?: GendoAiRenderResolvers<ContextType>;
   GendoAIRenderCollection?: GendoAiRenderCollectionResolvers<ContextType>;
-  GenerateBlobUploadUrlOutput?: GenerateBlobUploadUrlOutputResolvers<ContextType>;
   GenerateFileUploadUrlOutput?: GenerateFileUploadUrlOutputResolvers<ContextType>;
   JSONObject?: GraphQLScalarType;
   LegacyCommentViewerData?: LegacyCommentViewerDataResolvers<ContextType>;

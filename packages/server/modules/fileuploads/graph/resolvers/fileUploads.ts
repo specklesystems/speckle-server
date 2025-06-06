@@ -221,7 +221,7 @@ export = {
     }
   },
   Mutation: {
-    //NOTE if editing this, see corresponding `BlobMutations` map in codegen.yml
+    //NOTE if editing this, see corresponding `FileUploadMutations` map in codegen.yml
     fileUploadMutations: () => ({})
   },
   FileUploadMutations: {
