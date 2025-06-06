@@ -41,43 +41,6 @@ extend type Project {
   blob(id: String!): BlobMetadata
 }
 
-input GenerateBlobUploadUrlInput {
-  projectId: String!
-  fileName: String!
-}
-
-type GenerateBlobUploadUrlOutput {
-  url: String!
-  blobId: String!
-}
-
-input RegisterCompletedUploadInput {
-  projectId: String!
-
-  blobId: String!
-  """
-  The etag is returned by the blob storage provider in the response body after a successful upload.
-  It is used to verify the integrity of the uploaded file.
-  """
-  etag: String!
-}
-
-type BlobMutations {
-  """
-  Generate a pre-signed url to which a blob can be uploaded.
-  """
-  generateUploadUrl(input: GenerateBlobUploadUrlInput!): GenerateBlobUploadUrlOutput!
-  """
-  Once the upload to the pre-signed url is completed, this mutation should be called
-  to register the completed upload and create the blob metadata.
-  """
-  registerCompletedUpload(input: RegisterCompletedUploadInput!): BlobMetadata!
-}
-
-extend type Mutation {
-  blobMutations: BlobMutations! @hasServerRole(role: SERVER_GUEST)
-}
-
 type BlobMetadataCollection {
   totalCount: Int!
   totalSize: Int!

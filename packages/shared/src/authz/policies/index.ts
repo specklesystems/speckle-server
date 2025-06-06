@@ -31,7 +31,6 @@ import { canPublishPolicy } from './project/canPublish.js'
 import { canLoadPolicy } from './project/canLoad.js'
 import { canUpdateEmbedOptionsPolicy } from './workspace/canUpdateEmbedOptions.js'
 import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
-import { canUploadProjectBlobPolicy } from './project/blob/canUpload.js'
 import { canImportProjectFilesPolicy } from './project/files/canImport.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
@@ -41,9 +40,6 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canRead: canReadAutomationPolicy(loaders),
       canUpdate: canUpdateAutomationPolicy(loaders),
       canDelete: canDeleteAutomationPolicy(loaders)
-    },
-    blob: {
-      canUpload: canUploadProjectBlobPolicy(loaders)
     },
     files: {
       canImport: canImportProjectFilesPolicy(loaders)
