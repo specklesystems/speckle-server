@@ -17,44 +17,24 @@
         </p>
       </div>
       <div>
-        <!-- Case 1: User doesn't have SSO access/plan -->
-        <FormButton
-          v-if="!workspace.hasAccessToSSO"
-          :to="settingsWorkspaceRoutes.billing.route(workspace.slug)"
-          size="sm"
-          color="outline"
-        >
-          Upgrade to Business
-        </FormButton>
-
-        <!-- Case 2: User has SSO access -->
-        <div v-else-if="isWorkspaceAdmin" class="flex flex-col items-end gap-2">
-          <!-- Case 2a: SSO is configured - switch to enable/disable -->
+        <div v-if="workspace.hasAccessToSSO">
           <FormSwitch
-            v-if="provider"
-            v-model="isSsoEnabled"
-            name="sso-enabled"
-            :show-label="false"
-            :disabled="loading"
-            @update:model-value="handleSsoToggle"
-          />
-          <!-- Case 2b: SSO not configured - switch to show configuration form -->
-          <FormSwitch
-            v-else
-            v-model="isConfigurationMode"
+            v-if="isWorkspaceAdmin"
+            v-model="isFormVisible"
             name="sso-configuration"
             :show-label="false"
-            :disabled="loading"
+            :disabled="loading || !!provider"
             @update:model-value="handleConfigurationToggle"
           />
-        </div>
 
-        <!-- Case 3: User has SSO access but not admin -->
-        <div v-else-if="workspace.hasAccessToSSO" class="flex flex-col items-end gap-2">
-          <div v-tippy="`You must be a workspace admin`">
-            <FormSwitch disabled name="sso-disabled" :show-label="false" />
+          <div v-else v-tippy="`You must be a workspace admin`">
+            <FormSwitch disabled name="sso-configuration" :show-label="false" />
           </div>
         </div>
+
+        <FormButton v-else :to="settingsWorkspaceRoutes.billing.route(workspace.slug)">
+          Upgrade to Business
+        </FormButton>
       </div>
     </div>
 
@@ -65,7 +45,7 @@
     <template v-else>
       <!-- Existing Provider Configuration -->
       <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
-        <div v-if="!isEditing" class="flex items-center justify-between">
+        <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h3 class="text-body-xs font-medium text-foreground">
               {{ provider.name }}
@@ -96,19 +76,11 @@
             />
           </LayoutMenu>
         </div>
-
-        <SettingsWorkspacesSecuritySsoForm
-          v-else
-          :workspace-slug="workspace.slug"
-          :provider-info="errorProviderInfo"
-          @cancel="handleCancel"
-          @submit="handleFormSubmit"
-        />
       </div>
 
       <!-- Configuration Instructions -->
       <div
-        v-if="isConfigurationMode && !provider"
+        v-if="isFormVisible && !provider"
         class="py-6 px-8 border border-outline-3 rounded-lg mt-4"
       >
         <p class="text-body-xs mb-4">
@@ -201,10 +173,7 @@ const { provider, loading, isSsoAuthenticated } = useWorkspaceSsoStatus({
   workspaceSlug: computed(() => props.workspace.slug)
 })
 
-// Replace old state variables with new switch states
-const isConfigurationMode = ref(false)
-const isSsoEnabled = ref(true) // Default to enabled when provider exists
-const isEditing = ref(false)
+const isFormVisible = ref(false)
 const showActionsMenu = ref(false)
 const isDeleteDialogOpen = ref(false)
 
@@ -241,30 +210,22 @@ const onButtonClick = () => {
   showActionsMenu.value = !showActionsMenu.value
 }
 
-// Handle SSO enable/disable toggle for existing providers
-const handleSsoToggle = (enabled: boolean) => {
-  logger.info('SSO toggle:', enabled)
-  // TODO: Implement actual SSO enable/disable logic here
-}
-
-// Handle configuration mode toggle for new SSO setup
 const handleConfigurationToggle = (enabled: boolean) => {
-  isConfigurationMode.value = enabled
+  isFormVisible.value = enabled
   if (!enabled) {
-    // Reset any error state when turning off configuration mode
     errorProviderInfo.value = undefined
   }
 }
 
 const handleFormSubmit = (data: SsoFormValues) => {
   logger.info('Form submitted:', data)
-  isEditing.value = false
-  isConfigurationMode.value = false
+  isFormVisible.value = false
+  errorProviderInfo.value = undefined
 }
 
 const handleCancel = () => {
-  isConfigurationMode.value = false
-  isEditing.value = false
+  isFormVisible.value = false
+  errorProviderInfo.value = undefined
 }
 
 const redirectUrl = computed(() => {
@@ -297,6 +258,8 @@ onMounted(() => {
       title: 'SSO Configuration Successful',
       description: 'Your SSO settings have been successfully configured.'
     })
+    isFormVisible.value = false
+    errorProviderInfo.value = undefined
   } else if (ssoValidationSuccess === 'false' || ssoError) {
     triggerNotification({
       type: ToastNotificationType.Danger,
@@ -314,7 +277,7 @@ onMounted(() => {
       clientId,
       issuerUrl
     }
-    isConfigurationMode.value = true
+    isFormVisible.value = true
   }
 
   // Clean up URL params
@@ -328,12 +291,5 @@ onMounted(() => {
       ssoValidationSuccess: undefined
     }
   })
-})
-
-// Reset configuration mode on page refresh if no provider exists
-watchEffect(() => {
-  if (!provider.value && !errorProviderInfo.value) {
-    isConfigurationMode.value = false
-  }
 })
 </script>

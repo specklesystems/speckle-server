@@ -5,7 +5,7 @@
         title="Security"
         text="Manage verified workspace domains and associated features."
       />
-      <div v-if="workspace" class="flex flex-col divide-y divide-outline-2">
+      <div v-if="workspace" class="flex flex-col divide-y divide-outline-2 pb-12">
         <SettingsWorkspacesSecurityDefaultSeat :workspace="workspace" />
         <SettingsWorkspacesSecurityDomainManagement :workspace="workspace" />
         <SettingsWorkspacesSecurityDiscoverability :workspace="workspace" />
