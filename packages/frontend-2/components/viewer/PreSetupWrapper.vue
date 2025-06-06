@@ -280,9 +280,10 @@ onMounted(() => {
 
 // Watch for plan limit conditions and show dialog if needed
 watch(
-  [hasMissingReferencedObject],
-  ([missingObject]) => {
-    if (missingObject) {
+  [hasMissingReferencedObject, state.resources.response.resourcesLoading],
+  ([missingObject, resourcesLoading]: [boolean, boolean]) => {
+    // Only show dialog if resources are not loading to prevent flashing during version switches
+    if (missingObject && !resourcesLoading) {
       if (isFederated.value) {
         limitsDialogType.value = 'federated'
       } else {

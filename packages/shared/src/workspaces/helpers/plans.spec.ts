@@ -18,7 +18,8 @@ describe('plan helpers', () => {
       proUnlimitedInvoiced: false,
       team: false,
       teamUnlimited: true,
-      teamUnlimitedInvoiced: false
+      teamUnlimitedInvoiced: false,
+      enterprise: false
     }
     it.each(Object.entries(planCases))(
       'plan %s include the paid unlimited projects addon -> %s',
@@ -41,7 +42,8 @@ describe('plan helpers', () => {
       proUnlimitedInvoiced: false,
       team: true,
       teamUnlimited: true,
-      teamUnlimitedInvoiced: false
+      teamUnlimitedInvoiced: false,
+      enterprise: false
     }
     it.each(Object.entries(planCases))(
       'is plan %s available self served -> %s',
