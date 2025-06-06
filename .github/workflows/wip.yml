@@ -3,9 +3,44 @@ name: Pipeline test build
 on: pull_request
 
 jobs:
+  get-version:
+    outputs:
+      IMAGE_VERSION_TAG: ${{ steps.export-step.outputs.IMAGE_VERSION_TAG }}
+    name: Get version
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - run: git fetch origin 'refs/tags/*:refs/tags/*'
+      - run: chmod +x ./get_version.sh ./common.sh
+        working-directory: ./.github/workflows/scripts
+      - run: ./get_version.sh >> result
+        working-directory: ./.github/workflows/scripts
+      - run: echo "IMAGE_VERSION_TAG=$(cat result)"
+        working-directory: ./.github/workflows/scripts
+      - id: export-step
+        run: echo "IMAGE_VERSION_TAG=$(cat result)" >> "$GITHUB_OUTPUT"
+        working-directory: ./.github/workflows/scripts
+
+  docker-build-postgres-container:
+    runs-on: blacksmith
+    needs: [get-version]
+    name: Docker build postgres container
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: true
+          tags: speckle/speckle-postgres:${{  needs.get-version.outputs.IMAGE_VERSION_TAG  }}
+          file: ./utils/postgres/Dockerfile
+
   test-server-multiregion:
     name: Server multiregion
-    #needs: [docker-build-postgres-container]
+    needs: [docker-build-postgres-container]
     runs-on: blacksmith
     services:
       redis:
@@ -19,7 +54,7 @@ jobs:
           - 6379:6379
 
       postgres0:
-        image: speckle/speckle-postgres # :${{ inputs.IMAGE_VERSION_TAG }}
+        image: speckle/speckle-postgres:${{  needs.get-version.outputs.IMAGE_VERSION_TAG  }}
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -27,13 +62,14 @@ jobs:
         ports:
           - 5432:5432
         options: >-
+          --entrypoint "posgres -c 'max_connections=1000' -c 'wal_level=logical'"
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
       postgres1:
-        image: speckle/speckle-postgres #:${{ inputs.IMAGE_VERSION_TAG }}
+        image: speckle/speckle-postgres:${{  needs.get-version.outputs.IMAGE_VERSION_TAG  }}
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -41,13 +77,14 @@ jobs:
         ports:
           - 5433:5432
         options: >-
+          --entrypoint "posgres -c 'max_connections=1000' -c 'wal_level=logical'"
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
       postgres2:
-        image: speckle/speckle-postgres #:${{ inputs.IMAGE_VERSION_TAG }}
+        image: speckle/speckle-postgres:${{  needs.get-version.outputs.IMAGE_VERSION_TAG  }}
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -55,6 +92,7 @@ jobs:
         ports:
           - 5434:5432
         options: >-
+          --entrypoint "posgres -c 'max_connections=1000' -c 'wal_level=logical'"
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
