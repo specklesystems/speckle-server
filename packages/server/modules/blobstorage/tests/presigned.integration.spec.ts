@@ -262,8 +262,11 @@ describe('Presigned integration @blobstorage', async () => {
       expect(secondAttempt).to.exist
       expect(secondAttempt.uploadStatus).to.equal(BlobUploadStatus.Completed)
       expect(secondAttempt.fileHash).to.equal(expectedETag)
+      expect(secondAttempt.createdAt.toISOString()).to.equal(
+        storedBlob.createdAt.toISOString()
+      )
     })
-    it('re-registering with increased maximum file size does not change anything', async () => {
+    it('re-registering with increased maximum file size after failure does not change anything', async () => {
       const blobId = cryptoRandomString({ length: 10 })
       const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
       const expiryDuration = 1 * TIME.minute
@@ -349,6 +352,9 @@ describe('Presigned integration @blobstorage', async () => {
       expect(secondAttempt).to.exist
       expect(secondAttempt.uploadStatus).to.equal(BlobUploadStatus.Completed)
       expect(secondAttempt.fileHash).to.equal(expectedETag)
+      expect(secondAttempt.createdAt.toISOString()).to.equal(
+        storedBlob.createdAt.toISOString()
+      )
     })
   })
 })

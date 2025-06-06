@@ -11,6 +11,11 @@ export type GetFileInfo = (args: {
   fileId: string
 }) => Promise<Optional<FileUploadRecord>>
 
+export type GetFileInfoV2 = (args: {
+  fileId: string
+  projectId?: string
+}) => Promise<Optional<FileUploadRecordV2>>
+
 export type SaveUploadFileInput = Pick<
   FileUploadRecord,
   'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'

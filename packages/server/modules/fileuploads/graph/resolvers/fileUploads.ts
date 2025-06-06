@@ -3,6 +3,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchPendingVersionsFactory,
   getFileInfoFactory,
+  getFileInfoFactoryV2,
   getStreamFileUploadsFactory,
   getStreamPendingModelsFactory,
   saveUploadFileFactoryV2
@@ -158,6 +159,7 @@ const fileUploadMutations = {
           })
         }),
         insertNewUploadAndNotify,
+        getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
         getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
 
