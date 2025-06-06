@@ -121,25 +121,32 @@ jobs:
       RUN_TESTS_IN_MULTIREGION_MODE: true
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: useblacksmith/setup-node@v5
-        with:
-          node-version: 22
-          cache: yarn
-      - name: Install dependencies
-        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-      - name: Build public packages
-        run: yarn build:public
-      - run: cp .env.test-example .env.test
-        working-directory: 'packages/server'
-      - name: 'Run test'
-        run: yarn test:report
-        working-directory: 'packages/server'
-        timeout-minutes: 30
-      - uses: codecov/codecov-action@v5
-        with:
-          disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-          files: packages/server/coverage/lcov.info
-
-  # TODO: fix db error on multiregion test
+      - run: sudo apt update
+      - run: sudo apt install postgresql postgresql-contrib
+      # create users
+      - run: PGPASSWORD=speckle psql -U speckle -d localhost:5432 -c 'CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);'
+      - run: PGPASSWORD=speckle psql -U speckle -d localhost:5433 -c 'CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);'
+      # pubs - sub
+      - run: PGPASSWORD=speckle psql -U speckle -d localhost:5432 -c 'CREATE PUBLICATION test_userspub FOR TABLE users';
+      - run: PGPASSWORD=speckle psql -U speckle -d localhost:5433 -c 'CREATE EXTENSION IF NOT EXISTS "aiven_extras";'
+      - run: PGPASSWORD=speckle psql -U speckle -d localhost:5433 -c `SELECT * FROM aiven_extras.pg_create_subscription('test_userssub_region1', 'dbname=speckle2_test host=postgres0 port=5432 sslmode=disable user=speckle password=speckle', 'test_userspub','test_userssub_region1', TRUE, TRUE);`
+      # - uses: useblacksmith/setup-node@v5
+      #   with:
+      #     node-version: 22
+      #     cache: yarn
+      # - name: Install dependencies
+      #   run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      # - name: Build public packages
+      #   run: yarn build:public
+      # - run: cp .env.test-example .env.test
+      #   working-directory: 'packages/server'
+      # - name: 'Run test'
+      #   run: yarn test:report
+      #   working-directory: 'packages/server'
+      #   timeout-minutes: 30
+      # - uses: codecov/codecov-action@v5
+      #   with:
+      #     disable_search: true
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     fail_ci_if_error: true
+      #     files: packages/server/coverage/lcov.info
