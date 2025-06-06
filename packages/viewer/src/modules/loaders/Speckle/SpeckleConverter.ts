@@ -6,7 +6,7 @@ import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import { ObjectLoader2 } from '@speckle/objectloader2'
 
-export type ConverterResultDelegate = () => Promise<void>
+export type ConverterResultDelegate = (count: number, total: number) => void
 export type SpeckleConverterNodeDelegate =
   | ((object: SpeckleObject, node: TreeNode) => Promise<void>)
   | null
@@ -29,6 +29,8 @@ export default class SpeckleConverter {
   protected renderMaterialMap: { [id: string]: SpeckleObject } = {}
   protected colorMap: { [id: string]: SpeckleObject } = {}
   protected instanceCounter = 0
+  private traverseCount = 0
+  private traverseTotal = 0
 
   protected readonly NodeConverterMapping: {
     [name: string]: SpeckleConverterNodeDelegate
@@ -100,15 +102,25 @@ export default class SpeckleConverter {
       for (const element of obj) {
         if (typeof element !== 'object') break // exit early for non-object based arrays
         if (this.activePromises >= this.maxChildrenPromises) {
+          this.traverseTotal++
+          callback(this.traverseCount, this.traverseTotal)
           await this.traverse(objectURL, element, callback, node)
+          this.traverseCount++
+          callback(this.traverseCount, this.traverseTotal)
         } else {
+          this.traverseTotal++
+          callback(this.traverseCount, this.traverseTotal)
           const childPromise = this.traverse(objectURL, element, callback, node)
           childrenConversionPromisses.push(childPromise)
         }
       }
-      this.activePromises += childrenConversionPromisses.length
-      await Promise.all(childrenConversionPromisses)
-      this.activePromises -= childrenConversionPromisses.length
+      if (childrenConversionPromisses.length > 0) {
+        this.activePromises += childrenConversionPromisses.length
+        await Promise.all(childrenConversionPromisses)
+        this.traverseCount += childrenConversionPromisses.length
+        callback(this.traverseCount, this.traverseTotal)
+        this.activePromises -= childrenConversionPromisses.length
+      }
       return
     }
 
@@ -145,7 +157,7 @@ export default class SpeckleConverter {
     if (this.directNodeConverterExists(obj)) {
       try {
         await this.convertToNode(obj, childNode)
-        await callback()
+       // callback()
         return
       } catch (e) {
         Logger.warn(
@@ -182,7 +194,7 @@ export default class SpeckleConverter {
           })
           this.tree.addNode(nestedNode, childNode)
           await this.convertToNode(displayValue, nestedNode)
-          await callback()
+       //   callback()
         } catch (e) {
           Logger.warn(
             `(Traversing) Failed to convert obj with id: ${obj.id} — ${
@@ -202,7 +214,7 @@ export default class SpeckleConverter {
           })
           this.tree.addNode(nestedNode, childNode)
           await this.convertToNode(val, nestedNode)
-          await callback()
+         // callback()
         }
       }
 
@@ -215,11 +227,16 @@ export default class SpeckleConverter {
       ) {
         const elements = this.getElementsValue(obj)
         if (elements) {
+          //this doesn't seem right for totals
+          this.traverseTotal++
+          callback(this.traverseCount, this.traverseTotal)
           childrenConversionPromisses.push(
             this.traverse(objectURL, elements as SpeckleObject, callback, childNode)
           )
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
+          this.traverseCount++
+          callback(this.traverseCount, this.traverseTotal)
           this.activePromises -= childrenConversionPromisses.length
         }
 
@@ -238,13 +255,19 @@ export default class SpeckleConverter {
       if (typeof target[prop] !== 'object' || target[prop] === null) continue
 
       if (this.activePromises >= this.maxChildrenPromises) {
+        this.traverseTotal++
+        callback(this.traverseCount, this.traverseTotal)
         await this.traverse(
           objectURL,
           target[prop] as SpeckleObject,
           callback,
           childNode
         )
+        this.traverseCount++
+        callback(this.traverseCount, this.traverseTotal)
       } else {
+        this.traverseTotal++
+        callback(this.traverseCount, this.traverseTotal)
         const childPromise = this.traverse(
           objectURL,
           target[prop] as SpeckleObject,
@@ -254,9 +277,13 @@ export default class SpeckleConverter {
         childrenConversionPromisses.push(childPromise)
       }
     }
-    this.activePromises += childrenConversionPromisses.length
-    await Promise.all(childrenConversionPromisses)
-    this.activePromises -= childrenConversionPromisses.length
+    if (childrenConversionPromisses.length > 0) {
+      this.activePromises += childrenConversionPromisses.length
+      await Promise.all(childrenConversionPromisses)
+      this.traverseCount += childrenConversionPromisses.length
+      callback(this.traverseCount, this.traverseTotal)
+      this.activePromises -= childrenConversionPromisses.length
+    }
   }
 
   private getNodeId(obj: SpeckleObject): string {

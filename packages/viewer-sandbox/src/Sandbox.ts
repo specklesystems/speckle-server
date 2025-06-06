@@ -1338,19 +1338,19 @@ export default class Sandbox {
           console.log(`Loading ${p}%`)
         }
       })
-      loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
+      loader.on(LoaderEvent.Traversed, (arg: { count: number, total: number }) => {
         if (arg.count > traversedCount) {
           traversedCount = arg.count
-          if (traversedCount % 777 === 0) {
-            console.log(`Traversed Data ${traversedCount}`)
+          if (traversedCount % 500 === 0) {
+            console.log(`Traversed ${traversedCount} / ${arg.total}`)
           }
         }
       })
-      loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
+      loader.on(LoaderEvent.Converted, (arg: { count: number; total: number }) => {
         if (arg.count > renderedCount) {
           renderedCount = arg.count
-          if (renderedCount % 777 === 0) {
-            console.log(`Rendering Data ${renderedCount}`)
+          if (renderedCount % 500 === 0) {
+            console.log(`Rendering Data ${renderedCount} / ${arg.total}`)
           }
         }
       })
