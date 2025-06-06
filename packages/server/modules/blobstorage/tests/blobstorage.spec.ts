@@ -26,7 +26,7 @@ import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs
 import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { expect } from 'chai'
 import { UploadFileStream } from '@/modules/blobstorage/domain/operations'
-import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { BlobStorageItem, BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -367,7 +367,7 @@ describe('Blob storage @blobstorage', () => {
       blobId,
       fileName: blob.fileName,
       fileSize: null,
-      uploadStatus: 2,
+      uploadStatus: BlobUploadStatus.Error,
       uploadError: 'File size limit reached'
     })
   })
@@ -382,7 +382,7 @@ describe('Blob storage @blobstorage', () => {
     expect(markResult).to.deep.equal({
       blobId,
       fileName: blob.fileName,
-      uploadStatus: 1,
+      uploadStatus: BlobUploadStatus.Completed,
       fileSize
     })
   })
