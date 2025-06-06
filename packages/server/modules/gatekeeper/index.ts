@@ -38,6 +38,7 @@ import {
   manageSubscriptionDownscaleFactory
 } from '@/modules/gatekeeper/services/subscriptions/manageSubscriptionDownscale'
 import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -58,7 +59,8 @@ const scheduleWorkspaceSubscriptionDownscale = ({
       countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
       reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe }),
-      getWorkspacePlanProductId
+      getWorkspacePlanProductId,
+      eventBusEmit: getEventBus().emit
     }),
     getWorkspaceSubscriptions: getWorkspaceSubscriptionsPastBillingCycleEndFactory({
       db
