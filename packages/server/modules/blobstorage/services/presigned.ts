@@ -96,11 +96,25 @@ export const registerCompletedUploadFactory =
       logger.warn(
         `ETag mismatch for blob ${blobId} in project ${projectId}: expected ${expectedETag}, got ${blobMetadata.eTag}`
       )
-      // we don't want to leak the actual ETag to the user for security reasons, but we log it for debugging purposes
+
+      // we don't know enough to mark the upload as failed (maybe this is just the client getting confused about the etag or blobId)
+
+      // we don't want to leak the actual ETag to the user; it's the proof of the upload
       throw new UserInputError(`ETag mismatch: expected ${expectedETag}`)
     }
 
     if (!blobMetadata.contentLength || blobMetadata.contentLength > maximumFileSize) {
+      await updateBlob({
+        id: blobId,
+        streamId: projectId,
+        item: {
+          uploadStatus: BlobUploadStatus.Error,
+          uploadError:
+            '[FILE_SIZE_EXCEEDED] File size exceeds maximum allowed size for the project at the time of upload',
+          fileSize: blobMetadata.contentLength,
+          fileHash: blobMetadata.eTag
+        }
+      })
       throw new UserInputError(
         `File size exceeds maximum allowed size of ${maximumFileSize} bytes. Actual size: ${blobMetadata.contentLength} bytes`
       )

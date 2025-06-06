@@ -11,6 +11,7 @@ import {
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobMetadataFactory,
+  getBlobsFactory,
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
@@ -27,6 +28,7 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { GetBlobMetadata } from '@/modules/blobstorage/domain/operations'
+import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 
 describe('Presigned integration @blobstorage', async () => {
   const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
@@ -187,6 +189,15 @@ describe('Presigned integration @blobstorage', async () => {
           })
       )
       expect(thrownError).to.be.instanceOf(UserInputError)
+
+      // Verify that the blob is now marked as in error state
+      const blobs = await getBlobsFactory({ db: projectDb })({
+        streamId: ownedProject.id,
+        blobIds: [blobId]
+      })
+      expect(blobs).to.have.lengthOf(1)
+      expect(blobs[0].uploadStatus).to.equal(BlobUploadStatus.Error)
+      expect(blobs[0].uploadError).to.include('[FILE_SIZE_EXCEEDED]')
     })
   })
 })

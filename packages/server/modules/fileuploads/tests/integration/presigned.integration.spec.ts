@@ -10,6 +10,7 @@ import {
   ObjectStorage
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
+  getBlobsFactory,
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
@@ -43,6 +44,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -216,6 +218,15 @@ describe('Presigned integration @fileuploads', async () => {
             })
         )
         expect(thrownError).to.be.instanceOf(UserInputError)
+
+        // Verify that the blob is now marked as in error state
+        const blobs = await getBlobsFactory({ db: projectDb })({
+          streamId: ownedProject.id,
+          blobIds: [fileId]
+        })
+        expect(blobs).to.have.lengthOf(1)
+        expect(blobs[0].uploadStatus).to.equal(BlobUploadStatus.Error)
+        expect(blobs[0].uploadError).to.include('[FILE_SIZE_EXCEEDED]')
       })
     }
   )
