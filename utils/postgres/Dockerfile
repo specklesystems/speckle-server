@@ -23,3 +23,4 @@ COPY --link --from=builder /aiven-extras/aiven_extras.so /usr/local/lib/postgres
 EXPOSE 5432
 
 ENTRYPOINT [ "postgres" ]
+CMD [ "-c", "max_connections=1000", "-c", "wal_level=logical" ]
