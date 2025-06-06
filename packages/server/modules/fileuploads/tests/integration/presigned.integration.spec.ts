@@ -30,7 +30,7 @@ import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/service
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { saveUploadFileFactoryV2 } from '@/modules/fileuploads/repositories/fileUploads'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import {
@@ -43,6 +43,8 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+
+const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 describe('Presigned integration @fileuploads', async () => {
   const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
@@ -90,127 +92,131 @@ describe('Presigned integration @fileuploads', async () => {
       getProjectObjectStorage({ projectId: ownedProject.id })
     ])
   })
-
-  describe('register completed upload and start file import', () => {
-    let generatePresignedUrl: ReturnType<typeof generatePresignedUrlFactory>
-    let SUT: RegisterUploadCompleteAndStartFileImport
-    before(() => {
-      generatePresignedUrl = generatePresignedUrlFactory({
-        getSignedUrl: getSignedUrlFactory({
-          objectStorage: projectStorage
-        }),
-        upsertBlob: upsertBlobFactory({
-          db: projectDb
-        })
-      })
-      SUT = registerUploadCompleteAndStartFileImportFactory({
-        registerCompletedUpload: registerCompletedUploadFactory({
-          getBlobMetadata: getBlobMetadataFromStorage({
+  ;(FF_NEXT_GEN_FILE_IMPORTER_ENABLED ? describe : describe.skip)(
+    'register completed upload and start file import',
+    () => {
+      let generatePresignedUrl: ReturnType<typeof generatePresignedUrlFactory>
+      let SUT: RegisterUploadCompleteAndStartFileImport
+      before(() => {
+        generatePresignedUrl = generatePresignedUrlFactory({
+          getSignedUrl: getSignedUrlFactory({
             objectStorage: projectStorage
           }),
-          updateBlob: updateBlobFactory({ db: projectDb }),
-          logger: testLogger
-        }),
-        insertNewUploadAndNotify: insertNewUploadAndNotifyFactoryV2({
-          pushJobToFileImporter: pushJobToFileImporterFactory({
-            getServerOrigin,
-            scheduleJob,
-            createAppToken: createAppTokenFactory({
-              storeApiToken: storeApiTokenFactory({ db: projectDb }),
-              storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
-              storeTokenResourceAccessDefinitions:
-                storeTokenResourceAccessDefinitionsFactory({
-                  db: projectDb
-                }),
-              storeUserServerAppToken: storeUserServerAppTokenFactory({ db: projectDb })
-            })
+          upsertBlob: upsertBlobFactory({
+            db: projectDb
+          })
+        })
+        SUT = registerUploadCompleteAndStartFileImportFactory({
+          registerCompletedUpload: registerCompletedUploadFactory({
+            getBlobMetadata: getBlobMetadataFromStorage({
+              objectStorage: projectStorage
+            }),
+            updateBlob: updateBlobFactory({ db: projectDb }),
+            logger: testLogger
           }),
-          saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-          publish,
-          emit: getEventBus().emit
-        }),
-        getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
+          insertNewUploadAndNotify: insertNewUploadAndNotifyFactoryV2({
+            pushJobToFileImporter: pushJobToFileImporterFactory({
+              getServerOrigin,
+              scheduleJob,
+              createAppToken: createAppTokenFactory({
+                storeApiToken: storeApiTokenFactory({ db: projectDb }),
+                storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
+                storeTokenResourceAccessDefinitions:
+                  storeTokenResourceAccessDefinitionsFactory({
+                    db: projectDb
+                  }),
+                storeUserServerAppToken: storeUserServerAppTokenFactory({
+                  db: projectDb
+                })
+              })
+            }),
+            saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+            publish,
+            emit: getEventBus().emit
+          }),
+          getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
+        })
       })
-    })
-    it('should create a record for the uploaded file', async () => {
-      const fileId = cryptoRandomString({ length: 10 })
-      const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
-      const expiryDuration = 1 * TIME.minute
-      const url = await generatePresignedUrl({
-        blobId: fileId,
-        fileName,
-        projectId: ownedProject.id,
-        userId: serverAdmin.id,
-        urlExpiryDurationSeconds: expiryDuration
+      it('should create a record for the uploaded file', async () => {
+        const fileId = cryptoRandomString({ length: 10 })
+        const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+        const expiryDuration = 1 * TIME.minute
+        const url = await generatePresignedUrl({
+          blobId: fileId,
+          fileName,
+          projectId: ownedProject.id,
+          userId: serverAdmin.id,
+          urlExpiryDurationSeconds: expiryDuration
+        })
+
+        const response = await put(url, cryptoRandomString({ length: 10 }))
+        expect(
+          response.status,
+          JSON.stringify({ statusText: response.statusText, body: response.data })
+        ).to.equal(200)
+        expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
+
+        const expectedETag = response.headers['etag']
+        const storedFile = await SUT({
+          fileId,
+          modelId: model.id,
+          userId: serverAdmin.id,
+          projectId: ownedProject.id,
+          expectedETag,
+          maximumFileSize: 1 * 1024 * 1024 // 1 MB
+        })
+
+        expect(storedFile).to.exist
+        expect(storedFile.fileType).to.equal('stl')
+        expect(storedFile.fileSize).to.equal(10)
       })
-
-      const response = await put(url, cryptoRandomString({ length: 10 }))
-      expect(
-        response.status,
-        JSON.stringify({ statusText: response.statusText, body: response.data })
-      ).to.equal(200)
-      expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
-
-      const expectedETag = response.headers['etag']
-      const storedFile = await SUT({
-        fileId,
-        modelId: model.id,
-        userId: serverAdmin.id,
-        projectId: ownedProject.id,
-        expectedETag,
-        maximumFileSize: 1 * 1024 * 1024 // 1 MB
+      it('should throw a StoredBlobAccessError if the blob cannot be found', async () => {
+        const thrownError = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId: cryptoRandomString({ length: 10 }),
+              projectId: ownedProject.id,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              expectedETag: cryptoRandomString({ length: 32 }),
+              maximumFileSize: 1 * 1024 * 1024 // 1 MB
+            })
+        )
+        expect(thrownError).to.be.instanceOf(StoredBlobAccessError)
       })
+      it('should throw an UserInputError if the file exceeds the maximum allowed size', async () => {
+        const fileId = cryptoRandomString({ length: 10 })
+        const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+        const expiryDuration = 1 * TIME.minute
+        const url = await generatePresignedUrl({
+          blobId: fileId,
+          fileName,
+          projectId: ownedProject.id,
+          userId: serverAdmin.id,
+          urlExpiryDurationSeconds: expiryDuration
+        })
 
-      expect(storedFile).to.exist
-      expect(storedFile.fileType).to.equal('stl')
-      expect(storedFile.fileSize).to.equal(10)
-    })
-    it('should throw a StoredBlobAccessError if the blob cannot be found', async () => {
-      const thrownError = await expectToThrow(
-        async () =>
-          await SUT({
-            fileId: cryptoRandomString({ length: 10 }),
-            projectId: ownedProject.id,
-            modelId: model.id,
-            userId: serverAdmin.id,
-            expectedETag: cryptoRandomString({ length: 32 }),
-            maximumFileSize: 1 * 1024 * 1024 // 1 MB
-          })
-      )
-      expect(thrownError).to.be.instanceOf(StoredBlobAccessError)
-    })
-    it('should throw an UserInputError if the file exceeds the maximum allowed size', async () => {
-      const fileId = cryptoRandomString({ length: 10 })
-      const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
-      const expiryDuration = 1 * TIME.minute
-      const url = await generatePresignedUrl({
-        blobId: fileId,
-        fileName,
-        projectId: ownedProject.id,
-        userId: serverAdmin.id,
-        urlExpiryDurationSeconds: expiryDuration
+        const response = await put(url, 'test content') // more than 1 byte long
+        expect(
+          response.status,
+          JSON.stringify({ statusText: response.statusText, body: response.data })
+        ).to.equal(200)
+        expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
+
+        const expectedETag = response.headers['etag']
+        const thrownError = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              projectId: ownedProject.id,
+              expectedETag,
+              maximumFileSize: 1 // 1 byte max
+            })
+        )
+        expect(thrownError).to.be.instanceOf(UserInputError)
       })
-
-      const response = await put(url, 'test content') // more than 1 byte long
-      expect(
-        response.status,
-        JSON.stringify({ statusText: response.statusText, body: response.data })
-      ).to.equal(200)
-      expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
-
-      const expectedETag = response.headers['etag']
-      const thrownError = await expectToThrow(
-        async () =>
-          await SUT({
-            fileId,
-            modelId: model.id,
-            userId: serverAdmin.id,
-            projectId: ownedProject.id,
-            expectedETag,
-            maximumFileSize: 1 // 1 byte max
-          })
-      )
-      expect(thrownError).to.be.instanceOf(UserInputError)
-    })
-  })
+    }
+  )
 })
