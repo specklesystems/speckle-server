@@ -19,6 +19,11 @@ export type UpdateBlob = (params: {
   streamId?: string
 }) => Promise<BlobStorageItem>
 
+export type ExpirePendingUploads = (params: {
+  timeoutThresholdSeconds: number
+  errMessage: string
+}) => Promise<BlobStorageItem[]>
+
 export type DeleteBlob = (params: { id: string; streamId?: string }) => Promise<number>
 
 export type FullyDeleteBlob = (params: {

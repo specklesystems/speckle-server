@@ -43,7 +43,7 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { expireOldPendingUploadsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
-import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
+import { manageFileImportExpiryFactory } from '@/modules/fileuploads/tasks'
 import {
   deleteInvitesByTargetFactory,
   deleteServerOnlyInvitesFactory,

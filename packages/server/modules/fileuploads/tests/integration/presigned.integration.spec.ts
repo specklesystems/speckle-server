@@ -45,6 +45,7 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
+import { GeneratePresignedUrl } from '@/modules/blobstorage/domain/operations'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -97,7 +98,7 @@ describe('Presigned integration @fileuploads', async () => {
   ;(FF_NEXT_GEN_FILE_IMPORTER_ENABLED ? describe : describe.skip)(
     'register completed upload and start file import',
     () => {
-      let generatePresignedUrl: ReturnType<typeof generatePresignedUrlFactory>
+      let generatePresignedUrl: GeneratePresignedUrl
       let SUT: RegisterUploadCompleteAndStartFileImport
       before(() => {
         generatePresignedUrl = generatePresignedUrlFactory({

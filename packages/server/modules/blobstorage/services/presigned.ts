@@ -58,6 +58,7 @@ export const generatePresignedUrlFactory =
       objectKey,
       urlExpiryDurationSeconds
     })
+
     return url
   }
 

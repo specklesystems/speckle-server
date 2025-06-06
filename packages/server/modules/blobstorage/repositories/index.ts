@@ -4,11 +4,13 @@ import {
   GetBlobMetadataCollection,
   GetBlobs,
   UpdateBlob,
+  ExpirePendingUploads,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
 import {
   BlobStorageItem,
-  BlobStorageItemInput
+  BlobStorageItemInput,
+  BlobUploadStatus
 } from '@/modules/blobstorage/domain/types'
 import { cursorFromRows, decodeCursor } from '@/modules/blobstorage/helpers/db'
 import { buildTableHelper } from '@/modules/core/dbSchema'
@@ -94,6 +96,27 @@ export const updateBlobFactory =
 
     const [res] = await q
     return res
+  }
+
+export const expirePendingUploadsFactory =
+  (deps: { db: Knex }): ExpirePendingUploads =>
+  async (params) => {
+    const { timeoutThresholdSeconds, errMessage } = params
+    const updatedRows = await deps
+      .db(BlobStorage.name)
+      .where(BlobStorage.withoutTablePrefix.col.uploadStatus, BlobUploadStatus.Pending)
+      .andWhere(
+        BlobStorage.withoutTablePrefix.col.createdAt,
+        '<',
+        deps.db.raw(`now() - interval '${timeoutThresholdSeconds} seconds'`)
+      )
+      .update({
+        [BlobStorage.withoutTablePrefix.col.uploadStatus]: BlobUploadStatus.Error,
+        [BlobStorage.withoutTablePrefix.col.uploadError]: errMessage
+      })
+      .returning<BlobStorageItem[]>('*')
+
+    return updatedRows
   }
 
 export const getBlobMetadataFactory =
