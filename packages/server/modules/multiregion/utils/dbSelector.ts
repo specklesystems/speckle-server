@@ -271,7 +271,6 @@ const setUpUserReplication = async ({
     })
 
     await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
-    console.log('extension?')
     await to.public.raw(rawSqeel, [
       subName,
       `dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}`,
@@ -294,15 +293,7 @@ const setUpUserReplication = async ({
     if (
       !err.message.includes('already exists') &&
       !err.message.includes('duplicate key value violates unique constraint')
-    ) {
-      console.log({
-        cause: ensureError(
-          sanitizeError(err),
-          'Unknown database error when creating subscription'
-        ),
-        info: { subName, pubName, regionName }
-      })
-
+    )
       throw new DatabaseError(
         'Unknown error while creating subscription {subName} to {pubName} when setting up user replication for region {regionName}',
         to.public,
@@ -314,7 +305,6 @@ const setUpUserReplication = async ({
           info: { subName, pubName, regionName }
         }
       )
-    }
   }
 }
 

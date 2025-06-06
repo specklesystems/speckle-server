@@ -424,7 +424,7 @@ jobs:
           disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-          files: packages/shared/coverage/lcov.info
+          files: packages/server/coverage/lcov.info
 
   test-server-multiregion:
     name: Server multiregion
@@ -545,16 +545,6 @@ jobs:
       RUN_TESTS_IN_MULTIREGION_MODE: true
     steps:
       - uses: actions/checkout@v4.2.2
-      # - run: sudo apt update
-      # - run: sudo apt install postgresql postgresql-contrib
-      # # create users
-      # - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5432 -c 'CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);'
-      # - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5433 -c 'CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);'
-      # # pubs - sub
-      # - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5432 -c 'CREATE PUBLICATION test_userspub FOR TABLE users';
-      # - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5433 -c 'CREATE EXTENSION IF NOT EXISTS "aiven_extras";'
-      # - run: PGPASSWORD=speckle psql -U speckle -d speckle2_test -h 127.0.0.1 -p 5433 -c "SELECT * FROM aiven_extras.pg_create_subscription('test_userssub_region1', 'dbname=speckle2_test host=postgres0 port=5432 sslmode=disable user=speckle password=speckle', 'test_userspub','test_userssub_region1', TRUE, TRUE);"
-
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
