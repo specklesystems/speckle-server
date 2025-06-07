@@ -34,7 +34,7 @@ export interface SectionBoxData {
  * v1.1 -> v1.2
  * - ui.diff added
  * v1.2 -> v1.3
- * - ui.filters.selectedObjectIds deprecated in favor of ui.filters.selectedObjectApplicationIds
+ * - ui.filters.selectedObjectIds removed in favor of ui.filters.selectedObjectApplicationIds
  */
 export const SERIALIZED_VIEWER_STATE_VERSION = 1.3
 
@@ -75,8 +75,6 @@ export type SerializedViewerState = {
     filters: {
       isolatedObjectIds: string[]
       hiddenObjectIds: string[]
-      /** @deprecated Use `selectedObjectApplicationIds */
-      selectedObjectIds: string[]
       /** Map of object id => application id or null, if no application id */
       selectedObjectApplicationIds: Record<string, string | null>
       propertyFilter: {
@@ -107,7 +105,16 @@ export type SerializedViewerState = {
   }
 }
 
-type UnformattedState = PartialDeep<SerializedViewerState>
+type UnformattedState = PartialDeep<
+  SerializedViewerState & {
+    // Properties removed from earlier viewer state versions
+    ui: {
+      filters: {
+        selectedObjectIds: string[]
+      }
+    }
+  }
+>
 
 /**
  * Note: This only does superficial validation. To really ensure that all of the keys are there, even if prefilled with default values, make sure you invoke
@@ -210,7 +217,6 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         ...(state.ui?.filters || {}),
         isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
         hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
-        selectedObjectIds: state.ui?.filters?.selectedObjectIds || [],
         selectedObjectApplicationIds,
         propertyFilter: {
           ...(state.ui?.filters?.propertyFilter || {}),

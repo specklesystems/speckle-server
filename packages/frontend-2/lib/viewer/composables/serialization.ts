@@ -96,7 +96,6 @@ export function useStateSerialization() {
         filters: {
           isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
           hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
-          selectedObjectIds: selectedObjects.value.map((obj) => obj.id),
           selectedObjectApplicationIds: selectedObjects.value.reduce((ret, obj) => {
             ret[obj.id] = obj.applicationId ?? null
             return ret
