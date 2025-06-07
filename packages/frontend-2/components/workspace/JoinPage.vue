@@ -30,8 +30,8 @@
         :workspace="workspace"
         :request-status="workspace.requestStatus"
         location="workspace_join_page"
-        @auto-joined="workspace.requestStatus = WorkspaceJoinRequestStatus.Approved"
-        @request="workspace.requestStatus = WorkspaceJoinRequestStatus.Pending"
+        @auto-joined="moveToTop(workspace.id, WorkspaceJoinRequestStatus.Approved)"
+        @request="moveToTop(workspace.id, WorkspaceJoinRequestStatus.Pending)"
       />
       <FormButton
         v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 3"
@@ -94,17 +94,29 @@ const {
   hasDiscoverableJoinRequests
 } = useDiscoverableWorkspaces()
 
+const showAllWorkspaces = ref(false)
+
+const actionedWorkspaces = ref<
+  (DiscoverableWorkspace_LimitedWorkspaceFragment & { requestStatus: string | null })[]
+>([])
+
+const remainingWorkspaces = computed(() => {
+  const actionedIds = new Set(actionedWorkspaces.value.map((w) => w.id))
+  return (discoverableWorkspacesAndJoinRequests.value || []).filter(
+    (workspace) => !actionedIds.has(workspace.id)
+  )
+})
+
+const localWorkspaces = computed(() => [
+  ...actionedWorkspaces.value,
+  ...remainingWorkspaces.value
+])
+
 const hasApprovedWorkspace = computed(() =>
   localWorkspaces.value.some(
     (workspace) => workspace.requestStatus === WorkspaceJoinRequestStatus.Approved
   )
 )
-
-const showAllWorkspaces = ref(false)
-
-const localWorkspaces = ref<
-  (DiscoverableWorkspace_LimitedWorkspaceFragment & { requestStatus: string | null })[]
->([])
 
 const workspacesToShow = computed(() => {
   return showAllWorkspaces.value
@@ -119,14 +131,13 @@ const description = computed(() => {
   return 'We found workspaces that match your email domain'
 })
 
-watch(
-  discoverableWorkspacesAndJoinRequests,
-  (newWorkspaces) => {
-    // Only update if localWorkspaces is empty (initial load) or if we don't have any local modifications
-    if (localWorkspaces.value.length === 0) {
-      localWorkspaces.value = [...newWorkspaces]
-    }
-  },
-  { immediate: true }
-)
+const moveToTop = (workspaceId: string, newStatus: WorkspaceJoinRequestStatus) => {
+  const workspace = remainingWorkspaces.value.find((w) => w.id === workspaceId)
+  if (workspace) {
+    actionedWorkspaces.value.unshift({
+      ...workspace,
+      requestStatus: newStatus
+    })
+  }
+}
 </script>

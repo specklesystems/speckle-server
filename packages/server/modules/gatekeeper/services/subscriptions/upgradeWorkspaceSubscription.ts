@@ -27,7 +27,8 @@ import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   PaidWorkspacePlans,
   throwUncoveredError,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanBillingIntervals,
+  WorkspacePlans
 } from '@speckle/shared'
 import { cloneDeep } from 'lodash'
 
@@ -68,16 +69,17 @@ export const upgradeWorkspaceSubscriptionFactory =
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
     switch (workspacePlan.name) {
-      case 'unlimited':
-      case 'academia':
-      case 'teamUnlimitedInvoiced':
-      case 'proUnlimitedInvoiced':
-      case 'free': // Upgrade from free is handled through startCheckout since it is from free to paid
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.Enterprise:
+      case WorkspacePlans.Free: // Upgrade from free is handled through startCheckout since it is from free to paid
         throw new WorkspaceNotPaidPlanError()
-      case 'team':
-      case 'teamUnlimited':
-      case 'pro':
-      case 'proUnlimited':
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
         break
       default:
         throwUncoveredError(workspacePlan)

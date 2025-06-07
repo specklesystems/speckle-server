@@ -5,6 +5,11 @@
         title="Security"
         text="Manage verified workspace domains and associated features."
       />
+      <SettingsWorkspacesSecurityDefaultSeat
+        v-if="workspace"
+        :workspace="workspace"
+        class="mb-8 border-b border-outline-2 pb-8"
+      />
       <template v-if="isSsoEnabled">
         <SettingsWorkspacesSecuritySsoWrapper v-if="workspace" :workspace="workspace" />
         <hr class="my-6 md:my-8 border-outline-2" />
@@ -148,12 +153,19 @@
       :workspace-id="workspace?.id"
       :domain="removeDialogDomain"
     />
-    <SettingsWorkspacesSecurityConfirmJoinPolicyDialog
+    <SettingsConfirmDialog
       v-if="showConfirmJoinPolicyDialog"
       v-model:open="showConfirmJoinPolicyDialog"
+      title="Confirm change"
       @confirm="handleJoinPolicyConfirm"
       @cancel="pendingJoinPolicy = undefined"
-    />
+    >
+      <p class="text-body-xs text-foreground mb-2">
+        This will allow users with verified domain emails to join automatically without
+        admin approval.
+      </p>
+      <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
+    </SettingsConfirmDialog>
   </section>
 </template>
 
@@ -196,6 +208,7 @@ graphql(`
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
     discoverabilityAutoJoinEnabled
+    defaultSeatType
     hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
       featureName: domainBasedSecurityPolicies
     )
@@ -345,17 +358,10 @@ const tooltipText = computed(() => {
 
 const addDomain = async () => {
   if (!selectedDomain.value || !workspace.value) return
-  await addWorkspaceDomain.mutate(
-    {
-      domain: selectedDomain.value,
-      workspaceId: workspace.value.id
-    },
-    workspace.value.domains ?? [],
-    workspace.value.discoverabilityEnabled,
-    workspace.value.domainBasedMembershipProtectionEnabled,
-    workspace.value.hasAccessToSSO,
-    workspace.value.hasAccessToDomainBasedSecurityPolicies
-  )
+  await addWorkspaceDomain.mutate({
+    domain: selectedDomain.value,
+    workspaceId: workspace.value.id
+  })
 
   mixpanel.track('Workspace Domain Added', {
     // eslint-disable-next-line camelcase

@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: speckle-server-minion-api-file
+  name: speckle-server-minion-api-objects
   namespace: {{ .Values.namespace }}
   labels:
 {{ include "speckle.labels" . | indent 4 }}
@@ -11,7 +11,7 @@ metadata:
     {{- if .Values.cert_manager_issuer }}
     cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
     {{- end }}
-    nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.objects_size_limit_mb)) | quote }}
 spec:
   ingressClassName: nginx
   rules:
@@ -19,21 +19,28 @@ spec:
     http:
       paths:
       - pathType: Prefix
-        path: "/api/file/"
+        path: "/api/getobjects/"
         backend:
           service:
             name: speckle-objects
             port:
               name: web
       - pathType: Prefix
-        path: "/api/stream/"
+        path: "/api/objects/"
         backend:
           service:
             name: speckle-objects
             port:
               name: web
       - pathType: Prefix
-        path: "/api/thirdparty/gendo"
+        path: "/api/diff/"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/objects/"
         backend:
           service:
             name: speckle-objects

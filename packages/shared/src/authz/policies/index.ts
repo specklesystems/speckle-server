@@ -19,7 +19,6 @@ import { canUpdateModelPolicy } from './project/model/canUpdate.js'
 import { canDeleteModelPolicy } from './project/model/canDelete.js'
 import { canCreateProjectVersionPolicy } from './project/version/canCreate.js'
 import { canUpdateProjectVersionPolicy } from './project/version/canUpdate.js'
-import { canReceiveProjectVersionPolicy } from './project/version/canReceive.js'
 import { canRequestProjectVersionRenderPolicy } from './project/version/canRequestRender.js'
 import { canCreateAutomationPolicy } from './project/automation/canCreate.js'
 import { canUpdateAutomationPolicy } from './project/automation/canUpdate.js'
@@ -53,7 +52,7 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     version: {
       canCreate: canCreateProjectVersionPolicy(loaders),
       canUpdate: canUpdateProjectVersionPolicy(loaders),
-      canReceive: canReceiveProjectVersionPolicy(loaders),
+      canReceive: canLoadPolicy(loaders),
       canRequestRender: canRequestProjectVersionRenderPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
