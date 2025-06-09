@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
+echo "🏷️ Preparing envs"
+
 GIT_ROOT="$(git rev-parse --show-toplevel)"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -16,17 +18,21 @@ if [[ -z "${DATADOG_API_KEY}" ]]; then
   exit 1
 fi
 
-# Build same prod docker image just w/ sourcemaps enabled
+
+echo "🏗️ Building prod docker image with sourcemaps enabled"
+
 export DOCKER_BUILDKIT=1
 docker build --build-arg BUILD_SOURCEMAPS=true --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" --tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}-sourcemaps" --file "${FE2_DIR_PATH}/Dockerfile" .
 container_id=$(docker create "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}-sourcemaps")
 
-# Clean target location and copy sourcemaps into it
+echo "🧹 Cleaning target location and copy sourcemaps into it"
+
 rm -rf "${GIT_ROOT}/${FE2_DIR_PATH}/.output"
 docker cp "$container_id":/speckle-server "${GIT_ROOT}/${FE2_DIR_PATH}/.output"
 docker rm "$container_id"
 
-# Publish sourcemaps
+echo "🆕 Publishing sourcemaps"
+
 pushd "${GIT_ROOT}/${FE2_DIR_PATH}"
 DATADOG_SITE="${DATADOG_SITE}" npx --yes @datadog/datadog-ci sourcemaps upload ./.output/public/_nuxt \
 --service="${FE2_DATADOG_SERVICE}" \
