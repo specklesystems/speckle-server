@@ -44,6 +44,22 @@ describe('Presigned @blobstorage', async () => {
       convertedMessage: null,
       convertedCommitId: null
     })
+    const fakeGetFileInfo = async () => ({
+      id: blobId,
+      projectId,
+      modelId,
+      userId,
+      fileName,
+      fileType: 'stl',
+      fileSize: 101,
+      uploadComplete: false,
+      uploadDate: new Date(),
+      uploadStatus: BlobUploadStatus.Completed,
+      convertedStatus: FileUploadConvertedStatus.Queued,
+      convertedLastUpdate: new Date(),
+      convertedMessage: null,
+      convertedCommitId: null
+    })
     // const fakeGetModelsByIds = async () => [
     //   {
     //     id: modelId,
@@ -62,6 +78,7 @@ describe('Presigned @blobstorage', async () => {
       const SUT = registerUploadCompleteAndStartFileImportFactory({
         registerCompletedUpload: fakeRegisterCompletedUpload,
         insertNewUploadAndNotify: fakeInsertNewUploadAndNotify,
+        getFileInfo: fakeGetFileInfo,
         getModelsByIds: async () => [] // return an empty array to simulate no models found
       })
 

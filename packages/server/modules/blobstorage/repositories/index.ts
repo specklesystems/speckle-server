@@ -119,6 +119,22 @@ export const expirePendingUploadsFactory =
     return updatedRows
   }
 
+export const updateBlobWhereStatusPendingFactory =
+  (deps: { db: Knex }): UpdateBlob =>
+  async (params: { id: string; item: Partial<BlobStorageItem>; streamId?: string }) => {
+    const { id, item, streamId } = params
+    const q = tables
+      .blobStorage(deps.db)
+      .where(BlobStorage.col.id, id)
+      .andWhere(BlobStorage.col.uploadStatus, BlobUploadStatus.Pending)
+      .update(item, '*')
+
+    if (streamId) q.andWhere(BlobStorage.col.streamId, streamId)
+
+    const [res] = await q
+    return res
+  }
+
 export const getBlobMetadataFactory =
   (deps: { db: Knex }): GetBlobMetadata =>
   async (params: { blobId: string; streamId: string }) => {

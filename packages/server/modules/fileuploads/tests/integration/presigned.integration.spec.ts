@@ -11,7 +11,7 @@ import {
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobsFactory,
-  updateBlobFactory,
+  updateBlobWhereStatusPendingFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { Roles, TIME } from '@speckle/shared'
@@ -24,13 +24,19 @@ import { expect } from 'chai'
 import { testLogger } from '@/observability/logging'
 import { put } from 'axios'
 import { expectToThrow } from '@/test/assertionHelper'
-import { StoredBlobAccessError } from '@/modules/blobstorage/errors'
+import {
+  AlreadyRegisteredBlobError,
+  StoredBlobAccessError
+} from '@/modules/blobstorage/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
 import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
-import { saveUploadFileFactoryV2 } from '@/modules/fileuploads/repositories/fileUploads'
+import {
+  getFileInfoFactoryV2,
+  saveUploadFileFactoryV2
+} from '@/modules/fileuploads/repositories/fileUploads'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
@@ -111,10 +117,13 @@ describe('Presigned integration @fileuploads', async () => {
         })
         SUT = registerUploadCompleteAndStartFileImportFactory({
           registerCompletedUpload: registerCompletedUploadFactory({
+            getBlobs: getBlobsFactory({ db: projectDb }),
             getBlobMetadata: getBlobMetadataFromStorage({
               objectStorage: projectStorage
             }),
-            updateBlob: updateBlobFactory({ db: projectDb }),
+            updateBlobWhereStatusPending: updateBlobWhereStatusPendingFactory({
+              db: projectDb
+            }),
             logger: testLogger
           }),
           insertNewUploadAndNotify: insertNewUploadAndNotifyFactoryV2({
@@ -137,11 +146,13 @@ describe('Presigned integration @fileuploads', async () => {
             publish,
             emit: getEventBus().emit
           }),
+          getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
           getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
         })
       })
       it('should create a record for the uploaded file', async () => {
         const fileId = cryptoRandomString({ length: 10 })
+        const fileSize = 10
         const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
         const expiryDuration = 1 * TIME.minute
         const url = await generatePresignedUrl({
@@ -152,7 +163,7 @@ describe('Presigned integration @fileuploads', async () => {
           urlExpiryDurationSeconds: expiryDuration
         })
 
-        const response = await put(url, cryptoRandomString({ length: 10 }))
+        const response = await put(url, cryptoRandomString({ length: fileSize }))
         expect(
           response.status,
           JSON.stringify({ statusText: response.statusText, body: response.data })
@@ -171,13 +182,27 @@ describe('Presigned integration @fileuploads', async () => {
 
         expect(storedFile).to.exist
         expect(storedFile.fileType).to.equal('stl')
-        expect(storedFile.fileSize).to.equal(10)
+        expect(storedFile.fileSize).to.equal(fileSize)
+        expect(storedFile.uploadComplete).to.be.true
       })
       it('should throw a StoredBlobAccessError if the blob cannot be found', async () => {
+        const fileId = cryptoRandomString({ length: 10 })
+        const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+        const expiryDuration = 1 * TIME.minute
+        await generatePresignedUrl({
+          blobId: fileId,
+          fileName,
+          projectId: ownedProject.id,
+          userId: serverAdmin.id,
+          urlExpiryDurationSeconds: expiryDuration
+        })
+
+        // Do not upload any file, and skip straight to requesting the file be imported
+
         const thrownError = await expectToThrow(
           async () =>
             await SUT({
-              fileId: cryptoRandomString({ length: 10 }),
+              fileId,
               projectId: ownedProject.id,
               modelId: model.id,
               userId: serverAdmin.id,
@@ -228,6 +253,154 @@ describe('Presigned integration @fileuploads', async () => {
         expect(blobs).to.have.lengthOf(1)
         expect(blobs[0].uploadStatus).to.equal(BlobUploadStatus.Error)
         expect(blobs[0].uploadError).to.include('[FILE_SIZE_EXCEEDED]')
+      })
+      it('re-registering should be idempotent', async () => {
+        const fileId = cryptoRandomString({ length: 10 })
+        const fileSize = 10
+        const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+        const expiryDuration = 1 * TIME.minute
+        const url = await generatePresignedUrl({
+          blobId: fileId,
+          fileName,
+          projectId: ownedProject.id,
+          userId: serverAdmin.id,
+          urlExpiryDurationSeconds: expiryDuration
+        })
+
+        const response = await put(url, cryptoRandomString({ length: fileSize }))
+        expect(
+          response.status,
+          JSON.stringify({ statusText: response.statusText, body: response.data })
+        ).to.equal(200)
+        expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
+
+        const expectedETag = response.headers['etag']
+        const storedFile = await SUT({
+          fileId,
+          modelId: model.id,
+          userId: serverAdmin.id,
+          projectId: ownedProject.id,
+          expectedETag,
+          maximumFileSize: 1 * 1024 * 1024 // 1 MB
+        })
+
+        expect(storedFile).to.exist
+        expect(storedFile.fileType).to.equal('stl')
+        expect(storedFile.fileSize).to.equal(fileSize)
+        expect(storedFile.uploadComplete).to.be.true
+
+        const thrownError = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              projectId: ownedProject.id,
+              expectedETag,
+              maximumFileSize: 1 * 1024 * 1024 // 1 MB
+            })
+        )
+        expect(thrownError).to.be.instanceOf(AlreadyRegisteredBlobError)
+        expect(thrownError.message).to.include('Blob already registered and completed')
+      })
+      it('re-registering with increased maximum file size after failure results in the file being processed', async () => {
+        const fileId = cryptoRandomString({ length: 10 })
+        const fileSize = 10
+        const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+        const expiryDuration = 1 * TIME.minute
+        const url = await generatePresignedUrl({
+          blobId: fileId,
+          fileName,
+          projectId: ownedProject.id,
+          userId: serverAdmin.id,
+          urlExpiryDurationSeconds: expiryDuration
+        })
+
+        const response = await put(url, cryptoRandomString({ length: fileSize }))
+        expect(
+          response.status,
+          JSON.stringify({ statusText: response.statusText, body: response.data })
+        ).to.equal(200)
+        expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
+
+        const expectedETag = response.headers['etag']
+        const thrownError = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              projectId: ownedProject.id,
+              expectedETag,
+              maximumFileSize: 1 // smaller than fileSize, so expected to throw
+            })
+        )
+        expect(thrownError).to.be.instanceOf(UserInputError)
+
+        const secondAttempt = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              projectId: ownedProject.id,
+              expectedETag,
+              maximumFileSize: fileSize + 100 // an increased size, greater than the fileSize
+            })
+        )
+
+        expect(secondAttempt).to.be.instanceOf(AlreadyRegisteredBlobError)
+        expect(secondAttempt.message).to.contain('[FILE_SIZE_EXCEEDED]')
+      })
+      it('re-registering with decreased maximum file size does not change anything', async () => {
+        const fileId = cryptoRandomString({ length: 10 })
+        const fileSize = 10
+        const fileName = `test-file-${cryptoRandomString({ length: 10 })}.stl`
+        const expiryDuration = 1 * TIME.minute
+        const url = await generatePresignedUrl({
+          blobId: fileId,
+          fileName,
+          projectId: ownedProject.id,
+          userId: serverAdmin.id,
+          urlExpiryDurationSeconds: expiryDuration
+        })
+
+        const response = await put(url, cryptoRandomString({ length: fileSize }))
+        expect(
+          response.status,
+          JSON.stringify({ statusText: response.statusText, body: response.data })
+        ).to.equal(200)
+        expect(response.headers['etag'], JSON.stringify(response.headers)).to.exist
+
+        const expectedETag = response.headers['etag']
+        const storedFile = await SUT({
+          fileId,
+          modelId: model.id,
+          userId: serverAdmin.id,
+          projectId: ownedProject.id,
+          expectedETag,
+          maximumFileSize: fileSize + 100
+        })
+
+        expect(storedFile).to.exist
+        expect(storedFile.fileType).to.equal('stl')
+        expect(storedFile.fileSize).to.equal(fileSize)
+        expect(storedFile.uploadComplete).to.be.true
+
+        const thrownError = await expectToThrow(
+          async () =>
+            await SUT({
+              fileId,
+              modelId: model.id,
+              userId: serverAdmin.id,
+              projectId: ownedProject.id,
+              expectedETag,
+              maximumFileSize: 1 // smaller than our fileSize, but it is already registered so should throw
+            })
+        )
+
+        expect(thrownError).to.be.instanceOf(AlreadyRegisteredBlobError)
+        expect(thrownError.message).to.include('Blob already registered and completed')
       })
     }
   )
