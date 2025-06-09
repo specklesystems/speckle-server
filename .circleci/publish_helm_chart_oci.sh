@@ -41,9 +41,9 @@ if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; th
   fi
 fi
 
-echo "$(helm version --short)"
+echo "helm version: $(helm version --short)"
 echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
-echo "${DOCKER_HELM_REG_URL}"
-echo "${DOCKER_REG_PASS:-3}"
+echo "docker registry: ${DOCKER_HELM_REG_URL}"
+echo "docker registry password: *******${DOCKER_REG_PASS: -3}"
 helm package "${GIT_REPO}/utils/helm/speckle-server" --version "${RELEASE_VERSION}" --app-version "${RELEASE_VERSION}" --destination "/tmp"
 helm push "/tmp/${CHART_NAME}-${RELEASE_VERSION}.tgz" "oci://${DOCKER_HELM_REG_URL}/speckle"
