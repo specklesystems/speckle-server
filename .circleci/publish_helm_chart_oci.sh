@@ -15,6 +15,7 @@ echo "Releasing Helm Chart version ${RELEASE_VERSION}"
 yq e -i ".docker_image_tag = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 
 #TODO remove this once we have tested it
+echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
 helm pull "oci://${DOCKER_HELM_REG_URL}/speckle/speckle-server-chart" --destination "/tmp/old-version" --untar --untardir "untar"
 echo "untar contents: $(ls -la /tmp/old-version/untar/)"
 CURRENT_VERSION="$(grep ^version "/tmp/old-version/Chart.yaml"  | grep -o '2\..*')"
