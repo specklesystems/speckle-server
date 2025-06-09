@@ -18,6 +18,7 @@ on:
 jobs:
   docker-build-server:
     runs-on: blacksmith
+    if: false
     name: Server
     steps:
       - name: Login to Docker Hub
@@ -34,6 +35,7 @@ jobs:
 
   docker-build-frontend2:
     runs-on: blacksmith
+    if: false
     name: Frontend2
     steps:
       - name: Login to Docker Hub
@@ -50,6 +52,7 @@ jobs:
 
   docker-build-preview-service:
     runs-on: blacksmith
+    if: false
     name: Preview service
     steps:
       - name: Login to Docker Hub
@@ -66,6 +69,7 @@ jobs:
 
   docker-build-webhook-service:
     runs-on: blacksmith
+    if: false
     name: Webhook service
     steps:
       - name: Login to Docker Hub
@@ -82,6 +86,7 @@ jobs:
 
   docker-build-fileimport-service:
     runs-on: blacksmith
+    if: false
     name: File import service
     steps:
       - name: Login to Docker Hub
@@ -98,6 +103,7 @@ jobs:
 
   docker-build-test-deploy:
     runs-on: blacksmith
+    if: false
     name: Test deploy util
     steps:
       - name: Build and push
@@ -109,6 +115,7 @@ jobs:
 
   docker-build-monitor-deployment:
     runs-on: Blacksmith
+    if: false
     name: monitor container
     steps:
       - name: Login to Docker Hub
@@ -125,6 +132,7 @@ jobs:
 
   docker-build-docker-compose-ingress:
     runs-on: blacksmith
+    if: false
     name: Docker compose ingress
     steps:
       - name: Login to Docker Hub
@@ -141,6 +149,7 @@ jobs:
 
   docker-frontend-2-sourcemaps:
     runs-on: blacksmith
+    if: true
     name: Frontend 2 sourcemaps
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
@@ -148,5 +157,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: frontend-2
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
       - name: Build and Publish sourcemaps
         run: ./.github/workflows/scripts/publish_fe2_sourcemaps.sh
