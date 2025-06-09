@@ -28,7 +28,6 @@ on:
 jobs:
   lint-and-prettier:
     name: Lint and prettier
-    if: false
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -51,7 +50,6 @@ jobs:
 
   pre-commit:
     name: Precommit check
-    if: false
     runs-on: blacksmith
     container:
       image: speckle/pre-commit-runner:latest
@@ -88,7 +86,6 @@ jobs:
 
   test-viewer:
     name: Viewer
-    if: false
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -117,7 +114,6 @@ jobs:
     env:
       CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     name: UI components chromatic
-    if: false
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -137,7 +133,6 @@ jobs:
 
   test-shared:
     name: Shared
-    if: false
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -174,7 +169,6 @@ jobs:
 
   test-objectsender:
     name: Object Sender
-    if: false
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -198,7 +192,6 @@ jobs:
 
   test-ui-components:
     name: UI Components
-    if: false
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -225,7 +218,6 @@ jobs:
 
   test-preview-service:
     name: Preview service
-    if: false
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -260,7 +252,6 @@ jobs:
 
   test-server:
     name: Server
-    if: false
     needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
     services:
@@ -355,7 +346,6 @@ jobs:
 
   test-server-no-ff:
     name: Server no ff
-    if: false
     needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
     services:
