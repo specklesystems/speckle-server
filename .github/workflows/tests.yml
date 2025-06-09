@@ -84,7 +84,7 @@ jobs:
         working-directory: 'packages/frontend-2'
 
   test-viewer:
-    name: Viwer
+    name: Viewer
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2

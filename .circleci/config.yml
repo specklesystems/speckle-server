@@ -120,7 +120,7 @@ workflows:
       #       - docker-build-docker-compose-ingress
 
       - deployment-test-helm-chart:
-          filters: *filters-only-main-hotfix-testing
+          filters: *filters-allow-all
           requires:
             - get-version
             - deployment-testing-approval
@@ -197,10 +197,6 @@ workflows:
           requires:
             - get-version
 
-      - publish-approval:
-          type: approval
-          filters: *filters-ignore-main-branch-or-all-tags
-
       - docker-publish-server:
           context: &docker-hub-context
             - docker-hub
@@ -210,7 +206,6 @@ workflows:
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -228,7 +223,6 @@ workflows:
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -245,7 +239,6 @@ workflows:
           filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
-            - publish-approval
 
       - docker-publish-webhooks:
           context: *docker-hub-context
@@ -255,7 +248,6 @@ workflows:
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -273,7 +265,6 @@ workflows:
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -291,7 +282,6 @@ workflows:
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -309,7 +299,6 @@ workflows:
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -326,7 +315,6 @@ workflows:
             - docker-build-monitor-container
             - get-version
             - pre-commit
-            - publish-approval
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -339,7 +327,6 @@ workflows:
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -356,7 +343,6 @@ workflows:
             - docker-build-docker-compose-ingress
             - get-version
             - pre-commit
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -384,7 +370,6 @@ workflows:
             - docker-publish-test-container
             - docker-publish-webhooks
             - get-version
-            - publish-approval
 
       - publish-npm:
           filters:
