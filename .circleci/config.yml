@@ -1122,7 +1122,7 @@ jobs:
 
   publish-helm-chart:
     docker:
-      - image: speckle/pre-commit-runner:latest #TODO replace with a more suitable image with only helm installed
+      - image: speckle/pre-commit-runner:latest
     working_directory: *work-dir
     steps:
       - checkout
@@ -1138,7 +1138,7 @@ jobs:
 
   publish-helm-chart-oci:
     docker:
-      - image: speckle/pre-commit-runner:latest #TODO replace with a more suitable image with only helm installed
+      - image: speckle/pre-commit-runner:latest
     working_directory: *work-dir
     steps:
       - checkout

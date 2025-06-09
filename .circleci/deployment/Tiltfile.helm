@@ -106,12 +106,10 @@ helm_resource('ingress-nginx',
             labels=['speckle-dependencies'])
 
 # Uncomment the below, and comment out the other helm_resource('speckle-server'...) to use the speckle-server helm chart
-# helm_repo('speckle-server-repo',
-#           'https://specklesystems.github.io/helm')
 # helm_resource('speckle-server',
 #             release_name='speckle-server',
 #             namespace='speckle-server',
-#             chart='speckle-server-repo/speckle-server-chart',
+#             chart='oci://registry-1.docker.io/speckle/speckle-server-chart',
 #             deps=['./values/speckle-server.values.yaml'],
 #             resource_deps=['postgresql', 'minio', 'valkey', 'ingress-nginx','speckle-server-repo'],
 #             flags=['--values=./values/speckle-server.values.yaml', '--devel'],
