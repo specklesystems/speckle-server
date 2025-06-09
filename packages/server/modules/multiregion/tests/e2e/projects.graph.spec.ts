@@ -244,6 +244,40 @@ isMultiRegionTestMode()
         await assertProjectRegion(testProject.id, regionKey1)
       })
 
+      it('moves project to region without breaking the target region', async () => {
+        // Move a workspace project to region2
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: emptyProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+        await ensureProjectRegion(emptyProject.id, regionKey2)
+
+        // Create a new project in region2
+        const testRegion2Workspace: BasicTestWorkspace = {
+          id: '',
+          ownerId: '',
+          name: 'My Region 2 Workspace',
+          slug: 'region-2-workspace'
+        }
+        await createTestWorkspace(testRegion2Workspace, adminUser, {
+          regionKey: regionKey2,
+          addPlan: {
+            name: 'unlimited',
+            status: 'valid'
+          }
+        })
+
+        const testRegion2Project: BasicTestStream = {
+          id: '',
+          ownerId: '',
+          name: 'My Region 2 Project',
+          workspaceId: testRegion2Workspace.id
+        }
+        await createTestStream(testRegion2Project, adminUser)
+        await ensureProjectRegion(testRegion2Project.id, regionKey2)
+      })
+
       it('moves projects with no resources of a given type', async () => {
         const resA = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: emptyProject.id,
