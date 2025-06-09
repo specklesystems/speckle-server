@@ -108,7 +108,8 @@ export const ensureValidWorkspaceRoleSeatFactory =
         eventName: WorkspaceEvents.SeatUpdated,
         payload: {
           seat,
-          updatedByUserId: params.updatedByUserId
+          updatedByUserId: params.updatedByUserId,
+          previousSeat: workspaceSeat
         }
       })
     }
@@ -120,10 +121,12 @@ export const assignWorkspaceSeatFactory =
   ({
     createWorkspaceSeat,
     getWorkspaceRoleForUser,
+    getWorkspaceUserSeat,
     eventEmit: eventEmit
   }: {
     createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
     eventEmit: EventBusEmit
   }): AssignWorkspaceSeat =>
   async ({ workspaceId, userId, type, assignedByUserId }) => {
@@ -149,6 +152,7 @@ export const assignWorkspaceSeatFactory =
       )
     }
 
+    const previousSeat = await getWorkspaceUserSeat({ workspaceId, userId })
     const seat = await createWorkspaceSeat({
       workspaceId,
       userId,
@@ -159,7 +163,8 @@ export const assignWorkspaceSeatFactory =
       eventName: WorkspaceEvents.SeatUpdated,
       payload: {
         seat,
-        updatedByUserId: assignedByUserId
+        updatedByUserId: assignedByUserId,
+        previousSeat
       }
     })
 
