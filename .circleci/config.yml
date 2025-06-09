@@ -374,8 +374,7 @@ workflows:
       - publish-helm-chart-oci:
           filters: &filters-publish
             branches:
-              only: iain/web-3578-publish-helm-chart-to-oci-registry
-              # only: *branches-special  #FIXME temporarily disable and run for this PR
+              only: *branches-special
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           context:
@@ -1122,7 +1121,7 @@ jobs:
 
   publish-helm-chart:
     docker:
-      - image: speckle/pre-commit-runner:latest
+      - image: cimg/python:3.12.1
     working_directory: *work-dir
     steps:
       - checkout
