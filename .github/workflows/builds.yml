@@ -75,7 +75,7 @@ jobs:
           file: ./utils/test-deployment/Dockerfile
 
   docker-build-monitor-deployment:
-    runs-on: Blacksmith
+    runs-on: blacksmith
     name: monitor container
     steps:
       - name: Build and push
