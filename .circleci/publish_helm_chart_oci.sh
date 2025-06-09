@@ -15,14 +15,14 @@ echo "Releasing Helm Chart version ${RELEASE_VERSION}"
 yq e -i ".docker_image_tag = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 
 #TODO remove this once we have tested it
-echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
-helm pull "oci://${DOCKER_HELM_REG_URL}/speckle/speckle-server-chart" --destination "/tmp/old-version" --untar --untardir "untar"
-echo "untar contents: $(ls -la /tmp/old-version/untar/)"
-CURRENT_VERSION="$(grep ^version "/tmp/old-version/Chart.yaml"  | grep -o '2\..*')"
-echo "${CURRENT_VERSION}"
+# echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
+# helm pull "oci://${DOCKER_HELM_REG_URL}/speckle/speckle-server-chart" --destination "/tmp/old-version" --untar --untardir "untar"
+# echo "untar contents: $(ls -la /tmp/old-version/untar/)"
+# CURRENT_VERSION="$(grep ^version "/tmp/old-version/Chart.yaml"  | grep -o '2\..*')"
+# echo "${CURRENT_VERSION}"
 
-.circleci/check_version.py "${CURRENT_VERSION}" "${RELEASE_VERSION}"
-echo "check_version exit code: $($?)"
+# .circleci/check_version.py "${CURRENT_VERSION}" "${RELEASE_VERSION}"
+# echo "check_version exit code: $($?)"
 
 if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; then
   # before overwriting the chart with the build version, check if the current chart version
@@ -44,7 +44,7 @@ else
   yq e -i ".name = \"speckle-server-chart-branch-${BRANCH_NAME_TRUNCATED}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
 fi
 
-# echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
+echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
 helm package "${GIT_REPO}/utils/helm/speckle-server" --version "${RELEASE_VERSION}" --app-version "${RELEASE_VERSION}" --destination "/tmp"
 echo "/tmp contents: $(ls -la /tmp/)"
-# helm push "/tmp/speckle-server-${RELEASE_VERSION}.tgz" "oci://${DOCKER_HELM_REG_URL}/speckle"
+helm push "/tmp/speckle-server-${RELEASE_VERSION}.tgz" "oci://${DOCKER_HELM_REG_URL}/speckle"
