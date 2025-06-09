@@ -26,7 +26,8 @@ export const formatName = (plan?: MaybeNullOrUndefined<WorkspacePlans>) => {
     [WorkspacePlans.TeamUnlimitedInvoiced]: 'Starter (Invoiced)',
     [WorkspacePlans.Pro]: 'Business',
     [WorkspacePlans.ProUnlimited]: 'Business',
-    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business (Invoiced)'
+    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business (Invoiced)',
+    [WorkspacePlans.Enterprise]: 'Enterprise'
   }
   return formattedPlanNames[plan]
 }

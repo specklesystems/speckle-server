@@ -116,6 +116,7 @@ import {
 } from '@/modules/workspaces/services/retrieval'
 import {
   Roles,
+  WorkspacePlans,
   WorkspaceRoles,
   removeNullOrUndefinedKeys,
   throwUncoveredError
@@ -707,10 +708,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
           if (workspacePlan) {
             switch (workspacePlan.name) {
-              case 'team':
-              case 'teamUnlimited':
-              case 'pro':
-              case 'proUnlimited':
+              case WorkspacePlans.Team:
+              case WorkspacePlans.TeamUnlimited:
+              case WorkspacePlans.Pro:
+              case WorkspacePlans.ProUnlimited:
                 switch (workspacePlan.status) {
                   case 'cancelationScheduled':
                   case 'valid':
@@ -721,11 +722,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   default:
                     throwUncoveredError(workspacePlan)
                 }
-              case 'free':
-              case 'unlimited':
-              case 'academia':
-              case 'proUnlimitedInvoiced':
-              case 'teamUnlimitedInvoiced':
+              case WorkspacePlans.Free:
+              case WorkspacePlans.Unlimited:
+              case WorkspacePlans.Academia:
+              case WorkspacePlans.Enterprise:
+              case WorkspacePlans.ProUnlimitedInvoiced:
+              case WorkspacePlans.TeamUnlimitedInvoiced:
                 break
               default:
                 throwUncoveredError(workspacePlan)

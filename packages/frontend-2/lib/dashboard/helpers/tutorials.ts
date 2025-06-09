@@ -2,51 +2,51 @@ import type { TutorialItem } from '~/lib/dashboard/helpers/types'
 
 export const tutorialItems: TutorialItem[] = [
   {
-    title: 'Get Civil 3D Pipe Networks Into Revit as Families',
+    title: 'Embed 3D models in Miro',
     image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/67b8980920e42b89aff75a3f_C3d%20to%20Revit.jpg',
-    url: 'https://www.speckle.systems/tutorials/pipe-networks-civil3d-revit'
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/6840300850bf20bbc4598692_Embed%20in%20Miro.jpg',
+    url: 'https://www.speckle.systems/tutorials/embed-3d-models-in-miro'
   },
   {
-    title: 'How To Get Data From Grasshopper Into Power BI',
+    title: 'Embed 3D models in Notion',
     image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/677d34c3f1e3b99aa578bfea_GH%20to%20PBI%20tutorial-p-800.jpg',
-    url: 'https://www.speckle.systems/tutorials/best-way-to-get-data-from-grasshopper-into-power-bi'
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/68402d8d2220374a63dc4164_Embed%20in%20Notion.jpg',
+    url: 'https://www.speckle.systems/tutorials/how-to-embed-3d-models-in-notion'
   },
   {
-    title: 'Automating CFD Analysis with Speckle',
+    title: 'Visualize Archicad models in 3D with Power BI',
     image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/66f9c508e14c68996f7aa1f5_66d648086cd656dae5168a85_Tutorial-Graphics-automate-centeres-cfd-1.png',
-    url: 'https://www.speckle.systems/tutorials/automating-cfd-analysis-with-speckle'
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/68345b16d7223d552bf58f84_Archicad%20to%20%20Power%20BI.jpg',
+    url: 'https://www.speckle.systems/tutorials/visualize-archicad-models-in-3d-with-power-bi'
   },
   {
-    title: 'PowerQuery(QL) for AEC Data Analysis',
+    title: 'Visualize Rhino models in 3D with Power BI',
     image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/66f9c49549279bcda21c3115_66e047f5c915694aefb78105_powerquery-specklecon%25400.5x.png',
-    url: 'https://www.speckle.systems/tutorials/powerquery-ql-for-aec-data-analysis'
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/68345a0a3271258ec8a1dacc_Rhino%20to%20%20Power%20BI.jpg',
+    url: 'https://www.speckle.systems/tutorials/visualize-rhino-models-in-3d-with-power-bi'
   },
   {
-    title: 'From Grasshopper Placeholders to Unreal Assets',
+    title: 'Visualize SketchUp models in 3D with Power BI',
     image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/66f9c50919d477e7b4454747_66e047f5b7f992018acdb66b_grasshopper-unreal%25400.5x.png',
-    url: 'https://www.speckle.systems/tutorials/from-grasshopper-placeholders-to-unreal-assets'
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/68345976fda085cd403855c0_SketchUp%20to%20%20Power%20BI.jpg',
+    url: 'https://www.speckle.systems/tutorials/visualize-sketchup-models-in-3d-with-power-bi'
   },
   {
-    title: 'Rhino Block to Revit Family',
+    title: 'Visualize Tekla models in 3D with Power BI',
     image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/66f9c50a49279bcda21c9483_66e047f58da87f021da53e06_rhino-2-rvt-families%25400.5x.png',
-    url: 'https://www.speckle.systems/tutorials/rhino-block-to-revit-family'
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/683458947403486c2b2235ac_Tekla%20to%20%20Power%20BI.jpg',
+    url: 'https://www.speckle.systems/tutorials/visualize-tekla-models-in-3d-with-power-bi'
   },
   {
-    title: 'SketchUp Components to Revit Families',
+    title: 'Visualize Navisworks models in 3D with Power BI',
     image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/66f9c50ac6269f3166039982_66e047f51d1cb84078e7320a_skp-2-rvt-families%25400.5x.png',
-    url: 'https://www.speckle.systems/tutorials/sketchup-components-to-revit-families'
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/6834573d14d3d379e7c0ffa9_Navisworks%20to%20%20Power%20BI.jpg',
+    url: 'https://www.speckle.systems/tutorials/visualize-navisworks-models-in-3d-with-power-bi'
   },
   {
-    title: 'Block to Family Conversion with Speckle',
+    title: 'Visualize ETABS models in 3D with Power BI',
     image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/66f9c50ac50a28b58fe0e10b_66e047f505114bd4a6854b6a_216-blocks-to-families%25400.5x.png',
-    url: 'https://www.speckle.systems/tutorials/new-in-2-16-block-to-family-conversion'
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/683454bb49e49e15ec574877_ETABS%20to%20%20Power%20BI.jpg',
+    url: 'https://www.speckle.systems/tutorials/visualize-etabs-models-in-3d-with-power-bi'
   }
 ]

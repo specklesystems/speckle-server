@@ -56,12 +56,15 @@ import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/managemen
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 import { matchesDomainPolicy } from '~/lib/invites/helpers/validation'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment InviteDialogWorkspace_Workspace on Workspace {
     id
     name
+    slug
     domainBasedMembershipProtectionEnabled
+    defaultSeatType
     domains {
       domain
       id
@@ -77,6 +80,9 @@ const isOpen = defineModel<boolean>('open', { required: true })
 const mixpanel = useMixpanel()
 const inviteToWorkspace = useInviteUserToWorkspace()
 const inviteToProject = useInviteUserToProject()
+
+const workspaceSlug = computed(() => props.workspace?.slug || '')
+const { isSelfServePlan } = useWorkspacePlan(workspaceSlug.value)
 
 const isSelectingRole = ref(true)
 const selectedRole = ref<WorkspaceRoles>(Roles.Workspace.Member)
@@ -119,9 +125,21 @@ const allowedDomains = computed(() =>
 )
 const infoText = computed(() => {
   if (selectedRole.value === Roles.Workspace.Member) {
-    return 'Inviting is free. Members join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to projects beyond viewing and commenting.'
+    if (props.workspace?.defaultSeatType === 'editor') {
+      if (isSelfServePlan.value) {
+        return `Members join your workspace on an Editor seat by default. Editor seats may incur charges based on your workspace plan. You can change their seat type to Viewer after they join if they only need to view and comment.`
+      }
+      return `Members join your workspace on an Editor seat by default. Editor seats have additional permissions compared to Viewer seats. You can change their seat type to Viewer after they join if they only need to view and comment.`
+    }
+    return `Inviting is free. Members join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to projects beyond viewing and commenting.`
   }
 
+  if (props.workspace?.defaultSeatType === 'editor') {
+    if (isSelfServePlan.value) {
+      return `Guests join your workspace on an Editor seat by default. Editor seats may incur charges based on your workspace plan. You can change their seat type to Viewer after they join if they only need to view and comment.`
+    }
+    return `Guests join your workspace on an Editor seat by default. Editor seats have additional permissions compared to Viewer seats. You can change their seat type to Viewer after they join if they only need to view and comment.`
+  }
   return `Inviting is free. Guests join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to a project beyond viewing and commenting.`
 })
 

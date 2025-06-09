@@ -13,6 +13,7 @@ export type PaidWorkspacePlans =
 export const UnpaidWorkspacePlans = <const>{
   TeamUnlimitedInvoiced: 'teamUnlimitedInvoiced',
   ProUnlimitedInvoiced: 'proUnlimitedInvoiced',
+  Enterprise: 'enterprise',
   Unlimited: 'unlimited',
   Academia: 'academia',
   Free: 'free'
@@ -32,16 +33,17 @@ export const doesPlanIncludeUnlimitedProjectsAddon = (
   plan: WorkspacePlans
 ): boolean => {
   switch (plan) {
-    case 'teamUnlimited':
-    case 'proUnlimited':
+    case WorkspacePlans.TeamUnlimited:
+    case WorkspacePlans.ProUnlimited:
       return true
-    case 'free':
-    case 'team':
-    case 'pro':
-    case 'teamUnlimitedInvoiced':
-    case 'proUnlimitedInvoiced':
-    case 'unlimited':
-    case 'academia':
+    case WorkspacePlans.Free:
+    case WorkspacePlans.Team:
+    case WorkspacePlans.Pro:
+    case WorkspacePlans.TeamUnlimitedInvoiced:
+    case WorkspacePlans.ProUnlimitedInvoiced:
+    case WorkspacePlans.Unlimited:
+    case WorkspacePlans.Academia:
+    case WorkspacePlans.Enterprise:
       return false
 
     default:
@@ -51,16 +53,17 @@ export const doesPlanIncludeUnlimitedProjectsAddon = (
 
 export const isSelfServeAvailablePlan = (plan: WorkspacePlans): boolean => {
   switch (plan) {
-    case 'free':
-    case 'team':
-    case 'teamUnlimited':
-    case 'pro':
-    case 'proUnlimited':
+    case WorkspacePlans.Free:
+    case WorkspacePlans.Team:
+    case WorkspacePlans.TeamUnlimited:
+    case WorkspacePlans.Pro:
+    case WorkspacePlans.ProUnlimited:
       return true
-    case 'teamUnlimitedInvoiced':
-    case 'proUnlimitedInvoiced':
-    case 'unlimited':
-    case 'academia':
+    case WorkspacePlans.TeamUnlimitedInvoiced:
+    case WorkspacePlans.ProUnlimitedInvoiced:
+    case WorkspacePlans.Unlimited:
+    case WorkspacePlans.Academia:
+    case WorkspacePlans.Enterprise:
       return false
 
     default:
@@ -70,16 +73,17 @@ export const isSelfServeAvailablePlan = (plan: WorkspacePlans): boolean => {
 
 export const isPaidPlan = (plan: WorkspacePlans): boolean => {
   switch (plan) {
-    case 'team':
-    case 'teamUnlimited':
-    case 'pro':
-    case 'proUnlimited':
+    case WorkspacePlans.Team:
+    case WorkspacePlans.TeamUnlimited:
+    case WorkspacePlans.Pro:
+    case WorkspacePlans.ProUnlimited:
       return true
-    case 'free':
-    case 'teamUnlimitedInvoiced':
-    case 'proUnlimitedInvoiced':
-    case 'unlimited':
-    case 'academia':
+    case WorkspacePlans.Free:
+    case WorkspacePlans.TeamUnlimitedInvoiced:
+    case WorkspacePlans.ProUnlimitedInvoiced:
+    case WorkspacePlans.Unlimited:
+    case WorkspacePlans.Academia:
+    case WorkspacePlans.Enterprise:
       return false
 
     default:

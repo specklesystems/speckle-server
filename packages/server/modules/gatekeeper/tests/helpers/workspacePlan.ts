@@ -3,6 +3,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { assign } from 'lodash'
 import {
   SubscriptionData,
+  SubscriptionProduct,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 
@@ -47,6 +48,19 @@ export const buildTestSubscriptionData = (
       status: 'active',
       products: [],
       currentPeriodEnd: new Date()
+    },
+    overrides
+  )
+
+export const buildTestSubscriptionProduct = (
+  overrides?: Partial<SubscriptionProduct>
+): SubscriptionProduct =>
+  assign(
+    {
+      productId: cryptoRandomString({ length: 10 }),
+      subscriptionItemId: cryptoRandomString({ length: 10 }),
+      priceId: cryptoRandomString({ length: 10 }),
+      quantity: 1
     },
     overrides
   )

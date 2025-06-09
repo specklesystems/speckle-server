@@ -20,7 +20,19 @@ aliases:
   - &yarn
     run:
       name: Install Dependencies
-      command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+      command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+
+  - &filters-allow-all
+    tags:
+      # run tests for any commit on any branch, including any tags
+      only: /.*/
+
+  - &filters-only-main-hotfix-testing
+    branches:
+      only: &branches-special
+        - main
+        - /^hotfix.*$/
+        - /^testing\d*$/
 
 workflows:
   test-build:
@@ -39,51 +51,52 @@ workflows:
             - speckle-server-licensing
             - stripe-integration
             - speckle-server-codecov
-          filters: &filters-allow-all
-            tags:
-              # run tests for any commit on any branch, including any tags
-              only: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-postgres-container
 
       - test-server-no-ff:
+          filters: *filters-only-main-hotfix-testing
+          requires:
+            - docker-build-postgres-container
+
+      - test-server-multiregion:
+          context:
+            - speckle-server-licensing
+            - stripe-integration
+            - speckle-server-codecov
           filters: *filters-allow-all
           requires:
             - docker-build-postgres-container
 
-      - test-server-multiregion: *test-server-job-definition
-
       - test-frontend-2:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-viewer:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-objectsender:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-shared:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-preview-service:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-ui-components:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - deployment-testing-approval:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
             branches:
-              ignore: &branches-special
-                - main
-                - /^hotfix.*$/
-                - /^testing\d*$/
+              ignore: *branches-special
             tags:
               ignore: /.*/
 
@@ -107,10 +120,7 @@ workflows:
       #       - docker-build-docker-compose-ingress
 
       - deployment-test-helm-chart:
-          filters: &filters-deployment-testing
-            tags:
-              # run tests for any commit on any branch, including any tags
-              only: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
             - deployment-testing-approval
@@ -126,66 +136,64 @@ workflows:
           filters: *filters-allow-all
 
       - pre-commit:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - lint-and-prettier:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
             - docker-hub
-          filters: &filters-build
-            tags:
-              only: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-frontend-2:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-webhooks:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-file-imports:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-previews:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-test-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-postgres-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-allow-all
           requires:
             - get-version
 
       - docker-build-monitor-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-docker-compose-ingress:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
@@ -196,11 +204,7 @@ workflows:
       - docker-publish-server:
           context: &docker-hub-context
             - docker-hub
-          filters: &filters-publish
-            branches:
-              ignore: /pull\/[0-9]+/
-            tags:
-              only: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-server
             - get-version
@@ -218,7 +222,7 @@ workflows:
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-frontend-2
             - get-version
@@ -238,14 +242,14 @@ workflows:
           context:
             - github-readonly-public-repos
             - datadog-sourcemaps-publish
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
             - publish-approval
 
       - docker-publish-webhooks:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-webhooks
             - get-version
@@ -263,7 +267,7 @@ workflows:
 
       - docker-publish-file-imports:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-file-imports
             - get-version
@@ -281,7 +285,7 @@ workflows:
 
       - docker-publish-previews:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-previews
             - get-version
@@ -299,7 +303,7 @@ workflows:
 
       - docker-publish-test-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-test-container
             - get-version
@@ -317,7 +321,7 @@ workflows:
 
       - docker-publish-postgres-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-monitor-container
             - get-version
@@ -329,7 +333,7 @@ workflows:
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-monitor-container
             - get-version
@@ -347,7 +351,7 @@ workflows:
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-docker-compose-ingress
             - get-version
@@ -433,7 +437,9 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
-      - *yarn
+      - run:
+          name: Install Hardened Dependencies
+          command: YARN_ENABLE_HARDENED_MODE=1 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -550,15 +556,14 @@ jobs:
           name: Introspect GQL schema for subsequent checks
           command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
-      # Temporarily disabled while Apollo Studio is down - https://status.apollographql.com/
-      # - run:
-      #     name: Checking for GQL schema breakages against app.speckle.systems
-      #     command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
-      #     working_directory: 'packages/server'
-      # - run:
-      #     name: Checking for GQL schema breakages against latest.speckle.systems
-      #     command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
-      #     working_directory: 'packages/server'
+      - run:
+          name: Checking for GQL schema breakages against app.speckle.systems
+          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
+          working_directory: 'packages/server'
+      - run:
+          name: Checking for GQL schema breakages against latest.speckle.systems
+          command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+          working_directory: 'packages/server'
       - store_test_results:
           path: packages/server/reports
 
@@ -774,7 +779,7 @@ jobs:
       - checkout
       - run:
           name: Install Dependencies
-          command: PUPPETEER_SKIP_DOWNLOAD=true yarn
+          command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true yarn
       - run:
           name: Build public packages
           command: yarn build:public

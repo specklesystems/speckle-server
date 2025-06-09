@@ -148,6 +148,17 @@ export const WorkspacePaidPlanConfigs: {
 export const WorkspaceUnpaidPlanConfigs: {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
+  [UnpaidWorkspacePlans.Enterprise]: {
+    plan: UnpaidWorkspacePlans.Enterprise,
+    features: [
+      ...baseFeatures,
+      WorkspacePlanFeatures.DomainSecurity,
+      WorkspacePlanFeatures.SSO,
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding
+    ],
+    limits: unlimited
+  },
   [UnpaidWorkspacePlans.Unlimited]: {
     plan: UnpaidWorkspacePlans.Unlimited,
     features: [

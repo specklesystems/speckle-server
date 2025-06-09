@@ -10,7 +10,7 @@
       <FormButton
         color="outline"
         :icon-left="BookOpenIcon"
-        to="https://speckle.guide/dev/server-webhooks.html"
+        to="https://speckle.guide/server/server-webhooks.html"
         external
         target="_blank"
       >

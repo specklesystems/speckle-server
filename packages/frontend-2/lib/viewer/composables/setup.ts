@@ -217,6 +217,7 @@ export type InjectableViewerState = Readonly<{
        * Fetch the next page of versions for a loaded model
        */
       loadMoreVersions: (modelId: string) => Promise<void>
+      resourcesLoading: ComputedRef<boolean>
     }
   }
   /**
@@ -713,6 +714,7 @@ function setupResponseResourceData(
   // sorting variables so that we don't refetech just because the order changed
   const {
     result: viewerLoadedResourcesResult,
+    loading: viewerLoadedResourcesLoading,
     variables: viewerLoadedResourcesVariables,
     onError: onViewerLoadedResourcesError,
     onResult: onViewerLoadedResourcesResult,
@@ -880,7 +882,8 @@ function setupResponseResourceData(
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
     loadMoreVersions,
-    resourcesLoaded: computed(() => initLoadDone.value)
+    resourcesLoaded: computed(() => initLoadDone.value),
+    resourcesLoading: computed(() => viewerLoadedResourcesLoading.value)
   }
 }
 

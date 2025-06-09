@@ -76,7 +76,10 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { itEach } from '@/test/assertionHelper'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
-import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
 
@@ -394,6 +397,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
           eventEmit: async () => {}
         })({
           workspaceId: workspace.id,
@@ -406,6 +410,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
           eventEmit: async () => {}
         })({
           workspaceId: otherWorkspace.id,
@@ -424,6 +429,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
           eventEmit: async () => {}
         })({
           workspaceId: workspace.id,

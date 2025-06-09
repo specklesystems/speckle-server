@@ -9,7 +9,8 @@ const WorkspacePlansUpgradeMapping: Record<WorkspacePlans, WorkspacePlans[]> = {
   teamUnlimitedInvoiced: [],
   pro: ['pro', 'proUnlimited'],
   proUnlimited: ['proUnlimited'],
-  proUnlimitedInvoiced: []
+  proUnlimitedInvoiced: [],
+  enterprise: []
 }
 
 export const isUpgradeWorkspacePlanValid = ({
