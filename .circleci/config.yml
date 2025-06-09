@@ -355,6 +355,25 @@ workflows:
       - publish-helm-chart:
           filters: &filters-publish
             branches:
+              only: *branches-special
+            tags:
+              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
+          requires:
+            # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
+            - deployment-test-helm-chart
+            - docker-publish-docker-compose-ingress
+            - docker-publish-file-imports
+            - docker-publish-frontend-2
+            - docker-publish-monitor-container
+            - docker-publish-previews
+            - docker-publish-server
+            - docker-publish-test-container
+            - docker-publish-webhooks
+            - get-version
+
+      - publish-helm-chart-oci:
+          filters: &filters-publish
+            branches:
               only: iain/web-3578-publish-helm-chart-to-oci-registry
               # only: *branches-special  #FIXME temporarily disable and run for this PR
             tags:
@@ -1100,6 +1119,22 @@ jobs:
           command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
 
   publish-helm-chart:
+    docker:
+      - image: speckle/pre-commit-runner:latest #TODO replace with a more suitable image with only helm installed
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - add_ssh_keys:
+          fingerprints:
+            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
+      - run:
+          name: Publish Helm Chart
+          command: ./.circleci/publish_helm_chart.sh
+
+  publish-helm-chart-oci:
     docker:
       - image: speckle/pre-commit-runner:latest #TODO replace with a more suitable image with only helm installed
     working_directory: *work-dir
