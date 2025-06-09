@@ -40,7 +40,7 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }} # todo chec this one
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }} # todo chec this one
     secrets: inherit
 
   npm:
