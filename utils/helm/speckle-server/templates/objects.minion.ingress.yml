@@ -1,0 +1,49 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: speckle-server-minion-api-objects
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
+    {{- if .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.objects_size_limit_mb)) | quote }}
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.domain }}
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/api/getobjects/"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/api/objects/"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/api/diff/"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/objects/"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web
+{{- end }}

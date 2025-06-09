@@ -1,4 +1,5 @@
 import {
+  calculateSubscriptionSeats,
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
@@ -19,22 +20,27 @@ import {
 import {
   PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
-  throwUncoveredError
+  throwUncoveredError,
+  WorkspacePlans
 } from '@speckle/shared'
 import { cloneDeep } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 export const handleSubscriptionUpdateFactory =
   ({
     upsertPaidWorkspacePlan,
     getWorkspacePlan,
     getWorkspaceSubscriptionBySubscriptionId,
-    upsertWorkspaceSubscription
+    upsertWorkspaceSubscription,
+    emitEvent
   }: {
     getWorkspacePlan: GetWorkspacePlan
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getWorkspaceSubscriptionBySubscriptionId: GetWorkspaceSubscriptionBySubscriptionId
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
+    emitEvent: EventBusEmit
   }) =>
   async ({ subscriptionData }: { subscriptionData: SubscriptionData }) => {
     // we're only handling marking the sub scheduled for cancelation right now
@@ -75,23 +81,25 @@ export const handleSubscriptionUpdateFactory =
 
     if (status) {
       switch (workspacePlan.name) {
-        case 'team':
-        case 'teamUnlimited':
-        case 'pro':
-        case 'proUnlimited':
+        case WorkspacePlans.Team:
+        case WorkspacePlans.TeamUnlimited:
+        case WorkspacePlans.Pro:
+        case WorkspacePlans.ProUnlimited:
           break
-        case 'unlimited':
-        case 'academia':
-        case 'proUnlimitedInvoiced':
-        case 'teamUnlimitedInvoiced':
-        case 'free':
+        case WorkspacePlans.Unlimited:
+        case WorkspacePlans.Academia:
+        case WorkspacePlans.ProUnlimitedInvoiced:
+        case WorkspacePlans.TeamUnlimitedInvoiced:
+        case WorkspacePlans.Free:
+        case WorkspacePlans.Enterprise:
           throw new WorkspacePlanMismatchError()
         default:
           throwUncoveredError(workspacePlan)
       }
 
+      const newWorkspacePlan = { ...workspacePlan, status }
       await upsertPaidWorkspacePlan({
-        workspacePlan: { ...workspacePlan, status }
+        workspacePlan: newWorkspacePlan
       })
       // if there is a status in the sub, we recognize, we need to update our state
       await upsertWorkspaceSubscription({
@@ -99,6 +107,21 @@ export const handleSubscriptionUpdateFactory =
           ...subscription,
           updatedAt: new Date(),
           subscriptionData
+        }
+      })
+
+      await emitEvent({
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+        payload: {
+          workspacePlan: newWorkspacePlan,
+          subscription: {
+            totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
+          },
+          previousSubscription: {
+            totalEditorSeats: calculateSubscriptionSeats({
+              subscriptionData: subscription.subscriptionData
+            })
+          }
         }
       })
     }
@@ -135,21 +158,22 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
     switch (workspacePlan.name) {
-      case 'team':
-      case 'teamUnlimited':
-      case 'pro':
-      case 'proUnlimited':
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
         // If viewer seat type, we don't need to do anything
         if (seatType === WorkspaceSeatType.Viewer) {
           return
         } else {
           break
         }
-      case 'unlimited':
-      case 'academia':
-      case 'proUnlimitedInvoiced':
-      case 'teamUnlimitedInvoiced':
-      case 'free':
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Enterprise:
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)

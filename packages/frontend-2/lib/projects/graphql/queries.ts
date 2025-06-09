@@ -23,6 +23,7 @@ export const projectsDashboardQuery = graphql(`
         totalCount
         items {
           ...ProjectDashboardItem
+          ...WorkspaceMoveProject_Project
         }
       }
       ...ProjectsHiddenProjectWarning_User
@@ -145,6 +146,7 @@ export const latestCommentThreadsQuery = graphql(`
           ...ProjectPageLatestItemsCommentItem
         }
       }
+      ...ViewerResourcesLimitAlert_Project
     }
   }
 `)
@@ -363,6 +365,7 @@ export const projectBlobInfoQuery = graphql(`
 export const moveToWorkspaceDryRunQuery = graphql(`
   query MoveToWorkspaceDryRun($workspaceId: String!, $projectId: String!, $limit: Int) {
     project(id: $projectId) {
+      id
       moveToWorkspaceDryRun(workspaceId: $workspaceId) {
         addedToWorkspaceTotalCount
         addedToWorkspace(limit: $limit) {

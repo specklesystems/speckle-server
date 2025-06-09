@@ -8,15 +8,17 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkspaceSeatType, WorkspaceRoles } from '@speckle/shared'
+import type { WorkspaceRoles, MaybeNullOrUndefined } from '@speckle/shared'
 import { WorkspaceSeatTypeDescription } from '~/lib/settings/helpers/constants'
+import { WorkspaceSeatType } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  seatType: WorkspaceSeatType
+  seatType: MaybeNullOrUndefined<WorkspaceSeatType>
   role: WorkspaceRoles
 }>()
 
 const description = computed(
-  () => WorkspaceSeatTypeDescription[props.role][props.seatType]
+  () =>
+    WorkspaceSeatTypeDescription[props.role][props.seatType || WorkspaceSeatType.Viewer]
 )
 </script>

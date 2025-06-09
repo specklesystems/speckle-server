@@ -1,20 +1,25 @@
-import { UpsertWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import {
+  GetWorkspacePlan,
+  UpsertWorkspacePlan
+} from '@/modules/gatekeeper/domain/billing'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GetWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { throwUncoveredError, WorkspacePlan } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlan, WorkspacePlans } from '@speckle/shared'
 
 export const updateWorkspacePlanFactory =
   ({
     getWorkspace,
     upsertWorkspacePlan,
+    getWorkspacePlan,
     emitEvent
   }: {
     getWorkspace: GetWorkspace
     // im using the generic function here, cause the service is
     // responsible for protecting the permutations
     upsertWorkspacePlan: UpsertWorkspacePlan
+    getWorkspacePlan: GetWorkspacePlan
     emitEvent: EventBusEmit
   }) =>
   async ({
@@ -26,13 +31,14 @@ export const updateWorkspacePlanFactory =
       workspaceId
     })
     if (!workspace) throw new WorkspaceNotFoundError()
+    const previousPlan = await getWorkspacePlan({ workspaceId })
     const createdAt = new Date()
     const updatedAt = new Date()
     switch (name) {
-      case 'team':
-      case 'teamUnlimited':
-      case 'pro':
-      case 'proUnlimited':
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
         switch (status) {
           case 'valid':
           case 'cancelationScheduled':
@@ -47,11 +53,12 @@ export const updateWorkspacePlanFactory =
         }
         break
 
-      case 'free':
-      case 'academia':
-      case 'unlimited':
-      case 'teamUnlimitedInvoiced':
-      case 'proUnlimitedInvoiced':
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Enterprise:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.ProUnlimitedInvoiced:
         switch (status) {
           case 'valid':
             await upsertWorkspacePlan({
@@ -71,6 +78,15 @@ export const updateWorkspacePlanFactory =
     }
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
-      payload: { workspacePlan: { name, status, workspaceId } }
+      payload: {
+        workspacePlan: {
+          name,
+          status,
+          workspaceId
+        },
+        ...(previousPlan && {
+          previousPlan: { name: previousPlan.name }
+        })
+      }
     })
   }

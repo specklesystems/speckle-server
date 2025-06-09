@@ -85,11 +85,17 @@ spec:
           - name: SPECKLE_SERVER_URL
             value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
 
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
           - name: REDIS_URL
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
-                key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
+                name: {{ default .Values.secretName .Values.redis.fileimportServiceConnectionString.secretName }}
+                key: {{ default "fileimport_service_redis_url" .Values.redis.fileimportServiceConnectionString.secretKey }}
+          {{- else }}
+          # Dummy value for backwards compatibility
+          - name: REDIS_URL
+            value: "redis://redis"
+          {{- end }}
 
           - name: PG_CONNECTION_STRING
             valueFrom:

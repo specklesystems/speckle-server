@@ -4510,6 +4510,8 @@ export type Workspace = {
    * region.
    */
   defaultRegion?: Maybe<ServerRegionItem>;
+  /** The default seat assigned to users that join a workspace. Used during workspace discovery or on invites without seat types. */
+  defaultSeatType: WorkspaceSeatType;
   description?: Maybe<Scalars['String']['output']>;
   /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
   discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
@@ -4612,6 +4614,7 @@ export type WorkspaceBillingMutationsUpgradePlanArgs = {
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** Date that the user joined the workspace. */
   joinDate: Scalars['DateTime']['output'];
@@ -4756,6 +4759,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceJoinRequest = {
   __typename?: 'WorkspaceJoinRequest';
   createdAt: Scalars['DateTime']['output'];
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   status: WorkspaceJoinRequestStatus;
   user: LimitedUser;
@@ -4911,6 +4915,7 @@ export type WorkspacePermissionChecks = {
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
+  canReadMemberEmail: PermissionCheckResult;
 };
 
 
@@ -4949,6 +4954,7 @@ export type WorkspacePlanUsage = {
 
 export const WorkspacePlans = {
   Academia: 'academia',
+  Enterprise: 'enterprise',
   Free: 'free',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',
@@ -5154,6 +5160,7 @@ export type WorkspaceUpdateEmbedOptionsInput = {
 export type WorkspaceUpdateInput = {
   /** @deprecated Always the reviewer role. Will be removed in the future. */
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
+  defaultSeatType?: InputMaybe<WorkspaceSeatType>;
   description?: InputMaybe<Scalars['String']['input']>;
   discoverabilityAutoJoinEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -7479,6 +7486,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   customerPortalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   defaultProjectRole?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   defaultRegion?: Resolver<Maybe<ResolversTypes['ServerRegionItem']>, ParentType, ContextType>;
+  defaultSeatType?: Resolver<ResolversTypes['WorkspaceSeatType'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   discoverabilityAutoJoinEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   discoverabilityEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -7515,6 +7523,7 @@ export type WorkspaceBillingMutationsResolvers<ContextType = GraphQLContext, Par
 };
 
 export type WorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceCollaborator'] = ResolversParentTypes['WorkspaceCollaborator']> = {
+  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   joinDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   projectRoles?: Resolver<Array<ResolversTypes['ProjectRole']>, ParentType, ContextType>;
@@ -7566,6 +7575,7 @@ export type WorkspaceInviteMutationsResolvers<ContextType = GraphQLContext, Pare
 
 export type WorkspaceJoinRequestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceJoinRequest'] = ResolversParentTypes['WorkspaceJoinRequest']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['WorkspaceJoinRequestStatus'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
@@ -7620,6 +7630,7 @@ export type WorkspacePermissionChecksResolvers<ContextType = GraphQLContext, Par
   canEditEmbedOptions?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canInvite?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs>>;
+  canReadMemberEmail?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

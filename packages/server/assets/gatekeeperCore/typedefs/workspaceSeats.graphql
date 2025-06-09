@@ -19,6 +19,10 @@ extend type Workspace {
   Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   seatType: WorkspaceSeatType
+  """
+  The default seat assigned to users that join a workspace. Used during workspace discovery or on invites without seat types.
+  """
+  defaultSeatType: WorkspaceSeatType!
 }
 
 type WorkspaceSeatsByType {

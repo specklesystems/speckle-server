@@ -5,6 +5,11 @@
         title="Security"
         text="Manage verified workspace domains and associated features."
       />
+      <SettingsWorkspacesSecurityDefaultSeat
+        v-if="workspace"
+        :workspace="workspace"
+        class="mb-8 border-b border-outline-2 pb-8"
+      />
       <template v-if="isSsoEnabled">
         <SettingsWorkspacesSecuritySsoWrapper v-if="workspace" :workspace="workspace" />
         <hr class="my-6 md:my-8 border-outline-2" />
@@ -26,11 +31,7 @@
             class="border-x border-b first:border-t first:rounded-t-lg border-outline-2 last:rounded-b-lg p-6 py-4 flex items-center"
           >
             <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
-            <FormButton
-              :disabled="workspaceDomains.length === 1 && isDomainProtectionEnabled"
-              color="outline"
-              @click="openRemoveDialog(domain)"
-            >
+            <FormButton color="outline" @click="openRemoveDialog(domain)">
               Delete
             </FormButton>
           </li>
@@ -46,7 +47,7 @@
       <section class="mt-8">
         <div class="grid grid-cols-2 gap-x-6 items-center">
           <div class="flex flex-col gap-y-1">
-            <p class="text-body-xs font-medium text-foreground">New domain</p>
+            <p class="text-body-xs font-medium text-foreground">Add domain</p>
             <p class="text-body-2xs text-foreground-2 leading-5">
               Add a domain from a list of email domains for your active account.
             </p>
@@ -75,6 +76,52 @@
         <div class="flex flex-col space-y-8">
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
+              <p class="text-body-xs font-medium text-foreground">
+                Domain-based discoverability
+              </p>
+              <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+                Allow users with verified domain emails to find and request access to
+                this workspace.
+              </p>
+            </div>
+            <FormSwitch
+              v-model="isDomainDiscoverabilityEnabled"
+              v-tippy="
+                !hasWorkspaceDomains
+                  ? 'Your workspace must have at least one verified domain'
+                  : undefined
+              "
+              name="domain-discoverability"
+              :disabled="!hasWorkspaceDomains"
+              :show-label="false"
+            />
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-center">
+              <div class="flex-1 flex-col pr-6 gap-y-1">
+                <p class="text-body-xs font-medium text-foreground">
+                  Join without admin approval
+                </p>
+                <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+                  Allow users with verified domain emails to join immediately without
+                  admin approval.
+                </p>
+              </div>
+              <FormSwitch
+                v-model="isAutoJoinEnabled"
+                v-tippy="
+                  !isDomainDiscoverabilityEnabled
+                    ? 'Domain-based discoverability must be enabled'
+                    : undefined
+                "
+                name="auto-join"
+                :disabled="!hasWorkspaceDomains || !isDomainDiscoverabilityEnabled"
+                :show-label="false"
+              />
+            </div>
+          </div>
+          <div class="flex items-center">
+            <div class="flex-1 flex-col pr-6 gap-y-1">
               <div class="flex items-center">
                 <p class="text-body-xs font-medium text-foreground">
                   Domain protection
@@ -96,23 +143,6 @@
               />
             </div>
           </div>
-          <div class="flex items-center">
-            <div class="flex-1 flex-col pr-6 gap-y-1">
-              <p class="text-body-xs font-medium text-foreground">
-                Domain-based discoverability
-              </p>
-              <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-                When enabled, users with a verified email address from your verified
-                domain list will be able to request to join this workspace.
-              </p>
-            </div>
-            <FormSwitch
-              v-model="isDomainDiscoverabilityEnabled"
-              name="domain-discoverability"
-              :disabled="!hasWorkspaceDomains"
-              :show-label="false"
-            />
-          </div>
         </div>
       </section>
     </div>
@@ -123,6 +153,19 @@
       :workspace-id="workspace?.id"
       :domain="removeDialogDomain"
     />
+    <SettingsConfirmDialog
+      v-if="showConfirmJoinPolicyDialog"
+      v-model:open="showConfirmJoinPolicyDialog"
+      title="Confirm change"
+      @confirm="handleJoinPolicyConfirm"
+      @cancel="pendingJoinPolicy = undefined"
+    >
+      <p class="text-body-xs text-foreground mb-2">
+        This will allow users with verified domain emails to join automatically without
+        admin approval.
+      </p>
+      <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
+    </SettingsConfirmDialog>
   </section>
 </template>
 
@@ -138,9 +181,15 @@ import { blockedDomains } from '@speckle/shared'
 import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 import {
   workspaceUpdateDomainProtectionMutation,
-  workspaceUpdateDiscoverabilityMutation
+  workspaceUpdateDiscoverabilityMutation,
+  workspaceUpdateAutoJoinMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
+
+enum JoinPolicy {
+  AdminApproval = 'admin-approval',
+  AutoJoin = 'auto-join'
+}
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -158,6 +207,8 @@ graphql(`
     ...SettingsWorkspacesSecuritySsoWrapper_Workspace
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
+    discoverabilityAutoJoinEnabled
+    defaultSeatType
     hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
       featureName: domainBasedSecurityPolicies
     )
@@ -187,12 +238,16 @@ const { mutate: updateDomainProtection } = useMutation(
 const { mutate: updateDiscoverability } = useMutation(
   workspaceUpdateDiscoverabilityMutation
 )
+const { mutate: updateAutoJoin } = useMutation(workspaceUpdateAutoJoinMutation)
+const { triggerNotification } = useGlobalToast()
 
 const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
 const removeDialogDomain =
   ref<SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment>()
 const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
+const showConfirmJoinPolicyDialog = ref(false)
+const pendingJoinPolicy = ref<JoinPolicy>()
 
 const { result } = useQuery(settingsWorkspacesSecurityQuery, {
   slug: slug.value
@@ -257,7 +312,32 @@ const isDomainDiscoverabilityEnabled = computed({
         // eslint-disable-next-line camelcase
         workspace_id: workspace.value?.id
       })
+
+      // If turning off discoverability, also turn off auto-join
+      if (!newVal && workspace.value.discoverabilityAutoJoinEnabled) {
+        const autoJoinResult = await updateAutoJoin({
+          input: {
+            id: workspace.value.id,
+            discoverabilityAutoJoinEnabled: false
+          }
+        }).catch(convertThrowIntoFetchResult)
+
+        if (autoJoinResult?.data) {
+          mixpanel.track('Workspace Join Policy Updated', {
+            value: 'admin-approval',
+            // eslint-disable-next-line camelcase
+            workspace_id: workspace.value.id
+          })
+        }
+      }
     }
+  }
+})
+
+const isAutoJoinEnabled = computed({
+  get: () => workspace.value?.discoverabilityAutoJoinEnabled || false,
+  set: (newVal) => {
+    handleJoinPolicyUpdate(newVal ? JoinPolicy.AutoJoin : JoinPolicy.AdminApproval)
   }
 })
 
@@ -278,17 +358,10 @@ const tooltipText = computed(() => {
 
 const addDomain = async () => {
   if (!selectedDomain.value || !workspace.value) return
-  await addWorkspaceDomain.mutate(
-    {
-      domain: selectedDomain.value,
-      workspaceId: workspace.value.id
-    },
-    workspace.value.domains ?? [],
-    workspace.value.discoverabilityEnabled,
-    workspace.value.domainBasedMembershipProtectionEnabled,
-    workspace.value.hasAccessToSSO,
-    workspace.value.hasAccessToDomainBasedSecurityPolicies
-  )
+  await addWorkspaceDomain.mutate({
+    domain: selectedDomain.value,
+    workspaceId: workspace.value.id
+  })
 
   mixpanel.track('Workspace Domain Added', {
     // eslint-disable-next-line camelcase
@@ -308,11 +381,90 @@ const disabledItemPredicate = (item: string) => {
   return blockedDomainItems.value.includes(item)
 }
 
+const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) => {
+  if (!workspace.value?.id) return
+
+  // If enabling auto-join and not yet confirmed, show confirmation dialog
+  if (newValue === JoinPolicy.AutoJoin && !confirmed) {
+    showConfirmJoinPolicyDialog.value = true
+    pendingJoinPolicy.value = newValue
+    return
+  }
+
+  const isAutoJoinEnabled = newValue === JoinPolicy.AutoJoin
+
+  const result = await updateAutoJoin({
+    input: {
+      id: workspace.value.id,
+      discoverabilityAutoJoinEnabled: isAutoJoinEnabled
+    }
+  }).catch(convertThrowIntoFetchResult)
+
+  if (result?.data) {
+    // Reset dialog state if it was open
+    if (showConfirmJoinPolicyDialog.value) {
+      showConfirmJoinPolicyDialog.value = false
+      pendingJoinPolicy.value = undefined
+    }
+
+    const notificationConfig = isAutoJoinEnabled
+      ? {
+          title: 'Join without admin approval enabled',
+          description:
+            'Users with a verified domain can now join without admin approval'
+        }
+      : {
+          title: 'New user policy updated',
+          description: 'Admin approval is now required for new users to join'
+        }
+
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      ...notificationConfig
+    })
+
+    mixpanel.track('Workspace Join Policy Updated', {
+      value: isAutoJoinEnabled ? 'auto-join' : 'admin-approval',
+      // eslint-disable-next-line camelcase
+      workspace_id: workspace.value.id
+    })
+  }
+}
+
+const handleJoinPolicyConfirm = async () => {
+  if (!pendingJoinPolicy.value) return
+  await handleJoinPolicyUpdate(pendingJoinPolicy.value, true)
+}
+
 watch(
-  () => workspaceDomains.value,
-  () => {
-    if (!hasWorkspaceDomains.value) {
-      isDomainDiscoverabilityEnabled.value = false
+  () => workspaceDomains.value.length,
+  async (newLength) => {
+    // If last domain was removed, disable all domain features
+    if (newLength === 0 && workspace.value?.id) {
+      if (workspace.value.discoverabilityEnabled) {
+        await updateDiscoverability({
+          input: {
+            id: workspace.value.id,
+            discoverabilityEnabled: false
+          }
+        })
+      }
+      if (workspace.value.discoverabilityAutoJoinEnabled) {
+        await updateAutoJoin({
+          input: {
+            id: workspace.value.id,
+            discoverabilityAutoJoinEnabled: false
+          }
+        })
+      }
+      if (workspace.value.domainBasedMembershipProtectionEnabled) {
+        await updateDomainProtection({
+          input: {
+            id: workspace.value.id,
+            domainBasedMembershipProtectionEnabled: false
+          }
+        })
+      }
     }
   }
 )

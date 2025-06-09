@@ -8,6 +8,9 @@ export class DefermentManager {
   private logger: CustomLogger
   private currentSize = 0
   private disposed = false
+  //tracks total deferment requests for each id
+  //this is used to prevent cleaning up deferments that are still being requested
+  private totalDefermentRequests: Map<string, number> = new Map()
 
   constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()
@@ -29,6 +32,7 @@ export class DefermentManager {
 
   async defer(params: { id: string }): Promise<Base> {
     if (this.disposed) throw new Error('DefermentManager is disposed')
+    this.trackDefermentRequest(params.id)
     const now = this.now()
     const deferredBase = this.deferments.get(params.id)
     if (deferredBase) {
@@ -42,6 +46,15 @@ export class DefermentManager {
     )
     this.deferments.set(params.id, notYetFound)
     return notYetFound.getPromise()
+  }
+
+  private trackDefermentRequest(id: string): void {
+    const request = this.totalDefermentRequests.get(id)
+    if (request) {
+      this.totalDefermentRequests.set(id, request + 1)
+    } else {
+      this.totalDefermentRequests.set(id, 1)
+    }
   }
 
   undefer(item: Item): void {
@@ -108,6 +121,12 @@ export class DefermentManager {
       .filter((x) => x.isExpired(now))
       .sort((a, b) => this.compareMaybeBasesBySize(a.getItem(), b.getItem()))) {
       if (deferredBase.done(now)) {
+        //if the deferment is done but has been requested multiple times,
+        //we do not clean it up to allow the requests to resolve
+        const requestCount = this.totalDefermentRequests.get(deferredBase.getId())
+        if (requestCount && requestCount > 1) {
+          return
+        }
         this.currentSize -= deferredBase.getItem()?.size || 0
         this.deferments.delete(deferredBase.getId())
         cleaned++
@@ -117,7 +136,7 @@ export class DefermentManager {
       }
     }
     this.logger(
-      'cleaned deferments, cleaned, left',
+      'cleaned deferments: cleaned, left, time',
       cleaned,
       this.deferments.size,
       performance.now() - start

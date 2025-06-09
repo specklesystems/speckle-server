@@ -77,16 +77,5 @@ export const canCreateModelPolicy: AuthPolicy<
       return err(ensuredModelsAccepted.error)
     }
 
-    // Prevent personal project models, if personal projects limited
-    const project = await loaders.getProject({ projectId })
-    const env = await loaders.getEnv()
-    if (project && !project.workspaceId && env.FF_PERSONAL_PROJECTS_LIMITS_ENABLED) {
-      return err(
-        new PersonalProjectsLimitedError(
-          'No new models can be added to personal projects'
-        )
-      )
-    }
-
     return ok()
   }

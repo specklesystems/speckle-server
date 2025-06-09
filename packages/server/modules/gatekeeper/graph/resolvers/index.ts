@@ -1,7 +1,12 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { Roles, throwUncoveredError, WorkspacePlanFeatures } from '@speckle/shared'
+import {
+  Roles,
+  throwUncoveredError,
+  WorkspacePlanFeatures,
+  WorkspacePlans
+} from '@speckle/shared'
 import {
   getWorkspaceFactory,
   getWorkspaceRoleForUserFactory,
@@ -44,7 +49,8 @@ import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/check
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
 import {
   countSeatsByTypeInWorkspaceFactory,
-  createWorkspaceSeatFactory
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -71,19 +77,20 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (!workspacePlan) return null
           let paymentMethod: WorkspacePaymentMethod
           switch (workspacePlan.name) {
-            case 'team':
-            case 'teamUnlimited':
-            case 'pro':
-            case 'proUnlimited':
+            case WorkspacePlans.Team:
+            case WorkspacePlans.TeamUnlimited:
+            case WorkspacePlans.Pro:
+            case WorkspacePlans.ProUnlimited:
               paymentMethod = WorkspacePaymentMethod.Billing
               break
-            case 'unlimited':
-            case 'academia':
-            case 'free':
+            case WorkspacePlans.Unlimited:
+            case WorkspacePlans.Academia:
+            case WorkspacePlans.Free:
               paymentMethod = WorkspacePaymentMethod.Unpaid
               break
-            case 'proUnlimitedInvoiced':
-            case 'teamUnlimitedInvoiced':
+            case WorkspacePlans.ProUnlimitedInvoiced:
+            case WorkspacePlans.TeamUnlimitedInvoiced:
+            case WorkspacePlans.Enterprise:
               paymentMethod = WorkspacePaymentMethod.Invoice
               break
             default:
@@ -248,17 +255,18 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (subscription) {
             let purchased = 0
             switch (workspacePlan.name) {
-              case 'unlimited':
-              case 'academia':
-              case 'free':
-              case 'proUnlimitedInvoiced':
-              case 'teamUnlimitedInvoiced':
+              case WorkspacePlans.Unlimited:
+              case WorkspacePlans.Academia:
+              case WorkspacePlans.Free:
+              case WorkspacePlans.ProUnlimitedInvoiced:
+              case WorkspacePlans.TeamUnlimitedInvoiced:
+              case WorkspacePlans.Enterprise:
                 // not stripe paid plans and old plans do not have seats available
                 break
-              case 'team':
-              case 'teamUnlimited':
-              case 'pro':
-              case 'proUnlimited':
+              case WorkspacePlans.Team:
+              case WorkspacePlans.TeamUnlimited:
+              case WorkspacePlans.Pro:
+              case WorkspacePlans.ProUnlimited:
                 purchased = getTotalSeatsCountByPlanFactory({
                   getWorkspacePlanProductId
                 })({
@@ -337,6 +345,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const assignSeat = assignWorkspaceSeatFactory({
             createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
             getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+            getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
             eventEmit: getEventBus().emit
           })
           await withOperationLogging(
@@ -455,7 +464,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
             updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
               db
-            })
+            }),
+            emitEvent: getEventBus().emit
           })
           await withOperationLogging(
             async () =>

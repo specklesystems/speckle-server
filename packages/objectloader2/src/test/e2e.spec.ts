@@ -14,8 +14,10 @@ describe('e2e', () => {
         serverUrl: 'https://app.speckle.systems',
         streamId: 'da9e320dad',
         objectId: '31d10c0cea569a1e26809658ed27e281',
-        indexedDB: new IDBFactory(),
-        keyRange: IDBKeyRange
+        options: {
+          indexedDB: new IDBFactory(),
+          keyRange: IDBKeyRange
+        }
       })
 
       const getObjectPromise = loader.getObject({

@@ -15,11 +15,13 @@ import {
   WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { checkIfAdminOverrideEnabledFragment } from '../../fragments/server.js'
 
 type PolicyLoaderKeys =
   | typeof Loaders.getProject
   | typeof Loaders.getServerRole
   | typeof Loaders.getEnv
+  | typeof Loaders.getAdminOverrideEnabled
   | typeof Loaders.getWorkspaceRole
   | typeof Loaders.getWorkspace
   | typeof Loaders.getWorkspaceSsoProvider
@@ -43,6 +45,12 @@ type PolicyErrors = InstanceType<
 export const canLoadPolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyErrors> =
   (loaders) =>
   async ({ userId, projectId }) => {
+    const hasAdminAccess = await checkIfAdminOverrideEnabledFragment(loaders)({
+      userId
+    })
+    if (hasAdminAccess.isOk && hasAdminAccess.value) {
+      return ok()
+    }
     const ensuredWriteAccess = await ensureImplicitProjectMemberWithWriteAccessFragment(
       loaders
     )({

@@ -46,7 +46,10 @@ import {
   isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+import {
+  WorkspaceDefaultSeatType,
+  WorkspaceInviteResourceType
+} from '@/modules/workspacesCore/domain/constants'
 import {
   WorkspaceInvalidRoleError,
   WorkspaceNotFoundError,
@@ -113,6 +116,7 @@ import {
 } from '@/modules/workspaces/services/retrieval'
 import {
   Roles,
+  WorkspacePlans,
   WorkspaceRoles,
   removeNullOrUndefinedKeys,
   throwUncoveredError
@@ -201,7 +205,10 @@ import {
   AuthCodePayloadAction,
   createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
   getWorkspaceRoleAndSeatFactory,
@@ -282,6 +289,9 @@ const buildFinalizeWorkspaceInvite = () =>
         ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+          getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+            getWorkspace: getWorkspaceFactory({ db })
+          }),
           eventEmit: getEventBus().emit
         })
       }),
@@ -566,6 +576,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const updateWorkspacePlan = updateWorkspacePlanFactory({
             getWorkspace: getWorkspaceFactory({ db }),
             upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
             emitEvent: getEventBus().emit
           })
 
@@ -614,6 +625,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                     getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                      getWorkspace: getWorkspaceFactory({ db })
+                    }),
                     eventEmit: emit
                   })
                 })
@@ -694,10 +708,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
           if (workspacePlan) {
             switch (workspacePlan.name) {
-              case 'team':
-              case 'teamUnlimited':
-              case 'pro':
-              case 'proUnlimited':
+              case WorkspacePlans.Team:
+              case WorkspacePlans.TeamUnlimited:
+              case WorkspacePlans.Pro:
+              case WorkspacePlans.ProUnlimited:
                 switch (workspacePlan.status) {
                   case 'cancelationScheduled':
                   case 'valid':
@@ -708,11 +722,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   default:
                     throwUncoveredError(workspacePlan)
                 }
-              case 'free':
-              case 'unlimited':
-              case 'academia':
-              case 'proUnlimitedInvoiced':
-              case 'teamUnlimitedInvoiced':
+              case WorkspacePlans.Free:
+              case WorkspacePlans.Unlimited:
+              case WorkspacePlans.Academia:
+              case WorkspacePlans.Enterprise:
+              case WorkspacePlans.ProUnlimitedInvoiced:
+              case WorkspacePlans.TeamUnlimitedInvoiced:
                 break
               default:
                 throwUncoveredError(workspacePlan)
@@ -852,6 +867,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
                     getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
+                    getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                      getWorkspace: getWorkspaceFactory({ db })
+                    }),
                     eventEmit: emit
                   })
                 })
@@ -1146,6 +1164,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                     getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                      getWorkspace: getWorkspaceFactory({ db })
+                    }),
                     eventEmit: getEventBus().emit
                   })
                 }),
@@ -1505,6 +1526,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                     getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                      getWorkspace: getWorkspaceFactory({ db })
+                    }),
                     eventEmit: emit
                   })
                 }),
@@ -1554,6 +1578,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       Workspace: {
         defaultProjectRole: () => Roles.Stream.Reviewer,
+        defaultSeatType: (parent) => {
+          return parent.defaultSeatType ?? WorkspaceDefaultSeatType
+        },
         creationState: async (parent) => {
           return getWorkspaceCreationStateFactory({ db })({ workspaceId: parent.id })
         },
@@ -1564,7 +1591,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
           return acl?.role || null
         },
-        team: async (parent, args) => {
+        team: async (parent, args, ctx) => {
           const roles = args.filter?.roles?.map((r) => {
             const role = r as WorkspaceRoles
             if (!Object.values(Roles.Workspace).includes(role)) {
@@ -1573,6 +1600,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
               )
             }
             return role
+          })
+          const hasAccessToEmail = await ctx.authPolicies.workspace.canReadMemberEmail({
+            workspaceId: parent.id,
+            userId: ctx.userId
           })
           const filter = removeNullOrUndefinedKeys({
             ...args?.filter,
@@ -1585,7 +1616,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceId: parent.id,
             filter,
             limit: args.limit,
-            cursor: args.cursor ?? undefined
+            cursor: args.cursor ?? undefined,
+            hasAccessToEmail: hasAccessToEmail.isOk
           })
           return team
         },
@@ -1808,13 +1840,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const token = parent.token
           const authedUserId = ctx.userId
+          const canReadMemberEmail =
+            await ctx.authPolicies.workspace.canReadMemberEmail({
+              workspaceId: parent.workspaceId,
+              userId: ctx.userId
+            })
           const targetUserId = parent.user?.id
-
           // Only returning it for the user that is the pending stream collaborator
           // OR if the token was specified
+          // OR if the policy allows
           if (
             (!authedUserId || !targetUserId || authedUserId !== targetUserId) &&
-            !token
+            !token &&
+            !canReadMemberEmail.isOk
           ) {
             return null
           }

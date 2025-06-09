@@ -20,7 +20,19 @@ aliases:
   - &yarn
     run:
       name: Install Dependencies
-      command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+      command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+
+  - &filters-allow-all
+    tags:
+      # run tests for any commit on any branch, including any tags
+      only: /.*/
+
+  - &filters-only-main-hotfix-testing
+    branches:
+      only: &branches-special
+        - main
+        - /^hotfix.*$/
+        - /^testing\d*$/
 
 workflows:
   test-build:
@@ -39,51 +51,52 @@ workflows:
             - speckle-server-licensing
             - stripe-integration
             - speckle-server-codecov
-          filters: &filters-allow-all
-            tags:
-              # run tests for any commit on any branch, including any tags
-              only: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-postgres-container
 
       - test-server-no-ff:
+          filters: *filters-only-main-hotfix-testing
+          requires:
+            - docker-build-postgres-container
+
+      - test-server-multiregion:
+          context:
+            - speckle-server-licensing
+            - stripe-integration
+            - speckle-server-codecov
           filters: *filters-allow-all
           requires:
             - docker-build-postgres-container
 
-      - test-server-multiregion: *test-server-job-definition
-
       - test-frontend-2:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-viewer:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-objectsender:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-shared:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-preview-service:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - test-ui-components:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
 
       - deployment-testing-approval:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
             branches:
-              ignore: &branches-special
-                - main
-                - /^hotfix.*$/
-                - /^testing\d*$/
+              ignore: *branches-special
             tags:
               ignore: /.*/
 
@@ -107,10 +120,7 @@ workflows:
       #       - docker-build-docker-compose-ingress
 
       - deployment-test-helm-chart:
-          filters: &filters-deployment-testing
-            tags:
-              # run tests for any commit on any branch, including any tags
-              only: /.*/
+          filters: *filters-allow-all
           requires:
             - get-version
             - deployment-testing-approval
@@ -126,83 +136,76 @@ workflows:
           filters: *filters-allow-all
 
       - pre-commit:
-          filters: *filters-allow-all
+          filters: *filters-only-main-hotfix-testing
+
+      - lint-and-prettier:
+          filters: *filters-only-main-hotfix-testing
 
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
             - docker-hub
-          filters: &filters-build
-            tags:
-              only: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-frontend-2:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-webhooks:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-file-imports:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-previews:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-test-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-postgres-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-allow-all
           requires:
             - get-version
 
       - docker-build-monitor-container:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
 
       - docker-build-docker-compose-ingress:
           context: *build-context
-          filters: *filters-build
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
-
-      - publish-approval:
-          type: approval
-          filters: *filters-ignore-main-branch-or-all-tags
 
       - docker-publish-server:
           context: &docker-hub-context
             - docker-hub
-          filters: &filters-publish
-            branches:
-              ignore: /pull\/[0-9]+/
-            tags:
-              only: /.*/
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-server
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -214,12 +217,12 @@ workflows:
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-frontend-2
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -233,19 +236,18 @@ workflows:
           context:
             - github-readonly-public-repos
             - datadog-sourcemaps-publish
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - get-version
-            - publish-approval
 
       - docker-publish-webhooks:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-webhooks
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -257,12 +259,12 @@ workflows:
 
       - docker-publish-file-imports:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-file-imports
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -274,12 +276,12 @@ workflows:
 
       - docker-publish-previews:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-previews
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -291,12 +293,12 @@ workflows:
 
       - docker-publish-test-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-test-container
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -308,24 +310,23 @@ workflows:
 
       - docker-publish-postgres-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-monitor-container
             - get-version
             - pre-commit
-            - publish-approval
             - test-server
             - test-server-no-ff
             - test-server-multiregion
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-monitor-container
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -337,12 +338,11 @@ workflows:
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *filters-only-main-hotfix-testing
           requires:
             - docker-build-docker-compose-ingress
             - get-version
             - pre-commit
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -370,12 +370,6 @@ workflows:
             - docker-publish-test-container
             - docker-publish-webhooks
             - get-version
-            - publish-approval
-
-      - update-helm-documentation:
-          filters: *filters-publish
-          requires:
-            - publish-helm-chart
 
       - publish-npm:
           filters:
@@ -422,46 +416,56 @@ jobs:
           paths:
             - env-vars
 
+  lint-and-prettier:
+    <<: *docker-node-image
+    resource_class: xlarge
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - run:
+          name: Install Hardened Dependencies
+          command: YARN_ENABLE_HARDENED_MODE=1 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+      - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
+          name: Lint everything
+          command: yarn eslint:projectwide
+      - run:
+          name: Run prettier check
+          command: yarn prettier:check
+      - run:
+          name: Check JSON Schema is up to date
+          command: |
+            yarn helm:jsonschema:generate
+            git diff --exit-code
+
   pre-commit:
     parameters:
       config_file:
         default: ./.pre-commit-config.yaml
         description: Optional, path to pre-commit config file.
         type: string
-      deployment_config_file:
-        default: ./.pre-commit-config.deployment.yaml
-        description: Optional, path to additional pre-commit config file.
-        type: string
-      cache_prefix:
-        default: ''
-        description: |
-          Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
-        type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: xlarge
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
       - restore_cache:
           name: Restore pre-commit & Yarn Package cache
           keys:
-            - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
-            - yarn-packages-{{ checksum "yarn.lock" }}
+            - cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
       - save_cache:
-          key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+          key: cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
-      - *yarn
-      - run:
-          name: Build public packages
-          command: yarn build:public
       - run:
           name: Run pre-commit
-          command: ./.husky/pre-commit
+          command: pre-commit run --all-files --config <<parameters.config_file>>
       - run:
           command: git --no-pager diff
           name: git diff
@@ -760,7 +764,7 @@ jobs:
       - checkout
       - run:
           name: Install Dependencies
-          command: PUPPETEER_SKIP_DOWNLOAD=true yarn
+          command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -1109,21 +1113,6 @@ jobs:
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
-
-  update-helm-documentation:
-    <<: *docker-node-image
-    working_directory: *work-dir
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
-      - add_ssh_keys:
-          fingerprints:
-            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
-      - run:
-          name: Update Helm Documentation
-          command: ./.circleci/update_helm_documentation.sh
 
   publish-viewer-sandbox-cloudflare-pages:
     <<: *docker-node-image
