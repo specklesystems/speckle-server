@@ -1101,7 +1101,7 @@ jobs:
 
   publish-helm-chart:
     docker:
-      - image: cimg/python:3.12.1
+      - image: speckle/pre-commit-runner:latest #TODO replace with a more suitable image with only helm installed
     working_directory: *work-dir
     steps:
       - checkout
