@@ -149,7 +149,7 @@ jobs:
 
   docker-frontend-2-sourcemaps:
     runs-on: blacksmith
-    name: Frontend 2 sourcemaps
+    name: Frontend2 sourcemaps
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}

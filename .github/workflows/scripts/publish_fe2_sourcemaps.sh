@@ -1,20 +1,13 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-echo "🏷️ Preparing envs 1"
+echo "🏷️ Preparing envs"
 
 GIT_ROOT="$(git rev-parse --show-toplevel)"
-
-echo "🏷️ Preparing envs 2"
-
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
-echo "🏷️ Preparing envs 3"
 
 # shellcheck disable=SC1090,SC1091
 source "${SCRIPT_DIR}/common.sh"
-
-echo "🏷️ Preparing envs 4"
 
 FE2_DIR_PATH="${FE2_DIR_PATH:-"packages/frontend-2"}"
 FE2_DATADOG_SERVICE="${FE2_DATADOG_SERVICE:-"web-app-2"}"
