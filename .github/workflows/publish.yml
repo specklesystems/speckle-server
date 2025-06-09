@@ -40,6 +40,8 @@ jobs:
       VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22

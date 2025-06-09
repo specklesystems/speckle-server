@@ -18,7 +18,6 @@ if [[ -z "${DATADOG_API_KEY}" ]]; then
   exit 1
 fi
 
-
 echo "🏗️ Building prod docker image with sourcemaps enabled"
 
 export DOCKER_BUILDKIT=1
@@ -39,6 +38,8 @@ DATADOG_SITE="${DATADOG_SITE}" npx --yes @datadog/datadog-ci sourcemaps upload .
 --release-version="${IMAGE_VERSION_TAG}" \
 --minified-path-prefix=/_nuxt
 popd
+
+echo "✅ Publishing completed."
 
 # Clean up
 rm -rf "${GIT_ROOT}/${FE2_DIR_PATH}/.output"
