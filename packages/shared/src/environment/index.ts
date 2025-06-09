@@ -96,17 +96,21 @@ export const parseFeatureFlags = (
         "Enables endpoint(s) for updating a project's region. Requires FF_WORKSPACES_MULTI_REGION_ENABLED to be true (which indirectly requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme",
       defaults: { _: false }
     },
-    // Enable limits on personal projects
     FF_PERSONAL_PROJECTS_LIMITS_ENABLED: {
       schema: z.boolean(),
       description:
         'Enables limits on personal projects. Requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
       defaults: { _: false }
     },
-    // Enables the new file importer
     FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
       schema: z.boolean(),
       description: 'Enables the new file importer.',
+      defaults: { _: false }
+    },
+    FF_LARGE_FILE_IMPORTS_ENABLED: {
+      schema: z.boolean(),
+      description:
+        'Enables the new file importer to handle large files via pre-signed URLs. Requires FF_NEXT_GEN_FILE_IMPORTER_ENABLED to also be true.',
       defaults: { _: false }
     }
   })
@@ -140,6 +144,7 @@ export type FeatureFlags = {
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
   FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
+  FF_LARGE_FILE_IMPORTS_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

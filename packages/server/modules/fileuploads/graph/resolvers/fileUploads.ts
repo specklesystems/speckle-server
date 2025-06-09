@@ -15,7 +15,11 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
+import {
+  BadRequestError,
+  ForbiddenError,
+  MisconfiguredEnvironmentError
+} from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   getFileUploadUrlExpiryMinutes,
@@ -56,6 +60,9 @@ import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import cryptoRandomString from 'crypto-random-string'
+import { getFeatureFlags } from '@speckle/shared/environment'
+
+const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
 const fileUploadMutations = {
   async generateUploadUrl(
@@ -63,6 +70,11 @@ const fileUploadMutations = {
     args: FileUploadMutationsGenerateUploadUrlArgs,
     ctx: GraphQLContext
   ) {
+    if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
+      throw new MisconfiguredEnvironmentError(
+        'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
+      )
+    }
     const { projectId } = args.input
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
@@ -106,6 +118,12 @@ const fileUploadMutations = {
     args: FileUploadMutationsStartFileImportArgs,
     ctx: GraphQLContext
   ) {
+    if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
+      throw new MisconfiguredEnvironmentError(
+        'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
+      )
+    }
+
     const { projectId } = args.input
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
