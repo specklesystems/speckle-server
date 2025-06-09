@@ -34,7 +34,7 @@ jobs:
     runs-on: blacksmith
     name: Viewer sandbox cloudflare pages
     env:
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_PAGES_PROJECT_NAME: viewer
       VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox
