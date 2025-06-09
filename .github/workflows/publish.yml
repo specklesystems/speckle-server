@@ -1,0 +1,58 @@
+on:
+  workflow_call:
+    inputs:
+      IMAGE_VERSION_TAG:
+        required: true
+        type: string
+      CLOUDFLARE_ACCOUNT_ID:
+        required: true
+        type: string
+    secrets:
+      DATADOG_API_KEY:
+        required: true
+      CLOUDFARE_API_TOKEN:
+        required: true
+
+jobs:
+  helm-chart:
+    runs-on: blacksmith
+    name: Helm chart publish
+    container:
+      image: python:3.12.1
+    env:
+      IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Publish Helm Chart
+        run: echo "published!"
+      # TODO this: webfactory/ssh-agent@v0.9.0 ---
+      # - name: Publish Helm Chart
+      #  run: ./.github/workflows/scripts/publish_helm_chart.sh
+      # TODO: check CIRCLE_TAG, CIRCLE_BRANCH
+
+  viewer-sandbox-cloudflare-pages:
+    runs-on: blacksmith
+    name: Viewer sandbox cloudflare pages
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFARE_API_TOKEN: ${{ secrets.CLOUDFARE_API_TOKEN }}
+      CLOUDFLARE_PAGES_PROJECT_NAME: viewer
+      VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint viewer-sandbox
+        run: yarn lint:ci
+        working-directory: 'packages/viewer-sandbox'
+      - name: Build viewer-sandbox
+        run: yarn build
+        working-directory: 'packages/viewer-sandbox'
+      - name: Publish Viewer Sandbox to Cloudflare Pages
+        run: ./.github/workflows/scripts/publish_cloudflare_pages.sh
