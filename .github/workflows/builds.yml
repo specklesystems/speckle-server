@@ -1,0 +1,97 @@
+name: Run all builds
+
+on:
+  workflow_call:
+    inputs:
+      IMAGE_VERSION_TAG:
+        required: true
+        type: string
+
+jobs:
+  docker-build-server:
+    runs-on: blacksmith
+    name: Server
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./packages/server/Dockerfile
+
+  docker-build-frontend2:
+    runs-on: blacksmith
+    name: Frontend2
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./packages/frontend-2/Dockerfile
+
+  docker-build-preview-service:
+    runs-on: blacksmith
+    name: Preview service
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-preview-service:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./packages/preview-service/Dockerfile
+
+  docker-build-webhook-service:
+    runs-on: blacksmith
+    name: Webhook service
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-webhook-service:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./packages/webhook-service/Dockerfile
+
+  docker-build-fileimport-service:
+    runs-on: blacksmith
+    name: File import service
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-fileimport-service:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./packages/fileimport-service/Dockerfile
+
+  docker-build-test-deploy:
+    runs-on: blacksmith
+    name: Test deploy util
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-test-deployment:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./utils/test-deployment/Dockerfile
+
+  docker-build-monitor-deployment:
+    runs-on: Blacksmith
+    name: monitor container
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-monitor-deployment:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./packages/monitor-deployment/Dockerfile
+
+  docker-build-docker-compose-ingress:
+    runs-on: blacksmith
+    name: Docker compose ingress
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-docker-compose-ingress:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./utils/docker-compose-ingress/Dockerfile

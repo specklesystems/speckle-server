@@ -9,6 +9,7 @@ import Mixpanel from 'mixpanel'
 import type express from 'express'
 import type http from 'http'
 import { mixpanelLogger } from '@/observability/logging'
+import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 let client: Optional<MixpanelClient> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined
@@ -25,10 +26,23 @@ export const MixpanelEvents = {
   WorkspaceSubscriptionCanceled: 'Workspace Subscription Canceled',
   WorkspaceSubscriptionCancelationScheduled:
     'Workspace Subscription Cancelation Scheduled',
+  WorkspaceSubscriptionPaymentFailed: 'Workspace Subscription Payment Failed',
   FileUploadStarted: 'File Upload Started',
   AutomateFunctionRunFinished: 'Automate Function Run Finished',
   AutomationRunTriggered: 'Automation Run Triggered',
-  SignUp: 'Sign Up'
+  SignUp: 'Sign Up',
+  EditorSeatsPurchased: 'Editor Seats Purchased',
+  EditorSeatsDownscaled: 'Editor Seats Downscaled',
+  EditorSeatAssigned: 'Editor Seat Assigned',
+  EditorSeatUnassigned: 'Editor Seat Unassigned'
+} as const
+
+export const mapPlanStatusToMixpanelEvent = {
+  [WorkspacePlanStatuses.CancelationScheduled]:
+    MixpanelEvents.WorkspaceSubscriptionCancelationScheduled,
+  [WorkspacePlanStatuses.Canceled]: MixpanelEvents.WorkspaceSubscriptionCanceled,
+  [WorkspacePlanStatuses.PaymentFailed]:
+    MixpanelEvents.WorkspaceSubscriptionPaymentFailed
 } as const
 
 type TrackParameters = {
