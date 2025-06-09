@@ -59,3 +59,9 @@ export type StoreModel = (params: {
   projectId: string
   authorId: string
 }) => Promise<void>
+
+export type WaitForRegionProject = (params: {
+  projectId: string
+  regionKey: string
+  maxAttempts?: number
+}) => Promise<void>

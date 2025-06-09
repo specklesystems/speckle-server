@@ -45,8 +45,12 @@ import {
   isMultiRegionTestMode,
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { retry, Roles } from '@speckle/shared'
+import {
+  BasicTestStream,
+  createTestStream,
+  getUserStreamRole
+} from '@/test/speckle-helpers/streamHelper'
+import { retry, Roles, wait } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
@@ -244,6 +248,15 @@ isMultiRegionTestMode()
         await assertProjectRegion(testProject.id, regionKey1)
       })
 
+      it('moves project with no resources of a given type', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: emptyProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+        await ensureProjectRegion(emptyProject.id, regionKey2)
+      })
+
       it('moves project to region without breaking the target region', async () => {
         // Move a workspace project to region2
         const resA = await apollo.execute(UpdateProjectRegionDocument, {
@@ -278,13 +291,18 @@ isMultiRegionTestMode()
         await ensureProjectRegion(testRegion2Project.id, regionKey2)
       })
 
-      it('moves projects with no resources of a given type', async () => {
+      it('moves project to region and preserves project roles', async () => {
         const resA = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: emptyProject.id,
           regionKey: regionKey2
         })
         expect(resA).to.not.haveGraphQLErrors()
-        await ensureProjectRegion(emptyProject.id, regionKey2)
+        // Wait for job to complete, otherwise we are testing against initial roles
+        await wait(10_000)
+        const role = await getUserStreamRole(adminUser.id, emptyProject.id)
+        if (!role || role !== Roles.Stream.Owner) {
+          expect.fail('Did not preserve roles on project after region move.')
+        }
       })
 
       it('moves project record to target regional db', async () => {

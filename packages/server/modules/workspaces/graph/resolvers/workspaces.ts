@@ -1563,10 +1563,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
             })
 
             if (!!workspaceRegion && workspaceRegion.key !== projectRegion) {
+              const projectRoles = await getStreamCollaboratorsFactory({ db })(
+                projectId
+              )
+
               await scheduleJob({
                 type: 'move-project-region',
                 payload: {
                   projectId,
+                  projectRoles: projectRoles.map((role) => ({
+                    userId: role.id,
+                    role: role.streamRole
+                  })),
                   regionKey: workspaceRegion.key
                 }
               })
