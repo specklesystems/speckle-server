@@ -2,7 +2,7 @@ import {
   BlobStorageItem,
   BlobStorageItemInput
 } from '@/modules/blobstorage/domain/types'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import type { Readable } from 'stream'
 import { StoreFileStream } from '@/modules/blobstorage/domain/storageOperations'
 
@@ -18,6 +18,11 @@ export type UpdateBlob = (params: {
   item: Partial<BlobStorageItem>
   streamId?: string
 }) => Promise<BlobStorageItem>
+
+export type ExpirePendingUploads = (params: {
+  timeoutThresholdSeconds: number
+  errMessage: string
+}) => Promise<BlobStorageItem[]>
 
 export type DeleteBlob = (params: { id: string; streamId?: string }) => Promise<number>
 
@@ -52,3 +57,27 @@ export type UploadFileStream = (
 ) => Promise<{ blobId: string; fileName: string; fileHash: string }>
 
 export { StoreFileStream }
+
+export type GeneratePresignedUrl = (params: {
+  projectId: string
+  userId: string
+  blobId: string
+  fileName: string
+  urlExpiryDurationSeconds: number
+}) => Promise<string>
+
+export type GetSignedUrl = (params: {
+  objectKey: string
+  urlExpiryDurationSeconds: number
+}) => Promise<string>
+
+export type GetBlobMetadataFromStorage = (params: {
+  objectKey: string
+}) => Promise<{ eTag: Optional<string>; contentLength: Optional<number> }>
+
+export type RegisterCompletedUpload = (params: {
+  projectId: string
+  blobId: string
+  expectedETag: string
+  maximumFileSize: number
+}) => Promise<BlobStorageItem>

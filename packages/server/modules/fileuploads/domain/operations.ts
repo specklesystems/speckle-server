@@ -11,6 +11,11 @@ export type GetFileInfo = (args: {
   fileId: string
 }) => Promise<Optional<FileUploadRecord>>
 
+export type GetFileInfoV2 = (args: {
+  fileId: string
+  projectId?: string
+}) => Promise<Optional<FileUploadRecordV2>>
+
 export type SaveUploadFileInput = Pick<
   FileUploadRecord,
   'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
@@ -25,7 +30,7 @@ export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRe
 
 export type InsertNewUploadAndNotify = (
   uploadResults: SaveUploadFileInputV2
-) => Promise<void>
+) => Promise<FileUploadRecordV2>
 
 export type SaveUploadFileV2 = (
   args: SaveUploadFileInputV2
@@ -61,3 +66,12 @@ export type FileImportMessage = Pick<
 export type ScheduleFileimportJob = (args: JobPayload) => Promise<void>
 
 export type PushJobToFileImporter = (args: FileImportMessage) => Promise<void>
+
+export type RegisterUploadCompleteAndStartFileImport = (args: {
+  projectId: string
+  modelId: string
+  fileId: string
+  userId: string
+  expectedETag: string
+  maximumFileSize: number
+}) => Promise<FileUploadRecordV2 & { modelName: string }>

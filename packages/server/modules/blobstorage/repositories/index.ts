@@ -4,11 +4,13 @@ import {
   GetBlobMetadataCollection,
   GetBlobs,
   UpdateBlob,
+  ExpirePendingUploads,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
 import {
   BlobStorageItem,
-  BlobStorageItemInput
+  BlobStorageItemInput,
+  BlobUploadStatus
 } from '@/modules/blobstorage/domain/types'
 import { cursorFromRows, decodeCursor } from '@/modules/blobstorage/helpers/db'
 import { buildTableHelper } from '@/modules/core/dbSchema'
@@ -88,6 +90,43 @@ export const updateBlobFactory =
     const q = tables
       .blobStorage(deps.db)
       .where(BlobStorage.col.id, id)
+      .update(item, '*')
+
+    if (streamId) q.andWhere(BlobStorage.col.streamId, streamId)
+
+    const [res] = await q
+    return res
+  }
+
+export const expirePendingUploadsFactory =
+  (deps: { db: Knex }): ExpirePendingUploads =>
+  async (params) => {
+    const { timeoutThresholdSeconds, errMessage } = params
+    const updatedRows = await deps
+      .db(BlobStorage.name)
+      .where(BlobStorage.withoutTablePrefix.col.uploadStatus, BlobUploadStatus.Pending)
+      .andWhere(
+        BlobStorage.withoutTablePrefix.col.createdAt,
+        '<',
+        deps.db.raw(`now() - interval '${timeoutThresholdSeconds} seconds'`)
+      )
+      .update({
+        [BlobStorage.withoutTablePrefix.col.uploadStatus]: BlobUploadStatus.Error,
+        [BlobStorage.withoutTablePrefix.col.uploadError]: errMessage
+      })
+      .returning<BlobStorageItem[]>('*')
+
+    return updatedRows
+  }
+
+export const updateBlobWhereStatusPendingFactory =
+  (deps: { db: Knex }): UpdateBlob =>
+  async (params: { id: string; item: Partial<BlobStorageItem>; streamId?: string }) => {
+    const { id, item, streamId } = params
+    const q = tables
+      .blobStorage(deps.db)
+      .where(BlobStorage.col.id, id)
+      .andWhere(BlobStorage.col.uploadStatus, BlobUploadStatus.Pending)
       .update(item, '*')
 
     if (streamId) q.andWhere(BlobStorage.col.streamId, streamId)
