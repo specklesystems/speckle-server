@@ -24,8 +24,6 @@ yq e -i ".docker_image_tag = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/spe
 # .circleci/check_version.py "${CURRENT_VERSION}" "${RELEASE_VERSION}"
 # echo "check_version exit code: $($?)"
 
-CHART_NAME="$(yq '.name' "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml")"
-
 if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; then
   # before overwriting the chart with the build version, check if the current chart version
   # is not newer than the currently build one
@@ -41,13 +39,8 @@ if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; th
     echo "The current helm chart version '${CURRENT_VERSION}' is newer than the version '${RELEASE_VERSION}' we are attempting to publish. Exiting"
     exit 1
   fi
-else
-  # overwrite the name of the chart
-  CHART_NAME="speckle-server-chart-branch-${BRANCH_NAME_TRUNCATED}"
-  yq e -i ".name = \"${CHART_NAME}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
 fi
 
 echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
 helm package "${GIT_REPO}/utils/helm/speckle-server" --version "${RELEASE_VERSION}" --app-version "${RELEASE_VERSION}" --destination "/tmp"
-echo "/tmp contents: $(ls -la /tmp/)"
 helm push "/tmp/${CHART_NAME}-${RELEASE_VERSION}.tgz" "oci://${DOCKER_HELM_REG_URL}/speckle"
