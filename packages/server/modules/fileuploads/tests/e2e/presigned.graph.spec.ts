@@ -11,8 +11,7 @@ import gql from 'graphql-tag'
 import { SetNonNullable } from 'type-fest'
 import { getFeatureFlags } from '@speckle/shared/environment'
 
-const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
-  getFeatureFlags()
+const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
 const testForbiddenResponse = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -299,9 +298,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: Roles.Stream.Owner,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: true },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: true }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: true }
             ]
           },
           {
@@ -309,9 +306,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: Roles.Stream.Contributor,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: true },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: true }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: true }
             ]
           },
           {
@@ -319,9 +314,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: Roles.Stream.Reviewer,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: true },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: true }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: true }
             ]
           },
           {
@@ -329,9 +322,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -339,9 +330,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           }
         ]
@@ -354,9 +343,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: Roles.Stream.Owner,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -364,9 +351,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: Roles.Stream.Contributor,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -374,9 +359,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: Roles.Stream.Reviewer,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -384,9 +367,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -394,9 +375,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           }
         ]
@@ -409,9 +388,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -419,9 +396,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -429,9 +404,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -439,9 +412,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -449,9 +420,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           }
         ]
@@ -464,9 +433,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -474,9 +441,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -484,9 +449,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -494,9 +457,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
@@ -504,9 +465,7 @@ const startFileImport = async (params: TestContext) => {
             projectRole: null,
             cases: [
               { testCase: generateUploadUrl, shouldSucceed: false },
-              ...(FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-                ? [{ testCase: startFileImport, shouldSucceed: false }]
-                : [])
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           }
         ]

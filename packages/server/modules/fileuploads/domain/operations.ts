@@ -29,6 +29,10 @@ export type SaveUploadFileInputV2 = Pick<
 export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
 
 export type InsertNewUploadAndNotify = (
+  uploadResults: SaveUploadFileInput
+) => Promise<FileUploadRecord>
+
+export type InsertNewUploadAndNotifyV2 = (
   uploadResults: SaveUploadFileInputV2
 ) => Promise<FileUploadRecordV2>
 

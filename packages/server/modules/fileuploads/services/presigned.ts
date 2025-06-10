@@ -3,6 +3,7 @@ import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import {
   GetFileInfoV2,
   InsertNewUploadAndNotify,
+  InsertNewUploadAndNotifyV2,
   RegisterUploadCompleteAndStartFileImport
 } from '@/modules/fileuploads/domain/operations'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
@@ -12,7 +13,7 @@ import { get } from 'lodash'
 
 export const registerUploadCompleteAndStartFileImportFactory = (deps: {
   registerCompletedUpload: RegisterCompletedUpload
-  insertNewUploadAndNotify: InsertNewUploadAndNotify
+  insertNewUploadAndNotify: InsertNewUploadAndNotifyV2 | InsertNewUploadAndNotify
   getModelsByIds: GetBranchesByIds
   getFileInfo: GetFileInfoV2
 }): RegisterUploadCompleteAndStartFileImport => {
@@ -37,16 +38,22 @@ export const registerUploadCompleteAndStartFileImportFactory = (deps: {
     try {
       const storedFile = await insertNewUploadAndNotify({
         projectId: storedBlob.streamId,
+        streamId: storedBlob.streamId, //backwards compatibility
         userId,
         fileName: storedBlob.fileName,
         fileType: storedBlob.fileType,
         fileSize: storedBlob.fileSize,
         fileId: storedBlob.id,
         modelId,
-        modelName: model.name
+        modelName: model.name,
+        branchName: model.name //backwards compatibility
       })
 
-      return { ...storedFile, modelName: model.name }
+      return {
+        ...storedFile,
+        modelName: model.name,
+        projectId: storedBlob.streamId //backwards compatibility
+      }
     } catch (error) {
       const message = get(error, 'message')
       if (

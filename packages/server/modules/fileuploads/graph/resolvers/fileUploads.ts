@@ -6,6 +6,7 @@ import {
   getFileInfoFactoryV2,
   getStreamFileUploadsFactory,
   getStreamPendingModelsFactory,
+  saveUploadFileFactory,
   saveUploadFileFactoryV2
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { authorizeResolver } from '@/modules/shared'
@@ -46,7 +47,10 @@ import {
   registerCompletedUploadFactory
 } from '@/modules/blobstorage/services/presigned'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
+import {
+  insertNewUploadAndNotifyFactory,
+  insertNewUploadAndNotifyFactoryV2
+} from '@/modules/fileuploads/services/management'
 import {
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
@@ -56,13 +60,17 @@ import {
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
-import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
+import {
+  getBranchesByIdsFactory,
+  getStreamBranchByNameFactory
+} from '@/modules/core/repositories/branches'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import cryptoRandomString from 'crypto-random-string'
 import { getFeatureFlags } from '@speckle/shared/environment'
 
-const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
+const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
+  getFeatureFlags()
 
 const fileUploadMutations = {
   async generateUploadUrl(
@@ -118,12 +126,6 @@ const fileUploadMutations = {
     args: FileUploadMutationsStartFileImportArgs,
     ctx: GraphQLContext
   ) {
-    if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
-      throw new MisconfiguredEnvironmentError(
-        'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
-      )
-    }
-
     const { projectId } = args.input
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
@@ -136,6 +138,12 @@ const fileUploadMutations = {
 
     if (!isFileUploadsEnabled())
       throw new BadRequestError('File uploads are not enabled for this server')
+
+    if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
+      throw new MisconfiguredEnvironmentError(
+        'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
+      )
+    }
 
     const [projectDb, projectStorage] = await Promise.all([
       getProjectDbClient({ projectId }),
@@ -157,9 +165,16 @@ const fileUploadMutations = {
       })
     })
 
-    const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+    const insertNewUploadAndNotifyV2 = insertNewUploadAndNotifyFactoryV2({
       pushJobToFileImporter,
       saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+      publish,
+      emit: getEventBus().emit
+    })
+
+    const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+      getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+      saveUploadFile: saveUploadFileFactory({ db: projectDb }),
       publish,
       emit: getEventBus().emit
     })
@@ -176,7 +191,9 @@ const fileUploadMutations = {
             objectStorage: projectStorage
           })
         }),
-        insertNewUploadAndNotify,
+        insertNewUploadAndNotify: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+          ? insertNewUploadAndNotifyV2
+          : insertNewUploadAndNotify,
         getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
         getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
