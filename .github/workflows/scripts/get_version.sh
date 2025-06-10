@@ -5,7 +5,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shellcheck disable=SC1090,SC1091
 source "${SCRIPT_DIR}/common.sh"
 
-
 if [[ "${GITHUB_REF}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "${GITHUB_REF}"
     exit 0

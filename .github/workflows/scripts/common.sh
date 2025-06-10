@@ -14,7 +14,7 @@ LAST_RELEASE="$(git describe --always --tags $(git rev-list --tags) | grep -E '^
 NEXT_RELEASE="$(echo "${LAST_RELEASE}" | awk -F. -v OFS=. '{$NF += 1 ; print}')"
 
 # shellcheck disable=SC2034
-BRANCH_NAME_TRUNCATED="$(echo "${GITHUB_HEAD_REF}" | cut -c -50 | sed 's/[^a-zA-Z0-9.-]/-/g')" # docker has a 128 character tag limit, so ensuring the branch name will be short enough
+BRANCH_NAME_TRUNCATED="$(echo "${GITHUB_HEAD_REF}" | cut -c -28 | sed 's/[^a-zA-Z0-9.-]/-/g')" # docker has a 128 character tag limit, so ensuring the branch name will be short enough
 
 # shellcheck disable=SC2034
 COMMIT_SHA1_TRUNCATED="$(echo "${GITHUB_SHA}" | cut -c -7)"
