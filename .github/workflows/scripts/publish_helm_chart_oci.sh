@@ -15,6 +15,8 @@ if [[ -z "${DOCKER_REG_PASS}" ]]; then
   exit 1
 fi
 
+echo "🏷️ Preparing envs"
+
 GIT_REPO=$( pwd )
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shellcheck disable=SC1090,SC1091
@@ -26,7 +28,7 @@ DOCKER_HELM_REG_URL="${DOCKER_HELM_REG_URL:-"registry-1.docker.io"}"
 DOCKER_HELM_REG_ORG="${DOCKER_HELM_REG_ORG:-"speckle"}"
 CHART_NAME="${CHART_NAME:-"speckle-server"}"
 
-echo "Releasing Helm Chart version ${RELEASE_VERSION} for application version ${IMAGE_VERSION_TAG}"
+echo "📌 Releasing Helm Chart version ${RELEASE_VERSION} for application version ${IMAGE_VERSION_TAG}"
 
 yq e -i ".docker_image_tag = \"${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 
