@@ -153,7 +153,7 @@ export const copyWorkspaceFactory =
  */
 export const copyProjectsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjects =>
-  async ({ projectIds }) => {
+  async ({ projectIds, regionKey }) => {
     const selectProjects = tables
       .projects(deps.sourceDb)
       .select('*')
@@ -168,7 +168,12 @@ export const copyProjectsFactory =
       // Copy `streams` rows to target db
       await tables
         .projects(deps.targetDb)
-        .insert(projects)
+        .insert(
+          projects.map((project) => ({
+            ...project,
+            regionKey
+          }))
+        )
         .onConflict(Streams.withoutTablePrefix.col.id)
         .merge(Streams.withoutTablePrefix.cols as (keyof StreamRecord)[])
 

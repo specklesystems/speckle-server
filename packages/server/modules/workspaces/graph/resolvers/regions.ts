@@ -21,7 +21,10 @@ import { Roles } from '@speckle/shared'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamCollaboratorsFactory,
+  legacyGetStreamsFactory
+} from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
@@ -83,15 +86,22 @@ export default {
           workspaceId
         })) {
           await Promise.all(
-            projects.map((project) =>
-              scheduleJob({
+            projects.map(async (project) => {
+              const projectRoles = await getStreamCollaboratorsFactory({ db })(
+                project.id
+              )
+              await scheduleJob({
                 type: 'move-project-region',
                 payload: {
                   projectId: project.id,
+                  projectRoles: projectRoles.map((role) => ({
+                    userId: role.id,
+                    role: role.streamRole
+                  })),
                   regionKey
                 }
               })
-            )
+            })
           )
         }
       }
@@ -122,14 +132,20 @@ export default {
       })
 
       return await withOperationLogging(
-        async () =>
-          await scheduleJob({
+        async () => {
+          const projectRoles = await getStreamCollaboratorsFactory({ db })(projectId)
+          return await scheduleJob({
             type: 'move-project-region',
             payload: {
               projectId,
+              projectRoles: projectRoles.map((role) => ({
+                userId: role.id,
+                role: role.streamRole
+              })),
               regionKey
             }
-          }),
+          })
+        },
         {
           logger,
           operationName: 'workspaceProjectMoveToRegion',
