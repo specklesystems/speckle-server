@@ -10,16 +10,16 @@ source "${SCRIPT_DIR}/common.sh"
 RELEASE_VERSION="chart.${IMAGE_VERSION_TAG}"
 HELM_STABLE_BRANCH="${HELM_STABLE_BRANCH:-"main"}"
 
-echo "Releasing Helm Chart version ${RELEASE_VERSION}"
+echo "Releasing Helm Chart version ${RELEASE_VERSION} for application version ${IMAGE_VERSION_TAG}"
 
-yq e -i ".docker_image_tag = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+yq e -i ".docker_image_tag = \"${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 
 echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
-helm package "${GIT_REPO}/utils/helm/speckle-server" --version "${RELEASE_VERSION}" --app-version "${RELEASE_VERSION}" --destination "/tmp"
+helm package "${GIT_REPO}/utils/helm/speckle-server" --version "${RELEASE_VERSION}" --app-version "${IMAGE_VERSION_TAG}" --destination "/tmp"
 helm push "/tmp/${CHART_NAME}-${RELEASE_VERSION}.tgz" "oci://${DOCKER_HELM_REG_URL}/speckle"
 
 if [[ "${IMAGE_VERSION_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+)?$ ]]; then
   echo "🏷 Tagging and pushing helm chart as 'speckle/${CHART_NAME}:chart.latest'"
-  helm package "${GIT_REPO}/utils/helm/speckle-server" --version "chart.latest" --app-version "${RELEASE_VERSION}" --destination "/tmp"
+  helm package "${GIT_REPO}/utils/helm/speckle-server" --version "chart.latest" --app-version "${IMAGE_VERSION_TAG}" --destination "/tmp"
   helm push "/tmp/${CHART_NAME}-chart-latest.tgz" "oci://${DOCKER_HELM_REG_URL}/speckle"
 fi
