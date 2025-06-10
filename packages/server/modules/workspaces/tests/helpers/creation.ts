@@ -220,7 +220,8 @@ export const createTestWorkspace = async (
         getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
           db
         }),
-        eventEmit: getEventBus().emit
+        eventEmit: getEventBus().emit,
+        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
       })
     })
   })
@@ -438,7 +439,8 @@ export const assignToWorkspace = async (
       getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
         db
       }),
-      eventEmit: getEventBus().emit
+      eventEmit: getEventBus().emit,
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
     })
   })
   const assignWorkspaceSeat = assignWorkspaceSeatFactory({
@@ -581,7 +583,8 @@ export const createWorkspaceInviteDirectly = async (
             getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
               db
             }),
-            eventEmit: getEventBus().emit
+            eventEmit: getEventBus().emit,
+            getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
           })
         }),
         processFinalizedProjectInvite: processFinalizedProjectInviteFactory({

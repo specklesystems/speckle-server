@@ -848,7 +848,8 @@ export const initializeEventListenersFactory =
               getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
                 db
               }),
-              eventEmit: eventBus.emit
+              eventEmit: eventBus.emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
             })
           }),
           getWorkspaceRole: getWorkspaceRoleForUserFactory({ db }),

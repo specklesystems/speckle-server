@@ -300,7 +300,8 @@ const buildFinalizeWorkspaceInvite = () =>
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
             db
           }),
-          eventEmit: getEventBus().emit
+          eventEmit: getEventBus().emit,
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
         })
       }),
       processFinalizedProjectInvite: processFinalizedProjectInviteFactory({
@@ -644,7 +645,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
                       db
                     }),
-                    eventEmit: emit
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 })
               })
@@ -893,7 +895,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
                       db: trx
                     }),
-                    eventEmit: emit
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx })
                   })
                 })
 
@@ -1197,7 +1200,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
                       db
                     }),
-                    eventEmit: getEventBus().emit
+                    eventEmit: getEventBus().emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 }),
                 getWorkspaceTeam: getWorkspaceCollaboratorsFactory({ db })
@@ -1566,7 +1570,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
                       db
                     }),
-                    eventEmit: emit
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 }),
                 createWorkspaceSeat: createWorkspaceSeatFactory({ db }),

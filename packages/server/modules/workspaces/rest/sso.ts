@@ -370,7 +370,8 @@ export const getSsoRouter = (): Router => {
                       getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
                         db: trx
                       }),
-                      eventEmit: getEventBus().emit
+                      eventEmit: getEventBus().emit,
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx })
                     })
                   }),
                   findInvite: findInviteFactory({ db: trx }),

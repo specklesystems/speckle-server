@@ -404,7 +404,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
               getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
                 db
               }),
-              eventEmit: getEventBus().emit
+              eventEmit: getEventBus().emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
             })
           }),
           getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),

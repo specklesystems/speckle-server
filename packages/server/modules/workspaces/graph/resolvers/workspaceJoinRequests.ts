@@ -201,7 +201,8 @@ export default FF_WORKSPACES_MODULE_ENABLED
                       getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
                         db
                       }),
-                      eventEmit: emit
+                      eventEmit: emit,
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                     })
                   })
                 })
