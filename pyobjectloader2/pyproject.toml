@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyobjectloader2"
+version = "0.1.0"
+description = "A Python implementation of the Speckle ObjectLoader2."
+readme = "README.md"
+requires-python = ">=3.8" # Asyncio improvements and dataclasses are well-supported
+license = {text = "MIT License"}
+keywords = ["speckle", "aec", "3d", "objectloader"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+# Add dependencies here if any are strictly required by the library itself
+# For example, if we decided to use 'aiohttp' for ServerDownloader:
+# dependencies = [
+#    "aiohttp>=3.0.0"
+# ]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.18.0", # For async test support with pytest
+    "pytest-snapshot>=0.9.0", # For snapshot testing
+    # Add other test-specific dependencies if needed, e.g., aiohttp for testing ServerDownloader
+]
+dev = ["pyobjectloader2[test]", "ruff"] # Includes test dependencies
+
+[project.urls]
+Homepage = "https://github.com/example/pyobjectloader2" # Replace with actual URL if available
+Repository = "https://github.com/example/pyobjectloader2"
+
+[tool.setuptools.packages.find]
+where = ["src"] # Tells setuptools to find packages in the src directory
+
+[tool.ruff]
+line-length = 88
+select = ["E", "W", "F", "I", "UP", "PL", "T20"] # Example: Enable a good set of Ruff linters
+ignore = []
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+asyncio_mode = "auto" # or "strict"
+testpaths = [
+    "tests",
+]
+# Add -p no:warnings to suppress warnings if needed, or configure specific warning filters
+# addopts = "-p no:warnings"
