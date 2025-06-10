@@ -1147,9 +1147,6 @@ jobs:
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart_oci.sh
-          environment:
-            DOCKER_HELM_REG_URL: registry-1.docker.io
-            CHART_NAME: speckle-server
 
   publish-viewer-sandbox-cloudflare-pages:
     <<: *docker-node-image
