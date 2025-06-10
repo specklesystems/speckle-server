@@ -7,14 +7,15 @@ on:
       CLOUDFLARE_ACCOUNT_ID:
         required: true
         type: string
+      DOCKER_REG_USER:
+        required: true
+        type: string
     secrets:
       DATADOG_API_KEY:
         required: true
       CLOUDFLARE_API_TOKEN:
         required: true
       DOCKER_REG_PASS:
-        required: true
-      DOCKER_REG_USER:
         required: true
 
 jobs:
