@@ -7,7 +7,7 @@ on:
       CLOUDFLARE_ACCOUNT_ID:
         required: true
         type: string
-      DOCKER_REG_USER:
+      DOCKERHUB_USERNAME:
         required: true
         type: string
     secrets:
@@ -15,9 +15,8 @@ on:
         required: true
       CLOUDFLARE_API_TOKEN:
         required: true
-      DOCKER_REG_PASS:
+      DOCKERHUB_TOKEN:
         required: true
-
 jobs:
   helm-chart-oci:
     runs-on: blacksmith
@@ -25,8 +24,8 @@ jobs:
       image: speckle/pre-commit-runner:latest
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
-      DOCKER_REG_PASS: ${{ secrets.DOCKER_REG_PASS }}
-      DOCKER_REG_USER: ${{ secrets.DOCKER_REG_USER }}
+      DOCKER_REG_PASS:: ${{ inputs.DOCKERHUB_USERNAME }}
+      DOCKER_REG_USER: ${{ secrets.DOCKERHUB_TOKEN }}
       DOCKER_HELM_REG_URL: registry-1.docker.io
       CHART_NAME: speckle-server
     steps:

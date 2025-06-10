@@ -42,7 +42,7 @@ jobs:
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-      DOCKER_REG_USER: ${{ vars.DOCKER_REG_USER }}
+      DOCKERHUB_USERNAME: 'speckledevops'
     secrets: inherit
 
   npm:
