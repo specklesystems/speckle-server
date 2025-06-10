@@ -79,7 +79,7 @@ const fileUploadMutations = {
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
     }
-    const canImport = await ctx.authPolicies.project.files.canImport({
+    const canImport = await ctx.authPolicies.project.canPublish({
       userId: ctx.userId,
       projectId
     })
@@ -128,7 +128,7 @@ const fileUploadMutations = {
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
     }
-    const canImport = await ctx.authPolicies.project.files.canImport({
+    const canImport = await ctx.authPolicies.project.canPublish({
       userId: ctx.userId,
       projectId
     })
