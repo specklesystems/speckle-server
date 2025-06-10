@@ -1,9 +1,20 @@
-import { StreamAcl, Streams, UserEmails, Users } from '@/modules/core/dbSchema'
+import {
+  ServerAcl,
+  StreamAcl,
+  Streams,
+  UserEmails,
+  Users
+} from '@/modules/core/dbSchema'
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { StreamAclRecord, UserRecord } from '@/modules/core/helpers/types'
+import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { SetUserActiveWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
+import { ServerRoles } from '@speckle/shared'
 import { Knex } from 'knex'
 
 const tables = {
@@ -36,6 +47,8 @@ const buildInvitableCollaboratorsByProjectIdQueryFactory =
       .users(db)
       .join(WorkspaceAcl.name, WorkspaceAcl.col.userId, Users.col.id)
       .join(Streams.name, Streams.col.workspaceId, WorkspaceAcl.col.workspaceId)
+      .join(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
       .where(WorkspaceAcl.col.workspaceId, workspaceId)
       .whereNotIn(
         Users.col.id,
@@ -45,13 +58,11 @@ const buildInvitableCollaboratorsByProjectIdQueryFactory =
           .where(StreamAcl.col.resourceId, projectId)
       )
     if (search) {
-      query
-        .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
-        .andWhere((w) =>
-          w
-            .whereLike(Users.col.name, `%${search}%`)
-            .orWhereLike(UserEmails.col.email, `%${search}%`)
-        )
+      query.andWhere((w) =>
+        w
+          .whereLike(Users.col.name, `%${search}%`)
+          .orWhereLike(UserEmails.col.email, `%${search}%`)
+      )
     }
     return query.groupBy(Users.col.id)
   }
@@ -80,10 +91,35 @@ export const getInvitableCollaboratorsByProjectIdFactory =
     if (cursor) {
       query.andWhere(Users.col.createdAt, '<', cursor)
     }
-    return await query
+    const res = await query
       .orderBy(Users.col.createdAt, 'desc')
       .limit(limit)
-      .select(Users.cols.filter((col) => col !== Users.col.passwordDigest))
+      .select([
+        ...Users.cols,
+        WorkspaceAcl.groupArray('workspaceAcl'),
+        ServerAcl.groupArray('serverAcl'),
+        UserEmails.groupArray('emails')
+      ])
+
+    const formattedRes = res.map((row) => {
+      const workspaceAcl = formatJsonArrayRecords(
+        row.workspaceAcl
+      )[0] as WorkspaceAclRecord
+      const serverAcl = formatJsonArrayRecords(row.serverAcl)[0] as StreamAclRecord
+      const emails = formatJsonArrayRecords(row.emails) as UserEmail[]
+      const email = emails.find((e) => e.primary)?.email
+
+      return {
+        ...removePrivateFields(row),
+        workspaceRole: workspaceAcl.role,
+        workspaceRoleCreatedAt: workspaceAcl.createdAt,
+        workspaceId: workspaceAcl.workspaceId,
+        role: serverAcl.role as ServerRoles,
+        email: email!
+      }
+    })
+
+    return formattedRes
   }
 
 export const countInvitableCollaboratorsByProjectIdFactory =

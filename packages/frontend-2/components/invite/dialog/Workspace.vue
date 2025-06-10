@@ -1,5 +1,6 @@
 <template>
   <LayoutDialog
+    v-if="workspace"
     v-model:open="isOpen"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
@@ -18,6 +19,7 @@
       :invites="invites"
       :allowed-domains="allowedDomains"
       :target-role="selectedRole"
+      :workspace="workspace"
     >
       <template #project>
         <FormSelectProjects
@@ -36,6 +38,7 @@
       </p>
     </InviteDialogSharedSelectUsers>
   </LayoutDialog>
+  <div v-else />
 </template>
 
 <script setup lang="ts">
@@ -49,7 +52,12 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import type { InviteWorkspaceItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
-import { Roles, type MaybeNullOrUndefined, type WorkspaceRoles } from '@speckle/shared'
+import {
+  Roles,
+  SeatTypes,
+  type MaybeNullOrUndefined,
+  type WorkspaceRoles
+} from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/management'
@@ -69,6 +77,7 @@ graphql(`
       domain
       id
     }
+    ...InviteDialogSharedSelectUsers_Workspace
   }
 `)
 
@@ -87,13 +96,7 @@ const { isSelfServePlan } = useWorkspacePlan(workspaceSlug.value)
 const isSelectingRole = ref(true)
 const selectedRole = ref<WorkspaceRoles>(Roles.Workspace.Member)
 const project = ref<FormSelectProjects_ProjectFragment>()
-const invites = ref<InviteWorkspaceItem[]>([
-  {
-    ...emptyInviteWorkspaceItem,
-    workspaceRole: selectedRole.value,
-    serverRole: Roles.Server.User
-  }
-])
+const invites = ref<InviteWorkspaceItem[]>([])
 const selectUsers = ref<{
   submitForm: () => Promise<InviteWorkspaceItem[]>
 }>()
@@ -182,7 +185,8 @@ const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
       role: canBeMember(invite.email)
         ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
         : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest),
-      email: invite.email
+      email: invite.email,
+      seatType: invite.seatType
     }))
 
     await inviteToWorkspace({ workspaceId: props.workspace.id, inputs })
@@ -202,18 +206,32 @@ const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
   })
 }
 
+const initInvites = () => {
+  invites.value = [
+    {
+      ...emptyInviteWorkspaceItem,
+      seatType: props.workspace?.defaultSeatType || SeatTypes.Viewer,
+      workspaceRole: selectedRole.value,
+      serverRole: Roles.Server.User
+    }
+  ]
+}
+
 watch(isOpen, (newVal) => {
   if (newVal) {
     isSelectingRole.value = true
     selectedRole.value = Roles.Workspace.Member
     project.value = undefined
-    invites.value = [
-      {
-        ...emptyInviteWorkspaceItem,
-        workspaceRole: Roles.Workspace.Member,
-        serverRole: Roles.Server.User
-      }
-    ]
+    initInvites()
   }
 })
+
+watch(
+  () => props.workspace,
+  (newVal) => {
+    if (newVal) {
+      initInvites()
+    }
+  }
+)
 </script>
