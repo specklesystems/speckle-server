@@ -102,11 +102,10 @@ export class SpeckleLoader extends Loader {
         firstObjectPromise = this.converter.traverse(
           this.resource,
           obj as SpeckleObject,
-          (count, total) => {
+          (count) => {
             traversals++
             this.emit(LoaderEvent.Traversed, {
-              count,
-              total
+              count
             })
           }
         )
