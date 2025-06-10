@@ -313,8 +313,8 @@ const startFileImport = async (params: TestContext) => {
             project: reviewerProject,
             projectRole: Roles.Stream.Reviewer,
             cases: [
-              { testCase: generateUploadUrl, shouldSucceed: true },
-              { testCase: startFileImport, shouldSucceed: true }
+              { testCase: generateUploadUrl, shouldSucceed: false },
+              { testCase: startFileImport, shouldSucceed: false }
             ]
           },
           {
