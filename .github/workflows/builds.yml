@@ -9,6 +9,9 @@ on:
       DOCKERHUB_USERNAME:
         required: true
         type: string
+      PUSH_IMAGES:
+        required: true
+        type: boolean
     secrets:
       DATADOG_API_KEY:
         required: true
@@ -28,7 +31,7 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/server/Dockerfile
 
@@ -44,7 +47,7 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/frontend-2/Dockerfile
 
@@ -60,7 +63,7 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-preview-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/preview-service/Dockerfile
 
@@ -76,7 +79,7 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-webhook-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/webhook-service/Dockerfile
 
@@ -92,7 +95,7 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-fileimport-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/fileimport-service/Dockerfile
 
@@ -103,7 +106,7 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: false
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-test-deployment:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./utils/test-deployment/Dockerfile
 
@@ -119,7 +122,7 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-monitor-deployment:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/monitor-deployment/Dockerfile
 
@@ -135,7 +138,7 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-docker-compose-ingress:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./utils/docker-compose-ingress/Dockerfile
 
@@ -146,6 +149,7 @@ jobs:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       SPECKLE_SERVER_PACKAGE: frontend-2
+      PUSH_IMAGES: ${{ inputs.PUSH_IMAGES }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:

@@ -30,16 +30,21 @@ rm -rf "${GIT_ROOT}/${FE2_DIR_PATH}/.output"
 docker cp "$container_id":/speckle-server "${GIT_ROOT}/${FE2_DIR_PATH}/.output"
 docker rm "$container_id"
 
-echo "🆕 Publishing sourcemaps"
 
-pushd "${GIT_ROOT}/${FE2_DIR_PATH}"
-DATADOG_SITE="${DATADOG_SITE}" npx --yes @datadog/datadog-ci sourcemaps upload ./.output/public/_nuxt \
---service="${FE2_DATADOG_SERVICE}" \
---release-version="${IMAGE_VERSION_TAG}" \
---minified-path-prefix=/_nuxt
-popd
+if [[ "${PUSH_IMAGES:-false}" == "true" ]]; then
+  echo "🆕 Publishing sourcemaps"
 
-echo "✅ Publishing completed."
+  pushd "${GIT_ROOT}/${FE2_DIR_PATH}"
+  DATADOG_SITE="${DATADOG_SITE}" npx --yes @datadog/datadog-ci sourcemaps upload ./.output/public/_nuxt \
+  --service="${FE2_DATADOG_SERVICE}" \
+  --release-version="${IMAGE_VERSION_TAG}" \
+  --minified-path-prefix=/_nuxt
+  popd
+else
+  echo "⏭️ Skipped publishing step"
+fi
+
+echo "✅ Sourcemaps completed."
 
 # Clean up
 rm -rf "${GIT_ROOT}/${FE2_DIR_PATH}/.output"
