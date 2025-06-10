@@ -31,6 +31,7 @@ import { canPublishPolicy } from './project/canPublish.js'
 import { canLoadPolicy } from './project/canLoad.js'
 import { canUpdateEmbedOptionsPolicy } from './workspace/canUpdateEmbedOptions.js'
 import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
+import { canCreateWorkspacePolicy } from './workspace/canCreateWorkspace.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -76,7 +77,8 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canReceiveProjectsUpdatedMessage:
       canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders),
     canUpdateEmbedOptions: canUpdateEmbedOptionsPolicy(loaders),
-    canReadMemberEmail: canReadMemberEmailPolicy(loaders)
+    canReadMemberEmail: canReadMemberEmailPolicy(loaders),
+    canCreateWorkspace: canCreateWorkspacePolicy(loaders)
   }
 })
 

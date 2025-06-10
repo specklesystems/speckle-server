@@ -62,6 +62,7 @@ import {
 import {
   knex,
   ServerAcl,
+  ServerInvites,
   StreamAcl,
   Streams,
   UserEmails,
@@ -98,13 +99,35 @@ const tables = {
 
 export const getUserEligibleWorkspacesFactory =
   ({ db }: { db: Knex }): GetUserEligibleWorkspaces =>
-  async () => {
-    console.log(db)
-    return []
-    // async ({ domains, userId }) => {
-    // await db.raw(`
-    //   select distinct
-    //   `)
+  async ({ userId, domains }) => {
+    const q = tables
+      .workspaces(db)
+      .distinctOn(Workspaces.col.id)
+      .select<LimitedWorkspace[]>(Workspaces.cols)
+      .joinRaw(
+        `left join ${DbWorkspaceAcl.name}
+        on ${Workspaces.col.id} = ${DbWorkspaceAcl.name}."${DbWorkspaceAcl.withoutTablePrefix.col.workspaceId}"
+        and ${DbWorkspaceAcl.name}."${DbWorkspaceAcl.withoutTablePrefix.col.userId}" = '${userId}'`
+      )
+      .joinRaw(
+        `left join ${ServerInvites.name}
+        on ${Workspaces.col.id} = ${ServerInvites.col.resource} ->> 'resourceId'
+        and ${ServerInvites.col.target} = '@${userId}'`
+      )
+      .leftJoin(
+        WorkspaceDomains.name,
+        WorkspaceDomains.col.workspaceId,
+        Workspaces.col.id
+      )
+      .whereNotNull(DbWorkspaceAcl.col.userId)
+      .orWhereNotNull(ServerInvites.col.target)
+    if (domains.length)
+      q.orWhere(function () {
+        this.where(Workspaces.col.discoverabilityEnabled, true)
+        this.whereIn(WorkspaceDomains.col.domain, domains)
+      })
+    const items = await q
+    return items
   }
 
 export const getUserDiscoverableWorkspacesFactory =

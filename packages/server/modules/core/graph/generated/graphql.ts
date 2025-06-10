@@ -3067,6 +3067,7 @@ export type Role = {
 export type RootPermissionChecks = {
   __typename?: 'RootPermissionChecks';
   canCreatePersonalProject: PermissionCheckResult;
+  canCreateWorkspace: PermissionCheckResult;
 };
 
 /** Available scopes. */
@@ -6969,6 +6970,7 @@ export type RoleResolvers<ContextType = GraphQLContext, ParentType extends Resol
 
 export type RootPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RootPermissionChecks'] = ResolversParentTypes['RootPermissionChecks']> = {
   canCreatePersonalProject?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canCreateWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
