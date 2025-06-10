@@ -18,7 +18,6 @@ import {
   GetSignedUrl
 } from '@/modules/blobstorage/domain/operations'
 
-//FIXME these types should move to domain directory, except we want to avoid having a dependency on S3Client from the domain
 export type ObjectStorage = {
   client: S3Client
   bucket: string
