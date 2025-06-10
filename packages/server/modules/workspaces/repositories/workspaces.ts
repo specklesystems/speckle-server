@@ -34,6 +34,7 @@ import {
   GetWorkspaceSeatCount,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesNonComplete,
   GetWorkspacesProjectsCounts,
   GetWorkspacesRolesForUsers,
   QueryWorkspaces,
@@ -569,6 +570,21 @@ export const getWorkspaceWithDomainsFactory =
         (domain: WorkspaceDomain | null) => domain !== null
       )
     } as Workspace & { domains: WorkspaceDomain[] }
+  }
+
+export const getWorkspacesNonCompleteFactory =
+  ({ db }: { db: Knex }): GetWorkspacesNonComplete =>
+  async ({ createdAtBefore }) => {
+    return tables
+      .workspaceCreationState(db)
+      .where({ [DbWorkspaceCreationState.col.completed]: false })
+      .innerJoin(
+        Workspaces.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      )
+      .where(Workspaces.col.createdAt, '<', createdAtBefore.toISOString())
+      .select([DbWorkspaceCreationState.col.workspaceId])
   }
 
 export const getUserIdsWithRoleInWorkspaceFactory =

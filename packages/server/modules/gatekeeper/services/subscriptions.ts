@@ -1,4 +1,5 @@
 import {
+  calculateSubscriptionSeats,
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
@@ -25,6 +26,7 @@ import {
 import { cloneDeep } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -95,8 +97,9 @@ export const handleSubscriptionUpdateFactory =
           throwUncoveredError(workspacePlan)
       }
 
+      const newWorkspacePlan = { ...workspacePlan, status }
       await upsertPaidWorkspacePlan({
-        workspacePlan: { ...workspacePlan, status }
+        workspacePlan: newWorkspacePlan
       })
       // if there is a status in the sub, we recognize, we need to update our state
       await upsertWorkspaceSubscription({
@@ -108,10 +111,17 @@ export const handleSubscriptionUpdateFactory =
       })
 
       await emitEvent({
-        eventName: 'gatekeeper.workspace-subscription-updated',
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
-          workspaceId: subscription.workspaceId,
-          status
+          workspacePlan: newWorkspacePlan,
+          subscription: {
+            totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
+          },
+          previousSubscription: {
+            totalEditorSeats: calculateSubscriptionSeats({
+              subscriptionData: subscription.subscriptionData
+            })
+          }
         }
       })
     }

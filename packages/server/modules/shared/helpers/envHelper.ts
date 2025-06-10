@@ -128,6 +128,10 @@ export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
   return getBooleanFromEnv('PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
 }
 
+export const getFileimportServiceRedisUrl = (): string | undefined => {
+  return process.env['FILEIMPORT_SERVICE_REDIS_URL']
+}
+
 export const getPreviewServiceRedisUrl = (): string | undefined => {
   return process.env['PREVIEW_SERVICE_REDIS_URL']
 }
@@ -296,7 +300,7 @@ export function weeklyEmailDigestEnabled() {
  * Useful in some CLI scenarios when you aren't doing anything with the DB
  */
 export function ignoreMissingMigrations() {
-  return getBooleanFromEnv('IGNORE_MISSING_MIRATIONS')
+  return getBooleanFromEnv('IGNORE_MISSING_MIGRATIONS')
 }
 
 /**

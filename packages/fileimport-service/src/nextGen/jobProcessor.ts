@@ -139,6 +139,6 @@ export const jobProcessor = async ({
       reason
     }
   } finally {
-    fs.rmdirSync(jobDir, { recursive: true })
+    fs.rmSync(jobDir, { recursive: true })
   }
 }
