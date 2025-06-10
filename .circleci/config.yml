@@ -560,7 +560,7 @@ jobs:
           files: packages/server/coverage/lcov.info
       - run:
           name: Introspect GQL schema for subsequent checks
-          command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+          command: 'IGNORE_MISSING_MIGRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
       - run:
           name: Checking for GQL schema breakages against app.speckle.systems
