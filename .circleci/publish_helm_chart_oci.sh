@@ -18,8 +18,8 @@ if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; th
   # before overwriting the chart with the build version, check if the current chart version
   # is not newer than the currently build one
 
-  helm pull "oci://${DOCKER_HELM_REG_URL}/speckle/speckle-server-chart" --destination "/tmp/old-version" --untar --untardir "untar"
-  CURRENT_VERSION="$(yq .version "/tmp/old-version/untar/speckle-server-chart/Chart.yaml")"
+  helm pull "oci://${DOCKER_HELM_REG_URL}/speckle/${CHART_NAME}" --destination "/tmp/old-version" --untar --untardir "untar"
+  CURRENT_VERSION="$(yq .version "/tmp/old-version/untar/${CHART_NAME}/Chart.yaml")"
   echo "${CURRENT_VERSION}"
   rm -rf "/tmp/old-version"
 

@@ -7,7 +7,7 @@ icon: 'https://app.speckle.systems/images/logo.png'
 maintainers:
   - name: Speckle Systems
     url: 'https://speckle.systems/'
-name: speckle-server-chart
+name: speckle-server
 sources:
   - 'https://github.com/specklesystems/speckle-server'
 type: application
