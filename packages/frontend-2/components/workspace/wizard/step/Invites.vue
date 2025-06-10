@@ -80,8 +80,6 @@ const { fields, push } = useFieldArray<string>('fields')
 
 const enableDomainDiscoverabilityModel = computed({
   get() {
-    if (!verifiedDomain.value) return false
-
     return !isUndefined(state.value.enableDomainDiscoverabilityForDomain)
       ? state.value.enableDomainDiscoverabilityForDomain !== null
         ? true
