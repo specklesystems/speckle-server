@@ -68,7 +68,6 @@ jobs:
 
   test-frontend-2:
     name: Frontend
-    if: false
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
@@ -235,7 +234,6 @@ jobs:
 
   docker-build-postgres-container:
     runs-on: blacksmith
-    if: false
     name: Docker build postgres container
     steps:
       - name: Login to Docker Hub
