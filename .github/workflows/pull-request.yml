@@ -2,6 +2,10 @@ name: PR Pipeline
 
 on: pull_request
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true # other running workflows get cancelled on the same branch
+
 jobs:
   get-version:
     outputs:
