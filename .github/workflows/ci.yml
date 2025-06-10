@@ -2,6 +2,10 @@ name: CI Pipeline
 
 on: pull_request
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true # other running workflows get cancelled on the same branch
+
 jobs:
   get-version:
     outputs:
@@ -34,4 +38,6 @@ jobs:
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+      DOCKERHUB_USERNAME: 'speckledevops'
+      PUSH_IMAGES: false
     secrets: inherit
