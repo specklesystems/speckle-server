@@ -4895,6 +4895,7 @@ export type WorkspacePermissionChecks = {
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
+  canReadMemberEmail: PermissionCheckResult;
 };
 
 
@@ -4933,6 +4934,7 @@ export type WorkspacePlanUsage = {
 
 export const WorkspacePlans = {
   Academia: 'academia',
+  Enterprise: 'enterprise',
   Free: 'free',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',

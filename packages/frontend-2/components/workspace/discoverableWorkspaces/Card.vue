@@ -2,7 +2,7 @@
   <WorkspaceCard
     :logo="workspace.logo ?? ''"
     :name="workspace.name"
-    :class="requestStatus === WorkspaceJoinRequestStatus.Pending ? '' : 'bg-foundation'"
+    :class="isActioned ? '' : 'bg-foundation'"
     :banner-text="
       workspace.discoverabilityAutoJoinEnabled &&
       requestStatus !== WorkspaceJoinRequestStatus.Approved
@@ -91,6 +91,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'auto-joined'): void
   (e: 'request'): void
+  (e: 'dismissed', workspaceId: string): void
 }>()
 
 const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
@@ -116,6 +117,13 @@ const members = computed(() => {
   }
 })
 
+const isActioned = computed(() => {
+  return (
+    props.requestStatus === WorkspaceJoinRequestStatus.Approved ||
+    props.requestStatus === WorkspaceJoinRequestStatus.Pending
+  )
+})
+
 const onRequest = () => {
   requestToJoinWorkspace(props.workspace, props.location || 'discovery_card')
   if (props.workspace.discoverabilityAutoJoinEnabled) {
@@ -127,6 +135,7 @@ const onRequest = () => {
 
 const onDismiss = async () => {
   await dismissDiscoverableWorkspace(props.workspace.id)
+  emit('dismissed', props.workspace.id)
   mixpanel.track('Workspace Discovery Banner Dismissed', {
     workspaceId: props.workspace.id,
     location: 'discovery_card',

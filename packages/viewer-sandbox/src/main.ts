@@ -7,7 +7,7 @@ import {
   ViewModes,
   SelectionExtension,
   HybridCameraController,
-  OrientedSectionTool
+  SectionTool
 } from '@speckle/viewer'
 
 import './style.css'
@@ -46,7 +46,7 @@ const createViewer = async (containerName: string, _stream: string) => {
 
   viewer.createExtension(HybridCameraController)
   viewer.createExtension(SelectionExtension)
-  viewer.createExtension(OrientedSectionTool)
+  viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
   viewer.createExtension(MeasurementsExtension)
   viewer.createExtension(FilteringExtension)
@@ -117,10 +117,10 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
 
     //bad commit! not all items uploaded to server
-    // 'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
+    //'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
 
     // 'Super' heavy revit shit
-    //  'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
+    //'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
     // IFC building (good for a tree based structure)
     // 'https://latest.speckle.systems/streams/92b620fb17/commits/2ebd336223'
     // IFC story, a subtree of the above

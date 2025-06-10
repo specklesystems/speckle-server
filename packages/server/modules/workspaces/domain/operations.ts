@@ -83,6 +83,10 @@ export type GetWorkspacesBySlug = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
+export type GetWorkspacesNonComplete = (args: {
+  createdAtBefore: Date
+}) => Promise<{ workspaceId: string }[]>
+
 export type StoreWorkspaceDomain = (args: {
   workspaceDomain: WorkspaceDomain
 }) => Promise<void>

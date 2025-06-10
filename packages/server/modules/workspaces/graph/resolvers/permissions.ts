@@ -38,6 +38,13 @@ export default {
           workspaceId: parent.workspaceId
         })
       return Authz.toGraphqlResult(canEditEmbedOptions)
+    },
+    canReadMemberEmail: async (parent, _args, ctx) => {
+      const policyResult = await ctx.authPolicies.workspace.canReadMemberEmail({
+        userId: ctx.userId,
+        workspaceId: parent.workspaceId
+      })
+      return Authz.toGraphqlResult(policyResult)
     }
   }
 } as Resolvers

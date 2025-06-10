@@ -11,6 +11,9 @@ services:
     environment:
       FILE_SIZE_LIMIT_MB: '100'
       NGINX_ENVSUBST_OUTPUT_DIR: '/etc/nginx'
+    depends_on:
+      - speckle-server
+      - speckle-frontend-2
 
   speckle-frontend-2:
     build:
@@ -31,6 +34,9 @@ services:
       NUXT_REDIS_URL: 'redis://redis'
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
+    depends_on:
+      - speckle-server
+      # - redis
 
   speckle-server:
     build:
@@ -73,6 +79,7 @@ services:
       REDIS_URL: 'redis://redis'
       PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'true'
       PREVIEW_SERVICE_REDIS_URL: 'redis://redis'
+      FILEIMPORT_SERVICE_REDIS_URL: 'redis://redis'
 
       S3_ENDPOINT: 'http://minio:9000'
       S3_ACCESS_KEY: 'minioadmin'
@@ -85,6 +92,11 @@ services:
 
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
+    depends_on:
+      []
+      # - minio
+      # - redis
+      # - postgres
 
   preview-service:
     build:
@@ -101,6 +113,9 @@ services:
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
       REDIS_URL: 'redis://redis'
+    depends_on:
+      []
+      # - redis
 
   webhook-service:
     build:
@@ -113,6 +128,9 @@ services:
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
+    depends_on:
+      - speckle-server
+      # - postgres
 
   fileimport-service:
     build:
@@ -127,3 +145,6 @@ services:
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'
       FILE_IMPORT_TIME_LIMIT_MIN: 10
+    depends_on:
+      - speckle-server
+      # - postgres

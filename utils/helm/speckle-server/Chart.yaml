@@ -1,5 +1,5 @@
 apiVersion: v2
-# 'appVersion' is set by the build process to the correct value
+# When releasing, 'appVersion' is set by the Chart publishing process
 appVersion: '0.1.0-local'
 description: Speckle Server
 home: 'https://speckle.systems/'
@@ -11,5 +11,5 @@ name: speckle-server
 sources:
   - 'https://github.com/specklesystems/speckle-server'
 type: application
-# 'version' is set by the build process to the correct value
+# When releasing, 'version' is set by the Chart publishing process
 version: 0.1.0-local

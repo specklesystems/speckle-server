@@ -10,7 +10,7 @@ import {
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { PaidWorkspacePlans, PaidWorkspacePlanStatuses } from '@speckle/shared'
+import { WorkspacePlans, WorkspacePlanStatuses } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
 
@@ -18,8 +18,9 @@ const command: CommandModule<
   unknown,
   {
     workspaceSlugOrId: string
-    status: PaidWorkspacePlanStatuses
-    plan: PaidWorkspacePlans
+    // you need to know what you are doing, status and plan pairing validity is not ensured here
+    status: WorkspacePlanStatuses
+    plan: WorkspacePlans
   }
 > = {
   command: 'set-plan <workspaceSlugOrId> [plan] [status]',
@@ -32,8 +33,8 @@ const command: CommandModule<
     plan: {
       describe: 'Plan to set the status for',
       type: 'string',
-      default: PaidWorkspacePlans.Team,
-      choices: [PaidWorkspacePlans.Team, PaidWorkspacePlans.Pro]
+      default: WorkspacePlans.Team,
+      choices: Object.values(WorkspacePlans)
     },
     status: {
       describe: 'Status to set for the workspace plan',
