@@ -12,23 +12,28 @@ on:
         required: true
       CLOUDFLARE_API_TOKEN:
         required: true
+      DOCKER_REG_PASS:
+        required: true
+      DOCKER_REG_USER:
+        required: true
 
 jobs:
-  helm-chart:
+  helm-chart-oci:
     runs-on: blacksmith
-    name: Helm chart publish
     container:
-      image: python:3.12.1
+      image: speckle/pre-commit-runner:latest
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
+      DOCKER_REG_PASS: ${{ secrets.DOCKER_REG_PASS }}
+      DOCKER_REG_USER: ${{ secrets.DOCKER_REG_USER }}
+      DOCKER_HELM_REG_URL: registry-1.docker.io
+      CHART_NAME: speckle-server
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
       - name: Publish Helm Chart
-        run: echo "published!"
-      # TODO this: webfactory/ssh-agent@v0.9.0 ---
-      # - name: Publish Helm Chart
-      #  run: ./.github/workflows/scripts/publish_helm_chart.sh
-      # TODO: check CIRCLE_TAG, CIRCLE_BRANCH
+        run: ./.github/workflows/scripts/publish_helm_chart_oci.sh
 
   viewer-sandbox-cloudflare-pages:
     runs-on: blacksmith
