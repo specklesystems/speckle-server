@@ -1,3 +1,4 @@
+import Queue from '../../helpers/queue.js'
 import { Item } from '../../types/types.js'
 import { ItemQueue } from '../../workers/ItemQueue.js'
 import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
@@ -6,7 +7,17 @@ import { handleError, WorkerMessageType } from '../../workers/WorkerMessageType.
 import { Database } from '../interfaces.js'
 import IndexedDatabase from './indexedDatabase.js'
 
-const BUFFER_CAPACITY_BYTES = 1024 * 16 // 16KB capacity for each queue
+const BUFFER_CAPACITY_BYTES = 1024 * 1024 * 16 // 16KB capacity for each queue
+
+export interface WorkerMessage {
+  type?: string
+  mainToWorkerSab?: SharedArrayBuffer
+  mainToWorkerCapacityBytes?: number
+  workerToMainSab?: SharedArrayBuffer
+  workerToMainCapacityBytes?: number
+  error?: string
+  message?: string
+}
 
 export class WorkerDatabase implements Database {
   private indexedDbReaderWorker: Worker | null = null
@@ -15,17 +26,30 @@ export class WorkerDatabase implements Database {
   private workerCheckInterval: number | null = null
 
   private idb: Database = new IndexedDatabase({})
+  private foundItems?: Queue<Item>
+  private notFoundItems?: Queue<string>
 
-  getAll(keys: string[]): Promise<(Item | undefined)[]> {
-    throw new Error('Method not implemented.')
+  isDisposed(): boolean {
+    return this.idb.isDisposed()
+  }
+
+  async initializeQueues(
+    foundItems: Queue<Item>,
+    notFoundItems: Queue<string>
+  ): Promise<void> {
+    this.foundItems = foundItems
+    this.notFoundItems = notFoundItems
+    this.initialize()
+    void this.processWorkerMessages()
+    return Promise.resolve()
+  }
+
+  async findBatch(keys: string[]): Promise<void> {
+    await this.mainToWorkerQueue?.enqueue(keys)
   }
   cacheSaveBatch(params: { batch: Item[] }): Promise<void> {
     return this.idb.cacheSaveBatch(params)
   }
-  disposeAsync(): Promise<void> {
-    return this.idb.disposeAsync()
-  }
-
   private logToMainUI(message: string): void {
     console.log(`[Main] ${message}`)
   }
@@ -83,7 +107,7 @@ export class WorkerDatabase implements Database {
 
     this.logToMainUI('Starting Web Worker...')
     this.indexedDbReaderWorker = new Worker(
-      new URL('./IndexDbReaderWorker.js', import.meta.url),
+      new URL('./workers/IndexDbReaderWorker.js', window.location.origin),
       { type: 'module' }
     )
     this.initializeWorker(this.indexedDbReaderWorker)
@@ -99,7 +123,7 @@ export class WorkerDatabase implements Database {
   }
 
   private initializeWorker(worker: Worker): void {
-    worker.onmessage = (event): void => {
+    worker.onmessage = (event: MessageEvent<WorkerMessage>): void => {
       if (event.data && event.data.type === 'WORKER_READY') {
         this.logToMainUI('Worker is ready and has initialized both queues.')
         if (this.workerCheckInterval === null) {
@@ -139,10 +163,18 @@ export class WorkerDatabase implements Database {
   private async processWorkerMessages(): Promise<void> {
     if (!this.workerToMainQueue) return
     try {
-      const receivedItems = await this.workerToMainQueue.dequeue(10, 50)
-      if (receivedItems && receivedItems.length > 0) {
-        for (const item of receivedItems) {
-          this.logToWorkerResponseUI(JSON.stringify(item, null, 2))
+      while (!this.idb.isDisposed()) {
+        const receivedItems = await this.workerToMainQueue.dequeue(10, 50)
+        if (receivedItems && receivedItems.length > 0) {
+          for (const item of receivedItems) {
+            const i = JSON.stringify(item, null, 2)
+            this.logToWorkerResponseUI(i)
+            if (item.baseId) {
+              this.foundItems?.add(item)
+            } else {
+              this.notFoundItems?.add(item.baseId)
+            }
+          }
         }
       }
     } catch (e: unknown) {
@@ -150,7 +182,7 @@ export class WorkerDatabase implements Database {
     }
   }
 
-  public dispose(): void {
+  public async disposeAsync(): Promise<void> {
     if (this.indexedDbReaderWorker) {
       this.indexedDbReaderWorker.terminate()
       this.indexedDbReaderWorker = null
@@ -160,6 +192,7 @@ export class WorkerDatabase implements Database {
       clearInterval(this.workerCheckInterval)
       this.workerCheckInterval = null
     }
+    await this.idb.disposeAsync()
     this.logToMainUI('WorkerManager disposed.')
   }
 }

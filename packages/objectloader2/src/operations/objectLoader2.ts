@@ -7,6 +7,7 @@ import { CacheReader } from '../helpers/cacheReader.js'
 import { CachePump } from '../helpers/cachePump.js'
 import AggregateQueue from '../helpers/aggregateQueue.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
+import IndexedDatabase from './databases/indexedDatabase.js'
 
 export class ObjectLoader2 {
   #rootId: string
@@ -65,10 +66,12 @@ export class ObjectLoader2 {
 
   async getRootObject(): Promise<Item | undefined> {
     if (!this.#root) {
-      this.#root = (await this.#database.getAll([this.#rootId]))[0]
+      const idb = new IndexedDatabase({});
+      this.#root = (await idb.getAll([this.#rootId]))[0]
       if (!this.#root) {
         this.#root = await this.#downloader.downloadSingle()
       }
+      await idb.disposeAsync()
     }
     return this.#root
   }

@@ -12,12 +12,9 @@ export interface Downloader extends Queue<string> {
 }
 
 export interface Database {
-  //getAll(keys: string[]): Promise<(Item | undefined)[]>
-  findBatch(
-    keys: string[],
-    foundItems: Queue<Item>,
-    notFoundItems: Queue<string>
-  ): Promise<void>
+  initializeQueues(foundItems: Queue<Item>, notFoundItems: Queue<string>): Promise<void>
+  findBatch(keys: string[]): Promise<void>
   cacheSaveBatch(params: { batch: Item[] }): Promise<void>
   disposeAsync(): Promise<void>
+  isDisposed(): boolean
 }

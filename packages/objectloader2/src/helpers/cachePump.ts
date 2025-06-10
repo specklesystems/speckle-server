@@ -18,7 +18,6 @@ export class CachePump implements Pump {
   #gathered: AsyncGeneratorQueue<Item>
 
   #options: CacheOptions
-
   #disposed = false
 
   constructor(
@@ -56,12 +55,8 @@ export class CachePump implements Pump {
     return this.#disposed
   }
 
-  async pumpItems(params: {
-    ids: string[]
-    foundItems: Queue<Item>
-    notFoundItems: Queue<string>
-  }): Promise<void> {
-    const { ids, foundItems, notFoundItems } = params
+  async pumpItems(params: { ids: string[] }): Promise<void> {
+    const { ids } = params
     const maxCacheReadSize = this.#options.maxCacheReadSize
 
     for (let i = 0; i < ids.length; ) {
@@ -74,7 +69,7 @@ export class CachePump implements Pump {
         continue
       }
       const batch = ids.slice(i, i + maxCacheReadSize)
-      await this.#database.findBatch(batch, foundItems, notFoundItems)
+      await this.#database.findBatch(batch)
       /*const cachedData = await this.#database.getAll(batch)
       for (let i = 0; i < cachedData.length; i++) {
         if (cachedData[i]) {
@@ -89,10 +84,10 @@ export class CachePump implements Pump {
 
   async *gather(ids: string[], downloader: Downloader): AsyncGenerator<Item> {
     const total = ids.length
+
+    await this.#database.initializeQueues(this.#gathered, downloader)
     const pumpPromise = this.pumpItems({
-      ids,
-      foundItems: this.#gathered,
-      notFoundItems: downloader
+      ids
     })
     let count = 0
     for await (const item of this.#gathered.consume()) {

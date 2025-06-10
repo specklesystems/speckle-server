@@ -2,10 +2,10 @@
   "name": "@speckle/objectloader2",
   "version": "1.0.0",
   "description": "This is an updated objectloader for the Speckle viewer written in typescript",
-  "main": "./dist/commonjs/index.js",
+  "main": "./dist/esm/index.js",
   "module": "./dist/esm/index.js",
   "homepage": "https://speckle.systems",
-  "types": "./dist/commonjs/index.d.ts",
+  "types": "./dist/esm/index.d.ts",
   "type": "module",
   "repository": {
     "type": "git",
@@ -57,10 +57,6 @@
       "import": {
         "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/index.d.ts",
-        "default": "./dist/commonjs/index.js"
       }
     }
   },

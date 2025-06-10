@@ -129,7 +129,7 @@ export class RingBuffer {
   }
 
   // data is Uint8Array, so data.length is number of bytes (elements)
-  push(data: Uint8Array, timeoutMs: number = Infinity): boolean {
+  async push(data: Uint8Array, timeoutMs: number = Infinity): Promise<boolean> {
     const dataLengthElements = data.length // For Uint8Array, length is number of elements
     if (dataLengthElements === 0) return true
     if (dataLengthElements > this.capacity) {
@@ -175,7 +175,6 @@ export class RingBuffer {
         // currentWriteIndex < currentReadIndex
         space = currentReadIndex - currentWriteIndex - 1
       }
-      console.log('space ', space)
 
       // Calculate actual contiguous and total available space more directly
       let availableSlots
@@ -216,14 +215,14 @@ export class RingBuffer {
         // A reader is interested when write_idx changes making data.
         // So, writer should wait on read_idx. But we can't predict what read_idx will become.
         // Let's make writer wait on its own write_idx, hoping a reader will notify it on 0 (write_idx_pos).
-        const outcome = Atomics.wait(
+        const outcome = await Atomics.waitAsync(
           this.controlBuffer,
           RingBuffer.WRITE_IDX_POS,
           currentWriteIndex,
           remainingTimeout
         )
 
-        if (outcome === 'timed-out') {
+        if (outcome.value === 'timed-out') {
           return false
         }
         // if 'ok' or 'not-equal', loop again to re-check space

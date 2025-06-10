@@ -90,7 +90,7 @@ export class RingBufferQueue {
       const remainingTimeout = timeoutMs - (loopStartTime - overallStartTime)
       if (remainingTimeout <= 0 && timeoutMs !== Infinity) break
 
-      const lengthBytes = await this.ringBuffer.shift(
+      const lengthBytes = this.ringBuffer.shift(
         RingBufferQueue.LENGTH_PREFIX_BYTES,
         remainingTimeout
       )
@@ -123,7 +123,7 @@ export class RingBufferQueue {
       const dataShiftTimeout = timeoutMs - (Date.now() - overallStartTime)
       if (dataShiftTimeout <= 0 && timeoutMs !== Infinity) break
 
-      const dataBytes = await this.ringBuffer.shift(messageLength, dataShiftTimeout)
+      const dataBytes =  this.ringBuffer.shift(messageLength, dataShiftTimeout)
       if (!dataBytes) {
         break
       }
