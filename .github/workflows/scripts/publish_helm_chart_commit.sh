@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-echo "🏷️ Setting envs for"
+echo "🏷️ Setting envs"
 
 GIT_ROOT="$(git rev-parse --show-toplevel)"
 GIT_HELM="$(dirname "$GIT_ROOT")/helm"
