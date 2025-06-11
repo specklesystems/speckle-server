@@ -41,7 +41,7 @@ if [[ "${GITHUB_REF}" == refs/tags/* || "${GITHUB_REF_NAME}" == "${HELM_STABLE_B
   CURRENT_VERSION="$(grep ^version "${GIT_HELM}/charts/speckle-server/Chart.yaml"  | grep -o '2\..*')"
   echo "ℹ️ Current version ${CURRENT_VERSION}"
 
-  .github/workflows/scripts/check_version.py "${CURRENT_VERSION}" "${RELEASE_VERSION}"
+  "${GIT_ROOT}/workflows/scripts/check_version.py" "${CURRENT_VERSION}" "${RELEASE_VERSION}"
   if [ $? -eq 1 ]
   then
     echo "The current helm chart version '${CURRENT_VERSION}' is newer than the version '${RELEASE_VERSION}' we are attempting to publish. Exiting"
