@@ -11,25 +11,24 @@ import {
   WorkspacesNotEnabledError
 } from '../../domain/authErrors.js'
 import { canReadMemberEmailPolicy } from './canReadMemberEmail.js'
+import { getWorkspaceFake } from '../../../tests/fakes.js'
 
 describe('canReadMemberEmailPolicy', () => {
+  const workspaceId = cryptoRandomString({ length: 9 })
+
   const buildCanReadMemberEmailPolicy = (
     overrides?: Partial<Parameters<typeof canReadMemberEmailPolicy>[0]>
   ) => {
-    const workspaceId = cryptoRandomString({ length: 9 })
-
     return canReadMemberEmailPolicy({
       getEnv: async () =>
         parseFeatureFlags({
           FF_WORKSPACES_MODULE_ENABLED: 'true'
         }),
       getServerRole: async () => Roles.Server.Admin,
-      getWorkspace: async () => {
-        return {
-          id: workspaceId,
-          slug: cryptoRandomString({ length: 9 })
-        }
-      },
+      getWorkspace: getWorkspaceFake({
+        id: workspaceId,
+        slug: cryptoRandomString({ length: 9 })
+      }),
       getWorkspaceRole: async () => Roles.Workspace.Admin,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -48,7 +47,7 @@ describe('canReadMemberEmailPolicy', () => {
 
   const getPolicyArgs = () => ({
     userId: cryptoRandomString({ length: 9 }),
-    workspaceId: cryptoRandomString({ length: 9 })
+    workspaceId
   })
   it('returns error if workspaces is not enabled', async () => {
     const policy = buildCanReadMemberEmailPolicy({
