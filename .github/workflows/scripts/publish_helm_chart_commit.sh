@@ -34,19 +34,6 @@ yq e -i ".appVersion = \"${RELEASE_VERSION}\"" "${GIT_ROOT}/utils/helm/speckle-s
 yq e -i ".docker_image_tag = \"${RELEASE_VERSION}\"" "${GIT_ROOT}/utils/helm/speckle-server/values.yaml"
 
 if [[ "${GITHUB_REF}" == refs/tags/* || "${GITHUB_REF_NAME}" == "${HELM_STABLE_BRANCH}" ]]; then
-  echo "⚠️ prod release ${RELEASE_VERSION}"
-  # before overwriting the chart with the build version, check if the current chart version
-  # is not newer than the currently build one
-
-  CURRENT_VERSION="$(grep ^version "${GIT_HELM}/charts/speckle-server/Chart.yaml"  | grep -o '2\..*')"
-  echo "ℹ️ Current version ${CURRENT_VERSION}"
-
-  "${GIT_ROOT}/.github/workflows/scripts/check_version.py" "${CURRENT_VERSION}" "${RELEASE_VERSION}"
-  if [ $? -eq 1 ]
-  then
-    echo "The current helm chart version '${CURRENT_VERSION}' is newer than the version '${RELEASE_VERSION}' we are attempting to publish. Exiting"
-    exit 1
-  fi
   rm -rf "${GIT_HELM}/charts/speckle-server"
   cp -r "${GIT_ROOT}/utils/helm/speckle-server" "${GIT_HELM}/charts/speckle-server"
 else
