@@ -29,10 +29,12 @@ aliases:
 
   - &filters-only-main-hotfix-testing
     branches:
-      only: &branches-special
-        - main
-        - /^hotfix.*$/
-        - /^testing\d*$/
+      ignore: /.*/
+
+  - &branches-special
+    - main
+    - /^hotfix.*$/
+    - /^testing\d*$/
 
 workflows:
   test-build:
