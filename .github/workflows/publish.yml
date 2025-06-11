@@ -46,11 +46,6 @@ jobs:
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
     steps:
-      - run: apt-get update -y
-      - run: apt-get install -y wget
-      - run:
-          wget https://github.com/mikefarah/yq/releases/download/v4.9.6/yq_linux_386 -O /usr/bin/yq \
-          && chmod +x /usr/bin/yq
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
