@@ -55,7 +55,7 @@ jobs:
           repository: specklesystems/helm
           path: helm
           token: ${{ secrets.GH_DEVOPS_PAT }}
-      - run: apt-get update
+      - run: apt-get update -y
       - run: apt-get install software-properties-common
       - run: add-apt-repository ppa:rmescandon/yq
       - run: apt-get install yq
