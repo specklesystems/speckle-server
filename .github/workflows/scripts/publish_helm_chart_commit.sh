@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-echo "🏷️ Setting envs"
+echo "🏷️ Setting envs for"
 
 GIT_ROOT="$(git rev-parse --show-toplevel)"
 GIT_HELM="$(dirname "$GIT_ROOT")/helm"
@@ -14,6 +14,10 @@ RELEASE_VERSION="${IMAGE_VERSION_TAG}"
 HELM_STABLE_BRANCH="${HELM_STABLE_BRANCH:-"main"}"
 
 
+if [[ -z "${RELEASE_VERSION}" ]]; then
+  echo "IMAGE_VERSION_TAG is not set: ${IMAGE_VERSION_TAG} ${RELEASE_VERSION}"
+  exit 1
+fi
 if [ ! -d "${GIT_HELM}/.git" ]; then
   echo "helm repo not found at ${GIT_HELM} "
   exit 1
