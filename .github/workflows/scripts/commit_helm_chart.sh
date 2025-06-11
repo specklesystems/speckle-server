@@ -2,6 +2,8 @@
 
 set -eo pipefail
 
+echo "🏷️ Setting envs"
+
 GIT_REPO=$( pwd )
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shellcheck disable=SC1090,SC1091
