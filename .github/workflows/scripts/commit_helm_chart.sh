@@ -14,7 +14,7 @@ RELEASE_VERSION="${IMAGE_VERSION_TAG}"
 HELM_STABLE_BRANCH="${HELM_STABLE_BRANCH:-"main"}"
 
 
-if [ ! -d "${GIT_HELM}/.git" & ]; then
+if [ ! -d "${GIT_HELM}/.git" ]; then
   echo "helm repo not found at ${GIT_HELM} "
   exit 1
 fi

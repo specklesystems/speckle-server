@@ -54,6 +54,7 @@ jobs:
           repository: specklesystems/helm
           path: helm
           # token: ${{ secrets.GITHUB_DEVOPS_PAT }}
+      - run: apk add yq
       - run: chmod +x ./.github/workflows/scripts/commit_helm_chart.sh
         working-directory: speckle
       - name: Commit Helm Chart
