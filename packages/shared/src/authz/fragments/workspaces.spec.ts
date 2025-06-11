@@ -17,6 +17,7 @@ import {
 import { OverridesOf } from '../../tests/helpers/types.js'
 import { parseFeatureFlags } from '../../environment/index.js'
 import { Roles } from '../../core/constants.js'
+import { getWorkspaceFake } from '../../tests/fakes.js'
 
 describe('ensureWorkspaceRoleAndSessionFragment', () => {
   it('hides non existing workspaces behind a WorkspaceNoAccessError', async () => {
@@ -41,7 +42,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
   })
   it('returns WorkspaceNoAccessError if the user does not have a workspace role', async () => {
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -62,7 +63,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
   })
   it('returns ok w/o checking session if user is a workspace guest', async () => {
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -81,7 +82,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
   })
   it('returns just(ok()) if user is a member and workspace has no SSO provider', async () => {
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -98,7 +99,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
   })
   it('returns WorkspaceSsoSessionInvalidError if user does not have an SSO session', async () => {
     const result = ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -126,7 +127,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
     validUntil.setDate(validUntil.getDate() - 1)
 
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -154,7 +155,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
     validUntil.setDate(validUntil.getDate() + 100)
 
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -213,12 +214,10 @@ describe('ensureUserIsWorkspaceAdminFragment', () => {
           FF_WORKSPACES_MODULE_ENABLED: 'true'
         }),
       getServerRole: async () => Roles.Server.Admin,
-      getWorkspace: async () => {
-        return {
-          id: workspaceId,
-          slug: cryptoRandomString({ length: 9 })
-        }
-      },
+      getWorkspace: getWorkspaceFake({
+        id: workspaceId,
+        slug: cryptoRandomString({ length: 9 })
+      }),
       getWorkspaceRole: async () => Roles.Workspace.Admin,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
