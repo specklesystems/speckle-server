@@ -23,6 +23,7 @@ jobs:
   helm-chart-oci:
     runs-on: blacksmith
     name: Helm chart oci
+    if: false
     container:
       image: speckle/pre-commit-runner:latest
     env:
@@ -54,7 +55,7 @@ jobs:
           repository: specklesystems/helm
           path: helm
           # token: ${{ secrets.GITHUB_DEVOPS_PAT }}
-      - run: apk add yq
+      - run: apt-get install yq
       - run: chmod +x ./.github/workflows/scripts/commit_helm_chart.sh
         working-directory: speckle
       - name: Commit Helm Chart
@@ -64,6 +65,7 @@ jobs:
   viewer-sandbox-cloudflare-pages:
     runs-on: blacksmith
     name: Viewer sandbox cloudflare pages
+    if: false # TODO: remove
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
