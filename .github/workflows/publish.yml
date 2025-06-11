@@ -22,6 +22,7 @@ on:
 jobs:
   helm-chart-oci:
     runs-on: blacksmith
+    name: Helm chart oci
     container:
       image: speckle/pre-commit-runner:latest
     env:
@@ -49,7 +50,7 @@ jobs:
           path: speckle
       - uses: actions/checkout@v4.2.2
         with:
-          repository: specklesystems/helm.git
+          repository: specklesystems/helm
           path: helm
           # token: ${{ secrets.GITHUB_DEVOPS_PAT }}
       - name: Commit Helm Chart
