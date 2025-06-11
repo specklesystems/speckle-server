@@ -27,6 +27,7 @@
     "lint:tsc": "tsc --noEmit",
     "lint:eslint": "eslint .",
     "start": "node ./bin/www.js",
+    "start:pm2": "pm2 start --attach ./bin/www.js",
     "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest run --sequence.shuffle",
     "downloadBlob": "node scripts/downloadBlob.js",
     "publishTask": "tsx --env-file=.env scripts/publishTask.ts"
@@ -62,6 +63,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-vitest": "^0.5.4",
     "nodemon": "^2.0.20",
+    "pm2": "^6.0.8",
     "prettier": "^2.5.1",
     "rimraf": "^5.0.7",
     "tsx": "^4.19.4",
