@@ -48,14 +48,14 @@ graphql(`
   }
 `)
 
-export const useWorkspacePlan = (slug: string) => {
+export const useWorkspacePlan = (slug: MaybeRef<string>) => {
   const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
   const { prices } = useActiveWorkspacePlanPrices()
 
   const { result } = useQuery(
     workspacePlanQuery,
     () => ({
-      slug
+      slug: unref(slug)
     }),
     () => ({
       enabled: isBillingIntegrationEnabled.value
@@ -129,6 +129,11 @@ export const useWorkspacePlan = (slug: string) => {
     })
   })
 
+  const editorSeatPriceWithIntervalFormatted = computed(() => {
+    const price = editorSeatPriceFormatted.value
+    return `${price}/${intervalIsYearly.value ? 'year' : 'month'}`
+  })
+
   return {
     plan,
     statusIsCanceled,
@@ -141,6 +146,7 @@ export const useWorkspacePlan = (slug: string) => {
     seats,
     hasAvailableEditorSeats,
     editorSeatPriceFormatted,
+    editorSeatPriceWithIntervalFormatted,
     isUnlimitedPlan,
     isBusinessPlan,
     isPaidPlan,

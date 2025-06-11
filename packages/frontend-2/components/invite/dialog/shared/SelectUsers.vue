@@ -51,7 +51,9 @@
         </FormButton>
       </div>
     </div>
-    <slot />
+    <p class="text-body-2xs text-foreground-2 leading-5">
+      {{ infoText }}
+    </p>
   </form>
 </template>
 <script setup lang="ts">
@@ -63,15 +65,22 @@ import type {
 } from '~~/lib/invites/helpers/types'
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  Roles,
+  type WorkspaceRoles,
+  type MaybeNullOrUndefined,
+  SeatTypes
+} from '@speckle/shared'
 import { canHaveRole } from '~/lib/invites/helpers/validation'
 import { parsePastedEmails } from '~/lib/invites/helpers/helpers'
 import { graphql } from '~/lib/common/generated/gql'
 import type { InviteDialogSharedSelectUsers_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment InviteDialogSharedSelectUsers_Workspace on Workspace {
     id
+    slug
     defaultSeatType
   }
 `)
@@ -94,9 +103,19 @@ const {
   remove: removeInvite
 } = useFieldArray<InviteWorkspaceItem>('fields')
 
+const workspaceSlug = computed(() => props.workspace?.slug || '')
+const { isPaidPlan, editorSeatPriceWithIntervalFormatted } =
+  useWorkspacePlan(workspaceSlug)
+
+const infoText = computed(() => {
+  if (!isPaidPlan.value) return ''
+  return `Viewer seats are free. You'll be charged ${editorSeatPriceWithIntervalFormatted.value} for each Editor seat when they accept. We'll use any unused Editor seats from your plan first.`
+})
+
 const addInviteItem = () => {
   pushInvite({
     ...emptyInviteWorkspaceItem,
+    seatType: props.workspace?.defaultSeatType || SeatTypes.Viewer,
     workspaceRole: props.targetRole || Roles.Workspace.Guest,
     projectRole: Roles.Stream.Reviewer
   })
