@@ -54,7 +54,7 @@ fi
 
 echo "💾 Pushing commit"
 
-cd ${GIT_HELM}
+cd "${GIT_HELM}"
 
 git add .
 git -c user.email="devops+gha@speckle.systems" -c user.name="CI" commit -m "Github action commit for version '${RELEASE_VERSION}'"
