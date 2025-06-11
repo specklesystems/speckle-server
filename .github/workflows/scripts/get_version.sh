@@ -11,7 +11,7 @@ if [[ "${GITHUB_REF}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 if [[ "${GITHUB_HEAD_REF}" == "main" ]]; then
-    echo "${NEXT_RELEASE}-alpha.${GITHUB_RUN_ID}"
+    echo "${NEXT_RELEASE}-alpha.${GITHUB_RUN_NUMBER}"
     exit 0
 fi
 
@@ -21,5 +21,5 @@ if [[ "${BRANCH_NAME_TRUNCATED}" =~ "_" ]]; then
     exit 1
 fi
 
-echo "${NEXT_RELEASE}-branch.${BRANCH_NAME_TRUNCATED}.${GITHUB_RUN_ID}-${COMMIT_SHA1_TRUNCATED}"
+echo "${NEXT_RELEASE}-branch.${BRANCH_NAME_TRUNCATED}.${GITHUB_RUN_NUMBER}-${COMMIT_SHA1_TRUNCATED}"
 exit 0
