@@ -29,10 +29,18 @@ aliases:
 
   - &filters-only-main-hotfix-testing
     branches:
-      only: &branches-special
-        - main
-        - /^hotfix.*$/
-        - /^testing\d*$/
+      ignore: /.*/
+
+  - &filters-publish
+    branches:
+      ignore: /.*/
+    tags:
+      ignore: /.*/
+
+  - &branches-special
+    - main
+    - /^hotfix.*$/
+    - /^testing\d*$/
 
 workflows:
   test-build:
@@ -353,11 +361,7 @@ workflows:
             - test-preview-service
 
       - publish-helm-chart:
-          filters: &filters-publish
-            branches:
-              only: *branches-special
-            tags:
-              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
+          filters: *filters-publish
           requires:
             # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
             - deployment-test-helm-chart
@@ -372,11 +376,7 @@ workflows:
             - get-version
 
       - publish-helm-chart-oci:
-          filters: &filters-publish
-            branches:
-              only: *branches-special
-            tags:
-              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
+          filters: *filters-publish
           context:
             - docker-hub
           requires:
@@ -395,7 +395,7 @@ workflows:
       - publish-npm:
           filters:
             tags:
-              only: *filters-tag
+              ignore: /.*/
             branches:
               ignore: /.*/
           context:
@@ -1147,9 +1147,6 @@ jobs:
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart_oci.sh
-          environment:
-            DOCKER_HELM_REG_URL: registry-1.docker.io
-            CHART_NAME: speckle-server
 
   publish-viewer-sandbox-cloudflare-pages:
     <<: *docker-node-image
