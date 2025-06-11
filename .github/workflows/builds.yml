@@ -34,6 +34,8 @@ jobs:
           push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/server/Dockerfile
+          build-args: |
+            SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
 
   docker-build-frontend2:
     runs-on: blacksmith
@@ -50,6 +52,8 @@ jobs:
           push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/frontend-2/Dockerfile
+          build-args: |
+            SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
 
   docker-build-preview-service:
     runs-on: blacksmith
