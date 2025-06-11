@@ -87,6 +87,7 @@ graphql(`
       }
     }
     ...InviteDialogSharedSelectUsers_Workspace
+    ...WorkspacesPlan_Workspace
   }
 `)
 

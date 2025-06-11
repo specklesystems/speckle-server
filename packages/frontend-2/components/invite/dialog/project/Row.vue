@@ -174,6 +174,7 @@ const searchQuery = graphql(`
       id
       invitableCollaborators(filter: $filter) {
         items {
+          id
           user {
             id
             name
@@ -208,7 +209,6 @@ const menuEl = ref<HTMLDivElement | null>(null)
 const listboxButton = ref<HTMLDivElement | null>(null)
 const search = ref('')
 const input = ref('')
-const selectedUser = ref<SelectedUser | null>(null)
 const showDropdownState = ref(false)
 const activeIndex = ref(-1)
 const suggestionRefs = ref<HTMLButtonElement[]>([])
@@ -275,12 +275,13 @@ const email = computed({
   }
 })
 
-const userId = computed({
-  get: () => props.modelValue.userId,
+const selectedUser = computed({
+  get: () => props.modelValue.userInfo,
   set: (value) => {
     emit('update:modelValue', {
       ...props.modelValue,
-      userId: value
+      userInfo: value ? { ...value } : value,
+      userId: value ? value.user.id : undefined
     })
   }
 })
@@ -336,7 +337,8 @@ const handleClear = () => {
   selectedUser.value = null
   emit('update:modelValue', {
     ...props.modelValue,
-    userId: undefined
+    userId: undefined,
+    userInfo: undefined
   })
 }
 
@@ -384,7 +386,6 @@ const focusActiveItem = () => {
 }
 
 const selectSuggestion = (user: SelectedUser) => {
-  userId.value = user.user.id
   selectedUser.value = user
   search.value = ''
   input.value = user.user.name
