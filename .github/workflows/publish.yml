@@ -23,7 +23,6 @@ jobs:
   helm-chart-oci:
     runs-on: blacksmith
     name: Helm chart oci
-    if: false
     container:
       image: speckle/pre-commit-runner:latest
     env:
