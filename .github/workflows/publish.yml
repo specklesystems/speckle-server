@@ -17,8 +17,8 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
-      # GITHUB_DEVOPS_PAT:
-      #   required: true
+      GH_DEVOPS_PAT:
+        required: true
 jobs:
   helm-chart-oci:
     runs-on: blacksmith
@@ -54,8 +54,10 @@ jobs:
         with:
           repository: specklesystems/helm
           path: helm
-          # token: ${{ secrets.GITHUB_DEVOPS_PAT }}
-      - run: apt-get install yq
+          token: ${{ secrets.GH_DEVOPS_PAT }}
+      - run: add-apt-repository ppa:rmescandon/yq
+      - run: apt update
+      - run: apt install yq
       - run: chmod +x ./.github/workflows/scripts/commit_helm_chart.sh
         working-directory: speckle
       - name: Commit Helm Chart

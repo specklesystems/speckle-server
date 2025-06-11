@@ -59,5 +59,5 @@ cd ${GIT_HELM}
 cat ./charts/speckle-server-branch-${BRANCH_NAME_TRUNCATED}
 
 #git add .
-#git -c user.email="devops+circleci@speckle.systems" -c user.name="CI" commit -m "CircleCI commit for version '${RELEASE_VERSION}'"
+#git -c user.email="devops+gha@speckle.systems" -c user.name="CI" commit -m "Github action commit for version '${RELEASE_VERSION}'"
 #git push
