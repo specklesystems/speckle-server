@@ -44,7 +44,7 @@ import {
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
-import { isNullOrUndefined, Roles } from '@speckle/shared'
+import { isNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
 import {
   ServerAclRecord,
   BranchRecord,
@@ -104,7 +104,10 @@ export const getUserEligibleWorkspacesFactory =
     const q = tables
       .workspaces(db)
       .distinctOn(Workspaces.col.id)
-      .select<LimitedWorkspace[]>(Workspaces.cols)
+      .select<LimitedWorkspace & { role?: WorkspaceRoles }[]>([
+        ...Workspaces.cols,
+        DbWorkspaceAcl.col.role
+      ])
       .joinRaw(
         `left join ${DbWorkspaceAcl.name}
         on ${Workspaces.col.id} = ${DbWorkspaceAcl.name}."${DbWorkspaceAcl.withoutTablePrefix.col.workspaceId}"

@@ -45,7 +45,24 @@ export const canCreateWorkspacePolicy: AuthPolicy<
 
     // userId is not null here, ensured by the serverRoleFragment
     const workspaces = await loaders.getUserEligibleWorkspaces({ userId: userId! })
-    const isUserEligibleForExclusiveWorkspaces = workspaces.some((w) => w.isExclusive)
+    const isUserEligibleForExclusiveWorkspaces = workspaces.some((w) => {
+      if (w.isExclusive) {
+        // if the user has no role in the workspace, means they are eligible
+        // to join it via an invite or discovery
+        if (!w.role) return true
+        // for exclusive workspaces, if the user has a role, some of them are not affected by this policy
+        // ie.: Workspace admins of exclusive workspaces should be able to create new ones
+        //      also guests should not be bound by this rule
+        switch (w.role) {
+          case Roles.Workspace.Admin:
+          case Roles.Workspace.Guest:
+            return false
+          case Roles.Workspace.Member:
+            return true
+        }
+      }
+      return false
+    })
 
     if (isUserEligibleForExclusiveWorkspaces) {
       return err(new EligibleForExclusiveWorkspaceError())

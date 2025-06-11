@@ -178,7 +178,177 @@ describe('canCreateWorkspacePolicy creates a function, that handles', () => {
               id: cryptoRandomString({ length: 10 }),
               name: 'Exclusive Workspace',
               slug: 'exclusive-workspace',
-              isExclusive: true
+              isExclusive: true,
+              role: Roles.Workspace.Admin
+            }
+          ]
+        }
+      })({ userId })
+
+      expect(result).toBeAuthOKResult()
+    })
+
+    it('allows creation for workspace admins of exclusive workspaces', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const result = await canCreateWorkspacePolicy({
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+        getServerRole: async () => {
+          return Roles.Server.User
+        },
+        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+          expect(queriedUserId).toBe(userId)
+          return [
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace',
+              slug: 'exclusive-workspace',
+              isExclusive: true,
+              role: Roles.Workspace.Admin
+            }
+          ]
+        }
+      })({ userId })
+
+      expect(result).toBeAuthOKResult()
+    })
+
+    it('allows creation for workspace guests of exclusive workspaces', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const result = await canCreateWorkspacePolicy({
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+        getServerRole: async () => {
+          return Roles.Server.User
+        },
+        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+          expect(queriedUserId).toBe(userId)
+          return [
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace',
+              slug: 'exclusive-workspace',
+              isExclusive: true,
+              role: Roles.Workspace.Guest
+            }
+          ]
+        }
+      })({ userId })
+
+      expect(result).toBeAuthOKResult()
+    })
+
+    it('forbids creation for workspace members of exclusive workspaces', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const result = await canCreateWorkspacePolicy({
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+        getServerRole: async () => {
+          return Roles.Server.User
+        },
+        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+          expect(queriedUserId).toBe(userId)
+          return [
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace',
+              slug: 'exclusive-workspace',
+              isExclusive: true,
+              role: Roles.Workspace.Member
+            }
+          ]
+        }
+      })({ userId })
+
+      expect(result).toBeAuthErrorResult({
+        code: EligibleForExclusiveWorkspaceError.code
+      })
+    })
+
+    it('forbids creation for workspace admins if they have a member role on an exclusive workspace', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const result = await canCreateWorkspacePolicy({
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+        getServerRole: async () => {
+          return Roles.Server.User
+        },
+        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+          expect(queriedUserId).toBe(userId)
+          return [
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace 1',
+              slug: 'exclusive-workspace-1',
+              isExclusive: true,
+              role: Roles.Workspace.Admin
+            },
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace 2',
+              slug: 'exclusive-workspace-2',
+              isExclusive: true,
+              role: Roles.Workspace.Member
+            }
+          ]
+        }
+      })({ userId })
+
+      expect(result).toBeAuthErrorResult({
+        code: EligibleForExclusiveWorkspaceError.code
+      })
+    })
+
+    it('allows creation for workspace admins even with mixed exclusive workspace roles', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const result = await canCreateWorkspacePolicy({
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+        getServerRole: async () => {
+          return Roles.Server.User
+        },
+        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+          expect(queriedUserId).toBe(userId)
+          return [
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace 1',
+              slug: 'exclusive-workspace-1',
+              isExclusive: true,
+              role: Roles.Workspace.Admin
+            },
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace 2',
+              slug: 'exclusive-workspace-2',
+              isExclusive: true,
+              role: Roles.Workspace.Guest
+            }
+          ]
+        }
+      })({ userId })
+
+      expect(result).toBeAuthOKResult()
+    })
+
+    it('allows creation when all workspace roles pass the policy', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const result = await canCreateWorkspacePolicy({
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+        getServerRole: async () => {
+          return Roles.Server.User
+        },
+        getUserEligibleWorkspaces: async ({ userId: queriedUserId }) => {
+          expect(queriedUserId).toBe(userId)
+          return [
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace 1',
+              slug: 'exclusive-workspace-1',
+              isExclusive: false,
+              role: Roles.Workspace.Member
+            },
+            {
+              id: cryptoRandomString({ length: 10 }),
+              name: 'Exclusive Workspace 2',
+              slug: 'exclusive-workspace-2',
+              isExclusive: true,
+              role: Roles.Workspace.Guest
             }
           ]
         }
