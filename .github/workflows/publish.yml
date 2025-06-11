@@ -17,6 +17,8 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
+      # GITHUB_DEVOPS_PAT:
+      #   required: true
 jobs:
   helm-chart-oci:
     runs-on: blacksmith
@@ -33,6 +35,26 @@ jobs:
       - run: git config --global --add safe.directory $PWD
       - name: Publish Helm Chart
         run: ./.github/workflows/scripts/publish_helm_chart_oci.sh
+
+  helm-chart-commit:
+    runs-on: blacksmith
+    name: Helm chart commit
+    container:
+      image: python:3.12.1
+    env:
+      IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          path: speckle
+      - uses: actions/checkout@v4.2.2
+        with:
+          repository: specklesystems/helm.git
+          path: helm
+          # token: ${{ secrets.GITHUB_DEVOPS_PAT }}
+      - name: Commit Helm Chart
+        run: ./.github/workflows/scripts/commit_helm_chart.sh
+        working-directory: speckle
 
   viewer-sandbox-cloudflare-pages:
     runs-on: blacksmith
