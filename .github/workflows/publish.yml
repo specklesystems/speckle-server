@@ -42,14 +42,15 @@ jobs:
     runs-on: blacksmith
     name: Helm chart commit
     container:
-      image: python:3.12.1
+      image: bitnami/python:3.12.0
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
     steps:
       - run: apt-get update -y
-      - run: apt-get install software-properties-common -y
-      - run: add-apt-repository ppa:rmescandon/yq
-      - run: apt-get install yq
+      - run: apt-get install -y wget
+      - run:
+          wget https://github.com/mikefarah/yq/releases/download/v4.9.6/yq_linux_386 -O /usr/bin/yq \
+          && chmod +x /usr/bin/yq
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
