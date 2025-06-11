@@ -50,7 +50,6 @@ jobs:
       - run: apt-get install -y wget
       - run: wget -qO /usr/local/bin/yq github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
       - run: chmod a+x /usr/local/bin/yq
-      - run: yq --version # TODO: remove
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
