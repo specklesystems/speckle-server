@@ -270,8 +270,8 @@ export type ValidateWorkspaceMemberProjectRole = (params: {
    * if a planned workspace member will have valid access to a project
    */
   workspaceAccess?: {
-    role: WorkspaceRoles
-    seatType: WorkspaceSeatType
+    role?: WorkspaceRoles
+    seatType?: WorkspaceSeatType
   }
 }) => Promise<void>
 

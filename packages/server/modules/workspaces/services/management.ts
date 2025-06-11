@@ -426,12 +426,7 @@ export const addOrUpdateWorkspaceRoleFactory =
     seatType
   }): Promise<void> => {
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
-
-    // Return early if no work required
     const previousWorkspaceRole = workspaceRoles.find((acl) => acl.userId === userId)
-    if (previousWorkspaceRole?.role === nextWorkspaceRole) {
-      return
-    }
 
     // prevent role downgrades (used during invite flow)
     if (preventRoleDowngrade) {

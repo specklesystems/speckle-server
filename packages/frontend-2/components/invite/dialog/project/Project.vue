@@ -196,7 +196,7 @@ const sendInvites = handleSubmit(async () => {
     .filter((invite) => invite.value.email || invite.value.userId)
     .map((invite) => invite.value)
 
-  const inputs: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[] =
+  const inputs: Array<ProjectInviteCreateInput | WorkspaceProjectInviteCreateInput> =
     invites.map((u) => ({
       role: u.projectRole,
       ...(isInWorkspace.value
@@ -204,10 +204,13 @@ const sendInvites = handleSubmit(async () => {
           ? { email: u.email }
           : { userId: u.userId }
         : { email: u.email }),
-      ...(props.project?.workspace?.id
+      ...(isInWorkspace.value
         ? {
-            workspaceRole: Roles.Workspace.Guest
+            workspaceRole: u.userInfo?.role || Roles.Workspace.Guest
           }
+        : {}),
+      ...(isInWorkspace.value && u.projectRole !== Roles.Stream.Reviewer
+        ? { seatType: SeatTypes.Editor }
         : {})
     }))
 

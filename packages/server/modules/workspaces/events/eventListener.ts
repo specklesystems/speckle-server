@@ -787,10 +787,20 @@ const blockInvalidWorkspaceProjectRoleUpdatesFactory =
     const project = await deps.getStream({ streamId: payload.projectId })
     if (!project?.workspaceId) return // No extra validation necessary
 
+    // Does this come from an invite that plans to increase seat?
+    const plannedSeatType = payload.fromInvite?.resource.workspaceSeatType
+
     await deps.validateWorkspaceMemberProjectRole({
       userId: payload.targetUserId,
       projectRole: payload.role,
-      workspaceId: project.workspaceId
+      workspaceId: project.workspaceId,
+      ...(plannedSeatType
+        ? {
+            workspaceAccess: {
+              seatType: plannedSeatType
+            }
+          }
+        : {})
     })
   }
 

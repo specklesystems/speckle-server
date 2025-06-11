@@ -581,7 +581,22 @@ describe('Workspaces Invites GQL', () => {
           leaveStream(
             myProjectInviteTargetBasicProject,
             workspaceMemberWithNoProjectAccess
-          )
+          ),
+          // Switch workspaceGuest back to Viewer/Guest
+          assignToWorkspaces([
+            [
+              myProjectInviteTargetWorkspace,
+              workspaceGuest,
+              Roles.Workspace.Guest,
+              WorkspaceSeatType.Viewer
+            ],
+            [
+              myProjectInviteTargetWorkspaceWithNewPlan,
+              workspaceGuest,
+              Roles.Workspace.Guest,
+              WorkspaceSeatType.Viewer
+            ]
+          ])
         ])
       })
 
@@ -745,7 +760,7 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
       })
 
-      it("can't invite someone with a viewer seat to be a contributor", async () => {
+      it(`can't invite someone with a viewer seat to be a contributor`, async () => {
         const res = await gqlHelpers.createWorkspaceProjectInvite({
           projectId: myProjectInviteTargetWorkspaceNewPlanProject.id,
           inputs: [
@@ -758,6 +773,33 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.haveGraphQLErrors({ code: WorkspaceInvalidRoleError.code })
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
+      })
+
+      it('can invite someone with a viewer seat to be a contributor if seatType set to editor', async () => {
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceNewPlanProject.id,
+          inputs: [
+            {
+              userId: workspaceGuest.id,
+              role: Roles.Stream.Contributor,
+              seatType: WorkspaceSeatType.Editor
+            }
+          ]
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+
+        // invite should be auto-accepted
+        await gqlHelpers.validateResourceAccess({
+          shouldHaveAccess: true,
+          expectedWorkspaceRole: Roles.Workspace.Guest,
+          expectedWorkspaceSeatType: WorkspaceSeatType.Editor,
+          expectedProjectRole: Roles.Stream.Contributor,
+          streamId: myProjectInviteTargetWorkspaceNewPlanProject.id,
+          userId: workspaceGuest.id,
+          workspaceId: myProjectInviteTargetWorkspaceWithNewPlan.id
+        })
       })
 
       it("can't invite invalid domain email to domain protected workspace project", async () => {

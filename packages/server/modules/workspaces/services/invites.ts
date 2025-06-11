@@ -231,6 +231,13 @@ export const collectAndValidateWorkspaceTargetsFactory =
     const projectTarget = baseTargets.find(isProjectResourceTarget)
     const projectRole = projectTarget?.role
     if (projectRole && targetUser) {
+      // If target seat type was specified w/ invite, use that (cause we're gonna switch to that upon accept)
+      const seatType =
+        primaryResourceTarget.workspaceSeatType ||
+        (workspaceRoleAndSeat
+          ? workspaceRoleAndSeat.seat.type
+          : targetWorkspaceSeatType)
+
       await deps.validateWorkspaceMemberProjectRoleFactory({
         workspaceId,
         userId: targetUser.id,
@@ -238,11 +245,11 @@ export const collectAndValidateWorkspaceTargetsFactory =
         workspaceAccess: workspaceRoleAndSeat
           ? {
               role: workspaceRoleAndSeat.role.role,
-              seatType: workspaceRoleAndSeat.seat.type
+              seatType
             }
           : {
               role: targetWorkspaceRole,
-              seatType: targetWorkspaceSeatType
+              seatType
             }
       })
 

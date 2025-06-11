@@ -174,12 +174,7 @@ const searchQuery = graphql(`
       id
       invitableCollaborators(filter: $filter) {
         items {
-          id
-          user {
-            id
-            name
-          }
-          seatType
+          ...InviteProjectItem_WorkspaceCollaborator
         }
       }
     }

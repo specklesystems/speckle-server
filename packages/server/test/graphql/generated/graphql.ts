@@ -4962,8 +4962,8 @@ export type WorkspaceProjectInviteCreateInput = {
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']['input']>;
   /**
-   * The workspace seat type to assign to the user upon accepting the invite (if the user isn't a workspace
-   * member already)
+   * The workspace seat type to assign to the user upon accepting the invite
+   * (if user is a workspace member already, the seat type will be updated)
    */
   seatType?: InputMaybe<WorkspaceSeatType>;
   /** Can only be specified if guest mode is on or if the user is an admin */

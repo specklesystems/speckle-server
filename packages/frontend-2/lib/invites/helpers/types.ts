@@ -19,6 +19,7 @@ graphql(`
       name
     }
     seatType
+    role
   }
 `)
 
