@@ -48,9 +48,9 @@ jobs:
     steps:
       - run: apt-get update -y
       - run: apt-get install -y wget
-      - run:
-          wget github.com/mikefarah/yq/releases/download/v4.9.6/yq_linux_386 -O /usr/bin/yq \
-          && chmod +x /usr/bin/yq
+      - run: wget -qO /usr/local/bin/yq github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+      - run: chmod a+x /usr/local/bin/yq
+      - run: yq --version # TODO: remove
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
