@@ -14,6 +14,7 @@
     :disabled="disabled"
     :clearable="clearable"
     :menu-max-width="250"
+    menu-open-direction="left"
     :allow-unset="allowUnset"
   >
     <template #nothing-selected>

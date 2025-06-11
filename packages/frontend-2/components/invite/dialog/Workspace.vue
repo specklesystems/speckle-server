@@ -47,8 +47,8 @@ import { graphql } from '~/lib/common/generated/gql'
 import type {
   InviteDialogWorkspace_WorkspaceFragment,
   WorkspaceInviteCreateInput,
-  ProjectInviteCreateInput,
-  FormSelectProjects_ProjectFragment
+  FormSelectProjects_ProjectFragment,
+  WorkspaceProjectInviteCreateInput
 } from '~/lib/common/generated/gql/graphql'
 import type { InviteWorkspaceItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
@@ -173,10 +173,14 @@ const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
   if (!invites.value.length || !props.workspace?.id) return
 
   if (selectedRole.value === Roles.Workspace.Guest && project.value) {
-    const inputs: ProjectInviteCreateInput[] = invites.value.map((invite) => ({
-      role: Roles.Stream.Reviewer,
+    const inputs: WorkspaceProjectInviteCreateInput[] = invites.value.map((invite) => ({
+      role:
+        invite.seatType === SeatTypes.Editor
+          ? Roles.Stream.Contributor
+          : Roles.Stream.Reviewer,
       email: invite.email,
-      workspaceRole: selectedRole.value
+      workspaceRole: selectedRole.value,
+      seatType: invite.seatType
     }))
 
     await inviteToProject(project.value.id, inputs)

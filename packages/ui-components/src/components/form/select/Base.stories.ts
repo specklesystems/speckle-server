@@ -90,7 +90,11 @@ export default {
       control: { type: 'select' }
     },
     menuMaxWidth: {
-      type: 'string'
+      type: 'number'
+    },
+    menuOpenDirection: {
+      options: ['left', 'right'],
+      control: { type: 'select' }
     }
   }
 } as Meta
@@ -284,9 +288,14 @@ export const WithWiderMenu: StoryType = {
   render: (args, ctx) => ({
     components: { FormSelectBase, FormButton },
     setup: () => {
+      const pageMargin = ref(false)
       const location = ref(0) // -1 = left, 0 = center, 1 = right
       const wrapperClasses = computed(() => {
         const classParts = ['flex flex-col h-72 gap-32']
+
+        if (pageMargin.value) {
+          classParts.push('px-[50px]')
+        }
 
         if (location.value === -1) {
           classParts.push('items-start')
@@ -304,7 +313,11 @@ export const WithWiderMenu: StoryType = {
         location.value = newValue
       }
 
-      return { args, wrapperClasses, swap, location }
+      const togglePageMargin = () => {
+        pageMargin.value = !pageMargin.value
+      }
+
+      return { args, wrapperClasses, swap, location, togglePageMargin }
     },
     template: `
       <div :class="wrapperClasses">
@@ -312,6 +325,7 @@ export const WithWiderMenu: StoryType = {
           <FormSelectBase v-bind="args" class="max-w-xs w-full" @update:modelValue="onModelUpdate"/>
         </div>
         <FormButton @click="swap">Swap locations</FormButton>
+        <FormButton @click="togglePageMargin">Toggle Page Margin</FormButton>
       </div>
     `,
     methods: {

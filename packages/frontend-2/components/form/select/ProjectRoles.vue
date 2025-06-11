@@ -13,6 +13,7 @@
     :allow-unset="allowUnset"
     :disabled="disabled"
     :menu-max-width="250"
+    menu-open-direction="left"
     mount-menu-on-body
   >
     <template #nothing-selected>Select role</template>

@@ -482,6 +482,14 @@ const props = defineProps({
   menuMaxWidth: {
     type: Number,
     default: undefined
+  },
+  /**
+   * If menuMaxWidth is set and menu is wider than the button, this will determine the direction of the menu opening.
+   * Default: 'left' (opens to the left of the button)
+   */
+  menuOpenDirection: {
+    type: String as PropType<'left' | 'right'>,
+    default: 'left'
   }
 })
 
@@ -755,13 +763,15 @@ const listboxOptionsStyle = computed(() => {
      * 2. If 1.b. but menu is leaving screen bounds, make it open to the left, instead of right
      */
 
+    const openToLeft = props.menuOpenDirection === 'left'
+
     const top = listboxButtonBounding.top.value
     const left = listboxButtonBounding.left.value
     const width = listboxButtonBounding.width.value
     const height = listboxButtonBounding.height.value
 
-    let finalLeft = left
     let finalWidth = width
+    let finalLeft = left
 
     if (props.menuMaxWidth) {
       const viewportWidth = window.innerWidth
@@ -774,11 +784,24 @@ const listboxOptionsStyle = computed(() => {
       } else {
         finalWidth = props.menuMaxWidth
 
-        if (left + props.menuMaxWidth > viewportWithoutMargins) {
-          finalLeft = Math.max(left + width - props.menuMaxWidth, xMargin)
+        if (openToLeft) {
+          finalLeft = left + width - props.menuMaxWidth
+          if (finalLeft < xMargin) {
+            finalLeft = xMargin
+          }
+        } else {
+          if (left + props.menuMaxWidth > viewportWithoutMargins) {
+            finalLeft = Math.max(left + width - props.menuMaxWidth, xMargin)
+          }
         }
       }
     }
+
+    // if (props.menuOpenDirection === 'right') {
+    //   style.left = `${finalLeft}px`
+    // } else {
+    //   style.left = `${finalLeft}px`
+    // }
 
     style.left = `${finalLeft}px`
     style.width = `${finalWidth}px`
