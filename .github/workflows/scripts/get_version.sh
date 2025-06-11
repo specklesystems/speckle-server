@@ -10,7 +10,7 @@ if [[ "${GITHUB_REF}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 0
 fi
 
-if [[ "${GITHUB_HEAD_REF}" == "main" ]]; then
+if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
     echo "${NEXT_RELEASE}-alpha.${GITHUB_RUN_NUMBER}"
     exit 0
 fi
