@@ -32,11 +32,7 @@ aliases:
       only: &branches-special
         - main
         - /^hotfix.*$/
-        - testing1
-        - testing2
-        - testing3
-        - testing4
-        - testing6
+        - /^testing\d*$/
 
 workflows:
   test-build:
