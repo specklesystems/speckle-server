@@ -1,0 +1,60 @@
+name: Test helm deployment
+
+on: workflow_dispatch
+
+jobs:
+  verify-non-prod:
+    runs-on: blacksmith
+    if: github.ref != 'refs/heads/main'
+
+  get-version:
+    needs: verify-non-prod
+    outputs:
+      IMAGE_VERSION_TAG: ${{ steps.export-step.outputs.IMAGE_VERSION_TAG }}
+    name: Get version
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - run: git fetch origin 'refs/tags/*:refs/tags/*'
+      - run: chmod +x ./get_version.sh ./common.sh
+        working-directory: ./.github/workflows/scripts
+      - run: ./get_version.sh >> result
+        working-directory: ./.github/workflows/scripts
+      - run: echo "IMAGE_VERSION_TAG=$(cat result)"
+        working-directory: ./.github/workflows/scripts
+      - id: export-step
+        run: echo "IMAGE_VERSION_TAG=$(cat result)" >> "$GITHUB_OUTPUT"
+        working-directory: ./.github/workflows/scripts
+
+  builds:
+    needs: [verify-non-prod, get-version]
+    uses: ./.github/workflows/builds.yml
+    with:
+      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+      DOCKERHUB_USERNAME: 'speckledevops'
+      PUSH_IMAGES: true
+    secrets: inherit
+
+  deployment-test-helm-chart:
+    runs-on: blacksmith
+    needs: [verify-non-prod, get-version, builds]
+    container:
+      image: ubuntu-2204:2024.01.1
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      # create the nix folder with permissive write permissions
+      - run: |
+          sudo mkdir /nix
+          sudo chmod 777 /nix
+      - name: Install the nix package manager
+        run: |
+          sh <(curl -L https://nixos.org/nix/install) --daemon --yes
+          echo "source /etc/bashrc" >> "${BASH_ENV}"
+      - name: Initialize nix shell
+        run: |
+          nix-shell \
+          --run "echo Here, a nix shell for you" \
+          ./.circleci/deployment/helm-chart-shell.nix
+        # TODO:

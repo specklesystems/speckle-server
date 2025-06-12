@@ -51,7 +51,7 @@ jobs:
         if: ${{ inputs.PUSH_IMAGES == false }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.workflow }}-${GITHUB_REF_NAME//\//-}"
+          name: ${{ github.workflow }}-${{ github.ref_name//\//- }}"
           overwrite: false
           path: /tmp/server.tar
           retention-days: 7
@@ -198,6 +198,7 @@ jobs:
   test-deployment:
     runs-on: blacksmith
     needs: [docker-build-server]
+    # manual
     name: Test deployment
     steps:
       - name: Download artifacts (Docker images) from previous workflows
@@ -205,7 +206,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.workflow }}-${GITHUB_REF_NAME//\//-}"
+          name: ${{ github.workflow }}-${{ github.ref_name//\//- }}"
           path: /tmp
       - name: Load Docker image
         run: |
