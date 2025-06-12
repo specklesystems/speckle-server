@@ -12,6 +12,7 @@ import { AuthPolicy } from '../../domain/policies.js'
 import { ensureWorkspacesEnabledFragment } from '../../fragments/workspaces.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import { Roles } from '../../../core/constants.js'
+import { throwUncoveredError } from '../../../core/index.js'
 
 type PolicyArgs = MaybeUserContext
 type PolicyLoaderKeys =
@@ -59,6 +60,8 @@ export const canCreateWorkspacePolicy: AuthPolicy<
             return false
           case Roles.Workspace.Member:
             return true
+          default:
+            throwUncoveredError(w.role)
         }
       }
       return false
