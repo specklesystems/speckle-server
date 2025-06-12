@@ -253,6 +253,8 @@ const filteredSuggestions = computed(() =>
 const projectRole = computed({
   get: () => props.modelValue.projectRole,
   set: (value) => {
+    if (value === props.modelValue.projectRole) return
+
     emit('update:modelValue', {
       ...props.modelValue,
       projectRole: value
@@ -263,6 +265,8 @@ const projectRole = computed({
 const email = computed({
   get: () => props.modelValue.email,
   set: (value) => {
+    if (value === props.modelValue.email) return
+
     emit('update:modelValue', {
       ...props.modelValue,
       email: value
@@ -273,6 +277,8 @@ const email = computed({
 const selectedUser = computed({
   get: () => props.modelValue.userInfo,
   set: (value) => {
+    if (value === props.modelValue.userInfo) return
+
     emit('update:modelValue', {
       ...props.modelValue,
       userInfo: value ? { ...value } : value,
