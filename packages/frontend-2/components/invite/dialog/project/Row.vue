@@ -106,7 +106,7 @@
           <FormSelectProjectRoles
             v-if="showProjectRoles"
             v-model="projectRole"
-            label="Select role"
+            label="Project role"
             :name="`fields.${index}.projectRole`"
             mount-menu-on-body
             :show-label="showLabel"
