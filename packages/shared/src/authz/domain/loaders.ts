@@ -10,6 +10,7 @@ import type {
 import type {
   GetAdminOverrideEnabled,
   GetEnv,
+  GetUserWorkspaces,
   GetWorkspace,
   GetWorkspaceLimits,
   GetWorkspaceModelCount,
@@ -60,6 +61,7 @@ export const AuthCheckContextLoaderKeys = <const>{
   getProjectModelCount: 'getProjectModelCount',
   getServerRole: 'getServerRole',
   getWorkspace: 'getWorkspace',
+  getUserEligibleWorkspaces: 'getUserEligibleWorkspaces',
   getWorkspaceRole: 'getWorkspaceRole',
   getWorkspaceSeat: 'getWorkspaceSeat',
   getWorkspaceModelCount: 'getWorkspaceModelCount',
@@ -88,6 +90,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getProjectModelCount: GetProjectModelCount
   getServerRole: GetServerRole
   getWorkspace: GetWorkspace
+  getUserEligibleWorkspaces: GetUserWorkspaces
   getWorkspaceRole: GetWorkspaceRole
   getWorkspaceLimits: GetWorkspaceLimits
   getWorkspacePlan: GetWorkspacePlan

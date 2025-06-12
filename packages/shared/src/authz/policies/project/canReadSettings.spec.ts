@@ -10,7 +10,7 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import { TIME_MS } from '../../../core/helpers/timeConstants.js'
 import { ProjectVisibility } from '../../domain/projects/types.js'
 
@@ -45,7 +45,7 @@ describe('canReadProjectSettingsPolicy', () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),

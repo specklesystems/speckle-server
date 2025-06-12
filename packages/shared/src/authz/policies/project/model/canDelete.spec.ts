@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { Roles } from '../../../../core/constants.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
-import { getModelFake, getProjectFake } from '../../../../tests/fakes.js'
+import {
+  getModelFake,
+  getProjectFake,
+  getWorkspaceFake
+} from '../../../../tests/fakes.js'
 import {
   ModelNotFoundError,
   ProjectNoAccessError,
@@ -45,7 +49,7 @@ const buildWorkspaceSUT = (
       id: 'project-id',
       workspaceId: 'workspace-id'
     }),
-    getWorkspace: async () => ({
+    getWorkspace: getWorkspaceFake({
       id: 'workspace-id',
       slug: 'workspace-slug'
     }),

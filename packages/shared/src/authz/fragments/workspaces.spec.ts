@@ -1,16 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import {
   ensureWorkspaceRoleAndSessionFragment,
-  ensureWorkspacesEnabledFragment
+  ensureWorkspacesEnabledFragment,
+  ensureUserIsWorkspaceAdminFragment
 } from './workspaces.js'
 import cryptoRandomString from 'crypto-random-string'
 import {
+  ServerNoAccessError,
+  ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
 import { parseFeatureFlags } from '../../environment/index.js'
+import { Roles } from '../../core/constants.js'
+import { getWorkspaceFake } from '../../tests/fakes.js'
 
 describe('ensureWorkspaceRoleAndSessionFragment', () => {
   it('hides non existing workspaces behind a WorkspaceNoAccessError', async () => {
@@ -35,7 +42,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
   })
   it('returns WorkspaceNoAccessError if the user does not have a workspace role', async () => {
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -56,7 +63,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
   })
   it('returns ok w/o checking session if user is a workspace guest', async () => {
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -75,7 +82,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
   })
   it('returns just(ok()) if user is a member and workspace has no SSO provider', async () => {
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -92,7 +99,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
   })
   it('returns WorkspaceSsoSessionInvalidError if user does not have an SSO session', async () => {
     const result = ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -120,7 +127,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
     validUntil.setDate(validUntil.getDate() - 1)
 
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -148,7 +155,7 @@ describe('ensureWorkspaceRoleAndSessionFragment', () => {
     validUntil.setDate(validUntil.getDate() + 100)
 
     const result = await ensureWorkspaceRoleAndSessionFragment({
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'aaa',
         slug: 'bbb'
       }),
@@ -192,5 +199,125 @@ describe('ensureWorkspacesEnabledFragment', () => {
     expect(result).toBeAuthErrorResult({
       code: WorkspacesNotEnabledError.code
     })
+  })
+})
+
+describe('ensureUserIsWorkspaceAdminFragment', () => {
+  const buildEnsureUserIsWorkspaAdminFragment = (
+    overrides?: Partial<Parameters<typeof ensureUserIsWorkspaceAdminFragment>[0]>
+  ) => {
+    const workspaceId = cryptoRandomString({ length: 9 })
+
+    return ensureUserIsWorkspaceAdminFragment({
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
+      getServerRole: async () => Roles.Server.Admin,
+      getWorkspace: getWorkspaceFake({
+        id: workspaceId,
+        slug: cryptoRandomString({ length: 9 })
+      }),
+      getWorkspaceRole: async () => Roles.Workspace.Admin,
+      getWorkspaceSsoProvider: async () => null,
+      getWorkspaceSsoSession: async () => null,
+      getWorkspacePlan: async () => {
+        return {
+          workspaceId,
+          name: 'unlimited' as const,
+          status: 'valid' as const,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      },
+      ...overrides
+    })
+  }
+
+  const getPolicyArgs = () => ({
+    userId: cryptoRandomString({ length: 9 }),
+    workspaceId: cryptoRandomString({ length: 9 })
+  })
+  it('returns error if workspaces is not enabled', async () => {
+    const policy = buildEnsureUserIsWorkspaAdminFragment({
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' })
+    })
+
+    const result = await policy({
+      ...getPolicyArgs(),
+      userId: undefined
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspacesNotEnabledError.code
+    })
+  })
+  it('returns error if user is not logged in', async () => {
+    const policy = buildEnsureUserIsWorkspaAdminFragment()
+
+    const result = await policy({
+      ...getPolicyArgs(),
+      userId: undefined
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: ServerNoSessionError.code
+    })
+  })
+
+  it('returns error if user is not found', async () => {
+    const policy = buildEnsureUserIsWorkspaAdminFragment({
+      getServerRole: async () => null
+    })
+
+    const result = await policy(getPolicyArgs())
+
+    expect(result).toBeAuthErrorResult({
+      code: ServerNoAccessError.code
+    })
+  })
+
+  it('returns error if user is a server guest', async () => {
+    const policy = buildEnsureUserIsWorkspaAdminFragment({
+      getServerRole: async () => Roles.Server.Guest
+    })
+
+    const result = await policy(getPolicyArgs())
+
+    expect(result).toBeAuthErrorResult({
+      code: ServerNotEnoughPermissionsError.code
+    })
+  })
+
+  it('returns error if workspace does not exist', async () => {
+    const policy = buildEnsureUserIsWorkspaAdminFragment({
+      getWorkspace: async () => null
+    })
+
+    const result = await policy(getPolicyArgs())
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceNoAccessError.code
+    })
+  })
+
+  it('returns error if user is not workspace admin', async () => {
+    const policy = buildEnsureUserIsWorkspaAdminFragment({
+      getWorkspaceRole: async () => Roles.Workspace.Member
+    })
+
+    const result = await policy(getPolicyArgs())
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceNotEnoughPermissionsError.code
+    })
+  })
+
+  it('returns ok if user is workspace admin', async () => {
+    const policy = buildEnsureUserIsWorkspaAdminFragment()
+
+    const result = await policy(getPolicyArgs())
+
+    expect(result).toBeAuthOKResult()
   })
 })

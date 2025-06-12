@@ -28,7 +28,8 @@ export const getProjectFake = fakeGetFactory<Project>(() => ({
 
 export const getWorkspaceFake = fakeGetFactory<Workspace>(() => ({
   id: nanoid(10),
-  slug: nanoid(10)
+  slug: nanoid(10),
+  isExclusive: false
 }))
 
 export const getCommentFake = fakeGetFactory<Comment>(() => ({

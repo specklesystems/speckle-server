@@ -7,6 +7,8 @@ import { Workspace, WorkspaceSsoProvider, WorkspaceSsoSession } from './types.js
 
 export type GetWorkspace = (args: WorkspaceContext) => Promise<Workspace | null>
 
+export type GetUserWorkspaces = (args: UserContext) => Promise<Workspace[]>
+
 export type GetWorkspaceRole = (
   args: UserContext & WorkspaceContext
 ) => Promise<WorkspaceRoles | null>

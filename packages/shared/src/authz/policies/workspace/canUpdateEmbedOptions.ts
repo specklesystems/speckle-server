@@ -21,6 +21,7 @@ import {
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import { Roles } from '../../../core/constants.js'
 import { WorkspacePlans } from '../../../workspaces/index.js'
+import { throwUncoveredError } from '../../../core/index.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -74,16 +75,22 @@ export const canUpdateEmbedOptionsPolicy: AuthPolicy<
     })
     if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
 
-    const validPlans: WorkspacePlans[] = [
-      'academia',
-      'unlimited',
-      'pro',
-      'proUnlimited',
-      'proUnlimitedInvoiced'
-    ]
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-    if (!workspacePlan || !validPlans.includes(workspacePlan.name))
-      return err(new WorkspaceNoFeatureAccessError())
-
-    return ok()
+    if (!workspacePlan) return err(new WorkspaceNoFeatureAccessError())
+    switch (workspacePlan.name) {
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+        return err(new WorkspaceNoFeatureAccessError())
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.Enterprise:
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Academia:
+        return ok()
+      default:
+        throwUncoveredError(workspacePlan)
+    }
   }

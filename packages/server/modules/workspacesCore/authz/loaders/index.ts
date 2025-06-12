@@ -14,6 +14,9 @@ export default defineModuleLoaders(() => ({
   getWorkspaceSsoProvider: async () => {
     throw new LoaderUnsupportedError()
   },
+  getUserEligibleWorkspaces: async () => {
+    throw new LoaderUnsupportedError()
+  },
   getWorkspaceSeat: async () => {
     throw new LoaderUnsupportedError()
   },

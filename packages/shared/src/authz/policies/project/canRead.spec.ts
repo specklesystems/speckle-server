@@ -11,9 +11,8 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import cryptoRandomString from 'crypto-random-string'
-import { AuthCheckContextLoaders } from '../../domain/loaders.js'
 import { ProjectVisibility } from '../../domain/projects/types.js'
 
 const canReadProjectArgs = () => {
@@ -22,7 +21,7 @@ const canReadProjectArgs = () => {
   return { projectId, userId }
 }
 
-const getWorkspace: AuthCheckContextLoaders['getWorkspace'] = async () => ({
+const getWorkspace = getWorkspaceFake({
   id: 'aaa',
   slug: 'bbb'
 })

@@ -50,6 +50,7 @@ export const toLimitedWorkspace = (workspace: Workspace): LimitedWorkspace => {
     name: workspace.name,
     description: workspace.description,
     logo: workspace.logo,
-    discoverabilityAutoJoinEnabled: workspace.discoverabilityAutoJoinEnabled
+    discoverabilityAutoJoinEnabled: workspace.discoverabilityAutoJoinEnabled,
+    isExclusive: workspace.isExclusive
   }
 }
