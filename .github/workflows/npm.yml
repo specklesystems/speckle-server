@@ -17,6 +17,8 @@ jobs:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
