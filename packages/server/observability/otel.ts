@@ -56,7 +56,7 @@ export function initOpenTelemetry() {
     ]
   })
 
-  const headers: Partial<Record<string, unknown>> = {}
+  const headers: Record<string, string> = {}
   const key = getOtelTraceKey()
   const value = getOtelHeaderValue()
   if (key && value) {
