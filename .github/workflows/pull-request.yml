@@ -19,7 +19,7 @@ jobs:
             .github/workflows/scripts/get_version.sh
             .github/workflows/scripts/common.sh
           fetch-depth: 1
-          fetch-tags: true
+          fetch-tags: 1
       - run: git fetch origin 'refs/tags/*:refs/tags/*'
       - run: chmod +x ./get_version.sh ./common.sh
         working-directory: ./.github/workflows/scripts
