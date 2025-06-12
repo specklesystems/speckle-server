@@ -30,11 +30,6 @@ jobs:
         run: |
           sh <(curl -L https://nixos.org/nix/install) --daemon --yes
           echo "source /etc/bashrc" >> "${BASH_ENV}"
-          - name: Login to Docker Hub
-          uses: docker/login-action@v3
-          with:
-            username: ${{ inputs.DOCKERHUB_USERNAME }}
-            password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Initialize nix shell
         run: |
           nix-shell \
@@ -70,6 +65,11 @@ jobs:
           nix-shell \
           --run "ctlptl apply --filename ./tests/deployment/helm/cluster-config.yaml" \
           ./tests/deployment/helm/helm-chart-shell.nix
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ inputs.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
