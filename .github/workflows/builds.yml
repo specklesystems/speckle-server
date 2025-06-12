@@ -51,7 +51,7 @@ jobs:
         if: ${{ inputs.PUSH_IMAGES == false }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.workflow }}-${{ github.ref }}
+          name: ${{ github.workflow }}-${GITHUB_REF_NAME//\//-}"
           overwrite: false
           path: /tmp/server.tar
           retention-days: 7
@@ -205,7 +205,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.workflow }}-${{ github.ref }}
+          name: ${{ github.workflow }}-${GITHUB_REF_NAME//\//-}"
           path: /tmp
       - name: Load Docker image
         run: |
