@@ -107,7 +107,7 @@ export class WorkerDatabase implements Database {
 
     this.logToMainUI('Starting Web Worker...')
     this.indexedDbReaderWorker = new Worker(
-      new URL('./workers/IndexDbReaderWorker.js', window.location.origin),
+      new URL('../../workers/IndexDbReaderWorker.js', import.meta.url),
       { type: 'module' }
     )
     this.initializeWorker(this.indexedDbReaderWorker)
