@@ -12,9 +12,9 @@ load('ext://k8s_yaml_glob', 'k8s_yaml_glob')
 symbols = None
 IS_LOAD_DOCKER = os.getenv('LOAD_DOCKER', "false") == "true"
 if IS_LOAD_DOCKER:
-  symbols = load_dynamic('./Tiltfile.load')
+  symbols = load_dynamic('./../load-images.tiltfile')
 else:
-  symbols = load_dynamic('./Tiltfile.build')
+  symbols = load_dynamic('./../build-images.tiltfile')
 
 IMAGE_PREFIX = os.getenv('IMAGE_PREFIX', 'speckle')
 
@@ -40,7 +40,7 @@ k8s_yaml('./manifests/minio.pv.yaml')
 k8s_yaml('./manifests/minio.pvc.yaml')
 
 # Update CoreDNS to allow for local resolution of services internally (i.e. speckle.internal will be routed to nginx)
-local(command='./coredns-up.sh')
+local(command='./scripts/coredns-up.sh')
 
 # Install speckle pod-priority and secrets
 k8s_yaml('./manifests/priorityclass.yaml')

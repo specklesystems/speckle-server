@@ -37,17 +37,11 @@ jobs:
           with:
             username: ${{ inputs.DOCKERHUB_USERNAME }}
             password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Initialize nix shell
         run: |
           nix-shell \
           --run "echo Here, a nix shell for you" \
-          ./.circleci/deployment/helm-chart-shell.nix
+          ./tests/deployment/helm/helm-chart-shell.nix
         env:
           IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
@@ -56,7 +50,7 @@ jobs:
         run: |
           nix-shell \
           --run "helm template speckle-server ./utils/helm/speckle-server" \
-          ./.circleci/deployment/helm-chart-shell.nix
+          ./tests/deployment/helm/helm-chart-shell.nix
       - name: Add 127.0.0.1 domains to /etc/hosts
         run: |
           sudo tee -a /etc/hosts \<<<'127.0.0.1 speckle.internal'
@@ -76,10 +70,16 @@ jobs:
       - name: Deploy Kubernetes (kind) cluster
         run: |
           nix-shell \
-          --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
-          ./.circleci/deployment/helm-chart-shell.nix
+          --run "ctlptl apply --filename ./tests/deployment/helm/cluster-config.yaml" \
+          ./tests/deployment/helm/helm-chart-shell.nix
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Deploy Kubernetes resources to cluster
         run: |
           nix-shell \
-          --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
-          ./.circleci/deployment/helm-chart-shell.nix
+          --run "IMAGE_PREFIX=${{ inputs.IMAGE_PREFIX }} LOAD_DOCKER='true' tilt ci --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server --timeout 10m" \
+          ./tests/deployment/helm/helm-chart-shell.nix
