@@ -9,9 +9,13 @@ on:
       DOCKERHUB_USERNAME:
         required: true
         type: string
-      PUSH_IMAGES:
+      IMAGE_PREFIX:
         required: true
+        type: string
+      PUBLISH:
+        required: false
         type: boolean
+        default: false
     secrets:
       DATADOG_API_KEY:
         required: true
@@ -24,7 +28,6 @@ jobs:
     name: Server
     steps:
       - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -40,7 +43,7 @@ jobs:
         with:
           push: true
           tags: |
-            ghcr.io/specklesystems/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
+            ${{ inputs.IMAGE_PREFIX }}/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
           # TODO add docker hub tag, but only if we want to push to docker hub
           file: ./packages/server/Dockerfile
           build-args: |
@@ -52,37 +55,34 @@ jobs:
     name: Frontend2
     steps:
       - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push w/ version tag
         uses: useblacksmith/build-push-action@v1
-        if: ${{ inputs.PUSH_IMAGES }}
+        if: ${{ inputs.PUBLISH }}
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
-          tags: speckle/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/frontend-2/Dockerfile
           build-args: |
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
-          cache-from: type=registry,ref=speckle/speckle-frontend-2:buildcache
-          cache-to: type=registry,ref=speckle/speckle-frontend-2:buildcache,mode=max
+          cache-from: type=registry,ref=${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:buildcache
+          cache-to: type=registry,ref=${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:buildcache,mode=max
       - name: Check frontend-2 build
         uses: useblacksmith/build-push-action@v1
-        if: ${{ inputs.PUSH_IMAGES == false }}
+        if: ${{ !inputs.PUBLISH }}
         with:
-          push: false
-          tags: speckle/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/frontend-2/Dockerfile
 
   docker-build-preview-service:
     runs-on: blacksmith
-    if: false # TODO: delete
     name: Preview service
     steps:
       - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -90,8 +90,8 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
-          tags: speckle/speckle-preview-service:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-preview-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/preview-service/Dockerfile
 
   docker-build-webhook-service:
@@ -100,7 +100,6 @@ jobs:
     name: Webhook service
     steps:
       - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -108,8 +107,8 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
-          tags: speckle/speckle-webhook-service:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-webhook-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/webhook-service/Dockerfile
 
   docker-build-fileimport-service:
@@ -118,7 +117,6 @@ jobs:
     name: File import service
     steps:
       - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -126,17 +124,15 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
-          tags: speckle/speckle-fileimport-service:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-fileimport-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/fileimport-service/Dockerfile
 
   docker-build-test-deploy:
     runs-on: blacksmith
-    if: false # TODO: delete
     name: Test deploy util
     steps:
       - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -144,8 +140,8 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
-          tags: speckle/speckle-test-deployment:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-test-deployment:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./utils/test-deployment/Dockerfile
 
   docker-build-monitor-deployment:
@@ -154,7 +150,6 @@ jobs:
     name: monitor container
     steps:
       - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -162,17 +157,15 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
-          tags: speckle/speckle-monitor-deployment:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-monitor-deployment:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/monitor-deployment/Dockerfile
 
   docker-build-docker-compose-ingress:
     runs-on: blacksmith
-    if: false # TODO: delete
     name: Docker compose ingress
     steps:
       - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -180,14 +173,14 @@ jobs:
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
-          tags: speckle/speckle-docker-compose-ingress:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-docker-compose-ingress:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./utils/docker-compose-ingress/Dockerfile
 
   docker-frontend-2-sourcemaps:
     runs-on: blacksmith
     name: Frontend2 sourcemaps
-    if: ${{ inputs.PUSH_IMAGES }}
+    if: ${{ inputs.PUBLISH }}
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
@@ -199,8 +192,8 @@ jobs:
       - uses: useblacksmith/build-push-action@v1
         with:
           setup-only: true
-          cache-from: type=registry,ref=speckle/speckle-frontend-2:buildcache-sourcemaps
-          cache-to: type=registry,ref=speckle/speckle-frontend-2:buildcache-sourcemaps
+          cache-from: type=registry,ref=${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:buildcache-sourcemaps
+          cache-to: type=registry,ref=${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:buildcache-sourcemaps
       - name: Build and Publish sourcemaps
         run: ./.github/workflows/scripts/publish_fe2_sourcemaps.sh
 

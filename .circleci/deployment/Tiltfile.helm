@@ -16,17 +16,19 @@ if IS_LOAD_DOCKER:
 else:
   symbols = load_dynamic('./Tiltfile.build')
 
+IMAGE_PREFIX = os.getenv('IMAGE_PREFIX', 'speckle')
+
 # # Prepare the Speckle images
 # # (builds the images or pulls them from remote)
 speckle_image = symbols['speckle_image']
-speckle_image('fileimport-service')
-speckle_image('frontend-2')
-speckle_image('monitor-deployment')
-speckle_image('preview-service')
-speckle_image('server')
-speckle_image('objects','server')
-speckle_image('test-deployment')
-speckle_image('webhook-service')
+speckle_image('fileimport-service', None, IMAGE_PREFIX)
+speckle_image('frontend-2', None, IMAGE_PREFIX)
+speckle_image('monitor-deployment', None, IMAGE_PREFIX)
+speckle_image('preview-service', None, IMAGE_PREFIX)
+speckle_image('server', None, IMAGE_PREFIX)
+speckle_image('objects','server', IMAGE_PREFIX)
+speckle_image('test-deployment', None, IMAGE_PREFIX)
+speckle_image('webhook-service', None, IMAGE_PREFIX)
 
 # Create namespaces
 k8s_yaml_glob('./manifests/*.namespace.yaml')
