@@ -23,17 +23,17 @@ jobs:
     runs-on: blacksmith
     name: Server
     steps:
-      - name: Login to Docker Hub
-        if: ${{ inputs.PUSH_IMAGES }}
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ inputs.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
-          tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
+          push: true
+          tags: ghcr.io/specklesystems/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/server/Dockerfile
           build-args: |
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
@@ -203,6 +203,5 @@ jobs:
     name: Test deployment
     steps:
       - name: Load Docker image
-        # determine what might exist on the cache
         run: |
-          docker image ls --all
+          docker pull ghcr.io/specklesystems/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}

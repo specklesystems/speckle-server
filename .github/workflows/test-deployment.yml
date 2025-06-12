@@ -6,6 +6,8 @@ jobs:
   verify-non-prod:
     runs-on: blacksmith
     if: github.ref != 'refs/heads/main'
+    steps:
+      - run: echo "This is a non-production deployment."
 
   get-version:
     needs: verify-non-prod
