@@ -16,25 +16,11 @@ concurrency:
 
 jobs:
   get-version:
-    outputs:
-      IMAGE_VERSION_TAG: ${{ steps.export-step.outputs.IMAGE_VERSION_TAG }}
     name: Get version
-    runs-on: blacksmith
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - run: git fetch origin 'refs/tags/*:refs/tags/*'
-      - run: chmod +x ./get_version.sh ./common.sh
-        working-directory: ./.github/workflows/scripts
-      - run: ./get_version.sh >> result
-        working-directory: ./.github/workflows/scripts
-      - run: echo "IMAGE_VERSION_TAG=$(cat result)"
-        working-directory: ./.github/workflows/scripts
-      - id: export-step
-        run: echo "IMAGE_VERSION_TAG=$(cat result)" >> "$GITHUB_OUTPUT"
-        working-directory: ./.github/workflows/scripts
+    uses: ./.github/workflows/get-version.yml
 
   tests:
-    needs: get-version
+    needs: [get-version]
     uses: ./.github/workflows/tests.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
@@ -42,7 +28,7 @@ jobs:
     secrets: inherit
 
   builds:
-    needs: get-version
+    needs: [get-version]
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}

@@ -1,0 +1,85 @@
+name: Run deployment test
+
+on:
+  workflow_call:
+    inputs:
+      IMAGE_VERSION_TAG:
+        required: true
+        type: string
+      DOCKERHUB_USERNAME:
+        required: true
+        type: string
+      IMAGE_PREFIX:
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_TOKEN:
+        required: true
+jobs:
+  deployment-test-helm-chart:
+    runs-on: blacksmith
+    container:
+      image: ubuntu-2204:2024.01.1
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      # create the nix folder with permissive write permissions
+      - run: |
+          sudo mkdir /nix
+          sudo chmod 777 /nix
+      - name: Install the nix package manager
+        run: |
+          sh <(curl -L https://nixos.org/nix/install) --daemon --yes
+          echo "source /etc/bashrc" >> "${BASH_ENV}"
+          - name: Login to Docker Hub
+          uses: docker/login-action@v3
+          with:
+            username: ${{ inputs.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Initialize nix shell
+        run: |
+          nix-shell \
+          --run "echo Here, a nix shell for you" \
+          ./.circleci/deployment/helm-chart-shell.nix
+        env:
+          IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
+      - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
+      - run: echo "${KUBECONFIG}"
+      - name: Template Speckle Server Helm Chart
+        run: |
+          nix-shell \
+          --run "helm template speckle-server ./utils/helm/speckle-server" \
+          ./.circleci/deployment/helm-chart-shell.nix
+      - name: Add 127.0.0.1 domains to /etc/hosts
+        run: |
+          sudo tee -a /etc/hosts \<<<'127.0.0.1 speckle.internal'
+          cat /etc/hosts
+      - name: Change directory permissions to allow kind to create directories
+        run: |
+          mkdir -p "./minio-data"
+          if [ "$(stat -f "%A" "./minio-data")" != "775" ]; then
+            echo "🔐 We need 'sudo' to set permissions on minio-data directory to 775"
+            sudo chmod 775 "./minio-data"
+          fi
+          mkdir -p "./postgres-data"
+          if [ "$(stat -f "%A" "./postgres-data")" != "775" ]; then
+            echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
+            sudo chmod 775 "./postgres-data"
+          fi
+      - name: Deploy Kubernetes (kind) cluster
+        run: |
+          nix-shell \
+          --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
+          ./.circleci/deployment/helm-chart-shell.nix
+      - name: Deploy Kubernetes resources to cluster
+        run: |
+          nix-shell \
+          --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
+          ./.circleci/deployment/helm-chart-shell.nix
