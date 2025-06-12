@@ -28,17 +28,37 @@ jobs:
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push
+      - name: Build and push to registry
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: useblacksmith/build-push-action@v1
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
+          push: true
           tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/server/Dockerfile
           build-args: |
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
+      - name: Build and push to artifact
+        if: ${{ inputs.PUSH_IMAGES == false }}
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: true
+          tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./packages/server/Dockerfile
+          outputs: type=docker,dest=/tmp/server.tar
+          build-args: |
+            SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
+      - name: Upload Artifact
+        if: ${{ inputs.PUSH_IMAGES == false }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.workflow }}-${{ github.ref }}
+          overwrite: false
+          path: /tmp/server.tar
+          retention-days: 7
 
   docker-build-frontend2:
     runs-on: blacksmith
+    if: false # TODO: delete
     name: Frontend2
     steps:
       - name: Login to Docker Hub
@@ -57,6 +77,7 @@ jobs:
 
   docker-build-preview-service:
     runs-on: blacksmith
+    if: false # TODO: delete
     name: Preview service
     steps:
       - name: Login to Docker Hub
@@ -73,6 +94,7 @@ jobs:
 
   docker-build-webhook-service:
     runs-on: blacksmith
+    if: false # TODO: delete
     name: Webhook service
     steps:
       - name: Login to Docker Hub
@@ -89,6 +111,7 @@ jobs:
 
   docker-build-fileimport-service:
     runs-on: blacksmith
+    if: false # TODO: delete
     name: File import service
     steps:
       - name: Login to Docker Hub
@@ -105,6 +128,7 @@ jobs:
 
   docker-build-test-deploy:
     runs-on: blacksmith
+    if: false # TODO: delete
     name: Test deploy util
     steps:
       - name: Login to Docker Hub
@@ -121,6 +145,7 @@ jobs:
 
   docker-build-monitor-deployment:
     runs-on: blacksmith
+    if: false # TODO: delete
     name: monitor container
     steps:
       - name: Login to Docker Hub
@@ -137,6 +162,7 @@ jobs:
 
   docker-build-docker-compose-ingress:
     runs-on: blacksmith
+    if: false # TODO: delete
     name: Docker compose ingress
     steps:
       - name: Login to Docker Hub
@@ -168,3 +194,20 @@ jobs:
           setup-only: true
       - name: Build and Publish sourcemaps
         run: ./.github/workflows/scripts/publish_fe2_sourcemaps.sh
+
+  test-deployment:
+    runs-on: blacksmith
+    needs: [docker-build-server]
+    name: Test deployment
+    steps:
+      - name: Download artifacts (Docker images) from previous workflows
+        uses: actions/download-artifact@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ github.workflow }}-${{ github.ref }}
+          path: /tmp
+      - name: Load Docker image
+        run: |
+          docker load --input /tmp/server.tar
+          docker image ls -a

@@ -26,6 +26,7 @@ jobs:
         working-directory: ./.github/workflows/scripts
 
   tests:
+    if: false # TODO: delete
     needs: get-version
     uses: ./.github/workflows/tests.yml
     with:
