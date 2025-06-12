@@ -1,12 +1,6 @@
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import { StreamAcl } from '@/modules/core/dbSchema'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -17,6 +11,11 @@ import {
   grantStreamPermissionsFactory,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
@@ -28,18 +27,34 @@ import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory
 } from '@/modules/core/services/streams/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import {
+  deleteInvitesByTargetFactory,
+  deleteServerOnlyInvitesFactory,
+  findInviteFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver } from '@/modules/shared'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
@@ -52,6 +67,52 @@ const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -70,17 +131,17 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -89,29 +150,22 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 export type BasicTestStream = {
   name: string
-  isPublic: boolean
+  /**
+   * @deprecated Use visibility instead
+   */
+  isPublic?: boolean
   /**
    * The ID of the owner user. Will be filled in by createTestStream().
    */
@@ -128,7 +182,7 @@ export type BasicTestStream = {
 export async function createTestStreams(
   streamOwnerPairs: [BasicTestStream, BasicTestUser][]
 ) {
-  await Promise.all(streamOwnerPairs.map((p) => createTestStream(p[0], p[1])))
+  return await Promise.all(streamOwnerPairs.map((p) => createTestStream(p[0], p[1])))
 }
 
 /**
@@ -139,6 +193,13 @@ export async function createTestStream(
   owner: BasicTestUser
 ) {
   let id: string
+
+  const visibility = streamObj.isPublic
+    ? ProjectVisibility.Public
+    : (streamObj.visibility
+        ? mapDbToGqlProjectVisibility(streamObj.visibility)
+        : undefined) || ProjectVisibility.Private
+
   if (streamObj.workspaceId) {
     const createWorkspaceProject = createWorkspaceProjectFactory({
       getDefaultRegion: getDefaultRegionFactory({ db })
@@ -147,9 +208,7 @@ export async function createTestStream(
       input: {
         name: streamObj.name || faker.commerce.productName(),
         description: streamObj.description,
-        visibility: streamObj.isPublic
-          ? ProjectVisibility.Public
-          : ProjectVisibility.Private,
+        visibility,
         workspaceId: streamObj.workspaceId
       },
       ownerId: owner.id
@@ -157,13 +216,15 @@ export async function createTestStream(
     id = newProject.id
   } else {
     id = await createStream({
-      ...omit(streamObj, ['id', 'ownerId']),
+      ...omit(streamObj, ['id', 'ownerId', 'visibility']),
+      isPublic: visibility === ProjectVisibility.Public,
       ownerId: owner.id
     })
   }
 
   streamObj.id = id
   streamObj.ownerId = owner.id
+  return streamObj
 }
 
 export async function leaveStream(streamObj: BasicTestStream, user: BasicTestUser) {

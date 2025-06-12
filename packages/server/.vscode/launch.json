@@ -41,7 +41,7 @@
       "program": "${file}",
       "request": "launch",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node",
+      "type": "node",
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["ts-node", "${file}"],
       "console": "integratedTerminal"

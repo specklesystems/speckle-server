@@ -12,11 +12,16 @@ import {
   GetPaginatedBranchCommitsItemsByName,
   GetSpecificBranchCommits,
   GetStreamCommitCount,
+  GetTotalVersionCount,
   LegacyGetPaginatedStreamCommits,
   LegacyGetPaginatedStreamCommitsPage,
   PaginatedBranchCommitsParams
 } from '@/modules/core/domain/commits/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { getTotalVersionCountFactory } from '@/modules/core/repositories/commits'
+import { sum } from 'lodash'
 
 export const legacyGetPaginatedStreamCommitsFactory =
   (deps: {
@@ -110,7 +115,8 @@ export const getBranchCommitsTotalCountByNameFactory =
     branchName = branchName.toLowerCase()
     const myBranch = await deps.getStreamBranchByName(streamId, branchName)
 
-    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
+    if (!myBranch)
+      throw new BranchNotFoundError(`Failed to find branch with name ${branchName}.`)
     return deps.getBranchCommitsTotalCount({ branchId: myBranch.id })
   }
 
@@ -123,7 +129,21 @@ export const getPaginatedBranchCommitsItemsByNameFactory =
     branchName = branchName.toLowerCase()
     const myBranch = await deps.getStreamBranchByName(streamId, branchName)
 
-    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
+    if (!myBranch)
+      throw new BranchNotFoundError(`Failed to find branch with name ${branchName}.`)
 
     return deps.getPaginatedBranchCommitsItems({ branchId: myBranch.id, limit, cursor })
+  }
+
+export const getServerTotalVersionCountFactory =
+  (): GetTotalVersionCount => async () => {
+    const allDbs = await getAllRegisteredDbClients()
+    const allDbCounts = await Promise.all(
+      Object.values(allDbs).map(async ({ client: db }) => {
+        const getTotalVersionCount = getTotalVersionCountFactory({ db })
+        return await getTotalVersionCount()
+      })
+    )
+
+    return sum(allDbCounts)
   }

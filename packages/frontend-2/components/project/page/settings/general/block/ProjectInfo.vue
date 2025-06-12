@@ -1,10 +1,6 @@
 <template>
   <div class="flex flex-col gap-4">
-    <ProjectPageSettingsBlock
-      background
-      title="Project info"
-      :disabled-message="disabled ? 'You must be a project owner' : undefined"
-    >
+    <ProjectPageSettingsBlock background title="Project info" :auth-check="canUpdate">
       <FormTextInput
         v-model="localProjectName"
         name="projectName"
@@ -13,7 +9,7 @@
         show-label
         color="foundation"
         class="mb-2"
-        :disabled="disabled"
+        :disabled="!canUpdate.authorized"
       />
       <FormTextArea
         v-model="localProjectDescription"
@@ -23,7 +19,7 @@
         show-label
         show-optional
         color="foundation"
-        :disabled="disabled"
+        :disabled="!canUpdate.authorized"
       />
       <template #bottom-buttons>
         <FormButton color="subtle" :disabled="!hasChanges" @click="resetLocalState">
@@ -38,7 +34,7 @@
       max-width="md"
       :buttons="dialogButtons"
     >
-      <template #header>Unsaved Changes</template>
+      <template #header>Unsaved changes</template>
       <div class="space-y-4">
         <p>You have unsaved changes. Do you want to save them before leaving?</p>
       </div>
@@ -62,15 +58,18 @@ import { graphql } from '~~/lib/common/generated/gql'
 graphql(`
   fragment ProjectPageSettingsGeneralBlockProjectInfo_Project on Project {
     id
-    role
     name
     description
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragment
-  disabled?: boolean
 }>()
 
 const emit = defineEmits(['update-project'])
@@ -81,6 +80,7 @@ const localProjectName = ref(props.project.name)
 const localProjectDescription = ref(props.project.description ?? '')
 const showConfirmDialog = ref(false)
 
+const canUpdate = computed(() => props.project.permissions.canUpdate)
 const hasChanges = computed(() => {
   return (
     localProjectName.value !== props.project.name ||
@@ -113,12 +113,12 @@ const resetLocalState = () => {
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
-    text: 'Discard Changes',
+    text: 'Discard changes',
     props: { color: 'outline' },
     onClick: handleRedirection
   },
   {
-    text: 'Save Changes',
+    text: 'Save changes',
     props: {
       submit: true
     },

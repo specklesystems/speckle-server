@@ -14,7 +14,7 @@ declare module '#app' {
   }
 
   interface NuxtPayload {
-    serverFatalError?: import('~~/lib/core/helpers/observability').AbstractErrorHandlerParams
+    serverFatalError?: import('~~/lib/core/helpers/observability').AbstractLoggerHandlerParams
   }
 }
 

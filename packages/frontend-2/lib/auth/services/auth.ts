@@ -6,7 +6,6 @@ import {
 } from '~~/lib/auth/errors/errors'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 
-// TODO: Should these differ from the old frontend values?
 const appId = speckleWebAppId
 const appSecret = speckleWebAppId
 
@@ -39,12 +38,26 @@ type RegisterParams = {
 async function resolveAccessCode(res: Response): Promise<string> {
   if (!res.redirected) {
     // for some reason the error response structure differs between /login and /register...
-    const body = (await res.json()) as { err?: boolean | string; message?: string }
+    const body = (await res.json()) as {
+      err?: boolean | string
+      message?: string
+      error?: { message: string }
+    }
     if (body.err) {
       const errMsg = isString(body.err)
         ? body.err
         : body.message || 'An issue occurred while resolving access code'
       throw new AuthFailedError(errMsg)
+    }
+
+    // Check for error.message structure
+    if (body.error?.message) {
+      throw new AuthFailedError(body.error.message)
+    }
+
+    // Check for direct message
+    if (body.message) {
+      throw new AuthFailedError(body.message)
     }
 
     throw new AuthFailedError('Authentication request unexpectedly did not redirect')

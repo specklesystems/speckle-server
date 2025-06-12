@@ -25,25 +25,25 @@ spec:
               value: https://{{ .Values.domain }}
             - name: SERVER_VERSION
               value: {{ .Values.docker_image_tag | quote}}
-            - name: FRONTEND_VERSION
-              {{- if .Values.frontend_2.enabled }}
-              value: {{ "2" | quote }}
-              {{- else }}
-              value: {{ "1" | quote }}
-              {{- end }}
             - name: VERIFY_CERTIFICATE
               value: {{ (default "1" .Values.tlsRejectUnauthorized) | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.test.logLevel }}
             - name: LOG_PRETTY
               value: {{ .Values.test.logPretty | quote }}
+
+            {{- with .Values.test.additionalEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           resources:
+            {{- with .Values.test.requests }}
             requests:
-              cpu: {{ .Values.test.requests.cpu }}
-              memory: {{ .Values.test.requests.memory }}
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- with .Values.test.limits }}
             limits:
-              cpu: {{ .Values.test.limits.cpu }}
-              memory: {{ .Values.test.limits.memory }}
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -63,5 +63,11 @@ spec:
 
       {{- if .Values.test.serviceAccount.create }}
       serviceAccountName: {{ include "test.name" $ }}
+      {{- else }}
+      {{- /* NOTE: If there is a service account, Kubernetes adds the imagePullSecrets to Pods automatically. */}}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
 {{- end }}

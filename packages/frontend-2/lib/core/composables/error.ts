@@ -1,9 +1,9 @@
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import * as Observability from '@speckle/shared/dist/esm/observability/index'
+import * as Observability from '@speckle/shared/observability'
 import {
   prettify,
-  type AbstractErrorHandler,
-  type AbstractErrorHandlerParams,
+  type AbstractLoggerHandler,
+  type AbstractLoggerHandlerParams,
   type AbstractUnhandledErrorHandler
 } from '~/lib/core/helpers/observability'
 
@@ -14,15 +14,17 @@ export function useAppErrorState() {
     inErrorState: ref(false),
     errorRpm: Observability.simpleRpmCounter()
   }))
-  const logger = useLogger()
+  const nuxtApp = useNuxtApp()
 
   return {
     isErrorState: computed(() => state.inErrorState.value),
     registerError: () => {
       const epm = state.errorRpm.hit()
+      const logger = nuxtApp.$logger
 
       if (!state.inErrorState.value && epm >= ENTER_STATE_AT_ERRORS_PER_MIN) {
-        logger.fatal(
+        // optional chaining, cause logger may not exist super early in startup
+        logger?.fatal(
           `Too many errors (${epm} errors per minute), entering app error state!`
         )
         state.inErrorState.value = true
@@ -31,20 +33,22 @@ export function useAppErrorState() {
   }
 }
 
-export type ErrorLoggingTransport = {
-  onError: AbstractErrorHandler
+export type CustomLoggingTransport = {
+  onLog?: AbstractLoggerHandler
   onUnhandledError?: AbstractUnhandledErrorHandler
 }
 
-const useErrorLoggingTransportState = () =>
-  useScopedState('useErrorLoggingTransport', () => ({
-    transports: [] as ErrorLoggingTransport[]
+const useCustomLoggingTransportState = () =>
+  useScopedState('useCustomLoggingTransport', () => ({
+    transports: [] as CustomLoggingTransport[]
   }))
 
-export const useCreateErrorLoggingTransport = () => {
-  const { transports } = useErrorLoggingTransportState()
+export const useCreateLoggingTransport = () => {
+  const { transports } = useCustomLoggingTransportState()
 
-  return (transport: ErrorLoggingTransport) => {
+  return (transport: CustomLoggingTransport) => {
+    if (!transport.onLog && !transport.onUnhandledError) return noop
+
     transports.push(transport)
     const remove = () => {
       const idx = transports.indexOf(transport)
@@ -57,20 +61,21 @@ export const useCreateErrorLoggingTransport = () => {
   }
 }
 
-export const useGetErrorLoggingTransports = () => {
-  const { transports } = useErrorLoggingTransportState()
+export const useGetLoggingTransports = () => {
+  const { transports } = useCustomLoggingTransportState()
 
   return transports
 }
 
-export const useLogToErrorLoggingTransports = () => {
-  const transports = useGetErrorLoggingTransports()
-  const invokeTransportsWithPayload = (payload: AbstractErrorHandlerParams) => {
-    transports.forEach((handler) =>
-      handler.onError(payload, {
+export const useLogToLoggingTransports = () => {
+  const transports = useGetLoggingTransports()
+  const invokeTransportsWithPayload = (payload: AbstractLoggerHandlerParams) => {
+    transports.forEach((handler) => {
+      if (!handler.onLog) return
+      handler.onLog(payload, {
         prettifyMessage: (msg) => prettify(payload.otherData || {}, msg)
       })
-    )
+    })
   }
 
   return {

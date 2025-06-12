@@ -10,9 +10,6 @@ export const ServerInvitesEvents = {
   Canceled: `${prefix}canceled`
 } as const
 
-export type ServerInvitesEventsKeys =
-  (typeof ServerInvitesEvents)[keyof typeof ServerInvitesEvents]
-
 export type ServerInvitesEventsPayloads = {
   [ServerInvitesEvents.Created]: {
     invite: ServerInviteRecord
@@ -21,6 +18,11 @@ export type ServerInvitesEventsPayloads = {
     invite: ServerInviteRecord
     finalizerUserId: string
     accept: boolean
+    /**
+     * finalizerUserId will always be the invite target. This field will be the actual person triggering the action,
+     * which in auto-accept flows will be the initial inviter. Use this for reporting.
+     */
+    trueFinalizerUserId: string
   }
   [ServerInvitesEvents.Canceled]: {
     invite: ServerInviteRecord

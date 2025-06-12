@@ -1,5 +1,5 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { readFile } from 'fs/promises'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
@@ -14,7 +14,7 @@ async function getExplorerHtml() {
   )
 }
 
-export const init: SpeckleModule['init'] = (app) => {
+export const init: SpeckleModule['init'] = ({ app }) => {
   moduleLogger.info('💅 Init graphql api explorer module')
 
   // sweet and simple

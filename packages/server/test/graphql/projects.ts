@@ -58,8 +58,12 @@ export const getProjectQuery = gql`
       id
       name
       workspaceId
+      role
+      ...BasicProjectFields
     }
   }
+
+  ${basicProjectFieldsFragment}
 `
 
 export const createProjectMutation = gql`
@@ -78,6 +82,43 @@ export const batchDeleteProjectsMutation = gql`
   mutation BatchDeleteProjects($ids: [String!]!) {
     projectMutations {
       batchDelete(ids: $ids)
+    }
+  }
+`
+
+export const updateProjectRoleMutation = gql`
+  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {
+    projectMutations {
+      updateRole(input: $input) {
+        ...BasicProjectFields
+      }
+    }
+  }
+
+  ${basicProjectFieldsFragment}
+`
+
+export const getProjectCollaboratorsQuery = gql`
+  query GetProjectCollaborators($projectId: String!) {
+    project(id: $projectId) {
+      id
+      team {
+        id
+        role
+      }
+    }
+  }
+`
+
+export const getProjectVersionsQuery = gql`
+  query GetProjectVersions($projectId: String!) {
+    project(id: $projectId) {
+      versions {
+        items {
+          id
+          referencedObject
+        }
+      }
     }
   }
 `

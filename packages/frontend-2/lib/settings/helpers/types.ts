@@ -1,70 +1,37 @@
-import type { AvailableRoles } from '@speckle/shared'
-import { isObjectLike, has } from 'lodash'
-import type { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
+import type { AvailableRoles, WorkspaceSeatType } from '@speckle/shared'
 
-export type SettingsMenuItem = {
+type BaseSettingsMenuItem = {
   title: string
-  component?: ReturnType<typeof defineComponent>
   disabled?: boolean
   tooltipText?: string
   permission?: AvailableRoles[]
 }
 
-export type SettingsMenuItems = {
-  [key: string]: SettingsMenuItem
+export type GenericSettingsMenuItem = BaseSettingsMenuItem & {
+  route: string
 }
 
-export const SettingMenuKeys = Object.freeze(<const>{
-  User: {
-    Profile: 'user/profile',
-    Notifications: 'user/notifications',
-    DeveloperSettings: 'user/developer-settings',
-    Emails: 'user/emails'
-  },
-  Server: {
-    General: 'server/general',
-    Projects: 'server/projects',
-    ActiveUsers: 'server/active-users',
-    PendingInvitations: 'server/pending-invitations',
-    Regions: 'server/regions'
-  },
-  Workspace: {
-    General: 'workspace/general',
-    Members: 'workspace/members',
-    Projects: 'workspace/projects',
-    Security: 'workspace/security',
-    Billing: 'workspace/billing',
-    Regions: 'workspace/regions'
-  }
-})
-
-export type UserSettingMenuKeys =
-  (typeof SettingMenuKeys)['User'][keyof (typeof SettingMenuKeys)['User']]
-export type ServerSettingMenuKeys =
-  (typeof SettingMenuKeys)['Server'][keyof (typeof SettingMenuKeys)['Server']]
-export type WorkspaceSettingMenuKeys =
-  (typeof SettingMenuKeys)['Workspace'][keyof (typeof SettingMenuKeys)['Workspace']]
-
-export type AvailableSettingsMenuKeys =
-  | UserSettingMenuKeys
-  | ServerSettingMenuKeys
-  | WorkspaceSettingMenuKeys
-
-export type WorkspacePricingPlans = {
-  workspacePricingPlans: {
-    workspacePlanInformation: {
-      [key: string]: {
-        name: WorkspacePlans
-      }
-    }
-  }
+export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
+  name: string
+  route: (slug?: string) => string
 }
 
-export function isWorkspacePricingPlans(
-  pricingPlans: unknown
-): pricingPlans is WorkspacePricingPlans {
-  return (
-    isObjectLike(pricingPlans) &&
-    has(pricingPlans, 'workspacePricingPlans.workspacePlanInformation')
-  )
+export enum WorkspaceUserActionTypes {
+  RemoveFromWorkspace = 'remove-from-workspace',
+  LeaveWorkspace = 'leave-workspace',
+  MakeAdmin = 'make-admin',
+  RemoveAdmin = 'remove-admin',
+  MakeGuest = 'make-guest',
+  MakeMember = 'make-member',
+  UpgradeEditor = 'upgrade-editor',
+  DowngradeEditor = 'downgrade-editor',
+  UpdateProjectPermissions = 'update-project-permissions'
+}
+
+export type WorkspaceUserUpdateShowOptions = {
+  isActiveUserWorkspaceAdmin?: boolean
+  isActiveUserTargetUser?: boolean
+  targetUserCurrentRole?: string
+  targetUserCurrentSeatType?: WorkspaceSeatType
+  isDomainCompliant?: boolean
 }

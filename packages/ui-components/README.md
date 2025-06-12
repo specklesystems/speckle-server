@@ -6,7 +6,7 @@ Speckle UI component library built with Vue 3 and relying on the Speckle Tailwin
 
 1. Make sure you have `@speckle/tailwind-theme` installed and set up with Tailwind
 1. Install `@speckle/ui-components`
-1. In your tailwind config import `tailwindContentEntry` from `@speckle/ui-components/tailwind-configure` and invoke it in the `contents` field to ensure PurgeCSS is configured correctly. It requires the CJS `require` object as its only parameter. If it isn't available (in an ESM environment), you can use node's `createRequire()`.
+1. In your tailwind config import `tailwindContentEntries` from `@speckle/ui-components/tailwind-configure` and invoke it in the `contents` field to ensure PurgeCSS is configured correctly. It requires the CJS `require` object as its only parameter. If it isn't available (in an ESM environment), you can use node's `createRequire()`.
 1. Import `@speckle/ui-components/style.css` in your app. If `exports` map isn't supported you can also import from `@speckle/ui-components/dist/style.css`
 
 ### Usage in Nuxt v3

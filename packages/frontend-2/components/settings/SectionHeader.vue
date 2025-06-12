@@ -5,7 +5,7 @@
       :class="{ 'md:items-center': subheading }"
     >
       <h2 v-if="subheading" class="text-heading-lg">{{ title }}</h2>
-      <h1 v-else class="text-heading-xl hidden md:block">
+      <h1 v-else class="text-heading-xl">
         {{ title }}
       </h1>
       <div v-if="buttons.length > 0" class="flex flex-wrap gap-2">

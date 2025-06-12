@@ -18,7 +18,6 @@ import {
   type VisualDiffMode,
   ViewMode
 } from '@speckle/viewer'
-import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
 import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
@@ -51,7 +50,6 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
-import type { Box3 } from 'three'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
@@ -67,6 +65,7 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
+import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -82,7 +81,7 @@ export type InjectableViewerState = Readonly<{
   /**
    * The project which we're opening in the viewer (all loaded models should belong to it)
    */
-  projectId: ComputedRef<string>
+  projectId: AsyncWritableComputedRef<string>
   /**
    * User viewer session ID. The same user will have different IDs in different tabs if multiple are open.
    * This is used to ignore user activity messages from the same tab.
@@ -218,6 +217,7 @@ export type InjectableViewerState = Readonly<{
        * Fetch the next page of versions for a loaded model
        */
       loadMoreVersions: (modelId: string) => Promise<void>
+      resourcesLoading: ComputedRef<boolean>
     }
   }
   /**
@@ -268,7 +268,7 @@ export type InjectableViewerState = Readonly<{
       result: ShallowRef<Optional<DiffResult>> //ComputedRef<Optional<DiffResult>>
       enabled: Ref<boolean>
     }
-    sectionBox: Ref<Nullable<Box3>>
+    sectionBox: Ref<Nullable<SectionBoxData>>
     sectionBoxContext: {
       visible: Ref<boolean>
       edited: Ref<boolean>
@@ -277,6 +277,7 @@ export type InjectableViewerState = Readonly<{
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
+    loadProgress: Ref<number>
     selection: Ref<Nullable<Vector3>>
     measurement: {
       enabled: Ref<boolean>
@@ -399,8 +400,6 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     public: { viewerDebug }
   } = useRuntimeConfig()
 
-  const projectId = computed(() => unref(params.projectId))
-
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
@@ -411,7 +410,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
   const hasDoneInitialLoad = ref(false)
 
   return {
-    projectId,
+    projectId: params.projectId,
     sessionId,
     viewer: import.meta.server
       ? ({
@@ -715,6 +714,7 @@ function setupResponseResourceData(
   // sorting variables so that we don't refetech just because the order changed
   const {
     result: viewerLoadedResourcesResult,
+    loading: viewerLoadedResourcesLoading,
     variables: viewerLoadedResourcesVariables,
     onError: onViewerLoadedResourcesError,
     onResult: onViewerLoadedResourcesResult,
@@ -882,7 +882,8 @@ function setupResponseResourceData(
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
     loadMoreVersions,
-    resourcesLoaded: computed(() => initLoadDone.value)
+    resourcesLoaded: computed(() => initLoadDone.value),
+    resourcesLoading: computed(() => viewerLoadedResourcesLoading.value)
   }
 }
 
@@ -918,6 +919,8 @@ function setupInterfaceState(
     get: () => isViewerBusy.value,
     set: (newVal) => (isViewerBusy.value = !!newVal)
   })
+
+  const loadProgress = ref(0)
 
   const isolatedObjectIds = ref([] as string[])
   const hiddenObjectIds = ref([] as string[])
@@ -978,6 +981,7 @@ function setupInterfaceState(
       explodeFactor,
       spotlightUserSessionId,
       viewerBusy,
+      loadProgress,
       threads: {
         items: commentThreads,
         openThread: {
@@ -995,7 +999,7 @@ function setupInterfaceState(
         isOrthoProjection
       },
       viewMode,
-      sectionBox: ref(null as Nullable<Box3>),
+      sectionBox: ref(null as Nullable<SectionBoxData>),
       sectionBoxContext: {
         visible: ref(false),
         edited: ref(false)
@@ -1026,7 +1030,7 @@ function setupInterfaceState(
   }
 }
 
-type UseSetupViewerParams = { projectId: MaybeRef<string> }
+type UseSetupViewerParams = { projectId: AsyncWritableComputedRef<string> }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
   // Initialize full state object - each subsequent state initialization depends on

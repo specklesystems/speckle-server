@@ -1,9 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock
-    background
-    title="Discussions"
-    :disabled-message="disabled ? 'You must be a project owner' : undefined"
-  >
+  <ProjectPageSettingsBlock background title="Discussions" :auth-check="canUpdate">
     <template #introduction>
       <p class="text-body-xs text-foreground">
         Control who can leave comments on this project.
@@ -11,8 +7,9 @@
     </template>
     <FormRadioGroup
       v-model="selectedOption"
-      :disabled="isDisabled"
+      :disabled="!canUpdate.authorized"
       :options="radioOptions"
+      size="sm"
       @update:model-value="emitUpdate"
     />
   </ProjectPageSettingsBlock>
@@ -21,7 +18,10 @@
 <script setup lang="ts">
 import { UserGroupIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
-import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import {
+  castToSupportedVisibility,
+  SupportedProjectVisibility
+} from '~/lib/projects/helpers/visibility'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsGeneralBlockDiscussions_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -30,12 +30,16 @@ graphql(`
     id
     visibility
     allowPublicComments
+    permissions {
+      canUpdateAllowPublicComments {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockDiscussions_ProjectFragment
-  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -53,9 +57,7 @@ const selectedOption = ref(
     : CommentPermission.TeamMembers
 )
 
-const isDisabled = computed(
-  () => props.project.visibility === ProjectVisibility.Private || props.disabled
-)
+const canUpdate = computed(() => props.project.permissions.canUpdateAllowPublicComments)
 
 const radioOptions = computed(() => [
   {
@@ -70,7 +72,8 @@ const radioOptions = computed(() => [
     introduction: 'Only collaborators can comment',
     icon: UserCircleIcon,
     help:
-      props.project.visibility === ProjectVisibility.Private
+      castToSupportedVisibility(props.project.visibility) !==
+      SupportedProjectVisibility.Public
         ? 'Only collaborators can comment on private projects'
         : undefined
   }
@@ -79,7 +82,9 @@ const radioOptions = computed(() => [
 watch(
   () => props.project.visibility,
   (newVisibility) => {
-    if (newVisibility === ProjectVisibility.Private) {
+    if (
+      castToSupportedVisibility(newVisibility) !== SupportedProjectVisibility.Public
+    ) {
       selectedOption.value = CommentPermission.TeamMembers
     }
   },

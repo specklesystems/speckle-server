@@ -8,10 +8,11 @@ export const Workspaces = buildTableHelper('workspaces', [
   'createdAt',
   'updatedAt',
   'logo',
-  'defaultLogoIndex',
-  'defaultProjectRole',
   'domainBasedMembershipProtectionEnabled',
-  'discoverabilityEnabled'
+  'discoverabilityEnabled',
+  'discoverabilityAutoJoinEnabled',
+  'defaultSeatType',
+  'isEmbedSpeckleBrandingHidden'
 ])
 
 export const WorkspaceAcl = buildTableHelper('workspace_acl', [
@@ -29,4 +30,26 @@ export const WorkspaceDomains = buildTableHelper('workspace_domains', [
   'updatedAt',
   'createdByUserId',
   'verified'
+])
+
+export const WorkspaceCreationState = buildTableHelper('workspace_creation_state', [
+  'workspaceId',
+  'completed',
+  'state'
+])
+
+export const WorkspaceJoinRequests = buildTableHelper('workspace_join_requests', [
+  'workspaceId',
+  'userId',
+  'status',
+  'createdAt',
+  'updatedAt'
+])
+
+export const WorkspaceSeats = buildTableHelper('workspace_seats', [
+  'workspaceId',
+  'userId',
+  'type',
+  'createdAt',
+  'updatedAt'
 ])

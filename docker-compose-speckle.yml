@@ -1,4 +1,3 @@
-version: '2.4'
 services:
   speckle-ingress:
     build:
@@ -12,6 +11,9 @@ services:
     environment:
       FILE_SIZE_LIMIT_MB: '100'
       NGINX_ENVSUBST_OUTPUT_DIR: '/etc/nginx'
+    depends_on:
+      - speckle-server
+      - speckle-frontend-2
 
   speckle-frontend-2:
     build:
@@ -22,12 +24,19 @@ services:
     restart: always
     environment:
       NUXT_PUBLIC_SERVER_NAME: 'local'
+      #TODO: Change this to the URL of your server. This is the URL of the server as accessed by users.
       NUXT_PUBLIC_API_ORIGIN: 'http://127.0.0.1'
+      #TODO: Change this to the URL of your server. This is the URL of the server as accessed by users.
       NUXT_PUBLIC_BASE_URL: 'http://127.0.0.1'
+      # This is the URL of the server as accessed via this docker compose network.
       NUXT_PUBLIC_BACKEND_API_ORIGIN: 'http://speckle-server:3000'
       NUXT_PUBLIC_LOG_LEVEL: 'warn'
       NUXT_REDIS_URL: 'redis://redis'
       LOG_LEVEL: 'info'
+      LOG_PRETTY: 'true'
+    depends_on:
+      - speckle-server
+      # - redis
 
   speckle-server:
     build:
@@ -47,14 +56,20 @@ services:
       retries: 3
       start_period: 90s
     environment:
-      # TODO: Change this to the URL of the speckle server, as accessed from the network
+      # TODO. Change this to the url of your server. This is the URL of the server as accessed by users.
       CANONICAL_URL: 'http://127.0.0.1'
+      # This is the URL of the server as accessed by other Speckle services within this docker compose network, such as preview-service.
+      # This will be the same value as NUXT_PUBLIC_BACKEND_API_ORIGIN as defined in the frontend-2 service.
+      PRIVATE_OBJECTS_SERVER_URL: 'http://speckle-server:3000'
 
       # TODO: Change this to a unique secret for this server
       SESSION_SECRET: 'TODO:Replace'
 
+      # This is the authentication strategy to use. Local (i.e. username & password) is the default strategy.
       STRATEGY_LOCAL: 'true'
+
       LOG_LEVEL: 'info'
+      LOG_PRETTY: 'true'
 
       POSTGRES_URL: 'postgres'
       POSTGRES_USER: 'speckle'
@@ -62,6 +77,9 @@ services:
       POSTGRES_DB: 'speckle'
 
       REDIS_URL: 'redis://redis'
+      PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'true'
+      PREVIEW_SERVICE_REDIS_URL: 'redis://redis'
+      FILEIMPORT_SERVICE_REDIS_URL: 'redis://redis'
 
       S3_ENDPOINT: 'http://minio:9000'
       S3_ACCESS_KEY: 'minioadmin'
@@ -72,9 +90,13 @@ services:
       FILE_SIZE_LIMIT_MB: 100
       EMAIL_FROM: 'no-reply@example.org'
 
-      USE_FRONTEND_2: true
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
+    depends_on:
+      []
+      # - minio
+      # - redis
+      # - postgres
 
   preview-service:
     build:
@@ -86,10 +108,14 @@ services:
     mem_limit: '3000m'
     memswap_limit: '3000m'
     environment:
-      HOST: '127.0.0.1' # Only accept connections from localhost, as preview service does not need to be exposed outside the container.
-      METRICS_HOST: '127.0.0.1' # Amend if you want to expose Prometheus metrics outside of the container
+      HOST: '127.0.0.1' # The preview service does not need to be exposed outside the container.
+      PORT: '3001'
       LOG_LEVEL: 'info'
-      PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
+      LOG_PRETTY: 'true'
+      REDIS_URL: 'redis://redis'
+    depends_on:
+      []
+      # - redis
 
   webhook-service:
     build:
@@ -100,7 +126,11 @@ services:
     restart: always
     environment:
       LOG_LEVEL: 'info'
+      LOG_PRETTY: 'true'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
+    depends_on:
+      - speckle-server
+      # - postgres
 
   fileimport-service:
     build:
@@ -111,6 +141,10 @@ services:
     restart: always
     environment:
       LOG_LEVEL: 'info'
+      LOG_PRETTY: 'true'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'
       FILE_IMPORT_TIME_LIMIT_MIN: 10
+    depends_on:
+      - speckle-server
+      # - postgres

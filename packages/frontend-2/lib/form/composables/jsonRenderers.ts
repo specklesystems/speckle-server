@@ -2,7 +2,7 @@
 import type { useJsonFormsArrayControl, useJsonFormsControl } from '@jsonforms/vue'
 import { useVanillaArrayControl } from '@jsonforms/vue-vanilla'
 import { cloneDeep, merge } from 'lodash-es'
-import { type RuleExpression } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
 
 export function useJsonRendererBaseSetup<
   I extends ReturnType<typeof useJsonFormsControl>

@@ -44,6 +44,13 @@ const DefaultSpeckleTextStyle: SpeckleTextStyle = {
   billboard: false
 }
 
+/** TO DO: This is weird because in the billboarded scenario, background size is
+ *  specified in pixels inside the style, yet we still rely on the actual world space
+ *  background rectangle to be a factor larger than the text itself
+ *  This needs to be looked and probably eliminated, but it does not currently break functionality
+ */
+const BACKGROUND_OVERSIZE = 1.2
+
 export class SpeckleText extends Mesh {
   private _layer: ObjectLayers = ObjectLayers.NONE
   private _text: Text = null
@@ -140,6 +147,21 @@ export class SpeckleText extends Mesh {
       if (this._style.billboard) {
         this.textMesh.material.userData.billboardPos.value.copy(position)
         if (this._background) {
+          const textSize = this.textMesh.geometry.boundingBox.getSize(new Vector3())
+          const textCenter = this.textMesh.geometry.boundingBox.getCenter(new Vector3())
+          const offset = new Vector3()
+            .copy(textCenter)
+            .multiplyScalar(BACKGROUND_OVERSIZE)
+          const sizeOffset = new Vector3()
+            .copy(textSize)
+            .multiplyScalar(BACKGROUND_OVERSIZE)
+            .sub(textSize)
+          offset.x +=
+            textCenter.x < 0 ? sizeOffset.x : textCenter.x > 0 ? -sizeOffset.x : 0
+          offset.y +=
+            textCenter.y < 0 ? sizeOffset.y : textCenter.y > 0 ? -sizeOffset.y : 0
+          ;(this._background.material as SpeckleBasicMaterial).billboardOffset =
+            new Vector2(offset.x, offset.y)
           ;(
             this._background.material as SpeckleBasicMaterial
           ).userData.billboardPos.value.copy(position)
@@ -170,9 +192,14 @@ export class SpeckleText extends Mesh {
         }
         if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
           if (this._resolution.length() === 0) return
+          const backgroundSizeIncrease = this._background ? BACKGROUND_OVERSIZE : 1
           const billboardSize = new Vector2().set(
-            (this.textMesh.material.billboardPixelHeight / this._resolution.x) * 2,
-            (this.textMesh.material.billboardPixelHeight / this._resolution.y) * 2
+            (this.textMesh.material.billboardPixelHeight / this._resolution.x) *
+              2 *
+              backgroundSizeIncrease,
+            (this.textMesh.material.billboardPixelHeight / this._resolution.y) *
+              2 *
+              backgroundSizeIncrease
           )
 
           const invProjection = new Matrix4()
@@ -236,7 +263,13 @@ export class SpeckleText extends Mesh {
     const sizeDelta = sizeBox.distanceTo(this._backgroundSize)
     let geometry = this._background?.geometry
     if (sizeDelta > 0.1) {
-      geometry = this.RectangleRounded(sizeBox.x * 1.2, sizeBox.y * 1.2, 0.5, 5)
+      /** BACKGROUND_OVERSIZE should not be required for billboarded backgrounds. Weird */
+      geometry = this.RectangleRounded(
+        sizeBox.x * BACKGROUND_OVERSIZE,
+        sizeBox.y * BACKGROUND_OVERSIZE,
+        0.5,
+        5
+      )
       geometry.computeBoundingBox()
       this._backgroundSize.copy(sizeBox)
       if (this._background) this._background.geometry = geometry
@@ -286,7 +319,7 @@ export class SpeckleText extends Mesh {
       new BufferAttribute(new Float32Array(positions), 3)
     )
     geometry.setAttribute('uv', new BufferAttribute(new Float32Array(uvs), 2))
-
+    geometry.computeBoundingBox()
     return geometry
 
     function contour(j: number) {

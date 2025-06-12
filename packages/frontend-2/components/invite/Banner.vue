@@ -28,7 +28,6 @@
           :size="buttonSize"
           color="outline"
           class="px-4"
-          :icon-left="CheckIcon"
           :disabled="loading"
           @click="onAcceptClick(token)"
         >
@@ -52,7 +51,6 @@
 <script setup lang="ts">
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import type { AvatarUserType } from '~/lib/user/composables/avatar'
-import { CheckIcon } from '@heroicons/vue/24/solid'
 import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import {
   useNavigateToLogin,
@@ -125,7 +123,9 @@ const mainInfoBlockClasses = computed(() => {
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
 const isForRegisteredUser = computed(() => !!props.invite.user?.id)
-const acceptMessage = computed(() => (props.invite.workspace ? 'Join' : 'Accept'))
+const acceptMessage = computed(() =>
+  props.invite.workspace ? 'Request to join' : 'Accept'
+)
 const declineMessage = computed(() => (props.invite.workspace ? 'Dismiss' : 'Decline'))
 
 const onLoginSignupClick = async () => {

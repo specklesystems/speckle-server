@@ -9,7 +9,17 @@ export function ensureError(
   fallbackMessage?: string
 ): Error | UnexpectedErrorStructureError {
   if (e instanceof Error) return e
-  return new UnexpectedErrorStructureError(fallbackMessage)
+  let stringifiedError = ''
+  if (e !== null && e !== undefined) {
+    try {
+      stringifiedError = JSON.stringify(e)
+    } catch {
+      //ignore
+    }
+  }
+  return new UnexpectedErrorStructureError(
+    `${fallbackMessage}${stringifiedError !== '' ? `. Cause: ${stringifiedError}` : ''}`
+  )
 }
 
 // this makes sure that a case is breaking in typing and in runtime too
@@ -17,6 +27,22 @@ export function throwUncoveredError(e: never): never {
   throw createUncoveredError(e)
 }
 
-export function createUncoveredError(e: never) {
-  return new Error(`Uncovered error case ${e}.`)
+export class UncoveredError extends Error {}
+
+export function createUncoveredError(e: unknown) {
+  let errorRepr = e
+
+  if (typeof e === 'object') errorRepr = JSON.stringify(e)
+  return new UncoveredError(`Uncovered error case ${errorRepr}.`)
+}
+
+/**
+ * Note: Only V8 and Node.js support controlling the stack trace limit
+ */
+export const collectLongTrace = (limit?: number) => {
+  const originalLimit = Error.stackTraceLimit
+  Error.stackTraceLimit = limit || 30
+  const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
+  Error.stackTraceLimit = originalLimit
+  return trace
 }

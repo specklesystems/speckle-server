@@ -3,7 +3,7 @@
     class="relative flex space-x-2 mb-2 last:mb-0"
     :class="description && inlineDescription ? 'items-start' : 'items-center'"
   >
-    <div class="flex h-6 items-center">
+    <div class="flex items-center" :class="size === 'sm' ? 'h-4' : 'h-6'">
       <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
       <input
         :id="finalId"
@@ -20,8 +20,10 @@
       />
     </div>
     <div
-      class="text-xs sm:text-sm"
-      :class="inlineDescription ? 'flex space-x-2 items-center' : ''"
+      :class="[
+        inlineDescription ? 'flex space-x-2 items-center' : '',
+        size === 'sm' ? 'text-body-2xs' : 'text-body-xs'
+      ]"
     >
       <label
         :for="finalId"
@@ -29,10 +31,15 @@
         :class="{ 'sr-only': hideLabel }"
       >
         <div v-if="icon">
-          <component :is="icon" class="h-8 sm:h-10 w-8 sm:w-10"></component>
+          <component
+            :is="icon"
+            :class="[
+              size === 'sm' ? 'h-6 sm:h-8 w-6 sm:w-8' : 'h-8 w-8 sm:h-10 sm:w-10'
+            ]"
+          />
         </div>
         <div class="flex flex-col">
-          <span class="text-body-sm font-medium">{{ title }}</span>
+          <span class="font-medium">{{ title }}</span>
           <p
             v-if="descriptionText && !inlineDescription"
             :id="descriptionId"
@@ -73,6 +80,7 @@ import { nanoid } from 'nanoid'
  */
 
 type ValueType = Optional<string | true> | string[]
+type Size = 'sm' | 'base'
 
 defineOptions({
   inheritAttrs: false
@@ -167,6 +175,10 @@ const props = defineProps({
   hideLabel: {
     type: Boolean,
     default: false
+  },
+  size: {
+    type: String as PropType<Optional<Size>>,
+    default: 'base'
   }
 })
 

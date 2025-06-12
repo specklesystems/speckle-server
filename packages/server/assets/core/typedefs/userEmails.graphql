@@ -22,6 +22,10 @@ input SetPrimaryUserEmailInput {
 input EmailVerificationRequestInput {
   id: ID!
 }
+input VerifyUserEmailInput {
+  email: String!
+  code: String!
+}
 
 type UserEmailMutations {
   create(input: CreateUserEmailInput!): User!
@@ -34,6 +38,9 @@ type UserEmailMutations {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "profile:email")
   requestNewEmailVerification(input: EmailVerificationRequestInput!): Boolean
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+  verify(input: VerifyUserEmailInput!): Boolean
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "profile:email")
 }

@@ -3,8 +3,8 @@ import { MathUtils, Matrix4 } from 'three'
 import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
 import { NodeMap } from '../../tree/NodeMap.js'
 import { SpeckleType, type SpeckleObject } from '../../../index.js'
-import type ObjectLoader from '@speckle/objectloader'
 import Logger from '../../utils/Logger.js'
+import { ObjectLoader2 } from '@speckle/objectloader2'
 
 export type ConverterResultDelegate = () => Promise<void>
 export type SpeckleConverterNodeDelegate =
@@ -16,7 +16,7 @@ export type SpeckleConverterNodeDelegate =
  * Warning: HIC SVNT DRACONES.
  */
 export default class SpeckleConverter {
-  protected objectLoader: ObjectLoader
+  protected objectLoader: ObjectLoader2
   protected activePromises: number
   protected maxChildrenPromises: number
   protected spoofIDs = false
@@ -57,12 +57,13 @@ export default class SpeckleConverter {
     InstanceProxy: this.InstanceProxyToNode.bind(this),
     RenderMaterialProxy: this.RenderMaterialProxyToNode.bind(this),
     ColorProxy: this.ColorProxyToNode.bind(this),
+    Region: this.RegionToNode.bind(this),
     Parameter: null
   }
 
   protected readonly IgnoreNodes = ['Parameter']
 
-  constructor(objectLoader: ObjectLoader, tree: WorldTree) {
+  constructor(objectLoader: ObjectLoader2, tree: WorldTree) {
     if (!objectLoader) {
       Logger.warn(
         'Converter initialized without a corresponding object loader. Any objects that include references will throw errors.'
@@ -275,9 +276,9 @@ export default class SpeckleConverter {
 
     const chunked: unknown[] = []
     for (const ref of arr) {
-      const real: Record<string, unknown> = await this.objectLoader.getObject(
-        ref.referencedId
-      )
+      const real: Record<string, unknown> = (await this.objectLoader.getObject({
+        id: ref.referencedId
+      })) as unknown as Record<string, number>
       chunked.push(real.data)
       // await this.asyncPause()
     }
@@ -295,9 +296,9 @@ export default class SpeckleConverter {
    */
   private async resolveReference(obj: SpeckleObject): Promise<SpeckleObject> {
     if (obj.referencedId) {
-      const resolvedObj = (await this.objectLoader.getObject(
-        obj.referencedId
-      )) as SpeckleObject
+      const resolvedObj = (await this.objectLoader.getObject({
+        id: obj.referencedId
+      })) as SpeckleObject
       // this.asyncPause()
       return resolvedObj
     } else return obj
@@ -724,31 +725,40 @@ export default class SpeckleConverter {
       /** Create the final instances */
       await this.convertToNode(node.model.raw, node)
       count++
-      // if (count === 3) break
     }
   }
 
   public async applyMaterials() {
-    let renderMaterialCount = Object.keys(this.renderMaterialMap).length
-    let colorCount = Object.keys(this.colorMap).length
+    const renderMaterialCount = Object.keys(this.renderMaterialMap).length
+    const colorCount = Object.keys(this.colorMap).length
     if (renderMaterialCount === 0 && colorCount === 0) return
 
     /** Do a short async walk */
     await this.tree.walkAsync((node: TreeNode) => {
       if (!node.model.raw.applicationId) return true
       const applicationId = node.model.raw.applicationId.toString()
-      if (this.renderMaterialMap[applicationId] !== undefined) {
+      /** With instances, render materials proxy can reference parents of original instanced data.
+       *  However, after they are instanced, they sometimes (or maybe often) do not have the same
+       *  parents anymore, so they can't inherit the render materials naturally.
+       *
+       *  That's why we check they parent layer application id and write the render material data
+       *  into the node themselves, sort of like 'baking' them in.
+       *
+       *  One side-effect is that we can no longer assume that each proxy is only getting applied once
+       *  so we cannot early break out of the walk
+       */
+      const parentApplicationId = node.model.raw.parentLayerApplicationId
+
+      if (this.renderMaterialMap[applicationId]) {
         node.model.raw.renderMaterial = this.renderMaterialMap[applicationId]
-        renderMaterialCount--
+      } else if (this.renderMaterialMap[parentApplicationId]) {
+        node.model.raw.renderMaterial = this.renderMaterialMap[parentApplicationId]
       }
 
       /** For non-instanced objects just use the color if any is present */
       if (this.colorMap[applicationId] !== undefined && !node.model.instanced) {
         node.model.color = this.colorMap[applicationId].value
-        colorCount--
       }
-      /** Break out when all applicationIds are accounted for*/
-      if (renderMaterialCount === 0 && colorCount === 0) return false
       return true
     }, this.subtree)
 
@@ -897,6 +907,36 @@ export default class SpeckleConverter {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     node.model.raw.colors = await this.dechunk(obj.colors)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    node.model.raw.vertexNormals = await this.dechunk(obj.vertexNormals)
+  }
+
+  private async RegionToNode(obj: SpeckleObject, node: TreeNode) {
+    try {
+      if (!obj) return
+
+      let displayValue = this.getDisplayValue(obj)
+
+      if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
+      if (!displayValue) return
+
+      const ref = await this.resolveReference(displayValue as SpeckleObject)
+      const nestedNode: TreeNode = this.tree.parse({
+        id: node.model.instanced
+          ? this.getCompoundId(ref.id, this.instanceCounter++)
+          : this.getNodeId(ref),
+        raw: ref,
+        atomic: false,
+        children: [],
+        ...(node.model.instanced && { instanced: node.model.instanced })
+      })
+      await this.convertToNode(ref, nestedNode)
+      this.tree.addNode(nestedNode, node)
+    } catch (e) {
+      Logger.warn(`Failed to convert Region id: ${obj.id}`)
+      throw e
+    }
   }
 
   private async TextToNode(_obj: SpeckleObject, _node: TreeNode) {

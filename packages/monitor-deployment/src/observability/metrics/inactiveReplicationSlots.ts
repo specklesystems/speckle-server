@@ -16,7 +16,7 @@ export const init: MetricInitializer = (config) => {
         const connectionResults = await client.raw<{
           rows: [{ inactive_replication_slots: string }]
         }>(
-          `SELECT count(*) AS inactive_replication_slots FROM pg_replication_slots WHERE NOT active;`
+          `SELECT count(*) AS inactive_replication_slots FROM pg_replication_slots WHERE slot_type = 'logical' AND (slot_name LIKE 'projectsub_%' OR slot_name LIKE 'userssub_%') AND NOT active;`
         )
         if (!connectionResults.rows.length) {
           logger.error(

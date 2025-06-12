@@ -12,6 +12,7 @@
       :allow-unset="false"
       validate-on-value-update
       owned-only
+      :workspace-id="workspaceId"
     />
     <FormSelectModels
       v-if="project?.id"
@@ -51,6 +52,7 @@ import type {
 const props = defineProps<{
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
   isTestAutomation: boolean
+  workspaceId?: string
 }>()
 const project = defineModel<Optional<FormSelectProjects_ProjectFragment>>('project', {
   required: true

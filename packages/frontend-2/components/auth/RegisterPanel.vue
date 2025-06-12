@@ -20,7 +20,7 @@
           class="flex gap-1 text-foregound-3 text-body-xs items-center justify-center"
         >
           <span>Already have an account?</span>
-          <CommonTextLink :to="loginRoute">Log in</CommonTextLink>
+          <NuxtLink class="text-foreground" :to="loginRoute">Log in</NuxtLink>
         </div>
       </template>
       <template v-else>

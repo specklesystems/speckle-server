@@ -14,8 +14,8 @@ export const WorkspaceRegions = buildTableHelper('workspace_regions', [
 ])
 
 const tables = {
-  workspaceRegions: (db: Knex) => db<WorkspaceRegionAssignment>(WorkspaceRegions.name),
-  regions: (db: Knex) => db<RegionRecord>(Regions.name)
+  regions: (db: Knex) => db<RegionRecord>(Regions.name),
+  workspaceRegions: (db: Knex) => db<WorkspaceRegionAssignment>(WorkspaceRegions.name)
 }
 
 export const upsertRegionAssignmentFactory =

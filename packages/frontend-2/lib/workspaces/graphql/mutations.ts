@@ -15,6 +15,21 @@ export const workspaceUpdateRoleMutation = graphql(`
   }
 `)
 
+export const workspacesUpdateSeatTypeMutation = graphql(`
+  mutation WorkspacesUpdateSeatType($input: WorkspaceUpdateSeatTypeInput!) {
+    workspaceMutations {
+      updateSeatType(input: $input) {
+        team {
+          items {
+            id
+            seatType
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const inviteToWorkspaceMutation = graphql(`
   mutation InviteToWorkspace(
     $workspaceId: String!
@@ -38,7 +53,7 @@ export const createWorkspaceMutation = graphql(`
     workspaceMutations {
       create(input: $input) {
         id
-        ...SettingsDialog_Workspace
+        ...SettingsSidebar_Workspace
       }
     }
   }
@@ -80,6 +95,82 @@ export const updateWorkspaceCreationStateMutation = graphql(`
   mutation SetWorkspaceCreationState($input: WorkspaceCreationStateInput!) {
     workspaceMutations {
       updateCreationState(input: $input)
+    }
+  }
+`)
+
+export const workspaceUpdateDomainProtectionMutation = graphql(`
+  mutation WorkspaceUpdateDomainProtectionMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        domainBasedMembershipProtectionEnabled
+      }
+    }
+  }
+`)
+
+export const workspaceUpdateDiscoverabilityMutation = graphql(`
+  mutation WorkspaceUpdateDiscoverabilityMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        discoverabilityEnabled
+      }
+    }
+  }
+`)
+
+export const approveWorkspaceJoinRequestMutation = graphql(`
+  mutation ApproveWorkspaceJoinRequest($input: ApproveWorkspaceJoinRequestInput!) {
+    workspaceJoinRequestMutations {
+      approve(input: $input)
+    }
+  }
+`)
+
+export const denyWorkspaceJoinRequestMutation = graphql(`
+  mutation DenyWorkspaceJoinRequest($input: DenyWorkspaceJoinRequestInput!) {
+    workspaceJoinRequestMutations {
+      deny(input: $input)
+    }
+  }
+`)
+
+export const requestToJoinWorkspaceMutation = graphql(`
+  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {
+    workspaceMutations {
+      requestToJoin(input: $input)
+    }
+  }
+`)
+
+export const dismissDiscoverableWorkspaceMutation = graphql(`
+  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {
+    workspaceMutations {
+      dismiss(input: $input)
+    }
+  }
+`)
+
+export const workspaceUpdateAutoJoinMutation = graphql(`
+  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        discoverabilityAutoJoinEnabled
+      }
+    }
+  }
+`)
+
+export const workspaceUpdateDefaultSeatTypeMutation = graphql(`
+  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        defaultSeatType
+      }
     }
   }
 `)

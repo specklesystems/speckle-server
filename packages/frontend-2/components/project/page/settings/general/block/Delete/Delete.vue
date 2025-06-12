@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ProjectPageSettingsBlock background title="Delete project">
+    <ProjectPageSettingsBlock :auth-check="canDelete" background title="Delete project">
       <div
         class="rounded border bg-foundation-page border-outline-3 text-body-xs text-foreground py-4 px-6"
       >
@@ -8,7 +8,11 @@
         platform. This action is not reversible.
       </div>
       <template #bottom-buttons>
-        <FormButton color="danger" @click="showDeleteDialog = true">
+        <FormButton
+          color="danger"
+          :disabled="!canDelete.authorized"
+          @click="showDeleteDialog = true"
+        >
           Delete project
         </FormButton>
       </template>
@@ -24,17 +28,23 @@
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import type { ProjectsDeleteDialog_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageSettingsGeneralBlockDelete_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {
     ...ProjectsDeleteDialog_Project
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
-defineProps<{
-  project?: ProjectsDeleteDialog_ProjectFragment
+const props = defineProps<{
+  project: ProjectPageSettingsGeneralBlockDelete_ProjectFragment
 }>()
 
 const showDeleteDialog = ref(false)
+const canDelete = computed(() => props.project.permissions.canUpdate)
 </script>

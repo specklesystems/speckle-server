@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import {
-  automationFunctionsRoute,
+  publicAutomateFunctionsRoute,
   workspaceFunctionsRoute
 } from '~/lib/common/helpers/route'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
@@ -58,7 +58,7 @@ onMounted(() => {
 const functionsGalleryRoute = computed(() =>
   props.workspaceSlug
     ? workspaceFunctionsRoute(props.workspaceSlug)
-    : automationFunctionsRoute
+    : publicAutomateFunctionsRoute
 )
 
 const isVisibleAction = (action: LayoutDialogButton): boolean => {
@@ -124,7 +124,7 @@ const emptyStateItems = computed(() => {
         "Let's chat! Find out how Automate can be customised to support and improve virtually any of your custom workflows.",
       buttons: [
         {
-          text: 'Book a demo',
+          text: 'Book an intro call',
           props: {
             to: 'https://calendar.app.google/kH2EzSSMQktJ6bTZ7',
             external: true

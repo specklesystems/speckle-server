@@ -39,7 +39,6 @@
           v-model:open="showActionsMenu"
           :model="model"
           :project="project"
-          :can-edit="canEdit"
           @click.stop.prevent
           @upload-version="triggerVersionUpload"
         />
@@ -79,16 +78,16 @@
           </NuxtLink>
         </template>
         <div
-          v-if="!isPendingModelFragment(model)"
+          v-if="!isPendingModelFragment(model) && project"
           v-show="!previewUrl && !pendingVersion"
           class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
             ref="importArea"
-            :project-id="projectId"
-            :model-name="model.name"
+            empty-state-variant="modelGrid"
+            :project="project"
+            :model="model"
             class="w-full h-full"
-            :disabled="project?.workspace?.readOnly"
           />
         </div>
       </div>
@@ -131,7 +130,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
-import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
 
@@ -141,9 +139,11 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
-    workspace {
-      id
-      readOnly
+    ...ProjectCardImportFileArea_Project
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -166,9 +166,6 @@ const props = withDefaults(
     showActions: true
   }
 )
-
-// TODO: Get rid of this, its not reactive. Is it even necessary?
-provide('projectId', props.projectId)
 
 const router = useRouter()
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
@@ -215,7 +212,6 @@ const updatedAtFullDate = computed(() => {
     : props.model.updatedAt
 })
 
-const canEdit = computed(() => (props.project ? canModifyModels(props.project) : false))
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
 })

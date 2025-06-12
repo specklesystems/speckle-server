@@ -1,4 +1,4 @@
-import { Streams } from '@/modules/core/dbSchema'
+import { buildTableHelper, Streams } from '@/modules/core/dbSchema'
 import {
   CheckoutSession,
   GetCheckoutSession,
@@ -8,33 +8,75 @@ import {
   UpsertWorkspacePlan,
   UpsertWorkspaceSubscription,
   WorkspaceSubscription,
-  WorkspacePlan,
   UpsertPaidWorkspacePlan,
   DeleteCheckoutSession,
   GetWorkspaceCheckoutSession,
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
   GetWorkspaceSubscriptions,
-  UpsertTrialWorkspacePlan,
-  UpsertUnpaidWorkspacePlan
+  UpsertUnpaidWorkspacePlan,
+  GetWorkspaceWithPlan,
+  GetWorkspacePlansByWorkspaceId
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  ChangeExpiredTrialWorkspacePlanStatuses,
   GetWorkspacesByPlanDaysTillExpiry,
   GetWorkspacePlanByProjectId
 } from '@/modules/gatekeeper/domain/operations'
+import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
+import { PaidWorkspacePlans, WorkspacePlan } from '@speckle/shared'
 import { Knex } from 'knex'
+import { omit } from 'lodash'
+
+const WorkspacePlans = buildTableHelper('workspace_plans', [
+  'workspaceId',
+  'name',
+  'status',
+  'createdAt',
+  'updatedAt'
+])
+const WorkspaceSubscriptions = buildTableHelper('workspace_subscriptions', [
+  'workspaceId',
+  'createdAt',
+  'updatedAt',
+  'currentBillingCycleEnd',
+  'billingInterval',
+  'subscriptionData',
+  'currency'
+])
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
-  workspacePlans: (db: Knex) => db<WorkspacePlan>('workspace_plans'),
+  workspacePlans: (db: Knex) => db<WorkspacePlan>(WorkspacePlans.name),
   workspaceCheckoutSessions: (db: Knex) =>
     db<CheckoutSession>('workspace_checkout_sessions'),
   workspaceSubscriptions: (db: Knex) =>
     db<WorkspaceSubscription>('workspace_subscriptions')
 }
+
+export const getWorkspaceWithPlanFactory =
+  (deps: { db: Knex }): GetWorkspaceWithPlan =>
+  async ({ workspaceId }) => {
+    const q = tables
+      .workspaces(deps.db)
+      .select<Workspace & { plans: WorkspacePlan[] }>([
+        ...Workspaces.cols,
+        WorkspacePlans.groupArray('plans')
+      ])
+      .leftJoin(WorkspacePlans.name, WorkspacePlans.col.workspaceId, Workspaces.col.id)
+      .where(Workspaces.col.id, workspaceId)
+      .groupBy(Workspaces.col.id)
+      .first()
+
+    const workspace = await q
+    if (!workspace) return undefined
+
+    return {
+      ...omit(workspace, 'plans'),
+      plan: formatJsonArrayRecords(workspace.plans || [])[0] || null
+    }
+  }
 
 export const getWorkspacePlanFactory =
   ({ db }: { db: Knex }): GetWorkspacePlan =>
@@ -47,14 +89,23 @@ export const getWorkspacePlanFactory =
     return workspacePlan ?? null
   }
 
-const upsertWorkspacePlanFactory =
+export const getWorkspacePlansByWorkspaceIdFactory =
+  ({ db }: { db: Knex }): GetWorkspacePlansByWorkspaceId =>
+  async ({ workspaceIds }) => {
+    const results = await tables
+      .workspacePlans(db)
+      .whereIn(WorkspacePlans.col.workspaceId, workspaceIds)
+    return results.reduce((acc, curr) => ({ ...acc, [curr.workspaceId]: curr }), {})
+  }
+
+export const upsertWorkspacePlanFactory =
   ({ db }: { db: Knex }): UpsertWorkspacePlan =>
   async ({ workspacePlan }) => {
     await tables
       .workspacePlans(db)
       .insert(workspacePlan)
       .onConflict('workspaceId')
-      .merge(['name', 'status'])
+      .merge(['name', 'status', 'updatedAt'])
   }
 
 // this is a typed rebrand of the generic workspace plan upsert
@@ -65,28 +116,11 @@ export const upsertPaidWorkspacePlanFactory = ({
   db: Knex
 }): UpsertPaidWorkspacePlan => upsertWorkspacePlanFactory({ db })
 
-export const upsertTrialWorkspacePlanFactory = ({
-  db
-}: {
-  db: Knex
-}): UpsertTrialWorkspacePlan => upsertWorkspacePlanFactory({ db })
-
 export const upsertUnpaidWorkspacePlanFactory = ({
   db
 }: {
   db: Knex
 }): UpsertUnpaidWorkspacePlan => upsertWorkspacePlanFactory({ db })
-
-export const changeExpiredTrialWorkspacePlanStatusesFactory =
-  ({ db }: { db: Knex }): ChangeExpiredTrialWorkspacePlanStatuses =>
-  async ({ numberOfDays }) => {
-    return await tables
-      .workspacePlans(db)
-      .where({ status: 'trial' })
-      .andWhereRaw(`"createdAt" + make_interval(days => ${numberOfDays}) < now()`)
-      .update({ status: 'expired' })
-      .returning('*')
-  }
 
 export const getWorkspacesByPlanAgeFactory =
   ({ db }: { db: Knex }): GetWorkspacesByPlanDaysTillExpiry =>
@@ -185,8 +219,14 @@ export const getWorkspaceSubscriptionsPastBillingCycleEndFactory =
     cycleEnd.setMinutes(cycleEnd.getMinutes() + 5)
     return await tables
       .workspaceSubscriptions(db)
-      .select()
+      .join(
+        WorkspacePlans.name,
+        WorkspacePlans.col.workspaceId,
+        'workspace_subscriptions.workspaceId'
+      )
+      .whereIn(WorkspacePlans.col.name, Object.values(PaidWorkspacePlans))
       .where('currentBillingCycleEnd', '<', cycleEnd)
+      .select(WorkspaceSubscriptions.cols)
   }
 
 export const getWorkspacePlanByProjectIdFactory =

@@ -25,12 +25,14 @@ import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.j
 import { ObjectLayers } from '../../IViewer.js'
 import {
   type DrawGroup,
+  getNextBatchIndex,
   INSTANCE_GRADIENT_BUFFER_STRIDE,
   INSTANCE_TRANSFORM_BUFFER_STRIDE
 } from '../batching/Batch.js'
 import { SpeckleRaycaster } from './SpeckleRaycaster.js'
 import Logger from '../utils/Logger.js'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial.js'
+import { ExtendedInstancedMesh } from './ExtendedInstancedMesh.js'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -68,7 +70,8 @@ export default class SpeckleInstancedMesh extends Group {
   private batchMaterialStack: Array<Material> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
-  private _batchObjects!: BatchObject[]
+  private _batchObjects: BatchObject[]
+  private _needsRTE: boolean
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
@@ -83,10 +86,15 @@ export default class SpeckleInstancedMesh extends Group {
     return this._batchObjects
   }
 
-  constructor(geometry: BufferGeometry) {
+  public get needsRTE(): boolean {
+    return this._needsRTE
+  }
+
+  constructor(geometry: BufferGeometry, RTE = false) {
     super()
     this.instanceGeometry = geometry
     this.userData.raycastChildren = false
+    this._needsRTE = RTE
   }
 
   public setBatchMaterial(material: Material) {
@@ -182,7 +190,11 @@ export default class SpeckleInstancedMesh extends Group {
     this.tas.refit()
   }
 
-  public updateDrawGroups(transformBuffer: Float32Array, gradientBuffer: Float32Array) {
+  public updateDrawGroups(
+    transformBuffer: Float32Array,
+    gradientBuffer: Float32Array,
+    objectIndexBuffer?: Float32Array
+  ) {
     this.instances.forEach((value: InstancedMesh) => {
       this.remove(value)
       value.customDepthMaterial?.dispose()
@@ -194,10 +206,11 @@ export default class SpeckleInstancedMesh extends Group {
       const materialIndex = this.groups[k].materialIndex
       const material = this.materials[materialIndex]
 
-      const group = new InstancedMesh(
+      const group = new ExtendedInstancedMesh(
         this.getInstanceGeometryShallowCopy(),
         material,
-        0
+        0,
+        getNextBatchIndex()
       )
       group.instanceMatrix = new InstancedBufferAttribute(
         transformBuffer.subarray(
@@ -217,6 +230,18 @@ export default class SpeckleInstancedMesh extends Group {
           INSTANCE_GRADIENT_BUFFER_STRIDE
         )
       )
+      if (objectIndexBuffer)
+        group.geometry.setAttribute(
+          'objIndex',
+          new InstancedBufferAttribute(
+            objectIndexBuffer.subarray(
+              this.groups[k].start / INSTANCE_TRANSFORM_BUFFER_STRIDE,
+              (this.groups[k].start + this.groups[k].count) /
+                INSTANCE_TRANSFORM_BUFFER_STRIDE
+            ),
+            INSTANCE_GRADIENT_BUFFER_STRIDE
+          )
+        )
       group.count = this.groups[k].count / INSTANCE_TRANSFORM_BUFFER_STRIDE
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
@@ -225,7 +250,7 @@ export default class SpeckleInstancedMesh extends Group {
         {
           depthPacking: RGBADepthPacking
         },
-        ['USE_RTE', 'ALPHATEST_REJECTION']
+        ['ALPHATEST_REJECTION']
       )
       group.castShadow = !material.transparent
       group.receiveShadow = !material.transparent

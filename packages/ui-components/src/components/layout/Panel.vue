@@ -76,7 +76,7 @@ const computedClasses = computed(() => {
 
   if (!props.noShadow) classParts.push('shadow')
   if (props.ring) {
-    classParts.push('ring-outline-2 hover:ring-2')
+    classParts.push('ring-outline-1 hover:ring-1')
   }
   if (props.panelClasses) {
     classParts.push(props.panelClasses)

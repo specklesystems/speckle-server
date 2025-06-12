@@ -1,4 +1,7 @@
-import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import {
+  castToSupportedVisibility,
+  SupportedProjectVisibility
+} from '~/lib/projects/helpers/visibility'
 import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import {
@@ -26,12 +29,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // If project succesfully resolved, move on
   if (data?.project?.model?.id) return
 
-  const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
+  const isForbidden = (errors || []).find((e) => e.extensions?.['code'] === 'FORBIDDEN')
   const isProjectNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'STREAM_NOT_FOUND'
+    (e) => e.extensions?.['code'] === 'STREAM_NOT_FOUND'
   )
   const isModelNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'BRANCH_NOT_FOUND'
+    (e) => e.extensions?.['code'] === 'BRANCH_NOT_FOUND'
   )
 
   // Check if project exists and model is valid
@@ -43,10 +46,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  // If project is public or link shareable, allow access
+  // If project is public, allow access
   if (
-    data.project.visibility === ProjectVisibility.Public ||
-    data.project.visibility === ProjectVisibility.Unlisted
+    castToSupportedVisibility(data.project.visibility) ===
+    SupportedProjectVisibility.Public
   ) {
     return
   }

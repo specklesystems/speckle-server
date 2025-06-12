@@ -45,7 +45,7 @@ export function isSerializedTextEditorValueSchema(schemaJson: string) {
     if (deserializedJson && isTextEditorValueSchema(deserializedJson)) {
       deserializedSchema = deserializedJson
     }
-  } catch (e) {
+  } catch {
     // Suppressing serialization errors
   }
 

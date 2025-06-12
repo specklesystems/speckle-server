@@ -11,7 +11,8 @@ import { wait } from '@speckle/shared'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import {
   createStreamFactory,
-  getStreamFactory
+  getStreamFactory,
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { db } from '@/db/knex'
 import {
@@ -21,7 +22,9 @@ import {
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
+  deleteInvitesByTargetFactory,
   deleteServerOnlyInvitesFactory,
+  findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   updateAllInviteTargetsFactory
@@ -30,7 +33,6 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   countAdminUsersFactory,
   getUserFactory,
@@ -49,9 +51,20 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
@@ -60,6 +73,52 @@ const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -78,13 +137,14 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const createInviteDirectly = createStreamInviteDirectly
@@ -114,7 +174,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 function randomEl<T>(array: T[]): T {
@@ -141,7 +201,7 @@ async function getOrderedUserIds() {
 describe('[Admin users list]', () => {
   const me = {
     name: 'Mr Server Admin Dude',
-    email: 'adminuserguy@gmail.com',
+    email: 'adminuserguy@example.org',
     password: 'sn3aky-1337-b1m',
     id: undefined as Optional<string>,
     verified: false
@@ -199,7 +259,7 @@ describe('[Admin users list]', () => {
         name: `User #${i} - ${
           remainingSearchQueryUserCount-- >= 1 ? SEARCH_QUERY : ''
         }`,
-        email: `speckleuser${i}@gmail.com`,
+        email: `speckleuser${i}@example.org`,
         password: 'sn3aky-1337-b1m',
         verified: false
       })
@@ -227,7 +287,7 @@ describe('[Admin users list]', () => {
         {
           email: `randominvitee${i}.${
             remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
-          }@gmail.com`
+          }@example.org`
         },
         randomEl(userIds)
       )
@@ -239,7 +299,7 @@ describe('[Admin users list]', () => {
       const { id: streamId, ownerId } = randomEl(streamData)
       const email = `streamrandominvitee${i}.${
         remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
-      }@gmail.com`
+      }@example.org`
 
       await createInviteDirectly(
         {
@@ -266,7 +326,10 @@ describe('[Admin users list]', () => {
             userId
           },
           ownerId
-        )
+        ).then((invite) => ({
+          inviteId: invite.id,
+          token: invite.token
+        }))
       )
     }
 

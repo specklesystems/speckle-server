@@ -1,9 +1,9 @@
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import {
   CreateProject,
   DeleteProject,
   GetProject,
-  ProjectVisibility,
   StoreModel,
   StoreProject,
   StoreProjectRole
@@ -11,12 +11,12 @@ import {
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import {
-  ProjectEvents,
-  ProjectsEventsEmitter
-} from '@/modules/core/events/projectsEmitter'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
+import { mapGqlToDbProjectVisibility } from '@/modules/core/helpers/project'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
-import { Roles } from '@speckle/shared'
+import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 
 export const createNewProjectFactory =
@@ -26,25 +26,25 @@ export const createNewProjectFactory =
     deleteProject,
     storeProjectRole,
     storeModel,
-    projectsEventsEmitter
+    emitEvent
   }: {
     storeProject: StoreProject
     getProject: GetProject
     deleteProject: DeleteProject
     storeProjectRole: StoreProjectRole
-    projectsEventsEmitter: ProjectsEventsEmitter
+    emitEvent: EventBusEmit
     storeModel: StoreModel
   }): CreateProject =>
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
-    const publicVisibilities: ProjectVisibility[] = ['PUBLIC', 'UNLISTED']
-    const isPublic = !visibility || publicVisibilities.includes(visibility)
-    const isDiscoverable = visibility === 'PUBLIC'
+    visibility =
+      visibility ||
+      (workspaceId ? ProjectVisibility.Workspace : ProjectVisibility.Private)
+
     const project: Project = {
       id: cryptoRandomString({ length: 10 }),
       name: name || generateProjectName(),
       description: description || '',
-      isPublic,
-      isDiscoverable,
+      visibility: mapGqlToDbProjectVisibility(visibility),
       createdAt: new Date(),
       clonedFrom: null,
       updatedAt: new Date(),
@@ -60,15 +60,18 @@ export const createNewProjectFactory =
       try {
         await retry(
           async () => {
-            await getProject({ projectId })
+            const replicatedProject = await getProject({ projectId })
+            if (!replicatedProject) throw new StreamNotFoundError()
           },
-          { maxAttempts: 10 }
+          { maxAttempts: 10, delay: isTestEnv() ? TIME_MS.second : undefined }
         )
       } catch (err) {
         if (err instanceof StreamNotFoundError) {
           // delete from region
           await deleteProject({ projectId })
-          throw new RegionalProjectCreationError()
+          throw new RegionalProjectCreationError(undefined, {
+            info: { projectId, regionKey }
+          })
         }
         // else throw as is
         throw err
@@ -81,6 +84,17 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
-    await projectsEventsEmitter(ProjectEvents.Created, { project, ownerId })
+    await emitEvent({
+      eventName: ProjectEvents.Created,
+      payload: {
+        project,
+        ownerId,
+        input: {
+          description: project.description,
+          name: project.name,
+          visibility
+        }
+      }
+    })
     return project
   }

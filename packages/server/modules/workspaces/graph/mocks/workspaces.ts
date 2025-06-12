@@ -135,7 +135,6 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
                 id: faker.string.uuid(),
                 name: workspaceName(),
                 description: faker.lorem.sentence(),
-                defaultLogoIndex: 0,
                 logo: null
               }
             ]),

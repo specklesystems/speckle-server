@@ -146,3 +146,28 @@ export const WithOverflowingTooltip: StoryObj = {
     </div>`
   })
 }
+
+export const Transparent: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    isTransparent: true,
+    maxWidth: 'md'
+  },
+  render: (args) => ({
+    components: { LayoutDialog, FormButton },
+    setup() {
+      const open = ref(false)
+      return { args, open }
+    },
+    template: `<div>
+      <FormButton @click="() => open = true">Open Transparent Dialog</FormButton>
+      <LayoutDialog v-model:open="open" v-bind="args">
+        <div class="flex flex-col space-y-4">
+          <div class="h4 font-semibold">Transparent Background</div>
+          <div>This dialog has a transparent background, useful for custom styling or overlay purposes.</div>
+        </div>
+      </LayoutDialog>
+    </div>`
+  })
+}

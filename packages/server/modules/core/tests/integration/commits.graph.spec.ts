@@ -33,11 +33,11 @@ import {
   storeUserFactory
 } from '@/modules/core/repositories/users'
 import { createUserFactory } from '@/modules/core/services/users/management'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 import gql from 'graphql-tag'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -69,7 +69,7 @@ const createUser = createUserFactory({
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()

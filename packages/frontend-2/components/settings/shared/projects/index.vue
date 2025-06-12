@@ -12,21 +12,22 @@
           v-on="on"
         />
       </div>
-      <FormButton :disabled="disableCreate" @click="openNewProject = true">
-        Create
-      </FormButton>
+      <div v-tippy="createDisabledTooltip">
+        <FormButton :disabled="isCreateDisabled" @click="openNewProject = true">
+          Create
+        </FormButton>
+      </div>
     </div>
 
     <LayoutTable
       class="mt-6"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
-        { id: 'type', header: 'Type', classes: 'col-span-1' },
         { id: 'created', header: 'Created', classes: 'col-span-2' },
         { id: 'modified', header: 'Modified', classes: 'col-span-2' },
         { id: 'models', header: 'Models', classes: 'col-span-1' },
         { id: 'versions', header: 'Versions', classes: 'col-span-1' },
-        { id: 'contributors', header: 'Contributors', classes: 'col-span-2 pr-8' },
+        { id: 'contributors', header: 'Project members', classes: 'col-span-2 pr-8' },
         { id: 'actions', header: '', classes: 'absolute right-2 top-0.5' }
       ]"
       :items="projects"
@@ -35,12 +36,6 @@
         <NuxtLink :to="projectRoute(item.id)">
           {{ isProject(item) ? item.name : '' }}
         </NuxtLink>
-      </template>
-
-      <template #type="{ item }">
-        <div class="capitalize">
-          {{ isProject(item) ? item.visibility.toLowerCase() : '' }}
-        </div>
       </template>
 
       <template #created="{ item }">
@@ -76,9 +71,10 @@
       <template #actions="{ item }">
         <LayoutMenu
           v-model:open="showActionsMenu[item.id]"
-          :items="actionItems"
+          :items="actionItems[item.id]"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          :menu-id="menuId"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
@@ -97,7 +93,7 @@
       :project="projectToModify"
     />
 
-    <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
+    <ProjectsAdd v-model:open="openNewProject" :workspace="workspace" />
   </div>
 </template>
 
@@ -105,7 +101,8 @@
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type {
   SettingsSharedProjects_ProjectFragment,
-  ProjectsDeleteDialog_ProjectFragment
+  ProjectsDeleteDialog_ProjectFragment,
+  SettingsSharedProjects_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import {
   MagnifyingGlassIcon,
@@ -116,7 +113,10 @@ import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput, type LayoutMenuItem } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import { useRouter } from 'vue-router'
-import { projectCollaboratorsRoute, projectRoute } from '~/lib/common/helpers/route'
+import { projectRoute } from '~/lib/common/helpers/route'
+import { useCanCreatePersonalProject } from '~/lib/projects/composables/permissions'
+import { useCanCreateWorkspaceProject } from '~/lib/workspaces/composables/projects/permissions'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsSharedProjects_Project on Project {
@@ -140,22 +140,61 @@ graphql(`
         avatar
       }
     }
+    permissions {
+      canDelete {
+        ...FullPermissionCheckResult
+      }
+      canReadSettings {
+        ...FullPermissionCheckResult
+      }
+      canRead {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
-defineProps<{
-  projects?: SettingsSharedProjects_ProjectFragment[]
-  workspaceId?: string
-  disableCreate?: boolean
+graphql(`
+  fragment SettingsSharedProjects_Workspace on Workspace {
+    id
+    ...ProjectsAdd_Workspace
+  }
+`)
+
+const props = defineProps<{
+  workspaceId: MaybeNullOrUndefined<string>
+  projects: MaybeNullOrUndefined<SettingsSharedProjects_ProjectFragment[]>
+  workspace: MaybeNullOrUndefined<SettingsSharedProjects_WorkspaceFragment>
 }>()
 
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
+const { activeUser } = useActiveUser()
+const canCreatePersonal = useCanCreatePersonalProject({
+  activeUser: computed(() => activeUser.value)
+})
+
+const canCreateWorkspace = useCanCreateWorkspaceProject({
+  workspace: computed(() => props.workspace)
+})
+
+const isCreateDisabled = computed(() => {
+  if (props.workspaceId) {
+    return !canCreateWorkspace.canClickCreate.value
+  }
+
+  return !canCreatePersonal.canClickCreate.value
+})
+const createDisabledTooltip = computed(() => {
+  if (props.workspaceId) {
+    return canCreateWorkspace.cantClickCreateReason.value
+  }
+
+  return canCreatePersonal.cantClickCreateReason.value
+})
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const router = useRouter()
+const menuId = useId()
 
 const projectToModify = ref<ProjectsDeleteDialog_ProjectFragment | null>(null)
 const showProjectDeleteDialog = ref(false)
@@ -168,7 +207,6 @@ const openProjectDeleteDialog = (item: ProjectsDeleteDialog_ProjectFragment) => 
 
 const handleProjectClick = (id: string) => {
   router.push(projectRoute(id))
-  emit('close')
 }
 
 enum ActionTypes {
@@ -179,21 +217,44 @@ enum ActionTypes {
 
 const showActionsMenu = ref<Record<string, boolean>>({})
 
-const actionItems: LayoutMenuItem[][] = [
-  [
-    { title: 'View project', id: ActionTypes.ViewProject },
-    { title: 'Edit members', id: ActionTypes.EditMembers },
-    { title: 'Delete project...', id: ActionTypes.DeleteProject }
-  ]
-]
+const actionItems = computed((): { [projectId: string]: LayoutMenuItem[][] } =>
+  (props.projects || []).reduce((ret, project) => {
+    const canRead = project.permissions.canRead
+    const canDelete = project.permissions.canDelete
+    const canReadSettings = project.permissions.canReadSettings
+
+    ret[project.id] = [
+      [
+        {
+          title: 'View project',
+          id: ActionTypes.ViewProject,
+          disabled: !canRead?.authorized,
+          disabledTooltip: canRead?.message
+        },
+        {
+          title: 'Edit members',
+          id: ActionTypes.EditMembers,
+          disabled: !canReadSettings?.authorized,
+          disabledTooltip: canReadSettings?.message
+        },
+        {
+          title: 'Delete project...',
+          id: ActionTypes.DeleteProject,
+          disabled: !canDelete?.authorized,
+          disabledTooltip: canDelete?.message
+        }
+      ]
+    ]
+    return ret
+  }, {} as { [projectId: string]: LayoutMenuItem[][] })
+)
 
 const onActionChosen = (
   actionItem: LayoutMenuItem,
   project: ProjectsDeleteDialog_ProjectFragment
 ) => {
   if (actionItem.id === ActionTypes.EditMembers) {
-    router.push(projectCollaboratorsRoute(project.id))
-    emit('close')
+    router.push(projectRoute(project.id, 'collaborators'))
   } else if (actionItem.id === ActionTypes.ViewProject) {
     handleProjectClick(project.id)
   } else if (actionItem.id === ActionTypes.DeleteProject) {

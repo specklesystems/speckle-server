@@ -58,10 +58,11 @@ export const deleteExistingAuthTokensFactory =
   async (userId: string) => {
     if (!userId) throw new InvalidArgumentError('User ID must be set')
 
-    await tables.refreshTokens(deps.db).where(RefreshTokens.col.userId, userId)
+    await tables.refreshTokens(deps.db).where(RefreshTokens.col.userId, userId).del()
     await tables
       .authorizationCodes(deps.db)
       .where(AuthorizationCodes.col.userId, userId)
+      .del()
     await knex.raw(
       `
         DELETE FROM api_tokens

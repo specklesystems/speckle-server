@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
   AccessRequestType,
   createNewRequestFactory,
@@ -17,11 +16,6 @@ import {
   requestProjectAccessFactory,
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
@@ -36,7 +30,8 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { LogicError } from '@/modules/shared/errors'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -52,7 +47,7 @@ const requestProjectAccess = requestProjectAccessFactory({
   getUserStreamAccessRequest,
   getStream,
   createNewRequest: createNewRequestFactory({ db }),
-  accessRequestsEmitter: AccessRequestsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const requestStreamAccess = requestStreamAccessFactory({
@@ -67,7 +62,6 @@ const getPendingStreamRequests = getPendingStreamRequestsFactory({
   getPendingProjectRequests
 })
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({
   authorizeResolver
 })
@@ -75,14 +69,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const processPendingStreamRequest = processPendingStreamRequestFactory({
@@ -90,7 +77,7 @@ const processPendingStreamRequest = processPendingStreamRequestFactory({
   validateStreamAccess,
   addOrUpdateStreamCollaborator,
   deleteRequestById: deleteRequestByIdFactory({ db }),
-  accessRequestsEmitter: AccessRequestsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const processPendingProjectRequest = processPendingStreamRequest
@@ -117,7 +104,18 @@ const resolvers: Resolvers = {
       if (!userId) throw new LogicError('User ID unexpectedly false')
 
       const { streamId } = args
-      return await requestStreamAccess(userId, streamId)
+      const logger = ctx.log.child({
+        streamId,
+        projectId: streamId
+      })
+      return await withOperationLogging(
+        async () => await requestStreamAccess(userId, streamId),
+        {
+          logger,
+          operationName: 'requestStreamAccess',
+          operationDescription: 'Request for stream access'
+        }
+      )
     }
   },
   ProjectMutations: {
@@ -127,18 +125,39 @@ const resolvers: Resolvers = {
     async create(_parent, args, ctx) {
       const { userId } = ctx
       const { projectId } = args
-      return await requestProjectAccess(userId!, projectId)
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId // for legacy compatibility
+      })
+      return await withOperationLogging(
+        async () => await requestProjectAccess(userId!, projectId),
+        {
+          logger,
+          operationName: 'CreateProjectAccessRequest',
+          operationDescription: 'Create a request for project access'
+        }
+      )
     },
     async use(_parent, args, ctx) {
       const { userId, resourceAccessRules } = ctx
       const { requestId, accept, role } = args
+      const logger = ctx.log
 
-      const usedReq = await processPendingProjectRequest(
-        userId!,
-        requestId,
-        accept,
-        mapStreamRoleToValue(role),
-        resourceAccessRules
+      const usedReq = await withOperationLogging(
+        async () =>
+          await processPendingProjectRequest(
+            userId!,
+            requestId,
+            accept,
+            mapStreamRoleToValue(role),
+            resourceAccessRules
+          ),
+
+        {
+          logger,
+          operationName: 'ProcessProjectAccessRequest',
+          operationDescription: 'Use a request for project access'
+        }
       )
 
       const project = await ctx.loaders.streams.getStream.load(usedReq.resourceId)

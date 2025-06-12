@@ -39,7 +39,7 @@ import { useQuery } from '@vue/apollo-composable'
 
 const route = useRoute()
 const loading = ref(false)
-const newsletterConsent = ref<true | undefined>(undefined)
+const newsletterConsent = ref<boolean>(false)
 
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()

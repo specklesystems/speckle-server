@@ -1,8 +1,4 @@
-import {
-  AccessRequestsEmitter,
-  AccessRequestsEvents,
-  AccessRequestsEventsPayloads
-} from '@/modules/accessrequests/events/emitter'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
@@ -10,6 +6,7 @@ import {
   NotificationPublisher,
   NotificationType
 } from '@/modules/notifications/helpers/types'
+import { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
 
 type OnServerAccessRequestCreatedDeps = {
   getStreamCollaborators: GetStreamCollaborators
@@ -18,8 +15,8 @@ type OnServerAccessRequestCreatedDeps = {
 
 const onServerAccessRequestCreatedFactory =
   (deps: OnServerAccessRequestCreatedDeps) =>
-  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Created]) => {
-    const { request } = payload
+  async (payload: EventPayload<typeof AccessRequestEvents.Created>) => {
+    const { request } = payload.payload
 
     // Send out email to all owners of the stream
     if (isStreamAccessRequest(request)) {
@@ -46,8 +43,8 @@ type OnServerAccessRequestFinalizedDeps = {
 
 const onServerAccessRequestFinalizedFactory =
   (deps: OnServerAccessRequestFinalizedDeps) =>
-  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Finalized]) => {
-    const { approved, request, finalizedBy } = payload
+  async (payload: EventPayload<typeof AccessRequestEvents.Finalized>) => {
+    const { approved, request, finalizedBy } = payload.payload
 
     // Send out email to requester, if accepted
     if (approved && isStreamAccessRequest(request)) {
@@ -67,7 +64,7 @@ const onServerAccessRequestFinalizedFactory =
 export const initializeEventListenerFactory =
   (
     deps: {
-      accessRequestsEventListener: (typeof AccessRequestsEmitter)['listen']
+      eventBus: EventBus
     } & OnServerAccessRequestCreatedDeps &
       OnServerAccessRequestFinalizedDeps
   ) =>
@@ -76,12 +73,9 @@ export const initializeEventListenerFactory =
     const onServerAccessRequestFinalized = onServerAccessRequestFinalizedFactory(deps)
 
     const quitCbs = [
-      deps.accessRequestsEventListener(
-        AccessRequestsEvents.Created,
-        onServerAccessRequestCreated
-      ),
-      deps.accessRequestsEventListener(
-        AccessRequestsEvents.Finalized,
+      deps.eventBus.listen(AccessRequestEvents.Created, onServerAccessRequestCreated),
+      deps.eventBus.listen(
+        AccessRequestEvents.Finalized,
         onServerAccessRequestFinalized
       )
     ]

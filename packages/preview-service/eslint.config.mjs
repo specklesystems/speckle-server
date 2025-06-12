@@ -1,54 +1,30 @@
+import { baseConfigs, globals, getESMDirname } from '../../eslint.config.mjs'
 import tseslint from 'typescript-eslint'
-import {
-  baseConfigs,
-  getESMDirname,
-  globals,
-  prettierConfig
-} from '../../eslint.config.mjs'
 
+/**
+ * @type {Array<import('eslint').Linter.FlatConfig>}
+ */
 const configs = [
   ...baseConfigs,
   {
     ignores: ['dist', 'public', 'docs']
   },
   {
-    files: ['webpack.config.renderPage.cjs'],
-    languageOptions: {
-      globals: {
-        ...globals.node
-      }
-    }
-  },
-  {
     files: ['**/*.js'],
-    ignores: ['renderPage', '**/*.mjs', 'src/scripts/puppeteerDriver.js'],
     languageOptions: {
-      sourceType: 'module',
+      sourceType: 'module'
+    }
+  },
+  {
+    files: ['*.{js,cjs,mjs,ts}'],
+    languageOptions: {
       globals: {
         ...globals.node
       }
     }
   },
   {
-    files: ['bin/www'],
-    languageOptions: {
-      sourceType: 'module',
-      globals: {
-        ...globals.node
-      }
-    }
-  },
-  {
-    files: ['renderPage/**/*.js'],
-    languageOptions: {
-      sourceType: 'module',
-      globals: {
-        ...globals.browser
-      }
-    }
-  },
-  {
-    files: ['src/scripts/puppeteerDriver.js'],
+    files: ['**/*.src'],
     languageOptions: {
       globals: {
         ...globals.browser
@@ -68,19 +44,21 @@ const configs = [
       }
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unsafe-return': 'error'
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/no-base-to-string': 'off', // too restrictive
+      '@typescript-eslint/restrict-template-expressions': 'off', // too restrictive
+      '@typescript-eslint/no-unsafe-enum-comparison': 'off', // too restrictive
+      '@typescript-eslint/require-await': 'off', // too restrictive
+      '@typescript-eslint/unbound-method': 'off', // too restrictive
+      '@typescript-eslint/no-misused-promises': 'off'
     }
   },
   {
-    files: ['**/*.spec.{js,ts}'],
-    languageOptions: {
-      globals: {
-        ...globals.node
-      }
+    rules: {
+      'no-console': 'off'
     }
-  },
-  prettierConfig
+  }
 ]
 
 export default configs

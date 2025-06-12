@@ -1,8 +1,6 @@
 *node_modules
 packages/server/.env
 packages/server/dist
-packages/frontend/dist
-packages/frontend/profiler
 packages/viewer/dist
 packages/objectloader/dist
 packages/*/dist
@@ -22,7 +20,6 @@ coverage/
 
 packages/viewer/example/*.js
 packages/viewer/example/*.js.map
-packages/frontend/schema.graphql
 .tool-versions
 
 packages/server/reports*
@@ -71,13 +68,19 @@ minio-data/
 postgres-data/
 redis-data/
 
+packages/fileimport-service/src/ifc-dotnet/output
+
 .tshy-build
 obj/
 bin/
+!packages/fileimport-service/src/obj
+!packages/fileimport-service/bin
 !packages/monitor-deployment/bin
 !packages/preview-service/bin
 !packages/server/bin
+!packages/viewer/src/modules/loaders/OBJ
 
 # Server
 multiregion.json
 multiregion.test.json
+packages/*/.tshy/

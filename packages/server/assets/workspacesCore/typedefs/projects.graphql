@@ -1,0 +1,22 @@
+input InvitableCollaboratorsFilter {
+  search: String
+}
+
+extend type Project {
+  invitableCollaborators(
+    filter: InvitableCollaboratorsFilter
+    cursor: String
+    limit: Int! = 25
+  ): WorkspaceCollaboratorCollection!
+}
+
+extend type ProjectCollaborator {
+  """
+  The collaborator's workspace role for the workspace this project is in, if any
+  """
+  workspaceRole: String
+}
+
+extend type PendingStreamCollaborator {
+  workspaceSlug: String
+}

@@ -1,10 +1,8 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { type Optional } from '@speckle/shared'
-import type * as Observability from '@speckle/shared/dist/esm/observability/index'
+import type { Optional } from '@speckle/shared'
+import type * as Observability from '@speckle/shared/observability'
 import {
   upperFirst,
   get,
@@ -14,7 +12,8 @@ import {
   isString,
   noop
 } from 'lodash-es'
-import type { Logger } from 'pino'
+import type { Logger, Level } from 'pino'
+import { ResourceLoadError } from '~/lib/core/errors/base'
 
 /**
  * Add pino-pretty like formatting
@@ -59,7 +58,6 @@ const prettifiedLoggerFactory =
 
 export function buildFakePinoLogger(
   options?: Partial<{
-    onError: (...args: any[]) => void
     /**
      * Returns an object that will be merged into the log context when outputting to the console.
      * These will not be sent to seq!
@@ -69,18 +67,12 @@ export function buildFakePinoLogger(
 ) {
   const bindings = options?.consoleBindings
 
-  const errLogger = (...args: unknown[]) => {
-    const { onError } = options || {}
-    if (onError) onError(...args)
-    prettifiedLoggerFactory(console.error, bindings)(...args)
-  }
-
   const logger = {
     debug: prettifiedLoggerFactory(console.debug, bindings),
     info: prettifiedLoggerFactory(console.info, bindings),
     warn: prettifiedLoggerFactory(console.warn, bindings),
-    error: errLogger,
-    fatal: errLogger,
+    error: prettifiedLoggerFactory(console.error, bindings),
+    fatal: prettifiedLoggerFactory(console.error, bindings),
     trace: prettifiedLoggerFactory(console.trace, bindings),
     silent: noop
   } as unknown as ReturnType<typeof Observability.getLogger>
@@ -112,6 +104,12 @@ export const formatAppError = (err: SimpleError): SimpleError => {
     finalStatusCode = 429
   }
 
+  if (finalMessage.match(/\/_nuxt\/builds\/meta.*?404/i)) {
+    finalMessage =
+      'Speckle is currently upgrading to a newer version. Please reload the page in a few seconds.'
+    finalStatusCode = 500
+  }
+
   finalMessage = upperFirst(finalMessage)
 
   return {
@@ -121,13 +119,14 @@ export const formatAppError = (err: SimpleError): SimpleError => {
   }
 }
 
-export type AbstractErrorHandler = (
+export type AbstractLoggerHandler = (
   params: {
     args: unknown[]
     firstString: Optional<string>
     firstError: Optional<Error>
     otherData: Record<string, unknown>
     nonObjectOtherData: unknown[]
+    level: Level
   },
   helpers: {
     prettifyMessage: (msg: string) => string
@@ -141,16 +140,16 @@ export type AbstractUnhandledErrorHandler = (params: {
   message: string
 }) => void
 
-export type AbstractErrorHandlerParams = Parameters<AbstractErrorHandler>[0]
+export type AbstractLoggerHandlerParams = Parameters<AbstractLoggerHandler>[0]
 
 /**
- * Adds proxy that intercepts error log calls so that they can be sent to any transport
+ * Adds proxy that intercepts logger calls so that they can be sent to any transport
  */
-export function enableCustomErrorHandling(params: {
+export function enableCustomLoggerHandling(params: {
   logger: Logger
-  onError: AbstractErrorHandler
+  handler: AbstractLoggerHandler
 }): Logger {
-  const { logger, onError } = params
+  const { logger, handler } = params
   return new Proxy(logger, {
     get(target, prop) {
       if (
@@ -160,37 +159,55 @@ export function enableCustomErrorHandling(params: {
         return (...args: unknown[]) => {
           const log = logMethod.bind(target)
 
+          // Format passed in data, if needed
+          args = args
+            .map((arg) => {
+              // Convert error events to error type
+              if (arg instanceof Event && arg.type === 'error') {
+                return new ResourceLoadError()
+              }
+
+              return arg
+            })
+            .filter((arg) => {
+              // Filter out falsy values
+              return !!arg && !(['null', 'undefined'] as unknown[]).includes(arg)
+            })
+
+          // If nothing valid to log, skip entirely
+          if (args.length === 0) return
+
+          const level = prop as Level
           const firstError = args.find((arg): arg is Error => arg instanceof Error)
-          const isError = ['error', 'fatal'].includes(prop as string) || firstError
 
-          if (isError) {
-            const firstString = args.find(isString)
-            const otherData: unknown[] = args.filter(
-              (o) => !(o instanceof Error) && o !== firstString
-            )
+          const firstString = args.find(isString)
+          const otherData: unknown[] = args.filter(
+            (o) => o !== firstString && o !== firstError
+          )
 
-            const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
-            if (errorMessage !== firstString) {
-              otherData.unshift(firstString)
-            }
-
-            const otherDataObjects = otherData.filter(isObjectLike)
-            const otherDataNonObjects = otherData.filter((o) => !isObjectLike(o))
-            const mergedOtherDataObject = Object.assign(
-              {},
-              ...otherDataObjects
-            ) as Record<string, unknown>
-            onError(
-              {
-                args,
-                firstError,
-                firstString,
-                otherData: mergedOtherDataObject,
-                nonObjectOtherData: otherDataNonObjects
-              },
-              { prettifyMessage: (msg) => prettify(mergedOtherDataObject, msg) }
-            )
+          const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
+          if (errorMessage !== firstString) {
+            otherData.unshift(firstString)
           }
+
+          const otherDataObjects = otherData.filter(isObjectLike)
+          const otherDataNonObjects = otherData.filter((o) => !isObjectLike(o))
+          const mergedOtherDataObject = Object.assign(
+            {},
+            ...otherDataObjects
+          ) as Record<string, unknown>
+
+          handler(
+            {
+              args,
+              firstError,
+              firstString,
+              otherData: mergedOtherDataObject,
+              nonObjectOtherData: otherDataNonObjects,
+              level
+            },
+            { prettifyMessage: (msg) => prettify(mergedOtherDataObject, msg) }
+          )
 
           return log(...args)
         }

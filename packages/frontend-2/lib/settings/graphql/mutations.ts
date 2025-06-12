@@ -10,12 +10,27 @@ export const settingsUpdateWorkspaceMutation = graphql(`
   }
 `)
 
+export const settingsUpdateWorkspaceEmbedOptionsMutation = graphql(`
+  mutation SettingsUpdateWorkspaceEmbedOptions(
+    $input: WorkspaceUpdateEmbedOptionsInput!
+  ) {
+    workspaceMutations {
+      updateEmbedOptions(input: $input) {
+        hideSpeckleBranding
+      }
+    }
+  }
+`)
+
 export const settingsCreateUserEmailMutation = graphql(`
   mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {
     activeUserMutations {
       emailMutations {
         create(input: $input) {
-          ...SettingsUserEmails_User
+          id
+          emails {
+            ...EmailFields
+          }
         }
       }
     }
@@ -27,7 +42,10 @@ export const settingsDeleteUserEmailMutation = graphql(`
     activeUserMutations {
       emailMutations {
         delete(input: $input) {
-          ...SettingsUserEmails_User
+          id
+          emails {
+            ...EmailFields
+          }
         }
       }
     }
@@ -39,7 +57,10 @@ export const settingsSetPrimaryUserEmailMutation = graphql(`
     activeUserMutations {
       emailMutations {
         setPrimary(input: $input) {
-          ...SettingsUserEmails_User
+          id
+          emails {
+            ...EmailFields
+          }
         }
       }
     }

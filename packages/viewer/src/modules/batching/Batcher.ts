@@ -1,4 +1,4 @@
-import { MathUtils } from 'three'
+import { Box3, MathUtils, Matrix4, WebGLCapabilities } from 'three'
 import LineBatch from './LineBatch.js'
 import Materials, {
   FilterMaterialType,
@@ -36,20 +36,18 @@ type BatchTypeMap = {
 }
 
 export default class Batcher {
-  private maxHardwareUniformCount = 0
-  private floatTextures = false
+  private caps: WebGLCapabilities
   private maxBatchObjects = 0
   private maxBatchVertices = 500000
   private minInstancedBatchVertices = 10000
   public materials: Materials
   public batches: { [id: string]: Batch } = {}
 
-  public constructor(maxUniformCount: number, floatTextures: boolean) {
-    this.maxHardwareUniformCount = maxUniformCount
+  public constructor(caps: WebGLCapabilities) {
+    this.caps = caps
     this.maxBatchObjects = Math.floor(
-      (this.maxHardwareUniformCount - Materials.UNIFORM_VECTORS_USED) / 4
+      (this.caps.maxVertexUniforms - Materials.UNIFORM_VECTORS_USED) / 4
     )
-    this.floatTextures = floatTextures
     this.materials = new Materials()
     void this.materials.createDefaultMaterials()
   }
@@ -109,9 +107,36 @@ export default class Batcher {
         const rvs = nodes
           .map((node: TreeNode) => node.model.renderView)
           /** This disconsiders orphaned nodes caused by incorrect id duplication in the stream */
-          .filter((rv) => rv)
+          .filter((rv: NodeRenderView) => rv)
 
-        if (Number.parseInt(v) < this.minInstancedBatchVertices || !instanced) {
+        /** Determine if the instance geometry needs RTE */
+        let needsRTE = Geometry.needsRTE(rvs[0].aabb)
+        if (!needsRTE) {
+          /** Get all the transforms for this instance geometry */
+          const transforms: Array<Matrix4> = rvs
+            .map((rv: NodeRenderView) => rv.renderData.geometry.transform)
+            .filter((t): t is Matrix4 => t !== null) // This is lunacy
+
+          const testBox: Box3 = new Box3().copy(rvs[0].aabb)
+          const scratchBox: Box3 = new Box3()
+          /** Go through each transform and test. */
+          for (let k = 0; k < transforms.length; k++) {
+            scratchBox.copy(testBox)
+            scratchBox.applyMatrix4(transforms[k])
+            needsRTE ||= Geometry.needsRTE(scratchBox)
+            /** If we find one that needs RTE we break early */
+            if (needsRTE) break
+          }
+        }
+
+        /** We currently do not use RTE with hardware instancing
+         * Explanation: https://www.notion.so/speckle/On-demand-RTE-fa57fff0685c4302a6970e81df3cab5b?pvs=4#1fbb78fc7aa680c4acc0de8929e92924
+         */
+        if (
+          Number.parseInt(v) < this.minInstancedBatchVertices ||
+          !instanced ||
+          needsRTE
+        ) {
           rvs.forEach((nodeRv) => {
             const geometry = nodeRv.renderData.geometry
             geometry.instanced = false
@@ -299,7 +324,12 @@ export default class Batcher {
     const matRef = renderViews[0].renderData.renderMaterial
     const material = this.materials.getMaterial(materialHash, matRef, GeometryType.MESH)
     const batchID = MathUtils.generateUUID()
-    const geometryBatch = new InstancedMeshBatch(batchID, renderTree.id, renderViews)
+    const geometryBatch = new InstancedMeshBatch(
+      batchID,
+      renderTree.id,
+      renderViews,
+      this.caps.isWebGL2
+    )
     geometryBatch.setBatchMaterial(material)
     await geometryBatch.buildBatch()
 
@@ -355,7 +385,7 @@ export default class Batcher {
           batchID,
           renderTree.id,
           renderViews,
-          this.floatTextures
+          this.caps.floatVertexTextures
             ? TransformStorage.VERTEX_TEXTURE
             : TransformStorage.UNIFORM_ARRAY
         )
@@ -540,7 +570,7 @@ export default class Batcher {
     }
   }
 
-  public getBatch(rv: NodeRenderView) {
+  public getBatch(rv: NodeRenderView): Batch | undefined {
     return this.batches[rv.batchId]
   }
 

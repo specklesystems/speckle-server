@@ -1,4 +1,4 @@
-import { RateLimitBreached } from '@/modules/core/services/ratelimiter'
+import { RateLimitBreached } from '@/modules/core/utils/ratelimiter'
 import { BaseError } from '@/modules/shared/errors'
 import { Options } from 'verror'
 
@@ -12,8 +12,8 @@ export class RateLimitError extends BaseError {
 
   constructor(
     rateLimitBreached: RateLimitBreached,
-    message?: string | undefined,
-    options?: Options | Error | undefined
+    message?: string,
+    options?: Options | Error
   ) {
     super(message || RateLimitError.defaultMessage, options)
     this.rateLimitBreached = rateLimitBreached

@@ -33,7 +33,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (data?.automateFunction?.id) return
 
   const isNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'FUNCTION_NOT_FOUND'
+    (e) => e.extensions?.['code'] === 'FUNCTION_NOT_FOUND'
   )
   if (isNotFound) {
     return abortNavigation(

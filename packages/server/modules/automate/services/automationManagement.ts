@@ -7,21 +7,23 @@ import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import {
   createAutomation as clientCreateAutomation,
-  getFunction,
-  getFunctionRelease,
-  getFunctionReleases
+  getFunctionReleaseFactory,
+  getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
-import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
+import {
+  Automate,
+  Roles,
+  ensureError,
+  removeNullOrUndefinedKeys
+} from '@speckle/shared'
 import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
-  ProjectAutomationUpdateInput,
-  ProjectTestAutomationCreateInput
+  ProjectAutomationUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
-  AutomationCreationError,
   AutomationFunctionInputEncryptionError,
   AutomationRevisionCreationError,
   AutomationUpdateError,
@@ -38,14 +40,11 @@ import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/help
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
-import {
-  AutomationsEmitter,
-  AutomationsEventsEmit
-} from '@/modules/automate/events/automations'
 import { validateAutomationName } from '@/modules/automate/utils/automationConfigurationValidator'
 import {
   CreateAutomation,
   CreateStoredAuthCode,
+  MarkAutomationDeleted,
   GetAutomation,
   GetEncryptionKeyPair,
   GetLatestVersionAutomationRuns,
@@ -56,14 +55,16 @@ import {
 } from '@/modules/automate/domain/operations'
 import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { AutomationEvents } from '@/modules/automate/domain/events'
+import { UnformattableTriggerDefinitionSchemaError } from '@speckle/shared/dist/commonjs/automate/index.js'
 
 export type CreateAutomationDeps = {
   createAuthCode: CreateStoredAuthCode
   automateCreateAutomation: typeof clientCreateAutomation
   storeAutomation: StoreAutomation
   storeAutomationToken: StoreAutomationToken
-  validateStreamAccess: ValidateStreamAccess
-  automationsEventsEmit: AutomationsEventsEmit
+  eventEmit: EventBusEmit
 }
 
 export const createAutomationFactory =
@@ -77,26 +78,17 @@ export const createAutomationFactory =
     const {
       input: { name, enabled },
       projectId,
-      userId,
-      userResourceAccessRules
+      userId
     } = params
     const {
       createAuthCode,
       automateCreateAutomation,
       storeAutomation,
       storeAutomationToken,
-      validateStreamAccess,
-      automationsEventsEmit
+      eventEmit
     } = deps
 
     validateAutomationName(name)
-
-    await validateStreamAccess(
-      userId,
-      projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
 
     const authCode = await createAuthCode({
       userId,
@@ -121,7 +113,8 @@ export const createAutomationFactory =
       enabled,
       projectId,
       executionEngineAutomationId,
-      isTestAutomation: false
+      isTestAutomation: false,
+      isDeleted: false
     })
 
     const automationTokenRecord = await storeAutomationToken({
@@ -129,8 +122,11 @@ export const createAutomationFactory =
       automateToken: token
     })
 
-    await automationsEventsEmit(AutomationsEmitter.events.Created, {
-      automation: automationRecord
+    await eventEmit({
+      eventName: AutomationEvents.Created,
+      payload: {
+        automation: automationRecord
+      }
     })
 
     return { automation: automationRecord, token: automationTokenRecord }
@@ -138,11 +134,10 @@ export const createAutomationFactory =
 
 export type CreateTestAutomationDeps = {
   getEncryptionKeyPair: GetEncryptionKeyPair
-  getFunction: typeof getFunction
   storeAutomation: StoreAutomation
   storeAutomationRevision: StoreAutomationRevision
   validateStreamAccess: ValidateStreamAccess
-  automationsEventsEmit: AutomationsEventsEmit
+  eventEmit: EventBusEmit
 }
 
 /**
@@ -152,77 +147,49 @@ export type CreateTestAutomationDeps = {
 export const createTestAutomationFactory =
   (deps: CreateTestAutomationDeps) =>
   async (params: {
-    input: ProjectTestAutomationCreateInput
+    automationName: string
     projectId: string
+    modelId: string
     userId: string
-    userResourceAccessRules?: ContextResourceAccessRules
   }) => {
-    const {
-      input: { name, functionId, modelId },
-      projectId,
-      userId,
-      userResourceAccessRules
-    } = params
+    const { automationName, projectId, modelId, userId } = params
     const {
       getEncryptionKeyPair,
-      getFunction,
       storeAutomation,
       storeAutomationRevision,
-      validateStreamAccess,
-      automationsEventsEmit
+      eventEmit
     } = deps
 
-    validateAutomationName(name)
-
-    await validateStreamAccess(
-      userId,
-      projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
-
-    // Get latest release for specified function
-    const { functionVersions: functionReleases } = await getFunction({ functionId })
-
-    if (!functionReleases || functionReleases.length === 0) {
-      // TODO: This should probably be okay for test automations
-      throw new AutomationCreationError(
-        'The specified function does not have any releases'
-      )
-    }
-
-    const latestFunctionRelease = functionReleases[0]
+    validateAutomationName(automationName)
 
     // Create and store the automation record
     const automationId = cryptoRandomString({ length: 10 })
 
     const automationRecord = await storeAutomation({
       id: automationId,
-      name,
+      name: automationName,
       userId,
       createdAt: new Date(),
       updatedAt: new Date(),
       enabled: true,
       projectId,
       executionEngineAutomationId: null,
-      isTestAutomation: true
+      isTestAutomation: true,
+      isDeleted: false
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
-      automation: automationRecord
+    await eventEmit({
+      eventName: AutomationEvents.Created,
+      payload: {
+        automation: automationRecord
+      }
     })
 
     // Create and store the automation revision
     const encryptionKeyPair = await getEncryptionKeyPair()
 
     const automationRevisionRecord = await storeAutomationRevision({
-      functions: [
-        {
-          functionId,
-          functionReleaseId: latestFunctionRelease.functionVersionId,
-          functionInputs: null
-        }
-      ],
+      functions: [],
       triggers: [
         {
           triggerType: VersionCreationTriggerType,
@@ -235,19 +202,28 @@ export const createTestAutomationFactory =
       publicKey: encryptionKeyPair.publicKey
     })
 
-    await automationsEventsEmit(AutomationsEmitter.events.CreatedRevision, {
-      automation: automationRecord,
-      revision: automationRevisionRecord
+    await eventEmit({
+      eventName: AutomationEvents.CreatedRevision,
+      payload: {
+        automation: automationRecord,
+        revision: automationRevisionRecord
+      }
     })
 
     return automationRecord
   }
 
+export const deleteAutomationFactory =
+  (deps: { deleteAutomation: MarkAutomationDeleted }) =>
+  async (params: { automationId: string }) => {
+    const { automationId } = params
+    return await deps.deleteAutomation({ automationId })
+  }
+
 export type ValidateAndUpdateAutomationDeps = {
   getAutomation: GetAutomation
   updateAutomation: UpdateAutomation
-  validateStreamAccess: ValidateStreamAccess
-  automationsEventsEmit: AutomationsEventsEmit
+  eventEmit: EventBusEmit
 }
 
 export const validateAndUpdateAutomationFactory =
@@ -261,13 +237,8 @@ export const validateAndUpdateAutomationFactory =
      */
     projectId?: string
   }) => {
-    const {
-      getAutomation,
-      updateAutomation,
-      validateStreamAccess,
-      automationsEventsEmit
-    } = deps
-    const { input, userId, userResourceAccessRules, projectId } = params
+    const { getAutomation, updateAutomation, eventEmit } = deps
+    const { input, projectId } = params
 
     const existingAutomation = await getAutomation({
       automationId: input.id,
@@ -276,13 +247,6 @@ export const validateAndUpdateAutomationFactory =
     if (!existingAutomation) {
       throw new AutomationUpdateError('Automation not found')
     }
-
-    await validateStreamAccess(
-      userId,
-      existingAutomation.projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
 
     // Filter out empty (null) values from input
     const updates = removeNullOrUndefinedKeys(input)
@@ -297,8 +261,11 @@ export const validateAndUpdateAutomationFactory =
       id: input.id
     })
 
-    await automationsEventsEmit(AutomationsEmitter.events.Updated, {
-      automation: res
+    await eventEmit({
+      eventName: AutomationEvents.Updated,
+      payload: {
+        automation: res
+      }
     })
 
     return res
@@ -351,7 +318,7 @@ const validateNewTriggerDefinitions =
   }
 
 type ValidateNewRevisionFunctionsDeps = {
-  getFunctionRelease: typeof getFunctionRelease
+  getFunctionRelease: ReturnType<typeof getFunctionReleaseFactory>
 }
 
 const validateNewRevisionFunctions =
@@ -375,7 +342,7 @@ const validateNewRevisionFunctions =
       ),
       (r) =>
         updateId({
-          functionReleaseId: r.functionVersionId,
+          functionReleaseId: r?.functionVersionId ?? '',
           functionId: r.functionId
         })
     )
@@ -394,9 +361,9 @@ export type CreateAutomationRevisionDeps = {
   storeAutomationRevision: StoreAutomationRevision
   getEncryptionKeyPair: GetEncryptionKeyPair
   getFunctionInputDecryptor: FunctionInputDecryptor
-  getFunctionReleases: typeof getFunctionReleases
+  getFunctionReleases: ReturnType<typeof getFunctionReleasesFactory>
   validateStreamAccess: ValidateStreamAccess
-  automationsEventsEmit: AutomationsEventsEmit
+  eventEmit: EventBusEmit
 } & ValidateNewTriggerDefinitionsDeps &
   ValidateNewRevisionFunctionsDeps
 
@@ -416,7 +383,7 @@ export const createAutomationRevisionFactory =
       getFunctionInputDecryptor,
       getFunctionReleases,
       validateStreamAccess,
-      automationsEventsEmit
+      eventEmit
     } = deps
 
     const existingAutomation = await getAutomation({
@@ -434,9 +401,20 @@ export const createAutomationRevisionFactory =
       userResourceAccessRules
     )
 
-    const triggers = Automate.AutomateTypes.formatTriggerDefinitionSchema(
-      input.triggerDefinitions
-    )
+    let triggers: Automate.AutomateTypes.TriggerDefinitionsSchema
+    try {
+      triggers = Automate.AutomateTypes.formatTriggerDefinitionSchema(
+        input.triggerDefinitions
+      )
+    } catch (e) {
+      if (e instanceof UnformattableTriggerDefinitionSchemaError) {
+        throw new AutomationRevisionCreationError(
+          'One or more trigger definitions are not valid',
+          { cause: ensureError(e, 'Unknown error when formatting trigger definition') }
+        )
+      }
+      throw e
+    }
     const triggerDefinitions = triggers.definitions.map((d) => {
       if (Automate.AutomateTypes.isVersionCreatedTriggerDefinition(d)) {
         const triggerDef: InsertableAutomationRevisionTrigger = {
@@ -538,9 +516,12 @@ export const createAutomationRevisionFactory =
     }
     const res = await storeAutomationRevision(revisionInput)
 
-    await automationsEventsEmit(AutomationsEmitter.events.CreatedRevision, {
-      automation: existingAutomation,
-      revision: res
+    await eventEmit({
+      eventName: AutomationEvents.CreatedRevision,
+      payload: {
+        automation: existingAutomation,
+        revision: res
+      }
     })
 
     return res

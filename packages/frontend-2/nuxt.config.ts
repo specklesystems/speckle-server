@@ -2,7 +2,7 @@ import { join } from 'path'
 import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
-import * as Environment from '@speckle/shared/dist/esm/environment/index'
+import * as Environment from '@speckle/shared/environment'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
 const buildOutputFileName = (chunkName: string) =>
@@ -24,11 +24,17 @@ const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
+  // ssr: false, // for debugging set to false (prod should always be true)
   ...(buildSourceMaps ? { sourcemap: true } : {}),
   modulesDir: ['./node_modules'],
   typescript: {
     shim: false,
-    strict: true
+    strict: true,
+    tsConfig: {
+      compilerOptions: {
+        moduleResolution: 'bundler'
+      }
+    }
   },
   modules: [
     '@nuxt/eslint',
@@ -48,7 +54,6 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     redisUrl: '',
-    webflowApiToken: '',
     public: {
       ...featureFlags,
       apiOrigin: 'UNDEFINED',
@@ -56,7 +61,6 @@ export default defineNuxtConfig({
       baseUrl: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
-      survicateWorkspaceKey: '',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
       logCsrEmitProps: false,
@@ -71,9 +75,12 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      enableDirectPreviews: true,
-      ghostApiKey: ''
+      intercomAppId: ''
     }
+  },
+
+  experimental: {
+    emitRouteChunkError: 'automatic-immediate'
   },
 
   alias: {
@@ -139,70 +146,81 @@ export default defineNuxtConfig({
     }
   },
 
-  app: {
-    pageTransition: { name: 'page', mode: 'out-in' }
-  },
-
   routeRules: {
-    // Necessary because of redirects from backend in auth flows
-    '/': {
-      cors: true,
-      headers: {
-        'access-control-allow-methods': 'GET',
-        'Access-Control-Expose-Headers': '*'
-      }
-    },
-    '/authn/login': {
-      cors: true,
-      headers: {
-        'access-control-allow-methods': 'GET',
-        'Access-Control-Expose-Headers': '*'
+    '/functions': {
+      redirect: {
+        to: '/',
+        statusCode: 307
       }
     },
     // Redirect old settings pages
     '/server-management/projects': {
       redirect: {
-        to: '/?settings=server/projects',
+        to: '/settings/server/projects',
         statusCode: 301
       }
     },
     '/server-management/active-users': {
       redirect: {
-        to: '/?settings=server/active-users',
+        to: '/settings/server/active-users',
         statusCode: 301
       }
     },
     '/server-management/pending-invitations': {
       redirect: {
-        to: '/?settings=server/pending-invitations',
+        to: '/settings/server/pending-invitations',
         statusCode: 301
       }
     },
     '/server-management': {
       redirect: {
-        to: '/?settings=server/general',
+        to: '/settings/server/general',
         statusCode: 301
       }
     },
     '/profile': {
       redirect: {
-        to: '/?settings=user/profile',
+        to: '/settings/user/profile',
         statusCode: 301
       }
     },
-
-    // Redirect settings 'route' to homepage with added query
-    '/settings': { redirect: '/?settings=user/profile' },
-    '/settings/user/profile': { redirect: '/?settings=user/profile' },
-    '/settings/user/notifications': { redirect: '/?settings=user/notifications' },
-    '/settings/user/developer-settings': {
-      redirect: '/?settings=user/developer-settings'
+    '/settings/server/active-users': {
+      redirect: {
+        to: '/settings/server/members',
+        statusCode: 301
+      }
     },
-    '/settings/server/general': { redirect: '/?settings=server/general' },
-    '/settings/server/projects': { redirect: '/?settings=server/projects' },
-    '/settings/server/active-users': { redirect: '/?settings=server/active-users' },
     '/settings/server/pending-invitations': {
-      redirect: '/?settings=server/pending-invitations'
+      redirect: {
+        to: '/settings/server/members',
+        statusCode: 301
+      }
+    },
+    '/settings/**': {
+      appMiddleware: ['auth', 'settings']
+    },
+    '/settings/server/*': {
+      appMiddleware: ['auth', 'settings', 'admin']
+    },
+    '/settings/workspaces/:slug/*': {
+      appMiddleware: [
+        'auth',
+        'settings',
+        'requires-workspaces-enabled',
+        'require-valid-workspace'
+      ]
+    },
+    '/downloads': {
+      redirect: {
+        to: 'https://www.speckle.systems/connectors',
+        statusCode: 301
+      }
+    },
+    '/workspaces': {
+      redirect: {
+        to: '/workspaces/actions/create',
+        statusCode: 301
+      }
     }
   },
 

@@ -60,7 +60,7 @@
 import { CubeIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { isNonNullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
-import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
+import type { ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
 import { projectAutomationRoute } from '~/lib/common/helpers/route'
 import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 

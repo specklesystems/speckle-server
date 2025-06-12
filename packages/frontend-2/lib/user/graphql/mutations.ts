@@ -25,3 +25,13 @@ export const deleteAccountMutation = graphql(`
     userDelete(userConfirmation: $input)
   }
 `)
+
+export const verifyEmailMutation = graphql(`
+  mutation verifyEmail($input: VerifyUserEmailInput!) {
+    activeUserMutations {
+      emailMutations {
+        verify(input: $input)
+      }
+    }
+  }
+`)

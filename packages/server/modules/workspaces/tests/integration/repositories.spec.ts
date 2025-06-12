@@ -12,18 +12,26 @@ import {
   getWorkspaceWithDomainsFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceCollaboratorsFactory,
-  getWorkspaceBySlugFactory
+  getWorkspaceBySlugFactory,
+  getWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import {
+  BasicTestUser,
+  buildBasicTestUser,
+  createTestUser,
+  createTestUsers
+} from '@/test/authHelper'
 import {
   BasicTestWorkspace,
   assignToWorkspace,
-  createTestWorkspace
+  buildBasicTestWorkspace,
+  createTestWorkspace,
+  createTestWorkspaces
 } from '@/modules/workspaces/tests/helpers/creation'
 import {
   createUserEmailFactory,
@@ -43,8 +51,10 @@ import {
 } from '@/modules/core/repositories/streams'
 import { omit } from 'lodash'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
+import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 
 const getWorkspace = getWorkspaceFactory({ db })
+const getWorkspaces = getWorkspacesFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
 const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
 const deleteWorkspace = deleteWorkspaceFactory({ db })
@@ -83,6 +93,23 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
 
 describe('Workspace repositories', () => {
   describe('getWorkspaceFactory creates a function, that', () => {
+    const testUserA = buildBasicTestUser()
+    const workspaceA1 = buildBasicTestWorkspace({ name: 'My House Workspace' })
+    const workspaceA2 = buildBasicTestWorkspace({ name: 'My Garage Workspace' })
+
+    before(async () => {
+      const testUserB = buildBasicTestUser()
+      await createTestUsers([testUserA, testUserB])
+
+      const workspaceB = buildBasicTestWorkspace()
+      await createTestWorkspace(workspaceB, testUserB)
+
+      await createTestWorkspace(workspaceA1, testUserA, {
+        addCreationState: { completed: true, state: {} }
+      })
+      await createTestWorkspace(workspaceA2, testUserA)
+    })
+
     it('returns null if the workspace is not found', async () => {
       const workspace = await getWorkspace({
         workspaceId: cryptoRandomString({ length: 10 })
@@ -90,6 +117,61 @@ describe('Workspace repositories', () => {
       expect(workspace).to.be.null
     })
     // not testing get here, we're going to use that for testing upsert
+
+    describe('getWorkspaces filters', () => {
+      it('is able to select them by name', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA1.id],
+          search: 'house'
+        })
+
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(workspaceA1.id)
+      })
+
+      it('is able to filter them out by name', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA1.id],
+          search: 'park'
+        })
+
+        expect(workspaces).to.have.lengthOf(0)
+      })
+
+      it('is able to filer them by completed status', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA1.id],
+          completed: true
+        })
+
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(workspaceA1.id)
+      })
+
+      it('is able to filer them out by completed status', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA1.id],
+          completed: false
+        })
+
+        expect(workspaces).to.have.lengthOf(0)
+      })
+
+      it('does not filter when there is no workspace_completed entry as safety mechanism', async () => {
+        const workspaces = await getWorkspaces({
+          userId: testUserA.id,
+          workspaceIds: [workspaceA2.id],
+          completed: false
+        })
+
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(workspaceA2.id)
+      })
+    })
   })
 
   describe('getWorkspaceBySlugFactory creates a function, that', () => {
@@ -770,6 +852,157 @@ describe('Workspace repositories', () => {
       })
 
       expect(workspaces.length).to.equal(1)
+    })
+
+    it('should not return discoverable workspaces with existing requests for the user', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+      const otherUser = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: otherUser.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      // existing request for other user
+      await db(WorkspaceJoinRequests.name).insert({
+        workspaceId: workspace.id,
+        userId: otherUser.id,
+        createdAt: new Date(),
+        status: 'pending'
+      })
+      const workspaceWithExistingRequest = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspaceWithExistingRequest.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      await db(WorkspaceJoinRequests.name).insert({
+        workspaceId: workspaceWithExistingRequest.id,
+        userId: user.id,
+        createdAt: new Date(),
+        status: 'pending'
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(1)
+      expect(workspaces[0].id).to.equal(workspace.id)
+
+      const otherUserWorkspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: otherUser.id
+      })
+
+      expect(otherUserWorkspaces.length).to.equal(1)
+      expect(otherUserWorkspaces[0].id).to.equal(workspaceWithExistingRequest.id)
+    })
+
+    it('should return workspaces in order of team size', async () => {
+      const userA: BasicTestUser = {
+        id: '',
+        name: 'John Speckle',
+        email: createRandomEmail(),
+        verified: true
+      }
+      const userB: BasicTestUser = {
+        id: '',
+        name: 'John Speckle 2',
+        email: createRandomEmail(),
+        verified: true
+      }
+      const userC: BasicTestUser = {
+        id: '',
+        name: 'John Speckle 2 2',
+        email: createRandomEmail(),
+        verified: true
+      }
+      const userD: BasicTestUser = {
+        id: '',
+        name: 'No Workspace User',
+        email: createRandomEmail(),
+        verified: true
+      }
+
+      const workspaceA: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'Small Workspace',
+        slug: cryptoRandomString({ length: 9 }),
+        discoverabilityEnabled: true
+      }
+      const workspaceB: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'Medium Workspace',
+        slug: cryptoRandomString({ length: 9 }),
+        discoverabilityEnabled: true
+      }
+      const workspaceC: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'Large Workspace',
+        slug: cryptoRandomString({ length: 9 }),
+        discoverabilityEnabled: true
+      }
+
+      await createTestUsers([userA, userB, userC])
+      await createTestWorkspaces([
+        [workspaceA, userA, { domain: 'example.org' }],
+        [workspaceB, userB, { domain: 'example.org' }],
+        [workspaceC, userC, { domain: 'example.org' }]
+      ])
+
+      await Promise.all([
+        assignToWorkspace(workspaceB, userA),
+        assignToWorkspace(workspaceC, userA),
+        assignToWorkspace(workspaceC, userB)
+      ])
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: userD.id
+      })
+
+      expect(workspaces.length).to.equal(3)
+      expect(workspaces[0].id).to.equal(workspaceC.id)
+      expect(workspaces[1].id).to.equal(workspaceB.id)
+      expect(workspaces[2].id).to.equal(workspaceA.id)
     })
   })
 

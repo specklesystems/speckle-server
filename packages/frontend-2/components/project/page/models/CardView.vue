@@ -22,12 +22,15 @@
         v-if="isFiltering"
         @clear-search="() => $emit('clear-search')"
       />
-      <div v-else>
+      <div v-else-if="!hideFileUpload">
         <ProjectCardImportFileArea
-          :disabled="project?.workspace?.readOnly"
-          :project-id="projectId"
+          v-if="project"
+          :project="project"
           class="h-36 col-span-4"
         />
+      </div>
+      <div v-else class="text-center my-6">
+        <p class="text-heading-sm text-foreground">No models</p>
       </div>
     </template>
     <InfiniteLoading
@@ -72,6 +75,7 @@ const props = withDefaults(
     sourceApps?: SourceAppDefinition[]
     contributors?: FormUsersSelectItemFragment[]
     smallView?: boolean
+    hideFileUpload?: boolean
   }>(),
   {
     showActions: true,

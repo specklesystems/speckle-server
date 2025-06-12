@@ -1,7 +1,3 @@
-import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
@@ -14,7 +10,6 @@ import {
 } from '@/modules/core/repositories/commits'
 import {
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { markCommitStreamUpdatedFactory } from '@/modules/core/repositories/streams'
@@ -24,9 +19,10 @@ import {
 } from '@/modules/core/services/commit/management'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import cryptoRandomString from 'crypto-random-string'
 
 export type BasicTestCommit = {
   /**
@@ -46,6 +42,10 @@ export type BasicTestCommit = {
    */
   authorId: string
   /**
+   * Can be left empty, will be filled on creation. Takes precedence over branchName
+   */
+  branchId: string
+  /**
    * Defaults to 'main'
    */
   branchName?: string
@@ -58,20 +58,27 @@ export type BasicTestCommit = {
    * Empty array by default
    */
   parents?: string[]
+
+  /**
+   * Optionally override the createdAt date
+   */
+  createdAt?: Date
 }
 
-export async function createTestObject(params: { projectId: string }) {
+export async function createTestObject(params: {
+  projectId: string
+  object?: Record<string, unknown>
+}) {
   const projectDb = await getProjectDbClient(params)
   const createObject = createObjectFactory({
     storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
       db: projectDb
-    }),
-    storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+    })
   })
 
   return await createObject({
     streamId: params.projectId,
-    object: { foo: 'bar' }
+    object: params.object ?? { foo: 'bar' }
   })
 }
 
@@ -86,13 +93,12 @@ async function ensureObjects(commits: BasicTestCommit[]) {
       const createObject = createObjectFactory({
         storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
           db: projectDb
-        }),
-        storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+        })
       })
 
       return createObject({
         streamId: c.streamId,
-        object: { foo: 'bar' }
+        object: { foo: cryptoRandomString({ length: 256 }) }
       }).then((oid) => (c.objectId = oid))
     })
   )
@@ -126,11 +132,7 @@ export async function createTestCommits(
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated,
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        versionsEventEmitter: VersionsEmitter.emit,
-        addCommitCreatedActivity: addCommitCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        emitEvent: getEventBus().emit
       })
 
       const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -139,7 +141,7 @@ export async function createTestCommits(
         getBranchById: getBranchByIdFactory({ db: projectDb })
       })
 
-      return createCommitByBranchName({
+      const baseArgs = {
         streamId: c.streamId,
         branchName: c.branchName || 'main',
         message: c.message || 'this message is auto generated',
@@ -147,8 +149,20 @@ export async function createTestCommits(
         objectId: c.objectId,
         authorId: c.authorId,
         totalChildrenCount: 0,
-        parents: c.parents || []
-      }).then((newCommit) => (c.id = newCommit.id))
+        parents: c.parents || [],
+        createdAt: c.createdAt
+      }
+
+      const commit = await (c.branchId?.length
+        ? createCommitByBranchId({
+            ...baseArgs,
+            branchId: c.branchId
+          })
+        : createCommitByBranchName(baseArgs))
+      c.id = commit.id
+      c.branchId = commit.branchId
+
+      return c
     })
   )
 }

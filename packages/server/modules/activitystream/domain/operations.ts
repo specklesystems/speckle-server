@@ -149,7 +149,7 @@ export type GetUserActivity = ({
   limit
 }: {
   userId: string
-  actionType: StreamActionType
+  actionType?: StreamActionType
   after?: Date
   before?: Date
   cursor?: Date
@@ -174,21 +174,6 @@ export type AddStreamCommentMentionActivity = (params: {
   mentionTargetId: string
   commentId: string
   threadId: string
-}) => Promise<void>
-
-export type AddStreamInviteDeclinedActivity = (params: {
-  streamId: string
-  inviteTargetId: string
-  inviterId: string
-  stream: StreamRecord
-}) => Promise<void>
-
-export type AddStreamInviteSentOutActivity = (params: {
-  streamId: string
-  inviteTargetId: string | null
-  inviterId: string
-  inviteTargetEmail: string | null
-  stream: StreamRecord
 }) => Promise<void>
 
 export type AddStreamDeletedActivity = (params: {
@@ -253,26 +238,20 @@ export type AddCommitDeletedActivity = (params: {
   branchId: string
 }) => Promise<void>
 
-export type AddCommentCreatedActivity = (params: {
-  streamId: string
-  userId: string
+export type AddThreadCreatedActivity = (params: {
   input: CommentCreatedActivityInput
   comment: CommentRecord
 }) => Promise<void>
 
 export type AddCommentArchivedActivity = (params: {
-  streamId: string
-  commentId: string
   userId: string
   input: MutationCommentArchiveArgs
   comment: CommentRecord
 }) => Promise<void>
 
 export type AddReplyAddedActivity = (params: {
-  streamId: string
   input: ReplyCreatedActivityInput
   reply: CommentRecord
-  userId: string
 }) => Promise<void>
 
 export type AddBranchCreatedActivity = (params: {

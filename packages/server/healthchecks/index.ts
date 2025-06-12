@@ -1,4 +1,4 @@
-import { healthCheckLogger } from '@/logging/logging'
+import { healthCheckLogger } from '@/observability/logging'
 import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers/envHelper'
 import { handleLivenessFactory, handleReadinessFactory } from '@/healthchecks/health'
 import { FreeConnectionsCalculator, ReadinessHandler } from '@/healthchecks/types'
@@ -44,7 +44,7 @@ export const updateFreeDbConnectionSamplers = async () => {
         knexFreeDbConnectionSamplerFactory({
           db: dbClient.client,
           collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
-          sampledDuration: 20_000 //number of ms over which to average the database connections, before declaring unready. 20 seconds.
+          sampledDuration: 4_000 //number of ms over which to average the database connections, before declaring unready. 4 seconds.
         })
       knexFreeDbConnectionSamplerReadiness[dbClient.regionKey].start()
     }
@@ -71,7 +71,6 @@ export const initFactory: () => (
 
     const readinessHandler = handleReadinessFactory({
       isRedisAlive,
-      areAllPostgresAlive,
       getFreeConnectionsCalculators: getKnexFreeDbConnectionSamplerReadiness
     })
 

@@ -6,13 +6,21 @@
         v-model="email"
         type="email"
         name="email"
-        label="Email"
+        label="Work email"
         placeholder="Email"
         size="lg"
         color="foundation"
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+        auto-focus
+        :help="
+          emailIsBlocked
+            ? 'A work email makes it easier to discover and collaborate with your coworkers on Speckle.'
+            : ''
+        "
+        autocomplete="email"
+        @blur="onEmailChange"
       />
       <FormTextInput
         type="text"
@@ -24,7 +32,7 @@
         color="foundation"
         show-label
         :disabled="loading"
-        auto-focus
+        autocomplete="name"
       />
       <FormTextInput
         v-model="password"
@@ -37,6 +45,7 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
+        autocomplete="new-password"
       />
     </div>
     <AuthPasswordChecks :password="password" class="mt-2 h-12 sm:h-8" />
@@ -55,7 +64,7 @@
     <AuthRegisterTerms v-if="serverInfo.termsOfService" :server-info="serverInfo" />
     <div v-if="!inviteEmail" class="mt-2 sm:mt-4 text-center text-body-xs">
       <span class="mr-2 text-foreground-3">Already have an account?</span>
-      <CommonTextLink :to="finalLoginRoute">Log in</CommonTextLink>
+      <NuxtLink class="text-foreground" :to="finalLoginRoute">Log in</NuxtLink>
     </div>
   </form>
 </template>
@@ -70,12 +79,7 @@ import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMounted } from '@vueuse/core'
-
-/**
- * TODO:
- * - (BE) Password strength check? Do we want to use it anymore?
- * - Dim's answer: no, `passwordRules` are legit enough for now.
- */
+import { checkIfEmailIsBlocked } from '~~/lib/auth/helpers/checkBlockedDomain'
 
 graphql(`
   fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {
@@ -96,11 +100,13 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const isMounted = useMounted()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
+const emailIsBlocked = ref(false)
 
 const emailRules = [isEmail]
 const nameRules = [isRequired]
@@ -114,6 +120,11 @@ const finalLoginRoute = computed(() => {
   })
   return result.fullPath
 })
+
+const onEmailChange = () => {
+  if (!isWorkspacesEnabled.value) return
+  emailIsBlocked.value = checkIfEmailIsBlocked(email.value)
+}
 
 const onSubmit = handleSubmit(async (fullUser) => {
   try {

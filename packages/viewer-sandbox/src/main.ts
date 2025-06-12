@@ -4,9 +4,10 @@ import {
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  CameraController,
   ViewModes,
-  SelectionExtension
+  SelectionExtension,
+  HybridCameraController,
+  SectionTool
 } from '@speckle/viewer'
 
 import './style.css'
@@ -17,11 +18,9 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
-import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
-import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'
-import { SnowPipeline } from './Pipelines/Snow/SnowPipeline'
+import { PassReader } from './Extensions/PassReader'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -45,28 +44,18 @@ const createViewer = async (containerName: string, _stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(CameraController)
-  const selection = viewer.createExtension(SelectionExtension)
-  const sections = viewer.createExtension(SectionTool)
+  viewer.createExtension(HybridCameraController)
+  viewer.createExtension(SelectionExtension)
+  viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
-  const measurements = viewer.createExtension(MeasurementsExtension)
-  const filtering = viewer.createExtension(FilteringExtension)
-  const explode = viewer.createExtension(ExplodeExtension)
-  const diff = viewer.createExtension(DiffExtension)
+  viewer.createExtension(MeasurementsExtension)
+  viewer.createExtension(FilteringExtension)
+  viewer.createExtension(ExplodeExtension)
+  viewer.createExtension(DiffExtension)
   viewer.createExtension(ViewModes)
-  viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
-  // const rotateCamera = viewer.createExtension(RotateCamera)
-  cameraController // use it
-  selection // use it
-  sections // use it
-  measurements // use it
-  filtering // use it
-  explode // use it
-  diff // use it
-  // rotateCamera // use it
-  // boxSelect // use it
+  viewer.createExtension(PassReader)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -75,7 +64,9 @@ const createViewer = async (containerName: string, _stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
-    if (event) console.log(event.hits[0].node.model.id)
+    if (event) {
+      console.log(event.hits[0].node.model.id)
+    }
   })
 
   viewer.on(ViewerEvent.LoadComplete, async () => {
@@ -83,9 +74,14 @@ const createViewer = async (containerName: string, _stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
-    const snowPipeline = new SnowPipeline(viewer.getRenderer())
-    viewer.getRenderer().pipeline = snowPipeline
-    void snowPipeline.start()
+    const loadingWrapper = document.getElementById('loadingWrapper')
+    if (loadingWrapper) {
+      loadingWrapper.addEventListener('transitionend', function () {
+        // Remove the loading wrapper from the page
+        loadingWrapper.style.display = 'none'
+      })
+      loadingWrapper.style.opacity = '0'
+    }
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -106,6 +102,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
+  // await sandbox.objectLoaderOnly(_stream)
   await sandbox.loadUrl(_stream)
   // await sandbox.loadJSON(JSONSpeckleStream)
 }
@@ -113,14 +110,17 @@ const createViewer = async (containerName: string, _stream: string) => {
 const getStream = () => {
   return (
     // prettier-ignore
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
+
+    //bad commit! not all items uploaded to server
+    //'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
+
     // 'Super' heavy revit shit
-    // 'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
+    //'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
     // IFC building (good for a tree based structure)
     // 'https://latest.speckle.systems/streams/92b620fb17/commits/2ebd336223'
     // IFC story, a subtree of the above
@@ -263,6 +263,9 @@ const getStream = () => {
     // Lines with numeric filter
     // 'https://app.speckle.systems/streams/16a7ca997a/commits/91d82f4ea1'
 
+    // Lines with numeric filter far away
+    // 'https://latest.speckle.systems/projects/8a2c865c93/models/a5c1339f73@cda204df97'
+
     // Type inheritence
     // 'https://app.speckle.systems/streams/4063469c0b/objects/ce831723f2a3a56a30dfbca54a53c90f'
     // Sum groups
@@ -339,9 +342,10 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/0cf9e393c4/commits/cef3f40be2'
     // 'https://latest.speckle.systems/streams/0cf9e393c4/commits/f4e11a8b01'
 
-    // Far away instances
+    // Instance with both far away geometry and far away transform
     // 'https://latest.speckle.systems/streams/ee5346d3e1/commits/576310a6d5'
-    // 'https://latest.speckle.systems/streams/ee5346d3e1/commits/489d42ca8c'
+
+    // Door+wall instances
     // 'https://latest.speckle.systems/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
     // 'https://app.speckle.systems/streams/0ed2cdc8eb/commits/350c4e1a4d'
 
@@ -360,8 +364,11 @@ const getStream = () => {
 
     // 'https://latest.speckle.systems/streams/e9285828d7/commits/9b80b7a70c'
     // 'https://app.speckle.systems/streams/b85d53c3b4/commits/be26146460'
+
     // Germany
     // 'https://latest.speckle.systems/streams/7117052f4e/commits/a646bf659e'
+
+    // Diffing tests
     // 'https://latest.speckle.systems/streams/aea12cab71/commits/787ade768e'
     // 'https://app.speckle.systems/streams/a29e5c7772/commits/a8cfae2645'
     // 'https://latest.speckle.systems/streams/9d71f041b2/commits/01279333e5'
@@ -389,6 +396,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/e8b81c24f5/models/759186b9ec'
     // 'https://latest.speckle.systems/projects/c1faab5c62/models/c8ca2dcbe2@f79f9fe600'
     // 'https://app.speckle.systems/projects/7591c56179/models/0185a7c62e'
+    // DEFAUL WEIRD MODEL
     // 'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
     // 'https://app.speckle.systems/projects/96c43c61a6/models/fd12973e73'
     // 'https://latest.speckle.systems/projects/2099ac4b5f/models/5d6eb30c16'
@@ -460,15 +468,95 @@ const getStream = () => {
     // Perfectly flat
     // 'https://app.speckle.systems/projects/344f803f81/models/5582ab673e'
 
+    // big baker
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716'
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     //Gingerbread
-    'https://latest.speckle.systems/projects/387050bffe/models/48f7eb26fb'
+    // 'https://latest.speckle.systems/projects/387050bffe/models/48f7eb26fb'
     // DUI3 Mesh Colors
     // 'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb@344a397239'
 
     // Instance toilets
     // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
+
+    // 'https://latest.speckle.systems/projects/3fe1880c36/models/65bb4287a8'
+    // 'https://latest.speckle.systems/projects/db06488e1c/models/21f3930771'
+
+    // FAR OFF
+    // 'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
+
+    // SUPER TINY
+    // 'https://latest.speckle.systems/projects/6631c0378c/models/4fed65a49c'
+
+    // v2 colored lines
+    // 'https://app.speckle.systems/projects/052b576a45/models/c756235fcc'
+
+    // Custom normals
+    // 'https://latest.speckle.systems/projects/51c449c440/models/08e97226cf'
+
+    // Meshed together - like objects
+    // 'https://app.speckle.systems/projects/edccdee0fd/models/944c475581'
+
+    // Engine thing with outlines
+    // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
+
+    // Dim's meshed together non instanced + instanced
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be@ee21745e43'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
+
+    // A LOT of text objects
+    // 'https://app.speckle.systems/projects/e771a388b1/models/f5c967dfa9'
+
+    // 'https://app.speckle.systems/projects/16cffbc224/models/1e142b07a0'
+
+    // REGIONS
+    // https://app.speckle.systems/projects/16ce7b208c/models/1c14e37363@0614bb2957
+
+    // 'https://app.speckle.systems/projects/63bb691d0f/models/a64da9072d'
+    // 'https://app.speckle.systems/projects/7591c56179/models/82b94108a3'
+
+    // SUPER slow tree build time (LARGE N-GONS TRIANGULATION)
+    // 'https://app.speckle.systems/projects/0edb6ef628/models/ff3d8480bc@cd83d90a2c'
+
+    /* ObjectLoader 2 tests */
+    // `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
+    //crashing out of memory?
+    //`https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@2a6fd781f2`
+    //too big?
+    // `https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716`
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
+
+    // BUSTED model ID
+    // 'https://app.speckle.systems/projects/155101d3ca/models/b8d3b42787b2dc9fc412a8ae16af03ac385e48e6'
+
+    // New text
+    // 'https://app.speckle.systems/projects/16ce7b208c/models/e9f8edeb13@dc0b9471e9'
+
+    // 'https://app.speckle.systems/projects/40df04e516/models/5658c83729'
+
+    // 'https://latest.speckle.systems/projects/46e3e0e1ec/models/ac0e624478'
+    // 'https://app.speckle.systems/projects/16ce7b208c/models/07065dc527'
+    // 'https://latest.speckle.systems/projects/46e3e0e1ec/models/ac0e624478@0153622f9a'
+
+    // MONSTER
+    // 'https://app.speckle.systems/projects/40df04e516/models/5658c83729@29b08a8601'
+    // Materials in blocks full
+    // 'https://app.speckle.systems/projects/1b96a34aae/models/673312057e'
+    // Materials in blocks single
+    // 'https://app.speckle.systems/projects/f7bb16037a/models/5d090c6f07'
+
+    // Large topological stuff
+    // 'https://app.speckle.systems/projects/7a489ac0d4/models/146d5fbe27,3e481c9a58,65b4cf97d5,6d07577256,903850fa6f'
+
+    // Instance with far away transform
+    // 'https://app.speckle.systems/projects/40d439576e/models/759c1b2d20@b0a8ae1f81'
+
+    // Small (microscopic) building
+    // 'https://app.speckle.systems/projects/26e4c4aab5/models/7d5ff72f5b'
+
+    // Instances with far away transform
+    // 'https://app.speckle.systems/projects/9d0ce16ba8/models/3c079572ea'
   )
 }
 

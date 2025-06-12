@@ -34,10 +34,11 @@ import {
   storeUserFactory
 } from '@/modules/core/repositories/users'
 import { createUserFactory } from '@/modules/core/services/users/management'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { PaidWorkspacePlanStatuses } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -69,7 +70,7 @@ const createUser = createUserFactory({
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
@@ -106,7 +107,7 @@ describe('Objects graphql @core', () => {
 
         // Make the project read-only
         await db('workspace_plans')
-          .update({ status: 'expired' })
+          .update({ status: PaidWorkspacePlanStatuses.Canceled })
           .where({ workspaceId: workspace!.id })
 
         const objectCreateRes = await apollo.execute(CreateObjectDocument, {

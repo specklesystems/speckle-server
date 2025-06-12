@@ -1,6 +1,6 @@
 import { CommandModule } from 'yargs'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import {
   getStreamCollaboratorsFactory,
   getStreamFactory,
@@ -16,7 +16,6 @@ import {
 import {
   getObjectFactory,
   getStreamObjectsFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
@@ -46,22 +45,14 @@ import {
   markCommentUpdatedFactory,
   markCommentViewedFactory
 } from '@/modules/comments/repositories/comments'
-import { CommentsEmitter } from '@/modules/comments/events/emitter'
-import {
-  addCommentCreatedActivityFactory,
-  addReplyAddedActivityFactory
-} from '@/modules/activitystream/services/commentActivity'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { db, mainDb } from '@/db/knex'
+import { db } from '@/db/knex'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const command: CommandModule<
   unknown,
@@ -144,13 +135,7 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      commentsEventsEmit: CommentsEmitter.emit,
-      addCommentCreatedActivity: addCommentCreatedActivityFactory({
-        getViewerResourcesFromLegacyIdentifiers,
-        getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
 
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
@@ -159,14 +144,10 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
-      commentsEventsEmit: CommentsEmitter.emit,
-      addReplyAddedActivity: addReplyAddedActivityFactory({
-        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
-          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
-          getViewerResourcesFromLegacyIdentifiers
-        }),
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
+      emitEvent: getEventBus().emit,
+      getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+        getViewerResourcesFromLegacyIdentifiers
       })
     })
 
@@ -178,18 +159,13 @@ const command: CommandModule<
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-      versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({
       storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
         db: projectDb
-      }),
-      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+      })
     })
     const getUser = getUserFactory({ db })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
@@ -205,7 +181,7 @@ const command: CommandModule<
       createCommentReplyAndNotify
     })
 
-    await downloadCommit(argv, { logger: cliLogger })
+    await downloadCommit(argv, { logger })
   }
 }
 

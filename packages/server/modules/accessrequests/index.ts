@@ -1,22 +1,22 @@
 import { db } from '@/db/knex'
-import { moduleLogger } from '@/logging/logging'
-import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
+import { moduleLogger } from '@/observability/logging'
 import { initializeEventListenerFactory } from '@/modules/accessrequests/services/eventListener'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 let quitListeners: Optional<() => void> = undefined
 
 const ServerAccessRequestsModule: SpeckleModule = {
-  init(_, isInitial) {
+  init({ isInitial }) {
     moduleLogger.info('🔐 Init access request module')
 
     if (isInitial) {
       const initializeEventListener = initializeEventListenerFactory({
         getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
         publishNotification,
-        accessRequestsEventListener: AccessRequestsEmitter.listen
+        eventBus: getEventBus()
       })
       quitListeners = initializeEventListener()
     }

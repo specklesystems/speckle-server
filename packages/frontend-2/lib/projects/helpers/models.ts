@@ -22,5 +22,6 @@ export function sanitizeModelName(name: string): string {
   return name
     .split('/')
     .map((part) => part.trim())
+    .filter((part) => part.length > 0)
     .join('/')
 }

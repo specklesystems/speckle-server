@@ -1,4 +1,3 @@
-import cors from 'cors'
 import {
   createBareToken,
   createAppTokenFactory,
@@ -7,7 +6,7 @@ import {
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
 import { ensureError, Optional, Scopes } from '@speckle/shared'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import {
   getAppFactory,
   revokeRefreshTokenFactory,
@@ -37,6 +36,8 @@ import {
   updateApiTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 // TODO: Secure these endpoints!
 export default function (app: Express) {
@@ -109,9 +110,18 @@ export default function (app: Express) {
   /*
   Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token
    */
-  app.options('/auth/token', cors())
-  app.post('/auth/token', cors(), async (req, res) => {
+  app.options('/auth/token', corsMiddlewareFactory())
+  app.post('/auth/token', corsMiddlewareFactory(), async (req, res) => {
     try {
+      if (!req.body.appId)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided. App Id is required.`
+        )
+      if (!req.body.appSecret)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided. App Secret is required.`
+        )
+
       const createRefreshToken = createRefreshTokenFactory({ db })
       const getApp = getAppFactory({ db })
       const createAppToken = createAppTokenFactory({
@@ -142,35 +152,52 @@ export default function (app: Express) {
       })
 
       // Token refresh
-      if (req.body.refreshToken) {
-        if (!req.body.appId || !req.body.appSecret)
-          throw new Error('Invalid request - App Id and Secret are required.')
+      if ('refreshToken' in req.body) {
+        if (!req.body.refreshToken)
+          throw new BadRequestError(
+            'Invalid request, insufficient information provided. A valid refresh token is required.'
+          )
 
-        const authResponse = await refreshAppToken({
-          refreshToken: req.body.refreshToken,
-          appId: req.body.appId,
-          appSecret: req.body.appSecret
-        })
+        const authResponse = await withOperationLogging(
+          async () =>
+            await refreshAppToken({
+              refreshToken: req.body.refreshToken,
+              appId: req.body.appId,
+              appSecret: req.body.appSecret
+            }),
+          {
+            operationName: 'refreshAppToken',
+            operationDescription: 'Refresh an app token',
+            logger: req.log
+          }
+        )
         return res.send(authResponse)
       }
 
       // Access-code - token exchange
-      if (
-        !req.body.appId ||
-        !req.body.appSecret ||
-        !req.body.accessCode ||
-        !req.body.challenge
-      )
-        throw new Error(
-          `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
+      if (!req.body.accessCode)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided. Access Code is required.`
+        )
+      if (!req.body.challenge)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided. Challenge is required.`
         )
 
-      const authResponse = await createAppTokenFromAccessCode({
-        appId: req.body.appId,
-        appSecret: req.body.appSecret,
-        accessCode: req.body.accessCode,
-        challenge: req.body.challenge
-      })
+      const authResponse = await withOperationLogging(
+        async () =>
+          await createAppTokenFromAccessCode({
+            appId: req.body.appId,
+            appSecret: req.body.appSecret,
+            accessCode: req.body.accessCode,
+            challenge: req.body.challenge
+          }),
+        {
+          operationName: 'createAppTokenFromAccessCode',
+          operationDescription: 'Create an app token from an access code',
+          logger: req.log
+        }
+      )
       return res.send(authResponse)
     } catch (err) {
       req.log.info({ err }, 'Error while trying to generate a new token.')
@@ -189,7 +216,7 @@ export default function (app: Express) {
       const token = req.body.token
       const refreshToken = req.body.refreshToken
 
-      if (!token) throw new Error('Invalid request. No token provided.')
+      if (!token) throw new BadRequestError('Invalid request. No token provided.')
       await revokeTokenById(token)
 
       if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })

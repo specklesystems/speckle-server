@@ -5,13 +5,15 @@ import {
   convertBasicStringToDocument,
   isSerializedTextEditorValueSchema,
   SmartTextEditorValueSchema,
-  isDocEmpty
+  isDocEmpty,
+  documentToBasicString
 } from '@/modules/core/services/richTextEditorService'
 import { isString, uniq } from 'lodash'
 import { InvalidAttachmentsError } from '@/modules/comments/errors'
 import { JSONContent } from '@tiptap/core'
 import { ValidateInputAttachments } from '@/modules/comments/domain/operations'
 import { GetBlobs } from '@/modules/blobstorage/domain/operations'
+import { Nullable } from '@speckle/shared'
 
 const COMMENT_SCHEMA_VERSION = '1.0.0'
 const COMMENT_SCHEMA_TYPE = 'stream_comment'
@@ -75,4 +77,12 @@ export function ensureCommentSchema(
   }
 
   throw new RichTextParseError('Unexpected comment schema format')
+}
+
+export const commentTextToRawString = (
+  text: Nullable<SmartTextEditorValueSchema | string>
+) => {
+  if (!text) return null
+  const schema = ensureCommentSchema(text)
+  return documentToBasicString(schema.doc)
 }

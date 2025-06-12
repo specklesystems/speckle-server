@@ -17,7 +17,7 @@ import {
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { Optional } from '@speckle/shared'
-import { BlobStorageConfig } from '@speckle/shared/dist/commonjs/environment/multiRegionConfig'
+import { BlobStorageConfig } from '@speckle/shared/environment/multiRegionConfig'
 
 type RegionStorageClients = {
   [regionKey: string]: ObjectStorage
@@ -44,7 +44,10 @@ export const initializeRegion = async (params: {
     // getAvailableRegionConfig allows getting configs that may not be registered yet
     const regionConfigs = await getAvailableRegionConfig()
     config = regionConfigs[regionKey].blobStorage
-    if (!config) throw new Error(`RegionKey ${regionKey} not available in config`)
+    if (!config)
+      throw new MisconfiguredEnvironmentError(
+        `RegionKey ${regionKey} not available in config`
+      )
   }
 
   const storage = getObjectStorage({

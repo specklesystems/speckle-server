@@ -6,6 +6,8 @@
     "../src/**/*.tsx"
   ],
   "exclude": [
+    "../**/*.spec.ts",
+    "../src/tests/**/*.ts",
     "../src/**/*.mts"
   ],
   "compilerOptions": {

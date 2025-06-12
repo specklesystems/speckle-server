@@ -59,51 +59,48 @@ export const ToolShortcuts = {
 export const ViewModeShortcuts = {
   SetViewModeDefault: {
     name: 'Rendered',
-    description: 'Set view mode to Rendered',
+    description:
+      'A realistic view of your model rendered with available materials for surfaces.',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit1',
     action: 'SetViewModeDefault',
     viewMode: ViewMode.DEFAULT
   },
-  SetViewModeDefaultEdges: {
-    name: 'Rendered + Edges',
-    description: 'Set view mode to Rendered + Edges',
+  SetViewModeShaded: {
+    name: 'Shaded',
+    description:
+      'A shaded view of your model using available colors for surfaces and curves.',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit2',
-    action: 'SetViewModeDefaultEdges',
-    viewMode: ViewMode.DEFAULT_EDGES
-  },
-  SetViewModeShaded: {
-    name: 'Solid',
-    description: 'Set view mode to Solid',
-    modifiers: [ModifierKeys.Shift],
-    key: 'Digit3',
     action: 'SetViewModeShaded',
     viewMode: ViewMode.SHADED
   },
-  SetViewModePen: {
-    name: 'Pen',
-    description: 'Set view mode to Pen',
-    modifiers: [ModifierKeys.Shift],
-    key: 'Digit4',
-    action: 'SetViewModePen',
-    viewMode: ViewMode.PEN
-  },
   SetViewModeArctic: {
     name: 'Arctic',
-    description: 'Set view mode to Arctic',
+    description:
+      'A white conceptual view of your model without any materials or colors.',
     modifiers: [ModifierKeys.Shift],
-    key: 'Digit5',
+    key: 'Digit3',
     action: 'SetViewModeArctic',
     viewMode: ViewMode.ARCTIC
   },
-  SetViewModeColors: {
-    name: 'Shaded',
-    description: 'Set view mode to Shaded',
+  SetViewModeSolid: {
+    name: 'Solid',
+    description:
+      'A basic shaded view of your model using our default material, with edges.',
     modifiers: [ModifierKeys.Shift],
-    key: 'Digit6',
-    action: 'SetViewModeColors',
-    viewMode: ViewMode.COLORS
+    key: 'Digit4',
+    action: 'SetViewModeSolid',
+    viewMode: ViewMode.SOLID
+  },
+  SetViewModePen: {
+    name: 'Pen',
+    description:
+      'A stylized black and white drawing view of your model, without any lighting or shadows.',
+    modifiers: [ModifierKeys.Shift],
+    key: 'Digit5',
+    action: 'SetViewModePen',
+    viewMode: ViewMode.PEN
   }
 } as const
 

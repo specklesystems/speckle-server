@@ -3,15 +3,15 @@
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
       search-placeholder="Search pending invites..."
-      :workspace-id="workspaceId"
       :workspace="workspace"
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
-        { id: 'invitedBy', header: 'Invited by', classes: 'col-span-4' },
-        { id: 'role', header: 'Role', classes: 'col-span-2' },
+        { id: 'email', header: 'Email', classes: 'col-span-3' },
+        { id: 'invitedBy', header: 'Invited by', classes: 'col-span-2' },
+        { id: 'role', header: 'Role', classes: 'col-span-1' },
         { id: 'lastRemindedOn', header: 'Last reminded on', classes: 'col-span-2' },
         {
           id: 'actions',
@@ -31,6 +31,11 @@
         <div class="flex items-center gap-2">
           <UserAvatar v-if="item.user" hide-tooltip :user="item.user" />
           <span class="truncate text-body-xs text-foreground">{{ item.title }}</span>
+        </div>
+      </template>
+      <template #email="{ item }">
+        <div class="flex">
+          <span class="truncate text-body-xs text-foreground">{{ item.email }}</span>
         </div>
       </template>
       <template #invitedBy="{ item }">
@@ -57,6 +62,7 @@
           :items="actionsItems"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          :menu-id="`invite-actions-${item.id}`"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
@@ -84,6 +90,7 @@ import {
 import { settingsWorkspacesInvitesSearchQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
@@ -92,6 +99,7 @@ graphql(`
     role
     title
     updatedAt
+    email
     user {
       id
       ...LimitedUserAvatar
@@ -107,15 +115,15 @@ graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_Workspace on Workspace {
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
-    invitedTeam(filter: $invitesFilter) {
+    invitedTeam {
       ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator
     }
   }
 `)
 
 const props = defineProps<{
-  workspaceId: string
-  workspace?: SettingsWorkspacesMembersInvitesTable_WorkspaceFragment
+  workspaceSlug: string
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersInvitesTable_WorkspaceFragment>
 }>()
 
 const search = ref('')
@@ -129,7 +137,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
     invitesFilter: {
       search: search.value
     },
-    workspaceId: props.workspaceId
+    slug: props.workspaceSlug
   }),
   () => ({
     enabled: !!search.value.length
@@ -138,7 +146,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
 
 const invites = computed(() =>
   search.value.length
-    ? searchResult.value?.workspace.invitedTeam
+    ? searchResult.value?.workspaceBySlug.invitedTeam
     : props.workspace?.invitedTeam
 )
 
@@ -151,18 +159,20 @@ const onActionChosen = async (
   actionItem: LayoutMenuItem,
   item: NonNullable<typeof invites.value>[0]
 ) => {
+  if (!props.workspace?.id) return
+
   switch (actionItem.id) {
     case 'resend-invite':
       await resendInvite({
         input: {
-          workspaceId: props.workspaceId,
+          workspaceId: props.workspace.id,
           inviteId: item.inviteId
         }
       })
       break
     case 'delete-invite':
       await cancelInvite({
-        workspaceId: props.workspaceId,
+        workspaceId: props.workspace.id,
         inviteId: item.inviteId
       })
       break

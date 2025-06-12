@@ -16,6 +16,7 @@ export type UserAvatarSize =
   | 'lg'
   | 'xl'
   | 'xxl'
+  | '3xl'
   | 'editable'
 
 export function useAvatarSizeClasses(params: {
@@ -39,6 +40,8 @@ export function useAvatarSizeClasses(params: {
       case 'xl':
         return 'h-14'
       case 'xxl':
+        return 'h-24'
+      case '3xl':
         return 'h-32'
       case 'editable':
         return 'h-60'
@@ -62,6 +65,8 @@ export function useAvatarSizeClasses(params: {
       case 'xl':
         return 'w-14'
       case 'xxl':
+        return 'w-24'
+      case '3xl':
         return 'w-32'
       case 'editable':
         return 'w-60'
@@ -84,6 +89,8 @@ export function useAvatarSizeClasses(params: {
       case 'xl':
         return 'text-2xl'
       case 'xxl':
+        return 'text-2xl'
+      case '3xl':
         return 'text-3xl'
       case 'editable':
         return 'h1'

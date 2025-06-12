@@ -32,6 +32,9 @@ import {
 } from '@/modules/core/domain/users/operations'
 import crs from 'crypto-random-string'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
+import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
 
 const githubStrategyBuilderFactory =
   (deps: {
@@ -87,7 +90,7 @@ const githubStrategyBuilderFactory =
         try {
           const email = profile.emails?.[0].value
           if (!email) {
-            throw new Error('No email provided by Github')
+            throw new EnvironmentResourceError('No email provided by Github')
           }
 
           const name = profile.displayName || profile.username || crs({ length: 10 })
@@ -159,12 +162,19 @@ const githubStrategyBuilderFactory =
           )
           switch (e.constructor) {
             case UserInputError:
-              logger.info(err)
-              break
+            case InviteNotFoundError:
+            case UnverifiedEmailSSOLoginError:
+              logger.info({ err: e }, 'Auth error for GitHub strategy')
+              // note; passportjs suggests err should be null for user input errors.
+              // We also need to pass the error type in the info parameter
+              // so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              return done(null, false, {
+                message: e.message,
+                failureType: e.constructor.name as ExpectedAuthFailure
+              })
             default:
-              logger.error(err)
+              return done(e, false, { message: e.message })
           }
-          return done(err, false, { message: e.message })
         }
       }
     )

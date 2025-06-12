@@ -1,28 +1,26 @@
-import type { SettingsMenuItems } from '~/lib/settings/helpers/types'
-import SettingsUserProfile from '~/components/settings/user/Profile.vue'
-import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
-import SettingsUserDeveloper from '~/components/settings/user/developer/Developer.vue'
-import SettingsUserEmails from '~/components/settings/user/Emails.vue'
-import SettingsServerGeneral from '~/components/settings/server/General.vue'
-import SettingsServerRegions from '~/components/settings/server/Regions.vue'
-import SettingsServerProjects from '~/components/settings/server/Projects.vue'
-import SettingsServerMembers from '~/components/settings/server/Members.vue'
-import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
-import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
-import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
-import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
-import SettingsWorkspacesBilling from '~/components/settings/workspaces/Billing.vue'
-import SettingsWorkspacesRegions from '~/components/settings/workspaces/Regions.vue'
-import { useIsMultipleEmailsEnabled } from '~/composables/globals'
-import { Roles } from '@speckle/shared'
-import { SettingMenuKeys } from '~/lib/settings/helpers/types'
+import {
+  WorkspaceUserActionTypes,
+  type GenericSettingsMenuItem,
+  type WorkspaceSettingsMenuItem
+} from '~/lib/settings/helpers/types'
+import { useIsMultipleEmailsEnabled, useActiveUser } from '~/composables/globals'
+import { Roles, SeatTypes, type MaybeNullOrUndefined } from '@speckle/shared'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
-import type { InjectionKey } from 'vue'
 import { graphql } from '~/lib/common/generated/gql'
+import {
+  settingsWorkspaceRoutes,
+  settingsUserRoutes,
+  settingsServerRoutes
+} from '~/lib/common/helpers/route'
+import type { LayoutMenuItem } from '@speckle/ui-components'
+import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
+import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment SettingsMenu_Workspace on Workspace {
     id
+    slug
     sso {
       provider {
         id
@@ -38,35 +36,41 @@ export const useSettingsMenu = () => {
   const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
   const isMultiRegionEnabled = useIsMultiregionEnabled()
 
-  const workspaceMenuItems = shallowRef<SettingsMenuItems>({
-    [SettingMenuKeys.Workspace.General]: {
+  const workspaceMenuItems = shallowRef<WorkspaceSettingsMenuItem[]>([
+    {
       title: 'General',
-      component: SettingsWorkspaceGeneral,
+      name: settingsWorkspaceRoutes.general.name,
+      route: (slug?: string) => settingsWorkspaceRoutes.general.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
-    [SettingMenuKeys.Workspace.Members]: {
-      title: 'Members',
-      component: SettingsWorkspacesMembers,
+    {
+      title: 'People',
+      name: settingsWorkspaceRoutes.members.name,
+      route: (slug?: string) => settingsWorkspaceRoutes.members.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    [SettingMenuKeys.Workspace.Projects]: {
+    {
       title: 'Projects',
-      component: SettingsWorkspacesProjects,
+      name: settingsWorkspaceRoutes.projects.name,
+      route: (slug?: string) => settingsWorkspaceRoutes.projects.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    [SettingMenuKeys.Workspace.Security]: {
+    {
       title: 'Security',
-      component: SettingsWorkspacesSecurity,
+      name: settingsWorkspaceRoutes.security.name,
+      route: (slug?: string) => settingsWorkspaceRoutes.security.route(slug),
       permission: [Roles.Workspace.Admin]
     },
-    [SettingMenuKeys.Workspace.Billing]: {
+    {
       title: 'Billing',
-      component: SettingsWorkspacesBilling,
+      name: settingsWorkspaceRoutes.billing.name,
+      route: (slug?: string) => settingsWorkspaceRoutes.billing.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    [SettingMenuKeys.Workspace.Regions]: {
+    {
       title: 'Data residency',
-      component: SettingsWorkspacesRegions,
+      name: settingsWorkspaceRoutes.regions.name,
+      route: (slug?: string) => settingsWorkspaceRoutes.regions.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
       ...(!isMultiRegionEnabled
         ? {
@@ -77,53 +81,53 @@ export const useSettingsMenu = () => {
             disabled: false
           })
     }
-  })
+  ])
 
-  const userMenuItems = shallowRef<SettingsMenuItems>({
-    [SettingMenuKeys.User.Profile]: {
-      title: 'User profile',
-      component: SettingsUserProfile
+  const userMenuItems = shallowRef<GenericSettingsMenuItem[]>([
+    {
+      title: 'Profile',
+      route: settingsUserRoutes.profile
+    },
+    {
+      title: 'Notifications',
+      route: settingsUserRoutes.notifications
+    },
+    {
+      title: 'Developer',
+      route: settingsUserRoutes.developerSettings
     },
     ...(isMultipleEmailsEnabled
-      ? {
-          [SettingMenuKeys.User.Emails]: {
+      ? [
+          {
             title: 'Emails',
-            component: SettingsUserEmails
+            route: settingsUserRoutes.emails
           }
-        }
-      : {}),
-    [SettingMenuKeys.User.Notifications]: {
-      title: 'Notifications',
-      component: SettingsUserNotifications
-    },
-    [SettingMenuKeys.User.DeveloperSettings]: {
-      title: 'Developer',
-      component: SettingsUserDeveloper
-    }
-  })
+        ]
+      : [])
+  ])
 
-  const serverMenuItems = shallowRef<SettingsMenuItems>({
-    [SettingMenuKeys.Server.General]: {
+  const serverMenuItems = shallowRef<GenericSettingsMenuItem[]>([
+    {
       title: 'General',
-      component: SettingsServerGeneral
+      route: settingsServerRoutes.general
     },
-    [SettingMenuKeys.Server.ActiveUsers]: {
+    {
       title: 'Members',
-      component: SettingsServerMembers
+      route: settingsServerRoutes.members
     },
-    [SettingMenuKeys.Server.Projects]: {
+    {
       title: 'Projects',
-      component: SettingsServerProjects
+      route: settingsServerRoutes.projects
     },
     ...(isMultiRegionEnabled
-      ? {
-          [SettingMenuKeys.Server.Regions]: {
+      ? [
+          {
             title: 'Regions',
-            component: SettingsServerRegions
+            route: settingsServerRoutes.regions
           }
-        }
-      : {})
-  })
+        ]
+      : [])
+  ])
 
   return {
     userMenuItems,
@@ -132,16 +136,175 @@ export const useSettingsMenu = () => {
   }
 }
 
-type MenuState = {
-  goToWorkspaceMenuItem: (workspaceId: string, menuTarget: string) => void
-}
-const MenuStateKey: InjectionKey<MenuState> = Symbol('menuState')
+export const useSettingsMenuState = () =>
+  useState<{
+    previousRoute: string | undefined
+  }>('settings-menu-state', () => ({
+    previousRoute: undefined
+  }))
 
-export const useSetupMenuState = (params: MenuState) => {
-  const state = params
-  provide(MenuStateKey, state)
-}
+export const useSettingsMembersActions = (params: {
+  workspaceRole: ComputedRef<MaybeNullOrUndefined<string>>
+  workspaceSlug: ComputedRef<MaybeNullOrUndefined<string>>
+  targetUser: ComputedRef<SettingsWorkspacesMembersActionsMenu_UserFragment>
+}) => {
+  const { activeUser } = useActiveUser()
 
-export const useMenuState = () => {
-  return inject(MenuStateKey)!
+  const { isLastAdmin } = useWorkspaceLastAdminCheck({
+    workspaceSlug: params.workspaceSlug.value || ''
+  })
+
+  const { statusIsCanceled } = useWorkspacePlan(params.workspaceSlug.value || '')
+
+  const targetUserRole = computed(() => {
+    return params.targetUser.value.role
+  })
+
+  const targetUserSeatType = computed(() => params.targetUser.value.seatType)
+
+  const isActiveUserWorkspaceAdmin = computed(
+    () => params.workspaceRole.value === Roles.Workspace.Admin
+  )
+
+  const isOnlyAdmin = computed(
+    () => isLastAdmin.value && isActiveUserWorkspaceAdmin.value
+  )
+
+  const isActiveUserTargetUser = computed(
+    () => activeUser.value?.id === params.targetUser.value.id
+  )
+
+  const canModifyUser = computed(
+    () => isActiveUserWorkspaceAdmin.value && !isActiveUserTargetUser.value
+  )
+
+  const showMakeAdmin = computed(
+    () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Member
+  )
+
+  const showRemoveAdmin = computed(
+    () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Admin
+  )
+
+  const showMakeGuest = computed(
+    () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Member
+  )
+
+  const showMakeMember = computed(
+    () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Guest
+  )
+
+  const showUpgradeEditor = computed(
+    () => canModifyUser.value && targetUserSeatType.value === SeatTypes.Viewer
+  )
+
+  const showDowngradeEditor = computed(
+    () => canModifyUser.value && targetUserSeatType.value === SeatTypes.Editor
+  )
+
+  const showRemoveFromWorkspace = computed(() => canModifyUser.value)
+
+  const showLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
+
+  // const showUpdateProjectPermissions = computed(() => canModifyUser.value)
+
+  const actionItems = computed(() => {
+    const headerItems: LayoutMenuItem[] = []
+    const mainItems: LayoutMenuItem[] = []
+    const footerItems: LayoutMenuItem[] = []
+
+    if (showMakeAdmin.value) {
+      mainItems.push({
+        title: 'Make admin...',
+        id: WorkspaceUserActionTypes.MakeAdmin
+      })
+    }
+    if (showRemoveAdmin.value) {
+      mainItems.push({
+        title: 'Revoke admin access...',
+        id: WorkspaceUserActionTypes.RemoveAdmin,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'There must be at least one admin in this workspace'
+      })
+    }
+    if (showMakeGuest.value) {
+      mainItems.push({
+        title: 'Make guest...',
+        id: WorkspaceUserActionTypes.MakeGuest,
+        disabled: targetUserRole.value === Roles.Workspace.Admin,
+        disabledTooltip: 'Admins must be on an Member seat'
+      })
+    }
+    if (showMakeMember.value) {
+      mainItems.push({
+        title: 'Make member...',
+        id: WorkspaceUserActionTypes.MakeMember
+      })
+    }
+    if (showUpgradeEditor.value) {
+      headerItems.push({
+        title: 'Upgrade to editor...',
+        id: WorkspaceUserActionTypes.UpgradeEditor,
+        disabled: statusIsCanceled.value,
+        disabledTooltip: 'This workspace has a canceled plan'
+      })
+    }
+    if (showDowngradeEditor.value) {
+      headerItems.push({
+        title: 'Downgrade to viewer...',
+        id: WorkspaceUserActionTypes.DowngradeEditor,
+        disabled:
+          targetUserRole.value === Roles.Workspace.Admin || statusIsCanceled.value,
+        disabledTooltip: statusIsCanceled.value
+          ? 'This workspace has a canceled plan'
+          : 'Admins must be on an Editor seat'
+      })
+    }
+    // This will return post new workspace plan launch
+    // if (showUpdateProjectPermissions.value) {
+    //   mainItems.push({
+    //     title: 'Manage project access...',
+    //     id: WorkspaceUserActionTypes.UpdateProjectPermissions,
+    //     disabled: params.targetUser.value.projectRoles.length === 0,
+    //     disabledTooltip: 'User is not in any projects'
+    //   })
+    // }
+
+    if (showRemoveFromWorkspace.value) {
+      footerItems.push({
+        title: 'Remove from workspace...',
+        id: WorkspaceUserActionTypes.RemoveFromWorkspace,
+        disabled: isOnlyAdmin.value && targetUserRole.value === Roles.Workspace.Admin,
+        disabledTooltip: 'There must be at least one admin in this workspace'
+      })
+    }
+    if (showLeaveWorkspace.value) {
+      footerItems.push({
+        title: 'Leave workspace...',
+        id: WorkspaceUserActionTypes.LeaveWorkspace,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'You are the only admin of this workspace'
+      })
+    }
+
+    const result: LayoutMenuItem[][] = []
+    if (headerItems.length) result.push(headerItems)
+    if (mainItems.length) result.push(mainItems)
+    if (footerItems.length) result.push(footerItems)
+    return result
+  })
+
+  return {
+    actionItems,
+    isActiveUserWorkspaceAdmin,
+    isActiveUserTargetUser,
+    showMakeAdmin,
+    showRemoveAdmin,
+    showMakeGuest,
+    showMakeMember,
+    showUpgradeEditor,
+    showDowngradeEditor,
+    showRemoveFromWorkspace,
+    showLeaveWorkspace
+  }
 }

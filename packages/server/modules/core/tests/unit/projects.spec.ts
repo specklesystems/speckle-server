@@ -1,8 +1,10 @@
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectEvents } from '@/modules/core/events/projectsEmitter'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
+import { isSpecificEventPayload } from '@/modules/shared/services/eventBus'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Roles, StreamRoles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -25,17 +27,16 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        projectsEventsEmitter: async () => []
+        emitEvent: async () => {}
       })
       const project = await createNewProject({ ownerId })
 
       expect(project).deep.equal(storedProject)
-      expect(storedProject!.isPublic).to.be.true
-      expect(storedProject!.isDiscoverable).to.be.false
+      expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Private)
       expect(storedProject!.allowPublicComments).to.be.false
     })
-    // ;(['PUBLIC', 'UNLISTED'] as const).forEach((visibility) =>
-    it(`makes PUBLIC projects public and discoverable`, async () => {
+
+    it(`makes PUBLIC projects public`, async () => {
       const visibility = 'PUBLIC'
       const ownerId = cryptoRandomString({ length: 10 })
 
@@ -52,18 +53,17 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        projectsEventsEmitter: async () => []
+        emitEvent: async () => {}
       })
 
       const project = await createNewProject({ ownerId, visibility })
 
       expect(project).deep.equal(storedProject)
-      expect(storedProject!.isPublic).to.be.true
-      expect(storedProject!.isDiscoverable).to.be.true
+      expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Public)
       expect(storedProject!.allowPublicComments).to.be.false
     })
 
-    it(`makes UNLISTED projects public but not discoverable`, async () => {
+    it(`makes UNLISTED projects public`, async () => {
       const visibility = 'UNLISTED'
       const ownerId = cryptoRandomString({ length: 10 })
 
@@ -80,17 +80,16 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        projectsEventsEmitter: async () => []
+        emitEvent: async () => {}
       })
 
       const project = await createNewProject({ ownerId, visibility })
 
       expect(project).deep.equal(storedProject)
-      expect(storedProject!.isPublic).to.be.true
-      expect(storedProject!.isDiscoverable).to.be.false
+      expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Public)
       expect(storedProject!.allowPublicComments).to.be.false
     })
-    // )
+
     it('creates a private project', async () => {
       const ownerId = cryptoRandomString({ length: 10 })
       let storedProject: Project | undefined = undefined
@@ -106,13 +105,12 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        projectsEventsEmitter: async () => []
+        emitEvent: async () => {}
       })
       const project = await createNewProject({ ownerId, visibility: 'PRIVATE' })
 
       expect(project).deep.equal(storedProject)
-      expect(storedProject!.isPublic).to.be.false
-      expect(storedProject!.isDiscoverable).to.be.false
+      expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Private)
       expect(storedProject!.allowPublicComments).to.be.false
     })
     it('deletes the created project if getProject throws StreamNotFoundError', async () => {
@@ -136,7 +134,7 @@ describe('project services @core', () => {
         storeModel: async () => {
           expect.fail()
         },
-        projectsEventsEmitter: async () => {
+        emitEvent: async () => {
           expect.fail()
         }
       })
@@ -168,7 +166,7 @@ describe('project services @core', () => {
         storeModel: async () => {
           expect.fail()
         },
-        projectsEventsEmitter: async () => {
+        emitEvent: async () => {
           expect.fail()
         }
       })
@@ -223,10 +221,11 @@ describe('project services @core', () => {
         storeModel: async (args) => {
           storedModel = args
         },
-        projectsEventsEmitter: async (eventName, payload) => {
-          emitedEvent = eventName
-          eventPayload = payload
-          return []
+        emitEvent: async (payload) => {
+          if (isSpecificEventPayload(payload, ProjectEvents.Created)) {
+            emitedEvent = payload.eventName
+            eventPayload = payload.payload
+          }
         }
       })
       const project = await createNewProject({
@@ -247,7 +246,11 @@ describe('project services @core', () => {
         authorId: ownerId
       })
       expect(emitedEvent).to.equal(ProjectEvents.Created)
-      expect(eventPayload).deep.equal({ ownerId, project })
+      expect(eventPayload).deep.equal({
+        ownerId,
+        project,
+        input: { description: '', name: project.name, visibility: 'PRIVATE' }
+      })
     })
     it('successfully creates a project', async () => {
       const ownerId = cryptoRandomString({ length: 10 })
@@ -286,10 +289,11 @@ describe('project services @core', () => {
         storeModel: async (args) => {
           storedModel = args
         },
-        projectsEventsEmitter: async (eventName, payload) => {
-          emitedEvent = eventName
-          eventPayload = payload
-          return []
+        emitEvent: async (payload) => {
+          if (isSpecificEventPayload(payload, ProjectEvents.Created)) {
+            emitedEvent = payload.eventName
+            eventPayload = payload.payload
+          }
         }
       })
       const project = await createNewProject({ ownerId })
@@ -306,7 +310,11 @@ describe('project services @core', () => {
         authorId: ownerId
       })
       expect(emitedEvent).to.equal(ProjectEvents.Created)
-      expect(eventPayload).deep.equal({ ownerId, project })
+      expect(eventPayload).deep.equal({
+        ownerId,
+        project,
+        input: { description: '', name: project.name, visibility: 'PRIVATE' }
+      })
     })
   })
 })

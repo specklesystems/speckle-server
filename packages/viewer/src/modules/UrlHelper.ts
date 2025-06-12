@@ -107,7 +107,7 @@ async function getNewResourceUrls(url: string, authToken?: string): Promise<stri
   const parsed = new URL(decodeURI(url))
   const params = parsed.href.match(/[^/]+$/)
   if (!params) {
-    return Promise.reject('No model or object ids specified')
+    return Promise.reject(new Error('No model or object ids specified'))
   }
 
   const projectId = parsed.href.split('/projects/')[1].substring(0, 10)
@@ -142,7 +142,13 @@ async function getNewResourceUrls(url: string, authToken?: string): Promise<stri
     }
   }
 
-  return (await Promise.all(promises)).flat()
+  try {
+    const results = await Promise.all(promises)
+    return results.flatMap((val) => (Array.isArray(val) ? val : [val]))
+  } catch (e) {
+    Logger.error(e)
+    return []
+  }
 }
 
 async function objectResourceToUrl(
@@ -208,14 +214,15 @@ async function runModelLastVersionQuery(
   try {
     const data = await getResponse(res)
     return `${ref.origin}/streams/${ref.projectId}/objects/${data.project.model.versions.items[0].referencedObject}`
-  } catch (e) {
-    Logger.error(
-      `Could not get object URLs for project ${ref.projectId} and model ${
-        resource.modelId
-      }. Error: ${e instanceof Error ? e.message : e}`
+  } catch (e: unknown) {
+    return Promise.reject(
+      new Error(
+        `Could not get object URLs for project ${ref.projectId} and model ${
+          resource.modelId
+        }. Error: ${e instanceof Error ? e.message : e}`
+      )
     )
   }
-  return ''
 }
 
 async function runModelVersionQuery(
@@ -249,13 +256,14 @@ async function runModelVersionQuery(
     const data = await getResponse(res)
     return `${ref.origin}/streams/${ref.projectId}/objects/${data.project.model.version.referencedObject}`
   } catch (e) {
-    Logger.error(
-      `Could not get object URLs for project ${ref.projectId} and model ${
-        resource.modelId
-      }. Error: ${e instanceof Error ? e.message : e}`
+    return Promise.reject(
+      new Error(
+        `Could not get object URLs for project ${ref.projectId} and model ${
+          resource.modelId
+        }. Error: ${e instanceof Error ? e.message : e}`
+      )
     )
   }
-  return ''
 }
 
 async function runAllModelsQuery(
@@ -298,13 +306,14 @@ async function runAllModelsQuery(
     )
     return urls
   } catch (e) {
-    Logger.error(
-      `Could not get object URLs for project ${ref.projectId}. Error: ${
-        e instanceof Error ? e.message : e
-      }`
+    return Promise.reject(
+      new Error(
+        `Could not get object URLs for project ${ref.projectId}. Error: ${
+          e instanceof Error ? e.message : e
+        }`
+      )
     )
   }
-  return ['']
 }
 
 async function getResponse(res: Response) {

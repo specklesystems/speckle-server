@@ -8,8 +8,7 @@
           <div v-if="!showRaw" class="flex items-center gap-1">
             <FormButton
               size="sm"
-              color="primary"
-              text
+              color="outline"
               :icon-left="BarsArrowDownIcon"
               @click="expandLevel++"
             >
@@ -17,8 +16,7 @@
             </FormButton>
             <FormButton
               size="sm"
-              color="primary"
-              text
+              color="outline"
               :icon-left="BarsArrowUpIcon"
               :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
               @click="collapse()"
@@ -27,21 +25,17 @@
             </FormButton>
           </div>
           <div v-else>
-            <h4 class="font-medium whitespace-normal text-body-2xs ml-1">Dev mode</h4>
+            <h4 class="font-semibold text-body-2xs">Dev mode</h4>
           </div>
 
           <FormButton
             v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
             size="sm"
-            class="-mr-1"
+            :icon-left="CodeBracketIcon"
             color="subtle"
+            hide-text
             @click="showRaw = !showRaw"
-          >
-            <CodeBracketIcon
-              class="size-4 sm:size-3"
-              :class="showRaw ? 'text-primary' : 'text-foreground'"
-            />
-          </FormButton>
+          />
         </div>
       </template>
       <div
@@ -115,6 +109,7 @@ useViewerEventListener(ViewerEvent.Busy, (isBusy: boolean) => {
 })
 
 const rootNodes = computed(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   refhack.value
 
   if (!worldTree.value) return []

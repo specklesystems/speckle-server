@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import {
   createRandomEmail,
   createRandomPassword
@@ -39,9 +38,10 @@ import {
   storeTokenResourceAccessDefinitionsFactory,
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
-import { Scopes } from '@speckle/shared'
+import { PaidWorkspacePlans, Scopes } from '@speckle/shared'
 import { expect } from 'chai'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -73,7 +73,7 @@ const createUser = createUserFactory({
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
@@ -108,7 +108,7 @@ describe('Objects REST @core', () => {
         slug: ''
       }
       await createTestWorkspace(workspace, user, {
-        addPlan: { name: 'business', status: 'expired' }
+        addPlan: { name: PaidWorkspacePlans.Team, status: 'canceled' }
       })
 
       const project = {

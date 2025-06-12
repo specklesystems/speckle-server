@@ -1,5 +1,6 @@
 import {
   AutomationCreationError,
+  AutomationRevisionCreationError,
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
 import {
@@ -42,20 +43,15 @@ import { expect } from 'chai'
 import { times } from 'lodash'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { AutomationEvents } from '@/modules/automate/domain/events'
 
 /**
  * TODO: Extra test ideas
@@ -66,20 +62,12 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const getUser = getUserFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const buildAutomationUpdate = () => {
@@ -88,8 +76,7 @@ const buildAutomationUpdate = () => {
   const update = validateAndUpdateAutomationFactory({
     getAutomation,
     updateAutomation: updateDbAutomation,
-    validateStreamAccess,
-    automationsEventsEmit: AutomationsEmitter.emit
+    eventEmit: getEventBus().emit
   })
 
   return update
@@ -149,43 +136,18 @@ const buildAutomationUpdate = () => {
         })
       })
 
-      it('fails if refering to a project that doesnt exist', async () => {
-        const create = buildAutomationCreate()
-
-        const e = await expectToThrow(
-          async () =>
-            await create({
-              input: { name: 'Automation', enabled: true },
-              projectId: 'non-existent',
-              userId: me.id
-            })
-        )
-        expect(e)
-          .to.have.property('message')
-          .match(/^User does not have required access to stream/)
-      })
-
-      it('fails if user does not have access to the project', async () => {
-        const create = buildAutomationCreate()
-
-        const e = await expectToThrow(
-          async () =>
-            await create({
-              input: { name: 'Automation', enabled: true },
-              projectId: myStream.id,
-              userId: otherGuy.id
-            })
-        )
-        expect(e)
-          .to.have.property('message')
-          .match(/^User does not have required access to stream/)
-      })
-
       it('creates an automation', async () => {
+        let eventFired = false
+        const name = 'My Super Automation #1'
+
+        getEventBus().listenOnce(AutomationEvents.Created, async ({ payload }) => {
+          expect(payload.automation.name).to.equal(name)
+          eventFired = true
+        })
         const create = buildAutomationCreate()
 
         const automation = await create({
-          input: { name: 'Automation #1', enabled: true },
+          input: { name, enabled: true },
           projectId: myStream.id,
           userId: me.id
         })
@@ -193,6 +155,8 @@ const buildAutomationUpdate = () => {
         expect(automation).to.be.ok
         expect(automation.automation).to.be.ok
         expect(automation.token).to.be.ok
+        expect(automation.automation.name).to.equal(name)
+        expect(eventFired).to.be.true
       })
     })
 
@@ -226,22 +190,6 @@ const buildAutomationUpdate = () => {
         expect(e).to.have.property('message', 'Automation not found')
       })
 
-      it('fails if refering to an automation in a project owned by someone else', async () => {
-        const update = buildAutomationUpdate()
-
-        const e = await expectToThrow(
-          async () =>
-            await update({
-              input: { id: createdAutomation.automation.id, enabled: false },
-              userId: otherGuy.id,
-              projectId: myStream.id
-            })
-        )
-        expect(e)
-          .to.have.property('message')
-          .match(/^User does not have required access to stream/)
-      })
-
       it('fails if automation is mismatched with specified project id', async () => {
         const update = buildAutomationUpdate()
 
@@ -264,6 +212,14 @@ const buildAutomationUpdate = () => {
           userId: me.id
         })
 
+        let eventFired = false
+        getEventBus().listenOnce(AutomationEvents.Updated, async ({ payload }) => {
+          expect(payload.automation.name).to.equal(initAutomation.name)
+          expect(payload.automation.enabled).to.be.false
+          expect(payload.automation.id).to.equal(initAutomation.id)
+          eventFired = true
+        })
+
         const updatedAutomation = await update({
           input: { id: initAutomation.id, enabled: false },
           userId: me.id,
@@ -273,6 +229,7 @@ const buildAutomationUpdate = () => {
         expect(updatedAutomation).to.be.ok
         expect(updatedAutomation.enabled).to.be.false
         expect(updatedAutomation.name).to.equal(initAutomation.name)
+        expect(eventFired).to.be.true
       })
 
       it('updates all available properties', async () => {
@@ -339,6 +296,15 @@ const buildAutomationUpdate = () => {
       })
 
       it('works successfully', async () => {
+        let eventFired = false
+        getEventBus().listenOnce(
+          AutomationEvents.CreatedRevision,
+          async ({ payload }) => {
+            expect(payload.automation.id).to.equal(createdAutomation.automation.id)
+            expect(payload.revision).to.be.ok
+            eventFired = true
+          }
+        )
         const create = buildAutomationRevisionCreate()
 
         const ret = await create({
@@ -352,6 +318,7 @@ const buildAutomationUpdate = () => {
         expect(ret.automationId).to.equal(createdAutomation.automation.id)
         expect(ret.triggers.length).to.be.ok
         expect(ret.functions.length).to.be.ok
+        expect(eventFired).to.be.true
       })
 
       it('fails if automation does not exist', async () => {
@@ -440,10 +407,7 @@ const buildAutomationUpdate = () => {
               })
           )
 
-          expect(
-            e instanceof Automate.UnformattableTriggerDefinitionSchemaError,
-            e.toString()
-          ).to.be.true
+          expect(e instanceof AutomationRevisionCreationError, e.toString()).to.be.true
         })
       })
 
@@ -487,9 +451,11 @@ const buildAutomationUpdate = () => {
 
       it('fails when refering to nonexistent function releases', async () => {
         const create = buildAutomationRevisionCreate({
-          getFunctionRelease: async () => {
-            // TODO: Update once we know how exec engine should respond
-            throw new Error('Function release with ID XXX not found')
+          overrides: {
+            getFunctionRelease: async () => {
+              // TODO: Update once we know how exec engine should respond
+              throw new Error('Function release with ID XXX not found')
+            }
           }
         })
 

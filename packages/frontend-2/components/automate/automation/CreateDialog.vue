@@ -54,22 +54,15 @@
         v-model:has-errors="hasParameterErrors"
         :fn="selectedFunction"
       />
-      <template v-else-if="enumStep === AutomationCreateSteps.AutomationDetails">
-        <AutomateAutomationCreateDialogAutomationDetailsStep
-          v-model:project="selectedProject"
-          v-model:model="selectedModel"
-          v-model:automation-name="automationName"
-          :preselected-project="preselectedProject"
-          :is-test-automation="isTestAutomation"
-        />
-        <AutomateAutomationCreateDialogSelectFunctionStep
-          v-if="isTestAutomation"
-          v-model:selected-function="selectedFunction"
-          :preselected-function="validatedPreselectedFunction"
-          :page-size="2"
-          :workspace-id="workspaceId"
-        />
-      </template>
+      <AutomateAutomationCreateDialogAutomationDetailsStep
+        v-else-if="enumStep === AutomationCreateSteps.AutomationDetails"
+        v-model:project="selectedProject"
+        v-model:model="selectedModel"
+        v-model:automation-name="automationName"
+        :preselected-project="preselectedProject"
+        :is-test-automation="isTestAutomation"
+        :workspace-id="workspaceId"
+      />
     </div>
   </LayoutDialog>
 </template>
@@ -189,8 +182,7 @@ const shouldShowStepsWidget = computed(() => {
 })
 
 const enableSubmitTestAutomation = computed(() => {
-  const isValidInput =
-    !!automationName.value && !!selectedModel.value && !!selectedFunction.value
+  const isValidInput = !!automationName.value && !!selectedModel.value
   const isLoading = creationLoading.value
 
   return isValidInput && !isLoading
@@ -222,7 +214,9 @@ const buttons = computed((): LayoutDialogButton[] => {
             disabled: !selectedFunction.value
           },
           onClick: () => {
-            mixpanel.track('Automate Select Function')
+            mixpanel.track('Automate Select Function', {
+              functionId: selectedFunction?.value?.id
+            })
             step.value++
           }
         }
@@ -231,7 +225,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       return [
         {
           id: 'fnParamsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },
@@ -241,7 +235,9 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'fnParamsNext',
           text: 'Next',
           onClick: () => {
-            mixpanel.track('Automate Set Function Parameters ')
+            mixpanel.track('Automate Set Function Parameters', {
+              functionId: selectedFunction?.value?.id
+            })
           },
           props: {
             disabled: hasParameterErrors.value
@@ -253,7 +249,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       const automationButtons: LayoutDialogButton[] = [
         {
           id: 'detailsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },
@@ -263,7 +259,9 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsCreate',
           text: 'Create',
           onClick: () => {
-            mixpanel.track('Automate Set Automation Details')
+            mixpanel.track('Automate Set Automation Details', {
+              functionId: selectedFunction?.value?.id
+            })
           },
           submit: true,
           disabled: creationLoading.value
@@ -345,7 +343,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
   const parameters = functionParameters.value
   const name = automationName.value
 
-  if (!fn || !project || !model || !name?.length || !fnRelease) {
+  if (!project || !model || !name?.length) {
     logger.error('Missing required data', {
       fn,
       project,
@@ -368,7 +366,6 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
         projectId: project.id,
         input: {
           name,
-          functionId: fn.id,
           modelId: model.id
         }
       })
@@ -380,6 +377,19 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
 
       automationId.value = testAutomationId
       await goToNewAutomation()
+      return
+    }
+
+    // Test automations can be created without functions
+    if (!fn || !fnRelease) {
+      logger.error('Missing required data', {
+        fn,
+        project,
+        model,
+        parameters,
+        name,
+        fnRelease
+      })
       return
     }
 
@@ -419,7 +429,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
               parameters: encryptedParams
             }
           ],
-          triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+          triggerDefinitions: {
             version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
             definitions: [
               {
@@ -427,7 +437,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
                 modelId: model.id
               }
             ]
-          }
+          } as Automate.AutomateTypes.TriggerDefinitionsSchema
         }
       },
       { hideSuccessToast: true }

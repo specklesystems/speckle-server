@@ -1,6 +1,5 @@
 <template>
-  <component
-    :is="isButton ? 'div' : 'button'"
+  <div
     :class="[
       'flex shrink-0 overflow-hidden rounded-md border border-outline-2 bg-foundation-2',
       sizeClasses
@@ -8,13 +7,13 @@
   >
     <div
       class="h-full w-full bg-cover bg-center bg-no-repeat flex items-center justify-center"
-      :style="logo ? { backgroundImage: `url('${logo}')` } : undefined"
+      :style="logo ? { backgroundImage: `url('${logo}')` } : {}"
     >
       <span v-if="!logo" class="text-foreground-3 uppercase leading-none">
         {{ name[0] }}
       </span>
     </div>
-  </component>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -26,7 +25,6 @@ const props = withDefaults(
     size?: UserAvatarSize
     logo: MaybeNullOrUndefined<string>
     name: string
-    isButton?: boolean
   }>(),
   {
     size: 'base'

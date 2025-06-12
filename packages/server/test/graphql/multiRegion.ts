@@ -60,3 +60,113 @@ export const updateRegionMutation = gql`
 
   ${mainRegionMetadataFragment}
 `
+
+export const updateProjectRegionMutation = gql`
+  mutation UpdateProjectRegion($projectId: String!, $regionKey: String!) {
+    workspaceMutations {
+      projects {
+        moveToRegion(projectId: $projectId, regionKey: $regionKey)
+      }
+    }
+  }
+`
+
+/** Queries for regional project data */
+
+export const getRegionalProjectModelQuery = gql`
+  query GetRegionalProjectModel($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      id
+      model(id: $modelId) {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const getRegionalProjectVersionQuery = gql`
+  query GetRegionalProjectVersion(
+    $projectId: String!
+    $modelId: String!
+    $versionId: String!
+  ) {
+    project(id: $projectId) {
+      id
+      model(id: $modelId) {
+        id
+        version(id: $versionId) {
+          id
+          referencedObject
+        }
+      }
+    }
+  }
+`
+
+export const getRegionalProjectObjectQuery = gql`
+  query GetRegionalProjectObject($projectId: String!, $objectId: String!) {
+    project(id: $projectId) {
+      id
+      object(id: $objectId) {
+        id
+      }
+    }
+  }
+`
+
+export const getRegionalProjectAutomationQuery = gql`
+  query GetRegionalProjectAutomation($projectId: String!, $automationId: String!) {
+    project(id: $projectId) {
+      id
+      automation(id: $automationId) {
+        id
+        runs {
+          items {
+            id
+            functionRuns {
+              id
+              status
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const getRegionalProjectCommentQuery = gql`
+  query GetRegionalProjectComment($projectId: String!, $commentId: String!) {
+    project(id: $projectId) {
+      id
+      comment(id: $commentId) {
+        id
+      }
+    }
+  }
+`
+
+export const getRegionalProjectWebhookQuery = gql`
+  query GetRegionalProjectWebhook($projectId: String!, $webhookId: String!) {
+    project(id: $projectId) {
+      id
+      webhooks(id: $webhookId) {
+        items {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const getRegionalProjectBlobQuery = gql`
+  query GetRegionalProjectBlob($projectId: String!, $blobId: String!) {
+    project(id: $projectId) {
+      id
+      blob(id: $blobId) {
+        id
+        fileName
+      }
+    }
+  }
+`

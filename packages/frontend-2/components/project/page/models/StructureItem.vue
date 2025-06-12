@@ -19,7 +19,6 @@
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
-              :can-edit="canContribute"
               :menu-position="
                 itemType === StructureItemType.EmptyModel
                   ? HorizontalDirection.Right
@@ -32,26 +31,28 @@
           </span>
         </div>
         <!-- Empty model action -->
-        <NuxtLink
+        <div
           v-if="itemType === StructureItemType.EmptyModel"
-          :class="[
-            'cursor-pointer ml-2 text-xs text-foreground-2 flex items-center space-x-1',
-            'opacity-0 group-hover:opacity-100 transition duration-200',
-            'hover:text-primary p-1'
-          ]"
-          @click.stop="$emit('create-submodel', model?.name || '')"
+          v-tippy="canCreateModel.cantClickCreateReason.value"
         >
-          <PlusIcon class="w-3 h-3" />
-          submodel
-        </NuxtLink>
+          <FormButton
+            color="subtle"
+            :icon-left="PlusIcon"
+            size="sm"
+            :disabled="!canCreateModel.canClickCreate.value"
+            @click.stop="$emit('create-submodel', model?.name || '')"
+          >
+            submodel
+          </FormButton>
+        </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
         <ProjectCardImportFileArea
           v-if="!isPendingFileUpload(item)"
           ref="importArea"
-          :project-id="project.id"
+          :project="project"
           :model-name="item.fullName"
-          :disabled="project?.workspace?.readOnly"
+          :model="item.model || undefined"
           class="hidden"
         />
         <div
@@ -69,9 +70,12 @@
           />
           <ProjectCardImportFileArea
             v-else
-            :project-id="project.id"
+            :empty-state-variant="
+              props.gridOrList === GridListToggleValue.Grid ? 'modelGrid' : 'modelList'
+            "
+            :project="project"
             :model-name="item.fullName"
-            :disabled="project?.workspace?.readOnly"
+            :model="item.model || undefined"
             class="h-full w-full"
           />
         </div>
@@ -82,7 +86,7 @@
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="space-x-2 flex flex-row pils">
+          <div class="space-x-2 flex flex-row">
             <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
               <IconDiscussions class="w-4 h-4" />
               <span>{{ model?.commentThreadCount.totalCount }}</span>
@@ -204,14 +208,13 @@
             <ProjectPageModelsStructureItem
               :item="child"
               :project="project"
-              :can-contribute="canContribute"
               class="flex-grow"
               @model-updated="onModelUpdated"
               @create-submodel="emit('create-submodel', $event)"
             />
           </div>
         </template>
-        <div v-if="canContribute" class="mr-8"></div>
+        <div v-if="canEdit" class="mr-8"></div>
       </div>
     </div>
   </div>
@@ -233,6 +236,8 @@ import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import { useCanCreateModel } from '~/lib/projects/composables/permissions'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -249,11 +254,14 @@ enum StructureItemType {
 graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
-    workspace {
-      id
-      readOnly
-    }
     ...ProjectPageModelsActions_Project
+    ...ProjectCardImportFileArea_Project
+    ...UseCanCreateModel_Project
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -264,6 +272,7 @@ graphql(`
     fullName
     model {
       ...ProjectPageLatestItemsModelItem
+      ...ProjectCardImportFileArea_Model
     }
     hasChildren
     updatedAt
@@ -282,11 +291,9 @@ const emit = defineEmits<{
 const props = defineProps<{
   item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
   project: ProjectPageModelsStructureItem_ProjectFragment
-  canContribute?: boolean
   isSearchResult?: boolean
+  gridOrList?: GridListToggleValue
 }>()
-
-provide('projectId', props.project.id)
 
 const router = useRouter()
 
@@ -306,6 +313,14 @@ const trackFederateModels = () =>
   })
 
 const showActionsMenu = ref(false)
+
+const canCreateModel = useCanCreateModel({
+  project: computed(() => props.project)
+})
+
+const canEdit = computed(() =>
+  isPendingFileUpload(props.item) ? undefined : props.item.model?.permissions.canUpdate
+)
 
 const itemType = computed<StructureItemType>(() => {
   if (isPendingFileUpload(props.item)) return StructureItemType.PendingModel

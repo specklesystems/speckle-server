@@ -74,7 +74,7 @@ export function useStepsInternals(params: {
       paddingHorizontal = 'space-x-4'
       paddingVertical = 'space-y-1'
     } else {
-      paddingHorizontal = 'space-x-8'
+      paddingHorizontal = 'space-x-6'
       paddingVertical = 'space-y-4'
     }
 
@@ -130,10 +130,10 @@ export function useStepsInternals(params: {
 
 // to allow for dynamic class building above:
 markClassesUsed([
-  'sm:space-x-8',
-  'md:space-x-8',
-  'lg:space-x-8',
-  'xl:space-x-8',
+  'sm:space-x-6',
+  'md:space-x-6',
+  'lg:space-x-6',
+  'xl:space-x-6',
   'sm:space-x-2',
   'md:space-x-2',
   'lg:space-x-2',

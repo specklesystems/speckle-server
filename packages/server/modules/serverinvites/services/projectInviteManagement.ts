@@ -31,6 +31,7 @@ import {
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
+  isProjectResourceTarget,
   resolveInviteTargetTitle,
   resolveTarget,
   ResourceTargetTypeRoleTypeMap
@@ -39,7 +40,8 @@ import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/
 import {
   CreateAndSendInvite,
   FinalizeInvite,
-  GetInvitationTargetUsers
+  GetInvitationTargetUsers,
+  GetProjectInviteProject
 } from '@/modules/serverinvites/services/operations'
 import {
   MaybeNullOrUndefined,
@@ -140,7 +142,6 @@ export const useProjectInviteAndNotifyFactory =
 
     await deps.finalizeInvite({
       accept,
-      resourceType: ProjectInviteResourceType,
       token,
       finalizerUserId: userId,
       finalizerResourceAccessLimits: userResourceAccessRules
@@ -216,10 +217,7 @@ export const getUserPendingProjectInvitesFactory =
       throw new InviteNotFoundError('Nonexistant user specified')
     }
 
-    const invites = await deps.getUserResourceInvites<
-      typeof ProjectInviteResourceType,
-      StreamRoles
-    >({
+    const invites = await deps.getUserResourceInvites<ProjectInviteResourceTarget>({
       userId,
       resourceType: ProjectInviteResourceType
     })
@@ -239,16 +237,14 @@ export const getUserPendingProjectInviteFactory =
   ): Promise<Nullable<PendingStreamCollaboratorGraphQLReturn>> => {
     if (!userId && !token) return null
 
-    const invite = await deps.findInvite<typeof ProjectInviteResourceType, StreamRoles>(
-      {
-        target: userId ? buildUserTarget(userId) : undefined,
-        token: token || undefined,
-        resourceFilter: {
-          resourceType: ProjectInviteResourceType,
-          resourceId: projectId
-        }
+    const invite = await deps.findInvite<ProjectInviteResourceTarget>({
+      target: userId ? buildUserTarget(userId) : undefined,
+      token: token || undefined,
+      resourceFilter: {
+        resourceType: ProjectInviteResourceType,
+        resourceId: projectId
       }
-    )
+    })
     if (!invite) return null
 
     const targetUserId = resolveTarget(invite.target).userId
@@ -267,10 +263,7 @@ export const getPendingProjectCollaboratorsFactory =
   }) =>
   async (streamId: string): Promise<PendingStreamCollaboratorGraphQLReturn[]> => {
     // Get all pending invites
-    const invites = await deps.queryAllResourceInvites<
-      typeof ProjectInviteResourceType,
-      StreamRoles
-    >({
+    const invites = await deps.queryAllResourceInvites<ProjectInviteResourceTarget>({
       resourceId: streamId,
       resourceType: ProjectInviteResourceType
     })
@@ -291,4 +284,15 @@ export const getPendingProjectCollaboratorsFactory =
     }
 
     return results
+  }
+
+export const getProjectInviteProjectFactory =
+  (deps: { getStream: GetStream }): GetProjectInviteProject =>
+  async (params) => {
+    const { invite } = params
+    const primaryResourceTarget = invite.resource
+
+    if (!isProjectResourceTarget(primaryResourceTarget)) return undefined
+
+    return await deps.getStream({ streamId: primaryResourceTarget.resourceId })
   }

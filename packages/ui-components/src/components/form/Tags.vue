@@ -62,12 +62,13 @@
           <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
         </div>
         <div
-          v-if="showRequired && !errorMessage"
+          v-else-if="showRequired"
           class="pointer-events-none absolute top-[2px] text-4xl right-0 flex items-center text-danger opacity-50"
           :class="shouldShowClear ? 'pr-8' : 'pr-2'"
         >
           *
         </div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
       </div>
       <TransitionRoot
         leave="transition ease-in duration-100"
@@ -125,7 +126,12 @@
           </template>
         </ComboboxOptions>
       </TransitionRoot>
-      <p v-if="helpTipId && !hideHelpTip" :id="helpTipId" :class="helpTipClasses">
+      <p
+        v-if="helpTipId && !hideHelpTip"
+        :id="helpTipId"
+        class="mt-2"
+        :class="helpTipClasses"
+      >
         {{ helpTip }}
       </p>
     </FormTagsContextManager>
@@ -173,6 +179,7 @@ const props = withDefaults(
     autoFocus?: boolean
     showClear?: boolean
     showRequired?: boolean
+    showOptional?: boolean
     color?: InputColor
     wrapperClasses?: string
     size?: InputSize

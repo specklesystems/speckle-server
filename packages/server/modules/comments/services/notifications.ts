@@ -1,5 +1,4 @@
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { CommentsEvents, CommentsEventsListen } from '@/modules/comments/events/emitter'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
@@ -8,7 +7,13 @@ import {
   NotificationPublisher,
   NotificationType
 } from '@/modules/notifications/helpers/types'
-import { AddStreamCommentMentionActivity } from '@/modules/activitystream/domain/operations'
+import {
+  AddStreamCommentMentionActivity,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
+import { EventBus } from '@/modules/shared/services/eventBus'
+import { CommentEvents } from '@/modules/comments/domain/events'
+import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()
@@ -33,6 +38,28 @@ function collectMentionedUserIds(comment: CommentRecord): string[] {
 
   return findMentionedUserIds(doc)
 }
+
+/**
+ * Save "user mentioned in stream comment" activity item
+ */
+const addStreamCommentMentionActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }): AddStreamCommentMentionActivity =>
+  async ({ streamId, mentionAuthorId, mentionTargetId, commentId, threadId }) => {
+    await saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Comment,
+      resourceId: commentId,
+      actionType: ActionTypes.Comment.Mention,
+      userId: mentionAuthorId,
+      message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
+      info: {
+        mentionAuthorId,
+        mentionTargetId,
+        commentId,
+        threadId
+      }
+    })
+  }
 
 type SendNotificationsForUsersDeps = {
   publish: NotificationPublisher
@@ -92,19 +119,25 @@ const processCommentMentionsFactory =
  * @returns Callback to invoke when you wish to stop listening for comments events
  */
 export const notifyUsersOnCommentEventsFactory =
-  (
-    deps: { commentsEventsListen: CommentsEventsListen } & SendNotificationsForUsersDeps
-  ) =>
+  (deps: {
+    eventBus: EventBus
+    publish: NotificationPublisher
+    saveActivity: SaveActivity
+  }) =>
   async () => {
-    const processCommentMentions = processCommentMentionsFactory(deps)
+    const addStreamCommentMentionActivity = addStreamCommentMentionActivityFactory(deps)
+    const processCommentMentions = processCommentMentionsFactory({
+      ...deps,
+      addStreamCommentMentionActivity
+    })
 
     const exitCbs = [
-      deps.commentsEventsListen(CommentsEvents.Created, async ({ comment }) => {
+      deps.eventBus.listen(CommentEvents.Created, async ({ payload: { comment } }) => {
         await processCommentMentions(comment)
       }),
-      deps.commentsEventsListen(
-        CommentsEvents.Updated,
-        async ({ newComment, previousComment }) => {
+      deps.eventBus.listen(
+        CommentEvents.Updated,
+        async ({ payload: { newComment, previousComment } }) => {
           await processCommentMentions(newComment, previousComment)
         }
       )

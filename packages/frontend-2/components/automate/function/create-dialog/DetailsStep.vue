@@ -1,29 +1,27 @@
 <template>
   <div class="flex flex-col gap-6 mb-4">
-    <div class="flex flex-col gap-2 sm:gap-0 sm:flex-row w-full">
+    <div class="flex flex-col gap-2 sm:gap-0 sm:flex-row sm:gap-x-4 w-full">
       <UserAvatarEditable
         v-model:edit-mode="avatarEditMode"
         name="image"
-        placeholder="F N"
+        placeholder="FN"
         size="xxl"
-        class="sm:w-5/12"
         @update:model-value="avatarEditMode = false"
       />
-      <div class="sm:w-7/12">
-        <FormTextInput
-          size="lg"
-          name="name"
-          label="Name"
-          placeholder="Function Name"
-          color="foundation"
-          help="This will be used as the function's display name and also as the name of the Git repository."
-          show-label
-          show-required
-          :rules="nameRules"
-          validate-on-value-update
-          autocomplete="off"
-        />
-      </div>
+
+      <FormTextInput
+        size="lg"
+        name="name"
+        label="Function name"
+        placeholder="Name"
+        color="foundation"
+        help="This will be the function's display and repository name."
+        show-label
+        :rules="nameRules"
+        validate-on-value-update
+        wrapper-classes="flex-1"
+        autocomplete="off"
+      />
     </div>
     <FormMarkdownEditor
       name="description"
@@ -66,6 +64,7 @@
       clearable
       button-style="tinted"
       validate-on-value-update
+      show-optional
     />
     <FormTags
       name="tags"
@@ -75,6 +74,7 @@
       show-clear
       help="Appropriate tags will help other people find your function."
       validate-on-value-update
+      show-optional
     />
     <FormSelectBase
       v-if="githubOrgs?.length"

@@ -3,15 +3,12 @@
 <template>
   <a
     :class="[
-      'flex flex-col p-2 cursor-pointer',
+      'flex flex-col p-2 cursor-pointer rounded-md text-body-2xs',
       isSelected ? 'bg-foundation-focus dark:bg-foundation-2' : 'hover:bg-foundation-3'
     ]"
     @click="($event) => $emit('click', $event)"
   >
-    <span class="normal font-medium truncate">{{ item.name }}</span>
-    <span v-if="item.company" class="label label--light truncate">
-      {{ item.company }}
-    </span>
+    <span class="truncate">{{ item.name }}</span>
   </a>
 </template>
 <script setup lang="ts">

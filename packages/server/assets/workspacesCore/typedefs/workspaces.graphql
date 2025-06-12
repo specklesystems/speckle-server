@@ -41,11 +41,14 @@ input WorkspaceCreateInput {
   name: String!
   slug: String
   description: String
-  defaultLogoIndex: Int
   """
   Logo image as base64-encoded string
   """
   logo: String
+  """
+  Add this domain to the workspace as a verified domain and enable domain discoverability
+  """
+  enableDomainDiscoverabilityForDomain: String
 }
 
 input WorkspaceUpdateInput {
@@ -57,10 +60,12 @@ input WorkspaceUpdateInput {
   Logo image as base64-encoded string
   """
   logo: String
-  defaultLogoIndex: Int
   defaultProjectRole: String
+    @deprecated(reason: "Always the reviewer role. Will be removed in the future.")
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
+  discoverabilityAutoJoinEnabled: Boolean
+  defaultSeatType: WorkspaceSeatType
 }
 
 input WorkspaceRoleUpdateInput {
@@ -117,7 +122,7 @@ extend type ProjectInviteMutations {
   createForWorkspace(
     projectId: ID!
     inputs: [WorkspaceProjectInviteCreateInput!]!
-  ): Project! @hasScope(scope: "users:invite") @hasServerRole(role: SERVER_USER)
+  ): Project! @hasScope(scope: "users:invite")
 }
 
 extend type Mutation {
@@ -138,19 +143,34 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:update")
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
-  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
-  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
-  # We are, for the moment, doing the check in the resolver
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
     @hasScope(scope: "workspace:update")
-  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
-  # We are, for the moment, doing the check in the resolver
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   deleteSsoProvider(workspaceId: String!): Boolean!
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
   updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+  updateEmbedOptions(input: WorkspaceUpdateEmbedOptionsInput!): WorkspaceEmbedOptions!
+  """
+  Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
+  """
+  dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+}
+
+input WorkspaceUpdateEmbedOptionsInput {
+  workspaceId: String!
+  hideSpeckleBranding: Boolean!
+}
+
+input WorkspaceDismissInput {
+  workspaceId: ID!
+}
+
+input WorkspaceRequestToJoinInput {
+  workspaceId: ID!
 }
 
 input WorkspaceCreationStateInput {
@@ -216,14 +236,10 @@ input WorkspaceInviteResendInput {
 type WorkspaceInviteMutations {
   create(workspaceId: String!, input: WorkspaceInviteCreateInput!): Workspace!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   batchCreate(workspaceId: String!, input: [WorkspaceInviteCreateInput!]!): Workspace!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   use(input: WorkspaceInviteUseInput!): Boolean!
-  resend(input: WorkspaceInviteResendInput!): Boolean!
-    @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
+  resend(input: WorkspaceInviteResendInput!): Boolean! @hasScope(scope: "users:invite")
   cancel(workspaceId: String!, inviteId: String!): Workspace!
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
@@ -245,13 +261,10 @@ type Workspace {
   """
   logo: String
   """
-  Selected fallback when `logo` not set
-  """
-  defaultLogoIndex: Int!
-  """
   The default role workspace members will receive for workspace projects.
   """
   defaultProjectRole: String!
+    @deprecated(reason: "Always the reviewer role. Will be removed in the future.")
   """
   Verified workspace domains
   """
@@ -265,6 +278,7 @@ type Workspace {
     cursor: String
     filter: WorkspaceTeamFilter
   ): WorkspaceCollaboratorCollection!
+  teamByRole: WorkspaceTeamByRole!
   """
   Only available to workspace owners/members
   """
@@ -294,9 +308,33 @@ type Workspace {
   """
   discoverabilityEnabled: Boolean!
   """
+  If true, allow users to automatically join discoverable workspaces (instead of requesting to join)
+  """
+  discoverabilityAutoJoinEnabled: Boolean!
+
+  defaultSeatType: WorkspaceSeatType!
+  """
   Info about the workspace creation state
   """
   creationState: WorkspaceCreationState
+  """
+  Workspace-level configuration for models in embedded viewer
+  """
+  embedOptions: WorkspaceEmbedOptions!
+}
+
+type WorkspaceEmbedOptions {
+  hideSpeckleBranding: Boolean!
+}
+
+type WorkspaceTeamByRole {
+  admins: WorkspaceRoleCollection
+  members: WorkspaceRoleCollection
+  guests: WorkspaceRoleCollection
+}
+
+type WorkspaceRoleCollection {
+  totalCount: Int!
 }
 
 type WorkspaceCreationState {
@@ -349,9 +387,27 @@ type LimitedWorkspace {
   """
   logo: String
   """
-  Index of fallback workspace logo to use
+  If true, the users with a matching domain may join the workspace directly
   """
-  defaultLogoIndex: Int!
+  discoverabilityAutoJoinEnabled: Boolean!
+  """
+  Workspace members visible to people with verified email domain
+  """
+  team(cursor: String, limit: Int! = 25): LimitedWorkspaceCollaboratorCollection
+  """
+  Workspace admins ordered by join date
+  """
+  adminTeam: [LimitedWorkspaceCollaborator!]!
+}
+
+type LimitedWorkspaceCollaboratorCollection {
+  totalCount: Int!
+  cursor: String
+  items: [LimitedWorkspaceCollaborator!]!
+}
+
+type LimitedWorkspaceCollaborator {
+  user: LimitedUser!
 }
 
 type WorkspaceDomain {
@@ -364,6 +420,11 @@ input WorkspaceProjectsFilter {
   Filter out projects by name
   """
   search: String
+
+  """
+  Only return workspace projects that the active user has an explicit project role in
+  """
+  withProjectRoleOnly: Boolean
 }
 
 input WorkspaceTeamFilter {
@@ -375,6 +436,7 @@ input WorkspaceTeamFilter {
   Search for team members by name or email
   """
   search: String
+  seatType: WorkspaceSeatType
 }
 
 type WorkspaceCollaboratorCollection {
@@ -395,7 +457,12 @@ type WorkspaceCollaborator {
   id: ID!
   role: String!
   user: LimitedUser!
+  email: String
   projectRoles: [ProjectRole!]!
+  """
+  Date that the user joined the workspace.
+  """
+  joinDate: DateTime!
 }
 
 type PendingWorkspaceCollaborator {
@@ -466,10 +533,36 @@ extend type User {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
     @isOwner
+
+  """
+  The last-visited workspace for the given user
+  """
+  activeWorkspace: Workspace
+  """
+  Returns `true` if last visited project was "legacy" "personal project" outside of a workspace
+  """
+  isProjectsActive: Boolean
 }
 
 extend type Project {
   workspace: Workspace
+  """
+  Public project-level configuration for embedded viewer
+  """
+  embedOptions: ProjectEmbedOptions!
+  """
+  Returns information about the potential effects of moving a project to a given workspace.
+  """
+  moveToWorkspaceDryRun(workspaceId: String!): ProjectMoveToWorkspaceDryRun!
+}
+
+type ProjectEmbedOptions {
+  hideSpeckleBranding: Boolean!
+}
+
+type ProjectMoveToWorkspaceDryRun {
+  addedToWorkspace(limit: Int): [LimitedUser!]!
+  addedToWorkspaceTotalCount: Int!
 }
 
 type ServerWorkspacesInfo {
@@ -494,15 +587,17 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
+  completed: Boolean
 }
 
 extend type Project {
   workspaceId: String
 }
 
-# case of using userSearch, and we alway expose this
+# case of using userSearch, and we always expose this
 extend type LimitedUser {
-  workspaceDomainPolicyCompliant(workspaceId: String): Boolean
+  workspaceDomainPolicyCompliant(workspaceSlug: String): Boolean
+  workspaceRole(workspaceId: String): String
   # if workspaceId is undefined | null, just return undefined
   # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
 }
@@ -578,4 +673,8 @@ input AdminUpdateWorkspacePlanInput {
 
 type AdminMutations {
   updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
+}
+
+extend type ActiveUserMutations {
+  setActiveWorkspace(slug: String, isProjectsActive: Boolean): Boolean!
 }

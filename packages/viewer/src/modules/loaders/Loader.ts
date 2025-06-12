@@ -3,26 +3,27 @@ import EventEmitter from '../EventEmitter.js'
 export enum LoaderEvent {
   LoadProgress = 'load-progress',
   LoadCancelled = 'load-cancelled',
-  LoadWarning = 'load-warning'
+  LoadWarning = 'load-warning',
+  Converted = 'converted',
+  Traversed = 'traversed'
 }
 
 export interface LoaderEventPayload {
   [LoaderEvent.LoadProgress]: { progress: number; id: string }
+  [LoaderEvent.Converted]: { count: number }
+  [LoaderEvent.Traversed]: { count: number }
   [LoaderEvent.LoadCancelled]: string
   [LoaderEvent.LoadWarning]: { message: string }
 }
 
 export abstract class Loader extends EventEmitter {
   protected _resource: string
-  protected _resourceData: string | ArrayBuffer | undefined
+  protected _resourceData: unknown
 
   public abstract get resource(): string
   public abstract get finished(): boolean
 
-  protected constructor(
-    resource: string,
-    resourceData?: string | ArrayBuffer | undefined
-  ) {
+  protected constructor(resource: string, resourceData?: unknown) {
     super()
     this._resource = resource
     this._resourceData = resourceData

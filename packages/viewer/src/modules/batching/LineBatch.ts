@@ -31,8 +31,11 @@ export default class LineBatch implements Batch {
   public renderViews: NodeRenderView[]
   protected geometry: LineSegmentsGeometry
   public batchMaterial: SpeckleLineMaterial
+  protected batchTransparent: boolean
+  protected batchOpacity: number
   protected mesh: LineSegments2
-  public colorBuffer!: InstancedInterleavedBuffer
+  public colorBuffer: InstancedInterleavedBuffer
+
   private static readonly vector4Buffer: Vector4 = new Vector4()
 
   public get bounds(): Box3 {
@@ -94,6 +97,9 @@ export default class LineBatch implements Batch {
 
   public setBatchMaterial(material: SpeckleLineMaterial) {
     this.batchMaterial = material
+    /** Not a fan of this :( */
+    this.batchTransparent = material.transparent
+    this.batchOpacity = material.opacity
   }
 
   public onUpdate(deltaTime: number) {
@@ -167,8 +173,12 @@ export default class LineBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
+  /** Reminder here that line batches do not really change materials, just the color buffer changes */
   public setBatchBuffers(ranges: BatchUpdateRange[]): void {
     const data = this.colorBuffer.array as number[]
+    /** Reset transparency */
+    this.batchMaterial.transparent = this.batchTransparent
+    this.batchMaterial.opacity = this.batchOpacity
 
     for (let i = 0; i < ranges.length; i++) {
       const material = ranges[i].material as SpeckleLineMaterial
@@ -179,6 +189,10 @@ export default class LineBatch implements Batch {
           : material.color
       const alpha: number = material.visible ? material.opacity : 0
       this.batchMaterial.transparent ||= material.opacity < 1
+      this.batchMaterial.opacity = Math.min(
+        this.batchMaterial.opacity,
+        material.opacity
+      )
       const start = ranges[i].offset * this.colorBuffer.stride
       const len =
         ranges[i].offset * this.colorBuffer.stride +
@@ -211,11 +225,13 @@ export default class LineBatch implements Batch {
     ])
     this.mesh.material = this.batchMaterial
     this.mesh.visible = true
-    this.batchMaterial.transparent = false
+    this.batchMaterial.transparent = this.batchTransparent
+    this.batchMaterial.opacity = this.batchOpacity
   }
 
   public buildBatch() {
     let attributeCount = 0
+    const bounds = new Box3()
     this.renderViews.forEach((val: NodeRenderView) => {
       if (!val.renderData.geometry.attributes) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry`)
@@ -223,6 +239,7 @@ export default class LineBatch implements Batch {
       attributeCount += val.needsSegmentConversion
         ? (val.renderData.geometry.attributes.POSITION.length - 3) * 2
         : val.renderData.geometry.attributes.POSITION.length
+      bounds.union(val.aabb)
     })
     const position = new Float64Array(attributeCount)
     let offset = 0
@@ -258,7 +275,12 @@ export default class LineBatch implements Batch {
 
       offset += points.length
     }
-    this.makeLineGeometry(position)
+    this.geometry = this.makeLineGeometry(position)
+    if (Geometry.needsRTE(bounds)) {
+      Geometry.updateRTEGeometry(this.geometry, position)
+      this.batchMaterial.defines['USE_RTE'] = ' '
+    }
+
     this.mesh = new LineSegments2(this.geometry, this.batchMaterial)
     this.mesh.computeLineDistances()
     this.mesh.scale.set(1, 1, 1)
@@ -297,15 +319,10 @@ export default class LineBatch implements Batch {
     return material
   }
 
-  private makeLineGeometry(position: Float64Array) {
-    this.geometry = this.makeLineGeometryTriangle(new Float32Array(position))
-    Geometry.updateRTEGeometry(this.geometry, position)
-  }
-
-  private makeLineGeometryTriangle(position: Float32Array): LineSegmentsGeometry {
+  private makeLineGeometry(position: Float64Array): LineSegmentsGeometry {
     const geometry = new LineSegmentsGeometry()
     /** This will set the instanceStart and instanceEnd attributes. These will be our high parts */
-    geometry.setPositions(position)
+    geometry.setPositions(new Float32Array(position))
 
     const buffer = new Float32Array(position.length + position.length / 3)
     this.colorBuffer = new InstancedInterleavedBuffer(buffer, 8, 1) // rgba, rgba

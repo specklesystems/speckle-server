@@ -20,11 +20,11 @@ import { ObjectLayers } from '../../IViewer.js'
 import Logger from '../utils/Logger.js'
 
 export class MeshBatch extends PrimitiveBatch {
-  protected primitive!: SpeckleMesh
+  protected primitive: SpeckleMesh
   protected transformStorage: TransformStorage
 
-  private indexBuffer0!: BufferAttribute
-  private indexBuffer1!: BufferAttribute
+  private indexBuffer0: BufferAttribute
+  private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
 
   protected drawRanges: DrawRanges = new DrawRanges()
@@ -193,6 +193,7 @@ export class MeshBatch extends PrimitiveBatch {
   public buildBatch(): Promise<void> {
     let indicesCount = 0
     let attributeCount = 0
+    const bounds: Box3 = new Box3()
     for (let k = 0; k < this.renderViews.length; k++) {
       const ervee = this.renderViews[k]
       /** Catering to typescript
@@ -206,6 +207,7 @@ export class MeshBatch extends PrimitiveBatch {
       }
       indicesCount += ervee.renderData.geometry.attributes.INDEX.length
       attributeCount += ervee.renderData.geometry.attributes.POSITION.length
+      bounds.union(ervee.aabb)
     }
 
     const hasVertexColors =
@@ -215,6 +217,7 @@ export class MeshBatch extends PrimitiveBatch {
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
     const batchIndices = new Float32Array(attributeCount / 3)
+    const normals = new Float32Array(attributeCount)
 
     let offset = 0
     let arrayOffset = 0
@@ -234,6 +237,21 @@ export class MeshBatch extends PrimitiveBatch {
       )
       position.set(geometry.attributes.POSITION, offset)
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+
+      /** We either copy over the provided vertex normals */
+      if (geometry.attributes.NORMAL) {
+        normals.set(geometry.attributes.NORMAL, offset)
+      } else {
+        /** Either we compute them ourselves */
+        Geometry.computeVertexNormalsBuffer(
+          normals.subarray(
+            offset,
+            offset + geometry.attributes.POSITION.length
+          ) as unknown as number[],
+          geometry.attributes.POSITION,
+          geometry.attributes.INDEX
+        )
+      }
       batchIndices.fill(
         k,
         offset / 3,
@@ -258,11 +276,14 @@ export class MeshBatch extends PrimitiveBatch {
     const geometry = this.makeMeshGeometry(
       indices,
       position,
+      normals,
       batchIndices,
       hasVertexColors ? color : undefined
     )
+    const needsRTE = Geometry.needsRTE(bounds)
+    if (needsRTE) Geometry.updateRTEGeometry(geometry, position)
 
-    this.primitive = new SpeckleMesh(geometry)
+    this.primitive = new SpeckleMesh(geometry, needsRTE)
     this.primitive.setBatchObjects(batchObjects, this.transformStorage)
     this.primitive.setBatchMaterial(this.batchMaterial)
     this.primitive.buildTAS()
@@ -285,6 +306,7 @@ export class MeshBatch extends PrimitiveBatch {
   protected makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
+    normals: Float32Array,
     batchIndices: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
@@ -306,6 +328,12 @@ export class MeshBatch extends PrimitiveBatch {
       geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 
+    if (normals) {
+      geometry
+        .setAttribute('normal', new Float32BufferAttribute(normals, 3))
+        .normalizeNormals()
+    }
+
     if (batchIndices) {
       geometry.setAttribute('objIndex', new Float32BufferAttribute(batchIndices, 1))
     }
@@ -318,9 +346,6 @@ export class MeshBatch extends PrimitiveBatch {
     this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
     this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
     geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
-
-    Geometry.computeVertexNormals(geometry, position)
-    Geometry.updateRTEGeometry(geometry, position)
 
     return geometry
   }

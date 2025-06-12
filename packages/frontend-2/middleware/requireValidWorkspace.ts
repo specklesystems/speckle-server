@@ -26,9 +26,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (data?.workspaceBySlug.id) return
 
-  const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
+  const isForbidden = (errors || []).find((e) => e.extensions?.['code'] === 'FORBIDDEN')
   const isNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'WORKSPACE_NOT_FOUND_ERROR'
+    (e) => e.extensions?.['code'] === 'WORKSPACE_NOT_FOUND_ERROR'
   )
   if (isForbidden) {
     return abortNavigation(
@@ -58,7 +58,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     const firstErrorWithCode = errors.find((e) => e.extensions?.['code'])
     if (firstErrorWithCode) {
-      const errorCode = firstErrorWithCode.extensions['code']
+      const errorCode = firstErrorWithCode.extensions?.['code']
       return abortNavigation(
         createError({
           statusCode: 401,

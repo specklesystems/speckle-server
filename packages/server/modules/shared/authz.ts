@@ -9,8 +9,8 @@ import {
   DatabaseError,
   NotFoundError
 } from '@/modules/shared/errors'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
+  Authz,
   AvailableRoles,
   MaybeNullOrUndefined,
   ServerRoles,
@@ -32,13 +32,18 @@ import {
 } from '@/modules/shared/domain/authz/operations'
 import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { ValidateUserServerRole } from '@/modules/shared/domain/operations'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { moduleAuthLoaders } from '@/modules/index'
 export { AuthContext, AuthParams }
 
-interface AuthFailedResult extends AuthResult {
+export interface AuthFailedResult extends AuthResult {
   authorized: false
   error: BaseError | null
   fatal?: boolean
 }
+
+export const isAuthFailedResult = (result: AuthResult): result is AuthFailedResult =>
+  ('error' in result || ('fatal' in result && !!result.fatal)) && !result.authorized
 
 interface AuthFailedData extends AuthData {
   authResult: AuthFailedResult
@@ -147,14 +152,15 @@ export const validateStreamRoleBuilderFactory =
 
 export const validateResourceAccess: AuthPipelineFunction = async ({
   context,
-  authResult
+  authResult,
+  params
 }) => {
   const { resourceAccessRules } = context
 
   if (authHasFailed(authResult)) return { context, authResult }
   if (!resourceAccessRules?.length) return authSuccess(context)
 
-  const streamId = context.stream?.id
+  const streamId = context.stream?.id || params?.streamId
   if (!streamId) {
     return authSuccess(context)
   }
@@ -265,20 +271,25 @@ export const allowForServerAdmins: AuthPipelineFunction = async ({
 
 export const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole: AuthPipelineFunction =
   async ({ context, authResult }) =>
-    context.auth && context.stream?.isPublic
+    context.auth && context.stream?.visibility === ProjectRecordVisibility.Public
       ? authSuccess(context)
       : { context, authResult }
 
 export const allowForAllRegisteredUsersOnPublicStreamsWithPublicComments: AuthPipelineFunction =
   async ({ context, authResult }) =>
-    context.auth && context.stream?.isPublic && context.stream?.allowPublicComments
+    context.auth &&
+    context.stream?.visibility === ProjectRecordVisibility.Public &&
+    context.stream?.allowPublicComments
       ? authSuccess(context)
       : { context, authResult }
 
 export const allowAnonymousUsersOnPublicStreams: AuthPipelineFunction = async ({
   context,
   authResult
-}) => (context.stream?.isPublic ? authSuccess(context) : { context, authResult })
+}) =>
+  context.stream?.visibility === ProjectRecordVisibility.Public
+    ? authSuccess(context)
+    : { context, authResult }
 
 export const authPipelineCreator = (
   steps: AuthPipelineFunction[]
@@ -294,40 +305,105 @@ export const authPipelineCreator = (
     }
     // validate auth result a bit...
     if (authResult.authorized && authHasFailed(authResult))
-      throw new Error('Auth failure')
+      throw new UnauthorizedError('Auth failure')
     return { context, authResult }
   }
   return pipeline
 }
 
-export const streamWritePermissionsPipelineFactory = (
-  deps: ValidateRoleBuilderDeps & ValidateRequiredStreamDeps
-): AuthPipelineFunction[] => [
-  validateServerRoleBuilderFactory(deps)({ requiredRole: Roles.Server.Guest }),
+/**
+ * TODO: All auth pipeline stuff should be replaced/refactored to just use auth policies, but
+ * for now as a quickfix i'm adjusting stream specific pipelines to check auth policies
+ */
+
+const validateStreamPolicyAccessFactory =
+  (deps: {
+    policyInvoker: (params: {
+      authData: AuthData
+      policies: Authz.AuthPolicies
+    }) => Promise<Authz.AuthPolicyResult>
+  }): AuthPipelineFunction =>
+  async (authData) => {
+    const { context, params, authResult } = authData
+
+    if (authHasFailed(authResult)) return { context, authResult }
+
+    if (!params?.streamId)
+      return authFailed(
+        context,
+        new ContextError("The context doesn't have a streamId")
+      )
+
+    const authLoaders = await moduleAuthLoaders({ dataLoaders: undefined })
+    const policies = Authz.authPoliciesFactory(authLoaders.loaders)
+    const result = await deps.policyInvoker({ authData, policies })
+    if (result.isOk) {
+      return authSuccess(context)
+    }
+
+    if (result.error.code === Authz.ProjectNotFoundError.code) {
+      return authFailed(
+        context,
+        new NotFoundError(
+          'Project ID is malformed and cannot be found, or the project does not exist',
+          {
+            info: { projectId: params.streamId }
+          }
+        ),
+        true
+      )
+    }
+
+    return authFailed(context, new ForbiddenError(result.error.message))
+  }
+
+export const streamWritePermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateResourceAccess,
   validateRequiredStreamFactory(deps),
-  validateStreamRoleBuilderFactory(deps)({ requiredRole: Roles.Stream.Contributor }),
-  validateResourceAccess
+  validateStreamPolicyAccessFactory({
+    ...deps,
+    policyInvoker: async ({ authData, policies }) =>
+      policies.project.version.canCreate({
+        userId: authData.context.userId,
+        projectId: authData.params!.streamId!
+      })
+  })
 ]
 
-export const streamReadPermissionsPipelineFactory = (
-  deps: ValidateRoleBuilderDeps &
-    ValidateRequiredStreamDeps & {
-      adminOverrideEnabled: typeof adminOverrideEnabled
-    }
-): AuthPipelineFunction[] => {
-  const ret: AuthPipelineFunction[] = [
-    validateServerRoleBuilderFactory(deps)({ requiredRole: Roles.Server.Guest }),
-    validateScope({ requiredScope: Scopes.Streams.Read }),
-    validateRequiredStreamFactory(deps),
-    validateStreamRoleBuilderFactory(deps)({ requiredRole: Roles.Stream.Contributor }),
-    validateResourceAccess
-  ]
+export const streamCommentsWritePermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
+  validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
+  validateStreamPolicyAccessFactory({
+    ...deps,
+    policyInvoker: async ({ authData, policies }) =>
+      policies.project.comment.canCreate({
+        userId: authData.context.userId,
+        projectId: authData.params!.streamId!
+      })
+  })
+]
 
-  if (deps.adminOverrideEnabled()) ret.push(allowForServerAdmins)
-
-  return ret
-}
+export const streamReadPermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
+  validateScope({ requiredScope: Scopes.Streams.Read }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
+  validateStreamPolicyAccessFactory({
+    ...deps,
+    policyInvoker: async ({ authData, policies }) =>
+      policies.project.canRead({
+        userId: authData.context.userId,
+        projectId: authData.params!.streamId!
+      })
+  })
+]
 
 export const throwForNotHavingServerRoleFactory =
   (deps: { validateServerRole: ValidateServerRoleBuilder }): ValidateUserServerRole =>
@@ -337,7 +413,7 @@ export const throwForNotHavingServerRoleFactory =
       authResult: { authorized: false }
     })
     if (authHasFailed(authResult))
-      throw authResult.error ?? new Error('Auth failed without an error')
+      throw authResult.error ?? new ForbiddenError('Auth failed without an error')
     return true
   }
 

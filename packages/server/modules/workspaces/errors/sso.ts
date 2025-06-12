@@ -1,11 +1,7 @@
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { User } from '@/modules/core/domain/users/types'
 import { BaseError } from '@/modules/shared/errors/base'
-
-export class SsoSessionMissingOrExpiredError extends BaseError {
-  static defaultMessage =
-    'No valid SSO session found for the given workspace. Please sign in.'
-  static code = 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
-  static statusCode = 401
-}
+export { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 
 export class SsoVerificationCodeMissingError extends BaseError {
   static defaultMessage = 'Cannot find verification token. Restart authentication flow.'
@@ -38,9 +34,11 @@ export class SsoProviderProfileMissingPropertiesError extends BaseError {
   static code = 'SSO_PROVIDER_PROFILE_MISSING_PROPERTIES_ERROR'
   constructor(properties: string[]) {
     super(
-      `User profile from identity provider missing required properties: ${properties.join(
-        ', '
-      )}`
+      [
+        'Login was successful, but your identity provider is not configured correctly for Speckle.',
+        'The following required properties were not present on your user profile:',
+        properties.join(', ')
+      ].join(' ')
     )
   }
 }
@@ -69,12 +67,34 @@ export class SsoUserClaimedError extends BaseError {
   static defaultMessage =
     'OIDC provider user already associated with another Speckle account.'
   static code = 'SSO_USER_ALREADY_CLAIMED_ERROR'
+  constructor(params: {
+    currentUser: User
+    currentUserEmails: UserEmail[]
+    existingUser: User
+    existingUserEmail: string
+  }) {
+    super(
+      [
+        'User from SSO provider already exists as another Speckle user.',
+        `Currently signed in as ${params.currentUser.name}`,
+        `(${params.currentUserEmails.map((record) => record.email).join(',')})`,
+        `but attempted to sign in as ${params.existingUser.name}`,
+        `(${params.existingUserEmail})`
+      ].join(' ')
+    )
+  }
 }
 
 export class SsoUserInviteRequiredError extends BaseError {
   static defaultMessage = 'Cannot sign up with SSO without a valid workspace invite.'
   static code = 'SSO_USER_INVITE_REQUIRED_ERROR'
   static statusCode = 400
+
+  constructor(userEmail: string) {
+    super(
+      `Cannot sign up with SSO without a valid workspace invite. No invite found for ${userEmail}.`
+    )
+  }
 }
 
 export class OidcProviderMissingGrantTypeError extends BaseError {

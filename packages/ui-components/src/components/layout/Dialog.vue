@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="relative z-50" @close="onClose">
+    <Dialog as="div" class="relative z-50" open @close="onClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -80,10 +80,11 @@
                 v-if="!hideCloser"
                 color="subtle"
                 size="sm"
-                class="absolute z-20 top-4 right-5 shrink-0 !w-6 !h-6 !p-0"
+                class="absolute z-20 top-4 right-5 shrink-0 !w-6 !h-6 !p-0 text-foreground-2"
+                :class="closerClasses"
                 @click="open = false"
               >
-                <XMarkIcon class="h-6 w-6 text-foreground-2" />
+                <XMarkIcon class="h-6 w-6" />
               </FormButton>
               <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
                 <slot>Put your content here!</slot>
@@ -97,16 +98,24 @@
                 }"
               >
                 <template v-if="buttons">
-                  <FormButton
+                  <div
                     v-for="(button, index) in buttons"
                     :key="button.id || index"
-                    v-bind="button.props || {}"
-                    :disabled="button.props?.disabled || button.disabled"
-                    :submit="button.props?.submit || button.submit"
-                    @click="($event) => button.onClick?.($event)"
+                    v-tippy="
+                      button.props?.disabled || button.disabled
+                        ? button.disabledMessage
+                        : undefined
+                    "
                   >
-                    {{ button.text }}
-                  </FormButton>
+                    <FormButton
+                      v-bind="button.props || {}"
+                      :disabled="button.props?.disabled || button.disabled"
+                      :submit="button.props?.submit || button.submit"
+                      @click="($event) => button.onClick?.($event)"
+                    >
+                      {{ button.text }}
+                    </FormButton>
+                  </div>
                 </template>
                 <template v-else>
                   <slot name="buttons" />
@@ -124,7 +133,7 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
-import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
+import { computed, ref, useSlots, watch, onUnmounted, type SetupContext } from 'vue'
 import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
@@ -158,13 +167,17 @@ const props = withDefaults(
      * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
      */
     onSubmit?: (e: SubmitEvent) => void
+    isTransparent?: boolean
+    closerClasses?: string
+    hideTitle?: boolean
+    hideButtons?: boolean
   }>(),
   {
     fullscreen: 'mobile'
   }
 )
 
-const slots = useSlots()
+const slots: SetupContext['slots'] = useSlots()
 
 const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(true)
@@ -180,8 +193,10 @@ useResizeObserver(
 )
 
 const isForm = computed(() => !!props.onSubmit)
-const hasButtons = computed(() => props.buttons || slots.buttons)
-const hasTitle = computed(() => !!props.title || !!slots.header)
+const hasButtons = computed(
+  () => (props.buttons || slots.buttons) && !props.hideButtons
+)
+const hasTitle = computed(() => !props.hideTitle && (!!props.title || !!slots.header))
 
 const open = computed({
   get: () => props.open,
@@ -237,8 +252,12 @@ const isFullscreenDesktop = computed(
 
 const dialogPanelClasses = computed(() => {
   const classParts: string[] = [
-    'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation-page text-left shadow-xl border border-outline-2 flex flex-col md:h-auto'
+    'transform md:rounded-xl text-foreground overflow-hidden transition-all text-left flex flex-col md:h-auto'
   ]
+
+  if (!props.isTransparent) {
+    classParts.push('bg-foundation-page shadow-xl border border-outline-2')
+  }
 
   if (isFullscreenDesktop.value) {
     classParts.push('md:h-full')
@@ -263,13 +282,15 @@ const dialogPanelClasses = computed(() => {
 const slotContainerClasses = computed(() => {
   const classParts: string[] = ['flex-1 simple-scrollbar overflow-y-auto text-body-xs']
 
-  if (hasTitle.value) {
-    classParts.push('px-6 py-4')
-    if (isFullscreenDesktop.value) {
-      classParts.push('md:p-0')
+  if (!props.isTransparent) {
+    if (hasTitle.value) {
+      classParts.push('px-6 py-4')
+      if (isFullscreenDesktop.value) {
+        classParts.push('md:p-0')
+      }
+    } else if (!isFullscreenDesktop.value) {
+      classParts.push('px-6 py-4')
     }
-  } else if (!isFullscreenDesktop.value) {
-    classParts.push('px-6 py-4')
   }
 
   return classParts.join(' ')

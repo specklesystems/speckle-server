@@ -8,22 +8,16 @@ import {
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   StreamInvalidAccessError,
+  StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
-import { isProjectCreateInput } from '@/modules/core/helpers/stream'
+import { isProjectCreateInput } from '@/modules/core/helpers/project'
 import { has } from 'lodash'
-import {
-  ContextResourceAccessRules,
-  isNewResourceAllowed
-} from '@/modules/core/helpers/token'
+import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
-import {
-  ProjectEvents,
-  ProjectsEventsEmitter
-} from '@/modules/core/events/projectsEmitter'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import {
@@ -43,20 +37,16 @@ import {
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
-import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import {
-  AddStreamDeletedActivity,
-  AddStreamUpdatedActivity
-} from '@/modules/activitystream/domain/operations'
-import { LogicError } from '@/modules/shared/errors'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 
 export const createStreamReturnRecordFactory =
   (deps: {
     createStream: StoreStream
     createBranch: StoreBranch
     inviteUsersToProject: ReturnType<typeof inviteUsersToProjectFactory>
-    projectsEventsEmitter: ProjectsEventsEmitter
+    emitEvent: EventBusEmit
   }): CreateStream =>
   async (params): Promise<StreamRecord> => {
     const { ownerId, ownerResourceAccessRules } = params
@@ -93,9 +83,13 @@ export const createStreamReturnRecordFactory =
       )
     }
 
-    await deps.projectsEventsEmitter(ProjectEvents.Created, {
-      project: stream,
-      ownerId
+    await deps.emitEvent({
+      eventName: ProjectEvents.Created,
+      payload: {
+        project: stream,
+        ownerId,
+        input: params
+      }
     })
 
     return stream
@@ -117,42 +111,30 @@ export const legacyCreateStreamFactory =
 export const deleteStreamAndNotifyFactory =
   (deps: {
     deleteStream: DeleteStreamRecord
-    authorizeResolver: AuthorizeResolver
-    addStreamDeletedActivity: AddStreamDeletedActivity
     deleteAllResourceInvites: DeleteAllResourceInvites
     getStream: GetStream
+    emitEvent: EventBusEmit
   }): DeleteStream =>
-  async (
-    streamId: string,
-    deleterId: string,
-    deleterResourceAccessRules: ContextResourceAccessRules,
-    options?: {
-      skipAccessChecks?: boolean
-    }
-  ) => {
-    const { skipAccessChecks = false } = options || {}
-
-    if (!skipAccessChecks) {
-      await deps.authorizeResolver(
-        deleterId,
-        streamId,
-        Roles.Stream.Owner,
-        deleterResourceAccessRules
-      )
-    }
-
+  async (streamId: string, deleterId: string) => {
     const stream = await deps.getStream({ streamId })
     if (!stream)
-      throw new LogicError('Unexpectedly stream that should exist is not found...')
+      throw new StreamNotFoundError(
+        'Stream which we are attempting to delete cannot been found.'
+      )
 
-    await deps.addStreamDeletedActivity({
-      streamId,
-      deleterId,
-      workspaceId: stream.workspaceId
+    await deps.emitEvent({
+      eventName: ProjectEvents.Deleted,
+      payload: {
+        project: stream,
+        deleterId,
+        projectId: streamId
+      }
     })
 
     // TODO: this has been around since before my time, we should get rid of it...
     // delay deletion by a bit so we can do auth checks
+    // (essentially: ensure authorizeResolver/authPolicies can retrieve the stream and
+    // validate a user's access in subscription field resolvers. we can do w/o it tho...)
     await wait(250)
 
     // Delete after event so we can do authz
@@ -172,23 +154,11 @@ export const deleteStreamAndNotifyFactory =
  */
 export const updateStreamAndNotifyFactory =
   (deps: {
-    authorizeResolver: AuthorizeResolver
     getStream: GetStream
     updateStream: UpdateStreamRecord
-    addStreamUpdatedActivity: AddStreamUpdatedActivity
+    emitEvent: EventBusEmit
   }): UpdateStream =>
-  async (
-    update: StreamUpdateInput | ProjectUpdateInput,
-    updaterId: string,
-    updaterResourceAccessRules: ContextResourceAccessRules
-  ) => {
-    await deps.authorizeResolver(
-      updaterId,
-      update.id,
-      Roles.Stream.Owner,
-      updaterResourceAccessRules
-    )
-
+  async (update: StreamUpdateInput | ProjectUpdateInput, updaterId: string) => {
     const oldStream = await deps.getStream({ streamId: update.id, userId: updaterId })
     if (!oldStream) {
       throw new StreamUpdateError('Stream not found', {
@@ -201,12 +171,14 @@ export const updateStreamAndNotifyFactory =
       return oldStream
     }
 
-    await deps.addStreamUpdatedActivity({
-      streamId: update.id,
-      updaterId,
-      oldStream,
-      newStream,
-      update
+    await deps.emitEvent({
+      eventName: ProjectEvents.Updated,
+      payload: {
+        newProject: newStream,
+        oldProject: oldStream,
+        updaterId,
+        update
+      }
     })
 
     return newStream

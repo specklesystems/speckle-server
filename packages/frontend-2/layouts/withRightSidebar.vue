@@ -7,22 +7,7 @@
 
       <div class="relative flex h-[calc(100dvh-3rem)]">
         <DashboardSidebar />
-
-        <main class="w-full h-full overflow-y-auto simple-scrollbar pt-4 lg:pt-6 pb-16">
-          <div class="container mx-auto px-6 md:px-8">
-            <slot />
-          </div>
-        </main>
-
-        <div
-          class="hidden lg:flex h-full w-[17rem] shrink-0 border-l border-outline-3 bg-foundation-page"
-        >
-          <PortalTarget name="right-sidebar">
-            <div class="h-full w-full flex items-center justify-center">
-              <CommonLoadingIcon />
-            </div>
-          </PortalTarget>
-        </div>
+        <slot />
       </div>
     </div>
   </div>

@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
+import { useFixBraveSafariCookies } from '~~/lib/common/composables/reactiveCookie'
 
 const { isDarkTheme } = useTheme()
 
@@ -30,6 +31,7 @@ useHead({
 
 const { watchAuthQueryString } = useAuthManager()
 watchAuthQueryString()
+useFixBraveSafariCookies()
 </script>
 <style>
 .page-enter-active,

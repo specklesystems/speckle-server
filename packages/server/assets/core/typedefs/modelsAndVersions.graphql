@@ -106,7 +106,7 @@ type Model {
   The shortened/display name that doesn't include the names of parent models
   """
   displayName: String!
-  author: LimitedUser!
+  author: LimitedUser
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -237,7 +237,7 @@ type ModelsTreeItem {
 
 type Version {
   id: ID!
-  referencedObject: String!
+  referencedObject: String
   message: String
   sourceApplication: String
   authorUser: LimitedUser

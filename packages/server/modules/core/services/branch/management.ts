@@ -15,7 +15,6 @@ import {
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
-import { ModelsEmitter, ModelsEventsEmitter } from '@/modules/core/events/modelsEmitter'
 import {
   CreateBranchAndNotify,
   DeleteBranchAndNotify,
@@ -30,11 +29,8 @@ import {
   GetStream,
   MarkBranchStreamUpdated
 } from '@/modules/core/domain/streams/operations'
-import {
-  AddBranchCreatedActivity,
-  AddBranchDeletedActivity,
-  AddBranchUpdatedActivity
-} from '@/modules/activitystream/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ModelEvents } from '@/modules/core/domain/branches/events'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -44,7 +40,7 @@ export const createBranchAndNotifyFactory =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
     createBranch: StoreBranch
-    addBranchCreatedActivity: AddBranchCreatedActivity
+    eventEmit: EventBusEmit
   }): CreateBranchAndNotify =>
   async (input: BranchCreateInput | CreateModelInput, creatorId: string) => {
     const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
@@ -59,7 +55,11 @@ export const createBranchAndNotifyFactory =
       streamId: isBranchCreateInput(input) ? input.streamId : input.projectId,
       authorId: creatorId
     })
-    await deps.addBranchCreatedActivity({ branch })
+
+    await deps.eventEmit({
+      eventName: ModelEvents.Created,
+      payload: { model: branch, projectId: branch.streamId }
+    })
 
     return branch
   }
@@ -68,7 +68,7 @@ export const updateBranchAndNotifyFactory =
   (deps: {
     getBranchById: GetBranchById
     updateBranch: UpdateBranch
-    addBranchUpdatedActivity: AddBranchUpdatedActivity
+    eventEmit: EventBusEmit
   }): UpdateBranchAndNotify =>
   async (input: BranchUpdateInput | UpdateModelInput, userId: string) => {
     const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
@@ -112,11 +112,14 @@ export const updateBranchAndNotifyFactory =
     }
 
     if (newBranch) {
-      await deps.addBranchUpdatedActivity({
-        update: input,
-        userId,
-        oldBranch: existingBranch,
-        newBranch
+      await deps.eventEmit({
+        eventName: ModelEvents.Updated,
+        payload: {
+          update: input,
+          userId,
+          oldModel: existingBranch,
+          newModel: newBranch
+        }
       })
     }
 
@@ -127,9 +130,8 @@ export const deleteBranchAndNotifyFactory =
   (deps: {
     getStream: GetStream
     getBranchById: GetBranchById
-    modelsEventsEmitter: ModelsEventsEmitter
+    emitEvent: EventBusEmit
     markBranchStreamUpdated: MarkBranchStreamUpdated
-    addBranchDeletedActivity: AddBranchDeletedActivity
     deleteBranchById: DeleteBranchById
   }): DeleteBranchAndNotify =>
   async (input: BranchDeleteInput | DeleteModelInput, userId: string) => {
@@ -166,16 +168,16 @@ export const deleteBranchAndNotifyFactory =
     const isDeleted = !!(await deps.deleteBranchById(existingBranch.id))
     if (isDeleted) {
       await Promise.all([
-        deps.addBranchDeletedActivity({
-          input,
-          userId,
-          branchName: existingBranch.name
-        }),
         deps.markBranchStreamUpdated(input.id),
-        deps.modelsEventsEmitter(ModelsEmitter.events.Deleted, {
-          modelId: existingBranch.id,
-          model: existingBranch,
-          projectId: streamId
+        deps.emitEvent({
+          eventName: ModelEvents.Deleted,
+          payload: {
+            modelId: existingBranch.id,
+            model: existingBranch,
+            projectId: streamId,
+            input,
+            userId
+          }
         })
       ])
     }

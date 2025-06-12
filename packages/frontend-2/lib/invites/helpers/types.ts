@@ -1,6 +1,7 @@
 import type { ServerRoles, WorkspaceRoles, StreamRoles } from '@speckle/shared'
 import type { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
+// Server
 export type InviteServerItem = {
   email: string
   serverRole: ServerRoles
@@ -11,7 +12,21 @@ export interface InviteServerForm {
   fields: InviteServerItem[]
 }
 
-export type InviteGenericItem = {
+// Project
+export type InviteProjectItem = {
+  email: string
+  userId?: string
+  projectRole?: StreamRoles
+  project?: FormSelectProjects_ProjectFragment
+  serverRole?: ServerRoles
+}
+
+export interface InviteProjectForm {
+  fields: InviteProjectItem[]
+}
+
+// Workspace
+export type InviteWorkspaceItem = {
   email: string
   workspaceRole?: WorkspaceRoles
   projectRole?: StreamRoles
@@ -19,6 +34,6 @@ export type InviteGenericItem = {
   matchesDomainPolicy?: boolean
 }
 
-export interface InviteGenericForm {
-  fields: InviteGenericItem[]
+export interface InviteWorkspaceForm {
+  fields: InviteWorkspaceItem[]
 }

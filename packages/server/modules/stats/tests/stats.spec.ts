@@ -8,7 +8,6 @@ import {
   getTotalUserCountFactory
 } from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
-import { Server } from 'node:http'
 import { db } from '@/db/knex'
 import {
   createCommitByBranchIdFactory,
@@ -28,12 +27,11 @@ import {
 import {
   createStreamFactory,
   getStreamFactory,
+  grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
@@ -43,7 +41,9 @@ import {
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
+  deleteInvitesByTargetFactory,
   deleteServerOnlyInvitesFactory,
+  findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   updateAllInviteTargetsFactory
@@ -51,10 +51,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   countAdminUsersFactory,
   getUserFactory,
@@ -73,8 +69,10 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -84,9 +82,19 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
+const getUser = getUserFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
@@ -97,11 +105,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -111,6 +115,50 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
 })
 
 const getStream = getStreamFactory({ db })
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -129,13 +177,14 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser: getUserFactory({ db }),
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const findEmail = findEmailFactory({ db })
@@ -163,7 +212,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -174,8 +223,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 const createObjects = createObjectsFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
 })
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
@@ -199,8 +247,7 @@ describe('Server stats services @stats-services', function () {
 })
 
 describe('Server stats api @stats-api', function () {
-  let server: Server,
-    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
+  let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
   const adminUser = {
     name: 'Dimitrie',
@@ -238,7 +285,6 @@ describe('Server stats api @stats-api', function () {
   before(async function () {
     this.timeout(15000)
     const ctx = await beforeEachContext()
-    server = ctx.server
     ;({ sendRequest } = await initializeTestServer(ctx))
 
     adminUser.id = await createUser(adminUser)
@@ -266,10 +312,6 @@ describe('Server stats api @stats-api', function () {
     )}`
 
     await seedDb(params)
-  })
-
-  after(async function () {
-    await server.close()
   })
 
   it('Should not get stats if user is not admin', async () => {

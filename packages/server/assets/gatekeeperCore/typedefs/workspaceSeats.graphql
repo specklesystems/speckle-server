@@ -1,0 +1,47 @@
+enum WorkspaceSeatType {
+  editor
+  viewer
+}
+
+extend type WorkspaceCollaborator {
+  seatType: WorkspaceSeatType
+}
+
+extend type ProjectCollaborator {
+  """
+  The collaborator's workspace seat type for the workspace this project is in
+  """
+  seatType: WorkspaceSeatType
+}
+
+extend type Workspace {
+  """
+  Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
+  """
+  seatType: WorkspaceSeatType
+  """
+  The default seat assigned to users that join a workspace. Used during workspace discovery or on invites without seat types.
+  """
+  defaultSeatType: WorkspaceSeatType!
+}
+
+type WorkspaceSeatsByType {
+  editors: WorkspaceSeatCollection
+  viewers: WorkspaceSeatCollection
+}
+
+type WorkspaceSeatCollection {
+  totalCount: Int!
+}
+
+input WorkspaceUpdateSeatTypeInput {
+  userId: String!
+  workspaceId: String!
+  seatType: WorkspaceSeatType!
+}
+
+extend type WorkspaceMutations {
+  updateSeatType(input: WorkspaceUpdateSeatTypeInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+    @hasServerRole(role: SERVER_USER)
+}

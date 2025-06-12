@@ -2,7 +2,6 @@ import {
   AccessRequestCreationError,
   AccessRequestProcessingError
 } from '@/modules/accessrequests/errors'
-import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
 import {
   AccessRequestType,
@@ -35,6 +34,8 @@ import {
   GetStream,
   ValidateStreamAccess
 } from '@/modules/core/domain/streams/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
@@ -85,7 +86,7 @@ export const requestProjectAccessFactory =
     getUserStreamAccessRequest: GetUserStreamAccessRequest
     getStream: GetStream
     createNewRequest: CreateNewRequest
-    accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
+    emitEvent: EventBusEmit
   }): RequestProjectAccess =>
   async (userId: string, projectId: string) => {
     const [stream, existingRequest] = await Promise.all([
@@ -121,8 +122,11 @@ export const requestProjectAccessFactory =
       resourceId: projectId
     })
 
-    await deps.accessRequestsEmitter(AccessRequestsEmitter.events.Created, {
-      request: req
+    await deps.emitEvent({
+      eventName: AccessRequestEvents.Created,
+      payload: {
+        request: req
+      }
     })
 
     return req
@@ -168,7 +172,7 @@ export const processPendingStreamRequestFactory =
     validateStreamAccess: ValidateStreamAccess
     addOrUpdateStreamCollaborator: AddOrUpdateStreamCollaborator
     deleteRequestById: DeleteRequestById
-    accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
+    emitEvent: EventBusEmit
   }) =>
   async (
     userId: string,
@@ -216,10 +220,13 @@ export const processPendingStreamRequestFactory =
 
     await deps.deleteRequestById(req.id)
 
-    await deps.accessRequestsEmitter(AccessRequestsEmitter.events.Finalized, {
-      request: req,
-      approved: accept ? { role } : undefined,
-      finalizedBy: userId
+    await deps.emitEvent({
+      eventName: AccessRequestEvents.Finalized,
+      payload: {
+        request: req,
+        approved: accept ? { role } : undefined,
+        finalizedBy: userId
+      }
     })
 
     return req

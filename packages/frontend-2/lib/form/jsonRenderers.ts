@@ -83,7 +83,6 @@ export const arrayListRenderer: JsonFormsRendererRegistryEntry = {
 }
 
 export const renderers: JsonFormsRendererRegistryEntry[] = markRaw([
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   ...vanillaRenderers,
   stringControlRenderer,
   booleanControlRenderer,

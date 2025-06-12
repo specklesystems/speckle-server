@@ -62,12 +62,14 @@ export const useAutomationRunSummary = (params: {
         ?.functionRuns.filter(
           (r): r is SetFullyRequired<typeof r, 'statusMessage'> =>
             !!(
-              [
-                AutomateRunStatus.Failed,
-                AutomateRunStatus.Canceled,
-                AutomateRunStatus.Exception,
-                AutomateRunStatus.Timeout
-              ].includes(r.status) && r.statusMessage?.length
+              (
+                [
+                  AutomateRunStatus.Failed,
+                  AutomateRunStatus.Canceled,
+                  AutomateRunStatus.Exception,
+                  AutomateRunStatus.Timeout
+                ] as string[]
+              ).includes(r.status) && r.statusMessage?.length
             )
         )
         .map((r) => r.statusMessage) || []
@@ -141,9 +143,9 @@ export const useAutomationRunDetailsFns = () => {
     const end =
       run.status === AutomateRunStatus.Running
         ? now.value
-        : [AutomateRunStatus.Initializing, AutomateRunStatus.Pending].includes(
-            run.status
-          )
+        : (
+            [AutomateRunStatus.Initializing, AutomateRunStatus.Pending] as string[]
+          ).includes(run.status)
         ? undefined
         : run.updatedAt
     if (!end) return undefined

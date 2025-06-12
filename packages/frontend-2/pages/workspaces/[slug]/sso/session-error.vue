@@ -10,9 +10,7 @@
         :name="workspace.name"
         size="xl"
       />
-      <h1 class="text-heading-xl text-center">
-        SSO is required for {{ workspace?.name }}
-      </h1>
+      <h1 class="text-heading-xl text-center">SSO is required for this workspace</h1>
       <div
         class="p-4 rounded-lg border border-outline-2 bg-foundation text-body-xs mb-2"
       >

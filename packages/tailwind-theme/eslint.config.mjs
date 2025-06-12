@@ -43,10 +43,11 @@ const configs = [
       '@typescript-eslint/restrict-template-expressions': ['error'],
       '@typescript-eslint/restrict-plus-operands': ['error'],
       '@typescript-eslint/await-thenable': ['warn'],
-      '@typescript-eslint/ban-types': ['warn'],
+      '@typescript-eslint/no-restricted-types': ['warn'],
       'require-await': 'off',
       '@typescript-eslint/require-await': 'error',
-      'no-undef': 'off'
+      'no-undef': 'off',
+      '@typescript-eslint/unbound-method': 'off'
     }
   },
   {
@@ -54,8 +55,16 @@ const configs = [
     rules: {
       'no-var': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/ban-types': 'off',
+      '@typescript-eslint/no-restricted-types': 'off',
       'no-unused-vars': 'off'
+    }
+  },
+  {
+    files: ['utils/*.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
     }
   }
 ]

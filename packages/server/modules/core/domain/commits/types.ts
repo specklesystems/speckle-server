@@ -8,6 +8,7 @@ import {
 } from '@/modules/core/helpers/types'
 
 export type Commit = CommitRecord
+export type Version = Commit
 export type CommitWithBranchId = Commit & {
   branchId: string
 }

@@ -1,8 +1,17 @@
 import prometheusClient from 'prom-client'
 import { join } from 'lodash-es'
 import type { MetricInitializer } from '@/observability/types.js'
+import * as Environment from '@speckle/shared/environment'
+
+const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
 export const init: MetricInitializer = (config) => {
+  if (!FF_WORKSPACES_MULTI_REGION_ENABLED) {
+    return async () => {
+      // Do nothing
+    }
+  }
+
   const { labelNames, namePrefix, logger } = config
   const promMetric = new prometheusClient.Gauge({
     name: join([namePrefix, 'db_replication_slot_lag'], '_'),

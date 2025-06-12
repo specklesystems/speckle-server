@@ -1,6 +1,7 @@
 import {
   LimitedUser,
   User,
+  UserOnboardingChoices,
   UserSignUpContext,
   UserWithOptionalRole
 } from '@/modules/core/domain/users/types'
@@ -123,6 +124,7 @@ export type CreateValidatedUser = (
   },
   options?: Partial<{
     skipPropertyValidation: boolean
+    allowPersonalEmail: boolean
   }>
 ) => Promise<string>
 
@@ -159,7 +161,7 @@ export type ValidateUserPassword = (params: {
   password: string
 }) => Promise<boolean>
 
-export type DeleteUser = (id: string) => Promise<boolean>
+export type DeleteUser = (id: string, invokerId?: string) => Promise<boolean>
 
 export type ChangeUserRole = (params: { userId: string; role: string }) => Promise<void>
 
@@ -256,3 +258,10 @@ export type AdminGetInviteList = (args: CollectionQueryArgs) => Promise<{
   totalCount: number
   items: ServerInviteGraphQLReturnType[]
 }>
+
+export type UpdateUserMixpanelProfile = (params: { userId: string }) => Promise<void>
+
+export type SetUserOnboardingChoices = (params: {
+  userId: string
+  choices: UserOnboardingChoices
+}) => Promise<void>

@@ -4,18 +4,27 @@ import {
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import { SaveUploadFile } from '@/modules/fileuploads/domain/operations'
-import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
+import {
+  SaveUploadFile,
+  NotifyChangeInFileStatus,
+  SaveUploadFileV2,
+  SaveUploadFileInput,
+  PushJobToFileImporter,
+  InsertNewUploadAndNotify
+} from '@/modules/fileuploads/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   FileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
+import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
     saveUploadFile: SaveUploadFile
     publish: PublishSubscription
+    emit: EventBusEmit
   }) =>
   async (upload: SaveUploadFileInput) => {
     const branch = await deps.getStreamBranchByName(upload.streamId, upload.branchName)
@@ -49,5 +58,100 @@ export const insertNewUploadAndNotifyFactory =
         upload: file
       },
       projectId: file.streamId
+    })
+
+    await deps.emit({
+      eventName: FileuploadEvents.Started,
+      payload: {
+        userId: file.userId,
+        projectId: file.streamId,
+        fileSize: file.fileSize,
+        fileType: file.fileType
+      }
+    })
+  }
+
+export const insertNewUploadAndNotifyFactoryV2 =
+  (deps: {
+    pushJobToFileImporter: PushJobToFileImporter
+    saveUploadFile: SaveUploadFileV2
+    publish: PublishSubscription
+    emit: EventBusEmit
+  }): InsertNewUploadAndNotify =>
+  async (upload) => {
+    const file = await deps.saveUploadFile(upload)
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: file.id,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: {
+          ...file,
+          streamId: upload.projectId,
+          branchName: upload.modelName
+        }
+      },
+      projectId: file.projectId
+    })
+
+    await deps.pushJobToFileImporter({
+      fileName: file.fileName,
+      fileType: file.fileType,
+      projectId: file.projectId,
+      modelId: upload.modelId,
+      blobId: file.id,
+      jobId: file.id,
+      userId: upload.userId
+    })
+
+    await deps.emit({
+      eventName: FileuploadEvents.Started,
+      payload: {
+        userId: file.userId,
+        projectId: file.projectId,
+        fileSize: file.fileSize,
+        fileType: file.fileType
+      }
+    })
+  }
+
+export const notifyChangeInFileStatus =
+  (deps: {
+    getStreamBranchByName: GetStreamBranchByName
+    publish: PublishSubscription
+  }): NotifyChangeInFileStatus =>
+  async (params) => {
+    const { file } = params
+    const { id: fileId, streamId, branchName } = file
+    const branch = await deps.getStreamBranchByName(streamId, branchName)
+
+    if (!branch) {
+      await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
+        projectPendingModelsUpdated: {
+          id: fileId,
+          type: ProjectPendingModelsUpdatedMessageType.Updated,
+          model: file
+        },
+        projectId: streamId
+      })
+    } else {
+      await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
+        projectPendingVersionsUpdated: {
+          id: fileId,
+          type: ProjectPendingVersionsUpdatedMessageType.Updated,
+          version: file
+        },
+        projectId: streamId,
+        branchName
+      })
+    }
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: fileId,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: file
+      },
+      projectId: streamId
     })
   }

@@ -173,7 +173,8 @@ export class FilteringExtension extends Extension {
         const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node)
         if (!this.VisibilityState.ids[node.model.raw.id]) {
           rvNodes.forEach((rvNode: TreeNode) => {
-            rvMap[rvNode.model.id] = rvNode.model.renderView
+            if (!this.VisibilityState.ids[rvNode.model.raw.id])
+              rvMap[rvNode.model.id] = rvNode.model.renderView
           })
         } else {
           rvNodes.forEach((rvNode: TreeNode) => {
@@ -417,7 +418,9 @@ export class FilteringExtension extends Extension {
     this.UserspaceColorState = null
     this.StateKey = undefined
     this.Renderer.resetMaterials()
+    this.CurrentFilteringState = {}
     this.viewer.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return null
   }
 

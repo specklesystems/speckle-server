@@ -39,17 +39,17 @@ import { useDebouncedTextInput } from '@speckle/ui-components'
 import { useQueryLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
-import type { Optional } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const searchQuery = graphql(`
   query AutomationCreateDialogFunctionsSearch(
     $workspaceId: String!
-    $search: String
+    $filter: AutomateFunctionsFilter
     $cursor: String = null
   ) {
     workspace(id: $workspaceId) {
-      automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+      automateFunctions(limit: 20, cursor: $cursor, filter: $filter) {
         cursor
         totalCount
         items {
@@ -68,10 +68,12 @@ const props = withDefaults(
     pageSize?: Optional<number>
     showLabel?: Optional<boolean>
     showRequired?: Optional<boolean>
+    isTestAutomation?: Optional<boolean>
   }>(),
   {
     showLabel: true,
-    showRequired: true
+    showRequired: true,
+    isTestAutomation: false
   }
 )
 const selectedFunction = defineModel<Optional<CreateAutomationSelectableFunction>>(
@@ -91,9 +93,14 @@ const {
   query: searchQuery,
   baseVariables: computed(() => ({
     workspaceId: props.workspaceId ?? '',
-    search: search.value?.length ? search.value : ''
+    cursor: null as Nullable<string>,
+    filter: {
+      search: search.value?.length ? search.value : undefined,
+      includeFeatured: props.isTestAutomation ? false : true,
+      requireRelease: props.isTestAutomation ? false : true
+    }
   })),
-  resolveKey: (vars) => [vars.search || ''],
+  resolveKey: (vars) => [vars.filter.search || ''],
   resolveCurrentResult: (res) => res?.workspace?.automateFunctions,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,

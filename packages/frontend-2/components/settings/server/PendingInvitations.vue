@@ -46,6 +46,7 @@
           :items="actionItems"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          :menu-id="`invite-actions-${item.id}`"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
@@ -58,9 +59,11 @@
       </template>
     </LayoutTable>
 
-    <SettingsServerPendingInvitationsDeleteDialog
+    <InviteDialogCancelInvite
+      v-if="inviteToModify"
       v-model:open="showDeleteInvitationDialog"
-      :invite="inviteToModify"
+      :email="inviteToModify?.email"
+      @on-cancel-invite="cancelInvite"
     />
 
     <InfiniteLoading
@@ -75,14 +78,17 @@
 </template>
 
 <script setup lang="ts">
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation, useApolloClient } from '@vue/apollo-composable'
 import {
   MagnifyingGlassIcon,
   XMarkIcon,
   EllipsisHorizontalIcon
 } from '@heroicons/vue/24/outline'
 import type { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
-import { adminResendInviteMutation } from '~~/lib/server-management/graphql/mutations'
+import {
+  adminResendInviteMutation,
+  adminDeleteInviteMutation
+} from '~~/lib/server-management/graphql/mutations'
 import { isInvite } from '~~/lib/server-management/helpers/utils'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
@@ -94,14 +100,16 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { getInvitesQuery } from '~~/lib/server-management/graphql/queries'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import type { Nullable } from '@speckle/shared'
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: resendInvitationMutation } = useMutation(adminResendInviteMutation)
+const { mutate: deleteInvitationMutation } = useMutation(adminDeleteInviteMutation)
 const { on, bind, value: search } = useDebouncedTextInput()
+const apollo = useApolloClient().client
 
 const inviteToModify = ref<InviteItem | null>(null)
 const showDeleteInvitationDialog = ref(false)
-const successfullyResentInvites = ref<string[]>([])
 const showInviteDialog = ref(false)
 const showActionsMenu = ref<Record<string, boolean>>({})
 
@@ -113,7 +121,8 @@ const {
   query: getInvitesQuery,
   baseVariables: computed(() => ({
     query: search.value?.length ? search.value : null,
-    limit: 50
+    limit: 50,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.query || ''],
   resolveCurrentResult: (res) => res?.admin.inviteList,
@@ -128,8 +137,8 @@ const invites = computed(() => result.value?.admin.inviteList.items || [])
 
 const actionItems: LayoutMenuItem[][] = [
   [
-    { title: 'Resend invitation', id: 'resend-invite' },
-    { title: 'Delete invitation...', id: 'delete-invite' }
+    { title: 'Resend invite', id: 'resend-invite' },
+    { title: 'Cancel invite...', id: 'delete-invite' }
   ]
 ]
 
@@ -165,17 +174,43 @@ const resendInvitation = async (item: InviteItem) => {
   )
 
   if (result?.data?.inviteResend) {
-    successfullyResentInvites.value.push(inviteId)
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Invitation resent',
-      description: 'The invitation has been successfully resent'
+      title: `Invite for ${inviteToModify.value?.email} resent`
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
-      title: 'Failed to resend invitation',
+      title: `Failed to resend invite to ${inviteToModify.value?.email}`,
+      description: errorMessage
+    })
+  }
+}
+
+const cancelInvite = async () => {
+  const inviteId = inviteToModify.value?.id
+  if (!inviteId) return
+
+  const result = await deleteInvitationMutation({ inviteId }).catch(
+    convertThrowIntoFetchResult
+  )
+
+  if (result?.data?.inviteDelete) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: `Invite for ${inviteToModify.value?.email} canceled`
+    })
+
+    const cacheId = getCacheId('ServerInvite', inviteId)
+    apollo.cache.evict({
+      id: cacheId
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to cancel invite',
       description: errorMessage
     })
   }

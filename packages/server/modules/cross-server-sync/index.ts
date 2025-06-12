@@ -1,14 +1,6 @@
 import { db } from '@/db/knex'
-import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
-import {
-  addCommentCreatedActivityFactory,
-  addReplyAddedActivityFactory
-} from '@/modules/activitystream/services/commentActivity'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { moduleLogger, crossServerSyncLogger } from '@/observability/logging'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   getCommentFactory,
   getCommentsResourcesFactory,
@@ -22,8 +14,6 @@ import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   createBranchFactory,
   getBranchByIdFactory,
@@ -44,17 +34,16 @@ import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   getObjectFactory,
   getStreamObjectsFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   deleteProjectFactory,
+  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import {
   getOnboardingBaseStreamFactory,
-  getProjectFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdatedFactory,
@@ -76,7 +65,7 @@ import { downloadCommitFactory } from '@/modules/cross-server-sync/services/comm
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const crossServerSyncModule: SpeckleModule = {
   init() {
@@ -123,13 +112,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      commentsEventsEmit: CommentsEmitter.emit,
-      addCommentCreatedActivity: addCommentCreatedActivityFactory({
-        getViewerResourcesFromLegacyIdentifiers,
-        getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
       getComment: getCommentFactory({ db }),
@@ -137,14 +120,10 @@ const crossServerSyncModule: SpeckleModule = {
       insertComments,
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
-      commentsEventsEmit: CommentsEmitter.emit,
-      addReplyAddedActivity: addReplyAddedActivityFactory({
-        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
-          getCommentsResources: getCommentsResourcesFactory({ db }),
-          getViewerResourcesFromLegacyIdentifiers
-        }),
-        saveActivity: saveActivityFactory({ db }),
-        publish
+      emitEvent: getEventBus().emit,
+      getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db }),
+        getViewerResourcesFromLegacyIdentifiers
       })
     })
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })
@@ -156,16 +135,11 @@ const crossServerSyncModule: SpeckleModule = {
       insertBranchCommits: insertBranchCommitsFactory({ db }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-      versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({
-      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
     })
 
     const createNewProject = createNewProjectFactory({
@@ -174,7 +148,7 @@ const crossServerSyncModule: SpeckleModule = {
       deleteProject: deleteProjectFactory({ db }),
       storeModel: storeModelFactory({ db }),
       storeProjectRole: storeProjectRoleFactory({ db }),
-      projectsEventsEmitter: ProjectsEmitter.emit
+      emitEvent: getEventBus().emit
     })
 
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
@@ -198,10 +172,7 @@ const crossServerSyncModule: SpeckleModule = {
         createBranchAndNotify: createBranchAndNotifyFactory({
           createBranch: createBranchFactory({ db }),
           getStreamBranchByName,
-          addBranchCreatedActivity: addBranchCreatedActivityFactory({
-            saveActivity: saveActivityFactory({ db }),
-            publish
-          })
+          eventEmit: getEventBus().emit
         })
       }),
       markOnboardingBaseStream

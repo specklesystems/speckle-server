@@ -1,3 +1,4 @@
+import { AutomationRunEvents } from '@/modules/automate/domain/events'
 import {
   GetFunctionRun,
   UpdateAutomationRun,
@@ -8,14 +9,11 @@ import {
   FunctionRunNotFoundError
 } from '@/modules/automate/errors/runs'
 import {
-  AutomateRunsEmitter,
-  AutomateRunsEventsEmitter
-} from '@/modules/automate/events/runs'
-import {
   AutomationFunctionRunRecord,
   AutomationRunStatus,
   AutomationRunStatuses
 } from '@/modules/automate/helpers/types'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Automate } from '@speckle/shared'
 
 const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
@@ -62,7 +60,7 @@ export const validateContextView = (contextView: string) => {
   // Try parsing URL
   try {
     new URL(contextView, 'https://unimportant.com')
-  } catch (e) {
+  } catch {
     throw new FunctionRunReportStatusError('Invalid relative URL')
   }
 }
@@ -87,15 +85,13 @@ export const resolveStatusFromFunctionRunStatuses = (
   return AutomationRunStatuses.succeeded
 }
 
-export type ReportFunctionRunStatusDeps = {
-  getAutomationFunctionRunRecord: GetFunctionRun
-  upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
-  automationRunUpdater: UpdateAutomationRun
-  runEventEmit: AutomateRunsEventsEmitter
-}
-
 export const reportFunctionRunStatusFactory =
-  (deps: ReportFunctionRunStatusDeps) =>
+  (deps: {
+    getAutomationFunctionRunRecord: GetFunctionRun
+    upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
+    automationRunUpdater: UpdateAutomationRun
+    emitEvent: EventBusEmit
+  }) =>
   async (
     params: Pick<
       AutomationFunctionRunRecord,
@@ -106,7 +102,7 @@ export const reportFunctionRunStatusFactory =
       getAutomationFunctionRunRecord,
       upsertAutomationFunctionRunRecord,
       automationRunUpdater,
-      runEventEmit
+      emitEvent
     } = deps
     const { projectId, runId, ...statusReportData } = params
 
@@ -147,11 +143,14 @@ export const reportFunctionRunStatusFactory =
       updatedAt: new Date()
     })
 
-    await runEventEmit(AutomateRunsEmitter.events.StatusUpdated, {
-      run: updatedRun,
-      functionRun: nextFunctionRunRecord,
-      automationId,
-      projectId
+    await emitEvent({
+      eventName: AutomationRunEvents.StatusUpdated,
+      payload: {
+        run: updatedRun,
+        functionRun: nextFunctionRunRecord,
+        automationId,
+        projectId
+      }
     })
 
     return true

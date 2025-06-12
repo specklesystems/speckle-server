@@ -29,7 +29,7 @@
     </div>
     <div
       v-if="items?.length && project.model"
-      class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-4 relative z-10"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-4 relative z-10"
     >
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
       <template v-for="(item, i) in items" :key="item.id">
@@ -38,7 +38,7 @@
           v-model:selected="itemsSelectedState[item.id]"
           :version="item"
           :model-id="project.model.id"
-          :project-id="project.id"
+          :project="project"
           :style="`z-index: ${items.length - i};`"
           :selectable="!!selectedItems.length"
           :selection-disabled="disabledSelections[item.id]"
@@ -50,7 +50,7 @@
           v-else
           :version="item"
           :model-id="project.model.id"
-          :project-id="project.id"
+          :project="project"
           :style="`z-index: ${items.length - i};`"
         />
       </template>
@@ -58,9 +58,8 @@
     <div v-else>
       <ProjectCardImportFileArea
         ref="importArea"
-        :project-id="project.id"
-        :model-name="project.model.name"
-        :disabled="project.workspace?.readOnly"
+        :project="project"
+        :model="project.model"
         class="h-full w-full"
       />
     </div>
@@ -72,6 +71,7 @@
       :model-id="modelId"
       @fully-closed="dialogState = null"
     />
+
     <ProjectModelPageDialogMoveTo
       v-model:open="isMoveToDialogOpen"
       :project-id="project.id"
@@ -124,8 +124,11 @@ graphql(`
           ...ProjectModelPageVersionsCardVersion
         }
       }
+      ...ProjectCardImportFileArea_Model
     }
     ...ProjectsModelPageEmbed_Project
+    ...ProjectCardImportFileArea_Project
+    ...ProjectModelPageVersionsCard_Project
   }
 `)
 

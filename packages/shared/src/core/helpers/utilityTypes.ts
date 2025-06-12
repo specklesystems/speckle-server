@@ -16,6 +16,8 @@ export type PartialNullable<T> = {
   [K in keyof T]?: T[K] | null
 }
 
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
+
 type NullableKeys<T> = {
   [K in keyof T]: T[K] extends NonNullable<T[K]> ? never : K
 }[keyof T]

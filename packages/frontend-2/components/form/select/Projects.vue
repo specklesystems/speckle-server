@@ -11,6 +11,7 @@
     :name="name || 'projects'"
     :label-id="labelId"
     :button-id="buttonId"
+    :tooltip-text="tooltipText"
     by="id"
   >
     <template #nothing-selected>
@@ -133,6 +134,15 @@ const props = defineProps({
   ownedOnly: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Whether to only return projects within a specific workspace
+   */
+  workspaceId: {
+    type: String as PropType<Optional<string>>
+  },
+  tooltipText: {
+    type: String as PropType<Optional<string>>
   }
 })
 
@@ -155,10 +165,11 @@ const invokeSearch = async (search: string) => {
   if (!isLoggedIn.value) return []
   const results = await apollo.query({
     query: searchProjectsQuery,
-    variables: {
+    variables: computed(() => ({
       search: search.trim().length ? search : null,
-      onlyWithRoles: props.ownedOnly ? [Roles.Stream.Owner] : null
-    }
+      onlyWithRoles: props.ownedOnly ? [Roles.Stream.Owner] : null,
+      ...(props.workspaceId && { workspaceId: props.workspaceId })
+    })).value
   })
   return results.data.activeUser?.projects.items || []
 }

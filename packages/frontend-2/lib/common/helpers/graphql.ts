@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { isNullOrUndefined, isUndefinedOrVoid } from '@speckle/shared'
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { ApolloError, defaultDataIdFromObject } from '@apollo/client/core'
@@ -9,10 +7,11 @@ import type {
   TypedDocumentNode,
   ServerError,
   ServerParseError,
-  ApolloCache
+  ApolloCache,
+  Unmasked
 } from '@apollo/client/core'
 import { GraphQLError } from 'graphql'
-import type { DocumentNode } from 'graphql'
+import type { DocumentNode, GraphQLFormattedError } from 'graphql'
 import {
   flatten,
   has,
@@ -27,7 +26,7 @@ import {
 } from 'lodash-es'
 import type { Modifier, ModifierDetails, Reference } from '@apollo/client/cache'
 import type { Get, PartialDeep, Paths, ReadonlyDeep, Tagged } from 'type-fest'
-import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
+import type { NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 import dayjs from 'dayjs'
@@ -35,7 +34,8 @@ import { base64Encode } from '~/lib/common/helpers/encodeDecode'
 import type { ErrorResponse } from '@apollo/client/link/error'
 import type {
   AllObjectFieldArgTypes,
-  AllObjectTypes
+  AllObjectTypes,
+  PermissionCheckResult
 } from '~/lib/common/generated/gql/graphql'
 
 /**
@@ -117,7 +117,7 @@ export function isInvalidAuth(error: ApolloError | NetworkError) {
 export function convertThrowIntoFetchResult(
   err: unknown
 ): FetchResult<undefined> & { apolloError?: ApolloError; isInvalidAuth: boolean } {
-  let gqlErrors: readonly GraphQLError[]
+  let gqlErrors: readonly GraphQLFormattedError[]
   let apolloError: Optional<ApolloError> = undefined
   if (err instanceof ApolloError) {
     gqlErrors = err.graphQLErrors
@@ -154,7 +154,7 @@ export function convertThrowIntoFetchResult(
  * Get first error message from a GQL errors array
  */
 export function getFirstErrorMessage(
-  errs: readonly GraphQLError[] | undefined | null,
+  errs: readonly GraphQLError[] | readonly GraphQLFormattedError[] | undefined | null,
   fallbackMessage = 'An unexpected issue occurred'
 ): string {
   return errs?.[0]?.message || fallbackMessage
@@ -176,7 +176,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
    * mutate anything being passed into this function! E.g. if you want to mutate arrays,
    * create new arrays through slice()/filter() instead
    */
-  updater: (data: TData) => TData | undefined,
+  updater: (data: Unmasked<TData>) => Unmasked<TData> | undefined,
   options: Partial<{
     /**
      * Whether to suppress errors that occur when the fragment being queried
@@ -203,7 +203,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     )
   }
 
-  const readData = (): TData | null => {
+  const readData = (): Unmasked<TData> | null => {
     if (fragment) {
       return cache.readFragment(fragment)
     } else if (query) {
@@ -213,7 +213,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     }
   }
 
-  const writeData = (data: TData): boolean => {
+  const writeData = (data: Unmasked<TData>): boolean => {
     if (fragment) {
       cache.writeFragment({ ...fragment, data, overwrite })
       return true
@@ -486,7 +486,9 @@ export function evictObjectFields<
   )
 }
 
-export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
+export const resolveGenericStatusCode = (
+  errors: readonly GraphQLError[] | readonly GraphQLFormattedError[]
+) => {
   if (errors.some((e) => e.extensions?.code === 'FORBIDDEN')) return 403
   if (
     errors.some((e) =>
@@ -508,7 +510,10 @@ export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
   return 500
 }
 
-export const errorFailedAtPathSegment = (error: GraphQLError, segment: string) => {
+export const errorFailedAtPathSegment = (
+  error: GraphQLError | GraphQLFormattedError,
+  segment: string
+) => {
   const path = error.path || []
   return path[path.length - 1] === segment
 }
@@ -746,4 +751,64 @@ export const modifyObjectField = <
     },
     options
   )
+}
+
+export const hasErrorWith = (params: {
+  errors: readonly GraphQLFormattedError[] | undefined
+  codes?: Array<string | RegExp>
+  message?: string
+}) => {
+  const { errors, message, codes } = params
+  if (!errors?.length) return undefined
+  if (!message?.length && !codes?.length) return undefined
+
+  return errors.find((e) => {
+    const hasMessage = message && e.message.toLowerCase().includes(message)
+    const hasCodes =
+      codes &&
+      codes.some((testCode) => {
+        const code = e.extensions?.code
+        if (!code || !isString(code)) return false
+        return isString(testCode) ? code === testCode : code.match(testCode)
+      })
+    return hasMessage || hasCodes
+  })
+}
+
+export const errorsToAuthResult = (params: {
+  errors: readonly GraphQLFormattedError[] | undefined
+}): PermissionCheckResult => {
+  const { errors } = params
+  if (!errors?.length) return { authorized: true, message: 'OK', code: 'OK' }
+
+  // Prioritize common error codes
+  const commonAuthError = hasErrorWith({
+    errors,
+    codes: [
+      /forbidden/i,
+      /unauthorized/i,
+      /not[_\s]found/i,
+      /not[_\s]authorized/i,
+      'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
+    ]
+  })
+  if (commonAuthError) {
+    return {
+      authorized: false,
+      code: commonAuthError.extensions!.code as string,
+      message: commonAuthError.message,
+      payload: commonAuthError.extensions || null
+    }
+  }
+
+  const firstError = errors[0]
+  return {
+    authorized: false,
+    code:
+      firstError.extensions?.code && isString(firstError.extensions?.code)
+        ? firstError.extensions?.code
+        : 'UNKNOWN_ERROR',
+    message: firstError.message,
+    payload: firstError.extensions || null
+  }
 }
