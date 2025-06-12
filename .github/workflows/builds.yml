@@ -51,7 +51,6 @@ jobs:
 
   docker-build-frontend2:
     runs-on: blacksmith
-    if: false # TODO: delete
     name: Frontend2
     steps:
       - name: Login to Docker Hub
@@ -108,7 +107,6 @@ jobs:
 
   docker-build-webhook-service:
     runs-on: blacksmith
-    if: false # TODO: delete
     name: Webhook service
     steps:
       - name: Login to Docker Hub
@@ -131,7 +129,6 @@ jobs:
 
   docker-build-fileimport-service:
     runs-on: blacksmith
-    if: false # TODO: delete
     name: File import service
     steps:
       - name: Login to Docker Hub
@@ -176,7 +173,6 @@ jobs:
 
   docker-build-monitor-deployment:
     runs-on: blacksmith
-    if: false # TODO: delete
     name: monitor container
     steps:
       - name: Login to Docker Hub
@@ -206,6 +202,12 @@ jobs:
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:

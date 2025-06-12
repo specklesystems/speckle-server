@@ -29,3 +29,13 @@ jobs:
       IMAGE_PREFIX: 'ghcr.io/specklesystems'
       PUBLISH: false # do not publish the sourcemaps or include the version in frontend-2 builds for pull requests
     secrets: inherit
+
+  #TODO remove this job once the deployment tests are stable
+  deployment-tests:
+    needs: [builds, get-version]
+    uses: ./.github/workflows/deployment-tests.yml
+    with:
+      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+      DOCKERHUB_USERNAME: 'speckledevops'
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+    secrets: inherit
