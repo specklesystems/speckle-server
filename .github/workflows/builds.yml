@@ -24,37 +24,19 @@ jobs:
     name: Server
     steps:
       - name: Login to Docker Hub
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push to registry
-        if: ${{ inputs.PUSH_IMAGES }}
+      - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/server/Dockerfile
           build-args: |
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
-      - name: Build and push to artifact
-        if: ${{ inputs.PUSH_IMAGES == false }}
-        uses: useblacksmith/build-push-action@v1
-        with:
-          push: true
-          tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
-          file: ./packages/server/Dockerfile
-          outputs: type=docker,dest=/tmp/server.tar
-          build-args: |
-            SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
-      - name: Upload Artifact
-        if: ${{ inputs.PUSH_IMAGES == false }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.workflow }}-${{ github.ref_name//\//- }}"
-          overwrite: false
-          path: /tmp/server.tar
-          retention-days: 7
 
   docker-build-frontend2:
     runs-on: blacksmith
@@ -62,6 +44,7 @@ jobs:
     name: Frontend2
     steps:
       - name: Login to Docker Hub
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -70,7 +53,7 @@ jobs:
         uses: useblacksmith/build-push-action@v1
         if: ${{ inputs.PUSH_IMAGES }}
         with:
-          push: true
+          push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/frontend-2/Dockerfile
           build-args: |
@@ -91,6 +74,7 @@ jobs:
     name: Preview service
     steps:
       - name: Login to Docker Hub
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -108,6 +92,7 @@ jobs:
     name: Webhook service
     steps:
       - name: Login to Docker Hub
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -125,6 +110,7 @@ jobs:
     name: File import service
     steps:
       - name: Login to Docker Hub
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -142,6 +128,7 @@ jobs:
     name: Test deploy util
     steps:
       - name: Login to Docker Hub
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -159,6 +146,7 @@ jobs:
     name: monitor container
     steps:
       - name: Login to Docker Hub
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -176,6 +164,7 @@ jobs:
     name: Docker compose ingress
     steps:
       - name: Login to Docker Hub
+        if: ${{ inputs.PUSH_IMAGES }}
         uses: docker/login-action@v3
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
@@ -213,14 +202,7 @@ jobs:
     # manual
     name: Test deployment
     steps:
-      - name: Download artifacts (Docker images) from previous workflows
-        uses: actions/download-artifact@v2
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ github.workflow }}-${{ github.ref_name//\//- }}"
-          path: /tmp
       - name: Load Docker image
+        # determine what might exist on the cache
         run: |
-          docker load --input /tmp/server.tar
-          docker image ls -a
+          docker image ls --all
