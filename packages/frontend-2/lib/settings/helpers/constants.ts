@@ -15,7 +15,7 @@ export const WorkspaceRoleDescriptions: Record<string, string> = {
 }
 
 export const WorkspaceSeatTypeDescription: Record<
-  WorkspaceRoles,
+  WorkspaceRoles | 'any',
   Record<WorkspaceSeatType, string>
 > = {
   [Roles.Workspace.Admin]: {
@@ -33,5 +33,9 @@ export const WorkspaceSeatTypeDescription: Record<
       "Guests on an editor seat can contribute to the projects they're invited to",
     [SeatTypes.Viewer]:
       "Guests on a viewer seat can view and comment on the projects they're invited to"
+  },
+  any: {
+    [SeatTypes.Editor]: 'Users on an editor seat can create and contribute to projects',
+    [SeatTypes.Viewer]: 'Users on a viewer seat can view and comment on projects'
   }
 }

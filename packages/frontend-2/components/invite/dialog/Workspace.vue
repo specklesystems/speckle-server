@@ -1,41 +1,48 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    :buttons="dialogButtons"
-    prevent-close-on-click-outside
-    max-width="md"
-    @update:open="isOpen = false"
-  >
-    <template #header>{{ title }}</template>
-    <InviteDialogWorkspaceSelectRole
-      v-if="isSelectingRole"
-      v-model:selected-role="selectedRole"
-      :workspace-name="workspace?.name || ''"
-    />
-    <InviteDialogSharedSelectUsers
-      v-else
-      ref="selectUsers"
-      :invites="invites"
-      :allowed-domains="allowedDomains"
-      :target-role="selectedRole"
+  <div>
+    <LayoutDialog
+      v-if="workspace"
+      v-model:open="isOpen"
+      :buttons="dialogButtons"
+      prevent-close-on-click-outside
+      max-width="md"
+      @update:open="isOpen = false"
     >
-      <template #project>
-        <FormSelectProjects
-          v-if="selectedRole === Roles.Workspace.Guest"
-          v-model="project"
-          label="Project (optional)"
-          show-label
-          mount-menu-on-body
-          allow-unset
-          :workspace-id="workspace?.id"
-          class="mb-4"
-        />
-      </template>
-      <p class="text-body-2xs text-foreground-2 leading-5">
-        {{ infoText }}
-      </p>
-    </InviteDialogSharedSelectUsers>
-  </LayoutDialog>
+      <template #header>{{ title }}</template>
+      <InviteDialogWorkspaceSelectRole
+        v-if="isSelectingRole"
+        v-model:selected-role="selectedRole"
+        :workspace-name="workspace?.name || ''"
+      />
+      <InviteDialogSharedSelectUsers
+        v-else
+        ref="selectUsers"
+        :invites="invites"
+        :allowed-domains="allowedDomains"
+        :target-role="selectedRole"
+        :workspace="workspace"
+      >
+        <template #project>
+          <FormSelectProjects
+            v-if="selectedRole === Roles.Workspace.Guest"
+            v-model="project"
+            label="Project (optional)"
+            show-label
+            mount-menu-on-body
+            allow-unset
+            :workspace-id="workspace?.id"
+            class="mb-4"
+          />
+        </template>
+      </InviteDialogSharedSelectUsers>
+    </LayoutDialog>
+    <WorkspaceAdditionalSeatsChargeDisclaimer
+      v-model:open="showAdditionalSeatsDisclaimer"
+      :editor-count="purchasableEditorCount"
+      :workspace-slug="workspace?.slug || ''"
+      @confirm="onSelectUsersSubmit"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -44,12 +51,17 @@ import { graphql } from '~/lib/common/generated/gql'
 import type {
   InviteDialogWorkspace_WorkspaceFragment,
   WorkspaceInviteCreateInput,
-  ProjectInviteCreateInput,
-  FormSelectProjects_ProjectFragment
+  FormSelectProjects_ProjectFragment,
+  WorkspaceProjectInviteCreateInput
 } from '~/lib/common/generated/gql/graphql'
 import type { InviteWorkspaceItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
-import { Roles, type MaybeNullOrUndefined, type WorkspaceRoles } from '@speckle/shared'
+import {
+  Roles,
+  SeatTypes,
+  type MaybeNullOrUndefined,
+  type WorkspaceRoles
+} from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/management'
@@ -69,6 +81,13 @@ graphql(`
       domain
       id
     }
+    seats {
+      editors {
+        available
+      }
+    }
+    ...InviteDialogSharedSelectUsers_Workspace
+    ...WorkspacesPlan_Workspace
   }
 `)
 
@@ -82,18 +101,13 @@ const inviteToWorkspace = useInviteUserToWorkspace()
 const inviteToProject = useInviteUserToProject()
 
 const workspaceSlug = computed(() => props.workspace?.slug || '')
-const { isSelfServePlan } = useWorkspacePlan(workspaceSlug.value)
+const { isPaidPlan } = useWorkspacePlan(workspaceSlug)
 
+const showAdditionalSeatsDisclaimer = ref(false)
 const isSelectingRole = ref(true)
 const selectedRole = ref<WorkspaceRoles>(Roles.Workspace.Member)
 const project = ref<FormSelectProjects_ProjectFragment>()
-const invites = ref<InviteWorkspaceItem[]>([
-  {
-    ...emptyInviteWorkspaceItem,
-    workspaceRole: selectedRole.value,
-    serverRole: Roles.Server.User
-  }
-])
+const invites = ref<InviteWorkspaceItem[]>([])
 const selectUsers = ref<{
   submitForm: () => Promise<InviteWorkspaceItem[]>
 }>()
@@ -123,24 +137,14 @@ const allowedDomains = computed(() =>
     ? props.workspace.domains?.map((d) => d.domain)
     : null
 )
-const infoText = computed(() => {
-  if (selectedRole.value === Roles.Workspace.Member) {
-    if (props.workspace?.defaultSeatType === 'editor') {
-      if (isSelfServePlan.value) {
-        return `Members join your workspace on an Editor seat by default. Editor seats may incur charges based on your workspace plan. You can change their seat type to Viewer after they join if they only need to view and comment.`
-      }
-      return `Members join your workspace on an Editor seat by default. Editor seats have additional permissions compared to Viewer seats. You can change their seat type to Viewer after they join if they only need to view and comment.`
-    }
-    return `Inviting is free. Members join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to projects beyond viewing and commenting.`
-  }
 
-  if (props.workspace?.defaultSeatType === 'editor') {
-    if (isSelfServePlan.value) {
-      return `Guests join your workspace on an Editor seat by default. Editor seats may incur charges based on your workspace plan. You can change their seat type to Viewer after they join if they only need to view and comment.`
-    }
-    return `Guests join your workspace on an Editor seat by default. Editor seats have additional permissions compared to Viewer seats. You can change their seat type to Viewer after they join if they only need to view and comment.`
-  }
-  return `Inviting is free. Guests join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to a project beyond viewing and commenting.`
+const purchasableEditorCount = computed(() => {
+  if (!isPaidPlan.value) return 0
+  const seatsAvailable = props.workspace?.seats?.editors?.available || 0
+  const editorSeatsToAdd = invites.value.filter(
+    (i) => i.seatType === SeatTypes.Editor
+  ).length
+  return Math.max(0, editorSeatsToAdd - seatsAvailable)
 })
 
 const onBack = () => {
@@ -155,25 +159,33 @@ const onSubmit = async () => {
   if (isSelectingRole.value) {
     isSelectingRole.value = false
   } else {
-    const invites = await selectUsers.value?.submitForm()
-    if (invites?.length) {
-      onSelectUsersSubmit(invites)
+    const newInvites = await selectUsers.value?.submitForm()
+    if (newInvites?.length) {
+      invites.value = newInvites
+
+      if (purchasableEditorCount.value > 0) {
+        showAdditionalSeatsDisclaimer.value = true
+      } else {
+        onSelectUsersSubmit()
+      }
     }
   }
 }
 
 const canBeMember = (email: string) => matchesDomainPolicy(email, allowedDomains.value)
 
-const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
-  invites.value = updatedInvites
-
+const onSelectUsersSubmit = async () => {
   if (!invites.value.length || !props.workspace?.id) return
 
   if (selectedRole.value === Roles.Workspace.Guest && project.value) {
-    const inputs: ProjectInviteCreateInput[] = invites.value.map((invite) => ({
-      role: Roles.Stream.Reviewer,
+    const inputs: WorkspaceProjectInviteCreateInput[] = invites.value.map((invite) => ({
+      role:
+        invite.seatType === SeatTypes.Editor
+          ? Roles.Stream.Contributor
+          : Roles.Stream.Reviewer,
       email: invite.email,
-      workspaceRole: selectedRole.value
+      workspaceRole: selectedRole.value,
+      seatType: invite.seatType
     }))
 
     await inviteToProject(project.value.id, inputs)
@@ -182,7 +194,8 @@ const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
       role: canBeMember(invite.email)
         ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
         : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest),
-      email: invite.email
+      email: invite.email,
+      seatType: invite.seatType
     }))
 
     await inviteToWorkspace({ workspaceId: props.workspace.id, inputs })
@@ -202,18 +215,32 @@ const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
   })
 }
 
+const initInvites = () => {
+  invites.value = [
+    {
+      ...emptyInviteWorkspaceItem,
+      seatType: props.workspace?.defaultSeatType || SeatTypes.Viewer,
+      workspaceRole: selectedRole.value,
+      serverRole: Roles.Server.User
+    }
+  ]
+}
+
 watch(isOpen, (newVal) => {
   if (newVal) {
     isSelectingRole.value = true
     selectedRole.value = Roles.Workspace.Member
     project.value = undefined
-    invites.value = [
-      {
-        ...emptyInviteWorkspaceItem,
-        workspaceRole: Roles.Workspace.Member,
-        serverRole: Roles.Server.User
-      }
-    ]
+    initInvites()
   }
 })
+
+watch(
+  () => props.workspace,
+  (newVal) => {
+    if (newVal) {
+      initInvites()
+    }
+  }
+)
 </script>
