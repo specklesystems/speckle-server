@@ -77,9 +77,11 @@
         </div>
       </template>
       <template #email="{ item }">
-        <span class="text-foreground-2 truncate">
-          {{ canReadMemberEmail ? item.email : '-' }}
-        </span>
+        <div class="flex">
+          <span class="text-foreground-2 truncate">
+            {{ canReadMemberEmail ? item.email : '-' }}
+          </span>
+        </div>
       </template>
       <template #seat="{ item }">
         <SettingsWorkspacesMembersTableSeatType
