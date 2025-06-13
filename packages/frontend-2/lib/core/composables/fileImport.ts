@@ -8,7 +8,7 @@ import type {
 } from '~~/lib/form/composables/fileUpload'
 import { importFile } from '~~/lib/core/api/fileImport'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
-import { BlobUploadStatus } from '~~/lib/core/api/blobStorage'
+import { blobUploadStatus } from '~~/lib/core/api/blobStorage'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
@@ -112,7 +112,7 @@ export function useFileImport(params: {
       onFileUploadedCb?.(upload.value)
     } catch (e) {
       upload.value.result = {
-        uploadStatus: BlobUploadStatus.Failure,
+        uploadStatus: blobUploadStatus.Error,
         uploadError: ensureError(e).message,
         formKey: 'file'
       }

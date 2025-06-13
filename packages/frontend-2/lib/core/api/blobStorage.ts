@@ -6,7 +6,7 @@ import type {
 } from '~~/lib/form/composables/fileUpload'
 import type { Optional } from '@speckle/shared'
 import type { Merge, SetRequired } from 'type-fest'
-import { BlobUploadStatus } from '@speckle/ui-components'
+import { blobUploadStatus } from '@speckle/shared'
 import type { BlobPostResultItem } from '@speckle/ui-components'
 
 export type BlobUploadPrincipal = {
@@ -214,7 +214,7 @@ export function uploadFiles(params: {
       uploadFile.progress = 100
       uploadFile.result = uploadResults.find((r) => r.formKey === uploadFile.id) || {
         uploadError: getErrorMessage('Unable to resolve upload results'),
-        uploadStatus: BlobUploadStatus.Failure,
+        uploadStatus: blobUploadStatus.Error,
         formKey: uploadFile.id
       }
     }
@@ -231,7 +231,7 @@ export function uploadFiles(params: {
       uploadFile.progress = 100
       uploadFile.result = uploadResults.find((r) => r.formKey === uploadFile.id) || {
         uploadError: getErrorMessage('Upload request failed unexpectedly'),
-        uploadStatus: BlobUploadStatus.Failure,
+        uploadStatus: blobUploadStatus.Error,
         formKey: uploadFile.id
       }
     }
@@ -272,5 +272,5 @@ export async function deleteBlob(params: {
   }
 }
 
-export { BlobUploadStatus }
+export { blobUploadStatus }
 export type { BlobPostResultItem }
