@@ -1,7 +1,7 @@
 <template>
   <section class="py-8">
     <SettingsSectionHeader subheading title="Domain protection" />
-    <p class="text-body-sm text-foreground-2 mt-2 mb-6">
+    <p class="text-body-xs text-foreground-2 mt-2 mb-6">
       Secure access to the workspace with your verified domains.
     </p>
 
