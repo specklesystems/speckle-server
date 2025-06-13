@@ -26,13 +26,14 @@ import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs
 import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { expect } from 'chai'
 import { UploadFileStream } from '@/modules/blobstorage/domain/operations'
-import { BlobStorageItem, BlobUploadStatus } from '@/modules/blobstorage/domain/types'
+import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import {
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { waitForRegionUser } from '@/test/speckle-helpers/regions'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { blobUploadStatus } from '@speckle/shared'
 
 type UploadFileStreamStreamData = Parameters<UploadFileStream>[0]
 type UploadFileStreamBlobData = Parameters<UploadFileStream>[1]
@@ -367,7 +368,7 @@ describe('Blob storage @blobstorage', () => {
       blobId,
       fileName: blob.fileName,
       fileSize: null,
-      uploadStatus: BlobUploadStatus.Error,
+      uploadStatus: blobUploadStatus.Error,
       uploadError: 'File size limit reached'
     })
   })
@@ -382,7 +383,7 @@ describe('Blob storage @blobstorage', () => {
     expect(markResult).to.deep.equal({
       blobId,
       fileName: blob.fileName,
-      uploadStatus: BlobUploadStatus.Completed,
+      uploadStatus: blobUploadStatus.Completed,
       fileSize
     })
   })

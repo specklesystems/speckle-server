@@ -8,8 +8,7 @@ import {
 } from '@/modules/blobstorage/domain/operations'
 import {
   BlobStorageItem,
-  BlobStorageItemInput,
-  BlobUploadStatus
+  BlobStorageItemInput
 } from '@/modules/blobstorage/domain/types'
 import { cursorFromRows, decodeCursor } from '@/modules/blobstorage/helpers/db'
 import { buildTableHelper } from '@/modules/core/dbSchema'
@@ -18,7 +17,7 @@ import {
   NotFoundError,
   ResourceMismatch
 } from '@/modules/shared/errors'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { BlobUploadStatus, MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { Knex } from 'knex'
 
 export const BlobStorage = buildTableHelper('blob_storage', [

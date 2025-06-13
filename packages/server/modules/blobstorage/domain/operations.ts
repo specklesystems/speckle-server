@@ -1,9 +1,13 @@
 import {
   BlobStorageItem,
-  BlobStorageItemInput,
-  BlobUploadStatus
+  BlobStorageItemInput
 } from '@/modules/blobstorage/domain/types'
-import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import {
+  BlobUploadStatus,
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional
+} from '@speckle/shared'
 import type { Readable } from 'stream'
 import { StoreFileStream } from '@/modules/blobstorage/domain/storageOperations'
 

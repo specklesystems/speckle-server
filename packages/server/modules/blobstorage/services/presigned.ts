@@ -9,9 +9,13 @@ import type {
 } from '@/modules/blobstorage/domain/operations'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { UserInputError } from '@/modules/core/errors/userinput'
-import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 import type { Logger } from '@/observability/logging'
-import { ensureError, throwUncoveredError, type Optional } from '@speckle/shared'
+import {
+  blobUploadStatus,
+  ensureError,
+  throwUncoveredError,
+  type Optional
+} from '@speckle/shared'
 import {
   AlreadyRegisteredBlobError,
   StoredBlobAccessError
@@ -96,13 +100,13 @@ export const registerCompletedUploadFactory =
 
     // If the blob already exists and is not pending, we can return it directly as it has already been registered
     switch (existingBlobs[0].uploadStatus) {
-      case BlobUploadStatus.Completed:
+      case blobUploadStatus.Completed:
         throw new AlreadyRegisteredBlobError('Blob already registered and completed')
-      case BlobUploadStatus.Error:
+      case blobUploadStatus.Error:
         throw new AlreadyRegisteredBlobError(
           existingBlobs[0].uploadError || 'Blob already registered with an error'
         )
-      case BlobUploadStatus.Pending:
+      case blobUploadStatus.Pending:
         break //continue on to register the completed upload
       default:
         throwUncoveredError(existingBlobs[0].uploadStatus)
@@ -137,10 +141,10 @@ export const registerCompletedUploadFactory =
         id: blobId,
         filter: {
           streamId: projectId,
-          uploadStatus: BlobUploadStatus.Pending
+          uploadStatus: blobUploadStatus.Pending
         },
         item: {
-          uploadStatus: BlobUploadStatus.Error,
+          uploadStatus: blobUploadStatus.Error,
           uploadError:
             '[FILE_SIZE_EXCEEDED] File size exceeds maximum allowed size for the project at the time of upload',
           fileSize: blobMetadata.contentLength,
@@ -156,10 +160,10 @@ export const registerCompletedUploadFactory =
       id: blobId,
       filter: {
         streamId: projectId,
-        uploadStatus: BlobUploadStatus.Pending
+        uploadStatus: blobUploadStatus.Pending
       },
       item: {
-        uploadStatus: BlobUploadStatus.Completed,
+        uploadStatus: blobUploadStatus.Completed,
         fileSize: blobMetadata.contentLength,
         fileHash: blobMetadata.eTag
       }

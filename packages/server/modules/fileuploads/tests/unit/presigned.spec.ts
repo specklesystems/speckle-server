@@ -1,10 +1,10 @@
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
+import { blobUploadStatus } from '@speckle/shared'
 
 describe('Presigned @blobstorage', async () => {
   describe('register a completed blob upload', () => {
@@ -21,7 +21,7 @@ describe('Presigned @blobstorage', async () => {
       fileName,
       fileType: 'stl',
       fileSize: 101,
-      uploadStatus: BlobUploadStatus.Completed,
+      uploadStatus: blobUploadStatus.Completed,
       uploadError: null,
       createdAt: new Date(),
       fileHash: cryptoRandomString({ length: 32 }),
@@ -38,11 +38,12 @@ describe('Presigned @blobstorage', async () => {
       fileSize: 101,
       uploadComplete: false,
       uploadDate: new Date(),
-      uploadStatus: BlobUploadStatus.Completed,
+      uploadStatus: blobUploadStatus.Completed,
       convertedStatus: FileUploadConvertedStatus.Queued,
       convertedLastUpdate: new Date(),
       convertedMessage: null,
-      convertedCommitId: null
+      convertedCommitId: null,
+      metadata: null
     })
     const fakeGetFileInfo = async () => ({
       id: blobId,
@@ -54,11 +55,12 @@ describe('Presigned @blobstorage', async () => {
       fileSize: 101,
       uploadComplete: false,
       uploadDate: new Date(),
-      uploadStatus: BlobUploadStatus.Completed,
+      uploadStatus: blobUploadStatus.Completed,
       convertedStatus: FileUploadConvertedStatus.Queued,
       convertedLastUpdate: new Date(),
       convertedMessage: null,
-      convertedCommitId: null
+      convertedCommitId: null,
+      metadata: null
     })
     // const fakeGetModelsByIds = async () => [
     //   {

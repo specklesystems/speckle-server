@@ -15,7 +15,7 @@ import {
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
-import { Roles, TIME } from '@speckle/shared'
+import { blobUploadStatus, Roles, TIME } from '@speckle/shared'
 import { createProject } from '@/test/projectHelper'
 import { createTestUser } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
@@ -35,7 +35,6 @@ import {
   GetBlobMetadata,
   RegisterCompletedUpload
 } from '@/modules/blobstorage/domain/operations'
-import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 import { getFeatureFlags } from '@speckle/shared/environment'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
@@ -163,7 +162,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
         })
 
         expect(storedBlob).to.exist
-        expect(storedBlob.uploadStatus).to.equal(BlobUploadStatus.Completed)
+        expect(storedBlob.uploadStatus).to.equal(blobUploadStatus.Completed)
         expect(storedBlob.fileHash).to.equal(expectedETag)
         expect(storedBlob.fileSize).to.equal(fileSize)
       })
@@ -229,7 +228,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
           blobIds: [blobId]
         })
         expect(blobs).to.have.lengthOf(1)
-        expect(blobs[0].uploadStatus).to.equal(BlobUploadStatus.Error)
+        expect(blobs[0].uploadStatus).to.equal(blobUploadStatus.Error)
         expect(blobs[0].uploadError).to.include('[FILE_SIZE_EXCEEDED]')
       })
       it('re-registering should be idempotent', async () => {
@@ -260,7 +259,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
         })
 
         expect(storedBlob).to.exist
-        expect(storedBlob.uploadStatus).to.equal(BlobUploadStatus.Completed)
+        expect(storedBlob.uploadStatus).to.equal(blobUploadStatus.Completed)
         expect(storedBlob.fileHash).to.equal(expectedETag)
 
         const secondAttempt = await expectToThrow(
@@ -352,7 +351,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
         })
 
         expect(storedBlob).to.exist
-        expect(storedBlob.uploadStatus).to.equal(BlobUploadStatus.Completed)
+        expect(storedBlob.uploadStatus).to.equal(blobUploadStatus.Completed)
         expect(storedBlob.fileHash).to.equal(expectedETag)
         expect(storedBlob.fileSize).to.equal(fileSize)
 

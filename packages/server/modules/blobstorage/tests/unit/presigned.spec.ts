@@ -6,9 +6,9 @@ import { UserInputError } from '@/modules/core/errors/userinput'
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 import { testLogger } from '@/observability/logging'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { blobUploadStatus } from '@speckle/shared'
 
 describe('Presigned @blobstorage', async () => {
   describe('generate a presigned URL', () => {
@@ -23,7 +23,7 @@ describe('Presigned @blobstorage', async () => {
           ...blob,
           fileSize: 0,
           fileType: blob.fileType || 'unknown',
-          uploadStatus: BlobUploadStatus.Pending,
+          uploadStatus: blobUploadStatus.Pending,
           uploadError: null,
           createdAt: new Date(),
           fileHash: null
@@ -51,7 +51,7 @@ describe('Presigned @blobstorage', async () => {
           ...blob,
           fileSize: 0,
           fileType: blob.fileType || 'unknown',
-          uploadStatus: BlobUploadStatus.Pending,
+          uploadStatus: blobUploadStatus.Pending,
           uploadError: null,
           createdAt: new Date(),
           fileHash: null
@@ -80,7 +80,7 @@ describe('Presigned @blobstorage', async () => {
           ...blob,
           fileSize: 0,
           fileType: blob.fileType || 'unknown',
-          uploadStatus: BlobUploadStatus.Pending,
+          uploadStatus: blobUploadStatus.Pending,
           uploadError: null,
           createdAt: new Date(),
           fileHash: null
@@ -107,7 +107,7 @@ describe('Presigned @blobstorage', async () => {
         fileName: `test-file-${cryptoRandomString({ length: 10 })}.stl`,
         fileType: 'stl',
         fileSize: null,
-        uploadStatus: BlobUploadStatus.Pending,
+        uploadStatus: blobUploadStatus.Pending,
         uploadError: null,
         createdAt: new Date(),
         fileHash: null,
@@ -122,7 +122,7 @@ describe('Presigned @blobstorage', async () => {
       fileName: `test-file-${cryptoRandomString({ length: 10 })}.stl`,
       fileType: 'stl',
       fileSize: 101,
-      uploadStatus: BlobUploadStatus.Completed,
+      uploadStatus: blobUploadStatus.Completed,
       uploadError: null,
       createdAt: new Date(),
       fileHash: cryptoRandomString({ length: 32 }),

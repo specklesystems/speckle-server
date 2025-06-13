@@ -1,12 +1,5 @@
-import { Nullable } from '@speckle/shared'
+import { BlobUploadStatus, Nullable } from '@speckle/shared'
 import { SetOptional } from 'type-fest'
-
-export const BlobUploadStatus = <const>{
-  Pending: 0,
-  Completed: 1,
-  Error: 2
-}
-export type BlobUploadStatus = (typeof BlobUploadStatus)[keyof typeof BlobUploadStatus]
 
 export type BlobStorageItem = {
   id: string
