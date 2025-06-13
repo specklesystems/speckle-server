@@ -56,7 +56,11 @@ export function useFileImport(params: {
   }
 
   const mp = useMixpanel()
-  const onFilesSelected = async (params: { files: UploadableFileItem[] }) => {
+  const onFilesSelected = async (params: {
+    files: UploadableFileItem[]
+    modelName?: string
+    modelDescription?: string
+  }) => {
     if (isUploading.value || !authToken.value) return
 
     const file = params.files[0]
@@ -84,7 +88,8 @@ export function useFileImport(params: {
         {
           file: upload.value.file,
           projectId: unref(project).id,
-          modelName: modelName.value || undefined,
+          modelName: params.modelName || modelName.value || undefined,
+          modelDescription: params.modelDescription,
           authToken: authToken.value,
           apiOrigin
         },

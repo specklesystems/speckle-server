@@ -31,6 +31,7 @@ export const fileuploadRouterFactory = (): Router => {
       const branchName = req.params.branchName || 'main'
       const projectId = req.params.streamId
       const userId = req.context.userId
+
       if (!userId) {
         throw new UnauthorizedError('User not authenticated.')
       }
