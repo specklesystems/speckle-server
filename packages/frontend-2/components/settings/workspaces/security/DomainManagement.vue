@@ -1,8 +1,8 @@
 <template>
   <section class="py-8">
-    <SettingsSectionHeader subheading title="Connect domains to workspace" />
+    <SettingsSectionHeader subheading title="Verified domains" />
     <p class="text-body-xs text-foreground-2 mt-2 mb-6">
-      Connect verified domains to the workspace to enable various features below.
+      Connect verified domains to the workspace to enable security features below.
     </p>
 
     <div>
@@ -31,17 +31,23 @@
 
         <p
           v-else
-          class="text-body-xs text-center text-foreground-2 px-6 py-12 rounded-lg"
+          class="text-body-2xs text-center text-foreground-2 px-6 py-6 rounded-lg"
         >
-          No verified domains yet
+          No domains connected yet
         </p>
-
         <div
           class="flex justify-between items-center gap-8 border-t border-outline-2 rounded-b-lg px-6 py-3"
         >
-          <p class="text-body-2xs text-foreground-2">
-            Add a domain from your verified email addresses
-          </p>
+          <div class="flex items-center gap-1">
+            <p class="text-body-2xs text-foreground-2">Connect a verified domain</p>
+            <InformationCircleIcon
+              v-tippy="
+                'To connect a domain, you first need to verify an email address with that domain in your personal account settings. For example, if you verify example@company.com, you can then connect the company.com domain here.'
+              "
+              class="w-4 h-4 text-foreground-disabled"
+            />
+          </div>
+
           <div class="flex gap-1 min-w-[210px]">
             <div
               v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
@@ -65,7 +71,12 @@
                 </template>
               </FormSelectBase>
             </div>
-            <FormButton :disabled="!selectedDomain" size="sm" @click="handleAddDomain">
+            <FormButton
+              :disabled="!selectedDomain"
+              size="sm"
+              color="outline"
+              @click="handleAddDomain"
+            >
               Add
             </FormButton>
           </div>
@@ -81,6 +92,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { ShallowRef } from 'vue'
 import { blockedDomains, Roles } from '@speckle/shared'
 import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
+import { InformationCircleIcon } from '@heroicons/vue/20/solid'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 import type { SettingsWorkspacesSecurityDomainManagement_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'

@@ -1,15 +1,11 @@
 <template>
-  <section class="flex flex-col gap-2 border-t border-outline-2 py-8">
-    <div class="flex justify-between items-start">
-      <div class="flex flex-col">
-        <h4 class="text-heading-lg">Single sign-on</h4>
-        <p class="text-body-xs text-foreground-2">
-          Use your existing identity provider to authenticate users.
-        </p>
-      </div>
-    </div>
+  <section class="flex flex-col border-t border-outline-2 py-8">
+    <SettingsSectionHeader subheading title="Single Sign-On" />
+    <p class="text-body-xs text-foreground-2 mt-2 mb-6">
+      Use a third-party identity provider to authenticate users.
+    </p>
 
-    <div class="flex items-center mt-6">
+    <div class="flex items-center">
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">Enable SSO</p>
         <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
@@ -32,7 +28,12 @@
           </div>
         </div>
 
-        <FormButton v-else :to="settingsWorkspaceRoutes.billing.route(workspace.slug)">
+        <FormButton
+          v-else
+          size="sm"
+          color="outline"
+          :to="settingsWorkspaceRoutes.billing.route(workspace.slug)"
+        >
           Upgrade to Business
         </FormButton>
       </div>

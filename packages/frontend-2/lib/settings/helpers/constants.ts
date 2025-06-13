@@ -19,19 +19,17 @@ export const WorkspaceSeatTypeDescription: Record<
   Record<WorkspaceSeatType, string>
 > = {
   [Roles.Workspace.Admin]: {
-    [SeatTypes.Editor]:
-      'Members on an editor seat can create and contribute to projects',
-    [SeatTypes.Viewer]: 'Members on a viewer seat can view and comment on projects'
+    [SeatTypes.Editor]: 'Users on an Editor seat can create and contribute to projects',
+    [SeatTypes.Viewer]: 'Users on a Viewer seat can view and comment on projects'
   },
   [Roles.Workspace.Member]: {
-    [SeatTypes.Editor]:
-      'Members on an editor seat can create and contribute to projects',
-    [SeatTypes.Viewer]: 'Members on a viewer seat can view and comment on projects'
+    [SeatTypes.Editor]: 'Users on an Editor seat can create and contribute to projects',
+    [SeatTypes.Viewer]: 'Users on a Viewer seat can view and comment on projects'
   },
   [Roles.Workspace.Guest]: {
     [SeatTypes.Editor]:
-      "Guests on an editor seat can contribute to the projects they're invited to",
+      "Guests on an Editor seat can contribute to the projects they're invited to",
     [SeatTypes.Viewer]:
-      "Guests on a viewer seat can view and comment on the projects they're invited to"
+      "Guests on a Viewer seat can view and comment on the projects they're invited to"
   }
 }

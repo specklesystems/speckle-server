@@ -1,8 +1,8 @@
 <template>
   <section class="py-8">
-    <SettingsSectionHeader title="Workspace discoverability" subheading />
+    <SettingsSectionHeader title="Discoverable workspace" subheading />
     <p class="text-body-xs text-foreground-2 mt-2 mb-6">
-      Make it easy for coworkers to join the workspace
+      Make the workspace discoverable to coworkers for easy joining.
     </p>
 
     <div class="flex flex-col space-y-8">
@@ -12,7 +12,8 @@
             Enable workspace discoverability
           </p>
           <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-            Lets users discover the workspace if they sign up with a matching email.
+            Users can discover the workspace if they sign up with a verified email
+            domain.
           </p>
         </div>
         <div
@@ -195,7 +196,7 @@ const joinPolicy = computed({
 
 const radioOptions = shallowRef([
   {
-    title: 'Workspace admins have to accept a join request',
+    title: 'A workspace admin has to accept a join request',
     value: JoinPolicy.AdminApproval
   },
   {
