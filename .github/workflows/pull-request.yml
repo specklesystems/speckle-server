@@ -14,6 +14,12 @@ jobs:
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          sparse-checkout: |
+            .github/workflows/scripts/get_version.sh
+            .github/workflows/scripts/common.sh
+          fetch-depth: 1
+          fetch-tags: 1
       - run: git fetch origin 'refs/tags/*:refs/tags/*'
       - run: chmod +x ./get_version.sh ./common.sh
         working-directory: ./.github/workflows/scripts
