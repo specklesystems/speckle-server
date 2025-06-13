@@ -1456,7 +1456,8 @@ describe('Workspaces Invites GQL', () => {
           // Should have access to workspace visibility stream, not the other one
           await validateResourceAccess({
             shouldHaveAccess: accept,
-            streamId: myInviteTargetWorkspaceStream1.id
+            streamId: myInviteTargetWorkspaceStream1.id,
+            expectedWorkspaceSeatType: WorkspaceSeatType.Viewer
           })
           await validateResourceAccess({
             shouldHaveAccess: { workspace: accept, project: false },
@@ -1615,7 +1616,8 @@ describe('Workspaces Invites GQL', () => {
 
           await validateResourceAccess({
             shouldHaveAccess: accept,
-            streamId: myInviteTargetWorkspaceStream1.id
+            streamId: myInviteTargetWorkspaceStream1.id,
+            expectedWorkspaceSeatType: WorkspaceSeatType.Editor // admin role
           })
 
           const verifiedEmails = await findVerifiedEmailsByUserIdFactory({
@@ -1788,6 +1790,7 @@ describe('Workspaces Invites GQL', () => {
         await validateResourceAccess({
           shouldHaveAccess: true,
           expectedWorkspaceRole: Roles.Workspace.Guest,
+          expectedWorkspaceSeatType: WorkspaceSeatType.Viewer,
           expectedProjectRole: Roles.Stream.Reviewer,
           streamId: myInviteTargetWorkspaceStream1.id
         })
@@ -1845,6 +1848,9 @@ describe('Workspaces Invites GQL', () => {
             expectedWorkspaceRole: withRole
               ? Roles.Workspace.Admin
               : Roles.Workspace.Guest,
+            expectedWorkspaceSeatType: withRole
+              ? WorkspaceSeatType.Editor
+              : WorkspaceSeatType.Viewer,
             expectedProjectRole: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer,
             streamId: myInviteTargetWorkspaceStream1.id
           })
@@ -1930,7 +1936,8 @@ describe('Workspaces Invites GQL', () => {
       await gqlHelpers.validateResourceAccess({
         shouldHaveAccess: true,
         userId: newUser.id,
-        workspaceId: otherWorkspace.id
+        workspaceId: otherWorkspace.id,
+        expectedWorkspaceSeatType: WorkspaceSeatType.Viewer
       })
     })
   })
