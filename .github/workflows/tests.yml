@@ -233,7 +233,7 @@ jobs:
         working-directory: 'packages/preview-service'
 
   docker-build-postgres-container:
-    runs-on: blacksmith
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     name: Docker build postgres container
     steps:
       - name: Login to Docker Hub

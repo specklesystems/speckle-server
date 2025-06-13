@@ -38,7 +38,7 @@ jobs:
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
 
   docker-build-frontend2:
-    runs-on: blacksmith
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     name: Frontend2
     steps:
       - name: Login to Docker Hub
@@ -162,7 +162,7 @@ jobs:
           file: ./utils/docker-compose-ingress/Dockerfile
 
   docker-frontend-2-sourcemaps:
-    runs-on: blacksmith
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     name: Frontend2 sourcemaps
     if: ${{ inputs.PUSH_IMAGES }}
     env:
