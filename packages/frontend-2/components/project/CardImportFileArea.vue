@@ -68,7 +68,6 @@
       v-model:open="showNewModelDialog"
       :project-id="project.id"
       :model-name="selectedFile?.file.name"
-      hijack-submit
       @submit="onModelCreate"
     />
   </FormFileUploadZone>
@@ -85,7 +84,8 @@ import type { Nullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   ProjectCardImportFileArea_ModelFragment,
-  ProjectCardImportFileArea_ProjectFragment
+  ProjectCardImportFileArea_ProjectFragment,
+  ProjectPageLatestItemsModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
 
 type EmptyStateVariants = 'modelGrid' | 'modelList' | 'modelsSection'
@@ -275,13 +275,12 @@ const onFilesSelected = (params: { files: UploadableFileItem[] }) => {
   selectedFile.value = firstFile
 }
 
-const onModelCreate = (params: { name: string; description?: string }) => {
+const onModelCreate = (params: { model: ProjectPageLatestItemsModelItemFragment }) => {
   if (!selectedFile.value) return
 
   onFilesSelectedInternal({
     files: [selectedFile.value],
-    modelName: params.name,
-    modelDescription: params.description
+    modelName: params.model.name
   })
 
   selectedFile.value = null
