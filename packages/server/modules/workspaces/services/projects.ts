@@ -285,25 +285,27 @@ export const validateWorkspaceMemberProjectRoleFactory =
     let workspaceRole: WorkspaceRoles
     let seatType: WorkspaceSeatType
 
-    if (workspaceAccess) {
-      // Check planned workspace role/seat
+    // Check real workspace role/seat
+    const roleSeatParams = {
+      workspaceId,
+      userId
+    }
+
+    const [currentWorkspaceRoleAndSeat, workspace] = await Promise.all([
+      deps.getWorkspaceRoleAndSeat(roleSeatParams),
+      deps.getWorkspaceWithPlan({ workspaceId })
+    ])
+
+    if (!workspace || !currentWorkspaceRoleAndSeat?.role) return
+    workspaceRole = currentWorkspaceRoleAndSeat.role.role
+    seatType = currentWorkspaceRoleAndSeat.seat?.type || WorkspaceSeatType.Viewer
+
+    // Override w/ planned
+    if (workspaceAccess?.role) {
       workspaceRole = workspaceAccess.role
+    }
+    if (workspaceAccess?.seatType) {
       seatType = workspaceAccess.seatType
-    } else {
-      // Check real workspace role/seat
-      const roleSeatParams = {
-        workspaceId,
-        userId
-      }
-
-      const [currentWorkspaceRoleAndSeat, workspace] = await Promise.all([
-        deps.getWorkspaceRoleAndSeat(roleSeatParams),
-        deps.getWorkspaceWithPlan({ workspaceId })
-      ])
-
-      if (!workspace || !currentWorkspaceRoleAndSeat?.role) return
-      workspaceRole = currentWorkspaceRoleAndSeat.role.role
-      seatType = currentWorkspaceRoleAndSeat.seat?.type || WorkspaceSeatType.Viewer
     }
 
     const workspaceAllowedRoles = (

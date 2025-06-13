@@ -16,7 +16,8 @@ export const emptyInviteProjectItem: InviteProjectItem = {
   userId: undefined,
   serverRole: Roles.Server.User,
   projectRole: Roles.Stream.Reviewer,
-  project: undefined
+  project: undefined,
+  userInfo: undefined
 }
 
 export const emptyInviteWorkspaceItem: InviteWorkspaceItem = {
