@@ -15,12 +15,13 @@ export function importFile(
     apiOrigin: string
     authToken: string
     modelName?: string
+    modelDescription?: string
   },
   callbacks?: Partial<{
     onProgress: (percentage: number) => void
   }>
 ) {
-  const { file, projectId, modelName, apiOrigin, authToken } = params
+  const { file, projectId, modelName, apiOrigin, authToken, modelDescription } = params
   const { onProgress } = callbacks || {}
 
   let resolveWithResponse: (res: BlobPostResultItem) => void
@@ -36,11 +37,16 @@ export function importFile(
   const formKey = 'file'
   data.append(formKey, file)
 
-  const request = new XMLHttpRequest()
-  request.open(
-    'POST',
-    new URL(`/api/file/autodetect/${projectId}/${finalModelName}`, apiOrigin).toString()
+  const endpointUrl = new URL(
+    `/api/file/autodetect/${projectId}/${finalModelName}`,
+    apiOrigin
   )
+  if (modelDescription?.length) {
+    endpointUrl.searchParams.append('description', modelDescription.trim())
+  }
+
+  const request = new XMLHttpRequest()
+  request.open('POST', endpointUrl.toString())
   request.responseType = 'json'
 
   request.setRequestHeader('Authorization', `Bearer ${authToken}`)
