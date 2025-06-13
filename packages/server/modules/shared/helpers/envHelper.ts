@@ -300,7 +300,7 @@ export function weeklyEmailDigestEnabled() {
  * Useful in some CLI scenarios when you aren't doing anything with the DB
  */
 export function ignoreMissingMigrations() {
-  return getBooleanFromEnv('IGNORE_MISSING_MIRATIONS')
+  return getBooleanFromEnv('IGNORE_MISSING_MIGRATIONS')
 }
 
 /**
