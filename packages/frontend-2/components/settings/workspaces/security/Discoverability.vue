@@ -67,7 +67,13 @@
       <p class="text-body-xs text-foreground mb-2">
         This will allow users with verified domain emails to join automatically without
         admin approval.
-        <span v-if="workspace.defaultSeatType === SeatTypes.Editor && isSelfServePlan">
+        <span
+          v-if="
+            workspace.defaultSeatType === SeatTypes.Editor &&
+            isSelfServePlan &&
+            isPaidPlan
+          "
+        >
           They will join on a paid Editor seat.
         </span>
       </p>
@@ -118,7 +124,7 @@ const { mutate: updateDiscoverability } = useMutation(
 )
 const { mutate: updateAutoJoin } = useMutation(workspaceUpdateAutoJoinMutation)
 const { triggerNotification } = useGlobalToast()
-const { isSelfServePlan } = useWorkspacePlan(props.workspace.slug)
+const { isSelfServePlan, isPaidPlan } = useWorkspacePlan(props.workspace.slug)
 
 const showConfirmJoinPolicyDialog = ref(false)
 const pendingIsAutoJoinEnabled = ref(false)
@@ -240,7 +246,7 @@ const handleJoinPolicyUpdate = async (newValue: JoinPolicy, confirmed = false) =
               'Users with a verified domain can now join without admin approval'
           }
         : {
-            title: 'New user policy updated',
+            title: 'Admin approval enabled',
             description: 'Admin approval is now required for new users to join'
           }
 
