@@ -9,7 +9,10 @@ import {
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
-import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import {
+  GetStreamBranchByName,
+  UpdateBranch
+} from '@/modules/core/domain/branches/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 import { fileUploadsLogger as logger } from '@/observability/logging'
@@ -19,6 +22,7 @@ import { FileUploadInternalError } from '@/modules/fileuploads/helpers/errors'
 type OnFileImportProcessedDeps = {
   getFileInfo: GetFileInfo
   getStreamBranchByName: GetStreamBranchByName
+  updateBranch: UpdateBranch
   publish: PublishSubscription
   eventEmit: EventBusEmit
 }
@@ -64,6 +68,14 @@ export const onFileImportProcessedFactory =
     }
 
     if (isNewBranch) {
+      // Do relevant post-model-creation activities (e.g. set description, if any)
+      if (branch && upload.metadata?.description?.length) {
+        await deps.updateBranch(branch.id, {
+          description: upload.metadata.description
+        })
+      }
+
+      // Report
       await publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
         projectPendingModelsUpdated: {
           id: upload.id,

@@ -48,8 +48,14 @@ import {
 } from '~~/lib/projects/composables/modelManagement'
 import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 
+type FormValues = {
+  name: string
+  description: string
+}
+
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
+  (e: 'submit', val: FormValues): void
 }>()
 
 const props = defineProps<{
@@ -61,9 +67,18 @@ const props = defineProps<{
    * E.g. if creating a model under "a/b", then put "a/b" here
    */
   parentModelName?: string
+  /**
+   * Prefill the model name input. Takes precedence over `parentModelName`.
+   */
+  modelName?: string
+  /**
+   * If set to true, form submit will not actually create the model, but emit the event outwards for
+   * external processing
+   */
+  hijackSubmit?: boolean
 }>()
 
-const { handleSubmit } = useForm<{ name: string; description: string }>()
+const { handleSubmit } = useForm<FormValues>()
 const anyMutationsLoading = useMutationLoading()
 const rules = useModelNameValidationRules()
 const createModel = useCreateNewModel()
@@ -78,6 +93,11 @@ const openState = computed({
 })
 
 const onSubmit = handleSubmit(async ({ name, description }) => {
+  if (props.hijackSubmit) {
+    emit('submit', { name, description })
+    return
+  }
+
   await createModel({
     name: sanitizeModelName(name),
     description,
@@ -91,7 +111,13 @@ watch(
   () => props.open,
   (isOpen, oldIsOpen) => {
     if (isOpen && isOpen !== oldIsOpen) {
-      newModelName.value = props.parentModelName ? `${props.parentModelName}/` : ''
+      if (props.modelName) {
+        newModelName.value = props.modelName
+      } else if (props.parentModelName) {
+        newModelName.value = `${props.parentModelName}/`
+      } else {
+        newModelName.value = ''
+      }
       newDescription.value = ''
     }
   }

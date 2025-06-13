@@ -4742,6 +4742,8 @@ export type WorkspaceInviteCreateInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   /** Defaults to the member role, if not specified */
   role?: InputMaybe<WorkspaceRole>;
+  /** The workspace seat type to assign to the user upon accepting the invite. */
+  seatType?: InputMaybe<WorkspaceSeatType>;
   /** Defaults to User, if not specified */
   serverRole?: InputMaybe<ServerRole>;
   /** Either this or email must be filled */
@@ -5027,6 +5029,11 @@ export type WorkspaceProjectInviteCreateInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * The workspace seat type to assign to the user upon accepting the invite
+   * (if user is a workspace member already, the seat type will be updated)
+   */
+  seatType?: InputMaybe<WorkspaceSeatType>;
   /** Can only be specified if guest mode is on or if the user is an admin */
   serverRole?: InputMaybe<Scalars['String']['input']>;
   /** Either this or email must be filled */

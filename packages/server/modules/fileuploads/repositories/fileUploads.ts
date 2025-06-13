@@ -100,7 +100,8 @@ export const saveUploadFileFactory =
     userId,
     fileName,
     fileType,
-    fileSize
+    fileSize,
+    description
   }: SaveUploadFileInput) => {
     const dbFile: Partial<FileUploadRecord> = {
       id: fileId,
@@ -110,7 +111,8 @@ export const saveUploadFileFactory =
       fileName,
       fileType,
       fileSize,
-      uploadComplete: true
+      uploadComplete: true,
+      ...(description ? { metadata: { description } } : {})
     }
     const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
     return newRecord as FileUploadRecord
@@ -126,7 +128,8 @@ export const saveUploadFileFactoryV2 =
     fileName,
     fileType,
     fileSize,
-    modelName
+    modelName,
+    description
   }: SaveUploadFileInputV2) => {
     const dbFile: Partial<SaveUploadFileV2> = {
       id: fileId,
@@ -137,7 +140,8 @@ export const saveUploadFileFactoryV2 =
       fileName,
       fileType,
       fileSize,
-      uploadComplete: true
+      uploadComplete: true,
+      ...(description ? { metadata: { description } } : {})
     }
     const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
     return mapFileUploadRecordToV2(newRecord)

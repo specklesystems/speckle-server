@@ -19,12 +19,12 @@ export type GetFileInfoV2 = (args: {
 export type SaveUploadFileInput = Pick<
   FileUploadRecord,
   'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
-> & { fileId: string }
+> & { fileId: string; description?: string }
 
 export type SaveUploadFileInputV2 = Pick<
   FileUploadRecordV2,
   'projectId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
-> & { fileId: string; modelId: string; modelName: string }
+> & { fileId: string; modelId: string; modelName: string; description?: string }
 
 export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
 

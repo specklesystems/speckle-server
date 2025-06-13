@@ -5,13 +5,16 @@
     :clearable="clearable"
     name="projectRoles"
     label="Project roles"
-    class="min-w-[150px]"
+    class="min-w-[100px]"
     :label-id="labelId"
     :button-id="buttonId"
     :disabled-item-tooltip="disabledItemsTooltip"
     :disabled-item-predicate="disabledItemPredicate"
     :allow-unset="allowUnset"
     :disabled="disabled"
+    :menu-max-width="250"
+    menu-open-direction="left"
+    mount-menu-on-body
   >
     <template #nothing-selected>Select role</template>
     <template #something-selected="{ value }">
