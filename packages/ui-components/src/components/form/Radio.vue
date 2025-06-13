@@ -27,8 +27,8 @@
     >
       <label
         :for="finalId"
-        class="text-foreground flex space-x-2 items-center"
-        :class="{ 'sr-only': hideLabel }"
+        class="text-foreground flex space-x-2 items-center cursor-pointer"
+        :class="{ 'sr-only': hideLabel, '!cursor-not-allowed opacity-70': disabled }"
       >
         <div v-if="icon">
           <component
@@ -39,7 +39,7 @@
           />
         </div>
         <div class="flex flex-col">
-          <span class="font-medium">{{ title }}</span>
+          <span :class="labelClasses ? labelClasses : ''">{{ title }}</span>
           <p
             v-if="descriptionText && !inlineDescription"
             :id="descriptionId"
@@ -105,6 +105,13 @@ const props = defineProps({
    * Set label text
    */
   label: {
+    type: String as PropType<Optional<string>>,
+    default: undefined
+  },
+  /**
+   * Set label text classes
+   */
+  labelClasses: {
     type: String as PropType<Optional<string>>,
     default: undefined
   },
