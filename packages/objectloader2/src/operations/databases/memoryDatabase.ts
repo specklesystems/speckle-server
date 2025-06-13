@@ -22,7 +22,7 @@ export class MemoryDatabase implements Database {
     return Promise.resolve(found)
   }
 
-  cacheSaveBatch({ batch }: { batch: Item[] }): Promise<void> {
+  saveBatch({ batch }: { batch: Item[] }): Promise<void> {
     for (const item of batch) {
       this.items.set(item.baseId, item.base)
     }

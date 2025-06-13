@@ -21,14 +21,14 @@ describe('MemoryDatabase', () => {
 
   it('should add and retrieve a single item', async () => {
     const item = makeItem('id1')
-    await db.cacheSaveBatch({ batch: [item] })
+    await db.saveBatch({ batch: [item] })
     const result = await db.getAll(['id1'])
     expect(result).toEqual([item])
   })
 
   it('should add and retrieve multiple items', async () => {
     const items = [makeItem('id1'), makeItem('id2', 'baz')]
-    await db.cacheSaveBatch({ batch: items })
+    await db.saveBatch({ batch: items })
     const result = await db.getAll(['id1', 'id2'])
     expect(result).toEqual(items)
   })
@@ -36,8 +36,8 @@ describe('MemoryDatabase', () => {
   it('should overwrite items with the same key', async () => {
     const item1 = makeItem('id1', 'foo')
     const item2 = makeItem('id1', 'bar')
-    await db.cacheSaveBatch({ batch: [item1] })
-    await db.cacheSaveBatch({ batch: [item2] })
+    await db.saveBatch({ batch: [item1] })
+    await db.saveBatch({ batch: [item2] })
     const result = await db.getAll(['id1'])
     expect(result).toEqual([item2])
   })
