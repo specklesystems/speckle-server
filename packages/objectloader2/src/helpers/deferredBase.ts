@@ -41,11 +41,11 @@ export class DeferredBase {
 
   found(value: Item): void {
     this.item = value
-    this.resolve(value.base)
+    this.resolve(value.base!)
   }
   done(now: number): boolean {
     if (this.item) {
-      this.resolve(this.item.base)
+      this.resolve(this.item.base!)
     }
     if (this.isExpired(now)) {
       return true

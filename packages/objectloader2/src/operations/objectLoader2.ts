@@ -7,6 +7,7 @@ import { CacheReader } from '../helpers/cacheReader.js'
 import { CachePump } from '../helpers/cachePump.js'
 import AggregateQueue from '../helpers/aggregateQueue.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
+import IndexedDatabase from './databases/indexedDatabase.js'
 
 export class ObjectLoader2 {
   #rootId: string
@@ -65,10 +66,12 @@ export class ObjectLoader2 {
 
   async getRootObject(): Promise<Item | undefined> {
     if (!this.#root) {
-      this.#root = (await this.#database.getAll([this.#rootId]))[0]
+      const idb = new IndexedDatabase({});
+      this.#root = (await idb.getAll([this.#rootId]))[0]
       if (!this.#root) {
         this.#root = await this.#downloader.downloadSingle()
       }
+      await idb.disposeAsync()
     }
     return this.#root
   }
@@ -79,13 +82,13 @@ export class ObjectLoader2 {
 
   async getTotalObjectCount(): Promise<number> {
     const rootObj = await this.getRootObject()
-    const totalChildrenCount = Object.keys(rootObj?.base.__closure || {}).length
+    const totalChildrenCount = Object.keys(rootObj?.base?.__closure || {}).length
     return totalChildrenCount + 1 //count the root
   }
 
   async *getObjectIterator(): AsyncGenerator<Base> {
     const rootItem = await this.getRootObject()
-    if (rootItem === undefined) {
+    if (rootItem?.base === undefined) {
       this.#logger('No root object found!')
       return
     }
@@ -105,7 +108,9 @@ export class ObjectLoader2 {
       total
     })
     for await (const item of this.#pump.gather(children, this.#downloader)) {
-      yield item.base
+      if (item.base) {
+        yield item.base
+      }
     }
   }
 

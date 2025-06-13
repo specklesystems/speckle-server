@@ -4,6 +4,7 @@ import { CustomLogger, Item } from '../../types/types.js'
 import { isSafari } from '@speckle/shared'
 import { Dexie, DexieOptions, Table } from 'dexie'
 import { Database } from '../interfaces.js'
+import Queue from '../../helpers/queue.js'
 
 export class ObjectStore extends Dexie {
   static #databaseName: string = 'speckle-cache'
@@ -35,12 +36,43 @@ export default class IndexedDatabase implements Database {
   #cacheDB?: ObjectStore
 
   #writeQueue: BatchingQueue<Item> | undefined
+  #foundItems?: Queue<Item>
+  #notFoundItems?: Queue<string>
+
 
   // #count: number = 0
 
   constructor(options: IndexedDatabaseOptions) {
     this.#options = options
     this.#logger = options.logger || ((): void => {})
+  }
+
+  initializeQueues(foundItems: Queue<Item>, notFoundItems: Queue<string>): Promise<void> {
+    this.#foundItems = foundItems
+    this.#notFoundItems = notFoundItems
+    return Promise.resolve()
+  }
+
+  async findBatch(
+    keys: string[]
+  ): Promise<void> {
+    await this.#setupCacheDb()
+    let items: (Item | undefined)[] = []
+
+    //faster than BulkGet with dexie
+    await this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
+      const gets = keys.map((key) => this.#cacheDB!.objects.get(key))
+      const cachedData = await Promise.all(gets)
+      items = cachedData
+    })
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item !== undefined) {
+        this.#foundItems?.add(item)
+      } else {
+        this.#notFoundItems?.add(keys[i])
+      }
+    }
   }
 
   async getAll(keys: string[]): Promise<(Item | undefined)[]> {
@@ -122,5 +154,9 @@ export default class IndexedDatabase implements Database {
     this.#cacheDB = undefined
     await this.#writeQueue?.disposeAsync()
     this.#writeQueue = undefined
+  }
+
+  isDisposed(): boolean {
+    return this.#cacheDB === undefined
   }
 }

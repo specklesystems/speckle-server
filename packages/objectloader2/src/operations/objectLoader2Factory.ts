@@ -1,6 +1,7 @@
 import { Base, CustomLogger } from '../types/types.js'
 import IndexedDatabase from './databases/indexedDatabase.js'
 import { MemoryDatabase } from './databases/memoryDatabase.js'
+import { WorkerDatabase } from './databases/workerDatabase.js'
 import { MemoryDownloader } from './downloaders/memoryDownloader.js'
 import ServerDownloader from './downloaders/serverDownloader.js'
 import { ObjectLoader2 } from './objectLoader2.js'
@@ -66,11 +67,7 @@ export class ObjectLoader2Factory {
           token: params.token,
           headers: params.headers
         }),
-        database: new IndexedDatabase({
-          logger: params.options?.logger,
-          indexedDB: params.options?.indexedDB,
-          keyRange: params.options?.keyRange
-        })
+        database: new WorkerDatabase()
       })
     }
     return loader

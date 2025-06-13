@@ -4,7 +4,7 @@ import IndexedDatabase, { IndexedDatabaseOptions } from './indexedDatabase.js'
 import { Item } from '../../types/types.js'
 
 // Mock Item
-const defaultItem = (id: string): Item => ({ baseId: id, item: { foo: 'bar' } })
+const defaultItem = (id: string): Item => ({ baseId: id, base: { foo: 'bar' } })
 
 describe('IndexedDatabase', () => {
   let db: IndexedDatabase
