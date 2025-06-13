@@ -1,6 +1,7 @@
 import {
   BlobStorageItem,
-  BlobStorageItemInput
+  BlobStorageItemInput,
+  BlobUploadStatus
 } from '@/modules/blobstorage/domain/types'
 import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import type { Readable } from 'stream'
@@ -16,7 +17,10 @@ export type UpsertBlob = (item: BlobStorageItemInput) => Promise<BlobStorageItem
 export type UpdateBlob = (params: {
   id: string
   item: Partial<BlobStorageItem>
-  streamId?: string
+  filter?: {
+    streamId?: string
+    uploadStatus?: BlobUploadStatus
+  }
 }) => Promise<BlobStorageItem>
 
 export type DeleteBlob = (params: { id: string; streamId?: string }) => Promise<number>

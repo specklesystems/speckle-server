@@ -12,7 +12,7 @@ import {
 import {
   getBlobMetadataFactory,
   getBlobsFactory,
-  updateBlobWhereStatusPendingFactory,
+  updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { Roles, TIME } from '@speckle/shared'
@@ -72,6 +72,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
     describe('generate a presigned URL', () => {
       let SUT: ReturnType<typeof generatePresignedUrlFactory>
+
       before(() => {
         SUT = generatePresignedUrlFactory({
           getSignedUrl: getSignedUrlFactory({
@@ -126,7 +127,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
           getBlobMetadata: getBlobMetadataFromStorage({
             objectStorage: projectStorage
           }),
-          updateBlobWhereStatusPending: updateBlobWhereStatusPendingFactory({
+          updateBlob: updateBlobFactory({
             db: projectDb
           }),
           logger: testLogger

@@ -139,7 +139,7 @@ describe('Presigned @blobstorage', async () => {
           contentLength: 1000,
           eTag: fileHash
         }),
-        updateBlobWhereStatusPending: fakeUpdateBlob,
+        updateBlob: fakeUpdateBlob,
         logger: testLogger
       })
 
@@ -165,7 +165,7 @@ describe('Presigned @blobstorage', async () => {
           contentLength: 1000,
           eTag: fileHash // the etag to match
         }),
-        updateBlobWhereStatusPending: fakeUpdateBlob,
+        updateBlob: fakeUpdateBlob,
         logger: testLogger
       })
 
@@ -192,7 +192,7 @@ describe('Presigned @blobstorage', async () => {
           contentLength: maximumFileSize + 1,
           eTag: fileHash
         }),
-        updateBlobWhereStatusPending: fakeUpdateBlob,
+        updateBlob: fakeUpdateBlob,
         logger: testLogger
       })
 
@@ -219,7 +219,7 @@ describe('Presigned @blobstorage', async () => {
           contentLength: 100,
           eTag: fileHash
         }),
-        updateBlobWhereStatusPending: fakeUpdateBlob,
+        updateBlob: fakeUpdateBlob,
         logger: testLogger
       })
 
@@ -245,7 +245,7 @@ describe('Presigned @blobstorage', async () => {
           contentLength: 1000,
           eTag: fileHash
         }),
-        updateBlobWhereStatusPending: fakeUpdateBlob,
+        updateBlob: fakeUpdateBlob,
         logger: testLogger
       })
       const thrownError = await expectToThrow(

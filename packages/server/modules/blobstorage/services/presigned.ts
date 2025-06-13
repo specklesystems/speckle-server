@@ -11,16 +11,13 @@ import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { BlobUploadStatus } from '@/modules/blobstorage/domain/types'
 import type { Logger } from '@/observability/logging'
-import { ensureError, type Optional } from '@speckle/shared'
+import { ensureError, throwUncoveredError, type Optional } from '@speckle/shared'
 import {
   AlreadyRegisteredBlobError,
   StoredBlobAccessError
 } from '@/modules/blobstorage/errors'
 import { isEmpty } from 'lodash'
-import {
-  MisconfiguredEnvironmentError,
-  NotImplementedError
-} from '@/modules/shared/errors'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 // import { acceptedFileExtensions } from '@speckle/shared'
 
 export const generatePresignedUrlFactory =
@@ -72,11 +69,11 @@ export const registerCompletedUploadFactory =
   (deps: {
     getBlobs: GetBlobs
     getBlobMetadata: GetBlobMetadataFromStorage
-    updateBlobWhereStatusPending: UpdateBlob
+    updateBlob: UpdateBlob
     logger: Logger
   }): RegisterCompletedUpload =>
   async (params) => {
-    const { getBlobs, updateBlobWhereStatusPending, getBlobMetadata, logger } = deps
+    const { getBlobs, updateBlob, getBlobMetadata, logger } = deps
     const { blobId, projectId, expectedETag, maximumFileSize } = params
     if (isEmpty(expectedETag)) {
       throw new UserInputError('ETag is required to register a completed upload')
@@ -108,9 +105,7 @@ export const registerCompletedUploadFactory =
       case BlobUploadStatus.Pending:
         break //continue on to register the completed upload
       default:
-        throw new NotImplementedError(
-          `Blob upload status ${existingBlobs[0].uploadStatus} is not implemented`
-        )
+        throwUncoveredError(existingBlobs[0].uploadStatus)
     }
 
     const objectKey = getObjectKey(projectId, blobId)
@@ -138,9 +133,12 @@ export const registerCompletedUploadFactory =
     }
 
     if (!blobMetadata.contentLength || blobMetadata.contentLength > maximumFileSize) {
-      await updateBlobWhereStatusPending({
+      await updateBlob({
         id: blobId,
-        streamId: projectId,
+        filter: {
+          streamId: projectId,
+          uploadStatus: BlobUploadStatus.Pending
+        },
         item: {
           uploadStatus: BlobUploadStatus.Error,
           uploadError:
@@ -154,9 +152,12 @@ export const registerCompletedUploadFactory =
       )
     }
 
-    const updatedBlob = await updateBlobWhereStatusPending({
+    const updatedBlob = await updateBlob({
       id: blobId,
-      streamId: projectId,
+      filter: {
+        streamId: projectId,
+        uploadStatus: BlobUploadStatus.Pending
+      },
       item: {
         uploadStatus: BlobUploadStatus.Completed,
         fileSize: blobMetadata.contentLength,

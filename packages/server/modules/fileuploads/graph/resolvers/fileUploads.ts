@@ -30,7 +30,7 @@ import {
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import {
   getBlobsFactory,
-  updateBlobWhereStatusPendingFactory,
+  updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import {
@@ -68,11 +68,13 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import cryptoRandomString from 'crypto-random-string'
 import { getFeatureFlags } from '@speckle/shared/environment'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
 
-const fileUploadMutations = {
+const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   async generateUploadUrl(
     _parent: unknown,
     args: FileUploadMutationsGenerateUploadUrlArgs,
@@ -87,6 +89,13 @@ const fileUploadMutations = {
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
     }
+
+    throwIfResourceAccessNotAllowed({
+      resourceId: projectId,
+      resourceType: TokenResourceIdentifierType.Project,
+      resourceAccessRules: ctx.resourceAccessRules
+    })
+
     const canImport = await ctx.authPolicies.project.canPublish({
       userId: ctx.userId,
       projectId
@@ -130,6 +139,13 @@ const fileUploadMutations = {
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
     }
+
+    throwIfResourceAccessNotAllowed({
+      resourceId: projectId,
+      resourceType: TokenResourceIdentifierType.Project,
+      resourceAccessRules: ctx.resourceAccessRules
+    })
+
     const canImport = await ctx.authPolicies.project.canPublish({
       userId: ctx.userId,
       projectId
@@ -184,7 +200,7 @@ const fileUploadMutations = {
         registerCompletedUpload: registerCompletedUploadFactory({
           logger: ctx.log,
           getBlobs: getBlobsFactory({ db: projectDb }),
-          updateBlobWhereStatusPending: updateBlobWhereStatusPendingFactory({
+          updateBlob: updateBlobFactory({
             db: projectDb
           }),
           getBlobMetadata: getBlobMetadataFromStorage({
@@ -198,7 +214,6 @@ const fileUploadMutations = {
         getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
 
-    //TODO get the workspace plan and get a limit for the file size that can be uploaded
     const maximumFileSize = getFileSizeLimit()
 
     const uploadedFileData = await registerUploadCompleteAndStartFileImport({
@@ -260,7 +275,6 @@ export = {
     }
   },
   Mutation: {
-    //NOTE if editing this, see corresponding `FileUploadMutations` map in codegen.yml
     fileUploadMutations: () => ({})
   },
   FileUploadMutations: {

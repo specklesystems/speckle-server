@@ -93,7 +93,7 @@ const updateBlobMetadataFactory =
       blobId
     })
     const updateData = await updateCallback({ objectKey: objectKey! })
-    await deps.updateBlob({ id: blobId, item: updateData, streamId })
+    await deps.updateBlob({ id: blobId, item: updateData, filter: { streamId } })
     return {
       blobId,
       ...updateData,

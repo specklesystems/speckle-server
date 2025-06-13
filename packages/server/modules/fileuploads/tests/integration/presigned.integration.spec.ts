@@ -11,7 +11,7 @@ import {
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobsFactory,
-  updateBlobWhereStatusPendingFactory,
+  updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { Roles, TIME } from '@speckle/shared'
@@ -156,7 +156,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
             getBlobMetadata: getBlobMetadataFromStorage({
               objectStorage: projectStorage
             }),
-            updateBlobWhereStatusPending: updateBlobWhereStatusPendingFactory({
+            updateBlob: updateBlobFactory({
               db: projectDb
             }),
             logger: testLogger
