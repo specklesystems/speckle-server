@@ -247,6 +247,8 @@ jobs:
           push: true
           tags: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./utils/postgres/Dockerfile
+          cache-from: type=registry,ref=speckle/speckle-postgres:latest
+          cache-to: type=inline
 
   test-server:
     name: Server
