@@ -26,16 +26,7 @@ const DetermineRequestId = (
 export const sanitizeHeaders = (headers: Record<string, unknown>) =>
   Object.fromEntries(
     Object.entries(headers).filter(
-      ([key]) =>
-        ![
-          'cookie',
-          'authorization',
-          'cf-connecting-ip',
-          'true-client-ip',
-          'x-real-ip',
-          'x-forwarded-for',
-          'x-original-forwarded-for'
-        ].includes(key.toLocaleLowerCase())
+      ([key]) => !['cookie', 'authorization'].includes(key.toLocaleLowerCase())
     )
   )
 
