@@ -40,7 +40,7 @@ export class CachePump implements Pump {
         batchSize: this.#options.maxCacheWriteSize,
         maxWaitTime: this.#options.maxCacheBatchWriteWait,
         processFunction: (batch: Item[]): Promise<void> =>
-          this.#database.cacheSaveBatch({ batch })
+          this.#database.saveBatch({ batch })
       })
     }
     this.#writeQueue.add(item.baseId, item)
