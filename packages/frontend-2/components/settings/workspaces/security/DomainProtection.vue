@@ -1,14 +1,14 @@
 <template>
   <section class="py-8">
     <SettingsSectionHeader subheading title="Domain protection" />
-    <p class="text-body-xs text-foreground-2 mt-2 mb-6">
+    <p class="text-body-sm text-foreground-2 mt-2 mb-6">
       Secure access to the workspace with your verified domains.
     </p>
 
     <div class="flex items-center">
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">Enable domain protection</p>
-        <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+        <p class="text-body-2xs text-foreground-2 leading-5 max-w-md mt-1">
           Only allow users with verified domains to join the workspace.
         </p>
       </div>

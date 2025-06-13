@@ -5,13 +5,13 @@
       Make the workspace discoverable to coworkers for easy joining.
     </p>
 
-    <div class="flex flex-col space-y-8">
+    <div class="flex flex-col space-y-6">
       <div class="flex items-center">
         <div class="flex-1 flex-col pr-6 gap-y-1">
           <p class="text-body-xs font-medium text-foreground">
             Enable workspace discoverability
           </p>
-          <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+          <p class="text-body-2xs text-foreground-2 leading-5 max-w-md mt-1">
             Users can discover the workspace if they sign up with a verified email
             domain.
           </p>

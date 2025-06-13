@@ -3,7 +3,7 @@
     <div class="flex flex-col sm:flex-row gap-y-3 sm:items-center">
       <div class="flex-1 flex-col pr-6 gap-y-1">
         <p class="text-body-xs font-medium text-foreground">Default seat type</p>
-        <p class="text-body-2xs text-foreground-2 leading-5 max-w-[250px]">
+        <p class="text-body-2xs text-foreground-2 leading-5 max-w-[250px] mt-1">
           Set the default seat type assigned to new people who join the workspace.
         </p>
       </div>
