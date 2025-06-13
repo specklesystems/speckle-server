@@ -41,6 +41,7 @@ import { CubeIcon } from '@heroicons/vue/24/outline'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
+import type { ProjectPageLatestItemsModelItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   useCreateNewModel,
@@ -55,7 +56,7 @@ type FormValues = {
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  (e: 'submit', val: FormValues): void
+  (e: 'submit', val: { model: ProjectPageLatestItemsModelItemFragment }): void
 }>()
 
 const props = defineProps<{
@@ -71,11 +72,6 @@ const props = defineProps<{
    * Prefill the model name input. Takes precedence over `parentModelName`.
    */
   modelName?: string
-  /**
-   * If set to true, form submit will not actually create the model, but emit the event outwards for
-   * external processing
-   */
-  hijackSubmit?: boolean
 }>()
 
 const { handleSubmit } = useForm<FormValues>()
@@ -93,16 +89,15 @@ const openState = computed({
 })
 
 const onSubmit = handleSubmit(async ({ name, description }) => {
-  if (props.hijackSubmit) {
-    emit('submit', { name, description })
-    return
-  }
-
-  await createModel({
+  const res = await createModel({
     name: sanitizeModelName(name),
     description,
     projectId: props.projectId
   })
+
+  if (!res?.id) return
+  emit('submit', { model: res })
+
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
   openState.value = false
 })

@@ -8,10 +8,7 @@ import {
 } from '@/modules/fileuploads/services/resultListener'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import {
-  getStreamBranchByNameFactory,
-  updateBranchFactory
-} from '@/modules/core/repositories/branches'
+import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import {
   getFeatureFlags,
   isFileUploadsEnabled
@@ -138,7 +135,6 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
       })
       await onFileImportProcessedFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
-        updateBranch: updateBranchFactory({ db: projectDb }),
         publish,
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         eventEmit: getEventBus().emit

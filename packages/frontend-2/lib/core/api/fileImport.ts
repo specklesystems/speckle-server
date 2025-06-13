@@ -15,13 +15,12 @@ export function importFile(
     apiOrigin: string
     authToken: string
     modelName?: string
-    modelDescription?: string
   },
   callbacks?: Partial<{
     onProgress: (percentage: number) => void
   }>
 ) {
-  const { file, projectId, modelName, apiOrigin, authToken, modelDescription } = params
+  const { file, projectId, modelName, apiOrigin, authToken } = params
   const { onProgress } = callbacks || {}
 
   let resolveWithResponse: (res: BlobPostResultItem) => void
@@ -41,9 +40,6 @@ export function importFile(
     `/api/file/autodetect/${projectId}/${finalModelName}`,
     apiOrigin
   )
-  if (modelDescription?.length) {
-    endpointUrl.searchParams.append('description', modelDescription.trim())
-  }
 
   const request = new XMLHttpRequest()
   request.open('POST', endpointUrl.toString())
