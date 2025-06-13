@@ -1,0 +1,34 @@
+name: Test helm deployment
+
+on: workflow_dispatch
+
+jobs:
+  verify-non-prod:
+    runs-on: blacksmith
+    if: github.ref != 'refs/heads/main'
+    steps:
+      - run: echo "This is a non-production deployment."
+
+  get-version:
+    needs: [verify-non-prod]
+    name: Get version
+    uses: ./.github/workflows/get-version.yml
+
+  builds:
+    needs: [verify-non-prod, get-version]
+    uses: ./.github/workflows/builds.yml
+    with:
+      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+      DOCKERHUB_USERNAME: 'speckledevops'
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+      PUBLISH: false # do not publish the sourcemaps or include the version in frontend-2 builds
+    secrets: inherit
+
+  deployment-tests:
+    needs: [builds, get-version]
+    uses: ./.github/workflows/deployment-tests.yml
+    with:
+      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+      DOCKERHUB_USERNAME: 'speckledevops'
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+    secrets: inherit

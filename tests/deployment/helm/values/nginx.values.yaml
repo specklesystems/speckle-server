@@ -1,5 +1,5 @@
 controller:
-  # We must set the kind cluster listen address for every port to '127.0.0.1' when hostNetwork is true, see ./deploy/local/cluster-config.yaml
+  # We must set the kind cluster listen address for every port to '127.0.0.1' when hostNetwork is true
   hostNetwork: true
   admissionWebhooks:
     enabled: false
