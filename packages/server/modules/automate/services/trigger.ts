@@ -277,6 +277,7 @@ export const triggerAutomationRevisionRunFactory =
       // should rely on the function definitions requesting the needed scopes
       scopes: [
         Scopes.Profile.Read,
+        Scopes.Profile.Email,
         Scopes.Streams.Read,
         Scopes.Streams.Write,
         Scopes.Automate.ReportResults
