@@ -18,7 +18,8 @@ import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   expireOldPendingUploadsFactory,
-  getFileInfoFactory
+  getFileInfoFactory,
+  updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
@@ -137,6 +138,7 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
         getFileInfo: getFileInfoFactory({ db: projectDb }),
         publish,
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         eventEmit: getEventBus().emit
       })(parsedMessage)
     })

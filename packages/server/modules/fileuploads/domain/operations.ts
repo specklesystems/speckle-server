@@ -31,6 +31,11 @@ export type SaveUploadFileV2 = (
   args: SaveUploadFileInputV2
 ) => Promise<FileUploadRecordV2>
 
+export type UpdateFileUpload = (args: {
+  id: string
+  upload: Partial<FileUploadRecord>
+}) => Promise<FileUploadRecord>
+
 export type GarbageCollectPendingUploadedFiles = (args: {
   timeoutThresholdSeconds: number
 }) => Promise<FileUploadRecord[]>

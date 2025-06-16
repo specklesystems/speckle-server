@@ -1,12 +1,12 @@
 import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
 import {
-  UpdateFileStatus,
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
   SaveUploadFile,
   SaveUploadFileV2,
   SaveUploadFileInput,
-  SaveUploadFileInputV2
+  SaveUploadFileInputV2,
+  UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
@@ -215,23 +215,18 @@ export const getBranchPendingVersionsFactory =
     return await q
   }
 
-export const updateFileStatusFactory =
-  (deps: { db: Knex }): UpdateFileStatus =>
+export const updateFileUploadFactory =
+  (deps: { db: Knex }): UpdateFileUpload =>
   async (params) => {
-    const { fileId, status, convertedMessage, convertedCommitId } = params
-    const fileInfos = await tables
+    const { id, upload } = params
+    const updatedFile = await tables
       .fileUploads(deps.db)
-      .update<FileUploadRecord[]>({
-        [FileUploads.withoutTablePrefix.col.convertedStatus]: status,
-        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: knex.fn.now(),
-        [FileUploads.withoutTablePrefix.col.convertedMessage]: convertedMessage,
-        [FileUploads.withoutTablePrefix.col.convertedCommitId]: convertedCommitId
-      })
-      .where({ [FileUploads.withoutTablePrefix.col.id]: fileId })
+      .update(upload)
+      .where({ [FileUploads.col.id]: id })
       .returning<FileUploadRecord[]>('*')
 
-    if (fileInfos.length === 0) {
-      throw new FileImportJobNotFoundError(`File with id ${fileId} not found`)
+    if (updatedFile.length === 0) {
+      throw new FileImportJobNotFoundError(`File with id ${id} not found`)
     }
-    return fileInfos[0]
+    return updatedFile[0]
   }
