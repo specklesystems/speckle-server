@@ -28,7 +28,7 @@ export const pushJobToFileImporterFactory =
       appId: DefaultAppIds.Web,
       name: `fileimport-${projectId}@${modelId}`,
       userId,
-      scopes: [Scopes.Streams.Write, Scopes.Streams.Read],
+      scopes: [Scopes.Streams.Write, Scopes.Streams.Read, Scopes.Profile.Read],
       lifespan: 2 * TIME_MS.hour,
       limitResources: [
         {
