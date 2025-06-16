@@ -65,3 +65,15 @@ Results are then sent to the viewer, if found, else they're send to the download
 The download queue is a batching mechanism that gets what is available, up to a limit or a timeout. The results are parsed and given to the generator and written to another queue.
 
 The write cache queue is processed with a single writer to the indexeddb.
+
+## Deferment
+
+Deferment is what happens with the viewer does a random access to OL2. It returns a promise but it will be fulfilled later if the item isn't in memory.
+
+The `DefermentManager` only holds a subset of the model in memory. If the requested item isn't in memory, then it enqueues the request into the general process laid out above.
+
+When items are returned to the generator loop, `undefer` is called which caches the item in the manager as well as fulfills any outstanding promises.
+
+A cleanup process is ran to be a singleton process. This process sorts by the total number of requests and the size. If anything falls outside the size window, then it is removed from the manager's memory cache.
+
+The aim is to speed up random access while still getting items from the cache in batches. Items that are accessed randomly tend to be references in the model.
