@@ -319,7 +319,10 @@ function createCache(): InMemoryCache {
             merge: (_existing, incoming) => incoming
           },
           team: {
-            merge: (_existing, incoming) => incoming
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction(
+              'WorkspaceCollaboratorCollection'
+            )
           },
           plan: {
             merge: incomingOverwritesExistingMergeFunction
