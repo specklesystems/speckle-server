@@ -1350,7 +1350,7 @@ export default class Sandbox {
         if (arg.count > renderedCount) {
           renderedCount = arg.count
           if (renderedCount % 500 === 0) {
-            console.log(`Rendering Data ${renderedCount} / ${arg.total}`)
+            console.log(`Converting Data ${renderedCount}`)
           }
         }
       })
