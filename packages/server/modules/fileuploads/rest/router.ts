@@ -31,6 +31,8 @@ export const fileuploadRouterFactory = (): Router => {
       const branchName = req.params.branchName || 'main'
       const projectId = req.params.streamId
       const userId = req.context.userId
+      const description = req.query.description as string | undefined
+
       if (!userId) {
         throw new UnauthorizedError('User not authenticated.')
       }
@@ -49,14 +51,8 @@ export const fileuploadRouterFactory = (): Router => {
         emit: getEventBus().emit
       })
       const saveFileUploads = async ({
-        userId,
-        streamId,
-        branchName,
         uploadResults
       }: {
-        userId: string
-        streamId: string
-        branchName: string
         uploadResults: Array<{
           blobId: string
           fileName: string
@@ -67,12 +63,13 @@ export const fileuploadRouterFactory = (): Router => {
           uploadResults.map(async (upload) => {
             await insertNewUploadAndNotify({
               fileId: upload.blobId,
-              streamId,
+              streamId: projectId,
               branchName,
               userId,
               fileName: upload.fileName,
               fileType: upload.fileName?.split('.').pop() || '', //FIXME
-              fileSize: upload.fileSize
+              fileSize: upload.fileSize,
+              description
             })
           })
         )
@@ -87,9 +84,6 @@ export const fileuploadRouterFactory = (): Router => {
         onFinishAllFileUploads: async (uploadResults) => {
           try {
             await saveFileUploads({
-              userId,
-              streamId: projectId,
-              branchName,
               uploadResults
             })
           } catch (err) {

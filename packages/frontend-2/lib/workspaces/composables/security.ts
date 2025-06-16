@@ -1,4 +1,5 @@
 import { blockedDomains } from '@speckle/shared'
+import { sortBy } from 'lodash-es'
 
 export const useVerifiedUserEmailDomains = (
   options?: Partial<{
@@ -12,8 +13,10 @@ export const useVerifiedUserEmailDomains = (
   const { activeUser } = useActiveUser()
 
   const domains = computed(() => {
-    return (activeUser.value?.emails || [])
-      .filter((email) => email.verified)
+    return sortBy(
+      (activeUser.value?.emails || []).filter((email) => email.verified),
+      (email) => !email.primary
+    )
       .map((email) => email.email.split('@')[1])
       .filter(
         (domain) => domain && (!filterBlocked || !blockedDomains.includes(domain))

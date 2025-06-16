@@ -12,6 +12,7 @@ export const workspaceFragment = gql`
     readOnly
     discoverabilityEnabled
     role
+    seatType
   }
 `
 

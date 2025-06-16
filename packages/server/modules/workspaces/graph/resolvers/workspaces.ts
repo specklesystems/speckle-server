@@ -206,6 +206,7 @@ import {
   createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
 import {
+  assignWorkspaceSeatFactory,
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
@@ -293,6 +294,14 @@ const buildFinalizeWorkspaceInvite = () =>
             getWorkspace: getWorkspaceFactory({ db })
           }),
           eventEmit: getEventBus().emit
+        }),
+        assignWorkspaceSeat: assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+            db
+          }),
+          eventEmit: getEventBus().emit,
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
         })
       }),
       processFinalizedProjectInvite: processFinalizedProjectInviteFactory({
@@ -551,6 +560,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
                               workspaceRole as WorkspaceRoles
                           }
                         : undefined,
+                      workspaceSeatType: i.seatType || undefined,
                       allowWorkspacedProjects: true
                     }),
                   {
@@ -629,6 +639,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                       getWorkspace: getWorkspaceFactory({ db })
                     }),
                     eventEmit: emit
+                  }),
+                  assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                      db
+                    }),
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 })
               })
@@ -871,6 +889,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                       getWorkspace: getWorkspaceFactory({ db })
                     }),
                     eventEmit: emit
+                  }),
+                  assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                      db: trx
+                    }),
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx })
                   })
                 })
 
@@ -1168,6 +1194,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                       getWorkspace: getWorkspaceFactory({ db })
                     }),
                     eventEmit: getEventBus().emit
+                  }),
+                  assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                      db
+                    }),
+                    eventEmit: getEventBus().emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 }),
                 getWorkspaceTeam: getWorkspaceCollaboratorsFactory({ db })
@@ -1530,6 +1564,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                       getWorkspace: getWorkspaceFactory({ db })
                     }),
                     eventEmit: emit
+                  }),
+                  assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                      db
+                    }),
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 }),
                 createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
