@@ -1,5 +1,5 @@
 import { Logger } from 'pino'
-import { spawn } from 'child_process'
+import { execFile } from 'child_process'
 import fs from 'fs'
 
 export function runProcessWithTimeout(
@@ -13,7 +13,21 @@ export function runProcessWithTimeout(
   return new Promise((resolve, reject) => {
     let boundLogger = processLogger.child({ cmd, args: cmdArgs })
     boundLogger.info('Starting process.')
-    const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
+    const childProc = execFile(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
+
+    if (!childProc || !childProc.stdout || !childProc.stderr) {
+      const rejectionReason = `Error: Could not start child process.`
+      const error = new Error(rejectionReason)
+      boundLogger.error(error, 'Error starting child process.')
+      childProc.kill(9)
+      const output = {
+        success: false,
+        error: rejectionReason
+      }
+      fs.writeFileSync(resultsPath, JSON.stringify(output))
+      reject(new Error(rejectionReason))
+      return
+    }
 
     boundLogger = boundLogger.child({ pid: childProc.pid })
     childProc.stdout.on('data', (data) => {
