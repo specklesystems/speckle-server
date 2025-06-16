@@ -1,4 +1,4 @@
-import { Base } from './Base.js'
+import { Base, Reference } from './types.js'
 
 export type CustomLogger = (message?: string, ...optionalParams: unknown[]) => void
 
@@ -6,16 +6,6 @@ export type Fetcher = (
   input: string | URL | Request,
   init?: RequestInit
 ) => Promise<Response>
-
-export interface Reference {
-  speckle_type: string
-  referencedId: string
-  __closure?: Record<string, number>
-}
-
-export interface DataChunk extends Base {
-  data?: Base[]
-}
 
 export function isBase(maybeBase?: unknown): maybeBase is Base {
   return (

@@ -1,7 +1,6 @@
 import { DeferredBase } from './deferredBase.js'
 import { CustomLogger } from '../types/functions.js'
-import { Base } from '../types/Base.js'
-import { Item } from '../types/types.js'
+import { Item, Base } from '../types/types.js'
 import { DefermentManagerOptions } from '../core/options.js'
 
 export class DefermentManager {

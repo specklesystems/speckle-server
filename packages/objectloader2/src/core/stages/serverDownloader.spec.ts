@@ -3,14 +3,14 @@ import createFetchMock from 'vitest-fetch-mock'
 import { vi } from 'vitest'
 import { Item } from '../../types/types.js'
 import ServerDownloader from './serverDownloader.js'
-import { MemoryPump } from '../../deferment/memoryPump.js'
+import AsyncGeneratorQueue from '../../queues/asyncGeneratorQueue.js'
 
 describe('downloader', () => {
   test('download batch of one', async () => {
     const fetchMocker = createFetchMock(vi)
     const i: Item = { baseId: 'id', base: { id: 'id', speckle_type: 'type' } }
     fetchMocker.mockResponseOnce('id\t' + JSON.stringify(i.base) + '\n')
-    const pump = new MemoryPump()
+    const gathered = new AsyncGeneratorQueue<Item>()
     const downloader = new ServerDownloader({
       serverUrl: 'http://speckle.test',
       streamId: 'streamId',
@@ -18,11 +18,14 @@ describe('downloader', () => {
       token: 'token',
       fetch: fetchMocker
     })
-    downloader.initializePool({ results: pump, total: 1, maxDownloadBatchWait: 200 })
+    downloader.initializePool({
+      results: gathered,
+      total: 1,
+      maxDownloadBatchWait: 200
+    })
     downloader.add('id')
-    await downloader.disposeAsync()
     const r = []
-    for await (const x of pump.gather([i.baseId])) {
+    for await (const x of gathered.consume()) {
       r.push(x)
     }
 
@@ -38,7 +41,7 @@ describe('downloader', () => {
       'id1\t' + JSON.stringify(i1.base) + '\nid2\t' + JSON.stringify(i2.base) + '\n'
     )
 
-    const pump = new MemoryPump()
+    const gathered = new AsyncGeneratorQueue<Item>()
     const downloader = new ServerDownloader({
       serverUrl: 'http://speckle.test',
       streamId: 'streamId',
@@ -47,12 +50,16 @@ describe('downloader', () => {
 
       fetch: fetchMocker
     })
-    downloader.initializePool({ results: pump, total: 2, maxDownloadBatchWait: 200 })
+    downloader.initializePool({
+      results: gathered,
+      total: 2,
+      maxDownloadBatchWait: 200
+    })
     downloader.add('id1')
     downloader.add('id2')
     await downloader.disposeAsync()
     const r = []
-    for await (const x of pump.gather([i1.baseId, i2.baseId])) {
+    for await (const x of gathered.consume([i1.baseId, i2.baseId])) {
       r.push(x)
     }
 
@@ -75,7 +82,7 @@ describe('downloader', () => {
         '\n'
     )
 
-    const pump = new MemoryPump()
+    const gathered = new AsyncGeneratorQueue<Item>()
     const downloader = new ServerDownloader({
       serverUrl: 'http://speckle.test',
       streamId: 'streamId',
@@ -84,13 +91,17 @@ describe('downloader', () => {
 
       fetch: fetchMocker
     })
-    downloader.initializePool({ results: pump, total: 3, maxDownloadBatchWait: 200 })
+    downloader.initializePool({
+      results: gathered,
+      total: 3,
+      maxDownloadBatchWait: 200
+    })
     downloader.add('id1')
     downloader.add('id2')
     downloader.add('id3')
     await downloader.disposeAsync()
     const r = []
-    for await (const x of pump.gather([i1.baseId, i2.baseId, i3.baseId])) {
+    for await (const x of gathered.consume([i1.baseId, i2.baseId, i3.baseId])) {
       r.push(x)
     }
 

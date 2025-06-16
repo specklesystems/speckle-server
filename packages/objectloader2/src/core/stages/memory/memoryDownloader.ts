@@ -1,6 +1,6 @@
-import Queue from '../../helpers/queue.js'
-import { Base, Item } from '../../types/types.js'
-import { Downloader } from '../interfaces.js'
+import Queue from '../../../queues/queue.js'
+import { Base, Item } from '../../../types/types.js'
+import { Downloader } from '../../interfaces.js'
 
 export class MemoryDownloader implements Downloader {
   #items: Map<string, Base>

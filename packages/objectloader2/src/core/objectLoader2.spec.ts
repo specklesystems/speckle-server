@@ -1,11 +1,10 @@
-import { describe, expect, test } from 'vitest'
+import { describe, test, expect } from 'vitest'
+import { Base, Item } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
-import { Base } from '../types/Base.js'
-import { Item } from '../types/types.js'
-import { MemoryDownloader } from './downloaders/memoryDownloader.js'
-import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
-import { MemoryDatabase } from './databases/memoryDatabase.js'
 import IndexedDatabase from './stages/indexedDatabase.js'
+import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
+import { MemoryDatabase } from './stages/memory/memoryDatabase.js'
+import { MemoryDownloader } from './stages/memory/memoryDownloader.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {

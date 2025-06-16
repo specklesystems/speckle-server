@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { MemoryDownloader } from './memoryDownloader.js'
-import { Base, Item } from '../../types/types.js'
-import Queue from '../../helpers/queue.js'
-import BufferQueue from '../../helpers/bufferQueue.js'
+import BufferQueue from '../../../queues/bufferQueue.js'
+import Queue from '../../../queues/queue.js'
+import { Base, Item } from '../../../types/types.js'
 
 const makeBase = (foo: string): Base => ({ foo } as unknown as Base)
 

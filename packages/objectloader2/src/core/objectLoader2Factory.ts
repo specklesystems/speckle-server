@@ -1,10 +1,10 @@
 import { CustomLogger } from '../types/functions.js'
-import { Base } from '../types/Base.js'
-import IndexedDatabase from './stages/indexedDatabase.js'
-import { MemoryDatabase } from './databases/memoryDatabase.js'
-import { MemoryDownloader } from './downloaders/memoryDownloader.js'
-import ServerDownloader from './downloaders/serverDownloader.js'
+import { Base } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
+import IndexedDatabase from './stages/indexedDatabase.js'
+import { MemoryDatabase } from './stages/memory/memoryDatabase.js'
+import { MemoryDownloader } from './stages/memory/memoryDownloader.js'
+import ServerDownloader from './stages/serverDownloader.js'
 
 export interface ObjectLoader2FactoryOptions {
   useMemoryCache?: boolean

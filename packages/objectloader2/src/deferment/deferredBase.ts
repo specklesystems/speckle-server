@@ -1,4 +1,4 @@
-import { Base } from '../types/Base.js'
+import { Base } from '../types/types.js'
 
 export class DeferredBase {
   private promise: Promise<Base>

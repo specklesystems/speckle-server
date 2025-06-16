@@ -9,4 +9,7 @@ export default class BufferQueue<T> implements Queue<T> {
   values(): T[] {
     return this.#buffer
   }
+  disposeAsync(): Promise<void> {
+    return Promise.resolve()
+  }
 }

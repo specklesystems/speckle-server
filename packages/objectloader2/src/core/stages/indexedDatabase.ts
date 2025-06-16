@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
-import BatchingQueue from '../../deferment/batchingQueue.js'
 import { CustomLogger } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 import { isSafari } from '@speckle/shared'
 import { Dexie, DexieOptions, Table } from 'dexie'
 import { Database } from '../interfaces.js'
+import BatchingQueue from '../../queues/batchingQueue.js'
 
 export class ObjectStore extends Dexie {
   static #databaseName: string = 'speckle-cache'

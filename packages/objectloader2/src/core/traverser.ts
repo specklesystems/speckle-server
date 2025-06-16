@@ -1,5 +1,5 @@
-import { DataChunk, isBase, isReference, isScalar } from '../types/functions.js'
-import { Base } from '../types/Base.js'
+import { isScalar, isBase, isReference } from '../types/functions.js'
+import { Base, DataChunk } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 
 export type ProgressStage = 'download' | 'construction'

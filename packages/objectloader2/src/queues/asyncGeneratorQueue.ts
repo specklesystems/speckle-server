@@ -29,7 +29,8 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
       }
     }
   }
-  dispose(): void {
+  disposeAsync(): Promise<void> {
     this.#finished = true
+    return Promise.resolve()
   }
 }

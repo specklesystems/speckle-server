@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
-import IndexedDatabase, { IndexedDatabaseOptions } from './databases/indexedDatabase.js'
 
-import { Base } from '../../types/Base.js'
-import { Item } from '../../types/types.js'
+import { Base, Item } from '../../types/types.js'
+import IndexedDatabase, { IndexedDatabaseOptions } from './indexedDatabase.js'
 
 // Mock Item
 const defaultItem = (id: string): Item => ({

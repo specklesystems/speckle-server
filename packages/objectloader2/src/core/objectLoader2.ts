@@ -1,14 +1,13 @@
-import AsyncGeneratorQueue from '../deferment/asyncGeneratorQueue.js'
-import { Downloader, Database } from './interfaces.js'
-import { CustomLogger } from '../types/functions.js'
-import { Base } from '../types/Base.js'
-import { Item } from '../types/types.js'
-import { CacheOptions, ObjectLoader2Options } from './options.js'
 import { DefermentManager } from '../deferment/defermentManager.js'
-import { CacheReader } from '../deferment/cacheReader.js'
-import AggregateQueue from '../deferment/aggregateQueue.js'
+import AggregateQueue from '../queues/aggregateQueue.js'
+import AsyncGeneratorQueue from '../queues/asyncGeneratorQueue.js'
+import { CustomLogger } from '../types/functions.js'
+import { Item, Base } from '../types/types.js'
+import { Database, Downloader } from './interfaces.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
-import { CacheWriter } from '../deferment/cacheWriter.js'
+import { ObjectLoader2Options, CacheOptions } from './options.js'
+import { CacheReader } from './stages/cacheReader.js'
+import { CacheWriter } from './stages/cacheWriter.js'
 
 export class ObjectLoader2 {
   #rootId: string
@@ -54,8 +53,8 @@ export class ObjectLoader2 {
   }
 
   async disposeAsync(): Promise<void> {
-    this.#gathered.dispose()
     await Promise.all([
+      this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
       this.#cacheReader.disposeAsync(),
       this.#cacheWriter.disposeAsync()

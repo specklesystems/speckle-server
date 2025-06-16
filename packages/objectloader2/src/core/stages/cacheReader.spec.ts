@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest'
-import { Base, Item } from '../types/types.js'
-import { DefermentManager } from './defermentManager.js'
+import { describe, test, expect } from 'vitest'
+import { DefermentManager } from '../../deferment/defermentManager.js'
+import { Item, Base } from '../../types/types.js'
 import { CacheReader } from './cacheReader.js'
-import { MemoryDatabase } from '../core/databases/memoryDatabase.js'
+import { MemoryDatabase } from './memory/memoryDatabase.js'
 
 describe('CacheReader testing', () => {
   test('deferred getObject', async () => {
@@ -11,7 +11,7 @@ describe('CacheReader testing', () => {
     const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
     const cacheReader = new CacheReader(
       new MemoryDatabase({
-        items: new Map<string, Base>([[i1.baseId, i1.base]])
+        items: new Map<string, Base>([[i1.baseId, i1.base!]])
       }),
       deferments,
       {

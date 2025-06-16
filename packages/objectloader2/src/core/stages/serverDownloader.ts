@@ -1,4 +1,4 @@
-import BatchedPool from '../../deferment/batchedPool.js'
+import BatchedPool from '../../queues/batchedPool.js'
 import Queue from '../../queues/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
 import { Fetcher, isBase, take } from '../../types/functions.js'
@@ -21,6 +21,8 @@ export default class ServerDownloader implements Downloader {
   #options: ServerDownloaderOptions
   #fetch: Fetcher
   #results?: Queue<Item>
+  #total?: number
+  #count: number = 0
 
   #downloadQueue?: BatchedPool<string>
   #decoder = new TextDecoder()
@@ -64,6 +66,7 @@ export default class ServerDownloader implements Downloader {
   }): void {
     const { results, total } = params
     this.#results = results
+    this.#total = total
     this.#downloadQueue = new BatchedPool<string>({
       concurrencyAndSizes: this.#getDownloadCountAndSizes(total),
       maxWaitTime: params.maxDownloadBatchWait,
@@ -89,20 +92,6 @@ export default class ServerDownloader implements Downloader {
 
   async disposeAsync(): Promise<void> {
     await this.#downloadQueue?.disposeAsync()
-  }
-
-  #processJson(baseId: string, unparsedBase: string): Item {
-    let base: unknown
-    try {
-      base = JSON.parse(unparsedBase)
-    } catch (e: unknown) {
-      throw new Error(`Error parsing object ${baseId}: ${(e as Error).message}`)
-    }
-    if (isBase(base)) {
-      return { baseId, base }
-    } else {
-      throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
-    }
   }
 
   async downloadBatch(params: {
@@ -142,6 +131,10 @@ export default class ServerDownloader implements Downloader {
       throw new Error(
         'Items requested were not downloaded: ' + take(keys.values(), 10).join(',')
       )
+    }
+    count += keys.size // count the leftovers
+    if (count >= this.#total!) {
+      await this.#results?.disposeAsync() // mark the queue as done
     }
   }
 
@@ -185,6 +178,20 @@ export default class ServerDownloader implements Downloader {
     throw new ObjectLoaderRuntimeError(
       'Invalid line format: ' + this.#decoder.decode(line)
     )
+  }
+
+  #processJson(baseId: string, unparsedBase: string): Item {
+    let base: unknown
+    try {
+      base = JSON.parse(unparsedBase)
+    } catch (e: unknown) {
+      throw new Error(`Error parsing object ${baseId}: ${(e as Error).message}`)
+    }
+    if (isBase(base)) {
+      return { baseId, base }
+    } else {
+      throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
+    }
   }
 
   concatUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
