@@ -1,4 +1,4 @@
-import Queue from '../helpers/queue.js'
+import Queue from '../queues/queue.js'
 import { Item } from '../types/types.js'
 
 export interface Downloader extends Queue<string> {

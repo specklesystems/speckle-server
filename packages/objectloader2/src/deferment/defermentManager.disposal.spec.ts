@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { DefermentManager } from './defermentManager.js'
-import { DefermentManagerOptions } from '../operations/options.js'
+import { DefermentManagerOptions } from '../core/options.js'
 import { Item } from '../types/types.js'
 
 describe('DefermentManager disposal', () => {

@@ -1,5 +1,5 @@
-import { Database } from '../operations/interfaces.js'
-import { CacheOptions } from '../operations/options.js'
+import { Database } from '../core/interfaces.js'
+import { CacheOptions } from '../core/options.js'
 import { CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
 import { DefermentManager } from './defermentManager.js'

@@ -1,4 +1,5 @@
-import { Base, CustomLogger } from '../types/types.js'
+import { CustomLogger } from '../types/functions.js'
+import { Base } from '../types/Base.js'
 import { Downloader, Database } from './interfaces.js'
 
 export interface ObjectLoader2Options {

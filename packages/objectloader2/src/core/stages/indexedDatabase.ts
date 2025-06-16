@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
-import BatchingQueue from '../../helpers/batchingQueue.js'
-import { CustomLogger, Item } from '../../types/types.js'
+import BatchingQueue from '../../deferment/batchingQueue.js'
+import { CustomLogger } from '../../types/functions.js'
+import { Item } from '../../types/types.js'
 import { isSafari } from '@speckle/shared'
 import { Dexie, DexieOptions, Table } from 'dexie'
 import { Database } from '../interfaces.js'

@@ -1,7 +1,8 @@
 import { describe, test, expect, beforeEach } from 'vitest'
 import { DefermentManager } from './defermentManager.js'
-import { DefermentManagerOptions } from '../operations/options.js'
-import { Base, Item } from '../types/types.js'
+import { DefermentManagerOptions } from '../core/options.js'
+import { Base } from '../types/Base.js'
+import { Item } from '../types/types.js'
 
 const makeItem = (id: string, size = 1): Item => ({
   baseId: id,

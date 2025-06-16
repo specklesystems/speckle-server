@@ -1,7 +1,8 @@
-import BatchedPool from '../../helpers/batchedPool.js'
-import Queue from '../../helpers/queue.js'
+import BatchedPool from '../../deferment/batchedPool.js'
+import Queue from '../../queues/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
-import { Fetcher, isBase, Item, take } from '../../types/types.js'
+import { Fetcher, isBase, take } from '../../types/functions.js'
+import { Item } from '../../types/types.js'
 import { Downloader } from '../interfaces.js'
 
 export interface ServerDownloaderOptions {

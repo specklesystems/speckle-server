@@ -1,5 +1,6 @@
-import { Base, CustomLogger } from '../types/types.js'
-import IndexedDatabase from './databases/indexedDatabase.js'
+import { CustomLogger } from '../types/functions.js'
+import { Base } from '../types/Base.js'
+import IndexedDatabase from './stages/indexedDatabase.js'
 import { MemoryDatabase } from './databases/memoryDatabase.js'
 import { MemoryDownloader } from './downloaders/memoryDownloader.js'
 import ServerDownloader from './downloaders/serverDownloader.js'

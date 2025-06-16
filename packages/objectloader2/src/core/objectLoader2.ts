@@ -1,12 +1,14 @@
-import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
+import AsyncGeneratorQueue from '../deferment/asyncGeneratorQueue.js'
 import { Downloader, Database } from './interfaces.js'
-import { CustomLogger, Base, Item } from '../types/types.js'
+import { CustomLogger } from '../types/functions.js'
+import { Base } from '../types/Base.js'
+import { Item } from '../types/types.js'
 import { CacheOptions, ObjectLoader2Options } from './options.js'
-import { DefermentManager } from '../helpers/defermentManager.js'
-import { CacheReader } from '../helpers/cacheReader.js'
-import AggregateQueue from '../helpers/aggregateQueue.js'
+import { DefermentManager } from '../deferment/defermentManager.js'
+import { CacheReader } from '../deferment/cacheReader.js'
+import AggregateQueue from '../deferment/aggregateQueue.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
-import { CacheWriter } from '../helpers/cacheWriter.js'
+import { CacheWriter } from '../deferment/cacheWriter.js'
 
 export class ObjectLoader2 {
   #rootId: string

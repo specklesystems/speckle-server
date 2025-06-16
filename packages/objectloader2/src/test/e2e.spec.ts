@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'vitest'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
-import { Base } from '../types/types.js'
+import { Base } from '../types/Base.js'
 import { TIME_MS } from '@speckle/shared'
-import { ObjectLoader2Factory } from '../operations/objectLoader2Factory.js'
+import { ObjectLoader2Factory } from '../core/objectLoader2Factory.js'
 
 describe('e2e', () => {
   test(

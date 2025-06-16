@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { Base } from '../types/types.js'
+import { Base } from '../types/Base.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import Traverser from './traverser.js'
 

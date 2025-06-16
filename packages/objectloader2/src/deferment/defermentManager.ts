@@ -1,6 +1,8 @@
 import { DeferredBase } from './deferredBase.js'
-import { Base, CustomLogger, Item } from '../types/types.js'
-import { DefermentManagerOptions } from '../operations/options.js'
+import { CustomLogger } from '../types/functions.js'
+import { Base } from '../types/Base.js'
+import { Item } from '../types/types.js'
+import { DefermentManagerOptions } from '../core/options.js'
 
 export class DefermentManager {
   private deferments: Map<string, DeferredBase> = new Map()

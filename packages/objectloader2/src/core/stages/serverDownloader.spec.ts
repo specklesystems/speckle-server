@@ -3,7 +3,7 @@ import createFetchMock from 'vitest-fetch-mock'
 import { vi } from 'vitest'
 import { Item } from '../../types/types.js'
 import ServerDownloader from './serverDownloader.js'
-import { MemoryPump } from '../../helpers/memoryPump.js'
+import { MemoryPump } from '../../deferment/memoryPump.js'
 
 describe('downloader', () => {
   test('download batch of one', async () => {
