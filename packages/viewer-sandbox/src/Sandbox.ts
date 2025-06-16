@@ -489,7 +489,7 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
@@ -500,6 +500,10 @@ export default class Sandbox {
       //   .read(pass)
 
       // console.log(PassReader.toBase64(PassReader.decodeDepth(depthData), width, height))
+
+      this.viewer
+        .getExtension(FilteringExtension)
+        .hideObjects(['a9676fc28d803280afbd0f9fde192de1'])
     })
 
     const rotate = this.tabs.pages[0].addButton({

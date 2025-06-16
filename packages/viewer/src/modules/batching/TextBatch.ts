@@ -146,7 +146,17 @@ export default class TextBatch implements Batch {
       //@ts-ignore
       text.color = range.material?.color
       //@ts-ignore
-      text.material.opacity = range.material?.opacity
+      text.material.color = range.material?.color
+      //@ts-ignore
+      text.material.opacity = range.material?.visible ? range.material?.opacity : 0
+
+      if (range.materialOptions) {
+        if (range.materialOptions.rampIndexColor !== undefined) {
+          text.color = range.materialOptions.rampIndexColor
+          text.material.color = range.materialOptions.rampIndexColor
+        }
+      }
+
       packingInfo.needsUpdate = true
     })
     //@ts-ignore
@@ -202,8 +212,18 @@ export default class TextBatch implements Batch {
   }
 
   public resetDrawRanges() {
-    // this.mesh.textMesh.material = this.batchMaterial
-    // this.mesh.textMesh.visible = true
+    this.groups.length = 0
+    this.materials.length = 0
+
+    this.materials.push(this.batchMaterial)
+    this.setVisibleRange([AllBatchUpdateRange])
+    this.setDrawRanges([
+      {
+        offset: 0,
+        count: this.renderViews.length,
+        material: this.batchMaterial
+      }
+    ])
   }
 
   protected alignmentXToAnchorX(value: number): string {
@@ -340,6 +360,13 @@ export default class TextBatch implements Batch {
                 textMap.get(text).setBatchData(this.id, packingInfo.index, 1)
                 packingInfo.needsUpdate = true
               })
+              this.setBatchBuffers([
+                {
+                  offset: 0,
+                  count: this.renderViews.length,
+                  material: this.batchMaterial
+                }
+              ])
               resolve()
             })
           }
@@ -348,19 +375,40 @@ export default class TextBatch implements Batch {
     })
   }
 
-  public getRenderView(index: number): NodeRenderView {
+  public getRenderView(index: number): NodeRenderView | null {
     index
-    return this.renderViews[0]
+    Logger.warn('Deprecated! Use InstancedBatchObject')
+    return null
   }
 
-  public getMaterialAtIndex(index: number): Material {
+  public getMaterialAtIndex(index: number): Material | null {
     index
-    return this.batchMaterial
+    Logger.warn('Deprecated! Use InstancedBatchObject')
+    return null
   }
 
-  public getMaterial(rv: NodeRenderView): Material {
-    rv
-    return this.batchMaterial
+  public getMaterial(rv: NodeRenderView): Material | null {
+    const group = this.groups.find((value) => {
+      return (
+        rv.batchStart >= value.start &&
+        rv.batchStart + rv.batchCount <= value.count + value.start
+      )
+    })
+    if (!group) {
+      Logger.warn(`Could not get material for ${rv.renderData.id}`)
+      return null
+    }
+    /** Just like for lines, this isn't ideal but it's quicker */
+    const material = this.materials[group.materialIndex].clone() as SpeckleTextMaterial
+    //@ts-ignore
+    this.mesh._members.forEach((packingInfo, text) => {
+      if (group.start === packingInfo.index) {
+        material.color.copy(text.material.color)
+        material.opacity = text.material.opacity
+      }
+    })
+
+    return material
   }
 
   public purge() {

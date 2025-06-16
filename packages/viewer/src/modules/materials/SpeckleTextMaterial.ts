@@ -73,7 +73,7 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
 
   constructor(parameters: SpeckleTextMaterialParameters, defines: Array<string> = []) {
     super(parameters)
-    this.billboardPixelHeight = parameters.billboardPixelHeight ?? 0
+    this.billboardPixelHeight = parameters?.billboardPixelHeight ?? 0
     this.init(defines)
   }
 
