@@ -354,6 +354,8 @@ const cloneStreamCoreFactory =
 
     // Create branch_commits
     await createBranchCommitReferencesFactory(deps)(state, commitIdMap, branchIdMap)
+
+    // TODO: no stream activity
     return { newStreamId, commitIdMap, newStream }
   }
 

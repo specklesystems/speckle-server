@@ -171,7 +171,7 @@ export const batchMoveCommitsFactory =
           streamId: stream.id,
           authorId: userId,
           description: null
-        }))
+        })) // TODO: no event emitted here
 
       await deps.moveCommitsToBranch(commitIds, finalBranch.id)
       await Promise.all(

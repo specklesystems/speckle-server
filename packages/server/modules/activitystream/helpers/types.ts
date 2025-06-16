@@ -24,12 +24,12 @@ export const ResourceTypes = Object.freeze(<const>{
  */
 export const ActionTypes = Object.freeze(<const>{
   Stream: {
-    Update: 'stream_update',
+    Update: 'stream_update', // TODO: do we track visibility update? if yes, we do not need a visibility update here
     PermissionsRemove: 'stream_permissions_remove',
-    PermissionsAdd: 'stream_permissions_add',
+    PermissionsAdd: 'stream_permissions_add', // do we tack already role changes here? we need a curl: CREATE; UPDATE; DELETE;
     InviteAccepted: 'stream_permissions_invite_accepted',
     Delete: 'stream_delete',
-    Create: 'stream_create',
+    Create: 'stream_create', // TODO: check if create stores visibility
     Clone: 'stream_clone',
     InviteSent: 'stream_invite_sent',
     InviteDeclined: 'stream_invite_declined',
