@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Item, Base } from '../../../types/types.js'
-import { MemoryDatabase } from './MemoryDatabase.1.js'
+import { MemoryDatabase } from './memoryDatabase.js'
 
 const makeItem = (id: string, foo = 'bar'): Item => ({
   baseId: id,
