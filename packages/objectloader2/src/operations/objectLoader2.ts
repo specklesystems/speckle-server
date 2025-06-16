@@ -102,8 +102,14 @@ export class ObjectLoader2 {
       results: new AggregateQueue(this.#gathered, this.#cacheWriter),
       total
     })
+    this.#cacheReader.requestAll(children)
+    let count = 0
     for await (const item of this.#gathered.consume()) {
       yield item.base! //always defined, as we add it to the queue
+      count++
+      if (count >= total) {
+        break
+      }
     }
   }
 
