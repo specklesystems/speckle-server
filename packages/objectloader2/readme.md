@@ -11,26 +11,51 @@ The main aim for the objectloader is:
 
 ## Architecture
 
-To achieve increased concurrency, the different phases of the objectloader are divided into pools of workers with queues to feed them.
+To achieve increased concurrency, the different phases of the objectloader are divided into pools of workers with queues to feed them. Below is a sequence diagram of the worker stages
+
+```mermaid
+sequenceDiagram
+    ObjectLoader2->>CacheReader: Root+Children
+    CacheReader-->>Database: Item exists?
+    CacheReader->>ObjectLoader2: Item exists in Cache
+    CacheReader->>Downloader: Item does not exist in Cache
+    Downloader->>CacheWriter: Save Item to Cache
+    CacheWriter->>Database: Write Item
+    Downloader->>ObjectLoader2: Item exists in Cache
+```
+
+The queues between stages are illustrated below with the concurrency
 
 ```mermaid
 flowchart TD
-  start(Root Commit)
-  getIds(Parse Root to get all IDs)
-  cached{Cached?}
-  download(Download IDs)
-  save(Write to Cache)
-  load(Load from Cache)
-  generate(Generate to Viewer!)
+  start(ObjectLoader2)
+  cachedQueue(BatchingQueue)
+  cachedExists{Exists?}
+  downloadQueue(BatchingQueue)
+  download{Download Batch}
+  saveQueue(BatchingQueue)
+  save{Save to Database}
+  asyncGeneratorQueue(Aggregated Async Generator Queue)
+  loop(Generate to Viewer!)
 
-  start --> getIds
-  getIds --> cached
-  cached -->|Yes| load
-  cached -->|No| download
-  load --> generate
-  download --> generate
-  download --> save
+  start -- Add IDs --> cachedQueue
 
+  subgraph CacheReader
+  cachedQueue -- Checks by Batch --> cachedExists
+  end
+  cachedExists -->|Yes| asyncGeneratorQueue
+  subgraph Downloader
+  cachedExists -->|No| downloadQueue
+  downloadQueue --> download
+  end
+  subgraph CacheWriter
+  download -- add to queue --> saveQueue
+  saveQueue --> save
+  end
+  subgraph Viewer
+  download -- add to queue --> asyncGeneratorQueue
+  asyncGeneratorQueue -- Generator Loop --> loop
+  end
 ```
 
 From the list of IDs, they are moved to a queue to be begin checking the cache from a pool of readers.
