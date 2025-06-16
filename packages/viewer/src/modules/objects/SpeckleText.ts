@@ -193,11 +193,12 @@ export class SpeckleText extends BatchedText {
       //@ts-ignore
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
-      // const tasOnly = raycaster.intersectTASOnly || true
+      /** Texts are all quads. Intersection their BAS is redundant */
+      const tasOnly = raycaster.intersectTASOnly || true
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, raycaster.intersectTASOnly, this.batchMaterial),
+          this.tas.raycastFirst(ray, tasOnly, this.batchMaterial),
           this as unknown as Object3D,
           raycaster
         )
@@ -205,11 +206,7 @@ export class SpeckleText extends BatchedText {
           intersects.push(hit)
         }
       } else {
-        const hits = this.tas.raycast(
-          ray,
-          raycaster.intersectTASOnly,
-          this.batchMaterial
-        )
+        const hits = this.tas.raycast(ray, tasOnly, this.batchMaterial)
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(
             hits[i],

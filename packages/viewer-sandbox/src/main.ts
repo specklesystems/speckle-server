@@ -566,10 +566,10 @@ const getStream = () => {
     // Far away text screen
     // 'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04@c6622b474a'
     // Far away text, world
-    // 'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04@fac9360249'
+    'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04@fac9360249'
 
     // Text test stream
-    'https://latest.speckle.systems/projects/109e01c8c0/models/1eee4edbe6'
+    // 'https://latest.speckle.systems/projects/109e01c8c0/models/1eee4edbe6'
   )
 }
 

@@ -314,7 +314,8 @@ export default class Materials {
       renderView.geometryType.toString() +
       geometry +
       mat +
-      (renderView.geometryType === GeometryType.TEXT
+      (renderView.geometryType === GeometryType.TEXT &&
+      renderView.renderData.geometry.metaData?.screenOriented !== undefined
         ? (
             renderView.renderData.geometry.metaData?.screenOriented as boolean
           ).toString()

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box3, Material, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Matrix4, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
@@ -318,6 +318,10 @@ export default class TextBatch implements Batch {
             0
           )
           box.setFromArray(vertices)
+          box.applyMatrix4(
+            this.renderViews[k].renderData.geometry.bakeTransform || new Matrix4()
+          )
+
           needsRTE ||= Geometry.needsRTE(box)
 
           const geometry = text.geometry
