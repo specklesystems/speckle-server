@@ -2,17 +2,24 @@ import { Database } from '../operations/interfaces.js'
 import { CacheOptions } from '../operations/options.js'
 import { CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
+import { DefermentManager } from './defermentManager.js'
 import Queue from './queue.js'
 
 export class CacheWriter implements Queue<Item> {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: Database
+  #defermentManager: DefermentManager
   #logger: CustomLogger
   #options: CacheOptions
   #disposed = false
 
-  constructor(database: Database, options: CacheOptions) {
+  constructor(
+    database: Database,
+    defermentManager: DefermentManager,
+    options: CacheOptions
+  ) {
     this.#database = database
+    this.#defermentManager = defermentManager
     this.#options = options
     this.#logger = options.logger || ((): void => {})
   }
@@ -26,12 +33,12 @@ export class CacheWriter implements Queue<Item> {
           this.#database.saveBatch({ batch })
       })
     }
+    this.#defermentManager.undefer(item)
     this.#writeQueue.add(item.baseId, item)
   }
 
   async disposeAsync(): Promise<void> {
     await this.#writeQueue?.disposeAsync()
-    await this.#database.disposeAsync()
     this.#disposed = true
   }
 
