@@ -31,7 +31,8 @@ export const updateWorkspacePlanFactory =
       workspaceId
     })
     if (!workspace) throw new WorkspaceNotFoundError()
-    const previousPlan = await getWorkspacePlan({ workspaceId })
+    let workspacePlan: WorkspacePlan
+    const previousWorkspacePlan = await getWorkspacePlan({ workspaceId })
     const createdAt = new Date()
     const updatedAt = new Date()
     switch (name) {
@@ -44,9 +45,8 @@ export const updateWorkspacePlanFactory =
           case 'cancelationScheduled':
           case 'canceled':
           case 'paymentFailed':
-            await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
-            })
+            workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
+            await upsertWorkspacePlan({ workspacePlan })
             break
           default:
             throwUncoveredError(status)
@@ -61,9 +61,8 @@ export const updateWorkspacePlanFactory =
       case WorkspacePlans.ProUnlimitedInvoiced:
         switch (status) {
           case 'valid':
-            await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
-            })
+            workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
+            await upsertWorkspacePlan({ workspacePlan })
             break
           case 'cancelationScheduled':
           case 'canceled':
@@ -76,17 +75,14 @@ export const updateWorkspacePlanFactory =
       default:
         throwUncoveredError(name)
     }
+
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
-        workspacePlan: {
-          name,
-          status,
-          workspaceId
-        },
-        ...(previousPlan && {
-          previousPlan: { name: previousPlan.name }
-        })
+        workspacePlan,
+        subscription: previousSubscription,
+        previousWorkspacePlan: previousWorkspacePlan || undefined,
+        previousSubscription: undefined // TODO: implement logic
       }
     })
   }

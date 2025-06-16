@@ -69,6 +69,7 @@ export const downscaleWorkspaceSubscriptionFactory =
       type: WorkspaceSeatType.Editor
     })
 
+    const previousWorkspacePlan = cloneDeep(workspacePlan)
     const previousSubscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
     const subscriptionData = cloneDeep(previousSubscriptionData)
 
@@ -88,10 +89,13 @@ export const downscaleWorkspaceSubscriptionFactory =
       eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
       payload: {
         workspacePlan,
+        previousWorkspacePlan,
         subscription: {
+          billingInterval: workspaceSubscription.billingInterval,
           totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
         },
         previousSubscription: {
+          billingInterval: workspaceSubscription.billingInterval,
           totalEditorSeats: calculateSubscriptionSeats({
             subscriptionData: previousSubscriptionData
           })

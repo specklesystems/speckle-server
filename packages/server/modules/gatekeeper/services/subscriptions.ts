@@ -114,10 +114,13 @@ export const handleSubscriptionUpdateFactory =
         eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
           workspacePlan: newWorkspacePlan,
+          previousWorkspacePlan: workspacePlan,
           subscription: {
-            totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
+            totalEditorSeats: calculateSubscriptionSeats({ subscriptionData }),
+            billingInterval: subscription.billingInterval
           },
           previousSubscription: {
+            billingInterval: subscription.billingInterval,
             totalEditorSeats: calculateSubscriptionSeats({
               subscriptionData: subscription.subscriptionData
             })

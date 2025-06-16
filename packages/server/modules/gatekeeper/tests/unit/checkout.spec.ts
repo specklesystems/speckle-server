@@ -41,6 +41,9 @@ describe('checkout @gatekeeper', () => {
           getSubscriptionData: async () => {
             expect.fail()
           },
+          getWorkspaceSubscription: async () => {
+            expect.fail()
+          },
           emitEvent: async () => {
             expect.fail()
           },
@@ -76,6 +79,9 @@ describe('checkout @gatekeeper', () => {
           },
           getWorkspacePlan: async () => null,
           getSubscriptionData: async () => {
+            expect.fail()
+          },
+          getWorkspaceSubscription: async () => {
             expect.fail()
           },
           emitEvent: async () => {
@@ -145,6 +151,7 @@ describe('checkout @gatekeeper', () => {
             upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
               storedWorkspaceSubscriptionData = workspaceSubscription
             },
+            getWorkspaceSubscription: async () => null,
             emitEvent: async ({ eventName, payload }) => {
               emittedEventName = eventName
               eventWorkspacePlan = payload

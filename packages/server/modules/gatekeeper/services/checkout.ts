@@ -3,7 +3,9 @@ import {
   UpdateCheckoutSessionStatus,
   UpsertWorkspaceSubscription,
   UpsertPaidWorkspacePlan,
-  GetSubscriptionData
+  GetSubscriptionData,
+  calculateSubscriptionSeats,
+  GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
   CheckoutSessionNotFoundError,
@@ -20,6 +22,7 @@ export const completeCheckoutSessionFactory =
     upsertWorkspaceSubscription,
     upsertPaidWorkspacePlan,
     getWorkspacePlan,
+    getWorkspaceSubscription,
     getSubscriptionData,
     emitEvent
   }: {
@@ -27,6 +30,7 @@ export const completeCheckoutSessionFactory =
     updateCheckoutSessionStatus: UpdateCheckoutSessionStatus
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
     getWorkspacePlan: GetWorkspacePlan
+    getWorkspaceSubscription: GetWorkspaceSubscription
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getSubscriptionData: GetSubscriptionData
     emitEvent: EventBusEmit
@@ -56,7 +60,7 @@ export const completeCheckoutSessionFactory =
     // TODO: make sure, the subscription data price plan matches the checkout session workspacePlan
 
     await updateCheckoutSessionStatus({ sessionId, paymentStatus: 'paid' })
-    const previousPlan = await getWorkspacePlan({
+    const previousWorkspacePlan = await getWorkspacePlan({
       workspaceId: checkoutSession.workspaceId
     })
     // a plan determines the workspace feature set
@@ -85,20 +89,29 @@ export const completeCheckoutSessionFactory =
       subscriptionData
     }
 
+    const previousSubscription = await getWorkspaceSubscription({
+      workspaceId: checkoutSession.workspaceId
+    })
     await upsertWorkspaceSubscription({
       workspaceSubscription
     })
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
-        workspacePlan: {
-          workspaceId: checkoutSession.workspaceId,
-          status: workspacePlan.status,
-          name: workspacePlan.name
+        workspacePlan,
+        subscription: {
+          totalEditorSeats: calculateSubscriptionSeats({ subscriptionData }),
+          billingInterval: workspaceSubscription.billingInterval
         },
-        ...(previousPlan && {
-          previousPlan: { name: previousPlan.name }
-        })
+        previousWorkspacePlan: previousWorkspacePlan || undefined,
+        previousSubscription: previousSubscription
+          ? {
+              totalEditorSeats: calculateSubscriptionSeats({
+                subscriptionData: previousSubscription.subscriptionData
+              }),
+              billingInterval: previousSubscription.billingInterval
+            }
+          : undefined
       }
     })
   }

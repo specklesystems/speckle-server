@@ -581,7 +581,7 @@ export const workspaceTrackingFactory =
           payload: {
             plan: payload.workspacePlan.name,
             cycle: subscription?.billingInterval,
-            previousPlan: payload.previousPlan?.name
+            previousPlan: payload.previousWorkspacePlan?.name
           }
         })
 

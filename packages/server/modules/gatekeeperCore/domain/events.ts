@@ -12,17 +12,21 @@ export const GatekeeperEvents = {
 
 type SubscriptionStats = {
   totalEditorSeats: number
+  billingInterval: string
 }
 
 export type GatekeeperEventPayloads = {
   [GatekeeperEvents.WorkspaceTrialExpired]: { workspaceId: string }
   [GatekeeperEvents.WorkspacePlanUpdated]: {
-    workspacePlan: Pick<WorkspacePlan, 'name' | 'status' | 'workspaceId'>
-    previousPlan?: Pick<WorkspacePlan, 'name'>
+    workspacePlan: WorkspacePlan
+    subscription: SubscriptionStats
+    previousWorkspacePlan?: WorkspacePlan
+    previousSubscription?: SubscriptionStats
   }
   [GatekeeperEvents.WorkspaceSubscriptionUpdated]: {
     workspacePlan: WorkspacePlan
     subscription: SubscriptionStats
+    previousWorkspacePlan: WorkspacePlan
     previousSubscription: SubscriptionStats
   }
 }
