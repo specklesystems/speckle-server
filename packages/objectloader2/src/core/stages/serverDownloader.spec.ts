@@ -59,7 +59,7 @@ describe('downloader', () => {
     downloader.add('id2')
     await downloader.disposeAsync()
     const r = []
-    for await (const x of gathered.consume([i1.baseId, i2.baseId])) {
+    for await (const x of gathered.consume()) {
       r.push(x)
     }
 
@@ -101,7 +101,7 @@ describe('downloader', () => {
     downloader.add('id3')
     await downloader.disposeAsync()
     const r = []
-    for await (const x of gathered.consume([i1.baseId, i2.baseId, i3.baseId])) {
+    for await (const x of gathered.consume()) {
       r.push(x)
     }
 
