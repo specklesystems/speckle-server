@@ -84,17 +84,15 @@ export class ObjectLoader2 {
 
   async *getObjectIterator(): AsyncGenerator<Base> {
     const rootItem = await this.getRootObject()
-    if (rootItem?.base === undefined) {
+    const root = rootItem?.base
+    if (root === undefined) {
       this.#logger('No root object found!')
       return
     }
-    if (!rootItem.base.__closure) {
-      yield rootItem.base
-      return
-    }
+    yield root
 
     //sort the closures by their values descending
-    const sortedClosures = Object.entries(rootItem.base.__closure).sort(
+    const sortedClosures = Object.entries(root.__closure ?? []).sort(
       (a, b) => b[1] - a[1]
     )
     const children = sortedClosures.map((x) => x[0])
@@ -104,7 +102,6 @@ export class ObjectLoader2 {
       total
     })
     //only for root
-    this.#gathered.add(rootItem)
     this.#cacheReader.requestAll(children)
     for await (const item of this.#gathered.consume()) {
       yield item.base! //always defined, as we add it to the queue

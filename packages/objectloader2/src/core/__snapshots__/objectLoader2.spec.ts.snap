@@ -36,14 +36,14 @@ exports[`objectloader2 > can get a root object from downloader 1`] = `
 exports[`objectloader2 > can get root/child object from memory cache using iterator and getObject 1`] = `
 [
   {
-    "id": "child1Id",
-    "speckle_type": "type",
-  },
-  {
     "__closure": {
       "child1Id": 100,
     },
     "id": "rootId",
+    "speckle_type": "type",
+  },
+  {
+    "id": "child1Id",
     "speckle_type": "type",
   },
 ]
@@ -59,14 +59,14 @@ exports[`objectloader2 > can get root/child object from memory cache using itera
 exports[`objectloader2 > can get root/child object from memory downloader using iterator and getObject 1`] = `
 [
   {
-    "id": "child1Id",
-    "speckle_type": "type",
-  },
-  {
     "__closure": {
       "child1Id": 100,
     },
     "id": "rootId",
+    "speckle_type": "type",
+  },
+  {
+    "id": "child1Id",
     "speckle_type": "type",
   },
 ]
@@ -90,32 +90,6 @@ exports[`objectloader2 > can get single object from cache using iterator 1`] = `
 
 exports[`objectloader2 > createFromJSON test 1`] = `
 [
-  {
-    "applicationId": null,
-    "data": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-    ],
-    "id": "0e61e61edee00404ec6e0f9f594bce24",
-    "speckle_type": "Speckle.Core.Models.DataChunk",
-  },
-  {
-    "applicationId": null,
-    "data": [
-      1,
-      10,
-    ],
-    "id": "f70738e3e3e593ac11099a6ed6b71154",
-    "speckle_type": "Speckle.Core.Models.DataChunk",
-  },
   {
     "__closure": {
       "0e61e61edee00404ec6e0f9f594bce24": 100,
@@ -144,6 +118,32 @@ exports[`objectloader2 > createFromJSON test 1`] = `
       },
     ],
     "speckle_type": "Speckle.Core.Tests.Unit.Models.BaseTests+SampleObjectBase2",
+  },
+  {
+    "applicationId": null,
+    "data": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+    ],
+    "id": "0e61e61edee00404ec6e0f9f594bce24",
+    "speckle_type": "Speckle.Core.Models.DataChunk",
+  },
+  {
+    "applicationId": null,
+    "data": [
+      1,
+      10,
+    ],
+    "id": "f70738e3e3e593ac11099a6ed6b71154",
+    "speckle_type": "Speckle.Core.Models.DataChunk",
   },
 ]
 `;
