@@ -72,9 +72,18 @@ const { result: workspaceInviteResult } = useQuery(
 const projectsInvites = computed(
   () => projectInviteResult.value?.activeUser?.projectInvites
 )
-const workspacesInvites = computed(
-  () => workspaceInviteResult.value?.activeUser?.workspaceInvites
-)
+const workspacesInvites = computed(() => {
+  const invites = workspaceInviteResult.value?.activeUser?.workspaceInvites
+
+  // Filter out implicit workspace invites that already show up as project invites here (same ID)
+  return (
+    invites?.filter((invite) => {
+      return !projectsInvites.value?.some(
+        (projectInvite) => projectInvite.id === invite.id
+      )
+    }) || []
+  )
+})
 
 const hasNotifications = computed(
   () => projectsInvites.value?.length || workspacesInvites.value?.length
