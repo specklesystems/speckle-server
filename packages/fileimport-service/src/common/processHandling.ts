@@ -54,7 +54,7 @@ export function runProcessWithTimeout(
       reject(new Error(rejectionReason))
     }, timeoutMs)
 
-    childProc.on('close', (code) => {
+    childProc.on('exit', (code) => {
       boundLogger.info({ exitCode: code }, "Process exited with code '{exitCode}'")
 
       if (timedOut) {
