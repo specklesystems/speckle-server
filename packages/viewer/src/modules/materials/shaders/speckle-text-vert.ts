@@ -105,15 +105,15 @@ void main() {
         #endif
     #else
         #if defined(BILLBOARD)
+            vec3 billboardPosition = matrix[3].xyz;
             #if defined(BILLBOARD_FIXED)
-                vec3 billboardPosition = matrix[3].xyz;
                 vec2 billboardPixelSize = troikaBatchTexel(9.0).y / screenSize;
                 gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPosition, 1.0));
                 float div = gl_Position.w;
                 gl_Position /= gl_Position.w;
                 gl_Position.xy += position.xy * billboardPixelSize;
             #else
-                mvPosition = (modelViewMatrix * matrix[3].xyz + vec4(position.x, position.y, 0., 0.0));
+                mvPosition = (modelViewMatrix * vec4(billboardPosition, 1.) + vec4(position.x, position.y, 0., 0.0));
             #endif
         #else
              mvPosition = matrix * vec4(transformed, 1.);

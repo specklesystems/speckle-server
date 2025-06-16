@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Box3, Material, Matrix4, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
@@ -137,10 +137,20 @@ export default class TextBatch implements Batch {
   public setBatchBuffers(ranges: BatchUpdateRange[]): void {
     console.warn(' Groups -> ', this.mesh.groups)
     console.warn(' Ranges -> ', ranges)
+    const splitRanges: BatchUpdateRange[] = []
+    ranges.forEach((range: BatchUpdateRange) => {
+      for (let k = 0; k < range.count; k++) {
+        splitRanges.push({
+          offset: range.offset + k,
+          count: 1,
+          material: range.material,
+          materialOptions: range.materialOptions
+        })
+      }
+    })
     //@ts-ignore
-
     this.mesh._members.forEach((packingInfo, text) => {
-      const range = ranges.find((val) => val.offset === packingInfo.index)
+      const range = splitRanges.find((val) => val.offset === packingInfo.index)
       if (!range) return
 
       //@ts-ignore
@@ -278,13 +288,9 @@ export default class TextBatch implements Batch {
           text.anchorX = this.alignmentXToAnchorX(textMeta.alignmentH as number)
           text.anchorY = this.alignmentYToAnchorY(textMeta.alignmentV as number)
         }
-        box.setFromBufferAttribute(text.geometry.attributes.position)
-        box.applyMatrix4(
-          this.renderViews[k].renderData.geometry.bakeTransform || new Matrix4()
-        )
-        needsRTE ||= Geometry.needsRTE(box)
         needsBillboard ||=
           textMeta !== undefined ? (textMeta.screenOriented as boolean) : false
+
         text.material = new SpeckleTextMaterial({
           color: 0xff0000 // control color
         }).getDerivedMaterial()
@@ -311,6 +317,9 @@ export default class TextBatch implements Batch {
             bounds[1],
             0
           )
+          box.setFromArray(vertices)
+          needsRTE ||= Geometry.needsRTE(box)
+
           const geometry = text.geometry
           geometry.computeBoundingBox()
           const textBvh = AccelerationStructure.buildBVH(
@@ -398,17 +407,19 @@ export default class TextBatch implements Batch {
       Logger.warn(`Could not get material for ${rv.renderData.id}`)
       return null
     }
-    /** Just like for lines, this isn't ideal but it's quicker */
-    const material = this.materials[group.materialIndex].clone() as SpeckleTextMaterial
-    //@ts-ignore
-    this.mesh._members.forEach((packingInfo, text) => {
-      if (group.start === packingInfo.index) {
-        material.color.copy(text.material.color)
-        material.opacity = text.material.opacity
-      }
-    })
+    return this.materials[group.materialIndex]
 
-    return material
+    // /** Just like for lines, this isn't ideal but it's quicker */
+    // const material = this.materials[group.materialIndex].clone() as SpeckleTextMaterial
+    // //@ts-ignore
+    // this.mesh._members.forEach((packingInfo, text) => {
+    //   if (group.start === packingInfo.index) {
+    //     material.color.copy(text.material.color)
+    //     material.opacity = text.material.opacity
+    //   }
+    // })
+
+    // return material
   }
 
   public purge() {

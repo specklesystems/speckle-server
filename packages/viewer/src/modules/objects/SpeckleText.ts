@@ -193,6 +193,7 @@ export class SpeckleText extends BatchedText {
       //@ts-ignore
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
+      // const tasOnly = raycaster.intersectTASOnly || true
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
