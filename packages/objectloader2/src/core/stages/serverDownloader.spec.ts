@@ -28,9 +28,9 @@ describe('downloader', () => {
     for await (const x of gathered.consume()) {
       r.push(x)
     }
+    await downloader.disposeAsync()
 
     expect(r).toMatchSnapshot()
-    await downloader.disposeAsync()
   })
 
   test('download batch of two', async () => {
