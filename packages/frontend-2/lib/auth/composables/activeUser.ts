@@ -15,6 +15,7 @@ export const activeUserQuery = graphql(`
         id
         email
         verified
+        primary
       }
       company
       bio

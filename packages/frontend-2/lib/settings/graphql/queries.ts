@@ -88,10 +88,15 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersSearchQuery = graphql(`
-  query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
+  query SettingsWorkspacesMembersSearch(
+    $slug: String!
+    $filter: WorkspaceTeamFilter
+    $limit: Int
+    $cursor: String
+  ) {
     workspaceBySlug(slug: $slug) {
       id
-      team(filter: $filter, limit: 250) {
+      team(filter: $filter, limit: $limit, cursor: $cursor) {
         items {
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator

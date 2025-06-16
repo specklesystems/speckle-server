@@ -7,6 +7,10 @@ export enum FileUploadConvertedStatus {
   Error = 3
 }
 
+export type FileUploadRecordMetadata = {
+  description?: string
+}
+
 export type FileUploadRecord = {
   id: string
   streamId: string
@@ -22,6 +26,7 @@ export type FileUploadRecord = {
   convertedLastUpdate: Date
   convertedMessage: Nullable<string>
   convertedCommitId: Nullable<string>
+  metadata: Nullable<FileUploadRecordMetadata>
 }
 
 export type FileUploadRecordV2 = {
@@ -38,6 +43,7 @@ export type FileUploadRecordV2 = {
   convertedLastUpdate: Date
   convertedMessage: Nullable<string>
   convertedCommitId: Nullable<string>
+  metadata: Nullable<FileUploadRecordMetadata>
 }
 
 export type FileUploadGraphQLReturn = FileUploadRecord
