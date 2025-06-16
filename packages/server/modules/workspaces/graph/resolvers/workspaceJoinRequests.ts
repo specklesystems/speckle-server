@@ -30,6 +30,7 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import {
   getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
@@ -42,6 +43,7 @@ import {
   denyWorkspaceJoinRequestFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
 import {
+  assignWorkspaceSeatFactory,
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
@@ -193,6 +195,14 @@ export default FF_WORKSPACES_MODULE_ENABLED
                         getWorkspace: getWorkspaceFactory({ db })
                       }),
                       eventEmit: emit
+                    }),
+                    assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                        db
+                      }),
+                      eventEmit: emit,
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                     })
                   })
                 })

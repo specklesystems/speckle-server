@@ -116,6 +116,7 @@ import {
 } from '@/modules/workspaces/services/retrieval'
 import {
   Roles,
+  WorkspacePlans,
   WorkspaceRoles,
   removeNullOrUndefinedKeys,
   throwUncoveredError
@@ -205,6 +206,7 @@ import {
   createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
 import {
+  assignWorkspaceSeatFactory,
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
@@ -292,6 +294,14 @@ const buildFinalizeWorkspaceInvite = () =>
             getWorkspace: getWorkspaceFactory({ db })
           }),
           eventEmit: getEventBus().emit
+        }),
+        assignWorkspaceSeat: assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+            db
+          }),
+          eventEmit: getEventBus().emit,
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
         })
       }),
       processFinalizedProjectInvite: processFinalizedProjectInviteFactory({
@@ -550,6 +560,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
                               workspaceRole as WorkspaceRoles
                           }
                         : undefined,
+                      workspaceSeatType: i.seatType || undefined,
                       allowWorkspacedProjects: true
                     }),
                   {
@@ -628,6 +639,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                       getWorkspace: getWorkspaceFactory({ db })
                     }),
                     eventEmit: emit
+                  }),
+                  assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                      db
+                    }),
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 })
               })
@@ -707,10 +726,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
           if (workspacePlan) {
             switch (workspacePlan.name) {
-              case 'team':
-              case 'teamUnlimited':
-              case 'pro':
-              case 'proUnlimited':
+              case WorkspacePlans.Team:
+              case WorkspacePlans.TeamUnlimited:
+              case WorkspacePlans.Pro:
+              case WorkspacePlans.ProUnlimited:
                 switch (workspacePlan.status) {
                   case 'cancelationScheduled':
                   case 'valid':
@@ -721,11 +740,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   default:
                     throwUncoveredError(workspacePlan)
                 }
-              case 'free':
-              case 'unlimited':
-              case 'academia':
-              case 'proUnlimitedInvoiced':
-              case 'teamUnlimitedInvoiced':
+              case WorkspacePlans.Free:
+              case WorkspacePlans.Unlimited:
+              case WorkspacePlans.Academia:
+              case WorkspacePlans.Enterprise:
+              case WorkspacePlans.ProUnlimitedInvoiced:
+              case WorkspacePlans.TeamUnlimitedInvoiced:
                 break
               default:
                 throwUncoveredError(workspacePlan)
@@ -869,6 +889,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                       getWorkspace: getWorkspaceFactory({ db })
                     }),
                     eventEmit: emit
+                  }),
+                  assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                      db: trx
+                    }),
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx })
                   })
                 })
 
@@ -1166,6 +1194,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                       getWorkspace: getWorkspaceFactory({ db })
                     }),
                     eventEmit: getEventBus().emit
+                  }),
+                  assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                      db
+                    }),
+                    eventEmit: getEventBus().emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 }),
                 getWorkspaceTeam: getWorkspaceCollaboratorsFactory({ db })
@@ -1528,6 +1564,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                       getWorkspace: getWorkspaceFactory({ db })
                     }),
                     eventEmit: emit
+                  }),
+                  assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                      db
+                    }),
+                    eventEmit: emit,
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                   })
                 }),
                 createWorkspaceSeat: createWorkspaceSeatFactory({ db }),

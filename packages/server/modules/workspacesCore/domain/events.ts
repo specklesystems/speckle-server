@@ -37,6 +37,7 @@ type WorkspaceRoleUpdatedPayload = {
 }
 type WorkspaceSeatUpdatedPayload = {
   seat: WorkspaceSeat
+  previousSeat?: WorkspaceSeat
   updatedByUserId: string
 }
 

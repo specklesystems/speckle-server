@@ -24,7 +24,7 @@ export const connectorItems: ConnectorItem[] = [
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
   {
-    title: 'Rhino + Grasshopper',
+    title: 'Rhino + Grasshopper (alpha)',
     slug: 'rhino',
     description:
       'Publish and load Rhino and Grasshopper models for high-quality design coordination and business intelligence workflows.',
@@ -109,20 +109,11 @@ export const connectorItems: ConnectorItem[] = [
     categories: [ConnectorCategory.NextGen, ConnectorCategory.Structural]
   },
   {
-    title: 'Blender',
+    title: 'Blender (beta)',
     slug: 'blender',
     description: 'Load models into Blender to boost design coordination workflows.',
     images: ['/images/connectors/blender.png'],
     url: 'https://docs.speckle.systems/connectors/blender',
     categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling]
-  },
-  // Non-available connectors
-  {
-    title: 'Excel',
-    slug: 'excel',
-    description: "Create geometry, schedules and analyse your geometry's metadata.",
-    images: ['/images/connectors/excel.png'],
-    categories: [ConnectorCategory.BusinessIntelligence],
-    isComingSoon: true
   }
 ]

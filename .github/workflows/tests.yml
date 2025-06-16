@@ -1,0 +1,567 @@
+name: Run all tests
+
+on:
+  workflow_call:
+    inputs:
+      IMAGE_VERSION_TAG:
+        required: true
+        type: string
+      DOCKERHUB_USERNAME:
+        required: true
+        type: string
+    secrets:
+      LICENSE_TOKEN:
+        required: true
+      CHROMATIC_PROJECT_TOKEN:
+        required: true
+      STRIPE_API_KEY:
+        required: true
+      # STRIPE_ENDPOINT_SIGNING_KEY:
+      #   required: true
+      APOLLO_KEY:
+        required: true
+      CODECOV_TOKEN:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+
+jobs:
+  lint-and-prettier:
+    name: Lint and prettier
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install hardened (no HARD flag)
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn eslint:projectwide
+      - name: Run prettier check
+        run: yarn prettier:check
+      - name: Check JSON Schema is up to date
+        run: |
+          yarn helm:jsonschema:generate
+          git diff --exit-code
+
+  pre-commit:
+    name: Precommit check
+    runs-on: blacksmith
+    container:
+      image: speckle/pre-commit-runner:latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - run: git config --global --add safe.directory $PWD
+      - name: Set precommit
+        run: pre-commit install-hooks --config ./.pre-commit-config.yaml
+      - name: Run precommit
+        run: pre-commit run --all-files --config ./.pre-commit-config.yaml
+      - name: Diff on failure
+        if: failure()
+        run: git --no-pager diff
+
+  test-frontend-2:
+    name: Frontend
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/frontend-2'
+
+  test-viewer:
+    name: Viewer
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint viewer
+        run: yarn lint:ci
+        working-directory: 'packages/viewer'
+      - name: Run tests
+        run: yarn test
+        working-directory: 'packages/viewer'
+      - name: Lint viewer-sandbox
+        run: yarn lint:ci
+        working-directory: 'packages/viewer-sandbox'
+      - name: Build viewer-sandbox
+        run: yarn build
+        working-directory: 'packages/viewer-sandbox'
+
+  ui-components-chromatic:
+    env:
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+    name: UI components chromatic
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Run chromatic
+        run: yarn chromatic
+        working-directory: 'packages/ui-components'
+
+  test-shared:
+    name: Shared
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Lint
+        run: yarn lint:ci
+        working-directory: 'packages/shared'
+      - name: Run tests (all FFs)
+        run: ENABLE_ALL_FFS=1 yarn test:ci
+        working-directory: 'packages/shared'
+      - name: Run tests (no FFs)
+        run: DISABLE_ALL_FFS=1 yarn test:ci
+        working-directory: 'packages/shared'
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/shared/coverage/coverage-final.json
+      - name: Build
+        run: yarn build
+        working-directory: 'packages/shared'
+      - name: Ensure ESM import works
+        run: node ./e2e/testEsm.mjs
+        working-directory: 'packages/shared'
+      - name: Ensure CJS require works
+        run: node ./e2e/testCjs.cjs
+        working-directory: 'packages/shared'
+
+  test-objectsender:
+    name: Object Sender
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn test:ci
+        working-directory: 'packages/objectsender'
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/objectsender/coverage/coverage-final.json
+
+  test-ui-components:
+    name: UI Components
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable # we need PLAYWRIGHT
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint tailwind theme
+        run: yarn lint:ci
+        working-directory: 'packages/tailwind-theme'
+      - name: Lint ui components
+        run: yarn lint:ci
+        working-directory: 'packages/ui-components'
+      - name: Lint component nuxt package
+        run: yarn lint:ci
+        working-directory: 'packages/ui-components-nuxt'
+      - name: Test via Storybook
+        run: yarn storybook:test:ci
+        working-directory: 'packages/ui-components'
+
+  test-preview-service:
+    name: Preview service
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/preview-service'
+
+  docker-build-postgres-container:
+    runs-on: blacksmith
+    name: Docker build postgres container
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ inputs.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: true
+          tags: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./utils/postgres/Dockerfile
+
+  test-server:
+    name: Server
+    needs: [docker-build-postgres-container]
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    services:
+      redis:
+        image: redis:7.2.4
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      postgres:
+        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      minio:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9000:9000
+    env:
+      NODE_ENV: test
+      POSTGRES_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://localhost:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://localhost:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
+      LICENSE_TOKEN: ${{ secrets.LICENSE_TOKEN }}
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+      STRIPE_ENDPOINT_SIGNING_KEY: ${{ secrets.STRIPE_ENDPOINT_SIGNING_KEY }}
+      APOLLO_KEY: ${{ secrets.APOLLO_KEY }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/server'
+      - name: 'Lint'
+        run: yarn lint:ci
+        working-directory: 'packages/server'
+      - name: 'Run test'
+        run: yarn test:report
+        working-directory: 'packages/server'
+        timeout-minutes: 30
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/server/coverage/lcov.info
+      - name: Introspect GQL schema for subsequent checks
+        run: 'IGNORE_MISSING_MIGRATIONS=true yarn cli graphql introspect'
+        working-directory: 'packages/server'
+      - name: Checking for GQL schema breakages against app.speckle.systems
+        run: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
+        working-directory: 'packages/server'
+      - name: Checking for GQL schema breakages against latest.speckle.systems
+        run: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+        working-directory: 'packages/server'
+
+  test-server-no-ff:
+    name: Server no ff
+    needs: [docker-build-postgres-container]
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    services:
+      redis:
+        image: redis:7.2.4
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      postgres:
+        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      minio:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9000:9000
+    env:
+      DISABLE_ALL_FFS: 'true'
+      NODE_ENV: test
+      POSTGRES_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://localhost:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://localhost:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
+      LICENSE_TOKEN: ${{ secrets.LICENSE_TOKEN }}
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+      STRIPE_ENDPOINT_SIGNING_KEY: ${{ secrets.STRIPE_ENDPOINT_SIGNING_KEY }}
+      APOLLO_KEY: ${{ secrets.APOLLO_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/server'
+      - name: 'Run test'
+        run: yarn test:report
+        working-directory: 'packages/server'
+        timeout-minutes: 30
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/server/coverage/lcov.info
+
+  test-server-multiregion:
+    name: Server multiregion
+    needs: [docker-build-postgres-container]
+    if: false # disabled
+    runs-on: blacksmith
+    services:
+      redis:
+        image: redis:7.2.4
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      postgres0:
+        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres1:
+        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres2:
+        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        env:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      minio0:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9000:9000
+
+      minio1:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9001:9000
+
+      minio2:
+        image: bitnami/minio
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_SKIP_CLIENT: yes
+        ports:
+          - 9002:9000
+
+    env:
+      NODE_ENV: test
+      POSTGRES_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
+      POSTGRES_MAX_CONNECTIONS_SERVER: 50
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://localhost:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://localhost:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
+      LICENSE_TOKEN: ${{ secrets.LICENSE_TOKEN }}
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+      STRIPE_ENDPOINT_SIGNING_KEY: ${{ secrets.STRIPE_ENDPOINT_SIGNING_KEY }}
+      #
+      # This are the only different keys:
+      #
+      MULTI_REGION_CONFIG_PATH: '../../.github/workflows/config/multiregion.test-ci.json'
+      FF_GATEKEEPER_MODULE_ENABLED: 'true'
+      FF_WORKSPACES_MODULE_ENABLED: 'true'
+      FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
+      FF_MOVE_PROJECT_REGION_ENABLED: 'true'
+      RUN_TESTS_IN_MULTIREGION_MODE: true
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/server'
+      - name: 'Run test'
+        run: yarn test:report
+        working-directory: 'packages/server'
+        timeout-minutes: 30
+      - uses: codecov/codecov-action@v5
+        with:
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: packages/server/coverage/lcov.info

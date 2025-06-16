@@ -184,6 +184,11 @@ function createCache(): InMemoryCache {
             keyArgs: false,
             merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')
           },
+          invitableCollaborators: {
+            merge: buildAbstractCollectionMergeFunction(
+              'InvitableCollaboratorCollection'
+            )
+          },
           automations: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('AutomationCollection')

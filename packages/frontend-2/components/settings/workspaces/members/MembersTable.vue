@@ -21,9 +21,7 @@
       class="mt-6 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
-        ...(canReadMemberEmail
-          ? [{ id: 'email', header: 'Email', classes: 'col-span-4' }]
-          : []),
+        { id: 'email', header: 'Email', classes: 'col-span-4' },
         { id: 'seat', header: 'Seat', classes: 'col-span-2' },
         { id: 'joined', header: 'Joined', classes: 'col-span-2' },
         {
@@ -80,7 +78,9 @@
       </template>
       <template #email="{ item }">
         <div class="flex">
-          <span class="text-foreground-2 truncate">{{ item.email }}</span>
+          <span class="text-foreground-2 truncate">
+            {{ canReadMemberEmail ? item.email : '-' }}
+          </span>
         </div>
       </template>
       <template #seat="{ item }">
