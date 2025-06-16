@@ -24,6 +24,9 @@ export class MemoryDatabase implements Database {
 
   saveBatch({ batch }: { batch: Item[] }): Promise<void> {
     for (const item of batch) {
+      if (!item.baseId || !item.base) {
+        throw new Error('Item must have a baseId and base')
+      }
       this.items.set(item.baseId, item.base)
     }
     return Promise.resolve()

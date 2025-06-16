@@ -1,4 +1,3 @@
-import { initializeQueue } from '@speckle/shared/queue'
 import { Database } from '../operations/interfaces.js'
 import { CacheOptions } from '../operations/options.js'
 import { Base, CustomLogger, Item } from '../types/types.js'
@@ -12,7 +11,8 @@ export class CacheReader {
   #logger: CustomLogger
   #options: CacheOptions
   #readQueue: BatchingQueue<string> | undefined
-  #outputQueue: Queue<Item> | undefined
+  #foundQueue: Queue<Item> | undefined
+  #notFoundQueue: Queue<string> | undefined
 
   constructor(
     database: Database,
@@ -25,8 +25,9 @@ export class CacheReader {
     this.#logger = options.logger || ((): void => {})
   }
 
-  initializeQueue(results: Queue<Item>): void {
-    this.#outputQueue = results
+  initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
+    this.#foundQueue = foundQueue
+    this.#notFoundQueue = notFoundQueue
   }
 
   async getObject(params: { id: string }): Promise<Base> {
@@ -63,11 +64,15 @@ export class CacheReader {
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
       if (item) {
-        this.#outputQueue?.add(item)
+        this.#foundQueue?.add(item)
         this.#defermentManager.undefer(item)
       } else {
-        this.#outputQueue?.add({ baseId: batch[i] })
+        this.#notFoundQueue?.add(batch[i])
       }
     }
+  }
+
+  async disposeAsync(): Promise<void> {
+    await this.#readQueue?.disposeAsync()
   }
 }
