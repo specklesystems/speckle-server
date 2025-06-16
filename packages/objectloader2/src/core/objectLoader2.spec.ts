@@ -66,6 +66,9 @@ describe('objectloader2', () => {
     const r = []
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
+      if (r.length >= 1) {
+        break
+      }
     }
     await loader.disposeAsync()
 
@@ -101,6 +104,9 @@ describe('objectloader2', () => {
     const obj = loader.getObject({ id: child1.baseId })
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
+      if (r.length >= 2) {
+        break
+      }
     }
     await loader.disposeAsync()
 
@@ -139,6 +145,9 @@ describe('objectloader2', () => {
     const obj = loader.getObject({ id: child1.baseId })
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
+      if (r.length >= 2) {
+        break
+      }
     }
     await loader.disposeAsync()
 

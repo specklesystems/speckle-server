@@ -27,10 +27,13 @@ describe('downloader', () => {
     const r = []
     for await (const x of gathered.consume()) {
       r.push(x)
+      if (r.length >= 1) {
+        break
+      }
     }
-    await downloader.disposeAsync()
 
     expect(r).toMatchSnapshot()
+    await downloader.disposeAsync()
   })
 
   test('download batch of two', async () => {
@@ -61,6 +64,9 @@ describe('downloader', () => {
     const r = []
     for await (const x of gathered.consume()) {
       r.push(x)
+      if (r.length >= 2) {
+        break
+      }
     }
 
     expect(r).toMatchSnapshot()
@@ -103,6 +109,9 @@ describe('downloader', () => {
     const r = []
     for await (const x of gathered.consume()) {
       r.push(x)
+      if (r.length >= 3) {
+        break
+      }
     }
 
     expect(r).toMatchSnapshot()

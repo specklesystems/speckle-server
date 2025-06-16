@@ -2,7 +2,7 @@ import Queue from './queue.js'
 
 export default class AsyncGeneratorQueue<T> implements Queue<T> {
   #buffer: T[] = []
-  #resolveQueue: ((value: T | undefined) => void)[] = []
+  #resolveQueue: ((value: T) => void)[] = []
   #finished = false
 
   add(value: T): void {
@@ -25,23 +25,12 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
       if (this.#buffer.length > 0) {
         yield this.#buffer.shift()! // Yield available values
       } else {
-        const val = await new Promise<T | undefined>((resolve) =>
-          this.#resolveQueue.push(resolve)
-        )
-        if (!val && this.#finished) {
-          // If finished and no more consumers, exit the loop
-          return
-        }
-        yield val! // Yield the value resolved from the queue
+        yield await new Promise<T>((resolve) => this.#resolveQueue.push(resolve))
       }
     }
   }
   disposeAsync(): Promise<void> {
     this.#finished = true
-    const resolve = this.#resolveQueue.shift()
-    if (resolve) {
-      resolve(undefined) // Resolve the last promise with undefined
-    }
     return Promise.resolve()
   }
 }

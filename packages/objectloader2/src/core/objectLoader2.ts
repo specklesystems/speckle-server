@@ -96,15 +96,20 @@ export class ObjectLoader2 {
       (a, b) => b[1] - a[1]
     )
     const children = sortedClosures.map((x) => x[0])
-    const total = children.length
+    const total = children.length // +1 for the root object
     this.#downloader.initializePool({
       results: new AggregateQueue(this.#gathered, this.#cacheWriter),
       total
     })
     //only for root
     this.#cacheReader.requestAll(children)
+    let count = 0
     for await (const item of this.#gathered.consume()) {
       yield item.base! //always defined, as we add it to the queue
+      count++
+      if (count >= total) {
+        break
+      }
     }
   }
 

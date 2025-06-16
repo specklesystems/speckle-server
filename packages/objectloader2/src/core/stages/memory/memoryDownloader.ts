@@ -17,14 +17,6 @@ export class MemoryDownloader implements Downloader {
     maxDownloadBatchWait?: number
   }): void {
     this.#results = params.results
-    for (const element of this.#items) {
-      const [id, base] = element
-      if (id === this.#rootId) {
-        continue // Skip the root item, as it will be handled separately
-      }
-      this.#results.add({ baseId: id, base })
-    }
-    void this.#results.disposeAsync()
   }
   downloadSingle(): Promise<Item> {
     const root = this.#items.get(this.#rootId)
