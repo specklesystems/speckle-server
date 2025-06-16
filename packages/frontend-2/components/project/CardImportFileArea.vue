@@ -64,18 +64,28 @@
         </div>
       </div>
     </div>
+    <ProjectPageModelsNewDialog
+      v-model:open="showNewModelDialog"
+      :project-id="project.id"
+      :model-name="selectedFile?.file.name"
+      @submit="onModelCreate"
+    />
   </FormFileUploadZone>
 </template>
 <script setup lang="ts">
 import { useFileImport } from '~~/lib/core/composables/fileImport'
-import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
+import {
+  useFileUploadProgressCore,
+  type UploadableFileItem
+} from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   ProjectCardImportFileArea_ModelFragment,
-  ProjectCardImportFileArea_ProjectFragment
+  ProjectCardImportFileArea_ProjectFragment,
+  ProjectPageLatestItemsModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
 
 type EmptyStateVariants = 'modelGrid' | 'modelList' | 'modelsSection'
@@ -114,7 +124,7 @@ const props = defineProps<{
 
 const {
   maxSizeInBytes,
-  onFilesSelected,
+  onFilesSelected: onFilesSelectedInternal,
   accept,
   upload: fileUpload,
   isUploading
@@ -130,6 +140,17 @@ const uploadZone = ref(
     triggerPicker: () => void
   }>
 )
+
+const selectedFile = shallowRef<Nullable<UploadableFileItem>>(null)
+
+const showNewModelDialog = computed({
+  get: () => !!selectedFile.value,
+  set: (newVal) => {
+    if (!newVal) {
+      selectedFile.value = null
+    }
+  }
+})
 
 const modelName = computed(() => props.modelName || props.model?.name)
 const accessCheck = computed(() => {
@@ -238,6 +259,31 @@ const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   if (errorMessage.value) return 'border-danger'
 
   return 'border-outline-2'
+}
+
+const onFilesSelected = (params: { files: UploadableFileItem[] }) => {
+  const firstFile = params.files[0]
+  if (!firstFile) return
+
+  if (props.model) {
+    // Uploading version to specific model, trigger upload instantly
+    onFilesSelectedInternal({ files: [firstFile] })
+    return
+  }
+
+  // Otherwise store selected file and show model create dialog
+  selectedFile.value = firstFile
+}
+
+const onModelCreate = (params: { model: ProjectPageLatestItemsModelItemFragment }) => {
+  if (!selectedFile.value) return
+
+  onFilesSelectedInternal({
+    files: [selectedFile.value],
+    modelName: params.model.name
+  })
+
+  selectedFile.value = null
 }
 
 const triggerPicker = () => {

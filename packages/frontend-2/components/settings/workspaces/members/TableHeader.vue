@@ -35,6 +35,7 @@
       <div v-tippy="inviteTooltipText">
         <FormButton
           v-if="!isWorkspaceGuest"
+          :disabled="!canInvite"
           @click="isInviteDialogOpen = !isInviteDialogOpen"
         >
           Invite
