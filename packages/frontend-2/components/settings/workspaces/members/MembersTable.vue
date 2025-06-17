@@ -31,7 +31,7 @@
         }
       ]"
       :items="members"
-      :loading="loading"
+      :loading="isVeryFirstLoading"
       :empty-message="
         search.length || seatTypeFilter || roleFilter
           ? 'No results'
@@ -161,7 +161,8 @@ const defaultRoles = shallowRef([Roles.Workspace.Admin, Roles.Workspace.Member])
 const {
   identifier,
   onInfiniteLoad,
-  query: { result: membersResult, loading }
+  query: { result: membersResult },
+  isVeryFirstLoading
 } = usePaginatedQuery({
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
