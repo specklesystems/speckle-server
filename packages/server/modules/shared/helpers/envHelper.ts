@@ -478,3 +478,7 @@ export function disablePreviews() {
 export const isRateLimiterEnabled = (): boolean => {
   return getBooleanFromEnv('RATELIMITER_ENABLED', true)
 }
+
+export const getFileUploadUrlExpiryMinutes = (): number => {
+  return getIntFromEnv('FILE_UPLOAD_URL_EXPIRY_MINUTES', '10')
+}

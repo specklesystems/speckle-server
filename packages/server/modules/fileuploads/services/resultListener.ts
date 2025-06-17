@@ -48,6 +48,7 @@ export const onFileImportProcessedFactory =
       isNewBranch ? deps.getStreamBranchByName(streamId, branchName) : null
     ])
     if (!upload) return
+    if (upload.streamId !== streamId) return
 
     if (upload.convertedStatus === FileUploadConvertedStatus.Error) {
       //TODO in future differentiate between internal server errors and user errors
@@ -108,10 +109,11 @@ type OnFileProcessingDeps = {
 
 export const onFileProcessingFactory =
   (deps: OnFileProcessingDeps) =>
-  async ({ uploadId }: ParsedMessage) => {
+  async ({ uploadId, streamId }: ParsedMessage) => {
     if (!uploadId) return
     const upload = await deps.getFileInfo({ fileId: uploadId })
     if (!upload) return
+    if (upload.streamId !== streamId) return
 
     await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
       projectFileImportUpdated: {
