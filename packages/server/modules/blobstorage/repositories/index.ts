@@ -1,5 +1,6 @@
 import {
   DeleteBlob,
+  GetBlob,
   GetBlobMetadata,
   GetBlobMetadataCollection,
   GetBlobs,
@@ -50,6 +51,20 @@ export const getBlobsFactory =
     if (streamId) {
       q.andWhere('streamId', streamId)
     }
+
+    return await q
+  }
+
+export const getBlobFactory =
+  (deps: { db: Knex }): GetBlob =>
+  async (params) => {
+    const { streamId, blobId } = params
+
+    const q = tables
+      .blobStorage(deps.db)
+      .where('id', blobId)
+      .andWhere('streamId', streamId)
+      .first()
 
     return await q
   }

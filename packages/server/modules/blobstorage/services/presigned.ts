@@ -5,7 +5,7 @@ import type {
   GetSignedUrl,
   UpdateBlob,
   UpsertBlob,
-  GetBlobs
+  GetBlob
 } from '@/modules/blobstorage/domain/operations'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { UserInputError } from '@/modules/core/errors/userinput'
@@ -71,13 +71,13 @@ export const generatePresignedUrlFactory =
 
 export const registerCompletedUploadFactory =
   (deps: {
-    getBlobs: GetBlobs
+    getBlob: GetBlob
     getBlobMetadata: GetBlobMetadataFromStorage
     updateBlob: UpdateBlob
     logger: Logger
   }): RegisterCompletedUpload =>
   async (params) => {
-    const { getBlobs, updateBlob, getBlobMetadata, logger } = deps
+    const { getBlob, updateBlob, getBlobMetadata, logger } = deps
     const { blobId, projectId, expectedETag, maximumFileSize } = params
     if (isEmpty(expectedETag)) {
       throw new UserInputError('ETag is required to register a completed upload')
@@ -88,28 +88,28 @@ export const registerCompletedUploadFactory =
       )
     }
 
-    const existingBlobs = await getBlobs({
+    const existingBlob = await getBlob({
       streamId: projectId,
-      blobIds: [blobId]
+      blobId
     })
-    if (!existingBlobs || existingBlobs.length === 0) {
+    if (!existingBlob) {
       throw new UserInputError(
         'Please use mutation generateUploadUrl to create a blob before registering a completed upload'
       )
     }
 
     // If the blob already exists and is not pending, we can return it directly as it has already been registered
-    switch (existingBlobs[0].uploadStatus) {
+    switch (existingBlob.uploadStatus) {
       case blobUploadStatus.Completed:
         throw new AlreadyRegisteredBlobError('Blob already registered and completed')
       case blobUploadStatus.Error:
         throw new AlreadyRegisteredBlobError(
-          existingBlobs[0].uploadError || 'Blob already registered with an error'
+          existingBlob.uploadError || 'Blob already registered with an error'
         )
       case blobUploadStatus.Pending:
         break //continue on to register the completed upload
       default:
-        throwUncoveredError(existingBlobs[0].uploadStatus)
+        throwUncoveredError(existingBlob.uploadStatus)
     }
 
     const objectKey = getObjectKey(projectId, blobId)

@@ -11,6 +11,11 @@ import {
 import type { Readable } from 'stream'
 import { StoreFileStream } from '@/modules/blobstorage/domain/storageOperations'
 
+export type GetBlob = (params: {
+  streamId: string
+  blobId: string
+}) => Promise<Optional<BlobStorageItem>>
+
 export type GetBlobs = (params: {
   streamId?: MaybeNullOrUndefined<string>
   blobIds: string[]
