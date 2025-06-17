@@ -592,6 +592,7 @@ export const workspaceTrackingFactory =
           payload.previousSubscription.totalEditorSeats
 
         if (editorSeatsChanged > 0 && isPaidPlan(payload.workspacePlan.name)) {
+          console.log('emmited purchase!')
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatsPurchased,
             workspaceId: payload.workspacePlan.workspaceId,

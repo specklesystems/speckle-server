@@ -6,12 +6,19 @@ import {
   WorkspacePlanUpdatedActivity,
   WorkspaceSubscriptionUpdatedActivity
 } from '@/modules/activitystream/domain/types'
+import { isEqual } from 'lodash'
 
 const addWorkspacePlanUpdatedActivityFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
   async (payload: EventPayload<typeof GatekeeperEvents.WorkspacePlanUpdated>) => {
     const { workspacePlan, subscription, previousSubscription, previousWorkspacePlan } =
       payload.payload
+
+    if (
+      isEqual(workspacePlan, previousWorkspacePlan) &&
+      isEqual(subscription, previousSubscription)
+    )
+      return
 
     const info: WorkspacePlanUpdatedActivity = {
       version: '1.0.0',
@@ -45,7 +52,7 @@ const addWorkspacePlanUpdatedActivityFactory =
       streamId: null,
       resourceType: ResourceTypes.Workspace,
       resourceId: workspacePlan.workspaceId,
-      actionType: ActionTypes.Workspace.SubscriptionUpgraded,
+      actionType: ActionTypes.Workspace.PlanUpgraded,
       userId: null,
       info,
       message: 'Workspace plan upgraded'
@@ -59,6 +66,12 @@ const addWorkspaceSubscriptionUpdatedActivityFactory =
   ) => {
     const { workspacePlan, previousWorkspacePlan, subscription, previousSubscription } =
       payload.payload
+
+    if (
+      isEqual(workspacePlan, previousWorkspacePlan) &&
+      isEqual(subscription, previousSubscription)
+    )
+      return
 
     const info: WorkspaceSubscriptionUpdatedActivity = {
       version: '1.0.0',
