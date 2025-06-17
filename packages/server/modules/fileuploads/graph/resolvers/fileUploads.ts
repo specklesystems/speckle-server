@@ -29,7 +29,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import {
-  getBlobsFactory,
+  getBlobFactory,
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
@@ -199,7 +199,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       registerUploadCompleteAndStartFileImportFactory({
         registerCompletedUpload: registerCompletedUploadFactory({
           logger: ctx.log,
-          getBlobs: getBlobsFactory({ db: projectDb }),
+          getBlob: getBlobFactory({ db: projectDb }),
           updateBlob: updateBlobFactory({
             db: projectDb
           }),

@@ -14,7 +14,7 @@ import {
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
-import { blobUploadStatus, Roles, TIME } from '@speckle/shared'
+import { BlobUploadStatus, Roles, TIME } from '@speckle/shared'
 import { createProject } from '@/test/projectHelper'
 import { createTestUser } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
@@ -266,7 +266,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
           blobIds: [fileId]
         })
         expect(blobs).to.have.lengthOf(1)
-        expect(blobs[0].uploadStatus).to.equal(blobUploadStatus.Error)
+        expect(blobs[0].uploadStatus).to.equal(BlobUploadStatus.Error)
         expect(blobs[0].uploadError).to.include('[FILE_SIZE_EXCEEDED]')
       })
       it('re-registering should be idempotent', async () => {

@@ -11,7 +11,7 @@ import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import type { Logger } from '@/observability/logging'
 import {
-  blobUploadStatus,
+  BlobUploadStatus,
   ensureError,
   throwUncoveredError,
   type Optional
@@ -100,13 +100,13 @@ export const registerCompletedUploadFactory =
 
     // If the blob already exists and is not pending, we can return it directly as it has already been registered
     switch (existingBlob.uploadStatus) {
-      case blobUploadStatus.Completed:
+      case BlobUploadStatus.Completed:
         throw new AlreadyRegisteredBlobError('Blob already registered and completed')
-      case blobUploadStatus.Error:
+      case BlobUploadStatus.Error:
         throw new AlreadyRegisteredBlobError(
           existingBlob.uploadError || 'Blob already registered with an error'
         )
-      case blobUploadStatus.Pending:
+      case BlobUploadStatus.Pending:
         break //continue on to register the completed upload
       default:
         throwUncoveredError(existingBlob.uploadStatus)
@@ -141,10 +141,10 @@ export const registerCompletedUploadFactory =
         id: blobId,
         filter: {
           streamId: projectId,
-          uploadStatus: blobUploadStatus.Pending
+          uploadStatus: BlobUploadStatus.Pending
         },
         item: {
-          uploadStatus: blobUploadStatus.Error,
+          uploadStatus: BlobUploadStatus.Error,
           uploadError:
             '[FILE_SIZE_EXCEEDED] File size exceeds maximum allowed size for the project at the time of upload',
           fileSize: blobMetadata.contentLength,
@@ -160,10 +160,10 @@ export const registerCompletedUploadFactory =
       id: blobId,
       filter: {
         streamId: projectId,
-        uploadStatus: blobUploadStatus.Pending
+        uploadStatus: BlobUploadStatus.Pending
       },
       item: {
-        uploadStatus: blobUploadStatus.Completed,
+        uploadStatus: BlobUploadStatus.Completed,
         fileSize: blobMetadata.contentLength,
         fileHash: blobMetadata.eTag
       }

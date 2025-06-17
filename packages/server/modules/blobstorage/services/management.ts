@@ -11,7 +11,7 @@ import { type BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { BadRequestError } from '@/modules/shared/errors'
 import { getFileSizeLimitMB } from '@/modules/shared/helpers/envHelper'
-import { blobUploadStatus, type MaybeAsync } from '@speckle/shared'
+import { BlobUploadStatus, type MaybeAsync } from '@speckle/shared'
 import type { ProcessingResult } from '@/modules/blobstorage/domain/types'
 
 /**
@@ -109,7 +109,7 @@ export const markUploadSuccessFactory =
     const updateBlobMetadata = updateBlobMetadataFactory(deps)
     return await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
       const { fileSize } = await getObjectAttributes({ objectKey })
-      return { uploadStatus: blobUploadStatus.Completed, fileSize }
+      return { uploadStatus: BlobUploadStatus.Completed, fileSize }
     })
   }
 
@@ -127,7 +127,7 @@ export const markUploadErrorFactory =
     const updateBlobMetadata = updateBlobMetadataFactory(deps)
     return await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
       await deleteObject({ objectKey })
-      return { uploadStatus: blobUploadStatus.Error, uploadError: error }
+      return { uploadStatus: BlobUploadStatus.Error, uploadError: error }
     })
   }
 

@@ -4,7 +4,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
-import { blobUploadStatus } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared'
 
 describe('Presigned @blobstorage', async () => {
   describe('register a completed blob upload', () => {
@@ -21,7 +21,7 @@ describe('Presigned @blobstorage', async () => {
       fileName,
       fileType: 'stl',
       fileSize: 101,
-      uploadStatus: blobUploadStatus.Completed,
+      uploadStatus: BlobUploadStatus.Completed,
       uploadError: null,
       createdAt: new Date(),
       fileHash: cryptoRandomString({ length: 32 }),
@@ -38,7 +38,7 @@ describe('Presigned @blobstorage', async () => {
       fileSize: 101,
       uploadComplete: false,
       uploadDate: new Date(),
-      uploadStatus: blobUploadStatus.Completed,
+      uploadStatus: BlobUploadStatus.Completed,
       convertedStatus: FileUploadConvertedStatus.Queued,
       convertedLastUpdate: new Date(),
       convertedMessage: null,
@@ -55,7 +55,7 @@ describe('Presigned @blobstorage', async () => {
       fileSize: 101,
       uploadComplete: false,
       uploadDate: new Date(),
-      uploadStatus: blobUploadStatus.Completed,
+      uploadStatus: BlobUploadStatus.Completed,
       convertedStatus: FileUploadConvertedStatus.Queued,
       convertedLastUpdate: new Date(),
       convertedMessage: null,
