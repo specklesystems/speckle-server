@@ -218,8 +218,15 @@ export function useViewerUserActivityTracking(params: {
     const event = res.data.viewerUserActivityBroadcasted
     const status = event.status
     const incomingSessionId = event.sessionId
+    const incomingUserId = event.userId
+
+    // Prevent users from seeing their own activity notifications
+    const { activeUser } = useActiveUser()
+    const currentUserId = activeUser.value?.id
 
     if (sessionId.value === incomingSessionId) return
+    if (currentUserId && incomingUserId && currentUserId === incomingUserId) return
+
     if (!isEmbedEnabled.value && status === ViewerUserActivityStatus.Disconnected) {
       triggerNotification({
         title: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
