@@ -135,8 +135,7 @@ const {
     projectId: props.projectId,
     modelId: props.modelId,
     input: {
-      cursor: null as string | null,
-      limit: 8
+      cursor: null as string | null
     }
   })),
   options: {
