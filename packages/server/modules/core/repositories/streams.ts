@@ -107,7 +107,8 @@ import {
   GetUserDeletableStreams,
   GetStreamsCollaborators,
   GetStreamsCollaboratorCounts,
-  GetImplicitUserProjectsCountFactory
+  GetImplicitUserProjectsCountFactory,
+  GrantProjectPermissions
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
@@ -1200,6 +1201,16 @@ export const grantStreamPermissionsFactory =
     const streams = await streamsQuery.where({ id: streamId })
     return streams[0] as StreamRecord
   }
+
+/**
+ * Convenience wrapper around grantStreamPermissions, renaming streams -> projects
+ */
+export const grantProjectPermissionsFactory = (
+  deps: Parameters<typeof grantStreamPermissionsFactory>[0]
+): GrantProjectPermissions => {
+  const grant = grantStreamPermissionsFactory(deps)
+  return async (params) => await grant({ ...params, streamId: params.projectId })
+}
 
 export const deleteProjectRoleFactory =
   ({ db }: { db: Knex }): DeleteProjectRole =>

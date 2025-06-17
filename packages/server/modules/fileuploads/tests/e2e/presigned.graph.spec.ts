@@ -1,7 +1,7 @@
 import { createTestUser } from '@/test/authHelper'
 import { ExecuteOperationResponse, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { createProject, grantPermissionsOnProject } from '@/test/projectHelper'
+import { createProject, grantProjectPermissions } from '@/test/projectHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { Nullable, Optional, Roles, ServerRoles, StreamRoles } from '@speckle/shared'
 import { put } from 'axios'
@@ -496,7 +496,7 @@ const startFileImport = async (params: TestContext) => {
           }`, () => {
             before(async () => {
               if (testUser && projectRole) {
-                await grantPermissionsOnProject({
+                await grantProjectPermissions({
                   projectId: project.id,
                   userId: testUser.id,
                   role: projectRole

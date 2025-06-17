@@ -44,7 +44,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
-import { grantPermissionsOnProjectFactory } from '@/modules/core/domain/streams/operations'
+import { grantProjectPermissionsFactory } from '@/modules/core/repositories/streams'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -122,6 +122,4 @@ export const createProject = createStreamReturnRecordFactory({
   emitEvent: getEventBus().emit
 })
 
-export const grantPermissionsOnProject = grantPermissionsOnProjectFactory({
-  grantStreamPermissions: grantStreamPermissionsFactory({ db })
-})
+export const grantProjectPermissions = grantProjectPermissionsFactory({ db })

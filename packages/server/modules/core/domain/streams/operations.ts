@@ -312,16 +312,6 @@ export type GrantProjectPermissions = (
   }
 ) => Promise<Optional<Project>>
 
-/**
- * Convenience wrapper around grantStreamPermissions, renaming streams -> projects
- */
-export const grantPermissionsOnProjectFactory = (deps: {
-  grantStreamPermissions: GrantStreamPermissions
-}): GrantProjectPermissions => {
-  return (params) =>
-    deps.grantStreamPermissions({ ...params, streamId: params.projectId })
-}
-
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateArgs) & {
     ownerId: string
