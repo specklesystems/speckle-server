@@ -27,11 +27,7 @@ aliases:
       # run tests for any commit on any branch, including any tags
       only: /.*/
 
-  - &filters-only-main-hotfix-testing
-    branches:
-      ignore: /.*/
-
-  - &filters-publish
+  - &ignored
     branches:
       ignore: /.*/
     tags:
@@ -54,19 +50,16 @@ workflows:
                 - main
                 - hotfix*
 
-      - test-server: &test-server-job-definition
-          context:
-            - speckle-server-licensing
-            - stripe-integration
-            - speckle-server-codecov
-          filters: *filters-only-main-hotfix-testing
-          requires:
-            - docker-build-postgres-container
+      - get-version:
+          filters: *filters-allow-all
 
-      - test-server-no-ff:
-          filters: *filters-only-main-hotfix-testing
+      - docker-build-postgres-container:
+          context: &build-context
+            - github-readonly-public-repos
+            - docker-hub
+          filters: *filters-allow-all
           requires:
-            - docker-build-postgres-container
+            - get-version
 
       - test-server-multiregion:
           context:
@@ -77,36 +70,46 @@ workflows:
           requires:
             - docker-build-postgres-container
 
+      - test-server:
+          context:
+            - speckle-server-licensing
+            - stripe-integration
+            - speckle-server-codecov
+          filters: *ignored
+          requires:
+            - docker-build-postgres-container
+
+      - test-server-no-ff:
+          filters: *ignored
+          requires:
+            - docker-build-postgres-container
+
       - test-frontend-2:
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - test-viewer:
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - test-objectsender:
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - test-shared:
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - test-preview-service:
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - test-ui-components:
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - deployment-testing-approval:
           type: approval
-          filters: &filters-ignore-main-branch-or-all-tags
-            branches:
-              ignore: *branches-special
-            tags:
-              ignore: /.*/
+          filters: *ignored
 
       #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
       # - deployment-test-docker-compose:
@@ -128,7 +131,7 @@ workflows:
       #       - docker-build-docker-compose-ingress
 
       - deployment-test-helm-chart:
-          filters: *filters-allow-all
+          filters: *ignored
           requires:
             - get-version
             - deployment-testing-approval
@@ -140,75 +143,64 @@ workflows:
             - docker-build-test-container
             - docker-build-monitor-container
 
-      - get-version:
-          filters: *filters-allow-all
-
       - pre-commit:
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - lint-and-prettier:
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
 
       - docker-build-server:
-          context: &build-context
-            - github-readonly-public-repos
-            - docker-hub
-          filters: *filters-only-main-hotfix-testing
+          context: *build-context
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-frontend-2:
           context: *build-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-webhooks:
           context: *build-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-file-imports:
           context: *build-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-previews:
           context: *build-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-test-container:
           context: *build-context
-          filters: *filters-only-main-hotfix-testing
-          requires:
-            - get-version
-
-      - docker-build-postgres-container:
-          context: *build-context
-          filters: *filters-allow-all
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-monitor-container:
           context: *build-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-docker-compose-ingress:
           context: *build-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - get-version
 
       - docker-publish-server:
           context: &docker-hub-context
             - docker-hub
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-server
             - get-version
@@ -225,7 +217,7 @@ workflows:
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-frontend-2
             - get-version
@@ -244,13 +236,13 @@ workflows:
           context:
             - github-readonly-public-repos
             - datadog-sourcemaps-publish
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - get-version
 
       - docker-publish-webhooks:
           context: *docker-hub-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-webhooks
             - get-version
@@ -267,7 +259,7 @@ workflows:
 
       - docker-publish-file-imports:
           context: *docker-hub-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-file-imports
             - get-version
@@ -284,7 +276,7 @@ workflows:
 
       - docker-publish-previews:
           context: *docker-hub-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-previews
             - get-version
@@ -301,7 +293,7 @@ workflows:
 
       - docker-publish-test-container:
           context: *docker-hub-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-test-container
             - get-version
@@ -318,7 +310,7 @@ workflows:
 
       - docker-publish-postgres-container:
           context: *docker-hub-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-monitor-container
             - get-version
@@ -329,7 +321,7 @@ workflows:
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-monitor-container
             - get-version
@@ -346,7 +338,7 @@ workflows:
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
-          filters: *filters-only-main-hotfix-testing
+          filters: *ignored
           requires:
             - docker-build-docker-compose-ingress
             - get-version
@@ -361,7 +353,7 @@ workflows:
             - test-preview-service
 
       - publish-helm-chart:
-          filters: *filters-publish
+          filters: *ignored
           requires:
             # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
             - deployment-test-helm-chart
@@ -376,7 +368,7 @@ workflows:
             - get-version
 
       - publish-helm-chart-oci:
-          filters: *filters-publish
+          filters: *ignored
           context:
             - docker-hub
           requires:
@@ -393,11 +385,7 @@ workflows:
             - get-version
 
       - publish-npm:
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              ignore: /.*/
+          filters: *ignored
           context:
             - npm-registry
           requires:
@@ -413,7 +401,7 @@ workflows:
             - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
-          filters: *filters-publish
+          filters: *ignored
           context:
             - cloudflare-pages-edit
           requires:

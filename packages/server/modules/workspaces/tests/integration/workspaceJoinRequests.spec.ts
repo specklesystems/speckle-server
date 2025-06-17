@@ -58,6 +58,7 @@ import {
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
+  assignWorkspaceSeatFactory,
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
@@ -397,6 +398,14 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
                 getWorkspace: getWorkspaceFactory({ db })
               }),
               eventEmit: getEventBus().emit
+            }),
+            assignWorkspaceSeat: assignWorkspaceSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                db
+              }),
+              eventEmit: getEventBus().emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
             })
           }),
           getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),

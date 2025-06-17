@@ -34,6 +34,8 @@ jobs:
           push: ${{ inputs.PUSH_IMAGES }}
           tags: speckle/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/server/Dockerfile
+          build-args: |
+            SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
 
   docker-build-frontend2:
     runs-on: blacksmith
@@ -44,10 +46,22 @@ jobs:
         with:
           username: ${{ inputs.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push
+      - name: Build and push w/ version tag
         uses: useblacksmith/build-push-action@v1
+        if: ${{ inputs.PUSH_IMAGES }}
         with:
-          push: ${{ inputs.PUSH_IMAGES }}
+          push: true
+          tags: speckle/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
+          file: ./packages/frontend-2/Dockerfile
+          build-args: |
+            SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
+          cache-from: type=registry,ref=speckle/speckle-frontend-2:buildcache
+          cache-to: type=registry,ref=speckle/speckle-frontend-2:buildcache,mode=max
+      - name: Check frontend-2 build
+        uses: useblacksmith/build-push-action@v1
+        if: ${{ inputs.PUSH_IMAGES == false }}
+        with:
+          push: false
           tags: speckle/speckle-frontend-2:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/frontend-2/Dockerfile
 
@@ -162,5 +176,7 @@ jobs:
       - uses: useblacksmith/build-push-action@v1
         with:
           setup-only: true
+          cache-from: type=registry,ref=speckle/speckle-frontend-2:buildcache-sourcemaps
+          cache-to: type=registry,ref=speckle/speckle-frontend-2:buildcache-sourcemaps
       - name: Build and Publish sourcemaps
         run: ./.github/workflows/scripts/publish_fe2_sourcemaps.sh

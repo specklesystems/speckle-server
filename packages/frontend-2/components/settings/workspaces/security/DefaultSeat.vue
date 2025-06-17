@@ -1,12 +1,10 @@
 <template>
-  <section class="flex flex-col space-y-3">
+  <section class="flex flex-col space-y-3 pb-8">
     <div class="flex flex-col sm:flex-row gap-y-3 sm:items-center">
       <div class="flex-1 flex-col pr-6 gap-y-1">
-        <p class="text-body-xs font-medium text-foreground">
-          Default seat for new members
-        </p>
-        <p class="text-body-2xs text-foreground-2 leading-5 max-w-[250px]">
-          Set the default seat type assigned to new workspace members.
+        <p class="text-body-xs font-medium text-foreground">Default seat type</p>
+        <p class="text-body-2xs text-foreground-2 leading-5 max-w-[250px] mt-1">
+          Set the default seat type assigned to new people who join the workspace.
         </p>
       </div>
       <FormSelectBase
@@ -44,7 +42,10 @@
       @confirm="handleSeatTypeConfirm"
       @cancel="handleSeatTypeCancel"
     >
-      <p class="text-body-xs text-foreground mb-2">
+      <p
+        v-if="workspace.discoverabilityAutoJoinEnabled"
+        class="text-body-xs text-foreground mb-2"
+      >
         You have
         <span class="font-medium">Join without admin approval</span>
         enabled.
@@ -52,7 +53,7 @@
       <p class="text-body-xs text-foreground mb-2">
         Setting the default seat type to
         <span class="font-medium">Editor</span>
-        means each user who joins will consume a paid seat and possibly incur charges.
+        means each user who joins will consume a paid seat and incur charges.
       </p>
       <p class="text-body-xs text-foreground">Are you sure you want to enable this?</p>
     </SettingsConfirmDialog>
@@ -61,9 +62,10 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
 import type {
   WorkspaceSeatType,
-  SettingsWorkspacesSecurity_WorkspaceFragment
+  SettingsWorkspacesSecurityDefaultSeat_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Roles, SeatTypes } from '@speckle/shared'
 import { workspaceUpdateDefaultSeatTypeMutation } from '~/lib/workspaces/graphql/mutations'
@@ -75,8 +77,18 @@ import {
   convertThrowIntoFetchResult
 } from '~/lib/common/helpers/graphql'
 
+graphql(`
+  fragment SettingsWorkspacesSecurityDefaultSeat_Workspace on Workspace {
+    id
+    slug
+    defaultSeatType
+    discoverabilityAutoJoinEnabled
+    role
+  }
+`)
+
 const props = defineProps<{
-  workspace: SettingsWorkspacesSecurity_WorkspaceFragment
+  workspace: SettingsWorkspacesSecurityDefaultSeat_WorkspaceFragment
 }>()
 
 const mixpanel = useMixpanel()
@@ -84,7 +96,7 @@ const { mutate: updateDefaultSeatType } = useMutation(
   workspaceUpdateDefaultSeatTypeMutation
 )
 const { triggerNotification } = useGlobalToast()
-const { isSelfServePlan } = useWorkspacePlan(props.workspace.slug)
+const { isSelfServePlan, isPaidPlan } = useWorkspacePlan(props.workspace.slug)
 
 const currentSeatType = ref<WorkspaceSeatType>(props.workspace.defaultSeatType)
 
@@ -105,12 +117,8 @@ const seatTypeModel = computed({
 const handleSeatTypeChange = (newValue: WorkspaceSeatType) => {
   if (newValue === currentSeatType.value) return
 
-  // If setting to Editor with auto-join enabled on paid plan, show confirmation
-  if (
-    newValue === SeatTypes.Editor &&
-    props.workspace.discoverabilityAutoJoinEnabled &&
-    isSelfServePlan
-  ) {
+  // If setting to Editor on paid plan, show confirmation
+  if (newValue === SeatTypes.Editor && isSelfServePlan.value && isPaidPlan.value) {
     pendingNewSeatType.value = newValue
     showConfirmSeatTypeDialog.value = true
     return

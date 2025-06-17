@@ -59,7 +59,6 @@ WORKDIR /speckle-server/packages/server
 # Consume the ARG from the global scope
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
-ARG SPECKLE_SERVER_VERSION
 RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
 FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage

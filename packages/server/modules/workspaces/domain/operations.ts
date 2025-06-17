@@ -240,6 +240,10 @@ export type AddOrUpdateWorkspaceRole = (
     skipEvent?: boolean
 
     updatedByUserId: string
+    /**
+     * Optionally set Workspace seat type to ensure
+     */
+    seatType?: WorkspaceSeatType
   }
 ) => Promise<void>
 
@@ -274,8 +278,8 @@ export type ValidateWorkspaceMemberProjectRole = (params: {
    * if a planned workspace member will have valid access to a project
    */
   workspaceAccess?: {
-    role: WorkspaceRoles
-    seatType: WorkspaceSeatType
+    role?: WorkspaceRoles
+    seatType?: WorkspaceSeatType
   }
 }) => Promise<void>
 
@@ -539,6 +543,7 @@ export type AssignWorkspaceSeat = (
   params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {
     type: WorkspaceSeatType
     assignedByUserId: string
+    skipEvent?: boolean
   }
 ) => Promise<WorkspaceSeat>
 
