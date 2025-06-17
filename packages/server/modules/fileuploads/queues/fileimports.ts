@@ -62,7 +62,7 @@ const initializeQueue = async (params: {
     ),
     shutdown: async () => await queue.close(),
     scheduleJob: async (jobData: JobPayload): Promise<void> => {
-      await queue.add(jobData, { removeOnComplete: true, attempts: 3 })
+      await queue.add(jobData, defaultJobOptions)
     }
   }
 }

@@ -131,14 +131,6 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
       queues.push(ifcQueue)
     }
 
-    if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-      moduleLogger.info('📄 Next Gen File Importer is ENABLED')
-      app.use(nextGenFileImporterRouterFactory({ queues }))
-    }
-
-    // the two routers can be used independently and can both be enabled
-    app.use(fileuploadRouterFactory())
-
     const scheduleExecution = scheduleExecutionFactory({
       acquireTaskLock: acquireTaskLockFactory({ db }),
       releaseTaskLock: releaseTaskLockFactory({ db })
@@ -175,6 +167,14 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
 
     quitListeners = initializeEventListenersFactory({ db })()
   }
+
+  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+    moduleLogger.info('📄 Next Gen File Importer is ENABLED')
+    app.use(nextGenFileImporterRouterFactory({ queues }))
+  }
+
+  // the two routers can be used independently and can both be enabled
+  app.use(fileuploadRouterFactory())
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
