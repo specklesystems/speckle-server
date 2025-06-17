@@ -15,6 +15,7 @@
       :items="items"
       :loading="isVeryFirstLoading"
       empty-message="This model has no uploads"
+      :max-height="300"
     >
       <template #file="{ item }">
         <div
@@ -56,12 +57,14 @@
           @click="onDownload(item)"
         />
       </template>
+      <template #loader>
+        <InfiniteLoading
+          v-if="items?.length"
+          :settings="{ identifier }"
+          @infinite="onInfiniteLoad"
+        />
+      </template>
     </LayoutTable>
-    <InfiniteLoading
-      v-if="items?.length"
-      :settings="{ identifier }"
-      @infinite="onInfiniteLoad"
-    />
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -132,7 +135,8 @@ const {
     projectId: props.projectId,
     modelId: props.modelId,
     input: {
-      cursor: null as string | null
+      cursor: null as string | null,
+      limit: 8
     }
   })),
   options: {
