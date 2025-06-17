@@ -8,7 +8,7 @@ import { StoreFileStream } from '@/modules/blobstorage/domain/storageOperations'
 
 export type GetBlobs = (params: {
   streamId?: MaybeNullOrUndefined<string>
-  blobIds: string[]
+  blobIds?: string[]
 }) => Promise<BlobStorageItem[]>
 
 export type UpsertBlob = (item: BlobStorageItemInput) => Promise<BlobStorageItem>

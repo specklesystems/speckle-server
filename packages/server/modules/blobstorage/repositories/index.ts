@@ -46,7 +46,12 @@ export const getBlobsFactory =
   async (params) => {
     const { streamId, blobIds } = params
 
-    const q = tables.blobStorage(deps.db).whereIn('id', blobIds)
+    // TODO: not commit this
+    const q = tables.blobStorage(deps.db)
+    if (blobIds) {
+      q.whereIn('id', blobIds)
+    }
+
     if (streamId) {
       q.andWhere('streamId', streamId)
     }
