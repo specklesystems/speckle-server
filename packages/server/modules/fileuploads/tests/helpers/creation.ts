@@ -17,7 +17,7 @@ export const createFileUploadJob = (params: { projectId: string; userId: string 
     fileName: cryptoRandomString({ length: 10 }),
     fileType: cryptoRandomString({ length: 3 }),
     fileSize: randomInt(1, 1e6),
-    modelId: cryptoRandomString({ length: 10 })
+    modelId: null
   }
 
   return saveUploadFile(data)
