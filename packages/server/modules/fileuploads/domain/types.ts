@@ -1,8 +1,8 @@
-import { JobPayload } from '@speckle/shared/workers/fileimport'
+import { ScheduleFileimportJob } from '@/modules/fileuploads/domain/operations'
 
 export type FileImportQueue = {
   label: string
   supportedFileTypes: string[]
   shutdown: () => Promise<void>
-  scheduleJob: (jobData: JobPayload) => Promise<void>
+  scheduleJob: ScheduleFileimportJob
 }

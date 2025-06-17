@@ -75,7 +75,7 @@ export const insertNewUploadAndNotifyFactory =
 
 export const insertNewUploadAndNotifyFactoryV2 =
   (deps: {
-    queues: FileImportQueue[]
+    queues: Pick<FileImportQueue, 'scheduleJob' | 'supportedFileTypes'>[]
     pushJobToFileImporter: PushJobToFileImporter
     saveUploadFile: SaveUploadFileV2
     publish: PublishSubscription
@@ -105,7 +105,7 @@ export const insertNewUploadAndNotifyFactoryV2 =
     }
 
     await deps.pushJobToFileImporter({
-      queue,
+      scheduleJob: queue.scheduleJob,
       fileName: file.fileName,
       fileType: file.fileType,
       projectId: file.projectId,

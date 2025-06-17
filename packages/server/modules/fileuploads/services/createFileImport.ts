@@ -12,7 +12,7 @@ export const pushJobToFileImporterFactory =
     getServerOrigin: () => string
   }): PushJobToFileImporter =>
   async ({
-    queue,
+    scheduleJob,
     modelId,
     projectId,
     userId,
@@ -35,7 +35,7 @@ export const pushJobToFileImporterFactory =
       ]
     })
 
-    await queue.scheduleJob({
+    await scheduleJob({
       jobId,
       fileName,
       token,

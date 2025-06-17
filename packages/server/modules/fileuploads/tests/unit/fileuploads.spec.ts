@@ -169,16 +169,19 @@ describe('FileUploads @fileuploads', () => {
 
         const pushJobToFileImporter = pushJobToFileImporterFactory({
           getServerOrigin: () => serverOrigin,
-          scheduleJob: async (jobData) => {
-            assign(result, jobData)
-          },
+
           createAppToken: async (args) => {
             usedUserId = args.userId
             return token
           }
         })
 
-        await pushJobToFileImporter(upload)
+        await pushJobToFileImporter({
+          scheduleJob: async (jobData) => {
+            assign(result, jobData)
+          },
+          ...upload
+        })
 
         expect(usedUserId).to.equal(upload.userId)
         const expected: JobPayload = {
@@ -203,9 +206,14 @@ describe('FileUploads @fileuploads', () => {
           emittedEventPayload = payload
         }
         const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+          queues: [
+            {
+              scheduleJob: async () => {},
+              supportedFileTypes: ['txt']
+            }
+          ],
           pushJobToFileImporter: pushJobToFileImporterFactory({
             getServerOrigin: () => serverOrigin,
-            scheduleJob: async () => {},
             createAppToken: async () => token
           }),
           saveUploadFile: saveUploadFileFactoryV2({ db }),
@@ -219,7 +227,7 @@ describe('FileUploads @fileuploads', () => {
           fileId,
           fileName: 'testfile.txt',
           fileSize: 100,
-          fileType: 'text/plain',
+          fileType: 'txt',
           modelId: createdBranch.id,
           modelName: createdBranch.name
         })
@@ -235,7 +243,7 @@ describe('FileUploads @fileuploads', () => {
           userId: userOneId,
           projectId: createdStreamId,
           fileSize: 100,
-          fileType: 'text/plain'
+          fileType: 'txt'
         })
       })
     }
