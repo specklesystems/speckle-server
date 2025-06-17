@@ -79,7 +79,7 @@
       <template #email="{ item }">
         <div class="flex">
           <span class="text-foreground-2 truncate">
-            {{ canReadMemberEmail ? item.email : '-' }}
+            {{ item.email }}
           </span>
         </div>
       </template>
@@ -156,6 +156,8 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
+const defaultRoles = shallowRef([Roles.Workspace.Admin, Roles.Workspace.Member])
+
 const {
   identifier,
   onInfiniteLoad,
@@ -168,14 +170,12 @@ const {
     slug: props.workspaceSlug,
     filter: {
       search: search.value,
-      roles: roleFilter.value
-        ? [roleFilter.value]
-        : [Roles.Workspace.Admin, Roles.Workspace.Member],
+      roles: roleFilter.value ? [roleFilter.value] : defaultRoles.value,
       seatType: seatTypeFilter.value
     },
     cursor: null as Nullable<string>
   })),
-  resolveKey: (vars) => [vars.query || ''],
+  resolveKey: (vars) => [vars.slug, vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.workspaceBySlug.team,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
@@ -185,8 +185,5 @@ const {
 })
 
 const workspace = computed(() => result.value?.workspaceBySlug)
-const canReadMemberEmail = computed(
-  () => workspace.value?.permissions.canReadMemberEmail.authorized
-)
 const members = computed(() => membersResult.value?.workspaceBySlug.team.items)
 </script>
