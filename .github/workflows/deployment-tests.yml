@@ -27,9 +27,7 @@ jobs:
           sudo mkdir /nix
           sudo chmod 777 /nix
       - name: Install the nix package manager
-        run: |
-          sh <(curl -L https://nixos.org/nix/install) --daemon --yes
-          echo "source /etc/bashrc" >> "${BASH_ENV}"
+        uses: cachix/install-nix-action@v31
       - name: Initialize nix shell
         run: |
           nix-shell \
