@@ -1,4 +1,5 @@
 import {
+  calculateSubscriptionSeats,
   GetSubscriptionData,
   GetWorkspacePlan,
   GetWorkspacePlanProductId,
@@ -14,6 +15,8 @@ import {
   WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Logger } from '@/observability/logging'
 import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
 import { cloneDeep, isEqual } from 'lodash'
@@ -27,12 +30,14 @@ export const downscaleWorkspaceSubscriptionFactory =
     getWorkspacePlan,
     countSeatsByTypeInWorkspace,
     getWorkspacePlanProductId,
-    reconcileSubscriptionData
+    reconcileSubscriptionData,
+    eventBusEmit
   }: {
     getWorkspacePlan: GetWorkspacePlan
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
     getWorkspacePlanProductId: GetWorkspacePlanProductId
     reconcileSubscriptionData: ReconcileSubscriptionData
+    eventBusEmit: EventBusEmit
   }): DownscaleWorkspaceSubscription =>
   async ({ workspaceSubscription }) => {
     const workspaceId = workspaceSubscription.workspaceId
@@ -64,7 +69,8 @@ export const downscaleWorkspaceSubscriptionFactory =
       type: WorkspaceSeatType.Editor
     })
 
-    const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+    const previousSubscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+    const subscriptionData = cloneDeep(previousSubscriptionData)
 
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: editorsCount,
@@ -73,11 +79,27 @@ export const downscaleWorkspaceSubscriptionFactory =
       subscriptionData
     })
 
-    if (!isEqual(subscriptionData, workspaceSubscription.subscriptionData)) {
-      await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
-      return true
+    if (isEqual(subscriptionData, workspaceSubscription.subscriptionData)) {
+      return false
     }
-    return false
+
+    await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
+    await eventBusEmit({
+      eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+      payload: {
+        workspacePlan,
+        subscription: {
+          totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
+        },
+        previousSubscription: {
+          totalEditorSeats: calculateSubscriptionSeats({
+            subscriptionData: previousSubscriptionData
+          })
+        }
+      }
+    })
+
+    return true
   }
 
 export const manageSubscriptionDownscaleFactory =

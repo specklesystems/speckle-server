@@ -33,6 +33,7 @@ import { MaybeAsync, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expectToThrow } from '@/test/assertionHelper'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { isBoolean } from 'lodash'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 
 export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const { apollo } = deps
@@ -86,6 +87,7 @@ export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }
     workspaceId: string
     streamId?: string
     expectedWorkspaceRole?: WorkspaceRoles
+    expectedWorkspaceSeatType?: WorkspaceSeatType
     expectedProjectRole?: StreamRoles
   }) => {
     const { shouldHaveAccess, userId, workspaceId, streamId } = params
@@ -121,6 +123,15 @@ export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }
       ) {
         throw new ForbiddenError(
           `Unexpected workspace role! Expected: ${params.expectedWorkspaceRole}, real: ${workspace.role}`
+        )
+      }
+
+      if (
+        params.expectedWorkspaceSeatType &&
+        workspace.seatType !== params.expectedWorkspaceSeatType
+      ) {
+        throw new ForbiddenError(
+          `Unexpected workspace seat type! Expected: ${params.expectedWorkspaceSeatType}, real: ${workspace.seatType}`
         )
       }
     }, shouldHaveWorkspaceAccess)

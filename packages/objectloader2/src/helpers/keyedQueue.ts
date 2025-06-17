@@ -16,6 +16,18 @@ export default class KeyedQueue<K, V> {
     return true
   }
 
+  enqueueAll(keys: K[], values: V[]): number {
+    let count = 0
+    for (let i = 0; i < keys.length; i++) {
+      if (!this._map.has(keys[i])) {
+        this._map.set(keys[i], values[i])
+        this._order.push(keys[i])
+        count++
+      }
+    }
+    return count
+  }
+
   get(key: K): V | undefined {
     return this._map.get(key)
   }

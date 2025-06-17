@@ -33,6 +33,7 @@ import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/m
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
+  isPaidPlan,
   MaybeNullOrUndefined,
   Roles,
   StreamRoles,
@@ -86,6 +87,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   getBaseTrackingProperties,
   getClient,
+  mapPlanStatusToMixpanelEvent as mapPlanNameToMixpanelEventName,
   MixpanelClient,
   MixpanelEvents,
   WORKSPACE_TRACKING_ID_KEY
@@ -105,6 +107,7 @@ import {
   upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
+  assignWorkspaceSeatFactory,
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
@@ -179,7 +182,8 @@ export const onInviteFinalizedFactory =
       userId: targetUserId,
       workspaceId: project.workspaceId,
       preventRoleDowngrade: true,
-      updatedByUserId: invite.inviterId
+      updatedByUserId: invite.inviterId,
+      seatType: invite.resource.workspaceSeatType
     })
 
     // Automatically promote user to project owner if workspace admin
@@ -583,19 +587,40 @@ export const workspaceTrackingFactory =
 
         break
       case GatekeeperEvents.WorkspaceSubscriptionUpdated:
-        if (payload.status === WorkspacePlanStatuses.Canceled) {
+        const editorSeatsChanged =
+          payload.subscription.totalEditorSeats -
+          payload.previousSubscription.totalEditorSeats
+
+        if (editorSeatsChanged > 0 && isPaidPlan(payload.workspacePlan.name)) {
           await mixpanel.track({
-            eventName: MixpanelEvents.WorkspaceSubscriptionCanceled,
-            workspaceId: payload.workspaceId
+            eventName: MixpanelEvents.EditorSeatsPurchased,
+            workspaceId: payload.workspacePlan.workspaceId,
+            payload: {
+              amount: editorSeatsChanged,
+              planName: payload.workspacePlan.name
+            }
           })
         }
 
-        if (payload.status === WorkspacePlanStatuses.CancelationScheduled) {
+        if (editorSeatsChanged < 0 && isPaidPlan(payload.workspacePlan.name)) {
           await mixpanel.track({
-            eventName: MixpanelEvents.WorkspaceSubscriptionCancelationScheduled,
-            workspaceId: payload.workspaceId
+            eventName: MixpanelEvents.EditorSeatsDownscaled,
+            workspaceId: payload.workspacePlan.workspaceId,
+            payload: {
+              amount: Math.abs(editorSeatsChanged),
+              planName: payload.workspacePlan.name
+            }
           })
         }
+
+        if (payload.workspacePlan.status === WorkspacePlanStatuses.Valid) break
+        await mixpanel.track({
+          eventName: mapPlanNameToMixpanelEventName[payload.workspacePlan.status],
+          workspaceId: payload.workspacePlan.workspaceId,
+          payload: {
+            planName: payload.workspacePlan.name
+          }
+        })
         break
       case GatekeeperEvents.WorkspaceTrialExpired:
         break
@@ -641,19 +666,58 @@ export const workspaceTrackingFactory =
         break
       case WorkspaceEvents.RoleDeleted:
       case WorkspaceEvents.RoleUpdated:
-      case WorkspaceEvents.SeatUpdated:
-        const entity = 'acl' in payload ? payload.acl : payload.seat
-        const workspace = await getWorkspace({ workspaceId: entity.workspaceId })
-        if (!workspace) break
+        const aclWorkspace = await getWorkspace({
+          workspaceId: payload.acl.workspaceId
+        })
+        if (!aclWorkspace) break
 
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
-          entity.workspaceId,
+          payload.acl.workspaceId,
           assign(
-            await buildWorkspaceTrackingProperties(workspace),
-            await checkForSpeckleMembers({ userId: entity.userId })
+            await buildWorkspaceTrackingProperties(aclWorkspace),
+            await checkForSpeckleMembers({ userId: payload.acl.workspaceId })
           )
         )
+        break
+      case WorkspaceEvents.SeatUpdated:
+        const seatWorkspace = await getWorkspace({
+          workspaceId: payload.seat.workspaceId
+        })
+        if (!seatWorkspace) break
+
+        mixpanel.groups.set(
+          WORKSPACE_TRACKING_ID_KEY,
+          payload.seat.workspaceId,
+          assign(
+            await buildWorkspaceTrackingProperties(seatWorkspace),
+            await checkForSpeckleMembers({ userId: payload.seat.userId })
+          )
+        )
+
+        const userSeated = await getUser(payload.seat.userId)
+        if (
+          payload.previousSeat?.type === WorkspaceSeatType.Viewer &&
+          payload.seat.type === WorkspaceSeatType.Editor
+        ) {
+          await mixpanel.track({
+            eventName: MixpanelEvents.EditorSeatAssigned,
+            workspaceId: payload.seat.workspaceId,
+            userEmail: userSeated?.email
+          })
+        }
+
+        if (
+          payload.previousSeat?.type === WorkspaceSeatType.Editor &&
+          payload.seat.type === WorkspaceSeatType.Viewer
+        ) {
+          await mixpanel.track({
+            eventName: MixpanelEvents.EditorSeatUnassigned,
+            workspaceId: payload.seat.workspaceId,
+            userEmail: userSeated?.email
+          })
+        }
+
         break
       default:
         throwUncoveredError(eventName)
@@ -723,10 +787,20 @@ const blockInvalidWorkspaceProjectRoleUpdatesFactory =
     const project = await deps.getStream({ streamId: payload.projectId })
     if (!project?.workspaceId) return // No extra validation necessary
 
+    // Does this come from an invite that plans to increase seat?
+    const plannedSeatType = payload.fromInvite?.resource.workspaceSeatType
+
     await deps.validateWorkspaceMemberProjectRole({
       userId: payload.targetUserId,
       projectRole: payload.role,
-      workspaceId: project.workspaceId
+      workspaceId: project.workspaceId,
+      ...(plannedSeatType
+        ? {
+            workspaceAccess: {
+              seatType: plannedSeatType
+            }
+          }
+        : {})
     })
   }
 
@@ -778,7 +852,15 @@ export const initializeEventListenersFactory =
             getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-            ensureValidWorkspaceRoleSeat
+            ensureValidWorkspaceRoleSeat,
+            assignWorkspaceSeat: assignWorkspaceSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                db
+              }),
+              eventEmit: eventBus.emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+            })
           }),
           getWorkspaceRole: getWorkspaceRoleForUserFactory({ db }),
           upsertProjectRole: upsertProjectRoleFactory({ db })

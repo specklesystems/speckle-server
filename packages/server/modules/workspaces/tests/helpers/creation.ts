@@ -130,7 +130,10 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
-import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
+import {
+  WorkspaceSeat,
+  WorkspaceWithOptionalRole
+} from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRole } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
@@ -211,6 +214,14 @@ export const createTestWorkspace = async (
           getWorkspace: getWorkspaceFactory({ db })
         }),
         eventEmit: getEventBus().emit
+      }),
+      assignWorkspaceSeat: assignWorkspaceSeatFactory({
+        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+        getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+          db
+        }),
+        eventEmit: getEventBus().emit,
+        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
       })
     })
   })
@@ -366,6 +377,20 @@ export const buildBasicTestWorkspace = (
     overrides
   )
 
+export const buildTestWorkspaceSeat = (
+  overrides?: Partial<WorkspaceSeat>
+): WorkspaceSeat =>
+  assign(
+    {
+      workspaceId: cryptoRandomString({ length: 10 }),
+      userId: cryptoRandomString({ length: 10 }),
+      type: WorkspaceSeatType.Viewer,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    overrides
+  )
+
 export const buildTestWorkspaceWithOptionalRole = (
   overrides?: Partial<WorkspaceWithOptionalRole>
 ): WorkspaceWithOptionalRole =>
@@ -408,11 +433,20 @@ export const assignToWorkspace = async (
         getWorkspace: getWorkspaceFactory({ db })
       }),
       eventEmit: getEventBus().emit
+    }),
+    assignWorkspaceSeat: assignWorkspaceSeatFactory({
+      createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+        db
+      }),
+      eventEmit: getEventBus().emit,
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
     })
   })
   const assignWorkspaceSeat = assignWorkspaceSeatFactory({
     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
     eventEmit: getEventBus().emit
   })
 
@@ -543,6 +577,14 @@ export const createWorkspaceInviteDirectly = async (
               getWorkspace: getWorkspaceFactory({ db })
             }),
             eventEmit: getEventBus().emit
+          }),
+          assignWorkspaceSeat: assignWorkspaceSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+              db
+            }),
+            eventEmit: getEventBus().emit,
+            getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
           })
         }),
         processFinalizedProjectInvite: processFinalizedProjectInviteFactory({

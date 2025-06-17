@@ -665,6 +665,15 @@ const buildUpdateWorkspaceRoleAndTestContext = (
         updatedAt: new Date()
       }
     },
+    assignWorkspaceSeat: async () => {
+      return {
+        type: WorkspaceSeatType.Editor,
+        workspaceId: 'test',
+        userId: 'test',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    },
     ...dependencyOverrides
   }
 

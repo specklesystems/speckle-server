@@ -13,6 +13,6 @@ export interface Downloader extends Queue<string> {
 
 export interface Database {
   getAll(keys: string[]): Promise<(Item | undefined)[]>
-  cacheSaveBatch(params: { batch: Item[] }): Promise<void>
+  saveBatch(params: { batch: Item[] }): Promise<void>
   disposeAsync(): Promise<void>
 }

@@ -9,6 +9,6 @@ LAST_RELEASE="$(git describe --always --tags $(git rev-list --tags) | grep -E '^
 # shellcheck disable=SC2034
 NEXT_RELEASE="$(echo "${LAST_RELEASE}" | awk -F. -v OFS=. '{$NF += 1 ; print}')"
 # shellcheck disable=SC2034
-BRANCH_NAME_TRUNCATED="$(echo "${CIRCLE_BRANCH}" | cut -c -50 | sed 's/[^a-zA-Z0-9.-]/-/g')" # docker has a 128 character tag limit, so ensuring the branch name will be short enough
+BRANCH_NAME_TRUNCATED="$(echo "${CIRCLE_BRANCH}" | cut -c -28 | sed 's/[^a-zA-Z0-9.-]/-/g')" # Kubernetes has a 63 character limit, so ensuring the branch name will be short enough.
 # shellcheck disable=SC2034
 COMMIT_SHA1_TRUNCATED="$(echo "${CIRCLE_SHA1}" | cut -c -7)"

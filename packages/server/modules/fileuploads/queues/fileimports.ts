@@ -52,6 +52,7 @@ export const initializeQueue = async () => {
       defaultJobOptions
     }
   })
+  return queue
 }
 
 export const shutdownQueue = async () => {
