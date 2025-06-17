@@ -165,7 +165,6 @@ const {
 } = usePaginatedQuery({
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
-    query: search.value?.length ? search.value : null,
     limit: 10,
     slug: props.workspaceSlug,
     filter: {
@@ -175,7 +174,10 @@ const {
     },
     cursor: null as Nullable<string>
   })),
-  resolveKey: (vars) => [vars.slug, vars.filter?.search || ''],
+  resolveKey: (vars) => ({
+    slug: vars.slug,
+    filter: vars.filter
+  }),
   resolveCurrentResult: (res) => res?.workspaceBySlug.team,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
