@@ -94,6 +94,7 @@
       "./authz": "./src/authz/index.ts",
       "./queue": "./src/queue/index.ts",
       "./redis": "./src/redis/index.ts",
+      "./blobs": "./src/blobs/index.ts",
       "./workers": "./src/workers/index.ts",
       "./workers/previews": "./src/workers/previews/index.ts",
       "./workers/fileimport": "./src/workers/fileimport/index.ts",
@@ -203,6 +204,16 @@
       "require": {
         "types": "./dist/commonjs/redis/index.d.ts",
         "default": "./dist/commonjs/redis/index.js"
+      }
+    },
+    "./blobs": {
+      "import": {
+        "types": "./dist/esm/blobs/index.d.ts",
+        "default": "./dist/esm/blobs/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/blobs/index.d.ts",
+        "default": "./dist/commonjs/blobs/index.js"
       }
     },
     "./workers": {
