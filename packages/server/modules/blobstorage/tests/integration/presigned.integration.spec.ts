@@ -12,6 +12,7 @@ import {
 import {
   getBlobMetadataFactory,
   getBlobsFactory,
+  getBlobFactory,
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
@@ -122,7 +123,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
           })
         })
         SUT = registerCompletedUploadFactory({
-          getBlobs: getBlobsFactory({ db: projectDb }),
+          getBlob: getBlobFactory({ db: projectDb }),
           getBlobMetadata: getBlobMetadataFromStorage({
             objectStorage: projectStorage
           }),

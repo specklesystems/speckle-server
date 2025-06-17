@@ -99,22 +99,21 @@ describe('Presigned @blobstorage', async () => {
     })
   })
   describe('register a completed blob upload', () => {
-    const fakeGetBlobs = async () => [
-      {
-        // this returned data is never used
-        id: cryptoRandomString({ length: 10 }),
-        streamId: cryptoRandomString({ length: 10 }),
-        fileName: `test-file-${cryptoRandomString({ length: 10 })}.stl`,
-        fileType: 'stl',
-        fileSize: null,
-        uploadStatus: BlobUploadStatus.Pending,
-        uploadError: null,
-        createdAt: new Date(),
-        fileHash: null,
-        userId: cryptoRandomString({ length: 10 }),
-        objectKey: cryptoRandomString({ length: 10 })
-      }
-    ]
+    const fakeGetBlob = async () => ({
+      // this returned data is never used
+      id: cryptoRandomString({ length: 10 }),
+      streamId: cryptoRandomString({ length: 10 }),
+      fileName: `test-file-${cryptoRandomString({ length: 10 })}.stl`,
+      fileType: 'stl',
+      fileSize: null,
+      uploadStatus: BlobUploadStatus.Pending,
+      uploadError: null,
+      createdAt: new Date(),
+      fileHash: null,
+      userId: cryptoRandomString({ length: 10 }),
+      objectKey: cryptoRandomString({ length: 10 })
+    })
+
     const fakeUpdateBlob = async () => ({
       // this returned data is never used
       id: cryptoRandomString({ length: 10 }),
@@ -134,7 +133,7 @@ describe('Presigned @blobstorage', async () => {
       const fileHash = cryptoRandomString({ length: 10 })
       const blobId = cryptoRandomString({ length: 10 })
       const SUT = registerCompletedUploadFactory({
-        getBlobs: fakeGetBlobs,
+        getBlob: fakeGetBlob,
         getBlobMetadata: async () => ({
           contentLength: 1000,
           eTag: fileHash
@@ -160,7 +159,7 @@ describe('Presigned @blobstorage', async () => {
       const fileHash = cryptoRandomString({ length: 10 })
       const blobId = cryptoRandomString({ length: 10 })
       const SUT = registerCompletedUploadFactory({
-        getBlobs: fakeGetBlobs,
+        getBlob: fakeGetBlob,
         getBlobMetadata: async () => ({
           contentLength: 1000,
           eTag: fileHash // the etag to match
@@ -187,7 +186,7 @@ describe('Presigned @blobstorage', async () => {
       const blobId = cryptoRandomString({ length: 10 })
       const maximumFileSize = 100
       const SUT = registerCompletedUploadFactory({
-        getBlobs: fakeGetBlobs,
+        getBlob: fakeGetBlob,
         getBlobMetadata: async () => ({
           contentLength: maximumFileSize + 1,
           eTag: fileHash
@@ -214,7 +213,7 @@ describe('Presigned @blobstorage', async () => {
       const blobId = cryptoRandomString({ length: 10 })
       const maximumFileSize = -22 // negative file size for this test
       const SUT = registerCompletedUploadFactory({
-        getBlobs: fakeGetBlobs,
+        getBlob: fakeGetBlob,
         getBlobMetadata: async () => ({
           contentLength: 100,
           eTag: fileHash
@@ -240,7 +239,7 @@ describe('Presigned @blobstorage', async () => {
       const fileHash = cryptoRandomString({ length: 10 })
       const blobId = cryptoRandomString({ length: 10 })
       const SUT = registerCompletedUploadFactory({
-        getBlobs: async () => [],
+        getBlob: async () => undefined, // simulate no existing blob
         getBlobMetadata: async () => ({
           contentLength: 1000,
           eTag: fileHash

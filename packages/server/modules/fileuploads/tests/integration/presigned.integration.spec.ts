@@ -10,6 +10,7 @@ import {
   ObjectStorage
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
+  getBlobFactory,
   getBlobsFactory,
   updateBlobFactory,
   upsertBlobFactory
@@ -151,7 +152,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
 
         SUT = registerUploadCompleteAndStartFileImportFactory({
           registerCompletedUpload: registerCompletedUploadFactory({
-            getBlobs: getBlobsFactory({ db: projectDb }),
+            getBlob: getBlobFactory({ db: projectDb }),
             getBlobMetadata: getBlobMetadataFromStorage({
               objectStorage: projectStorage
             }),
