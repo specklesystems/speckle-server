@@ -4,7 +4,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
-import { BlobUploadStatus } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 
 describe('Presigned @blobstorage', async () => {
   describe('register a completed blob upload', () => {

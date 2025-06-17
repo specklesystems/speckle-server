@@ -11,7 +11,8 @@ import { type BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { BadRequestError } from '@/modules/shared/errors'
 import { getFileSizeLimitMB } from '@/modules/shared/helpers/envHelper'
-import { BlobUploadStatus, type MaybeAsync } from '@speckle/shared'
+import { type MaybeAsync } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 import type { ProcessingResult } from '@/modules/blobstorage/domain/types'
 
 /**

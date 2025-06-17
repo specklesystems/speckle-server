@@ -33,7 +33,7 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { waitForRegionUser } from '@/test/speckle-helpers/regions'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
-import { BlobUploadStatus } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 
 type UploadFileStreamStreamData = Parameters<UploadFileStream>[0]
 type UploadFileStreamBlobData = Parameters<UploadFileStream>[1]

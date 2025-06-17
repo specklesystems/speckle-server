@@ -10,12 +10,8 @@ import type {
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import type { Logger } from '@/observability/logging'
-import {
-  BlobUploadStatus,
-  ensureError,
-  throwUncoveredError,
-  type Optional
-} from '@speckle/shared'
+import { ensureError, throwUncoveredError, type Optional } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 import {
   AlreadyRegisteredBlobError,
   StoredBlobAccessError

@@ -1,4 +1,5 @@
-import { BlobUploadStatus, Nullable } from '@speckle/shared'
+import { Nullable } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 import { SetOptional } from 'type-fest'
 
 export type BlobStorageItem = {

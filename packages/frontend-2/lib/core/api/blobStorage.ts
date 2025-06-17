@@ -6,7 +6,7 @@ import type {
 } from '~~/lib/form/composables/fileUpload'
 import type { Optional } from '@speckle/shared'
 import type { Merge, SetRequired } from 'type-fest'
-import { BlobUploadStatus } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 import type { BlobPostResultItem } from '@speckle/ui-components'
 
 export type BlobUploadPrincipal = {

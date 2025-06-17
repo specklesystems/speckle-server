@@ -8,7 +8,7 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { testLogger } from '@/observability/logging'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { BlobUploadStatus } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 
 describe('Presigned @blobstorage', async () => {
   describe('generate a presigned URL', () => {

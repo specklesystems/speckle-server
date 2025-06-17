@@ -18,7 +18,8 @@ import {
   NotFoundError,
   ResourceMismatch
 } from '@/modules/shared/errors'
-import { BlobUploadStatus, MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 import { Knex } from 'knex'
 
 export const BlobStorage = buildTableHelper('blob_storage', [

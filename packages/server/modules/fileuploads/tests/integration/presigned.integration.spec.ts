@@ -15,7 +15,8 @@ import {
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
-import { BlobUploadStatus, Roles, TIME } from '@speckle/shared'
+import { Roles, TIME } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 import { createProject } from '@/test/projectHelper'
 import { createTestUser } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
