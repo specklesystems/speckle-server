@@ -35,8 +35,8 @@ import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
 import {
-  initializeQueue,
-  shutdownQueue
+  initializeRhinoQueue,
+  initalizeIfcQueue
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
 import { createBullBoard } from 'bull-board'
@@ -44,11 +44,13 @@ import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 let quitListeners: Optional<() => void> = undefined
 let scheduledTasks: cron.ScheduledTask[] = []
+const queues: FileImportQueue[] = []
 
 const scheduleFileImportExpiry = async ({
   scheduleExecution
@@ -95,20 +97,13 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
     return
   }
   moduleLogger.info('📄 Init FileUploads module')
-  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-    moduleLogger.info('📄 Next Gen File Importer is ENABLED')
-    app.use(nextGenFileImporterRouterFactory())
-  }
-
-  // the two routers can be used independently and can both be enabled
-  app.use(fileuploadRouterFactory())
 
   if (isInitial) {
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-      const queue = await initializeQueue()
-      const router = createBullBoard([new BullMQAdapter(queue)]).router
+      const rhinoQueue = await initializeRhinoQueue()
+      const rhinoRouter = createBullBoard([new BullMQAdapter(rhinoQueue.queue)]).router
       app.use(
-        '/api/admin/fileimport-jobs',
+        '/api/admin/fileimport-jobs/rhino',
         async (req, res, next) => {
           await authMiddlewareCreator([
             validateServerRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
@@ -116,9 +111,34 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
             })
           ])(req, res, next)
         },
-        router
+        rhinoRouter
       )
+      queues.push(rhinoQueue)
+
+      const ifcQueue = await initalizeIfcQueue()
+      const ifcRouter = createBullBoard([new BullMQAdapter(ifcQueue.queue)]).router
+      app.use(
+        '/api/admin/fileimport-jobs/ifc',
+        async (req, res, next) => {
+          await authMiddlewareCreator([
+            validateServerRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
+              requiredRole: Roles.Server.Admin
+            })
+          ])(req, res, next)
+        },
+        ifcRouter
+      )
+      queues.push(ifcQueue)
     }
+
+    if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+      moduleLogger.info('📄 Next Gen File Importer is ENABLED')
+      app.use(nextGenFileImporterRouterFactory({ queues }))
+    }
+
+    // the two routers can be used independently and can both be enabled
+    app.use(fileuploadRouterFactory())
+
     const scheduleExecution = scheduleExecutionFactory({
       acquireTaskLock: acquireTaskLockFactory({ db }),
       releaseTaskLock: releaseTaskLockFactory({ db })
@@ -160,5 +180,10 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
 export const shutdown: SpeckleModule['shutdown'] = async () => {
   quitListeners?.()
   scheduledTasks.forEach((task) => task.stop())
-  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) await shutdownQueue()
+  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+    for (const queue of queues) {
+      await queue.shutdown()
+      moduleLogger.info(`📄 FileUploads ${queue.label} shutdown`)
+    }
+  }
 }

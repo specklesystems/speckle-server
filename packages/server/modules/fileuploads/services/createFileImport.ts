@@ -2,10 +2,7 @@ import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Scopes, TIME, TIME_MS } from '@speckle/shared'
 import { TokenResourceIdentifierType } from '@/test/graphql/generated/graphql'
-import {
-  PushJobToFileImporter,
-  ScheduleFileimportJob
-} from '@/modules/fileuploads/domain/operations'
+import { PushJobToFileImporter } from '@/modules/fileuploads/domain/operations'
 
 const twentyMinutes = 20 * TIME.minute
 
@@ -13,9 +10,9 @@ export const pushJobToFileImporterFactory =
   (deps: {
     createAppToken: CreateAndStoreAppToken
     getServerOrigin: () => string
-    scheduleJob: ScheduleFileimportJob
   }): PushJobToFileImporter =>
   async ({
+    queue,
     modelId,
     projectId,
     userId,
@@ -38,7 +35,7 @@ export const pushJobToFileImporterFactory =
       ]
     })
 
-    await deps.scheduleJob({
+    await queue.scheduleJob({
       jobId,
       fileName,
       token,

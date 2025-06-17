@@ -30,11 +30,13 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 
-export const nextGenFileImporterRouterFactory = (): Router => {
+export const nextGenFileImporterRouterFactory = (params: {
+  queues: FileImportQueue[]
+}): Router => {
   const processNewFileStream = processNewFileStreamFactory()
   const app = Router()
 
@@ -72,7 +74,6 @@ export const nextGenFileImporterRouterFactory = (): Router => {
 
       const pushJobToFileImporter = pushJobToFileImporterFactory({
         getServerOrigin,
-        scheduleJob,
         createAppToken: createAppTokenFactory({
           storeApiToken: storeApiTokenFactory({ db }),
           storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -85,6 +86,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       })
 
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+        queues: params.queues,
         pushJobToFileImporter,
         saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
         publish,
