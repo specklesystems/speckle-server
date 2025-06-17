@@ -10,7 +10,7 @@ export enum LoaderEvent {
 
 export interface LoaderEventPayload {
   [LoaderEvent.LoadProgress]: { progress: number; id: string }
-  [LoaderEvent.Converted]: { count: number; total: number }
+  [LoaderEvent.Converted]: { count: number }
   [LoaderEvent.Traversed]: { count: number }
   [LoaderEvent.LoadCancelled]: string
   [LoaderEvent.LoadWarning]: { message: string }

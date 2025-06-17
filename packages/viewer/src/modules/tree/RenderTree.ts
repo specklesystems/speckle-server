@@ -16,7 +16,6 @@ export class RenderTree {
   public getNodeTime = 0
   public otherTime = 0
   private count = 0
-  private total
 
   public get id(): string {
     return this.root.model.id
@@ -29,17 +28,11 @@ export class RenderTree {
   public constructor(tree: WorldTree, subtreeRoot: TreeNode) {
     this.tree = tree
     this.root = subtreeRoot
-    /** Technically, this isn't corret as rendertrees can be built to wrap subtrees, not the entire tree.
-     *  The second argument is the root of tree it wraps around.
-     *  For building the render tree, we always currently do it on the entire tree, but this will need to change
-     *  once/if we introduce tree building in parallel with downloading/converting
-     */
-    this.total = this.tree.nodeCount
   }
 
   public buildRenderTree(
     geometryConverter: GeometryConverter,
-    countCallback: (count: number, total: number) => void
+    countCallback: (count: number) => void
   ): Promise<boolean> {
     const p = this.tree.walkAsync((node: TreeNode): boolean => {
       let start = performance.now()
@@ -83,12 +76,12 @@ export class RenderTree {
   private buildRenderNode(
     node: TreeNode,
     geometryConverter: GeometryConverter,
-    countCallback: (count: number, total: number) => void
+    countCallback: (count: number) => void
   ): NodeRenderData | null {
     let ret: NodeRenderData | null = null
     let start = performance.now()
     const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
-    countCallback(this.count++, this.total)
+    countCallback(this.count++)
     this.convertTime += performance.now() - start
     if (geometryData) {
       start = performance.now()

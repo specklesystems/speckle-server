@@ -147,15 +147,11 @@ export class SpeckleLoader extends Loader {
 
     const renderTree = this.tree.getRenderTree(this.resource)
     if (!renderTree) return Promise.resolve(false)
-    const p = renderTree.buildRenderTree(
-      geometryConverter,
-      (count: number, total: number) => {
-        this.emit(LoaderEvent.Converted, {
-          count,
-          total
-        })
-      }
-    )
+    const p = renderTree.buildRenderTree(geometryConverter, (count: number) => {
+      this.emit(LoaderEvent.Converted, {
+        count
+      })
+    })
 
     Logger.warn(
       `Finished rendering object . Node count: ${this.tree.nodeCount} Total: ${total}`
