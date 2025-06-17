@@ -45,7 +45,7 @@ import { useAttachments } from '~~/lib/core/composables/fileUpload'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { isSuccessfullyUploaded } from '~~/lib/core/api/blobStorage'
 import { canInviteToProject } from '~~/lib/projects/helpers/permissions'
-import { acceptedFileExtensions } from '@speckle/shared'
+import { acceptedFileExtensions } from '@speckle/shared/blobs'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: Optional<CommentEditorValue>): void
