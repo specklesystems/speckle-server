@@ -96,7 +96,8 @@ export const WorkspaceNotEnoughPermissionsError = defineAuthError({
 
 export const EligibleForExclusiveWorkspaceError = defineAuthError({
   code: 'UserEligibleForExclusiveWorkspace',
-  message: 'You are eligible for an exclusive workspace, cannot do this action'
+  message:
+    'You are eligible to become a member of an exclusive workspace, cannot do this action'
 })
 
 export const WorkspaceReadOnlyError = defineAuthError({

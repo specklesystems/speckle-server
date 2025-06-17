@@ -14,7 +14,7 @@ import {
 } from '@/modules/workspaces/repositories/workspaces'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
-import { getEligileWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
+import { getEligibleWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
 import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 
 // TODO: Move everything to use dataLoaders
@@ -77,7 +77,7 @@ export default defineModuleLoaders(async () => {
       return await getWorkspacePlan({ workspaceId })
     },
     getUserEligibleWorkspaces: async ({ userId }) => {
-      return await getEligileWorkspacesForUserFactory({
+      return await getEligibleWorkspacesForUserFactory({
         findEmailsByUserId: findEmailsByUserIdFactory({ db }),
         getUserEligibleWorkspaces: getUserEligibleWorkspacesFactory({ db })
       })({ userId })

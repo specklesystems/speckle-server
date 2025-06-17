@@ -1322,61 +1322,6 @@ describe('Workspace repositories', () => {
   })
 
   describe('getUserEligibleWorkspacesFactory creates a function, that', () => {
-    // let testUser1: BasicTestUser
-    // let testUser2: BasicTestUser
-    // let workspace1: BasicTestWorkspace
-    // let workspace2: BasicTestWorkspace
-    // let workspace3: BasicTestWorkspace
-    // let workspace4: BasicTestWorkspace
-
-    // before(async () => {
-    // Create workspaces
-    //   workspace2 = buildBasicTestWorkspace({
-    //     name: 'Workspace 2',
-    //     description: 'User has invite'
-    //   })
-    //   await createTestWorkspace(workspace2, testUser2)
-    //   workspace3 = buildBasicTestWorkspace({
-    //     name: 'Workspace 3',
-    //     description: 'Discoverable with matching domain',
-    //     discoverabilityEnabled: true
-    //   })
-    //   await createTestWorkspace(workspace3, testUser2, { domain: 'example.com' })
-    //   workspace4 = buildBasicTestWorkspace({
-    //     name: 'Workspace 4',
-    //     description: 'Not accessible to user',
-    //     discoverabilityEnabled: false
-    //   })
-    //   await crfalseeateTestWorkspace(workspace4, testUser2)
-    //   // Set up workspace domains
-    //   await storeWorkspaceDomain({
-    //     workspaceId: workspace4.id,
-    //     domain: 'other.com'
-    //   })
-    //   // Create user email records
-    //   await createUserEmail({
-    //     userEmail: {
-    //       id: cryptoRandomString({ length: 10 }),
-    //       userId: testUser1.id,
-    //       email: testUser1.email,
-    //       verified: true,
-    //       primary: true
-    //     }
-    //   })
-    //   // Create invite for testUser1 to workspace2
-    //   await db('server_invites').insert({
-    //     id: cryptoRandomString({ length: 10 }),
-    //     target: `@${testUser1.id}`,
-    //     inviterId: testUser2.id,
-    //     resource: JSON.stringify({
-    //       resourceType: 'workspace',
-    //       resourceId: workspace2.id,
-    //       role: Roles.Workspace.Member
-    //     })
-    //   })
-    // })
-    // })
-
     it('returns workspaces where user is a member', async () => {
       const testUser1 = buildBasicTestUser()
       await createTestUsers([testUser1])
@@ -1486,6 +1431,33 @@ describe('Workspace repositories', () => {
     })
 
     it('does not return discoverable workspaces with matching unverified domains', async () => {
+      const domain = `${createRandomString()}.com`
+      const testUser1 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain}`,
+        verified: true
+      })
+      const testUser2 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain}`,
+        verified: false
+      })
+      await createTestUsers([testUser1, testUser2])
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 2',
+        description: 'User is member',
+        discoverabilityEnabled: false
+      })
+      await createTestWorkspace(workspace1, testUser1, { domain })
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser2.id,
+        domains: [domain]
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).deep.equalInAnyOrder([])
+    })
+
+    it('does not return non discoverable workspaces with matching verified domains', async () => {
       const domain = `${createRandomString()}.com`
       const testUser1 = buildBasicTestUser({
         email: `${createRandomString()}@${domain}`,
