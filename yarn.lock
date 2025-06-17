@@ -76,9 +76,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.12.4, @apollo/client@npm:^3.7.0, @apollo/client@npm:^3.8.0":
-  version: 3.12.4
-  resolution: "@apollo/client@npm:3.12.4"
+"@apollo/client@npm:^3.13.8, @apollo/client@npm:^3.7.0, @apollo/client@npm:^3.8.0":
+  version: 3.13.8
+  resolution: "@apollo/client@npm:3.13.8"
   dependencies:
     "@graphql-typed-document-node/core": "npm:^3.1.1"
     "@wry/caches": "npm:^1.0.0"
@@ -89,14 +89,13 @@ __metadata:
     optimism: "npm:^0.18.0"
     prop-types: "npm:^15.7.2"
     rehackt: "npm:^0.1.0"
-    response-iterator: "npm:^0.2.6"
     symbol-observable: "npm:^4.0.0"
     ts-invariant: "npm:^0.10.3"
     tslib: "npm:^2.3.0"
     zen-observable-ts: "npm:^1.2.5"
   peerDependencies:
     graphql: ^15.0.0 || ^16.0.0
-    graphql-ws: ^5.5.5
+    graphql-ws: ^5.5.5 || ^6.0.3
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || >=19.0.0-rc
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || >=19.0.0-rc
     subscriptions-transport-ws: ^0.9.0 || ^0.11.0
@@ -109,7 +108,7 @@ __metadata:
       optional: true
     subscriptions-transport-ws:
       optional: true
-  checksum: 10/9659ccf03ab5d6708cf191a1bd09c33ab5f958a8d66e783f81ccc899448b362a51cecf7d62c0ff5b852e60a340238e6903b3c96dcb5cf68dfb8a438ee6cd24bb
+  checksum: 10/a2fb3990ea25b96df2719ae0e925c07acc84cbf73da8871233169d65f01ae506cc0a52f6a83c40dea06bb3c9a5eb46a34f3e9b6e545931bae8c48f9bf4652e7a
   languageName: node
   linkType: hard
 
@@ -15722,7 +15721,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/frontend-2@workspace:packages/frontend-2"
   dependencies:
-    "@apollo/client": "npm:^3.12.4"
+    "@apollo/client": "npm:^3.13.8"
     "@artmizu/nuxt-prometheus": "npm:^2.2.1"
     "@datadog/browser-rum": "npm:^5.11.0"
     "@datadog/datadog-ci": "npm:^3.5.0"
@@ -15784,7 +15783,7 @@ __metadata:
     "@types/ua-parser-js": "npm:^0.7.39"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
-    "@vue/apollo-composable": "npm:@speckle/apollo-composable@4.2.1-patch.1"
+    "@vue/apollo-composable": "npm:^4.2.2"
     "@vue/apollo-ssr": "npm:4.0.0"
     "@vueuse/core": "npm:^10.9.0"
     apollo-upload-client: "npm:^18.0.1"
@@ -20650,9 +20649,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/apollo-composable@npm:@speckle/apollo-composable@4.2.1-patch.1":
-  version: 4.2.1-patch.1
-  resolution: "@speckle/apollo-composable@npm:4.2.1-patch.1"
+"@vue/apollo-composable@npm:^4.2.2":
+  version: 4.2.2
+  resolution: "@vue/apollo-composable@npm:4.2.2"
   dependencies:
     throttle-debounce: "npm:^5.0.0"
     ts-essentials: "npm:^9.4.0"
@@ -20665,7 +20664,7 @@ __metadata:
   peerDependenciesMeta:
     "@vue/composition-api":
       optional: true
-  checksum: 10/f8816269d1e0294b817af863417a49bce353e0324a7c984f9c71a057d4b3415e1708ac6bf41907951a7fe467cf0a1dfacfec9e78db9985ba7f2773cbba0a2e38
+  checksum: 10/1c26ac821016d79158812da0510e6da7148767e4f86f82cb0926391ecfee768c7238865e3bee14bf8a7a186f7ca8ec5c9586b3544bdc61909c52049c75ef3dd0
   languageName: node
   linkType: hard
 
@@ -43630,13 +43629,6 @@ __metadata:
   bin:
     resolve: bin/resolve
   checksum: 10/d4d878bfe3702d215ea23e75e0e9caf99468e3db76f5ca100d27ebdc527366fee3877e54bce7d47cc72ca8952fc2782a070d238bfa79a550eeb0082384c3b81a
-  languageName: node
-  linkType: hard
-
-"response-iterator@npm:^0.2.6":
-  version: 0.2.6
-  resolution: "response-iterator@npm:0.2.6"
-  checksum: 10/ef7c74693ef3891461955a666e753585b298fe0de1baaf0d190e7a6818e4311e459d72f4a36f04aa8f49eda9b5f97124e5534be01e40d9e008795125d0bbb374
   languageName: node
   linkType: hard
 

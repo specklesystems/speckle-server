@@ -230,6 +230,10 @@ function createCache(): InMemoryCache {
           },
           permissions: {
             merge: mergeAsObjectsFunction
+          },
+          uploads: {
+            keyArgs: ['input', ['limit']],
+            merge: buildAbstractCollectionMergeFunction('FileUploadCollection')
           }
         }
       },

@@ -13,7 +13,7 @@
         }
       ]"
       :items="items"
-      :loading="loading"
+      :loading="isVeryFirstLoading"
       empty-message="This model has no uploads"
     >
       <template #file="{ item }">
@@ -87,6 +87,7 @@ graphql(`
     convertedLastUpdate
     uploadDate
     uploadComplete
+    branchName
   }
 `)
 
@@ -123,7 +124,8 @@ const open = defineModel<boolean>('open', { required: true })
 const {
   identifier,
   onInfiniteLoad,
-  query: { result, loading }
+  query: { result },
+  isVeryFirstLoading
 } = usePaginatedQuery({
   query: getModelUploadsQuery,
   baseVariables: computed(() => ({
