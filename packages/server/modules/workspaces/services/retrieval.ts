@@ -36,7 +36,7 @@ export const getDiscoverableWorkspacesForUserFactory =
     return workspaces
   }
 
-export const getEligibleWorkspacesForUserFactory =
+export const getUsersCurrentAndEligibleToBecomeAMemberWorkspaces =
   ({
     findEmailsByUserId,
     getUserEligibleWorkspaces
