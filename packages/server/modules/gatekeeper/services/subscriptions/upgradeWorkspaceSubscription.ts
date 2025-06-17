@@ -1,5 +1,5 @@
 import {
-  calculateSubscriptionSeats,
+  getSubscriptionState,
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
@@ -204,16 +204,8 @@ export const upgradeWorkspaceSubscriptionFactory =
       payload: {
         workspacePlan: newWorkspacePlan,
         previousWorkspacePlan: workspacePlan,
-        subscription: {
-          totalEditorSeats: editorsCount,
-          billingInterval: workspaceSubscription.billingInterval
-        },
-        previousSubscription: {
-          totalEditorSeats: calculateSubscriptionSeats({
-            subscriptionData: previousSubscription.subscriptionData
-          }),
-          billingInterval: previousSubscription.billingInterval
-        }
+        subscription: getSubscriptionState(workspaceSubscription),
+        previousSubscription: getSubscriptionState(previousSubscription)
       }
     })
   }

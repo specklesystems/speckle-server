@@ -1,5 +1,5 @@
 import {
-  calculateSubscriptionSeats,
+  getSubscriptionState,
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
@@ -102,12 +102,13 @@ export const handleSubscriptionUpdateFactory =
         workspacePlan: newWorkspacePlan
       })
       // if there is a status in the sub, we recognize, we need to update our state
+      const newWorkspaceSubscription = {
+        ...subscription,
+        updatedAt: new Date(),
+        subscriptionData
+      }
       await upsertWorkspaceSubscription({
-        workspaceSubscription: {
-          ...subscription,
-          updatedAt: new Date(),
-          subscriptionData
-        }
+        workspaceSubscription: newWorkspaceSubscription
       })
 
       await emitEvent({
@@ -115,16 +116,8 @@ export const handleSubscriptionUpdateFactory =
         payload: {
           workspacePlan: newWorkspacePlan,
           previousWorkspacePlan: workspacePlan,
-          subscription: {
-            totalEditorSeats: calculateSubscriptionSeats({ subscriptionData }),
-            billingInterval: subscription.billingInterval
-          },
-          previousSubscription: {
-            billingInterval: subscription.billingInterval,
-            totalEditorSeats: calculateSubscriptionSeats({
-              subscriptionData: subscription.subscriptionData
-            })
-          }
+          subscription: getSubscriptionState(newWorkspaceSubscription),
+          previousSubscription: getSubscriptionState(subscription)
         }
       })
     }

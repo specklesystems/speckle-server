@@ -4,8 +4,8 @@ import {
   UpsertWorkspaceSubscription,
   UpsertPaidWorkspacePlan,
   GetSubscriptionData,
-  calculateSubscriptionSeats,
-  GetWorkspaceSubscription
+  GetWorkspaceSubscription,
+  getSubscriptionState
 } from '@/modules/gatekeeper/domain/billing'
 import {
   CheckoutSessionNotFoundError,
@@ -99,18 +99,10 @@ export const completeCheckoutSessionFactory =
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
         workspacePlan,
-        subscription: {
-          totalEditorSeats: calculateSubscriptionSeats({ subscriptionData }),
-          billingInterval: workspaceSubscription.billingInterval
-        },
+        subscription: getSubscriptionState(workspaceSubscription),
         previousWorkspacePlan: previousWorkspacePlan || undefined,
         previousSubscription: previousSubscription
-          ? {
-              totalEditorSeats: calculateSubscriptionSeats({
-                subscriptionData: previousSubscription.subscriptionData
-              }),
-              billingInterval: previousSubscription.billingInterval
-            }
+          ? getSubscriptionState(previousSubscription)
           : undefined
       }
     })

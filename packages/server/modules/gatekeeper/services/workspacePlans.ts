@@ -1,5 +1,7 @@
 import {
+  getSubscriptionState,
   GetWorkspacePlan,
+  GetWorkspaceSubscription,
   UpsertWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
@@ -13,6 +15,7 @@ export const updateWorkspacePlanFactory =
     getWorkspace,
     upsertWorkspacePlan,
     getWorkspacePlan,
+    getWorkspaceSubscription,
     emitEvent
   }: {
     getWorkspace: GetWorkspace
@@ -20,6 +23,7 @@ export const updateWorkspacePlanFactory =
     // responsible for protecting the permutations
     upsertWorkspacePlan: UpsertWorkspacePlan
     getWorkspacePlan: GetWorkspacePlan
+    getWorkspaceSubscription: GetWorkspaceSubscription
     emitEvent: EventBusEmit
   }) =>
   async ({
@@ -76,13 +80,16 @@ export const updateWorkspacePlanFactory =
         throwUncoveredError(name)
     }
 
+    const subscription = await getWorkspaceSubscription({ workspaceId })
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
         workspacePlan,
-        subscription: previousSubscription,
+        subscription: subscription ? getSubscriptionState(subscription) : undefined,
         previousWorkspacePlan: previousWorkspacePlan || undefined,
-        previousSubscription: undefined // TODO: implement logic
+        previousSubscription: subscription
+          ? getSubscriptionState(subscription)
+          : undefined // TODO: implement logic
       }
     })
   }

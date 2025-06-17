@@ -18,8 +18,12 @@ const addWorkspacePlanUpdatedActivityFactory =
       new: {
         name: workspacePlan.name,
         status: workspacePlan.status,
-        totalEditorSeats: subscription.totalEditorSeats,
-        billingInterval: subscription.billingInterval
+        ...(subscription
+          ? {
+              totalEditorSeats: subscription.totalEditorSeats,
+              billingInterval: subscription.billingInterval
+            }
+          : {})
       },
       old: {
         ...(previousWorkspacePlan

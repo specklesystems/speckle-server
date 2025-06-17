@@ -3,6 +3,7 @@ import {
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
+import { SubscriptionState } from '@/modules/gatekeeperCore/domain/events'
 import {
   Workspace,
   WorkspaceSeat,
@@ -145,6 +146,15 @@ export const calculateSubscriptionSeats = ({
   const product = subscriptionData.products[0]
   return product?.quantity || 0
 }
+
+export const getSubscriptionState = (
+  subscription: WorkspaceSubscription
+): SubscriptionState => ({
+  billingInterval: subscription.billingInterval,
+  totalEditorSeats: calculateSubscriptionSeats({
+    subscriptionData: subscription.subscriptionData
+  })
+})
 
 export type UpsertWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription

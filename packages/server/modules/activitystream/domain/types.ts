@@ -48,7 +48,12 @@ export type WorkspaceSubscriptionUpdatedActivity = {
 
 export type WorkspacePlanUpdatedActivity = {
   version: '1.0.0'
-  new: WorkspaceBillingSnapshot
+  new: {
+    name: string
+    status: string
+    billingInterval?: string
+    totalEditorSeats?: number
+  }
   old: {
     name?: string
     status?: string
