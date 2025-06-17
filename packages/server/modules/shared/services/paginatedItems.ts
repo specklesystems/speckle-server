@@ -9,6 +9,11 @@ type GetPaginatedItemsArgs = {
   cursor?: string
 }
 
+/**
+ * @deprecated This doesn't support composite cursors and as such breaks pagination in certain cases. Either create
+ * your own custom implementation or create a new general paginated items util that allows getItems to encode/decode
+ * cursor its own way and return the cursor back out from the function.
+ */
 export const getPaginatedItemsFactory =
   <TArgs extends GetPaginatedItemsArgs, T extends { createdAt: Date }>({
     getItems,

@@ -24,6 +24,7 @@ import {
   GetWorkspaceBySlug,
   GetWorkspaceBySlugOrId,
   GetWorkspaceCollaborators,
+  GetWorkspaceCollaboratorsBaseArgs,
   GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceCreationState,
   GetWorkspaceDomains,
@@ -67,7 +68,7 @@ import {
   UserEmails,
   Users
 } from '@/modules/core/dbSchema'
-import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { removePrivateFields, UserRecord } from '@/modules/core/helpers/userHelper'
 
 import { clamp, has, isObjectLike } from 'lodash'
 import {
@@ -83,6 +84,7 @@ import {
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const tables = {
+  users: (db: Knex) => db<UserRecord>(Users.name),
   branches: (db: Knex) => db<BranchRecord>('branches'),
   streams: (db: Knex) => db<StreamRecord>('streams'),
   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
@@ -407,19 +409,12 @@ export const upsertWorkspaceRoleFactory =
       .merge(['role'])
   }
 
-export const getWorkspaceCollaboratorsTotalCountFactory =
-  ({ db }: { db: Knex }): GetWorkspaceCollaboratorsTotalCount =>
-  async ({ workspaceId }) => {
-    const [res] = await DbWorkspaceAcl.knex(db).where({ workspaceId }).count()
-    const count = parseInt(res.count)
-    return count || 0
-  }
+const getWorkspaceCollaboratorsBaseQuery =
+  (deps: { db: Knex }) => (params: GetWorkspaceCollaboratorsBaseArgs) => {
+    const { workspaceId, filter = {} } = params
 
-export const getWorkspaceCollaboratorsFactory =
-  ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
-  async ({ workspaceId, filter = {}, cursor, limit = 25, hasAccessToEmail }) => {
-    const query = db
-      .from(Users.name)
+    const query = tables
+      .users(deps.db)
       .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
         ...Users.cols,
         ServerAcl.col.role,
@@ -466,6 +461,27 @@ export const getWorkspaceCollaboratorsFactory =
         w.whereNotIn(Users.col.id, excludeUserIds)
       })
     }
+
+    return query
+  }
+
+export const getWorkspaceCollaboratorsTotalCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaboratorsTotalCount =>
+  async (params) => {
+    const q = db
+      .from(getWorkspaceCollaboratorsBaseQuery({ db })(params).as('t1'))
+      .count()
+
+    const [res] = await q
+    const count = parseInt(res.count + '')
+    return count || 0
+  }
+
+export const getWorkspaceCollaboratorsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
+  async (params) => {
+    const { cursor, limit = 25, hasAccessToEmail } = params
+    const query = getWorkspaceCollaboratorsBaseQuery({ db })(params)
 
     if (cursor) {
       query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)

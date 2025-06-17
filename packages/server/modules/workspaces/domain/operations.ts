@@ -128,10 +128,8 @@ export type GetProjectWorkspace = (args: {
 
 /** Workspace Roles */
 
-export type GetWorkspaceCollaboratorsArgs = {
+export type GetWorkspaceCollaboratorsBaseArgs = {
   workspaceId: string
-  limit: number
-  cursor?: string
   filter?: {
     /**
      * Optionally filter by workspace role(s)
@@ -150,16 +148,17 @@ export type GetWorkspaceCollaboratorsArgs = {
   hasAccessToEmail?: boolean
 }
 
+export type GetWorkspaceCollaboratorsArgs = GetWorkspaceCollaboratorsBaseArgs & {
+  limit: number
+  cursor?: string
+}
+
 export type GetWorkspaceCollaborators = (
   args: GetWorkspaceCollaboratorsArgs
 ) => Promise<WorkspaceTeam>
 
-type GetWorkspaceCollaboratorsTotalCountArgs = {
-  workspaceId: string
-}
-
 export type GetWorkspaceCollaboratorsTotalCount = (
-  args: GetWorkspaceCollaboratorsTotalCountArgs
+  args: GetWorkspaceCollaboratorsBaseArgs
 ) => Promise<number>
 
 type DeleteWorkspaceRoleArgs = {
