@@ -10,7 +10,10 @@ import {
   SaveUploadFileV2,
   SaveUploadFileInput,
   PushJobToFileImporter,
-  InsertNewUploadAndNotify
+  InsertNewUploadAndNotify,
+  GetModelUploads,
+  GetModelUploadsItems,
+  GetModelUploadsTotalCount
 } from '@/modules/fileuploads/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
@@ -154,4 +157,24 @@ export const notifyChangeInFileStatus =
       },
       projectId: streamId
     })
+  }
+
+export const getModelUploadsFactory =
+  (deps: {
+    getModelUploadsItems: GetModelUploadsItems
+    getModelUploadsTotalCount: GetModelUploadsTotalCount
+  }): GetModelUploads =>
+  async (params) => {
+    const [{ items, cursor }, totalCount] = await Promise.all([
+      params.limit === 0
+        ? { items: [], cursor: null }
+        : deps.getModelUploadsItems(params),
+      deps.getModelUploadsTotalCount(params)
+    ])
+
+    return {
+      items,
+      totalCount,
+      cursor
+    }
   }

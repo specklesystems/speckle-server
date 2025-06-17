@@ -3,6 +3,8 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchPendingVersionsFactory,
   getFileInfoFactory,
+  getModelUploadsItemsFactory,
+  getModelUploadsTotalCountFactory,
   getStreamFileUploadsFactory,
   getStreamPendingModelsFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
@@ -12,6 +14,7 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
 
 export = {
   Stream: {
@@ -40,6 +43,20 @@ export = {
         parent.name,
         args
       )
+    },
+    async uploads(parent, args) {
+      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+      const getModelUploads = getModelUploadsFactory({
+        getModelUploadsItems: getModelUploadsItemsFactory({ db: projectDb }),
+        getModelUploadsTotalCount: getModelUploadsTotalCountFactory({ db: projectDb })
+      })
+
+      return await getModelUploads({
+        modelId: parent.id,
+        projectId: parent.streamId,
+        limit: args.input?.limit ?? 25,
+        cursor: args.input?.cursor
+      })
     }
   },
   FileUpload: {
@@ -47,11 +64,19 @@ export = {
     modelName: (parent) => parent.branchName,
     convertedVersionId: (parent) => parent.convertedCommitId,
     async model(parent, _args, ctx) {
-      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+      const { streamId, modelId, branchName } = parent
+
+      const projectDb = await getProjectDbClient({ projectId: streamId })
+      if (modelId) {
+        return await ctx.loaders
+          .forRegion({ db: projectDb })
+          .branches.getById.load(modelId)
+      }
+
       return await ctx.loaders
         .forRegion({ db: projectDb })
-        .streams.getStreamBranchByName.forStream(parent.streamId)
-        .load(parent.branchName.toLowerCase())
+        .streams.getStreamBranchByName.forStream(streamId)
+        .load(branchName.toLowerCase())
     }
   },
   Subscription: {

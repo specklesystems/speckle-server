@@ -1052,6 +1052,13 @@ export type FileUpload = {
   userId: Scalars['String']['output'];
 };
 
+export type FileUploadCollection = {
+  __typename?: 'FileUploadCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<FileUpload>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
@@ -1085,6 +1092,13 @@ export type GendoAiRenderInput = {
   /** The generation prompt. */
   prompt: Scalars['String']['input'];
   versionId: Scalars['ID']['input'];
+};
+
+export type GetModelUploadsInput = {
+  /** The cursor for pagination. */
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  /** The maximum number of uploads to return. */
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type InvitableCollaboratorsFilter = {
@@ -1305,6 +1319,8 @@ export type Model = {
   permissions: ModelPermissionChecks;
   previewUrl?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+  /** Get all file uploads ever done in this model */
+  uploads: FileUploadCollection;
   version: Version;
   versions: VersionCollection;
 };
@@ -1318,6 +1334,11 @@ export type ModelCommentThreadsArgs = {
 
 export type ModelPendingImportedVersionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ModelUploadsArgs = {
+  input?: InputMaybe<GetModelUploadsInput>;
 };
 
 
@@ -5368,10 +5389,12 @@ export type ResolversTypes = {
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
+  FileUploadCollection: ResolverTypeWrapper<Omit<FileUploadCollection, 'items'> & { items: Array<ResolversTypes['FileUpload']> }>;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   GendoAIRender: ResolverTypeWrapper<GendoAIRenderGraphQLReturn>;
   GendoAIRenderCollection: ResolverTypeWrapper<Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversTypes['GendoAIRender']>> }>;
   GendoAIRenderInput: GendoAiRenderInput;
+  GetModelUploadsInput: GetModelUploadsInput;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   InvitableCollaboratorsFilter: InvitableCollaboratorsFilter;
@@ -5704,10 +5727,12 @@ export type ResolversParentTypes = {
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: FileUploadGraphQLReturn;
+  FileUploadCollection: Omit<FileUploadCollection, 'items'> & { items: Array<ResolversParentTypes['FileUpload']> };
   Float: Scalars['Float']['output'];
   GendoAIRender: GendoAIRenderGraphQLReturn;
   GendoAIRenderCollection: Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversParentTypes['GendoAIRender']>> };
   GendoAIRenderInput: GendoAiRenderInput;
+  GetModelUploadsInput: GetModelUploadsInput;
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   InvitableCollaboratorsFilter: InvitableCollaboratorsFilter;
@@ -6400,6 +6425,13 @@ export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type FileUploadCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUploadCollection'] = ResolversParentTypes['FileUploadCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type GendoAiRenderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GendoAIRender'] = ResolversParentTypes['GendoAIRender']> = {
   camera?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -6508,6 +6540,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   permissions?: Resolver<ResolversTypes['ModelPermissionChecks'], ParentType, ContextType>;
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  uploads?: Resolver<ResolversTypes['FileUploadCollection'], ParentType, ContextType, Partial<ModelUploadsArgs>>;
   version?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;
   versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ModelVersionsArgs, 'limit'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -7801,6 +7834,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CurrencyBasedPrices?: CurrencyBasedPricesResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   FileUpload?: FileUploadResolvers<ContextType>;
+  FileUploadCollection?: FileUploadCollectionResolvers<ContextType>;
   GendoAIRender?: GendoAiRenderResolvers<ContextType>;
   GendoAIRenderCollection?: GendoAiRenderCollectionResolvers<ContextType>;
   JSONObject?: GraphQLScalarType;

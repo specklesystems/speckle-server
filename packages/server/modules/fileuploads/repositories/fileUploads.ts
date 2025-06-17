@@ -6,7 +6,10 @@ import {
   SaveUploadFileV2,
   SaveUploadFileInput,
   SaveUploadFileInputV2,
-  UpdateFileUpload
+  UpdateFileUpload,
+  GetModelUploadsItems,
+  GetModelUploadsBaseArgs,
+  GetModelUploadsTotalCount
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
@@ -15,10 +18,18 @@ import {
 } from '@/modules/fileuploads/helpers/types'
 import { Knex } from 'knex'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
+import { compositeCursorTools } from '@/modules/shared/helpers/graphqlHelper'
+import { clamp } from 'lodash'
 
 const tables = {
   fileUploads: (db: Knex) => db<FileUploadRecord>(FileUploads.name)
 }
+
+const getCursorTools = () =>
+  compositeCursorTools({
+    schema: FileUploads,
+    cols: ['convertedLastUpdate', 'id']
+  })
 
 export const getFileInfoFactory =
   (deps: { db: Knex }): GetFileInfo =>
@@ -83,7 +94,8 @@ export const saveUploadFileFactory =
     userId,
     fileName,
     fileType,
-    fileSize
+    fileSize,
+    modelId
   }: SaveUploadFileInput) => {
     const dbFile: Partial<FileUploadRecord> = {
       id: fileId,
@@ -93,7 +105,8 @@ export const saveUploadFileFactory =
       fileName,
       fileType,
       fileSize,
-      uploadComplete: true
+      uploadComplete: true,
+      modelId
     }
     const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
     return newRecord as FileUploadRecord
@@ -229,4 +242,47 @@ export const updateFileUploadFactory =
       throw new FileImportJobNotFoundError(`File with id ${id} not found`)
     }
     return updatedFile[0]
+  }
+
+const getModelUploadsBaseQueryFactory =
+  (deps: { db: Knex }) => (params: GetModelUploadsBaseArgs) => {
+    const { projectId, modelId } = params
+    const q = tables
+      .fileUploads(deps.db)
+      .where(FileUploads.col.streamId, projectId)
+      .andWhere(FileUploads.col.modelId, modelId)
+
+    return q
+  }
+
+export const getModelUploadsItemsFactory =
+  (deps: { db: Knex }): GetModelUploadsItems =>
+  async (params) => {
+    const limit = clamp(params.limit || 0, 0, 100)
+    const { filterByCursor, resolveNewCursor } = getCursorTools()
+
+    const q = getModelUploadsBaseQueryFactory(deps)(params)
+      .orderBy(FileUploads.col.convertedLastUpdate, 'desc')
+      .limit(limit)
+
+    filterByCursor({
+      query: q,
+      cursor: params.cursor
+    })
+
+    const rows = await q
+    const newCursor = resolveNewCursor(rows)
+
+    return {
+      items: rows,
+      cursor: newCursor
+    }
+  }
+
+export const getModelUploadsTotalCountFactory =
+  (deps: { db: Knex }): GetModelUploadsTotalCount =>
+  async (params) => {
+    const q = getModelUploadsBaseQueryFactory(deps)(params)
+    const [{ count }] = await q.count()
+    return parseInt(count + '')
   }

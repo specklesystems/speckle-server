@@ -13,7 +13,13 @@ export type GetFileInfo = (args: {
 
 export type SaveUploadFileInput = Pick<
   FileUploadRecord,
-  'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
+  | 'streamId'
+  | 'branchName'
+  | 'userId'
+  | 'fileName'
+  | 'fileType'
+  | 'fileSize'
+  | 'modelId'
 > & { fileId: string }
 
 export type SaveUploadFileInputV2 = Pick<
@@ -66,3 +72,28 @@ export type FileImportMessage = Pick<
 export type ScheduleFileimportJob = (args: JobPayload) => Promise<void>
 
 export type PushJobToFileImporter = (args: FileImportMessage) => Promise<void>
+
+export type GetModelUploadsBaseArgs = {
+  projectId: string
+  modelId: string
+}
+
+export type GetModelUploadsArgs = GetModelUploadsBaseArgs & {
+  limit?: number
+  cursor?: string | null
+}
+
+export type GetModelUploadsItems = (params: GetModelUploadsArgs) => Promise<{
+  items: FileUploadRecord[]
+  cursor: string | null
+}>
+
+export type GetModelUploadsTotalCount = (
+  params: GetModelUploadsBaseArgs
+) => Promise<number>
+
+export type GetModelUploads = (params: GetModelUploadsArgs) => Promise<{
+  items: FileUploadRecord[]
+  totalCount: number
+  cursor: string | null
+}>

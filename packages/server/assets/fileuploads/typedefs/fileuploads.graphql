@@ -23,11 +23,33 @@ extend type Project {
   pendingImportedModels(limit: Int = 25): [FileUpload!]!
 }
 
+type FileUploadCollection {
+  totalCount: Int!
+  cursor: String
+  items: [FileUpload!]!
+}
+
+input GetModelUploadsInput {
+  """
+  The maximum number of uploads to return.
+  """
+  limit: Int = 25
+  """
+  The cursor for pagination.
+  """
+  cursor: String
+}
+
 extend type Model {
   """
   Returns a list of versions that are being created from a file import
   """
   pendingImportedVersions(limit: Int = 25): [FileUpload!]!
+
+  """
+  Get all file uploads ever done in this model
+  """
+  uploads(input: GetModelUploadsInput): FileUploadCollection!
 }
 
 type FileUpload {

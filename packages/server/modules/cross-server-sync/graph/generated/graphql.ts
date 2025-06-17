@@ -1032,6 +1032,13 @@ export type FileUpload = {
   userId: Scalars['String']['output'];
 };
 
+export type FileUploadCollection = {
+  __typename?: 'FileUploadCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<FileUpload>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
@@ -1065,6 +1072,13 @@ export type GendoAiRenderInput = {
   /** The generation prompt. */
   prompt: Scalars['String']['input'];
   versionId: Scalars['ID']['input'];
+};
+
+export type GetModelUploadsInput = {
+  /** The cursor for pagination. */
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  /** The maximum number of uploads to return. */
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type InvitableCollaboratorsFilter = {
@@ -1285,6 +1299,8 @@ export type Model = {
   permissions: ModelPermissionChecks;
   previewUrl?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+  /** Get all file uploads ever done in this model */
+  uploads: FileUploadCollection;
   version: Version;
   versions: VersionCollection;
 };
@@ -1298,6 +1314,11 @@ export type ModelCommentThreadsArgs = {
 
 export type ModelPendingImportedVersionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ModelUploadsArgs = {
+  input?: InputMaybe<GetModelUploadsInput>;
 };
 
 
