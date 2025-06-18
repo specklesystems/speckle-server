@@ -3103,6 +3103,7 @@ export type Role = {
 export type RootPermissionChecks = {
   __typename?: 'RootPermissionChecks';
   canCreatePersonalProject: PermissionCheckResult;
+  canCreateWorkspace: PermissionCheckResult;
 };
 
 /** Available scopes. */
@@ -8817,6 +8818,7 @@ export type RoleFieldArgs = {
 }
 export type RootPermissionChecksFieldArgs = {
   canCreatePersonalProject: {},
+  canCreateWorkspace: {},
 }
 export type ScopeFieldArgs = {
   description: {},

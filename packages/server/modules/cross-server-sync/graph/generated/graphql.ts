@@ -3106,6 +3106,7 @@ export type Role = {
 export type RootPermissionChecks = {
   __typename?: 'RootPermissionChecks';
   canCreatePersonalProject: PermissionCheckResult;
+  canCreateWorkspace: PermissionCheckResult;
 };
 
 /** Available scopes. */
