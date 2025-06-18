@@ -611,6 +611,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             enableDomainDiscoverabilityForDomain
           } = args.input
 
+          // Check if user can create workspace
+          const canCreate = await context.authPolicies.workspace.canCreateWorkspace({
+            userId: context.userId
+          })
+          throwIfAuthNotOk(canCreate)
+
           const logger = context.log
 
           return await asOperation(

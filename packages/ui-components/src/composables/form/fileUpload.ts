@@ -23,11 +23,6 @@ export interface UploadableFileItem {
   id: string
 }
 
-export enum BlobUploadStatus {
-  Success = 1,
-  Failure = 2
-}
-
 export type BlobPostResultItem = {
   blobId?: string
   fileName?: string

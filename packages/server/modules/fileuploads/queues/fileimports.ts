@@ -8,13 +8,17 @@ import {
   isProdEnv,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
-import { logger } from '@/observability/logging'
+import { Logger, logger } from '@/observability/logging'
 import { TIME_MS } from '@speckle/shared'
 import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
+import { FileImportQueue } from '@/modules/fileuploads/domain/types'
+import Bull from 'bull'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
+
+export const fileImportQueues: FileImportQueue[] = []
 
 if (isTestEnv()) {
   logger.info(`Fileimport service test queue ID: ${FILEIMPORT_SERVICE_IFC_QUEUE_NAME}`)
@@ -44,7 +48,7 @@ const initializeQueue = async (params: {
   queueName: string
   redisUrl: string
   supportedFileTypes: string[]
-}) => {
+}): Promise<FileImportQueue & { queue: Bull.Queue }> => {
   const { label, queueName, redisUrl, supportedFileTypes } = params
   const queue = await setupQueue({
     queueName,
@@ -54,7 +58,7 @@ const initializeQueue = async (params: {
       defaultJobOptions
     }
   })
-  return {
+  const fileImportQueue = {
     label,
     queue,
     supportedFileTypes: supportedFileTypes.map(
@@ -65,6 +69,8 @@ const initializeQueue = async (params: {
       await queue.add(jobData, defaultJobOptions)
     }
   }
+  fileImportQueues.push(fileImportQueue)
+  return fileImportQueue
 }
 
 export const initializeRhinoQueue = async () =>
@@ -82,3 +88,10 @@ export const initalizeIfcQueue = async () =>
     redisUrl: getFileImportServiceIFCParserRedisUrl() ?? getRedisUrl(),
     supportedFileTypes: ['ifc']
   })
+
+export const shutdownQueues = async (params: { logger: Logger }) => {
+  for (const queue of fileImportQueues) {
+    await queue.shutdown()
+    params.logger.info(`📄 FileUploads ${queue.label} shutdown`)
+  }
+}

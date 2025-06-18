@@ -9,7 +9,7 @@ import { fileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
 import {
   saveUploadFileFactoryV2,
-  updateFileStatusFactory
+  updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
@@ -172,7 +172,7 @@ export const nextGenFileImporterRouterFactory = (params: {
 
       const onFileImportResult = onFileImportResultFactory({
         logger: logger.child({ fileUploadStatus: jobResult.status }),
-        updateFileStatus: updateFileStatusFactory({ db: projectDb }),
+        updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         publish
       })
 

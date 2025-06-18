@@ -69,11 +69,14 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
       await sleep(2000)
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 })
-      const results = await getFileInfoFactory({ db })({ fileId })
+      const results = await getFileInfoFactory({ db })({
+        fileId
+      })
       if (!results) {
         expect(results).to.not.be.undefined
         return //HACK to appease typescript
@@ -96,11 +99,14 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
       // timeout far in the future, so it won't be garbage collected
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 * TIME.hour })
-      const results = await getFileInfoFactory({ db })({ fileId })
+      const results = await getFileInfoFactory({ db })({
+        fileId
+      })
       if (!results) {
         expect(results).to.not.be.undefined
         return //HACK to appease typescript
@@ -129,10 +135,13 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
 
-      const results = await getFileInfoFactory({ db })({ fileId })
+      const results = await getFileInfoFactory({ db })({
+        fileId
+      })
       if (!results) {
         expect(results).to.not.be.undefined
         return //HACK to appease typescript
@@ -232,7 +241,9 @@ describe('FileUploads @fileuploads', () => {
           modelName: createdBranch.name
         })
 
-        const results = await getFileInfoFactory({ db })({ fileId })
+        const results = await getFileInfoFactory({ db })({
+          fileId
+        })
         if (!results) {
           expect(results).to.not.be.undefined
           return //HACK to appease typescript

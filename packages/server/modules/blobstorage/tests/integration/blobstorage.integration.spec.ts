@@ -33,6 +33,7 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { waitForRegionUser } from '@/test/speckle-helpers/regions'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 
 type UploadFileStreamStreamData = Parameters<UploadFileStream>[0]
 type UploadFileStreamBlobData = Parameters<UploadFileStream>[1]
@@ -367,7 +368,7 @@ describe('Blob storage @blobstorage', () => {
       blobId,
       fileName: blob.fileName,
       fileSize: null,
-      uploadStatus: 2,
+      uploadStatus: BlobUploadStatus.Error,
       uploadError: 'File size limit reached'
     })
   })
@@ -382,7 +383,7 @@ describe('Blob storage @blobstorage', () => {
     expect(markResult).to.deep.equal({
       blobId,
       fileName: blob.fileName,
-      uploadStatus: 1,
+      uploadStatus: BlobUploadStatus.Completed,
       fileSize
     })
   })

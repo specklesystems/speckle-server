@@ -18,7 +18,8 @@ import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   expireOldPendingUploadsFactory,
-  getFileInfoFactory
+  getFileInfoFactory,
+  updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
@@ -36,7 +37,9 @@ import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
 import {
   initializeRhinoQueue,
-  initalizeIfcQueue
+  initalizeIfcQueue,
+  shutdownQueues,
+  fileImportQueues
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
 import { createBullBoard } from 'bull-board'
@@ -44,13 +47,11 @@ import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
-import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 let quitListeners: Optional<() => void> = undefined
 let scheduledTasks: cron.ScheduledTask[] = []
-const queues: FileImportQueue[] = []
 
 const scheduleFileImportExpiry = async ({
   scheduleExecution
@@ -113,7 +114,6 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
         },
         rhinoRouter
       )
-      queues.push(rhinoQueue)
 
       const ifcQueue = await initalizeIfcQueue()
       const ifcRouter = createBullBoard([new BullMQAdapter(ifcQueue.queue)]).router
@@ -128,7 +128,6 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
         },
         ifcRouter
       )
-      queues.push(ifcQueue)
     }
 
     const scheduleExecution = scheduleExecutionFactory({
@@ -149,6 +148,7 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
         getFileInfo: getFileInfoFactory({ db: projectDb }),
         publish,
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         eventEmit: getEventBus().emit
       })(parsedMessage)
     })
@@ -170,7 +170,7 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
 
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
     moduleLogger.info('📄 Next Gen File Importer is ENABLED')
-    app.use(nextGenFileImporterRouterFactory({ queues }))
+    app.use(nextGenFileImporterRouterFactory({ queues: fileImportQueues }))
   }
 
   // the two routers can be used independently and can both be enabled
@@ -181,9 +181,6 @@ export const shutdown: SpeckleModule['shutdown'] = async () => {
   quitListeners?.()
   scheduledTasks.forEach((task) => task.stop())
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-    for (const queue of queues) {
-      await queue.shutdown()
-      moduleLogger.info(`📄 FileUploads ${queue.label} shutdown`)
-    }
+    await shutdownQueues({ logger: moduleLogger })
   }
 }
