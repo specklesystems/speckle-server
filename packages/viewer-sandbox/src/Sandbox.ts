@@ -1346,7 +1346,7 @@ export default class Sandbox {
           }
         }
       })
-      loader.on(LoaderEvent.Converted, (arg: { count: number; total: number }) => {
+      loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
         if (arg.count > renderedCount) {
           renderedCount = arg.count
           if (renderedCount % 500 === 0) {
