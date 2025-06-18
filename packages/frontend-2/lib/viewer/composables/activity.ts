@@ -189,6 +189,7 @@ export function useViewerUserActivityTracking(params: {
   const { triggerNotification } = useGlobalToast()
   const sendUpdate = useViewerUserActivityBroadcasting()
   const { isEnabled: isEmbedEnabled } = useEmbed()
+  const { activeUser } = useActiveUser()
 
   // TODO: For some reason subscription is set up twice? Vue Apollo bug?
   const { onResult: onUserActivity } = useSubscription(
@@ -221,7 +222,6 @@ export function useViewerUserActivityTracking(params: {
     const incomingUserId = event.userId
 
     // Prevent users from seeing their own activity notifications
-    const { activeUser } = useActiveUser()
     const currentUserId = activeUser.value?.id
 
     if (sessionId.value === incomingSessionId) return
