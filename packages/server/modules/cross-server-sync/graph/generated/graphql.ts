@@ -1039,6 +1039,32 @@ export type FileUploadCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type FileUploadMutations = {
+  __typename?: 'FileUploadMutations';
+  /**
+   * Generate a pre-signed url to which a file can be uploaded.
+   * After uploading the file, call mutation startFileImport to register the completed upload.
+   */
+  generateUploadUrl: GenerateFileUploadUrlOutput;
+  /**
+   * Before calling this mutation, call generateUploadUrl to get the
+   * pre-signed url and blobId. Then upload the file to that url.
+   * Once the upload to the pre-signed url is completed, this mutation should be
+   * called to register the completed upload and create the blob metadata.
+   */
+  startFileImport: FileUpload;
+};
+
+
+export type FileUploadMutationsGenerateUploadUrlArgs = {
+  input: GenerateFileUploadUrlInput;
+};
+
+
+export type FileUploadMutationsStartFileImportArgs = {
+  input: StartFileImportInput;
+};
+
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
@@ -1072,6 +1098,17 @@ export type GendoAiRenderInput = {
   /** The generation prompt. */
   prompt: Scalars['String']['input'];
   versionId: Scalars['ID']['input'];
+};
+
+export type GenerateFileUploadUrlInput = {
+  fileName: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+export type GenerateFileUploadUrlOutput = {
+  __typename?: 'GenerateFileUploadUrlOutput';
+  fileId: Scalars['String']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type GetModelUploadsInput = {
@@ -1483,6 +1520,7 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
    */
   commitsMove: Scalars['Boolean']['output'];
+  fileUploadMutations: FileUploadMutations;
   /**
    * Delete a pending invite
    * Note: The required scope to invoke this is not given out to app or personal access tokens
@@ -3307,6 +3345,17 @@ export const SortDirection = {
 } as const;
 
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
+export type StartFileImportInput = {
+  /**
+   * The etag is returned by the blob storage provider in the response body after a successful upload.
+   * It is used to verify the integrity of the uploaded file.
+   */
+  etag: Scalars['String']['input'];
+  fileId: Scalars['String']['input'];
+  modelId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type Stream = {
   __typename?: 'Stream';
   /**

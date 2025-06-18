@@ -49,6 +49,7 @@ export const onFileImportProcessedFactory =
       deps.getStreamBranchByName(streamId, branchName)
     ])
     if (!upload) return
+    if (upload.streamId !== streamId) return
 
     // Update upload to reference the actual model/branch created
     if (branch) {
@@ -119,10 +120,11 @@ type OnFileProcessingDeps = {
 
 export const onFileProcessingFactory =
   (deps: OnFileProcessingDeps) =>
-  async ({ uploadId }: ParsedMessage) => {
+  async ({ uploadId, streamId }: ParsedMessage) => {
     if (!uploadId) return
     const upload = await deps.getFileInfo({ fileId: uploadId })
     if (!upload) return
+    if (upload.streamId !== streamId) return
 
     await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
       projectFileImportUpdated: {

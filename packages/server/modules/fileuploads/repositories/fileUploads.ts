@@ -6,6 +6,7 @@ import {
   SaveUploadFileV2,
   SaveUploadFileInput,
   SaveUploadFileInputV2,
+  GetFileInfoV2,
   UpdateFileUpload,
   GetModelUploadsItems,
   GetModelUploadsBaseArgs,
@@ -33,7 +34,7 @@ const getCursorTools = () =>
 
 export const getFileInfoFactory =
   (deps: { db: Knex }): GetFileInfo =>
-  async (params: { fileId: string }) => {
+  async (params) => {
     const { fileId } = params
     const fileInfo = await tables
       .fileUploads(deps.db)
@@ -41,6 +42,22 @@ export const getFileInfoFactory =
       .select<FileUploadRecord[]>('*')
       .first()
     return fileInfo
+  }
+
+export const getFileInfoFactoryV2 =
+  (deps: { db: Knex }): GetFileInfoV2 =>
+  async (params) => {
+    const { fileId, projectId } = params
+    const q = tables
+      .fileUploads(deps.db)
+      .where({ [FileUploads.col.id]: fileId })
+      .select<FileUploadRecord[]>('*')
+
+    if (projectId) q.andWhere(FileUploads.col.streamId, projectId)
+    const fileInfo = await q.first()
+    if (!fileInfo) return undefined
+
+    return { ...fileInfo, projectId: fileInfo.streamId } satisfies FileUploadRecordV2
   }
 
 export const getStreamFileUploadsFactory =

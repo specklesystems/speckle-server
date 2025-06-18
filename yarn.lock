@@ -1857,6 +1857,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@aws-sdk/s3-request-presigner@npm:3.352.0":
+  version: 3.352.0
+  resolution: "@aws-sdk/s3-request-presigner@npm:3.352.0"
+  dependencies:
+    "@aws-sdk/middleware-endpoint": "npm:3.347.0"
+    "@aws-sdk/protocol-http": "npm:3.347.0"
+    "@aws-sdk/signature-v4-multi-region": "npm:3.347.0"
+    "@aws-sdk/smithy-client": "npm:3.347.0"
+    "@aws-sdk/types": "npm:3.347.0"
+    "@aws-sdk/util-format-url": "npm:3.347.0"
+    tslib: "npm:^2.5.0"
+  checksum: 10/90b16c953ce88f6342c8f23789260c15190eaebc3eb15cf76a04b377c00ee00893f91ce43f676c6a3e1c13376587cd083f1ccf59a908cdefed4d758595e964a0
+  languageName: node
+  linkType: hard
+
 "@aws-sdk/service-error-classification@npm:3.347.0":
   version: 3.347.0
   resolution: "@aws-sdk/service-error-classification@npm:3.347.0"
@@ -2103,6 +2118,17 @@ __metadata:
     "@smithy/util-endpoints": "npm:^3.0.4"
     tslib: "npm:^2.6.2"
   checksum: 10/bc735ac0d7c58d12e5ef820050879bba7300534ff9e05a3f0c3cb32ac5874e208b7e000e5cb4d04f407789cef0e48926e1564a5edc89f64a141b3494970f6ba4
+  languageName: node
+  linkType: hard
+
+"@aws-sdk/util-format-url@npm:3.347.0":
+  version: 3.347.0
+  resolution: "@aws-sdk/util-format-url@npm:3.347.0"
+  dependencies:
+    "@aws-sdk/querystring-builder": "npm:3.347.0"
+    "@aws-sdk/types": "npm:3.347.0"
+    tslib: "npm:^2.5.0"
+  checksum: 10/fc71ec300fbea62e0c8bd1cfae2d4fcc81b578ca0a7254c9d29af81c75d96f89dbbdff8a291cba633d2636a142b68abc1cc59d6d77f65a743e593d6e2aa7c414
   languageName: node
   linkType: hard
 
@@ -16025,6 +16051,7 @@ __metadata:
     "@apollo/server": "npm:^4.11.0"
     "@aws-sdk/client-s3": "npm:^3.276.0"
     "@aws-sdk/lib-storage": "npm:^3.100.0"
+    "@aws-sdk/s3-request-presigner": "npm:3.352.0"
     "@bull-board/express": "npm:^4.2.2"
     "@faker-js/faker": "npm:^8.4.1"
     "@godaddy/terminus": "npm:^4.9.0"
