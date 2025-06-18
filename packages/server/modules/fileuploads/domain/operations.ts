@@ -18,7 +18,13 @@ export type GetFileInfoV2 = (args: {
 
 export type SaveUploadFileInput = Pick<
   FileUploadRecord,
-  'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
+  | 'streamId'
+  | 'branchName'
+  | 'userId'
+  | 'fileName'
+  | 'fileType'
+  | 'fileSize'
+  | 'modelId'
 > & { fileId: string }
 
 export type SaveUploadFileInputV2 = Pick<
@@ -39,6 +45,11 @@ export type InsertNewUploadAndNotifyV2 = (
 export type SaveUploadFileV2 = (
   args: SaveUploadFileInputV2
 ) => Promise<FileUploadRecordV2>
+
+export type UpdateFileUpload = (args: {
+  id: string
+  upload: Partial<FileUploadRecord>
+}) => Promise<FileUploadRecord>
 
 export type GarbageCollectPendingUploadedFiles = (args: {
   timeoutThresholdSeconds: number
@@ -79,3 +90,28 @@ export type RegisterUploadCompleteAndStartFileImport = (args: {
   expectedETag: string
   maximumFileSize: number
 }) => Promise<FileUploadRecordV2 & { modelName: string }>
+
+export type GetModelUploadsBaseArgs = {
+  projectId: string
+  modelId: string
+}
+
+export type GetModelUploadsArgs = GetModelUploadsBaseArgs & {
+  limit?: number
+  cursor?: string | null
+}
+
+export type GetModelUploadsItems = (params: GetModelUploadsArgs) => Promise<{
+  items: FileUploadRecord[]
+  cursor: string | null
+}>
+
+export type GetModelUploadsTotalCount = (
+  params: GetModelUploadsBaseArgs
+) => Promise<number>
+
+export type GetModelUploads = (params: GetModelUploadsArgs) => Promise<{
+  items: FileUploadRecord[]
+  totalCount: number
+  cursor: string | null
+}>

@@ -9,6 +9,9 @@ import {
   NotifyChangeInFileStatus,
   SaveUploadFileV2,
   PushJobToFileImporter,
+  GetModelUploads,
+  GetModelUploadsItems,
+  GetModelUploadsTotalCount,
   InsertNewUploadAndNotifyV2,
   InsertNewUploadAndNotify
 } from '@/modules/fileuploads/domain/operations'
@@ -158,4 +161,24 @@ export const notifyChangeInFileStatus =
       },
       projectId: streamId
     })
+  }
+
+export const getModelUploadsFactory =
+  (deps: {
+    getModelUploadsItems: GetModelUploadsItems
+    getModelUploadsTotalCount: GetModelUploadsTotalCount
+  }): GetModelUploads =>
+  async (params) => {
+    const [{ items, cursor }, totalCount] = await Promise.all([
+      params.limit === 0
+        ? { items: [], cursor: null }
+        : deps.getModelUploadsItems(params),
+      deps.getModelUploadsTotalCount(params)
+    ])
+
+    return {
+      items,
+      totalCount,
+      cursor
+    }
   }

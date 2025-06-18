@@ -13,10 +13,7 @@
           {{ column.header }}
         </div>
       </div>
-      <div
-        class="divide-y divide-outline-3 h-full overflow-visible"
-        :class="{ 'pb-32': overflowCells }"
-      >
+      <div :class="resultContainerClasses" :style="resultContainerStyle">
         <div
           v-if="loading || !items"
           class="flex items-center justify-center py-3"
@@ -75,13 +72,14 @@
             </slot>
           </div>
         </div>
+        <slot name="loader" />
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts" generic="T extends {id: string}, C extends string">
 import { noop, isString } from 'lodash'
-import { computed } from 'vue'
+import { computed, type CSSProperties } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { CommonLoadingIcon, FormButton } from '~~/src/lib'
 import { directive as vTippy } from 'vue-tippy'
@@ -111,9 +109,36 @@ const props = withDefaults(
     rowItemsAlign?: 'center' | 'stretch'
     emptyMessage?: string
     loading?: boolean
+    maxHeight?: number
   }>(),
   { rowItemsAlign: 'center', emptyMessage: 'No data found' }
 )
+
+const resultContainerClasses = computed(() => {
+  const classParts = ['divide-y divide-outline-3 overflow-visible']
+
+  if (props.overflowCells) {
+    classParts.push('pb-32')
+  }
+
+  if (!props.maxHeight) {
+    classParts.push('h-full overflow-visible')
+  } else {
+    classParts.push('overflow-y-auto simple-scrollbar')
+  }
+
+  return classParts.join(' ')
+})
+
+const resultContainerStyle = computed((): CSSProperties => {
+  const style: CSSProperties = {}
+
+  if (props.maxHeight) {
+    style.maxHeight = `${props.maxHeight}px`
+  }
+
+  return style
+})
 
 const buttonCount = computed(() => {
   return (props.buttons || []).length
