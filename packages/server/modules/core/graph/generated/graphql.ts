@@ -3126,6 +3126,7 @@ export type Role = {
 export type RootPermissionChecks = {
   __typename?: 'RootPermissionChecks';
   canCreatePersonalProject: PermissionCheckResult;
+  canCreateWorkspace: PermissionCheckResult;
 };
 
 /** Available scopes. */
@@ -4597,6 +4598,8 @@ export type Workspace = {
   id: Scalars['ID']['output'];
   /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
+  /** Exclusive workspaces do not allow their workspace members to create or join other workspaces as members. */
+  isExclusive: Scalars['Boolean']['output'];
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
@@ -4986,6 +4989,7 @@ export type WorkspacePermissionChecks = {
   canCreateProject: PermissionCheckResult;
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
+  canMakeWorkspaceExclusive: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
   canReadMemberEmail: PermissionCheckResult;
 };
@@ -5243,6 +5247,7 @@ export type WorkspaceUpdateInput = {
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
+  isExclusive?: InputMaybe<Scalars['Boolean']['input']>;
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -7080,6 +7085,7 @@ export type RoleResolvers<ContextType = GraphQLContext, ParentType extends Resol
 
 export type RootPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RootPermissionChecks'] = ResolversParentTypes['RootPermissionChecks']> = {
   canCreatePersonalProject?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canCreateWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7606,6 +7612,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   hasAccessToFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceHasAccessToFeatureArgs, 'featureName'>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType, Partial<WorkspaceInvitedTeamArgs>>;
+  isExclusive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   permissions?: Resolver<ResolversTypes['WorkspacePermissionChecks'], ParentType, ContextType>;
@@ -7739,6 +7746,7 @@ export type WorkspacePermissionChecksResolvers<ContextType = GraphQLContext, Par
   canCreateProject?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canEditEmbedOptions?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canInvite?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canMakeWorkspaceExclusive?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs>>;
   canReadMemberEmail?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

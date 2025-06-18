@@ -7,13 +7,14 @@ import {
   getWorkspaceRolesFactory,
   getWorkspaceRolesForUserFactory,
   deleteWorkspaceFactory,
-  storeWorkspaceDomainFactory,
   getUserDiscoverableWorkspacesFactory,
+  getUserEligibleWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceCollaboratorsFactory,
   getWorkspaceBySlugFactory,
-  getWorkspacesFactory
+  getWorkspacesFactory,
+  storeWorkspaceDomainFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -52,7 +53,7 @@ import {
 import { omit } from 'lodash'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
-
+import { insertInviteAndDeleteOldFactory } from '@/modules/serverinvites/repositories/serverInvites'
 const getWorkspace = getWorkspaceFactory({ db })
 const getWorkspaces = getWorkspacesFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
@@ -67,9 +68,11 @@ const storeWorkspaceDomain = storeWorkspaceDomainFactory({ db })
 const createUserEmail = createUserEmailFactory({ db })
 const updateUserEmail = updateUserEmailFactory({ db })
 const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
+const getUserEligibleWorkspaces = getUserEligibleWorkspacesFactory({ db })
 const upsertProjectRole = upsertProjectRoleFactory({ db })
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
+const insertInviteAndDeleteOld = insertInviteAndDeleteOldFactory({ db })
 
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
   upsertWorkspace
@@ -1315,6 +1318,222 @@ describe('Workspace repositories', () => {
       })
 
       expect(count).to.equal(1)
+    })
+  })
+
+  describe('getUserEligibleWorkspacesFactory creates a function, that', () => {
+    it('returns workspaces where user is a member', async () => {
+      const testUser1 = buildBasicTestUser()
+      await createTestUsers([testUser1])
+
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 1',
+        description: 'User is member'
+      })
+      await createTestWorkspace(workspace1, testUser1)
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser1.id,
+        domains: []
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).deep.equalInAnyOrder([workspace1.id])
+    })
+
+    it('returns workspaces where user has an invite', async () => {
+      const testUser1 = buildBasicTestUser()
+      const testUser2 = buildBasicTestUser()
+      await createTestUsers([testUser1, testUser2])
+
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 1',
+        description: 'User is member'
+      })
+
+      await createTestWorkspace(workspace1, testUser1)
+
+      await insertInviteAndDeleteOld({
+        id: createRandomString(),
+        inviterId: testUser1.id,
+        message: '',
+        target: `@${testUser2.id}`,
+        token: createRandomString(),
+        resource: {
+          role: 'workspace:member',
+          primary: true,
+          resourceId: workspace1.id,
+          resourceType: 'workspace',
+          secondaryResourceRoles: {}
+        }
+      })
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser2.id,
+        domains: []
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).deep.equalInAnyOrder([workspace1.id])
+    })
+
+    it('returns empty if user not eligible', async () => {
+      const testUser1 = buildBasicTestUser()
+      const testUser2 = buildBasicTestUser()
+      await createTestUsers([testUser1, testUser2])
+
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 1',
+        description: 'User is member'
+      })
+
+      await createTestWorkspace(workspace1, testUser1)
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser2.id,
+        domains: []
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).to.have.length(0)
+    })
+
+    it('returns discoverable workspaces with matching verified domains', async () => {
+      const domain = `${createRandomString()}.com`
+      const testUser1 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain}`,
+        verified: true
+      })
+      const testUser2 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain}`,
+        verified: true
+      })
+      await createTestUsers([testUser1, testUser2])
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 1',
+        description: 'User is member',
+        discoverabilityEnabled: true
+      })
+      const workspace2 = buildBasicTestWorkspace({
+        name: 'Workspace 2',
+        description: 'User is member'
+      })
+      await createTestWorkspace(workspace1, testUser1, { domain })
+      await createTestWorkspace(workspace2, testUser2)
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser2.id,
+        domains: [domain]
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).deep.equalInAnyOrder([workspace1.id, workspace2.id])
+    })
+
+    it('does not return discoverable workspaces with matching unverified domains', async () => {
+      const domain = `${createRandomString()}.com`
+      const testUser1 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain}`,
+        verified: true
+      })
+      const testUser2 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain}`,
+        verified: false
+      })
+      await createTestUsers([testUser1, testUser2])
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 2',
+        description: 'User is member',
+        discoverabilityEnabled: false
+      })
+      await createTestWorkspace(workspace1, testUser1, { domain })
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser2.id,
+        domains: [domain]
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).deep.equalInAnyOrder([])
+    })
+
+    it('does not return non discoverable workspaces with matching verified domains', async () => {
+      const domain = `${createRandomString()}.com`
+      const testUser1 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain}`,
+        verified: true
+      })
+      const testUser2 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain}`,
+        verified: true
+      })
+      await createTestUsers([testUser1, testUser2])
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 2',
+        description: 'User is member',
+        discoverabilityEnabled: false
+      })
+      await createTestWorkspace(workspace1, testUser1, { domain })
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser2.id,
+        domains: [domain]
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).deep.equalInAnyOrder([])
+    })
+
+    it('does not return workspaces without matching domains when not member/invited', async () => {
+      const domain1 = `${createRandomString()}.com`
+      const testUser1 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain1}`,
+        verified: true
+      })
+      const domain2 = `${createRandomString()}.com`
+      const testUser2 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain2}.com`,
+        verified: true
+      })
+      await createTestUsers([testUser1, testUser2])
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 2',
+        description: 'User is member',
+        discoverabilityEnabled: true
+      })
+      await createTestWorkspace(workspace1, testUser1, { domain: domain1 })
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser2.id,
+        domains: [domain2]
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).deep.equalInAnyOrder([])
+    })
+
+    it('returns unique workspaces when user has multiple access paths', async () => {
+      const domain1 = `${createRandomString()}.com`
+      const testUser1 = buildBasicTestUser({
+        email: `${createRandomString()}@${domain1}`,
+        verified: true
+      })
+      await createTestUsers([testUser1])
+
+      const workspace1 = buildBasicTestWorkspace({
+        name: 'Workspace 2',
+        description: 'User is member',
+        discoverabilityEnabled: true
+      })
+      await createTestWorkspace(workspace1, testUser1, { domain: domain1 })
+
+      const workspaces = await getUserEligibleWorkspaces({
+        userId: testUser1.id,
+        domains: ['example.com']
+      })
+
+      const workspaceIds = workspaces.map((w) => w.id)
+      expect(workspaceIds).deep.equalInAnyOrder([workspace1.id])
     })
   })
 })
