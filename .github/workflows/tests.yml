@@ -31,6 +31,10 @@ jobs:
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
+      - uses: blacksmith/cache@v4
+        with:
+          path: '**/node_modules'
+          key: node-modules-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
