@@ -113,7 +113,7 @@ export function useFileImport(params: {
       onFileUploadedCb?.(upload.value)
     } catch (e) {
       upload.value.result = {
-        uploadStatus: BlobUploadStatus.Failure,
+        uploadStatus: BlobUploadStatus.Error,
         uploadError: ensureError(e).message,
         formKey: 'file'
       }

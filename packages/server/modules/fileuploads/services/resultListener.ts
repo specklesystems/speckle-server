@@ -8,7 +8,7 @@ import {
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
+import { GetFileInfo, UpdateFileUpload } from '@/modules/fileuploads/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
@@ -19,6 +19,7 @@ import { FileUploadInternalError } from '@/modules/fileuploads/helpers/errors'
 type OnFileImportProcessedDeps = {
   getFileInfo: GetFileInfo
   getStreamBranchByName: GetStreamBranchByName
+  updateFileUpload: UpdateFileUpload
   publish: PublishSubscription
   eventEmit: EventBusEmit
 }
@@ -45,9 +46,20 @@ export const onFileImportProcessedFactory =
 
     const [upload, branch] = await Promise.all([
       deps.getFileInfo({ fileId: uploadId }),
-      isNewBranch ? deps.getStreamBranchByName(streamId, branchName) : null
+      deps.getStreamBranchByName(streamId, branchName)
     ])
     if (!upload) return
+    if (upload.streamId !== streamId) return
+
+    // Update upload to reference the actual model/branch created
+    if (branch) {
+      await deps.updateFileUpload({
+        id: upload.id,
+        upload: {
+          modelId: branch.id
+        }
+      })
+    }
 
     if (upload.convertedStatus === FileUploadConvertedStatus.Error) {
       //TODO in future differentiate between internal server errors and user errors
@@ -108,10 +120,11 @@ type OnFileProcessingDeps = {
 
 export const onFileProcessingFactory =
   (deps: OnFileProcessingDeps) =>
-  async ({ uploadId }: ParsedMessage) => {
+  async ({ uploadId, streamId }: ParsedMessage) => {
     if (!uploadId) return
     const upload = await deps.getFileInfo({ fileId: uploadId })
     if (!upload) return
+    if (upload.streamId !== streamId) return
 
     await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
       projectFileImportUpdated: {

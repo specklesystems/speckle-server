@@ -28,11 +28,7 @@ export const Default: StoryObj = {
     },
     template: `
       <Table 
-        :items="args.items"
-        :buttons="args.buttons"
-        :columns="args.columns"
-        :overflow-cells="args.overflowCells"
-        :on-row-click="args.onRowClick"
+        v-bind="args"
       >
         <template #name="{ item }">
           <div class="flex items-center gap-2">
@@ -190,7 +186,8 @@ export const Default: StoryObj = {
     ],
     overflowCells: false,
     onRowClick: (item: unknown) => console.log('Row clicked', item),
-    roles: ['Admin', 'User', 'Guest']
+    roles: ['Admin', 'User', 'Guest'],
+    maxHeight: undefined
   }
 }
 
@@ -226,5 +223,13 @@ export const NoItems: StoryObj = {
   args: {
     ...Default.args,
     items: []
+  }
+}
+
+export const WithLimitedHeight: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    maxHeight: 200
   }
 }

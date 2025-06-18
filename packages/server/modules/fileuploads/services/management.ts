@@ -8,8 +8,11 @@ import {
   SaveUploadFile,
   NotifyChangeInFileStatus,
   SaveUploadFileV2,
-  SaveUploadFileInput,
   PushJobToFileImporter,
+  GetModelUploads,
+  GetModelUploadsItems,
+  GetModelUploadsTotalCount,
+  InsertNewUploadAndNotifyV2,
   InsertNewUploadAndNotify
 } from '@/modules/fileuploads/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
@@ -25,8 +28,8 @@ export const insertNewUploadAndNotifyFactory =
     saveUploadFile: SaveUploadFile
     publish: PublishSubscription
     emit: EventBusEmit
-  }) =>
-  async (upload: SaveUploadFileInput) => {
+  }): InsertNewUploadAndNotify =>
+  async (upload) => {
     const branch = await deps.getStreamBranchByName(upload.streamId, upload.branchName)
     const file = await deps.saveUploadFile(upload)
 
@@ -69,6 +72,8 @@ export const insertNewUploadAndNotifyFactory =
         fileType: file.fileType
       }
     })
+
+    return file
   }
 
 export const insertNewUploadAndNotifyFactoryV2 =
@@ -77,7 +82,7 @@ export const insertNewUploadAndNotifyFactoryV2 =
     saveUploadFile: SaveUploadFileV2
     publish: PublishSubscription
     emit: EventBusEmit
-  }): InsertNewUploadAndNotify =>
+  }): InsertNewUploadAndNotifyV2 =>
   async (upload) => {
     const file = await deps.saveUploadFile(upload)
 
@@ -113,6 +118,8 @@ export const insertNewUploadAndNotifyFactoryV2 =
         fileType: file.fileType
       }
     })
+
+    return file
   }
 
 export const notifyChangeInFileStatus =
@@ -154,4 +161,24 @@ export const notifyChangeInFileStatus =
       },
       projectId: streamId
     })
+  }
+
+export const getModelUploadsFactory =
+  (deps: {
+    getModelUploadsItems: GetModelUploadsItems
+    getModelUploadsTotalCount: GetModelUploadsTotalCount
+  }): GetModelUploads =>
+  async (params) => {
+    const [{ items, cursor }, totalCount] = await Promise.all([
+      params.limit === 0
+        ? { items: [], cursor: null }
+        : deps.getModelUploadsItems(params),
+      deps.getModelUploadsTotalCount(params)
+    ])
+
+    return {
+      items,
+      totalCount,
+      cursor
+    }
   }

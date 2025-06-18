@@ -43,8 +43,11 @@ export const fileuploadRouterFactory = (): Router => {
       })
 
       const projectDb = await getProjectDbClient({ projectId })
+      const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
+      const branch = await getStreamBranchByName(projectId, branchName)
+
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        getStreamBranchByName,
         saveUploadFile: saveUploadFileFactory({ db: projectDb }),
         publish,
         emit: getEventBus().emit
@@ -63,11 +66,12 @@ export const fileuploadRouterFactory = (): Router => {
             await insertNewUploadAndNotify({
               fileId: upload.blobId,
               streamId: projectId,
-              branchName,
+              branchName: branch?.name || branchName,
               userId,
               fileName: upload.fileName,
               fileType: upload.fileName?.split('.').pop() || '', //FIXME
-              fileSize: upload.fileSize
+              fileSize: upload.fileSize,
+              modelId: branch?.id || null
             })
           })
         )
