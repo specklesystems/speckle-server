@@ -31,10 +31,6 @@ jobs:
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: useblacksmith/cache@v5
-        with:
-          path: '**/node_modules'
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
@@ -92,6 +88,18 @@ jobs:
     runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/cache@v5
+        with:
+          path: |
+            '**/node_modules'
+            '**/dist'
+            '**/dist-cjs'
+            '**/.nuxt
+            .yarn/cache
+            .yarn/unplugged
+            .yarn/install-state.gz
+            .husky/_
+          key: node-modules-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
