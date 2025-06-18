@@ -1,4 +1,6 @@
-export default class BatchedPool<T> {
+import Queue from './queue.js'
+
+export default class BatchedPool<T> implements Queue<T> {
   #queue: T[] = []
   #concurrencyAndSizes: number[]
   #processFunction: (batch: T[]) => Promise<void>

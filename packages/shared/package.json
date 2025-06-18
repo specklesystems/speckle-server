@@ -90,6 +90,7 @@
       "./environment/multiRegionConfig": "./src/environment/multiRegionConfig.ts",
       "./observability": "./src/observability/index.ts",
       "./observability/mixpanel": "./src/observability/mixpanel.ts",
+      "./blobs": "./src/blobs/index.ts",
       "./previews": "./src/previews/index.ts",
       "./authz": "./src/authz/index.ts",
       "./queue": "./src/queue/index.ts",
@@ -163,6 +164,16 @@
       "require": {
         "types": "./dist/commonjs/observability/mixpanel.d.ts",
         "default": "./dist/commonjs/observability/mixpanel.js"
+      }
+    },
+    "./blobs": {
+      "import": {
+        "types": "./dist/esm/blobs/index.d.ts",
+        "default": "./dist/esm/blobs/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/blobs/index.d.ts",
+        "default": "./dist/commonjs/blobs/index.js"
       }
     },
     "./previews": {

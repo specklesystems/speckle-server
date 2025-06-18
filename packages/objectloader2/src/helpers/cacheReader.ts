@@ -3,6 +3,7 @@ import { CacheOptions } from '../operations/options.js'
 import { Base, CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
 import { DefermentManager } from './defermentManager.js'
+import Queue from './queue.js'
 
 export class CacheReader {
   #database: Database
@@ -10,6 +11,8 @@ export class CacheReader {
   #logger: CustomLogger
   #options: CacheOptions
   #readQueue: BatchingQueue<string> | undefined
+  #foundQueue: Queue<Item> | undefined
+  #notFoundQueue: Queue<string> | undefined
 
   constructor(
     database: Database,
@@ -22,14 +25,19 @@ export class CacheReader {
     this.#logger = options.logger || ((): void => {})
   }
 
+  initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
+    this.#foundQueue = foundQueue
+    this.#notFoundQueue = notFoundQueue
+  }
+
   async getObject(params: { id: string }): Promise<Base> {
     if (!this.#defermentManager.isDeferred(params.id)) {
-      this.#getItem(params.id)
+      this.#requestItem(params.id)
     }
     return await this.#defermentManager.defer({ id: params.id })
   }
 
-  #getItem(id: string): void {
+  #createReadQueue(): void {
     if (!this.#readQueue) {
       this.#readQueue = new BatchingQueue({
         batchSize: this.#options.maxCacheReadSize,
@@ -37,23 +45,29 @@ export class CacheReader {
         processFunction: this.#processBatch
       })
     }
-    if (!this.#readQueue.get(id)) {
-      this.#readQueue.add(id, id)
+  }
+
+  #requestItem(id: string): void {
+    this.#createReadQueue()
+    if (!this.#readQueue?.get(id)) {
+      this.#readQueue?.add(id, id)
     }
   }
 
-  async getAll(keys: string[]): Promise<(Item | undefined)[]> {
-    return this.#database.getAll(keys)
+  requestAll(keys: string[]): void {
+    this.#createReadQueue()
+    this.#readQueue?.addAll(keys, keys)
   }
 
   #processBatch = async (batch: string[]): Promise<void> => {
     const items = await this.#database.getAll(batch)
     for (let i = 0; i < items.length; i++) {
-      if (items[i]) {
-        this.#defermentManager.undefer(items[i]!)
+      const item = items[i]
+      if (item) {
+        this.#foundQueue?.add(item)
+        this.#defermentManager.undefer(item)
       } else {
-        //this is okay!
-        //this.#logger(`Item ${batch[i]} not found in cache`)
+        this.#notFoundQueue?.add(batch[i])
       }
     }
   }
