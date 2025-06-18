@@ -11,7 +11,9 @@ import {
   Scene,
   Camera,
   BufferGeometry,
-  Object3D
+  Object3D,
+  Texture,
+  NearestFilter
 } from 'three'
 import { Matrix4 } from 'three'
 
@@ -28,16 +30,13 @@ import { createTextDerivedMaterial } from 'troika-three-text'
 //@ts-ignore
 import { uniformToVarying } from 'troika-three-text/src/BatchedText.js'
 
-interface SpeckleTextMaterialParameters extends MeshBasicMaterialParameters {
+const matBuff: Matrix4 = new Matrix4()
+
+export interface SpeckleTextMaterialParameters extends MeshBasicMaterialParameters {
   billboardPixelHeight?: number
 }
 
 class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
-  protected static readonly matBuff: Matrix4 = new Matrix4()
-  protected static readonly vecBuff: Vector2 = new Vector2()
-
-  private _billboardPixelHeight: number
-
   protected get vertexProgram(): string {
     return speckleTextVert
   }
@@ -54,26 +53,13 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     return {
       uViewer_high: new Vector3(),
       uViewer_low: new Vector3(),
-      uTransforms: [new Matrix4()],
-      tTransforms: null,
-      objCount: 1,
-      billboardPos: new Vector3(),
-      billboardSize: new Vector2(),
-      invProjection: new Matrix4()
+      invProjection: new Matrix4(),
+      gradientRamp: null
     }
-  }
-
-  public set billboardPixelHeight(value: number) {
-    this._billboardPixelHeight = value
-  }
-
-  public get billboardPixelHeight() {
-    return this._billboardPixelHeight
   }
 
   constructor(parameters: SpeckleTextMaterialParameters, defines: Array<string> = []) {
     super(parameters)
-    this.billboardPixelHeight = parameters?.billboardPixelHeight ?? 0
     this.init(defines)
   }
 
@@ -253,7 +239,15 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     const fromStandard = from as SpeckleTextMaterial
     toStandard.color.copy(fromStandard.color)
     toStandard.refractionRatio = fromStandard.refractionRatio
-    to.userData.billboardPos.value.copy(from.userData.billboardPos.value)
+    to.userData.gradientRamp.value = from.userData.gradientRamp.value
+  }
+
+  public setGradientTexture(texture: Texture) {
+    this.userData.gradientRamp.value = texture
+    this.userData.gradientRamp.value.generateMipmaps = false
+    this.userData.gradientRamp.value.minFilter = NearestFilter
+    this.userData.gradientRamp.value.magFilter = NearestFilter
+    this.needsUpdate = true
   }
 
   /** Called by three.js render loop */
@@ -271,8 +265,8 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
       //   (this._billboardPixelHeight / resolution.y) * 2
       // )
       // this.userData.billboardSize.value.copy(SpeckleTextMaterial.vecBuff)
-      SpeckleTextMaterial.matBuff.copy(camera.projectionMatrix).invert()
-      this.userData.invProjection.value.copy(SpeckleTextMaterial.matBuff)
+      matBuff.copy(camera.projectionMatrix).invert()
+      this.userData.invProjection.value.copy(matBuff)
       this.needsUpdate = true
     }
     if (this.defines && this.defines['USE_RTE']) {

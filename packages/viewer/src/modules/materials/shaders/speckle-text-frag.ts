@@ -21,9 +21,15 @@ uniform float opacity;
 #include <specularmap_pars_fragment>
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
+
+uniform sampler2D gradientRamp;
+varying float vGradientIndex;
+
 void main() {
 	#include <clipping_planes_fragment>
-	vec4 diffuseColor = vec4( diffuse, opacity );
+	vec4 diffuseColor_RGB = vec4(diffuse, opacity);
+	vec4 diffuseColor_Tex = vec4( texture2D(gradientRamp, vec2(vGradientIndex, 0.)).rgb, opacity );
+	vec4 diffuseColor = mix(diffuseColor_RGB, diffuseColor_Tex, float(vGradientIndex > 0.));
 	#include <logdepthbuf_fragment>
 	#include <map_fragment>
 	#include <color_fragment>

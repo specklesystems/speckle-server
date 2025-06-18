@@ -6,11 +6,7 @@ export const speckleTextVert = /* glsl */ `
 #endif
 
 #ifdef BILLBOARD
-    uniform vec2 screenSize;
     uniform mat4 invProjection;
-    #ifdef BILLBOARD_PIXEL_HEIGHT
-        uniform float billboardPixelHeight;
-    #endif
 #endif
 
 
@@ -60,6 +56,9 @@ export const speckleTextVert = /* glsl */ `
 //         return modelMatrix;
 //     #endif
 // }
+#ifdef BATCHED_TEXT
+    varying float vGradientIndex;
+#endif
 
 void main() {
 	#include <uv_vertex>
@@ -120,40 +119,11 @@ void main() {
              mvPosition = modelViewMatrix * mvPosition;
         #endif
     #endif
-
+    #ifdef BATCHED_TEXT
+        vGradientIndex = troikaBatchTexel(6.).w;
+    #endif
     gl_Position = projectionMatrix * mvPosition;
 
-    // #if defined(BILLBOARD)
-    //     float div = 1.;
-    //     /* We store the high part normally as the translation component */
-    //     vec3 translationHigh = matrix[3].xyz;
-    //     /** We store the low part of the translation in row4 ofthe matrix */
-    //     vec3 translationLow = vec3(matrix[0][3], matrix[1][3], matrix[2][3]);
-    //     highp vec4 rteTranslation = computeRelativePosition(translationLow, translationHigh, uViewer_low, uViewer_high);
-    //     gl_Position = projectionMatrix * (modelViewMatrix * rteTranslation + vec4(position.x, position.y, 0., 0.0));
-    //     #if defined(BILLBOARD_FIXED)
-    //         vec3 billboardPosition = matrix[3].xyz;
-    //         vec2 billboardPixelSize = troikaBatchTexel(9.0).y / screenSize;
-    //         gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPosition, 1.0));
-    //         float div = gl_Position.w;
-    //         gl_Position /= gl_Position.w;
-    //         gl_Position.xy += position.xy * billboardPixelSize;
-    //     #endif
-    // #else
-    //     #ifdef USE_RTE
-    //         /* We store the high part normally as the translation component */
-    //         vec3 translationHigh = matrix[3].xyz;
-    //         /** We store the low part of the translation in row4 ofthe matrix */
-    //         vec3 translationLow = vec3(matrix[0][3], matrix[1][3], matrix[2][3]);
-    //         highp vec4 rteTranslation = computeRelativePosition(translationLow, translationHigh, uViewer_low, uViewer_high);
-    //         mvPosition = vec4(mat3(matrix) * transformed + rteTranslation.xyz, 1.);
-    //     #else
-    //         mvPosition = matrix * vec4(transformed, 1.);
-    //     #endif
-        
-    //     mvPosition = modelViewMatrix * mvPosition;
-    //     gl_Position = projectionMatrix * mvPosition;
-    // #endif
 
 	#include <logdepthbuf_vertex>
 	// #include <clipping_planes_vertex> COMMENTED CHUNK

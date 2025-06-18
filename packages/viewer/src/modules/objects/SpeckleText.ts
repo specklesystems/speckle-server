@@ -18,6 +18,7 @@ import {
   Raycaster,
   RGBAFormat,
   Sphere,
+  Texture,
   Vector3
 } from 'three'
 import { BatchObject } from '../batching/BatchObject.js'
@@ -33,7 +34,7 @@ const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 
 export class SpeckleText extends BatchedText {
   private tas: TopLevelAccelerationStructure
-  private batchMaterial: Material
+  private _batchMaterial: Material
   private _batchObjects: BatchObject[]
   private _textObjects: { [id: string]: Text } = {}
 
@@ -52,11 +53,15 @@ export class SpeckleText extends BatchedText {
     return this._batchObjects
   }
 
+  public get batchMaterial(): Material {
+    return this._batchMaterial
+  }
+
   public setBatchMaterial(material: Material) {
-    this.batchMaterial = this.getCachedMaterial(material)
+    this._batchMaterial = this.getCachedMaterial(material)
     //@ts-ignore
-    this.material = this.batchMaterial
-    this.materials.push(this.batchMaterial)
+    this.material = this._batchMaterial
+    this.materials.push(this._batchMaterial)
   }
 
   public setBatchObjects(batchObjects: BatchObject[], textObjects: Text[]) {
@@ -149,6 +154,10 @@ export class SpeckleText extends BatchedText {
     material
   }
 
+  public setGradientTexture(texture: Texture) {
+    ;(this._batchMaterial as SpeckleTextMaterial).setGradientTexture(texture)
+  }
+
   public getBatchObjectMaterial(batchObject: BatchObject) {
     const rv = batchObject.renderView
     const group = this.groups.find((value) => {
@@ -188,7 +197,7 @@ export class SpeckleText extends BatchedText {
 
   raycast(raycaster: SpeckleRaycaster, intersects: Array<Intersection>) {
     if (this.tas) {
-      if (this.batchMaterial === undefined) return
+      if (this._batchMaterial === undefined) return
 
       //@ts-ignore
       tmpInverseMatrix.copy(this.matrixWorld).invert()
@@ -198,7 +207,7 @@ export class SpeckleText extends BatchedText {
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, tasOnly, this.batchMaterial),
+          this.tas.raycastFirst(ray, tasOnly, this._batchMaterial),
           this as unknown as Object3D,
           raycaster
         )
@@ -206,7 +215,7 @@ export class SpeckleText extends BatchedText {
           intersects.push(hit)
         }
       } else {
-        const hits = this.tas.raycast(ray, tasOnly, this.batchMaterial)
+        const hits = this.tas.raycast(ray, tasOnly, this._batchMaterial)
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(
             hits[i],
@@ -271,10 +280,34 @@ export class SpeckleText extends BatchedText {
     }
   }
 
+  /*
+  Data texture packing strategy:
+
+  # Common:
+  0-15: matrix
+  16-19: uTroikaTotalBounds
+  20-23: uTroikaClipRect
+  24: diffuse (color/outlineColor)
+  25: uTroikaFillOpacity (fillOpacity/outlineOpacity)
+  26: uTroikaCurveRadius
+  27: <blank>
+
+  # Main:
+  28: uTroikaStrokeWidth
+  29: uTroikaStrokeColor
+  30: uTroikaStrokeOpacity
+
+  # Outline:
+  28-29: uTroikaPositionOffset
+  30: uTroikaEdgeOffset
+  31: uTroikaBlurRadius
+  */
+
   /**
    * @override
    * Patched version that allows:
    * - Individual text opacities
+   * - Coordinate inside gradient/ramp texture
    */
   //@ts-ignore
   _prepareForRender(material) {
@@ -383,7 +416,7 @@ export class SpeckleText extends BatchedText {
         // Curve radius
         this.setTexData(texture, startIndex + 26, uTroikaCurveRadius.value)
         // Billboard height
-        this.setTexData(texture, startIndex + 27, text.material.billboardPixelHeight)
+        this.setTexData(texture, startIndex + 27, text.userData.gradientIndex)
 
         if (isOutline) {
           // Outline properties

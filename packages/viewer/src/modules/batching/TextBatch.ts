@@ -26,6 +26,7 @@ import { DefaultBVHOptions } from '../objects/AccelerationStructure.js'
 import { TextBatchObject } from './TextBatchObject.js'
 import { DrawRanges } from './DrawRanges.js'
 import Logger from '../utils/Logger.js'
+import SpeckleTextColoredMaterial from '../materials/SpeckleTextColoredMaterial.js'
 
 const INSTANCE_TEXT_TRIS_COUNT = 2
 const INSTANCE_TEXT_VERT_COUNT = 4
@@ -134,6 +135,14 @@ export default class TextBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
+  /** Text batches are mix between how mesh and line batches work.
+   * - They still keep track of various draw groups each with it's material
+   * - However that material is not really being used, bur rather the properies are copied over to the batch fp32 data texture
+   * - For filtering we cheat and use `SpeckleTextColoredMaterial` only to store the gradient/ramp texture + gradient indices for each text in the batch
+   * - The color from the gradient/ramp texture will be used only if the gradient index > 0, otherwise the regular color will be used
+   * - The gradient index is stored in each text object in it's `userData` and written to the 27'th float in the batch data texture, where the shader reads if from
+   * - Even if, the **text batch does not use the materials in it's draw groups**, it emulates the behavior as if it would
+   */
   public setBatchBuffers(ranges: BatchUpdateRange[]): void {
     console.warn(' Groups -> ', this.mesh.groups)
     console.warn(' Ranges -> ', ranges)
@@ -160,11 +169,40 @@ export default class TextBatch implements Batch {
       //@ts-ignore
       text.material.opacity = range.material?.visible ? range.material?.opacity : 0
 
-      if (range.materialOptions) {
-        if (range.materialOptions.rampIndexColor !== undefined) {
-          text.color = range.materialOptions.rampIndexColor
-          text.material.color = range.materialOptions.rampIndexColor
+      if (range.material instanceof SpeckleTextColoredMaterial) {
+        // Group has gradient/ramp texture color source
+        if (range.materialOptions) {
+          if (
+            range.materialOptions.rampIndex !== undefined &&
+            range.materialOptions.rampWidth !== undefined
+          ) {
+            /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
+             *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
+             *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
+             *  sampling can occur.
+             */
+            const shiftedIndex =
+              range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
+            /** Update the gradient indices for the individual texts
+             *  The colored material is singular, as provided by Materials
+             */
+            range.material.updateGradientIndexMap(packingInfo.index, shiftedIndex)
+            text.userData.gradientIndex = shiftedIndex
+          }
+          if (range.materialOptions.rampTexture !== undefined) {
+            ;(range.material as SpeckleTextMaterial).setGradientTexture(
+              range.materialOptions.rampTexture
+            )
+            this.mesh.setGradientTexture(range.materialOptions.rampTexture)
+          }
+        } else {
+          text.userData.gradientIndex =
+            range.material.gradientIndexMap[packingInfo.index]
+          this.mesh.setGradientTexture(range.material.userData.gradientRamp.value)
         }
+      } else {
+        // No gradient or ramp color source
+        text.userData.gradientIndex = -1
       }
 
       packingInfo.needsUpdate = true
