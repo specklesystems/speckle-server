@@ -39,7 +39,6 @@ jobs:
         with:
           node-version: 22
           cache: yarn
-      - run: yarn config -v
       - name: Install hardened (no HARD flag)
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
