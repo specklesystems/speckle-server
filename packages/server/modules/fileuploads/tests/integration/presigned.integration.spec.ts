@@ -47,7 +47,6 @@ import {
   saveUploadFileFactoryV2
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -125,9 +124,14 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
         })
         const insertNewUploadAndNotify = FF_NEXT_GEN_FILE_IMPORTER_ENABLED
           ? insertNewUploadAndNotifyFactoryV2({
+              queues: [
+                {
+                  supportedFileTypes: ['stl', 'obj', 'ifc'],
+                  scheduleJob: () => Promise.resolve()
+                }
+              ],
               pushJobToFileImporter: pushJobToFileImporterFactory({
                 getServerOrigin,
-                scheduleJob,
                 createAppToken: createAppTokenFactory({
                   storeApiToken: storeApiTokenFactory({ db: projectDb }),
                   storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
