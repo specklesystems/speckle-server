@@ -20,7 +20,10 @@ import {
 } from '../../fragments/workspaces.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import { Roles } from '../../../core/constants.js'
-import { WorkspacePlans } from '../../../workspaces/index.js'
+import {
+  WorkspacePlanFeatures,
+  workspacePlanHasAccessToFeature
+} from '../../../workspaces/index.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -74,16 +77,11 @@ export const canUpdateEmbedOptionsPolicy: AuthPolicy<
     })
     if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
 
-    const validPlans: WorkspacePlans[] = [
-      'academia',
-      'unlimited',
-      'pro',
-      'proUnlimited',
-      'proUnlimitedInvoiced'
-    ]
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-    if (!workspacePlan || !validPlans.includes(workspacePlan.name))
-      return err(new WorkspaceNoFeatureAccessError())
-
-    return ok()
+    if (!workspacePlan) return err(new WorkspaceNoFeatureAccessError())
+    const canUpdateEmbedOptions = workspacePlanHasAccessToFeature({
+      plan: workspacePlan.name,
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
+    })
+    return canUpdateEmbedOptions ? ok() : err(new WorkspaceNoFeatureAccessError())
   }

@@ -13,12 +13,14 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  EligibleWorkspace,
   GetAllWorkspaces,
   GetPaginatedWorkspaceProjects,
   GetPaginatedWorkspaceProjectsArgs,
   GetPaginatedWorkspaceProjectsItems,
   GetPaginatedWorkspaceProjectsTotalCount,
   GetUserDiscoverableWorkspaces,
+  GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
   GetWorkspaceBySlug,
@@ -62,6 +64,7 @@ import {
 import {
   knex,
   ServerAcl,
+  ServerInvites,
   StreamAcl,
   Streams,
   UserEmails,
@@ -96,6 +99,39 @@ const tables = {
     db<WorkspaceJoinRequest>('workspace_join_requests')
 }
 
+export const getUserEligibleWorkspacesFactory =
+  ({ db }: { db: Knex }): GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces =>
+  async ({ userId, domains }) => {
+    const q = tables
+      .workspaces(db)
+      .distinctOn(Workspaces.col.id)
+      .select<EligibleWorkspace[]>([...Workspaces.cols, DbWorkspaceAcl.col.role])
+      .joinRaw(
+        `left join ${DbWorkspaceAcl.name}
+        on ${Workspaces.col.id} = ${DbWorkspaceAcl.name}."${DbWorkspaceAcl.withoutTablePrefix.col.workspaceId}"
+        and ${DbWorkspaceAcl.name}."${DbWorkspaceAcl.withoutTablePrefix.col.userId}" = '${userId}'`
+      )
+      .joinRaw(
+        `left join ${ServerInvites.name}
+        on ${Workspaces.col.id} = ${ServerInvites.col.resource} ->> 'resourceId'
+        and ${ServerInvites.col.target} = '@${userId}'`
+      )
+      .leftJoin(
+        WorkspaceDomains.name,
+        WorkspaceDomains.col.workspaceId,
+        Workspaces.col.id
+      )
+      .whereNotNull(DbWorkspaceAcl.col.userId)
+      .orWhereNotNull(ServerInvites.col.target)
+    if (domains.length)
+      q.orWhere(function () {
+        this.where(Workspaces.col.discoverabilityEnabled, true)
+        this.whereIn(WorkspaceDomains.col.domain, domains)
+      })
+    const items = await q
+    return items
+  }
+
 export const getUserDiscoverableWorkspacesFactory =
   ({ db }: { db: Knex }): GetUserDiscoverableWorkspaces =>
   async ({ domains, userId }) => {
@@ -112,6 +148,7 @@ export const getUserDiscoverableWorkspacesFactory =
         'description',
         'logo',
         'discoverabilityAutoJoinEnabled',
+        'isExclusive',
         tables
           .workspacesAcl(db)
           .select(knex.raw('count(*)::integer'))
@@ -312,7 +349,8 @@ export const upsertWorkspaceFactory =
         'discoverabilityEnabled',
         'discoverabilityAutoJoinEnabled',
         'defaultSeatType',
-        'isEmbedSpeckleBrandingHidden'
+        'isEmbedSpeckleBrandingHidden',
+        'isExclusive'
       ])
   }
 
