@@ -493,22 +493,20 @@ export const getWorkspaceCollaboratorsFactory =
   async (params) => {
     const { limit = 25, hasAccessToEmail } = params
     const query = getWorkspaceCollaboratorsBaseQuery({ db })(params)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: {
+        col: {
+          workspaceRoleCreatedAt: DbWorkspaceAcl.col.createdAt,
+          id: Users.col.id
+        }
+      },
+      cols: ['workspaceRoleCreatedAt', 'id']
+    })
 
-    type CursorType = { workspaceRoleCreatedAt: string; id: string }
-    const cursor = decodeCompositeCursor<CursorType>(
-      params.cursor,
-      (c) => isObjectLike(c) && has(c, 'id') && has(c, 'workspaceRoleCreatedAt')
-    )
-
-    if (cursor) {
-      // filter by date, and if there's duplicate dates, filter by id too
-      query.andWhereRaw('(??, ??) < (?, ?)', [
-        DbWorkspaceAcl.col.createdAt,
-        Users.col.id,
-        cursor.workspaceRoleCreatedAt,
-        cursor.id
-      ])
-    }
+    applyCursorSortAndFilter({
+      query,
+      cursor: params.cursor
+    })
 
     if (limit) {
       query.limit(clamp(limit, 0, 100))
@@ -522,14 +520,7 @@ export const getWorkspaceCollaboratorsFactory =
       workspaceId: i.workspaceId,
       role: i.role
     }))
-
-    const newCursorRow = items.at(-1)
-    const newCursor = newCursorRow
-      ? encodeCompositeCursor<CursorType>({
-          workspaceRoleCreatedAt: newCursorRow.workspaceRoleCreatedAt.toISOString(),
-          id: newCursorRow.id
-        })
-      : null
+    const newCursor = resolveNewCursor(items)
 
     return { items, cursor: newCursor }
   }

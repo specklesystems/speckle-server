@@ -76,14 +76,22 @@ export const decodeCompositeCursor = <C extends object>(
   return null
 }
 
+// This is to allow custom column/alias support for compositeCursorTools() - we don't want
+// to force the user to pass in the entire schema config, just the data we need
+type LimitedSchemaConfig = Pick<SchemaConfig<any, any, any>, 'col'>
+
 /**
  * Simplifies working with composite cursors in SQL queries. Composite cursors are better because they
  * allow duplicate values (e.g. updatedAt date) in different rows
  */
 export const compositeCursorTools = <
-  Config extends SchemaConfig<any, any, any>,
+  Config extends LimitedSchemaConfig,
   SelectedCols extends Array<keyof Config['col']>
 >(args: {
+  /**
+   * Db table schema config OR in case of aliased columns - manual column mapping between final aliases
+   * as keys and table-prefixed column names as values
+   */
   schema: Config
   /**
    * Order of columns matters - put the primary ordering column first (e.g. updatedAt), then the secondary
