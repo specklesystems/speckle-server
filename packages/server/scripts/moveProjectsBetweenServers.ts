@@ -2,11 +2,6 @@
 import '../bootstrap'
 
 import { configureClient } from '@/knexfile'
-import { getBlobsFactory, upsertBlobFactory } from '@/modules/blobstorage/repositories'
-import {
-  getObjectStreamFactory,
-  storeFileStreamFactory
-} from '@/modules/blobstorage/repositories/blobs'
 import {
   getBatchedStreamCommentsFactory,
   getCommentLinksFactory,
@@ -79,8 +74,6 @@ const projectIds = [
 //   '02d31038bc': '0b567b1cc9' // DT
 // }
 
-// format
-// sourceDB : mainDb
 const userIdMapping: Record<string, string> = {
   '52fb7b2818': 'ee07689e6c', // Aida Ramirez Marrujo
   a8bbe5fd68: 'ee07689e6c', // Xintong Chen
@@ -103,14 +96,13 @@ const main = async () => {
   const workspace = await getWorkspaceFactory({ db: mainDb })({ workspaceId })
   if (!workspace) throw Error('Target workspace not found')
   let regionDb = mainDb
-  // from sourceDb -> to mainDb (regionDb in case there it's configured like that)
   const workspaceRegion = await getDefaultRegionFactory({ db: mainDb })({
     workspaceId
   })
   if (workspaceRegion) {
     const targetWorkspaceRegionConfig = (await getAvailableRegionConfig())[
       workspaceRegion.key
-    ] // here: target blob storage config (regional)
+    ]
     regionDb = configureClient(targetWorkspaceRegionConfig).public
   }
 
@@ -142,7 +134,6 @@ const main = async () => {
     await regionTrx.commit()
 
     try {
-      // why retry?
       await retry(
         async () => {
           await getProjectFactory({ db: mainDb })({ projectId: sourceProject.id })
@@ -163,35 +154,6 @@ const main = async () => {
       regionTrx = await regionDb.transaction()
       // stream meta not needed, currently it only holds info about the onboarding project
       // stream favorites is ignored
-
-      // blobs
-      const projectBlobs = await getBlobsFactory({ db: sourceDb })({
-        streamId: sourceProject.id
-      })
-      const remappedProjectBlobs = projectBlobs.map((b) => {
-        if (!b.userId) return b
-        if (!(b.userId in userIdMapping)) throw new Error('Unknown commit author')
-        return {
-          ...b,
-          userId: userIdMapping[b.userId]
-        }
-      })
-      for (const b of remappedProjectBlobs) {
-        if (!b.objectKey) continue
-
-        // Todo: replace source with storage
-        const readable = await getObjectStreamFactory({ db: sourceDb })({
-          objectKey: b.objectKey
-        })
-        const { fileHash } = await storeFileStreamFactory({ db: regionTrx })({
-          objectKey: b.objectKey,
-          fileStream: readable
-        })
-        await upsertBlobFactory({ db: regionTrx })({
-          ...b,
-          fileHash
-        })
-      }
 
       // objects
       // the heavy stuff done in batches
@@ -233,7 +195,7 @@ const main = async () => {
         const commitsRemapped = commitBatch.map((c) => {
           sc.push({ streamId: sourceProject.id, commitId: c.id })
           bc.push({ branchId, commitId: c.id })
-          if (!c.author) return omit(c, 'branchId') // ?? why omit branchId?
+          if (!c.author) return omit(c, 'branchId')
           if (!(c.author in userIdMapping)) throw new Error('Unknown commit author')
           const commit = {
             ...c,
