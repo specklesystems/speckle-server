@@ -441,8 +441,6 @@ const getWorkspaceCollaboratorsBaseQuery =
       // it will not be surfaced by this query
       //
       .andWhere(UserEmails.col.primary, true)
-      .orderBy(DbWorkspaceAcl.col.createdAt, 'desc')
-      .orderBy(Users.col.id, 'desc')
 
     const { search, roles, seatType, excludeUserIds } = filter || {}
 

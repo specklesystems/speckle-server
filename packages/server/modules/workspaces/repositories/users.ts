@@ -99,7 +99,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
       cursor
     })
 
-    const res = await query
+    query
       .limit(limit)
       .select([
         ...Users.cols,
@@ -107,6 +107,8 @@ export const getInvitableCollaboratorsByProjectIdFactory =
         ServerAcl.groupArray('serverAcl'),
         UserEmails.groupArray('emails')
       ])
+
+    const res = await query
     const nextCursor = resolveNewCursor(res)
 
     const formattedRes = res.map((row) => {

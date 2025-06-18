@@ -107,13 +107,14 @@ export const getAdminWorkspaceJoinRequestsFactory =
       cursor
     })
 
-    const items = await query
+    query
       .select<WorkspaceJoinRequest[]>([
         ...WorkspaceJoinRequests.cols,
         UserEmails.col.email
       ])
       .limit(limit)
 
+    const items = await query
     const newCursor = resolveNewCursor(items)
 
     return {
