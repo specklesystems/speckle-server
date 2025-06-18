@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { OverridesOf } from '../../../../tests/helpers/types.js'
 import { canCreateProjectCommentPolicy } from './canCreate.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
-import { getProjectFake } from '../../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes.js'
 import { Roles } from '../../../../core/constants.js'
 import {
   ProjectNoAccessError,
@@ -42,7 +42,7 @@ describe('canCreateProjectCommentPolicy', () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),
