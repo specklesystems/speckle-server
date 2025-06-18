@@ -1,10 +1,11 @@
-import { Base, Item } from '../types/types.js'
+import { Base } from '../types/types.js'
 
 export class DeferredBase {
   private promise: Promise<Base>
   private resolve!: (value: Base) => void
   private reject!: (reason?: Error) => void
-  private item?: Item
+  private base?: Base
+  private size?: number
 
   private readonly id: string
   private expiresAt: number // Timestamp in ms
@@ -24,8 +25,11 @@ export class DeferredBase {
     return this.id
   }
 
-  getItem(): Item | undefined {
-    return this.item
+  getBase(): Base | undefined {
+    return this.base
+  }
+  getSize(): number | undefined {
+    return this.size
   }
 
   getPromise(): Promise<Base> {
@@ -33,19 +37,20 @@ export class DeferredBase {
   }
 
   isExpired(now: number): boolean {
-    return this.item !== undefined && now > this.expiresAt
+    return this.base !== undefined && now > this.expiresAt
   }
   setAccess(now: number): void {
     this.expiresAt = now + this.ttl
   }
 
-  found(value: Item): void {
-    this.item = value
-    this.resolve(value.base)
+  found(value: Base, size?: number): void {
+    this.base = value
+    this.size = size
+    this.resolve(value)
   }
   done(now: number): boolean {
-    if (this.item) {
-      this.resolve(this.item.base)
+    if (this.base) {
+      this.resolve(this.base)
     }
     if (this.isExpired(now)) {
       return true
