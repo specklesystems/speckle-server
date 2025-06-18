@@ -166,7 +166,7 @@ const {
 } = usePaginatedQuery({
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
-    limit: 1,
+    limit: 10,
     slug: props.workspaceSlug,
     filter: {
       search: search.value,
