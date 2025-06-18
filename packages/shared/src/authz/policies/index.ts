@@ -28,9 +28,9 @@ import { canDeleteProjectPolicy } from './project/canDelete.js'
 import { canDeleteAutomationPolicy } from './project/automation/canDelete.js'
 import { canPublishPolicy } from './project/canPublish.js'
 import { canLoadPolicy } from './project/canLoad.js'
-import { canUpdateEmbedOptionsPolicy } from './workspace/canUpdateEmbedOptions.js'
 import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
 import { canCreateWorkspacePolicy } from './workspace/canCreateWorkspace.js'
+import { canUseWorkspacePlanFeature } from './workspace/canUseWorkspacePlanFeature.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -75,7 +75,7 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canInvite: canInviteToWorkspacePolicy(loaders),
     canReceiveProjectsUpdatedMessage:
       canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders),
-    canUpdateEmbedOptions: canUpdateEmbedOptionsPolicy(loaders),
+    canUseWorkspacePlanFeature: canUseWorkspacePlanFeature(loaders),
     canReadMemberEmail: canReadMemberEmailPolicy(loaders),
     canCreateWorkspace: canCreateWorkspacePolicy(loaders)
   }
