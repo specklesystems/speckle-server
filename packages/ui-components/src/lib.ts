@@ -87,7 +87,6 @@ import UserAvatar from '~~/src/components/user/Avatar.vue'
 import UserAvatarGroup from '~~/src/components/user/AvatarGroup.vue'
 import UserAvatarEditable from '~~/src/components/user/AvatarEditable.vue'
 import FormFileUploadZone from '~~/src/components/form/file-upload/Zone.vue'
-import { BlobUploadStatus } from '~~/src/composables/form/fileUpload'
 import type {
   UploadableFileItem,
   UploadFileItem,
@@ -108,7 +107,6 @@ export {
   CommonLoadingIcon,
   UniqueFileTypeSpecifier,
   prettyFileSize,
-  BlobUploadStatus,
   FormFileUploadZone,
   UserAvatar,
   UserAvatarGroup,
