@@ -32,7 +32,7 @@ export class RenderTree {
 
   public buildRenderTree(
     geometryConverter: GeometryConverter,
-    countCallback: (count: number) => void
+    countCallback?: (count: number) => void
   ): Promise<boolean> {
     const p = this.tree.walkAsync((node: TreeNode): boolean => {
       let start = performance.now()
@@ -76,12 +76,12 @@ export class RenderTree {
   private buildRenderNode(
     node: TreeNode,
     geometryConverter: GeometryConverter,
-    countCallback: (count: number) => void
+    countCallback?: (count: number) => void
   ): NodeRenderData | null {
     let ret: NodeRenderData | null = null
     let start = performance.now()
     const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
-    countCallback(this.count++)
+    countCallback?.(this.count++)
     this.convertTime += performance.now() - start
     if (geometryData) {
       start = performance.now()
