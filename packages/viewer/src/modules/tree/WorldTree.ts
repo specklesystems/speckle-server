@@ -18,6 +18,7 @@ export interface NodeData {
   subtreeId?: number
   renderView?: NodeRenderView | null
   instanced?: boolean
+  duplicate?: boolean
   color?: number
 }
 
@@ -117,6 +118,18 @@ export class WorldTree {
     for (let k = 0; k < children.length; k++) {
       this.removeNode(children[k], removeChildren)
     }
+  }
+
+  public hasNodeId(id: string, subtreeId: number = 1) {
+    return this.nodeMaps[subtreeId] && this.nodeMaps[subtreeId].hasNodeId(id)
+  }
+
+  public hasInstanceId(id: string, subtreeId: number = 1) {
+    return this.nodeMaps[subtreeId] && this.nodeMaps[subtreeId].hasInstancId(id)
+  }
+
+  public hasId(id: string, subtreeId: number = 1) {
+    return this.nodeMaps[subtreeId] && this.nodeMaps[subtreeId].hasId(id)
   }
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {

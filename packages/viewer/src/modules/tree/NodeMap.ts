@@ -3,6 +3,7 @@ import { type TreeNode } from './WorldTree.js'
 
 export class NodeMap {
   public static readonly COMPOUND_ID_CHAR = '~'
+  public static readonly DUPLICATE_ID_CHAR = '#'
 
   private all: { [id: string]: TreeNode } = {}
   public instances: { [id: string]: { [id: string]: TreeNode } } = {}
@@ -54,11 +55,17 @@ export class NodeMap {
       }
     }
     if (this.all[id]) {
+      if (this.all[id].model.duplicate) {
+        return Object.entries(this.all)
+          .filter(([key]) => key.includes(id))
+          .map(([, value]) => value)
+      }
       return [this.all[id]]
     }
     if (this.instances[id]) {
       return Object.values(this.instances[id])
     }
+
     return null
   }
 
@@ -67,6 +74,14 @@ export class NodeMap {
   }
 
   public hasId(id: string): boolean {
+    return this.hasNodeId(id) || this.hasInstancId(id)
+  }
+
+  public hasNodeId(id: string): boolean {
+    return this.all[id] !== undefined
+  }
+
+  public hasInstancId(id: string): boolean {
     if (id.includes(NodeMap.COMPOUND_ID_CHAR)) {
       const baseId = id.substring(0, id.indexOf(NodeMap.COMPOUND_ID_CHAR))
       if (this.instances[baseId]) {
@@ -74,12 +89,6 @@ export class NodeMap {
       } else {
         return false
       }
-    }
-    if (this.all[id]) {
-      return true
-    }
-    if (this.instances[id]) {
-      return true
     }
     return false
   }

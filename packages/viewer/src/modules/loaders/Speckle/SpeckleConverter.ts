@@ -29,6 +29,7 @@ export default class SpeckleConverter {
   protected renderMaterialMap: { [id: string]: SpeckleObject } = {}
   protected colorMap: { [id: string]: SpeckleObject } = {}
   protected instanceCounter = 0
+  protected duplicateCounter = 0
 
   protected readonly NodeConverterMapping: {
     [name: string]: SpeckleConverterNodeDelegate
@@ -136,9 +137,9 @@ export default class SpeckleConverter {
         children: []
       })
       this.tree.addSubtree(this.subtree)
-      this.tree.addNode(childNode, this.subtree)
+      this.addNode(childNode, this.subtree)
     } else {
-      this.tree.addNode(childNode, node)
+      this.addNode(childNode, node)
     }
 
     // If we can convert it, we should invoke the respective conversion routine.
@@ -180,7 +181,7 @@ export default class SpeckleConverter {
             atomic: false,
             children: []
           })
-          this.tree.addNode(nestedNode, childNode)
+          this.addNode(nestedNode, childNode)
           await this.convertToNode(displayValue, nestedNode)
           await callback()
         } catch (e) {
@@ -200,7 +201,7 @@ export default class SpeckleConverter {
             atomic: false,
             children: []
           })
-          this.tree.addNode(nestedNode, childNode)
+          this.addNode(nestedNode, childNode)
           await this.convertToNode(val, nestedNode)
           await callback()
         }
@@ -261,7 +262,21 @@ export default class SpeckleConverter {
 
   private getNodeId(obj: SpeckleObject): string {
     if (this.spoofIDs) return MathUtils.generateUUID()
+
     return obj.id
+  }
+
+  private addNode(node: TreeNode, parent: TreeNode) {
+    if (this.tree.hasNodeId(node.model.id, parent.model.subtreeId)) {
+      this.tree
+        .findId(node.model.id)
+        ?.filter((val) => !val.model.duplicate)
+        .forEach((val) => (val.model.duplicate = true))
+
+      node.model.id = this.getDuplicateId(node.model.id, ++this.duplicateCounter)
+      node.model.duplicate = true
+    }
+    this.tree.addNode(node, parent)
   }
 
   /**
@@ -402,6 +417,14 @@ export default class SpeckleConverter {
     return baseId.substring(0, index) + NodeMap.COMPOUND_ID_CHAR + counter
   }
 
+  private getDuplicateId(baseId: string, counter: number) {
+    const index = baseId.indexOf(NodeMap.DUPLICATE_ID_CHAR)
+    if (index === -1) {
+      return baseId + NodeMap.DUPLICATE_ID_CHAR + counter
+    }
+    return baseId.substring(0, index) + NodeMap.DUPLICATE_ID_CHAR + counter
+  }
+
   private getEmptyTransformData(id: string) {
     // eslint-disable-next-line camelcase
     return { id, speckle_type: 'Transform', units: 'm', matrix: new Array(16) }
@@ -448,7 +471,7 @@ export default class SpeckleConverter {
           instanced
         })
 
-        this.tree.addNode(valueNode, node)
+        this.addNode(valueNode, node)
         await this.displayableLookup(value, valueNode, instanced)
       }
     }
@@ -477,7 +500,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(transformNode, instanceNode)
+    this.addNode(transformNode, instanceNode)
 
     const childNode: TreeNode = this.tree.parse({
       id: this.getCompoundId(defGeometry.id, this.instanceCounter++),
@@ -486,7 +509,7 @@ export default class SpeckleConverter {
       children: [],
       instanced: true
     })
-    this.tree.addNode(childNode, transformNode)
+    this.addNode(childNode, transformNode)
 
     await this.displayableLookup(defGeometry, childNode, true)
   }
@@ -502,7 +525,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(childNode, instanceNode)
+    this.addNode(childNode, instanceNode)
     await this.displayableLookup(elementObj, childNode, false)
   }
 
@@ -629,7 +652,7 @@ export default class SpeckleConverter {
     const definition = this.instanceDefinitionLookupTable[definitionId]
     const transformNode = this.createTransformNode(obj)
 
-    this.tree.addNode(transformNode, node)
+    this.addNode(transformNode, node)
     const objectApplicationIds = this.getInstanceProxyDefinitionObjects(
       definition.model.raw
     )
@@ -650,7 +673,7 @@ export default class SpeckleConverter {
         children: [],
         instanced: true
       })
-      this.tree.addNode(instancedNode, transformNode)
+      this.addNode(instancedNode, transformNode)
       await this.convertToNode(speckleData, instancedNode)
     }
   }
@@ -867,7 +890,7 @@ export default class SpeckleConverter {
         ...(node.model.instanced && { instanced: node.model.instanced })
       })
       await this.convertToNode(ref, nestedNode)
-      this.tree.addNode(nestedNode, node)
+      this.addNode(nestedNode, node)
 
       // deletes known unneeded fields
       delete obj.Edges
@@ -932,7 +955,7 @@ export default class SpeckleConverter {
         ...(node.model.instanced && { instanced: node.model.instanced })
       })
       await this.convertToNode(ref, nestedNode)
-      this.tree.addNode(nestedNode, node)
+      this.addNode(nestedNode, node)
     } catch (e) {
       Logger.warn(`Failed to convert Region id: ${obj.id}`)
       throw e
@@ -952,7 +975,7 @@ export default class SpeckleConverter {
         atomic: false,
         children: []
       })
-      this.tree.addNode(childNode, node)
+      this.addNode(childNode, node)
       await this.convertToNode(displayValue, childNode)
     }
     /**
@@ -982,7 +1005,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(textNode, node)
+    this.addNode(textNode, node)
     await this.convertToNode(textObj, textNode)
   }
 

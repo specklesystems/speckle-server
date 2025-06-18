@@ -41,7 +41,8 @@ export class RenderTree {
       start = performance.now()
       this.applyTransforms(node)
       this.applyTransformTime += performance.now() - start
-      if (!node.model.instanced) geometryConverter.disposeNodeGeometryData(node.model)
+      if (!node.model.instanced && !node.model.duplicate)
+        geometryConverter.disposeNodeGeometryData(node.model)
       return !this.cancel
     }, this.root)
     return p

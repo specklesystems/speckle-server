@@ -111,7 +111,7 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -557,6 +557,9 @@ const getStream = () => {
 
     // Instances with far away transform
     // 'https://app.speckle.systems/projects/9d0ce16ba8/models/3c079572ea'
+
+    // Duplicate display values
+    'https://app.speckle.systems/projects/1466fe31c6/models/2eaf0f0571'
   )
 }
 
