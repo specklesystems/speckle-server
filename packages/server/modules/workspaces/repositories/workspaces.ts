@@ -76,6 +76,7 @@ import {
   WorkspaceTeamMember
 } from '@/modules/workspaces/domain/types'
 import {
+  compositeCursorTools,
   decodeCompositeCursor,
   decodeCursor,
   encodeCompositeCursor,
@@ -276,15 +277,24 @@ const buildWorkspacesQuery = ({ db, search }: { db: Knex; search?: string }) => 
 export const queryWorkspacesFactory =
   ({ db }: { db: Knex }): QueryWorkspaces =>
   async ({ limit, cursor, filter }) => {
+    const { applyCursor, resolveNewCursor } = compositeCursorTools({
+      schema: Workspaces,
+      cols: ['createdAt', 'id']
+    })
+
     const query = buildWorkspacesQuery({ db, search: filter?.search })
       .select()
-      .orderBy('createdAt', 'desc')
       .limit(limit)
 
-    if (cursor) {
-      query.andWhere('createdAt', '<', cursor)
-    }
-    return await query
+    applyCursor({
+      query,
+      cursor
+    })
+
+    const res = await query
+    const newCursor = resolveNewCursor(res)
+
+    return { items: res, cursor: newCursor }
   }
 
 export const countWorkspacesFactory =
@@ -431,7 +441,8 @@ const getWorkspaceCollaboratorsBaseQuery =
       // it will not be surfaced by this query
       //
       .andWhere(UserEmails.col.primary, true)
-      .orderBy('workspaceRoleCreatedAt', 'desc')
+      .orderBy(DbWorkspaceAcl.col.createdAt, 'desc')
+      .orderBy(Users.col.id, 'desc')
 
     const { search, roles, seatType, excludeUserIds } = filter || {}
 
@@ -480,11 +491,23 @@ export const getWorkspaceCollaboratorsTotalCountFactory =
 export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
   async (params) => {
-    const { cursor, limit = 25, hasAccessToEmail } = params
+    const { limit = 25, hasAccessToEmail } = params
     const query = getWorkspaceCollaboratorsBaseQuery({ db })(params)
 
+    type CursorType = { workspaceRoleCreatedAt: string; id: string }
+    const cursor = decodeCompositeCursor<CursorType>(
+      params.cursor,
+      (c) => isObjectLike(c) && has(c, 'id') && has(c, 'workspaceRoleCreatedAt')
+    )
+
     if (cursor) {
-      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)
+      // filter by date, and if there's duplicate dates, filter by id too
+      query.andWhereRaw('(??, ??) < (?, ?)', [
+        DbWorkspaceAcl.col.createdAt,
+        Users.col.id,
+        cursor.workspaceRoleCreatedAt,
+        cursor.id
+      ])
     }
 
     if (limit) {
@@ -500,7 +523,15 @@ export const getWorkspaceCollaboratorsFactory =
       role: i.role
     }))
 
-    return items
+    const newCursorRow = items.at(-1)
+    const newCursor = newCursorRow
+      ? encodeCompositeCursor<CursorType>({
+          workspaceRoleCreatedAt: newCursorRow.workspaceRoleCreatedAt.toISOString(),
+          id: newCursorRow.id
+        })
+      : null
+
+    return { items, cursor: newCursor }
   }
 
 export const storeWorkspaceDomainFactory =

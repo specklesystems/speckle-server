@@ -196,8 +196,6 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
-import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
-import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { UsersMeta } from '@/modules/core/dbSchema'
 import { setUserActiveWorkspaceFactory } from '@/modules/workspaces/repositories/users'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
@@ -2067,10 +2065,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       LimitedWorkspace: {
         team: async (parent, args) => {
-          const team = await getPaginatedItemsFactory<
-            Pick<GetWorkspaceCollaboratorsArgs, 'workspaceId' | 'limit' | 'cursor'>,
-            WorkspaceTeamMember
-          >({
+          const team = await getPaginatedItemsFactory({
             getItems: getWorkspaceCollaboratorsFactory({ db }),
             getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
@@ -2088,7 +2083,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               roles: [Roles.Workspace.Admin]
             }
           })
-          return team
+          return team.items
         }
       },
       ActiveUserMutations: {

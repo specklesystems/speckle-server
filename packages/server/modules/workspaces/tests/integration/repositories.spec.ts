@@ -247,7 +247,7 @@ describe('Workspace repositories', () => {
       })
 
       it('returns all workspace members', async () => {
-        const team = await getWorkspaceCollaborators({
+        const { items: team } = await getWorkspaceCollaborators({
           workspaceId: testWorkspace.id,
           limit: 50
         })
@@ -295,7 +295,7 @@ describe('Workspace repositories', () => {
       })
 
       it('limits search results to specified workspace', async () => {
-        const result = await getWorkspaceCollaborators({
+        const { items: result } = await getWorkspaceCollaborators({
           workspaceId: testWorkspaces[2].id,
           limit: 50,
           filter: { search: 'John' }

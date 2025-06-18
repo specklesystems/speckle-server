@@ -120,7 +120,9 @@ export type QueryWorkspacesArgs = CountWorkspacesArgs & {
   limit: number
   cursor?: string
 }
-export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
+export type QueryWorkspaces = (
+  args: QueryWorkspacesArgs
+) => Promise<{ items: Workspace[]; cursor: string | null }>
 export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
 export type GetProjectWorkspace = (args: {
   projectId: string
@@ -155,7 +157,7 @@ export type GetWorkspaceCollaboratorsArgs = GetWorkspaceCollaboratorsBaseArgs & 
 
 export type GetWorkspaceCollaborators = (
   args: GetWorkspaceCollaboratorsArgs
-) => Promise<WorkspaceTeam>
+) => Promise<{ items: WorkspaceTeam; cursor: string | null }>
 
 export type GetWorkspaceCollaboratorsTotalCount = (
   args: GetWorkspaceCollaboratorsBaseArgs

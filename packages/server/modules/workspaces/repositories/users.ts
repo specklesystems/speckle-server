@@ -10,6 +10,7 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { StreamAclRecord, UserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
+import { compositeCursorTools } from '@/modules/shared/helpers/graphqlHelper'
 import { SetUserActiveWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
@@ -81,18 +82,24 @@ export const getInvitableCollaboratorsByProjectIdFactory =
     }
     cursor?: string
     limit: number
-  }): Promise<WorkspaceTeamMember[]> => {
+  }): Promise<{ items: WorkspaceTeamMember[]; cursor: string | null }> => {
     const { workspaceId, projectId, search } = filter
     const query = buildInvitableCollaboratorsByProjectIdQueryFactory({ db })({
       workspaceId,
       projectId,
       search
     })
-    if (cursor) {
-      query.andWhere(Users.col.createdAt, '<', cursor)
-    }
+    const { applyCursor, resolveNewCursor } = compositeCursorTools({
+      schema: Users,
+      cols: ['createdAt', 'id']
+    })
+
+    applyCursor({
+      query,
+      cursor
+    })
+
     const res = await query
-      .orderBy(Users.col.createdAt, 'desc')
       .limit(limit)
       .select([
         ...Users.cols,
@@ -100,6 +107,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
         ServerAcl.groupArray('serverAcl'),
         UserEmails.groupArray('emails')
       ])
+    const nextCursor = resolveNewCursor(res)
 
     const formattedRes = res.map((row) => {
       const workspaceAcl = formatJsonArrayRecords(
@@ -119,7 +127,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
       }
     })
 
-    return formattedRes
+    return { items: formattedRes, cursor: nextCursor }
   }
 
 export const countInvitableCollaboratorsByProjectIdFactory =

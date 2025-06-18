@@ -107,9 +107,10 @@ export const compositeCursorTools = <
     )
 
   /**
-   * Invoke this on the knex querybuilder to filter the query by the cursor
+   * Invoke this on the knex querybuilder to filter the query by the cursor and apply
+   * appropriate ordering
    */
-  const filterByCursor = <Query extends Knex.QueryBuilder>(params: {
+  const applyCursor = <Query extends Knex.QueryBuilder>(params: {
     query: Query
     /**
      * If falsy, filter will be skipped
@@ -121,9 +122,16 @@ export const compositeCursorTools = <
     sort?: 'desc' | 'asc'
   }) => {
     const { query, sort = 'desc' } = params
+
+    // Apply orderBy for each cursor column w/ proper sort direction
+    args.cols.forEach((col) => {
+      query.orderBy(args.schema.col[col], sort)
+    })
+
     const cursor = isString(params.cursor) ? decode(params.cursor) : params.cursor
     if (!cursor) return query
 
+    // Apply cursor filter
     const colCount = args.cols.length
 
     const sql = `(${times(colCount, () => '??').join(', ')}) ${
@@ -161,7 +169,7 @@ export const compositeCursorTools = <
   return {
     encode,
     decode,
-    filterByCursor,
+    applyCursor,
     resolveNewCursor
   }
 }
