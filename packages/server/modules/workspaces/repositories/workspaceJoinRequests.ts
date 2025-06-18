@@ -97,12 +97,12 @@ export const getAdminWorkspaceJoinRequestsFactory =
     cursor?: string
     limit: number
   }) => {
-    const { applyCursor, resolveNewCursor } = compositeCursorTools({
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
       schema: WorkspaceJoinRequests,
       cols: ['createdAt', 'userId']
     })
     const query = adminWorkspaceJoinRequestsBaseQueryFactory(db)(filter)
-    applyCursor({
+    applyCursorSortAndFilter({
       query,
       cursor
     })
@@ -160,11 +160,11 @@ export const getWorkspaceJoinRequestsFactory =
     limit: number
   }) => {
     const query = workspaceJoinRequestsBaseQueryFactory(db)(filter)
-    const { applyCursor, resolveNewCursor } = compositeCursorTools({
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
       schema: WorkspaceJoinRequests,
       cols: ['createdAt', 'userId']
     })
-    applyCursor({
+    applyCursorSortAndFilter({
       query,
       cursor
     })

@@ -89,12 +89,12 @@ export const getInvitableCollaboratorsByProjectIdFactory =
       projectId,
       search
     })
-    const { applyCursor, resolveNewCursor } = compositeCursorTools({
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
       schema: Users,
       cols: ['createdAt', 'id']
     })
 
-    applyCursor({
+    applyCursorSortAndFilter({
       query,
       cursor
     })

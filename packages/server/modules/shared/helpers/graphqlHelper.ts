@@ -110,7 +110,7 @@ export const compositeCursorTools = <
    * Invoke this on the knex querybuilder to filter the query by the cursor and apply
    * appropriate ordering
    */
-  const applyCursor = <Query extends Knex.QueryBuilder>(params: {
+  const applyCursorSortAndFilter = <Query extends Knex.QueryBuilder>(params: {
     query: Query
     /**
      * If falsy, filter will be skipped
@@ -169,7 +169,7 @@ export const compositeCursorTools = <
   return {
     encode,
     decode,
-    applyCursor,
+    applyCursorSortAndFilter,
     resolveNewCursor
   }
 }

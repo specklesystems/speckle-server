@@ -277,7 +277,7 @@ const buildWorkspacesQuery = ({ db, search }: { db: Knex; search?: string }) => 
 export const queryWorkspacesFactory =
   ({ db }: { db: Knex }): QueryWorkspaces =>
   async ({ limit, cursor, filter }) => {
-    const { applyCursor, resolveNewCursor } = compositeCursorTools({
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
       schema: Workspaces,
       cols: ['createdAt', 'id']
     })
@@ -286,7 +286,7 @@ export const queryWorkspacesFactory =
       .select()
       .limit(limit)
 
-    applyCursor({
+    applyCursorSortAndFilter({
       query,
       cursor
     })
