@@ -4,8 +4,8 @@ import readline from 'readline'
 import path from 'path'
 import isValidFilename from 'valid-filename'
 
-import { downloadFile, getFileInfoByName } from '@/controller/filesApi.js'
-import { logger } from '@/observability/logging.js'
+import { downloadFile, getFileInfoByName } from '../controller/filesApi.js'
+import { logger } from '../observability/logging.js'
 
 const getReferencedMtlFiles = async ({ objFilePath }: { objFilePath: string }) => {
   const mtlFiles: string[] = []
