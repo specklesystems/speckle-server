@@ -30,7 +30,7 @@ def speckle_image(package,original_package_name=None,image_prefix='localhost:500
 
     workspace='/tmp/ci/workspace'
 
-    docker_image_tag = '{}/speckle-{}'.format(image_prefix,package)
+    docker_image_tag = 'speckle/speckle-{}'.format(image_prefix,package)
     original_docker_image_tag = '{}/speckle-{}'.format(image_prefix,original_package_name)
     existing_ref = '{}:{}'.format(original_docker_image_tag, image_version_tag)
     return docker_load(docker_image_tag,

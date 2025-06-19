@@ -82,3 +82,4 @@ jobs:
         env:
           IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
           IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
+          LOAD_DOCKER: 'true'
