@@ -43,7 +43,7 @@ spec:
           {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
           httpGet:
             path: /healthz
-            port: 80
+            port: 9080
           {{- else }}
           exec:
             command:
