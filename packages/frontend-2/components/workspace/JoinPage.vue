@@ -64,6 +64,8 @@
         </FormButton>
         <FormButton
           v-if="!hasApprovedWorkspace"
+          v-tippy="!canClickCreate ? cantClickCreateReason : undefined"
+          :disabled="!canClickCreate"
           size="lg"
           full-width
           color="outline"
@@ -100,6 +102,7 @@ import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~/lib/commo
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { navigationWorkspaceInvitesQuery } from '~~/lib/navigation/graphql/queries'
+import { useCanCreateWorkspace } from '~/lib/projects/composables/permissions'
 
 const { logout } = useAuthManager()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
@@ -111,6 +114,12 @@ const {
 } = useDiscoverableWorkspaces()
 
 const { result: workspaceInviteResult } = useQuery(navigationWorkspaceInvitesQuery)
+
+const { activeUser } = useActiveUser()
+
+const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace({
+  activeUser: computed(() => activeUser.value)
+})
 
 const showAllWorkspaces = ref(false)
 

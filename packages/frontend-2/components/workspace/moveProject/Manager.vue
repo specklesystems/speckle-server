@@ -56,6 +56,8 @@
         </FormButton>
         <FormButton
           v-else-if="step.id === DialogStepId.workspace"
+          v-tippy="!canClickCreate ? cantClickCreateReason : undefined"
+          :disabled="!canClickCreate"
           color="outline"
           full-width
           @click="navigateTo(workspaceCreateRoute)"
@@ -81,6 +83,7 @@ import {
 import { workspaceCreateRoute } from '~/lib/common/helpers/route'
 import { useMultiStepDialog } from '~/lib/common/composables/dialog'
 import type { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
+import { useCanCreateWorkspace } from '~/lib/projects/composables/permissions'
 
 const DialogStepId = {
   intro: 'intro',
@@ -171,6 +174,12 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
+
+const { activeUser } = useActiveUser()
+
+const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace({
+  activeUser: computed(() => activeUser.value)
+})
 
 // Internal state management
 const selectedProject = ref<WorkspaceMoveProjectManager_ProjectFragment | null>(null)
