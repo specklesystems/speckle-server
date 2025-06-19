@@ -1,9 +1,9 @@
-import { REDIS_URL } from '../src/nextGen/config.js'
+import { REDIS_URL, QUEUE_NAME } from '../src/nextGen/config.js'
 import { initializeQueue } from '@speckle/shared/queue'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
 
 const jobQueue = await initializeQueue<JobPayload>({
-  queueName: 'fileimport-service-jobs',
+  queueName: QUEUE_NAME,
   redisUrl: REDIS_URL
 })
 

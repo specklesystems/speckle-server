@@ -56,7 +56,7 @@ type TestContext = {
   fileName: string
 }
 
-const FILE_TYPE = 'stl'
+const FILE_TYPE = 'obj'
 
 const generateUploadUrl = async (params: TestContext) => {
   const { apollo, projectId, fileName, shouldSucceed } = params
