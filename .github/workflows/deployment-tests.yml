@@ -29,7 +29,7 @@ jobs:
       - name: Install the nix package manager
         uses: cachix/install-nix-action@v31
         with:
-          nix_path: /nix/var/nix/profiles/per-user/root/channels/
+          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/63dacb46bf939521bdc93981b4cbb7ecb58427a0.tar.gz
       - name: Initialize nix shell
         run: |
           nix-shell \
