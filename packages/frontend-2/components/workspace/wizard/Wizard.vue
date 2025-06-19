@@ -11,9 +11,20 @@
           Something went wrong with your payment. Please try again.
         </template>
       </CommonAlert>
+      <CommonAlert
+        v-if="!canClickCreate"
+        color="danger"
+        class="w-lg mb-6 max-w-lg mx-auto"
+      >
+        <template #title>
+          You cannot create a workspace as you are a member of a workspace which does
+          not allow it.
+        </template>
+      </CommonAlert>
       <WorkspaceWizardStepDetails
         v-if="currentStep === WizardSteps.Details"
         :disable-slug-edit="!!workspaceId"
+        :disabled="!canClickCreate"
       />
       <WorkspaceWizardStepPricing v-else-if="currentStep === WizardSteps.Pricing" />
       <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
@@ -32,6 +43,7 @@ import type { WorkspaceWizardState } from '~~/lib/workspaces/helpers/types'
 import { PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { useCanCreateWorkspace } from '~/lib/projects/composables/permissions'
 
 graphql(`
   fragment WorkspaceWizard_Workspace on Workspace {
@@ -52,6 +64,11 @@ const { cancelCheckoutSession } = useBillingActions()
 const route = useRoute()
 const mixpanel = useMixpanel()
 const { goToStep, currentStep, isLoading, state } = useWorkspacesWizard()
+const { activeUser } = useActiveUser()
+
+const { canClickCreate } = useCanCreateWorkspace({
+  activeUser: computed(() => activeUser.value)
+})
 
 const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,
