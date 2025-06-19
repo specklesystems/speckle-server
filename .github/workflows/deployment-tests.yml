@@ -28,6 +28,8 @@ jobs:
           sudo chmod 777 /nix
       - name: Install the nix package manager
         uses: cachix/install-nix-action@v31
+        with:
+          nix_path: /nix/var/nix/profiles/per-user/root/channels/
       - name: Initialize nix shell
         run: |
           nix-shell \
