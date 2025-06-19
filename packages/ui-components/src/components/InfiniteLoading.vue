@@ -10,7 +10,7 @@
       </template>
       <template #complete>
         <!-- No "No more items" message, instead a small amount of spacing -->
-        <div class="h-8"></div>
+        <div :class="{ 'h-8': !hideWhenComplete }"></div>
       </template>
       <template #error="{ retry }">
         <div class="w-full flex flex-col items-center my-2 space-y-2 mt-4">
@@ -54,6 +54,10 @@ defineProps<{
    * Whether to allow retry and show a retry button when loading fails
    */
   allowRetry?: boolean
+  /**
+   * Hide completely and prevent taking any space when not loading
+   */
+  hideWhenComplete?: boolean
 }>()
 
 const wrapper = ref(null as Nullable<HTMLElement>)

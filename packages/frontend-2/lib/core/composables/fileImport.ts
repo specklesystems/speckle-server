@@ -37,52 +37,55 @@ export function useFileImport(params: {
    * model list view uploads, where list items don't necessarily represent real models)
    */
   modelName?: MaybeRef<MaybeNullOrUndefined<string>>
+  /**
+   * If true, the upload will be prepared and validated, but for it to start you must invoke uploadSelected() manually
+   */
+  manuallyTriggerUpload?: boolean
+  /**
+   * Optionally handle the file upload completion event.
+   */
+  fileUploadedCallback?: Optional<(file: UploadFileItem) => void>
+  /**
+   * Optionally handle the file selection event.
+   */
+  fileSelectedCallback?: Optional<() => void>
 }) {
-  const { project, model } = params
+  const {
+    project,
+    model,
+    manuallyTriggerUpload,
+    fileUploadedCallback,
+    fileSelectedCallback
+  } = params
 
   const { maxSizeInBytes } = useServerFileUploadLimit()
   const authToken = useAuthCookie()
   const apiOrigin = useApiOrigin()
 
   const accept = ref('.ifc,.stl,.obj')
-  const upload = ref(null as Nullable<UploadFileItem>)
+  const upload = ref(null as Nullable<UploadFileItem & { modelName: Optional<string> }>)
   const isUploading = ref(false)
 
   const modelName = computed(() => unref(params.modelName) || unref(model)?.name)
-
-  let onFileUploadedCb: Optional<(file: UploadFileItem) => void> = undefined
-  const onFileUploaded = (cb: (file: UploadFileItem) => void) => {
-    onFileUploadedCb = cb
-  }
+  const isUploadable = computed(() => {
+    if (!upload.value) return false
+    if (upload.value.error) return false
+    if (isUploading.value) return false
+    if (!authToken.value) return false
+    if (!upload.value.file) return false
+    return true
+  })
 
   const mp = useMixpanel()
-  const onFilesSelected = async (params: {
-    files: UploadableFileItem[]
+
+  const uploadSelected = async (params?: {
     /**
      * Optionally override model name to target for the upload
      */
     modelName?: string
   }) => {
-    if (isUploading.value || !authToken.value) return
-
-    const file = params.files[0]
-    if (!file) return
-
-    upload.value = {
-      ...file,
-      result: undefined,
-      progress: 0
-    }
-
-    if (file.error) {
-      return
-    }
-
-    upload.value = {
-      ...file,
-      result: undefined,
-      progress: 0
-    }
+    if (!isUploadable.value || !upload.value || !authToken.value) return
+    const finalModelName = params?.modelName || upload.value.modelName
 
     isUploading.value = true
     try {
@@ -90,7 +93,7 @@ export function useFileImport(params: {
         {
           file: upload.value.file,
           projectId: unref(project).id,
-          modelName: params.modelName || modelName.value || undefined,
+          modelName: finalModelName,
           authToken: authToken.value,
           apiOrigin
         },
@@ -106,11 +109,11 @@ export function useFileImport(params: {
       mp.track('Upload Action', {
         type: 'action',
         name: 'create',
-        source: modelName.value ? 'model card' : 'empty card'
+        source: finalModelName ? 'model card' : 'empty card'
         // extension
       })
 
-      onFileUploadedCb?.(upload.value)
+      fileUploadedCallback?.(upload.value)
     } catch (e) {
       upload.value.result = {
         uploadStatus: BlobUploadStatus.Error,
@@ -123,12 +126,48 @@ export function useFileImport(params: {
     }
   }
 
+  const resetSelected = () => {
+    if (isUploading.value) return
+    upload.value = null
+  }
+
+  const onFilesSelected = async (params: {
+    files: UploadableFileItem[]
+    /**
+     * Optionally override model name to target for the upload
+     */
+    modelName?: string
+  }) => {
+    if (isUploading.value || !authToken.value) return
+
+    const file = params.files[0]
+    if (!file) return
+
+    upload.value = {
+      ...file,
+      result: undefined,
+      progress: 0,
+      modelName: params.modelName || modelName.value || undefined
+    }
+
+    if (file.error) {
+      return
+    }
+
+    fileSelectedCallback?.()
+    if (!manuallyTriggerUpload) {
+      await uploadSelected()
+    }
+  }
+
   return {
     maxSizeInBytes,
     onFilesSelected,
     accept,
     upload,
     isUploading,
-    onFileUploaded
+    uploadSelected,
+    resetSelected,
+    isUploadable
   }
 }

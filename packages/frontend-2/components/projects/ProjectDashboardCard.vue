@@ -85,32 +85,35 @@
         </div>
       </div>
       <div :class="gridClasses">
-        <ProjectPageModelsCard
-          v-for="pendingModel in pendingModels"
-          :key="pendingModel.id"
-          :model="pendingModel"
-          :project="project"
-          show-versions
-          :project-id="project.id"
-          height="h-48"
-          show-actions
-        />
-        <ProjectPageModelsCard
-          v-for="model in models"
-          :key="model.id"
-          :model="model"
-          :project="project"
-          show-versions
-          show-actions
-          :project-id="project.id"
-          height="h-48"
-          @click="router.push(modelRoute(project.id, model.id))"
-        />
+        <template v-if="!isModelUploading">
+          <ProjectPageModelsCard
+            v-for="pendingModel in pendingModels"
+            :key="pendingModel.id"
+            :model="pendingModel"
+            :project="project"
+            show-versions
+            :project-id="project.id"
+            height="h-48"
+            show-actions
+          />
+          <ProjectPageModelsCard
+            v-for="model in models"
+            :key="model.id"
+            :model="model"
+            :project="project"
+            show-versions
+            show-actions
+            :project-id="project.id"
+            height="h-48"
+            @click="router.push(modelRoute(project.id, model.id))"
+          />
+        </template>
         <ProjectCardImportFileArea
-          v-if="hasNoModels"
+          v-if="hasNoModels || isModelUploading"
           empty-state-variant="modelsSection"
           :project="project"
           class="h-28 col-span-4"
+          @uploading="onModelUploading"
         />
       </div>
     </div>
@@ -129,6 +132,7 @@ import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { RoleInfo, type StreamRoles } from '@speckle/shared'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 defineEmits<{
   (e: 'moveProject'): void
@@ -142,6 +146,8 @@ const props = defineProps<{
 
 const router = useRouter()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+const isModelUploading = ref(false)
 
 const isOwner = computed(() => props.project.role === Roles.Stream.Owner)
 const projectId = computed(() => props.project.id)
@@ -194,4 +200,8 @@ const gridClasses = computed(() => [
   props.workspacePage && '2xl:[&>*:nth-child(n+2)]:block',
   '2xl:[&>*:nth-child(n+3)]:block'
 ])
+
+const onModelUploading = (payload: FileAreaUploadingPayload) => {
+  isModelUploading.value = payload.isUploading
+}
 </script>

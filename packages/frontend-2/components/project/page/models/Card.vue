@@ -61,15 +61,15 @@
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
-          class="px-4 w-full h-full"
+          class="px-4 w-full h-48"
         />
         <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
           :upload="pendingVersion"
           type="subversion"
-          class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
+          class="px-4 w-full h-48 text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
-        <template v-else-if="previewUrl">
+        <template v-else-if="previewUrl && !isVersionUploading">
           <NuxtLink
             :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
             class="relative z-20 bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
@@ -79,7 +79,7 @@
         </template>
         <div
           v-if="!isPendingModelFragment(model) && project"
-          v-show="!previewUrl && !pendingVersion"
+          v-show="!pendingVersion && (isVersionUploading || !previewUrl)"
           class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
@@ -88,6 +88,7 @@
             :project="project"
             :model="model"
             class="w-full h-full"
+            @uploading="onVersionUploading"
           />
         </div>
       </div>
@@ -132,6 +133,7 @@ import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -175,6 +177,8 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+
+const isVersionUploading = ref(false)
 const showActionsMenu = ref(false)
 const hovered = ref(false)
 
@@ -231,6 +235,10 @@ const onCardClick = (event: KeyboardEvent | MouseEvent) => {
     return
   }
   emit('click', event)
+}
+
+const onVersionUploading = (payload: FileAreaUploadingPayload) => {
+  isVersionUploading.value = payload.isUploading
 }
 
 const triggerVersionUpload = () => {
