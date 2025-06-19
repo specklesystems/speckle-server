@@ -84,6 +84,7 @@ import type {
   ProjectCardImportFileArea_ProjectFragment,
   ProjectPageLatestItemsModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 type EmptyStateVariants = 'modelGrid' | 'modelList' | 'modelsSection'
 
@@ -111,6 +112,13 @@ graphql(`
     ...UseFileImport_Model
   }
 `)
+
+const emit = defineEmits<{
+  /**
+   * Emits when files start/finish uploading
+   */
+  uploading: [payload: FileAreaUploadingPayload]
+}>()
 
 const props = defineProps<{
   project: ProjectCardImportFileArea_ProjectFragment
@@ -284,6 +292,11 @@ watch(showNewModelDialog, (newVal, oldVal) => {
       resetSelected()
     }
   }
+})
+
+watch(isUploading, (newVal) => {
+  // fileUpload is always gonna be non-null when isUploading changes
+  emit('uploading', { isUploading: newVal, upload: fileUpload.value! })
 })
 
 defineExpose({
