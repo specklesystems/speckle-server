@@ -463,6 +463,11 @@ describe('Workspaces GQL CRUD', () => {
           limit: 10,
           cursor: resA.data?.workspace.team.cursor
         })
+        const resC = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          limit: 10,
+          cursor: resB.data?.workspace.team.cursor
+        })
 
         expect(resA).to.not.haveGraphQLErrors()
         expect(resA.data?.workspace.team.items.length).to.equal(2)
@@ -475,7 +480,11 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(resB).to.not.haveGraphQLErrors()
         expect(resB.data?.workspace.team.items.length).to.equal(4)
-        expect(resB.data?.workspace.team.cursor).to.be.null
+        expect(resB.data?.workspace.team.cursor).to.be.not.null
+
+        expect(resC).to.not.haveGraphQLErrors()
+        expect(resC.data?.workspace.team.items.length).to.equal(0)
+        expect(resC.data?.workspace.team.cursor).to.be.null
       })
 
       it('should return correct total count', async () => {

@@ -69,7 +69,8 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
       await sleep(2000)
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 })
@@ -98,7 +99,8 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
       // timeout far in the future, so it won't be garbage collected
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 * TIME.hour })
@@ -133,7 +135,8 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
 
       const results = await getFileInfoFactory({ db })({
@@ -175,16 +178,19 @@ describe('FileUploads @fileuploads', () => {
 
         const pushJobToFileImporter = pushJobToFileImporterFactory({
           getServerOrigin: () => serverOrigin,
-          scheduleJob: async (jobData) => {
-            assign(result, jobData)
-          },
+
           createAppToken: async (args) => {
             usedUserId = args.userId
             return token
           }
         })
 
-        await pushJobToFileImporter(upload)
+        await pushJobToFileImporter({
+          scheduleJob: async (jobData) => {
+            assign(result, jobData)
+          },
+          ...upload
+        })
 
         expect(usedUserId).to.equal(upload.userId)
         const expected: JobPayload = {
@@ -209,9 +215,14 @@ describe('FileUploads @fileuploads', () => {
           emittedEventPayload = payload
         }
         const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+          queues: [
+            {
+              scheduleJob: async () => {},
+              supportedFileTypes: ['txt']
+            }
+          ],
           pushJobToFileImporter: pushJobToFileImporterFactory({
             getServerOrigin: () => serverOrigin,
-            scheduleJob: async () => {},
             createAppToken: async () => token
           }),
           saveUploadFile: saveUploadFileFactoryV2({ db }),
@@ -225,7 +236,7 @@ describe('FileUploads @fileuploads', () => {
           fileId,
           fileName: 'testfile.txt',
           fileSize: 100,
-          fileType: 'text/plain',
+          fileType: 'txt',
           modelId: createdBranch.id,
           modelName: createdBranch.name
         })
@@ -243,7 +254,7 @@ describe('FileUploads @fileuploads', () => {
           userId: userOneId,
           projectId: createdStreamId,
           fileSize: 100,
-          fileType: 'text/plain'
+          fileType: 'txt'
         })
       })
     }
