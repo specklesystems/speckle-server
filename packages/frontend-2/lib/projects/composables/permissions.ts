@@ -9,7 +9,8 @@ import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseCanCreateModel_ProjectFragment,
   UseCanCreatePersonalProject_UserFragment,
-  UseCanInviteToProject_ProjectFragment
+  UseCanInviteToProject_ProjectFragment,
+  UseCanCreateWorkspace_UserFragment
 } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
@@ -36,6 +37,38 @@ export const useCanCreatePersonalProject = (params: {
     ),
     disclaimerErrorCodes: [PersonalProjectsLimitedError.code],
     fallbackReason: 'Cannot create personal project'
+  })
+
+  return {
+    canClickCreate,
+    canActuallyCreate,
+    cantClickCreateReason,
+    cantClickCreateCode
+  }
+}
+
+graphql(`
+  fragment UseCanCreateWorkspace_User on User {
+    permissions {
+      canCreateWorkspace {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
+export const useCanCreateWorkspace = (params: {
+  activeUser: MaybeRef<MaybeNullOrUndefined<UseCanCreateWorkspace_UserFragment>>
+}) => {
+  const {
+    canClickAction: canClickCreate,
+    canActuallyInvokeAction: canActuallyCreate,
+    cantClickErrorReason: cantClickCreateReason,
+    cantClickErrorCode: cantClickCreateCode
+  } = usePermissionedAction({
+    check: computed(() => unref(params.activeUser)?.permissions?.canCreateWorkspace),
+    disclaimerErrorCodes: [PersonalProjectsLimitedError.code],
+    fallbackReason: 'Cannot create workspace'
   })
 
   return {

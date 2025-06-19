@@ -36,6 +36,7 @@ graphql(`
       }
     }
     ...UseCanCreatePersonalProject_User
+    ...UseCanCreateWorkspace_User
   }
 `)
 

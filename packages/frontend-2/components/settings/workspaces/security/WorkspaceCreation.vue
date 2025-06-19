@@ -16,15 +16,18 @@
             can still create workspaces.
           </p>
         </div>
-        <!-- Update when API is ready for hasAccessToFeature -->
         <div
-          v-if="props.workspace?.permissions?.canMakeWorkspaceExclusive.authorized"
-          v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
+          v-if="props.workspace?.hasAccessToExclusiveMembership"
+          v-tippy="
+            !canMakeWorkspaceExclusive.authorized
+              ? canMakeWorkspaceExclusive.message
+              : undefined
+          "
         >
           <FormSwitch
             v-model="isExclusive"
             name="workspace-exclusive"
-            :disabled="!isWorkspaceAdmin"
+            :disabled="!canMakeWorkspaceExclusive.authorized"
             :show-label="false"
           />
         </div>
@@ -42,7 +45,6 @@
 </template>
 
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecurityWorkspaceCreation_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
@@ -55,10 +57,10 @@ graphql(`
     slug
     role
     isExclusive
+    hasAccessToExclusiveMembership: hasAccessToFeature(featureName: exclusiveMembership)
     permissions {
       canMakeWorkspaceExclusive {
         authorized
-        code
         message
       }
     }
@@ -73,7 +75,9 @@ const mixpanel = useMixpanel()
 const { mutate: updateExclusive } = useMutation(workspaceUpdateExclusiveMutation)
 const { triggerNotification } = useGlobalToast()
 
-const isWorkspaceAdmin = computed(() => props.workspace.role === Roles.Workspace.Admin)
+const canMakeWorkspaceExclusive = computed(
+  () => props.workspace?.permissions?.canMakeWorkspaceExclusive
+)
 
 const isExclusive = computed({
   get: () => props.workspace?.isExclusive || false,

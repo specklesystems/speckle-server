@@ -2,8 +2,9 @@
   <div class="p-2 pt-1 max-h-[60vh] lg:max-h-96 overflow-y-auto simple-scrollbar">
     <LayoutSidebarMenuGroup
       title="Workspaces"
-      :icon-click="isGuest ? undefined : handlePlusClick"
-      icon-text="Create workspace"
+      :icon-click="handlePlusClick"
+      :icon-text="canClickCreate ? 'Create workspace' : cantClickCreateReason"
+      :icon-disabled="!canClickCreate"
       always-show-icon
     >
       <HeaderWorkspaceSwitcherListItem
@@ -24,6 +25,7 @@
 <script setup lang="ts">
 import type { HeaderWorkspaceSwitcherWorkspaceListItem_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { projectsRoute, workspaceCreateRoute } from '~/lib/common/helpers/route'
+import { useCanCreatePersonalProject } from '~/lib/projects/composables/permissions'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 defineProps<{
@@ -33,7 +35,11 @@ defineProps<{
 
 const route = useRoute()
 const mixpanel = useMixpanel()
-const { isGuest } = useActiveUser()
+const { activeUser } = useActiveUser()
+
+const { canClickCreate, cantClickCreateReason } = useCanCreatePersonalProject({
+  activeUser: computed(() => activeUser.value)
+})
 
 const handlePlusClick = () => {
   navigateTo(workspaceCreateRoute)
