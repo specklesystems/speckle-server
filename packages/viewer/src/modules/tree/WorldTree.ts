@@ -124,7 +124,7 @@ export class WorldTree {
   }
 
   public hasInstanceId(id: string, subtreeId: number = 1) {
-    return this.nodeMaps[subtreeId] && this.nodeMaps[subtreeId].hasInstancId(id)
+    return this.nodeMaps[subtreeId] && this.nodeMaps[subtreeId].hasInstanceId(id)
   }
 
   public hasId(id: string, subtreeId: number = 1) {

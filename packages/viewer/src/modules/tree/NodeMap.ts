@@ -90,14 +90,14 @@ export class NodeMap {
   }
 
   public hasId(id: string): boolean {
-    return this.hasNodeId(id) || this.hasInstancId(id)
+    return this.hasNodeId(id) || this.hasInstanceId(id)
   }
 
   public hasNodeId(id: string): boolean {
     return this.all[id] !== undefined
   }
 
-  public hasInstancId(id: string): boolean {
+  public hasInstanceId(id: string): boolean {
     if (id.includes(NodeMap.COMPOUND_ID_CHAR)) {
       const baseId = id.substring(0, id.indexOf(NodeMap.COMPOUND_ID_CHAR))
       if (this.instances[baseId]) {
