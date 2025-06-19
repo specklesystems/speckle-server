@@ -485,6 +485,14 @@ export const useWorkspaceUpdateRole = () => {
             'seatType',
             () => SeatTypes.Editor
           )
+          if (input.role) {
+            modifyObjectField(
+              cache,
+              getCacheId('WorkspaceCollaborator', input.userId),
+              'role',
+              () => input.role!
+            )
+          }
         }
       }
     ).catch(convertThrowIntoFetchResult)
@@ -656,12 +664,20 @@ export const useOnWorkspaceUpdated = (params: {
   }
 }
 
-export const useWorkspaceLastAdminCheck = (params: { workspaceSlug: string }) => {
+export const useWorkspaceLastAdminCheck = (params: {
+  workspaceSlug: Ref<string | undefined>
+}) => {
   const { workspaceSlug } = params
 
-  const { result } = useQuery(workspaceLastAdminCheckQuery, {
-    slug: workspaceSlug
-  })
+  const { result } = useQuery(
+    workspaceLastAdminCheckQuery,
+    () => ({
+      slug: workspaceSlug.value || ''
+    }),
+    () => ({
+      enabled: !!workspaceSlug.value
+    })
+  )
 
   const isLastAdmin = computed(
     () => result.value?.workspaceBySlug?.teamByRole?.admins?.totalCount === 1
