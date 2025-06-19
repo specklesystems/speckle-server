@@ -536,18 +536,58 @@
             }
           }
         },
-        "fileimportServiceConnectionString": {
+        "fileImportService": {
           "type": "object",
           "properties": {
-            "secretName": {
-              "type": "string",
-              "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-              "default": ""
+            "rhino": {
+              "type": "object",
+              "properties": {
+                "connectionString": {
+                  "type": "object",
+                  "properties": {
+                    "secretName": {
+                      "type": "string",
+                      "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+                      "default": ""
+                    },
+                    "secretKey": {
+                      "type": "string",
+                      "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
+                      "default": ""
+                    }
+                  }
+                },
+                "queueName": {
+                  "type": "string",
+                  "description": "Optional. The name of the queue created within the Redis cluster.",
+                  "default": "fileimport-service-jobs"
+                }
+              }
             },
-            "secretKey": {
-              "type": "string",
-              "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
-              "default": ""
+            "ifc": {
+              "type": "object",
+              "properties": {
+                "connectionString": {
+                  "type": "object",
+                  "properties": {
+                    "secretName": {
+                      "type": "string",
+                      "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+                      "default": ""
+                    },
+                    "secretKey": {
+                      "type": "string",
+                      "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
+                      "default": ""
+                    }
+                  }
+                },
+                "queueName": {
+                  "type": "string",
+                  "description": "Optional. The name of the queue created within the Redis cluster.",
+                  "default": "fileimport-service-jobs"
+                }
+              }
             }
           }
         },

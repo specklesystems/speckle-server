@@ -78,7 +78,7 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
         info: { filename: string; encoding: string; mimeType: string }
       ) => {
         const { filename: fileName } = info
-        const fileType = fileName?.split('.')?.pop()?.toLowerCase()
+        const fileType = fileName?.split('.')?.pop()?.toLowerCase().trim()
         logger = logger.child({ fileName, fileType })
         const registerUploadResult = (processingPromise: Promise<ProcessingResult>) => {
           finalizePromises.push(

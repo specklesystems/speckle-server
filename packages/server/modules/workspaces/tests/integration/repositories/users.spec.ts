@@ -86,7 +86,7 @@ describe('Workspace repositories', () => {
       })
 
       it('should return all workspace collaborators not members of the project', async () => {
-        const invitable = await getInvitableCollaboratorsByProjectId({
+        const { items: invitable } = await getInvitableCollaboratorsByProjectId({
           filter: {
             workspaceId: testWorkspace.id,
             projectId: testProject.id
@@ -100,7 +100,7 @@ describe('Workspace repositories', () => {
         ])
       })
       it('should should filter by user name', async () => {
-        const invitable = await getInvitableCollaboratorsByProjectId({
+        const { items: invitable } = await getInvitableCollaboratorsByProjectId({
           filter: {
             workspaceId: testWorkspace.id,
             projectId: testProject.id,
@@ -114,7 +114,7 @@ describe('Workspace repositories', () => {
         ])
       })
       it('should should filter by user email', async () => {
-        const invitable = await getInvitableCollaboratorsByProjectId({
+        const { items: invitable } = await getInvitableCollaboratorsByProjectId({
           filter: {
             workspaceId: testWorkspace.id,
             projectId: testProject.id,
@@ -128,7 +128,7 @@ describe('Workspace repositories', () => {
         ])
       })
       it('should should filter by user name and email', async () => {
-        const invitable = await getInvitableCollaboratorsByProjectId({
+        const { items: invitable } = await getInvitableCollaboratorsByProjectId({
           filter: {
             workspaceId: testWorkspace.id,
             projectId: testProject.id,

@@ -111,7 +111,10 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+
+    //large tower
+    //'https://app.speckle.systems/projects/e2a7b596f2/models/ddaf8349f5'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -308,7 +311,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
     // 'https://latest.speckle.systems/streams/97750296c2/commits/2a6fd781f2' // NEW
 
-    'https://latest.speckle.systems/streams/97750296c2/commits/48f0567a88' // 1015849 objects
+    // 'https://latest.speckle.systems/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.systems/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.systems/streams/97750296c2/commits/96ffc3c786' // 92209 objects
     // 'https://latest.speckle.systems/streams/97750296c2/commits/92115d3789' // 390974 objects 19kk tris

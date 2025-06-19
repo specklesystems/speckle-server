@@ -151,7 +151,7 @@ export const useSettingsMembersActions = (params: {
   const { activeUser } = useActiveUser()
 
   const { isLastAdmin } = useWorkspaceLastAdminCheck({
-    workspaceSlug: params.workspaceSlug.value || ''
+    workspaceSlug: computed(() => params.workspaceSlug.value)
   })
 
   const { statusIsCanceled } = useWorkspacePlan(params.workspaceSlug.value || '')

@@ -1,4 +1,5 @@
 import { UserEmails } from '@/modules/core/dbSchema'
+import { compositeCursorTools } from '@/modules/shared/helpers/graphqlHelper'
 import {
   CreateWorkspaceJoinRequest,
   GetWorkspaceJoinRequest,
@@ -96,18 +97,30 @@ export const getAdminWorkspaceJoinRequestsFactory =
     cursor?: string
     limit: number
   }) => {
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: WorkspaceJoinRequests,
+      cols: ['createdAt', 'userId']
+    })
     const query = adminWorkspaceJoinRequestsBaseQueryFactory(db)(filter)
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
 
-    if (cursor) {
-      query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
-    }
-    return await query
+    query
       .select<WorkspaceJoinRequest[]>([
         ...WorkspaceJoinRequests.cols,
         UserEmails.col.email
       ])
-      .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
       .limit(limit)
+
+    const items = await query
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
+    }
   }
 
 export const countAdminWorkspaceJoinRequestsFactory =
@@ -138,7 +151,7 @@ const workspaceJoinRequestsBaseQueryFactory =
 
 export const getWorkspaceJoinRequestsFactory =
   ({ db }: { db: Knex }) =>
-  ({
+  async ({
     filter,
     cursor,
     limit
@@ -148,14 +161,24 @@ export const getWorkspaceJoinRequestsFactory =
     limit: number
   }) => {
     const query = workspaceJoinRequestsBaseQueryFactory(db)(filter)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: WorkspaceJoinRequests,
+      cols: ['createdAt', 'userId']
+    })
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
 
-    if (cursor) {
-      query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
+    query.select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols).limit(limit)
+
+    const items = await query
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
     }
-    return query
-      .select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols)
-      .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
-      .limit(limit)
   }
 
 export const countWorkspaceJoinRequestsFactory =

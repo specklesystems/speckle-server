@@ -400,13 +400,29 @@ redis:
     ##
     secretKey: ''
 
-  fileimportServiceConnectionString:
-    ## @param redis.fileimportServiceConnectionString.secretName Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
-    ##
-    secretName: ''
-    ## @param redis.fileimportServiceConnectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
-    ##
-    secretKey: ''
+  fileImportService:
+    rhino:
+      connectionString:
+        ## @param redis.fileImportService.rhino.connectionString.secretName Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+        ##
+        secretName: ''
+        ## @param redis.fileImportService.rhino.connectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
+        ##
+        secretKey: ''
+      ## @param redis.fileImportService.rhino.queueName Optional. The name of the queue created within the Redis cluster.
+      ##
+      queueName: 'fileimport-service-jobs'
+    ifc:
+      connectionString:
+        ## @param redis.fileImportService.ifc.connectionString.secretName Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+        ##
+        secretName: ''
+        ## @param redis.fileImportService.ifc.connectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
+        ##
+        secretKey: ''
+      ## @param redis.fileImportService.ifc.queueName Optional. The name of the queue created within the Redis cluster.
+      ##
+      queueName: 'fileimport-service-jobs'
 
   ## @extra redis.networkPolicy If networkPolicy is enabled for Speckle server, this provides the NetworkPolicy with the necessary details to allow egress connections to the Redis store
   ##
