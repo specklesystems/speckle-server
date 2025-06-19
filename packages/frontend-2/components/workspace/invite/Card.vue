@@ -1,6 +1,5 @@
 <template>
   <WorkspaceCard
-    :logo="''"
     :name="invite.workspaceName"
     :class="isAccepted ? '' : 'bg-foundation'"
     :banner-text="`${invite.invitedBy.name} invited you to join this workspace`"
