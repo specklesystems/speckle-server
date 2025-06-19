@@ -46,6 +46,12 @@ const buildInvitableCollaboratorsByProjectIdQueryFactory =
   }) => {
     const query = tables
       .users(db)
+      .select([
+        ...Users.cols,
+        WorkspaceAcl.groupArray('workspaceAcl'),
+        ServerAcl.groupArray('serverAcl'),
+        UserEmails.groupArray('emails')
+      ])
       .join(WorkspaceAcl.name, WorkspaceAcl.col.userId, Users.col.id)
       .join(Streams.name, Streams.col.workspaceId, WorkspaceAcl.col.workspaceId)
       .join(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
@@ -99,14 +105,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
       cursor
     })
 
-    query
-      .limit(limit)
-      .select([
-        ...Users.cols,
-        WorkspaceAcl.groupArray('workspaceAcl'),
-        ServerAcl.groupArray('serverAcl'),
-        UserEmails.groupArray('emails')
-      ])
+    query.limit(limit)
 
     const res = await query
     const nextCursor = resolveNewCursor(res)
@@ -144,11 +143,16 @@ export const countInvitableCollaboratorsByProjectIdFactory =
     }
   }) => {
     const { workspaceId, projectId, search } = filter
-    const query = buildInvitableCollaboratorsByProjectIdQueryFactory({ db })({
-      workspaceId,
-      projectId,
-      search
-    })
-    const [res] = await query.count()
+    const query = db
+      .from(
+        buildInvitableCollaboratorsByProjectIdQueryFactory({ db })({
+          workspaceId,
+          projectId,
+          search
+        }).as('sq1')
+      )
+      .count()
+
+    const [res] = await query
     return parseInt(res?.count?.toString() ?? '0')
   }
