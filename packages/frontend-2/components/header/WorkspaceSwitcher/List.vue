@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import type { HeaderWorkspaceSwitcherWorkspaceListItem_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { projectsRoute, workspaceCreateRoute } from '~/lib/common/helpers/route'
-import { useCanCreatePersonalProject } from '~/lib/projects/composables/permissions'
+import { useCanCreateWorkspace } from '~/lib/projects/composables/permissions'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 defineProps<{
@@ -37,7 +37,7 @@ const route = useRoute()
 const mixpanel = useMixpanel()
 const { activeUser } = useActiveUser()
 
-const { canClickCreate, cantClickCreateReason } = useCanCreatePersonalProject({
+const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace({
   activeUser: computed(() => activeUser.value)
 })
 
