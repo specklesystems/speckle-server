@@ -210,6 +210,8 @@ type Documents = {
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": typeof types.ServerInfoBlobSizeLimitDocument,
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": typeof types.ServerInfoAllScopesDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": typeof types.ProjectModelsSelectorValuesDocument,
+    "\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n": typeof types.GenerateUploadUrlDocument,
+    "\n  mutation StartFileImport($input: StartFileImportInput!) {\n    fileUploadMutations {\n      startFileImport(input: $input) {\n        id\n      }\n    }\n  }\n": typeof types.StartFileImportDocument,
     "\n  fragment UseFileImport_Project on Project {\n    id\n  }\n": typeof types.UseFileImport_ProjectFragmentDoc,
     "\n  fragment UseFileImport_Model on Model {\n    id\n    name\n  }\n": typeof types.UseFileImport_ModelFragmentDoc,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": typeof types.MainServerInfoDataDocument,
@@ -660,6 +662,8 @@ const documents: Documents = {
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": types.ServerInfoAllScopesDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
+    "\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n": types.GenerateUploadUrlDocument,
+    "\n  mutation StartFileImport($input: StartFileImportInput!) {\n    fileUploadMutations {\n      startFileImport(input: $input) {\n        id\n      }\n    }\n  }\n": types.StartFileImportDocument,
     "\n  fragment UseFileImport_Project on Project {\n    id\n  }\n": types.UseFileImport_ProjectFragmentDoc,
     "\n  fragment UseFileImport_Model on Model {\n    id\n    name\n  }\n": types.UseFileImport_ModelFragmentDoc,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": types.MainServerInfoDataDocument,
@@ -1712,6 +1716,14 @@ export function graphql(source: "\n  query ServerInfoAllScopes {\n    serverInfo
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation StartFileImport($input: StartFileImportInput!) {\n    fileUploadMutations {\n      startFileImport(input: $input) {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation StartFileImport($input: StartFileImportInput!) {\n    fileUploadMutations {\n      startFileImport(input: $input) {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

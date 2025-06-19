@@ -436,7 +436,7 @@ const triggerVersionUpload = () => {
 }
 
 const onVersionUploading = (payload: FileAreaUploadingPayload) => {
-  isVersionUploading.value = payload.isUploading
+  isVersionUploading.value = !!(payload.isUploading || payload.error)
 }
 
 const onVersionsClick = () => {
