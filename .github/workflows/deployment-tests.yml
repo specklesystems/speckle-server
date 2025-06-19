@@ -35,7 +35,7 @@ jobs:
           ./tests/deployment/helm/helm-chart-shell.nix
         env:
           IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
-      - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
+      - run: export KUBECONFIG=$(pwd)/.kube/config
       - run: echo "${KUBECONFIG}"
       - name: Template Speckle Server Helm Chart
         run: |
