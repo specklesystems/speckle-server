@@ -29,8 +29,8 @@
           <span>{{ errorMessage }}</span>
         </span>
         <div
-          v-if="fileUpload.progress > 0"
-          :class="[' w-full mt-2', progressBarClasses]"
+          v-else
+          :class="['w-full mt-2', progressBarClasses]"
           :style="progressBarStyle"
         />
       </div>
@@ -67,17 +67,14 @@
     <ProjectPageModelsNewDialog
       v-model:open="showNewModelDialog"
       :project-id="project.id"
-      :model-name="selectedFile?.file.name"
+      :model-name="fileUpload?.file.name"
       @submit="onModelCreate"
     />
   </FormFileUploadZone>
 </template>
 <script setup lang="ts">
 import { useFileImport } from '~~/lib/core/composables/fileImport'
-import {
-  useFileUploadProgressCore,
-  type UploadableFileItem
-} from '~~/lib/form/composables/fileUpload'
+import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
@@ -124,11 +121,23 @@ const props = defineProps<{
 
 const {
   maxSizeInBytes,
-  onFilesSelected: onFilesSelectedInternal,
+  onFilesSelected,
   accept,
   upload: fileUpload,
-  isUploading
-} = useFileImport(toRefs(props))
+  isUploading,
+  uploadSelected,
+  resetSelected,
+  isUploadable: isFileUploadUploadable
+} = useFileImport({
+  ...toRefs(props),
+  manuallyTriggerUpload: true,
+  fileSelectedCallback: () => {
+    if (props.model || fileUpload.value?.error) return
+
+    // Only if upload is valid, trigger model creation dialog
+    showNewModelDialog.value = true
+  }
+})
 
 const { errorMessage, progressBarClasses, progressBarStyle } =
   useFileUploadProgressCore({
@@ -140,17 +149,7 @@ const uploadZone = ref(
     triggerPicker: () => void
   }>
 )
-
-const selectedFile = shallowRef<Nullable<UploadableFileItem>>(null)
-
-const showNewModelDialog = computed({
-  get: () => !!selectedFile.value,
-  set: (newVal) => {
-    if (!newVal) {
-      selectedFile.value = null
-    }
-  }
-})
+const showNewModelDialog = ref(false)
 
 const modelName = computed(() => props.modelName || props.model?.name)
 const accessCheck = computed(() => {
@@ -261,34 +260,26 @@ const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   return 'border-outline-2'
 }
 
-const onFilesSelected = (params: { files: UploadableFileItem[] }) => {
-  const firstFile = params.files[0]
-  if (!firstFile) return
-
-  if (props.model) {
-    // Uploading version to specific model, trigger upload instantly
-    onFilesSelectedInternal({ files: [firstFile] })
-    return
-  }
-
-  // Otherwise store selected file and show model create dialog
-  selectedFile.value = firstFile
-}
-
 const onModelCreate = (params: { model: ProjectPageLatestItemsModelItemFragment }) => {
-  if (!selectedFile.value) return
+  if (!isFileUploadUploadable.value) return
 
-  onFilesSelectedInternal({
-    files: [selectedFile.value],
+  uploadSelected({
     modelName: params.model.name
   })
-
-  selectedFile.value = null
 }
 
 const triggerPicker = () => {
   uploadZone.value?.triggerPicker()
 }
+
+watch(showNewModelDialog, (newVal, oldVal) => {
+  if (oldVal && !newVal) {
+    // Should we unselect file? Only if model was not created
+    if (!isUploading.value) {
+      resetSelected()
+    }
+  }
+})
 
 defineExpose({
   triggerPicker
