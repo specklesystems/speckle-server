@@ -10,6 +10,7 @@ import { logger } from '@/observability/logging.js'
 import { Logger } from 'pino'
 import { ensureError, TIME_MS } from '@speckle/shared'
 import { jobProcessor } from './jobProcessor.js'
+import { startHealthCheckServer } from './healthcheck.js'
 
 let jobQueue: Bull.Queue<JobPayload> | undefined = undefined
 let appState: AppState = AppState.STARTING
@@ -37,6 +38,9 @@ export const main = async () => {
     process.exit(1)
   }
   appState = AppState.RUNNING
+
+  startHealthCheckServer({ logger })
+
   logger.debug(`Starting processing of "${QUEUE_NAME}" message queue`)
 
   await jobQueue.process(async (payload, done) => {
