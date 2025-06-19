@@ -60,7 +60,7 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
-import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
+import { fileImportQueues } from '@/modules/fileuploads/queues/fileimports'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import {
   getBranchesByIdsFactory,
@@ -170,7 +170,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
     const pushJobToFileImporter = pushJobToFileImporterFactory({
       getServerOrigin,
-      scheduleJob,
       createAppToken: createAppTokenFactory({
         storeApiToken: storeApiTokenFactory({ db: projectDb }),
         storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
@@ -184,6 +183,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     })
 
     const insertNewUploadAndNotifyV2 = insertNewUploadAndNotifyFactoryV2({
+      queues: fileImportQueues,
       pushJobToFileImporter,
       saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
       publish,

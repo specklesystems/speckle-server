@@ -26,6 +26,7 @@ import {
   GetWorkspaceBySlug,
   GetWorkspaceBySlugOrId,
   GetWorkspaceCollaborators,
+  GetWorkspaceCollaboratorsBaseArgs,
   GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceCreationState,
   GetWorkspaceDomains,
@@ -70,7 +71,7 @@ import {
   UserEmails,
   Users
 } from '@/modules/core/dbSchema'
-import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { removePrivateFields, UserRecord } from '@/modules/core/helpers/userHelper'
 
 import { clamp, has, isObjectLike } from 'lodash'
 import {
@@ -78,6 +79,7 @@ import {
   WorkspaceTeamMember
 } from '@/modules/workspaces/domain/types'
 import {
+  compositeCursorTools,
   decodeCompositeCursor,
   decodeCursor,
   encodeCompositeCursor,
@@ -86,6 +88,7 @@ import {
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const tables = {
+  users: (db: Knex) => db<UserRecord>(Users.name),
   branches: (db: Knex) => db<BranchRecord>('branches'),
   streams: (db: Knex) => db<StreamRecord>('streams'),
   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
@@ -311,15 +314,24 @@ const buildWorkspacesQuery = ({ db, search }: { db: Knex; search?: string }) => 
 export const queryWorkspacesFactory =
   ({ db }: { db: Knex }): QueryWorkspaces =>
   async ({ limit, cursor, filter }) => {
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: Workspaces,
+      cols: ['createdAt', 'id']
+    })
+
     const query = buildWorkspacesQuery({ db, search: filter?.search })
       .select()
-      .orderBy('createdAt', 'desc')
       .limit(limit)
 
-    if (cursor) {
-      query.andWhere('createdAt', '<', cursor)
-    }
-    return await query
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
+
+    const res = await query
+    const newCursor = resolveNewCursor(res)
+
+    return { items: res, cursor: newCursor }
   }
 
 export const countWorkspacesFactory =
@@ -445,19 +457,12 @@ export const upsertWorkspaceRoleFactory =
       .merge(['role'])
   }
 
-export const getWorkspaceCollaboratorsTotalCountFactory =
-  ({ db }: { db: Knex }): GetWorkspaceCollaboratorsTotalCount =>
-  async ({ workspaceId }) => {
-    const [res] = await DbWorkspaceAcl.knex(db).where({ workspaceId }).count()
-    const count = parseInt(res.count)
-    return count || 0
-  }
+const getWorkspaceCollaboratorsBaseQuery =
+  (deps: { db: Knex }) => (params: GetWorkspaceCollaboratorsBaseArgs) => {
+    const { workspaceId, filter = {} } = params
 
-export const getWorkspaceCollaboratorsFactory =
-  ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
-  async ({ workspaceId, filter = {}, cursor, limit = 25, hasAccessToEmail }) => {
-    const query = db
-      .from(Users.name)
+    const query = tables
+      .users(deps.db)
       .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
         ...Users.cols,
         ServerAcl.col.role,
@@ -474,7 +479,6 @@ export const getWorkspaceCollaboratorsFactory =
       // it will not be surfaced by this query
       //
       .andWhere(UserEmails.col.primary, true)
-      .orderBy('workspaceRoleCreatedAt', 'desc')
 
     const { search, roles, seatType, excludeUserIds } = filter || {}
 
@@ -505,9 +509,40 @@ export const getWorkspaceCollaboratorsFactory =
       })
     }
 
-    if (cursor) {
-      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)
-    }
+    return query
+  }
+
+export const getWorkspaceCollaboratorsTotalCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaboratorsTotalCount =>
+  async (params) => {
+    const q = db
+      .from(getWorkspaceCollaboratorsBaseQuery({ db })(params).as('t1'))
+      .count()
+
+    const [res] = await q
+    const count = parseInt(res.count + '')
+    return count || 0
+  }
+
+export const getWorkspaceCollaboratorsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
+  async (params) => {
+    const { limit = 25, hasAccessToEmail } = params
+    const query = getWorkspaceCollaboratorsBaseQuery({ db })(params)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: {
+        col: {
+          workspaceRoleCreatedAt: DbWorkspaceAcl.col.createdAt,
+          id: Users.col.id
+        }
+      },
+      cols: ['workspaceRoleCreatedAt', 'id']
+    })
+
+    applyCursorSortAndFilter({
+      query,
+      cursor: params.cursor
+    })
 
     if (limit) {
       query.limit(clamp(limit, 0, 100))
@@ -521,8 +556,9 @@ export const getWorkspaceCollaboratorsFactory =
       workspaceId: i.workspaceId,
       role: i.role
     }))
+    const newCursor = resolveNewCursor(items)
 
-    return items
+    return { items, cursor: newCursor }
   }
 
 export const storeWorkspaceDomainFactory =
