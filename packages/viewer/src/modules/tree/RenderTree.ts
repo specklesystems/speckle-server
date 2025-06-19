@@ -41,8 +41,7 @@ export class RenderTree {
       start = performance.now()
       this.applyTransforms(node)
       this.applyTransformTime += performance.now() - start
-      if (!node.model.instanced && !node.model.duplicate)
-        geometryConverter.disposeNodeGeometryData(node.model)
+      if (!node.model.instanced) geometryConverter.disposeNodeGeometryData(node.model)
       return !this.cancel
     }, this.root)
     return p
@@ -172,6 +171,10 @@ export class RenderTree {
 
   public getInstances() {
     return this.tree.getInstances(this.root.model.subtreeId)
+  }
+
+  public getDuplicates() {
+    return this.tree.getDuplicates(this.root.model.subtreeId)
   }
 
   public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {

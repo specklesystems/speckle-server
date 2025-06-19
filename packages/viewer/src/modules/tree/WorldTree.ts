@@ -18,7 +18,6 @@ export interface NodeData {
   subtreeId?: number
   renderView?: NodeRenderView | null
   instanced?: boolean
-  duplicate?: boolean
   color?: number
 }
 
@@ -169,6 +168,10 @@ export class WorldTree {
 
   public getInstances(subtreeId: string): { [id: string]: Record<string, TreeNode> } {
     return this.nodeMaps[subtreeId].instances
+  }
+
+  public getDuplicates(subtreeId: string): { [id: string]: Record<string, TreeNode> } {
+    return this.nodeMaps[subtreeId].duplicates
   }
 
   /** TO DO: We might want to add boolean as return type here too */

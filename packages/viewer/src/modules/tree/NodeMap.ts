@@ -7,6 +7,7 @@ export class NodeMap {
 
   private all: { [id: string]: TreeNode } = {}
   public instances: { [id: string]: { [id: string]: TreeNode } } = {}
+  public duplicates: { [id: string]: { [id: string]: TreeNode } } = {}
 
   public get nodeCount() {
     return Object.keys(this.all).length
@@ -24,7 +25,12 @@ export class NodeMap {
         // console.warn(`Duplicate id ${node.model.id}, skipping!`)
         return false
       }
+
       this.registerNode(node)
+
+      if (node.model.id.includes(NodeMap.DUPLICATE_ID_CHAR)) {
+        this.registerDuplicate(node)
+      }
     }
     return true
   }
@@ -54,11 +60,21 @@ export class NodeMap {
         return null
       }
     }
+    if (id.includes(NodeMap.DUPLICATE_ID_CHAR)) {
+      const baseId = id.substring(0, id.indexOf(NodeMap.DUPLICATE_ID_CHAR))
+      if (this.duplicates[baseId]) {
+        if (this.duplicates[baseId][id]) {
+          return [this.duplicates[baseId][id]]
+        }
+      } else {
+        Logger.warn('Could not find duplicate with baseID: ', baseId)
+        return null
+      }
+    }
+
     if (this.all[id]) {
-      if (this.all[id].model.duplicate) {
-        return Object.entries(this.all)
-          .filter(([key]) => key.includes(id))
-          .map(([, value]) => value)
+      if (this.duplicates[id]) {
+        return [this.all[id], ...Object.values(this.duplicates[id])]
       }
       return [this.all[id]]
     }
@@ -102,6 +118,17 @@ export class NodeMap {
       this.instances[baseId] = {}
     }
     this.instances[baseId][node.model.id] = node
+  }
+
+  private registerDuplicate(node: TreeNode): void {
+    const baseId = node.model.id.substring(
+      0,
+      node.model.id.indexOf(NodeMap.DUPLICATE_ID_CHAR)
+    )
+    if (!this.duplicates[baseId]) {
+      this.duplicates[baseId] = {}
+    }
+    this.duplicates[baseId][node.model.id] = node
   }
 
   private registerNode(node: TreeNode) {

@@ -5,6 +5,7 @@ import { NodeMap } from '../../tree/NodeMap.js'
 import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import { ObjectLoader2 } from '@speckle/objectloader2'
+import { SpeckleTypeAllRenderables } from '../GeometryConverter.js'
 
 export type ConverterResultDelegate = () => Promise<void>
 export type SpeckleConverterNodeDelegate =
@@ -268,13 +269,7 @@ export default class SpeckleConverter {
 
   private addNode(node: TreeNode, parent: TreeNode) {
     if (this.tree.hasNodeId(node.model.id, parent.model.subtreeId)) {
-      this.tree
-        .findId(node.model.id)
-        ?.filter((val) => !val.model.duplicate)
-        .forEach((val) => (val.model.duplicate = true))
-
       node.model.id = this.getDuplicateId(node.model.id, ++this.duplicateCounter)
-      node.model.duplicate = true
     }
     this.tree.addNode(node, parent)
   }
@@ -1085,5 +1080,33 @@ export default class SpeckleConverter {
 
   private async EllipseToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
+  }
+
+  /** We shouldn't need to work with duplicates */
+  public handleDuplicates(): Promise<void> {
+    /** We're generally interested in handling renderable duplicates. Otherwise we're overbloat everything with millions of parameters and such */
+    const SpeckleTypeDuplicableRenderables: SpeckleType[] =
+      SpeckleTypeAllRenderables.slice()
+    /** We remove Point because speckle data contains tons of points that are not really renderable */
+    SpeckleTypeDuplicableRenderables.splice(
+      SpeckleTypeAllRenderables.indexOf(SpeckleType.Point),
+      1
+    )
+    const duplicates = this.tree.getRenderTree(this.subtree.model.id)?.getDuplicates()
+    for (const k in duplicates) {
+      const baseObject = this.tree.findId(k)
+      if (!baseObject) {
+        Logger.warn(`Base duplicated object ${k} not found!`)
+        continue
+      }
+      const speckleType = this.getSpeckleType(baseObject[0].model.raw) as SpeckleType
+      if (!SpeckleTypeDuplicableRenderables.includes(speckleType)) continue
+
+      for (const m in duplicates[k]) {
+        /** Normally we'd only need the geometry related data cloned, but this covers 100% */
+        duplicates[k][m].model.raw = structuredClone(duplicates[k][m].model.raw)
+      }
+    }
+    return Promise.resolve()
   }
 }
