@@ -4575,6 +4575,8 @@ export type Workspace = {
   id: Scalars['ID']['output'];
   /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
+  /** Exclusive workspaces do not allow their workspace members to create or join other workspaces as members. */
+  isExclusive: Scalars['Boolean']['output'];
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
@@ -4964,6 +4966,7 @@ export type WorkspacePermissionChecks = {
   canCreateProject: PermissionCheckResult;
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
+  canMakeWorkspaceExclusive: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
   canReadMemberEmail: PermissionCheckResult;
 };
@@ -5219,6 +5222,7 @@ export type WorkspaceUpdateInput = {
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
+  isExclusive?: InputMaybe<Scalars['Boolean']['input']>;
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -9242,6 +9246,7 @@ export type WorkspaceFieldArgs = {
   hasAccessToFeature: WorkspaceHasAccessToFeatureArgs,
   id: {},
   invitedTeam: WorkspaceInvitedTeamArgs,
+  isExclusive: {},
   logo: {},
   name: {},
   permissions: {},
@@ -9347,6 +9352,7 @@ export type WorkspacePermissionChecksFieldArgs = {
   canCreateProject: {},
   canEditEmbedOptions: {},
   canInvite: {},
+  canMakeWorkspaceExclusive: {},
   canMoveProjectToWorkspace: WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs,
   canReadMemberEmail: {},
 }

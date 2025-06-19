@@ -116,6 +116,7 @@ import {
 } from '@/modules/workspaces/services/retrieval'
 import {
   Roles,
+  WorkspacePlanFeatures,
   WorkspacePlans,
   WorkspaceRoles,
   removeNullOrUndefinedKeys,
@@ -196,8 +197,6 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
-import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
-import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { UsersMeta } from '@/modules/core/dbSchema'
 import { setUserActiveWorkspaceFactory } from '@/modules/workspaces/repositories/users'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
@@ -797,9 +796,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         update: async (_parent, args, context) => {
           const { id: workspaceId, ...workspaceInput } = args.input
-
+          const userId = context.userId!
           await authorizeResolver(
-            context.userId!,
+            userId,
             workspaceId,
             Roles.Workspace.Admin,
             context.resourceAccessRules
@@ -822,11 +821,23 @@ export = FF_WORKSPACES_MODULE_ENABLED
             emitWorkspaceEvent: getEventBus().emit
           })
 
+          if (workspaceInput.isExclusive) {
+            const canMakeWorkspaceExclusive =
+              await context.authPolicies.workspace.canUseWorkspacePlanFeature({
+                feature: WorkspacePlanFeatures.ExclusiveMembership,
+                workspaceId,
+                userId
+              })
+            throwIfAuthNotOk(canMakeWorkspaceExclusive)
+          }
+
           const workspace = await withOperationLogging(
             async () =>
               await updateWorkspace({
                 workspaceId,
-                workspaceInput: omit(workspaceInput, ['defaultProjectRole'])
+                workspaceInput: {
+                  ...omit(workspaceInput, ['defaultProjectRole'])
+                }
               }),
             {
               logger,
@@ -967,7 +978,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId
           })
         },
-        async deleteDomain(_parent, args, context) {
+        deleteDomain: async (_parent, args, context) => {
           const workspaceId = args.input.workspaceId
           await authorizeResolver(
             context.userId!,
@@ -2073,10 +2084,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       LimitedWorkspace: {
         team: async (parent, args) => {
-          const team = await getPaginatedItemsFactory<
-            Pick<GetWorkspaceCollaboratorsArgs, 'workspaceId' | 'limit' | 'cursor'>,
-            WorkspaceTeamMember
-          >({
+          const team = await getPaginatedItemsFactory({
             getItems: getWorkspaceCollaboratorsFactory({ db }),
             getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
@@ -2094,7 +2102,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               roles: [Roles.Workspace.Admin]
             }
           })
-          return team
+          return team.items
         }
       },
       ActiveUserMutations: {

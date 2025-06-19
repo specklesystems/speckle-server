@@ -6,7 +6,7 @@ import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import { ObjectLoader2 } from '@speckle/objectloader2'
 
-export type ConverterResultDelegate = () => Promise<void>
+export type ConverterResultDelegate = (count: number) => void
 export type SpeckleConverterNodeDelegate =
   | ((object: SpeckleObject, node: TreeNode) => Promise<void>)
   | null
@@ -29,6 +29,7 @@ export default class SpeckleConverter {
   protected renderMaterialMap: { [id: string]: SpeckleObject } = {}
   protected colorMap: { [id: string]: SpeckleObject } = {}
   protected instanceCounter = 0
+  private traverseCount = 0
 
   protected readonly NodeConverterMapping: {
     [name: string]: SpeckleConverterNodeDelegate
@@ -89,174 +90,181 @@ export default class SpeckleConverter {
     callback: ConverterResultDelegate,
     node: TreeNode | null = null
   ) {
-    // Exit on primitives (string, ints, bools, bigints, etc.)
-    if (obj === null || typeof obj !== 'object') return
-    if (obj.referencedId) obj = await this.resolveReference(obj)
+    try {
+      // Exit on primitives (string, ints, bools, bigints, etc.)
+      if (obj === null || typeof obj !== 'object') return
+      if (obj.referencedId) obj = await this.resolveReference(obj)
 
-    const childrenConversionPromisses = []
+      const childrenConversionPromisses = []
 
-    // Traverse arrays, and exit early (we don't want to iterate through many numbers)
-    if (Array.isArray(obj)) {
-      for (const element of obj) {
-        if (typeof element !== 'object') break // exit early for non-object based arrays
-        if (this.activePromises >= this.maxChildrenPromises) {
-          await this.traverse(objectURL, element, callback, node)
-        } else {
-          const childPromise = this.traverse(objectURL, element, callback, node)
-          childrenConversionPromisses.push(childPromise)
+      // Traverse arrays, and exit early (we don't want to iterate through many numbers)
+      if (Array.isArray(obj)) {
+        for (const element of obj) {
+          if (typeof element !== 'object') break // exit early for non-object based arrays
+          if (this.activePromises >= this.maxChildrenPromises) {
+            await this.traverse(objectURL, element, callback, node)
+          } else {
+            const childPromise = this.traverse(objectURL, element, callback, node)
+            childrenConversionPromisses.push(childPromise)
+          }
         }
-      }
-      this.activePromises += childrenConversionPromisses.length
-      await Promise.all(childrenConversionPromisses)
-      this.activePromises -= childrenConversionPromisses.length
-      return
-    }
-
-    /** These are not needed as nodes */
-    if (this.IgnoreNodes.includes(this.getSpeckleType(obj))) {
-      return
-    }
-    /** Ignore objects with no id */
-    if (!obj.id) return
-
-    const childNode: TreeNode = this.tree.parse({
-      id: this.getNodeId(obj),
-      raw: obj,
-      atomic: true,
-      children: []
-    })
-
-    if (node === null) {
-      /** We're adding a parent for the entire model (subtree) */
-      this.subtree = this.tree.parse({
-        id: objectURL,
-        /* Hack required by frontend*/
-        raw: { id: objectURL, children: [obj] },
-        atomic: true,
-        children: []
-      })
-      this.tree.addSubtree(this.subtree)
-      this.tree.addNode(childNode, this.subtree)
-    } else {
-      this.tree.addNode(childNode, node)
-    }
-
-    // If we can convert it, we should invoke the respective conversion routine.
-    if (this.directNodeConverterExists(obj)) {
-      try {
-        await this.convertToNode(obj, childNode)
-        await callback()
-        return
-      } catch (e) {
-        Logger.warn(
-          `(Traversing - direct) Failed to convert ${this.getSpeckleType(
-            obj
-          )} with id: ${obj.id}`,
-          e
-        )
-      }
-    }
-
-    const target: SpeckleObject = obj
-
-    // Check if the object has a display value of sorts
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let displayValue = this.getDisplayValue(target) as any
-
-    if (displayValue) {
-      childNode.model.atomic = true
-    } else {
-      childNode.model.atomic = false
-    }
-
-    if (displayValue) {
-      if (!Array.isArray(displayValue)) {
-        displayValue = await this.resolveReference(displayValue)
-        if (!displayValue.units) displayValue.units = obj.units
-        try {
-          const nestedNode: TreeNode = this.tree.parse({
-            id: this.getNodeId(displayValue),
-            raw: displayValue,
-            atomic: false,
-            children: []
-          })
-          this.tree.addNode(nestedNode, childNode)
-          await this.convertToNode(displayValue, nestedNode)
-          await callback()
-        } catch (e) {
-          Logger.warn(
-            `(Traversing) Failed to convert obj with id: ${obj.id} — ${
-              (e as never)['message']
-            }`
-          )
-        }
-      } else {
-        for (const element of displayValue) {
-          const val = await this.resolveReference(element)
-          if (!val.units) val.units = obj.units
-          const nestedNode: TreeNode = this.tree.parse({
-            id: this.getNodeId(val),
-            raw: val,
-            atomic: false,
-            children: []
-          })
-          this.tree.addNode(nestedNode, childNode)
-          await this.convertToNode(val, nestedNode)
-          await callback()
-        }
-      }
-
-      // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
-      /** 10.25.2023 This might be serious legacy stuff that we might not need anymore */
-      /** 22.11.2024 We have just added stuff to this serious legacy stuff that might not be needed anymore (joke's on us, it is needed) */
-      if (
-        obj.speckle_type.toLowerCase().includes('builtelements') ||
-        obj.speckle_type.toLowerCase().includes('objects.data')
-      ) {
-        const elements = this.getElementsValue(obj)
-        if (elements) {
-          childrenConversionPromisses.push(
-            this.traverse(objectURL, elements as SpeckleObject, callback, childNode)
-          )
+        if (childrenConversionPromisses.length > 0) {
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
           this.activePromises -= childrenConversionPromisses.length
         }
-
         return
       }
-    }
 
-    // Last attempt: iterate through all object keys and see if we can display anything!
-    // traverses the object in case there's any sub-objects we can convert.
-    for (const prop in target) {
-      if (prop === '__parents' || prop === 'bbox' || prop === '__closure') continue
-      if (
-        ['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(prop)
-      )
-        continue
-      if (typeof target[prop] !== 'object' || target[prop] === null) continue
-
-      if (this.activePromises >= this.maxChildrenPromises) {
-        await this.traverse(
-          objectURL,
-          target[prop] as SpeckleObject,
-          callback,
-          childNode
-        )
-      } else {
-        const childPromise = this.traverse(
-          objectURL,
-          target[prop] as SpeckleObject,
-          callback,
-          childNode
-        )
-        childrenConversionPromisses.push(childPromise)
+      /** These are not needed as nodes */
+      if (this.IgnoreNodes.includes(this.getSpeckleType(obj))) {
+        return
       }
+      /** Ignore objects with no id */
+      if (!obj.id) return
+
+      const childNode: TreeNode = this.tree.parse({
+        id: this.getNodeId(obj),
+        raw: obj,
+        atomic: true,
+        children: []
+      })
+
+      if (node === null) {
+        /** We're adding a parent for the entire model (subtree) */
+        this.subtree = this.tree.parse({
+          id: objectURL,
+          /* Hack required by frontend*/
+          raw: { id: objectURL, children: [obj] },
+          atomic: true,
+          children: []
+        })
+        this.tree.addSubtree(this.subtree)
+        this.tree.addNode(childNode, this.subtree)
+      } else {
+        this.tree.addNode(childNode, node)
+      }
+
+      // If we can convert it, we should invoke the respective conversion routine.
+      if (this.directNodeConverterExists(obj)) {
+        try {
+          await this.convertToNode(obj, childNode)
+          return
+        } catch (e) {
+          Logger.warn(
+            `(Traversing - direct) Failed to convert ${this.getSpeckleType(
+              obj
+            )} with id: ${obj.id}`,
+            e
+          )
+        }
+      }
+
+      const target: SpeckleObject = obj
+
+      // Check if the object has a display value of sorts
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let displayValue = this.getDisplayValue(target) as any
+
+      if (displayValue) {
+        childNode.model.atomic = true
+      } else {
+        childNode.model.atomic = false
+      }
+
+      if (displayValue) {
+        if (!Array.isArray(displayValue)) {
+          displayValue = await this.resolveReference(displayValue)
+          if (!displayValue.units) displayValue.units = obj.units
+          try {
+            const nestedNode: TreeNode = this.tree.parse({
+              id: this.getNodeId(displayValue),
+              raw: displayValue,
+              atomic: false,
+              children: []
+            })
+            this.tree.addNode(nestedNode, childNode)
+            await this.convertToNode(displayValue, nestedNode)
+          } catch (e) {
+            Logger.warn(
+              `(Traversing) Failed to convert obj with id: ${obj.id} — ${
+                (e as never)['message']
+              }`
+            )
+          }
+        } else {
+          for (const element of displayValue) {
+            const val = await this.resolveReference(element)
+            if (!val.units) val.units = obj.units
+            const nestedNode: TreeNode = this.tree.parse({
+              id: this.getNodeId(val),
+              raw: val,
+              atomic: false,
+              children: []
+            })
+            this.tree.addNode(nestedNode, childNode)
+            await this.convertToNode(val, nestedNode)
+          }
+        }
+
+        // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
+        /** 10.25.2023 This might be serious legacy stuff that we might not need anymore */
+        /** 22.11.2024 We have just added stuff to this serious legacy stuff that might not be needed anymore (joke's on us, it is needed) */
+        if (
+          obj.speckle_type.toLowerCase().includes('builtelements') ||
+          obj.speckle_type.toLowerCase().includes('objects.data')
+        ) {
+          const elements = this.getElementsValue(obj)
+          if (elements) {
+            childrenConversionPromisses.push(
+              this.traverse(objectURL, elements as SpeckleObject, callback, childNode)
+            )
+            this.activePromises += childrenConversionPromisses.length
+            await Promise.all(childrenConversionPromisses)
+            this.activePromises -= childrenConversionPromisses.length
+          }
+
+          return
+        }
+      }
+
+      // Last attempt: iterate through all object keys and see if we can display anything!
+      // traverses the object in case there's any sub-objects we can convert.
+      for (const prop in target) {
+        if (prop === '__parents' || prop === 'bbox' || prop === '__closure') continue
+        if (
+          ['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(
+            prop
+          )
+        )
+          continue
+        if (typeof target[prop] !== 'object' || target[prop] === null) continue
+
+        if (this.activePromises >= this.maxChildrenPromises) {
+          await this.traverse(
+            objectURL,
+            target[prop] as SpeckleObject,
+            callback,
+            childNode
+          )
+        } else {
+          const childPromise = this.traverse(
+            objectURL,
+            target[prop] as SpeckleObject,
+            callback,
+            childNode
+          )
+          childrenConversionPromisses.push(childPromise)
+        }
+      }
+      if (childrenConversionPromisses.length > 0) {
+        this.activePromises += childrenConversionPromisses.length
+        await Promise.all(childrenConversionPromisses)
+        this.activePromises -= childrenConversionPromisses.length
+      }
+    } finally {
+      callback(this.traverseCount++)
     }
-    this.activePromises += childrenConversionPromisses.length
-    await Promise.all(childrenConversionPromisses)
-    this.activePromises -= childrenConversionPromisses.length
   }
 
   private getNodeId(obj: SpeckleObject): string {

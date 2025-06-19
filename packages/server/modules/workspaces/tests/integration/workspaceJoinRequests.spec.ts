@@ -133,7 +133,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getWorkspaceWithDomains: async () => null,
             getUserEmails: async () => [],
             addOrUpdateWorkspaceRole: async () => {},
-            getWorkspaceTeam: async () => []
+            getWorkspaceTeam: async () => ({ items: [], cursor: null })
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -150,7 +150,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getWorkspaceWithDomains: async () => null,
             getUserEmails: async () => [],
             addOrUpdateWorkspaceRole: async () => {},
-            getWorkspaceTeam: async () => []
+            getWorkspaceTeam: async () => ({ items: [], cursor: null })
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -185,7 +185,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
               workspace as unknown as WorkspaceWithDomains,
             getUserEmails: async () => [],
             addOrUpdateWorkspaceRole: async () => {},
-            getWorkspaceTeam: async () => []
+            getWorkspaceTeam: async () => ({ items: [], cursor: null })
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -243,7 +243,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserEmails: async () =>
               [{ email: user.email, verified: true }] as unknown as UserEmail[],
             addOrUpdateWorkspaceRole: async () => {},
-            getWorkspaceTeam: async () => []
+            getWorkspaceTeam: async () => ({ items: [], cursor: null })
           })({ workspaceId: workspace.id, userId: user.id })
         ).to.equal(true)
 
@@ -314,7 +314,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
           getUserEmails: async () =>
             [{ email: user.email, verified: true }] as unknown as UserEmail[],
           addOrUpdateWorkspaceRole: async () => {},
-          getWorkspaceTeam: async () => []
+          getWorkspaceTeam: async () => ({ items: [], cursor: null })
         })
 
         expect(
