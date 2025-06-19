@@ -35,8 +35,6 @@ jobs:
           nix-shell \
           --run "echo Here, a nix shell for you" \
           ./tests/deployment/helm/helm-chart-shell.nix
-        env:
-          IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
       - run: export KUBECONFIG=$(pwd)/.kube/config
       - run: echo "${KUBECONFIG}"
       - name: Template Speckle Server Helm Chart
@@ -81,3 +79,6 @@ jobs:
           nix-shell \
           --run "IMAGE_PREFIX=${{ inputs.IMAGE_PREFIX }} LOAD_DOCKER='true' tilt ci --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server --timeout 10m" \
           ./tests/deployment/helm/helm-chart-shell.nix
+        env:
+          IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
+          IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
