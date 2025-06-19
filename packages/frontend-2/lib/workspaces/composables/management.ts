@@ -3,6 +3,7 @@ import {
   SeatTypes,
   waitForever,
   type MaybeAsync,
+  type MaybeNullOrUndefined,
   type Optional,
   type WorkspaceSeatType
 } from '@speckle/shared'
@@ -665,7 +666,7 @@ export const useOnWorkspaceUpdated = (params: {
 }
 
 export const useWorkspaceLastAdminCheck = (params: {
-  workspaceSlug: Ref<string | undefined>
+  workspaceSlug: Ref<MaybeNullOrUndefined<string>>
 }) => {
   const { workspaceSlug } = params
 
