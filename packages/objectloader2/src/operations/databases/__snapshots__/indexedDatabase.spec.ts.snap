@@ -3,16 +3,16 @@
 exports[`IndexedDatabase > should add and get multiple items 1`] = `
 [
   {
-    "baseId": "id1",
-    "item": {
+    "base": {
       "foo": "bar",
     },
+    "baseId": "id1",
   },
   {
-    "baseId": "id2",
-    "item": {
+    "base": {
       "foo": "bar",
     },
+    "baseId": "id2",
   },
 ]
 `;

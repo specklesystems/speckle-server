@@ -250,7 +250,9 @@ export const onWorkspaceRoleDeletedFactory =
     updatedByUserId: string
   }) => {
     // Resolve a fallback admin
-    const [admin] = await deps.getWorkspaceCollaborators({
+    const {
+      items: [admin]
+    } = await deps.getWorkspaceCollaborators({
       workspaceId,
       limit: 1,
       filter: {
@@ -330,7 +332,9 @@ export const onWorkspaceSeatUpdatedFactory =
       })
 
     // Resolve a fallback admin
-    const [admin] = await deps.getWorkspaceCollaborators({
+    const {
+      items: [admin]
+    } = await deps.getWorkspaceCollaborators({
       workspaceId,
       limit: 1,
       filter: {
@@ -415,7 +419,9 @@ export const onWorkspaceRoleUpdatedFactory =
     if (!seatType) return
 
     // Resolve a fallback admin
-    const [admin] = await deps.getWorkspaceCollaborators({
+    const {
+      items: [admin]
+    } = await deps.getWorkspaceCollaborators({
       workspaceId,
       limit: 1,
       filter: {

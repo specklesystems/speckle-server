@@ -34,6 +34,10 @@ export default class BatchingQueue<T> {
     this.#queue.enqueue(key, item)
   }
 
+  addAll(keys: string[], items: T[]): void {
+    this.#queue.enqueueAll(keys, items)
+  }
+
   get(id: string): T | undefined {
     return this.#queue.get(id)
   }

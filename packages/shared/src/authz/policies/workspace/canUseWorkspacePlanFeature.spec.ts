@@ -2,8 +2,8 @@ import cryptoRandomString from 'crypto-random-string'
 import { Roles } from '../../../core/constants.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { Workspace } from '../../domain/workspaces/types.js'
-import { canUpdateEmbedOptionsPolicy } from './canUpdateEmbedOptions.js'
-import { WorkspacePlan } from '../../../workspaces/index.js'
+import { canUseWorkspacePlanFeature } from './canUseWorkspacePlanFeature.js'
+import { WorkspacePlanFeatures } from '../../../workspaces/index.js'
 import { describe, expect, it } from 'vitest'
 import {
   ServerNoAccessError,
@@ -15,12 +15,12 @@ import {
   WorkspaceReadOnlyError
 } from '../../domain/authErrors.js'
 
-const buildCanUpdateEmbedOptionsPolicy = (
-  overrides?: Partial<Parameters<typeof canUpdateEmbedOptionsPolicy>[0]>
+const buildSUT = (
+  overrides?: Partial<Parameters<typeof canUseWorkspacePlanFeature>[0]>
 ) => {
   const workspaceId = cryptoRandomString({ length: 9 })
 
-  return canUpdateEmbedOptionsPolicy({
+  return canUseWorkspacePlanFeature({
     getEnv: async () =>
       parseFeatureFlags({
         FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -42,7 +42,7 @@ const buildCanUpdateEmbedOptionsPolicy = (
         status: 'valid',
         createdAt: new Date(),
         updatedAt: new Date()
-      } as WorkspacePlan
+      }
     },
     ...overrides
   })
@@ -50,14 +50,15 @@ const buildCanUpdateEmbedOptionsPolicy = (
 
 const getPolicyArgs = () => ({
   userId: cryptoRandomString({ length: 9 }),
-  workspaceId: cryptoRandomString({ length: 9 })
+  workspaceId: cryptoRandomString({ length: 9 }),
+  feature: WorkspacePlanFeatures.HideSpeckleBranding
 })
 
-describe('canUpdateEmbedOptions', () => {
+describe('canUseFeature', () => {
   it('returns error if user is not logged in', async () => {
-    const canUpdateEmbedOptions = buildCanUpdateEmbedOptionsPolicy()
+    const canUseFeature = buildSUT()
 
-    const result = await canUpdateEmbedOptions({
+    const result = await canUseFeature({
       ...getPolicyArgs(),
       userId: undefined
     })
@@ -68,11 +69,11 @@ describe('canUpdateEmbedOptions', () => {
   })
 
   it('returns error if user is not found', async () => {
-    const canUpdateEmbedOptions = buildCanUpdateEmbedOptionsPolicy({
+    const canUseFeature = buildSUT({
       getServerRole: async () => null
     })
 
-    const result = await canUpdateEmbedOptions(getPolicyArgs())
+    const result = await canUseFeature(getPolicyArgs())
 
     expect(result).toBeAuthErrorResult({
       code: ServerNoAccessError.code
@@ -80,11 +81,11 @@ describe('canUpdateEmbedOptions', () => {
   })
 
   it('returns error if user is a server guest', async () => {
-    const canUpdateEmbedOptions = buildCanUpdateEmbedOptionsPolicy({
+    const canUseFeature = buildSUT({
       getServerRole: async () => Roles.Server.Guest
     })
 
-    const result = await canUpdateEmbedOptions(getPolicyArgs())
+    const result = await canUseFeature(getPolicyArgs())
 
     expect(result).toBeAuthErrorResult({
       code: ServerNotEnoughPermissionsError.code
@@ -92,11 +93,11 @@ describe('canUpdateEmbedOptions', () => {
   })
 
   it('returns error if workspace does not exist', async () => {
-    const canUpdateEmbedOptions = buildCanUpdateEmbedOptionsPolicy({
+    const canUseFeature = buildSUT({
       getWorkspace: async () => null
     })
 
-    const result = await canUpdateEmbedOptions(getPolicyArgs())
+    const result = await canUseFeature(getPolicyArgs())
 
     expect(result).toBeAuthErrorResult({
       code: WorkspaceNoAccessError.code
@@ -104,11 +105,11 @@ describe('canUpdateEmbedOptions', () => {
   })
 
   it('returns error if user is not workspace admin', async () => {
-    const canUpdateEmbedOptions = buildCanUpdateEmbedOptionsPolicy({
+    const canUseFeature = buildSUT({
       getWorkspaceRole: async () => Roles.Workspace.Member
     })
 
-    const result = await canUpdateEmbedOptions(getPolicyArgs())
+    const result = await canUseFeature(getPolicyArgs())
 
     expect(result).toBeAuthErrorResult({
       code: WorkspaceNotEnoughPermissionsError.code
@@ -116,7 +117,7 @@ describe('canUpdateEmbedOptions', () => {
   })
 
   it('returns error if workspace is read only', async () => {
-    const canUpdateEmbedOptions = buildCanUpdateEmbedOptionsPolicy({
+    const canUseFeature = buildSUT({
       getWorkspacePlan: async () => ({
         workspaceId: cryptoRandomString({ length: 9 }),
         name: 'proUnlimited',
@@ -126,15 +127,15 @@ describe('canUpdateEmbedOptions', () => {
       })
     })
 
-    const result = await canUpdateEmbedOptions(getPolicyArgs())
+    const result = await canUseFeature(getPolicyArgs())
 
     expect(result).toBeAuthErrorResult({
       code: WorkspaceReadOnlyError.code
     })
   })
 
-  it('returns error if workspace has invalid plan', async () => {
-    const canUpdateEmbedOptions = buildCanUpdateEmbedOptionsPolicy({
+  it('returns error if workspace plan does not have access to the feature', async () => {
+    const canUseFeature = buildSUT({
       getWorkspacePlan: async () => ({
         workspaceId: cryptoRandomString({ length: 9 }),
         name: 'free',
@@ -144,17 +145,20 @@ describe('canUpdateEmbedOptions', () => {
       })
     })
 
-    const result = await canUpdateEmbedOptions(getPolicyArgs())
+    const result = await canUseFeature({
+      ...getPolicyArgs(),
+      feature: WorkspacePlanFeatures.CustomDataRegion
+    })
 
     expect(result).toBeAuthErrorResult({
       code: WorkspaceNoFeatureAccessError.code
     })
   })
 
-  it('returns ok if workspace has valid plan', async () => {
-    const canUpdateEmbedOptions = buildCanUpdateEmbedOptionsPolicy()
+  it('returns ok if workspace plan has access to the feature', async () => {
+    const canUseFeature = buildSUT()
 
-    const result = await canUpdateEmbedOptions(getPolicyArgs())
+    const result = await canUseFeature(getPolicyArgs())
 
     expect(result).toBeAuthOKResult()
   })

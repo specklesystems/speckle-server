@@ -1,5 +1,6 @@
 import { AppState } from '@speckle/shared/workers'
 import { initializeQueue } from '@speckle/shared/queue'
+import { FILEIMPORT_TIMEOUT, REDIS_URL, QUEUE_NAME } from '../nextGen/config.js'
 import type {
   JobPayload,
   FileImportResultPayload
@@ -8,10 +9,8 @@ import type Bull from 'bull'
 import { Logger } from 'pino'
 import { ensureError, TIME_MS } from '@speckle/shared'
 import { logger } from '../observability/logging.js'
-import { FILEIMPORT_TIMEOUT, REDIS_URL } from '../nextGen/config.js'
 import { jobProcessor } from '../nextGen/jobProcessor.js'
 
-const JobQueueName = 'fileimport-service-jobs'
 let jobQueue: Bull.Queue<JobPayload> | undefined = undefined
 let appState: AppState = AppState.STARTING
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
@@ -25,7 +24,7 @@ export const main = async () => {
 
   try {
     jobQueue = await initializeQueue<JobPayload>({
-      queueName: JobQueueName,
+      queueName: QUEUE_NAME,
       redisUrl: REDIS_URL
     })
   } catch (e) {
@@ -38,7 +37,7 @@ export const main = async () => {
     process.exit(1)
   }
   appState = AppState.RUNNING
-  logger.debug(`Starting processing of "${JobQueueName}" message queue`)
+  logger.debug(`Starting processing of "${QUEUE_NAME}" message queue`)
 
   await jobQueue.process(async (payload, done) => {
     const elapsed = (() => {
