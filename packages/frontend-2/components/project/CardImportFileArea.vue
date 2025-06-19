@@ -132,10 +132,15 @@ const {
   ...toRefs(props),
   manuallyTriggerUpload: true,
   fileSelectedCallback: () => {
-    if (props.model || fileUpload.value?.error) return
-
-    // Only if upload is valid, trigger model creation dialog
-    showNewModelDialog.value = true
+    if (props.model) {
+      // Uploading inside an existing model - trigger upload immediately
+      uploadSelected()
+    } else {
+      if (!fileUpload.value?.error) {
+        // Only if upload is valid, trigger model creation dialog
+        showNewModelDialog.value = true
+      }
+    }
   }
 })
 
