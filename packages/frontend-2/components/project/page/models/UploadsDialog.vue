@@ -15,7 +15,7 @@
       :items="items"
       :loading="isVeryFirstLoading"
       empty-message="This model has no uploads"
-      :max-height="300"
+      style="max-height: 300px"
     >
       <template #file="{ item }">
         <div
