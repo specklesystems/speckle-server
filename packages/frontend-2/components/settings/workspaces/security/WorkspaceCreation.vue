@@ -16,6 +16,7 @@
             can still create workspaces.
           </p>
         </div>
+        <!-- Update when API is ready for hasAccessToFeature -->
         <div
           v-if="props.workspace?.permissions?.canMakeWorkspaceExclusive.authorized"
           v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
@@ -29,11 +30,11 @@
         </div>
         <FormButton
           v-else
-          :to="settingsWorkspaceRoutes.billing.route(workspace.slug)"
+          to="mailto:billing@speckle.systems?subject=Workspace%20Creation%20Restriction"
           size="sm"
           color="outline"
         >
-          Upgrade to Business
+          Contact us
         </FormButton>
       </div>
     </div>
@@ -47,7 +48,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecurityWorkspaceCreation_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { workspaceUpdateExclusiveMutation } from '~/lib/workspaces/graphql/mutations'
-import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesSecurityWorkspaceCreation_Workspace on Workspace {
@@ -58,6 +58,8 @@ graphql(`
     permissions {
       canMakeWorkspaceExclusive {
         authorized
+        code
+        message
       }
     }
   }
