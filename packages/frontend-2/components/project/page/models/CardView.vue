@@ -204,7 +204,6 @@ const calculateLoaderId = () => {
 }
 
 const onModelUploading = (payload: FileAreaUploadingPayload) => {
-  logger.info(payload)
   isModelUploading.value = payload.isUploading
 }
 

@@ -61,6 +61,7 @@
         <InfiniteLoading
           v-if="items?.length"
           :settings="{ identifier }"
+          hide-when-complete
           @infinite="onInfiniteLoad"
         />
       </template>
@@ -139,7 +140,9 @@ const {
     }
   })),
   options: {
-    enabled: open
+    enabled: open,
+    // reload query when dialog opens
+    fetchPolicy: 'cache-and-network'
   },
   resolveKey: (vars) => [vars.projectId, vars.modelId],
   resolveCurrentResult: (res) => res?.project.model.uploads,

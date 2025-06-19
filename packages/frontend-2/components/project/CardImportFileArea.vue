@@ -208,7 +208,7 @@ const containerClasses = computed(() => {
   if (props.emptyStateVariant === 'modelGrid') {
     classParts.push('p-4 gap-4')
   } else if (props.emptyStateVariant === 'modelList') {
-    classParts.push('p-4 gap-4 text-center')
+    classParts.push('gap-4 text-center')
   } else if (props.emptyStateVariant === 'modelsSection') {
     classParts.push('p-4 gap-4 text-balance')
   } else {
@@ -294,9 +294,14 @@ watch(showNewModelDialog, (newVal, oldVal) => {
   }
 })
 
-watch(isUploading, (newVal) => {
+watch(isUploading, (newVal, oldVal) => {
   // fileUpload is always gonna be non-null when isUploading changes
   emit('uploading', { isUploading: newVal, upload: fileUpload.value! })
+
+  if (!newVal && oldVal) {
+    // Reset file upload state when upload finishes
+    resetSelected()
+  }
 })
 
 defineExpose({

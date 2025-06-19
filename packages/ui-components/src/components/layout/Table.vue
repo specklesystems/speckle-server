@@ -114,8 +114,16 @@ const props = withDefaults(
   { rowItemsAlign: 'center', emptyMessage: 'No data found' }
 )
 
+const sharedContainerClasses = computed(() => {
+  const classParts = ['w-full min-w-[750px]']
+  return classParts.join(' ')
+})
+
 const resultContainerClasses = computed(() => {
-  const classParts = ['divide-y divide-outline-3 overflow-visible']
+  const classParts = [
+    'divide-y divide-outline-3 overflow-visible',
+    sharedContainerClasses.value
+  ]
 
   if (props.overflowCells) {
     classParts.push('pb-32')
@@ -219,10 +227,11 @@ const handleRowClick = (item: T) => {
 
 const headerRowClasses = computed(() => [
   'z-10 grid grid-cols-12 items-center',
-  'w-full min-w-[750px] space-x-6',
+  'space-x-6',
   'px-4 py-3',
   'bg-foundation-2 rounded-t-lg',
   'font-medium text-body-2xs text-foreground-2',
-  'border-b border-outline-3'
+  'border-b border-outline-3',
+  sharedContainerClasses.value
 ])
 </script>
