@@ -90,7 +90,9 @@ export const requestToJoinWorkspaceFactory =
     }
 
     if (workspace.discoverabilityAutoJoinEnabled) {
-      const [workspaceAdmin] = await getWorkspaceTeam({
+      const {
+        items: [workspaceAdmin]
+      } = await getWorkspaceTeam({
         workspaceId,
         limit: 1,
         filter: {
