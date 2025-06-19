@@ -18,15 +18,28 @@ export const scheduleBlobPendingUploadExpiry = async ({
   }
 
   const cronExpression = '*/6 * * * *' // every 6 minutes
-  return scheduleExecution(cronExpression, 'BlobPendingUploadExpiry', async () => {
-    await Promise.all(
-      blobPendingUploadExpiryHandlers.map((handler) =>
-        handler({
-          timeoutThresholdSeconds: (getFileUploadUrlExpiryMinutes() + 1) * TIME.minute, // additional buffer of 1 minute
-          errMessage:
-            '[EXPIRED_PENDING_UPLOAD] Upload did not complete within the expected time frame.'
-        })
+  return scheduleExecution(
+    cronExpression,
+    'BlobPendingUploadExpiry',
+    async (_, options) => {
+      const { logger } = options
+      logger.debug('Running BlobPendingUploadExpiry task')
+      const items = await Promise.all(
+        blobPendingUploadExpiryHandlers.map((handler) =>
+          handler({
+            timeoutThresholdSeconds:
+              (getFileUploadUrlExpiryMinutes() + 1) * TIME.minute, // additional buffer of 1 minute
+            errMessage:
+              '[EXPIRED_PENDING_UPLOAD] Upload did not complete within the expected time frame.'
+          })
+        )
       )
-    )
-  })
+      logger.info(
+        `BlobPendingUploadExpiry task completed. Processed ${items.reduce(
+          (acc, items) => acc + items.length,
+          0
+        )} items.`
+      )
+    }
+  )
 }
