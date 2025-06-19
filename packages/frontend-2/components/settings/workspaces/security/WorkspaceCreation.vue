@@ -16,7 +16,10 @@
             can still create workspaces.
           </p>
         </div>
-        <div v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined">
+        <div
+          v-if="props.workspace?.permissions?.canMakeWorkspaceExclusive.authorized"
+          v-tippy="!isWorkspaceAdmin ? 'You must be a workspace admin' : undefined"
+        >
           <FormSwitch
             v-model="isExclusive"
             name="workspace-exclusive"
@@ -24,6 +27,14 @@
             :show-label="false"
           />
         </div>
+        <FormButton
+          v-else
+          :to="settingsWorkspaceRoutes.billing.route(workspace.slug)"
+          size="sm"
+          color="outline"
+        >
+          Upgrade to Business
+        </FormButton>
       </div>
     </div>
   </section>
@@ -36,6 +47,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecurityWorkspaceCreation_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { workspaceUpdateExclusiveMutation } from '~/lib/workspaces/graphql/mutations'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesSecurityWorkspaceCreation_Workspace on Workspace {
@@ -43,6 +55,11 @@ graphql(`
     slug
     role
     isExclusive
+    permissions {
+      canMakeWorkspaceExclusive {
+        authorized
+      }
+    }
   }
 `)
 
@@ -84,8 +101,7 @@ const isExclusive = computed({
     } else {
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title: 'Failed to update workspace creation restriction',
-        description: 'Please try again later'
+        title: 'Failed to update workspace creation restriction'
       })
     }
   }
