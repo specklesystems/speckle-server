@@ -276,13 +276,11 @@ export const getModelUploadsItemsFactory =
   (deps: { db: Knex }): GetModelUploadsItems =>
   async (params) => {
     const limit = clamp(params.limit || 0, 0, 100)
-    const { filterByCursor, resolveNewCursor } = getCursorTools()
+    const { applyCursorSortAndFilter, resolveNewCursor } = getCursorTools()
 
-    const q = getModelUploadsBaseQueryFactory(deps)(params)
-      .orderBy(FileUploads.col.convertedLastUpdate, 'desc')
-      .limit(limit)
+    const q = getModelUploadsBaseQueryFactory(deps)(params).limit(limit)
 
-    filterByCursor({
+    applyCursorSortAndFilter({
       query: q,
       cursor: params.cursor
     })

@@ -68,6 +68,9 @@ type SerializableObject = {
     | SerializableObject
     | SerializableValue[]
     | SerializableObject[]
+    | Array<SerializableValue | SerializableObject>
+    | undefined
+    | null
 }
 
 type BasicCursorContainer = {
@@ -106,6 +109,8 @@ export const usePaginatedQuery = <
     | SerializableObject
     | SerializableValue[]
     | SerializableObject[]
+    | Array<SerializableValue | SerializableObject>
+
   /**
    * Predicate for resolving the current paginated result from the query result. Return undefined
    * if query hasn't finished loading yet.
