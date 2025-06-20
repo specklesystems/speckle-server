@@ -255,6 +255,7 @@ describe('billing repositories @gatekeeper', () => {
         expect(storedSession).to.be.null
         const checkoutSession = {
           id: cryptoRandomString({ length: 10 }),
+          userId: cryptoRandomString({ length: 10 }),
           billingInterval: 'monthly',
           createdAt: new Date(),
           paymentStatus: 'unpaid',
@@ -279,6 +280,7 @@ describe('billing repositories @gatekeeper', () => {
         const workspaceId = workspace.id
         const checkoutSession = {
           id: cryptoRandomString({ length: 10 }),
+          userId: cryptoRandomString({ length: 10 }),
           billingInterval: 'monthly',
           createdAt: new Date(),
           paymentStatus: 'unpaid',
@@ -312,6 +314,7 @@ describe('billing repositories @gatekeeper', () => {
         const workspaceId = workspace.id
         const checkoutSession = {
           id: cryptoRandomString({ length: 10 }),
+          userId: cryptoRandomString({ length: 10 }),
           billingInterval: 'monthly',
           createdAt: new Date(),
           paymentStatus: 'unpaid',
@@ -354,6 +357,7 @@ describe('billing repositories @gatekeeper', () => {
         const workspaceId = workspace.id
         const checkoutSession = {
           id: cryptoRandomString({ length: 10 }),
+          userId: cryptoRandomString({ length: 10 }),
           billingInterval: 'monthly',
           createdAt: new Date(),
           paymentStatus: 'unpaid',

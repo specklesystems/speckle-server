@@ -60,6 +60,7 @@ export type SessionPaymentStatus = 'paid' | 'unpaid'
 export type CheckoutSession = SessionInput & {
   url: string
   workspaceId: string
+  userId: string
   workspacePlan: PaidWorkspacePlans
   paymentStatus: SessionPaymentStatus
   billingInterval: WorkspacePlanBillingIntervals
@@ -91,6 +92,7 @@ export type UpdateCheckoutSessionStatus = (args: {
 
 export type CreateCheckoutSession = (args: {
   workspaceId: string
+  userId: string
   workspaceSlug: string
   editorsCount: number
   workspacePlan: PaidWorkspacePlans
