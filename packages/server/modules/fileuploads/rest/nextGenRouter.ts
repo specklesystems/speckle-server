@@ -9,7 +9,7 @@ import { fileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
 import {
   saveUploadFileFactoryV2,
-  updateFileStatusFactory
+  updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
@@ -30,10 +30,13 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 
-export const nextGenFileImporterRouterFactory = (): Router => {
+export const nextGenFileImporterRouterFactory = (params: {
+  queues: FileImportQueue[]
+}): Router => {
   const processNewFileStream = processNewFileStreamFactory()
   const app = Router()
 
@@ -71,7 +74,6 @@ export const nextGenFileImporterRouterFactory = (): Router => {
 
       const pushJobToFileImporter = pushJobToFileImporterFactory({
         getServerOrigin,
-        scheduleJob,
         createAppToken: createAppTokenFactory({
           storeApiToken: storeApiTokenFactory({ db }),
           storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -84,9 +86,11 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       })
 
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+        queues: params.queues,
         pushJobToFileImporter,
         saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-        publish
+        publish,
+        emit: getEventBus().emit
       })
 
       const onError = () => {
@@ -168,7 +172,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
 
       const onFileImportResult = onFileImportResultFactory({
         logger: logger.child({ fileUploadStatus: jobResult.status }),
-        updateFileStatus: updateFileStatusFactory({ db: projectDb }),
+        updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         publish
       })
 

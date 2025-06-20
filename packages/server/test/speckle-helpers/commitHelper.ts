@@ -65,7 +65,10 @@ export type BasicTestCommit = {
   createdAt?: Date
 }
 
-export async function createTestObject(params: { projectId: string }) {
+export async function createTestObject(params: {
+  projectId: string
+  object?: Record<string, unknown>
+}) {
   const projectDb = await getProjectDbClient(params)
   const createObject = createObjectFactory({
     storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
@@ -75,7 +78,7 @@ export async function createTestObject(params: { projectId: string }) {
 
   return await createObject({
     streamId: params.projectId,
-    object: { foo: 'bar' }
+    object: params.object ?? { foo: 'bar' }
   })
 }
 

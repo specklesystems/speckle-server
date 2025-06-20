@@ -111,7 +111,8 @@ export const createWorkspaceInviteFactory =
           ...(input.serverRole
             ? { [ServerInviteResourceType]: mapServerRoleToValue(input.serverRole) }
             : {})
-        }
+        },
+        workspaceSeatType: input.seatType || undefined
       }
 
     return await deps.createAndSendInvite(
@@ -156,6 +157,8 @@ export const collectAndValidateWorkspaceTargetsFactory =
     )
       ? primaryResourceTarget
       : null
+    const chosenWorkspaceSeatType =
+      primaryResourceTarget.workspaceSeatType || WorkspaceSeatType.Viewer
 
     const targetWorkspaceRole =
       primaryWorkspaceResourceTarget?.role ||
@@ -166,7 +169,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
     const targetWorkspaceSeatType =
       targetWorkspaceRole === Roles.Workspace.Admin
         ? WorkspaceSeatType.Editor
-        : WorkspaceSeatType.Viewer
+        : chosenWorkspaceSeatType
 
     // Role based checks
     if (!Object.values(Roles.Workspace).includes(targetWorkspaceRole)) {
@@ -228,6 +231,13 @@ export const collectAndValidateWorkspaceTargetsFactory =
     const projectTarget = baseTargets.find(isProjectResourceTarget)
     const projectRole = projectTarget?.role
     if (projectRole && targetUser) {
+      // If target seat type was specified w/ invite, use that (cause we're gonna switch to that upon accept)
+      const seatType =
+        primaryResourceTarget.workspaceSeatType ||
+        (workspaceRoleAndSeat
+          ? workspaceRoleAndSeat.seat.type
+          : targetWorkspaceSeatType)
+
       await deps.validateWorkspaceMemberProjectRoleFactory({
         workspaceId,
         userId: targetUser.id,
@@ -235,11 +245,11 @@ export const collectAndValidateWorkspaceTargetsFactory =
         workspaceAccess: workspaceRoleAndSeat
           ? {
               role: workspaceRoleAndSeat.role.role,
-              seatType: workspaceRoleAndSeat.seat.type
+              seatType
             }
           : {
               role: targetWorkspaceRole,
-              seatType: targetWorkspaceSeatType
+              seatType
             }
       })
 
@@ -518,7 +528,6 @@ export const getPendingWorkspaceCollaboratorsFactory =
 
       results.push(buildPendingWorkspaceCollaboratorModel(invite, user))
     }
-
     return results
   }
 
@@ -632,7 +641,8 @@ export const processFinalizedWorkspaceInviteFactory =
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member,
         preventRoleDowngrade: true,
-        updatedByUserId: invite.inviterId
+        updatedByUserId: invite.inviterId,
+        seatType: invite.resource.workspaceSeatType
       })
     }
   }

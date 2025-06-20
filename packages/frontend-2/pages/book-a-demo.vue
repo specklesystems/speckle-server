@@ -20,11 +20,13 @@
     </template>
     <div class="flex flex-col items-center justify-center p-4 relative">
       <h1 class="text-heading-xl text-foreground mb-3">
-        <template v-if="!showEmbed">Book an intro call</template>
+        <template v-if="!showEmbed">Do you want a personal onboarding call?</template>
         <template v-else>Find a time</template>
       </h1>
       <template v-if="!showEmbed">
-        <p class="text-body-sm text-foreground-2">We'd love to help you get started</p>
+        <p class="text-body-sm text-foreground-2">
+          Get started like our most successful users
+        </p>
         <div class="flex flex-col gap-3 w-full md:max-w-96 mt-8">
           <FormRadioGroup v-model="bookDemoSelected" :options="options" is-stacked />
         </div>
@@ -35,7 +37,6 @@
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <div
           v-if="!showEmbed"
-          :key="`book-a-demo-cta-${bookDemoSelected}`"
           v-tippy="!bookDemoSelected ? 'Please select an option' : ''"
           class="w-full"
         >
@@ -78,13 +79,12 @@ const showEmbed = ref(false)
 const options = computed(() => [
   {
     value: 'yes',
-    title: `Yes, let's talk`,
-    subtitle: 'Find a time in the next step'
+    title: `Yes, help me get started`,
+    subtitle: 'Schedule your 15 minute call in the next step'
   },
   {
     value: 'no',
-    title: 'No, maybe later',
-    subtitle: 'You can also book a time later'
+    title: 'No, I will pass for now'
   }
 ])
 

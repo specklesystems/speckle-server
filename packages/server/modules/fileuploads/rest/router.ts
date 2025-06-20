@@ -13,6 +13,7 @@ import { processNewFileStreamFactory } from '@/modules/blobstorage/services/stre
 import { UnauthorizedError } from '@/modules/shared/errors'
 import { ensureError, Nullable } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -30,6 +31,7 @@ export const fileuploadRouterFactory = (): Router => {
       const branchName = req.params.branchName || 'main'
       const projectId = req.params.streamId
       const userId = req.context.userId
+
       if (!userId) {
         throw new UnauthorizedError('User not authenticated.')
       }
@@ -41,20 +43,18 @@ export const fileuploadRouterFactory = (): Router => {
       })
 
       const projectDb = await getProjectDbClient({ projectId })
+      const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
+      const branch = await getStreamBranchByName(projectId, branchName)
+
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        getStreamBranchByName,
         saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-        publish
+        publish,
+        emit: getEventBus().emit
       })
       const saveFileUploads = async ({
-        userId,
-        streamId,
-        branchName,
         uploadResults
       }: {
-        userId: string
-        streamId: string
-        branchName: string
         uploadResults: Array<{
           blobId: string
           fileName: string
@@ -65,12 +65,13 @@ export const fileuploadRouterFactory = (): Router => {
           uploadResults.map(async (upload) => {
             await insertNewUploadAndNotify({
               fileId: upload.blobId,
-              streamId,
-              branchName,
+              streamId: projectId,
+              branchName: branch?.name || branchName,
               userId,
               fileName: upload.fileName,
               fileType: upload.fileName?.split('.').pop() || '', //FIXME
-              fileSize: upload.fileSize
+              fileSize: upload.fileSize,
+              modelId: branch?.id || null
             })
           })
         )
@@ -85,9 +86,6 @@ export const fileuploadRouterFactory = (): Router => {
         onFinishAllFileUploads: async (uploadResults) => {
           try {
             await saveFileUploads({
-              userId,
-              streamId: projectId,
-              branchName,
               uploadResults
             })
           } catch (err) {

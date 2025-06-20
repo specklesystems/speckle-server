@@ -15,8 +15,8 @@ import { getMoveProjectToWorkspaceDryRunFactory } from '@/modules/workspaces/ser
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
-export default FF_WORKSPACES_MODULE_ENABLED
-  ? ({
+const resolvers: Resolvers = FF_WORKSPACES_MODULE_ENABLED
+  ? {
       Project: {
         invitableCollaborators: async (parent, args) => {
           // TODO: add authz policy
@@ -109,5 +109,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
           return workspace.slug
         }
       }
-    } as Resolvers)
+    }
   : {}
+
+export default resolvers

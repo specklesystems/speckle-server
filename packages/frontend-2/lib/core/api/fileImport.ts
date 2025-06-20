@@ -8,18 +8,25 @@ export enum FileUploadConvertedStatus {
   Error = 3
 }
 
-export function importFile(
+export type ImportFile = (
   params: {
     file: File
     projectId: string
     apiOrigin: string
     authToken: string
-    modelName?: string
+    modelName: string
+    modelId: string
   },
   callbacks?: Partial<{
     onProgress: (percentage: number) => void
   }>
-) {
+) => Promise<BlobPostResultItem>
+
+/**
+ * Old upload mechanism that streams uploads through the server
+ * @deprecated Use useFileImportApi() instead
+ */
+export const importFileLegacy: ImportFile = (params, callbacks) => {
   const { file, projectId, modelName, apiOrigin, authToken } = params
   const { onProgress } = callbacks || {}
 
@@ -36,11 +43,13 @@ export function importFile(
   const formKey = 'file'
   data.append(formKey, file)
 
-  const request = new XMLHttpRequest()
-  request.open(
-    'POST',
-    new URL(`/api/file/autodetect/${projectId}/${finalModelName}`, apiOrigin).toString()
+  const endpointUrl = new URL(
+    `/api/file/autodetect/${projectId}/${finalModelName}`,
+    apiOrigin
   )
+
+  const request = new XMLHttpRequest()
+  request.open('POST', endpointUrl.toString())
   request.responseType = 'json'
 
   request.setRequestHeader('Authorization', `Bearer ${authToken}`)

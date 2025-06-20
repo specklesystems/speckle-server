@@ -152,3 +152,36 @@ export const dismissDiscoverableWorkspaceMutation = graphql(`
     }
   }
 `)
+
+export const workspaceUpdateAutoJoinMutation = graphql(`
+  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        discoverabilityAutoJoinEnabled
+      }
+    }
+  }
+`)
+
+export const workspaceUpdateDefaultSeatTypeMutation = graphql(`
+  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        defaultSeatType
+      }
+    }
+  }
+`)
+
+export const workspaceUpdateExclusiveMutation = graphql(`
+  mutation WorkspaceUpdateExclusiveMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        isExclusive
+      }
+    }
+  }
+`)

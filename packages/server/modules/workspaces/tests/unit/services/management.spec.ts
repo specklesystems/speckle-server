@@ -258,9 +258,11 @@ describe('Workspace services', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         logo: null,
+        isExclusive: false,
         discoverabilityEnabled: false,
         discoverabilityAutoJoinEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
+        defaultSeatType: null,
         isEmbedSpeckleBrandingHidden: false,
         domains: []
       }
@@ -656,6 +658,15 @@ const buildUpdateWorkspaceRoleAndTestContext = (
       }
     },
     ensureValidWorkspaceRoleSeat: async () => {
+      return {
+        type: WorkspaceSeatType.Editor,
+        workspaceId: 'test',
+        userId: 'test',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    },
+    assignWorkspaceSeat: async () => {
       return {
         type: WorkspaceSeatType.Editor,
         workspaceId: 'test',
@@ -1137,12 +1148,14 @@ describe('Workspace role services', () => {
                   name: cryptoRandomString({ length: 10 }),
                   slug: cryptoRandomString({ length: 10 }),
                   logo: null,
+                  isExclusive: false,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
                   discoverabilityAutoJoinEnabled: false,
                   domainBasedMembershipProtectionEnabled: false,
+                  defaultSeatType: null,
                   isEmbedSpeckleBrandingHidden: false
                 }
               },
@@ -1180,10 +1193,12 @@ describe('Workspace role services', () => {
           logo: null,
           createdAt: new Date(),
           updatedAt: new Date(),
+          isExclusive: false,
           description: null,
           discoverabilityEnabled: false,
           discoverabilityAutoJoinEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
+          defaultSeatType: null,
           isEmbedSpeckleBrandingHidden: false
         }
 

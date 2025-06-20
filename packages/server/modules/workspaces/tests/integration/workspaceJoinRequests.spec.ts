@@ -57,7 +57,11 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  assignWorkspaceSeatFactory,
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
   getWorkspaceUserSeatFactory
@@ -129,7 +133,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getWorkspaceWithDomains: async () => null,
             getUserEmails: async () => [],
             addOrUpdateWorkspaceRole: async () => {},
-            getWorkspaceTeam: async () => []
+            getWorkspaceTeam: async () => ({ items: [], cursor: null })
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -146,7 +150,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getWorkspaceWithDomains: async () => null,
             getUserEmails: async () => [],
             addOrUpdateWorkspaceRole: async () => {},
-            getWorkspaceTeam: async () => []
+            getWorkspaceTeam: async () => ({ items: [], cursor: null })
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -181,7 +185,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
               workspace as unknown as WorkspaceWithDomains,
             getUserEmails: async () => [],
             addOrUpdateWorkspaceRole: async () => {},
-            getWorkspaceTeam: async () => []
+            getWorkspaceTeam: async () => ({ items: [], cursor: null })
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -239,7 +243,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserEmails: async () =>
               [{ email: user.email, verified: true }] as unknown as UserEmail[],
             addOrUpdateWorkspaceRole: async () => {},
-            getWorkspaceTeam: async () => []
+            getWorkspaceTeam: async () => ({ items: [], cursor: null })
           })({ workspaceId: workspace.id, userId: user.id })
         ).to.equal(true)
 
@@ -310,7 +314,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
           getUserEmails: async () =>
             [{ email: user.email, verified: true }] as unknown as UserEmail[],
           addOrUpdateWorkspaceRole: async () => {},
-          getWorkspaceTeam: async () => []
+          getWorkspaceTeam: async () => ({ items: [], cursor: null })
         })
 
         expect(
@@ -390,7 +394,18 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
               createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                getWorkspace: getWorkspaceFactory({ db })
+              }),
               eventEmit: getEventBus().emit
+            }),
+            assignWorkspaceSeat: assignWorkspaceSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                db
+              }),
+              eventEmit: getEventBus().emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
             })
           }),
           getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),

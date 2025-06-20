@@ -1,37 +1,37 @@
-import { describe, expect, test } from 'vitest'
-import IndexedDatabase from './indexedDatabase.js'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
-import { Item } from '../../types/types.js'
+import IndexedDatabase, { IndexedDatabaseOptions } from './indexedDatabase.js'
 
-describe('database cache', () => {
-  test('write single item to queue use getItem', async () => {
-    const i: Item = { baseId: 'id', base: { id: 'id', speckle_type: 'type' } }
-    const database = new IndexedDatabase({
-      indexedDB: new IDBFactory(),
-      keyRange: IDBKeyRange
-    })
-    await database.add(i)
-    await database.disposeAsync()
+import { Item, Base } from '../../types/types.js'
 
-    const x = await database.getItem({ id: 'id' })
-    expect(x).toMatchSnapshot()
+// Mock Item
+const defaultItem = (id: string): Item => ({
+  baseId: id,
+  base: { foo: 'bar' } as unknown as Base
+})
+
+describe('IndexedDatabase', () => {
+  let db: IndexedDatabase
+  let options: IndexedDatabaseOptions
+
+  beforeEach(() => {
+    options = { indexedDB: new IDBFactory(), keyRange: IDBKeyRange }
+    db = new IndexedDatabase(options)
   })
 
-  test('write two items to queue use getItem', async () => {
-    const i1: Item = { baseId: 'id1', base: { id: 'id', speckle_type: 'type' } }
-    const i2: Item = { baseId: 'id2', base: { id: 'id', speckle_type: 'type' } }
-    const database = new IndexedDatabase({
-      indexedDB: new IDBFactory(),
-      keyRange: IDBKeyRange
-    })
-    await database.add(i1)
-    await database.add(i2)
-    await database.disposeAsync()
+  afterEach(async () => {
+    await db.disposeAsync()
+  })
 
-    const x1 = await database.getItem({ id: i1.baseId })
-    expect(x1).toMatchSnapshot()
+  it('should add and get multiple items', async () => {
+    const items = [defaultItem('id1'), defaultItem('id2')]
+    await db.saveBatch({ batch: items })
+    const result = await db.getAll(['id1', 'id2'])
+    expect(result).toMatchSnapshot()
+    expect(result).toEqual(items)
+  })
 
-    const x2 = await database.getItem({ id: i2.baseId })
-    expect(x2).toMatchSnapshot()
+  it('should dispose without error', async () => {
+    await expect(db.disposeAsync()).resolves.not.toThrow()
   })
 })

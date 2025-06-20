@@ -152,7 +152,6 @@ import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewMo
 import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
-import { OrientedSectionTool } from './modules/extensions/sections/OrientedSectionTool.js'
 import {
   SectionTool,
   SectionToolEvent,
@@ -166,9 +165,18 @@ import {
   EdgesPassOptions
 } from './modules/pipeline/Passes/EdgesPass.js'
 import {
+  Measurement,
+  MeasurementState
+} from './modules/extensions/measurements/Measurement.js'
+import { PointToPointMeasurement } from './modules/extensions/measurements/PointToPointMeasurement.js'
+import { PerpendicularMeasurement } from './modules/extensions/measurements/PerpendicularMeasurement.js'
+import { AreaMeasurement } from './modules/extensions/measurements/AreaMeasurement.js'
+import { PointMeasurement } from './modules/extensions/measurements/PointMeasurement.js'
+import {
   DefaultEdgesPipelineOptions,
   EdgesPipeline
 } from './modules/pipeline/Pipelines/EdgesPipeline.js'
+import { Geometry } from './modules/converter/Geometry.js'
 
 export {
   Viewer,
@@ -184,13 +192,18 @@ export {
   WorldTree,
   RenderTree,
   VisualDiffMode,
+  Measurement,
+  PointToPointMeasurement,
+  PerpendicularMeasurement,
+  AreaMeasurement,
+  PointMeasurement,
   MeasurementType,
+  MeasurementState,
   Units,
   Extension,
   SelectionExtension,
   CameraController,
   SectionTool,
-  OrientedSectionTool,
   SectionOutlines,
   MeasurementsExtension,
   FilteringExtension,
@@ -201,6 +214,7 @@ export {
   Loader,
   SpeckleConverter,
   GeometryConverter,
+  Geometry,
   SpeckleLoader,
   ObjLoader,
   LoaderEvent,

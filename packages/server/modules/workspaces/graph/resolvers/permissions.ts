@@ -1,5 +1,5 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { Authz } from '@speckle/shared'
+import { Authz, WorkspacePlanFeatures } from '@speckle/shared'
 
 export default {
   Workspace: {
@@ -33,11 +33,28 @@ export default {
     },
     canEditEmbedOptions: async (parent, _args, ctx) => {
       const canEditEmbedOptions =
-        await ctx.authPolicies.workspace.canUpdateEmbedOptions({
+        await ctx.authPolicies.workspace.canUseWorkspacePlanFeature({
           userId: ctx.userId,
-          workspaceId: parent.workspaceId
+          workspaceId: parent.workspaceId,
+          feature: WorkspacePlanFeatures.HideSpeckleBranding
         })
       return Authz.toGraphqlResult(canEditEmbedOptions)
+    },
+    canMakeWorkspaceExclusive: async (parent, _args, ctx) => {
+      const canEditEmbedOptions =
+        await ctx.authPolicies.workspace.canUseWorkspacePlanFeature({
+          userId: ctx.userId,
+          workspaceId: parent.workspaceId,
+          feature: WorkspacePlanFeatures.ExclusiveMembership
+        })
+      return Authz.toGraphqlResult(canEditEmbedOptions)
+    },
+    canReadMemberEmail: async (parent, _args, ctx) => {
+      const policyResult = await ctx.authPolicies.workspace.canReadMemberEmail({
+        userId: ctx.userId,
+        workspaceId: parent.workspaceId
+      })
+      return Authz.toGraphqlResult(policyResult)
     }
   }
 } as Resolvers

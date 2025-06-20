@@ -30,13 +30,21 @@ export type Workspace = {
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
   discoverabilityAutoJoinEnabled: boolean
+  defaultSeatType: WorkspaceSeatType | null
   // TODO: Create new table/structure if embeds get more workspace-level configuration
   isEmbedSpeckleBrandingHidden: boolean
+  isExclusive: boolean
 }
 
 export type LimitedWorkspace = Pick<
   Workspace,
-  'id' | 'slug' | 'name' | 'description' | 'logo' | 'discoverabilityAutoJoinEnabled'
+  | 'id'
+  | 'slug'
+  | 'name'
+  | 'description'
+  | 'logo'
+  | 'discoverabilityAutoJoinEnabled'
+  | 'isExclusive'
 >
 
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }
@@ -71,6 +79,7 @@ export type WorkspaceJoinRequestStatus = 'pending' | 'approved' | 'denied' | 'di
 export type WorkspaceJoinRequest = {
   workspaceId: string
   userId: string
+  email: string
   status: WorkspaceJoinRequestStatus
   createdAt: Date
   updatedAt: Date

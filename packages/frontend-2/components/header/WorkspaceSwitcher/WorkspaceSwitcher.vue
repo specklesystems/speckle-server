@@ -144,12 +144,16 @@ const workspaces = computed(() =>
 const hasPersonalProjects = computed(
   () => !!result.value?.activeUser?.projects?.totalCount
 )
+
+const activeWorkspace = computed(() => activeWorkspaceResult.value?.workspaceBySlug)
 const selectedWorkspaceMeta = computed(() => {
-  return workspaces.value.find(
-    (workspace) => workspace.slug === activeWorkspaceSlug.value
+  return (
+    workspaces.value.find(
+      (workspace) => workspace.slug === activeWorkspaceSlug.value
+    ) || activeWorkspace.value
   )
 })
-const activeWorkspace = computed(() => activeWorkspaceResult.value?.workspaceBySlug)
+
 const displayName = computed(() =>
   isProjectsActive.value ? 'Personal projects' : selectedWorkspaceMeta.value?.name
 )

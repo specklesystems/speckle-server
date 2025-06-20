@@ -13,6 +13,7 @@ import {
 } from '../../domain/authErrors.js'
 import { TIME_MS } from '../../../core/index.js'
 import { ProjectVisibility } from '../../domain/projects/types.js'
+import { getWorkspaceFake } from '../../../tests/fakes.js'
 
 const buildCanLoadPolicy = (overrides?: Partial<Parameters<typeof canLoadPolicy>[0]>) =>
   canLoadPolicy({
@@ -20,6 +21,7 @@ const buildCanLoadPolicy = (overrides?: Partial<Parameters<typeof canLoadPolicy>
       parseFeatureFlags({
         FF_WORKSPACES_MODULE_ENABLED: 'true'
       }),
+    getAdminOverrideEnabled: async () => false,
     getProject: async () => ({
       id: 'project-id',
       workspaceId: null,
@@ -112,6 +114,49 @@ describe('canLoad', () => {
     expect(result).toBeAuthOKResult()
   })
 
+  describe('with server admin', () => {
+    it('returns ok if admin override enabled even without project role', async () => {
+      const canLoad = buildCanLoadPolicy({
+        getServerRole: async () => Roles.Server.Admin,
+        getAdminOverrideEnabled: async () => true,
+        getProjectRole: async () => null
+      })
+      const result = await canLoad({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthOKResult()
+    })
+
+    it('returns error if admin override disabled and no project role', async () => {
+      const canLoad = buildCanLoadPolicy({
+        getServerRole: async () => Roles.Server.Admin,
+        getAdminOverrideEnabled: async () => false,
+        getProjectRole: async () => null
+      })
+      const result = await canLoad({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
+
+    it('returns ok if admin override disabled but has valid project role', async () => {
+      const canLoad = buildCanLoadPolicy({
+        getServerRole: async () => Roles.Server.Admin,
+        getAdminOverrideEnabled: async () => false,
+        getProjectRole: async () => Roles.Stream.Contributor
+      })
+      const result = await canLoad({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthOKResult()
+    })
+  })
+
   describe('with workspace project', () => {
     const overrides = {
       getProject: async () => ({
@@ -120,7 +165,7 @@ describe('canLoad', () => {
         visibility: ProjectVisibility.Workspace,
         allowPublicComments: false
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),
@@ -235,6 +280,70 @@ describe('canLoad', () => {
       })
       expect(result).toBeAuthErrorResult({
         code: WorkspaceSsoSessionNoAccessError.code
+      })
+    })
+
+    describe('with server admin', () => {
+      it('returns ok if admin override enabled even without workspace/project role', async () => {
+        const canLoad = buildCanLoadPolicy({
+          ...overrides,
+          getServerRole: async () => Roles.Server.Admin,
+          getAdminOverrideEnabled: async () => true,
+          getWorkspaceRole: async () => null,
+          getProjectRole: async () => null
+        })
+        const result = await canLoad({
+          userId: 'user-id',
+          projectId: 'project-id'
+        })
+        expect(result).toBeAuthOKResult()
+      })
+
+      it('returns error if admin override disabled and no workspace role', async () => {
+        const canLoad = buildCanLoadPolicy({
+          ...overrides,
+          getServerRole: async () => Roles.Server.Admin,
+          getAdminOverrideEnabled: async () => false,
+          getWorkspaceRole: async () => null,
+          getProjectRole: async () => Roles.Stream.Owner
+        })
+        const result = await canLoad({
+          userId: 'user-id',
+          projectId: 'project-id'
+        })
+        expect(result).toBeAuthErrorResult({
+          code: WorkspaceNoAccessError.code
+        })
+      })
+
+      it('returns ok if admin override disabled but has valid workspace and project roles', async () => {
+        const canLoad = buildCanLoadPolicy({
+          ...overrides,
+          getServerRole: async () => Roles.Server.Admin,
+          getAdminOverrideEnabled: async () => false,
+          getWorkspaceRole: async () => Roles.Workspace.Member,
+          getProjectRole: async () => Roles.Stream.Contributor
+        })
+        const result = await canLoad({
+          userId: 'user-id',
+          projectId: 'project-id'
+        })
+        expect(result).toBeAuthOKResult()
+      })
+
+      it('returns ok if admin override disabled with implicit contributor role from workspace admin', async () => {
+        const canLoad = buildCanLoadPolicy({
+          ...overrides,
+          getServerRole: async () => Roles.Server.Admin,
+          getAdminOverrideEnabled: async () => false,
+          getWorkspaceRole: async () => Roles.Workspace.Admin,
+          getProjectRole: async () => null
+        })
+        const result = await canLoad({
+          userId: 'user-id',
+          projectId: 'project-id'
+        })
+        expect(result).toBeAuthOKResult()
       })
     })
   })

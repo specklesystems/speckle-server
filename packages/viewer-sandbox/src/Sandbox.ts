@@ -147,10 +147,11 @@ export default class Sandbox {
   public measurementsParams = {
     enabled: false,
     visible: true,
-    type: MeasurementType.POINTTOPOINT,
+    type: MeasurementType.POINT,
     vertexSnap: true,
     units: 'm',
-    precision: 2
+    precision: 2,
+    chain: false
   }
 
   public constructor(
@@ -489,24 +490,8 @@ export default class Sandbox {
     const screenshot = this.tabs.pages[0].addButton({
       title: 'Screenshot'
     })
-    let enabled = -1
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      this.viewer
-        .getRenderer()
-        .enableLayers(
-          [
-            ObjectLayers.STREAM_CONTENT,
-            ObjectLayers.STREAM_CONTENT_MESH,
-            ObjectLayers.STREAM_CONTENT_LINE,
-            ObjectLayers.STREAM_CONTENT_POINT,
-            ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-            ObjectLayers.STREAM_CONTENT_TEXT,
-            ObjectLayers.SHADOWCATCHER
-          ],
-          (++enabled % 2) as unknown as boolean
-        )
-      this.viewer.requestRender()
+      console.warn(await this.viewer.screenshot())
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
@@ -539,7 +524,7 @@ export default class Sandbox {
 
     const pipeline = {
       output: 0,
-      edges: false,
+      edges: true,
       outlineThickness: 1,
       outlineColor: 0x323232,
       outlineOpacity: 0.75
@@ -1249,7 +1234,9 @@ export default class Sandbox {
         label: 'Type',
         options: {
           PERPENDICULAR: MeasurementType.PERPENDICULAR,
-          POINTTOPOINT: MeasurementType.POINTTOPOINT
+          POINTTOPOINT: MeasurementType.POINTTOPOINT,
+          AREA: MeasurementType.AREA,
+          POINT: MeasurementType.POINT
         }
       })
       .on('change', () => {
@@ -1280,6 +1267,14 @@ export default class Sandbox {
         step: 1,
         min: 1,
         max: 5
+      })
+      .on('change', () => {
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
+      })
+    container
+      .addInput(this.measurementsParams, 'chain', {
+        label: 'Chain'
       })
       .on('change', () => {
         this.viewer.getExtension(MeasurementsExtension).options =
@@ -1330,15 +1325,33 @@ export default class Sandbox {
         true,
         undefined
       )
-      let progress = 0
+      let dataProgress = 0
+      let renderedCount = 0
+      let traversedCount = 0
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)
-        if (p > progress) {
+        if (p > dataProgress) {
           if (colorImage)
             colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
-          progress = p
+          dataProgress = p
           console.log(`Loading ${p}%`)
+        }
+      })
+      loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
+        if (arg.count > traversedCount) {
+          traversedCount = arg.count
+          if (traversedCount % 500 === 0) {
+            console.log(`Traversed ${traversedCount}`)
+          }
+        }
+      })
+      loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
+        if (arg.count > renderedCount) {
+          renderedCount = arg.count
+          if (renderedCount % 500 === 0) {
+            console.log(`Converting Data ${renderedCount}`)
+          }
         }
       })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
@@ -1348,7 +1361,7 @@ export default class Sandbox {
         console.error(`Loader warning: ${arg.message}`)
       })
 
-      void this.viewer.loadObject(loader, true)
+      await this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
   }

@@ -12,7 +12,8 @@ import {
   UpdateWorkspace,
   GetWorkspaceBySlug,
   AddOrUpdateWorkspaceRole,
-  EnsureValidWorkspaceRoleSeat
+  EnsureValidWorkspaceRoleSeat,
+  AssignWorkspaceSeat
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -165,7 +166,9 @@ export const createWorkspaceFactory =
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false,
       discoverabilityAutoJoinEnabled: false,
-      isEmbedSpeckleBrandingHidden: false
+      isEmbedSpeckleBrandingHidden: false,
+      defaultSeatType: null,
+      isExclusive: false
     } satisfies Workspace
     await upsertWorkspace({ workspace })
 
@@ -403,7 +406,8 @@ export const addOrUpdateWorkspaceRoleFactory =
     findVerifiedEmailsByUserId,
     upsertWorkspaceRole,
     emitWorkspaceEvent,
-    ensureValidWorkspaceRoleSeat
+    ensureValidWorkspaceRoleSeat,
+    assignWorkspaceSeat
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     getWorkspaceWithDomains: GetWorkspaceWithDomains
@@ -411,6 +415,7 @@ export const addOrUpdateWorkspaceRoleFactory =
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
     ensureValidWorkspaceRoleSeat: EnsureValidWorkspaceRoleSeat
+    assignWorkspaceSeat: AssignWorkspaceSeat
   }): AddOrUpdateWorkspaceRole =>
   async ({
     workspaceId,
@@ -418,15 +423,11 @@ export const addOrUpdateWorkspaceRoleFactory =
     role: nextWorkspaceRole,
     preventRoleDowngrade,
     updatedByUserId,
-    skipEvent
+    skipEvent,
+    seatType
   }): Promise<void> => {
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
-
-    // Return early if no work required
     const previousWorkspaceRole = workspaceRoles.find((acl) => acl.userId === userId)
-    if (previousWorkspaceRole?.role === nextWorkspaceRole) {
-      return
-    }
 
     // prevent role downgrades (used during invite flow)
     if (preventRoleDowngrade) {
@@ -474,13 +475,24 @@ export const addOrUpdateWorkspaceRoleFactory =
       role: nextWorkspaceRole,
       createdAt: previousWorkspaceRole?.createdAt ?? new Date()
     })
-    await ensureValidWorkspaceRoleSeat({
-      userId,
-      workspaceId,
-      role: nextWorkspaceRole,
-      updatedByUserId,
-      skipEvent
-    })
+
+    if (seatType) {
+      await assignWorkspaceSeat({
+        userId,
+        workspaceId,
+        type: seatType,
+        assignedByUserId: updatedByUserId,
+        skipEvent: true // skip SeatUpdated, cause we only want RoleUpdated to come out of this
+      })
+    } else {
+      await ensureValidWorkspaceRoleSeat({
+        userId,
+        workspaceId,
+        role: nextWorkspaceRole,
+        updatedByUserId,
+        skipEvent
+      })
+    }
 
     if (!skipEvent) {
       await emitWorkspaceEvent({

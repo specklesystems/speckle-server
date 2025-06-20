@@ -23,11 +23,11 @@
     "dev:docker:down": "docker compose -f ./docker-compose-deps.yml down",
     "dev:docker:down:volumes": "docker compose -f ./docker-compose-deps.yml down --volumes",
     "dev:docker:restart": "yarn dev:docker:down && yarn dev:docker:up",
-    "dev:kind:up": "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml",
-    "dev:kind:down": "ctlptl delete -f ./.circleci/deployment/cluster-config.yaml",
-    "dev:kind:helm:up": "yarn dev:kind:up && tilt up --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server",
-    "dev:kind:helm:down": "tilt down --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server",
-    "dev:kind:helm:ci": "tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m",
+    "dev:kind:up": "ctlptl apply --filename ./.tests/deployment/helm/cluster-config.yaml",
+    "dev:kind:down": "ctlptl delete -f ./tests/deployment/helm/cluster-config.yaml",
+    "dev:kind:helm:up": "yarn dev:kind:up && tilt up --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server",
+    "dev:kind:helm:down": "tilt down --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server",
+    "dev:kind:helm:ci": "tilt ci --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server --timeout 10m",
     "dev": "yarn workspaces foreach --parallel --interlaced --verbose --worktree --jobs unlimited run dev",
     "dev:no-server": "yarn workspaces foreach --exclude @speckle/server --parallel --interlaced --verbose --worktree --jobs unlimited run dev",
     "dev:minimal": "yarn workspaces foreach --parallel --interlaced --verbose --worktree --jobs unlimited --include '{@speckle/server,@speckle/frontend-2}' run dev",
@@ -40,6 +40,7 @@
     "cm": "cz",
     "eslint:inspect": "eslint-config-inspector",
     "eslint:projectwide": "node ./utils/eslint-projectwide.mjs",
+    "helm:jsonschema:generate": "./utils/helm/update-schema-json.sh",
     "npkill": "npkill"
   },
   "devDependencies": {
@@ -94,7 +95,6 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "wait-on": ">=7.2.0",
-    "vue-tsc@npm:2.2.2/@vue/language-core": "2.2.0",
     "vitest": "^3.0.7"
   },
   "config": {

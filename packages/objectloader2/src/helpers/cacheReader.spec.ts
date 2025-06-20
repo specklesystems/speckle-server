@@ -11,7 +11,7 @@ describe('CacheReader testing', () => {
     const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
     const cacheReader = new CacheReader(
       new MemoryDatabase({
-        items: new Map<string, Base>([[i1.baseId, i1.base]])
+        items: new Map<string, Base>([[i1.baseId, i1.base!]])
       }),
       deferments,
       {

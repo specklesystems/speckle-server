@@ -124,9 +124,15 @@ export const jobProcessor = async ({
   } catch (err) {
     if (getAppState() === AppState.SHUTTINGDOWN) {
       // likely that the job was cancelled due to the service shutting down
-      logger.warn({ err, elapsed: getElapsed(), status: 'error' }, jobMessage)
+      logger.warn(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
     } else {
-      logger.error({ err, elapsed: getElapsed(), status: 'error' }, jobMessage)
+      logger.error(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
     }
 
     const reason = err instanceof Error ? err.stack ?? err.toString() : 'unknown error'
@@ -139,6 +145,6 @@ export const jobProcessor = async ({
       reason
     }
   } finally {
-    fs.rmdirSync(jobDir, { recursive: true })
+    fs.rmSync(jobDir, { recursive: true })
   }
 }

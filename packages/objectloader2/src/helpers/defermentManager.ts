@@ -8,6 +8,9 @@ export class DefermentManager {
   private logger: CustomLogger
   private currentSize = 0
   private disposed = false
+  //tracks total deferment requests for each id
+  //this is used to prevent cleaning up deferments that are still being requested
+  private totalDefermentRequests: Map<string, number> = new Map()
 
   constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()
@@ -29,6 +32,7 @@ export class DefermentManager {
 
   async defer(params: { id: string }): Promise<Base> {
     if (this.disposed) throw new Error('DefermentManager is disposed')
+    this.trackDefermentRequest(params.id)
     const now = this.now()
     const deferredBase = this.deferments.get(params.id)
     if (deferredBase) {
@@ -44,18 +48,32 @@ export class DefermentManager {
     return notYetFound.getPromise()
   }
 
+  private trackDefermentRequest(id: string): void {
+    const request = this.totalDefermentRequests.get(id)
+    if (request) {
+      this.totalDefermentRequests.set(id, request + 1)
+    } else {
+      this.totalDefermentRequests.set(id, 1)
+    }
+  }
+
   undefer(item: Item): void {
     if (this.disposed) throw new Error('DefermentManager is disposed')
+    const base = item.base
+    if (!base) {
+      this.logger('undefer called with no base', item)
+      return
+    }
     const now = this.now()
     this.currentSize += item.size || 0
     //order matters here with found before undefer
     const deferredBase = this.deferments.get(item.baseId)
     if (deferredBase) {
-      deferredBase.found(item)
+      deferredBase.found(base)
       deferredBase.setAccess(now)
     } else {
       const existing = new DeferredBase(this.options.ttlms, item.baseId, now)
-      existing.found(item)
+      existing.found(base)
       this.deferments.set(item.baseId, existing)
     }
   }
@@ -82,7 +100,7 @@ export class DefermentManager {
     let waiting = 0
     for (const deferredBase of this.deferments.values()) {
       deferredBase.done(0)
-      if (deferredBase.getItem() === undefined) {
+      if (deferredBase.getBase() === undefined) {
         waiting++
       }
     }
@@ -106,9 +124,15 @@ export class DefermentManager {
     const start = performance.now()
     for (const deferredBase of Array.from(this.deferments.values())
       .filter((x) => x.isExpired(now))
-      .sort((a, b) => this.compareMaybeBasesBySize(a.getItem(), b.getItem()))) {
+      .sort((a, b) => this.compareMaybeBasesBySize(a.getSize(), b.getSize()))) {
       if (deferredBase.done(now)) {
-        this.currentSize -= deferredBase.getItem()?.size || 0
+        //if the deferment is done but has been requested multiple times,
+        //we do not clean it up to allow the requests to resolve
+        const requestCount = this.totalDefermentRequests.get(deferredBase.getId())
+        if (requestCount && requestCount > 1) {
+          return
+        }
+        this.currentSize -= deferredBase.getSize() || 0
         this.deferments.delete(deferredBase.getId())
         cleaned++
         if (this.currentSize < maxSizeBytes) {
@@ -117,7 +141,7 @@ export class DefermentManager {
       }
     }
     this.logger(
-      'cleaned deferments, cleaned, left',
+      'cleaned deferments: cleaned, left, time',
       cleaned,
       this.deferments.size,
       performance.now() - start
@@ -125,14 +149,7 @@ export class DefermentManager {
     return
   }
 
-  compareMaybeBasesBySize(a: Item | undefined, b: Item | undefined): number {
-    if (a === undefined && b === undefined) return 0
-    if (a === undefined) return -1
-    if (b === undefined) return 1
-    return this.compareMaybe(a.size, b.size)
-  }
-
-  compareMaybe(a: number | undefined, b: number | undefined): number {
+  compareMaybeBasesBySize(a: number | undefined, b: number | undefined): number {
     if (a === undefined && b === undefined) return 0
     if (a === undefined) return -1
     if (b === undefined) return 1
