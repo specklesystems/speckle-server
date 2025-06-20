@@ -174,6 +174,10 @@ export class RenderTree {
     return this.tree.getInstances(this.root.model.subtreeId)
   }
 
+  public getDuplicates() {
+    return this.tree.getDuplicates(this.root.model.subtreeId)
+  }
+
   public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
     return this.getRenderableNodes(...types).map(
       (val: TreeNode) => val.model.renderView
