@@ -137,12 +137,12 @@ export const loggingPluginFactory: (deps: {
         if (!importantError) {
           logger.info(
             { err: firstError },
-            '{graphql_operation_title} failed after {apollo_query_duration_ms} ms'
+            '{graphql_operation_name} failed after {apollo_query_duration_ms} ms'
           )
         } else {
           logger.error(
             { err: importantError },
-            '{graphql_operation_title} failed after {apollo_query_duration_ms} ms'
+            '{graphql_operation_name} failed after {apollo_query_duration_ms} ms'
           )
         }
       },

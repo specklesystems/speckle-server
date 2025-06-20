@@ -209,3 +209,11 @@ export const workspaceMoveProjectManagerUserQuery = graphql(`
     }
   }
 `)
+
+export const useCanCreateWorkspaceQuery = graphql(`
+  query UseCanCreateWorkspace {
+    activeUser {
+      ...UseCanCreateWorkspace_User
+    }
+  }
+`)

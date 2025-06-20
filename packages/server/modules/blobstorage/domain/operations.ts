@@ -85,3 +85,8 @@ export type RegisterCompletedUpload = (params: {
   expectedETag: string
   maximumFileSize: number
 }) => Promise<BlobStorageItem>
+
+export type ExpirePendingUploads = (params: {
+  timeoutThresholdSeconds: number
+  errMessage: string
+}) => Promise<BlobStorageItem[]>

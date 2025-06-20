@@ -13,8 +13,8 @@ export const startHealthCheckServer = (params: { logger: Logger }) => {
     }
   })
 
-  server.listen(9080, 'localhost', () => {
-    logger.info('Server running at http://localhost with endpoint /healthz')
+  server.listen(9080, '0.0.0.0', () => {
+    logger.info('Server running, listening to 0.0.0.0 and path /healthz')
   })
 
   return server

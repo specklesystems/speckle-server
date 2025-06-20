@@ -158,6 +158,7 @@ enum WorkspaceFeatureName {
   oidcSso
   hideSpeckleBranding
   workspaceDataRegionSpecificity
+  exclusiveMembership
 }
 
 type WorkspacePlanPrice {

@@ -174,3 +174,14 @@ export const workspaceUpdateDefaultSeatTypeMutation = graphql(`
     }
   }
 `)
+
+export const workspaceUpdateExclusiveMutation = graphql(`
+  mutation WorkspaceUpdateExclusiveMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        isExclusive
+      }
+    }
+  }
+`)

@@ -41,8 +41,13 @@
       <button
         v-if="iconClick"
         v-tippy="iconText ? iconText : undefined"
+        :disabled="iconDisabled"
         class="group-hover:flex p-1 shrink-0 hover:bg-primary-muted rounded text-foreground-2"
-        :class="[noHover ? '' : 'mr-2', alwaysShowIcon ? 'flex' : 'hidden']"
+        :class="[
+          noHover ? '' : 'mr-2',
+          alwaysShowIcon ? 'flex' : 'hidden',
+          iconDisabled ? 'opacity-50 cursor-not-allowed' : ''
+        ]"
         @click="iconClick"
       >
         <Edit v-if="icon === 'edit'" class="h-4 w-4" />
@@ -72,6 +77,7 @@ defineProps<{
   icon?: 'add' | 'edit' | 'view'
   iconText?: string
   iconClick?: () => void
+  iconDisabled?: boolean
   noHover?: boolean
   nested?: boolean
   alwaysShowIcon?: boolean

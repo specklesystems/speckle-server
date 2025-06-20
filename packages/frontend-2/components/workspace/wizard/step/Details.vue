@@ -13,6 +13,7 @@
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
         auto-focus
+        :disabled="disabled"
         size="lg"
         @update:model-value="updateShortId"
       />
@@ -28,7 +29,7 @@
           :custom-error-message="error?.graphQLErrors[0]?.message"
           show-label
           size="lg"
-          :disabled="disableSlugEdit"
+          :disabled="disableSlugEdit || disabled"
           @update:model-value="onSlugChange"
         />
         <p class="text-body-2xs mt-1.5 text-foreground-2">
@@ -54,6 +55,7 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   disableSlugEdit: boolean
+  disabled?: boolean
 }>()
 
 const mixpanel = useMixpanel()
@@ -78,7 +80,10 @@ const getShortIdHelp = computed(
 )
 const disableContinue = computed(
   () =>
-    !state.value.name || !state.value.slug || !!error.value?.graphQLErrors[0]?.message
+    !state.value.name ||
+    !state.value.slug ||
+    !!error.value?.graphQLErrors[0]?.message ||
+    props.disabled
 )
 
 const updateShortId = debounce((newName: string) => {

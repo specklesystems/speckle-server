@@ -50,7 +50,7 @@ jobs:
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
 
   docker-build-frontend2:
-    runs-on: blacksmith
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     name: Frontend2
     steps:
       - name: Login to Docker Hub
@@ -73,8 +73,6 @@ jobs:
           file: ./packages/frontend-2/Dockerfile
           build-args: |
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
-          cache-from: type=registry,ref=${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:buildcache
-          cache-to: type=registry,ref=${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:buildcache,mode=max
       - name: Check frontend-2 build
         uses: useblacksmith/build-push-action@v1
         if: ${{ !inputs.PUBLISH }}

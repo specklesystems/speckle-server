@@ -45,7 +45,7 @@
 
     <template v-else>
       <!-- Existing Provider Configuration -->
-      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
+      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg mt-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h3 class="text-body-xs font-medium text-foreground">
