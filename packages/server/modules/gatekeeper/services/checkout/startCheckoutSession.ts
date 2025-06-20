@@ -41,6 +41,7 @@ export const startCheckoutSessionFactory =
   }) =>
   async ({
     workspaceId,
+    userId,
     workspaceSlug,
     workspacePlan,
     billingInterval,
@@ -48,6 +49,7 @@ export const startCheckoutSessionFactory =
     currency
   }: {
     workspaceId: string
+    userId: string
     workspaceSlug: string
     workspacePlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
@@ -132,6 +134,7 @@ export const startCheckoutSessionFactory =
 
     const checkoutSession = await createCheckoutSession({
       workspaceId,
+      userId,
       workspaceSlug,
       billingInterval,
       workspacePlan,

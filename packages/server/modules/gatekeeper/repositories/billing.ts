@@ -43,7 +43,8 @@ const WorkspaceSubscriptions = buildTableHelper('workspace_subscriptions', [
   'currentBillingCycleEnd',
   'billingInterval',
   'subscriptionData',
-  'currency'
+  'currency',
+  'updateIntent'
 ])
 
 const tables = {

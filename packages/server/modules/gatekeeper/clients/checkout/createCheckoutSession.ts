@@ -23,6 +23,7 @@ export const createCheckoutSessionFactory =
     billingInterval,
     workspaceSlug,
     workspaceId,
+    userId,
     isCreateFlow,
     currency
   }) => {
@@ -53,6 +54,7 @@ export const createCheckoutSessionFactory =
       billingInterval,
       workspacePlan,
       workspaceId,
+      userId,
       currency,
       createdAt: new Date(),
       updatedAt: new Date(),

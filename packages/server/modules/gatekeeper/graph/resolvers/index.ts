@@ -41,7 +41,7 @@ import {
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
-import { LogicError } from '@/modules/shared/errors'
+import { LogicError, UnauthorizedError } from '@/modules/shared/errors'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'
 import { createCheckoutSessionFactory } from '@/modules/gatekeeper/clients/checkout/createCheckoutSession'
@@ -395,12 +395,15 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const { workspaceId, workspacePlan, billingInterval, isCreateFlow } =
             args.input
           logger = logger.child({ workspaceId, workspacePlan })
+          const userId = ctx.userId
+          if (!userId) throw new UnauthorizedError()
+
           const workspace = await getWorkspaceFactory({ db })({ workspaceId })
 
           if (!workspace) throw new WorkspaceNotFoundError()
 
           await authorizeResolver(
-            ctx.userId,
+            userId,
             workspaceId,
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
@@ -425,6 +428,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               await startCheckoutSession({
                 workspacePlan,
                 workspaceId,
+                userId,
                 workspaceSlug: workspace.slug,
                 isCreateFlow: isCreateFlow || false,
                 billingInterval,
