@@ -32,3 +32,32 @@ export type CommentCreatedActivityInput =
   | (CreateCommentInput & { resolvedResourceItems?: ViewerResourceItem[] })
 
 export type ReplyCreatedActivityInput = ReplyCreateInput | CreateCommentReplyInput
+
+type WorkspaceBillingSnapshot = {
+  name: string
+  status: string
+  billingInterval: string
+  totalEditorSeats: number
+}
+
+export type WorkspaceSubscriptionUpdatedActivity = {
+  version: '1.0.0'
+  new: WorkspaceBillingSnapshot
+  old: WorkspaceBillingSnapshot
+}
+
+export type WorkspacePlanUpdatedActivity = {
+  version: '1.0.0'
+  new: {
+    name: string
+    status: string
+    billingInterval?: string
+    totalEditorSeats?: number
+  }
+  old: {
+    name?: string
+    status?: string
+    billingInterval?: string
+    totalEditorSeats?: number
+  }
+}

@@ -1,4 +1,5 @@
 import {
+  getSubscriptionState,
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
@@ -104,6 +105,7 @@ export const upgradeWorkspaceSubscriptionFactory =
 
     const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
     if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
+    const previousSubscription = cloneDeep(workspaceSubscription)
 
     if (
       workspacePlan.name === targetPlan &&
@@ -186,27 +188,24 @@ export const upgradeWorkspaceSubscriptionFactory =
       subscriptionData,
       prorationBehavior: 'always_invoice'
     })
+    const newWorkspacePlan = {
+      status: workspacePlan.status,
+      workspaceId,
+      name: targetPlan,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
     await upsertWorkspacePlan({
-      workspacePlan: {
-        status: workspacePlan.status,
-        workspaceId,
-        name: targetPlan,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
+      workspacePlan: newWorkspacePlan
     })
     await updateWorkspaceSubscription({ workspaceSubscription })
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
-        workspacePlan: {
-          workspaceId,
-          status: workspacePlan.status,
-          name: targetPlan
-        },
-        ...(workspacePlan && {
-          previousPlan: { name: workspacePlan.name }
-        })
+        workspacePlan: newWorkspacePlan,
+        previousWorkspacePlan: workspacePlan,
+        subscription: getSubscriptionState(workspaceSubscription),
+        previousSubscription: getSubscriptionState(previousSubscription)
       }
     })
   }

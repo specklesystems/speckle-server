@@ -1,5 +1,7 @@
 import {
+  getSubscriptionState,
   GetWorkspacePlan,
+  GetWorkspaceSubscription,
   UpsertWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
@@ -13,6 +15,7 @@ export const updateWorkspacePlanFactory =
     getWorkspace,
     upsertWorkspacePlan,
     getWorkspacePlan,
+    getWorkspaceSubscription,
     emitEvent
   }: {
     getWorkspace: GetWorkspace
@@ -20,6 +23,7 @@ export const updateWorkspacePlanFactory =
     // responsible for protecting the permutations
     upsertWorkspacePlan: UpsertWorkspacePlan
     getWorkspacePlan: GetWorkspacePlan
+    getWorkspaceSubscription: GetWorkspaceSubscription
     emitEvent: EventBusEmit
   }) =>
   async ({
@@ -31,7 +35,8 @@ export const updateWorkspacePlanFactory =
       workspaceId
     })
     if (!workspace) throw new WorkspaceNotFoundError()
-    const previousPlan = await getWorkspacePlan({ workspaceId })
+    let workspacePlan: WorkspacePlan
+    const previousWorkspacePlan = await getWorkspacePlan({ workspaceId })
     const createdAt = new Date()
     const updatedAt = new Date()
     switch (name) {
@@ -44,9 +49,8 @@ export const updateWorkspacePlanFactory =
           case 'cancelationScheduled':
           case 'canceled':
           case 'paymentFailed':
-            await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
-            })
+            workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
+            await upsertWorkspacePlan({ workspacePlan })
             break
           default:
             throwUncoveredError(status)
@@ -61,9 +65,8 @@ export const updateWorkspacePlanFactory =
       case WorkspacePlans.ProUnlimitedInvoiced:
         switch (status) {
           case 'valid':
-            await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt, updatedAt }
-            })
+            workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
+            await upsertWorkspacePlan({ workspacePlan })
             break
           case 'cancelationScheduled':
           case 'canceled':
@@ -76,17 +79,17 @@ export const updateWorkspacePlanFactory =
       default:
         throwUncoveredError(name)
     }
+
+    const subscription = await getWorkspaceSubscription({ workspaceId })
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
-        workspacePlan: {
-          name,
-          status,
-          workspaceId
-        },
-        ...(previousPlan && {
-          previousPlan: { name: previousPlan.name }
-        })
+        workspacePlan,
+        subscription: subscription ? getSubscriptionState(subscription) : undefined,
+        previousWorkspacePlan: previousWorkspacePlan || undefined,
+        previousSubscription: subscription
+          ? getSubscriptionState(subscription)
+          : undefined // TODO: implement logic
       }
     })
   }

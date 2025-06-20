@@ -16,7 +16,8 @@ export const ResourceTypes = Object.freeze(<const>{
   Stream: 'stream',
   Commit: 'commit',
   Branch: 'branch',
-  Comment: 'comment'
+  Comment: 'comment',
+  Workspace: 'workspace'
 })
 
 /**
@@ -58,6 +59,10 @@ export const ActionTypes = Object.freeze(<const>{
     Create: 'user_create',
     Update: 'user_update',
     Delete: 'user_delete'
+  },
+  Workspace: {
+    PlanUpgraded: 'workspace_plan_upgraded',
+    SubscriptionUpgraded: 'workspace_subscription_upgraded'
   }
 })
 
@@ -76,12 +81,16 @@ export type CommitActivityType =
 export type UserActivityType =
   (typeof ActionTypes)['User'][keyof (typeof ActionTypes)['User']]
 
+export type WorkspaceActivityType =
+  (typeof ActionTypes)['Workspace'][keyof (typeof ActionTypes)['Workspace']]
+
 export type AllActivityTypes =
   | StreamActivityType
   | CommentActivityType
   | BranchActivityType
   | CommitActivityType
   | UserActivityType
+  | WorkspaceActivityType
 
 // export interface Activity {
 //   streamId: string | null
@@ -125,4 +134,10 @@ export interface CommitActivity extends StreamScopeActivity {
 export interface UserActivity extends StreamActivityRecord {
   resourceType: 'user'
   actionType: UserActivityType
+}
+
+export interface WorkspaceActivity extends StreamScopeActivity {
+  streamId: string
+  resourceType: 'workspace'
+  actionType: WorkspaceActivityType
 }

@@ -10,19 +10,23 @@ export const GatekeeperEvents = {
   WorkspaceSubscriptionUpdated: `${eventPrefix}workspace-subscription-updated`
 } as const
 
-type SubscriptionStats = {
+export type SubscriptionState = {
   totalEditorSeats: number
+  billingInterval: string
 }
 
 export type GatekeeperEventPayloads = {
   [GatekeeperEvents.WorkspaceTrialExpired]: { workspaceId: string }
   [GatekeeperEvents.WorkspacePlanUpdated]: {
-    workspacePlan: Pick<WorkspacePlan, 'name' | 'status' | 'workspaceId'>
-    previousPlan?: Pick<WorkspacePlan, 'name'>
+    workspacePlan: WorkspacePlan
+    subscription?: SubscriptionState
+    previousWorkspacePlan?: WorkspacePlan
+    previousSubscription?: SubscriptionState
   }
   [GatekeeperEvents.WorkspaceSubscriptionUpdated]: {
     workspacePlan: WorkspacePlan
-    subscription: SubscriptionStats
-    previousSubscription: SubscriptionStats
+    subscription: SubscriptionState
+    previousWorkspacePlan: WorkspacePlan
+    previousSubscription: SubscriptionState
   }
 }

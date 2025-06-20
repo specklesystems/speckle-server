@@ -24,6 +24,7 @@ describe('workspacePlan services @gatekeeper', () => {
         upsertWorkspacePlan: () => {
           expect.fail()
         },
+        getWorkspaceSubscription: async () => null,
         getWorkspacePlan: async () => null,
         emitEvent: () => {
           expect.fail()
@@ -155,6 +156,7 @@ describe('workspacePlan services @gatekeeper', () => {
                 },
                 upsertWorkspacePlan: fail,
                 getWorkspacePlan: async () => null,
+                getWorkspaceSubscription: async () => null,
                 emitEvent: fail
               })
               await updateWorkspacePlan({
@@ -187,6 +189,7 @@ describe('workspacePlan services @gatekeeper', () => {
                 return { id: workspaceId } as WorkspaceWithOptionalRole
               },
               upsertWorkspacePlan,
+              getWorkspaceSubscription: async () => null,
               getWorkspacePlan: async () => null,
               emitEvent
             })
@@ -226,6 +229,7 @@ describe('workspacePlan services @gatekeeper', () => {
           return { id: workspaceId } as WorkspaceWithOptionalRole
         },
         upsertWorkspacePlan: async () => {},
+        getWorkspaceSubscription: async () => null,
         getWorkspacePlan: async () =>
           buildTestWorkspacePlan({
             workspaceId,

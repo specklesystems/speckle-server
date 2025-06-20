@@ -37,6 +37,7 @@ import { WorkspacePlans, WorkspacePlanStatuses } from '@speckle/shared'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import cryptoRandomString from 'crypto-random-string'
+import { BillingInterval } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -104,13 +105,15 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: GatekeeperEvents.WorkspacePlanUpdated,
         payload: {
-          workspacePlan: {
-            workspaceId: workspacePlan.workspaceId,
-            name: workspacePlan.name,
-            status: workspacePlan.status
+          workspacePlan,
+          previousWorkspacePlan: {
+            ...workspacePlan,
+            name: 'free',
+            status: 'valid'
           },
-          previousPlan: {
-            name: 'free'
+          subscription: {
+            totalEditorSeats: 2,
+            billingInterval: BillingInterval.Monthly
           }
         }
       })
@@ -141,10 +144,17 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             status: WorkspacePlanStatuses.Valid,
             name: WorkspacePlans.Pro
           }),
+          previousWorkspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Pro
+          }),
           subscription: {
+            billingInterval: BillingInterval.Monthly,
             totalEditorSeats: 15
           },
           previousSubscription: {
+            billingInterval: BillingInterval.Monthly,
             totalEditorSeats: 20
           }
         }
@@ -178,10 +188,16 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
                 workspaceId: workspace.id,
                 status
               }),
+              previousWorkspacePlan: buildTestWorkspacePlan({
+                workspaceId: workspace.id,
+                status
+              }),
               subscription: {
+                billingInterval: BillingInterval.Monthly,
                 totalEditorSeats: 10
               },
               previousSubscription: {
+                billingInterval: BillingInterval.Monthly,
                 totalEditorSeats: 10
               }
             }
@@ -208,10 +224,16 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             workspaceId: workspace.id,
             status: WorkspacePlanStatuses.Valid
           }),
+          previousWorkspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid
+          }),
           subscription: {
+            billingInterval: BillingInterval.Monthly,
             totalEditorSeats: 10
           },
           previousSubscription: {
+            billingInterval: BillingInterval.Monthly,
             totalEditorSeats: 10
           }
         }
@@ -235,10 +257,17 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             status: WorkspacePlanStatuses.Valid,
             name: WorkspacePlans.Team
           }),
+          previousWorkspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Free
+          }),
           subscription: {
+            billingInterval: BillingInterval.Monthly,
             totalEditorSeats: 2
           },
           previousSubscription: {
+            billingInterval: BillingInterval.Monthly,
             totalEditorSeats: 1
           }
         }
@@ -269,11 +298,18 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             status: WorkspacePlanStatuses.Valid,
             name: WorkspacePlans.Academia
           }),
+          previousWorkspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Free
+          }),
           subscription: {
-            totalEditorSeats: 2
+            totalEditorSeats: 2,
+            billingInterval: BillingInterval.Monthly
           },
           previousSubscription: {
-            totalEditorSeats: 1
+            totalEditorSeats: 1,
+            billingInterval: BillingInterval.Monthly
           }
         }
       })
