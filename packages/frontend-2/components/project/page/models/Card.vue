@@ -238,7 +238,7 @@ const onCardClick = (event: KeyboardEvent | MouseEvent) => {
 }
 
 const onVersionUploading = (payload: FileAreaUploadingPayload) => {
-  isVersionUploading.value = payload.isUploading
+  isVersionUploading.value = !!(payload.isUploading || payload.error)
 }
 
 const triggerVersionUpload = () => {

@@ -5,6 +5,7 @@ import { NodeMap } from '../../tree/NodeMap.js'
 import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import { ObjectLoader2 } from '@speckle/objectloader2'
+import { SpeckleTypeAllRenderables } from '../GeometryConverter.js'
 
 export type ConverterResultDelegate = (count: number) => void
 export type SpeckleConverterNodeDelegate =
@@ -29,6 +30,7 @@ export default class SpeckleConverter {
   protected renderMaterialMap: { [id: string]: SpeckleObject } = {}
   protected colorMap: { [id: string]: SpeckleObject } = {}
   protected instanceCounter = 0
+  protected duplicateCounter = 0
   private traverseCount = 0
 
   protected readonly NodeConverterMapping: {
@@ -140,9 +142,9 @@ export default class SpeckleConverter {
           children: []
         })
         this.tree.addSubtree(this.subtree)
-        this.tree.addNode(childNode, this.subtree)
+        this.addNode(childNode, this.subtree)
       } else {
-        this.tree.addNode(childNode, node)
+        this.addNode(childNode, node)
       }
 
       // If we can convert it, we should invoke the respective conversion routine.
@@ -183,7 +185,7 @@ export default class SpeckleConverter {
               atomic: false,
               children: []
             })
-            this.tree.addNode(nestedNode, childNode)
+            this.addNode(nestedNode, childNode)
             await this.convertToNode(displayValue, nestedNode)
           } catch (e) {
             Logger.warn(
@@ -202,7 +204,7 @@ export default class SpeckleConverter {
               atomic: false,
               children: []
             })
-            this.tree.addNode(nestedNode, childNode)
+            this.addNode(nestedNode, childNode)
             await this.convertToNode(val, nestedNode)
           }
         }
@@ -269,7 +271,15 @@ export default class SpeckleConverter {
 
   private getNodeId(obj: SpeckleObject): string {
     if (this.spoofIDs) return MathUtils.generateUUID()
+
     return obj.id
+  }
+
+  private addNode(node: TreeNode, parent: TreeNode) {
+    if (this.tree.hasNodeId(node.model.id, parent.model.subtreeId)) {
+      node.model.id = this.getDuplicateId(node.model.id, ++this.duplicateCounter)
+    }
+    this.tree.addNode(node, parent)
   }
 
   /**
@@ -410,6 +420,14 @@ export default class SpeckleConverter {
     return baseId.substring(0, index) + NodeMap.COMPOUND_ID_CHAR + counter
   }
 
+  private getDuplicateId(baseId: string, counter: number) {
+    const index = baseId.indexOf(NodeMap.DUPLICATE_ID_CHAR)
+    if (index === -1) {
+      return baseId + NodeMap.DUPLICATE_ID_CHAR + counter
+    }
+    return baseId.substring(0, index) + NodeMap.DUPLICATE_ID_CHAR + counter
+  }
+
   private getEmptyTransformData(id: string) {
     // eslint-disable-next-line camelcase
     return { id, speckle_type: 'Transform', units: 'm', matrix: new Array(16) }
@@ -456,7 +474,7 @@ export default class SpeckleConverter {
           instanced
         })
 
-        this.tree.addNode(valueNode, node)
+        this.addNode(valueNode, node)
         await this.displayableLookup(value, valueNode, instanced)
       }
     }
@@ -485,7 +503,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(transformNode, instanceNode)
+    this.addNode(transformNode, instanceNode)
 
     const childNode: TreeNode = this.tree.parse({
       id: this.getCompoundId(defGeometry.id, this.instanceCounter++),
@@ -494,7 +512,7 @@ export default class SpeckleConverter {
       children: [],
       instanced: true
     })
-    this.tree.addNode(childNode, transformNode)
+    this.addNode(childNode, transformNode)
 
     await this.displayableLookup(defGeometry, childNode, true)
   }
@@ -510,7 +528,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(childNode, instanceNode)
+    this.addNode(childNode, instanceNode)
     await this.displayableLookup(elementObj, childNode, false)
   }
 
@@ -637,7 +655,7 @@ export default class SpeckleConverter {
     const definition = this.instanceDefinitionLookupTable[definitionId]
     const transformNode = this.createTransformNode(obj)
 
-    this.tree.addNode(transformNode, node)
+    this.addNode(transformNode, node)
     const objectApplicationIds = this.getInstanceProxyDefinitionObjects(
       definition.model.raw
     )
@@ -658,7 +676,7 @@ export default class SpeckleConverter {
         children: [],
         instanced: true
       })
-      this.tree.addNode(instancedNode, transformNode)
+      this.addNode(instancedNode, transformNode)
       await this.convertToNode(speckleData, instancedNode)
     }
   }
@@ -875,7 +893,7 @@ export default class SpeckleConverter {
         ...(node.model.instanced && { instanced: node.model.instanced })
       })
       await this.convertToNode(ref, nestedNode)
-      this.tree.addNode(nestedNode, node)
+      this.addNode(nestedNode, node)
 
       // deletes known unneeded fields
       delete obj.Edges
@@ -940,7 +958,7 @@ export default class SpeckleConverter {
         ...(node.model.instanced && { instanced: node.model.instanced })
       })
       await this.convertToNode(ref, nestedNode)
-      this.tree.addNode(nestedNode, node)
+      this.addNode(nestedNode, node)
     } catch (e) {
       Logger.warn(`Failed to convert Region id: ${obj.id}`)
       throw e
@@ -960,7 +978,7 @@ export default class SpeckleConverter {
         atomic: false,
         children: []
       })
-      this.tree.addNode(childNode, node)
+      this.addNode(childNode, node)
       await this.convertToNode(displayValue, childNode)
     }
     /**
@@ -990,7 +1008,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(textNode, node)
+    this.addNode(textNode, node)
     await this.convertToNode(textObj, textNode)
   }
 
@@ -1070,5 +1088,33 @@ export default class SpeckleConverter {
 
   private async EllipseToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
+  }
+
+  /** We shouldn't need to work with duplicates */
+  public handleDuplicates(): Promise<void> {
+    /** We're generally interested in handling renderable duplicates. Otherwise we're overbloat everything with millions of parameters and such */
+    const SpeckleTypeDuplicableRenderables: SpeckleType[] =
+      SpeckleTypeAllRenderables.slice()
+    /** We remove Point because speckle data contains tons of points that are not really renderable */
+    SpeckleTypeDuplicableRenderables.splice(
+      SpeckleTypeAllRenderables.indexOf(SpeckleType.Point),
+      1
+    )
+    const duplicates = this.tree.getRenderTree(this.subtree.model.id)?.getDuplicates()
+    for (const k in duplicates) {
+      const baseObject = this.tree.findId(k)
+      if (!baseObject) {
+        Logger.warn(`Base duplicated object ${k} not found!`)
+        continue
+      }
+      const speckleType = this.getSpeckleType(baseObject[0].model.raw) as SpeckleType
+      if (!SpeckleTypeDuplicableRenderables.includes(speckleType)) continue
+
+      for (const m in duplicates[k]) {
+        /** Normally we'd only need the geometry related data cloned, but this covers 100% */
+        duplicates[k][m].model.raw = structuredClone(duplicates[k][m].model.raw)
+      }
+    }
+    return Promise.resolve()
   }
 }
