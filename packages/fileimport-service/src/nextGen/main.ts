@@ -94,10 +94,7 @@ export const main = async () => {
             }
           })
         } catch (sendErr) {
-          jobLogger.fatal(
-            { err: sendErr, jobId: job.jobId },
-            'Failed to send result for job {jobId}'
-          )
+          jobLogger.fatal({ err: sendErr }, 'Failed to send result for job {jobId}')
         } finally {
           done(err)
         }
