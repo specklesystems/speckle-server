@@ -29,16 +29,17 @@ export async function downloadFile({
     throw ensureError(e, 'Unknown error while creating directory')
   }
 
-  boundLogger.info(
-    { destinationFile: destination },
-    'Downloading file {fileId} from {streamId} to {destinationFile}'
-  )
-
-  let response
   const downloadUrl = new URL(
     `/api/stream/${streamId}/blob/${fileId}`,
     speckleServerUrl
   )
+
+  boundLogger.info(
+    { destinationFile: destination, downloadUrl: downloadUrl.toString() },
+    'Downloading file {fileId} (project: {streamId}) from ${downloadUrl} to {destinationFile}'
+  )
+
+  let response
   try {
     response = await fetch(downloadUrl.toString(), {
       headers: {
