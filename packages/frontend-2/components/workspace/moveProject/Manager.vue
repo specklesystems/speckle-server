@@ -175,11 +175,7 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true })
 
-const { activeUser } = useActiveUser()
-
-const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace({
-  activeUser: computed(() => activeUser.value)
-})
+const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace()
 
 // Internal state management
 const selectedProject = ref<WorkspaceMoveProjectManager_ProjectFragment | null>(null)

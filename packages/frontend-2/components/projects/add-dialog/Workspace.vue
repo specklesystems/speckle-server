@@ -27,11 +27,7 @@ const emit = defineEmits<{
   canceled: []
 }>()
 
-const { activeUser } = useActiveUser()
-
-const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace({
-  activeUser: computed(() => activeUser.value)
-})
+const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace()
 
 const onWorkspaceSelected = (
   workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment

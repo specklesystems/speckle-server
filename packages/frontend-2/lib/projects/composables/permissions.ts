@@ -6,11 +6,12 @@ import {
 } from '@speckle/shared/authz'
 import { usePermissionedAction } from '~/lib/common/composables/permissions'
 import { graphql } from '~/lib/common/generated/gql'
+import { useQuery } from '@vue/apollo-composable'
+import { useCanCreateWorkspaceQuery } from '~/lib/workspaces/graphql/queries'
 import type {
   UseCanCreateModel_ProjectFragment,
   UseCanCreatePersonalProject_UserFragment,
-  UseCanInviteToProject_ProjectFragment,
-  UseCanCreateWorkspace_UserFragment
+  UseCanInviteToProject_ProjectFragment
 } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
@@ -57,16 +58,16 @@ graphql(`
   }
 `)
 
-export const useCanCreateWorkspace = (params: {
-  activeUser: MaybeRef<MaybeNullOrUndefined<UseCanCreateWorkspace_UserFragment>>
-}) => {
+export const useCanCreateWorkspace = () => {
+  const { result } = useQuery(useCanCreateWorkspaceQuery)
+
   const {
     canClickAction: canClickCreate,
     canActuallyInvokeAction: canActuallyCreate,
     cantClickErrorReason: cantClickCreateReason,
     cantClickErrorCode: cantClickCreateCode
   } = usePermissionedAction({
-    check: computed(() => unref(params.activeUser)?.permissions?.canCreateWorkspace),
+    check: computed(() => result.value?.activeUser?.permissions?.canCreateWorkspace),
     disclaimerErrorCodes: [PersonalProjectsLimitedError.code],
     fallbackReason: 'Cannot create workspace'
   })
