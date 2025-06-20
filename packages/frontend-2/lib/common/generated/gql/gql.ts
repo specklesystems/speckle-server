@@ -104,7 +104,7 @@ type Documents = {
     "\n  fragment ProjectPageSettingsGeneralBlockProjectInfo_Project on Project {\n    id\n    name\n    description\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsWebhooks_Project on Project {\n    id\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ProjectPageSettingsWebhooks_ProjectFragmentDoc,
     "\n  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {\n    id\n    visibility\n    role\n    workspaceId\n  }\n": typeof types.ProjectsPageTeamDialogManagePermissions_ProjectFragmentDoc,
-    "\n  fragment ProjectsAdd_User on User {\n    id\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreatePersonalProject_User\n    ...UseCanCreateWorkspace_User\n  }\n": typeof types.ProjectsAdd_UserFragmentDoc,
+    "\n  fragment ProjectsAdd_User on User {\n    id\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreatePersonalProject_User\n  }\n": typeof types.ProjectsAdd_UserFragmentDoc,
     "\n  fragment ProjectsAdd_Workspace on Workspace {\n    id\n    slug\n    name\n    role\n    plan {\n      name\n    }\n    permissions {\n      canCreateProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreateWorkspaceProject_Workspace\n  }\n": typeof types.ProjectsAdd_WorkspaceFragmentDoc,
     "\n  fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {\n    numberOfHidden\n  }\n": typeof types.ProjectsDashboard_UserProjectCollectionFragmentDoc,
     "\n  fragment ProjectsDashboard_User on User {\n    ...ProjectsAdd_User\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ProjectsDashboard_UserFragmentDoc,
@@ -444,6 +444,7 @@ type Documents = {
     "\n  query WorkspaceMoveProjectManagerProject($projectId: String!, $workspaceId: String) {\n    project(id: $projectId) {\n      ...WorkspaceMoveProjectManager_Project\n    }\n  }\n": typeof types.WorkspaceMoveProjectManagerProjectDocument,
     "\n  query WorkspaceMoveProjectManagerWorkspace(\n    $workspaceSlug: String!\n    $projectId: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceMoveProjectManager_Workspace\n    }\n  }\n": typeof types.WorkspaceMoveProjectManagerWorkspaceDocument,
     "\n  query WorkspaceMoveProjectManagerUser(\n    $cursor: String\n    $filter: UserProjectsFilter\n    $projectId: String\n    $sortBy: [String!]\n    $workspaceId: String\n  ) {\n    activeUser {\n      ...WorkspaceMoveProjectSelectWorkspace_User\n    }\n  }\n": typeof types.WorkspaceMoveProjectManagerUserDocument,
+    "\n  query UseCanCreateWorkspace {\n    activeUser {\n      ...UseCanCreateWorkspace_User\n    }\n  }\n": typeof types.UseCanCreateWorkspaceDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceDashboard_Workspace\n        ...WorkspaceDashboardProjectList_Workspace\n      }\n    }\n  }\n": typeof types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": typeof types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LegacyViewerCommitRedirectMetadataDocument,
@@ -560,7 +561,7 @@ const documents: Documents = {
     "\n  fragment ProjectPageSettingsGeneralBlockProjectInfo_Project on Project {\n    id\n    name\n    description\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsWebhooks_Project on Project {\n    id\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ProjectPageSettingsWebhooks_ProjectFragmentDoc,
     "\n  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {\n    id\n    visibility\n    role\n    workspaceId\n  }\n": types.ProjectsPageTeamDialogManagePermissions_ProjectFragmentDoc,
-    "\n  fragment ProjectsAdd_User on User {\n    id\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreatePersonalProject_User\n    ...UseCanCreateWorkspace_User\n  }\n": types.ProjectsAdd_UserFragmentDoc,
+    "\n  fragment ProjectsAdd_User on User {\n    id\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreatePersonalProject_User\n  }\n": types.ProjectsAdd_UserFragmentDoc,
     "\n  fragment ProjectsAdd_Workspace on Workspace {\n    id\n    slug\n    name\n    role\n    plan {\n      name\n    }\n    permissions {\n      canCreateProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreateWorkspaceProject_Workspace\n  }\n": types.ProjectsAdd_WorkspaceFragmentDoc,
     "\n  fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {\n    numberOfHidden\n  }\n": types.ProjectsDashboard_UserProjectCollectionFragmentDoc,
     "\n  fragment ProjectsDashboard_User on User {\n    ...ProjectsAdd_User\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ProjectsDashboard_UserFragmentDoc,
@@ -900,6 +901,7 @@ const documents: Documents = {
     "\n  query WorkspaceMoveProjectManagerProject($projectId: String!, $workspaceId: String) {\n    project(id: $projectId) {\n      ...WorkspaceMoveProjectManager_Project\n    }\n  }\n": types.WorkspaceMoveProjectManagerProjectDocument,
     "\n  query WorkspaceMoveProjectManagerWorkspace(\n    $workspaceSlug: String!\n    $projectId: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceMoveProjectManager_Workspace\n    }\n  }\n": types.WorkspaceMoveProjectManagerWorkspaceDocument,
     "\n  query WorkspaceMoveProjectManagerUser(\n    $cursor: String\n    $filter: UserProjectsFilter\n    $projectId: String\n    $sortBy: [String!]\n    $workspaceId: String\n  ) {\n    activeUser {\n      ...WorkspaceMoveProjectSelectWorkspace_User\n    }\n  }\n": types.WorkspaceMoveProjectManagerUserDocument,
+    "\n  query UseCanCreateWorkspace {\n    activeUser {\n      ...UseCanCreateWorkspace_User\n    }\n  }\n": types.UseCanCreateWorkspaceDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceDashboard_Workspace\n        ...WorkspaceDashboardProjectList_Workspace\n      }\n    }\n  }\n": types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -1303,7 +1305,7 @@ export function graphql(source: "\n  fragment ProjectsPageTeamDialogManagePermis
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectsAdd_User on User {\n    id\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreatePersonalProject_User\n    ...UseCanCreateWorkspace_User\n  }\n"): (typeof documents)["\n  fragment ProjectsAdd_User on User {\n    id\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreatePersonalProject_User\n    ...UseCanCreateWorkspace_User\n  }\n"];
+export function graphql(source: "\n  fragment ProjectsAdd_User on User {\n    id\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreatePersonalProject_User\n  }\n"): (typeof documents)["\n  fragment ProjectsAdd_User on User {\n    id\n    permissions {\n      canCreatePersonalProject {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseCanCreatePersonalProject_User\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2660,6 +2662,10 @@ export function graphql(source: "\n  query WorkspaceMoveProjectManagerWorkspace(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query WorkspaceMoveProjectManagerUser(\n    $cursor: String\n    $filter: UserProjectsFilter\n    $projectId: String\n    $sortBy: [String!]\n    $workspaceId: String\n  ) {\n    activeUser {\n      ...WorkspaceMoveProjectSelectWorkspace_User\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceMoveProjectManagerUser(\n    $cursor: String\n    $filter: UserProjectsFilter\n    $projectId: String\n    $sortBy: [String!]\n    $workspaceId: String\n  ) {\n    activeUser {\n      ...WorkspaceMoveProjectSelectWorkspace_User\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query UseCanCreateWorkspace {\n    activeUser {\n      ...UseCanCreateWorkspace_User\n    }\n  }\n"): (typeof documents)["\n  query UseCanCreateWorkspace {\n    activeUser {\n      ...UseCanCreateWorkspace_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
