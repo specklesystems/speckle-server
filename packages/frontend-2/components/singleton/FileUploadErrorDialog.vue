@@ -1,10 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="open"
-    :title="title"
-    :buttons="buttons"
-    @fully-closed="clear"
-  >
+  <LayoutDialog v-model:open="open" :title="title" :buttons="buttons">
     <p class="text-foreground-2 mt-2">
       The following file uploads failed. You can retry them by re-uploading the files.
     </p>
@@ -20,7 +15,14 @@ import { useGlobalFileImportErrorManager } from '~/lib/core/composables/fileImpo
 
 const { clear, failedJobs } = useGlobalFileImportErrorManager()
 
-const open = ref(false)
+const open = computed({
+  get: () => failedJobs.value.length > 0,
+  set: (value) => {
+    if (!value) {
+      clear()
+    }
+  }
+})
 const title = computed(
   () => `File upload${failedJobs.value.length > 1 ? 's' : ''} failed`
 )

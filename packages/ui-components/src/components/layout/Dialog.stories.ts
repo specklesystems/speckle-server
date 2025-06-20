@@ -1,9 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
 import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import FormButton from '~~/src/components/form/Button.vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { action } from '@storybook/addon-actions'
 import { directive as vTippy } from 'vue-tippy'
+import { useIntervalFn } from '@vueuse/core'
 
 export default {
   component: LayoutDialog,
@@ -170,4 +171,40 @@ export const Transparent: StoryObj = {
       </LayoutDialog>
     </div>`
   })
+}
+
+export const FreezeContentsOnClose: StoryObj = {
+  render: (args) => ({
+    components: { LayoutDialog, FormButton },
+    setup() {
+      const open = ref(false)
+      const rapidlyChangingValue = ref(0)
+
+      const { resume, pause } = useIntervalFn(() => {
+        rapidlyChangingValue.value = Math.random() * 1000
+      }, 100)
+
+      watch(open, (newValue) => {
+        if (!newValue) {
+          pause()
+          rapidlyChangingValue.value = 0
+        } else {
+          resume()
+        }
+      })
+
+      return { args, open, rapidlyChangingValue }
+    },
+    template: `<div>
+      <FormButton @click="() => open = true">Trigger dialog</FormButton>
+      <LayoutDialog v-model:open="open" v-bind="args">
+        <div class="flex flex-col text-foreground space-y-4">
+          <p>This is gonna freeze on close: {{ rapidlyChangingValue }}</p>
+        </div>
+      </LayoutDialog>
+    </div>`
+  }),
+  args: {
+    ...Default.args
+  }
 }

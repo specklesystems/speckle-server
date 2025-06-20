@@ -316,7 +316,7 @@ export function useFileImport(params: {
     }
 
     // Log error to console/seq
-    logger.error(
+    logger[upload.value.result?.uploadError ? 'error' : 'warn'](
       {
         failedJob
       },
