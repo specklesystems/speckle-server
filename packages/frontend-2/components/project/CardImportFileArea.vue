@@ -277,7 +277,7 @@ const onModelCreate = (params: { model: ProjectPageLatestItemsModelItemFragment 
   if (!isFileUploadUploadable.value) return
 
   uploadSelected({
-    modelName: params.model.name
+    model: params.model
   })
 }
 
@@ -296,11 +296,18 @@ watch(showNewModelDialog, (newVal, oldVal) => {
 
 watch(isUploading, (newVal, oldVal) => {
   // fileUpload is always gonna be non-null when isUploading changes
-  emit('uploading', { isUploading: newVal, upload: fileUpload.value! })
+  emit('uploading', {
+    isUploading: newVal,
+    upload: fileUpload.value!,
+    error: errorMessage.value
+  })
 
   if (!newVal && oldVal) {
     // Reset file upload state when upload finishes
-    resetSelected()
+    // but only if it was successful! otherwise we wanna show the error
+    if (!errorMessage.value) {
+      resetSelected()
+    }
   }
 })
 
