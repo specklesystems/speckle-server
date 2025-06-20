@@ -120,7 +120,7 @@ helm_resource('ingress-nginx',
 helm_resource('speckle-server',
               release_name='speckle-server',
               namespace='speckle-server',
-              chart='./../../utils/helm/speckle-server',
+              chart='./../../../utils/helm/speckle-server',
               flags=['--values=./values/speckle-server.values.yaml',
                       '--kube-context=kind-speckle-server'],
               image_deps=[
@@ -143,7 +143,7 @@ helm_resource('speckle-server',
                           'test.image',
                           'webhook_service.image',
                           ],
-              deps=['../../utils/helm', './values/speckle-server.values.yaml'],
+              deps=['../../../utils/helm', './values/speckle-server.values.yaml'],
               resource_deps=['postgresql', 'minio', 'valkey', 'ingress-nginx'],
               labels=['speckle-server'])
 
