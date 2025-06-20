@@ -10,7 +10,7 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
 import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
   getBatchedStreamBranchesFactory,
@@ -50,6 +50,7 @@ import {
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
+import { addOrUpdateStreamCollaboratorFactory, validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -71,6 +72,7 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
+import { authorizeResolver } from '@/modules/shared'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { getStringFromEnv } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -78,17 +80,16 @@ import { getTotalStreamCountFactory } from '@/modules/stats/repositories'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
   getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { getPendingWorkspaceCollaboratorsFactory } from '@/modules/workspaces/services/invites'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
-import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
-import { getWorkspaceRoleAndSeatFactory } from '@/modules/workspacesCore/repositories/rolesSeats'
+import { assignWorkspaceSeatFactory, ensureValidWorkspaceRoleSeatFactory, getWorkspaceDefaultSeatTypeFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { retry } from '@lifeomic/attempt'
-import { Roles, StreamRoles, wait } from '@speckle/shared'
+import { Roles, wait } from '@speckle/shared'
 import knex from 'knex'
 import { omit } from 'lodash'
 
@@ -236,7 +237,16 @@ const main = async () => {
             ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
               createWorkspaceSeat: createWorkspaceSeatFactory({ db: targetMainDb }),
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: targetMainDb }),
+              getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                getWorkspace: getWorkspaceFactory({ db: targetMainDb })
+              }),
               eventEmit: getEventBus().emit
+            }),
+            assignWorkspaceSeat: assignWorkspaceSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db: targetMainDb }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: targetMainDb }),
+              eventEmit: getEventBus().emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: targetMainDb })
             })
           })({
             userId: newUserId,
@@ -253,9 +263,9 @@ const main = async () => {
     }
   }
 
-  const workspaceAcls = await getWorkspaceRolesFactory({ db: targetMainDb })({
-    workspaceId: TARGET_WORKSPACE_ID
-  })
+  // const workspaceAcls = await getWorkspaceRolesFactory({ db: targetMainDb })({
+  //   workspaceId: TARGET_WORKSPACE_ID
+  // })
 
   const sourceServerUserCount = Object.keys(userIdMapping).length
   const targetServerUserCount = Object.values(userIdMapping).filter((id) => !!id).length
@@ -303,12 +313,19 @@ const main = async () => {
         continue
       }
 
+      const projectVisibilityMap: Record<ProjectRecordVisibility, ProjectRecordVisibility> = {
+        'private': 'private',
+        'workspace': 'workspace',
+        'public': 'workspace'
+      }
+
       // TODO: Why is initial write wrapped in a transaction?
       await storeProjectFactory({ db: targetRegionDb })({
         project: {
           ...sourceProject,
           regionKey: targetWorkspaceRegionKey,
-          workspaceId: TARGET_WORKSPACE_ID
+          workspaceId: TARGET_WORKSPACE_ID,
+          visibility: projectVisibilityMap[sourceProject.visibility]
         }
       })
 
@@ -481,7 +498,7 @@ const main = async () => {
         // Assign project roles
         const existingStreamCollaborators = await getStreamCollaboratorsFactory({
           db: sourceDb
-        })(sourceProject.id, undefined, { limit: 100 })
+        })(sourceProject.id, undefined, { limit: 150 })
 
         // Give admin role
         await grantStreamPermissions({
@@ -490,52 +507,71 @@ const main = async () => {
           role: Roles.Stream.Owner
         })
 
-        // Try to assign roles
-        for (const user of sourceUsers) {
-          // stream_acl is calculated based on the users workspace role and the original role
-          if (!(user.id in userIdMapping))
-            throw new Error('cannot find source user in mapping')
-          const userId = userIdMapping[user.id]
-          if (!userId) continue
-          let role: StreamRoles | null = null
+        // Assign existing roles to project members
+        // TODO: Assign seats as well, or demote with invalid seat?
+        const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+          validateStreamAccess: validateStreamAccessFactory({
+            authorizeResolver,
+          }),
+          getUser: getUserFactory({ db: mainTrx }),
+          grantStreamPermissions: grantStreamPermissionsFactory({ db: mainTrx }),
+          emitEvent: getEventBus().emit
+        })
 
-          const existingCollaborator = existingStreamCollaborators.find(
-            (c) => c.id === user.id
-          )
-          if (existingCollaborator) {
-            role = existingCollaborator.streamRole
-          }
-          const workspaceAcl = workspaceAcls.find((w) => w.userId === userId)
-          if (!workspaceAcl) continue
-          if (workspaceAcl.role === Roles.Workspace.Admin) {
-            role = Roles.Stream.Owner
-          }
-          if (!role && workspaceAcl.role === Roles.Workspace.Member) {
-            const seatType = await getWorkspaceRoleAndSeatFactory({ db: targetMainDb })(
-              {
-                workspaceId: TARGET_WORKSPACE_ID,
-                userId
-              }
-            )
-            if (!seatType) {
-              continue
-            }
-            switch (seatType.seat.type) {
-              case WorkspaceSeatType.Editor: {
-                role = Roles.Stream.Contributor
-                break
-              }
-              case WorkspaceSeatType.Viewer: {
-                role = Roles.Stream.Reviewer
-                break
-              }
-            }
-          }
+        for (const user of existingStreamCollaborators) {
+          const targetServerUserId = userIdMapping[user.id]
+          if (!targetServerUserId) continue
 
-          // guest can be ignored, they get roles from the original project role
-          if (role)
-            await grantStreamPermissions({ userId, streamId: sourceProject.id, role })
+          // Will throw if user does not have valid seat for role
+          await addOrUpdateStreamCollaborator(sourceProject.id, user.id, user.streamRole, TARGET_WORKSPACE_ROOT_ADMIN_USER_ID)
         }
+
+        // // Try to assign roles
+        // for (const user of sourceUsers) {
+        //   // stream_acl is calculated based on the users workspace role and the original role
+        //   if (!(user.id in userIdMapping))
+        //     throw new Error('cannot find source user in mapping')
+        //   const userId = userIdMapping[user.id]
+        //   if (!userId) continue
+        //   let role: StreamRoles | null = null
+
+        //   const existingCollaborator = existingStreamCollaborators.find(
+        //     (c) => c.id === user.id
+        //   )
+        //   if (existingCollaborator) {
+        //     role = existingCollaborator.streamRole
+        //   }
+        //   const workspaceAcl = workspaceAcls.find((w) => w.userId === userId)
+        //   if (!workspaceAcl) continue
+        //   if (workspaceAcl.role === Roles.Workspace.Admin) {
+        //     role = Roles.Stream.Owner
+        //   }
+        //   if (!role && workspaceAcl.role === Roles.Workspace.Member) {
+        //     const seatType = await getWorkspaceRoleAndSeatFactory({ db: targetMainDb })(
+        //       {
+        //         workspaceId: TARGET_WORKSPACE_ID,
+        //         userId
+        //       }
+        //     )
+        //     if (!seatType) {
+        //       continue
+        //     }
+        //     switch (seatType.seat.type) {
+        //       case WorkspaceSeatType.Editor: {
+        //         role = Roles.Stream.Contributor
+        //         break
+        //       }
+        //       case WorkspaceSeatType.Viewer: {
+        //         role = Roles.Stream.Reviewer
+        //         break
+        //       }
+        //     }
+        //   }
+
+        //   // guest can be ignored, they get roles from the original project role
+        //   if (role)
+        //     await grantStreamPermissions({ userId, streamId: sourceProject.id, role })
+        // }
 
         await mainTrx.commit()
         await regionTrx.commit()
