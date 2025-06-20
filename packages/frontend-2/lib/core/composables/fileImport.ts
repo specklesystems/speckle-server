@@ -127,7 +127,7 @@ export const useFileImportApi = () => {
     // Upload to S3 compatible endpoint
     const request = new XMLHttpRequest()
     const uploadPromise = buildManualPromise<{ etag: string }>()
-    request.open('PUT', uploadUrl + 'asd')
+    request.open('PUT', uploadUrl)
     request.setRequestHeader('Content-Type', file.type)
 
     request.upload.addEventListener('progress', (e) => {
@@ -244,6 +244,7 @@ export function useFileImport(params: {
     errorCallback
   } = params
 
+  const logger = useLogger()
   const { importFile } = useFileImportApi()
   const { maxSizeInBytes } = useServerFileUploadLimit()
   const authToken = useAuthCookie()
@@ -313,6 +314,14 @@ export function useFileImport(params: {
       modelId: upload.value.model?.id || null,
       error
     }
+
+    // Log error to console/seq
+    logger.error(
+      {
+        failedJob
+      },
+      'File import failed'
+    )
 
     errorCallback({ failedJob })
   }
