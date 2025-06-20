@@ -84,6 +84,7 @@ export const jobProcessor = async ({
         break
       case 'stl':
       case 'obj':
+      case 'skp':
         await runProcessWithTimeout(
           taskLogger,
           RHINO_IMPORTER_PATH,

@@ -23,7 +23,7 @@
     "dev:docker:down": "docker compose -f ./docker-compose-deps.yml down",
     "dev:docker:down:volumes": "docker compose -f ./docker-compose-deps.yml down --volumes",
     "dev:docker:restart": "yarn dev:docker:down && yarn dev:docker:up",
-    "dev:kind:up": "ctlptl apply --filename ./.tests/deployment/helm/cluster-config.yaml",
+    "dev:kind:up": "ctlptl apply --filename ./tests/deployment/helm/cluster-config.yaml",
     "dev:kind:down": "ctlptl delete -f ./tests/deployment/helm/cluster-config.yaml",
     "dev:kind:helm:up": "yarn dev:kind:up && tilt up --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server",
     "dev:kind:helm:down": "tilt down --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server",

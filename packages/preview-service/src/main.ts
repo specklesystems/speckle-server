@@ -140,9 +140,9 @@ const server = app.listen(port, host, async () => {
     } catch (err) {
       if (appState === AppState.SHUTTINGDOWN) {
         // likely that the job was cancelled due to the service shutting down
-        jobLogger.warn({ err }, 'Processing {jobId} failed')
+        jobLogger.warn({ err }, 'Processing job {jobId} failed')
       } else {
-        jobLogger.error({ err }, 'Processing {jobId} failed')
+        jobLogger.error({ err }, 'Processing job {jobId} failed')
       }
       if (err instanceof Error) {
         encounteredError = true
