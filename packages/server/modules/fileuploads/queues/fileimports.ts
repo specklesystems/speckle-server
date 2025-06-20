@@ -81,7 +81,7 @@ export const initializeRhinoQueue = async () =>
     supportedFileTypes: ['obj', 'stl', 'skp']
   })
 
-export const initalizeIfcQueue = async () =>
+export const initializeIfcQueue = async () =>
   initializeQueue({
     label: 'IFC File Import Queue',
     queueName: FILEIMPORT_SERVICE_IFC_QUEUE_NAME,
