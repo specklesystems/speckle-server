@@ -105,6 +105,7 @@ export const handleSubscriptionUpdateFactory =
       await upsertWorkspaceSubscription({
         workspaceSubscription: {
           ...subscription,
+          updateIntent: {},
           updatedAt: new Date(),
           subscriptionData
         }

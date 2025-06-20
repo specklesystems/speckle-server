@@ -108,6 +108,7 @@ export type WorkspaceSubscription = {
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
   currency: Currency
+  updateIntent?: { userId: string; target: SubscriptionData }
   subscriptionData: SubscriptionData
 }
 const subscriptionProduct = z.object({
