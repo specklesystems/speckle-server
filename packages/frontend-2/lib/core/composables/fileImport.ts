@@ -16,6 +16,59 @@ import type {
   UseFileImport_ProjectFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useApolloClient } from '@vue/apollo-composable'
+import {
+  FileTooLargeError,
+  ForbiddenFileTypeError,
+  MissingFileExtensionError
+} from '@speckle/ui-components'
+
+export const FailedFileImportJobError = <const>{
+  InvalidFileType: 'InvalidFileType',
+  MissingFileExtensionError: 'MissingFileExtensionError',
+  FileTooLarge: 'FileTooLarge',
+  UploadFailed: 'UploadFailed',
+  ImportFailed: 'ImportFailed'
+}
+
+export type FailedFileImportJobErrorType =
+  (typeof FailedFileImportJobError)[keyof typeof FailedFileImportJobError]
+
+export type FailedFileImportJob = {
+  id: string
+  fileName: string
+  projectId: string
+  modelId: string | null // null if error occurred before model was created
+  error: { type: FailedFileImportJobErrorType; message: string }
+}
+
+type GlobalFileImportErrorManagerState = {
+  jobs: FailedFileImportJob[]
+}
+
+export const useGlobalFileImportErrorManager = () => {
+  const state = useState<GlobalFileImportErrorManagerState>(
+    'global_file_import_error_manager',
+    () => ({
+      jobs: []
+    })
+  )
+
+  const addFailedJob = (job: FailedFileImportJob) => {
+    state.value.jobs = [...state.value.jobs, job]
+  }
+
+  const clear = () => {
+    state.value.jobs = []
+  }
+
+  const failedJobs = computed(() => state.value.jobs)
+
+  return {
+    addFailedJob,
+    clear,
+    failedJobs
+  }
+}
 
 const generateUploadUrlMutation = graphql(`
   mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {
@@ -74,7 +127,7 @@ export const useFileImportApi = () => {
     // Upload to S3 compatible endpoint
     const request = new XMLHttpRequest()
     const uploadPromise = buildManualPromise<{ etag: string }>()
-    request.open('PUT', uploadUrl)
+    request.open('PUT', uploadUrl + 'asd')
     request.setRequestHeader('Content-Type', file.type)
 
     request.upload.addEventListener('progress', (e) => {
@@ -97,7 +150,7 @@ export const useFileImportApi = () => {
           /<Message>(.*?)<\/Message>/
         )?.[1]
         return uploadPromise.reject(
-          new Error(errorMessage || `Upload failed with status ${statusCode}`)
+          new Error(errorMessage || `Upload failed unexpectedly`)
         )
       }
     }
@@ -177,13 +230,18 @@ export function useFileImport(params: {
    * Optionally handle the file selection event.
    */
   fileSelectedCallback?: Optional<() => void>
+  /**
+   * Optionally handle errors that occur either on file selection or during upload (NOT during the async import job)
+   */
+  errorCallback?: Optional<(params: { failedJob: FailedFileImportJob }) => void>
 }) {
   const {
     project,
     model,
     manuallyTriggerUpload,
     fileUploadedCallback,
-    fileSelectedCallback
+    fileSelectedCallback,
+    errorCallback
   } = params
 
   const { importFile } = useFileImportApi()
@@ -192,7 +250,9 @@ export function useFileImport(params: {
   const apiOrigin = useApiOrigin()
 
   const accept = ref('.ifc,.stl,.obj')
-  const upload = ref(null as Nullable<UploadFileItem>)
+  const upload = ref(
+    null as Nullable<UploadFileItem & { model: Nullable<UseFileImport_ModelFragment> }>
+  )
   const isUploading = ref(false)
 
   const isUploadable = computed(() => {
@@ -207,6 +267,56 @@ export function useFileImport(params: {
 
   const mp = useMixpanel()
 
+  const handleError = () => {
+    if (!errorCallback || !upload.value) return
+
+    // Figure out what happened and report to callback
+    let error: Optional<FailedFileImportJob['error']> = undefined
+
+    if (upload.value.error) {
+      // Pre-upload validation error
+      if (upload.value.error instanceof FileTooLargeError) {
+        error = {
+          type: FailedFileImportJobError.FileTooLarge,
+          message: upload.value.error.message
+        }
+      } else if (upload.value.error instanceof MissingFileExtensionError) {
+        error = {
+          type: FailedFileImportJobError.MissingFileExtensionError,
+          message: upload.value.error.message
+        }
+      } else if (upload.value.error instanceof ForbiddenFileTypeError) {
+        error = {
+          type: FailedFileImportJobError.InvalidFileType,
+          message: upload.value.error.message
+        }
+      }
+    } else if (upload.value.result?.uploadError) {
+      // Post-upload error
+      error = {
+        type: FailedFileImportJobError.UploadFailed,
+        message: upload.value.result.uploadError
+      }
+    }
+
+    if (!error) {
+      error = {
+        type: FailedFileImportJobError.UploadFailed,
+        message: 'An unknown error occurred during file upload'
+      }
+    }
+
+    const failedJob: FailedFileImportJob = {
+      id: upload.value.id,
+      fileName: upload.value.file.name,
+      projectId: unref(project).id,
+      modelId: upload.value.model?.id || null,
+      error
+    }
+
+    errorCallback({ failedJob })
+  }
+
   const uploadSelected = async (params?: {
     /**
      * Optionally override model target for the upload
@@ -215,17 +325,13 @@ export function useFileImport(params: {
   }) => {
     if (!isUploadable.value || !upload.value || !authToken.value) return
 
-    const baseModel = unref(model)
-    const overridenModel = params?.model
+    if (params?.model) {
+      upload.value.model = params.model
+    }
 
     isUploading.value = true
     try {
-      let finalModel: UseFileImport_ModelFragment
-      if (overridenModel) {
-        finalModel = overridenModel
-      } else if (baseModel) {
-        finalModel = baseModel
-      } else {
+      if (!upload.value.model) {
         throw new Error('No model provided for file import')
       }
 
@@ -233,8 +339,8 @@ export function useFileImport(params: {
         {
           file: upload.value.file,
           projectId: unref(project).id,
-          modelName: finalModel.name,
-          modelId: finalModel.id,
+          modelName: upload.value.model.name,
+          modelId: upload.value.model.id,
           authToken: authToken.value,
           apiOrigin
         },
@@ -259,6 +365,7 @@ export function useFileImport(params: {
         uploadError: ensureError(e).message,
         formKey: 'file'
       }
+      handleError()
     } finally {
       upload.value.progress = 100
       isUploading.value = false
@@ -279,10 +386,12 @@ export function useFileImport(params: {
     upload.value = {
       ...file,
       result: undefined,
-      progress: 0
+      progress: 0,
+      model: unref(model) || null
     }
 
     if (file.error) {
+      handleError()
       return
     }
 

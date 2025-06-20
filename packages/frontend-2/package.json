@@ -27,7 +27,7 @@
     "@apollo/client": "^3.13.8",
     "@artmizu/nuxt-prometheus": "^2.2.1",
     "@datadog/browser-rum": "^5.11.0",
-    "@headlessui/vue": "^1.7.13",
+    "@headlessui/vue": "npm:@speckle/headlessui-vue@1.7.23-alpha.0",
     "@heroicons/vue": "^2.0.12",
     "@intercom/messenger-js-sdk": "^0.0.14",
     "@jsonforms/core": "^3.5.1",

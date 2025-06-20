@@ -11478,14 +11478,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@headlessui/vue@npm:^1.7.13, @headlessui/vue@npm:^1.7.18":
-  version: 1.7.18
-  resolution: "@headlessui/vue@npm:1.7.18"
+"@headlessui/vue@npm:@speckle/headlessui-vue@1.7.23-alpha.0":
+  version: 1.7.23-alpha.0
+  resolution: "@speckle/headlessui-vue@npm:1.7.23-alpha.0"
   dependencies:
-    "@tanstack/vue-virtual": "npm:^3.0.0-beta.60"
+    "@tanstack/vue-virtual": "npm:3.13.6"
   peerDependencies:
     vue: ^3.2.0
-  checksum: 10/ec25340642e01d9ab56bad86ef44cfea814286d5b2a8b03802ef23e1e895c811100d82bf7fbaa20712efd2023ecf5d879d91bbc5df22ba85389b99c44d9d24e6
+  checksum: 10/f2cff59cc8177112454f38294fe8120c42ecdce87a1af0b70fbaded57c4436cbf5cb47e18331576922c5df69cb9e2fe4a04c8d899b29d9118bc9d35ed7d78311
   languageName: node
   linkType: hard
 
@@ -15757,7 +15757,7 @@ __metadata:
     "@graphql-codegen/plugin-helpers": "npm:^5.1.0"
     "@graphql-codegen/typescript": "npm:^4.1.5"
     "@graphql-codegen/visitor-plugin-common": "npm:^5.7.1"
-    "@headlessui/vue": "npm:^1.7.13"
+    "@headlessui/vue": "npm:@speckle/headlessui-vue@1.7.23-alpha.0"
     "@heroicons/vue": "npm:^2.0.12"
     "@intercom/messenger-js-sdk": "npm:^0.0.14"
     "@jsonforms/core": "npm:^3.5.1"
@@ -16340,7 +16340,7 @@ __metadata:
   dependencies:
     "@babel/preset-env": "npm:^7.21.5"
     "@babel/preset-react": "npm:^7.18.6"
-    "@headlessui/vue": "npm:^1.7.18"
+    "@headlessui/vue": "npm:@speckle/headlessui-vue@1.7.23-alpha.0"
     "@heroicons/vue": "npm:^2.0.12"
     "@rollup/plugin-typescript": "npm:^11.1.0"
     "@speckle/shared": "workspace:^"
@@ -18099,21 +18099,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/virtual-core@npm:3.0.0":
-  version: 3.0.0
-  resolution: "@tanstack/virtual-core@npm:3.0.0"
-  checksum: 10/667941444b70773a8fc37b907718fcdbcf90b15660f427b06d6c140b72eea636d8609a8ba5ee3d2cb363066a8085fbf5b804fd08d5cfefd432cf1a14fa7c2355
+"@tanstack/virtual-core@npm:3.13.6":
+  version: 3.13.6
+  resolution: "@tanstack/virtual-core@npm:3.13.6"
+  checksum: 10/f6fc9e902077e68fcfc2fe936fcd90c89b128b1fca206d7e1d71bea0cf351994c11685a2aedeb9c9305596a1bc77ac9ef27eb889a2b348fcfbfa80dd608bb73c
   languageName: node
   linkType: hard
 
-"@tanstack/vue-virtual@npm:^3.0.0-beta.60":
-  version: 3.0.4
-  resolution: "@tanstack/vue-virtual@npm:3.0.4"
+"@tanstack/vue-virtual@npm:3.13.6":
+  version: 3.13.6
+  resolution: "@tanstack/vue-virtual@npm:3.13.6"
   dependencies:
-    "@tanstack/virtual-core": "npm:3.0.0"
+    "@tanstack/virtual-core": "npm:3.13.6"
   peerDependencies:
     vue: ^2.7.0 || ^3.0.0
-  checksum: 10/7ef62a2dd580f2368f292b784dc1c07eb77d1d595582f2e95d3b949b40e3be2b1914f5a2eaa620cfacc8ac4d444c7d78a6d38de76c7b946fb8b02cc2f1b3d3ba
+  checksum: 10/18ac49b450a7bbcff84ea6003fdb27cd129e5ef0d1c536ca70009d95b3008d8f9488bc2932178514dfd5378fff5c56f8f8f35c140b2bcf238de3a207d2747cbd
   languageName: node
   linkType: hard
 
