@@ -1,6 +1,6 @@
 <template>
   <section class="py-8">
-    <SettingsSectionHeader title="New workspace creation" subheading />
+    <SettingsSectionHeader title="Exclusive workspace" subheading />
     <p class="text-body-xs text-foreground-2 mt-2 mb-6">
       Control whether workspace members can create new workspaces.
     </p>

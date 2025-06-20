@@ -17,8 +17,7 @@
         class="w-lg mb-6 max-w-lg mx-auto"
       >
         <template #title>
-          You cannot create a workspace as you are a member of a workspace which does
-          not allow it.
+          {{ cantClickCreateReason }}
         </template>
       </CommonAlert>
       <WorkspaceWizardStepDetails
@@ -64,11 +63,8 @@ const { cancelCheckoutSession } = useBillingActions()
 const route = useRoute()
 const mixpanel = useMixpanel()
 const { goToStep, currentStep, isLoading, state } = useWorkspacesWizard()
-const { activeUser } = useActiveUser()
 
-const { canClickCreate } = useCanCreateWorkspace({
-  activeUser: computed(() => activeUser.value)
-})
+const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace()
 
 const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,
