@@ -40,11 +40,17 @@ spec:
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          httpGet:
+            path: /healthz
+            port: 9080
+          {{- else }}
           exec:
             command:
               - /usr/bin/node
               - -e
               - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
+          {{- end }}
 
         resources:
           {{- with .Values.fileimport_service.requests }}

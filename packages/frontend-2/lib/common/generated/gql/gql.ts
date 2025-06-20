@@ -161,6 +161,7 @@ type Documents = {
     "\n  fragment WorkspaceDashboardProjectList_Workspace on Workspace {\n    ...WorkspaceAddProjectMenu_Workspace\n    id\n  }\n": typeof types.WorkspaceDashboardProjectList_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": typeof types.WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": typeof types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
+    "\n  fragment WorkspaceInviteCard_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceSlug\n    workspaceName\n    invitedBy {\n      id\n      name\n    }\n  }\n": typeof types.WorkspaceInviteCard_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest on WorkspaceJoinRequest {\n    id\n    user {\n      id\n      name\n    }\n    workspace {\n      id\n    }\n  }\n": typeof types.WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragmentDoc,
     "\n  fragment WorkspaceMoveProjectManager_ProjectBase on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.WorkspaceMoveProjectManager_ProjectBaseFragmentDoc,
     "\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace(workspaceId: $workspaceId) {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceMoveProjectManager_ProjectFragmentDoc,
@@ -210,6 +211,8 @@ type Documents = {
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": typeof types.ServerInfoBlobSizeLimitDocument,
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": typeof types.ServerInfoAllScopesDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": typeof types.ProjectModelsSelectorValuesDocument,
+    "\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n": typeof types.GenerateUploadUrlDocument,
+    "\n  mutation StartFileImport($input: StartFileImportInput!) {\n    fileUploadMutations {\n      startFileImport(input: $input) {\n        id\n      }\n    }\n  }\n": typeof types.StartFileImportDocument,
     "\n  fragment UseFileImport_Project on Project {\n    id\n  }\n": typeof types.UseFileImport_ProjectFragmentDoc,
     "\n  fragment UseFileImport_Model on Model {\n    id\n    name\n  }\n": typeof types.UseFileImport_ModelFragmentDoc,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": typeof types.MainServerInfoDataDocument,
@@ -611,6 +614,7 @@ const documents: Documents = {
     "\n  fragment WorkspaceDashboardProjectList_Workspace on Workspace {\n    ...WorkspaceAddProjectMenu_Workspace\n    id\n  }\n": types.WorkspaceDashboardProjectList_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
+    "\n  fragment WorkspaceInviteCard_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceSlug\n    workspaceName\n    invitedBy {\n      id\n      name\n    }\n  }\n": types.WorkspaceInviteCard_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest on WorkspaceJoinRequest {\n    id\n    user {\n      id\n      name\n    }\n    workspace {\n      id\n    }\n  }\n": types.WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragmentDoc,
     "\n  fragment WorkspaceMoveProjectManager_ProjectBase on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.WorkspaceMoveProjectManager_ProjectBaseFragmentDoc,
     "\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace(workspaceId: $workspaceId) {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.WorkspaceMoveProjectManager_ProjectFragmentDoc,
@@ -660,6 +664,8 @@ const documents: Documents = {
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": types.ServerInfoAllScopesDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
+    "\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n": types.GenerateUploadUrlDocument,
+    "\n  mutation StartFileImport($input: StartFileImportInput!) {\n    fileUploadMutations {\n      startFileImport(input: $input) {\n        id\n      }\n    }\n  }\n": types.StartFileImportDocument,
     "\n  fragment UseFileImport_Project on Project {\n    id\n  }\n": types.UseFileImport_ProjectFragmentDoc,
     "\n  fragment UseFileImport_Model on Model {\n    id\n    name\n  }\n": types.UseFileImport_ModelFragmentDoc,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": types.MainServerInfoDataDocument,
@@ -1519,6 +1525,10 @@ export function graphql(source: "\n  fragment WorkspaceInviteBlock_PendingWorksp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment WorkspaceInviteCard_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceSlug\n    workspaceName\n    invitedBy {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteCard_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceSlug\n    workspaceName\n    invitedBy {\n      id\n      name\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest on WorkspaceJoinRequest {\n    id\n    user {\n      id\n      name\n    }\n    workspace {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest on WorkspaceJoinRequest {\n    id\n    user {\n      id\n      name\n    }\n    workspace {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1712,6 +1722,14 @@ export function graphql(source: "\n  query ServerInfoAllScopes {\n    serverInfo
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation StartFileImport($input: StartFileImportInput!) {\n    fileUploadMutations {\n      startFileImport(input: $input) {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation StartFileImport($input: StartFileImportInput!) {\n    fileUploadMutations {\n      startFileImport(input: $input) {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

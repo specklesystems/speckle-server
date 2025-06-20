@@ -10,10 +10,12 @@ import { logger } from '@/observability/logging.js'
 import { Logger } from 'pino'
 import { ensureError, TIME_MS } from '@speckle/shared'
 import { jobProcessor } from './jobProcessor.js'
+import { startHealthCheckServer } from './healthcheck.js'
 
 let jobQueue: Bull.Queue<JobPayload> | undefined = undefined
 let appState: AppState = AppState.STARTING
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
+let healthCheckServer: ReturnType<typeof startHealthCheckServer> | undefined
 
 export const main = async () => {
   logger.info('Starting FileUploads Service (nextGen 🚀)...')
@@ -37,6 +39,9 @@ export const main = async () => {
     process.exit(1)
   }
   appState = AppState.RUNNING
+
+  healthCheckServer = startHealthCheckServer({ logger })
+
   logger.debug(`Starting processing of "${QUEUE_NAME}" message queue`)
 
   await jobQueue.process(async (payload, done) => {
@@ -143,6 +148,13 @@ const beforeShutdown = async () => {
     currentJob.done(new Error('Job cancelled due to fileimport-service shutdown'))
   }
   // no need to close the job queue and redis client, when the process exits they will be closed automatically
+
+  if (healthCheckServer) {
+    logger.info('Stopping health check server')
+    healthCheckServer.close(() => {
+      logger.info('Health check server stopped')
+    })
+  }
 }
 
 const onShutdown = () => {
