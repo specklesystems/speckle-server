@@ -82,17 +82,25 @@ export const main = async () => {
       }
       if (err instanceof Error) {
         encounteredError = true
-        done(err)
-        await sendResult({
-          ...job,
-          result: {
-            status: 'error',
-            reason: err.message,
+        try {
+          await sendResult({
+            ...job,
             result: {
-              durationSeconds: 0
+              status: 'error',
+              reason: err.message,
+              result: {
+                durationSeconds: 0
+              }
             }
-          }
-        })
+          })
+        } catch (sendErr) {
+          jobLogger.fatal(
+            { err: sendErr, jobId: job.jobId },
+            'Failed to send result for job {jobId}'
+          )
+        } finally {
+          done(err)
+        }
       } else {
         throw err
       }
