@@ -37,7 +37,7 @@ import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
 import {
   initializeRhinoQueue,
-  initalizeIfcQueue,
+  initializeIfcQueue,
   shutdownQueues,
   fileImportQueues
 } from '@/modules/fileuploads/queues/fileimports'
@@ -115,7 +115,7 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
         rhinoRouter
       )
 
-      const ifcQueue = await initalizeIfcQueue()
+      const ifcQueue = await initializeIfcQueue()
       const ifcRouter = createBullBoard([new BullMQAdapter(ifcQueue.queue)]).router
       app.use(
         '/api/admin/fileimport-jobs/ifc',
