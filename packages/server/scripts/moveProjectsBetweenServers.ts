@@ -72,10 +72,8 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
-import { authorizeResolver } from '@/modules/shared'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { getStringFromEnv } from '@/modules/shared/helpers/envHelper'
-import { authorizeResolverFactory } from '@/modules/shared/services/auth'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalStreamCountFactory } from '@/modules/stats/repositories'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
@@ -147,6 +145,28 @@ const main = async () => {
   const sourceUsers: UserRecord[] = []
   const userIdMapping: Record<string, string | null> = {}
 
+  const addOrUpdateWorkspaceRole = addOrUpdateWorkspaceRoleFactory({
+    getWorkspaceRoles: getWorkspaceRolesFactory({ db: mainTrx }),
+    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: mainTrx }),
+    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db: mainTrx }),
+    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: mainTrx }),
+    emitWorkspaceEvent: getEventBus().emit,
+    ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+      createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainTrx }),
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainTrx }),
+      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: getWorkspaceFactory({ db: mainTrx })
+      }),
+      eventEmit: getEventBus().emit
+    }),
+    assignWorkspaceSeat: assignWorkspaceSeatFactory({
+      createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainTrx }),
+      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: mainTrx }),
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainTrx }),
+      eventEmit: getEventBus().emit
+    })
+  })
+
   for await (const users of executeBatchedSelect(
     sourceDb.table<UserRecord>('users').select('*')
   )) {
@@ -169,7 +189,13 @@ const main = async () => {
         })
 
         if (!!existingUserEmail) {
-          // Someone already has this email
+          // User exists with email, add them to workspace
+          await addOrUpdateWorkspaceRole({
+            userId: existingUserEmail.userId,
+            workspaceId: TARGET_WORKSPACE_ID,
+            role: Roles.Workspace.Member,
+            updatedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
+          })
           continue
         }
 
