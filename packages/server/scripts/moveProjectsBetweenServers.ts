@@ -146,23 +146,23 @@ const main = async () => {
   const userIdMapping: Record<string, string | null> = {}
 
   const addOrUpdateWorkspaceRole = addOrUpdateWorkspaceRoleFactory({
-    getWorkspaceRoles: getWorkspaceRolesFactory({ db: mainTrx }),
-    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: mainTrx }),
-    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db: mainTrx }),
-    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: mainTrx }),
+    getWorkspaceRoles: getWorkspaceRolesFactory({ db: targetMainDb }),
+    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: targetMainDb }),
+    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db: targetMainDb }),
+    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: targetMainDb }),
     emitWorkspaceEvent: getEventBus().emit,
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-      createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainTrx }),
-      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainTrx }),
+      createWorkspaceSeat: createWorkspaceSeatFactory({ db: targetMainDb }),
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: targetMainDb }),
       getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
-        getWorkspace: getWorkspaceFactory({ db: mainTrx })
+        getWorkspace: getWorkspaceFactory({ db: targetMainDb })
       }),
       eventEmit: getEventBus().emit
     }),
     assignWorkspaceSeat: assignWorkspaceSeatFactory({
-      createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainTrx }),
-      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: mainTrx }),
-      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainTrx }),
+      createWorkspaceSeat: createWorkspaceSeatFactory({ db: targetMainDb }),
+      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: targetMainDb }),
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: targetMainDb }),
       eventEmit: getEventBus().emit
     })
   })
