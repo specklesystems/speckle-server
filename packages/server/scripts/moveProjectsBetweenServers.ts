@@ -522,12 +522,12 @@ const main = async () => {
           if (!targetServerUserId) continue
 
           // Will throw if user does not have valid seat for role
-          await assignWorkspaceSeat({ userId: targetServerUserId, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
           await mainTrx.table<StreamAclRecord>('stream_acl').insert({
             userId: targetServerUserId,
             resourceId: sourceProject.id,
             role: user.streamRole
           })
+          await assignWorkspaceSeat({ userId: targetServerUserId, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
         }
 
         // // Try to assign roles
