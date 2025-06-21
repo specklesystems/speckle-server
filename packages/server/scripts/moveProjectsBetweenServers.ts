@@ -530,8 +530,8 @@ const main = async () => {
           if (!targetServerUserId) continue
 
           // Will throw if user does not have valid seat for role
-          await assignWorkspaceSeat({ userId: user.id, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
-          await addOrUpdateStreamCollaborator(sourceProject.id, user.id, user.streamRole, TARGET_WORKSPACE_ROOT_ADMIN_USER_ID)
+          await assignWorkspaceSeat({ userId: targetServerUserId, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
+          await addOrUpdateStreamCollaborator(sourceProject.id, targetServerUserId, user.streamRole, TARGET_WORKSPACE_ROOT_ADMIN_USER_ID)
         }
 
         // // Try to assign roles
