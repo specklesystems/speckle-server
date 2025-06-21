@@ -183,15 +183,20 @@ const main = async () => {
       // Optionally, provision users from source server on target server
       // TODO: This is only possible if the target workspace has SSO enabled
       if (ENABLE_USER_PROVISIONING) {
-        const existingUserEmail = await findEmailFactory({ db: targetMainDb })({
+        const unverifiedUserEmail = await findEmailFactory({ db: targetMainDb })({
           email: user.email.toLowerCase(),
           verified: false
         })
 
-        if (!!existingUserEmail) {
-          // User exists with email, add them to workspace
+        if (!!unverifiedUserEmail) {
+          // User exists with unverified email, skip
+          continue
+        }
+
+        if (!!userEmail) {
+          // User exists with verified email, add them to workspace
           await addOrUpdateWorkspaceRole({
-            userId: existingUserEmail.userId,
+            userId: userEmail.userId,
             workspaceId: TARGET_WORKSPACE_ID,
             role: Roles.Workspace.Member,
             updatedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
