@@ -172,19 +172,19 @@ const main = async () => {
           continue
         }
 
-        const pendingWorkspaceInvites = await getPendingWorkspaceCollaboratorsFactory({
-          queryAllResourceInvites: queryAllResourceInvitesFactory({ db: targetMainDb }),
-          getInvitationTargetUsers: getInvitationTargetUsersFactory({
-            getUsers: getUsersFactory({ db: targetMainDb })
-          })
-        })({
-          workspaceId: TARGET_WORKSPACE_ID
-        })
+        // const pendingWorkspaceInvites = await getPendingWorkspaceCollaboratorsFactory({
+        //   queryAllResourceInvites: queryAllResourceInvitesFactory({ db: targetMainDb }),
+        //   getInvitationTargetUsers: getInvitationTargetUsersFactory({
+        //     getUsers: getUsersFactory({ db: targetMainDb })
+        //   })
+        // })({
+        //   workspaceId: TARGET_WORKSPACE_ID
+        // })
 
-        if (!pendingWorkspaceInvites.some((invite) => invite.email === user.email)) {
-          // User does not have an active invite
-          continue
-        }
+        // if (!pendingWorkspaceInvites.some((invite) => invite.email === user.email)) {
+        //   // User does not have an active invite
+        //   continue
+        // }
 
         try {
           const newUserId = await createUserFactory({
@@ -518,11 +518,19 @@ const main = async () => {
           emitEvent: getEventBus().emit
         })
 
+        const assignWorkspaceSeat = assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainTrx }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: mainTrx }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainTrx }),
+          eventEmit: getEventBus().emit
+        })
+
         for (const user of existingStreamCollaborators) {
           const targetServerUserId = userIdMapping[user.id]
           if (!targetServerUserId) continue
 
           // Will throw if user does not have valid seat for role
+          await assignWorkspaceSeat({ userId: user.id, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
           await addOrUpdateStreamCollaborator(sourceProject.id, user.id, user.streamRole, TARGET_WORKSPACE_ROOT_ADMIN_USER_ID)
         }
 
