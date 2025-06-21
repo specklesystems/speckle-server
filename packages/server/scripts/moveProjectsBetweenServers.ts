@@ -10,7 +10,7 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility, StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
   getBatchedStreamBranchesFactory,
@@ -75,6 +75,7 @@ import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/service
 import { authorizeResolver } from '@/modules/shared'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { getStringFromEnv } from '@/modules/shared/helpers/envHelper'
+import { authorizeResolverFactory } from '@/modules/shared/services/auth'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalStreamCountFactory } from '@/modules/stats/repositories'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
@@ -509,15 +510,6 @@ const main = async () => {
 
         // Assign existing roles to project members
         // TODO: Assign seats as well, or demote with invalid seat?
-        const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
-          validateStreamAccess: validateStreamAccessFactory({
-            authorizeResolver,
-          }),
-          getUser: getUserFactory({ db: mainTrx }),
-          grantStreamPermissions: grantStreamPermissionsFactory({ db: mainTrx }),
-          emitEvent: getEventBus().emit
-        })
-
         const assignWorkspaceSeat = assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainTrx }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: mainTrx }),
@@ -531,7 +523,11 @@ const main = async () => {
 
           // Will throw if user does not have valid seat for role
           await assignWorkspaceSeat({ userId: targetServerUserId, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
-          await addOrUpdateStreamCollaborator(sourceProject.id, targetServerUserId, user.streamRole, TARGET_WORKSPACE_ROOT_ADMIN_USER_ID)
+          await mainTrx.table<StreamAclRecord>('stream_acl').insert({
+            userId: targetServerUserId,
+            resourceId: sourceProject.id,
+            role: user.streamRole
+          })
         }
 
         // // Try to assign roles
