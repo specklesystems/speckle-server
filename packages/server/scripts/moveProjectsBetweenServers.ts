@@ -407,7 +407,7 @@ const main = async () => {
 
         for await (const objectsBatch of getBatchedStreamObjectsFactory({
           db: sourceDb
-        })(sourceProject.id, { batchSize: 50 })) {
+        })(sourceProject.id, { batchSize: 500 })) {
           await insertObjectsFactory({ db: objectDb })(objectsBatch)
 
           movedObjectsCount = movedObjectsCount + objectsBatch.length
