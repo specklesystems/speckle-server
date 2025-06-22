@@ -269,7 +269,7 @@ const initializeEventListeners = () => {
         if (!isFinished(run.status)) return
         const logger = loggerWithMaybeContext({ logger: automateLogger })
         const projectDb = await getProjectDbClient({ projectId })
-        const project = await getProjectFactory({ db: projectDb })({ projectId })
+        const project = await getProjectFactory({ db })({ projectId })
 
         const automationWithRevision = await getFullAutomationRevisionMetadataFactory({
           db: projectDb
@@ -337,7 +337,7 @@ const initializeEventListeners = () => {
           return
         }
         const projectDb = await getProjectDbClient({ projectId: manifest.projectId })
-        const project = await getProjectFactory({ db: projectDb })({
+        const project = await getProjectFactory({ db })({
           projectId: manifest.projectId
         })
 

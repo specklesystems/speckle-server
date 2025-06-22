@@ -1,4 +1,4 @@
-import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
+import { type EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import {
   getClient,
   MixpanelClient,
@@ -6,11 +6,11 @@ import {
 } from '@/modules/shared/utils/mixpanel'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import { throwUncoveredError } from '@speckle/shared'
-import { GetProject } from '@/modules/core/domain/projects/operations'
-import { Knex } from 'knex'
+import type { GetProject } from '@/modules/core/domain/projects/operations'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import type { MainDb } from '@/db/types'
 
 export const fileuploadTrackingFactory =
   ({
@@ -46,7 +46,7 @@ export const fileuploadTrackingFactory =
   }
 
 export const initializeEventListenersFactory =
-  ({ db }: { db: Knex }) =>
+  ({ db }: { db: MainDb }) =>
   () => {
     const eventBus = getEventBus()
     const quitCbs = [

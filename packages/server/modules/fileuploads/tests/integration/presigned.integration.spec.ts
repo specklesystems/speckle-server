@@ -58,6 +58,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { db } from '@/db/knex'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
@@ -133,11 +134,11 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
               pushJobToFileImporter: pushJobToFileImporterFactory({
                 getServerOrigin,
                 createAppToken: createAppTokenFactory({
-                  storeApiToken: storeApiTokenFactory({ db: projectDb }),
-                  storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
+                  storeApiToken: storeApiTokenFactory({ db }),
+                  storeTokenScopes: storeTokenScopesFactory({ db }),
                   storeTokenResourceAccessDefinitions:
                     storeTokenResourceAccessDefinitionsFactory({
-                      db: projectDb
+                      db
                     }),
                   storeUserServerAppToken: storeUserServerAppTokenFactory({
                     db: projectDb

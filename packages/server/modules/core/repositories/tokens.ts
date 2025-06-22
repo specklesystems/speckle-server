@@ -28,54 +28,54 @@ import {
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { ServerScope } from '@speckle/shared'
-import { Knex } from 'knex'
 import { TokenRevokationError } from '@/modules/core/errors/tokens'
+import type { MainDb } from '@/db/types'
 
 const tables = {
-  apiTokens: (db: Knex) => db<ApiTokenRecord>(ApiTokens.name),
-  tokenScopes: (db: Knex) => db<TokenScopeRecord>(TokenScopes.name),
-  tokenResourceAccess: (db: Knex) =>
+  apiTokens: (db: MainDb) => db<ApiTokenRecord>(ApiTokens.name),
+  tokenScopes: (db: MainDb) => db<TokenScopeRecord>(TokenScopes.name),
+  tokenResourceAccess: (db: MainDb) =>
     db<TokenResourceAccessRecord>(TokenResourceAccess.name),
-  userServerAppTokens: (db: Knex) =>
+  userServerAppTokens: (db: MainDb) =>
     db<UserServerAppTokenRecord>(UserServerAppTokens.name),
-  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name)
+  personalApiTokens: (db: MainDb) => db<PersonalApiTokenRecord>(PersonalApiTokens.name)
 }
 
 export const storeApiTokenFactory =
-  (deps: { db: Knex }): StoreApiToken =>
+  (deps: { db: MainDb }): StoreApiToken =>
   async (token) => {
     const [newToken] = await tables.apiTokens(deps.db).insert(token, '*')
     return newToken
   }
 
 export const storeTokenScopesFactory =
-  (deps: { db: Knex }): StoreTokenScopes =>
+  (deps: { db: MainDb }): StoreTokenScopes =>
   async (scopes) => {
     await tables.tokenScopes(deps.db).insert(scopes)
   }
 
 export const storeTokenResourceAccessDefinitionsFactory =
-  (deps: { db: Knex }): StoreTokenResourceAccessDefinitions =>
+  (deps: { db: MainDb }): StoreTokenResourceAccessDefinitions =>
   async (defs) => {
     await tables.tokenResourceAccess(deps.db).insert(defs)
   }
 
 export const storeUserServerAppTokenFactory =
-  (deps: { db: Knex }): StoreUserServerAppToken =>
+  (deps: { db: MainDb }): StoreUserServerAppToken =>
   async (token) => {
     const [newToken] = await tables.userServerAppTokens(deps.db).insert(token, '*')
     return newToken
   }
 
 export const storePersonalApiTokenFactory =
-  (deps: { db: Knex }): StorePersonalApiToken =>
+  (deps: { db: MainDb }): StorePersonalApiToken =>
   async (token) => {
     const [newToken] = await tables.personalApiTokens(deps.db).insert(token, '*')
     return newToken
   }
 
 export const getUserPersonalAccessTokensFactory =
-  (deps: { db: Knex }): GetUserPersonalAccessTokens =>
+  (deps: { db: MainDb }): GetUserPersonalAccessTokens =>
   async (userId) => {
     const { rows } = await deps.db.raw(
       `
@@ -120,7 +120,7 @@ export const getUserPersonalAccessTokensFactory =
   }
 
 export const revokeTokenByIdFactory =
-  (deps: { db: Knex }): RevokeTokenById =>
+  (deps: { db: MainDb }): RevokeTokenById =>
   async (tokenId: string) => {
     const delCount = await tables
       .apiTokens(deps.db)
@@ -132,7 +132,7 @@ export const revokeTokenByIdFactory =
   }
 
 export const revokeUserTokenByIdFactory =
-  (deps: { db: Knex }): RevokeUserTokenById =>
+  (deps: { db: MainDb }): RevokeUserTokenById =>
   async (tokenId: string, userId: string) => {
     tokenId = tokenId.slice(0, 10)
     const delCount = await tables
@@ -144,25 +144,25 @@ export const revokeUserTokenByIdFactory =
   }
 
 export const getApiTokenByIdFactory =
-  (deps: { db: Knex }): GetApiTokenById =>
+  (deps: { db: MainDb }): GetApiTokenById =>
   async (tokenId) => {
     return tables.apiTokens(deps.db).where({ id: tokenId }).first()
   }
 
 export const getTokenScopesByIdFactory =
-  (deps: { db: Knex }): GetTokenScopesById =>
+  (deps: { db: MainDb }): GetTokenScopesById =>
   async (tokenId: string) => {
     return tables.tokenScopes(deps.db).where({ tokenId })
   }
 
 export const getTokenResourceAccessDefinitionsByIdFactory =
-  (deps: { db: Knex }): GetTokenResourceAccessDefinitionsById =>
+  (deps: { db: MainDb }): GetTokenResourceAccessDefinitionsById =>
   async (tokenId: string) => {
     return tables.tokenResourceAccess(deps.db).where({ tokenId })
   }
 
 export const updateApiTokenFactory =
-  (deps: { db: Knex }): UpdateApiToken =>
+  (deps: { db: MainDb }): UpdateApiToken =>
   async (tokenId, token) => {
     const [updatedToken] = await tables
       .apiTokens(deps.db)

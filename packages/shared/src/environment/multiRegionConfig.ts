@@ -168,12 +168,14 @@ export const configureKnexClient = (
   config: Pick<RegionServerConfig, 'postgres'>,
   configArgs: KnexConfigArgs
 ): { public: Knex.Knex; private?: Knex.Knex } => {
-  const knexConfig = createKnexConfig({
-    connectionString: config.postgres.connectionUri,
-    caCertificate: config.postgres.publicTlsCertificate,
-    ...configArgs
-  })
-  const privateConfig = config.postgres.privateConnectionUri
+  const publicClient = knex(
+    createKnexConfig({
+      connectionString: config.postgres.connectionUri,
+      caCertificate: config.postgres.publicTlsCertificate,
+      ...configArgs
+    })
+  )
+  const privateClient = config.postgres.privateConnectionUri
     ? knex(
         createKnexConfig({
           connectionString: config.postgres.privateConnectionUri,
@@ -182,5 +184,5 @@ export const configureKnexClient = (
         })
       )
     : undefined
-  return { public: knex(knexConfig), private: privateConfig }
+  return { public: publicClient, private: privateClient }
 }

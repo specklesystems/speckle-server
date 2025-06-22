@@ -64,8 +64,10 @@ import { createNewProjectFactory } from '@/modules/core/services/projects'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import type { ProjectDb } from '@/modules/multiregion/domain/types'
+import type { Knex } from 'knex'
 
 const crossServerSyncModule: SpeckleModule = {
   init() {
@@ -143,9 +145,9 @@ const crossServerSyncModule: SpeckleModule = {
     })
 
     const createNewProject = createNewProjectFactory({
-      storeProject: storeProjectFactory({ db }),
+      storeProject: storeProjectFactory({ db: db as Knex as ProjectDb }),
       getProject: getProjectFactory({ db }),
-      deleteProject: deleteProjectFactory({ db }),
+      deleteProject: deleteProjectFactory({ db: db as Knex as ProjectDb }),
       storeModel: storeModelFactory({ db }),
       storeProjectRole: storeProjectRoleFactory({ db }),
       emitEvent: getEventBus().emit

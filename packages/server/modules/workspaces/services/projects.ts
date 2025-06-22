@@ -53,6 +53,7 @@ import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
 import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import { ProjectDb } from '@/modules/multiregion/domain/types'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -342,7 +343,7 @@ export const createWorkspaceProjectFactory =
     })
     const regionKey =
       workspaceDefaultRegion?.key ?? (await getValidDefaultProjectRegionKey())
-    const projectDb = await getDb({ regionKey })
+    const projectDb = (await getDb({ regionKey })) as ProjectDb
     const db = mainDb
 
     const regionalWorkspace = await getWorkspaceFactory({ db: projectDb })({

@@ -226,6 +226,7 @@ import {
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
 import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
+import { MainDb } from '@/db/types'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1561,7 +1562,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             eventBus,
             operationFactory: ({ db, emit }) =>
               moveProjectToWorkspaceFactory({
-                getProject: getProjectFactory({ db }),
+                getProject: getProjectFactory({ db: db as Knex as MainDb }), // we know the project is already in this db, so don't have to search globally via the main DB
                 updateProject: updateProjectFactory({ db }),
                 updateProjectRole: updateStreamRoleAndNotify,
                 getProjectCollaborators: getStreamCollaboratorsFactory({ db }),

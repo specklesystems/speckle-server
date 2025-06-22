@@ -8,11 +8,13 @@ import {
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import { getRolesByUserIdFactory } from '@/modules/core/repositories/streams'
+import { ProjectDb } from '@/modules/multiregion/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { createTestUser } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { Knex } from 'knex'
 import { assign } from 'lodash'
 
 const createTestProject = (overrides?: Partial<Project>): Project => {
@@ -31,9 +33,9 @@ const createTestProject = (overrides?: Partial<Project>): Project => {
   return assign(defaults, overrides || {})
 }
 
-const storeProject = storeProjectFactory({ db })
+const storeProject = storeProjectFactory({ db: db as Knex as ProjectDb })
 const getProject = getProjectFactory({ db })
-const deleteProject = deleteProjectFactory({ db })
+const deleteProject = deleteProjectFactory({ db: db as Knex as ProjectDb })
 const storeProjectRole = storeProjectRoleFactory({ db })
 
 describe('project repositories @core', () => {
