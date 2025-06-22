@@ -50,6 +50,8 @@ import {
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import { Knex } from 'knex'
+import { MainDb } from '@/db/types'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()
   ? `test:multiregion:${cryptoRandomString({ length: 5 })}`
@@ -164,7 +166,7 @@ export const startQueue = async () => {
         return await withTransaction(
           async ({ db: targetDbTrx }) => {
             const updateProjectRegion = updateProjectRegionFactory({
-              getProject: getProjectFactory({ db: sourceDb }),
+              getProject: getProjectFactory({ db: sourceDb as Knex as MainDb }), // it isn't actually the main db, but we just want the project data and we already know it is in this project db
               getAvailableRegions: getAvailableRegionsFactory({
                 getRegions: getRegionsFactory({ db }),
                 canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({

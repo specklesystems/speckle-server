@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import '../bootstrap'
 
+import type { MainDb } from '@/db/types'
 import { configureClient } from '@/knexfile'
 import {
   getBatchedStreamCommentsFactory,
@@ -35,6 +36,7 @@ import {
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUsersFactory } from '@/modules/core/repositories/users'
+import type { ProjectDb } from '@/modules/multiregion/domain/types'
 import {
   getAvailableRegionConfig,
   getMainRegionConfig
@@ -47,7 +49,7 @@ import {
 } from '@/modules/workspaces/repositories/workspaces'
 import { retry } from '@lifeomic/attempt'
 import { Roles, StreamRoles } from '@speckle/shared'
-import knex from 'knex'
+import knex, { type Knex } from 'knex'
 import { omit } from 'lodash'
 
 const projectIds = [
@@ -92,10 +94,10 @@ const sourceDb = knex(sourceDbConnection)
 const main = async () => {
   const targetMainDbConfig = await getMainRegionConfig()
   // get mainDb
-  const mainDb = configureClient(targetMainDbConfig).public
+  const mainDb = configureClient(targetMainDbConfig).public as MainDb
   const workspace = await getWorkspaceFactory({ db: mainDb })({ workspaceId })
   if (!workspace) throw Error('Target workspace not found')
-  let regionDb = mainDb
+  let regionDb: ProjectDb = mainDb as Knex as ProjectDb
   const workspaceRegion = await getDefaultRegionFactory({ db: mainDb })({
     workspaceId
   })
@@ -103,7 +105,7 @@ const main = async () => {
     const targetWorkspaceRegionConfig = (await getAvailableRegionConfig())[
       workspaceRegion.key
     ]
-    regionDb = configureClient(targetWorkspaceRegionConfig).public
+    regionDb = configureClient(targetWorkspaceRegionConfig).public as ProjectDb
   }
 
   // getting users here, to make sure they all exist
@@ -121,7 +123,7 @@ const main = async () => {
     const mainTrx = await mainDb.transaction()
 
     const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
-    await storeProjectFactory({ db: regionTrx })({
+    await storeProjectFactory({ db: regionTrx as Knex as ProjectDb })({
       project: {
         ...sourceProject,
         regionKey: workspaceRegion?.key || null,

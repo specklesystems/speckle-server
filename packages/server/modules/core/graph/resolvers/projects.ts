@@ -115,6 +115,7 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { ProjectDb } from '@/modules/multiregion/domain/types'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -459,7 +460,7 @@ const resolvers: Resolvers = {
       throwIfAuthNotOk(canCreate)
 
       const regionKey = await getValidDefaultProjectRegionKey()
-      const projectDb = await getDb({ regionKey })
+      const projectDb = (await getDb({ regionKey })) as ProjectDb
 
       const createNewProject = createNewProjectFactory({
         storeProject: storeProjectFactory({ db: projectDb }),

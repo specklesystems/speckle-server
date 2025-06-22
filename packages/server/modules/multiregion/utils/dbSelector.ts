@@ -27,6 +27,7 @@ import {
 } from '@/modules/multiregion/utils/regionSelector'
 import { get, mapValues } from 'lodash'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { RegionDb } from '@/modules/multiregion/domain/types'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -55,7 +56,7 @@ export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
     regionClients[regionKey] = regionDb
   }
 
-  return regionClients[regionKey]
+  return regionClients[regionKey] as RegionDb
 }
 
 export const getDb = async ({

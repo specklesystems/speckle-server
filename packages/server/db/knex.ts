@@ -3,6 +3,7 @@ const env = process.env.NODE_ENV || 'development'
 import configs from '@/knexfile'
 import { dbStartupLogger } from '@/observability/logging'
 import knex from 'knex'
+import type { MainDb } from '@/db/types'
 
 const config = configs[env]
 
@@ -18,7 +19,7 @@ config.log = {
 
 dbStartupLogger.debug(`Loaded knex conf for ${env}`)
 
-const knexInstance = knex(config)
+const knexInstance = knex(config) as MainDb
 
 export default knexInstance
 export {

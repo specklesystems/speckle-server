@@ -1,7 +1,7 @@
-import { Stream } from '@/modules/core/domain/streams/types'
+import type { Stream } from '@/modules/core/domain/streams/types'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import {
+import type {
   AsyncRegionKeyStore,
   CachedRegionKeyDelete,
   CachedRegionKeyLookup,
@@ -12,7 +12,8 @@ import {
   SyncRegionKeyStore
 } from '@/modules/multiregion/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { Knex } from 'knex'
+import type { ProjectDb, RegionDb } from '@/modules/multiregion/domain/types'
+import type { MainDb } from '@/db/types'
 
 export type GetProjectRegionKey = (args: {
   projectId: string
@@ -87,10 +88,10 @@ export const updateProjectRegionKeyFactory =
     return project
   }
 
-export type GetRegionDb = (args: { regionKey: string }) => Promise<Knex>
-type GetDefaultDb = () => Knex
+export type GetRegionDb = (args: { regionKey: string }) => Promise<RegionDb>
+type GetDefaultDb = () => MainDb
 
-export type GetProjectDb = (args: { projectId: string }) => Promise<Knex>
+export type GetProjectDb = (args: { projectId: string }) => Promise<ProjectDb>
 export const getProjectDbClientFactory =
   ({
     getProjectRegionKey,
@@ -103,6 +104,6 @@ export const getProjectDbClientFactory =
   }): GetProjectDb =>
   async ({ projectId }) => {
     const regionKey = await getProjectRegionKey({ projectId })
-    if (!regionKey) return getDefaultDb()
-    return getRegionDb({ regionKey })
+    if (!regionKey) return getDefaultDb() as unknown as ProjectDb
+    return getRegionDb({ regionKey }) as unknown as ProjectDb
   }
