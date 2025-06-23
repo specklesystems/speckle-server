@@ -99,8 +99,9 @@ const nextPaymentHeadingText = computed(() => {
 
 const showBillingPortalLink = computed(
   () =>
-    plan.value?.status === WorkspacePlanStatuses.Valid ||
-    plan.value?.status === WorkspacePlanStatuses.PaymentFailed ||
-    plan.value?.status === WorkspacePlanStatuses.CancelationScheduled
+    isPaidPlan.value &&
+    (plan.value?.status === WorkspacePlanStatuses.Valid ||
+      plan.value?.status === WorkspacePlanStatuses.PaymentFailed ||
+      plan.value?.status === WorkspacePlanStatuses.CancelationScheduled)
 )
 </script>
