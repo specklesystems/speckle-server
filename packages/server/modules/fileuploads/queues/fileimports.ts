@@ -78,7 +78,7 @@ export const initializeRhinoQueue = async () =>
     label: 'rhino',
     queueName: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME,
     redisUrl: getFileImportServiceRhinoParserRedisUrl() ?? getRedisUrl(),
-    supportedFileTypes: ['obj']
+    supportedFileTypes: ['obj', 'stl', 'skp']
   })
 
 export const initializeIfcQueue = async () =>

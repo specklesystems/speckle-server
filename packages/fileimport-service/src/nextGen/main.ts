@@ -76,9 +76,9 @@ export const main = async () => {
     } catch (err) {
       if (appState === AppState.SHUTTINGDOWN) {
         // likely that the job was cancelled due to the service shutting down
-        jobLogger.warn({ err }, 'Processing {jobId} failed')
+        jobLogger.warn({ err }, 'Processing job {jobId} failed')
       } else {
-        jobLogger.error({ err }, 'Processing {jobId} failed')
+        jobLogger.error({ err }, 'Processing job {jobId} failed')
       }
       if (err instanceof Error) {
         encounteredError = true
@@ -122,19 +122,23 @@ const sendResult = async ({
   token: string
   result: FileImportResultPayload
 }) => {
-  const response = await fetch(
-    `${serverUrl}/api/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-
-      body: JSON.stringify(result)
-    }
+  const sendResultUrl = new URL(
+    `/api/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
+    serverUrl
   )
+  const response = await fetch(sendResultUrl.toString(), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+
+    body: JSON.stringify(result)
+  })
   if (!response.ok) {
     const text = await response.text()
-    currentJob?.logger.error({ cause: text }, 'Failed to report job result')
-    throw new Error(`Failed to report job result: ${text}`)
+    currentJob?.logger.error(
+      { cause: text, sendResultUrl: sendResultUrl.toString() },
+      'Failed to report result for job {jobId} to {sendResultUrl}'
+    )
+    throw new Error(`Failed to report result for job ${jobId}: ${text}`)
   }
 }
 
