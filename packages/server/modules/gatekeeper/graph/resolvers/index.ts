@@ -441,8 +441,6 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           )
         },
         upgradePlan: async (_parent, args, ctx) => {
-          // here upgrade plan
-
           let logger = extendLoggerComponent(ctx.log, 'gatekeeper', 'resolvers')
           const { workspaceId, workspacePlan, billingInterval } = args.input
           logger = logger.child({ workspaceId, workspacePlan })
