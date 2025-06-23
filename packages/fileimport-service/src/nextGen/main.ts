@@ -90,7 +90,11 @@ export const main = async () => {
               reason: err.message,
               result: {
                 durationSeconds: 0,
-                downloadDurationSeconds: 0
+                downloadDurationSeconds: 0,
+                parser: 'none'
+              },
+              metadata: {
+                fileType: job.fileType
               }
             }
           })

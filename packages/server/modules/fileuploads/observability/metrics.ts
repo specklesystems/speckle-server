@@ -108,11 +108,11 @@ export const initializeMetrics = (params: {
   registers.forEach((r) =>
     r.removeSingleMetric('speckle_server_file_import_jobs_processed_duration_seconds')
   )
-  const fileImportJobsProcessedSummary = new Summary<'status' | 'step'>({
+  const fileImportJobsProcessedSummary = new Summary<'status' | 'step' | 'parser'>({
     name: 'speckle_server_file_import_jobs_processed_duration_seconds',
     help: 'Duration of file import job processing, in seconds, as sampled over a moving window of 1 minute.',
     registers,
-    labelNames: ['status', 'step'],
+    labelNames: ['status', 'step', 'parser'],
     maxAgeSeconds: 1 * TIME.minute,
     ageBuckets: 5
   })

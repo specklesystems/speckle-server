@@ -28,15 +28,21 @@ const baseFileImportResult = z.object({
     .describe('Total duration to download & import the file, in seconds'),
   downloadDurationSeconds: z
     .number()
-    .describe('Duration to download the file, in seconds')
+    .describe('Duration to download the file, in seconds'),
+  parser: z.string().describe('The parser used for the import')
 })
 
 export type FileImportResult = z.infer<typeof baseFileImportResult>
 
+const baseFileImportMetadata = z.object({
+  fileType: z.string().describe('Suffix of file name of the file being imported')
+})
+
 const fileImportSuccessPayload = z.object({
   status: z.literal('success'),
   warnings: z.array(z.string()), //ok to be empty
-  result: baseFileImportResult.merge(z.object({ versionId: z.string() }))
+  result: baseFileImportResult.merge(z.object({ versionId: z.string() })),
+  metadata: baseFileImportMetadata
 })
 
 export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
@@ -44,7 +50,8 @@ export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
 const fileImportErrorPayload = z.object({
   status: z.literal('error'),
   reason: z.string(),
-  result: baseFileImportResult
+  result: baseFileImportResult,
+  metadata: baseFileImportMetadata
 })
 
 export type FileImportErrorPayload = z.infer<typeof fileImportErrorPayload>

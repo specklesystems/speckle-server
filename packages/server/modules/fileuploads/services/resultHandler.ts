@@ -42,6 +42,7 @@ export const onFileImportResultFactory =
     if (jobResult.result.downloadDurationSeconds) {
       metricsSummary?.observe(
         {
+          parser: jobResult.result.parser,
           status: jobResult.status,
           step: FileImportJobDurationStep.DOWNLOAD
         },

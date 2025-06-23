@@ -43,6 +43,8 @@ export const jobProcessor = async ({
   const jobMessage =
     'Processed job {jobId} with result {status}. It took {elapsed} seconds.'
 
+  let parserUsed = 'none'
+
   const tmp = tmpdir()
   const jobDir = path.join(tmp, job.jobId)
   let downloadDurationSeconds = 0
@@ -71,6 +73,7 @@ export const jobProcessor = async ({
 
     switch (fileType) {
       case 'ifc':
+        parserUsed = 'ifc'
         await runProcessWithTimeout(
           taskLogger,
           DOTNET_BINARY_PATH,
@@ -94,6 +97,7 @@ export const jobProcessor = async ({
       case 'stl':
       case 'obj':
       case 'skp':
+        parserUsed = 'rhino'
         await runProcessWithTimeout(
           taskLogger,
           RHINO_IMPORTER_PATH,
@@ -128,7 +132,15 @@ export const jobProcessor = async ({
     const versionId = output.data.commitId
     return {
       status: 'success',
-      result: { versionId, durationSeconds: getElapsed(), downloadDurationSeconds },
+      result: {
+        versionId,
+        durationSeconds: getElapsed(),
+        downloadDurationSeconds,
+        parser: parserUsed
+      },
+      metadata: {
+        fileType: job.fileType
+      },
       warnings: []
     }
   } catch (err) {
@@ -149,7 +161,11 @@ export const jobProcessor = async ({
 
     return {
       status: 'error',
+      metadata: {
+        fileType: job.fileType
+      },
       result: {
+        parser: parserUsed,
         durationSeconds: getElapsed(),
         downloadDurationSeconds
       },
