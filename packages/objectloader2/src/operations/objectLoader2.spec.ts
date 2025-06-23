@@ -23,6 +23,7 @@ describe('objectloader2', () => {
       })
     })
     const x = await loader.getRootObject()
+    await loader.disposeAsync()
     expect(x).toMatchSnapshot()
   })
 
@@ -42,6 +43,7 @@ describe('objectloader2', () => {
       })
     })
     const x = await loader.getRootObject()
+    await loader.disposeAsync()
     expect(x).toMatchSnapshot()
   })
 
@@ -65,6 +67,7 @@ describe('objectloader2', () => {
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
     }
+    await loader.disposeAsync()
 
     expect(r).toMatchSnapshot()
   })
@@ -99,6 +102,7 @@ describe('objectloader2', () => {
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
     }
+    await loader.disposeAsync()
 
     expect(obj).toBeDefined()
     expect(r).toMatchSnapshot()
@@ -129,16 +133,14 @@ describe('objectloader2', () => {
     const loader = new ObjectLoader2({
       rootId: root.baseId,
       downloader: new MemoryDownloader(rootId, records),
-      database: new IndexedDatabase({
-        indexedDB: new IDBFactory(),
-        keyRange: IDBKeyRange
-      })
+      database: new MemoryDatabase({ items: records })
     })
     const r = []
     const obj = loader.getObject({ id: child1.baseId })
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
     }
+    await loader.disposeAsync()
 
     expect(obj).toBeDefined()
     expect(r).toMatchSnapshot()
@@ -172,6 +174,7 @@ describe('objectloader2', () => {
       })
     })
     const x = await loader.getRootObject()
+    await loader.disposeAsync()
     expect(x).toMatchSnapshot()
   })
 
@@ -224,6 +227,7 @@ describe('objectloader2', () => {
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
     }
+    await loader.disposeAsync()
     expect(r).toMatchSnapshot()
   })
 })

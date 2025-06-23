@@ -8,20 +8,26 @@ export enum FileUploadConvertedStatus {
   Error = 3
 }
 
-export function importFile(
+export type ImportFile = (
   params: {
     file: File
     projectId: string
     apiOrigin: string
     authToken: string
-    modelName?: string
-    modelDescription?: string
+    modelName: string
+    modelId: string
   },
   callbacks?: Partial<{
     onProgress: (percentage: number) => void
   }>
-) {
-  const { file, projectId, modelName, apiOrigin, authToken, modelDescription } = params
+) => Promise<BlobPostResultItem>
+
+/**
+ * Old upload mechanism that streams uploads through the server
+ * @deprecated Use useFileImportApi() instead
+ */
+export const importFileLegacy: ImportFile = (params, callbacks) => {
+  const { file, projectId, modelName, apiOrigin, authToken } = params
   const { onProgress } = callbacks || {}
 
   let resolveWithResponse: (res: BlobPostResultItem) => void
@@ -41,9 +47,6 @@ export function importFile(
     `/api/file/autodetect/${projectId}/${finalModelName}`,
     apiOrigin
   )
-  if (modelDescription?.length) {
-    endpointUrl.searchParams.append('description', modelDescription.trim())
-  }
 
   const request = new XMLHttpRequest()
   request.open('POST', endpointUrl.toString())

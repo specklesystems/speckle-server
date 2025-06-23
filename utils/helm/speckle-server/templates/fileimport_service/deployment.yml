@@ -40,11 +40,17 @@ spec:
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          httpGet:
+            path: /healthz
+            port: 9080
+          {{- else }}
           exec:
             command:
               - /usr/bin/node
               - -e
               - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
+          {{- end }}
 
         resources:
           {{- with .Values.fileimport_service.requests }}
@@ -89,8 +95,10 @@ spec:
           - name: REDIS_URL
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName .Values.redis.fileimportServiceConnectionString.secretName }}
-                key: {{ default "fileimport_service_redis_url" .Values.redis.fileimportServiceConnectionString.secretKey }}
+                name: {{ default .Values.secretName .Values.redis.fileImportService.ifc.connectionString.secretName }}
+                key: {{ default "fileimport_service_ifc_redis_url" .Values.redis.fileImportService.ifc.connectionString.secretKey }}
+          - name: QUEUE_NAME
+            value: {{ .Values.redis.fileImportService.ifc.queueName | quote }}
           {{- else }}
           # Dummy value for backwards compatibility
           - name: REDIS_URL

@@ -15,6 +15,7 @@ export class RenderTree {
   public convertTime = 0
   public getNodeTime = 0
   public otherTime = 0
+  private count = 0
 
   public get id(): string {
     return this.root.model.id
@@ -31,11 +32,11 @@ export class RenderTree {
 
   public buildRenderTree(
     geometryConverter: GeometryConverter,
-    callback?: () => void
+    countCallback?: (count: number) => void
   ): Promise<boolean> {
     const p = this.tree.walkAsync((node: TreeNode): boolean => {
       let start = performance.now()
-      const rendeNode = this.buildRenderNode(node, geometryConverter, callback)
+      const rendeNode = this.buildRenderNode(node, geometryConverter, countCallback)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       this.buildNodeTime += performance.now() - start
       start = performance.now()
@@ -75,12 +76,12 @@ export class RenderTree {
   private buildRenderNode(
     node: TreeNode,
     geometryConverter: GeometryConverter,
-    callback?: () => void
+    countCallback?: (count: number) => void
   ): NodeRenderData | null {
     let ret: NodeRenderData | null = null
     let start = performance.now()
     const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
-    if (callback) callback()
+    countCallback?.(this.count++)
     this.convertTime += performance.now() - start
     if (geometryData) {
       start = performance.now()
@@ -171,6 +172,10 @@ export class RenderTree {
 
   public getInstances() {
     return this.tree.getInstances(this.root.model.subtreeId)
+  }
+
+  public getDuplicates() {
+    return this.tree.getDuplicates(this.root.model.subtreeId)
   }
 
   public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {

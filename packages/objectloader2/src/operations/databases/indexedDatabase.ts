@@ -83,7 +83,7 @@ export default class IndexedDatabase implements Database {
     this.#cacheDB = await this.#openDatabase()
   }
 
-  async cacheSaveBatch(params: { batch: Item[] }): Promise<void> {
+  async saveBatch(params: { batch: Item[] }): Promise<void> {
     await this.#setupCacheDb()
     const { batch } = params
     //const x = this.#count

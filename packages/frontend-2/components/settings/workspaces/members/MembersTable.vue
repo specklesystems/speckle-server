@@ -21,9 +21,7 @@
       class="mt-6 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
-        ...(canReadMemberEmail
-          ? [{ id: 'email', header: 'Email', classes: 'col-span-4' }]
-          : []),
+        { id: 'email', header: 'Email', classes: 'col-span-4' },
         { id: 'seat', header: 'Seat', classes: 'col-span-2' },
         { id: 'joined', header: 'Joined', classes: 'col-span-2' },
         {
@@ -33,7 +31,7 @@
         }
       ]"
       :items="members"
-      :loading="loading"
+      :loading="isVeryFirstLoading"
       :empty-message="
         search.length || seatTypeFilter || roleFilter
           ? 'No results'
@@ -80,7 +78,9 @@
       </template>
       <template #email="{ item }">
         <div class="flex">
-          <span class="text-foreground-2 truncate">{{ item.email }}</span>
+          <span class="text-foreground-2 truncate">
+            {{ item.email }}
+          </span>
         </div>
       </template>
       <template #seat="{ item }">
@@ -156,26 +156,29 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
+const defaultRoles = shallowRef([Roles.Workspace.Admin, Roles.Workspace.Member])
+
 const {
   identifier,
   onInfiniteLoad,
-  query: { result: membersResult, loading }
+  query: { result: membersResult },
+  isVeryFirstLoading
 } = usePaginatedQuery({
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
-    query: search.value?.length ? search.value : null,
     limit: 10,
     slug: props.workspaceSlug,
     filter: {
       search: search.value,
-      roles: roleFilter.value
-        ? [roleFilter.value]
-        : [Roles.Workspace.Admin, Roles.Workspace.Member],
+      roles: roleFilter.value ? [roleFilter.value] : defaultRoles.value,
       seatType: seatTypeFilter.value
     },
     cursor: null as Nullable<string>
   })),
-  resolveKey: (vars) => [vars.query || ''],
+  resolveKey: (vars) => ({
+    slug: vars.slug,
+    filter: vars.filter
+  }),
   resolveCurrentResult: (res) => res?.workspaceBySlug.team,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
@@ -185,8 +188,5 @@ const {
 })
 
 const workspace = computed(() => result.value?.workspaceBySlug)
-const canReadMemberEmail = computed(
-  () => workspace.value?.permissions.canReadMemberEmail.authorized
-)
 const members = computed(() => membersResult.value?.workspaceBySlug.team.items)
 </script>
