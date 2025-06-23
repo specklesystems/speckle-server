@@ -63,6 +63,8 @@ export const getBillingRouter = (): Router => {
     if ('id' in event.data.object)
       logger = logger.child(stripeEventId(event.data.object.id))
 
+    console.log(`💶 Stripe webhook event received ${event.type}`)
+
     switch (event.type) {
       case 'checkout.session.async_payment_failed':
         // if payment fails, we delete the failed session
@@ -203,7 +205,7 @@ export const getBillingRouter = (): Router => {
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
               upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
               emitEvent: getEventBus().emit
-            })({ subscriptionData: parseSubscriptionData(event.data.object) }),
+            })({ subscriptionData: parseSubscriptionData(event.data.object), logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
@@ -226,7 +228,7 @@ export const getBillingRouter = (): Router => {
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
               upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
               emitEvent: getEventBus().emit
-            })({ subscriptionData }),
+            })({ subscriptionData, logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',

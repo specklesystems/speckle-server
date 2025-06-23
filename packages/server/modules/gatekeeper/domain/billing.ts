@@ -108,9 +108,19 @@ export type WorkspaceSubscription = {
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
   currency: Currency
-  updateIntent?: { userId: string; target: SubscriptionData }
+  updateIntent: SubscriptionUpdateIntent | {}
   subscriptionData: SubscriptionData
 }
+
+export type SubscriptionUpdateIntent = {
+  userId: string
+  products: SubscriptionIntentProduct[]
+  planName: PaidWorkspacePlans
+} & Pick<
+  WorkspaceSubscription,
+  'currentBillingCycleEnd' | 'currency' | 'billingInterval' | 'updatedAt'
+>
+
 const subscriptionProduct = z.object({
   productId: z.string(),
   subscriptionItemId: z.string(),
@@ -119,6 +129,13 @@ const subscriptionProduct = z.object({
 })
 
 export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
+
+type SubscriptionIntentProduct = Pick<
+  SubscriptionProduct,
+  'productId' | 'priceId' | 'quantity'
+> & {
+  subscriptionItemId: undefined
+}
 
 export const SubscriptionData = z.object({
   subscriptionId: z.string().min(1),

@@ -27,6 +27,7 @@ import { cloneDeep } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
+import { Logger } from '@/observability/logging'
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -42,7 +43,13 @@ export const handleSubscriptionUpdateFactory =
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
     emitEvent: EventBusEmit
   }) =>
-  async ({ subscriptionData }: { subscriptionData: SubscriptionData }) => {
+  async ({
+    subscriptionData,
+    logger
+  }: {
+    subscriptionData: SubscriptionData
+    logger: Logger
+  }) => {
     // we're only handling marking the sub scheduled for cancelation right now
     const subscription = await getWorkspaceSubscriptionBySubscriptionId({
       subscriptionId: subscriptionData.subscriptionId
@@ -79,53 +86,110 @@ export const handleSubscriptionUpdateFactory =
       status = 'canceled'
     }
 
-    if (status) {
-      switch (workspacePlan.name) {
-        case WorkspacePlans.Team:
-        case WorkspacePlans.TeamUnlimited:
-        case WorkspacePlans.Pro:
-        case WorkspacePlans.ProUnlimited:
-          break
-        case WorkspacePlans.Unlimited:
-        case WorkspacePlans.Academia:
-        case WorkspacePlans.ProUnlimitedInvoiced:
-        case WorkspacePlans.TeamUnlimitedInvoiced:
-        case WorkspacePlans.Free:
-        case WorkspacePlans.Enterprise:
-          throw new WorkspacePlanMismatchError()
-        default:
-          throwUncoveredError(workspacePlan)
-      }
+    if (!status) {
+      logger.info({ workspaceId: subscription.workspaceId }, 'Nothing to update')
+      return
+    }
 
-      const newWorkspacePlan = { ...workspacePlan, status }
-      await upsertPaidWorkspacePlan({
-        workspacePlan: newWorkspacePlan
-      })
-      // if there is a status in the sub, we recognize, we need to update our state
-      await upsertWorkspaceSubscription({
-        workspaceSubscription: {
-          ...subscription,
-          updateIntent: {},
-          updatedAt: new Date(),
-          subscriptionData
-        }
-      })
+    switch (workspacePlan.name) {
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
+        break
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Enterprise:
+        throw new WorkspacePlanMismatchError()
+      default:
+        throwUncoveredError(workspacePlan)
+    }
 
-      await emitEvent({
-        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
-        payload: {
-          workspacePlan: newWorkspacePlan,
-          subscription: {
-            totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
+    // if there is an intent in the sub, we recognize it
+
+    const updateIntent = subscription.updateIntent
+    let planName = workspacePlan.name
+    let billingInterval = subscription.billingInterval
+    let currentBillingCycleEnd = subscription.currentBillingCycleEnd
+    let currency = subscription.currency
+    let updatedAt = new Date()
+    if ('products' in updateIntent) {
+      planName = updateIntent.planName
+      updatedAt = updateIntent.updatedAt
+      currency = updateIntent.currency
+      billingInterval = updateIntent.billingInterval
+      currentBillingCycleEnd = updateIntent.currentBillingCycleEnd
+
+      const updateIntentProductId = updateIntent.products[0].priceId
+      const targetProductId = subscriptionData.products[0].priceId
+      if (updateIntentProductId !== targetProductId) {
+        logger.error(
+          {
+            updateIntentProductId,
+            targetProductId,
+            workspaceId: subscription.workspaceId,
+            targetPlanName: planName,
+            planName: workspacePlan.name
           },
-          previousSubscription: {
-            totalEditorSeats: calculateSubscriptionSeats({
-              subscriptionData: subscription.subscriptionData
-            })
-          }
+          'Fatal: Stripe product ID mismatch with subscription update intent'
+        )
+      }
+    }
+
+    const newWorkspacePlan = {
+      ...workspacePlan,
+      status,
+      name: planName,
+      updatedAt
+    }
+
+    const newSubscription = {
+      ...subscription,
+      currency,
+      currentBillingCycleEnd,
+      billingInterval,
+      updateIntent: {},
+      updatedAt,
+      subscriptionData
+    }
+
+    await upsertPaidWorkspacePlan({
+      workspacePlan: newWorkspacePlan
+    })
+    await upsertWorkspaceSubscription({
+      workspaceSubscription: newSubscription
+    })
+
+    if (
+      workspacePlan.name !== newWorkspacePlan.name ||
+      workspacePlan.status !== newWorkspacePlan.status
+    ) {
+      await emitEvent({
+        eventName: GatekeeperEvents.WorkspacePlanUpdated,
+        payload: {
+          previousPlan: workspacePlan,
+          workspacePlan: newWorkspacePlan
         }
       })
     }
+
+    await emitEvent({
+      eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+      payload: {
+        workspacePlan: newWorkspacePlan,
+        subscription: {
+          totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
+        },
+        previousSubscription: {
+          totalEditorSeats: calculateSubscriptionSeats({
+            subscriptionData: subscription.subscriptionData
+          })
+        }
+      }
+    })
   }
 
 export const addWorkspaceSubscriptionSeatIfNeededFactory =

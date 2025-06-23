@@ -29,6 +29,7 @@ import { omit } from 'lodash'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
+import { testLogger } from '@/observability/logging'
 
 describe('subscriptions @gatekeeper', () => {
   describe('handleSubscriptionUpdateFactory creates a function, that', () => {
@@ -49,7 +50,7 @@ describe('subscriptions @gatekeeper', () => {
           emitEvent: async () => {
             expect.fail()
           }
-        })({ subscriptionData })
+        })({ subscriptionData, logger: testLogger })
       })
       expect(err.message).to.equal(new WorkspaceSubscriptionNotFoundError().message)
     })
@@ -70,7 +71,7 @@ describe('subscriptions @gatekeeper', () => {
         emitEvent: async () => {
           expect.fail()
         }
-      })({ subscriptionData })
+      })({ subscriptionData, logger: testLogger })
     })
     it('throws if workspacePlan is not found', async () => {
       const subscriptionData = createTestSubscriptionData()
@@ -88,7 +89,7 @@ describe('subscriptions @gatekeeper', () => {
           emitEvent: async () => {
             expect.fail()
           }
-        })({ subscriptionData })
+        })({ subscriptionData, logger: testLogger })
       })
       expect(err.message).to.equal(new WorkspacePlanNotFoundError().message)
     })
@@ -119,7 +120,7 @@ describe('subscriptions @gatekeeper', () => {
             emitEvent: async () => {
               expect.fail()
             }
-          })({ subscriptionData })
+          })({ subscriptionData, logger: testLogger })
         })
         expect(err.message).to.equal(new WorkspacePlanMismatchError().message)
       })
@@ -160,7 +161,7 @@ describe('subscriptions @gatekeeper', () => {
           updatedPlan = workspacePlan
         },
         emitEvent
-      })({ subscriptionData })
+      })({ subscriptionData, logger: testLogger })
       expect(updatedPlan!.status).to.be.equal('cancelationScheduled')
       expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
         workspaceSubscription.updatedAt
@@ -190,6 +191,7 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'monthly' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
+        updateIntent: {},
         currency: 'usd' as const,
         currentBillingCycleEnd: new Date(),
         workspaceId
@@ -220,7 +222,7 @@ describe('subscriptions @gatekeeper', () => {
           updatedPlan = workspacePlan
         },
         emitEvent
-      })({ subscriptionData })
+      })({ subscriptionData, logger: testLogger })
       expect(updatedPlan!.status).to.be.equal('valid')
       expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
         workspaceSubscription.updatedAt
@@ -275,7 +277,7 @@ describe('subscriptions @gatekeeper', () => {
           updatedPlan = workspacePlan
         },
         emitEvent
-      })({ subscriptionData })
+      })({ subscriptionData, logger: testLogger })
       expect(updatedPlan!.status).to.be.equal('paymentFailed')
       expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
         workspaceSubscription.updatedAt
@@ -304,6 +306,7 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'monthly' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
+        updateIntent: {},
         currency: 'usd' as const,
         currentBillingCycleEnd: new Date(),
         workspaceId
@@ -334,7 +337,7 @@ describe('subscriptions @gatekeeper', () => {
           updatedPlan = workspacePlan
         },
         emitEvent
-      })({ subscriptionData })
+      })({ subscriptionData, logger: testLogger })
       expect(updatedPlan!.status).to.be.equal('canceled')
       expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
         workspaceSubscription.updatedAt
@@ -385,7 +388,7 @@ describe('subscriptions @gatekeeper', () => {
           emitEvent: async () => {
             expect.fail()
           }
-        })({ subscriptionData })
+        })({ subscriptionData, logger: testLogger })
       })
     })
   })
@@ -1072,6 +1075,7 @@ describe('subscriptions @gatekeeper', () => {
   describe('upgradeWorkspaceSubscriptionFactory creates a function, that', () => {
     it('throws WorkspacePlanNotFound if no plan can be found', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => null,
         getWorkspacePlanProductId: () => {
@@ -1086,21 +1090,16 @@ describe('subscriptions @gatekeeper', () => {
         reconcileSubscriptionData: () => {
           expect.fail()
         },
-        upsertWorkspacePlan: () => {
-          expect.fail()
-        },
         updateWorkspaceSubscription: () => {
           expect.fail()
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
-        },
-        emitEvent: () => {
-          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
         await upgradeWorkspaceSubscription({
+          userId,
           workspaceId,
           targetPlan: 'team',
           billingInterval: 'monthly'
@@ -1112,6 +1111,7 @@ describe('subscriptions @gatekeeper', () => {
     ;(['unlimited', 'academia'] as const).forEach((plan) => {
       it(`throws WorkspaceNotPaidPlan for ${plan}`, async () => {
         const workspaceId = cryptoRandomString({ length: 10 })
+        const userId = cryptoRandomString({ length: 10 })
         const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
           getWorkspacePlan: async () => ({
             createdAt: new Date(),
@@ -1132,21 +1132,16 @@ describe('subscriptions @gatekeeper', () => {
           reconcileSubscriptionData: () => {
             expect.fail()
           },
-          upsertWorkspacePlan: () => {
-            expect.fail()
-          },
           updateWorkspaceSubscription: () => {
             expect.fail()
           },
           countSeatsByTypeInWorkspace: () => {
             expect.fail()
-          },
-          emitEvent: () => {
-            expect.fail()
           }
         })
         const err = await expectToThrow(async () => {
           await upgradeWorkspaceSubscription({
+            userId,
             workspaceId,
             targetPlan: 'team',
             billingInterval: 'monthly'
@@ -1161,6 +1156,7 @@ describe('subscriptions @gatekeeper', () => {
         (status) => {
           it(`throws WorkspaceNotPaidPlan for ${plan} on a non valid status: ${status}`, async () => {
             const workspaceId = cryptoRandomString({ length: 10 })
+            const userId = cryptoRandomString({ length: 10 })
             const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
               getWorkspacePlan: async () => ({
                 workspaceId,
@@ -1181,21 +1177,16 @@ describe('subscriptions @gatekeeper', () => {
               reconcileSubscriptionData: () => {
                 expect.fail()
               },
-              upsertWorkspacePlan: () => {
-                expect.fail()
-              },
               updateWorkspaceSubscription: () => {
                 expect.fail()
               },
               countSeatsByTypeInWorkspace: () => {
                 expect.fail()
-              },
-              emitEvent: () => {
-                expect.fail()
               }
             })
             const err = await expectToThrow(async () => {
               await upgradeWorkspaceSubscription({
+                userId,
                 workspaceId,
                 targetPlan: 'pro',
                 billingInterval: 'monthly'
@@ -1209,6 +1200,7 @@ describe('subscriptions @gatekeeper', () => {
     })
     it('throws WorkspaceSubscriptionNotFound', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => ({
           workspaceId,
@@ -1229,21 +1221,16 @@ describe('subscriptions @gatekeeper', () => {
         reconcileSubscriptionData: () => {
           expect.fail()
         },
-        upsertWorkspacePlan: () => {
-          expect.fail()
-        },
         updateWorkspaceSubscription: () => {
           expect.fail()
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
-        },
-        emitEvent: () => {
-          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
         await upgradeWorkspaceSubscription({
+          userId,
           workspaceId,
           targetPlan: 'team',
           billingInterval: 'monthly'
@@ -1255,6 +1242,7 @@ describe('subscriptions @gatekeeper', () => {
 
     it('throws WorkspacePlanUpgradeError for downgrading the plan', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const workspaceSubscription = createTestWorkspaceSubscription()
       const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => ({
@@ -1276,21 +1264,16 @@ describe('subscriptions @gatekeeper', () => {
         reconcileSubscriptionData: () => {
           expect.fail()
         },
-        upsertWorkspacePlan: () => {
-          expect.fail()
-        },
         updateWorkspaceSubscription: () => {
           expect.fail()
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
-        },
-        emitEvent: () => {
-          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
         await upgradeWorkspaceSubscription({
+          userId,
           workspaceId,
           targetPlan: 'team',
           billingInterval: 'yearly'
@@ -1302,6 +1285,7 @@ describe('subscriptions @gatekeeper', () => {
 
     it('throws WorkspacePlanUpgradeError for downgrading the billing interval', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const workspaceSubscription = createTestWorkspaceSubscription({
         billingInterval: 'yearly'
       })
@@ -1325,21 +1309,16 @@ describe('subscriptions @gatekeeper', () => {
         reconcileSubscriptionData: () => {
           expect.fail()
         },
-        upsertWorkspacePlan: () => {
-          expect.fail()
-        },
         updateWorkspaceSubscription: () => {
           expect.fail()
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
-        },
-        emitEvent: () => {
-          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
         await upgradeWorkspaceSubscription({
+          userId,
           workspaceId,
           targetPlan: 'team',
           billingInterval: 'monthly'
@@ -1350,6 +1329,7 @@ describe('subscriptions @gatekeeper', () => {
     })
     it('throws WorkspacePlanDowngradeError for noop requests', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const workspaceSubscription = createTestWorkspaceSubscription({
         billingInterval: 'monthly'
       })
@@ -1373,21 +1353,16 @@ describe('subscriptions @gatekeeper', () => {
         reconcileSubscriptionData: () => {
           expect.fail()
         },
-        upsertWorkspacePlan: () => {
-          expect.fail()
-        },
         updateWorkspaceSubscription: () => {
           expect.fail()
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
-        },
-        emitEvent: () => {
-          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
         await upgradeWorkspaceSubscription({
+          userId,
           workspaceId,
           targetPlan: 'team',
           billingInterval: 'monthly'
@@ -1398,6 +1373,7 @@ describe('subscriptions @gatekeeper', () => {
     })
     it('throws WorkspacePlanMismatchError if subscription has no seats for the current plan', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const subscriptionData: SubscriptionData = {
         cancelAt: null,
         customerId: cryptoRandomString({ length: 10 }),
@@ -1429,21 +1405,16 @@ describe('subscriptions @gatekeeper', () => {
         reconcileSubscriptionData: () => {
           expect.fail()
         },
-        upsertWorkspacePlan: () => {
-          expect.fail()
-        },
         updateWorkspaceSubscription: () => {
           expect.fail()
         },
         countSeatsByTypeInWorkspace: () => {
           expect.fail()
-        },
-        emitEvent: () => {
-          expect.fail()
         }
       })
       const err = await expectToThrow(async () => {
         await upgradeWorkspaceSubscription({
+          userId,
           workspaceId,
           targetPlan: 'pro',
           billingInterval: 'monthly'
@@ -1454,6 +1425,7 @@ describe('subscriptions @gatekeeper', () => {
     })
     it('replaces current products with new product', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const subscriptionData: SubscriptionData = {
         cancelAt: null,
         customerId: cryptoRandomString({ length: 10 }),
@@ -1475,10 +1447,8 @@ describe('subscriptions @gatekeeper', () => {
       })
 
       let reconciledSubscriptionData: SubscriptionDataInput | undefined = undefined
-      let updatedWorkspacePlan: WorkspacePlan | undefined = undefined
+      const updatedWorkspacePlan: WorkspacePlan | undefined = undefined
       let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
-      let emitedEventName: string | undefined = undefined
-      let emitedEventPayload: unknown = undefined
       const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => ({
           workspaceId,
@@ -1508,21 +1478,15 @@ describe('subscriptions @gatekeeper', () => {
         reconcileSubscriptionData: async ({ subscriptionData }) => {
           reconciledSubscriptionData = subscriptionData
         },
-        upsertWorkspacePlan: async ({ workspacePlan }) => {
-          updatedWorkspacePlan = workspacePlan
-        },
         updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedWorkspaceSubscription = workspaceSubscription
         },
         countSeatsByTypeInWorkspace: async () => {
           return 4
-        },
-        emitEvent: async ({ eventName, payload }) => {
-          emitedEventName = eventName
-          emitedEventPayload = payload
         }
       })
       await upgradeWorkspaceSubscription({
+        userId,
         workspaceId,
         targetPlan: 'pro',
         billingInterval: 'yearly'
@@ -1540,17 +1504,6 @@ describe('subscriptions @gatekeeper', () => {
       )
       expect(newProduct!.quantity).to.equal(4)
       expect(newProduct!.priceId).to.equal('newPlanPrice')
-      expect(emitedEventName).to.eq('gatekeeper.workspace-plan-updated')
-      expect(emitedEventPayload).to.deep.eq({
-        workspacePlan: {
-          workspaceId,
-          status: 'valid',
-          name: 'pro'
-        },
-        previousPlan: {
-          name: 'team'
-        }
-      })
     })
   })
   describe('getTotalSeatsCountByPlanFactory returns a function that, ', () => {
