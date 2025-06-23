@@ -1,5 +1,6 @@
 import { Roles, TIME } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { db } from '@/db/knex'
 import {
   getBranchPendingVersionsFactory,
   getFileInfoFactory,
@@ -171,14 +172,12 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     const pushJobToFileImporter = pushJobToFileImporterFactory({
       getServerOrigin,
       createAppToken: createAppTokenFactory({
-        storeApiToken: storeApiTokenFactory({ db: projectDb }),
-        storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
+        storeApiToken: storeApiTokenFactory({ db }),
+        storeTokenScopes: storeTokenScopesFactory({ db }),
         storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory(
-          {
-            db: projectDb
-          }
+          { db }
         ),
-        storeUserServerAppToken: storeUserServerAppTokenFactory({ db: projectDb })
+        storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
       })
     })
 
