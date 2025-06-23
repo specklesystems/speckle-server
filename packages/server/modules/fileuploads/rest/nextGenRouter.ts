@@ -33,11 +33,13 @@ import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHe
 import { ModelNotFoundError } from '@/modules/core/errors/model'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
+import { Summary } from 'prom-client'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
 export const nextGenFileImporterRouterFactory = (params: {
   queues: FileImportQueue[]
+  metricsSummary: Summary<'status' | 'step'> | undefined
 }): Router => {
   const processNewFileStream = processNewFileStreamFactory()
   const app = Router()
@@ -180,7 +182,11 @@ export const nextGenFileImporterRouterFactory = (params: {
         publish
       })
 
-      await onFileImportResult({ jobId, jobResult })
+      await onFileImportResult({
+        jobId,
+        jobResult,
+        metricsSummary: params.metricsSummary
+      })
 
       res.status(200).send({
         message: 'Job result processed successfully'

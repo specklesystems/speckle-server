@@ -23,7 +23,12 @@ export const jobPayload = job.merge(
 export type JobPayload = z.infer<typeof jobPayload>
 
 const baseFileImportResult = z.object({
-  durationSeconds: z.number().describe('Duration to import the file, in seconds')
+  durationSeconds: z
+    .number()
+    .describe('Total duration to download & import the file, in seconds'),
+  downloadDurationSeconds: z
+    .number()
+    .describe('Duration to download the file, in seconds')
 })
 
 export type FileImportResult = z.infer<typeof baseFileImportResult>

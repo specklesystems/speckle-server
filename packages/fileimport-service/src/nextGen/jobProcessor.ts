@@ -10,6 +10,7 @@ import { runProcessWithTimeout } from '@/common/processHandling.js'
 import { DOTNET_BINARY_PATH, RHINO_IMPORTER_PATH } from './config.js'
 import { getIfcDllPath } from '@/controller/helpers/env.js'
 import { z } from 'zod'
+import { TIME_MS } from '@speckle/shared'
 
 const jobSuccess = z.object({
   success: z.literal(true),
@@ -44,12 +45,18 @@ export const jobProcessor = async ({
 
   const tmp = tmpdir()
   const jobDir = path.join(tmp, job.jobId)
+  let downloadDurationSeconds = 0
   fs.rmSync(jobDir, { force: true, recursive: true })
   fs.mkdirSync(jobDir)
   try {
     const fileType = job.fileType.toLowerCase()
     const sourceFilePath = path.join(jobDir, job.fileName)
     const resultsPath = path.join(jobDir, 'import_results.json')
+
+    const elapsedDownloadDuration = (() => {
+      const start = new Date().getTime()
+      return () => (new Date().getTime() - start) / TIME_MS.second
+    })()
 
     await downloadFile({
       speckleServerUrl: job.serverUrl,
@@ -59,6 +66,8 @@ export const jobProcessor = async ({
       destination: sourceFilePath,
       logger
     })
+
+    downloadDurationSeconds = elapsedDownloadDuration()
 
     switch (fileType) {
       case 'ifc':
@@ -118,7 +127,7 @@ export const jobProcessor = async ({
     const versionId = output.data.commitId
     return {
       status: 'success',
-      result: { versionId, durationSeconds: getElapsed() },
+      result: { versionId, durationSeconds: getElapsed(), downloadDurationSeconds },
       warnings: []
     }
   } catch (err) {
@@ -140,7 +149,8 @@ export const jobProcessor = async ({
     return {
       status: 'error',
       result: {
-        durationSeconds: getElapsed()
+        durationSeconds: getElapsed(),
+        downloadDurationSeconds
       },
       reason
     }

@@ -89,7 +89,8 @@ export const main = async () => {
               status: 'error',
               reason: err.message,
               result: {
-                durationSeconds: 0
+                durationSeconds: 0,
+                downloadDurationSeconds: 0
               }
             }
           })

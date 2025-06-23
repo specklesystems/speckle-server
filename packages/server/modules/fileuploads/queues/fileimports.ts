@@ -75,7 +75,7 @@ const initializeQueue = async (params: {
 
 export const initializeRhinoQueue = async () =>
   initializeQueue({
-    label: 'Rhino File Import Queue',
+    label: 'rhino',
     queueName: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME,
     redisUrl: getFileImportServiceRhinoParserRedisUrl() ?? getRedisUrl(),
     supportedFileTypes: ['obj']
@@ -83,7 +83,7 @@ export const initializeRhinoQueue = async () =>
 
 export const initializeIfcQueue = async () =>
   initializeQueue({
-    label: 'IFC File Import Queue',
+    label: 'ifc',
     queueName: FILEIMPORT_SERVICE_IFC_QUEUE_NAME,
     redisUrl: getFileImportServiceIFCParserRedisUrl() ?? getRedisUrl(),
     supportedFileTypes: ['ifc']
@@ -92,6 +92,6 @@ export const initializeIfcQueue = async () =>
 export const shutdownQueues = async (params: { logger: Logger }) => {
   for (const queue of fileImportQueues) {
     await queue.shutdown()
-    params.logger.info(`📄 FileUploads ${queue.label} shutdown`)
+    params.logger.info(`📄 FileUploads, shutdown queue for ${queue.label} parser`)
   }
 }

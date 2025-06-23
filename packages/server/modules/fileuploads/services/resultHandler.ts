@@ -1,4 +1,4 @@
-import { Logger } from '@/observability/logging'
+import type { Logger } from '@/observability/logging'
 import {
   ProcessFileImportResult,
   UpdateFileUpload
@@ -15,8 +15,9 @@ import {
   jobResultStatusToFileUploadStatus,
   jobResultToConvertedMessage
 } from '@/modules/fileuploads/helpers/convert'
-import { ensureError } from '@speckle/shared'
-import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import { ensureError, TIME } from '@speckle/shared'
+import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import { FileImportJobDurationStep } from '@/modules/fileuploads/observability/metrics'
 
 type OnFileImportResultDeps = {
   updateFileUpload: UpdateFileUpload
@@ -28,20 +29,51 @@ export const onFileImportResultFactory =
   (deps: OnFileImportResultDeps): ProcessFileImportResult =>
   async (params) => {
     const { logger } = deps
-    const { jobId, jobResult } = params
+    const { jobId, jobResult, metricsSummary } = params
 
-    logger.info('Processing result for file upload')
+    metricsSummary?.observe(
+      {
+        status: jobResult.status,
+        step: FileImportJobDurationStep.TOTAL
+      },
+      jobResult.result.durationSeconds * TIME.second
+    )
 
-    const status = jobResultStatusToFileUploadStatus(jobResult.status)
-    const convertedMessage = jobResultToConvertedMessage(jobResult)
+    if (jobResult.result.downloadDurationSeconds) {
+      metricsSummary?.observe(
+        {
+          status: jobResult.status,
+          step: FileImportJobDurationStep.DOWNLOAD
+        },
+        jobResult.result.downloadDurationSeconds * TIME.second
+      )
+    }
 
     let convertedCommitId = null
     switch (jobResult.status) {
       case 'error':
+        logger.warn(
+          {
+            duration: jobResult.result.durationSeconds,
+            err: { message: jobResult.reason }
+          },
+          'Processing error result for file upload'
+        )
         break
       case 'success':
         convertedCommitId = jobResult.result.versionId
+        logger.info(
+          {
+            duration: jobResult.result.durationSeconds,
+            versionId: jobResult.result.versionId
+          },
+          'Processing success result for file upload'
+        )
+        break
     }
+
+    const status = jobResultStatusToFileUploadStatus(jobResult.status)
+    const convertedMessage = jobResultToConvertedMessage(jobResult)
 
     let updatedFile: FileUploadRecord
     try {
