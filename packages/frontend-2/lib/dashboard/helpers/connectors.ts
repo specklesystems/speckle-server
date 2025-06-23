@@ -109,7 +109,7 @@ export const connectorItems: ConnectorItem[] = [
     categories: [ConnectorCategory.NextGen, ConnectorCategory.Structural]
   },
   {
-    title: 'Blender (beta)',
+    title: 'Blender',
     slug: 'blender',
     description: 'Load models into Blender to boost design coordination workflows.',
     images: ['/images/connectors/blender.png'],
