@@ -36,7 +36,7 @@ export async function downloadFile({
 
   boundLogger.info(
     { destinationFile: destination, downloadUrl: downloadUrl.toString() },
-    'Downloading file {fileId} (project: {streamId}) from ${downloadUrl} to {destinationFile}'
+    'Downloading file {fileId} (project: {streamId}) from {downloadUrl} to {destinationFile}'
   )
 
   let response
