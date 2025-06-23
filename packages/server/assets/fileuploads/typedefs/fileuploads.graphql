@@ -23,11 +23,33 @@ extend type Project {
   pendingImportedModels(limit: Int = 25): [FileUpload!]!
 }
 
+type FileUploadCollection {
+  totalCount: Int!
+  cursor: String
+  items: [FileUpload!]!
+}
+
+input GetModelUploadsInput {
+  """
+  The maximum number of uploads to return.
+  """
+  limit: Int = 25
+  """
+  The cursor for pagination.
+  """
+  cursor: String
+}
+
 extend type Model {
   """
   Returns a list of versions that are being created from a file import
   """
   pendingImportedVersions(limit: Int = 25): [FileUpload!]!
+
+  """
+  Get all file uploads ever done in this model
+  """
+  uploads(input: GetModelUploadsInput): FileUploadCollection!
 }
 
 type FileUpload {
@@ -73,6 +95,48 @@ type FileUpload {
   Model associated with the file upload, if it exists already
   """
   model: Model
+}
+
+input GenerateFileUploadUrlInput {
+  projectId: String!
+  fileName: String!
+}
+
+type GenerateFileUploadUrlOutput {
+  url: String!
+  fileId: String!
+}
+
+input StartFileImportInput {
+  projectId: String!
+  modelId: String!
+
+  fileId: String!
+  """
+  The etag is returned by the blob storage provider in the response body after a successful upload.
+  It is used to verify the integrity of the uploaded file.
+  """
+  etag: String!
+}
+
+type FileUploadMutations {
+  """
+  Generate a pre-signed url to which a file can be uploaded.
+  After uploading the file, call mutation startFileImport to register the completed upload.
+  """
+  generateUploadUrl(input: GenerateFileUploadUrlInput!): GenerateFileUploadUrlOutput!
+
+  """
+  Before calling this mutation, call generateUploadUrl to get the
+  pre-signed url and blobId. Then upload the file to that url.
+  Once the upload to the pre-signed url is completed, this mutation should be
+  called to register the completed upload and create the blob metadata.
+  """
+  startFileImport(input: StartFileImportInput!): FileUpload!
+}
+
+extend type Mutation {
+  fileUploadMutations: FileUploadMutations!
 }
 
 enum ProjectPendingModelsUpdatedMessageType {

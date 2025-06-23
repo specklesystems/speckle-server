@@ -41,12 +41,9 @@ import {
 import {
   getBranchByIdFactory,
   markCommitBranchUpdatedFactory,
-  getStreamBranchByNameFactory,
-  createBranchFactory
+  getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
-  getStreamFactory,
-  createStreamFactory,
   updateStreamFactory,
   grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory
@@ -56,26 +53,13 @@ import {
   storeSingleObjectIfNotFoundFactory,
   getStreamObjectsFactory
 } from '@/modules/core/repositories/objects'
+import { legacyUpdateStreamFactory } from '@/modules/core/services/streams/management'
 import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory,
-  legacyUpdateStreamFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory,
-  findInviteFactory,
-  deleteInvitesByTargetFactory
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
-  getUsersFactory,
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
@@ -92,30 +76,17 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import {
   getViewerResourcesFromLegacyIdentifiersFactory,
   getViewerResourcesForCommentsFactory
 } from '@/modules/core/services/commit/viewerResources'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
 import { SetNonNullable } from 'type-fest'
+import { createProject } from '@/test/projectHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
-const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -162,81 +133,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   createCommitByBranchId,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
-})
-
-const getStream = getStreamFactory({ db })
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
 })
 
 const updateStream = legacyUpdateStreamFactory({
@@ -1127,27 +1023,39 @@ describe('Graphql @comments', () => {
       )
     )
 
-    ownedStream.id = await createStream({ ...ownedStream, ownerId: myTestActor.id })
-    contributorStream.id = await createStream({
-      ...contributorStream,
-      ownerId: myTestActor.id
-    })
-    reviewerStream.id = await createStream({
-      ...reviewerStream,
-      ownerId: myTestActor.id
-    })
-    noAccessStream.id = await createStream({
-      ...noAccessStream,
-      ownerId: myTestActor.id
-    })
-    publicStream.id = await createStream({
-      ...publicStream,
-      ownerId: myTestActor.id
-    })
-    publicStreamWithPublicComments.id = await createStream({
-      ...publicStreamWithPublicComments,
-      ownerId: myTestActor.id
-    })
+    ownedStream.id = (
+      await createProject({ ...ownedStream, ownerId: myTestActor.id })
+    ).id
+    contributorStream.id = (
+      await createProject({
+        ...contributorStream,
+        ownerId: myTestActor.id
+      })
+    ).id
+    reviewerStream.id = (
+      await createProject({
+        ...reviewerStream,
+        ownerId: myTestActor.id
+      })
+    ).id
+    noAccessStream.id = (
+      await createProject({
+        ...noAccessStream,
+        ownerId: myTestActor.id
+      })
+    ).id
+    publicStream.id = (
+      await createProject({
+        ...publicStream,
+        ownerId: myTestActor.id
+      })
+    ).id
+    publicStreamWithPublicComments.id = (
+      await createProject({
+        ...publicStreamWithPublicComments,
+        ownerId: myTestActor.id
+      })
+    ).id
     await updateStream({
       ...publicStreamWithPublicComments,
       id: publicStreamWithPublicComments.id,

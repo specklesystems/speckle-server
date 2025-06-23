@@ -128,8 +128,26 @@ export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
   return getBooleanFromEnv('PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
 }
 
-export const getFileimportServiceRedisUrl = (): string | undefined => {
-  return process.env['FILEIMPORT_SERVICE_REDIS_URL']
+export const getFileImportServiceRhinoParserRedisUrl = (): string | undefined => {
+  return getStringFromEnv('FILEIMPORT_SERVICE_RHINO_REDIS_URL', { unsafe: true })
+}
+
+export const getFileImportServiceRhinoQueueName = (): string => {
+  return (
+    getStringFromEnv('FILEIMPORT_SERVICE_RHINO_QUEUE_NAME', { unsafe: true }) ||
+    'fileimport-service-jobs'
+  )
+}
+
+export const getFileImportServiceIFCParserRedisUrl = (): string | undefined => {
+  return getStringFromEnv('FILEIMPORT_SERVICE_IFC_REDIS_URL', { unsafe: true })
+}
+
+export const getFileImportServiceIFCQueueName = (): string => {
+  return (
+    getStringFromEnv('FILEIMPORT_SERVICE_IFC_QUEUE_NAME', { unsafe: true }) ||
+    'fileimport-service-jobs'
+  )
 }
 
 export const getPreviewServiceRedisUrl = (): string | undefined => {
@@ -477,4 +495,8 @@ export function disablePreviews() {
 
 export const isRateLimiterEnabled = (): boolean => {
   return getBooleanFromEnv('RATELIMITER_ENABLED', true)
+}
+
+export const getFileUploadUrlExpiryMinutes = (): number => {
+  return getIntFromEnv('FILE_UPLOAD_URL_EXPIRY_MINUTES', '10')
 }

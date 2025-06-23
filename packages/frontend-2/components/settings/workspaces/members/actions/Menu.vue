@@ -112,7 +112,7 @@ const showDialog = ref(false)
 const dialogType = ref<WorkspaceUserActionTypes>()
 
 const { isLastAdmin } = useWorkspaceLastAdminCheck({
-  workspaceSlug: props.workspace?.slug || ''
+  workspaceSlug: computed(() => props.workspace?.slug)
 })
 
 const computedKey = computed(() => `${props.targetUser.id}-${props.targetUser.role}`)
