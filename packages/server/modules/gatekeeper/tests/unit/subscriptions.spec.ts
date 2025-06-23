@@ -192,7 +192,7 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'monthly' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
-        updateIntent: {},
+        updateIntent: null,
         currency: 'usd' as const,
         currentBillingCycleEnd: new Date(),
         workspaceId
@@ -260,17 +260,16 @@ describe('subscriptions @gatekeeper', () => {
         updatedAt: oneMonthAgo,
         updateIntent: {
           userId,
-          planName: 'proUnlimited',
-          billingInterval: 'yearly',
+          planName: 'proUnlimited' as const,
+          billingInterval: 'yearly' as const,
           currentBillingCycleEnd: inOneYear,
           updatedAt: now,
-          currency: 'usd',
+          currency: 'usd' as const,
           products: [
             {
               priceId: subscriptionData.products[0].priceId,
               productId: subscriptionData.products[0].productId,
-              quantity: subscriptionData.products[0].quantity,
-              subscriptionItemId: undefined
+              quantity: subscriptionData.products[0].quantity
             }
           ]
         },
@@ -311,7 +310,7 @@ describe('subscriptions @gatekeeper', () => {
         workspaceId,
         billingInterval: 'yearly',
         currentBillingCycleEnd: inOneYear,
-        updateIntent: {},
+        updateIntent: null,
         currency: 'usd',
         updatedAt: now,
         createdAt: oneMonthAgo,
@@ -393,7 +392,7 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'monthly' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
-        updateIntent: {},
+        updateIntent: null,
         currency: 'usd' as const,
         currentBillingCycleEnd: new Date(),
         workspaceId
@@ -1587,8 +1586,7 @@ describe('subscriptions @gatekeeper', () => {
           {
             productId: 'proProduct',
             priceId: 'newPlanPrice',
-            quantity: 4,
-            subscriptionItemId: undefined
+            quantity: 4
           }
         ]
       })

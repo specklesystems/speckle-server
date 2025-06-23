@@ -137,7 +137,7 @@ describe('Workspaces Billing', () => {
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
               currency: 'usd',
               billingInterval: 'monthly',
-              updateIntent: {},
+              updateIntent: null,
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),
                 customerId: cryptoRandomString({ length: 10 }),
@@ -188,7 +188,7 @@ describe('Workspaces Billing', () => {
               updatedAt: new Date(),
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
               currency: 'usd',
-              updateIntent: {},
+              updateIntent: null,
               billingInterval: 'monthly',
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),

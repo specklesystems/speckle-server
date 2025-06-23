@@ -5,7 +5,6 @@ import {
   GetWorkspaceSubscription,
   ReconcileSubscriptionData,
   SubscriptionDataInput,
-  SubscriptionUpdateIntent,
   UpsertWorkspaceSubscription,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
@@ -60,8 +59,6 @@ export const upgradeWorkspaceSubscriptionFactory =
     targetPlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
   }) => {
-    console.log('Workspace subscription update is happening')
-
     const workspacePlan = await getWorkspacePlan({
       workspaceId
     })
@@ -173,20 +170,18 @@ export const upgradeWorkspaceSubscriptionFactory =
         workspacePlan: targetPlan,
         billingInterval,
         currency: workspaceSubscription.currency
-      }),
-      subscriptionItemId: undefined
+      })
     }
 
     workspaceSubscription.updateIntent = {
       userId,
       planName: targetPlan,
-      status: workspacePlan.status,
       billingInterval,
       currentBillingCycleEnd,
       currency: workspaceSubscription.currency,
       updatedAt: new Date(),
       products: [newProduct]
-    } as SubscriptionUpdateIntent
+    }
     await updateWorkspaceSubscription({ workspaceSubscription })
 
     subscriptionData.products.push(newProduct)

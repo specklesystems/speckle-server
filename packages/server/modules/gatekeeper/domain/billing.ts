@@ -108,7 +108,7 @@ export type WorkspaceSubscription = {
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
   currency: Currency
-  updateIntent: SubscriptionUpdateIntent | {}
+  updateIntent: SubscriptionUpdateIntent | null // todo.: as undefined
   subscriptionData: SubscriptionData
 }
 
@@ -118,12 +118,13 @@ export type SubscriptionUpdateIntent = {
   planName: PaidWorkspacePlans
 } & Pick<
   WorkspaceSubscription,
+  // status is not needed cause its always provided by stripe
   'currentBillingCycleEnd' | 'currency' | 'billingInterval' | 'updatedAt'
 >
 
 const subscriptionProduct = z.object({
   productId: z.string(),
-  subscriptionItemId: z.string(),
+  subscriptionItemId: z.string(), // does not exist until billing is called with success
   priceId: z.string(),
   quantity: z.number()
 })
@@ -133,9 +134,7 @@ export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
 type SubscriptionIntentProduct = Pick<
   SubscriptionProduct,
   'productId' | 'priceId' | 'quantity'
-> & {
-  subscriptionItemId: undefined
-}
+>
 
 export const SubscriptionData = z.object({
   subscriptionId: z.string().min(1),

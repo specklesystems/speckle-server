@@ -82,7 +82,7 @@ export const completeCheckoutSessionFactory =
       workspaceId: checkoutSession.workspaceId,
       billingInterval: checkoutSession.billingInterval,
       currency: checkoutSession.currency,
-      updateIntent: {},
+      updateIntent: null,
       subscriptionData
     }
 

@@ -37,7 +37,7 @@ export const createTestWorkspaceSubscription = (
     updatedAt: new Date(),
     currentBillingCycleEnd: new Date(),
     subscriptionData: createTestSubscriptionData(),
-    updateIntent: {},
+    updateIntent: null,
     currency: 'usd',
     workspaceId: cryptoRandomString({ length: 10 })
   }

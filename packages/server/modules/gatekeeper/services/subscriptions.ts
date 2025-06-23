@@ -50,7 +50,7 @@ export const handleSubscriptionUpdateFactory =
     subscriptionData: SubscriptionData
     logger: Logger
   }) => {
-    // we're only handling marking the sub scheduled for cancelation right now
+    // we're only handling marking the sub scheduled for cancellation right now
     const subscription = await getWorkspaceSubscriptionBySubscriptionId({
       subscriptionId: subscriptionData.subscriptionId
     })
@@ -108,28 +108,39 @@ export const handleSubscriptionUpdateFactory =
         throwUncoveredError(workspacePlan)
     }
 
-    // if there is an intent in the sub, we recognize it
-
     const updateIntent = subscription.updateIntent
-    let planName = workspacePlan.name
-    let billingInterval = subscription.billingInterval
-    let currentBillingCycleEnd = subscription.currentBillingCycleEnd
-    let currency = subscription.currency
-    let updatedAt = new Date()
-    if ('products' in updateIntent) {
+    let planName
+    let billingInterval
+    let currentBillingCycleEnd
+    let currency
+    let updatedAt
+
+    if (updateIntent) {
+      // this is the branch where a user intents to upgrade his subscription
+      // if stripe comes back with a status, and we have a update intent in the subscription
+      // we're assuming that the target that the user wants to upgrade was written in the update intent
+
       planName = updateIntent.planName
       updatedAt = updateIntent.updatedAt
       currency = updateIntent.currency
       billingInterval = updateIntent.billingInterval
       currentBillingCycleEnd = updateIntent.currentBillingCycleEnd
 
-      const updateIntentProductId = updateIntent.products[0].priceId
-      const targetProductId = subscriptionData.products[0].priceId
-      if (updateIntentProductId !== targetProductId) {
+      const productsAreEquivalent = (
+        a: Array<{ priceId: string; quantity: number }>,
+        b: Array<{ priceId: string; quantity: number }>
+      ) =>
+        a.every((item) => {
+          return !!b.find(
+            (bi) => bi.priceId === item.priceId && bi.quantity === item.quantity
+          )
+        })
+
+      if (!productsAreEquivalent(updateIntent.products, subscriptionData.products)) {
         logger.error(
           {
-            updateIntentProductId,
-            targetProductId,
+            event: subscriptionData.products,
+            target: updateIntent.products,
             workspaceId: subscription.workspaceId,
             targetPlanName: planName,
             planName: workspacePlan.name
@@ -137,6 +148,23 @@ export const handleSubscriptionUpdateFactory =
           'Fatal: Stripe product ID mismatch with subscription update intent'
         )
       }
+    } else {
+      planName = workspacePlan.name
+      billingInterval = subscription.billingInterval
+      currentBillingCycleEnd = subscription.currentBillingCycleEnd
+      currency = subscription.currency
+      updatedAt = new Date()
+      // Stripe can have many cases were we receive an event
+      // - subscription cancellation schedules
+      // - subscription cancellations
+      // - payment failures
+      // - duplicated events
+      // - manual changes in the dashboard
+      // - ...
+      // at the moment, we are assuming this new status and update the status as given by stripe
+      // take into account that manual subscription updates in stripe dashboard can lead into
+      // errors, as changing quantity in the products may work, but changing product ids wont update
+      // the workspace plan and will result in errors
     }
 
     const newWorkspacePlan = {
@@ -151,7 +179,7 @@ export const handleSubscriptionUpdateFactory =
       currency,
       currentBillingCycleEnd,
       billingInterval,
-      updateIntent: {},
+      updateIntent: null,
       updatedAt,
       subscriptionData
     }

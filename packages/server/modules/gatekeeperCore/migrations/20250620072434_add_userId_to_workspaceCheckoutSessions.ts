@@ -8,7 +8,7 @@ export async function up(knex: Knex): Promise<void> {
   })
 
   // only on migration we are assuming its a random workspace admin who created the session
-  // these are ongoing sessions, wont be recorded as actvity
+  // these are ongoing sessions, wont be recorded as activity
   const workspaceIds: { workspaceId: string }[] = await knex
     .select('workspaceId')
     .from(TABLE_NAME)
