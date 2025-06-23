@@ -3,6 +3,7 @@ import {
   SeatTypes,
   waitForever,
   type MaybeAsync,
+  type MaybeNullOrUndefined,
   type Optional,
   type WorkspaceSeatType
 } from '@speckle/shared'
@@ -485,6 +486,14 @@ export const useWorkspaceUpdateRole = () => {
             'seatType',
             () => SeatTypes.Editor
           )
+          if (input.role) {
+            modifyObjectField(
+              cache,
+              getCacheId('WorkspaceCollaborator', input.userId),
+              'role',
+              () => input.role!
+            )
+          }
         }
       }
     ).catch(convertThrowIntoFetchResult)
@@ -656,12 +665,20 @@ export const useOnWorkspaceUpdated = (params: {
   }
 }
 
-export const useWorkspaceLastAdminCheck = (params: { workspaceSlug: string }) => {
+export const useWorkspaceLastAdminCheck = (params: {
+  workspaceSlug: Ref<MaybeNullOrUndefined<string>>
+}) => {
   const { workspaceSlug } = params
 
-  const { result } = useQuery(workspaceLastAdminCheckQuery, {
-    slug: workspaceSlug
-  })
+  const { result } = useQuery(
+    workspaceLastAdminCheckQuery,
+    () => ({
+      slug: workspaceSlug.value || ''
+    }),
+    () => ({
+      enabled: !!workspaceSlug.value
+    })
+  )
 
   const isLastAdmin = computed(
     () => result.value?.workspaceBySlug?.teamByRole?.admins?.totalCount === 1

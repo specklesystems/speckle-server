@@ -84,6 +84,7 @@ export const jobProcessor = async ({
         break
       case 'stl':
       case 'obj':
+      case 'skp':
         await runProcessWithTimeout(
           taskLogger,
           RHINO_IMPORTER_PATH,
@@ -124,9 +125,15 @@ export const jobProcessor = async ({
   } catch (err) {
     if (getAppState() === AppState.SHUTTINGDOWN) {
       // likely that the job was cancelled due to the service shutting down
-      logger.warn({ err, elapsed: getElapsed(), status: 'error' }, jobMessage)
+      logger.warn(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
     } else {
-      logger.error({ err, elapsed: getElapsed(), status: 'error' }, jobMessage)
+      logger.error(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
     }
 
     const reason = err instanceof Error ? err.stack ?? err.toString() : 'unknown error'

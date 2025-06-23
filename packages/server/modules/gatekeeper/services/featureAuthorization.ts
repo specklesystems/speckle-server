@@ -3,7 +3,7 @@ import {
   CanWorkspaceAccessFeature,
   WorkspaceFeatureAccessFunction
 } from '@/modules/gatekeeper/domain/operations'
-import { throwUncoveredError, WorkspacePlanConfigs } from '@speckle/shared'
+import { throwUncoveredError, workspacePlanHasAccessToFeature } from '@speckle/shared'
 
 export const canWorkspaceAccessFeatureFactory =
   ({
@@ -25,7 +25,10 @@ export const canWorkspaceAccessFeatureFactory =
         throwUncoveredError(workspacePlan)
     }
 
-    return WorkspacePlanConfigs[workspacePlan.name].features.includes(workspaceFeature)
+    return workspacePlanHasAccessToFeature({
+      plan: workspacePlan.name,
+      feature: workspaceFeature
+    })
   }
 
 export const canWorkspaceUseOidcSsoFactory =
