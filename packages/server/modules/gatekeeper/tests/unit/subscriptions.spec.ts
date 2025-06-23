@@ -1,6 +1,7 @@
 import {
   SubscriptionData,
   SubscriptionDataInput,
+  SubscriptionUpdateIntent,
   WorkspaceSeatType,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
@@ -230,6 +231,92 @@ describe('subscriptions @gatekeeper', () => {
       expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
         omit(workspaceSubscription, 'updatedAt')
       )
+      expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
+      expect(emittedEventPayload).to.have.nested.include({
+        'workspacePlan.status': 'valid'
+      })
+      expect(emittedEventPayload).to.have.nested.include({
+        'subscription.totalEditorSeats': 3
+      })
+      expect(emittedEventPayload).to.have.nested.include({
+        'previousSubscription.totalEditorSeats': 3
+      })
+    })
+    it('updates the plan with the subscription update intent', async () => {
+      const subscriptionData = createTestSubscriptionData({
+        status: 'active',
+        cancelAt: null
+      })
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
+      const now = new Date()
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      const inOneYear = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000)
+
+      const workspaceSubscription = {
+        subscriptionData,
+        billingInterval: 'monthly' as const,
+        createdAt: oneMonthAgo,
+        updatedAt: oneMonthAgo,
+        updateIntent: {
+          userId,
+          planName: 'proUnlimited',
+          billingInterval: 'yearly',
+          currentBillingCycleEnd: inOneYear,
+          updatedAt: now,
+          currency: 'usd',
+          products: [
+            {
+              priceId: subscriptionData.products[0].priceId,
+              productId: subscriptionData.products[0].productId,
+              quantity: subscriptionData.products[0].quantity,
+              subscriptionItemId: undefined
+            }
+          ]
+        },
+        currency: 'usd' as const,
+        currentBillingCycleEnd: new Date(),
+        workspaceId
+      }
+
+      let updatedSubscription: WorkspaceSubscription | undefined = undefined
+      let updatedPlan: WorkspacePlan | undefined = undefined
+      let emittedEventName: string | undefined = undefined
+      let emittedEventPayload: unknown = undefined
+      const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        emittedEventPayload = payload
+      }
+
+      await handleSubscriptionUpdateFactory({
+        getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
+        getWorkspacePlan: async () => ({
+          name: PaidWorkspacePlans.Team,
+          workspaceId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: 'paymentFailed'
+        }),
+        upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
+          updatedSubscription = workspaceSubscription
+        },
+        upsertPaidWorkspacePlan: async ({ workspacePlan }) => {
+          updatedPlan = workspacePlan
+        },
+        emitEvent
+      })({ subscriptionData, logger: testLogger })
+      expect(updatedPlan!.name).to.be.equal('proUnlimited')
+      expect(updatedPlan!.status).to.be.equal('valid')
+      expect(updatedSubscription).to.be.deep.equal({
+        workspaceId,
+        billingInterval: 'yearly',
+        currentBillingCycleEnd: inOneYear,
+        updateIntent: {},
+        currency: 'usd',
+        updatedAt: now,
+        createdAt: oneMonthAgo,
+        subscriptionData
+      })
       expect(emittedEventName).to.eq('gatekeeper.workspace-subscription-updated')
       expect(emittedEventPayload).to.have.nested.include({
         'workspacePlan.status': 'valid'
@@ -1447,7 +1534,6 @@ describe('subscriptions @gatekeeper', () => {
       })
 
       let reconciledSubscriptionData: SubscriptionDataInput | undefined = undefined
-      const updatedWorkspacePlan: WorkspacePlan | undefined = undefined
       let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
       const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => ({
@@ -1492,18 +1578,25 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'yearly'
       })
 
-      expect(updatedWorkspacePlan!.name).to.equal('pro')
+      const updateIntent = updatedWorkspaceSubscription!
+        .updateIntent as SubscriptionUpdateIntent
+      expect(updateIntent).to.deep.contain({
+        billingInterval: 'yearly',
+        planName: 'pro',
+        products: [
+          {
+            productId: 'proProduct',
+            priceId: 'newPlanPrice',
+            quantity: 4,
+            subscriptionItemId: undefined
+          }
+        ]
+      })
       expect(reconciledSubscriptionData!.products.length).to.equal(1)
-      expect(updatedWorkspaceSubscription!.billingInterval === 'yearly')
       expect(
         reconciledSubscriptionData!.products.find((p) => p.productId === 'proProduct')!
           .quantity
       ).to.equal(4)
-      const newProduct = reconciledSubscriptionData!.products.find(
-        (p) => p.productId === 'proProduct'
-      )
-      expect(newProduct!.quantity).to.equal(4)
-      expect(newProduct!.priceId).to.equal('newPlanPrice')
     })
   })
   describe('getTotalSeatsCountByPlanFactory returns a function that, ', () => {
