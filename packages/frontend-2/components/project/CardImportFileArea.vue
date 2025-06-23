@@ -51,7 +51,7 @@
             </NuxtLink>
             to publish a {{ modelName ? '' : 'new model' }} version to
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-            IFC/OBJ/STL file here.
+            IFC/OBJ/STL/SKP file here.
           </p>
           <div v-if="showEmptyState && !isDisabled" :class="buttonsClasses">
             <FormButton :to="connectorsRoute" size="sm" color="outline">

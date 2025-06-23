@@ -191,7 +191,7 @@ export function useFileImport(params: {
   const authToken = useAuthCookie()
   const apiOrigin = useApiOrigin()
 
-  const accept = ref('.ifc,.stl,.obj')
+  const accept = ref('.ifc,.stl,.obj,.skp')
   const upload = ref(null as Nullable<UploadFileItem>)
   const isUploading = ref(false)
 
