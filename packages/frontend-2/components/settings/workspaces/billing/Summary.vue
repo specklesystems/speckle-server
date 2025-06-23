@@ -1,4 +1,3 @@
-<!-- TODO: Some content still missing, needs to be updated as functionality is added -->
 <template>
   <div class="border border-outline-3 rounded-lg">
     <div
