@@ -51,6 +51,17 @@ export const onFileImportResultFactory =
       )
     }
 
+    if (jobResult.result.parseDurationSeconds) {
+      metricsSummary?.observe(
+        {
+          parser: jobResult.result.parser,
+          status: jobResult.status,
+          step: FileImportJobDurationStep.PARSE
+        },
+        jobResult.result.parseDurationSeconds * TIME.second
+      )
+    }
+
     let convertedCommitId = null
     switch (jobResult.status) {
       case 'error':
