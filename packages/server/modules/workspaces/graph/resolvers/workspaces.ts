@@ -139,7 +139,7 @@ import {
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { isWorkspaceRole } from '@/modules/workspaces/domain/logic'
+import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -1857,17 +1857,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       PendingWorkspaceCollaborator: {
-        workspaceName: async (parent, _args, ctx) => {
+        workspace: async (parent, _args, ctx) => {
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
             parent.workspaceId
           )
-          return workspace!.name
-        },
-        workspaceSlug: async (parent, _args, ctx) => {
-          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
-            parent.workspaceId
-          )
-          return workspace!.slug
+          return toLimitedWorkspace(workspace!)
         },
         invitedBy: async (parent, _args, ctx) => {
           const { invitedById } = parent
