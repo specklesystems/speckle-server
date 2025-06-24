@@ -9,7 +9,6 @@ import type {
   FileImportResultPayload,
   JobPayload
 } from '@speckle/shared/workers/fileimport'
-import { Summary } from 'prom-client'
 
 export type GetFileInfo = (args: {
   fileId: string
@@ -66,7 +65,6 @@ export type NotifyChangeInFileStatus = (params: {
 export type ProcessFileImportResult = (params: {
   jobId: string
   jobResult: FileImportResultPayload
-  metricsSummary: Summary<'status' | 'step' | 'parser'> | undefined
 }) => Promise<void>
 
 export type UpdateFileStatus = (params: {

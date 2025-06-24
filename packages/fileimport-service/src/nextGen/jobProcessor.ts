@@ -100,9 +100,6 @@ export const jobProcessor = async ({
       // return the error result whether or not the cleanup succeeded
       return {
         status: 'error',
-        metadata: {
-          fileType: job.fileType
-        },
         result: {
           parser: parserUsed,
           durationSeconds: getElapsed(),
@@ -191,9 +188,6 @@ export const jobProcessor = async ({
         parseDurationSeconds,
         parser: parserUsed
       },
-      metadata: {
-        fileType: job.fileType
-      },
       warnings: []
     }
   } catch (err) {
@@ -219,9 +213,6 @@ export const jobProcessor = async ({
 
     return {
       status: 'error',
-      metadata: {
-        fileType: job.fileType
-      },
       result: {
         parser: parserUsed,
         durationSeconds: getElapsed(),

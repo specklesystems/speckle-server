@@ -93,9 +93,6 @@ export const main = async () => {
                 downloadDurationSeconds: 0,
                 parseDurationSeconds: 0,
                 parser: 'none'
-              },
-              metadata: {
-                fileType: job.fileType
               }
             }
           })

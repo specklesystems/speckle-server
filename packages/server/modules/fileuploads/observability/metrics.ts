@@ -2,12 +2,15 @@ import { TIME } from '@speckle/shared'
 import Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
+import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 
 export const FileImportJobDurationStep = {
   TOTAL: 'total',
   DOWNLOAD: 'download', // time take to download the file from the blob storage
   PARSE: 'parse' // time taken by the parser to process the file, including sending the objects
 } as const
+
+export type ObserveResult = (params: { jobResult: FileImportResultPayload }) => void
 
 export const initializeMetrics = (params: {
   registers: Registry[]
@@ -117,5 +120,35 @@ export const initializeMetrics = (params: {
     ageBuckets: 5
   })
 
-  return { fileImportJobsProcessedSummary }
+  const observeResult: ObserveResult = (params) => {
+    const { jobResult } = params
+    fileImportJobsProcessedSummary.observe(
+      {
+        parser: jobResult.result.parser,
+        status: jobResult.status,
+        step: FileImportJobDurationStep.TOTAL
+      },
+      jobResult.result.durationSeconds * TIME.second
+    )
+
+    fileImportJobsProcessedSummary.observe(
+      {
+        parser: jobResult.result.parser,
+        status: jobResult.status,
+        step: FileImportJobDurationStep.DOWNLOAD
+      },
+      jobResult.result.downloadDurationSeconds * TIME.second
+    )
+
+    fileImportJobsProcessedSummary.observe(
+      {
+        parser: jobResult.result.parser,
+        status: jobResult.status,
+        step: FileImportJobDurationStep.PARSE
+      },
+      jobResult.result.parseDurationSeconds * TIME.second
+    )
+  }
+
+  return { observeResult }
 }

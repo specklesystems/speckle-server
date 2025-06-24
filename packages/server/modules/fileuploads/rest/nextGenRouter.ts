@@ -8,6 +8,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { fileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
 import {
+  getFileInfoFactoryV2,
   saveUploadFileFactoryV2,
   updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
@@ -33,13 +34,13 @@ import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHe
 import { ModelNotFoundError } from '@/modules/core/errors/model'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
-import { Summary } from 'prom-client'
+import type { ObserveResult } from '@/modules/fileuploads/observability/metrics'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
 export const nextGenFileImporterRouterFactory = (params: {
   queues: FileImportQueue[]
-  metricsSummary: Summary<'status' | 'step'> | undefined
+  observeResult: ObserveResult | undefined
 }): Router => {
   const processNewFileStream = processNewFileStreamFactory()
   const app = Router()
@@ -179,13 +180,14 @@ export const nextGenFileImporterRouterFactory = (params: {
       const onFileImportResult = onFileImportResultFactory({
         logger: logger.child({ fileUploadStatus: jobResult.status }),
         updateFileUpload: updateFileUploadFactory({ db: projectDb }),
+        getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+        observeResult: params.observeResult,
         publish
       })
 
       await onFileImportResult({
         jobId,
-        jobResult,
-        metricsSummary: params.metricsSummary
+        jobResult
       })
 
       res.status(200).send({
