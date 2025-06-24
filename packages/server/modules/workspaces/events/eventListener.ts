@@ -107,6 +107,7 @@ import {
   upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
+  assignWorkspaceSeatFactory,
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
@@ -181,7 +182,8 @@ export const onInviteFinalizedFactory =
       userId: targetUserId,
       workspaceId: project.workspaceId,
       preventRoleDowngrade: true,
-      updatedByUserId: invite.inviterId
+      updatedByUserId: invite.inviterId,
+      seatType: invite.resource.workspaceSeatType
     })
 
     // Automatically promote user to project owner if workspace admin
@@ -248,7 +250,9 @@ export const onWorkspaceRoleDeletedFactory =
     updatedByUserId: string
   }) => {
     // Resolve a fallback admin
-    const [admin] = await deps.getWorkspaceCollaborators({
+    const {
+      items: [admin]
+    } = await deps.getWorkspaceCollaborators({
       workspaceId,
       limit: 1,
       filter: {
@@ -328,7 +332,9 @@ export const onWorkspaceSeatUpdatedFactory =
       })
 
     // Resolve a fallback admin
-    const [admin] = await deps.getWorkspaceCollaborators({
+    const {
+      items: [admin]
+    } = await deps.getWorkspaceCollaborators({
       workspaceId,
       limit: 1,
       filter: {
@@ -413,7 +419,9 @@ export const onWorkspaceRoleUpdatedFactory =
     if (!seatType) return
 
     // Resolve a fallback admin
-    const [admin] = await deps.getWorkspaceCollaborators({
+    const {
+      items: [admin]
+    } = await deps.getWorkspaceCollaborators({
       workspaceId,
       limit: 1,
       filter: {
@@ -785,10 +793,20 @@ const blockInvalidWorkspaceProjectRoleUpdatesFactory =
     const project = await deps.getStream({ streamId: payload.projectId })
     if (!project?.workspaceId) return // No extra validation necessary
 
+    // Does this come from an invite that plans to increase seat?
+    const plannedSeatType = payload.fromInvite?.resource.workspaceSeatType
+
     await deps.validateWorkspaceMemberProjectRole({
       userId: payload.targetUserId,
       projectRole: payload.role,
-      workspaceId: project.workspaceId
+      workspaceId: project.workspaceId,
+      ...(plannedSeatType
+        ? {
+            workspaceAccess: {
+              seatType: plannedSeatType
+            }
+          }
+        : {})
     })
   }
 
@@ -840,7 +858,15 @@ export const initializeEventListenersFactory =
             getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-            ensureValidWorkspaceRoleSeat
+            ensureValidWorkspaceRoleSeat,
+            assignWorkspaceSeat: assignWorkspaceSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                db
+              }),
+              eventEmit: eventBus.emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+            })
           }),
           getWorkspaceRole: getWorkspaceRoleForUserFactory({ db }),
           upsertProjectRole: upsertProjectRoleFactory({ db })

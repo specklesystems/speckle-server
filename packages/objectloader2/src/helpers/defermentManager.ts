@@ -59,16 +59,21 @@ export class DefermentManager {
 
   undefer(item: Item): void {
     if (this.disposed) throw new Error('DefermentManager is disposed')
+    const base = item.base
+    if (!base) {
+      this.logger('undefer called with no base', item)
+      return
+    }
     const now = this.now()
     this.currentSize += item.size || 0
     //order matters here with found before undefer
     const deferredBase = this.deferments.get(item.baseId)
     if (deferredBase) {
-      deferredBase.found(item)
+      deferredBase.found(base)
       deferredBase.setAccess(now)
     } else {
       const existing = new DeferredBase(this.options.ttlms, item.baseId, now)
-      existing.found(item)
+      existing.found(base)
       this.deferments.set(item.baseId, existing)
     }
   }
@@ -95,7 +100,7 @@ export class DefermentManager {
     let waiting = 0
     for (const deferredBase of this.deferments.values()) {
       deferredBase.done(0)
-      if (deferredBase.getItem() === undefined) {
+      if (deferredBase.getBase() === undefined) {
         waiting++
       }
     }
@@ -119,7 +124,7 @@ export class DefermentManager {
     const start = performance.now()
     for (const deferredBase of Array.from(this.deferments.values())
       .filter((x) => x.isExpired(now))
-      .sort((a, b) => this.compareMaybeBasesBySize(a.getItem(), b.getItem()))) {
+      .sort((a, b) => this.compareMaybeBasesBySize(a.getSize(), b.getSize()))) {
       if (deferredBase.done(now)) {
         //if the deferment is done but has been requested multiple times,
         //we do not clean it up to allow the requests to resolve
@@ -127,7 +132,7 @@ export class DefermentManager {
         if (requestCount && requestCount > 1) {
           return
         }
-        this.currentSize -= deferredBase.getItem()?.size || 0
+        this.currentSize -= deferredBase.getSize() || 0
         this.deferments.delete(deferredBase.getId())
         cleaned++
         if (this.currentSize < maxSizeBytes) {
@@ -144,14 +149,7 @@ export class DefermentManager {
     return
   }
 
-  compareMaybeBasesBySize(a: Item | undefined, b: Item | undefined): number {
-    if (a === undefined && b === undefined) return 0
-    if (a === undefined) return -1
-    if (b === undefined) return 1
-    return this.compareMaybe(a.size, b.size)
-  }
-
-  compareMaybe(a: number | undefined, b: number | undefined): number {
+  compareMaybeBasesBySize(a: number | undefined, b: number | undefined): number {
     if (a === undefined && b === undefined) return 0
     if (a === undefined) return -1
     if (b === undefined) return 1

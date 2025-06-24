@@ -29,8 +29,8 @@
           <span>{{ errorMessage }}</span>
         </span>
         <div
-          v-if="fileUpload.progress > 0"
-          :class="[' w-full mt-2', progressBarClasses]"
+          v-else
+          :class="['w-full mt-2', progressBarClasses]"
           :style="progressBarStyle"
         />
       </div>
@@ -51,7 +51,7 @@
             </NuxtLink>
             to publish a {{ modelName ? '' : 'new model' }} version to
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-            IFC/OBJ/STL file here.
+            IFC/OBJ/STL{{ isNextGenFileImporterEnabled ? '/SKP' : '' }} file here.
           </p>
           <div v-if="showEmptyState && !isDisabled" :class="buttonsClasses">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
@@ -64,6 +64,12 @@
         </div>
       </div>
     </div>
+    <ProjectPageModelsNewDialog
+      v-model:open="showNewModelDialog"
+      :project-id="project.id"
+      :model-name="fileUpload?.file.name"
+      @submit="onModelCreate"
+    />
   </FormFileUploadZone>
 </template>
 <script setup lang="ts">
@@ -75,8 +81,11 @@ import type { Nullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   ProjectCardImportFileArea_ModelFragment,
-  ProjectCardImportFileArea_ProjectFragment
+  ProjectCardImportFileArea_ProjectFragment,
+  ProjectPageLatestItemsModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import { useIsNextGenFileImporterEnabled } from '~/composables/globals'
 
 type EmptyStateVariants = 'modelGrid' | 'modelList' | 'modelsSection'
 
@@ -105,6 +114,13 @@ graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  /**
+   * Emits when files start/finish uploading
+   */
+  uploading: [payload: FileAreaUploadingPayload]
+}>()
+
 const props = defineProps<{
   project: ProjectCardImportFileArea_ProjectFragment
   model?: ProjectCardImportFileArea_ModelFragment
@@ -112,13 +128,32 @@ const props = defineProps<{
   emptyStateVariant?: EmptyStateVariants
 }>()
 
+const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
+
 const {
   maxSizeInBytes,
   onFilesSelected,
   accept,
   upload: fileUpload,
-  isUploading
-} = useFileImport(toRefs(props))
+  isUploading,
+  uploadSelected,
+  resetSelected,
+  isUploadable: isFileUploadUploadable
+} = useFileImport({
+  ...toRefs(props),
+  manuallyTriggerUpload: true,
+  fileSelectedCallback: () => {
+    if (props.model) {
+      // Uploading inside an existing model - trigger upload immediately
+      uploadSelected()
+    } else {
+      if (!fileUpload.value?.error) {
+        // Only if upload is valid, trigger model creation dialog
+        showNewModelDialog.value = true
+      }
+    }
+  }
+})
 
 const { errorMessage, progressBarClasses, progressBarStyle } =
   useFileUploadProgressCore({
@@ -130,6 +165,7 @@ const uploadZone = ref(
     triggerPicker: () => void
   }>
 )
+const showNewModelDialog = ref(false)
 
 const modelName = computed(() => props.modelName || props.model?.name)
 const accessCheck = computed(() => {
@@ -175,7 +211,7 @@ const containerClasses = computed(() => {
   if (props.emptyStateVariant === 'modelGrid') {
     classParts.push('p-4 gap-4')
   } else if (props.emptyStateVariant === 'modelList') {
-    classParts.push('p-4 gap-4 text-center')
+    classParts.push('gap-4 text-center')
   } else if (props.emptyStateVariant === 'modelsSection') {
     classParts.push('p-4 gap-4 text-balance')
   } else {
@@ -240,9 +276,43 @@ const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   return 'border-outline-2'
 }
 
+const onModelCreate = (params: { model: ProjectPageLatestItemsModelItemFragment }) => {
+  if (!isFileUploadUploadable.value) return
+
+  uploadSelected({
+    model: params.model
+  })
+}
+
 const triggerPicker = () => {
   uploadZone.value?.triggerPicker()
 }
+
+watch(showNewModelDialog, (newVal, oldVal) => {
+  if (oldVal && !newVal) {
+    // Should we unselect file? Only if model was not created
+    if (!isUploading.value) {
+      resetSelected()
+    }
+  }
+})
+
+watch(isUploading, (newVal, oldVal) => {
+  // fileUpload is always gonna be non-null when isUploading changes
+  emit('uploading', {
+    isUploading: newVal,
+    upload: fileUpload.value!,
+    error: errorMessage.value
+  })
+
+  if (!newVal && oldVal) {
+    // Reset file upload state when upload finishes
+    // but only if it was successful! otherwise we wanna show the error
+    if (!errorMessage.value) {
+      resetSelected()
+    }
+  }
+})
 
 defineExpose({
   triggerPicker

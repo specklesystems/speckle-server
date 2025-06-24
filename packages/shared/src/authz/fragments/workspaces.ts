@@ -7,6 +7,9 @@ import {
 import {
   PersonalProjectsLimitedError,
   ProjectNotFoundError,
+  ServerNoAccessError,
+  ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
@@ -25,6 +28,7 @@ import {
 } from '../domain/context.js'
 import { isWorkspacePlanStatusReadOnly } from '../../workspaces/helpers/plans.js'
 import { hasEditorSeat } from '../checks/workspaceSeat.js'
+import { ensureMinimumServerRoleFragment } from './server.js'
 
 /**
  * Ensure user has a workspace role, and a valid SSO session (if SSO is configured)
@@ -302,4 +306,46 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
 
       return ok()
     }
+  }
+
+export const ensureUserIsWorkspaceAdminFragment: AuthPolicyEnsureFragment<
+  | typeof Loaders.getEnv
+  | typeof Loaders.getServerRole
+  | typeof Loaders.getWorkspace
+  | typeof Loaders.getWorkspaceRole
+  | typeof Loaders.getWorkspaceSsoProvider
+  | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getWorkspacePlan,
+  WorkspaceContext & MaybeUserContext,
+  InstanceType<
+    | typeof WorkspaceNoAccessError
+    | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspacesNotEnabledError
+    | typeof ServerNoSessionError
+    | typeof ServerNoAccessError
+    | typeof ServerNotEnoughPermissionsError
+    | typeof WorkspaceNotEnoughPermissionsError
+  >
+> =
+  (loaders) =>
+  async ({ userId, workspaceId }) => {
+    const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
+    if (ensuredWorkspacesEnabled.isErr) return err(ensuredWorkspacesEnabled.error)
+
+    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
+      userId,
+      role: Roles.Server.User
+    })
+
+    if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
+
+    const ensuredWorkspaceAccess = await ensureWorkspaceRoleAndSessionFragment(loaders)(
+      {
+        userId: userId!,
+        workspaceId,
+        role: Roles.Workspace.Admin
+      }
+    )
+    if (ensuredWorkspaceAccess.isErr) return err(ensuredWorkspaceAccess.error)
+    return ok()
   }

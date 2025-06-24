@@ -7,7 +7,7 @@ export type Fetcher = (
 
 export interface Item {
   baseId: string
-  base: Base
+  base?: Base
   size?: number
 }
 

@@ -4,9 +4,9 @@ import { CustomLogger, Base, Item } from '../types/types.js'
 import { CacheOptions, ObjectLoader2Options } from './options.js'
 import { DefermentManager } from '../helpers/defermentManager.js'
 import { CacheReader } from '../helpers/cacheReader.js'
-import { CachePump } from '../helpers/cachePump.js'
 import AggregateQueue from '../helpers/aggregateQueue.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
+import { CacheWriter } from '../helpers/cacheWriter.js'
 
 export class ObjectLoader2 {
   #rootId: string
@@ -15,8 +15,8 @@ export class ObjectLoader2 {
 
   #database: Database
   #downloader: Downloader
-  #pump: CachePump
-  #cache: CacheReader
+  #cacheReader: CacheReader
+  #cacheWriter: CacheWriter
 
   #deferments: DefermentManager
 
@@ -26,7 +26,7 @@ export class ObjectLoader2 {
 
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
-    this.#logger = options.logger || console.log
+    this.#logger = options.logger || ((): void => {})
 
     const cacheOptions: CacheOptions = {
       logger: this.#logger,
@@ -38,27 +38,25 @@ export class ObjectLoader2 {
     }
 
     this.#gathered = new AsyncGeneratorQueue()
+
     this.#database = options.database
     this.#deferments = new DefermentManager({
       maxSizeInMb: 2_000, // 2 GBs
       ttlms: 15_000, // 15 seconds
       logger: this.#logger
     })
-    this.#cache = new CacheReader(this.#database, this.#deferments, cacheOptions)
-    this.#pump = new CachePump(
-      this.#database,
-      this.#gathered,
-      this.#deferments,
-      cacheOptions
-    )
     this.#downloader = options.downloader
+    this.#cacheReader = new CacheReader(this.#database, this.#deferments, cacheOptions)
+    this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
+    this.#cacheWriter = new CacheWriter(this.#database, this.#deferments, cacheOptions)
   }
 
   async disposeAsync(): Promise<void> {
+    this.#gathered.dispose()
     await Promise.all([
       this.#downloader.disposeAsync(),
-      this.#cache.disposeAsync(),
-      this.#pump.disposeAsync()
+      this.#cacheReader.disposeAsync(),
+      this.#cacheWriter.disposeAsync()
     ])
     this.#deferments.dispose()
   }
@@ -74,38 +72,46 @@ export class ObjectLoader2 {
   }
 
   async getObject(params: { id: string }): Promise<Base> {
-    return await this.#cache.getObject({ id: params.id })
+    return await this.#cacheReader.getObject({ id: params.id })
   }
 
   async getTotalObjectCount(): Promise<number> {
     const rootObj = await this.getRootObject()
-    const totalChildrenCount = Object.keys(rootObj?.base.__closure || {}).length
+    const totalChildrenCount = Object.keys(rootObj?.base?.__closure || {}).length
     return totalChildrenCount + 1 //count the root
   }
 
   async *getObjectIterator(): AsyncGenerator<Base> {
     const rootItem = await this.getRootObject()
-    if (rootItem === undefined) {
+    if (rootItem?.base === undefined) {
       this.#logger('No root object found!')
       return
     }
-    //only for root
-    this.#pump.add(rootItem)
-    yield rootItem.base
-    if (!rootItem.base.__closure) return
+    if (!rootItem.base.__closure) {
+      yield rootItem.base
+      return
+    }
 
     //sort the closures by their values descending
     const sortedClosures = Object.entries(rootItem.base.__closure).sort(
       (a, b) => b[1] - a[1]
     )
     const children = sortedClosures.map((x) => x[0])
-    const total = children.length
+    const total = children.length + 1 // +1 for the root object
     this.#downloader.initializePool({
-      results: new AggregateQueue(this.#gathered, this.#pump),
+      results: new AggregateQueue(this.#gathered, this.#cacheWriter),
       total
     })
-    for await (const item of this.#pump.gather(children, this.#downloader)) {
-      yield item.base
+    //only for root
+    this.#gathered.add(rootItem)
+    this.#cacheReader.requestAll(children)
+    let count = 0
+    for await (const item of this.#gathered.consume()) {
+      yield item.base! //always defined, as we add it to the queue
+      count++
+      if (count >= total) {
+        break
+      }
     }
   }
 

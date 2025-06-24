@@ -333,7 +333,7 @@ jobs:
           fail_ci_if_error: true
           files: packages/server/coverage/lcov.info
       - name: Introspect GQL schema for subsequent checks
-        run: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+        run: 'IGNORE_MISSING_MIGRATIONS=true yarn cli graphql introspect'
         working-directory: 'packages/server'
       - name: Checking for GQL schema breakages against app.speckle.systems
         run: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'

@@ -102,10 +102,10 @@ export class SpeckleLoader extends Loader {
         firstObjectPromise = this.converter.traverse(
           this.resource,
           obj as SpeckleObject,
-          async () => {
+          (count) => {
             traversals++
             this.emit(LoaderEvent.Traversed, {
-              count: traversals
+              count
             })
           }
         )
@@ -140,6 +140,7 @@ export class SpeckleLoader extends Loader {
 
     await this.converter.convertInstances()
     await this.converter.applyMaterials()
+    await this.converter.handleDuplicates()
     await this.loader.disposeAsync()
 
     const t0 = performance.now()
@@ -147,11 +148,9 @@ export class SpeckleLoader extends Loader {
 
     const renderTree = this.tree.getRenderTree(this.resource)
     if (!renderTree) return Promise.resolve(false)
-    let converted = 0
-    const p = renderTree.buildRenderTree(geometryConverter, () => {
-      converted++
+    const p = renderTree.buildRenderTree(geometryConverter, (count: number) => {
       this.emit(LoaderEvent.Converted, {
-        count: converted
+        count
       })
     })
 

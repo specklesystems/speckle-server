@@ -78,14 +78,23 @@ const { handleSubmit } = useForm<InviteForm>({
 })
 const { fields, push } = useFieldArray<string>('fields')
 
-const enableDomainDiscoverabilityModel = computed(() => {
-  if (!verifiedDomain.value) return false
+const enableDomainDiscoverabilityModel = computed({
+  get() {
+    if (!verifiedDomain.value) return false
 
-  return !isUndefined(state.value.enableDomainDiscoverabilityForDomain)
-    ? state.value.enableDomainDiscoverabilityForDomain !== null
-      ? true
-      : undefined
-    : true
+    return !isUndefined(state.value.enableDomainDiscoverabilityForDomain)
+      ? state.value.enableDomainDiscoverabilityForDomain !== null
+        ? true
+        : undefined
+      : true
+  },
+  set(value: boolean) {
+    if (value && verifiedDomain.value) {
+      state.value.enableDomainDiscoverabilityForDomain = verifiedDomain.value
+    } else {
+      state.value.enableDomainDiscoverabilityForDomain = undefined
+    }
+  }
 })
 
 const nextButtonText = computed(() =>

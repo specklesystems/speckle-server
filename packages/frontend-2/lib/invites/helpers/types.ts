@@ -1,5 +1,27 @@
-import type { ServerRoles, WorkspaceRoles, StreamRoles } from '@speckle/shared'
-import type { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ServerRoles,
+  WorkspaceRoles,
+  StreamRoles,
+  WorkspaceSeatType,
+  MaybeNullOrUndefined
+} from '@speckle/shared'
+import { graphql } from '~/lib/common/generated/gql'
+import type {
+  FormSelectProjects_ProjectFragment,
+  InviteProjectItem_WorkspaceCollaboratorFragment
+} from '~~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment InviteProjectItem_WorkspaceCollaborator on WorkspaceCollaborator {
+    id
+    user {
+      id
+      name
+    }
+    seatType
+    role
+  }
+`)
 
 // Server
 export type InviteServerItem = {
@@ -19,6 +41,7 @@ export type InviteProjectItem = {
   projectRole?: StreamRoles
   project?: FormSelectProjects_ProjectFragment
   serverRole?: ServerRoles
+  userInfo: MaybeNullOrUndefined<InviteProjectItem_WorkspaceCollaboratorFragment>
 }
 
 export interface InviteProjectForm {
@@ -28,6 +51,7 @@ export interface InviteProjectForm {
 // Workspace
 export type InviteWorkspaceItem = {
   email: string
+  seatType?: WorkspaceSeatType
   workspaceRole?: WorkspaceRoles
   projectRole?: StreamRoles
   serverRole?: ServerRoles
