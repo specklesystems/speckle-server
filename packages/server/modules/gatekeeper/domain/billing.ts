@@ -108,7 +108,7 @@ export type WorkspaceSubscription = {
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
   currency: Currency
-  updateIntent: SubscriptionUpdateIntent | null // todo.: as undefined
+  updateIntent: SubscriptionUpdateIntent | null
   subscriptionData: SubscriptionData
 }
 
