@@ -234,7 +234,7 @@ export {
   SpeckleStandardMaterial,
   SpeckleBasicMaterial,
   SpeckleTextMaterial,
-  TextLabel as SpeckleText,
+  TextLabel,
   NodeRenderView,
   SpeckleGeometryConverter,
   Assets,

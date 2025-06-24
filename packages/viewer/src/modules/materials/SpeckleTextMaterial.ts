@@ -58,6 +58,17 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     }
   }
 
+  public get billboard(): boolean {
+    return this.defines && this.defines['BILLBOARD']
+  }
+
+  public set billboard(value: true) {
+    if (value) {
+      if (!this.defines) this.defines = {}
+      this.defines['BILLBOARD'] = ' '
+    } else if (this.defines) delete this.defines['BILLBOARD']
+  }
+
   constructor(parameters: SpeckleTextMaterialParameters, defines: Array<string> = []) {
     super(parameters)
     this.init(defines)

@@ -115,8 +115,8 @@ void main() {
                 mvPosition = (modelViewMatrix * vec4(billboardPosition, 1.) + vec4(position.x, position.y, 0., 0.0));
             #endif
         #else
-             mvPosition = matrix * vec4(transformed, 1.);
-             mvPosition = modelViewMatrix * mvPosition;
+             mvPosition = modelViewMatrix * vec4(transformed, 1.);
+            //  mvPosition = modelViewMatrix * mvPosition;
         #endif
     #endif
     #ifdef BATCHED_TEXT

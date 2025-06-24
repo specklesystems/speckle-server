@@ -37,7 +37,7 @@ import { AccelerationStructure } from './AccelerationStructure.js'
   fine as it is. If we really really really need that 100% accuracy, we'll just make it relative to the origin
  */
 export class TopLevelAccelerationStructure {
-  private debugBVH = true
+  private debugBVH = false
   private static cubeIndices = [
     // front
     0, 1, 2, 2, 3, 0,
