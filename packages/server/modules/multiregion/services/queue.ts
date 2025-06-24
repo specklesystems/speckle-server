@@ -2,7 +2,7 @@ import Bull from 'bull'
 import { logger } from '@/observability/logging'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { Optional, StreamRoles, TIME_MS } from '@speckle/shared'
+import { Optional, TIME_MS } from '@speckle/shared'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import {
   MultiRegionInvalidJobError,
@@ -22,7 +22,7 @@ import {
   deleteProjectFactory,
   getProjectFactory,
   storeProjectFactory,
-  storeProjectRoleFactory
+  storeProjectRolesFactory
 } from '@/modules/core/repositories/projects'
 import { getAvailableRegionsFactory } from '@/modules/workspaces/services/regions'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
@@ -57,6 +57,7 @@ import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { waitForRegionProjectFactory } from '@/modules/core/services/projects'
 import { chunk } from 'lodash'
+import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()
   ? `test:multiregion:${cryptoRandomString({ length: 5 })}`
@@ -72,10 +73,6 @@ type MultiregionJob =
       type: 'move-project-region'
       payload: {
         projectId: string
-        projectRoles: {
-          userId: string
-          role: StreamRoles
-        }[]
         regionKey: string
       }
     }
@@ -165,7 +162,7 @@ export const startQueue = async () => {
 
     switch (job.data.type) {
       case 'move-project-region': {
-        const { projectId, projectRoles, regionKey } = job.data.payload
+        const { projectId, regionKey } = job.data.payload
 
         const sourceDb = await getProjectDbClient({ projectId })
         const sourceObjectStorage = await getProjectObjectStorage({ projectId })
@@ -245,6 +242,9 @@ export const startQueue = async () => {
           { db: targetDb }
         )
 
+        // Grab project roles for later reinstating
+        const projectRoles = await getStreamCollaboratorsFactory({ db })(project.id)
+
         // Delete project in main db to "unblock" replication
         await deleteProjectFactory({ db })({ projectId: project.id })
 
@@ -265,16 +265,14 @@ export const startQueue = async () => {
         }
 
         // Reinstate project acl records
-        for (const roles of chunk(projectRoles, 15)) {
-          await Promise.all(
-            roles.map((role) =>
-              storeProjectRoleFactory({ db })({
-                projectId: project.id,
-                userId: role.userId,
-                role: role.role
-              })
-            )
-          )
+        for (const roles of chunk(projectRoles, 10_000)) {
+          await storeProjectRolesFactory({ db })({
+            roles: roles.map((role) => ({
+              projectId: project.id,
+              userId: role.id,
+              role: role.streamRole
+            }))
+          })
         }
       }
       case 'delete-project-region-data':

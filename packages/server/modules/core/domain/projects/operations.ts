@@ -14,6 +14,14 @@ export type StoreProjectRole = (args: {
   role: StreamRoles
 }) => Promise<void>
 
+export type StoreProjectRoles = (args: {
+  roles: {
+    projectId: string
+    userId: string
+    role: StreamRoles
+  }[]
+}) => Promise<void>
+
 export type UpsertProjectRole = (
   args: {
     projectId: string
