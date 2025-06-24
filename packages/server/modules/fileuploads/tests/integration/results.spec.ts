@@ -168,7 +168,12 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
           warnings: [],
           result: {
             versionId: cryptoRandomString({ length: 10 }),
-            durationSeconds: randomInt(1, 3600)
+            durationSeconds: randomInt(1, 3600),
+            downloadDurationSeconds: randomInt(1, 3600),
+            parser: 'ifc'
+          },
+          metadata: {
+            fileType: 'ifc'
           }
         }
         const response = await request(app)
@@ -189,7 +194,12 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
           warnings: [],
           result: {
             versionId: cryptoRandomString({ length: 10 }),
-            durationSeconds: randomInt(1, 3600)
+            durationSeconds: randomInt(1, 3600),
+            downloadDurationSeconds: randomInt(1, 3600),
+            parser: 'ifc'
+          },
+          metadata: {
+            fileType: 'ifc'
           }
         }
         const response = await request(app)
@@ -211,7 +221,12 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
           status: 'error',
           reason: cryptoRandomString({ length: 10 }),
           result: {
-            durationSeconds: randomInt(1, 3600)
+            durationSeconds: randomInt(0, 3600),
+            downloadDurationSeconds: randomInt(0, 3600),
+            parser: 'ifc'
+          },
+          metadata: {
+            fileType: 'ifc'
           }
         }
         const response = await request(app)

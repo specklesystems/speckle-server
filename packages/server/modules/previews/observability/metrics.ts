@@ -49,7 +49,7 @@ export const initializeMetrics = (params: {
   )
   const previewJobsRequestCompletedCounter = new Counter({
     name: 'speckle_server_preview_jobs_request_completed_count',
-    help: 'Total number of preview jobs which have been requested and were successful in being completed by a worker.'
+    help: 'Total number of preview jobs which have been requested and were successfully completed by a worker.'
   })
 
   registers.forEach((r) =>

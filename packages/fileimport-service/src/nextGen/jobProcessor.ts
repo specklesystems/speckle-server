@@ -10,6 +10,7 @@ import { DOTNET_BINARY_PATH, RHINO_IMPORTER_PATH } from '../nextGen/config.js'
 import { runProcessWithTimeout } from '../common/processHandling.js'
 import { downloadFile } from '../controller/filesApi.js'
 import { getIfcDllPath } from '../controller/helpers/env.js'
+import { TIME_MS } from '@speckle/shared'
 
 const jobSuccess = z.object({
   success: z.literal(true),
@@ -42,14 +43,22 @@ export const jobProcessor = async ({
   const jobMessage =
     'Processed job {jobId} with result {status}. It took {elapsed} seconds.'
 
+  let parserUsed = 'none'
+
   const tmp = tmpdir()
   const jobDir = path.join(tmp, job.jobId)
+  let downloadDurationSeconds = 0
   fs.rmSync(jobDir, { force: true, recursive: true })
   fs.mkdirSync(jobDir)
   try {
     const fileType = job.fileType.toLowerCase()
     const sourceFilePath = path.join(jobDir, job.fileName)
     const resultsPath = path.join(jobDir, 'import_results.json')
+
+    const elapsedDownloadDuration = (() => {
+      const start = new Date().getTime()
+      return () => (new Date().getTime() - start) / TIME_MS.second
+    })()
 
     await downloadFile({
       speckleServerUrl: job.serverUrl,
@@ -60,8 +69,11 @@ export const jobProcessor = async ({
       logger
     })
 
+    downloadDurationSeconds = elapsedDownloadDuration()
+
     switch (fileType) {
       case 'ifc':
+        parserUsed = 'ifc'
         await runProcessWithTimeout(
           taskLogger,
           DOTNET_BINARY_PATH,
@@ -85,6 +97,7 @@ export const jobProcessor = async ({
       case 'stl':
       case 'obj':
       case 'skp':
+        parserUsed = 'rhino'
         await runProcessWithTimeout(
           taskLogger,
           RHINO_IMPORTER_PATH,
@@ -119,7 +132,15 @@ export const jobProcessor = async ({
     const versionId = output.data.commitId
     return {
       status: 'success',
-      result: { versionId, durationSeconds: getElapsed() },
+      result: {
+        versionId,
+        durationSeconds: getElapsed(),
+        downloadDurationSeconds,
+        parser: parserUsed
+      },
+      metadata: {
+        fileType: job.fileType
+      },
       warnings: []
     }
   } catch (err) {
@@ -140,8 +161,13 @@ export const jobProcessor = async ({
 
     return {
       status: 'error',
+      metadata: {
+        fileType: job.fileType
+      },
       result: {
-        durationSeconds: getElapsed()
+        parser: parserUsed,
+        durationSeconds: getElapsed(),
+        downloadDurationSeconds
       },
       reason
     }
