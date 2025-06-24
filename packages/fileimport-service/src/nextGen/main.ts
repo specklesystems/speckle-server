@@ -91,6 +91,7 @@ export const main = async () => {
               result: {
                 durationSeconds: 0,
                 downloadDurationSeconds: 0,
+                parseDurationSeconds: 0,
                 parser: 'none'
               },
               metadata: {
