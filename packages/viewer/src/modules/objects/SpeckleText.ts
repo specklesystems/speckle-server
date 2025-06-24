@@ -6,44 +6,61 @@ import { BatchedText } from 'troika-three-text/src/BatchedText.js'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.js'
 import {
   Box3,
+  BufferGeometry,
+  Camera,
   Color,
   DataTexture,
+  Float32BufferAttribute,
   FloatType,
+  Int16BufferAttribute,
   Intersection,
   Material,
   Matrix4,
   Mesh,
+  MeshBasicMaterial,
   Object3D,
   Ray,
   Raycaster,
   RGBAFormat,
+  Scene,
   Sphere,
   Texture,
   Vector3
 } from 'three'
 import { BatchObject } from '../batching/BatchObject.js'
-import { SpeckleRaycaster } from './SpeckleRaycaster.js'
+import { ExtendedMeshIntersection, SpeckleRaycaster } from './SpeckleRaycaster.js'
 import { DrawGroup } from '../batching/Batch.js'
 import Logger from '../utils/Logger.js'
 import Materials from '../materials/Materials.js'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 import { Geometry } from '../converter/Geometry.js'
+import { TextBatchObject } from '../batching/TextBatchObject.js'
+import { ObjectLayers, SpeckleWebGLRenderer } from '../../index.js'
 
 const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
+const vecBuff0 = /* @__PURE__ */ new Vector3()
+const vecBuff1 = /* @__PURE__ */ new Vector3()
+const vecBuff2 = /* @__PURE__ */ new Vector3()
+const matBuff0 = /* @__PURE__ */ new Matrix4()
+const matBuff1 = /* @__PURE__ */ new Matrix4()
+const matBuff2 = /* @__PURE__ */ new Matrix4()
 
 export class SpeckleText extends BatchedText {
   private tas: TopLevelAccelerationStructure
   private _batchMaterial: Material
   private _batchObjects: BatchObject[]
   private _textObjects: { [id: string]: Text } = {}
+  private _dirty: boolean = false
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
 
   private materialCache: { [id: string]: Material } = {}
   private materialCacheLUT: { [id: string]: number } = {}
-  public dirty: boolean = false
+
+  private readonly DEBUG_BILLBOARDS = false
+  private debugMeshes: Mesh[] = []
 
   public get TAS(): TopLevelAccelerationStructure {
     return this.tas
@@ -55,6 +72,18 @@ export class SpeckleText extends BatchedText {
 
   public get batchMaterial(): Material {
     return this._batchMaterial
+  }
+
+  public set dirty(value: boolean) {
+    this._dirty = value
+  }
+
+  public get isBillboarded() {
+    return (
+      this._batchMaterial &&
+      this._batchMaterial.defines &&
+      this._batchMaterial.defines['BILLBOARD']
+    )
   }
 
   public setBatchMaterial(material: Material) {
@@ -195,40 +224,183 @@ export class SpeckleText extends BatchedText {
     }
   }
 
-  raycast(raycaster: SpeckleRaycaster, intersects: Array<Intersection>) {
-    if (this.tas) {
-      if (this._batchMaterial === undefined) return
+  private initDebugBox() {
+    const debugBox = new Mesh(
+      new BufferGeometry(),
+      new MeshBasicMaterial({ wireframe: true, color: 0xff0000 })
+    )
+    debugBox.geometry.setAttribute(
+      'position',
+      new Float32BufferAttribute(new Array(12), 3)
+    )
+    debugBox.geometry.setIndex(
+      new Int16BufferAttribute(
+        [
+          0,
+          1,
+          2, // First triangle: bottom-left → bottom-right → top-right
+          0,
+          2,
+          3 // Second triangle: bottom-left → top-right → top-left
+        ],
+        1
+      )
+    )
+    debugBox.layers.set(ObjectLayers.OVERLAY)
+    //@ts-ignore
+    this.parent.add(debugBox)
+    return debugBox
+  }
 
-      //@ts-ignore
-      tmpInverseMatrix.copy(this.matrixWorld).invert()
-      ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
-      /** Texts are all quads. Intersection their BAS is redundant */
-      const tasOnly = raycaster.intersectTASOnly || true
-
-      if (raycaster.firstHitOnly === true) {
-        const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, tasOnly, this._batchMaterial),
-          this as unknown as Object3D,
-          raycaster
-        )
-        if (hit) {
-          intersects.push(hit)
+  /** Debug purposes only */
+  onBeforeRender(
+    renderer: SpeckleWebGLRenderer,
+    scene: Scene,
+    camera: Camera,
+    geometry: BufferGeometry,
+    material: Material,
+    group: unknown
+  ) {
+    super.onBeforeRender(renderer, scene, camera, geometry, material, group)
+    if (this.DEBUG_BILLBOARDS && this.isBillboarded) {
+      const vertices = [new Vector3(), new Vector3(), new Vector3(), new Vector3()]
+      for (let k = 0; k < this._batchObjects.length; k++) {
+        if (!this.debugMeshes[k]) {
+          this.debugMeshes[k] = this.initDebugBox()
         }
-      } else {
-        const hits = this.tas.raycast(ray, tasOnly, this._batchMaterial)
-        for (let i = 0, l = hits.length; i < l; i++) {
+        const textMatrix = (this._batchObjects[k] as TextBatchObject).textTransform
+
+        const billboardPos = vecBuff0.set(
+          textMatrix.elements[12],
+          textMatrix.elements[13],
+          textMatrix.elements[14]
+        )
+
+        const box = new Box3().copy(this._batchObjects[k].aabb)
+        const min = vecBuff1.copy(box.min)
+        const max = vecBuff2.copy(box.max)
+        vertices[0].set(min.x, min.y, 0)
+        vertices[1].set(max.x, min.y, 0)
+        vertices[2].set(max.x, max.y, 0)
+        vertices[3].set(min.x, max.y, 0)
+
+        const billboardMat = matBuff0.makeTranslation(
+          billboardPos.x,
+          billboardPos.y,
+          billboardPos.z
+        )
+        billboardMat.multiply(matBuff1.extractRotation(camera.matrixWorld))
+        billboardMat.multiply(matBuff2.copy(textMatrix).invert())
+
+        for (let i = 0; i < vertices.length; i++) {
+          const debugVertex = vecBuff2.copy(vertices[i])
+          debugVertex.applyMatrix4(billboardMat)
+
+          this.debugMeshes[k].geometry.attributes.position.setXYZ(
+            i,
+            debugVertex.x,
+            debugVertex.y,
+            debugVertex.z
+          )
+        }
+        this.debugMeshes[k].geometry.attributes.position.needsUpdate = true
+      }
+    }
+  }
+
+  raycast(raycaster: SpeckleRaycaster, intersects: Array<Intersection>) {
+    /** We bypass the TAS for billboarded text batches, otherwise we would need to refit it each frame */
+    if (this.isBillboarded) {
+      const rayBuff = new Ray()
+      for (let k = 0; k < this._batchObjects.length; k++) {
+        const textMatrix = (this._batchObjects[k] as TextBatchObject).textTransform
+        /** The billboard position is the text object's position stored in it's world matrix */
+        const billboardPos = vecBuff0.set(
+          textMatrix.elements[12],
+          textMatrix.elements[13],
+          textMatrix.elements[14]
+        )
+        /** We compute the matrix that billboards the text */
+        const billboardMat = matBuff0.makeTranslation(
+          billboardPos.x,
+          billboardPos.y,
+          billboardPos.z
+        )
+        billboardMat.multiply(matBuff1.extractRotation(raycaster.camera.matrixWorld))
+        billboardMat.multiply(matBuff2.copy(textMatrix).invert())
+        /** We invert it in order to apply to the ray instead of the geometry */
+        const invBillboardMat = matBuff0.copy(billboardMat).invert()
+        rayBuff.copy(raycaster.ray)
+        rayBuff.applyMatrix4(invBillboardMat)
+
+        /** Regular intersecting from here on out on a per batch object level */
+        if (raycaster.firstHitOnly === true) {
           const hit = this.convertRaycastIntersect(
-            hits[i],
+            this._batchObjects[k].accelerationStructure.raycastFirst(
+              rayBuff,
+              this._batchMaterial
+            ),
+            this as unknown as Object3D,
+            raycaster
+          ) as ExtendedMeshIntersection
+          if (hit) {
+            hit.batchObject = this._batchObjects[k]
+            intersects.push(hit)
+            break // We break here as we only want the first hit
+          }
+        } else {
+          const hits = this._batchObjects[k].accelerationStructure.raycast(
+            rayBuff,
+            this._batchMaterial
+          )
+          for (let i = 0, l = hits.length; i < l; i++) {
+            const hit = this.convertRaycastIntersect(
+              hits[i],
+              this as unknown as Object3D,
+              raycaster
+            ) as ExtendedMeshIntersection
+            if (hit) {
+              hit.batchObject = this._batchObjects[k]
+              intersects.push(hit)
+            }
+          }
+        }
+      }
+    } else {
+      if (this.tas) {
+        if (this._batchMaterial === undefined) return
+
+        //@ts-ignore
+        tmpInverseMatrix.copy(this.matrixWorld).invert()
+        ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
+        /** Texts are all quads. Intersecting their BAS is redundant */
+        const tasOnly = raycaster.intersectTASOnly || true
+
+        if (raycaster.firstHitOnly === true) {
+          const hit = this.convertRaycastIntersect(
+            this.tas.raycastFirst(ray, tasOnly, this._batchMaterial),
             this as unknown as Object3D,
             raycaster
           )
           if (hit) {
             intersects.push(hit)
           }
+        } else {
+          const hits = this.tas.raycast(ray, tasOnly, this._batchMaterial)
+          for (let i = 0, l = hits.length; i < l; i++) {
+            const hit = this.convertRaycastIntersect(
+              hits[i],
+              this as unknown as Object3D,
+              raycaster
+            )
+            if (hit) {
+              intersects.push(hit)
+            }
+          }
         }
+      } else {
+        super.raycast(raycaster, intersects)
       }
-    } else {
-      super.raycast(raycaster, intersects)
     }
   }
 
@@ -236,7 +408,7 @@ export class SpeckleText extends BatchedText {
    * Update the batched geometry bounds to hold all members
    */
   updateBounds() {
-    if (!this.dirty) return
+    if (!this._dirty) return
     // Update member local matrices and the overall bounds
     const tempBox3 = new Box3()
     //@ts-ignore
@@ -311,9 +483,9 @@ export class SpeckleText extends BatchedText {
    */
   //@ts-ignore
   _prepareForRender(material) {
-    if (!this.dirty) return
+    if (!this._dirty) return
 
-    this.dirty = false
+    this._dirty = false
 
     const floatsPerMember = 32
     const tempColor = new Color()

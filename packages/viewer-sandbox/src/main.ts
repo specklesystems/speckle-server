@@ -570,6 +570,9 @@ const getStream = () => {
 
     // Text test stream
     'https://latest.speckle.systems/projects/109e01c8c0/models/1eee4edbe6'
+
+    // Single billboaded text
+    // 'https://latest.speckle.systems/projects/f28ad5b38a/models/b63ebcd807'
   )
 }
 

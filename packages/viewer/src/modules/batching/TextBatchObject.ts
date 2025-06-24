@@ -3,7 +3,7 @@ import { BatchObject, Vector3Like } from './BatchObject.js'
 import { NodeRenderView } from '../tree/NodeRenderView.js'
 
 export class TextBatchObject extends BatchObject {
-  protected textTransform: Matrix4 = new Matrix4()
+  public textTransform: Matrix4 = new Matrix4()
 
   public constructor(renderView: NodeRenderView, batchIndex: number) {
     super(renderView, batchIndex)
