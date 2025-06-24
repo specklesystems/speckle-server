@@ -52,16 +52,16 @@ export const jobProcessor = async ({
 
   fs.rmSync(jobDir, { force: true, recursive: true })
   fs.mkdirSync(jobDir)
+  const fileType = job.fileType.toLowerCase()
+  const sourceFilePath = path.join(jobDir, job.fileName)
+  const resultsPath = path.join(jobDir, 'import_results.json')
+
+  const elapsedDownloadDuration = (() => {
+    const start = new Date().getTime()
+    return () => (new Date().getTime() - start) / TIME_MS.second
+  })()
+
   try {
-    const fileType = job.fileType.toLowerCase()
-    const sourceFilePath = path.join(jobDir, job.fileName)
-    const resultsPath = path.join(jobDir, 'import_results.json')
-
-    const elapsedDownloadDuration = (() => {
-      const start = new Date().getTime()
-      return () => (new Date().getTime() - start) / TIME_MS.second
-    })()
-
     await downloadFile({
       speckleServerUrl: job.serverUrl,
       fileId: job.blobId,
@@ -72,12 +72,54 @@ export const jobProcessor = async ({
     })
 
     downloadDurationSeconds = elapsedDownloadDuration()
+  } catch (err) {
+    if (!downloadDurationSeconds) downloadDurationSeconds = elapsedDownloadDuration()
 
-    const elapsedParseDuration = (() => {
-      const start = new Date().getTime()
-      return () => (new Date().getTime() - start) / TIME_MS.second
-    })()
+    if (getAppState() === AppState.SHUTTINGDOWN) {
+      // likely that the job was cancelled due to the service shutting down
+      logger.warn(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
+    } else {
+      logger.error(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
+    }
 
+    const reason =
+      err instanceof Error
+        ? err.stack ?? err.toString()
+        : 'unknown error while downloading file'
+
+    try {
+      // try and clean up the job directory
+      fs.rmSync(jobDir, { recursive: true })
+    } finally {
+      // return the error result whether or not the cleanup succeeded
+      return {
+        status: 'error',
+        metadata: {
+          fileType: job.fileType
+        },
+        result: {
+          parser: parserUsed,
+          durationSeconds: getElapsed(),
+          downloadDurationSeconds,
+          parseDurationSeconds
+        },
+        reason
+      }
+    }
+  }
+
+  const elapsedParseDuration = (() => {
+    const start = new Date().getTime()
+    return () => (new Date().getTime() - start) / TIME_MS.second
+  })()
+
+  try {
     switch (fileType) {
       case 'ifc':
         parserUsed = 'ifc'
@@ -128,6 +170,7 @@ export const jobProcessor = async ({
     }
 
     parseDurationSeconds = elapsedParseDuration()
+
     const output = jobResult.safeParse(JSON.parse(readFileSync(resultsPath, 'utf8')))
 
     if (!output.success) {
@@ -154,6 +197,8 @@ export const jobProcessor = async ({
       warnings: []
     }
   } catch (err) {
+    if (!parseDurationSeconds) parseDurationSeconds = elapsedParseDuration()
+
     if (getAppState() === AppState.SHUTTINGDOWN) {
       // likely that the job was cancelled due to the service shutting down
       logger.warn(
@@ -167,7 +212,10 @@ export const jobProcessor = async ({
       )
     }
 
-    const reason = err instanceof Error ? err.stack ?? err.toString() : 'unknown error'
+    const reason =
+      err instanceof Error
+        ? err.stack ?? err.toString()
+        : 'unknown error while parsing file'
 
     return {
       status: 'error',
