@@ -33,6 +33,7 @@ export const onFileImportResultFactory =
 
     metricsSummary?.observe(
       {
+        parser: jobResult.result.parser,
         status: jobResult.status,
         step: FileImportJobDurationStep.TOTAL
       },
