@@ -1,5 +1,6 @@
 import type { Logger } from '@/observability/logging'
 import {
+  GetFileInfoV2,
   ProcessFileImportResult,
   UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
@@ -15,57 +16,49 @@ import {
   jobResultStatusToFileUploadStatus,
   jobResultToConvertedMessage
 } from '@/modules/fileuploads/helpers/convert'
-import { ensureError, TIME } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { FileImportJobDurationStep } from '@/modules/fileuploads/observability/metrics'
+import { ObserveResult } from '@/modules/fileuploads/observability/metrics'
+import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 
 type OnFileImportResultDeps = {
+  getFileInfo: GetFileInfoV2
   updateFileUpload: UpdateFileUpload
   publish: PublishSubscription
+  observeResult?: ObserveResult
   logger: Logger
 }
 
 export const onFileImportResultFactory =
   (deps: OnFileImportResultDeps): ProcessFileImportResult =>
   async (params) => {
-    const { logger } = deps
-    const { jobId, jobResult, metricsSummary } = params
+    const { logger, observeResult } = deps
+    const { jobId, jobResult } = params
 
-    metricsSummary?.observe(
-      {
-        parser: jobResult.result.parser,
-        status: jobResult.status,
-        step: FileImportJobDurationStep.TOTAL
-      },
-      jobResult.result.durationSeconds * TIME.second
-    )
+    if (observeResult) observeResult({ jobResult })
 
-    if (jobResult.result.downloadDurationSeconds) {
-      metricsSummary?.observe(
-        {
-          parser: jobResult.result.parser,
-          status: jobResult.status,
-          step: FileImportJobDurationStep.DOWNLOAD
-        },
-        jobResult.result.downloadDurationSeconds * TIME.second
-      )
+    const fileInfo = await deps.getFileInfo({ fileId: jobId })
+    if (!fileInfo) {
+      throw new FileImportJobNotFoundError(`File upload with ID ${jobId} not found`)
     }
 
-    if (jobResult.result.parseDurationSeconds) {
-      metricsSummary?.observe(
-        {
-          parser: jobResult.result.parser,
-          status: jobResult.status,
-          step: FileImportJobDurationStep.PARSE
-        },
-        jobResult.result.parseDurationSeconds * TIME.second
-      )
-    }
+    const boundLogger = logger.child({
+      jobId,
+      fileId: fileInfo.id,
+      fileSize: fileInfo.fileSize,
+      fileName: fileInfo.fileName,
+      fileType: fileInfo.fileType,
+      projectId: fileInfo.projectId,
+      streamId: fileInfo.projectId, // legacy for backwards compatibility
+      modelId: fileInfo.modelId,
+      branchId: fileInfo.modelId, // legacy for backwards compatibility
+      userId: fileInfo.userId
+    })
 
     let convertedCommitId = null
     switch (jobResult.status) {
       case 'error':
-        logger.warn(
+        boundLogger.warn(
           {
             duration: jobResult.result.durationSeconds,
             err: { message: jobResult.reason }
@@ -75,7 +68,7 @@ export const onFileImportResultFactory =
         break
       case 'success':
         convertedCommitId = jobResult.result.versionId
-        logger.info(
+        boundLogger.info(
           {
             duration: jobResult.result.durationSeconds,
             versionId: jobResult.result.versionId

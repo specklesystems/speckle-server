@@ -47,8 +47,10 @@ import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
-import { initializeMetrics } from '@/modules/fileuploads/observability/metrics'
-import type { Summary } from 'prom-client'
+import {
+  initializeMetrics,
+  ObserveResult
+} from '@/modules/fileuploads/observability/metrics'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -105,7 +107,7 @@ export const init: SpeckleModule['init'] = async ({
   }
   moduleLogger.info('📄 Init FileUploads module')
 
-  let fileImportJobsProcessedSummary: Summary<'status' | 'step'> | undefined = undefined
+  let observeResult: ObserveResult | undefined = undefined
 
   if (isInitial) {
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
@@ -136,7 +138,7 @@ export const init: SpeckleModule['init'] = async ({
         },
         ifcRouter
       )
-      ;({ fileImportJobsProcessedSummary } = initializeMetrics({
+      ;({ observeResult } = initializeMetrics({
         registers: [metricsRegister],
         requestQueues: [rhinoQueue, ifcQueue]
       }))
@@ -185,7 +187,7 @@ export const init: SpeckleModule['init'] = async ({
     app.use(
       nextGenFileImporterRouterFactory({
         queues: fileImportQueues,
-        metricsSummary: fileImportJobsProcessedSummary ?? undefined
+        observeResult: observeResult ?? undefined
       })
     )
   }

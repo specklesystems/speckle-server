@@ -172,9 +172,6 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
             downloadDurationSeconds: randomInt(1, 3600),
             parseDurationSeconds: randomInt(1, 3600),
             parser: 'ifc'
-          },
-          metadata: {
-            fileType: 'ifc'
           }
         }
         const response = await request(app)
@@ -199,9 +196,6 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
             downloadDurationSeconds: randomInt(1, 3600),
             parseDurationSeconds: randomInt(1, 3600),
             parser: 'ifc'
-          },
-          metadata: {
-            fileType: 'ifc'
           }
         }
         const response = await request(app)
@@ -227,9 +221,6 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
             downloadDurationSeconds: randomInt(0, 3600),
             parseDurationSeconds: randomInt(1, 3600),
             parser: 'ifc'
-          },
-          metadata: {
-            fileType: 'ifc'
           }
         }
         const response = await request(app)
