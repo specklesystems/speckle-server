@@ -25,7 +25,7 @@ import {
   ProjectPendingVersionsUpdatedMessageType,
   ProjectVersionsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
-import { modelRoute } from '~~/lib/common/helpers/route'
+import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import {
   onProjectPendingVersionsUpdatedSubscription,
   onProjectVersionsUpdateSubscription
@@ -557,7 +557,11 @@ export function useMoveVersions() {
       const deleteCount = input.versionIds.length
       triggerNotification({
         type: ToastNotificationType.Info,
-        title: `${deleteCount} version${deleteCount > 1 ? 's' : ''} moved`
+        title: `${deleteCount} version${deleteCount > 1 ? 's' : ''} moved`,
+        cta: {
+          title: 'View versions',
+          url: modelVersionsRoute(input.projectId, data.versionMutations.moveToModel.id)
+        }
       })
     } else {
       const errMsg = getFirstErrorMessage(errors)
