@@ -229,7 +229,9 @@ export const startQueue = async () => {
                 countProjectWebhooks: countProjectWebhooksFactory({ db: sourceDb })
               }),
               updateProjectRegionKey: updateProjectRegionKeyFactory({
-                upsertProjectRegionKey: upsertProjectRegionKeyFactory({ db }),
+                upsertProjectRegionKey: upsertProjectRegionKeyFactory({
+                  db: targetDbTrx
+                }),
                 cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
                   redis: getGenericRedis()
                 }),

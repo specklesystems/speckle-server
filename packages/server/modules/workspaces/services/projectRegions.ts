@@ -73,7 +73,7 @@ export const updateProjectRegionFactory =
     await deps.copyWorkspace({ workspaceId: project.workspaceId })
 
     // Move commits
-    const projectIds = await deps.copyProjects({ projectIds: [projectId], regionKey })
+    const projectIds = await deps.copyProjects({ projectIds: [projectId] })
     const copiedModelCount = await deps.copyProjectModels({ projectIds })
     const copiedVersionCount = await deps.copyProjectVersions({ projectIds })
 

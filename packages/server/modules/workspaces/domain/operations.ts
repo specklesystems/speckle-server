@@ -519,10 +519,7 @@ export type ValidateProjectRegionCopy = (params: {
 }) => Promise<[boolean, Record<string, number>]>
 
 export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
-export type CopyProjects = (params: {
-  projectIds: string[]
-  regionKey: string
-}) => Promise<string[]>
+export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
 export type CopyProjectModels = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
