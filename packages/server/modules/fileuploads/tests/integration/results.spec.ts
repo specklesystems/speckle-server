@@ -170,6 +170,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
             versionId: cryptoRandomString({ length: 10 }),
             durationSeconds: randomInt(1, 3600),
             downloadDurationSeconds: randomInt(1, 3600),
+            parseDurationSeconds: randomInt(1, 3600),
             parser: 'ifc'
           },
           metadata: {
@@ -196,6 +197,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
             versionId: cryptoRandomString({ length: 10 }),
             durationSeconds: randomInt(1, 3600),
             downloadDurationSeconds: randomInt(1, 3600),
+            parseDurationSeconds: randomInt(1, 3600),
             parser: 'ifc'
           },
           metadata: {
@@ -223,6 +225,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
           result: {
             durationSeconds: randomInt(0, 3600),
             downloadDurationSeconds: randomInt(0, 3600),
+            parseDurationSeconds: randomInt(1, 3600),
             parser: 'ifc'
           },
           metadata: {

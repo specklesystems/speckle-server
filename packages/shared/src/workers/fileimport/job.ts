@@ -28,7 +28,14 @@ const baseFileImportResult = z.object({
     .describe('Total duration to download & import the file, in seconds'),
   downloadDurationSeconds: z
     .number()
-    .describe('Duration to download the file, in seconds'),
+    .describe(
+      'Duration to download the file, in seconds. This is a sub-component of the total duration.'
+    ),
+  parseDurationSeconds: z
+    .number()
+    .describe(
+      'Duration to parse the file, in seconds. This is a sub-component of the total duration.'
+    ),
   parser: z.string().describe('The parser used for the import')
 })
 

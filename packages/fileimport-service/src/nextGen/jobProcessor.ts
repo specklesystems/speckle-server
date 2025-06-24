@@ -48,6 +48,8 @@ export const jobProcessor = async ({
   const tmp = tmpdir()
   const jobDir = path.join(tmp, job.jobId)
   let downloadDurationSeconds = 0
+  let parseDurationSeconds = 0
+
   fs.rmSync(jobDir, { force: true, recursive: true })
   fs.mkdirSync(jobDir)
   try {
@@ -70,6 +72,11 @@ export const jobProcessor = async ({
     })
 
     downloadDurationSeconds = elapsedDownloadDuration()
+
+    const elapsedParseDuration = (() => {
+      const start = new Date().getTime()
+      return () => (new Date().getTime() - start) / TIME_MS.second
+    })()
 
     switch (fileType) {
       case 'ifc':
@@ -119,6 +126,8 @@ export const jobProcessor = async ({
       default:
         throw new Error(`File type ${fileType} is not supported`)
     }
+
+    parseDurationSeconds = elapsedParseDuration()
     const output = jobResult.safeParse(JSON.parse(readFileSync(resultsPath, 'utf8')))
 
     if (!output.success) {
@@ -136,6 +145,7 @@ export const jobProcessor = async ({
         versionId,
         durationSeconds: getElapsed(),
         downloadDurationSeconds,
+        parseDurationSeconds,
         parser: parserUsed
       },
       metadata: {
@@ -167,7 +177,8 @@ export const jobProcessor = async ({
       result: {
         parser: parserUsed,
         durationSeconds: getElapsed(),
-        downloadDurationSeconds
+        downloadDurationSeconds,
+        parseDurationSeconds
       },
       reason
     }
