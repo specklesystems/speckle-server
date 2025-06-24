@@ -21,6 +21,7 @@ import { db } from '@/db/knex'
 import {
   deleteProjectFactory,
   getProjectFactory,
+  storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import { getAvailableRegionsFactory } from '@/modules/workspaces/services/regions'
@@ -247,15 +248,21 @@ export const startQueue = async () => {
         // Delete project in main db to "unblock" replication
         await deleteProjectFactory({ db })({ projectId: project.id })
 
-        // Wait for replication from regional db
-        await waitForRegionProjectFactory({
-          getProject: getProjectFactory({ db }),
-          deleteProject: deleteProjectFactory({ db })
-        })({
-          projectId: project.id,
-          regionKey,
-          maxAttempts: 100
-        })
+        try {
+          // Wait for replication from regional db
+          await waitForRegionProjectFactory({
+            getProject: getProjectFactory({ db }),
+            deleteProject: deleteProjectFactory({ db })
+          })({
+            projectId: project.id,
+            regionKey,
+            maxAttempts: 100
+          })
+        } catch (err) {
+          // Failed to delete project or await replication, reset project state in main db
+          await storeProjectFactory({ db })({ project })
+          throw err
+        }
 
         // Reinstate project acl records
         for (const roles of chunk(projectRoles, 15)) {
