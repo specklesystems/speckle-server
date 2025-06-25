@@ -256,10 +256,7 @@ graphql(`
     id
     token
     workspace {
-      id
-      slug
-      description
-      logo
+      ...WorkspaceInviteCard_LimitedWorkspace
     }
     user {
       id
