@@ -35,10 +35,10 @@ export const initializeMetrics = (params: {
   })
 
   registers.forEach((r) =>
-    r.removeSingleMetric('speckle_server_file_import_jobs_request_waiting_count')
+    r.removeSingleMetric('speckle_server_file_import_jobs_request_queue_waiting')
   )
   new Gauge<'parser'>({
-    name: 'speckle_server_file_import_jobs_request_waiting_count',
+    name: 'speckle_server_file_import_jobs_request_queue_waiting',
     help: 'Total number of file import jobs which have been added to the queue to be processed (and are in a waiting state).',
     labelNames: ['parser'],
     registers,
@@ -53,10 +53,10 @@ export const initializeMetrics = (params: {
   })
 
   registers.forEach((r) =>
-    r.removeSingleMetric('speckle_server_file_import_jobs_request_active_count')
+    r.removeSingleMetric('speckle_server_file_import_jobs_request_queue_active')
   )
   new Gauge<'parser'>({
-    name: 'speckle_server_file_import_jobs_request_active_count',
+    name: 'speckle_server_file_import_jobs_request_queue_active',
     help: 'Total number of file import jobs which have been requested and were being processed (are in an active state).',
     labelNames: ['parser'],
     registers,
