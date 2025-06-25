@@ -7,7 +7,8 @@ import {
   IntersectProjectCollaboratorsAndWorkspaceCollaborators,
   QueryAllWorkspaceProjects,
   AddOrUpdateWorkspaceRole,
-  ValidateWorkspaceMemberProjectRole
+  ValidateWorkspaceMemberProjectRole,
+  CopyWorkspace
 } from '@/modules/workspaces/domain/operations'
 import {
   WorkspaceInvalidProjectError,
@@ -99,6 +100,7 @@ export const moveProjectToWorkspaceFactory =
     updateProject,
     updateProjectRole,
     getProjectCollaborators,
+    copyWorkspace,
     getWorkspaceDomains,
     getWorkspaceRolesAndSeats,
     updateWorkspaceRole,
@@ -110,6 +112,7 @@ export const moveProjectToWorkspaceFactory =
     updateProject: UpdateProject
     updateProjectRole: UpdateStreamRole
     getProjectCollaborators: GetStreamCollaborators
+    copyWorkspace: CopyWorkspace
     getWorkspaceDomains: GetWorkspaceDomains
     getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
     updateWorkspaceRole: AddOrUpdateWorkspaceRole
@@ -138,6 +141,9 @@ export const moveProjectToWorkspaceFactory =
       getWorkspaceRolesAndSeats({ workspaceId })
     ])
     if (!workspace) throw new WorkspaceNotFoundError()
+
+    // Ensure workspace record exists in source region
+    await copyWorkspace({ workspaceId: workspace.id })
 
     for (const projectMembers of chunk(projectTeam, 5)) {
       await Promise.all(
