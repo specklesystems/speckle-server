@@ -22,7 +22,7 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
-import { UnsupportedFileTypeError } from '@/modules/fileuploads/errors'
+import { UnsupportedFileTypeError } from '@/modules/fileuploads/helpers/errors'
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
