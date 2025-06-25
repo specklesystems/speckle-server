@@ -30,7 +30,10 @@ import {
   getDb,
   getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
-import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  createNewProjectFactory,
+  waitForRegionProjectFactory
+} from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
   getProjectFactory,
@@ -367,11 +370,13 @@ export const createWorkspaceProjectFactory =
     // deps not injected to ensure proper DB injection
     const createNewProject = createNewProjectFactory({
       storeProject: storeProjectFactory({ db: projectDb }),
-      getProject: getProjectFactory({ db }),
-      deleteProject: deleteProjectFactory({ db: projectDb }),
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
+      waitForRegionProject: waitForRegionProjectFactory({
+        getProject: getProjectFactory({ db }),
+        deleteProject: deleteProjectFactory({ db: projectDb })
+      }),
       emitEvent: getEventBus().emit
     })
 
