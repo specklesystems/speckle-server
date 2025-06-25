@@ -132,7 +132,7 @@ file_size_limit_mb: 100
 ## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits.
 ## If this does not help, please reach out to Speckle at https://speckle.community/
 ##
-file_import_time_limit_min: 10
+file_import_time_limit_min: 30
 
 ## @param file_upload_url_expiry_minutes The number of minutes for which the file upload URL is valid. After this time, the URL will no longer be valid and the file cannot be uploaded.
 ##
@@ -1463,7 +1463,7 @@ fileimport_service:
   ## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits does not help,
   ##  please reach out to Speckle at https://speckle.community/
   ##
-  time_limit_min: 10
+  time_limit_min: 30
 
 ## @section Monitoring
 ## @descriptionStart

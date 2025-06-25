@@ -1078,6 +1078,7 @@ export const updateStreamFactory =
     return updatedStream
   }
 
+/** @deprecated Use `updateStreamFactory` */
 export const updateProjectFactory =
   ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {
