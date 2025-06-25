@@ -3,7 +3,7 @@ import {
   getFileImportServiceIFCQueueName,
   getFileImportServiceRhinoParserRedisUrl,
   getFileImportServiceRhinoQueueName,
-  getFileUploadTimeLimitMinutes,
+  getFileImportTimeLimitMinutes,
   getRedisUrl,
   isProdEnv,
   isTestEnv
@@ -14,6 +14,10 @@ import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/que
 import { JobPayload } from '@speckle/shared/workers/fileimport'
 import { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import Bull from 'bull'
+import {
+  NumberOfFileImportRetries,
+  DelayBetweenFileImportRetriesMinutes
+} from '@/modules/fileuploads/domain/consts'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -33,11 +37,14 @@ const limiter = {
 }
 
 const defaultJobOptions = {
-  attempts: 5,
-  timeout: getFileUploadTimeLimitMinutes() * TIME_MS.minute,
+  attempts: NumberOfFileImportRetries,
+  timeout:
+    NumberOfFileImportRetries *
+    (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
+    TIME_MS.minute,
   backoff: {
     type: 'fixed',
-    delay: 5 * TIME_MS.minute
+    delay: DelayBetweenFileImportRetriesMinutes * TIME_MS.minute
   },
   removeOnComplete: isProdEnv(),
   removeOnFail: false

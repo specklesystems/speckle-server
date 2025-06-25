@@ -100,10 +100,12 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+// This is the time limit for file import jobs to parse the files, not the upload time limit
 export function getFileImportTimeLimitMinutes() {
-  return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '10')
+  return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '30')
 }
 
+// This is for uploading files to the blob storage, not the import time limit for parsing them
 export function getFileUploadTimeLimitMinutes() {
   return getIntFromEnv('FILE_UPLOAD_TIME_LIMIT_MIN', '10')
 }

@@ -190,7 +190,7 @@
     "file_import_time_limit_min": {
       "type": "number",
       "description": "The maximum time (unit is minutes) that the file import service will attempt to process the file before it is considered to have failed",
-      "default": 10
+      "default": 30
     },
     "file_upload_url_expiry_minutes": {
       "type": "number",
@@ -2410,7 +2410,7 @@
         "time_limit_min": {
           "type": "number",
           "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
-          "default": 10
+          "default": 30
         }
       }
     },
