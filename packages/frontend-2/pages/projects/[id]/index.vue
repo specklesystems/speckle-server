@@ -60,7 +60,11 @@
           </LayoutMenu>
         </div>
       </div>
-      <LayoutTabsHorizontal v-model:active-item="activePageTab" :items="pageTabItems">
+      <LayoutTabsHorizontal
+        v-model:active-item="activePageTab"
+        :items="pageTabItems"
+        @open-in-new-tab="handleOpenInNewTab"
+      >
         <NuxtPage :project="project" />
       </LayoutTabsHorizontal>
     </div>
@@ -363,4 +367,15 @@ watch(
   },
   { immediate: true }
 )
+
+const handleOpenInNewTab = (tab: LayoutPageTabItem) => {
+  const tabType = tab.id as
+    | 'models'
+    | 'discussions'
+    | 'automations'
+    | 'collaborators'
+    | 'settings'
+  const url = projectRoute(projectId.value, tabType)
+  window.open(url, '_blank')
+}
 </script>

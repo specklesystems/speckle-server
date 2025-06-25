@@ -35,7 +35,7 @@
           ]"
           class="tab-button"
           :disabled="item.disabled"
-          @click="setActiveItem(item)"
+          @click="handleItemClick(item, $event)"
         >
           <div class="flex space-x-2 items-center">
             <component
@@ -103,6 +103,10 @@ import CommonBadge from '~~/src/components/common/Badge.vue'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
+}>()
+
+const emit = defineEmits<{
+  openInNewTab: [item: LayoutPageTabItem]
 }>()
 
 const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
@@ -209,6 +213,17 @@ const ensureActiveItemVisible = () => {
       block: 'nearest',
       inline: 'center'
     })
+  }
+}
+
+const handleItemClick = (item: LayoutPageTabItem, event: MouseEvent) => {
+  // Check for Ctrl+click or Cmd+click to open in new tab
+  if (event.ctrlKey || event.metaKey) {
+    // Emit event for parent to handle opening in new tab
+    emit('openInNewTab', item)
+  } else {
+    // Normal behavior - set active item
+    setActiveItem(item)
   }
 }
 
