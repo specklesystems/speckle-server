@@ -136,7 +136,7 @@ export const jobProcessor = async ({
           {
             USER_TOKEN: job.token
           },
-          timeout,
+          Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
           resultsPath
         )
         break
@@ -158,7 +158,7 @@ export const jobProcessor = async ({
           {
             USER_TOKEN: job.token
           },
-          timeout,
+          Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
           resultsPath
         )
         break
