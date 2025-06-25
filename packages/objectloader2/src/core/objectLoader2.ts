@@ -27,7 +27,7 @@ export class ObjectLoader2 {
 
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
-    this.#logger = options.logger || console.log
+    this.#logger = options.logger || ((): void => {})
 
     const cacheOptions: CacheOptions = {
       logger: this.#logger,
@@ -53,6 +53,7 @@ export class ObjectLoader2 {
   }
 
   async disposeAsync(): Promise<void> {
+    this.#gathered.dispose()
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
@@ -84,24 +85,27 @@ export class ObjectLoader2 {
 
   async *getObjectIterator(): AsyncGenerator<Base> {
     const rootItem = await this.getRootObject()
-    const root = rootItem?.base
-    if (root === undefined) {
+    if (rootItem?.base === undefined) {
       this.#logger('No root object found!')
       return
     }
-    yield root
+    if (!rootItem.base.__closure) {
+      yield rootItem.base
+      return
+    }
 
     //sort the closures by their values descending
     const sortedClosures = Object.entries(root.__closure ?? []).sort(
       (a, b) => b[1] - a[1]
     )
     const children = sortedClosures.map((x) => x[0])
-    const total = children.length // +1 for the root object
+    const total = children.length + 1 // +1 for the root object
     this.#downloader.initializePool({
       results: new AggregateQueue(this.#gathered, this.#cacheWriter),
       total
     })
     //only for root
+    this.#gathered.add(rootItem)
     this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {

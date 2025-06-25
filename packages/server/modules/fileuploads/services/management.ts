@@ -1,23 +1,28 @@
-import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import type { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import {
+import type {
   SaveUploadFile,
   NotifyChangeInFileStatus,
   SaveUploadFileV2,
-  SaveUploadFileInput,
   PushJobToFileImporter,
+  GetModelUploads,
+  GetModelUploadsItems,
+  GetModelUploadsTotalCount,
+  InsertNewUploadAndNotifyV2,
   InsertNewUploadAndNotify
 } from '@/modules/fileuploads/domain/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   FileImportSubscriptions,
-  PublishSubscription
+  type PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
+import { UnsupportedFileTypeError } from '@/modules/fileuploads/helpers/errors'
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
@@ -25,8 +30,8 @@ export const insertNewUploadAndNotifyFactory =
     saveUploadFile: SaveUploadFile
     publish: PublishSubscription
     emit: EventBusEmit
-  }) =>
-  async (upload: SaveUploadFileInput) => {
+  }): InsertNewUploadAndNotify =>
+  async (upload) => {
     const branch = await deps.getStreamBranchByName(upload.streamId, upload.branchName)
     const file = await deps.saveUploadFile(upload)
 
@@ -69,15 +74,18 @@ export const insertNewUploadAndNotifyFactory =
         fileType: file.fileType
       }
     })
+
+    return file
   }
 
 export const insertNewUploadAndNotifyFactoryV2 =
   (deps: {
+    queues: Pick<FileImportQueue, 'scheduleJob' | 'supportedFileTypes'>[]
     pushJobToFileImporter: PushJobToFileImporter
     saveUploadFile: SaveUploadFileV2
     publish: PublishSubscription
     emit: EventBusEmit
-  }): InsertNewUploadAndNotify =>
+  }): InsertNewUploadAndNotifyV2 =>
   async (upload) => {
     const file = await deps.saveUploadFile(upload)
 
@@ -94,7 +102,15 @@ export const insertNewUploadAndNotifyFactoryV2 =
       projectId: file.projectId
     })
 
+    const queue = deps.queues.find((q) =>
+      q.supportedFileTypes.includes(file.fileType.toLocaleLowerCase())
+    )
+    if (!queue) {
+      throw new UnsupportedFileTypeError()
+    }
+
     await deps.pushJobToFileImporter({
+      scheduleJob: queue.scheduleJob,
       fileName: file.fileName,
       fileType: file.fileType,
       projectId: file.projectId,
@@ -113,6 +129,8 @@ export const insertNewUploadAndNotifyFactoryV2 =
         fileType: file.fileType
       }
     })
+
+    return file
   }
 
 export const notifyChangeInFileStatus =
@@ -154,4 +172,24 @@ export const notifyChangeInFileStatus =
       },
       projectId: streamId
     })
+  }
+
+export const getModelUploadsFactory =
+  (deps: {
+    getModelUploadsItems: GetModelUploadsItems
+    getModelUploadsTotalCount: GetModelUploadsTotalCount
+  }): GetModelUploads =>
+  async (params) => {
+    const [{ items, cursor }, totalCount] = await Promise.all([
+      params.limit === 0
+        ? { items: [], cursor: null }
+        : deps.getModelUploadsItems(params),
+      deps.getModelUploadsTotalCount(params)
+    ])
+
+    return {
+      items,
+      totalCount,
+      cursor
+    }
   }

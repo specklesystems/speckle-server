@@ -5,7 +5,6 @@ import {
   GetWorkspaceSubscription,
   ReconcileSubscriptionData,
   SubscriptionDataInput,
-  UpsertPaidWorkspacePlan,
   UpsertWorkspaceSubscription,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
@@ -23,7 +22,6 @@ import { isPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { calculateNewBillingCycleEnd } from '@/modules/gatekeeper/services/subscriptions/calculateNewBillingCycleEnd'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgrades'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   PaidWorkspacePlans,
   throwUncoveredError,
@@ -40,9 +38,7 @@ export const upgradeWorkspaceSubscriptionFactory =
     getWorkspaceSubscription,
     reconcileSubscriptionData,
     updateWorkspaceSubscription,
-    countSeatsByTypeInWorkspace,
-    upsertWorkspacePlan,
-    emitEvent
+    countSeatsByTypeInWorkspace
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspacePlanProductId: GetWorkspacePlanProductId
@@ -51,14 +47,14 @@ export const upgradeWorkspaceSubscriptionFactory =
     reconcileSubscriptionData: ReconcileSubscriptionData
     updateWorkspaceSubscription: UpsertWorkspaceSubscription
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
-    upsertWorkspacePlan: UpsertPaidWorkspacePlan
-    emitEvent: EventBusEmit
   }) =>
   async ({
+    userId,
     workspaceId,
     targetPlan,
     billingInterval
   }: {
+    userId: string
     workspaceId: string
     targetPlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
@@ -139,9 +135,7 @@ export const upgradeWorkspaceSubscriptionFactory =
       default:
         throwUncoveredError(billingInterval)
     }
-    // must update the billing interval to the new one
-    workspaceSubscription.billingInterval = billingInterval
-    workspaceSubscription.currentBillingCycleEnd = calculateNewBillingCycleEnd({
+    const currentBillingCycleEnd = calculateNewBillingCycleEnd({
       workspaceSubscription
     })
 
@@ -160,8 +154,6 @@ export const upgradeWorkspaceSubscriptionFactory =
       type: WorkspaceSeatType.Editor
     })
 
-    workspaceSubscription.updatedAt = new Date()
-
     // set current plan seat count to 0
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: 0,
@@ -170,43 +162,31 @@ export const upgradeWorkspaceSubscriptionFactory =
       workspacePlan: workspacePlan.name
     })
 
-    // set target plan seat count to current seat count
-    subscriptionData.products.push({
+    // set target plan and subscription
+    const newProduct = {
       quantity: editorsCount,
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
         billingInterval,
         currency: workspaceSubscription.currency
-      }),
-      subscriptionItemId: undefined
-    })
+      })
+    }
 
+    workspaceSubscription.updateIntent = {
+      userId,
+      planName: targetPlan,
+      billingInterval,
+      currentBillingCycleEnd,
+      currency: workspaceSubscription.currency,
+      updatedAt: new Date(),
+      products: [newProduct]
+    }
+    await updateWorkspaceSubscription({ workspaceSubscription })
+
+    subscriptionData.products.push(newProduct)
     await reconcileSubscriptionData({
       subscriptionData,
       prorationBehavior: 'always_invoice'
-    })
-    await upsertWorkspacePlan({
-      workspacePlan: {
-        status: workspacePlan.status,
-        workspaceId,
-        name: targetPlan,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    })
-    await updateWorkspaceSubscription({ workspaceSubscription })
-    await emitEvent({
-      eventName: 'gatekeeper.workspace-plan-updated',
-      payload: {
-        workspacePlan: {
-          workspaceId,
-          status: workspacePlan.status,
-          name: targetPlan
-        },
-        ...(workspacePlan && {
-          previousPlan: { name: workspacePlan.name }
-        })
-      }
     })
   }

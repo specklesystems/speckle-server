@@ -116,6 +116,7 @@ import {
 } from '@/modules/workspaces/services/retrieval'
 import {
   Roles,
+  WorkspacePlanFeatures,
   WorkspacePlans,
   WorkspaceRoles,
   removeNullOrUndefinedKeys,
@@ -154,7 +155,7 @@ import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/use
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { asOperation, commandFactory } from '@/modules/shared/command'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
-import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
+import { getProjectDbClient, getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,
   listWorkspaceSsoMembershipsByUserEmailFactory
@@ -196,8 +197,6 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
-import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
-import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { UsersMeta } from '@/modules/core/dbSchema'
 import { setUserActiveWorkspaceFactory } from '@/modules/workspaces/repositories/users'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
@@ -227,6 +226,7 @@ import {
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
 import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
+import { copyWorkspaceFactory } from '@/modules/workspaces/repositories/projectRegions'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -611,6 +611,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             enableDomainDiscoverabilityForDomain
           } = args.input
 
+          // Check if user can create workspace
+          const canCreate = await context.authPolicies.workspace.canCreateWorkspace({
+            userId: context.userId
+          })
+          throwIfAuthNotOk(canCreate)
+
           const logger = context.log
 
           return await asOperation(
@@ -791,9 +797,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         update: async (_parent, args, context) => {
           const { id: workspaceId, ...workspaceInput } = args.input
-
+          const userId = context.userId!
           await authorizeResolver(
-            context.userId!,
+            userId,
             workspaceId,
             Roles.Workspace.Admin,
             context.resourceAccessRules
@@ -816,11 +822,23 @@ export = FF_WORKSPACES_MODULE_ENABLED
             emitWorkspaceEvent: getEventBus().emit
           })
 
+          if (workspaceInput.isExclusive) {
+            const canMakeWorkspaceExclusive =
+              await context.authPolicies.workspace.canUseWorkspacePlanFeature({
+                feature: WorkspacePlanFeatures.ExclusiveMembership,
+                workspaceId,
+                userId
+              })
+            throwIfAuthNotOk(canMakeWorkspaceExclusive)
+          }
+
           const workspace = await withOperationLogging(
             async () =>
               await updateWorkspace({
                 workspaceId,
-                workspaceInput: omit(workspaceInput, ['defaultProjectRole'])
+                workspaceInput: {
+                  ...omit(workspaceInput, ['defaultProjectRole'])
+                }
               }),
             {
               logger,
@@ -961,7 +979,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId
           })
         },
-        async deleteDomain(_parent, args, context) {
+        deleteDomain: async (_parent, args, context) => {
           const workspaceId = args.input.workspaceId
           await authorizeResolver(
             context.userId!,
@@ -1522,6 +1540,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args
 
+          const projectDb = await getProjectDbClient({ projectId })
+
           const logger = context.log.child({
             projectId,
             streamId: projectId, //legacy
@@ -1545,9 +1565,13 @@ export = FF_WORKSPACES_MODULE_ENABLED
             operationFactory: ({ db, emit }) =>
               moveProjectToWorkspaceFactory({
                 getProject: getProjectFactory({ db }),
-                updateProject: updateProjectFactory({ db }),
+                updateProject: updateProjectFactory({ db: projectDb }),
                 updateProjectRole: updateStreamRoleAndNotify,
                 getProjectCollaborators: getStreamCollaboratorsFactory({ db }),
+                copyWorkspace: copyWorkspaceFactory({
+                  sourceDb: db,
+                  targetDb: projectDb
+                }),
                 getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
                 updateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -2067,10 +2091,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       LimitedWorkspace: {
         team: async (parent, args) => {
-          const team = await getPaginatedItemsFactory<
-            Pick<GetWorkspaceCollaboratorsArgs, 'workspaceId' | 'limit' | 'cursor'>,
-            WorkspaceTeamMember
-          >({
+          const team = await getPaginatedItemsFactory({
             getItems: getWorkspaceCollaboratorsFactory({ db }),
             getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
@@ -2088,7 +2109,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               roles: [Roles.Workspace.Admin]
             }
           })
-          return team
+          return team.items
         }
       },
       ActiveUserMutations: {

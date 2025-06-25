@@ -60,6 +60,7 @@ export type SessionPaymentStatus = 'paid' | 'unpaid'
 export type CheckoutSession = SessionInput & {
   url: string
   workspaceId: string
+  userId: string
   workspacePlan: PaidWorkspacePlans
   paymentStatus: SessionPaymentStatus
   billingInterval: WorkspacePlanBillingIntervals
@@ -91,6 +92,7 @@ export type UpdateCheckoutSessionStatus = (args: {
 
 export type CreateCheckoutSession = (args: {
   workspaceId: string
+  userId: string
   workspaceSlug: string
   editorsCount: number
   workspacePlan: PaidWorkspacePlans
@@ -106,16 +108,33 @@ export type WorkspaceSubscription = {
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
   currency: Currency
+  updateIntent: SubscriptionUpdateIntent | null
   subscriptionData: SubscriptionData
 }
+
+export type SubscriptionUpdateIntent = {
+  userId: string
+  products: SubscriptionIntentProduct[]
+  planName: PaidWorkspacePlans
+} & Pick<
+  WorkspaceSubscription,
+  // status is not needed cause its always provided by stripe
+  'currentBillingCycleEnd' | 'currency' | 'billingInterval' | 'updatedAt'
+>
+
 const subscriptionProduct = z.object({
   productId: z.string(),
-  subscriptionItemId: z.string(),
+  subscriptionItemId: z.string(), // does not exist until billing is called with success
   priceId: z.string(),
   quantity: z.number()
 })
 
 export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
+
+type SubscriptionIntentProduct = Pick<
+  SubscriptionProduct,
+  'productId' | 'priceId' | 'quantity'
+>
 
 export const SubscriptionData = z.object({
   subscriptionId: z.string().min(1),

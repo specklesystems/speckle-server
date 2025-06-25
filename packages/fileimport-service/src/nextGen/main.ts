@@ -1,6 +1,6 @@
 import { AppState } from '@speckle/shared/workers'
 import { initializeQueue } from '@speckle/shared/queue'
-import { FILEIMPORT_TIMEOUT, REDIS_URL } from '@/nextGen/config.js'
+import { FILEIMPORT_TIMEOUT, REDIS_URL, QUEUE_NAME } from '@/nextGen/config.js'
 import type {
   JobPayload,
   FileImportResultPayload
@@ -10,11 +10,12 @@ import { logger } from '@/observability/logging.js'
 import { Logger } from 'pino'
 import { ensureError, TIME_MS } from '@speckle/shared'
 import { jobProcessor } from './jobProcessor.js'
+import { startHealthCheckServer } from './healthcheck.js'
 
-const JobQueueName = 'fileimport-service-jobs'
 let jobQueue: Bull.Queue<JobPayload> | undefined = undefined
 let appState: AppState = AppState.STARTING
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
+let healthCheckServer: ReturnType<typeof startHealthCheckServer> | undefined
 
 export const main = async () => {
   logger.info('Starting FileUploads Service (nextGen 🚀)...')
@@ -25,7 +26,7 @@ export const main = async () => {
 
   try {
     jobQueue = await initializeQueue<JobPayload>({
-      queueName: JobQueueName,
+      queueName: QUEUE_NAME,
       redisUrl: REDIS_URL
     })
   } catch (e) {
@@ -38,7 +39,10 @@ export const main = async () => {
     process.exit(1)
   }
   appState = AppState.RUNNING
-  logger.debug(`Starting processing of "${JobQueueName}" message queue`)
+
+  healthCheckServer = startHealthCheckServer({ logger })
+
+  logger.debug(`Starting processing of "${QUEUE_NAME}" message queue`)
 
   await jobQueue.process(async (payload, done) => {
     const elapsed = (() => {
@@ -72,23 +76,31 @@ export const main = async () => {
     } catch (err) {
       if (appState === AppState.SHUTTINGDOWN) {
         // likely that the job was cancelled due to the service shutting down
-        jobLogger.warn({ err }, 'Processing {jobId} failed')
+        jobLogger.warn({ err }, 'Processing job {jobId} failed')
       } else {
-        jobLogger.error({ err }, 'Processing {jobId} failed')
+        jobLogger.error({ err }, 'Processing job {jobId} failed')
       }
       if (err instanceof Error) {
         encounteredError = true
-        done(err)
-        await sendResult({
-          ...job,
-          result: {
-            status: 'error',
-            reason: err.message,
+        try {
+          await sendResult({
+            ...job,
             result: {
-              durationSeconds: 0
+              status: 'error',
+              reason: err.message,
+              result: {
+                durationSeconds: 0,
+                downloadDurationSeconds: 0,
+                parseDurationSeconds: 0,
+                parser: 'none'
+              }
             }
-          }
-        })
+          })
+        } catch (sendErr) {
+          jobLogger.fatal({ err: sendErr }, 'Failed to send result for job {jobId}')
+        } finally {
+          done(err)
+        }
       } else {
         throw err
       }
@@ -112,19 +124,23 @@ const sendResult = async ({
   token: string
   result: FileImportResultPayload
 }) => {
-  const response = await fetch(
-    `${serverUrl}/api/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-
-      body: JSON.stringify(result)
-    }
+  const sendResultUrl = new URL(
+    `/api/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
+    serverUrl
   )
+  const response = await fetch(sendResultUrl.toString(), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+
+    body: JSON.stringify(result)
+  })
   if (!response.ok) {
     const text = await response.text()
-    currentJob?.logger.error({ cause: text }, 'Failed to report job result')
-    throw new Error(`Failed to report job result: ${text}`)
+    currentJob?.logger.error(
+      { cause: text, sendResultUrl: sendResultUrl.toString() },
+      'Failed to report result for job {jobId} to {sendResultUrl}'
+    )
+    throw new Error(`Failed to report result for job ${jobId}: ${text}`)
   }
 }
 
@@ -144,6 +160,13 @@ const beforeShutdown = async () => {
     currentJob.done(new Error('Job cancelled due to fileimport-service shutdown'))
   }
   // no need to close the job queue and redis client, when the process exits they will be closed automatically
+
+  if (healthCheckServer) {
+    logger.info('Stopping health check server')
+    healthCheckServer.close(() => {
+      logger.info('Health check server stopped')
+    })
+  }
 }
 
 const onShutdown = () => {

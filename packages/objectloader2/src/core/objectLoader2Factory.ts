@@ -55,7 +55,8 @@ export class ObjectLoader2Factory {
         }),
         database: new MemoryDatabase({
           items: new Map<string, Base>()
-        })
+        }),
+        logger: params.options.logger
       })
     } else {
       loader = new ObjectLoader2({
@@ -71,7 +72,8 @@ export class ObjectLoader2Factory {
           logger: params.options?.logger,
           indexedDB: params.options?.indexedDB,
           keyRange: params.options?.keyRange
-        })
+        }),
+        logger: params.options?.logger
       })
     }
     return loader

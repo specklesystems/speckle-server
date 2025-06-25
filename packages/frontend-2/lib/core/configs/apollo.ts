@@ -230,6 +230,10 @@ function createCache(): InMemoryCache {
           },
           permissions: {
             merge: mergeAsObjectsFunction
+          },
+          uploads: {
+            keyArgs: ['input', ['limit']],
+            merge: buildAbstractCollectionMergeFunction('FileUploadCollection')
           }
         }
       },
@@ -319,7 +323,7 @@ function createCache(): InMemoryCache {
             merge: (_existing, incoming) => incoming
           },
           team: {
-            keyArgs: ['filter', 'limit'],
+            keyArgs: ['limit', 'filter', ['roles', 'search', 'seatType']],
             merge: buildAbstractCollectionMergeFunction(
               'WorkspaceCollaboratorCollection'
             )

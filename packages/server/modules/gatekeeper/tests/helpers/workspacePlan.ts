@@ -31,6 +31,7 @@ export const buildTestWorkspaceSubscription = (
       updatedAt: new Date(),
       currentBillingCycleEnd: new Date(),
       billingInterval: 'monthly',
+      updateIntent: {},
       currency: 'usd',
       subscriptionData: buildTestSubscriptionData()
     },
