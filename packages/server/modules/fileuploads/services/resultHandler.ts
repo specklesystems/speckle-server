@@ -1,7 +1,7 @@
 import { Logger } from '@/observability/logging'
 import {
   ProcessFileImportResult,
-  UpdateFileStatus
+  UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileImportSubscriptions,
@@ -16,9 +16,10 @@ import {
   jobResultToConvertedMessage
 } from '@/modules/fileuploads/helpers/convert'
 import { ensureError } from '@speckle/shared'
+import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 
 type OnFileImportResultDeps = {
-  updateFileStatus: UpdateFileStatus
+  updateFileUpload: UpdateFileUpload
   publish: PublishSubscription
   logger: Logger
 }
@@ -42,13 +43,16 @@ export const onFileImportResultFactory =
         convertedCommitId = jobResult.result.versionId
     }
 
-    let updatedFile
+    let updatedFile: FileUploadRecord
     try {
-      updatedFile = await deps.updateFileStatus({
-        fileId: jobId,
-        status,
-        convertedMessage,
-        convertedCommitId
+      updatedFile = await deps.updateFileUpload({
+        id: jobId,
+        upload: {
+          convertedStatus: status,
+          convertedLastUpdate: new Date(),
+          convertedMessage,
+          convertedCommitId
+        }
       })
     } catch (e) {
       const err = ensureError(e)

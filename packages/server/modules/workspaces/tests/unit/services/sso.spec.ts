@@ -381,6 +381,7 @@ describe('Workspace SSO services', () => {
               name: '',
               description: '',
               logo: null,
+              isExclusive: false,
               domainBasedMembershipProtectionEnabled: false,
               discoverabilityEnabled: false,
               discoverabilityAutoJoinEnabled: false,

@@ -24,7 +24,6 @@ const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
-  // ssr: false, // for debugging set to false (prod should always be true)
   ...(buildSourceMaps ? { sourcemap: true } : {}),
   modulesDir: ['./node_modules'],
   typescript: {
@@ -56,18 +55,18 @@ export default defineNuxtConfig({
     redisUrl: '',
     public: {
       ...featureFlags,
-      apiOrigin: 'UNDEFINED',
+      apiOrigin: '',
       backendApiOrigin: '',
       baseUrl: '',
-      mixpanelApiHost: 'UNDEFINED',
-      mixpanelTokenId: 'UNDEFINED',
+      mixpanelApiHost: '',
+      mixpanelTokenId: '',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
       logCsrEmitProps: false,
       logClientApiToken: '',
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
-      serverName: 'UNDEFINED',
+      serverName: 'unknown',
       viewerDebug: false,
       debugCoreWebVitals: false,
       datadogAppId: '',

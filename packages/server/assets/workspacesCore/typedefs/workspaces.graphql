@@ -66,6 +66,7 @@ input WorkspaceUpdateInput {
   discoverabilityEnabled: Boolean
   discoverabilityAutoJoinEnabled: Boolean
   defaultSeatType: WorkspaceSeatType
+  isExclusive: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -331,6 +332,10 @@ type Workspace {
   Workspace-level configuration for models in embedded viewer
   """
   embedOptions: WorkspaceEmbedOptions!
+  """
+  Exclusive workspaces do not allow their workspace members to create or join other workspaces as members.
+  """
+  isExclusive: Boolean!
 }
 
 type WorkspaceEmbedOptions {

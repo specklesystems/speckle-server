@@ -26,7 +26,7 @@ export class ObjectLoader2 {
 
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
-    this.#logger = options.logger || console.log
+    this.#logger = options.logger || ((): void => {})
 
     const cacheOptions: CacheOptions = {
       logger: this.#logger,

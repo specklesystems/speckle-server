@@ -47,38 +47,34 @@
         </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
-        <ProjectCardImportFileArea
-          v-if="!isPendingFileUpload(item)"
-          ref="importArea"
-          :project="project"
-          :model-name="item.fullName"
-          :model="item.model || undefined"
-          class="hidden"
-        />
-        <div
-          v-if="
-            !isPendingFileUpload(item) &&
-            (pendingVersion || itemType === StructureItemType.EmptyModel)
-          "
-          class="flex items-center h-full"
-        >
-          <ProjectPendingFileImportStatus
-            v-if="pendingVersion"
-            :upload="pendingVersion"
-            type="subversion"
-            class="px-4 w-full"
-          />
-          <ProjectCardImportFileArea
-            v-else
-            :empty-state-variant="
-              props.gridOrList === GridListToggleValue.Grid ? 'modelGrid' : 'modelList'
+        <template v-if="!isPendingFileUpload(item)">
+          <div
+            v-show="
+              pendingVersion ||
+              itemType === StructureItemType.EmptyModel ||
+              isVersionUploading
             "
-            :project="project"
-            :model-name="item.fullName"
-            :model="item.model || undefined"
-            class="h-full w-full"
-          />
-        </div>
+            class="flex items-center h-full"
+          >
+            <ProjectPendingFileImportStatus
+              v-if="pendingVersion"
+              :upload="pendingVersion"
+              type="subversion"
+              class="px-4 w-full h-16"
+            />
+            <!-- Import area must exist even if hidden, so that we can trigger uploads from actions -->
+            <ProjectCardImportFileArea
+              v-show="!pendingVersion"
+              ref="importArea"
+              empty-state-variant="modelList"
+              :project="project"
+              :model-name="item.fullName"
+              :model="item.model || undefined"
+              class="h-full w-full"
+              @uploading="onVersionUploading"
+            />
+          </div>
+        </template>
         <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
           <div class="text-body-3xs text-foreground-2 text-right">
             Updated
@@ -122,7 +118,12 @@
       </div>
       <!-- Preview or icon section -->
       <div
-        v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
+        v-if="
+          !isPendingFileUpload(item) &&
+          item.model?.previewUrl &&
+          !pendingVersion &&
+          !isVersionUploading
+        "
         class="w-20 h-16"
       >
         <NuxtLink
@@ -236,8 +237,8 @@ import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { useCanCreateModel } from '~/lib/projects/composables/permissions'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -292,7 +293,6 @@ const props = defineProps<{
   item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
   project: ProjectPageModelsStructureItem_ProjectFragment
   isSearchResult?: boolean
-  gridOrList?: GridListToggleValue
 }>()
 
 const router = useRouter()
@@ -302,6 +302,7 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+const isVersionUploading = ref(false)
 
 const mp = useMixpanel()
 const trackFederateModels = () =>
@@ -430,7 +431,12 @@ const onModelUpdated = () => {
 }
 
 const triggerVersionUpload = () => {
+  if (isVersionUploading.value) return
   importArea.value?.triggerPicker()
+}
+
+const onVersionUploading = (payload: FileAreaUploadingPayload) => {
+  isVersionUploading.value = !!(payload.isUploading || payload.error)
 }
 
 const onVersionsClick = () => {

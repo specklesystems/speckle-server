@@ -841,7 +841,7 @@ jobs:
       - restore_cache:
           name: Restore nix cache
           keys:
-            - nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+            - nix-{{ checksum "./tests/deployment/docker-compose/docker-compose-shell.nix" }}
       - run:
           name: Install the nix package manager
           command: |
@@ -850,13 +850,13 @@ jobs:
       - run:
           name: Initialize nix shell
           command: |
-            nix-shell --run "echo Here, a nix shell for you" ./.circleci/deployment/docker-compose-shell.nix
+            nix-shell --run "echo Here, a nix shell for you" ./tests/deployment/docker-compose/docker-compose-shell.nix
       - save_cache:
-          key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+          key: nix-{{ checksum "./tests/deployment/docker-compose/docker-compose-shell.nix" }}
           paths:
             - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
+      - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./tests/deployment/docker-compose/Tiltfile" ./tests/deployment/helm/docker-compose-shell.nix
 
   deployment-test-helm-chart:
     machine:
@@ -875,7 +875,7 @@ jobs:
       - restore_cache:
           name: Restore nix cache
           keys:
-            - nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+            - nix-{{ checksum "./tests/deployment/helm/helm-chart-shell.nix" }}
       - run:
           name: Install the nix package manager
           command: |
@@ -886,9 +886,9 @@ jobs:
           command: |
             nix-shell \
             --run "echo Here, a nix shell for you" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            ./tests/deployment/helm/helm-chart-shell.nix
       - save_cache:
-          key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+          key: nix-{{ checksum "./tests/deployment/helm/helm-chart-shell.nix" }}
           paths:
             - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
@@ -899,7 +899,7 @@ jobs:
           command: |
             nix-shell \
             --run "helm template speckle-server ./utils/helm/speckle-server" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            ./tests/deployment/helm/helm-chart-shell.nix
       - run:
           name: Add 127.0.0.1 domains to /etc/hosts
           command: |
@@ -922,14 +922,14 @@ jobs:
           name: Deploy Kubernetes (kind) cluster
           command: |
             nix-shell \
-            --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            --run "ctlptl apply --filename ./tests/deployment/helm/cluster-config.yaml" \
+            ./tests/deployment/helmhelm-chart-shell.nix
       - run:
           name: Deploy Kubernetes resources to cluster
           command: |
             nix-shell \
-            --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            --run "LOAD_DOCKER='true' tilt ci --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server --timeout 10m" \
+            ./tests/deployment/helm/helm-chart-shell.nix
 
   docker-build: &build-job
     <<: *docker-base-image

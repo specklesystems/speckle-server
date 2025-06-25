@@ -12,21 +12,23 @@ load('ext://k8s_yaml_glob', 'k8s_yaml_glob')
 symbols = None
 IS_LOAD_DOCKER = os.getenv('LOAD_DOCKER', "false") == "true"
 if IS_LOAD_DOCKER:
-  symbols = load_dynamic('./Tiltfile.load')
+  symbols = load_dynamic('./../load-images.tiltfile')
 else:
-  symbols = load_dynamic('./Tiltfile.build')
+  symbols = load_dynamic('./../build-images.tiltfile')
+
+IMAGE_PREFIX = os.getenv('IMAGE_PREFIX', 'speckle')
 
 # # Prepare the Speckle images
 # # (builds the images or pulls them from remote)
 speckle_image = symbols['speckle_image']
-speckle_image('fileimport-service')
-speckle_image('frontend-2')
-speckle_image('monitor-deployment')
-speckle_image('preview-service')
-speckle_image('server')
-speckle_image('objects','server')
-speckle_image('test-deployment')
-speckle_image('webhook-service')
+speckle_image('fileimport-service', None, IMAGE_PREFIX)
+speckle_image('frontend-2', None, IMAGE_PREFIX)
+speckle_image('monitor-deployment', None, IMAGE_PREFIX)
+speckle_image('preview-service', None, IMAGE_PREFIX)
+speckle_image('server', None, IMAGE_PREFIX)
+speckle_image('objects','server', IMAGE_PREFIX)
+speckle_image('test-deployment', None, IMAGE_PREFIX)
+speckle_image('webhook-service', None, IMAGE_PREFIX)
 
 # Create namespaces
 k8s_yaml_glob('./manifests/*.namespace.yaml')
@@ -38,7 +40,7 @@ k8s_yaml('./manifests/minio.pv.yaml')
 k8s_yaml('./manifests/minio.pvc.yaml')
 
 # Update CoreDNS to allow for local resolution of services internally (i.e. speckle.internal will be routed to nginx)
-local(command='./coredns-up.sh')
+local(command='./scripts/coredns-up.sh')
 
 # Install speckle pod-priority and secrets
 k8s_yaml('./manifests/priorityclass.yaml')
@@ -118,7 +120,7 @@ helm_resource('ingress-nginx',
 helm_resource('speckle-server',
               release_name='speckle-server',
               namespace='speckle-server',
-              chart='./../../utils/helm/speckle-server',
+              chart='./../../../utils/helm/speckle-server',
               flags=['--values=./values/speckle-server.values.yaml',
                       '--kube-context=kind-speckle-server'],
               image_deps=[
@@ -141,7 +143,7 @@ helm_resource('speckle-server',
                           'test.image',
                           'webhook_service.image',
                           ],
-              deps=['../../utils/helm', './values/speckle-server.values.yaml'],
+              deps=['../../../utils/helm', './values/speckle-server.values.yaml'],
               resource_deps=['postgresql', 'minio', 'valkey', 'ingress-nginx'],
               labels=['speckle-server'])
 
