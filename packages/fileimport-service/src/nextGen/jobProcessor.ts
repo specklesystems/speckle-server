@@ -134,6 +134,7 @@ export const jobProcessor = async ({
             'regionName'
           ],
           {
+            SPECKLE_SERVER_URL: job.serverUrl,
             USER_TOKEN: job.token
           },
           Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
@@ -156,6 +157,7 @@ export const jobProcessor = async ({
             job.token
           ],
           {
+            SPECKLE_SERVER_URL: job.serverUrl,
             USER_TOKEN: job.token
           },
           Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
