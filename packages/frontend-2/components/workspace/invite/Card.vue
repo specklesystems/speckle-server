@@ -1,6 +1,6 @@
 <template>
   <WorkspaceCard
-    :name="invite.workspaceName"
+    :name="invite.workspace.name"
     :class="isAccepted ? '' : 'bg-foundation'"
     :banner-text="`${invite.invitedBy.name} invited you to join this workspace`"
   >
@@ -32,9 +32,12 @@ import { CheckIcon } from '@heroicons/vue/20/solid'
 graphql(`
   fragment WorkspaceInviteCard_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
-    workspaceId
-    workspaceSlug
-    workspaceName
+    workspace {
+      id
+      slug
+      name
+      logo
+    }
     invitedBy {
       id
       name
