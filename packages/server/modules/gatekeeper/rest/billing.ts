@@ -205,7 +205,7 @@ export const getBillingRouter = (): Router => {
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
               upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
               emitEvent: getEventBus().emit
-            })({ subscriptionData: parseSubscriptionData(event.data.object) }),
+            })({ subscriptionData: parseSubscriptionData(event.data.object), logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
@@ -228,7 +228,7 @@ export const getBillingRouter = (): Router => {
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
               upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
               emitEvent: getEventBus().emit
-            })({ subscriptionData }),
+            })({ subscriptionData, logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',

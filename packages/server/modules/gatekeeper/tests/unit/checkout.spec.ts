@@ -57,12 +57,14 @@ describe('checkout @gatekeeper', () => {
     it('throws for already paid checkout sessions', async () => {
       const sessionId = cryptoRandomString({ length: 10 })
       const subscriptionId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
 
       const err = await expectToThrow(async () => {
         await completeCheckoutSessionFactory({
           getCheckoutSession: async () => ({
             billingInterval: 'monthly',
             id: sessionId,
+            userId,
             paymentStatus: 'paid',
             url: 'https://example.com',
             workspaceId: cryptoRandomString({ length: 10 }),
@@ -99,10 +101,12 @@ describe('checkout @gatekeeper', () => {
           const sessionId = cryptoRandomString({ length: 10 })
           const subscriptionId = cryptoRandomString({ length: 10 })
           const workspaceId = cryptoRandomString({ length: 10 })
+          const userId = cryptoRandomString({ length: 10 })
 
           const storedCheckoutSession: CheckoutSession = {
             billingInterval,
             id: sessionId,
+            userId,
             paymentStatus: 'unpaid',
             url: 'https://example.com',
             workspaceId,
@@ -206,6 +210,7 @@ describe('checkout @gatekeeper', () => {
   describe('startCheckoutSessionFactory creates a function, that', () => {
     it('does not allow checkout if workspace plan does not exists', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
           getWorkspacePlan: async () => null,
@@ -226,6 +231,7 @@ describe('checkout @gatekeeper', () => {
           }
         })({
           workspaceId,
+          userId,
           billingInterval: 'monthly',
           workspacePlan: 'pro',
           workspaceSlug: cryptoRandomString({ length: 10 }),
@@ -237,6 +243,7 @@ describe('checkout @gatekeeper', () => {
     })
     it('does not allow checkout for paid workspace plans, that is in a valid state', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
@@ -263,6 +270,7 @@ describe('checkout @gatekeeper', () => {
           }
         })({
           workspaceId,
+          userId,
           billingInterval: 'monthly',
           workspacePlan: 'pro',
           workspaceSlug: cryptoRandomString({ length: 10 }),
@@ -274,6 +282,7 @@ describe('checkout @gatekeeper', () => {
     })
     it('does not allow checkout for workspace plans, that is in a paymentFailed state', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
@@ -300,6 +309,7 @@ describe('checkout @gatekeeper', () => {
           }
         })({
           workspaceId,
+          userId,
           billingInterval: 'monthly',
           workspacePlan: 'pro',
           workspaceSlug: cryptoRandomString({ length: 10 }),
@@ -311,6 +321,7 @@ describe('checkout @gatekeeper', () => {
     })
     it('does not allow checkout for a workspace, that already has a checkout session', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
@@ -326,6 +337,7 @@ describe('checkout @gatekeeper', () => {
             paymentStatus: 'unpaid',
             url: '',
             workspaceId,
+            userId,
             workspacePlan: PaidWorkspacePlans.Team,
             currency: 'usd',
             createdAt: new Date(),
@@ -345,6 +357,7 @@ describe('checkout @gatekeeper', () => {
             expect.fail()
           }
         })({
+          userId,
           workspaceId,
           billingInterval: 'monthly',
           workspacePlan: 'team',
@@ -360,11 +373,13 @@ describe('checkout @gatekeeper', () => {
 
     it('creates and stores a checkout for FREE workspaces', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const workspacePlan: PaidWorkspacePlans = 'pro'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       const checkoutSession: CheckoutSession = {
         id: cryptoRandomString({ length: 10 }),
         workspaceId,
+        userId,
         workspacePlan,
         url: 'https://example.com',
         billingInterval,
@@ -393,6 +408,7 @@ describe('checkout @gatekeeper', () => {
         }
       })({
         workspaceId,
+        userId,
         billingInterval,
         workspacePlan,
         workspaceSlug: cryptoRandomString({ length: 10 }),
@@ -405,11 +421,13 @@ describe('checkout @gatekeeper', () => {
 
     it('creates and stores a checkout for FREE workspaces even if it has an old unpaid checkout session', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const workspacePlan: PaidWorkspacePlans = 'team'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       const checkoutSession: CheckoutSession = {
         id: cryptoRandomString({ length: 10 }),
         workspaceId,
+        userId,
         workspacePlan,
         url: 'https://example.com',
         billingInterval,
@@ -427,6 +445,7 @@ describe('checkout @gatekeeper', () => {
         currency: 'usd',
         url: 'https://example.com',
         workspaceId,
+        userId,
         workspacePlan
       }
       let storedCheckoutSession: CheckoutSession | undefined = undefined
@@ -449,6 +468,7 @@ describe('checkout @gatekeeper', () => {
         }
       })({
         workspaceId,
+        userId,
         billingInterval,
         workspacePlan,
         workspaceSlug: cryptoRandomString({ length: 10 }),
@@ -462,6 +482,7 @@ describe('checkout @gatekeeper', () => {
 
     it('does not allow checkout for FREE workspaces if there is a paid checkout session', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const workspacePlan: PaidWorkspacePlans = 'pro'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       let existingCheckoutSession: CheckoutSession | undefined = {
@@ -473,6 +494,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         currency: 'usd',
         workspaceId,
+        userId,
         workspacePlan
       }
       const err = await expectToThrow(async () => {
@@ -494,6 +516,7 @@ describe('checkout @gatekeeper', () => {
           },
           saveCheckoutSession: async () => {}
         })({
+          userId,
           workspaceId,
           billingInterval,
           workspacePlan,
@@ -507,11 +530,13 @@ describe('checkout @gatekeeper', () => {
 
     it('creates and stores a checkout for CANCELED workspaces', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       const workspacePlan: PaidWorkspacePlans = 'pro'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       const checkoutSession: CheckoutSession = {
         id: cryptoRandomString({ length: 10 }),
         workspaceId,
+        userId,
         workspacePlan,
         url: 'https://example.com',
         billingInterval,
@@ -526,6 +551,7 @@ describe('checkout @gatekeeper', () => {
         paymentStatus: 'paid',
         url: '',
         workspaceId,
+        userId,
         workspacePlan: 'team',
         currency: 'usd',
         createdAt: new Date(),
@@ -551,6 +577,7 @@ describe('checkout @gatekeeper', () => {
         }
       })({
         workspaceId,
+        userId,
         billingInterval,
         workspacePlan,
         workspaceSlug: cryptoRandomString({ length: 10 }),
