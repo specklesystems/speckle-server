@@ -13,7 +13,7 @@ export const {
 } = parseEnv(process.env, {
   REDIS_URL: z.string().url(),
   QUEUE_NAME: z.string().default('fileimport-service-jobs'),
-  FILEIMPORT_TIMEOUT: z.number().default(3600000),
+  FILEIMPORT_TIMEOUT: z.number().default(1800000),
   LOG_LEVEL: z.string().default('info'),
   LOG_PRETTY: z.boolean().default(false),
   DOTNET_BINARY_PATH: z.string().default('dotnet'),
