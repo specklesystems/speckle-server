@@ -4,7 +4,7 @@ import { parseEnv } from 'znv'
 export const {
   REDIS_URL,
   QUEUE_NAME,
-  FILEIMPORT_TIMEOUT,
+  FILE_IMPORT_TIME_LIMIT_MIN,
   LOG_LEVEL,
   LOG_PRETTY,
   DOTNET_BINARY_PATH,
@@ -13,7 +13,7 @@ export const {
 } = parseEnv(process.env, {
   REDIS_URL: z.string().url(),
   QUEUE_NAME: z.string().default('fileimport-service-jobs'),
-  FILEIMPORT_TIMEOUT: z.number().default(1800000),
+  FILE_IMPORT_TIME_LIMIT_MIN: z.number().default(30), // minutes
   LOG_LEVEL: z.string().default('info'),
   LOG_PRETTY: z.boolean().default(false),
   DOTNET_BINARY_PATH: z.string().default('dotnet'),
