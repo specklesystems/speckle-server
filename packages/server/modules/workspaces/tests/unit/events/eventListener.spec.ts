@@ -110,10 +110,6 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
             ...workspacePlan,
             name: 'free',
             status: 'valid'
-          },
-          subscription: {
-            totalEditorSeats: 2,
-            billingInterval: BillingInterval.Monthly
           }
         }
       })

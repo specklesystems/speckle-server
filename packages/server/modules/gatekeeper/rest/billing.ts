@@ -15,8 +15,7 @@ import {
   upsertWorkspaceSubscriptionFactory,
   updateCheckoutSessionStatusFactory,
   upsertPaidWorkspacePlanFactory,
-  getWorkspaceSubscriptionBySubscriptionIdFactory,
-  getWorkspaceSubscriptionFactory
+  getWorkspaceSubscriptionBySubscriptionIdFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
@@ -131,7 +130,6 @@ export const getBillingRouter = (): Router => {
                       db
                     }),
                     getWorkspacePlan: getWorkspacePlanFactory({ db }),
-                    getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
                     getSubscriptionData: getSubscriptionDataFactory({
                       stripe
                     }),

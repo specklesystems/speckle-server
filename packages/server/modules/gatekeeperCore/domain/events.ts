@@ -19,9 +19,7 @@ export type GatekeeperEventPayloads = {
   [GatekeeperEvents.WorkspaceTrialExpired]: { workspaceId: string }
   [GatekeeperEvents.WorkspacePlanUpdated]: {
     workspacePlan: WorkspacePlan
-    subscription?: SubscriptionState
     previousWorkspacePlan?: WorkspacePlan
-    previousSubscription?: SubscriptionState
   }
   [GatekeeperEvents.WorkspaceSubscriptionUpdated]: {
     workspacePlan: WorkspacePlan

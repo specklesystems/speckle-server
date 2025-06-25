@@ -3,9 +3,7 @@ import {
   UpdateCheckoutSessionStatus,
   UpsertWorkspaceSubscription,
   UpsertPaidWorkspacePlan,
-  GetSubscriptionData,
-  GetWorkspaceSubscription,
-  getSubscriptionState
+  GetSubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
 import {
   CheckoutSessionNotFoundError,
@@ -22,7 +20,6 @@ export const completeCheckoutSessionFactory =
     upsertWorkspaceSubscription,
     upsertPaidWorkspacePlan,
     getWorkspacePlan,
-    getWorkspaceSubscription,
     getSubscriptionData,
     emitEvent
   }: {
@@ -30,7 +27,6 @@ export const completeCheckoutSessionFactory =
     updateCheckoutSessionStatus: UpdateCheckoutSessionStatus
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
     getWorkspacePlan: GetWorkspacePlan
-    getWorkspaceSubscription: GetWorkspaceSubscription
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getSubscriptionData: GetSubscriptionData
     emitEvent: EventBusEmit
@@ -89,10 +85,6 @@ export const completeCheckoutSessionFactory =
       updateIntent: null,
       subscriptionData
     }
-
-    const previousSubscription = await getWorkspaceSubscription({
-      workspaceId: checkoutSession.workspaceId
-    })
     await upsertWorkspaceSubscription({
       workspaceSubscription
     })
@@ -100,11 +92,7 @@ export const completeCheckoutSessionFactory =
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
         workspacePlan,
-        subscription: getSubscriptionState(workspaceSubscription),
-        previousWorkspacePlan: previousWorkspacePlan || undefined,
-        previousSubscription: previousSubscription
-          ? getSubscriptionState(previousSubscription)
-          : undefined
+        previousWorkspacePlan: previousWorkspacePlan || undefined
       }
     })
   }

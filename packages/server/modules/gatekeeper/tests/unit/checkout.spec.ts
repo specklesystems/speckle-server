@@ -41,9 +41,6 @@ describe('checkout @gatekeeper', () => {
           getSubscriptionData: async () => {
             expect.fail()
           },
-          getWorkspaceSubscription: async () => {
-            expect.fail()
-          },
           emitEvent: async () => {
             expect.fail()
           },
@@ -81,9 +78,6 @@ describe('checkout @gatekeeper', () => {
           },
           getWorkspacePlan: async () => null,
           getSubscriptionData: async () => {
-            expect.fail()
-          },
-          getWorkspaceSubscription: async () => {
             expect.fail()
           },
           emitEvent: async () => {
@@ -138,8 +132,7 @@ describe('checkout @gatekeeper', () => {
             undefined
 
           let emittedEventName: string | undefined = undefined
-
-          let eventWorkspacePlan: unknown
+          let emittedEventPayload: unknown
 
           await completeCheckoutSessionFactory({
             getCheckoutSession: async () => storedCheckoutSession,
@@ -155,10 +148,9 @@ describe('checkout @gatekeeper', () => {
             upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
               storedWorkspaceSubscriptionData = workspaceSubscription
             },
-            getWorkspaceSubscription: async () => null,
             emitEvent: async ({ eventName, payload }) => {
               emittedEventName = eventName
-              eventWorkspacePlan = payload
+              emittedEventPayload = payload
             }
           })({ sessionId, subscriptionId })
 
@@ -169,15 +161,13 @@ describe('checkout @gatekeeper', () => {
             status: 'valid'
           })
           expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
-          expect(eventWorkspacePlan).to.deep.equal({
-            workspacePlan: {
-              workspaceId,
-              name: storedCheckoutSession.workspacePlan,
-              status: 'valid'
-            },
-            previousPlan: {
-              name: 'free'
-            }
+          expect(emittedEventPayload).to.nested.include({
+            'workspacePlan.workspaceId': workspaceId,
+            'workspacePlan.status': 'valid',
+            'workspacePlan.name': storedCheckoutSession.workspacePlan,
+            'previousWorkspacePlan.name': 'free',
+            'previousWorkspacePlan.status': 'valid',
+            'previousWorkspacePlan.workspaceId': workspaceId
           })
           expect(storedWorkspaceSubscriptionData!.billingInterval).to.equal(
             storedCheckoutSession.billingInterval

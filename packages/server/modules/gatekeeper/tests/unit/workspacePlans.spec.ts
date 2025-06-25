@@ -24,7 +24,6 @@ describe('workspacePlan services @gatekeeper', () => {
         upsertWorkspacePlan: () => {
           expect.fail()
         },
-        getWorkspaceSubscription: async () => null,
         getWorkspacePlan: async () => null,
         emitEvent: () => {
           expect.fail()
@@ -156,7 +155,6 @@ describe('workspacePlan services @gatekeeper', () => {
                 },
                 upsertWorkspacePlan: fail,
                 getWorkspacePlan: async () => null,
-                getWorkspaceSubscription: async () => null,
                 emitEvent: fail
               })
               await updateWorkspacePlan({
@@ -189,7 +187,6 @@ describe('workspacePlan services @gatekeeper', () => {
                 return { id: workspaceId } as WorkspaceWithOptionalRole
               },
               upsertWorkspacePlan,
-              getWorkspaceSubscription: async () => null,
               getWorkspacePlan: async () => null,
               emitEvent
             })
@@ -205,10 +202,10 @@ describe('workspacePlan services @gatekeeper', () => {
               expectedPlan
             )
             expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
-            expect(eventPayload).to.deep.equal({
-              workspacePlan: {
-                ...expectedPlan
-              }
+            expect(eventPayload).to.nested.include({
+              'workspacePlan.workspaceId': expectedPlan.workspaceId,
+              'workspacePlan.status': expectedPlan.status,
+              'workspacePlan.name': expectedPlan.name
             })
           }
         })
@@ -229,11 +226,11 @@ describe('workspacePlan services @gatekeeper', () => {
           return { id: workspaceId } as WorkspaceWithOptionalRole
         },
         upsertWorkspacePlan: async () => {},
-        getWorkspaceSubscription: async () => null,
         getWorkspacePlan: async () =>
           buildTestWorkspacePlan({
             workspaceId,
-            name: PaidWorkspacePlans.Team
+            name: PaidWorkspacePlans.Team,
+            status: WorkspacePlanStatuses.Valid
           }),
         emitEvent
       })
@@ -245,15 +242,13 @@ describe('workspacePlan services @gatekeeper', () => {
       })
 
       expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
-      expect(eventPayload).to.deep.equal({
-        workspacePlan: {
-          workspaceId,
-          status: WorkspacePlanStatuses.Valid,
-          name: PaidWorkspacePlans.ProUnlimited
-        },
-        previousPlan: {
-          name: PaidWorkspacePlans.Team
-        }
+      expect(eventPayload).to.nested.include({
+        'workspacePlan.workspaceId': workspaceId,
+        'workspacePlan.status': WorkspacePlanStatuses.Valid,
+        'workspacePlan.name': PaidWorkspacePlans.ProUnlimited,
+        'previousWorkspacePlan.workspaceId': workspaceId,
+        'previousWorkspacePlan.name': PaidWorkspacePlans.Team,
+        'previousWorkspacePlan.status': WorkspacePlanStatuses.Valid
       })
     })
   })

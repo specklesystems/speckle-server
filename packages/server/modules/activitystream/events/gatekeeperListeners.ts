@@ -11,38 +11,21 @@ import { isEqual } from 'lodash'
 const addWorkspacePlanUpdatedActivityFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
   async (payload: EventPayload<typeof GatekeeperEvents.WorkspacePlanUpdated>) => {
-    const { workspacePlan, subscription, previousSubscription, previousWorkspacePlan } =
-      payload.payload
+    const { workspacePlan, previousWorkspacePlan } = payload.payload
 
-    if (
-      isEqual(workspacePlan, previousWorkspacePlan) &&
-      isEqual(subscription, previousSubscription)
-    )
-      return
+    if (isEqual(workspacePlan, previousWorkspacePlan)) return
 
     const info: WorkspacePlanUpdatedActivity = {
       version: '1.0.0',
       new: {
         name: workspacePlan.name,
-        status: workspacePlan.status,
-        ...(subscription
-          ? {
-              totalEditorSeats: subscription.totalEditorSeats,
-              billingInterval: subscription.billingInterval
-            }
-          : {})
+        status: workspacePlan.status
       },
       old: {
         ...(previousWorkspacePlan
           ? {
               name: previousWorkspacePlan.name,
               status: previousWorkspacePlan.status
-            }
-          : {}),
-        ...(previousSubscription
-          ? {
-              totalEditorSeats: previousSubscription.totalEditorSeats,
-              billingInterval: previousSubscription.billingInterval
             }
           : {})
       }

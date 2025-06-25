@@ -51,13 +51,9 @@ export type WorkspacePlanUpdatedActivity = {
   new: {
     name: string
     status: string
-    billingInterval?: string
-    totalEditorSeats?: number
   }
   old: {
     name?: string
     status?: string
-    billingInterval?: string
-    totalEditorSeats?: number
   }
 }
