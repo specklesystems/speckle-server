@@ -86,6 +86,7 @@ const createViewer = async (containerName: string, _stream: string) => {
     }
     const label = new TextLabel() as unknown as Mesh
     label.rotateX(Math.PI * 0.5)
+    // label.position.set(2.5, 0, 0)
     viewer.getRenderer().scene.add(label)
   })
 

@@ -5,8 +5,12 @@ export const speckleTextVert = /* glsl */ `
     uniform vec3 uViewer_low;
 #endif
 
-#ifdef BILLBOARD
+#if defined(BILLBOARD) || defined(BILLBOARD_SCREEN)
     uniform mat4 invProjection;
+#endif
+
+#ifdef BILLBOARD_SCREEN
+    uniform vec2 billboardPixelSize;
 #endif
 
 
@@ -44,18 +48,7 @@ export const speckleTextVert = /* glsl */ `
     }
 #endif
 
-// mat4 getTextTransform(){
-//     #ifdef BATCHED_TEXT
-//         return mat4(
-//             troikaBatchTexel(0.0), 
-//             troikaBatchTexel(1.0), 
-//             troikaBatchTexel(2.0), 
-//             troikaBatchTexel(3.0)
-//         );
-//     #else
-//         return modelMatrix;
-//     #endif
-// }
+
 #ifdef BATCHED_TEXT
     varying float vGradientIndex;
 #endif
@@ -103,25 +96,31 @@ void main() {
              mvPosition = modelViewMatrix * mvPosition;
         #endif
     #else
-        #if defined(BILLBOARD)
+        #if defined(BILLBOARD) || defined(BILLBOARD_SCREEN)
             vec3 billboardPosition = matrix[3].xyz;
-            #if defined(BILLBOARD_FIXED)
-                vec2 billboardPixelSize = troikaBatchTexel(9.0).y / screenSize;
-                gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPosition, 1.0));
-                float div = gl_Position.w;
-                gl_Position /= gl_Position.w;
-                gl_Position.xy += position.xy * billboardPixelSize;
+            #if defined(BILLBOARD_SCREEN)
+                mvPosition = projectionMatrix * (viewMatrix * vec4(billboardPosition, 1.0));
+                float div = mvPosition.w;
+                mvPosition /= mvPosition.w;
+                // Pixel values are computed like so
+                // windowX = ((ndc.x + 1) / 2) * width;
+                // windowY = ((ndc.y + 1) / 2) * height;
+                // That's why we multiply by 2.
+                mvPosition.xy += position.xy * billboardPixelSize * 2.;
+                /** Back to view space for convenience */
+                mvPosition = invProjection * mvPosition;
             #else
-                mvPosition = (modelViewMatrix * vec4(billboardPosition, 1.) + vec4(position.x, position.y, 0., 0.0));
+                mvPosition = (viewMatrix * vec4(billboardPosition, 1.) + vec4(position.x, position.y, 0., 0.0));
             #endif
         #else
              mvPosition = modelViewMatrix * vec4(transformed, 1.);
-            //  mvPosition = modelViewMatrix * mvPosition;
         #endif
     #endif
+
     #ifdef BATCHED_TEXT
         vGradientIndex = troikaBatchTexel(6.).w;
     #endif
+
     gl_Position = projectionMatrix * mvPosition;
 
 

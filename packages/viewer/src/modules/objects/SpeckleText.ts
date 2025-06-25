@@ -479,7 +479,7 @@ export class SpeckleText extends BatchedText {
    * @override
    * Patched version that allows:
    * - Individual text opacities
-   * - Coordinate inside gradient/ramp texture
+   * - Coordinate inside gradient/ramp texture <27>
    */
   //@ts-ignore
   _prepareForRender(material) {

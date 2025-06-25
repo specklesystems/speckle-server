@@ -4,51 +4,57 @@ import {
   BufferGeometry,
   Color,
   DoubleSide,
-  Matrix4,
   Mesh,
   Raycaster,
+  Vector2,
   Vector3,
   type Intersection
 } from 'three'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import { Text } from 'troika-three-text'
-import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial.js'
+import SpeckleBasicMaterial, {
+  BillboardingType
+} from '../materials/SpeckleBasicMaterial.js'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 import { ObjectLayers } from '../../index.js'
 
-export type FontSizeUnits = 'world' | 'screen'
+const _box3: Box3 = new Box3()
+const _vec3: Vector3 = new Vector3()
+
 export interface TextLabelParams {
   text?: string
   fontSize?: number
-  fontSizeUnits?: FontSizeUnits
   maxWidth?: number
   anchorX?: string
   anchorY?: string
-  billboard?: boolean
+  billboard?: BillboardingType | null
   backgroundColor?: Color | null
   backgroundCornerRadius?: number
+  backgroundMargins?: Vector2
   textColor?: Color
   textOpacity?: number
 }
 
 export const DefaultTextLabelParams: TextLabelParams = {
-  text: 'YYYYYYYY',
-  fontSize: 1,
-  fontSizeUnits: 'world',
+  text: 'Test Text',
+  fontSize: 40,
   maxWidth: Number.POSITIVE_INFINITY,
   anchorX: 'center',
   anchorY: 'middle',
-  billboard: false,
+  billboard: 'screen',
   backgroundColor: new Color(0xff0000),
-  backgroundCornerRadius: 1,
+  backgroundCornerRadius: 0.5,
+  backgroundMargins: new Vector2(50, 10),
   textColor: new Color(0x00ffff),
   textOpacity: 1
 }
 
 export class TextLabel extends Text {
   private _background: Mesh | null = null
+  private _backgroundMaterial: SpeckleBasicMaterial
   private _params: TextLabelParams = Object.assign({}, DefaultTextLabelParams)
+  private _textBounds: Box3 = new Box3()
 
   public get textMesh() {
     return this
@@ -58,12 +64,21 @@ export class TextLabel extends Text {
     return this._background
   }
 
+  public get textBounds(): Box3 {
+    return this._textBounds
+  }
+
   public constructor(params: TextLabelParams = DefaultTextLabelParams) {
     super()
 
     this.material = new SpeckleTextMaterial({}).getDerivedMaterial()
     this.material.toneMapped = false
     this.material.side = DoubleSide
+
+    this._backgroundMaterial = new SpeckleBasicMaterial({})
+    this._backgroundMaterial.toneMapped = false
+    this._backgroundMaterial.side = DoubleSide
+    this._backgroundMaterial.depthTest = false
 
     void this.updateParams(params)
 
@@ -77,7 +92,6 @@ export class TextLabel extends Text {
       if (params.anchorX) this.anchorX = params.anchorX
       if (params.anchorY) this.anchorY = params.anchorY
       if (params.maxWidth) this.maxWidth = params.maxWidth
-      if (params.billboard !== undefined) this.material.billboard = params.billboard
 
       if (params.textColor !== undefined) {
         this.material.color.copy(params.textColor)
@@ -90,7 +104,10 @@ export class TextLabel extends Text {
 
       if (this._needsSync) {
         this.sync(() => {
+          this.textBoundsToBox(this._textBounds)
           this.updateBackground()
+          this.updateBillboarding()
+
           if (onUpdateComplete) onUpdateComplete()
           resolve()
         })
@@ -100,37 +117,6 @@ export class TextLabel extends Text {
       }
     })
   }
-
-  // public setTransform(position?: Vector3, quaternion?: Quaternion, scale?: Vector3) {
-  //   if (position) {
-  //     if (this._style.billboard) {
-  //       this.textMesh.material.userData.billboardPos.value.copy(position)
-  //       if (this._background) {
-  //         const textSize = this.textMesh.geometry.boundingBox.getSize(new Vector3())
-  //         const textCenter = this.textMesh.geometry.boundingBox.getCenter(new Vector3())
-  //         const offset = new Vector3()
-  //           .copy(textCenter)
-  //           .multiplyScalar(BACKGROUND_OVERSIZE)
-  //         const sizeOffset = new Vector3()
-  //           .copy(textSize)
-  //           .multiplyScalar(BACKGROUND_OVERSIZE)
-  //           .sub(textSize)
-  //         offset.x +=
-  //           textCenter.x < 0 ? sizeOffset.x : textCenter.x > 0 ? -sizeOffset.x : 0
-  //         offset.y +=
-  //           textCenter.y < 0 ? sizeOffset.y : textCenter.y > 0 ? -sizeOffset.y : 0
-  //         ;(this._background.material as SpeckleBasicMaterial).billboardOffset =
-  //           new Vector2(offset.x, offset.y)
-  //         ;(
-  //           this._background.material as SpeckleBasicMaterial
-  //         ).userData.billboardPos.value.copy(position)
-  //       }
-  //     }
-  //     this.position.copy(position)
-  //   }
-  //   if (quaternion) this.quaternion.copy(quaternion)
-  //   if (scale) this.scale.copy(scale)
-  // }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     super.raycast(raycaster, intersects)
@@ -211,13 +197,7 @@ export class TextLabel extends Text {
   // this.updateBackground()
   // }
 
-  private updateBackground() {
-    if (!this._params.backgroundColor) {
-      if (this._background) this.remove(this._background)
-      this._background = null
-      return
-    }
-
+  private textBoundsToBox(target: Box3 = new Box3()): Box3 {
     const { textRenderInfo } = this
     /** We're using visibleBounds for a better fit */
     const bounds = textRenderInfo.visibleBounds
@@ -237,42 +217,80 @@ export class TextLabel extends Text {
       bounds[1],
       0
     )
-    /** Check if text scale should be taken into account */
-    const box = new Box3().setFromArray(vertices)
+    target.setFromArray(vertices)
+    return target
+  }
+
+  /** Text's visibleBounds, the one we're working with bounds-wise is not a unit quad
+      When using BILLBOARD_SCREEN we store the desired pixel size in the text's `fontSize` property
+      This makes troika compute a large text since it thinks our pixels are world units.
+      So we divide the text bounds by the font size to get the size of the unit text bounds, or
+      another way of putting it, to compute the text bounds value as if fontSize = 1
+      From the unit box, we get it's size and compute a world->pixel ratio which we send to the shader
+   */
+  private updateBillboarding() {
+    this.material.setBillboarding(this._params.billboard)
+    this._backgroundMaterial.setBillboarding(this._params.billboard)
+
+    if (this._params.billboard === 'screen') {
+      /** Get the current bounds */
+      const bounds = _box3.copy(this._textBounds)
+      /** The fontSize is the pixel value so we normalize */
+      bounds.min.divideScalar(this.fontSize)
+      bounds.max.divideScalar(this.fontSize)
+      /** This is the size of the quad for the particular text value */
+      let unitSize = bounds.getSize(_vec3)
+      // const aspect = unitSize.y / unitSize.x;
+      // float billboardPixelSizeY = billboardPixelHeight / screenSize.y;
+      // billboardPixelSize.x = billboardPixelSizeY * aspect;
+      // billboardPixelSize.y = billboardPixelSizeY;
+      this.material.billboardPixelSize = new Vector2(1 / unitSize.y, 1 / unitSize.y)
+
+      /** Same thing for background */
+      const bgBounds = new Box3().copy(this._background?.geometry.boundingBox)
+      bgBounds.min.divideScalar(this.fontSize)
+      bgBounds.max.divideScalar(this.fontSize)
+      unitSize = bgBounds.getSize(_vec3)
+
+      const margins = new Vector2(
+        this._params.backgroundMargins?.x ?? 0,
+        this._params.backgroundMargins?.y ?? 0
+      )
+      this._backgroundMaterial.billboardPixelSize = new Vector2(
+        1 / unitSize.y + (margins.x * (1 / unitSize.x)) / this.fontSize,
+        1 / unitSize.y + (margins.y * (1 / unitSize.y)) / this.fontSize
+      )
+    }
+  }
+
+  private updateBackground() {
+    if (!this._params.backgroundColor) {
+      if (this._background) this.remove(this._background)
+      this._background = null
+      return
+    }
+
+    const box = _box3.copy(this._textBounds)
     const offset = box.getCenter(new Vector3())
-    const matrix = new Matrix4().extractRotation(this.matrixWorld).invert()
-    box.applyMatrix4(new Matrix4().copy(this.matrixWorld).multiply(matrix))
     const boxSize = box.getSize(new Vector3())
-    const geometry = this.RectangleRounded(offset, boxSize.x, boxSize.y, 0.5, 5)
+    const radius = this.fontSize * (this._params.backgroundCornerRadius ?? 0)
+    const margins =
+      this._params.billboard !== 'screen'
+        ? this._params.backgroundMargins ?? new Vector2()
+        : new Vector2()
+
+    const geometry = this.RectangleRounded(
+      offset,
+      boxSize.x + margins.x,
+      boxSize.y + margins.y,
+      radius,
+      5
+    )
     geometry.computeBoundingBox()
     if (this._background) this._background.geometry = geometry
 
-    // this._text.geometry.computeBoundingBox()
-    // const sizeBox = this._text.geometry.boundingBox.getSize(new Vector3())
-    // const sizeDelta = sizeBox.distanceTo(this._backgroundSize)
-    // let geometry = this._background?.geometry
-    // if (sizeDelta > 0.1) {
-    //   /** BACKGROUND_OVERSIZE should not be required for billboarded backgrounds. Weird */
-    //   geometry = this.RectangleRounded(
-    //     sizeBox.x * BACKGROUND_OVERSIZE,
-    //     sizeBox.y * BACKGROUND_OVERSIZE,
-    //     0.5,
-    //     5
-    //   )
-    //   geometry.computeBoundingBox()
-    //   this._backgroundSize.copy(sizeBox)
-    //   if (this._background) this._background.geometry = geometry
-    // }
     if (this._background === null) {
-      const material = new SpeckleBasicMaterial(
-        {},
-        this.material.billboard ? ['BILLBOARD'] : []
-      )
-      material.toneMapped = false
-      material.side = DoubleSide
-      material.depthTest = false
-
-      this._background = new Mesh(geometry, material)
+      this._background = new Mesh(geometry, this._backgroundMaterial)
       this._background.layers.mask = this.layers.mask
       this._background.frustumCulled = false
       this._background.renderOrder = 1
@@ -280,10 +298,6 @@ export class TextLabel extends Text {
     }
     const color = new Color(this._params.backgroundColor).convertSRGBToLinear()
     ;(this._background.material as SpeckleBasicMaterial).color = color
-    // ;(this._background.material as SpeckleBasicMaterial).billboardPixelHeight =
-    //   (this._style.backgroundPixelHeight !== undefined
-    //     ? this._style.backgroundPixelHeight
-    //     : DefaultSpeckleTextStyle.backgroundPixelHeight || 0) * window.devicePixelRatio
   }
 
   /** Improved version of https://discourse.threejs.org/t/roundedrectangle-squircle/28645 by way of the vibe */
@@ -292,21 +306,23 @@ export class TextLabel extends Text {
     w: number,
     h: number,
     r: number,
-    s: number
+    s: number,
+    inset = false
   ): BufferGeometry {
     const positions: number[] = []
     const uvs: number[] = []
     const indices: number[] = []
 
-    let maxInset = 0
-    for (let i = 0; i <= s; i++) {
-      const angle = (Math.PI / 2) * (i / (s + 1))
-      const x = r * Math.cos(angle)
-      const inset = r - x
-      if (inset > maxInset) maxInset = inset
+    if (inset) {
+      let maxInset = 0
+      for (let i = 0; i <= s; i++) {
+        const angle = (Math.PI / 2) * (i / (s + 1))
+        const x = r * Math.cos(angle)
+        const inset = r - x
+        if (inset > maxInset) maxInset = inset
+      }
+      w += 2 * maxInset
     }
-    w += 2 * maxInset
-
     const radius = Math.min(r, w / 2, h / 2)
     const segmentsPerCorner = s + 1
     const pointsPerCorner = segmentsPerCorner + 1

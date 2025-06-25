@@ -863,9 +863,10 @@ export class SmoothOrbitControls extends SpeckleControls {
       this._options.orbitAroundCursor && this.usePivotal
         ? this.pivotPoint
         : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
+    this.orbitSphere.position.copy(spherePos)
     /** TO DO: Revisit and set by writing to it's position */
-    const mat = this.orbitSphere.material as SpeckleBasicMaterial
-    mat.userData.billboardPos.value.copy(spherePos)
+    // const mat = this.orbitSphere.material as SpeckleBasicMaterial
+    // mat.userData.billboardPos.value.copy(spherePos)
 
     /** We'd rather have a palpable epsilon for regular sized streams, but also
      *  compute a custom one for microscopic ones
