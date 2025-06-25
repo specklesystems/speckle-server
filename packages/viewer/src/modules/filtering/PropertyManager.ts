@@ -1,8 +1,21 @@
 import flatten from '../../helpers/flatten.js'
 import { type TreeNode, WorldTree } from '../tree/WorldTree.js'
+import { Document } from 'flexsearch'
+
+interface PropertyResult {
+  id: string
+  doc: PropertyDocument
+}
+
+interface PropertyDocument {
+  key: string
+  value: string
+  objectId: string
+}
 
 export class PropertyManager {
   private propCache = {} as Record<string, PropertyInfo[]>
+  private searchIndices = {} as Record<string, Document>
 
   /**
    *
@@ -16,9 +29,9 @@ export class PropertyManager {
     bypassCache = false
   ): Promise<PropertyInfo[]> {
     let rootNode: TreeNode = tree.root
+    const cacheKey = resourceUrl ? resourceUrl : rootNode.model.id
 
-    if (!bypassCache && this.propCache[resourceUrl ? resourceUrl : rootNode.model.id])
-      return this.propCache[resourceUrl ? resourceUrl : rootNode.model.id]
+    if (!bypassCache && this.propCache[cacheKey]) return this.propCache[cacheKey]
 
     if (resourceUrl) {
       const actualRoot = rootNode.children.find(
@@ -30,7 +43,19 @@ export class PropertyManager {
       }
     }
 
+    // Initialize FlexSearch index for this resource
+    const searchIndex = new Document({
+      document: {
+        id: 'id',
+        index: ['key', 'value', 'objectId'],
+        store: ['key', 'value', 'objectId']
+      },
+      preset: 'match', // Enables fuzzy search
+      tokenize: 'full' // Good for substring/fuzzy
+    })
+
     const propValues: { [key: string]: unknown } = {}
+    let docId = 0 // Counter for document IDs in the search index
 
     await tree.walkAsync((node: TreeNode) => {
       if (!node.model.atomic) return true
@@ -38,10 +63,26 @@ export class PropertyManager {
       for (const key in obj) {
         if (Array.isArray(obj[key])) continue
         if (!propValues[key]) propValues[key] = []
-        ;(propValues[key] as Array<unknown>).push({ value: obj[key], id: obj.id })
+
+        const value = obj[key]
+        const objectId = obj.id
+
+        // Add to propValues for backward compatibility
+        ;(propValues[key] as Array<unknown>).push({ value, id: objectId })
+
+        // Add to search index
+        searchIndex.add({
+          id: (docId++).toString(),
+          key,
+          value: typeof value === 'string' ? value : String(value),
+          objectId: String(objectId)
+        })
       }
       return true
     }, rootNode)
+
+    // Store the search index
+    this.searchIndices[cacheKey] = searchIndex
 
     const allPropInfos: PropertyInfo[] = []
 
@@ -106,6 +147,63 @@ export class PropertyManager {
 
     return allPropInfos
   }
+
+  /**
+   * Search for properties by a query string
+   * @param resourceUrl The target resource's url or null for the whole scene
+   * @param query The search query
+   * @returns Array of search results containing property keys, values, and object IDs
+   */
+  public searchProperties(
+    resourceUrl: string | null = null,
+    query: string
+  ): SearchResult[] {
+    const cacheKey = resourceUrl || 'ROOT'
+
+    // Make sure the index exists
+    if (!this.searchIndices[cacheKey]) {
+      console.warn(
+        `No search index available for ${cacheKey}. Call getProperties first.`
+      )
+      return []
+    }
+
+    const index = this.searchIndices[cacheKey]
+    const results = index.search({
+      query,
+      field: ['value'],
+      enrich: true,
+      limit: 100,
+      suggest: true // Enables fuzzy suggestions
+    })
+
+    // Process and flatten results
+    const searchResults: SearchResult[] = []
+
+    for (const item of results) {
+      const result = item.result as unknown[] as PropertyResult[]
+      for (const r of result) {
+        if (r.doc) {
+          searchResults.push({
+            key: r.doc.key,
+            value: r.doc.value,
+            objectId: r.doc.objectId
+          })
+        }
+      }
+    }
+
+    return searchResults
+  }
+}
+
+/**
+ * SearchResult represents a result from a FlexSearch query
+ */
+export interface SearchResult {
+  key: string
+  value: string
+  objectId: string
 }
 
 /**

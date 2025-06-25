@@ -16,7 +16,7 @@ import {
 import { World } from './World.js'
 import { type TreeNode, WorldTree } from './tree/WorldTree.js'
 import SpeckleRenderer from './SpeckleRenderer.js'
-import { type PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
+import { PropertyManager } from './filtering/PropertyManager.js'
 import type { Query, QueryArgsResultMap } from './queries/Query.js'
 import { Queries } from './queries/Queries.js'
 import { type Utils } from './Utils.js'
@@ -246,11 +246,12 @@ export class Viewer extends EventEmitter implements IViewer {
     super.on(eventType, listener)
   }
 
-  public getObjectProperties(
+  public async getObjectProperties(
     resourceURL: string | null = null,
     bypassCache = true
-  ): Promise<PropertyInfo[]> {
-    return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
+  ): Promise<PropertyManager> {
+     await this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
+     return this.propertyManager;
   }
 
   public getDataTree(): void {

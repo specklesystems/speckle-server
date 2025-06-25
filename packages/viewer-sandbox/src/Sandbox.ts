@@ -24,7 +24,6 @@ import {
 import {
   CanonicalView,
   Viewer,
-  PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
   ViewerEvent,
@@ -57,6 +56,7 @@ import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import { ObjectLoader2Factory } from '@speckle/objectloader2'
+import { PropertyManager } from '@speckle/viewer/dist/modules/filtering/PropertyManager'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -64,7 +64,7 @@ export default class Sandbox {
   private tabs
   private viewsFolder!: FolderApi
   private streams: { [url: string]: Array<unknown> } = {}
-  private properties: PropertyInfo[]
+  private properties?: PropertyManager
   private selectionList: SelectionEvent[]
   private objectControls: FolderApi | null = null
   private batchesFolder: FolderApi | null = null
@@ -132,7 +132,9 @@ export default class Sandbox {
   }
 
   public filterParams = {
-    filterBy: 'Volume'
+    filterBy: 'Volume',
+    searchBy: 'contains',
+    searchTerm: '' // Adding search term field
   }
 
   public shadowCatcherParams = {
@@ -177,7 +179,6 @@ export default class Sandbox {
         { title: 'Measurements' }
       ]
     })
-    this.properties = []
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
       this.viewer.setLightConfiguration(DefaultLightConfiguration)
@@ -764,7 +765,7 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
 
-    /** Disabled color grading for now 
+    /** Disabled color grading for now
     postFolder
       .addInput(this.sceneParams, 'contrast', {
         min: 0,
@@ -1054,16 +1055,104 @@ export default class Sandbox {
       }
     })
 
+    // Adding search dropdown next to filterBy
+    filteringFolder.addInput(this.filterParams, 'searchBy', {
+      options: {
+        contains: 'contains',
+        equals: 'equals',
+        startsWith: 'startsWith',
+        endsWith: 'endsWith',
+        greaterThan: 'greaterThan',
+        lessThan: 'lessThan'
+      }
+    })
+
+    // Adding search term input field
+    filteringFolder.addInput(this.filterParams, 'searchTerm', {
+      label: 'Search Term'
+    })
+
     filteringFolder
       .addButton({
         title: 'Apply Filter'
       })
-      .on('click', () => {
-        const data = this.properties.find((value) => {
-          return value.key === this.filterParams.filterBy
-        }) as PropertyInfo
-        this.viewer.getExtension(FilteringExtension).setColorFilter(data)
-        this.pane.refresh()
+      .on('click', async () => {
+        // Format the query based on the search method and term
+        const searchMethod = this.filterParams.searchBy
+        const searchTerm = this.filterParams.searchTerm
+
+        // Construct a formatted query string based on the search method
+        let queryString = ''
+
+        // If a search term is provided, use it with the appropriate method
+        if (searchTerm) {
+          // The actual search implementation would depend on how the search index works
+          // This is a simplified approach that assumes the search index can handle these patterns
+          switch (searchMethod) {
+            case 'contains':
+              queryString = `$*${searchTerm}*`
+              break
+            case 'equals':
+              queryString = `${searchTerm}`
+              break
+            case 'startsWith':
+              queryString = `${searchTerm}*`
+              break
+            case 'endsWith':
+              queryString = `*${searchTerm}`
+              break
+            case 'greaterThan':
+              queryString = `>${searchTerm}`
+              break
+            case 'lessThan':
+              queryString = `<${searchTerm}`
+              break
+          }
+        }
+
+        // Execute the search with the constructed query
+        const data = await this.properties?.searchProperties(null, queryString)
+
+        if (!data || data.length === 0) {
+          console.warn(`No results found for ${searchMethod} "${searchTerm}"`)
+        } else {
+          console.log(`Search results:`, data)
+
+          // If data was found, apply filtering based on the search results
+          if (this.viewer.getExtension(FilteringExtension)) {
+            try {
+              // Extract object IDs from the search results
+              // The structure of search results might vary, so we need to handle it accordingly
+              const objectIds: string[] = []
+
+              // Process search results to extract object IDs
+              // We'll use type assertion as we know these are search results with specific properties
+              for (const result of data) {
+                if (result.objectId) {
+                  objectIds.push(result.objectId)
+                }
+              }
+
+              if (objectIds.length > 0) {
+                console.log(
+                  `Filtering ${objectIds.length} objects: ${objectIds
+                    .slice(0, 5)
+                    .join(', ')}${objectIds.length > 5 ? '...' : ''}`
+                )
+
+                // Apply filtering by isolating the found objects
+                this.viewer.getExtension(FilteringExtension).isolateObjects(objectIds)
+                this.viewer.requestRender()
+              } else {
+                console.warn(
+                  'Search returned results but no valid object IDs were found'
+                )
+              }
+            } catch (error) {
+              console.error('Error applying filter:', error)
+            }
+          }
+        }
       })
 
     filteringFolder

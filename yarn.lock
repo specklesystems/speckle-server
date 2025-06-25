@@ -16459,6 +16459,7 @@ __metadata:
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     flat: "npm:^5.0.2"
+    flexsearch: "npm:^0.8.205"
     js-logger: "npm:1.6.1"
     jsdom: "npm:^24.0.0"
     lodash-es: "npm:^4.17.21"
@@ -30028,6 +30029,13 @@ __metadata:
   version: 3.3.3
   resolution: "flatted@npm:3.3.3"
   checksum: 10/8c96c02fbeadcf4e8ffd0fa24983241e27698b0781295622591fc13585e2f226609d95e422bcf2ef044146ffacb6b68b1f20871454eddf75ab3caa6ee5f4a1fe
+  languageName: node
+  linkType: hard
+
+"flexsearch@npm:^0.8.205":
+  version: 0.8.205
+  resolution: "flexsearch@npm:0.8.205"
+  checksum: 10/f491a76b1413322dbf4cb81dcf42b3179d36bc4b4be11e5acc2c68913ccaf93837ba1da2f9661dad940e5b42795358dbd48a102b0e7f45d244aa59138c4dfe8e
   languageName: node
   linkType: hard
 

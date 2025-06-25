@@ -57,6 +57,7 @@
     "@types/flat": "^5.0.2",
     "earcut": "3.0.1",
     "flat": "^5.0.2",
+    "flexsearch": "^0.8.205",
     "js-logger": "1.6.1",
     "lodash-es": "^4.17.21",
     "polylabel": "2.0.1",

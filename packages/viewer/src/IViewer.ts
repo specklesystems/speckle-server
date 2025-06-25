@@ -1,5 +1,5 @@
 import { Vector3 } from 'three'
-import { type PropertyInfo } from './modules/filtering/PropertyManager.js'
+import { type PropertyManager } from './modules/filtering/PropertyManager.js'
 import type { Query, QueryArgsResultMap } from './modules/queries/Query.js'
 import { type TreeNode, WorldTree } from './modules/tree/WorldTree.js'
 import { type Utils } from './modules/Utils.js'
@@ -192,7 +192,7 @@ export interface IViewer {
   getObjectProperties(
     resourceURL?: string,
     bypassCache?: boolean
-  ): Promise<PropertyInfo[]>
+  ): Promise<PropertyManager>
 
   /** Data ops */
   getWorldTree(): WorldTree
