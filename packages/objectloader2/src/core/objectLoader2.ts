@@ -53,7 +53,6 @@ export class ObjectLoader2 {
   }
 
   async disposeAsync(): Promise<void> {
-    this.#gathered.dispose()
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
@@ -95,7 +94,7 @@ export class ObjectLoader2 {
     }
 
     //sort the closures by their values descending
-    const sortedClosures = Object.entries(root.__closure ?? []).sort(
+    const sortedClosures = Object.entries(rootItem.base.__closure ?? []).sort(
       (a, b) => b[1] - a[1]
     )
     const children = sortedClosures.map((x) => x[0])

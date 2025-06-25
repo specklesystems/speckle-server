@@ -1,15 +1,14 @@
-import { Database } from '../operations/interfaces.js'
-import { CacheOptions } from '../operations/options.js'
-import { CustomLogger, Item } from '../types/types.js'
+import { Database } from '../core/interfaces.js'
+import { CacheOptions } from '../core/options.js'
+import { DefermentManager } from '../deferment/defermentManager.js'
+import { Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
-import { DefermentManager } from './defermentManager.js'
 import Queue from './queue.js'
 
 export class CacheWriter implements Queue<Item> {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: Database
   #defermentManager: DefermentManager
-  #logger: CustomLogger
   #options: CacheOptions
   #disposed = false
 
@@ -21,7 +20,6 @@ export class CacheWriter implements Queue<Item> {
     this.#database = database
     this.#defermentManager = defermentManager
     this.#options = options
-    this.#logger = options.logger || ((): void => {})
   }
 
   add(item: Item): void {
