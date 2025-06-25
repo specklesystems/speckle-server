@@ -3,7 +3,8 @@ import {
   DeleteProject,
   GetProject,
   StoreProject,
-  StoreProjectRole
+  StoreProjectRole,
+  StoreProjectRoles
 } from '@/modules/core/domain/projects/operations'
 import { Project } from '@/modules/core/domain/streams/types'
 import { StreamAclRecord } from '@/modules/core/helpers/types'
@@ -35,6 +36,18 @@ export const deleteProjectFactory =
 
 export const storeProjectRoleFactory =
   ({ db }: { db: Knex }): StoreProjectRole =>
-  async ({ projectId, userId, role }) => {
-    await tables.projectAcl(db).insert({ resourceId: projectId, role, userId })
+  async (role) => {
+    await storeProjectRolesFactory({ db })({ roles: [role] })
+  }
+
+export const storeProjectRolesFactory =
+  ({ db }: { db: Knex }): StoreProjectRoles =>
+  async ({ roles }) => {
+    await tables.projectAcl(db).insert(
+      roles.map((role) => ({
+        resourceId: role.projectId,
+        userId: role.userId,
+        role: role.role
+      }))
+    )
   }

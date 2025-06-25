@@ -48,7 +48,10 @@ import {
   getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
-import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  createNewProjectFactory,
+  waitForRegionProjectFactory
+} from '@/modules/core/services/projects'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   addOrUpdateStreamCollaboratorFactory,
@@ -463,11 +466,13 @@ const resolvers: Resolvers = {
 
       const createNewProject = createNewProjectFactory({
         storeProject: storeProjectFactory({ db: projectDb }),
-        getProject: getProjectFactory({ db }),
-        deleteProject: deleteProjectFactory({ db: projectDb }),
         storeModel: storeModelFactory({ db: projectDb }),
         // THIS MUST GO TO THE MAIN DB
         storeProjectRole: storeProjectRoleFactory({ db }),
+        waitForRegionProject: waitForRegionProjectFactory({
+          getProject: getProjectFactory({ db }),
+          deleteProject: deleteProjectFactory({ db: projectDb })
+        }),
         emitEvent: getEventBus().emit
       })
 

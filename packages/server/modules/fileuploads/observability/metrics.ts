@@ -35,23 +35,39 @@ export const initializeMetrics = (params: {
   })
 
   registers.forEach((r) =>
-    r.removeSingleMetric('speckle_server_file_import_jobs_request_waiting_count')
+    r.removeSingleMetric('speckle_server_file_import_jobs_request_queue_waiting')
   )
-  const fileImportJobsRequestWaitingCounter = new Counter<'parser'>({
-    name: 'speckle_server_file_import_jobs_request_waiting_count',
+  new Gauge<'parser'>({
+    name: 'speckle_server_file_import_jobs_request_queue_waiting',
     help: 'Total number of file import jobs which have been added to the queue to be processed (and are in a waiting state).',
     labelNames: ['parser'],
-    registers
+    registers,
+    async collect() {
+      requestQueues.forEach(async (requestQueue) => {
+        this.set(
+          { parser: requestQueue.label },
+          await requestQueue.queue.getWaitingCount()
+        )
+      })
+    }
   })
 
   registers.forEach((r) =>
-    r.removeSingleMetric('speckle_server_file_import_jobs_request_active_count')
+    r.removeSingleMetric('speckle_server_file_import_jobs_request_queue_active')
   )
-  const fileImportJobsRequestActiveCounter = new Counter<'parser'>({
-    name: 'speckle_server_file_import_jobs_request_active_count',
+  new Gauge<'parser'>({
+    name: 'speckle_server_file_import_jobs_request_queue_active',
     help: 'Total number of file import jobs which have been requested and were being processed (are in an active state).',
     labelNames: ['parser'],
-    registers
+    registers,
+    async collect() {
+      requestQueues.forEach(async (requestQueue) => {
+        this.set(
+          { parser: requestQueue.label },
+          await requestQueue.queue.getActiveCount()
+        )
+      })
+    }
   })
 
   registers.forEach((r) =>
@@ -74,16 +90,8 @@ export const initializeMetrics = (params: {
     registers
   })
 
-  const waitingHandlerFactory = (queueLabel: string) => () => {
-    fileImportJobsRequestWaitingCounter.inc({ parser: queueLabel })
-  }
-
   const completedHandlerFactory = (queueLabel: string) => () => {
     fileImportJobsRequestCompletedCounter.inc({ parser: queueLabel })
-  }
-
-  const activeHandlerFactory = (queueLabel: string) => () => {
-    fileImportJobsRequestActiveCounter.inc({ parser: queueLabel })
   }
 
   const failedHandlerFactory = (queueLabel: string) => () => {
@@ -91,17 +99,11 @@ export const initializeMetrics = (params: {
   }
 
   requestQueues.forEach((requestQueue) => {
-    const waitingHandler = waitingHandlerFactory(requestQueue.label)
     const completedHandler = completedHandlerFactory(requestQueue.label)
-    const activeHandler = activeHandlerFactory(requestQueue.label)
     const failedHandler = failedHandlerFactory(requestQueue.label)
 
-    requestQueue.queue.removeListener('waiting', waitingHandler)
-    requestQueue.queue.on('waiting', waitingHandler)
     requestQueue.queue.removeListener('completed', completedHandler)
     requestQueue.queue.on('completed', completedHandler)
-    requestQueue.queue.removeListener('active', activeHandler)
-    requestQueue.queue.on('active', activeHandler)
     requestQueue.queue.removeListener('failed', failedHandler)
     requestQueue.queue.on('failed', failedHandler)
   })

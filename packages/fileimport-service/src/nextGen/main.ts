@@ -7,7 +7,7 @@ import type {
 import type Bull from 'bull'
 import { Logger } from 'pino'
 import { ensureError, TIME_MS } from '@speckle/shared'
-import { FILEIMPORT_TIMEOUT, REDIS_URL, QUEUE_NAME } from '../nextGen/config.js'
+import { FILE_IMPORT_TIME_LIMIT_MIN, REDIS_URL, QUEUE_NAME } from '../nextGen/config.js'
 import { logger } from '../observability/logging.js'
 import { jobProcessor } from '../nextGen/jobProcessor.js'
 import { startHealthCheckServer } from '../nextGen/healthcheck.js'
@@ -65,7 +65,7 @@ export const main = async () => {
       const result = await jobProcessor({
         job,
         logger,
-        timeout: FILEIMPORT_TIMEOUT,
+        timeout: FILE_IMPORT_TIME_LIMIT_MIN * TIME_MS.minute,
         getAppState: () => appState,
         getElapsed: elapsed
       })

@@ -201,7 +201,7 @@ describe('FileUploads @fileuploads', () => {
           modelId: upload.modelId,
           fileType: upload.fileType,
           projectId: upload.projectId,
-          timeOutSeconds: 1200,
+          timeOutSeconds: 1800,
           blobId: upload.blobId
         }
         expect(result).to.deep.equal(expected)
