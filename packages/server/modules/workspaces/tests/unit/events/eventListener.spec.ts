@@ -105,6 +105,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: GatekeeperEvents.WorkspacePlanUpdated,
         payload: {
+          userId: cryptoRandomString({ length: 10 }),
           workspacePlan,
           previousWorkspacePlan: {
             ...workspacePlan,

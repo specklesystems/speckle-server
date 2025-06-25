@@ -621,6 +621,8 @@ export const workspaceTrackingFactory =
         }
 
         if (payload.workspacePlan.status === WorkspacePlanStatuses.Valid) break
+        // TODO: fix this thing as its own event
+        // TODO: add user Id
         await mixpanel.track({
           eventName: mapPlanNameToMixpanelEventName[payload.workspacePlan.status],
           workspaceId: payload.workspacePlan.workspaceId,

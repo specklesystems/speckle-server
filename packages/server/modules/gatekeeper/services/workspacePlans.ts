@@ -23,10 +23,13 @@ export const updateWorkspacePlanFactory =
     emitEvent: EventBusEmit
   }) =>
   async ({
+    userId,
     workspaceId,
     name,
     status
-  }: Pick<WorkspacePlan, 'workspaceId' | 'name' | 'status'>): Promise<void> => {
+  }: Pick<WorkspacePlan, 'workspaceId' | 'name' | 'status'> & {
+    userId: string | null
+  }): Promise<void> => {
     const workspace = await getWorkspace({
       workspaceId
     })
@@ -79,6 +82,7 @@ export const updateWorkspacePlanFactory =
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
+        userId,
         workspacePlan,
         previousWorkspacePlan: previousWorkspacePlan || undefined
       }

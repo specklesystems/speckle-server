@@ -32,6 +32,7 @@ describe('workspacePlan services @gatekeeper', () => {
 
       const err = await expectToThrow(async () => {
         await updateWorkspacePlan({
+          userId: cryptoRandomString({ length: 10 }),
           workspaceId: cryptoRandomString({ length: 10 }),
           name: PaidWorkspacePlans.Team,
           status: PaidWorkspacePlanStatuses.Canceled
@@ -214,6 +215,7 @@ describe('workspacePlan services @gatekeeper', () => {
 
     it('sends the previous workspace plan in the event payload when present', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
       let emittedEventName: string | undefined = undefined
       let eventPayload: unknown = undefined
       const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
@@ -236,6 +238,7 @@ describe('workspacePlan services @gatekeeper', () => {
       })
 
       await updateWorkspacePlan({
+        userId,
         status: WorkspacePlanStatuses.Valid,
         workspaceId,
         name: PaidWorkspacePlans.ProUnlimited
@@ -243,6 +246,7 @@ describe('workspacePlan services @gatekeeper', () => {
 
       expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
       expect(eventPayload).to.nested.include({
+        userId,
         'workspacePlan.workspaceId': workspaceId,
         'workspacePlan.status': WorkspacePlanStatuses.Valid,
         'workspacePlan.name': PaidWorkspacePlans.ProUnlimited,

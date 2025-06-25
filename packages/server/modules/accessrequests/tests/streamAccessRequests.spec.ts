@@ -12,7 +12,7 @@ import {
   requestProjectAccessFactory,
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
-import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
 import {
   ServerAccessRequests,
   StreamActivity,
@@ -230,7 +230,7 @@ describe('Stream access requests', () => {
 
       // activity stream item inserted
       const streamActivity = await getStreamActivities(otherGuysPrivateStream.id, {
-        actionType: ActionTypes.Stream.AccessRequestSent,
+        actionType: StreamActionTypes.Stream.AccessRequestSent,
         userId: me.id
       })
       expect(streamActivity).to.have.lengthOf(1)
@@ -425,7 +425,7 @@ describe('Stream access requests', () => {
         // activity stream item should be inserted
         if (accept) {
           const streamActivity = await getStreamActivities(myPrivateStream.id, {
-            actionType: ActionTypes.Stream.PermissionsAdd,
+            actionType: StreamActionTypes.Stream.PermissionsAdd,
             userId: me.id
           })
           expect(streamActivity).to.have.lengthOf(1)
@@ -439,7 +439,7 @@ describe('Stream access requests', () => {
           )
         } else {
           const streamActivity = await getStreamActivities(myPrivateStream.id, {
-            actionType: ActionTypes.Stream.AccessRequestDeclined,
+            actionType: StreamActionTypes.Stream.AccessRequestDeclined,
             userId: me.id
           })
           expect(streamActivity).to.have.lengthOf(1)

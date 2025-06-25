@@ -114,6 +114,7 @@ export const handleSubscriptionUpdateFactory =
     let currentBillingCycleEnd
     let currency
     let updatedAt
+    let userId
 
     if (updateIntent) {
       // this is the branch where a user intents to upgrade his subscription
@@ -125,6 +126,7 @@ export const handleSubscriptionUpdateFactory =
       currency = updateIntent.currency
       billingInterval = updateIntent.billingInterval
       currentBillingCycleEnd = updateIntent.currentBillingCycleEnd
+      userId = updateIntent.userId
 
       const productsAreEquivalent = (
         a: Array<{ priceId: string; quantity: number }>,
@@ -192,6 +194,7 @@ export const handleSubscriptionUpdateFactory =
     })
 
     const payload = {
+      userId: userId || '', // TODO: THIS
       workspacePlan: newWorkspacePlan,
       previousWorkspacePlan: workspacePlan,
       subscription: getSubscriptionState(newSubscription),
@@ -204,7 +207,7 @@ export const handleSubscriptionUpdateFactory =
     ) {
       await emitEvent({
         eventName: GatekeeperEvents.WorkspacePlanUpdated,
-        payload
+        payload // TODO: userId might theoretically be here
       })
     }
 

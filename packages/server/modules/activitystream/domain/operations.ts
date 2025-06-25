@@ -6,6 +6,8 @@ import {
   StreamActionType
 } from '@/modules/activitystream/domain/types'
 import {
+  Activity,
+  ActivityEventTypes,
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
@@ -159,7 +161,9 @@ export type GetUserActivity = ({
   items: StreamActivityRecord[]
 }>
 
-export type SaveActivity = (args: Omit<StreamActivityRecord, 'time'>) => Promise<void>
+export type SaveStreamActivity = (
+  args: Omit<StreamActivityRecord, 'time'>
+) => Promise<void>
 
 export type CreateActivitySummary = (args: {
   userId: string
@@ -270,3 +274,7 @@ export type AddBranchDeletedActivity = (params: {
   userId: string
   branchName: string
 }) => Promise<void>
+
+export type SaveActivity = <T extends ActivityEventTypes>(
+  args: Omit<Activity<T>, 'createdAt' | 'id'>
+) => Promise<void>

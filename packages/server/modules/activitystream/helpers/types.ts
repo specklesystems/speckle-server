@@ -1,29 +1,56 @@
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import {
+  WorkspacePlanUpdatedActivity,
+  WorkspaceSubscriptionUpdatedActivity
+} from '@/modules/activitystream/domain/types'
+
+export type ResourceEventsToPayloadMap = {
+  workspace: {
+    workspace_plan_upgraded: WorkspacePlanUpdatedActivity
+    workspace_subscription_upgraded: WorkspaceSubscriptionUpdatedActivity
+  }
+}
+
+export type ActivityEventTypes = {
+  [Resource in keyof ResourceEventsToPayloadMap]: {
+    [Action in keyof ResourceEventsToPayloadMap[Resource]]: {
+      contextResourceType: Resource
+      eventType: Action
+      payload: ResourceEventsToPayloadMap[Resource][Action]
+    }
+  }[keyof ResourceEventsToPayloadMap[Resource]]
+}[keyof ResourceEventsToPayloadMap]
+
+export interface Activity<T extends ActivityEventTypes> {
+  id: string
+  contextResourceId: string
+  contextResourceType: T['contextResourceType']
+  eventType: T['eventType']
+  userId: string | null
+  payload: T['payload']
+  createdAt: Date
+}
 
 export type StreamActivityRecord = {
   streamId: Nullable<string>
   time: Date
-  resourceType: Nullable<(typeof ResourceTypes)[keyof typeof ResourceTypes]>
+  resourceType: Nullable<(typeof StreamResourceTypes)[keyof typeof StreamResourceTypes]>
   resourceId: Nullable<string>
-  actionType: AllActivityTypes
+  actionType: AllStreamActivityTypes
   userId: Nullable<string>
   info: Nullable<Record<string, unknown>>
   message: Nullable<string>
 }
 
-export const ResourceTypes = Object.freeze(<const>{
+export const StreamResourceTypes = Object.freeze(<const>{
   User: 'user',
   Stream: 'stream',
   Commit: 'commit',
   Branch: 'branch',
-  Comment: 'comment',
-  Workspace: 'workspace'
+  Comment: 'comment'
 })
 
-/**
- * User activity type constants
- */
-export const ActionTypes = Object.freeze(<const>{
+export const StreamActionTypes = Object.freeze(<const>{
   Stream: {
     Update: 'stream_update',
     PermissionsRemove: 'stream_permissions_remove',
@@ -59,49 +86,30 @@ export const ActionTypes = Object.freeze(<const>{
     Create: 'user_create',
     Update: 'user_update',
     Delete: 'user_delete'
-  },
-  Workspace: {
-    PlanUpgraded: 'workspace_plan_upgraded',
-    SubscriptionUpgraded: 'workspace_subscription_upgraded'
   }
 })
 
 export type StreamActivityType =
-  (typeof ActionTypes)['Stream'][keyof (typeof ActionTypes)['Stream']]
+  (typeof StreamActionTypes)['Stream'][keyof (typeof StreamActionTypes)['Stream']]
 
 export type CommentActivityType =
-  (typeof ActionTypes)['Comment'][keyof (typeof ActionTypes)['Comment']]
+  (typeof StreamActionTypes)['Comment'][keyof (typeof StreamActionTypes)['Comment']]
 
 export type BranchActivityType =
-  (typeof ActionTypes)['Branch'][keyof (typeof ActionTypes)['Branch']]
+  (typeof StreamActionTypes)['Branch'][keyof (typeof StreamActionTypes)['Branch']]
 
 export type CommitActivityType =
-  (typeof ActionTypes)['Commit'][keyof (typeof ActionTypes)['Commit']]
+  (typeof StreamActionTypes)['Commit'][keyof (typeof StreamActionTypes)['Commit']]
 
 export type UserActivityType =
-  (typeof ActionTypes)['User'][keyof (typeof ActionTypes)['User']]
+  (typeof StreamActionTypes)['User'][keyof (typeof StreamActionTypes)['User']]
 
-export type WorkspaceActivityType =
-  (typeof ActionTypes)['Workspace'][keyof (typeof ActionTypes)['Workspace']]
-
-export type AllActivityTypes =
+export type AllStreamActivityTypes =
   | StreamActivityType
   | CommentActivityType
   | BranchActivityType
   | CommitActivityType
   | UserActivityType
-  | WorkspaceActivityType
-
-// export interface Activity {
-//   streamId: string | null
-//   time: Date
-//   resourceType: typeof ResourceTypes[keyof typeof ResourceTypes]
-//   resourceId: string
-//   actionType: AllActivityTypes
-//   userId: string
-//   info: Record<string, unknown>
-//   message: string
-// }
 
 export interface StreamScopeActivity extends StreamActivityRecord {
   streamId: string
@@ -134,10 +142,4 @@ export interface CommitActivity extends StreamScopeActivity {
 export interface UserActivity extends StreamActivityRecord {
   resourceType: 'user'
   actionType: UserActivityType
-}
-
-export interface WorkspaceActivity extends StreamScopeActivity {
-  streamId: string
-  resourceType: 'workspace'
-  actionType: WorkspaceActivityType
 }

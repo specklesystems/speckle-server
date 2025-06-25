@@ -91,6 +91,7 @@ export const completeCheckoutSessionFactory =
     await emitEvent({
       eventName: 'gatekeeper.workspace-plan-updated',
       payload: {
+        userId: checkoutSession.userId,
         workspacePlan,
         previousWorkspacePlan: previousWorkspacePlan || undefined
       }

@@ -6,7 +6,8 @@ import { EventBus, getEventBus } from '@/modules/shared/services/eventBus'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import {
   getActiveUserStreamsFactory,
-  saveActivityFactory
+  saveActivity,
+  saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -42,41 +43,41 @@ const initializeEventListeners = ({
   eventBus: EventBus
   db: Knex
 }) => {
-  const saveActivity = saveActivityFactory({ db })
+  const saveStreamActivity = saveStreamActivityFactory({ db })
   const reportUserActivity = reportUserActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportAccessRequestActivity = reportAccessRequestActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportBranchActivity = reportBranchActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportCommitActivity = reportCommitActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportCommentActivity = reportCommentActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportStreamInviteActivity = reportStreamInviteActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity,
+    saveActivity: saveStreamActivity,
     getProjectInviteProject: getProjectInviteProjectFactory({
       getStream: getStreamFactory({ db })
     })
   })
   const reportStreamActivity = reportStreamActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportGatekeeperActivity = reportGatekeeperActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveActivity({ db })
   })
 
   const quitCbs = [

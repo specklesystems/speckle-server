@@ -8,13 +8,14 @@ import {
   GetTimelineCount,
   GetUserActivity,
   GetUserTimeline,
-  SaveActivity
+  SaveActivity,
+  SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
 import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
+import { Activity, StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { StreamAclRecord } from '@/modules/core/helpers/types'
 import {
@@ -224,8 +225,8 @@ export const getUserActivityFactory =
   }
 
 // TODO: this function should be a service
-export const saveActivityFactory =
-  ({ db }: { db: Knex }): SaveActivity =>
+export const saveStreamActivityFactory =
+  ({ db }: { db: Knex }): SaveStreamActivity =>
   async ({ streamId, resourceType, resourceId, actionType, userId, info, message }) => {
     const dbObject = {
       streamId, // abc
@@ -269,4 +270,10 @@ export const saveActivityFactory =
         eventPayload: webhooksPayload
       })
     }
+  }
+
+export const saveActivity =
+  ({ db }: { db: Knex }): SaveActivity =>
+  async (activity): Promise<void> => {
+    await db(Activity.name).insert(activity)
   }
