@@ -47,6 +47,10 @@ import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
+import {
+  initializeMetrics,
+  ObserveResult
+} from '@/modules/fileuploads/observability/metrics'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -92,12 +96,18 @@ const scheduleFileImportExpiry = async ({
   )
 }
 
-export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
+export const init: SpeckleModule['init'] = async ({
+  app,
+  isInitial,
+  metricsRegister
+}) => {
   if (!isFileUploadsEnabled()) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
   }
   moduleLogger.info('📄 Init FileUploads module')
+
+  let observeResult: ObserveResult | undefined = undefined
 
   if (isInitial) {
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
@@ -128,6 +138,10 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
         },
         ifcRouter
       )
+      ;({ observeResult } = initializeMetrics({
+        registers: [metricsRegister],
+        requestQueues: [rhinoQueue, ifcQueue]
+      }))
     }
 
     const scheduleExecution = scheduleExecutionFactory({
@@ -170,7 +184,12 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
 
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
     moduleLogger.info('📄 Next Gen File Importer is ENABLED')
-    app.use(nextGenFileImporterRouterFactory({ queues: fileImportQueues }))
+    app.use(
+      nextGenFileImporterRouterFactory({
+        queues: fileImportQueues,
+        observeResult: observeResult ?? undefined
+      })
+    )
   }
 
   // the two routers can be used independently and can both be enabled
