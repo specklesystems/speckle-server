@@ -88,8 +88,10 @@ spec:
         {{- end }}
 
         env:
+          {{- if not .Values.featureFlags.nextGenFileImporterEnabled }}
           - name: SPECKLE_SERVER_URL
             value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
+          {{- end }}
 
           {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
           - name: REDIS_URL
