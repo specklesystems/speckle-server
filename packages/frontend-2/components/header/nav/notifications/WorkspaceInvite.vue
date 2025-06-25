@@ -30,8 +30,7 @@ graphql(`
       ...LimitedUserAvatar
     }
     workspace {
-      id
-      name
+      ...WorkspaceInviteCard_LimitedWorkspace
     }
     token
     user {
