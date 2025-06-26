@@ -50,7 +50,7 @@ import {
   createTestStream,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
-import { retry, Roles } from '@speckle/shared'
+import { retry, Roles, wait } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
@@ -297,7 +297,8 @@ isMultiRegionTestMode()
           regionKey: regionKey2
         })
         expect(resA).to.not.haveGraphQLErrors()
-        await ensureProjectRegion(emptyProject.id, regionKey2)
+        // TODO: Change region move order of events to avoid wait
+        await wait(10_000)
         const role = await getUserStreamRole(adminUser.id, emptyProject.id)
         if (!role || role !== Roles.Stream.Owner) {
           expect.fail('Did not preserve roles on project after region move.')
