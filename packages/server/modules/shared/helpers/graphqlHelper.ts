@@ -63,9 +63,3 @@ export const isUserGraphqlError = (error: GraphQLError): boolean => {
   const code = error.extensions?.code as string
   return userCodes.includes(code)
 }
-
-export type Collection<T> = {
-  cursor: string | null
-  totalCount: number
-  items: T[]
-}
