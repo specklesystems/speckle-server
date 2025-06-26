@@ -9,7 +9,7 @@ import {
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
-  getBranchByIdFactory,
+  getProjectModelByIdFactory,
   getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
@@ -184,7 +184,12 @@ export const init: SpeckleModule['init'] = async ({
     reportSubscriptionEventsFactory({
       publish,
       eventListen: getEventBus().listen,
-      getBranchById: getBranchByIdFactory({ db })
+      getProjectModelById: async (params) => {
+        const projectDb = await getProjectDbClient({
+          projectId: params.projectId
+        })
+        return getProjectModelByIdFactory({ db: projectDb })(params)
+      }
     })()
   }
 
