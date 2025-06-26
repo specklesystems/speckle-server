@@ -9,8 +9,6 @@ import {
   NumberOfFileImportRetries
 } from '@/modules/fileuploads/domain/consts'
 
-const twentyMinutes = 20 * TIME.minute
-
 export const pushJobToFileImporterFactory =
   (deps: {
     createAppToken: CreateAndStoreAppToken
@@ -51,7 +49,7 @@ export const pushJobToFileImporterFactory =
       modelId,
       fileType,
       projectId,
-      timeOutSeconds: twentyMinutes,
+      timeOutSeconds: getFileImportTimeLimitMinutes() * TIME.minute,
       blobId
     })
   }
