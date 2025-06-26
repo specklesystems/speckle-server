@@ -5,11 +5,10 @@ import {
   getFileImportServiceRhinoQueueName,
   getFileImportTimeLimitMinutes,
   getRedisUrl,
-  isProdEnv,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { Logger, logger } from '@/observability/logging'
-import { TIME_MS } from '@speckle/shared'
+import { TIME, TIME_MS } from '@speckle/shared'
 import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
 import { FileImportQueue } from '@/modules/fileuploads/domain/types'
@@ -46,8 +45,16 @@ const defaultJobOptions = {
     type: 'fixed',
     delay: DelayBetweenFileImportRetriesMinutes * TIME_MS.minute
   },
-  removeOnComplete: isProdEnv(),
-  removeOnFail: false
+  removeOnComplete: {
+    // retain completed jobs for 1 day or until it is the 100th completed job being retained, whichever comes first
+    age: 1 * TIME.day,
+    count: 100
+  },
+  removeOnFail: {
+    // retain completed jobs for 1 week or until it is the 1_000th failed job being retained, whichever comes first
+    age: 1 * TIME.week,
+    count: 1_000
+  }
 }
 
 const initializeQueue = async (params: {
