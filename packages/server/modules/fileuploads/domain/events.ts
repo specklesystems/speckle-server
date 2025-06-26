@@ -1,4 +1,7 @@
-import { FileUploadRecordV2 } from '@/modules/fileuploads/helpers/types'
+import {
+  FileUploadRecord,
+  FileUploadRecordV2
+} from '@/modules/fileuploads/helpers/types'
 
 export const fileuploadEventNamespace = 'fileupload' as const
 
@@ -10,10 +13,7 @@ export const FileuploadEvents = {
 
 export type FileuploadEvents = (typeof FileuploadEvents)[keyof typeof FileuploadEvents]
 
-type FileuploadStartedPayload = Pick<
-  FileUploadRecordV2,
-  'userId' | 'projectId' | 'fileSize' | 'fileType'
->
+type FileuploadStartedPayload = { upload: FileUploadRecordV2 & FileUploadRecord }
 
 export type FileuploadEventsPayloads = {
   [FileuploadEvents.Started]: FileuploadStartedPayload

@@ -26,52 +26,19 @@ import { UnsupportedFileTypeError } from '@/modules/fileuploads/helpers/errors'
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
-    getStreamBranchByName: GetStreamBranchByName
     saveUploadFile: SaveUploadFile
-    publish: PublishSubscription
     emit: EventBusEmit
   }): InsertNewUploadAndNotify =>
   async (upload) => {
-    const branch = await deps.getStreamBranchByName(upload.streamId, upload.branchName)
     const file = await deps.saveUploadFile(upload)
-
-    if (!branch) {
-      await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
-        projectPendingModelsUpdated: {
-          id: file.id,
-          type: ProjectPendingModelsUpdatedMessageType.Created,
-          model: file
-        },
-        projectId: file.streamId
-      })
-    } else {
-      await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
-        projectPendingVersionsUpdated: {
-          id: file.id,
-          type: ProjectPendingVersionsUpdatedMessageType.Created,
-          version: file
-        },
-        projectId: file.streamId,
-        branchName: file.branchName
-      })
-    }
-
-    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
-      projectFileImportUpdated: {
-        id: file.id,
-        type: ProjectFileImportUpdatedMessageType.Created,
-        upload: file
-      },
-      projectId: file.streamId
-    })
 
     await deps.emit({
       eventName: FileuploadEvents.Started,
       payload: {
-        userId: file.userId,
-        projectId: file.streamId,
-        fileSize: file.fileSize,
-        fileType: file.fileType
+        upload: {
+          ...file,
+          projectId: upload.streamId
+        }
       }
     })
 
@@ -83,25 +50,10 @@ export const insertNewUploadAndNotifyFactoryV2 =
     queues: Pick<FileImportQueue, 'scheduleJob' | 'supportedFileTypes'>[]
     pushJobToFileImporter: PushJobToFileImporter
     saveUploadFile: SaveUploadFileV2
-    publish: PublishSubscription
     emit: EventBusEmit
   }): InsertNewUploadAndNotifyV2 =>
   async (upload) => {
     const file = await deps.saveUploadFile(upload)
-
-    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
-      projectFileImportUpdated: {
-        id: file.id,
-        type: ProjectFileImportUpdatedMessageType.Created,
-        upload: {
-          ...file,
-          streamId: upload.projectId,
-          branchName: upload.modelName
-        }
-      },
-      projectId: file.projectId
-    })
-
     const queue = deps.queues.find((q) =>
       q.supportedFileTypes.includes(file.fileType.toLocaleLowerCase())
     )
@@ -123,10 +75,12 @@ export const insertNewUploadAndNotifyFactoryV2 =
     await deps.emit({
       eventName: FileuploadEvents.Started,
       payload: {
-        userId: file.userId,
-        projectId: file.projectId,
-        fileSize: file.fileSize,
-        fileType: file.fileType
+        upload: {
+          ...file,
+          streamId: upload.projectId,
+          projectId: upload.projectId,
+          branchName: upload.modelName
+        }
       }
     })
 
