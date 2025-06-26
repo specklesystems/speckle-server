@@ -495,5 +495,5 @@ export const isRateLimiterEnabled = (): boolean => {
 }
 
 export const getFileUploadUrlExpiryMinutes = (): number => {
-  return getIntFromEnv('FILE_UPLOAD_URL_EXPIRY_MINUTES', '60')
+  return getIntFromEnv('FILE_UPLOAD_URL_EXPIRY_MINUTES', '1440')
 }
