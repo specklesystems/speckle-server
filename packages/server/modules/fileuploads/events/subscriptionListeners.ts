@@ -1,4 +1,4 @@
-import { GetBranchById } from '@/modules/core/domain/branches/operations'
+import { GetProjectModelById } from '@/modules/core/domain/branches/operations'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
@@ -15,13 +15,17 @@ import { fileUploadsLogger } from '@/observability/logging'
 import { getRequestLogger } from '@/observability/utils/requestContext'
 
 const reportFileUploadStartedFactory =
-  (deps: { publish: PublishSubscription; getBranchById: GetBranchById }) =>
+  (deps: { publish: PublishSubscription; getProjectModelById: GetProjectModelById }) =>
   async (payload: EventPayload<typeof FileuploadEvents.Started>) => {
     const {
       payload: { upload }
     } = payload
 
-    const model = upload.modelId ? await deps.getBranchById(upload.modelId) : null
+    const projectId = upload.streamId || upload.projectId
+    const model = upload.modelId
+      ? await deps.getProjectModelById({ modelId: upload.modelId, projectId })
+      : null
+
     if (!model) {
       // TODO: Debugging issue that only pops up on latest
       const logger = getRequestLogger() || fileUploadsLogger
@@ -63,7 +67,7 @@ const reportFileUploadStartedFactory =
   }
 
 const reportFileUploadUpdatedFactory =
-  (deps: { publish: PublishSubscription; getBranchById: GetBranchById }) =>
+  (deps: { publish: PublishSubscription }) =>
   async (payload: EventPayload<typeof FileuploadEvents.Updated>) => {
     const {
       payload: { upload, isNewModel }
