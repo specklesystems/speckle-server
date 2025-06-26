@@ -22,7 +22,6 @@ export default class ServerDownloader implements Downloader {
   #fetch: Fetcher
   #results?: Queue<Item>
   #total?: number
-  #count: number = 0
 
   #downloadQueue?: BatchedPool<string>
   #decoder = new TextDecoder()
