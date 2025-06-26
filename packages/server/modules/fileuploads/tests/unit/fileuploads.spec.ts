@@ -16,7 +16,7 @@ import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { TIME } from '@speckle/shared'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
-import { assign } from 'lodash'
+import { assign, get } from 'lodash'
 import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/creation'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
@@ -140,7 +140,7 @@ describe('FileUploads @fileuploads', () => {
       }
       expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
       expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
-      expect(emittedEventPayload).to.be.deep.equal({
+      expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
         userId: userOneId,
         projectId: createdStreamId,
         fileSize: 100,
