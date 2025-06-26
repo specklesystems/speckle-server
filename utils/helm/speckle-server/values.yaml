@@ -223,9 +223,9 @@ db:
   ## @param db.connectionAcquisitionTimeoutMillis The maximum time in milliseconds to wait for a connection to be acquired from the connection pool.
   ##
   connectionAcquisitionTimeoutMillis: 15000
-  ## @param db.connectionCreationTimeoutMillis The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.
+  ## @param db.connectionCreateTimeoutMillis The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.
   ##
-  connectionCreationTimeoutMillis: 5000
+  connectionCreateTimeoutMillis: 5000
   ## @param db.knexAsyncStackTracesEnabled If enabled, will provide better stack traces for errors arising out of knex operations
   ##
   knexAsyncStackTracesEnabled: false
