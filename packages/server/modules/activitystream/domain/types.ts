@@ -14,26 +14,39 @@ import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 
 // Activity
 
-type WorkspacePlanSnapshot = {
-  name: string
-  status: string
+export type ResourceEventsToPayloadMap = {
+  workspace: {
+    workspace_plan_upgraded: WorkspacePlanUpdatedActivity
+    workspace_subscription_upgraded: WorkspaceSubscriptionUpdatedActivity
+  }
 }
 
 export type WorkspacePlanUpdatedActivity = {
   version: '1'
-  new: WorkspacePlanSnapshot
-  old?: WorkspacePlanSnapshot
-}
-
-type WorkspaceBillingSnapshot = WorkspacePlanSnapshot & {
-  billingInterval: string
-  totalEditorSeats: number
+  new: {
+    name: string
+    status: string
+  }
+  old: {
+    name: string
+    status: string
+  } | null
 }
 
 export type WorkspaceSubscriptionUpdatedActivity = {
   version: '1'
-  new: WorkspaceBillingSnapshot
-  old?: WorkspaceBillingSnapshot
+  new: {
+    name: string
+    status: string
+    billingInterval: string
+    totalEditorSeats: number
+  }
+  old?: {
+    name: string
+    status: string
+    billingInterval: string
+    totalEditorSeats: number
+  }
 }
 
 // Stream Activity

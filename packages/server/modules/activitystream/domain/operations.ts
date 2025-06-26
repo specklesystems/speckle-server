@@ -2,12 +2,12 @@ import {
   ActivitySummary,
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput,
+  ResourceEventsToPayloadMap,
   ResourceType,
   StreamActionType
 } from '@/modules/activitystream/domain/types'
 import {
   Activity,
-  ActivityEventTypes,
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
@@ -275,6 +275,9 @@ export type AddBranchDeletedActivity = (params: {
   branchName: string
 }) => Promise<void>
 
-export type SaveActivity = <T extends ActivityEventTypes>(
-  args: Omit<Activity<T>, 'createdAt' | 'id'>
-) => Promise<void>
+export type SaveActivity = <
+  T extends keyof ResourceEventsToPayloadMap,
+  R extends keyof ResourceEventsToPayloadMap[T]
+>(
+  args: Omit<Activity<T, R>, 'createdAt' | 'id'>
+) => Promise<{ id: string }>

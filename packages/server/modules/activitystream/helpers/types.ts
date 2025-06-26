@@ -1,33 +1,16 @@
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import {
-  WorkspacePlanUpdatedActivity,
-  WorkspaceSubscriptionUpdatedActivity
-} from '@/modules/activitystream/domain/types'
+import { ResourceEventsToPayloadMap } from '@/modules/activitystream/domain/types'
 
-export type ResourceEventsToPayloadMap = {
-  workspace: {
-    workspace_plan_upgraded: WorkspacePlanUpdatedActivity
-    workspace_subscription_upgraded: WorkspaceSubscriptionUpdatedActivity
-  }
-}
-
-export type ActivityEventTypes = {
-  [Resource in keyof ResourceEventsToPayloadMap]: {
-    [Action in keyof ResourceEventsToPayloadMap[Resource]]: {
-      contextResourceType: Resource
-      eventType: Action
-      payload: ResourceEventsToPayloadMap[Resource][Action]
-    }
-  }[keyof ResourceEventsToPayloadMap[Resource]]
-}[keyof ResourceEventsToPayloadMap]
-
-export interface Activity<T extends ActivityEventTypes> {
+export interface Activity<
+  T extends keyof ResourceEventsToPayloadMap,
+  R extends keyof ResourceEventsToPayloadMap[T]
+> {
   id: string
   contextResourceId: string
-  contextResourceType: T['contextResourceType']
-  eventType: T['eventType']
+  contextResourceType: T
+  eventType: R
   userId: string | null
-  payload: T['payload']
+  payload: ResourceEventsToPayloadMap[T][R]
   createdAt: Date
 }
 

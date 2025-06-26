@@ -6,7 +6,7 @@ import { EventBus, getEventBus } from '@/modules/shared/services/eventBus'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import {
   getActiveUserStreamsFactory,
-  saveActivity,
+  saveActivityFactory,
   saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
@@ -77,7 +77,7 @@ const initializeEventListeners = ({
   })
   const reportGatekeeperActivity = reportGatekeeperActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveActivity({ db })
+    saveActivity: saveActivityFactory({ db })
   })
 
   const quitCbs = [

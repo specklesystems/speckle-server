@@ -273,11 +273,15 @@ export const saveStreamActivityFactory =
     }
   }
 
-export const saveActivity =
+export const saveActivityFactory =
   ({ db }: { db: Knex }): SaveActivity =>
-  async (activity): Promise<void> => {
+  async (activity): Promise<{ id: string }> => {
+    const id = cryptoRandomString({ length: 10 })
+
     await db(Activity.name).insert({
       ...activity,
-      id: cryptoRandomString({ length: 10 })
+      id
     })
+
+    return { id }
   }

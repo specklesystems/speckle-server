@@ -26,7 +26,7 @@ const addWorkspacePlanUpdatedActivityFactory =
               name: previousWorkspacePlan.name,
               status: previousWorkspacePlan.status
             }
-          : undefined
+          : null
       }
     })
   }
