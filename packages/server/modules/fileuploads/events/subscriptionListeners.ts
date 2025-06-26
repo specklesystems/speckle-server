@@ -11,6 +11,8 @@ import {
   FileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
+import { fileUploadsLogger } from '@/observability/logging'
+import { getRequestLogger } from '@/observability/utils/requestContext'
 
 const reportFileUploadStartedFactory =
   (deps: { publish: PublishSubscription; getBranchById: GetBranchById }) =>
@@ -21,6 +23,16 @@ const reportFileUploadStartedFactory =
 
     const model = upload.modelId ? await deps.getBranchById(upload.modelId) : null
     if (!model) {
+      // TODO: Debugging issue that only pops up on latest
+      const logger = getRequestLogger() || fileUploadsLogger
+      logger.error(
+        {
+          err: new Error('Model not found for upload'),
+          upload
+        },
+        'PendingModelsUpdated triggered, which shouldnt happen w/ FE2'
+      )
+
       await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
         projectPendingModelsUpdated: {
           id: upload.id,

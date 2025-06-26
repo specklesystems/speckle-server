@@ -1,4 +1,4 @@
-import { Roles, TIME } from '@speckle/shared'
+import { TIME } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { db } from '@/db/knex'
 import {
@@ -12,7 +12,6 @@ import {
   saveUploadFileFactory,
   saveUploadFileFactoryV2
 } from '@/modules/fileuploads/repositories/fileUploads'
-import { authorizeResolver } from '@/modules/shared'
 import {
   FileImportSubscriptions,
   filteredSubscribe
@@ -329,12 +328,17 @@ export = {
           const { id: projectId } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(
-            ctx.userId,
-            projectId,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.projectId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+          const canRead = await ctx.authPolicies.project.canRead({
+            userId: ctx.userId!,
+            projectId: payload.projectId
+          })
+          throwIfAuthNotOk(canRead)
+
           return true
         }
       )
@@ -346,12 +350,17 @@ export = {
           const { id: projectId } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(
-            ctx.userId,
-            projectId,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.projectId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+          const canRead = await ctx.authPolicies.project.canRead({
+            userId: ctx.userId!,
+            projectId: payload.projectId
+          })
+          throwIfAuthNotOk(canRead)
+
           return true
         }
       )
@@ -363,12 +372,17 @@ export = {
           const { id: projectId } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(
-            ctx.userId,
-            projectId,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.projectId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+          const canRead = await ctx.authPolicies.project.canRead({
+            userId: ctx.userId!,
+            projectId: payload.projectId
+          })
+          throwIfAuthNotOk(canRead)
+
           return true
         }
       )
