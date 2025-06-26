@@ -63,11 +63,7 @@ import {
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import { fileImportQueues } from '@/modules/fileuploads/queues/fileimports'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
-import {
-  getBranchesByIdsFactory,
-  getStreamBranchByNameFactory
-} from '@/modules/core/repositories/branches'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import cryptoRandomString from 'crypto-random-string'
 import { getFeatureFlags } from '@speckle/shared/environment'
@@ -76,6 +72,30 @@ import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
+
+const getFileUploadModel = async (params: {
+  upload: FileUploadRecord | FileUploadRecordV2
+  ctx: GraphQLContext
+}) => {
+  const { upload, ctx } = params
+  const projectId = 'streamId' in upload ? upload.streamId : upload.projectId
+
+  const projectDb = await getProjectDbClient({ projectId })
+  if ('modelId' in upload && upload.modelId) {
+    return await ctx.loaders
+      .forRegion({ db: projectDb })
+      .branches.getById.load(upload.modelId)
+  }
+
+  if ('branchName' in upload && upload.branchName) {
+    return await ctx.loaders
+      .forRegion({ db: projectDb })
+      .streams.getStreamBranchByName.forStream(projectId)
+      .load(upload.branchName.toLowerCase())
+  }
+
+  return null
+}
 
 const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   async generateUploadUrl(
@@ -185,14 +205,11 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       queues: fileImportQueues,
       pushJobToFileImporter,
       saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-      publish,
       emit: getEventBus().emit
     })
 
     const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-      getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
       saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-      publish,
       emit: getEventBus().emit
     })
 
@@ -234,6 +251,10 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   }
 }
 import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
+import {
+  FileUploadRecord,
+  FileUploadRecordV2
+} from '@/modules/fileuploads/helpers/types'
 
 export = {
   Stream: {
@@ -279,23 +300,19 @@ export = {
     }
   },
   FileUpload: {
-    projectId: (parent) => parent.streamId,
-    modelName: (parent) => parent.branchName,
+    projectId: (parent) => ('streamId' in parent ? parent.streamId : parent.projectId),
+    streamId: (parent) => ('streamId' in parent ? parent.streamId : parent.projectId),
+    modelName: async (parent, _args, ctx) => {
+      if ('branchName' in parent) return parent.branchName
+      return (await getFileUploadModel({ upload: parent, ctx }))?.name
+    },
+    branchName: async (parent, _args, ctx) => {
+      if ('branchName' in parent) return parent.branchName
+      return (await getFileUploadModel({ upload: parent, ctx }))?.name
+    },
     convertedVersionId: (parent) => parent.convertedCommitId,
     async model(parent, _args, ctx) {
-      const { streamId, modelId, branchName } = parent
-
-      const projectDb = await getProjectDbClient({ projectId: streamId })
-      if (modelId) {
-        return await ctx.loaders
-          .forRegion({ db: projectDb })
-          .branches.getById.load(modelId)
-      }
-
-      return await ctx.loaders
-        .forRegion({ db: projectDb })
-        .streams.getStreamBranchByName.forStream(streamId)
-        .load(branchName.toLowerCase())
+      return await getFileUploadModel({ upload: parent, ctx })
     }
   },
   Mutation: {

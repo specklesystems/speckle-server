@@ -8,7 +8,10 @@ import {
 } from '@/modules/fileuploads/services/resultListener'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import {
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory
+} from '@/modules/core/repositories/branches'
 import {
   getFeatureFlags,
   isFileUploadsEnabled
@@ -31,7 +34,7 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
-import { Optional, Roles, TIME } from '@speckle/shared'
+import { Roles, TIME } from '@speckle/shared'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
@@ -51,10 +54,10 @@ import {
   initializeMetrics,
   ObserveResult
 } from '@/modules/fileuploads/observability/metrics'
+import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/subscriptionListeners'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
-let quitListeners: Optional<() => void> = undefined
 let scheduledTasks: cron.ScheduledTask[] = []
 
 const scheduleFileImportExpiry = async ({
@@ -72,8 +75,7 @@ const scheduleFileImportExpiry = async ({
           db: projectDb
         }),
         notifyUploadStatus: notifyChangeInFileStatus({
-          getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-          publish
+          eventEmit: getEventBus().emit
         })
       })
     )
@@ -160,7 +162,6 @@ export const init: SpeckleModule['init'] = async ({
       })
       await onFileImportProcessedFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
-        publish,
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         eventEmit: getEventBus().emit
@@ -174,12 +175,17 @@ export const init: SpeckleModule['init'] = async ({
       })
       await onFileProcessingFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
-        publish
+        emitEvent: getEventBus().emit
       })(parsedMessage)
     })
     // }
 
-    quitListeners = initializeEventListenersFactory({ db })()
+    initializeEventListenersFactory({ db })()
+    reportSubscriptionEventsFactory({
+      publish,
+      eventListen: getEventBus().listen,
+      getBranchById: getBranchByIdFactory({ db })
+    })()
   }
 
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
@@ -197,7 +203,6 @@ export const init: SpeckleModule['init'] = async ({
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
-  quitListeners?.()
   scheduledTasks.forEach((task) => task.stop())
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
     await shutdownQueues({ logger: moduleLogger })
