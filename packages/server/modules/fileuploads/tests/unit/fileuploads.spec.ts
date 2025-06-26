@@ -1,6 +1,5 @@
 import cryptoRandomString from 'crypto-random-string'
 import { db } from '@/db/knex'
-import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import {
   getFileInfoFactory,
   saveUploadFileFactory,
@@ -10,7 +9,6 @@ import {
   insertNewUploadAndNotifyFactory,
   insertNewUploadAndNotifyFactoryV2
 } from '@/modules/fileuploads/services/management'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { testLogger as logger } from '@/observability/logging'
 import { sleep } from '@/test/helpers'
 import { expect } from 'chai'
@@ -56,9 +54,7 @@ describe('FileUploads @fileuploads', () => {
   describe('Convert files', () => {
     it('Should garbage collect expired files', async () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish,
         emit: async () => {}
       })
       const fileId = cryptoRandomString({ length: 10 })
@@ -86,9 +82,7 @@ describe('FileUploads @fileuploads', () => {
 
     it('Should not garbage collect files that are not expired', async () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish,
         emit: async () => {}
       })
       const fileId = cryptoRandomString({ length: 10 })
@@ -122,9 +116,7 @@ describe('FileUploads @fileuploads', () => {
         emittedEventPayload = payload
       }
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish,
         emit
       })
       const fileId = cryptoRandomString({ length: 10 })
@@ -226,7 +218,6 @@ describe('FileUploads @fileuploads', () => {
             createAppToken: async () => token
           }),
           saveUploadFile: saveUploadFileFactoryV2({ db }),
-          publish,
           emit
         })
         const fileId = cryptoRandomString({ length: 10 })

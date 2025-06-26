@@ -63,11 +63,7 @@ import {
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import { fileImportQueues } from '@/modules/fileuploads/queues/fileimports'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
-import {
-  getBranchesByIdsFactory,
-  getStreamBranchByNameFactory
-} from '@/modules/core/repositories/branches'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import cryptoRandomString from 'crypto-random-string'
 import { getFeatureFlags } from '@speckle/shared/environment'
@@ -209,14 +205,11 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       queues: fileImportQueues,
       pushJobToFileImporter,
       saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-      publish,
       emit: getEventBus().emit
     })
 
     const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-      getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
       saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-      publish,
       emit: getEventBus().emit
     })
 

@@ -95,7 +95,6 @@ export const nextGenFileImporterRouterFactory = (params: {
           queues: params.queues,
           pushJobToFileImporter,
           saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-          publish,
           emit: getEventBus().emit
         })
 
