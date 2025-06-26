@@ -17,7 +17,7 @@ export const jobPayload = job.merge(
     timeOutSeconds: z
       .number()
       .int()
-      .default(20 * TIME.minute)
+      .default(30 * TIME.minute)
   })
 )
 export type JobPayload = z.infer<typeof jobPayload>

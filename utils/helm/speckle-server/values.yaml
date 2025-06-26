@@ -136,7 +136,7 @@ file_import_time_limit_min: 30
 
 ## @param file_upload_url_expiry_minutes The number of minutes for which the file upload URL is valid. After this time, the URL will no longer be valid and the file cannot be uploaded.
 ##
-file_upload_url_expiry_minutes: 10
+file_upload_url_expiry_minutes: 1440
 
 ## @param objects_size_limit_mb This maximum size of the POST request body (unit is Megabytes) that can be sent to the Speckle Objects REST APIs.
 ##

@@ -195,7 +195,7 @@
     "file_upload_url_expiry_minutes": {
       "type": "number",
       "description": "The number of minutes for which the file upload URL is valid. After this time, the URL will no longer be valid and the file cannot be uploaded.",
-      "default": 10
+      "default": 1440
     },
     "objects_size_limit_mb": {
       "type": "number",
