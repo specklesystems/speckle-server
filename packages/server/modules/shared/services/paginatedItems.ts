@@ -1,4 +1,4 @@
-import { Collection } from '@/modules/shared/helpers/graphqlHelper'
+import { Collection } from '@/modules/shared/helpers/dbHelper'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 
 type GetPaginatedItemsArgs = {
