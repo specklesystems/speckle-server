@@ -1,7 +1,8 @@
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanFactory,
-  getWorkspaceSubscriptionFactory
+  getWorkspaceSubscriptionFactory,
+  upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeeper/services/subscriptions'
@@ -29,6 +30,7 @@ export const initializeEventListenersFactory =
             reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
               stripe
             }),
+            upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
             countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db })
           })
 

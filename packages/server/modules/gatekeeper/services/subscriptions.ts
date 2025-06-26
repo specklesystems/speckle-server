@@ -238,7 +238,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     getWorkspacePlanProductId,
     getWorkspacePlanPriceId,
     reconcileSubscriptionData,
-    countSeatsByTypeInWorkspace
+    countSeatsByTypeInWorkspace,
+    upsertWorkspaceSubscription
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
@@ -246,11 +247,14 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     getWorkspacePlanPriceId: GetWorkspacePlanPriceId
     reconcileSubscriptionData: ReconcileSubscriptionData
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
+    upsertWorkspaceSubscription: UpsertWorkspaceSubscription
   }) =>
   async ({
+    userId,
     workspaceId,
     seatType
   }: {
+    userId: string
     workspaceId: string
     seatType: WorkspaceSeatType
   }) => {
@@ -311,6 +315,20 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
       if (currentPlanProduct.quantity >= productAmount) return
       currentPlanProduct.quantity = productAmount
     }
+    await upsertWorkspaceSubscription({
+      workspaceSubscription: {
+        ...workspaceSubscription,
+        updateIntent: {
+          userId,
+          products: subscriptionData.products,
+          planName: workspacePlan.name,
+          currentBillingCycleEnd: workspaceSubscription.currentBillingCycleEnd,
+          currency: workspaceSubscription.currency,
+          billingInterval: workspaceSubscription.billingInterval,
+          updatedAt: new Date()
+        }
+      }
+    })
     await reconcileSubscriptionData({
       subscriptionData,
       prorationBehavior: 'always_invoice'
