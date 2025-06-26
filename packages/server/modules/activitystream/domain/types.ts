@@ -11,43 +11,48 @@ import {
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
+import z from 'zod'
 
 // Activity
 
 export type ResourceEventsToPayloadMap = {
   workspace: {
-    workspace_plan_upgraded: WorkspacePlanUpdatedActivity
-    workspace_subscription_upgraded: WorkspaceSubscriptionUpdatedActivity
+    workspace_plan_upgraded: z.infer<typeof WorkspacePlanUpdatedActivity>
+    workspace_subscription_upgraded: z.infer<
+      typeof WorkspaceSubscriptionUpdatedActivity
+    >
   }
 }
 
-export type WorkspacePlanUpdatedActivity = {
-  version: '1'
-  new: {
-    name: string
-    status: string
-  }
-  old: {
-    name: string
-    status: string
-  } | null
-}
+export const WorkspacePlanUpdatedActivity = z.object({
+  version: z.literal('1'),
+  new: z.object({
+    name: z.string(),
+    status: z.string()
+  }),
+  old: z.nullable(
+    z.object({
+      name: z.string(),
+      status: z.string()
+    })
+  )
+})
 
-export type WorkspaceSubscriptionUpdatedActivity = {
-  version: '1'
-  new: {
-    name: string
-    status: string
-    billingInterval: string
-    totalEditorSeats: number
-  }
-  old?: {
-    name: string
-    status: string
-    billingInterval: string
-    totalEditorSeats: number
-  }
-}
+export const WorkspaceSubscriptionUpdatedActivity = z.object({
+  version: z.literal('1'),
+  new: z.object({
+    name: z.string(),
+    status: z.string(),
+    billingInterval: z.string(),
+    totalEditorSeats: z.number()
+  }),
+  old: z.object({
+    name: z.string(),
+    status: z.string(),
+    billingInterval: z.string(),
+    totalEditorSeats: z.number()
+  })
+})
 
 // Stream Activity
 
