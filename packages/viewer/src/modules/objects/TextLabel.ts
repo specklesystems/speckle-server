@@ -4,10 +4,15 @@ import {
   BufferGeometry,
   Color,
   DoubleSide,
+  Float32BufferAttribute,
+  Int16BufferAttribute,
+  Matrix4,
   Mesh,
+  MeshBasicMaterial,
   Raycaster,
   Vector2,
   Vector3,
+  Vector4,
   type Intersection
 } from 'three'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -19,8 +24,12 @@ import SpeckleBasicMaterial, {
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 import { ObjectLayers } from '../../index.js'
 
+const _mat40: Matrix4 = new Matrix4()
+const _mat41: Matrix4 = new Matrix4()
 const _box3: Box3 = new Box3()
 const _vec3: Vector3 = new Vector3()
+const _vec4: Vector4 = new Vector4()
+const quadVerts = [new Vector3(), new Vector3(), new Vector3(), new Vector3()]
 
 export interface TextLabelParams {
   text?: string
@@ -34,28 +43,64 @@ export interface TextLabelParams {
   backgroundMargins?: Vector2
   textColor?: Color
   textOpacity?: number
+  objectLayer?: ObjectLayers
 }
 
-export const DefaultTextLabelParams: TextLabelParams = {
+/** Screen */
+// export const DefaultTextLabelParams: Required<TextLabelParams> = {
+//   text: 'Test Text',
+//   fontSize: 40,
+//   maxWidth: Number.POSITIVE_INFINITY,
+//   anchorX: 'center',
+//   anchorY: 'middle',
+//   billboard: 'screen',
+//   backgroundColor: new Color(0xff0000),
+//   backgroundCornerRadius: 0.5,
+//   backgroundMargins: new Vector2(50, 10),
+//   textColor: new Color(0x00ffff),
+//   textOpacity: 1,
+//   objectLayer: ObjectLayers.OVERLAY
+// }
+
+// /** World Billboard*/
+export const DefaultTextLabelParams: Required<TextLabelParams> = {
   text: 'Test Text',
-  fontSize: 40,
+  fontSize: 1,
   maxWidth: Number.POSITIVE_INFINITY,
   anchorX: 'center',
   anchorY: 'middle',
-  billboard: 'screen',
+  billboard: 'world',
   backgroundColor: new Color(0xff0000),
   backgroundCornerRadius: 0.5,
-  backgroundMargins: new Vector2(50, 10),
+  backgroundMargins: new Vector2(0.75, 0.1),
   textColor: new Color(0x00ffff),
-  textOpacity: 1
+  textOpacity: 1,
+  objectLayer: ObjectLayers.OVERLAY
 }
 
-export class TextLabel extends Text {
-  private _background: Mesh | null = null
-  private _backgroundMaterial: SpeckleBasicMaterial
-  private _params: TextLabelParams = Object.assign({}, DefaultTextLabelParams)
-  private _textBounds: Box3 = new Box3()
+// /** World */
+// export const DefaultTextLabelParams: Required<TextLabelParams> = {
+//   text: 'Test Text',
+//   fontSize: 1,
+//   maxWidth: Number.POSITIVE_INFINITY,
+//   anchorX: 'center',
+//   anchorY: 'middle',
+//   billboard: null,
+//   backgroundColor: new Color(0xff0000),
+//   backgroundCornerRadius: 0.5,
+//   backgroundMargins: new Vector2(0.75, 0.1),
+//   textColor: new Color(0x00ffff),
+//   textOpacity: 1,
+//   objectLayer: ObjectLayers.OVERLAY
+// }
 
+export class TextLabel extends Text {
+  private readonly DEBUG_BILLBOARDS = false
+  private _background: Mesh
+  private _backgroundMaterial: SpeckleBasicMaterial
+  private _params: Required<TextLabelParams> = Object.assign({}, DefaultTextLabelParams)
+  private _textBounds: Box3 = new Box3()
+  private _collisionMesh: Mesh
   public get textMesh() {
     return this
   }
@@ -70,7 +115,6 @@ export class TextLabel extends Text {
 
   public constructor(params: TextLabelParams = DefaultTextLabelParams) {
     super()
-
     this.material = new SpeckleTextMaterial({}).getDerivedMaterial()
     this.material.toneMapped = false
     this.material.side = DoubleSide
@@ -80,9 +124,37 @@ export class TextLabel extends Text {
     this._backgroundMaterial.side = DoubleSide
     this._backgroundMaterial.depthTest = false
 
-    void this.updateParams(params)
+    this._background = new Mesh(undefined, this._backgroundMaterial)
+    /** Otherwise three.js looses it's shit when rendering it billboarded */
+    this._background.frustumCulled = false
+    /** No raycasting for the background */
+    this._background.raycast = () => {}
 
-    this.layers.set(ObjectLayers.OVERLAY)
+    const geometry = new BufferGeometry()
+    geometry.setAttribute(
+      'position',
+      new Float32BufferAttribute(new Array(12).fill(0), 3)
+    )
+    geometry.setIndex(
+      // prettier-ignore
+      new Int16BufferAttribute(
+        [ 
+          0, 1, 2, // First triangle: bottom-left → bottom-right → top-right
+          0, 2, 3 // Second triangle: bottom-left → top-right → top-left
+        ],
+        1
+      )
+    )
+    this._collisionMesh = new Mesh(
+      geometry,
+      new MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
+    )
+    this._collisionMesh.name = 'TextLabel_Collision_Mesh'
+    this._collisionMesh.renderOrder = 1
+    this._collisionMesh.visible = this.DEBUG_BILLBOARDS
+    this.add(this._collisionMesh)
+
+    void this.updateParams(params)
   }
 
   public async updateParams(params: TextLabelParams, onUpdateComplete?: () => void) {
@@ -98,6 +170,12 @@ export class TextLabel extends Text {
         this.material.color.convertSRGBToLinear()
       }
       if (params.textOpacity !== undefined) this.material.opacity = params.textOpacity
+
+      if (params.objectLayer !== undefined) {
+        this.layers.set(params.objectLayer)
+        this._collisionMesh.layers.set(params.objectLayer)
+        this._background.layers.set(params.objectLayer)
+      }
 
       this.material.needsUpdate = true
       Object.assign(this._params, params)
@@ -119,84 +197,107 @@ export class TextLabel extends Text {
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
-    super.raycast(raycaster, intersects)
-    // const { textRenderInfo, curveRadius } = this.textMesh
-    // if (textRenderInfo) {
-    //   const bounds = textRenderInfo.blockBounds
-    //   const raycastMesh = curveRadius
-    //     ? this.getCurvedRaycastMesh()
-    //     : this.getFlatRaycastMesh()
-    //   const geom = raycastMesh.geometry
-    //   const { position, uv } = geom.attributes
-    //   for (let i = 0; i < uv.count; i++) {
-    //     let x = bounds[0] + uv.getX(i) * (bounds[2] - bounds[0])
-    //     const y = bounds[1] + uv.getY(i) * (bounds[3] - bounds[1])
-    //     let z = 0
-    //     if (curveRadius) {
-    //       z = curveRadius - Math.cos(x / curveRadius) * curveRadius
-    //       x = Math.sin(x / curveRadius) * curveRadius
-    //     }
-    //     if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
-    //       if (this._resolution.length() === 0) return
-    //       const backgroundSizeIncrease = this._background ? BACKGROUND_OVERSIZE : 1
-    //       const billboardSize = new Vector2().set(
-    //         (this.textMesh.material.billboardPixelHeight / this._resolution.x) *
-    //           2 *
-    //           backgroundSizeIncrease,
-    //         (this.textMesh.material.billboardPixelHeight / this._resolution.y) *
-    //           2 *
-    //           backgroundSizeIncrease
-    //       )
+    /** No billboarding, default raycasting works fine */
+    if (!this._params.billboard) {
+      super.raycast(raycaster, intersects)
+      return
+    }
+    /** If we have a billboard, we need to update the collision mesh */
+    const textMatrix = this.matrixWorld
+    const textMatrixInv = _mat40.copy(textMatrix).invert()
 
-    //       const invProjection = new Matrix4()
-    //         .copy(raycaster.camera.projectionMatrix)
-    //         .invert()
-    //       const invView = new Matrix4()
-    //         .copy(raycaster.camera.matrixWorldInverse)
-    //         .invert()
+    const billboardPos = new Vector3().set(
+      textMatrix.elements[12],
+      textMatrix.elements[13],
+      textMatrix.elements[14]
+    )
 
-    //       const clip = new Vector4(
-    //         this.position.x,
-    //         this.position.y,
-    //         this.position.z,
-    //         1.0
-    //       )
-    //         .applyMatrix4(raycaster.camera.matrixWorldInverse)
-    //         .applyMatrix4(raycaster.camera.projectionMatrix)
-    //       const pDiv = clip.w
-    //       clip.multiplyScalar(1 / pDiv)
-    //       clip.add(new Vector4(x * billboardSize.x, y * billboardSize.y, 0, 0))
-    //       clip.multiplyScalar(pDiv)
-    //       clip.applyMatrix4(invProjection)
-    //       clip.applyMatrix4(invView)
-    //       position.setXYZ(i, clip.x, clip.y, clip.z)
-    //     } else {
-    //       position.setXYZ(i, x, y, z)
-    //     }
-    //   }
-    //   if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
-    //     geom.computeBoundingBox()
-    //     geom.computeBoundingSphere()
-    //     raycastMesh.matrixWorld.identity()
-    //   } else {
-    //     geom.boundingSphere = this.textMesh.geometry.boundingSphere
-    //     geom.boundingBox = this.textMesh.geometry.boundingBox
-    //     raycastMesh.matrixWorld = this.textMesh.matrixWorld
-    //   }
-    //   raycastMesh.material.side = this.textMesh.material.side
-    //   const tempArray: Array<Intersection> = []
-    //   raycastMesh.raycast(raycaster, tempArray)
-    //   for (let i = 0; i < tempArray.length; i++) {
-    //     tempArray[i].object = this
-    //     intersects.push(tempArray[i])
-    //   }
-    // }
+    /** World space billboarding */
+    if (this._params.billboard === 'world') {
+      const box = new Box3().copy(
+        this._params.backgroundColor !== null
+          ? (this._background.geometry.boundingBox as Box3)
+          : this._textBounds
+      )
+      const min = new Vector3().copy(box.min)
+      const max = new Vector3().copy(box.max)
+      quadVerts[0].set(min.x, min.y, 0)
+      quadVerts[1].set(max.x, min.y, 0)
+      quadVerts[2].set(max.x, max.y, 0)
+      quadVerts[3].set(min.x, max.y, 0)
+
+      const cameraRotationMatrix = _mat41.extractRotation(raycaster.camera.matrixWorld)
+
+      const billboardMat = new Matrix4().makeTranslation(
+        billboardPos.x,
+        billboardPos.y,
+        billboardPos.z
+      )
+      billboardMat.premultiply(textMatrixInv)
+      billboardMat.multiply(cameraRotationMatrix)
+
+      for (let i = 0; i < quadVerts.length; i++) {
+        quadVerts[i].applyMatrix4(billboardMat)
+
+        this._collisionMesh.geometry.attributes.position.setXYZ(
+          i,
+          quadVerts[i].x,
+          quadVerts[i].y,
+          quadVerts[i].z
+        )
+      }
+    }
+
+    /** Screen space billboarding */
+    if (this._params.billboard === 'screen') {
+      const box = new Box3().copy(this._textBounds)
+      const min = new Vector3().copy(box.min)
+      const max = new Vector3().copy(box.max)
+      quadVerts[0].set(min.x, min.y, 0)
+      quadVerts[1].set(max.x, min.y, 0)
+      quadVerts[2].set(max.x, max.y, 0)
+      quadVerts[3].set(min.x, max.y, 0)
+
+      const billboardSize =
+        this._params.backgroundColor !== null
+          ? this._backgroundMaterial.userData.billboardPixelSize.value
+          : this._backgroundMaterial.userData.billboardPixelSize.value
+      const invProjection = raycaster.camera.projectionMatrixInverse
+      const invView = raycaster.camera.matrixWorld
+
+      const clip = new Vector4(billboardPos.x, billboardPos.y, billboardPos.z, 1.0)
+        .applyMatrix4(raycaster.camera.matrixWorldInverse)
+        .applyMatrix4(raycaster.camera.projectionMatrix)
+      const pDiv = clip.w
+      clip.multiplyScalar(1 / pDiv)
+
+      for (let i = 0; i < quadVerts.length; i++) {
+        _vec3.copy(quadVerts[i])
+        _vec3.multiply(new Vector3(billboardSize.x * 2, billboardSize.y * 2, 0))
+        _vec4.set(clip.x, clip.y, clip.z, 1)
+        _vec4.add(new Vector4(_vec3.x, _vec3.y, 0, 0))
+        _vec4.multiplyScalar(pDiv)
+        _vec4.applyMatrix4(invProjection)
+        _vec4.applyMatrix4(invView)
+        _vec4.applyMatrix4(textMatrixInv)
+
+        this._collisionMesh.geometry.attributes.position.setXYZ(
+          i,
+          _vec4.x,
+          _vec4.y,
+          _vec4.z
+        )
+      }
+    }
+
+    this._collisionMesh.geometry.attributes.position.needsUpdate = true
+    this._collisionMesh.geometry.computeBoundingBox()
+    this._collisionMesh.geometry.computeBoundingSphere()
+    /** No need to manually call. _collisionMesh is a child and will get automatically raycasted */
+    // this._collisionMesh.raycast(raycaster, intersects)
   }
 
-  // private updateStyle() {
-  // this.updateBackground()
-  // }
-
+  /** Gets the current bounds reported by troika taking `fontSize` into account */
   private textBoundsToBox(target: Box3 = new Box3()): Box3 {
     const { textRenderInfo } = this
     /** We're using visibleBounds for a better fit */
@@ -240,10 +341,7 @@ export class TextLabel extends Text {
       bounds.max.divideScalar(this.fontSize)
       /** This is the size of the quad for the particular text value */
       let unitSize = bounds.getSize(_vec3)
-      // const aspect = unitSize.y / unitSize.x;
-      // float billboardPixelSizeY = billboardPixelHeight / screenSize.y;
-      // billboardPixelSize.x = billboardPixelSizeY * aspect;
-      // billboardPixelSize.y = billboardPixelSizeY;
+      /** We need to keep aspect ratio for text */
       this.material.billboardPixelSize = new Vector2(1 / unitSize.y, 1 / unitSize.y)
 
       /** Same thing for background */
@@ -265,9 +363,13 @@ export class TextLabel extends Text {
 
   private updateBackground() {
     if (!this._params.backgroundColor) {
-      if (this._background) this.remove(this._background)
-      this._background = null
+      if (this._background) {
+        this._background.geometry.dispose()
+        this.remove(this._background)
+      }
       return
+    } else if (!this._background.parent) {
+      this.add(this._background)
     }
 
     const box = _box3.copy(this._textBounds)
@@ -287,15 +389,9 @@ export class TextLabel extends Text {
       5
     )
     geometry.computeBoundingBox()
-    if (this._background) this._background.geometry = geometry
+    geometry.computeBoundingSphere()
+    this._background.geometry = geometry
 
-    if (this._background === null) {
-      this._background = new Mesh(geometry, this._backgroundMaterial)
-      this._background.layers.mask = this.layers.mask
-      this._background.frustumCulled = false
-      this._background.renderOrder = 1
-      this.add(this._background)
-    }
     const color = new Color(this._params.backgroundColor).convertSRGBToLinear()
     ;(this._background.material as SpeckleBasicMaterial).color = color
   }

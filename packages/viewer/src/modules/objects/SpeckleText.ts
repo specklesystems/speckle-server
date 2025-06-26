@@ -59,7 +59,7 @@ export class SpeckleText extends BatchedText {
   private materialCache: { [id: string]: Material } = {}
   private materialCacheLUT: { [id: string]: number } = {}
 
-  private readonly DEBUG_BILLBOARDS = false
+  private readonly DEBUG_BILLBOARDS = true
   private debugMeshes: Mesh[] = []
 
   public get TAS(): TopLevelAccelerationStructure {
@@ -289,7 +289,9 @@ export class SpeckleText extends BatchedText {
           billboardPos.y,
           billboardPos.z
         )
+
         billboardMat.multiply(matBuff1.extractRotation(camera.matrixWorld))
+        // TO DO: This is out of place. Probably happening because acceleration structure has the text transform as input transform
         billboardMat.multiply(matBuff2.copy(textMatrix).invert())
 
         for (let i = 0; i < vertices.length; i++) {

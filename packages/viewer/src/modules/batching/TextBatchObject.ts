@@ -9,6 +9,7 @@ export class TextBatchObject extends BatchObject {
     super(renderView, batchIndex)
     if (renderView.renderData.geometry.bakeTransform)
       this.textTransform.copy(renderView.renderData.geometry.bakeTransform)
+    /** TO DO: Not sure we should do this */
     this.transform.copy(this.textTransform)
     this.transformInv.copy(new Matrix4().copy(this.textTransform).invert())
     this.transformDirty = false

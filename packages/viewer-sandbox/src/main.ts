@@ -8,7 +8,10 @@ import {
   SelectionExtension,
   HybridCameraController,
   SectionTool,
-  TextLabel
+  TextLabel,
+  InputEvent,
+  InputType,
+  ObjectLayers
 } from '@speckle/viewer'
 
 import './style.css'
@@ -22,7 +25,7 @@ import {
 import { SectionOutlines } from '@speckle/viewer'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
-import { Mesh } from 'three'
+import { Mesh, Raycaster } from 'three'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -84,10 +87,18 @@ const createViewer = async (containerName: string, _stream: string) => {
       })
       loadingWrapper.style.opacity = '0'
     }
-    const label = new TextLabel() as unknown as Mesh
-    label.rotateX(Math.PI * 0.5)
-    // label.position.set(2.5, 0, 0)
-    viewer.getRenderer().scene.add(label)
+  })
+
+  const label = new TextLabel() as unknown as Mesh
+  label.rotateX(Math.PI * 0.5)
+  label.position.set(2.5, 0, 0)
+  viewer.getRenderer().scene.add(label)
+
+  const raycaster = new Raycaster()
+  raycaster.layers.set(ObjectLayers.OVERLAY)
+  viewer.getRenderer().input.on(InputEvent.Click, (arg) => {
+    raycaster.setFromCamera(arg, viewer.getRenderer().renderingCamera)
+    console.log(raycaster.intersectObject(label))
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -194,7 +205,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/85bc4f61c6/commits/8575fe2978'
     // Alex cubes
     'https://latest.speckle.systems/streams/4658eb53b9/commits/d8ec9cccf7'
-    // Alex more cubes
+    // // Alex more cubes
     // 'https://latest.speckle.systems/streams/4658eb53b9/commits/31a8d5ff2b'
     // Tekla
     // 'https://latest.speckle.systems/streams/caec6d6676/commits/588c731104'
