@@ -30,12 +30,10 @@ export const WorkspacePlanUpdatedActivity = z.object({
     name: z.string(),
     status: z.string()
   }),
-  old: z.nullable(
-    z.object({
-      name: z.string(),
-      status: z.string()
-    })
-  )
+  old: z.object({
+    name: z.string(),
+    status: z.string()
+  })
 })
 
 export const WorkspaceSubscriptionUpdatedActivity = z.object({
@@ -46,12 +44,18 @@ export const WorkspaceSubscriptionUpdatedActivity = z.object({
     billingInterval: z.string(),
     totalEditorSeats: z.number()
   }),
-  old: z.object({
-    name: z.string(),
-    status: z.string(),
-    billingInterval: z.string(),
-    totalEditorSeats: z.number()
-  })
+  old: z.union([
+    z.object({
+      name: z.string(),
+      status: z.string()
+    }),
+    z.object({
+      name: z.string(),
+      status: z.string(),
+      billingInterval: z.string(),
+      totalEditorSeats: z.number()
+    })
+  ])
 })
 
 // Stream Activity

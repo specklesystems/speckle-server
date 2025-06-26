@@ -66,28 +66,4 @@ describe('Activity repository', () => {
       userId: null
     })
   })
-
-  it('can store a payload with null field', async () => {
-    const { id } = await saveActivity({
-      ...exampleActivity,
-      payload: {
-        version: '1' as const,
-        new: {
-          name: 'Team',
-          status: 'valid'
-        },
-        old: null
-      }
-    })
-
-    const activity = await db
-      .table(Activity.name)
-      .select(Activity.cols)
-      .where({ id })
-      .first()
-
-    expect(activity).to.nested.include({
-      'payload.old': null
-    })
-  })
 })

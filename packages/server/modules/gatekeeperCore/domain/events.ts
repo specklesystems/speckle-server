@@ -20,13 +20,13 @@ export type GatekeeperEventPayloads = {
   [GatekeeperEvents.WorkspacePlanUpdated]: {
     userId: string | null
     workspacePlan: WorkspacePlan
-    previousWorkspacePlan: WorkspacePlan | null
+    previousWorkspacePlan: WorkspacePlan
   }
   [GatekeeperEvents.WorkspaceSubscriptionUpdated]: {
     userId: string | null
     workspacePlan: WorkspacePlan
     subscription: SubscriptionState
     previousWorkspacePlan: WorkspacePlan
-    previousSubscription: SubscriptionState
+    previousSubscription: SubscriptionState | null
   }
 }

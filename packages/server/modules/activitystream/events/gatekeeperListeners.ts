@@ -21,12 +21,10 @@ const addWorkspacePlanUpdatedActivityFactory =
           name: workspacePlan.name,
           status: workspacePlan.status
         },
-        old: previousWorkspacePlan
-          ? {
-              name: previousWorkspacePlan.name,
-              status: previousWorkspacePlan.status
-            }
-          : null
+        old: {
+          name: previousWorkspacePlan.name,
+          status: previousWorkspacePlan.status
+        }
       }
     })
   }
@@ -42,12 +40,6 @@ const addWorkspaceSubscriptionUpdatedActivityFactory =
       previousSubscription
     }
   }: EventPayload<typeof GatekeeperEvents.WorkspaceSubscriptionUpdated>) => {
-    if (
-      isEqual(workspacePlan, previousWorkspacePlan) &&
-      isEqual(subscription, previousSubscription)
-    )
-      return
-
     await saveActivity({
       userId,
       contextResourceType: 'workspace',
@@ -58,14 +50,12 @@ const addWorkspaceSubscriptionUpdatedActivityFactory =
         new: {
           name: workspacePlan.name,
           status: workspacePlan.status,
-          billingInterval: subscription.billingInterval,
-          totalEditorSeats: subscription.totalEditorSeats
+          ...subscription
         },
         old: {
           name: previousWorkspacePlan.name,
           status: previousWorkspacePlan.status,
-          billingInterval: previousSubscription.billingInterval,
-          totalEditorSeats: previousSubscription.totalEditorSeats
+          ...(previousSubscription || {})
         }
       }
     })

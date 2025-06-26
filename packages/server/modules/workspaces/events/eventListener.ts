@@ -580,13 +580,9 @@ export const workspaceTrackingFactory =
         )
 
         // To not double track the events,
-        // we listen only to subscriptions updates and deduce it from there
-        // if paid plan was changed
-        if (
-          isPaidPlan(payload.workspacePlan.name) ||
-          payload.workspacePlan.name === payload.previousWorkspacePlan?.name
-        )
-          break
+        // paid plans always emit subscription events
+        // so we only track free plans
+        if (isPaidPlan(payload.workspacePlan.name)) break
 
         await mixpanel.track({
           eventName: MixpanelEvents.WorkspaceUpgraded,
@@ -600,12 +596,11 @@ export const workspaceTrackingFactory =
         break
       case GatekeeperEvents.WorkspaceSubscriptionUpdated:
         const status = payload.workspacePlan.status
-
         const hasPricePerSeatChanged =
           status === WorkspacePlanStatuses.Valid &&
           (payload.workspacePlan.name !== payload.previousWorkspacePlan?.name ||
             payload.subscription.billingInterval !==
-              payload.previousSubscription.billingInterval)
+              payload.previousSubscription?.billingInterval)
 
         if (hasPricePerSeatChanged) {
           await mixpanel.track({
@@ -614,18 +609,18 @@ export const workspaceTrackingFactory =
             payload: {
               plan: payload.workspacePlan.name,
               cycle: payload.subscription.billingInterval,
-              previousPlan: payload.previousWorkspacePlan?.name
+              previousPlan: payload.previousWorkspacePlan.name
             }
           })
 
           break
         }
 
-        const eventStopsAValidSubscription =
+        const newStatusNoLongerValid =
           status !== WorkspacePlanStatuses.Valid &&
-          status !== payload.previousWorkspacePlan?.status
+          status !== payload.previousWorkspacePlan.status
 
-        if (eventStopsAValidSubscription) {
+        if (newStatusNoLongerValid) {
           await mixpanel.track({
             eventName: mapNonValidPlanStatusToMixpanelEventName[status],
             workspaceId: payload.workspacePlan.workspaceId,
@@ -637,27 +632,27 @@ export const workspaceTrackingFactory =
           break
         }
 
-        const editorSeatsChanged =
+        const editorSeatsChange =
           payload.subscription.totalEditorSeats -
-          payload.previousSubscription.totalEditorSeats
+          (payload.previousSubscription?.totalEditorSeats || 0)
 
-        if (editorSeatsChanged > 0 && isPaidPlan(payload.workspacePlan.name)) {
+        if (editorSeatsChange > 0 && isPaidPlan(payload.workspacePlan.name)) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatsPurchased,
             workspaceId: payload.workspacePlan.workspaceId,
             payload: {
-              amount: editorSeatsChanged,
+              amount: editorSeatsChange,
               planName: payload.workspacePlan.name
             }
           })
         }
 
-        if (editorSeatsChanged < 0 && isPaidPlan(payload.workspacePlan.name)) {
+        if (editorSeatsChange < 0 && isPaidPlan(payload.workspacePlan.name)) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatsDownscaled,
             workspaceId: payload.workspacePlan.workspaceId,
             payload: {
-              amount: Math.abs(editorSeatsChanged),
+              amount: Math.abs(editorSeatsChange),
               planName: payload.workspacePlan.name
             }
           })

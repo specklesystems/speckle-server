@@ -2,7 +2,11 @@ import {
   GetWorkspacePlan,
   UpsertWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
-import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
+import {
+  InvalidWorkspacePlanStatus,
+  WorkspacePlanNotFoundError
+} from '@/modules/gatekeeper/errors/billing'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GetWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
@@ -36,6 +40,8 @@ export const updateWorkspacePlanFactory =
     if (!workspace) throw new WorkspaceNotFoundError()
     let workspacePlan: WorkspacePlan
     const previousWorkspacePlan = await getWorkspacePlan({ workspaceId })
+    if (!previousWorkspacePlan) throw new WorkspacePlanNotFoundError()
+
     const createdAt = new Date()
     const updatedAt = new Date()
     switch (name) {
@@ -80,7 +86,7 @@ export const updateWorkspacePlanFactory =
     }
 
     await emitEvent({
-      eventName: 'gatekeeper.workspace-plan-updated',
+      eventName: GatekeeperEvents.WorkspacePlanUpdated,
       payload: {
         userId,
         workspacePlan,

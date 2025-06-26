@@ -23,7 +23,7 @@ import {
   throwUncoveredError,
   WorkspacePlans
 } from '@speckle/shared'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, isEqual, omit } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
@@ -120,13 +120,12 @@ export const handleSubscriptionUpdateFactory =
       // this is the branch where a user intents to upgrade his subscription
       // if stripe comes back with a status, and we have a update intent in the subscription
       // we're assuming that the target that the user wants to upgrade was written in the update intent
-
+      userId = updateIntent.userId
       planName = updateIntent.planName
       updatedAt = updateIntent.updatedAt
       currency = updateIntent.currency
       billingInterval = updateIntent.billingInterval
       currentBillingCycleEnd = updateIntent.currentBillingCycleEnd
-      userId = updateIntent.userId
 
       const productsAreEquivalent = (
         a: Array<{ priceId: string; quantity: number }>,
@@ -203,20 +202,33 @@ export const handleSubscriptionUpdateFactory =
       previousSubscription: getSubscriptionState(subscription)
     }
 
-    if (
-      workspacePlan.name !== newWorkspacePlan.name ||
-      workspacePlan.status !== newWorkspacePlan.status
-    ) {
+    const planHasChanged = !isEqual(
+      omit(payload.workspacePlan, ['updatedAt', 'createdAt']),
+      omit(payload.previousWorkspacePlan, ['updatedAt', 'createdAt'])
+    )
+
+    if (planHasChanged) {
       await emitEvent({
         eventName: GatekeeperEvents.WorkspacePlanUpdated,
-        payload
+        payload: {
+          userId,
+          workspacePlan: payload.workspacePlan,
+          previousWorkspacePlan: payload.previousWorkspacePlan
+        }
       })
     }
 
-    await emitEvent({
-      eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
-      payload
-    })
+    const susbcriptionHasChanged = !isEqual(
+      payload.subscription,
+      payload.previousSubscription
+    )
+
+    if (planHasChanged || susbcriptionHasChanged) {
+      await emitEvent({
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+        payload
+      })
+    }
   }
 
 export const addWorkspaceSubscriptionSeatIfNeededFactory =
