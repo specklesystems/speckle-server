@@ -151,11 +151,13 @@ export const handleSubscriptionUpdateFactory =
         )
       }
     } else {
+      userId = null
       planName = workspacePlan.name
       billingInterval = subscription.billingInterval
       currentBillingCycleEnd = subscription.currentBillingCycleEnd
       currency = subscription.currency
       updatedAt = new Date()
+
       // Stripe can have many cases were we receive an event
       // - subscription cancellation schedules
       // - subscription cancellations
@@ -194,7 +196,7 @@ export const handleSubscriptionUpdateFactory =
     })
 
     const payload = {
-      userId: userId || '', // TODO: THIS
+      userId,
       workspacePlan: newWorkspacePlan,
       previousWorkspacePlan: workspacePlan,
       subscription: getSubscriptionState(newSubscription),
@@ -207,7 +209,7 @@ export const handleSubscriptionUpdateFactory =
     ) {
       await emitEvent({
         eventName: GatekeeperEvents.WorkspacePlanUpdated,
-        payload // TODO: userId might theoretically be here
+        payload
       })
     }
 

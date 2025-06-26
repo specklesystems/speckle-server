@@ -84,7 +84,7 @@ export const updateWorkspacePlanFactory =
       payload: {
         userId,
         workspacePlan,
-        previousWorkspacePlan: previousWorkspacePlan || undefined
+        previousWorkspacePlan
       }
     })
   }

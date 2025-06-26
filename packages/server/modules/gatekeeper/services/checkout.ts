@@ -93,7 +93,7 @@ export const completeCheckoutSessionFactory =
       payload: {
         userId: checkoutSession.userId,
         workspacePlan,
-        previousWorkspacePlan: previousWorkspacePlan || undefined
+        previousWorkspacePlan
       }
     })
   }

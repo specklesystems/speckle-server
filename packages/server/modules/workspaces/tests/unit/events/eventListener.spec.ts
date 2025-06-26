@@ -95,7 +95,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       getWorkspaceSeatCount
     }
 
-    it('pushes a Mixpanel Upgrade event when workspace plan was upgraded', async () => {
+    it('pushes a Mixpanel Upgrade event when workspace plan was upgraded to non paid', async () => {
       const events: MixpanelFakeEventRecord = []
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
@@ -106,12 +106,16 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
         eventName: GatekeeperEvents.WorkspacePlanUpdated,
         payload: {
           userId: cryptoRandomString({ length: 10 }),
-          workspacePlan,
-          previousWorkspacePlan: {
-            ...workspacePlan,
-            name: 'free',
-            status: 'valid'
-          }
+          workspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Academia
+          }),
+          previousWorkspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Free
+          })
         }
       })
 
@@ -120,14 +124,97 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       expect(event.eventName).to.be.eq(MixpanelEvents.WorkspaceUpgraded)
       expect(event.workspaceId).to.be.eq(workspace.id)
       expect(event.payload).to.be.deep.eq({
-        plan: workspacePlan.name,
-        cycle: workspaceSubscribtion.billingInterval,
-        previousPlan: 'free'
+        plan: WorkspacePlans.Academia,
+        previousPlan: WorkspacePlans.Free
       })
+    })
+
+    it("doesn't notify when plan is the same", async () => {
+      const events: MixpanelFakeEventRecord = []
+      const workspaceTracking = workspaceTrackingFactory({
+        ...defaults,
+        mixpanel: buildMixpanelFake({ events })
+      })
+
+      const plan = buildTestWorkspacePlan({
+        workspaceId: workspace.id,
+        status: WorkspacePlanStatuses.Valid,
+        name: WorkspacePlans.Academia
+      })
+
+      await workspaceTracking({
+        eventName: GatekeeperEvents.WorkspacePlanUpdated,
+        payload: {
+          userId: cryptoRandomString({ length: 10 }),
+          workspacePlan: plan,
+          previousWorkspacePlan: plan
+        }
+      })
+
+      expect(events).to.have.lengthOf(0)
+    })
+
+    it("doesn't notify when subscription is the same", async () => {
+      const events: MixpanelFakeEventRecord = []
+      const workspaceTracking = workspaceTrackingFactory({
+        ...defaults,
+        mixpanel: buildMixpanelFake({ events })
+      })
+      const plan = buildTestWorkspacePlan({
+        workspaceId: workspace.id,
+        status: WorkspacePlanStatuses.Valid,
+        name: WorkspacePlans.Academia
+      })
+      const subscription = {
+        billingInterval: BillingInterval.Monthly,
+        totalEditorSeats: 20
+      }
+
+      await workspaceTracking({
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+        payload: {
+          userId: cryptoRandomString({ length: 10 }),
+          workspacePlan: plan,
+          previousWorkspacePlan: plan,
+          subscription,
+          previousSubscription: subscription
+        }
+      })
+
+      expect(events).to.have.lengthOf(0)
+    })
+
+    it('skips the plan updates of paid plans for PlanUpdate events as a subscription update event will be emitted', async () => {
+      const events: MixpanelFakeEventRecord = []
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceTracking = workspaceTrackingFactory({
+        ...defaults,
+        mixpanel: buildMixpanelFake({ events })
+      })
+
+      await workspaceTracking({
+        eventName: GatekeeperEvents.WorkspacePlanUpdated,
+        payload: {
+          userId,
+          workspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.ProUnlimited
+          }),
+          previousWorkspacePlan: buildTestWorkspacePlan({
+            workspaceId: workspace.id,
+            status: WorkspacePlanStatuses.Valid,
+            name: WorkspacePlans.Free
+          })
+        }
+      })
+
+      expect(events).to.have.lengthOf(0)
     })
 
     it('pushes an event on a subscription downscale (seats reduction on workspace)', async () => {
       const events: MixpanelFakeEventRecord = []
+      const userId = cryptoRandomString({ length: 10 })
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
         mixpanel: buildMixpanelFake({ events })
@@ -136,6 +223,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
+          userId,
           workspacePlan: buildTestWorkspacePlan({
             workspaceId: workspace.id,
             status: WorkspacePlanStatuses.Valid,
@@ -172,6 +260,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
         WorkspacePlanStatuses.Canceled
       ].forEach((status) => {
         it(`sends a canceled event to mixpanel on subscription ${status}`, async () => {
+          const userId = cryptoRandomString({ length: 10 })
           const events: MixpanelFakeEventRecord = []
           const workspaceTracking = workspaceTrackingFactory({
             ...defaults,
@@ -181,13 +270,14 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
           await workspaceTracking({
             eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
             payload: {
+              userId,
               workspacePlan: buildTestWorkspacePlan({
                 workspaceId: workspace.id,
                 status
               }),
               previousWorkspacePlan: buildTestWorkspacePlan({
                 workspaceId: workspace.id,
-                status
+                status: WorkspacePlanStatuses.Valid
               }),
               subscription: {
                 billingInterval: BillingInterval.Monthly,
@@ -207,8 +297,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
         })
       })
 
-    it('does not send anything to mixpanel on subscription update regarding the valid status upgrade', async () => {
+    it("doesn't send anything to mixpanel on subscription update regarding the valid status upgrade", async () => {
       const events: MixpanelFakeEventRecord = []
+      const userId = cryptoRandomString({ length: 10 })
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
         mixpanel: buildMixpanelFake({ events })
@@ -217,6 +308,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
+          userId,
           workspacePlan: buildTestWorkspacePlan({
             workspaceId: workspace.id,
             status: WorkspacePlanStatuses.Valid
@@ -239,8 +331,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       expect(events).to.have.lengthOf(0)
     })
 
-    it('sends an event when subscription increases the seat numbers', async () => {
+    it('emits PlanUpgrade when a subscription changes a workspacePlan (and no SeatPurchase)', async () => {
       const events: MixpanelFakeEventRecord = []
+      const userId = cryptoRandomString({ length: 10 })
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
         mixpanel: buildMixpanelFake({ events })
@@ -249,6 +342,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
+          userId,
           workspacePlan: buildTestWorkspacePlan({
             workspaceId: workspace.id,
             status: WorkspacePlanStatuses.Valid,
@@ -272,16 +366,18 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
       const event = events[0]
       expect(events).to.have.lengthOf(1)
-      expect(event.eventName).to.be.eq(MixpanelEvents.EditorSeatsPurchased)
+      expect(event.eventName).to.be.eq(MixpanelEvents.WorkspaceUpgraded)
       expect(event.workspaceId).to.be.eq(workspace.id)
       expect(event.payload).to.be.deep.eq({
-        amount: 1, // 2 - 1
-        planName: 'team'
+        cycle: BillingInterval.Monthly,
+        plan: WorkspacePlans.Team,
+        previousPlan: WorkspacePlans.Free
       })
     })
 
-    it('skips the seat increases event of non paid plans', async () => {
+    it('emits a SeatPurchase when a subscription increases quantity but keeps planName the same', async () => {
       const events: MixpanelFakeEventRecord = []
+      const userId = cryptoRandomString({ length: 10 })
       const workspaceTracking = workspaceTrackingFactory({
         ...defaults,
         mixpanel: buildMixpanelFake({ events })
@@ -290,28 +386,36 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
         payload: {
+          userId,
           workspacePlan: buildTestWorkspacePlan({
             workspaceId: workspace.id,
             status: WorkspacePlanStatuses.Valid,
-            name: WorkspacePlans.Academia
+            name: WorkspacePlans.Team
           }),
           previousWorkspacePlan: buildTestWorkspacePlan({
             workspaceId: workspace.id,
             status: WorkspacePlanStatuses.Valid,
-            name: WorkspacePlans.Free
+            name: WorkspacePlans.Team
           }),
           subscription: {
-            totalEditorSeats: 2,
-            billingInterval: BillingInterval.Monthly
+            billingInterval: BillingInterval.Monthly,
+            totalEditorSeats: 2
           },
           previousSubscription: {
-            totalEditorSeats: 1,
-            billingInterval: BillingInterval.Monthly
+            billingInterval: BillingInterval.Monthly,
+            totalEditorSeats: 1
           }
         }
       })
 
-      expect(events).to.have.lengthOf(0)
+      const event = events[0]
+      expect(events).to.have.lengthOf(1)
+      expect(event.eventName).to.be.eq(MixpanelEvents.EditorSeatsPurchased)
+      expect(event.workspaceId).to.be.eq(workspace.id)
+      expect(event.payload).to.be.deep.eq({
+        amount: 1, // 2 - 1
+        planName: 'team'
+      })
     })
 
     it('sends a custom delete mixpanel event on Workspace Delete', async () => {
