@@ -1,13 +1,8 @@
 import {
   FileImportSubscriptions,
-  publish,
   type PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
-import {
-  ProjectFileImportUpdatedMessageType,
-  ProjectPendingModelsUpdatedMessageType,
-  ProjectPendingVersionsUpdatedMessageType
-} from '@/modules/core/graph/generated/graphql'
+import { ProjectFileImportUpdatedMessageType } from '@/modules/core/graph/generated/graphql'
 import { GetFileInfo, UpdateFileUpload } from '@/modules/fileuploads/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
@@ -15,12 +10,12 @@ import { ModelEvents } from '@/modules/core/domain/branches/events'
 import { fileUploadsLogger as logger } from '@/observability/logging'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { FileUploadInternalError } from '@/modules/fileuploads/helpers/errors'
+import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 
 type OnFileImportProcessedDeps = {
   getFileInfo: GetFileInfo
   getStreamBranchByName: GetStreamBranchByName
   updateFileUpload: UpdateFileUpload
-  publish: PublishSubscription
   eventEmit: EventBusEmit
 }
 
@@ -74,43 +69,23 @@ export const onFileImportProcessedFactory =
       logger.info({ fileImportDetails: upload }, 'File upload processed.')
     }
 
-    if (isNewBranch) {
-      // Report
-      await publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
-        projectPendingModelsUpdated: {
-          id: upload.id,
-          type: ProjectPendingModelsUpdatedMessageType.Updated,
-          model: upload
+    await deps.eventEmit({
+      eventName: FileuploadEvents.Updated,
+      payload: {
+        upload: {
+          ...upload,
+          projectId: upload.streamId
         },
-        projectId: upload.streamId
-      })
-
-      if (branch) {
-        await deps.eventEmit({
-          eventName: ModelEvents.Created,
-          payload: { model: branch, projectId: branch.streamId }
-        })
+        isNewModel: isNewBranch
       }
-    } else {
-      await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
-        projectPendingVersionsUpdated: {
-          id: upload.id,
-          type: ProjectPendingVersionsUpdatedMessageType.Updated,
-          version: upload
-        },
-        projectId: upload.streamId,
-        branchName: upload.branchName
+    })
+
+    if (branch && isNewBranch) {
+      await deps.eventEmit({
+        eventName: ModelEvents.Created,
+        payload: { model: branch, projectId: branch.streamId }
       })
     }
-
-    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
-      projectFileImportUpdated: {
-        id: upload.id,
-        type: ProjectFileImportUpdatedMessageType.Updated,
-        upload
-      },
-      projectId: upload.streamId
-    })
   }
 
 type OnFileProcessingDeps = {

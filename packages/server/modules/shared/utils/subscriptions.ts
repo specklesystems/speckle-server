@@ -246,7 +246,6 @@ type SubscriptionTypeMap = {
         { version: FileUploadGraphQLReturn }
       >
       projectId: string
-      branchName: string
     }
     variables: SubscriptionProjectPendingVersionsUpdatedArgs
   }

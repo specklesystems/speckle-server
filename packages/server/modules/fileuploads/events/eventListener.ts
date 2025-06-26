@@ -43,6 +43,8 @@ export const fileuploadTrackingFactory =
           }
         })
         break
+      case FileuploadEvents.Updated:
+        break
       default:
         throwUncoveredError(eventName)
     }

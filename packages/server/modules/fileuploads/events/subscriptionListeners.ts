@@ -36,8 +36,7 @@ const reportFileUploadStartedFactory =
           type: ProjectPendingVersionsUpdatedMessageType.Created,
           version: upload
         },
-        projectId: upload.streamId,
-        branchName: model.name
+        projectId: upload.streamId
       })
     }
 
@@ -51,18 +50,58 @@ const reportFileUploadStartedFactory =
     })
   }
 
+const reportFileUploadUpdatedFactory =
+  (deps: { publish: PublishSubscription; getBranchById: GetBranchById }) =>
+  async (payload: EventPayload<typeof FileuploadEvents.Updated>) => {
+    const {
+      payload: { upload, isNewModel }
+    } = payload
+
+    if (isNewModel || !upload.modelId) {
+      await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
+        projectPendingModelsUpdated: {
+          id: upload.id,
+          type: ProjectPendingModelsUpdatedMessageType.Updated,
+          model: upload
+        },
+        projectId: upload.projectId
+      })
+    } else {
+      await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
+        projectPendingVersionsUpdated: {
+          id: upload.id,
+          type: ProjectPendingVersionsUpdatedMessageType.Updated,
+          version: upload
+        },
+        projectId: upload.projectId
+      })
+    }
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: upload.id,
+        type: ProjectFileImportUpdatedMessageType.Updated,
+        upload
+      },
+      projectId: upload.projectId
+    })
+  }
+
 export const reportSubscriptionEventsFactory =
   (
     deps: {
       eventListen: EventBusListen
       publish: PublishSubscription
-    } & DependenciesOf<typeof reportFileUploadStartedFactory>
+    } & DependenciesOf<typeof reportFileUploadStartedFactory> &
+      DependenciesOf<typeof reportFileUploadUpdatedFactory>
   ) =>
   () => {
     const reportFileUploadStarted = reportFileUploadStartedFactory(deps)
+    const reportFileUploadUpdated = reportFileUploadUpdatedFactory(deps)
 
     const quitCbs = [
-      deps.eventListen(FileuploadEvents.Started, reportFileUploadStarted)
+      deps.eventListen(FileuploadEvents.Started, reportFileUploadStarted),
+      deps.eventListen(FileuploadEvents.Updated, reportFileUploadUpdated)
     ]
 
     return () => quitCbs.forEach((quit) => quit())

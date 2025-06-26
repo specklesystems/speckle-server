@@ -75,8 +75,7 @@ const scheduleFileImportExpiry = async ({
           db: projectDb
         }),
         notifyUploadStatus: notifyChangeInFileStatus({
-          getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-          publish
+          eventEmit: getEventBus().emit
         })
       })
     )
@@ -163,7 +162,6 @@ export const init: SpeckleModule['init'] = async ({
       })
       await onFileImportProcessedFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
-        publish,
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         eventEmit: getEventBus().emit
