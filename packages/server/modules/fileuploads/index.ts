@@ -175,7 +175,7 @@ export const init: SpeckleModule['init'] = async ({
       })
       await onFileProcessingFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
-        publish
+        emitEvent: getEventBus().emit
       })(parsedMessage)
     })
     // }

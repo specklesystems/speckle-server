@@ -21,7 +21,7 @@ type FileuploadUpdatedPayload = {
    * Whether the upload represents a new model being created. This is only supported in
    * legacy file uploads, where the model is created as part of the upload process.
    */
-  isNewModel?: boolean
+  isNewModel: boolean
 }
 
 export type FileuploadEventsPayloads = {

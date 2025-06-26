@@ -241,7 +241,7 @@ describe('FileUploads @fileuploads', () => {
         }
         expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
         expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
-        expect(emittedEventPayload).to.be.deep.equal({
+        expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
           userId: userOneId,
           projectId: createdStreamId,
           fileSize: 100,

@@ -44,8 +44,8 @@ async function startTask(knex: Knex) {
       LIMIT 1
     ) as task
     WHERE file_uploads."id" = task."id"
-    RETURNING file_uploads."id"
-  `)) satisfies { rows: { id: string }[] }
+    RETURNING file_uploads."id", file_uploads."streamId"
+  `)) satisfies { rows: { id: string; streamId: string }[] }
   return rows[0]
 }
 
@@ -53,12 +53,12 @@ async function doTask(
   mainDb: Knex,
   regionName: string,
   taskDb: Knex,
-  task: { id: string }
+  task: { id: string; streamId: string }
 ) {
   const taskId = task.id
 
   // Mark task as started
-  await mainDb.raw(`NOTIFY file_import_started, '${task.id}'`)
+  await mainDb.raw(`NOTIFY file_import_started, '${task.id}:::${task.streamId}::::::'`)
 
   let taskLogger = logger.child({ taskId })
   let tempUserToken: Nullable<string> = null

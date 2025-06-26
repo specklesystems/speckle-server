@@ -88,7 +88,8 @@ export const notifyChangeInFileStatus =
         upload: {
           ...file,
           projectId: file.streamId
-        }
+        },
+        isNewModel: false // next gen file uploads dont support this
       }
     })
   }

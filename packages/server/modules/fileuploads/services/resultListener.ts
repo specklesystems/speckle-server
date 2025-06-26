@@ -1,8 +1,3 @@
-import {
-  FileImportSubscriptions,
-  type PublishSubscription
-} from '@/modules/shared/utils/subscriptions'
-import { ProjectFileImportUpdatedMessageType } from '@/modules/core/graph/generated/graphql'
 import { GetFileInfo, UpdateFileUpload } from '@/modules/fileuploads/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
@@ -25,7 +20,7 @@ type ParsedMessage = {
   branchName: string | null
   isNewBranch: boolean
 }
-const branchCreatedPayloadRegexp = /^(.+):::(.+):::(.+):::(.+)$/i
+const branchCreatedPayloadRegexp = /^(.+?):::(.*?):::(.*?):::(.*?)$/i
 export const parseMessagePayload = (payload: string): ParsedMessage => {
   const [, uploadId, streamId, branchName, newBranchCreated] =
     branchCreatedPayloadRegexp.exec(payload) || [null, null, null, null]
@@ -90,7 +85,7 @@ export const onFileImportProcessedFactory =
 
 type OnFileProcessingDeps = {
   getFileInfo: GetFileInfo
-  publish: PublishSubscription
+  emitEvent: EventBusEmit
 }
 
 export const onFileProcessingFactory =
@@ -101,12 +96,14 @@ export const onFileProcessingFactory =
     if (!upload) return
     if (upload.streamId !== streamId) return
 
-    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
-      projectFileImportUpdated: {
-        id: upload.id,
-        type: ProjectFileImportUpdatedMessageType.Updated,
-        upload
-      },
-      projectId: upload.streamId
+    await deps.emitEvent({
+      eventName: FileuploadEvents.Updated,
+      payload: {
+        upload: {
+          ...upload,
+          projectId: upload.streamId
+        },
+        isNewModel: !upload.modelId
+      }
     })
   }

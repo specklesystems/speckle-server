@@ -102,7 +102,8 @@ export const onFileImportResultFactory =
         upload: {
           ...updatedFile,
           projectId: updatedFile.streamId
-        }
+        },
+        isNewModel: false // next gen file uploads don't support this
       }
     })
 
