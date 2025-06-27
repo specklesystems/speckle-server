@@ -153,7 +153,7 @@ export const init: SpeckleModule['init'] = async ({
 
     scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
 
-    listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
+    await listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
       const projectDb = await getProjectDbClient({
@@ -167,7 +167,7 @@ export const init: SpeckleModule['init'] = async ({
       })(parsedMessage)
     })
 
-    listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
+    await listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
       const projectDb = await getProjectDbClient({
