@@ -7,17 +7,36 @@ import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import Redis from 'ioredis'
 import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { mainDb } from '@/db/knex'
+import { PartialDeep } from 'type-fest'
+import { merge } from 'lodash'
 
 export type MessageType = Notification
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
+type ConnectionStateItem = {
+  setupListeners: {
+    [listenerName: string]: boolean | undefined
+  }
+}
 
 let shuttingDown = false
 let connection: Optional<Client> = undefined
 let redisClient: Optional<Redis> = undefined
 let activeReconnect: Optional<Promise<void>> = undefined
 
-const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
+const connectionState = new WeakMap<Client, ConnectionStateItem>()
+const listeners: Record<string, { listener: ListenerType }> = {}
 const lockName = 'server_postgres_listener_lock'
+
+const updateConnectionState = (
+  connection: Client,
+  update: PartialDeep<ConnectionStateItem>
+) => {
+  const state = connectionState.get(connection) || {
+    setupListeners: {}
+  }
+  const newState = merge(state, update)
+  connectionState.set(connection, newState)
+}
 
 function getMessageId(msg: MessageType) {
   const str = JSON.stringify(msg)
@@ -73,24 +92,27 @@ async function messageProcessor(msg: MessageType) {
 }
 
 const setupListeners = async (connection: Client) => {
-  for (const [key, val] of Object.entries(listeners)) {
+  for (const [key] of Object.entries(listeners)) {
+    const isSetupAlready = !!connectionState.get(connection)?.setupListeners?.[key]
     dbNotificationLogger.info(
       {
         key,
-        setup: val.setup
+        setup: isSetupAlready
       },
       'Setting up PG listener for channel {key}...'
     )
-    if (val.setup) continue
+    if (isSetupAlready) continue
 
     await connection.query(`LISTEN ${key}`)
-    listeners[key].setup = true
+    updateConnectionState(connection, {
+      setupListeners: {
+        [key]: true
+      }
+    })
   }
 }
 
 const setupConnection = async (connection: Client) => {
-  Object.values(listeners).forEach((l) => (l.setup = false))
-
   connection.on('notification', (msg) => {
     dbNotificationLogger.info({ msg }, 'Message incoming...')
     void messageProcessor(msg).catch((err) => {
@@ -204,7 +226,6 @@ export async function listenFor(eventName: string, cb: ListenerType) {
   )
 
   listeners[eventName] = {
-    setup: false,
     listener: cb
   }
 
