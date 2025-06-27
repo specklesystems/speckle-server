@@ -129,13 +129,24 @@ export const passportAuthenticationCallbackFactory =
     const infoMsg = resolveInfoMessage(info)
     switch (failureType) {
       case ExpectedAuthFailure.UserInputError:
-      case ExpectedAuthFailure.InviteNotFoundError:
       case ExpectedAuthFailure.InvalidGrantError:
         res.redirect(
           buildRedirectUrl({
             resolveAuthRedirectPath,
             path: defaultErrorPath(
-              infoMsg || 'Failed to authenticate, contact server admins'
+              infoMsg ||
+                'Failed to authenticate, please try again. Contact server admins if this is a persistent error.'
+            )
+          })
+        )
+        return
+      case ExpectedAuthFailure.InviteNotFoundError:
+        res.redirect(
+          buildRedirectUrl({
+            resolveAuthRedirectPath,
+            path: defaultErrorPath(
+              infoMsg ||
+                'This server is invite only. The invite link may have expired or the invite may have been revoked. Please authenticate yourself through a valid invite link.'
             )
           })
         )
@@ -152,8 +163,8 @@ export const passportAuthenticationCallbackFactory =
       case null:
         // unexpected error or missing info
         req.log.error(
-          { info, strategy },
-          "Authentication error for strategy '{strategy}' encountered an unexpected failure type or 'info' parameter is missing or invalid"
+          { info, authStrategy: strategy },
+          "Authentication error for strategy '{authStrategy}' encountered an unexpected failure type or 'info' parameter is missing or invalid"
         )
         const message = infoMsg || 'Failed to authenticate, contact server admins'
         res.redirect(
