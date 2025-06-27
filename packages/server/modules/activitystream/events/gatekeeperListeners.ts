@@ -1,15 +1,32 @@
 import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import { isEqual } from 'lodash'
 import { SaveActivity } from '@/modules/activitystream/domain/operations'
+
+const addWorkspacePlanCreatedActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  async ({
+    payload: { userId, workspacePlan }
+  }: EventPayload<typeof GatekeeperEvents.WorkspacePlanCreated>) => {
+    await saveActivity({
+      userId,
+      contextResourceType: 'workspace',
+      eventType: 'workspace_plan_created',
+      contextResourceId: workspacePlan.workspaceId,
+      payload: {
+        version: '1' as const,
+        new: {
+          name: workspacePlan.name,
+          status: workspacePlan.status
+        }
+      }
+    })
+  }
 
 const addWorkspacePlanUpdatedActivityFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
   async ({
     payload: { userId, workspacePlan, previousWorkspacePlan }
   }: EventPayload<typeof GatekeeperEvents.WorkspacePlanUpdated>) => {
-    if (isEqual(workspacePlan, previousWorkspacePlan)) return
-
     await saveActivity({
       userId,
       contextResourceType: 'workspace',
@@ -66,6 +83,7 @@ export const reportGatekeeperActivityFactory =
     const addWorkspaceSubscriptionUpdatedActivity =
       addWorkspaceSubscriptionUpdatedActivityFactory(deps)
     const addWorkspacePlanUpdatedActivity = addWorkspacePlanUpdatedActivityFactory(deps)
+    const addWorkspacePlanCreatedActivity = addWorkspacePlanCreatedActivityFactory(deps)
 
     const quitters = [
       deps.eventListen(
@@ -75,6 +93,10 @@ export const reportGatekeeperActivityFactory =
       deps.eventListen(
         GatekeeperEvents.WorkspacePlanUpdated,
         addWorkspacePlanUpdatedActivity
+      ),
+      deps.eventListen(
+        GatekeeperEvents.WorkspacePlanCreated,
+        addWorkspacePlanCreatedActivity
       )
     ]
 

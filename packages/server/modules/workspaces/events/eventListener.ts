@@ -137,6 +137,7 @@ import { assign } from 'lodash'
 import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { WorkspacePlans } from '@/modules/core/graph/generated/graphql'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -954,13 +955,19 @@ export const initializeEventListenersFactory =
         await onWorkspaceAuthorized(payload)
       }),
       eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
-        await upsertUnpaidWorkspacePlanFactory({ db })({
-          workspacePlan: {
-            name: 'free',
-            status: 'valid',
-            workspaceId: payload.workspace.id,
-            createdAt: new Date(),
-            updatedAt: new Date()
+        const workspacePlan = {
+          name: WorkspacePlans.Free,
+          status: WorkspacePlanStatuses.Valid,
+          workspaceId: payload.workspace.id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        await upsertUnpaidWorkspacePlanFactory({ db })({ workspacePlan })
+        await eventBus.emit({
+          eventName: GatekeeperEvents.WorkspacePlanCreated,
+          payload: {
+            workspacePlan,
+            userId: payload.createdByUserId
           }
         })
       }),

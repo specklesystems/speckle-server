@@ -17,10 +17,19 @@ import z from 'zod'
 
 export type ResourceEventsToPayloadMap = {
   workspace: {
+    workspace_plan_created: z.infer<typeof WorkspacePlanCreatedActivity>
     workspace_plan_updated: z.infer<typeof WorkspacePlanUpdatedActivity>
     workspace_subscription_updated: z.infer<typeof WorkspaceSubscriptionUpdatedActivity>
   }
 }
+
+export const WorkspacePlanCreatedActivity = z.object({
+  version: z.literal('1'),
+  new: z.object({
+    name: z.string(),
+    status: z.string()
+  })
+})
 
 export const WorkspacePlanUpdatedActivity = z.object({
   version: z.literal('1'),
