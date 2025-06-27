@@ -250,11 +250,11 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
   }) =>
   async ({
-    userId,
+    updatedByUserId,
     workspaceId,
     seatType
   }: {
-    userId: string
+    updatedByUserId: string
     workspaceId: string
     seatType: WorkspaceSeatType
   }) => {
@@ -319,7 +319,7 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
       workspaceSubscription: {
         ...workspaceSubscription,
         updateIntent: {
-          userId,
+          userId: updatedByUserId,
           products: subscriptionData.products,
           planName: workspacePlan.name,
           currentBillingCycleEnd: workspaceSubscription.currentBillingCycleEnd,

@@ -17,10 +17,8 @@ import z from 'zod'
 
 export type ResourceEventsToPayloadMap = {
   workspace: {
-    workspace_plan_upgraded: z.infer<typeof WorkspacePlanUpdatedActivity>
-    workspace_subscription_upgraded: z.infer<
-      typeof WorkspaceSubscriptionUpdatedActivity
-    >
+    workspace_plan_updated: z.infer<typeof WorkspacePlanUpdatedActivity>
+    workspace_subscription_updated: z.infer<typeof WorkspaceSubscriptionUpdatedActivity>
   }
 }
 

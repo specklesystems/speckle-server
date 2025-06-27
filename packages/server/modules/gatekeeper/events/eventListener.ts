@@ -34,8 +34,10 @@ export const initializeEventListenersFactory =
             countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db })
           })
 
+        // TODO: invites here
         await addWorkspaceSubscriptionSeatIfNeeded({
           ...payload.seat,
+          updatedByUserId: payload.updatedByUserId,
           seatType: payload.seat.type
         })
       })

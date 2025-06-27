@@ -12,7 +12,7 @@ describe('Activity repository', () => {
     contextResourceType: 'workspace' as const,
     contextResourceId: workspaceId,
     userId,
-    eventType: 'workspace_plan_upgraded' as const,
+    eventType: 'workspace_plan_updated' as const,
     payload: {
       version: '1' as const,
       new: {

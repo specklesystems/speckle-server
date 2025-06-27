@@ -13,7 +13,7 @@ const addWorkspacePlanUpdatedActivityFactory =
     await saveActivity({
       userId,
       contextResourceType: 'workspace',
-      eventType: 'workspace_plan_upgraded',
+      eventType: 'workspace_plan_updated',
       contextResourceId: workspacePlan.workspaceId,
       payload: {
         version: '1' as const,
@@ -44,7 +44,7 @@ const addWorkspaceSubscriptionUpdatedActivityFactory =
       userId,
       contextResourceType: 'workspace',
       contextResourceId: workspacePlan.workspaceId,
-      eventType: 'workspace_subscription_upgraded',
+      eventType: 'workspace_subscription_updated',
       payload: {
         version: '1' as const,
         new: {
