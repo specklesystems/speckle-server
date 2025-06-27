@@ -1,18 +1,18 @@
 import { MaybeAsync, Optional, md5, wait } from '@speckle/shared'
 import { dbNotificationLogger } from '@/observability/logging'
-import { knex } from '@/modules/core/dbSchema'
 import * as Knex from 'knex'
-import * as pg from 'pg'
+import { Client, Notification } from 'pg'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import Redis from 'ioredis'
-import { LogicError } from '@/modules/shared/errors'
+import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { mainDb } from '@/db/knex'
 
-export type MessageType = { channel: string; payload: string }
+export type MessageType = Notification
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
 
 let shuttingDown = false
-let connection: Optional<pg.Connection> = undefined
+let connection: Optional<Client> = undefined
 let redisClient: Optional<Redis> = undefined
 let activeReconnect: Optional<Promise<void>> = undefined
 
@@ -53,11 +53,6 @@ async function messageProcessor(msg: MessageType) {
     listenerRegistered: !!listener,
     messageId
   }
-  dbNotificationLogger.info(
-    logPayload,
-    'Message #{messageId} of channel {channel} incoming...'
-  )
-
   if (!listener) return
 
   // Only process if lock acquired
@@ -77,7 +72,7 @@ async function messageProcessor(msg: MessageType) {
   }
 }
 
-function setupListeners(connection: pg.Connection) {
+const setupListeners = async (connection: Client) => {
   for (const [key, val] of Object.entries(listeners)) {
     dbNotificationLogger.info(
       {
@@ -88,14 +83,16 @@ function setupListeners(connection: pg.Connection) {
     )
     if (val.setup) continue
 
-    connection.query(`LISTEN ${key}`)
+    await connection.query(`LISTEN ${key}`)
     listeners[key].setup = true
   }
 }
 
-function setupConnection(connection: pg.Connection) {
+const setupConnection = async (connection: Client) => {
   Object.values(listeners).forEach((l) => (l.setup = false))
+
   connection.on('notification', (msg) => {
+    dbNotificationLogger.info({ msg }, 'Message incoming...')
     void messageProcessor(msg).catch((err) => {
       dbNotificationLogger.error({ err, msg }, `Error processing notification...`)
     })
@@ -111,10 +108,12 @@ function setupConnection(connection: pg.Connection) {
 
     if (!shuttingDown) void memoizedReconnect()
   })
+
   connection.on('error', (err: unknown) => {
     dbNotificationLogger.error(err, 'Notification listener connection error')
   })
-  setupListeners(connection)
+
+  await setupListeners(connection)
 }
 
 const reconnect = async () => {
@@ -123,12 +122,24 @@ const reconnect = async () => {
 
     dbNotificationLogger.info('Attempting to (re-)connect...')
 
-    const newConnection = await (knex.client as Knex.Knex.Client).acquireRawConnection()
+    // creating externally managed PG connection from knex mainDB connection settings
+    const newConnection = new Client(
+      (mainDb.client as Knex.Knex.Client).connectionSettings
+    )
+
+    // connect and test
+    await newConnection.connect()
+    const test = await newConnection.query('SELECT NOW()')
+    if (!test || !test.rows || test.rows.length === 0) {
+      throw new MisconfiguredEnvironmentError(
+        'Failed to acquire a valid connection to the database'
+      )
+    }
 
     connection = newConnection
     redisClient = createRedisClient(getRedisUrl(), {})
 
-    setupConnection(newConnection)
+    await setupConnection(newConnection)
   } catch (e: unknown) {
     dbNotificationLogger.error(e, 'Notification listener connection acquisition failed')
     throw e
@@ -166,8 +177,7 @@ const endConnection = async () => {
   dbNotificationLogger.info('Ending connection...')
 
   if (connection) {
-    await (knex.client as Knex.Knex.Client).destroyRawConnection(connection)
-    connection = undefined
+    await connection.end()
   }
 
   if (redisClient) {
@@ -187,7 +197,7 @@ export async function shutdownResultListener() {
   await endConnection()
 }
 
-export function listenFor(eventName: string, cb: ListenerType) {
+export async function listenFor(eventName: string, cb: ListenerType) {
   dbNotificationLogger.info(
     { eventName },
     'Registering postgres event listener for {eventName}'
@@ -199,6 +209,6 @@ export function listenFor(eventName: string, cb: ListenerType) {
   }
 
   if (connection) {
-    setupListeners(connection)
+    await setupListeners(connection)
   }
 }
