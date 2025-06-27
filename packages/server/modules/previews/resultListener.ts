@@ -8,14 +8,14 @@ import {
   BuildConsumePreviewResult,
   ConsumePreviewResult,
   StorePreview,
-  UpsertObjectPreview
+  UpdateObjectPreview
 } from '@/modules/previews/domain/operations'
 import { joinImages } from 'join-images'
 import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import {
   storePreviewFactory,
-  upsertObjectPreviewFactory
+  updateObjectPreviewFactory
 } from '@/modules/previews/repository/previews'
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 
@@ -25,7 +25,7 @@ export const buildConsumePreviewResult: BuildConsumePreviewResult = async (deps)
   return consumePreviewResultFactory({
     logger,
     storePreview: storePreviewFactory({ db: projectDb }),
-    upsertObjectPreview: upsertObjectPreviewFactory({ db: projectDb }),
+    updateObjectPreview: updateObjectPreviewFactory({ db: projectDb }),
     getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({
       db: projectDb
     })
@@ -35,12 +35,12 @@ export const buildConsumePreviewResult: BuildConsumePreviewResult = async (deps)
 export const consumePreviewResultFactory =
   ({
     logger,
-    upsertObjectPreview,
+    updateObjectPreview,
     storePreview,
     getObjectCommitsWithStreamIds
   }: {
     logger: Logger
-    upsertObjectPreview: UpsertObjectPreview
+    updateObjectPreview: UpdateObjectPreview
     storePreview: StorePreview
     getObjectCommitsWithStreamIds: GetObjectCommitsWithStreamIds
   }): ConsumePreviewResult =>
@@ -62,7 +62,7 @@ export const consumePreviewResultFactory =
     switch (previewResult.status) {
       case 'error':
         log.warn({ reason: previewResult.reason }, previewMessage)
-        await upsertObjectPreview({
+        await updateObjectPreview({
           objectPreview: {
             objectId,
             streamId: projectId,
@@ -111,7 +111,7 @@ export const consumePreviewResultFactory =
 
         preview['all'] = fullImgId
 
-        await upsertObjectPreview({
+        await updateObjectPreview({
           objectPreview: {
             objectId,
             streamId: projectId,

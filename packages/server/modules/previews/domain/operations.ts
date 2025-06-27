@@ -18,9 +18,14 @@ export type ObjectPreviewInput = Pick<
   'streamId' | 'objectId' | 'priority'
 >
 export type StoreObjectPreview = (params: ObjectPreviewInput) => Promise<void>
+
 export type UpsertObjectPreview = (params: {
   objectPreview: PartialBy<ObjectPreview, 'preview' | 'priority'>
 }) => Promise<void>
+
+export type UpdateObjectPreview = (params: {
+  objectPreview: PartialBy<ObjectPreview, 'preview' | 'priority'>
+}) => Promise<ObjectPreview[]>
 
 export type ObjectPreviewRequest = {
   url: string
@@ -82,6 +87,8 @@ export type BuildConsumePreviewResult = (deps: {
   projectId: string
 }) => Promise<ConsumePreviewResult>
 
-export type BuildUpsertObjectPreview = (params: {
+export type BuildUpdateObjectPreview = (params: {
   projectId: string
-}) => Promise<UpsertObjectPreview>
+}) => Promise<UpdateObjectPreview>
+
+export type ObserveMetrics = (params: { payload: PreviewResultPayload }) => void

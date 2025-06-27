@@ -10,7 +10,10 @@ import type { Queue } from 'bull'
 import { ensureError } from '@speckle/shared'
 import { previewRouterFactory } from '@/modules/previews/rest/router'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { initializeMetrics } from '@/modules/previews/observability/metrics'
+import {
+  initializeMetrics,
+  observeMetricsFactory
+} from '@/modules/previews/observability/metrics'
 import { responseHandlerFactory } from '@/modules/previews/services/responses'
 import { adminRouterFactory } from '@/modules/previews/rest/admin'
 import { createRequestAndResponseQueues } from '@/modules/previews/clients/bull'
@@ -20,10 +23,19 @@ import {
   requestErrorHandlerFactory,
   requestFailedHandlerFactory
 } from '@/modules/previews/queues/previews'
-import { buildUpsertObjectPreview } from '@/modules/previews/repository/previews'
+import type { BuildUpdateObjectPreview } from '@/modules/previews/domain/operations'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { updateObjectPreviewFactory } from '@/modules/previews/repository/previews'
 
 const JobQueueName = 'preview-service-jobs'
 const ResponseQueueNamePrefix = 'preview-service-results'
+
+const buildUpdateObjectPreviewFunction =
+  (): BuildUpdateObjectPreview => async (params) => {
+    const { projectId } = params
+    const projectDb = await getProjectDbClient({ projectId })
+    return updateObjectPreviewFactory({ db: projectDb })
+  }
 
 export const init: SpeckleModule['init'] = async ({
   app,
@@ -55,7 +67,7 @@ export const init: SpeckleModule['init'] = async ({
         requestErrorHandler: requestErrorHandlerFactory({ logger }),
         requestFailedHandler: requestFailedHandlerFactory({
           logger,
-          buildUpsertObjectPreview: buildUpsertObjectPreview()
+          buildUpdateObjectPreview: buildUpdateObjectPreviewFunction()
         }),
         requestActiveHandler: requestActiveHandlerFactory({ logger })
       }))
@@ -85,7 +97,7 @@ export const init: SpeckleModule['init'] = async ({
 
   void previewResponseQueue.process(
     responseHandlerFactory({
-      previewJobsProcessedSummary,
+      observeMetrics: observeMetricsFactory({ summary: previewJobsProcessedSummary }),
       logger,
       consumePreviewResultBuilder: buildConsumePreviewResult
     })

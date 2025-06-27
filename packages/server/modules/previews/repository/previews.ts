@@ -1,11 +1,10 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import {
-  BuildUpsertObjectPreview,
   GetObjectPreviewInfo,
   GetPreviewImage,
   StoreObjectPreview,
   StorePreview,
-  UpsertObjectPreview
+  UpdateObjectPreview
 } from '@/modules/previews/domain/operations'
 import {
   ObjectPreview as ObjectPreviewRecord,
@@ -14,7 +13,6 @@ import {
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 const ObjectPreview = buildTableHelper('object_preview', [
   'streamId',
@@ -69,21 +67,13 @@ export const storePreviewFactory =
     await tables.previews(db).insert(preview).onConflict().ignore()
   }
 
-export const buildUpsertObjectPreview =
-  (): BuildUpsertObjectPreview => async (params) => {
-    const { projectId } = params
-    const projectDb = await getProjectDbClient({ projectId })
-    return upsertObjectPreviewFactory({ db: projectDb })
-  }
-
-export const upsertObjectPreviewFactory =
-  ({ db }: { db: Knex }): UpsertObjectPreview =>
+export const updateObjectPreviewFactory =
+  ({ db }: { db: Knex }): UpdateObjectPreview =>
   async ({ objectPreview }) => {
-    await tables
+    return await tables
       .objectPreview(db)
-      .insert(objectPreview)
-      .onConflict(['streamId', 'objectId'])
-      .merge()
+      .update(objectPreview)
+      .returning<ObjectPreviewRecord[]>('*')
   }
 
 export const getPreviewImageFactory =

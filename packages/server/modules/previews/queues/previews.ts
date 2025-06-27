@@ -1,11 +1,12 @@
 import type {
-  BuildUpsertObjectPreview,
+  BuildUpdateObjectPreview,
   RequestObjectPreview
 } from '@/modules/previews/domain/operations'
 import type { Logger } from '@/observability/logging'
 import type { Queue, Job } from 'bull'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
-import { JobPayload } from '@speckle/shared/workers/previews'
+import type { JobPayload } from '@speckle/shared/workers/previews'
+import { fromJobId, jobIdSchema } from '@speckle/shared/workers/previews'
 
 export const requestObjectPreviewFactory =
   ({
@@ -22,7 +23,10 @@ export const requestObjectPreviewFactory =
 
 export const requestErrorHandlerFactory =
   (deps: { logger: Logger }) => (err: Error) => {
-    deps.logger.error({ err }, 'Preview generation failed')
+    deps.logger.error(
+      { err },
+      'Preview generation resulted in an error due to the Redis backend.'
+    )
   }
 
 export const requestActiveHandlerFactory = (deps: { logger: Logger }) => (job: Job) => {
@@ -31,15 +35,15 @@ export const requestActiveHandlerFactory = (deps: { logger: Logger }) => (job: J
 }
 
 export const requestFailedHandlerFactory =
-  (deps: { logger: Logger; buildUpsertObjectPreview: BuildUpsertObjectPreview }) =>
+  (deps: { logger: Logger; buildUpdateObjectPreview: BuildUpdateObjectPreview }) =>
   async (job: Job, err: Error) => {
-    const { logger, buildUpsertObjectPreview } = deps
+    const { logger, buildUpdateObjectPreview } = deps
     const jobId = 'jobId' in job.data ? job.data.jobId : undefined
     logger.error({ err, jobId }, 'Preview job {jobId} failed.')
     if (!jobId) return
-    const [projectId, objectId] = jobId.split('.')
-    const upsertObjectPreview = await buildUpsertObjectPreview(projectId)
-    await upsertObjectPreview({
+    const { projectId, objectId } = fromJobId(jobId)
+    const updateObjectPreview = await buildUpdateObjectPreview({ projectId })
+    const updatedRecords = await updateObjectPreview({
       objectPreview: {
         streamId: projectId,
         objectId,
@@ -47,4 +51,16 @@ export const requestFailedHandlerFactory =
         lastUpdate: new Date()
       }
     })
+    if (updatedRecords.length < 1) {
+      logger.warn(
+        { projectId, objectId },
+        'No object preview was updated for {projectId}.{objectId} after a failed preview job. This may indicate that the object preview does not exist or that the project does not exist, or has moved regions.'
+      )
+    }
+    if (updatedRecords.length > 1) {
+      logger.warn(
+        { projectId, objectId, updatedRecords },
+        'Multiple object previews were updated for {projectId}.{objectId} after a failed preview job. This may indicate a data integrity issue.'
+      )
+    }
   }

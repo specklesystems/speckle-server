@@ -9,9 +9,7 @@ describe('object preview @previews', () => {
     beforeEach(() => {})
     it('gracefully handles a response for a non-existent (e.g. deleted in meantime) project', async () => {
       const handleResponse = responseHandlerFactory({
-        previewJobsProcessedSummary: {
-          observe: () => {}
-        },
+        observeMetrics: () => {},
         logger,
         consumePreviewResultBuilder: buildConsumePreviewResult
       })

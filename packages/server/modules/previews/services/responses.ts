@@ -1,31 +1,32 @@
-import { ensureError, TIME } from '@speckle/shared'
-import { PreviewJobDurationStep } from '@/modules/previews/observability/metrics'
-import type { Summary } from 'prom-client'
+import { ensureError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import type { DoneCallback, Job } from 'bull'
-import type { BuildConsumePreviewResult } from '@/modules/previews/domain/operations'
+import type {
+  BuildConsumePreviewResult,
+  ObserveMetrics
+} from '@/modules/previews/domain/operations'
 import { DatabaseError } from 'pg'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { previewResultPayload } from '@speckle/shared/workers/previews'
+import { fromJobId, previewResultPayload } from '@speckle/shared/workers/previews'
 
 const parseMessage = (data: string) =>
   previewResultPayload
-    .refine((data) => data.jobId.split('.').length === 2, {
-      message: 'jobId must be in the format "projectId.objectId"'
+    .transform((data) => {
+      const { projectId, objectId } = fromJobId(data.jobId)
+      return {
+        ...data,
+        projectId,
+        objectId
+      }
     })
-    .transform((data) => ({
-      ...data,
-      projectId: data.jobId.split('.')[0],
-      objectId: data.jobId.split('.')[1]
-    }))
     .safeParse(data)
 
 export const responseHandlerFactory = (deps: {
   consumePreviewResultBuilder: BuildConsumePreviewResult
-  previewJobsProcessedSummary: Pick<Summary<'status' | 'step'>, 'observe'>
+  observeMetrics: ObserveMetrics
   logger: Logger
 }) => {
-  const { previewJobsProcessedSummary, logger, consumePreviewResultBuilder } = deps
+  const { observeMetrics, logger, consumePreviewResultBuilder } = deps
   return async (payload: Pick<Job, 'attemptsMade' | 'data'>, done: DoneCallback) => {
     const { attemptsMade } = payload
     const parsedMessage = parseMessage(payload.data)
@@ -42,8 +43,8 @@ export const responseHandlerFactory = (deps: {
       return
     }
 
-    const parsedResult = parsedMessage.data
-    const { projectId, objectId } = parsedResult
+    const parsedPayload = parsedMessage.data
+    const { projectId, objectId } = parsedPayload
     const jobLogger = logger.child({
       projectId,
       objectId,
@@ -51,6 +52,8 @@ export const responseHandlerFactory = (deps: {
     })
 
     try {
+      observeMetrics({ payload: parsedPayload })
+
       const consumePreviewResult = await consumePreviewResultBuilder({
         logger: jobLogger,
         projectId
@@ -59,7 +62,7 @@ export const responseHandlerFactory = (deps: {
       await consumePreviewResult({
         projectId,
         objectId,
-        previewResult: parsedResult
+        previewResult: parsedPayload
       })
     } catch (e) {
       const err = ensureError(e, 'Unknown error when consuming preview result')
@@ -81,23 +84,6 @@ export const responseHandlerFactory = (deps: {
       jobLogger.error({ err }, 'Failed to consume preview result')
       done(err)
       return
-    }
-
-    previewJobsProcessedSummary.observe(
-      { status: parsedResult.status, step: PreviewJobDurationStep.TOTAL },
-      parsedResult.result.durationSeconds * TIME.second
-    )
-    if (parsedResult.result.loadDurationSeconds) {
-      previewJobsProcessedSummary.observe(
-        { status: parsedResult.status, step: PreviewJobDurationStep.LOAD },
-        parsedResult.result.loadDurationSeconds * TIME.second
-      )
-    }
-    if (parsedResult.result.renderDurationSeconds) {
-      previewJobsProcessedSummary.observe(
-        { status: parsedResult.status, step: PreviewJobDurationStep.RENDER },
-        parsedResult.result.renderDurationSeconds * TIME.second
-      )
     }
 
     done()
