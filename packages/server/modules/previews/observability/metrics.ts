@@ -1,6 +1,7 @@
 import { TIME } from '@speckle/shared'
 import Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
+import { ObserveMetrics } from '@/modules/previews/domain/operations'
 
 export const PreviewJobDurationStep = {
   TOTAL: 'total',
@@ -138,4 +139,29 @@ export const initializeMetrics = (params: {
   })
 
   return { previewJobsProcessedSummary }
+}
+
+export const observeMetricsFactory = (deps: {
+  summary: Summary<'step' | 'status'>
+}): ObserveMetrics => {
+  const { summary } = deps
+  return (params) => {
+    const { payload } = params
+    summary.observe(
+      { status: payload.status, step: PreviewJobDurationStep.TOTAL },
+      payload.result.durationSeconds * TIME.second
+    )
+    if (payload.result.loadDurationSeconds) {
+      summary.observe(
+        { status: payload.status, step: PreviewJobDurationStep.LOAD },
+        payload.result.loadDurationSeconds * TIME.second
+      )
+    }
+    if (payload.result.renderDurationSeconds) {
+      summary.observe(
+        { status: payload.status, step: PreviewJobDurationStep.RENDER },
+        payload.result.renderDurationSeconds * TIME.second
+      )
+    }
+  }
 }

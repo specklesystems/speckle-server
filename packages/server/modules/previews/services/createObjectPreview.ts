@@ -8,6 +8,7 @@ import {
 } from '@/modules/previews/domain/operations'
 import { Roles, Scopes, TIME_MS } from '@speckle/shared'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import { toJobId } from '@speckle/shared/workers/previews'
 
 export const createObjectPreviewFactory =
   ({
@@ -39,10 +40,12 @@ export const createObjectPreviewFactory =
       return false
     }
 
+    const jobId = toJobId({ projectId: streamId, objectId })
+
     // we're running the preview generation in the name of a project owner
     const token = await createAppToken({
       appId: DefaultAppIds.Web,
-      name: `preview-${streamId}@${objectId}`,
+      name: `preview-${jobId}`,
       userId,
       scopes: [Scopes.Streams.Read],
       lifespan: 2 * TIME_MS.hour,
@@ -58,6 +61,10 @@ export const createObjectPreviewFactory =
       serverOrigin
     ).toString()
 
-    await requestObjectPreview({ jobId: `${streamId}.${objectId}`, token, url })
+    await requestObjectPreview({
+      jobId,
+      token,
+      url
+    })
     return true
   }
