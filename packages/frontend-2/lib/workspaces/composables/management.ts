@@ -193,8 +193,11 @@ export const useProcessWorkspaceInvite = () => {
               'workspaceInvite',
               ({ value, variables, helpers: { readField } }) => {
                 if (value) {
-                  const inviteWorkspaceId = readField(value, 'workspaceId')
-                  if (inviteWorkspaceId === workspaceId) return null
+                  const workspace = readField(value, 'workspace')
+                  if (workspace) {
+                    const inviteWorkspaceId = workspace.id
+                    if (inviteWorkspaceId === workspaceId) return null
+                  }
                 } else {
                   if (variables.workspaceId === workspaceId) return null
                 }
@@ -252,8 +255,9 @@ graphql(`
   fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
     token
-    workspaceId
-    workspaceSlug
+    workspace {
+      ...WorkspaceInviteCard_LimitedWorkspace
+    }
     user {
       id
     }
@@ -318,8 +322,8 @@ export const useWorkspaceInviteManager = <
     if (!isWorkspacesEnabled.value) return false
     if (!token.value || !invite.value) return false
 
-    const workspaceId = invite.value.workspaceId
-    const workspaceSlug = invite.value.workspaceSlug
+    const workspaceId = invite.value.workspace.id
+    const workspaceSlug = invite.value.workspace.slug
     const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
 
     loading.value = true

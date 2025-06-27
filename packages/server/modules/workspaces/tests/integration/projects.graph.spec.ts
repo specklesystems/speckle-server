@@ -30,6 +30,7 @@ import {
   MoveProjectToWorkspaceDocument,
   ProjectUpdateRoleInput,
   ProjectVisibility,
+  UpdateProjectDocument,
   UpdateProjectRoleDocument,
   UpdateWorkspaceProjectRoleDocument
 } from '@/test/graphql/generated/graphql'
@@ -40,6 +41,7 @@ import {
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { mockAdminOverride } from '@/test/mocks/global'
+import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import {
   addToStream,
   BasicTestStream,
@@ -860,7 +862,8 @@ describe('Workspace project GQL CRUD', () => {
       id: '',
       ownerId: '',
       name: 'Test Project',
-      visibility: ProjectRecordVisibility.Private
+      visibility: ProjectRecordVisibility.Private,
+      regionKey: isMultiRegionTestMode() ? 'region1' : undefined
     }
 
     const targetWorkspace: BasicTestWorkspace = {
@@ -981,6 +984,27 @@ describe('Workspace project GQL CRUD', () => {
       expect(resA).to.not.haveGraphQLErrors()
       expect(resB).to.not.haveGraphQLErrors()
       expect(adminWorkspaceRole?.role).to.equal(Roles.Workspace.Admin)
+    })
+
+    it('should respect project region during move mutations @multiregion', async () => {
+      const resA = await apollo.execute(MoveProjectToWorkspaceDocument, {
+        projectId: testProject.id,
+        workspaceId: targetWorkspace.id
+      })
+      const resB = await apollo.execute(UpdateProjectDocument, {
+        input: {
+          id: testProject.id,
+          name: 'Foo'
+        }
+      })
+      const resC = await apollo.execute(GetProjectDocument, {
+        id: testProject.id
+      })
+
+      expect(resA).to.not.haveGraphQLErrors()
+      expect(resB).to.not.haveGraphQLErrors()
+      expect(resC).to.not.haveGraphQLErrors()
+      expect(resC.data?.project?.workspaceId).to.equal(targetWorkspace.id)
     })
   })
 

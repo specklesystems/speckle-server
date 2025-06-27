@@ -139,7 +139,7 @@ import {
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { isWorkspaceRole } from '@/modules/workspaces/domain/logic'
+import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -155,7 +155,7 @@ import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/use
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { asOperation, commandFactory } from '@/modules/shared/command'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
-import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
+import { getProjectDbClient, getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,
   listWorkspaceSsoMembershipsByUserEmailFactory
@@ -226,6 +226,7 @@ import {
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
 import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
+import { copyWorkspaceFactory } from '@/modules/workspaces/repositories/projectRegions'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1543,6 +1544,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args
 
+          const projectDb = await getProjectDbClient({ projectId })
+
           const logger = context.log.child({
             projectId,
             streamId: projectId, //legacy
@@ -1566,9 +1569,13 @@ export = FF_WORKSPACES_MODULE_ENABLED
             operationFactory: ({ db, emit }) =>
               moveProjectToWorkspaceFactory({
                 getProject: getProjectFactory({ db }),
-                updateProject: updateProjectFactory({ db }),
+                updateProject: updateProjectFactory({ db: projectDb }),
                 updateProjectRole: updateStreamRoleAndNotify,
                 getProjectCollaborators: getStreamCollaboratorsFactory({ db }),
+                copyWorkspace: copyWorkspaceFactory({
+                  sourceDb: db,
+                  targetDb: projectDb
+                }),
                 getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
                 updateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -1861,17 +1868,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       PendingWorkspaceCollaborator: {
-        workspaceName: async (parent, _args, ctx) => {
+        workspace: async (parent, _args, ctx) => {
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
             parent.workspaceId
           )
-          return workspace!.name
-        },
-        workspaceSlug: async (parent, _args, ctx) => {
-          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
-            parent.workspaceId
-          )
-          return workspace!.slug
+          return toLimitedWorkspace(workspace!)
         },
         invitedBy: async (parent, _args, ctx) => {
           const { invitedById } = parent

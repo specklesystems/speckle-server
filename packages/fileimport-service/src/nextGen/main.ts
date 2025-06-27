@@ -1,6 +1,6 @@
 import { AppState } from '@speckle/shared/workers'
 import { initializeQueue } from '@speckle/shared/queue'
-import { FILEIMPORT_TIMEOUT, REDIS_URL, QUEUE_NAME } from '@/nextGen/config.js'
+import { FILE_IMPORT_TIME_LIMIT_MIN, REDIS_URL, QUEUE_NAME } from '@/nextGen/config.js'
 import type {
   JobPayload,
   FileImportResultPayload
@@ -65,7 +65,7 @@ export const main = async () => {
       const result = await jobProcessor({
         job,
         logger,
-        timeout: FILEIMPORT_TIMEOUT,
+        timeout: FILE_IMPORT_TIME_LIMIT_MIN * TIME_MS.minute,
         getAppState: () => appState,
         getElapsed: elapsed
       })
@@ -89,7 +89,10 @@ export const main = async () => {
               status: 'error',
               reason: err.message,
               result: {
-                durationSeconds: 0
+                durationSeconds: 0,
+                downloadDurationSeconds: 0,
+                parseDurationSeconds: 0,
+                parser: 'none'
               }
             }
           })

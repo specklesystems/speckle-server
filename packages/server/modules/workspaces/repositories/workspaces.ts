@@ -84,7 +84,7 @@ import {
   decodeCursor,
   encodeCompositeCursor,
   encodeCursor
-} from '@/modules/shared/helpers/graphqlHelper'
+} from '@/modules/shared/helpers/dbHelper'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const tables = {

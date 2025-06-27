@@ -8,7 +8,10 @@ import {
 } from '@/modules/fileuploads/services/resultListener'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import {
+  getProjectModelByIdFactory,
+  getStreamBranchByNameFactory
+} from '@/modules/core/repositories/branches'
 import {
   getFeatureFlags,
   isFileUploadsEnabled
@@ -31,7 +34,7 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
-import { Optional, Roles, TIME } from '@speckle/shared'
+import { Roles, TIME } from '@speckle/shared'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
@@ -47,10 +50,14 @@ import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
+import {
+  initializeMetrics,
+  ObserveResult
+} from '@/modules/fileuploads/observability/metrics'
+import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/subscriptionListeners'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
-let quitListeners: Optional<() => void> = undefined
 let scheduledTasks: cron.ScheduledTask[] = []
 
 const scheduleFileImportExpiry = async ({
@@ -68,8 +75,7 @@ const scheduleFileImportExpiry = async ({
           db: projectDb
         }),
         notifyUploadStatus: notifyChangeInFileStatus({
-          getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-          publish
+          eventEmit: getEventBus().emit
         })
       })
     )
@@ -92,12 +98,18 @@ const scheduleFileImportExpiry = async ({
   )
 }
 
-export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
+export const init: SpeckleModule['init'] = async ({
+  app,
+  isInitial,
+  metricsRegister
+}) => {
   if (!isFileUploadsEnabled()) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
   }
   moduleLogger.info('📄 Init FileUploads module')
+
+  let observeResult: ObserveResult | undefined = undefined
 
   if (isInitial) {
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
@@ -128,6 +140,10 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
         },
         ifcRouter
       )
+      ;({ observeResult } = initializeMetrics({
+        registers: [metricsRegister],
+        requestQueues: [rhinoQueue, ifcQueue]
+      }))
     }
 
     const scheduleExecution = scheduleExecutionFactory({
@@ -146,7 +162,6 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
       })
       await onFileImportProcessedFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
-        publish,
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         eventEmit: getEventBus().emit
@@ -160,17 +175,32 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
       })
       await onFileProcessingFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
-        publish
+        emitEvent: getEventBus().emit
       })(parsedMessage)
     })
     // }
 
-    quitListeners = initializeEventListenersFactory({ db })()
+    initializeEventListenersFactory({ db })()
+    reportSubscriptionEventsFactory({
+      publish,
+      eventListen: getEventBus().listen,
+      getProjectModelById: async (params) => {
+        const projectDb = await getProjectDbClient({
+          projectId: params.projectId
+        })
+        return getProjectModelByIdFactory({ db: projectDb })(params)
+      }
+    })()
   }
 
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
     moduleLogger.info('📄 Next Gen File Importer is ENABLED')
-    app.use(nextGenFileImporterRouterFactory({ queues: fileImportQueues }))
+    app.use(
+      nextGenFileImporterRouterFactory({
+        queues: fileImportQueues,
+        observeResult: observeResult ?? undefined
+      })
+    )
   }
 
   // the two routers can be used independently and can both be enabled
@@ -178,7 +208,6 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
-  quitListeners?.()
   scheduledTasks.forEach((task) => task.stop())
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
     await shutdownQueues({ logger: moduleLogger })

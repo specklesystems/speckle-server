@@ -24,21 +24,26 @@ export const fileuploadTrackingFactory =
   }) =>
   async (params: EventPayload<'fileupload.*'>) => {
     if (!mixpanel) return
-    const { eventName, payload } = params
+    const {
+      eventName,
+      payload: { upload }
+    } = params
 
     switch (eventName) {
       case FileuploadEvents.Started:
-        const project = await getProject({ projectId: payload.projectId })
-        const user = await getUser(payload.userId)
+        const project = await getProject({ projectId: upload.projectId })
+        const user = await getUser(upload.userId)
         await mixpanel.track({
           eventName: MixpanelEvents.FileUploadStarted,
           userEmail: user?.email,
           workspaceId: project?.workspaceId,
           payload: {
-            fileSize: payload.fileSize,
-            fileType: payload.fileType
+            fileSize: upload.fileSize,
+            fileType: upload.fileType
           }
         })
+        break
+      case FileuploadEvents.Updated:
         break
       default:
         throwUncoveredError(eventName)
