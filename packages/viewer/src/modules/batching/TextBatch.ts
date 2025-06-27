@@ -12,7 +12,7 @@ import {
 } from './Batch.js'
 
 import Materials from '../materials/Materials.js'
-import { SpeckleText } from '../objects/SpeckleText.js'
+import { SpeckleBatchedText } from '../objects/SpeckleBatchedText.js'
 //@ts-ignore
 import { Text } from 'troika-three-text'
 import {
@@ -36,7 +36,7 @@ export default class TextBatch implements Batch {
   public subtreeId: string
   public renderViews: NodeRenderView[]
   public batchMaterial: Material
-  public mesh: SpeckleText
+  public mesh: SpeckleBatchedText
   protected drawRanges: DrawRanges = new DrawRanges()
 
   public get bounds(): Box3 {
@@ -302,7 +302,7 @@ export default class TextBatch implements Batch {
 
   public async buildBatch(): Promise<void> {
     return new Promise((resolve) => {
-      this.mesh = new SpeckleText()
+      this.mesh = new SpeckleBatchedText()
       const textMap = new Map()
       const batchObjects: BatchObject[] = []
       const textObjects: Text[] = []

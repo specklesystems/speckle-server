@@ -16,6 +16,8 @@ import { uniformToVarying } from 'troika-three-text/src/BatchedText.js'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial.js'
 
 class SpeckleTextMaterial extends SpeckleBasicMaterial {
+  public setMatrixTexture: (texture: Texture) => void
+
   protected get vertexProgram(): string {
     return speckleTextVert
   }

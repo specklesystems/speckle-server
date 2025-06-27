@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-//@ts-ignore
 import { Text } from 'troika-three-text'
-//@ts-ignore
-import { BatchedText } from 'troika-three-text/src/BatchedText.js'
+import { BatchedText } from 'troika-three-text'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.js'
 import {
   Box3,
@@ -46,9 +43,11 @@ const matBuff0 = /* @__PURE__ */ new Matrix4()
 const matBuff1 = /* @__PURE__ */ new Matrix4()
 const matBuff2 = /* @__PURE__ */ new Matrix4()
 
-export class SpeckleText extends BatchedText {
+export class SpeckleBatchedText extends BatchedText {
+  declare material: SpeckleTextMaterial
+
   private tas: TopLevelAccelerationStructure
-  private _batchMaterial: Material
+  private _batchMaterial: SpeckleTextMaterial
   private _batchObjects: BatchObject[]
   private _textObjects: { [id: string]: Text } = {}
   private _dirty: boolean = false
@@ -59,7 +58,7 @@ export class SpeckleText extends BatchedText {
   private materialCache: { [id: string]: Material } = {}
   private materialCacheLUT: { [id: string]: number } = {}
 
-  private readonly DEBUG_BILLBOARDS = true
+  private readonly DEBUG_BILLBOARDS = false
   private debugMeshes: Mesh[] = []
 
   public get TAS(): TopLevelAccelerationStructure {
@@ -87,8 +86,13 @@ export class SpeckleText extends BatchedText {
   }
 
   public setBatchMaterial(material: Material) {
-    this._batchMaterial = this.getCachedMaterial(material)
-    //@ts-ignore
+    if (!(material instanceof SpeckleTextMaterial)) {
+      Logger.error(
+        `SpeckleBatchedText requires a SpeckleTextMaterial. Found ${material.constructor.name}`
+      )
+      return
+    }
+    this._batchMaterial = this.getCachedMaterial(material) as SpeckleTextMaterial
     this.material = this._batchMaterial
     this.materials.push(this._batchMaterial)
   }
@@ -135,13 +139,10 @@ export class SpeckleText extends BatchedText {
     this.tas.refit()
 
     /** Copy computed bounds over so that three.js doesn't freak out */
-    ;(this as unknown as Mesh).geometry.boundingBox = this.TAS.getBoundingBox(
-      new Box3()
+    this.geometry.boundingBox = this.TAS.getBoundingBox(new Box3())
+    this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(
+      new Sphere()
     )
-    //@ts-ignore
-    ;(this as unknown as Mesh).geometry.boundingSphere = (
-      this as unknown as Mesh
-    ).geometry.boundingBox.getBoundingSphere(new Sphere())
   }
 
   /** This could be made faster. BUT, as this point in time it's not worth the effort */
@@ -159,20 +160,20 @@ export class SpeckleText extends BatchedText {
       textObject.updateMatrix()
       // Matrix
       const matrix = textObject.matrix.elements
-      //@ts-ignore
       const texture =
-        //@ts-ignore
         this._dataTextures[
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           //@ts-ignore
           textObject.material.isTextOutlineMaterial ? 'outline' : 'main'
         ]
-      //@ts-ignore
       const packingInfo = this._members.get(textObject)
-      const startIndex = packingInfo.index * 32
-      for (let i = 0; i < 16; i++) {
-        this.setTexData(texture, startIndex + i, matrix[i])
+      if (packingInfo) {
+        const startIndex = packingInfo.index * 32
+        for (let i = 0; i < 16; i++) {
+          this.setTexData(texture, startIndex + i, matrix[i])
+        }
+        batchObject.transformDirty = false
       }
-      batchObject.transformDirty = false
     }
     if (this.tas && needsUpdate) {
       this.tas.refit()
@@ -185,7 +186,7 @@ export class SpeckleText extends BatchedText {
   }
 
   public setGradientTexture(texture: Texture) {
-    ;(this._batchMaterial as SpeckleTextMaterial).setGradientTexture(texture)
+    this._batchMaterial.setGradientTexture(texture)
   }
 
   public getBatchObjectMaterial(batchObject: BatchObject) {
@@ -235,21 +236,17 @@ export class SpeckleText extends BatchedText {
       new Float32BufferAttribute(new Array(12), 3)
     )
     debugBox.geometry.setIndex(
+      // prettier-ignore
       new Int16BufferAttribute(
         [
-          0,
-          1,
-          2, // First triangle: bottom-left → bottom-right → top-right
-          0,
-          2,
-          3 // Second triangle: bottom-left → top-right → top-left
+          0, 1, 2, // First triangle: bottom-left → bottom-right → top-right
+          0, 2, 3 // Second triangle: bottom-left → top-right → top-left
         ],
         1
       )
     )
     debugBox.layers.set(ObjectLayers.OVERLAY)
-    //@ts-ignore
-    this.parent.add(debugBox)
+    this.parent?.add(debugBox)
     return debugBox
   }
 
@@ -373,7 +370,6 @@ export class SpeckleText extends BatchedText {
       if (this.tas) {
         if (this._batchMaterial === undefined) return
 
-        //@ts-ignore
         tmpInverseMatrix.copy(this.matrixWorld).invert()
         ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
         /** Texts are all quads. Intersecting their BAS is redundant */
@@ -414,41 +410,32 @@ export class SpeckleText extends BatchedText {
     if (!this._dirty) return
     // Update member local matrices and the overall bounds
     const tempBox3 = new Box3()
-    //@ts-ignore
-    const bbox = this.geometry.boundingBox.makeEmpty()
-    //@ts-ignore
+    const bbox = (this.geometry.boundingBox ?? new Box3()).makeEmpty()
     this._members.forEach((_, text) => {
       if (text.matrixAutoUpdate) text.updateMatrix() // ignore world matrix
-      //@ts-ignore
-      tempBox3.copy(text.geometry.boundingBox).applyMatrix4(text.matrix)
-      //@ts-ignore
+      tempBox3.copy(text.geometry.boundingBox ?? new Box3()).applyMatrix4(text.matrix)
       bbox.union(tempBox3)
     })
-    //@ts-ignore
-    bbox.getBoundingSphere(this.geometry.boundingSphere)
+    bbox.getBoundingSphere(this.geometry.boundingSphere ?? new Sphere())
   }
 
   /**
    * @param {Text} text
    */
   addText(text: Text) {
-    //@ts-ignore
     if (!this._members.has(text)) {
-      //@ts-ignore
       this._members.set(text, {
         index: -1,
         glyphCount: -1,
         dirty: true,
         needsUpdate: true
       })
-      //@ts-ignore
       text.addEventListener('synccomplete', this._onMemberSynced)
     }
   }
 
   private setTexData(texture: DataTexture, index: number, value: number) {
     const texData = texture.image.data
-    //@ts-ignore
     if (value !== texData[index]) {
       texData[index] = value
       texture.needsUpdate = true
@@ -484,30 +471,30 @@ export class SpeckleText extends BatchedText {
    * - Individual text opacities
    * - Coordinate inside gradient/ramp texture <27>
    */
-  //@ts-ignore
-  _prepareForRender(material) {
+  _prepareForRender(material: SpeckleTextMaterial) {
     if (!this._dirty) return
 
     this._dirty = false
 
     const floatsPerMember = 32
     const tempColor = new Color()
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     const isOutline = material.isTextOutlineMaterial
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     material.uniforms.uTroikaIsOutline.value = isOutline
 
     // Resize the texture to fit in powers of 2
-    //@ts-ignore
     let texture = this._dataTextures[isOutline ? 'outline' : 'main']
     const dataLength = Math.pow(
       2,
-      //@ts-ignore
       Math.ceil(Math.log2(this._members.size * floatsPerMember))
     )
     if (!texture || dataLength !== texture.image.data.length) {
       // console.log(`resizing: ${dataLength}`);
       if (texture) texture.dispose()
       const width = Math.min(dataLength / 4, 1024)
-      //@ts-ignore
       texture = this._dataTextures[isOutline ? 'outline' : 'main'] = new DataTexture(
         new Float32Array(dataLength),
         width,
@@ -517,7 +504,6 @@ export class SpeckleText extends BatchedText {
       )
     }
 
-    //@ts-ignore
     this._members.forEach((packingInfo, text) => {
       if (packingInfo.index > -1 && packingInfo.needsUpdate) {
         packingInfo.needsUpdate = false
@@ -552,6 +538,8 @@ export class SpeckleText extends BatchedText {
           uTroikaStrokeOpacity,
           uTroikaFillOpacity,
           uTroikaCurveRadius
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //@ts-ignore
         } = material.uniforms
 
         // Total bounds for uv
@@ -574,9 +562,7 @@ export class SpeckleText extends BatchedText {
 
         // Color
         let color = isOutline ? text.outlineColor || 0 : text.color
-        //@ts-ignore
         if (color === null) color = this.color
-        //@ts-ignore
         if (color === null) color = this.material.color
         if (color === null) color = 0xffffff
         this.setTexData(texture, startIndex + 24, tempColor.set(color).getHex())
@@ -585,7 +571,7 @@ export class SpeckleText extends BatchedText {
         this.setTexData(
           texture,
           startIndex + 25,
-          text.material.opacity ?? uTroikaFillOpacity.value
+          (text.material as Material).opacity ?? uTroikaFillOpacity.value
         )
 
         // Curve radius
@@ -614,7 +600,6 @@ export class SpeckleText extends BatchedText {
     material.setMatrixTexture(texture)
 
     // For the non-member-specific uniforms:
-    //@ts-ignore
     Text.prototype._prepareForRender.call(this, material)
   }
 }

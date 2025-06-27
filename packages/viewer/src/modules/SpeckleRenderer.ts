@@ -68,7 +68,7 @@ import Logger from './utils/Logger.js'
 /* TO DO: Not sure where to best import these */
 import '../type-augmentations/three-extensions.js'
 import { TextBatch } from '../index.js'
-import { SpeckleText } from './objects/SpeckleText.js'
+import { SpeckleBatchedText } from './objects/SpeckleBatchedText.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -525,7 +525,7 @@ export default class SpeckleRenderer {
       GeometryType.TEXT
     ])
     for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: SpeckleMesh | SpeckleInstancedMesh | SpeckleText =
+      const meshBatch: SpeckleMesh | SpeckleInstancedMesh | SpeckleBatchedText =
         meshBatches[k].mesh
       meshBatch.updateTransformsUniform()
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -636,7 +636,7 @@ export default class SpeckleRenderer {
     if (
       batchRenderable instanceof SpeckleMesh ||
       batchRenderable instanceof SpeckleInstancedMesh ||
-      batchRenderable instanceof SpeckleText
+      batchRenderable instanceof SpeckleBatchedText
     ) {
       if (batchRenderable.TAS.bvhHelper) parent.add(batchRenderable.TAS.bvhHelper)
     }

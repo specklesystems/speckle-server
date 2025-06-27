@@ -16,8 +16,6 @@ import {
   Vector4,
   type Intersection
 } from 'three'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
 import { AnchorX, AnchorY, Text } from 'troika-three-text'
 import SpeckleBasicMaterial, {
   BillboardingType
