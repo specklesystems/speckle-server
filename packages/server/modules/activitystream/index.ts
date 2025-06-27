@@ -28,6 +28,7 @@ import { getProjectInviteProjectFactory } from '@/modules/serverinvites/services
 import { reportStreamActivityFactory } from '@/modules/activitystream/events/streamListeners'
 import { TIME_MS } from '@speckle/shared'
 import { reportGatekeeperActivityFactory } from '@/modules/activitystream/events/gatekeeperListeners'
+import { reportWorkspaceActivityFactory } from '@/modules/activitystream/events/workspaceListeners'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -79,6 +80,10 @@ const initializeEventListeners = ({
     eventListen: eventBus.listen,
     saveActivity: saveActivityFactory({ db })
   })
+  const reportWorkspaceActivity = reportWorkspaceActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity: saveActivityFactory({ db })
+  })
 
   const quitCbs = [
     reportUserActivity(),
@@ -88,7 +93,8 @@ const initializeEventListeners = ({
     reportCommentActivity(),
     reportStreamInviteActivity(),
     reportStreamActivity(),
-    reportGatekeeperActivity()
+    reportGatekeeperActivity(),
+    reportWorkspaceActivity()
   ]
 
   return () => quitCbs.forEach((quit) => quit())
