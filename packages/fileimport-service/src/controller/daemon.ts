@@ -134,7 +134,7 @@ async function doTask(
       userId: info.userId,
       name: 'temp upload token',
       scopes: [Scopes.Streams.Write, Scopes.Streams.Read, Scopes.Profile.Read],
-      lifespan: 1_000_000
+      lifespan: TIME_LIMIT + 5 * TIME_MS.minute // plus 5 minutes buffer to download the file and other overhead
     })
     tempUserToken = token
 
