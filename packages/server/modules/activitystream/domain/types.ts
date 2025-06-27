@@ -23,46 +23,47 @@ export type ResourceEventsToPayloadMap = {
   }
 }
 
+const workspacePlan = z.object({
+  name: z.union([
+    z.literal('teamUnlimitedInvoiced'),
+    z.literal('proUnlimitedInvoiced'),
+    z.literal('enterprise'),
+    z.literal('unlimited'),
+    z.literal('academia'),
+    z.literal('free'),
+    z.literal('team'),
+    z.literal('teamUnlimited'),
+    z.literal('pro'),
+    z.literal('proUnlimited')
+  ]),
+  status: z.union([
+    z.literal('valid'),
+    z.literal('cancelationScheduled'),
+    z.literal('canceled'),
+    z.literal('paymentFailed')
+  ])
+})
+
+const workspaceSubscription = z.object({
+  billingInterval: z.union([z.literal('monthly'), z.literal('yearly')]),
+  totalEditorSeats: z.number()
+})
+
 export const WorkspacePlanCreatedActivity = z.object({
   version: z.literal('1'),
-  new: z.object({
-    name: z.string(),
-    status: z.string()
-  })
+  new: workspacePlan
 })
 
 export const WorkspacePlanUpdatedActivity = z.object({
   version: z.literal('1'),
-  new: z.object({
-    name: z.string(),
-    status: z.string()
-  }),
-  old: z.object({
-    name: z.string(),
-    status: z.string()
-  })
+  new: workspacePlan,
+  old: workspacePlan
 })
 
 export const WorkspaceSubscriptionUpdatedActivity = z.object({
   version: z.literal('1'),
-  new: z.object({
-    name: z.string(),
-    status: z.string(),
-    billingInterval: z.string(),
-    totalEditorSeats: z.number()
-  }),
-  old: z.union([
-    z.object({
-      name: z.string(),
-      status: z.string()
-    }),
-    z.object({
-      name: z.string(),
-      status: z.string(),
-      billingInterval: z.string(),
-      totalEditorSeats: z.number()
-    })
-  ])
+  new: z.intersection(workspacePlan, workspaceSubscription),
+  old: z.union([workspacePlan, z.intersection(workspaceSubscription, workspacePlan)])
 })
 
 // Stream Activity

@@ -16,12 +16,12 @@ describe('Activity repository', () => {
     payload: {
       version: '1' as const,
       new: {
-        name: 'Team',
-        status: 'valid'
+        name: 'team' as const,
+        status: 'valid' as const
       },
       old: {
-        name: 'Free',
-        status: 'valid'
+        name: 'free' as const,
+        status: 'valid' as const
       }
     }
   }

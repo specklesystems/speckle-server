@@ -660,8 +660,8 @@ export const workspaceTrackingFactory =
         }
 
         break
+      case GatekeeperEvents.WorkspacePlanCreated:
       case GatekeeperEvents.WorkspaceTrialExpired:
-        break
       case WorkspaceEvents.Authorizing:
         break
       case WorkspaceEvents.Created:

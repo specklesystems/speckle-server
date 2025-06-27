@@ -1,3 +1,4 @@
+import { BillingInterval } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { WorkspacePlan } from '@speckle/shared'
 
 export const gatekeeperEventNamespace = 'gatekeeper' as const
@@ -13,7 +14,7 @@ export const GatekeeperEvents = {
 
 export type SubscriptionState = {
   totalEditorSeats: number
-  billingInterval: string
+  billingInterval: BillingInterval
 }
 
 export type GatekeeperEventPayloads = {
