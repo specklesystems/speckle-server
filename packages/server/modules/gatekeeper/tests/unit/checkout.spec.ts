@@ -163,7 +163,7 @@ describe('checkout @gatekeeper', () => {
             name: storedCheckoutSession.workspacePlan,
             status: 'valid'
           })
-          expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
+          expect(emittedEventName).to.equal('gatekeeper.workspace-subscription-updated')
           expect(emittedEventPayload).to.nested.include({
             'workspacePlan.workspaceId': workspaceId,
             'workspacePlan.status': 'valid',

@@ -155,7 +155,12 @@ describe('workspacePlan services @gatekeeper', () => {
                   return { id: workspaceId } as WorkspaceWithOptionalRole
                 },
                 upsertWorkspacePlan: fail,
-                getWorkspacePlan: async () => null,
+                getWorkspacePlan: async () =>
+                  buildTestWorkspacePlan({
+                    workspaceId,
+                    status: WorkspacePlanStatuses.Valid,
+                    name: UnpaidWorkspacePlans.Free
+                  }),
                 emitEvent: fail
               })
               await updateWorkspacePlan({
@@ -188,7 +193,12 @@ describe('workspacePlan services @gatekeeper', () => {
                 return { id: workspaceId } as WorkspaceWithOptionalRole
               },
               upsertWorkspacePlan,
-              getWorkspacePlan: async () => null,
+              getWorkspacePlan: async () =>
+                buildTestWorkspacePlan({
+                  workspaceId,
+                  status: WorkspacePlanStatuses.Valid,
+                  name: UnpaidWorkspacePlans.Free
+                }),
               emitEvent
             })
             await updateWorkspacePlan({

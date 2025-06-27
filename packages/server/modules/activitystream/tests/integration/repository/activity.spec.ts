@@ -40,11 +40,11 @@ describe('Activity repository', () => {
       contextResourceType: 'workspace',
       contextResourceId: workspaceId,
       userId,
-      eventType: 'workspace_plan_upgraded',
+      eventType: 'workspace_plan_updated',
       'payload.version': '1',
-      'payload.new.name': 'Team',
+      'payload.new.name': 'team',
       'payload.new.status': 'valid',
-      'payload.old.name': 'Free',
+      'payload.old.name': 'free',
       'payload.old.status': 'valid'
     })
     expect(activity).to.have.a.property('createdAt').that.is.a('Date')

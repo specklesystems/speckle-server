@@ -129,31 +129,6 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       })
     })
 
-    it("doesn't notify when plan is the same", async () => {
-      const events: MixpanelFakeEventRecord = []
-      const workspaceTracking = workspaceTrackingFactory({
-        ...defaults,
-        mixpanel: buildMixpanelFake({ events })
-      })
-
-      const plan = buildTestWorkspacePlan({
-        workspaceId: workspace.id,
-        status: WorkspacePlanStatuses.Valid,
-        name: WorkspacePlans.Academia
-      })
-
-      await workspaceTracking({
-        eventName: GatekeeperEvents.WorkspacePlanUpdated,
-        payload: {
-          userId: cryptoRandomString({ length: 10 }),
-          workspacePlan: plan,
-          previousWorkspacePlan: plan
-        }
-      })
-
-      expect(events).to.have.lengthOf(0)
-    })
-
     it("doesn't notify when subscription is the same", async () => {
       const events: MixpanelFakeEventRecord = []
       const workspaceTracking = workspaceTrackingFactory({
