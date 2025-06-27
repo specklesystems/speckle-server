@@ -14,6 +14,7 @@ export type ListenerType = (msg: MessageType) => MaybeAsync<void>
 let shuttingDown = false
 let connection: Optional<pg.Connection> = undefined
 let redisClient: Optional<Redis> = undefined
+let activeReconnect: Optional<Promise<void>> = undefined
 
 const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
 const lockName = 'server_postgres_listener_lock'
@@ -52,6 +53,11 @@ async function messageProcessor(msg: MessageType) {
     listenerRegistered: !!listener,
     messageId
   }
+  dbNotificationLogger.info(
+    logPayload,
+    'Message #{messageId} of channel {channel} incoming...'
+  )
+
   if (!listener) return
 
   // Only process if lock acquired
@@ -73,6 +79,13 @@ async function messageProcessor(msg: MessageType) {
 
 function setupListeners(connection: pg.Connection) {
   for (const [key, val] of Object.entries(listeners)) {
+    dbNotificationLogger.info(
+      {
+        key,
+        setup: val.setup
+      },
+      'Setting up PG listener for channel {key}...'
+    )
     if (val.setup) continue
 
     connection.query(`LISTEN ${key}`)
@@ -82,10 +95,21 @@ function setupListeners(connection: pg.Connection) {
 
 function setupConnection(connection: pg.Connection) {
   Object.values(listeners).forEach((l) => (l.setup = false))
-  connection.on('notification', messageProcessor)
+  connection.on('notification', (msg) => {
+    void messageProcessor(msg).catch((err) => {
+      dbNotificationLogger.error({ err, msg }, `Error processing notification...`)
+    })
+  })
 
   connection.on('end', () => {
-    if (!shuttingDown) reconnectClient()
+    dbNotificationLogger.info(
+      {
+        shuttingDown
+      },
+      'Notification listener connection ended'
+    )
+
+    if (!shuttingDown) void memoizedReconnect()
   })
   connection.on('error', (err: unknown) => {
     dbNotificationLogger.error(err, 'Notification listener connection error')
@@ -93,41 +117,56 @@ function setupConnection(connection: pg.Connection) {
   setupListeners(connection)
 }
 
-function reconnectClient() {
-  const reconnect = async () => {
-    try {
-      await endConnection()
+const reconnect = async () => {
+  try {
+    await endConnection()
 
-      dbNotificationLogger.info('Attempting to (re-)connect...')
+    dbNotificationLogger.info('Attempting to (re-)connect...')
 
-      const newConnection = await (
-        knex.client as Knex.Knex.Client
-      ).acquireRawConnection()
+    const newConnection = await (knex.client as Knex.Knex.Client).acquireRawConnection()
 
-      connection = newConnection
-      redisClient = createRedisClient(getRedisUrl(), {})
+    connection = newConnection
+    redisClient = createRedisClient(getRedisUrl(), {})
 
-      setupConnection(newConnection)
-    } catch (e: unknown) {
-      dbNotificationLogger.error(
-        e,
-        'Notification listener connection acquisition failed'
-      )
-      throw e
-    }
+    setupConnection(newConnection)
+  } catch (e: unknown) {
+    dbNotificationLogger.error(e, 'Notification listener connection acquisition failed')
+    throw e
   }
 
-  void reconnect().catch(async () => {
+  dbNotificationLogger.info('Client reconnect successful!')
+}
+
+const reconnectUntilSuccessful = async (): Promise<void> => {
+  try {
+    await reconnect()
+  } catch {
+    dbNotificationLogger.info('Retrying reconnection in 5 seconds...')
     await wait(5000) // Wait 5s and retry
-    reconnectClient()
-  })
+    return reconnectUntilSuccessful()
+  }
+}
+
+const memoizedReconnect = (): Promise<void> => {
+  if (!activeReconnect) {
+    activeReconnect = reconnectUntilSuccessful()
+      .catch((e) => {
+        dbNotificationLogger.error(e, 'Error during reconnect attempt')
+        throw e
+      })
+      .finally(() => {
+        activeReconnect = undefined
+      })
+  }
+
+  return activeReconnect
 }
 
 const endConnection = async () => {
   dbNotificationLogger.info('Ending connection...')
 
   if (connection) {
-    connection.end()
+    await (knex.client as Knex.Knex.Client).destroyRawConnection(connection)
     connection = undefined
   }
 
@@ -137,9 +176,9 @@ const endConnection = async () => {
   }
 }
 
-export function setupResultListener() {
+export async function setupResultListener() {
   dbNotificationLogger.info('🔔 Initializing postgres notification listening...')
-  reconnectClient()
+  await memoizedReconnect()
 }
 
 export async function shutdownResultListener() {
