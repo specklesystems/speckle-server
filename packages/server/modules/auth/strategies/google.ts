@@ -72,6 +72,14 @@ const googleStrategyBuilderFactory =
         })
 
         try {
+          if ('error' in req.query && req.query.error === 'access_denied') {
+            logger.info('User was denied access by Google')
+            return done(null, false, {
+              message: 'Access to Google account denied by Google',
+              failureType: ExpectedAuthFailure.UserInputError
+            })
+          }
+
           const email = profile.emails?.[0].value
           if (!email) {
             throw new EnvironmentResourceError('No email provided by Google')
@@ -180,14 +188,6 @@ const googleStrategyBuilderFactory =
                 return done(null, false, {
                   message: e.message,
                   failureType: ExpectedAuthFailure.InvalidGrantError
-                })
-              }
-
-              if ('error' in req.query && req.query.error === 'access_denied') {
-                logger.info({ err: e }, 'User was denied access by Google')
-                return done(null, false, {
-                  message: 'Access to Google account denied by Google',
-                  failureType: ExpectedAuthFailure.UserInputError
                 })
               }
 

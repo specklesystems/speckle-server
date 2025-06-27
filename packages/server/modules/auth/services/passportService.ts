@@ -163,8 +163,8 @@ export const passportAuthenticationCallbackFactory =
       case null:
         // unexpected error or missing info
         req.log.error(
-          { info, strategy },
-          "Authentication error for strategy '{strategy}' encountered an unexpected failure type or 'info' parameter is missing or invalid"
+          { info, authStrategy: strategy },
+          "Authentication error for strategy '{authStrategy}' encountered an unexpected failure type or 'info' parameter is missing or invalid"
         )
         const message = infoMsg || 'Failed to authenticate, contact server admins'
         res.redirect(
