@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
 import { moduleLogger } from '@/observability/logging'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { saveStreamActivityFactory } from '@/modules/activitystream/repositories'
 import { reportSubscriptionEventsFactory } from '@/modules/comments/events/subscriptionListeners'
 import { getCommentsResourcesFactory } from '@/modules/comments/repositories/comments'
 import { notifyUsersOnCommentEventsFactory } from '@/modules/comments/services/notifications'
@@ -26,7 +26,7 @@ const commentsModule: SpeckleModule = {
       const notifyUsersOnCommentEvents = notifyUsersOnCommentEventsFactory({
         eventBus: getEventBus(),
         publish: publishNotification,
-        saveActivity: saveActivityFactory({ db })
+        saveActivity: saveStreamActivityFactory({ db })
       })
       unsubFromEvents = await notifyUsersOnCommentEvents()
 

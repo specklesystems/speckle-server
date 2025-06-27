@@ -1,17 +1,31 @@
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { ResourceEventsToPayloadMap } from '@/modules/activitystream/domain/types'
+
+export interface Activity<
+  T extends keyof ResourceEventsToPayloadMap,
+  R extends keyof ResourceEventsToPayloadMap[T]
+> {
+  id: string
+  contextResourceId: string
+  contextResourceType: T
+  eventType: R
+  userId: string | null
+  payload: ResourceEventsToPayloadMap[T][R]
+  createdAt: Date
+}
 
 export type StreamActivityRecord = {
   streamId: Nullable<string>
   time: Date
-  resourceType: Nullable<(typeof ResourceTypes)[keyof typeof ResourceTypes]>
+  resourceType: Nullable<(typeof StreamResourceTypes)[keyof typeof StreamResourceTypes]>
   resourceId: Nullable<string>
-  actionType: AllActivityTypes
+  actionType: AllStreamActivityTypes
   userId: Nullable<string>
   info: Nullable<Record<string, unknown>>
   message: Nullable<string>
 }
 
-export const ResourceTypes = Object.freeze(<const>{
+export const StreamResourceTypes = Object.freeze(<const>{
   User: 'user',
   Stream: 'stream',
   Commit: 'commit',
@@ -19,10 +33,7 @@ export const ResourceTypes = Object.freeze(<const>{
   Comment: 'comment'
 })
 
-/**
- * User activity type constants
- */
-export const ActionTypes = Object.freeze(<const>{
+export const StreamActionTypes = Object.freeze(<const>{
   Stream: {
     Update: 'stream_update',
     PermissionsRemove: 'stream_permissions_remove',
@@ -62,37 +73,26 @@ export const ActionTypes = Object.freeze(<const>{
 })
 
 export type StreamActivityType =
-  (typeof ActionTypes)['Stream'][keyof (typeof ActionTypes)['Stream']]
+  (typeof StreamActionTypes)['Stream'][keyof (typeof StreamActionTypes)['Stream']]
 
 export type CommentActivityType =
-  (typeof ActionTypes)['Comment'][keyof (typeof ActionTypes)['Comment']]
+  (typeof StreamActionTypes)['Comment'][keyof (typeof StreamActionTypes)['Comment']]
 
 export type BranchActivityType =
-  (typeof ActionTypes)['Branch'][keyof (typeof ActionTypes)['Branch']]
+  (typeof StreamActionTypes)['Branch'][keyof (typeof StreamActionTypes)['Branch']]
 
 export type CommitActivityType =
-  (typeof ActionTypes)['Commit'][keyof (typeof ActionTypes)['Commit']]
+  (typeof StreamActionTypes)['Commit'][keyof (typeof StreamActionTypes)['Commit']]
 
 export type UserActivityType =
-  (typeof ActionTypes)['User'][keyof (typeof ActionTypes)['User']]
+  (typeof StreamActionTypes)['User'][keyof (typeof StreamActionTypes)['User']]
 
-export type AllActivityTypes =
+export type AllStreamActivityTypes =
   | StreamActivityType
   | CommentActivityType
   | BranchActivityType
   | CommitActivityType
   | UserActivityType
-
-// export interface Activity {
-//   streamId: string | null
-//   time: Date
-//   resourceType: typeof ResourceTypes[keyof typeof ResourceTypes]
-//   resourceId: string
-//   actionType: AllActivityTypes
-//   userId: string
-//   info: Record<string, unknown>
-//   message: string
-// }
 
 export interface StreamScopeActivity extends StreamActivityRecord {
   streamId: string

@@ -2,9 +2,12 @@ import {
   AddCommitCreatedActivity,
   AddCommitDeletedActivity,
   AddCommitUpdatedActivity,
-  SaveActivity
+  SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { CommitCreateInput } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
@@ -15,7 +18,7 @@ import { MaybeNullOrUndefined } from '@speckle/shared'
  * Save "new commit created" activity item
  */
 const addCommitCreatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddCommitCreatedActivity =>
+  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddCommitCreatedActivity =>
   async (params: {
     commitId: string
     streamId: string
@@ -28,9 +31,9 @@ const addCommitCreatedActivityFactory =
     const { commitId, input, streamId, userId, branchName, commit, modelId } = params
     await saveActivity({
       streamId,
-      resourceType: ResourceTypes.Commit,
+      resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
-      actionType: ActionTypes.Commit.Create,
+      actionType: StreamActionTypes.Commit.Create,
       userId,
       info: {
         id: commitId,
@@ -46,15 +49,15 @@ const addCommitCreatedActivityFactory =
   }
 
 const addCommitUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddCommitUpdatedActivity =>
+  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddCommitUpdatedActivity =>
   async (params) => {
     const { commitId, streamId, userId, originalCommit, update } = params
 
     await saveActivity({
       streamId,
-      resourceType: ResourceTypes.Commit,
+      resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
-      actionType: ActionTypes.Commit.Update,
+      actionType: StreamActionTypes.Commit.Update,
       userId,
       info: { old: originalCommit, new: update },
       message: `Commit updated: ${commitId}`
@@ -62,7 +65,7 @@ const addCommitUpdatedActivityFactory =
   }
 
 const addCommitMovedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({ saveActivity }: { saveActivity: SaveStreamActivity }) =>
   async (params: {
     commitId: string
     streamId: string
@@ -74,9 +77,9 @@ const addCommitMovedActivityFactory =
     const { commitId, streamId, userId, originalBranchId, newBranchId } = params
     await saveActivity({
       streamId,
-      resourceType: ResourceTypes.Commit,
+      resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
-      actionType: ActionTypes.Commit.Move,
+      actionType: StreamActionTypes.Commit.Move,
       userId,
       info: { originalBranchId, newBranchId },
       message: `Commit moved: ${commitId}`
@@ -84,7 +87,7 @@ const addCommitMovedActivityFactory =
   }
 
 const addCommitDeletedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddCommitDeletedActivity =>
+  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddCommitDeletedActivity =>
   async (params: {
     commitId: string
     streamId: string
@@ -95,9 +98,9 @@ const addCommitDeletedActivityFactory =
     const { commitId, streamId, userId, commit } = params
     await saveActivity({
       streamId,
-      resourceType: ResourceTypes.Commit,
+      resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
-      actionType: ActionTypes.Commit.Delete,
+      actionType: StreamActionTypes.Commit.Delete,
       userId,
       info: { commit },
       message: `Commit deleted: ${commitId}`
@@ -105,7 +108,7 @@ const addCommitDeletedActivityFactory =
   }
 
 const addCommitReceivedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({ saveActivity }: { saveActivity: SaveStreamActivity }) =>
   async (params: {
     streamId: string
     commitId: string
@@ -116,9 +119,9 @@ const addCommitReceivedActivityFactory =
     const { streamId, commitId, userId, sourceApplication, message } = params
     await saveActivity({
       streamId,
-      resourceType: ResourceTypes.Commit,
+      resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
-      actionType: ActionTypes.Commit.Receive,
+      actionType: StreamActionTypes.Commit.Receive,
       userId,
       info: {
         sourceApplication,
@@ -129,7 +132,7 @@ const addCommitReceivedActivityFactory =
   }
 
 export const reportCommitActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveActivity: SaveStreamActivity }) => () => {
     const addCommitCreatedActivity = addCommitCreatedActivityFactory(deps)
     const addCommitUpdatedActivity = addCommitUpdatedActivityFactory(deps)
     const addCommitMovedActivity = addCommitMovedActivityFactory(deps)

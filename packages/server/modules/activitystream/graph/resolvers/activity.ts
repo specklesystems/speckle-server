@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
 import {
   getActivityCountByResourceIdFactory,
   getActivityCountByStreamIdFactory,
@@ -88,7 +88,9 @@ export = {
     async activity(parent, args) {
       if (
         args.actionType &&
-        !Object.values(ActionTypes.Stream).includes(args.actionType as StreamActionType)
+        !Object.values(StreamActionTypes.Stream).includes(
+          args.actionType as StreamActionType
+        )
       ) {
         throw new InvalidActionTypeError()
       }

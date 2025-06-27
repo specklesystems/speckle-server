@@ -1,5 +1,5 @@
 import {
-  calculateSubscriptionSeats,
+  getSubscriptionState,
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
@@ -23,7 +23,7 @@ import {
   throwUncoveredError,
   WorkspacePlans
 } from '@speckle/shared'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, isEqual, omit } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
@@ -114,12 +114,13 @@ export const handleSubscriptionUpdateFactory =
     let currentBillingCycleEnd
     let currency
     let updatedAt
+    let userId
 
     if (updateIntent) {
       // this is the branch where a user intents to upgrade his subscription
       // if stripe comes back with a status, and we have a update intent in the subscription
       // we're assuming that the target that the user wants to upgrade was written in the update intent
-
+      userId = updateIntent.userId
       planName = updateIntent.planName
       updatedAt = updateIntent.updatedAt
       currency = updateIntent.currency
@@ -149,11 +150,13 @@ export const handleSubscriptionUpdateFactory =
         )
       }
     } else {
+      userId = null
       planName = workspacePlan.name
       billingInterval = subscription.billingInterval
       currentBillingCycleEnd = subscription.currentBillingCycleEnd
       currency = subscription.currency
       updatedAt = new Date()
+
       // Stripe can have many cases were we receive an event
       // - subscription cancellation schedules
       // - subscription cancellations
@@ -191,33 +194,41 @@ export const handleSubscriptionUpdateFactory =
       workspaceSubscription: newSubscription
     })
 
-    if (
-      workspacePlan.name !== newWorkspacePlan.name ||
-      workspacePlan.status !== newWorkspacePlan.status
-    ) {
+    const payload = {
+      userId,
+      workspacePlan: newWorkspacePlan,
+      previousWorkspacePlan: workspacePlan,
+      subscription: getSubscriptionState(newSubscription),
+      previousSubscription: getSubscriptionState(subscription)
+    }
+
+    const planHasChanged = !isEqual(
+      omit(payload.workspacePlan, ['updatedAt', 'createdAt']),
+      omit(payload.previousWorkspacePlan, ['updatedAt', 'createdAt'])
+    )
+
+    if (planHasChanged) {
       await emitEvent({
         eventName: GatekeeperEvents.WorkspacePlanUpdated,
         payload: {
-          previousPlan: workspacePlan,
-          workspacePlan: newWorkspacePlan
+          userId,
+          workspacePlan: payload.workspacePlan,
+          previousWorkspacePlan: payload.previousWorkspacePlan
         }
       })
     }
 
-    await emitEvent({
-      eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
-      payload: {
-        workspacePlan: newWorkspacePlan,
-        subscription: {
-          totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
-        },
-        previousSubscription: {
-          totalEditorSeats: calculateSubscriptionSeats({
-            subscriptionData: subscription.subscriptionData
-          })
-        }
-      }
-    })
+    const susbcriptionHasChanged = !isEqual(
+      payload.subscription,
+      payload.previousSubscription
+    )
+
+    if (planHasChanged || susbcriptionHasChanged) {
+      await emitEvent({
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+        payload
+      })
+    }
   }
 
 export const addWorkspaceSubscriptionSeatIfNeededFactory =
@@ -227,7 +238,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     getWorkspacePlanProductId,
     getWorkspacePlanPriceId,
     reconcileSubscriptionData,
-    countSeatsByTypeInWorkspace
+    countSeatsByTypeInWorkspace,
+    upsertWorkspaceSubscription
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
@@ -235,11 +247,14 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     getWorkspacePlanPriceId: GetWorkspacePlanPriceId
     reconcileSubscriptionData: ReconcileSubscriptionData
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
+    upsertWorkspaceSubscription: UpsertWorkspaceSubscription
   }) =>
   async ({
+    updatedByUserId,
     workspaceId,
     seatType
   }: {
+    updatedByUserId: string
     workspaceId: string
     seatType: WorkspaceSeatType
   }) => {
@@ -300,6 +315,20 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
       if (currentPlanProduct.quantity >= productAmount) return
       currentPlanProduct.quantity = productAmount
     }
+    await upsertWorkspaceSubscription({
+      workspaceSubscription: {
+        ...workspaceSubscription,
+        updateIntent: {
+          userId: updatedByUserId,
+          products: subscriptionData.products,
+          planName: workspacePlan.name,
+          currentBillingCycleEnd: workspaceSubscription.currentBillingCycleEnd,
+          currency: workspaceSubscription.currency,
+          billingInterval: workspaceSubscription.billingInterval,
+          updatedAt: new Date()
+        }
+      }
+    })
     await reconcileSubscriptionData({
       subscriptionData,
       prorationBehavior: 'always_invoice'

@@ -481,6 +481,7 @@ describe('subscriptions @gatekeeper', () => {
   describe('addWorkspaceSubscriptionSeatIfNeededFactory returns a function, that', () => {
     it('just returns if the workspacePlan is not found', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const updatedByUserId = cryptoRandomString({ length: 10 })
       const addWorkspaceSubscriptionSeatIfNeeded =
         addWorkspaceSubscriptionSeatIfNeededFactory({
           getWorkspacePlan: async () => null,
@@ -496,9 +497,11 @@ describe('subscriptions @gatekeeper', () => {
           reconcileSubscriptionData: async () => {
             expect.fail()
           },
-          countSeatsByTypeInWorkspace: async () => 0
+          countSeatsByTypeInWorkspace: async () => 0,
+          upsertWorkspaceSubscription: async () => {}
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
+        updatedByUserId,
         workspaceId,
         seatType: WorkspaceSeatType.Editor
       })
@@ -506,6 +509,7 @@ describe('subscriptions @gatekeeper', () => {
     })
     it('returns if the workspaceSubscription is not found', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const updatedByUserId = cryptoRandomString({ length: 10 })
       const addWorkspaceSubscriptionSeatIfNeeded =
         addWorkspaceSubscriptionSeatIfNeededFactory({
           getWorkspacePlan: async () => ({
@@ -525,16 +529,19 @@ describe('subscriptions @gatekeeper', () => {
           reconcileSubscriptionData: async () => {
             expect.fail()
           },
-          countSeatsByTypeInWorkspace: async () => 0
+          countSeatsByTypeInWorkspace: async () => 0,
+          upsertWorkspaceSubscription: async () => {}
         })
 
       await addWorkspaceSubscriptionSeatIfNeeded({
+        updatedByUserId,
         workspaceId,
         seatType: WorkspaceSeatType.Editor
       })
     })
     it('throws if a non paid plan, has a subscription', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const updatedByUserId = cryptoRandomString({ length: 10 })
       const subscriptionData = createTestSubscriptionData({ products: [] })
       const workspaceSubscription = createTestWorkspaceSubscription({
         workspaceId,
@@ -559,10 +566,12 @@ describe('subscriptions @gatekeeper', () => {
           reconcileSubscriptionData: async () => {
             expect.fail()
           },
-          countSeatsByTypeInWorkspace: async () => 0
+          countSeatsByTypeInWorkspace: async () => 0,
+          upsertWorkspaceSubscription: async () => {}
         })
       const err = await expectToThrow(async () => {
         await addWorkspaceSubscriptionSeatIfNeeded({
+          updatedByUserId,
           workspaceId,
           seatType: WorkspaceSeatType.Editor
         })
@@ -571,6 +580,7 @@ describe('subscriptions @gatekeeper', () => {
     })
     it('returns without reconciliation if the subscription is canceled', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const updatedByUserId = cryptoRandomString({ length: 10 })
       const subscriptionData = createTestSubscriptionData({ products: [] })
       const workspaceSubscription = createTestWorkspaceSubscription({
         workspaceId,
@@ -595,15 +605,18 @@ describe('subscriptions @gatekeeper', () => {
           reconcileSubscriptionData: async () => {
             expect.fail()
           },
-          countSeatsByTypeInWorkspace: async () => 0
+          countSeatsByTypeInWorkspace: async () => 0,
+          upsertWorkspaceSubscription: async () => {}
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
+        updatedByUserId,
         workspaceId,
         seatType: WorkspaceSeatType.Editor
       })
     })
     it('uses the relevant seat count, product and price id', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const updatedByUserId = cryptoRandomString({ length: 10 })
       const subscriptionData = createTestSubscriptionData({ products: [] })
       const workspaceSubscription = createTestWorkspaceSubscription({
         workspaceId,
@@ -649,9 +662,11 @@ describe('subscriptions @gatekeeper', () => {
             if (prorationBehavior !== 'always_invoice') expect.fail()
             reconciledSubscriptionData = subscriptionData
           },
-          countSeatsByTypeInWorkspace: async () => roleCount
+          countSeatsByTypeInWorkspace: async () => roleCount,
+          upsertWorkspaceSubscription: async () => {}
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
+        updatedByUserId,
         workspaceId,
         seatType: WorkspaceSeatType.Editor
       })
@@ -664,6 +679,7 @@ describe('subscriptions @gatekeeper', () => {
 
     it('updates the sub existing product quantity if the one matching the new seat type, does not have enough quantities', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
+      const updatedByUserId = cryptoRandomString({ length: 10 })
       const priceId = cryptoRandomString({ length: 10 })
       const productId = cryptoRandomString({ length: 10 })
       const subscriptionItemId = cryptoRandomString({ length: 10 })
@@ -719,9 +735,11 @@ describe('subscriptions @gatekeeper', () => {
             if (prorationBehavior !== 'always_invoice') expect.fail()
             reconciledSubscriptionData = subscriptionData
           },
-          countSeatsByTypeInWorkspace: async () => roleCount
+          countSeatsByTypeInWorkspace: async () => roleCount,
+          upsertWorkspaceSubscription: async () => {}
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
+        updatedByUserId,
         workspaceId,
         seatType: WorkspaceSeatType.Editor
       })
@@ -731,7 +749,7 @@ describe('subscriptions @gatekeeper', () => {
     })
     it('does not update the subscription if the product matching the new role, has enough quantities', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-
+      const updatedByUserId = cryptoRandomString({ length: 10 })
       const priceId = cryptoRandomString({ length: 10 })
       const productId = cryptoRandomString({ length: 10 })
       const subscriptionItemId = cryptoRandomString({ length: 10 })
@@ -782,9 +800,11 @@ describe('subscriptions @gatekeeper', () => {
           reconcileSubscriptionData: async () => {
             expect.fail()
           },
-          countSeatsByTypeInWorkspace: async () => count
+          countSeatsByTypeInWorkspace: async () => count,
+          upsertWorkspaceSubscription: async () => {}
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
+        updatedByUserId,
         workspaceId,
         seatType: WorkspaceSeatType.Editor
       })

@@ -64,9 +64,7 @@ export const downscaleWorkspaceSubscriptionFactory =
       type: WorkspaceSeatType.Editor
     })
 
-    const previousSubscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
-    const subscriptionData = cloneDeep(previousSubscriptionData)
-
+    const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: editorsCount,
       workspacePlan: workspacePlan.name,
@@ -79,9 +77,7 @@ export const downscaleWorkspaceSubscriptionFactory =
     }
 
     await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
-
     // we do not need to emit a subscription event as stripe will emit an update
-
     return true
   }
 

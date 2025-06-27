@@ -1,6 +1,6 @@
 import {
-  ActionTypes,
-  ResourceTypes,
+  StreamActionTypes,
+  StreamResourceTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
 import { ViewerResourceItem } from '@/modules/comments/domain/types'
@@ -11,11 +11,68 @@ import {
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
+import z from 'zod'
+
+// Activity
+
+export type ResourceEventsToPayloadMap = {
+  workspace: {
+    workspace_plan_created: z.infer<typeof WorkspacePlanCreatedActivity>
+    workspace_plan_updated: z.infer<typeof WorkspacePlanUpdatedActivity>
+    workspace_subscription_updated: z.infer<typeof WorkspaceSubscriptionUpdatedActivity>
+  }
+}
+
+const workspacePlan = z.object({
+  name: z.union([
+    z.literal('teamUnlimitedInvoiced'),
+    z.literal('proUnlimitedInvoiced'),
+    z.literal('enterprise'),
+    z.literal('unlimited'),
+    z.literal('academia'),
+    z.literal('free'),
+    z.literal('team'),
+    z.literal('teamUnlimited'),
+    z.literal('pro'),
+    z.literal('proUnlimited')
+  ]),
+  status: z.union([
+    z.literal('valid'),
+    z.literal('cancelationScheduled'),
+    z.literal('canceled'),
+    z.literal('paymentFailed')
+  ])
+})
+
+const workspaceSubscription = z.object({
+  billingInterval: z.union([z.literal('monthly'), z.literal('yearly')]),
+  totalEditorSeats: z.number()
+})
+
+export const WorkspacePlanCreatedActivity = z.object({
+  version: z.literal('1'),
+  new: workspacePlan
+})
+
+export const WorkspacePlanUpdatedActivity = z.object({
+  version: z.literal('1'),
+  new: workspacePlan,
+  old: workspacePlan
+})
+
+export const WorkspaceSubscriptionUpdatedActivity = z.object({
+  version: z.literal('1'),
+  new: z.intersection(workspacePlan, workspaceSubscription),
+  old: z.union([workspacePlan, z.intersection(workspaceSubscription, workspacePlan)])
+})
+
+// Stream Activity
 
 export type StreamActionType =
-  (typeof ActionTypes.Stream)[keyof (typeof ActionTypes)['Stream']]
+  (typeof StreamActionTypes.Stream)[keyof (typeof StreamActionTypes)['Stream']]
 
-export type ResourceType = (typeof ResourceTypes)[keyof typeof ResourceTypes]
+export type ResourceType =
+  (typeof StreamResourceTypes)[keyof typeof StreamResourceTypes]
 
 export type StreamActivitySummary = {
   stream: StreamRecord | null
