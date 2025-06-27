@@ -29,6 +29,7 @@ import {
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
+import { ServerNoAccessError } from '@speckle/shared/authz'
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -72,12 +73,21 @@ const googleStrategyBuilderFactory =
         })
 
         try {
-          if ('error' in req.query && req.query.error === 'access_denied') {
-            logger.info('User was denied access by Google')
-            return done(null, false, {
-              message: 'Access to Google account denied by Google',
-              failureType: ExpectedAuthFailure.UserInputError
-            })
+          if ('error' in req.query) {
+            switch (req.query.error) {
+              case 'access_denied':
+                logger.info('User was denied access by Google')
+                return done(null, false, {
+                  message: 'Access to Google account denied by Google',
+                  failureType: ExpectedAuthFailure.UserInputError
+                })
+              default:
+                const errMessage = `Unexpected error from Google strategy: ${req.query.error}`
+                logger.error(errMessage)
+                return done(new ServerNoAccessError(errMessage), false, {
+                  message: errMessage
+                })
+            }
           }
 
           const email = profile.emails?.[0].value
