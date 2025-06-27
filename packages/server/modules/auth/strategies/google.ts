@@ -100,7 +100,7 @@ const googleStrategyBuilderFactory =
           // if the server is invite only and we have no invite id, throw.
           if (serverInfo.inviteOnly && !req.session.token) {
             throw new UserInputError(
-              'This server is invite only. Please authenticate yourself through a valid invite link.'
+              'This server is invite only. The invite link may have expired or the invite may have been revoked. Please authenticate yourself through a valid invite link.'
             )
           }
 
@@ -180,6 +180,14 @@ const googleStrategyBuilderFactory =
                 return done(null, false, {
                   message: e.message,
                   failureType: ExpectedAuthFailure.InvalidGrantError
+                })
+              }
+
+              if ('error' in req.query && req.query.error === 'access_denied') {
+                logger.info({ err: e }, 'User was denied access by Google')
+                return done(null, false, {
+                  message: 'Access to Google account denied by Google',
+                  failureType: ExpectedAuthFailure.UserInputError
                 })
               }
 
