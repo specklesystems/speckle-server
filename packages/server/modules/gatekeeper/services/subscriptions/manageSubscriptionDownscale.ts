@@ -90,12 +90,12 @@ export const manageSubscriptionDownscaleFactory =
     getWorkspaceSubscriptions,
     downscaleWorkspaceSubscription,
     updateWorkspaceSubscription,
-    getSubscriptionData
+    getStripeSubscriptionData
   }: {
     getWorkspaceSubscriptions: GetWorkspaceSubscriptions
     downscaleWorkspaceSubscription: DownscaleWorkspaceSubscription
     updateWorkspaceSubscription: UpsertWorkspaceSubscription
-    getSubscriptionData: GetSubscriptionData
+    getStripeSubscriptionData: GetSubscriptionData
   }) =>
   async (context: { logger: Logger }) => {
     const { logger } = context
@@ -116,7 +116,7 @@ export const manageSubscriptionDownscaleFactory =
       } catch (err) {
         log.error({ err }, 'Failed to downscale workspace subscription')
       }
-      const subscriptionData = await getSubscriptionData(
+      const subscriptionData = await getStripeSubscriptionData(
         workspaceSubscription.subscriptionData
       )
       const updatedWorkspaceSubscription = {
