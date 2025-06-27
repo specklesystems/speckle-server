@@ -153,8 +153,7 @@ export const init: SpeckleModule['init'] = async ({
 
     scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
 
-    // if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-    listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
+    await listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
       const projectDb = await getProjectDbClient({
@@ -167,7 +166,8 @@ export const init: SpeckleModule['init'] = async ({
         eventEmit: getEventBus().emit
       })(parsedMessage)
     })
-    listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
+
+    await listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
       const projectDb = await getProjectDbClient({
@@ -178,7 +178,6 @@ export const init: SpeckleModule['init'] = async ({
         emitEvent: getEventBus().emit
       })(parsedMessage)
     })
-    // }
 
     initializeEventListenersFactory({ db })()
     reportSubscriptionEventsFactory({
