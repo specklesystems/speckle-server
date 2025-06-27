@@ -56,7 +56,7 @@ export const onFileImportProcessedFactory =
       const err = new FileUploadInternalError(
         upload.convertedMessage || 'Unknown error while uploading file.'
       )
-      logger.error(
+      logger.warn(
         { err, fileImportDetails: upload },
         'Error while processing file upload.'
       )
