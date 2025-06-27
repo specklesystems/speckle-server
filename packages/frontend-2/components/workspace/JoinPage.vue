@@ -145,7 +145,7 @@ const actionedWorkspaces = ref<
 const remainingWorkspaces = computed(() => {
   const actionedIds = new Set(actionedWorkspaces.value.map((w) => w.id))
   const inviteWorkspaceIds = new Set(
-    localInvites.value.map((invite) => invite.workspaceId)
+    localInvites.value.map((invite) => invite.workspace.id)
   )
 
   return (discoverableWorkspacesAndJoinRequests.value || []).filter(
