@@ -76,8 +76,8 @@ export const downscaleWorkspaceSubscriptionFactory =
       return false
     }
 
-    // we do not need to emit a subscription event as stripe will emit an update
     await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
+    // we do not need to emit a subscription event as stripe will emit an update
     return true
   }
 
