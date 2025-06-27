@@ -153,7 +153,7 @@ export class SpeckleText extends BatchedText {
       const textObject = this._textObjects[batchObject.renderView.renderData.id]
       batchObject.transform.decompose(
         textObject.position,
-        textObject.rotation,
+        textObject.quaternion,
         textObject.scale
       )
       textObject.updateMatrix()
@@ -163,6 +163,7 @@ export class SpeckleText extends BatchedText {
       const texture =
         //@ts-ignore
         this._dataTextures[
+          //@ts-ignore
           textObject.material.isTextOutlineMaterial ? 'outline' : 'main'
         ]
       //@ts-ignore

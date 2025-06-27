@@ -6,6 +6,7 @@ import {
   DoubleSide,
   Float32BufferAttribute,
   Int16BufferAttribute,
+  Material,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
@@ -17,12 +18,13 @@ import {
 } from 'three'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
-import { Text } from 'troika-three-text'
+import { AnchorX, AnchorY, Text } from 'troika-three-text'
 import SpeckleBasicMaterial, {
   BillboardingType
 } from '../materials/SpeckleBasicMaterial.js'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 import { ObjectLayers } from '../../index.js'
+import Logger from '../utils/Logger.js'
 
 const _mat40: Matrix4 = new Matrix4()
 const _mat41: Matrix4 = new Matrix4()
@@ -35,8 +37,8 @@ export interface TextLabelParams {
   text?: string
   fontSize?: number
   maxWidth?: number
-  anchorX?: string
-  anchorY?: string
+  anchorX?: AnchorX
+  anchorY?: AnchorY
   billboard?: BillboardingType | null
   backgroundColor?: Color | null
   backgroundCornerRadius?: number
@@ -96,6 +98,9 @@ export const DefaultTextLabelParams: Required<TextLabelParams> = {
 
 export class TextLabel extends Text {
   private readonly DEBUG_BILLBOARDS = false
+
+  declare material: SpeckleTextMaterial
+
   private _background: Mesh
   private _backgroundMaterial: SpeckleBasicMaterial
   private _params: Required<TextLabelParams> = Object.assign({}, DefaultTextLabelParams)
@@ -159,6 +164,12 @@ export class TextLabel extends Text {
 
   public async updateParams(params: TextLabelParams, onUpdateComplete?: () => void) {
     return new Promise<void>((resolve) => {
+      if (this.material && !(this.material instanceof SpeckleTextMaterial)) {
+        const mat: Material = this.material
+        Logger.error(
+          `TextLabel requires a SpeckleTextMaterial instance. Found ${mat.constructor.name}`
+        )
+      }
       if (params.text) this.text = params.text
       if (params.fontSize) this.fontSize = params.fontSize
       if (params.anchorX) this.anchorX = params.anchorX
@@ -345,7 +356,9 @@ export class TextLabel extends Text {
       this.material.billboardPixelSize = new Vector2(1 / unitSize.y, 1 / unitSize.y)
 
       /** Same thing for background */
-      const bgBounds = new Box3().copy(this._background?.geometry.boundingBox)
+      if (!this._background.geometry.boundingBox)
+        this._background.geometry.computeBoundingBox()
+      const bgBounds = new Box3().copy(this._background.geometry.boundingBox as Box3)
       bgBounds.min.divideScalar(this.fontSize)
       bgBounds.max.divideScalar(this.fontSize)
       unitSize = bgBounds.getSize(_vec3)
