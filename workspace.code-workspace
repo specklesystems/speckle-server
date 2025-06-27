@@ -133,8 +133,10 @@
     },
     "vue.complete.casing.props": "kebab",
     "vue.inlayHints.missingProps": true,
-    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"],
-    "eslint.experimental.useFlatConfig": true
+    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"]
+    // "vitest.nodeEnv": {
+    //   "DISABLE_ALL_FFS": "1"
+    // }
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

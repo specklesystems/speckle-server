@@ -61,7 +61,8 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'paymentFailed',
           workspaceId,
-          createdAt: new Date()
+          createdAt: new Date(),
+          updatedAt: new Date()
         } as const
         await upsertPaidWorkspacePlan({
           workspacePlan
@@ -77,6 +78,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'paymentFailed',
           createdAt: new Date(),
+          updatedAt: new Date(),
           workspaceId
         } as const
         await upsertPaidWorkspacePlan({
@@ -103,6 +105,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'paymentFailed',
           createdAt: createdAt1,
+          updatedAt: createdAt1,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -115,6 +118,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'paymentFailed',
           createdAt: createdAt2,
+          updatedAt: createdAt2,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -140,6 +144,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Pro,
           status: 'paymentFailed',
           createdAt: createdAt1,
+          updatedAt: createdAt1,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -152,6 +157,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'paymentFailed',
           createdAt: createdAt2,
+          updatedAt: createdAt2,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -174,6 +180,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'paymentFailed',
           createdAt: createdAt1,
+          updatedAt: createdAt1,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -186,6 +193,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'valid',
           createdAt: createdAt2,
+          updatedAt: createdAt2,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -208,6 +216,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'valid',
           createdAt: createdAt1,
+          updatedAt: createdAt1,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -220,6 +229,7 @@ describe('billing repositories @gatekeeper', () => {
           name: PaidWorkspacePlans.Team,
           status: 'valid',
           createdAt: createdAt2,
+          updatedAt: createdAt2,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -245,6 +255,7 @@ describe('billing repositories @gatekeeper', () => {
         expect(storedSession).to.be.null
         const checkoutSession = {
           id: cryptoRandomString({ length: 10 }),
+          userId: cryptoRandomString({ length: 10 }),
           billingInterval: 'monthly',
           createdAt: new Date(),
           paymentStatus: 'unpaid',
@@ -269,6 +280,7 @@ describe('billing repositories @gatekeeper', () => {
         const workspaceId = workspace.id
         const checkoutSession = {
           id: cryptoRandomString({ length: 10 }),
+          userId: cryptoRandomString({ length: 10 }),
           billingInterval: 'monthly',
           createdAt: new Date(),
           paymentStatus: 'unpaid',
@@ -302,6 +314,7 @@ describe('billing repositories @gatekeeper', () => {
         const workspaceId = workspace.id
         const checkoutSession = {
           id: cryptoRandomString({ length: 10 }),
+          userId: cryptoRandomString({ length: 10 }),
           billingInterval: 'monthly',
           createdAt: new Date(),
           paymentStatus: 'unpaid',
@@ -344,6 +357,7 @@ describe('billing repositories @gatekeeper', () => {
         const workspaceId = workspace.id
         const checkoutSession = {
           id: cryptoRandomString({ length: 10 }),
+          userId: cryptoRandomString({ length: 10 }),
           billingInterval: 'monthly',
           createdAt: new Date(),
           paymentStatus: 'unpaid',
@@ -448,7 +462,8 @@ describe('billing repositories @gatekeeper', () => {
             workspaceId: workspace2Subscription.workspaceId,
             name: PaidWorkspacePlans.Team,
             status: 'valid',
-            createdAt: new Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
           }
         })
         await upsertWorkspaceSubscription({

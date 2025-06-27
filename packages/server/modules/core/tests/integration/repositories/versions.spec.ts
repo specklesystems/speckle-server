@@ -3,7 +3,7 @@ import {
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
-import { getLastVersionByProjectIdFactory } from '@/modules/core/repositories/versions'
+import { getLastVersionsByProjectIdFactory } from '@/modules/core/repositories/versions'
 import { createTestUser } from '@/test/authHelper'
 import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
@@ -11,7 +11,7 @@ import { expect } from 'chai'
 
 describe('Versions repositories @core', () => {
   describe('getLastVersionByProjectIdFactory returns a function that, ', () => {
-    const getLastVersionByProjectId = getLastVersionByProjectIdFactory({ db })
+    const getLastVersionsByProjectId = getLastVersionsByProjectIdFactory({ db })
     it('should return the last version for each projectId', async () => {
       const user = await createTestUser({
         name: createRandomString(),
@@ -57,13 +57,13 @@ describe('Versions repositories @core', () => {
         owner: user
       })
 
-      const result = await getLastVersionByProjectId({
+      const result = await getLastVersionsByProjectId({
         projectIds: [project1.id, project2.id]
       })
       const lastVersionProject1 = result[project1.id]
       const lastVersionProject2 = result[project2.id]
-      expect(lastVersionProject1.projectId).to.eq(project1.id)
-      expect(lastVersionProject2.projectId).to.eq(project2.id)
+      expect(lastVersionProject1[0].projectId).to.eq(project1.id)
+      expect(lastVersionProject2[0].projectId).to.eq(project2.id)
     })
   })
 })

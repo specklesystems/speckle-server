@@ -15,7 +15,7 @@ import {
 } from '@/modules/gatekeeper/errors/billing'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { Logger } from '@/observability/logging'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
 import { cloneDeep, isEqual } from 'lodash'
 
 type DownscaleWorkspaceSubscription = (args: {
@@ -41,16 +41,17 @@ export const downscaleWorkspaceSubscriptionFactory =
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
     switch (workspacePlan.name) {
-      case 'team':
-      case 'teamUnlimited':
-      case 'pro':
-      case 'proUnlimited':
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
         break
-      case 'unlimited':
-      case 'academia':
-      case 'proUnlimitedInvoiced':
-      case 'teamUnlimitedInvoiced':
-      case 'free':
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.Enterprise:
+      case WorkspacePlans.Unlimited:
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -63,7 +64,8 @@ export const downscaleWorkspaceSubscriptionFactory =
       type: WorkspaceSeatType.Editor
     })
 
-    const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+    const previousSubscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+    const subscriptionData = cloneDeep(previousSubscriptionData)
 
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: editorsCount,
@@ -72,11 +74,15 @@ export const downscaleWorkspaceSubscriptionFactory =
       subscriptionData
     })
 
-    if (!isEqual(subscriptionData, workspaceSubscription.subscriptionData)) {
-      await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
-      return true
+    if (isEqual(subscriptionData, workspaceSubscription.subscriptionData)) {
+      return false
     }
-    return false
+
+    await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
+
+    // we do not need to emit a subscription event as stripe will emit an update
+
+    return true
   }
 
 export const manageSubscriptionDownscaleFactory =

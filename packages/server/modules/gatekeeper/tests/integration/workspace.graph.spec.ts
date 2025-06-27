@@ -137,6 +137,7 @@ describe('Workspaces Billing', () => {
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
               currency: 'usd',
               billingInterval: 'monthly',
+              updateIntent: null,
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),
                 customerId: cryptoRandomString({ length: 10 }),
@@ -187,6 +188,7 @@ describe('Workspaces Billing', () => {
               updatedAt: new Date(),
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
               currency: 'usd',
+              updateIntent: null,
               billingInterval: 'monthly',
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),
@@ -298,7 +300,8 @@ describe('Workspaces Billing', () => {
           authorId: user.id,
           objectId,
           streamId: project.id,
-          branchName: modelWithVersions.name
+          branchName: modelWithVersions.name,
+          branchId: ''
         })
 
         const session = await login(user)

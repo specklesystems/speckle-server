@@ -12,13 +12,13 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import { TIME_MS } from '../../../core/index.js'
 
 // Default deps allow test to succeed, this makes it so that we need to override less of them
 const buildSUT = (overrides?: Partial<Parameters<typeof canUpdateProjectPolicy>[0]>) =>
   canUpdateProjectPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getProject: getProjectFake({
       id: 'project-id',
       workspaceId: null
@@ -40,10 +40,7 @@ const buildWorkspaceSUT = (
       id: 'project-id',
       workspaceId: 'workspace-id'
     }),
-    getWorkspace: async () => ({
-      id: 'workspace-id',
-      slug: 'workspace-slug'
-    }),
+    getWorkspace: getWorkspaceFake({ id: 'workspace-id', slug: 'workspace-slug' }),
     getWorkspaceRole: async () => Roles.Workspace.Member,
     getWorkspaceSsoProvider: async () => ({
       providerId: 'provider-id'

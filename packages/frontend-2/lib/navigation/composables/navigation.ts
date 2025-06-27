@@ -13,6 +13,8 @@ export const useNavigationState = () =>
 export const useNavigation = () => {
   const state = useNavigationState()
   const { mutate } = useMutation(setActiveWorkspaceMutation)
+  const { $intercom } = useNuxtApp()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   const activeWorkspaceSlug = computed({
     get: () => state.value.activeWorkspaceSlug,
@@ -27,12 +29,17 @@ export const useNavigation = () => {
   const mutateActiveWorkspaceSlug = async (newVal: string | null) => {
     state.value.activeWorkspaceSlug = newVal
     state.value.isProjectsActive = false
+    if (!isWorkspacesEnabled.value) return
+
     await mutate({ slug: newVal, isProjectsActive: false })
+    $intercom.updateCompany()
   }
 
   const mutateIsProjectsActive = async (isActive: boolean) => {
     state.value.isProjectsActive = isActive
     state.value.activeWorkspaceSlug = null
+    if (!isWorkspacesEnabled.value) return
+
     await mutate({ isProjectsActive: state.value.isProjectsActive, slug: null })
   }
 

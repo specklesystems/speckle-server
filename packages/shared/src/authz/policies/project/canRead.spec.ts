@@ -11,9 +11,8 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import cryptoRandomString from 'crypto-random-string'
-import { AuthCheckContextLoaders } from '../../domain/loaders.js'
 import { ProjectVisibility } from '../../domain/projects/types.js'
 
 const canReadProjectArgs = () => {
@@ -22,7 +21,7 @@ const canReadProjectArgs = () => {
   return { projectId, userId }
 }
 
-const getWorkspace: AuthCheckContextLoaders['getWorkspace'] = async () => ({
+const getWorkspace = getWorkspaceFake({
   id: 'aaa',
   slug: 'bbb'
 })
@@ -33,7 +32,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       const result = canReadProjectPolicy({
         getWorkspace,
         getAdminOverrideEnabled: async () => false,
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
         getProject: async () => null,
         getProjectRole: () => {
           assert.fail()

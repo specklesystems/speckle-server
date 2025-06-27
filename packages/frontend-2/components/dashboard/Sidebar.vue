@@ -115,7 +115,7 @@
                 </NuxtLink>
 
                 <NuxtLink
-                  to="https://speckle.guide/"
+                  :to="docsPageUrl"
                   target="_blank"
                   @click="isOpenMobile = false"
                 >
@@ -140,6 +140,9 @@
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
+          <template v-if="showSpeckleConPromo" #promo>
+            <DashboardPromo />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
@@ -157,12 +160,15 @@ import {
   projectsRoute,
   connectorsRoute,
   workspaceRoute,
-  tutorialsRoute
+  tutorialsRoute,
+  docsPageUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import dayjs from 'dayjs'
+import { useActiveUserMeta } from '~/lib/user/composables/meta'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -170,6 +176,7 @@ const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
+const { hasDismissedSpeckleConBanner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
@@ -186,6 +193,11 @@ const showSidebar = computed(() => {
   return isWorkspacesEnabled.value
     ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
     : isLoggedIn.value
+})
+
+const showSpeckleConPromo = computed(() => {
+  if (hasDismissedSpeckleConBanner.value) return false
+  return dayjs('2025-11-08').isAfter(dayjs())
 })
 
 const openChat = () => {

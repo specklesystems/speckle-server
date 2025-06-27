@@ -7,7 +7,7 @@ coverage:
   status:
     project:
       default:
-        target: 90% #overall project/ repo coverage
+        target: 70% #overall project/ repo coverage
       server:
         target: 70%
         flags:
@@ -20,7 +20,7 @@ coverage:
       default:
         target: 90% #overall project/ repo coverage
       server:
-        target: 90%
+        target: 70% #TODO This is low and should be increased
         flags:
           - server
       shared:

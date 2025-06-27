@@ -1,41 +1,32 @@
-import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import {
-  getFileUploadTimeLimitMinutes,
+  getFileImportServiceIFCParserRedisUrl,
+  getFileImportServiceIFCQueueName,
+  getFileImportServiceRhinoParserRedisUrl,
+  getFileImportServiceRhinoQueueName,
+  getFileImportTimeLimitMinutes,
   getRedisUrl,
-  isProdEnv,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
-import { logger } from '@/observability/logging'
-import { Optional, TIME_MS } from '@speckle/shared'
-import Bull from 'bull'
-import cryptoRandomString from 'crypto-random-string'
+import { Logger, logger } from '@/observability/logging'
+import { TIME, TIME_MS } from '@speckle/shared'
 import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
+import { JobPayload } from '@speckle/shared/workers/fileimport'
+import { FileImportQueue } from '@/modules/fileuploads/domain/types'
+import Bull from 'bull'
+import {
+  NumberOfFileImportRetries,
+  DelayBetweenFileImportRetriesMinutes
+} from '@/modules/fileuploads/domain/consts'
 
-const FILE_IMPORT_SERVICE_QUEUE_NAME = isTestEnv()
-  ? `test:fileimport-service-jobs:${cryptoRandomString({ length: 5 })}`
-  : 'fileimport-service-jobs'
+const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
+const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
 
-export type JobFileImportPayload = {
-  blobId: string
-  modelId: string
-  projectId: string
-  url: string
-  token: string
-  fileType: string
-  timeOutSeconds: number
-}
-
-export type FileImportJob = {
-  type: 'file-import'
-  payload: JobFileImportPayload
-}
-
-let queue: Optional<Bull.Queue<FileImportJob>>
+export const fileImportQueues: FileImportQueue[] = []
 
 if (isTestEnv()) {
-  logger.info(`Fileimport service test queue ID: ${FILE_IMPORT_SERVICE_QUEUE_NAME}`)
+  logger.info(`Fileimport service test queue ID: ${FILEIMPORT_SERVICE_IFC_QUEUE_NAME}`)
   logger.info(
-    `Monitor using: 'yarn cli bull monitor ${FILE_IMPORT_SERVICE_QUEUE_NAME}'`
+    `Monitor using: 'yarn cli bull monitor ${FILEIMPORT_SERVICE_IFC_QUEUE_NAME}'`
   )
 }
 
@@ -45,39 +36,76 @@ const limiter = {
 }
 
 const defaultJobOptions = {
-  attempts: 5,
-  timeout: getFileUploadTimeLimitMinutes() * TIME_MS.minute,
+  attempts: NumberOfFileImportRetries,
+  timeout:
+    NumberOfFileImportRetries *
+    (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
+    TIME_MS.minute,
   backoff: {
     type: 'fixed',
-    delay: 5 * TIME_MS.minute
+    delay: DelayBetweenFileImportRetriesMinutes * TIME_MS.minute
   },
-  removeOnComplete: isProdEnv(),
-  removeOnFail: false
+  removeOnComplete: {
+    // retain completed jobs for 1 day or until it is the 100th completed job being retained, whichever comes first
+    age: 1 * TIME.day,
+    count: 100
+  },
+  removeOnFail: {
+    // retain completed jobs for 1 week or until it is the 1_000th failed job being retained, whichever comes first
+    age: 1 * TIME.week,
+    count: 1_000
+  }
 }
 
-export const initializeQueue = async () => {
-  queue = await setupQueue({
-    queueName: FILE_IMPORT_SERVICE_QUEUE_NAME,
-    redisUrl: getRedisUrl(),
+const initializeQueue = async (params: {
+  label: string
+  queueName: string
+  redisUrl: string
+  supportedFileTypes: string[]
+}): Promise<FileImportQueue & { queue: Bull.Queue }> => {
+  const { label, queueName, redisUrl, supportedFileTypes } = params
+  const queue = await setupQueue({
+    queueName,
+    redisUrl,
     options: {
       ...(!isTestEnv() ? { limiter } : {}),
       defaultJobOptions
     }
   })
-}
-
-export const shutdownQueue = async () => {
-  if (!queue) return
-  await queue.close()
-}
-
-export const scheduleJob = async (jobData: FileImportJob): Promise<string> => {
-  if (!queue) {
-    throw new UninitializedResourceAccessError(
-      'Attempting to use uninitialized Bull queue'
-    )
+  const fileImportQueue = {
+    label,
+    queue,
+    supportedFileTypes: supportedFileTypes.map(
+      (type) => type.toLocaleLowerCase() // Normalize file types to lowercase (this is a safeguard to prevent stupid typos in the future)
+    ),
+    shutdown: async () => await queue.close(),
+    scheduleJob: async (jobData: JobPayload): Promise<void> => {
+      await queue.add(jobData, defaultJobOptions)
+    }
   }
+  fileImportQueues.push(fileImportQueue)
+  return fileImportQueue
+}
 
-  const job = await queue.add(jobData, { removeOnComplete: true, attempts: 3 })
-  return job.id.toString()
+export const initializeRhinoQueue = async () =>
+  initializeQueue({
+    label: 'rhino',
+    queueName: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME,
+    redisUrl: getFileImportServiceRhinoParserRedisUrl() ?? getRedisUrl(),
+    supportedFileTypes: ['obj', 'stl', 'skp']
+  })
+
+export const initializeIfcQueue = async () =>
+  initializeQueue({
+    label: 'ifc',
+    queueName: FILEIMPORT_SERVICE_IFC_QUEUE_NAME,
+    redisUrl: getFileImportServiceIFCParserRedisUrl() ?? getRedisUrl(),
+    supportedFileTypes: ['ifc']
+  })
+
+export const shutdownQueues = async (params: { logger: Logger }) => {
+  for (const queue of fileImportQueues) {
+    await queue.shutdown()
+    params.logger.info(`📄 FileUploads, shutdown queue for ${queue.label} parser`)
+  }
 }

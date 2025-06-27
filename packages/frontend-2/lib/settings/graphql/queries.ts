@@ -46,7 +46,10 @@ export const settingsWorkspaceRegionsQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersQuery = graphql(`
-  query SettingsWorkspacesMembers($slug: String!) {
+  query SettingsWorkspacesMembers(
+    $slug: String!
+    $filter: AdminWorkspaceJoinRequestFilter
+  ) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersCounts_Workspace
     }
@@ -69,13 +72,31 @@ export const settingsWorkspacesMembersRequestsQuery = graphql(`
   }
 `)
 
-export const settingsWorkspacesMembersSearchQuery = graphql(`
-  query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
+export const settingsWorkspacesMembersTableQuery = graphql(`
+  query SettingsWorkspacesMembersTableQuery($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
       role
       ...SettingsWorkspacesMembersTableHeader_Workspace
-      team(filter: $filter, limit: 250) {
+      permissions {
+        canReadMemberEmail {
+          ...FullPermissionCheckResult
+        }
+      }
+    }
+  }
+`)
+
+export const settingsWorkspacesMembersSearchQuery = graphql(`
+  query SettingsWorkspacesMembersSearch(
+    $slug: String!
+    $filter: WorkspaceTeamFilter
+    $limit: Int
+    $cursor: String
+  ) {
+    workspaceBySlug(slug: $slug) {
+      id
+      team(filter: $filter, limit: $limit, cursor: $cursor) {
         items {
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator

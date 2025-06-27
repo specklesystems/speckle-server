@@ -245,6 +245,7 @@ describe('Project management services', () => {
         getProjectCollaborators: async () => {
           expect.fail()
         },
+        copyWorkspace: async () => '',
         getWorkspaceRolesAndSeats: async () => {
           expect.fail()
         },
@@ -290,6 +291,7 @@ describe('Project management services', () => {
         getProjectCollaborators: async () => {
           expect.fail()
         },
+        copyWorkspace: async () => '',
         getWorkspaceRolesAndSeats: async () => {
           expect.fail()
         },
@@ -344,6 +346,7 @@ describe('Project management services', () => {
             } as unknown as ProjectTeamMember
           ]
         },
+        copyWorkspace: async () => '',
         getWorkspaceRolesAndSeats: async () => {
           return {
             [userId]: {
@@ -413,6 +416,7 @@ describe('Project management services', () => {
             } as unknown as ProjectTeamMember
           ]
         },
+        copyWorkspace: async () => '',
         getWorkspaceRolesAndSeats: async () => {
           return {}
         },
@@ -486,6 +490,7 @@ describe('Project management services', () => {
               } as unknown as ProjectTeamMember
             ]
           },
+          copyWorkspace: async () => '',
           getWorkspaceRolesAndSeats: async () => {
             return workspaceRole && workspaceSeatType
               ? {

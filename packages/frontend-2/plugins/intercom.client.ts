@@ -2,7 +2,13 @@ import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 import { watch, computed, ref } from 'vue'
-import Intercom, { shutdown, show, hide, update } from '@intercom/messenger-js-sdk'
+import Intercom, {
+  shutdown,
+  show,
+  hide,
+  update,
+  trackEvent
+} from '@intercom/messenger-js-sdk'
 import { useApolloClient } from '@vue/apollo-composable'
 import { intercomActiveWorkspaceQuery } from '~~/lib/intercom/graphql/queries'
 
@@ -78,9 +84,14 @@ export const useIntercom = () => {
     isInitialized.value = false
   }
 
+  const trackIntercom = (event: string, metadata?: Record<string, unknown>) => {
+    if (!isInitialized.value) return
+    trackEvent(event, metadata)
+  }
+
   // Fetch active workspace and add to the user as a company
   const updateCompany = async () => {
-    if (!activeWorkspaceSlug.value) return
+    if (!activeWorkspaceSlug.value || !isInitialized.value) return
 
     const workspace = await apollo.query({
       query: intercomActiveWorkspaceQuery,
@@ -95,8 +106,9 @@ export const useIntercom = () => {
       company: {
         id: workspace.data?.workspaceBySlug.id,
         name: workspace.data?.workspaceBySlug.name,
-        people: workspace.data?.workspaceBySlug.team?.totalCount,
         /* eslint-disable camelcase */
+        project_count: workspace.data?.workspaceBySlug.projects?.totalCount,
+        team_count: workspace.data?.workspaceBySlug.team?.totalCount,
         plan_name: workspace.data?.workspaceBySlug.plan?.name,
         plan_status: workspace.data?.workspaceBySlug.plan?.status,
         subscription_created_at:
@@ -131,6 +143,7 @@ export const useIntercom = () => {
     show: showIntercom,
     hide: hideIntercom,
     shutdown: shutdownIntercom,
+    track: trackIntercom,
     updateCompany
   }
 }

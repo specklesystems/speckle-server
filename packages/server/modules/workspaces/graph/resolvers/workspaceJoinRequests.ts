@@ -30,6 +30,7 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import {
   getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
@@ -41,7 +42,11 @@ import {
   approveWorkspaceJoinRequestFactory,
   denyWorkspaceJoinRequestFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
-import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  assignWorkspaceSeatFactory,
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
@@ -87,6 +92,14 @@ export default FF_WORKSPACES_MODULE_ENABLED
         },
         user: async (parent, _args, ctx) => {
           return await ctx.loaders.users.getUser.load(parent.userId)
+        },
+        email: async (parent, _args, ctx) => {
+          const hasAccessToEmail = await ctx.authPolicies.workspace.canReadMemberEmail({
+            workspaceId: parent.workspaceId,
+            userId: ctx.userId
+          })
+          if (!hasAccessToEmail.isOk) return null
+          return parent.email
         },
         workspace: async (parent, _args, ctx) => {
           return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
@@ -178,7 +191,18 @@ export default FF_WORKSPACES_MODULE_ENABLED
                     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                       getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                        getWorkspace: getWorkspaceFactory({ db })
+                      }),
                       eventEmit: emit
+                    }),
+                    assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                        db
+                      }),
+                      eventEmit: emit,
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
                     })
                   })
                 })

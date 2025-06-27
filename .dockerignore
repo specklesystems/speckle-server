@@ -1,4 +1,5 @@
 .circleci
+.github
 .git
 **/node_modules
 **/dist
@@ -13,6 +14,8 @@ ISSUE_TEMPLATE.md
 readme.md
 **/Dockerfile
 **/.venv
+
+**/**.spec.ts
 
 .pnp.*
 .yarn/*

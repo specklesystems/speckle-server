@@ -31,6 +31,7 @@ generates:
         ProjectInviteMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         VersionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        FileUploadMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         CommentMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AutomateMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AdminMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
@@ -72,6 +73,7 @@ generates:
         WorkspaceBillingMutations: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceBillingMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
+        LimitedWorkspace: '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceGraphQLReturn'
         LimitedWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceCollaboratorGraphQLReturn'
         WorkspaceSubscriptionSeats: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceSubscriptionSeatsGraphQLReturn'
         WorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestGraphQLReturn'
@@ -120,6 +122,7 @@ generates:
       - 'test/graphql/*.{js,ts}'
       - 'modules/**/tests/helpers/graphql.ts'
       - 'modules/**/tests/helpers/*Graphql.ts'
+      - 'modules/**/tests/helpers/graphql/*.ts'
     config:
       enumsAsConst: true
       scalars:

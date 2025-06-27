@@ -19,7 +19,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
-import { getProjectFake } from '../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../tests/fakes.js'
 import { TIME_MS } from '../../core/index.js'
 import { ProjectVisibility } from '../domain/projects/types.js'
 
@@ -36,7 +36,10 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getWorkspaceRole: async () => null,
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       ...overrides
     })
 
@@ -49,7 +52,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
         workspaceId: 'workspaceId',
         visibility: ProjectVisibility.Workspace
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -205,7 +208,10 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
         id: 'projectId',
         workspaceId: null
       }),
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       ...overrides
     })
 
@@ -268,7 +274,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
         id: 'projectId',
         workspaceId: null
       }),
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -284,7 +290,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
         id: 'projectId',
         workspaceId: 'workspaceId'
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -423,7 +429,10 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       getAdminOverrideEnabled: async () => false,
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -441,7 +450,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -661,7 +670,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       }),
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -679,7 +688,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),

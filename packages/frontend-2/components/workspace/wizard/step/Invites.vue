@@ -30,11 +30,20 @@
         </div>
       </div>
       <div v-if="verifiedDomain" class="flex flex-col gap-2 w-full">
-        <FormCheckbox
-          v-model="enableDomainDiscoverabilityModel"
-          name="enableDomainDiscoverability"
-          :label="`Allow users with the @${verifiedDomain} domain to request to join workspace`"
-        />
+        <CommonCard class="flex flex-col gap-1 !p-3">
+          <FormCheckbox
+            v-model="enableDomainDiscoverabilityModel"
+            name="enableDomainDiscoverability"
+            :label="`Make workspace discoverable to @${verifiedDomain} users`"
+          />
+          <div class="ml-6 text-body-2xs text-foreground-2 select-none">
+            <p>
+              Users signing up with a
+              <span class="font-medium">@{{ verifiedDomain }}</span>
+              email will be able to find and request to join this workspace.
+            </p>
+          </div>
+        </CommonCard>
       </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <FormButton size="lg" submit full-width>{{ nextButtonText }}</FormButton>
@@ -69,14 +78,23 @@ const { handleSubmit } = useForm<InviteForm>({
 })
 const { fields, push } = useFieldArray<string>('fields')
 
-const enableDomainDiscoverabilityModel = computed(() => {
-  if (!verifiedDomain.value) return false
+const enableDomainDiscoverabilityModel = computed({
+  get() {
+    if (!verifiedDomain.value) return false
 
-  return !isUndefined(state.value.enableDomainDiscoverabilityForDomain)
-    ? state.value.enableDomainDiscoverabilityForDomain !== null
-      ? true
-      : undefined
-    : true
+    return !isUndefined(state.value.enableDomainDiscoverabilityForDomain)
+      ? state.value.enableDomainDiscoverabilityForDomain !== null
+        ? true
+        : undefined
+      : true
+  },
+  set(value: boolean) {
+    if (value && verifiedDomain.value) {
+      state.value.enableDomainDiscoverabilityForDomain = verifiedDomain.value
+    } else {
+      state.value.enableDomainDiscoverabilityForDomain = undefined
+    }
+  }
 })
 
 const nextButtonText = computed(() =>

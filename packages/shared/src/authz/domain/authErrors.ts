@@ -64,6 +64,11 @@ export const ProjectNoAccessError = defineAuthError({
   message: 'You do not have access to the project'
 })
 
+export const PersonalProjectsLimitedError = defineAuthError({
+  code: 'PersonalProjectsLimited',
+  message: 'Non-workspaced/personal projects are limited'
+})
+
 export const ProjectNotEnoughPermissionsError = defineAuthError({
   code: 'ProjectNotEnoughPermissions',
   message: 'You do not have enough permissions in the project to perform this action'
@@ -87,6 +92,15 @@ export const WorkspaceNoAccessError = defineAuthError({
 export const WorkspaceNotEnoughPermissionsError = defineAuthError({
   code: 'WorkspaceNotEnoughPermissions',
   message: 'You do not have enough permissions in the workspace to perform this action'
+})
+
+export const EligibleForExclusiveWorkspaceError = defineAuthError({
+  code: 'UserEligibleForExclusiveWorkspace',
+  message:
+    'Cannot create workspace: ' +
+    'You are a member or eligible to become a member of an exclusive workspace. ' +
+    'This is due to you having received an invite to the workspace ' +
+    'or having a matching verified email.'
 })
 
 export const WorkspaceReadOnlyError = defineAuthError({

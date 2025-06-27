@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { OverridesOf } from '../../../../tests/helpers/types.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
-import { getCommentFake, getProjectFake } from '../../../../tests/fakes.js'
+import {
+  getCommentFake,
+  getProjectFake,
+  getWorkspaceFake
+} from '../../../../tests/fakes.js'
 import { Roles } from '../../../../core/constants.js'
 import {
   CommentNoAccessError,
@@ -19,7 +23,7 @@ import { ProjectVisibility } from '../../../domain/projects/types.js'
 describe('canEditProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canEditProjectCommentPolicy>) =>
     canEditProjectCommentPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null
@@ -49,10 +53,7 @@ describe('canEditProjectCommentPolicy', () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
-        id: 'workspace-id',
-        slug: 'workspace-slug'
-      }),
+      getWorkspace: getWorkspaceFake({ id: 'workspace-id', slug: 'workspace-slug' }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       getWorkspaceSsoProvider: async () => ({
         providerId: 'provider-id'

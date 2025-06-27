@@ -36,6 +36,7 @@ import {
   GetPaginatedProjectModelsItems,
   GetPaginatedProjectModelsTotalCount,
   GetPaginatedStreamBranchesPage,
+  GetProjectModelById,
   GetStreamBranchByName,
   GetStreamBranchCount,
   GetStreamBranchCounts,
@@ -78,6 +79,12 @@ export const getBranchByIdFactory =
     const [branch] = await getBranchesByIdsFactory(deps)([branchId], options)
     return branch as Optional<BranchRecord>
   }
+
+export const getProjectModelByIdFactory = (deps: { db: Knex }): GetProjectModelById => {
+  const getBranchById = getBranchByIdFactory(deps)
+  return async (params) =>
+    await getBranchById(params.modelId, { streamId: params.projectId })
+}
 
 export const getStreamBranchesByNameFactory =
   (deps: { db: Knex }): GetStreamBranchesByName =>
@@ -665,7 +672,7 @@ export const getModelTreeItemsTotalCountFactory =
 export const validateBranchName = (name: string) => {
   name = (name || '').trim()
   if (!name) {
-    throw new BranchNameError('Branch name is required')
+    throw new BranchNameError('Model name is required')
   }
 
   if (
@@ -678,7 +685,7 @@ export const validateBranchName = (name: string) => {
     name.indexOf('\\') !== -1
   )
     throw new BranchNameError(
-      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas or backwards slashes.',
+      'Model names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas or backwards slashes.',
       {
         info: {
           name

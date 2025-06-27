@@ -1,0 +1,124 @@
+import { GetProjectModelById } from '@/modules/core/domain/branches/operations'
+import {
+  ProjectFileImportUpdatedMessageType,
+  ProjectPendingModelsUpdatedMessageType,
+  ProjectPendingVersionsUpdatedMessageType
+} from '@/modules/core/graph/generated/graphql'
+import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
+import { DependenciesOf } from '@/modules/shared/helpers/factory'
+import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import {
+  FileImportSubscriptions,
+  PublishSubscription
+} from '@/modules/shared/utils/subscriptions'
+import { fileUploadsLogger } from '@/observability/logging'
+import { getRequestLogger } from '@/observability/utils/requestContext'
+
+const reportFileUploadStartedFactory =
+  (deps: { publish: PublishSubscription; getProjectModelById: GetProjectModelById }) =>
+  async (payload: EventPayload<typeof FileuploadEvents.Started>) => {
+    const {
+      payload: { upload }
+    } = payload
+
+    const projectId = upload.streamId || upload.projectId
+    const model = upload.modelId
+      ? await deps.getProjectModelById({ modelId: upload.modelId, projectId })
+      : null
+
+    if (!model) {
+      // TODO: Debugging issue that only pops up on latest
+      const logger = getRequestLogger() || fileUploadsLogger
+      logger.error(
+        {
+          err: new Error('Model not found for upload'),
+          upload
+        },
+        'PendingModelsUpdated triggered, which shouldnt happen w/ FE2'
+      )
+
+      await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
+        projectPendingModelsUpdated: {
+          id: upload.id,
+          type: ProjectPendingModelsUpdatedMessageType.Created,
+          model: upload
+        },
+        projectId: upload.streamId
+      })
+    } else {
+      await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
+        projectPendingVersionsUpdated: {
+          id: upload.id,
+          type: ProjectPendingVersionsUpdatedMessageType.Created,
+          version: upload
+        },
+        projectId: upload.streamId
+      })
+    }
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: upload.id,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload
+      },
+      projectId: upload.projectId
+    })
+  }
+
+const reportFileUploadUpdatedFactory =
+  (deps: { publish: PublishSubscription }) =>
+  async (payload: EventPayload<typeof FileuploadEvents.Updated>) => {
+    const {
+      payload: { upload, isNewModel }
+    } = payload
+
+    if (isNewModel || !upload.modelId) {
+      await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
+        projectPendingModelsUpdated: {
+          id: upload.id,
+          type: ProjectPendingModelsUpdatedMessageType.Updated,
+          model: upload
+        },
+        projectId: upload.projectId
+      })
+    } else {
+      await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
+        projectPendingVersionsUpdated: {
+          id: upload.id,
+          type: ProjectPendingVersionsUpdatedMessageType.Updated,
+          version: upload
+        },
+        projectId: upload.projectId
+      })
+    }
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: upload.id,
+        type: ProjectFileImportUpdatedMessageType.Updated,
+        upload
+      },
+      projectId: upload.projectId
+    })
+  }
+
+export const reportSubscriptionEventsFactory =
+  (
+    deps: {
+      eventListen: EventBusListen
+      publish: PublishSubscription
+    } & DependenciesOf<typeof reportFileUploadStartedFactory> &
+      DependenciesOf<typeof reportFileUploadUpdatedFactory>
+  ) =>
+  () => {
+    const reportFileUploadStarted = reportFileUploadStartedFactory(deps)
+    const reportFileUploadUpdated = reportFileUploadUpdatedFactory(deps)
+
+    const quitCbs = [
+      deps.eventListen(FileuploadEvents.Started, reportFileUploadStarted),
+      deps.eventListen(FileuploadEvents.Updated, reportFileUploadUpdated)
+    ]
+
+    return () => quitCbs.forEach((quit) => quit())
+  }

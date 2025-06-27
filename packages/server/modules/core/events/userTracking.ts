@@ -1,15 +1,14 @@
 import { authLogger, type Logger } from '@/observability/logging'
-import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
+import { loggerWithMaybeContext } from '@/observability/utils/requestContext'
 import { addToMailchimpAudience } from '@/modules/auth/services/mailchimp'
 import { UserEvents } from '@/modules/core/domain/users/events'
 import {
-  enableMixpanel,
   getMailchimpNewsletterIds,
   getMailchimpOnboardingIds,
   getMailchimpStatus
 } from '@/modules/shared/helpers/envHelper'
 import { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
-import { mixpanel } from '@/modules/shared/utils/mixpanel'
+import { getClient, MixpanelEvents } from '@/modules/shared/utils/mixpanel'
 import { UpdateUserMixpanelProfile } from '@/modules/core/domain/users/operations'
 import { DependenciesOf } from '@/modules/shared/helpers/factory'
 
@@ -24,10 +23,15 @@ const onUserCreatedFactory =
       const userEmail = user.email
       const newsletterConsent = signUpCtx?.newsletterConsent
 
-      if (userEmail && enableMixpanel()) {
-        const isInvite = !!signUpCtx?.isInvite
-        await mixpanel({ userEmail, req: signUpCtx?.req }).track('Sign Up', {
-          isInvite
+      const mixpanel = getClient()
+      if (userEmail && mixpanel) {
+        await mixpanel.track({
+          eventName: MixpanelEvents.SignUp,
+          req: signUpCtx?.req,
+          userEmail,
+          payload: {
+            isInvite: !!signUpCtx?.isInvite
+          }
         })
       }
 

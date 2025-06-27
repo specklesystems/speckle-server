@@ -32,14 +32,15 @@
           hide-description
         />
       </div>
-      <template v-if="showInviteButton">
-        <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
-          <FormButton :disabled="!isWorkspaceAdmin">Invite</FormButton>
-        </div>
-        <FormButton v-else @click="() => (isInviteDialogOpen = !isInviteDialogOpen)">
+      <div v-tippy="inviteTooltipText">
+        <FormButton
+          v-if="!isWorkspaceGuest"
+          :disabled="!canInvite"
+          @click="isInviteDialogOpen = !isInviteDialogOpen"
+        >
           Invite
         </FormButton>
-      </template>
+      </div>
     </div>
     <InviteDialogWorkspace
       v-if="workspace"
@@ -66,6 +67,11 @@ graphql(`
     slug
     role
     ...InviteDialogWorkspace_Workspace
+    permissions {
+      canInvite {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -73,7 +79,6 @@ const props = defineProps<{
   searchPlaceholder: string
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   showRoleFilter?: boolean
-  showInviteButton?: boolean
   showSeatFilter?: boolean
 }>()
 
@@ -81,7 +86,12 @@ const search = defineModel<string>('search')
 const role = defineModel<WorkspaceRoles>('role')
 const seatType = defineModel<WorkspaceSeatType>('seatType')
 const { on, bind } = useDebouncedTextInput({ model: search })
+
 const isInviteDialogOpen = ref(false)
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
+const canInvite = computed(() => props.workspace?.permissions.canInvite.authorized)
+const inviteTooltipText = computed(() =>
+  canInvite.value ? undefined : props.workspace?.permissions.canInvite.message
+)
 </script>

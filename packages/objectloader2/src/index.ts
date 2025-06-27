@@ -1,4 +1,2 @@
-import ObjectLoader2 from './operations/objectLoader2.js'
-
-export default ObjectLoader2
-export { MemoryDatabase } from './operations/memoryDatabase.js'
+export { ObjectLoader2 } from './core/objectLoader2.js'
+export { ObjectLoader2Factory } from './core/objectLoader2Factory.js'

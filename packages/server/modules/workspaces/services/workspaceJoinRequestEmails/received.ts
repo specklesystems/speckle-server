@@ -77,7 +77,7 @@ export const sendWorkspaceJoinRequestReceivedEmailFactory =
   }): SendWorkspaceJoinRequestReceivedEmail =>
   async (args) => {
     const { requester, workspace } = args
-    const [serverInfo, workspaceAdmins] = await Promise.all([
+    const [serverInfo, { items: workspaceAdmins }] = await Promise.all([
       getServerInfo(),
       getWorkspaceCollaborators({
         workspaceId: workspace.id,

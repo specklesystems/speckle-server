@@ -83,15 +83,15 @@ export default {
           workspaceId
         })) {
           await Promise.all(
-            projects.map((project) =>
-              scheduleJob({
+            projects.map(async (project) => {
+              await scheduleJob({
                 type: 'move-project-region',
                 payload: {
                   projectId: project.id,
                   regionKey
                 }
               })
-            )
+            })
           )
         }
       }
@@ -122,14 +122,15 @@ export default {
       })
 
       return await withOperationLogging(
-        async () =>
-          await scheduleJob({
+        async () => {
+          return await scheduleJob({
             type: 'move-project-region',
             payload: {
               projectId,
               regionKey
             }
-          }),
+          })
+        },
         {
           logger,
           operationName: 'workspaceProjectMoveToRegion',

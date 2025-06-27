@@ -17,6 +17,10 @@ import type { Server } from 'http'
 import request from 'supertest'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { createFileUploadJob } from '@/modules/fileuploads/tests/helpers/creation'
+import {
+  FileImportErrorPayload,
+  FileImportSuccessPayload
+} from '@speckle/shared/workers/fileimport'
 
 const { createUser, createStream, createToken } = initUploadTestEnvironment()
 
@@ -159,6 +163,17 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         expect(response.status).to.equal(400)
       })
       it('should 400 if the job id cannot be found', async () => {
+        const payload: FileImportSuccessPayload = {
+          status: 'success',
+          warnings: [],
+          result: {
+            versionId: cryptoRandomString({ length: 10 }),
+            durationSeconds: randomInt(1, 3600),
+            downloadDurationSeconds: randomInt(1, 3600),
+            parseDurationSeconds: randomInt(1, 3600),
+            parser: 'ifc'
+          }
+        }
         const response = await request(app)
           .post(
             `/api/projects/${projectOneId}/fileimporter/jobs/${cryptoRandomString({
@@ -167,34 +182,27 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
           )
           .set('Content-Type', 'application/json')
           .set('Authorization', `Bearer ${userOneToken}`)
-          .send(
-            JSON.stringify({
-              status: 'success',
-              warnings: [],
-              result: {
-                versionId: cryptoRandomString({ length: 10 }),
-                durationSeconds: randomInt(1, 3600)
-              }
-            })
-          )
+          .send(JSON.stringify(payload))
 
         expect(response.status).to.equal(404)
       })
       it('should 200 if the payload reports a success result', async () => {
+        const payload: FileImportSuccessPayload = {
+          status: 'success',
+          warnings: [],
+          result: {
+            versionId: cryptoRandomString({ length: 10 }),
+            durationSeconds: randomInt(1, 3600),
+            downloadDurationSeconds: randomInt(1, 3600),
+            parseDurationSeconds: randomInt(1, 3600),
+            parser: 'ifc'
+          }
+        }
         const response = await request(app)
           .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
           .set('Authorization', `Bearer ${userOneToken}`)
           .set('Content-Type', 'application/json')
-          .send(
-            JSON.stringify({
-              status: 'success',
-              warnings: [],
-              result: {
-                versionId: cryptoRandomString({ length: 10 }),
-                durationSeconds: randomInt(1, 3600)
-              }
-            })
-          )
+          .send(JSON.stringify(payload))
 
         expect(response.status).to.equal(200)
         const gqlResponse = await getFileUploads(projectOneId, userOneToken)
@@ -205,19 +213,21 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         )
       })
       it('should 200 if the payload reports an error result', async () => {
+        const payload: FileImportErrorPayload = {
+          status: 'error',
+          reason: cryptoRandomString({ length: 10 }),
+          result: {
+            durationSeconds: randomInt(0, 3600),
+            downloadDurationSeconds: randomInt(0, 3600),
+            parseDurationSeconds: randomInt(1, 3600),
+            parser: 'ifc'
+          }
+        }
         const response = await request(app)
           .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
           .set('Authorization', `Bearer ${userOneToken}`)
           .set('Content-Type', 'application/json')
-          .send(
-            JSON.stringify({
-              status: 'error',
-              reasons: [cryptoRandomString({ length: 10 })],
-              result: {
-                durationSeconds: randomInt(1, 3600)
-              }
-            })
-          )
+          .send(JSON.stringify(payload))
 
         expect(response.status).to.equal(200)
         const gqlResponse = await getFileUploads(projectOneId, userOneToken)

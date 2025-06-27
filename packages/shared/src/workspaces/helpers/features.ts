@@ -20,7 +20,8 @@ export const WorkspacePlanFeatures = <const>{
   DomainSecurity: 'domainBasedSecurityPolicies',
   SSO: 'oidcSso',
   CustomDataRegion: 'workspaceDataRegionSpecificity',
-  CustomViewerEmbed: 'customViewerEmbed'
+  HideSpeckleBranding: 'hideSpeckleBranding',
+  ExclusiveMembership: 'exclusiveMembership'
 }
 
 export type WorkspacePlanFeatures =
@@ -48,9 +49,14 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
     displayName: 'Custom data residency',
     description: 'Store your data in EU, UK, North America, or Asia Pacific'
   },
-  [WorkspacePlanFeatures.CustomViewerEmbed]: {
+  [WorkspacePlanFeatures.HideSpeckleBranding]: {
     displayName: 'Customised viewer',
-    description: 'Configure the branding of the embedded Speckle viewer'
+    description: 'Hide the Speckle branding in embedded viewer'
+  },
+  [WorkspacePlanFeatures.ExclusiveMembership]: {
+    displayName: 'Exclusive workspace membership',
+    description:
+      'Members of exclusive workspaces cannot join or create other workspaces'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -118,7 +124,7 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.CustomViewerEmbed
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: {
       projectCount: 10,
@@ -134,7 +140,7 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.CustomViewerEmbed
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: {
       projectCount: null,
@@ -148,6 +154,18 @@ export const WorkspacePaidPlanConfigs: {
 export const WorkspaceUnpaidPlanConfigs: {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
+  [UnpaidWorkspacePlans.Enterprise]: {
+    plan: UnpaidWorkspacePlans.Enterprise,
+    features: [
+      ...baseFeatures,
+      WorkspacePlanFeatures.DomainSecurity,
+      WorkspacePlanFeatures.SSO,
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.ExclusiveMembership
+    ],
+    limits: unlimited
+  },
   [UnpaidWorkspacePlans.Unlimited]: {
     plan: UnpaidWorkspacePlans.Unlimited,
     features: [
@@ -155,7 +173,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.CustomViewerEmbed
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.ExclusiveMembership
     ],
     limits: unlimited
   },
@@ -166,7 +185,7 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.CustomViewerEmbed
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: unlimited
   },
@@ -232,4 +251,16 @@ export const workspaceReachedPlanLimit = (
   if (!limits.projectCount || !limits.modelCount) return false
 
   return projectCount === limits.projectCount || modelCount === limits.modelCount
+}
+
+export const workspacePlanHasAccessToFeature = ({
+  plan,
+  feature
+}: {
+  plan: WorkspacePlans
+  feature: WorkspacePlanFeatures
+}): boolean => {
+  const planConfig = WorkspacePlanConfigs[plan]
+  const hasAccess = planConfig.features.includes(feature)
+  return hasAccess
 }

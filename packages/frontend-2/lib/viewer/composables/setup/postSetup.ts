@@ -1,6 +1,8 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
+  ExplodeEvent,
+  ExplodeExtension,
   LoaderEvent,
   type PropertyInfo,
   type StringPropertyInfo,
@@ -111,7 +113,7 @@ function useViewerObjectAutoLoading() {
 
   const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
 
-  const loadObject = (
+  const loadObject = async (
     objectId: string,
     unload?: boolean,
     options?: Partial<{ zoomToObject: boolean }>
@@ -119,7 +121,7 @@ function useViewerObjectAutoLoading() {
     const objectUrl = getObjectUrl(projectId.value, objectId)
 
     if (unload) {
-      viewer.unloadObject(objectUrl)
+      return viewer.unloadObject(objectUrl)
     } else {
       const loader = new SpeckleLoader(
         viewer.getWorldTree(),
@@ -135,7 +137,7 @@ function useViewerObjectAutoLoading() {
         consolidateProgressInternal({ id, progress: 1 })
       })
 
-      viewer.loadObject(loader, options?.zoomToObject)
+      return viewer.loadObject(loader, options?.zoomToObject)
     }
   }
 
@@ -155,9 +157,15 @@ function useViewerObjectAutoLoading() {
       if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
-        const res = await Promise.all(
-          allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
-        )
+        /** Load sequentially */
+        const res = []
+        for (const i of allObjectIds) {
+          res.push(await loadObject(i, false, { zoomToObject }))
+        }
+        /** Load in parallel */
+        // const res = await Promise.all(
+        //   allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        // )
         if (res.length) {
           hasDoneInitialLoad.value = true
         }
@@ -696,6 +704,20 @@ function useExplodeFactorIntegration() {
     ui: { explodeFactor },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  const updateOutlines = () => {
+    const sectionOutlines = instance.getExtension(SectionOutlines)
+    if (sectionOutlines && sectionOutlines.enabled) sectionOutlines.requestUpdate(true)
+  }
+  onMounted(() => {
+    instance.getExtension(ExplodeExtension).on(ExplodeEvent.Finshed, updateOutlines)
+  })
+
+  onBeforeUnmount(() => {
+    instance
+      .getExtension(ExplodeExtension)
+      .removeListener(ExplodeEvent.Finshed, updateOutlines)
+  })
 
   // state -> viewer only. we don't need the reverse.
   watch(

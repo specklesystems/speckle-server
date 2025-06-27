@@ -566,6 +566,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
+- name: FF_PERSONAL_PROJECTS_LIMITS_ENABLED
+  value: {{ .Values.featureFlags.personalProjectLimitsEnabled | quote }}
+
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
 
@@ -774,6 +777,26 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
       key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
+{{- end }}
+
+{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+- name: FILEIMPORT_SERVICE_RHINO_REDIS_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.redis.fileImportService.rhino.connectionString.secretName }}
+      key: {{ default "fileimport_service_rhino_redis_url" .Values.redis.fileImportService.rhino.connectionString.secretKey }}
+
+- name: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME
+  value: {{ .Values.redis.fileImportService.rhino.queueName | quote }}
+
+- name: FILEIMPORT_SERVICE_IFC_REDIS_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.redis.fileImportService.ifc.connectionString.secretName }}
+      key: {{ default "fileimport_service_ifc_redis_url" .Values.redis.fileImportService.ifc.connectionString.secretKey }}
+
+- name: FILEIMPORT_SERVICE_IFC_QUEUE_NAME
+  value: {{ .Values.redis.fileImportService.ifc.queueName | quote }}
 {{- end }}
 
 # *** PostgreSQL Database ***
@@ -1103,5 +1126,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
 - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
   value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
+{{- end }}
+{{- if .Values.featureFlags.largeFileUploadsEnabled }}
+- name: FF_LARGE_FILE_IMPORTS_ENABLED
+  value: {{ .Values.featureFlags.largeFileUploadsEnabled | quote }}
+- name: FILE_UPLOAD_URL_EXPIRY_MINUTES
+  value: {{ .Values.file_upload_url_expiry_minutes | quote }}
 {{- end }}
 {{- end }}
