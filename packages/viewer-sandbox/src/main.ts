@@ -89,16 +89,16 @@ const createViewer = async (containerName: string, _stream: string) => {
     }
   })
 
-  const label = new TextLabel() as unknown as Mesh
-  label.rotateX(Math.PI * 0.5)
-  label.position.set(2.5, 0, 0)
-  viewer.getRenderer().scene.add(label)
+  // const label = new TextLabel() as unknown as Mesh
+  // label.rotateX(Math.PI * 0.5)
+  // label.position.set(2.5, 0, 0)
+  // viewer.getRenderer().scene.add(label)
 
   const raycaster = new Raycaster()
   raycaster.layers.set(ObjectLayers.OVERLAY)
   viewer.getRenderer().input.on(InputEvent.Click, (arg) => {
-    raycaster.setFromCamera(arg, viewer.getRenderer().renderingCamera)
-    console.log(raycaster.intersectObject(label))
+    // raycaster.setFromCamera(arg, viewer.getRenderer().renderingCamera)
+    // console.log(raycaster.intersectObject(label))
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -204,7 +204,7 @@ const getStream = () => {
     // MEPs (whatever they are)
     // 'https://latest.speckle.systems/streams/85bc4f61c6/commits/8575fe2978'
     // Alex cubes
-    // 'https://latest.speckle.systems/streams/4658eb53b9/commits/d8ec9cccf7'
+    'https://latest.speckle.systems/streams/4658eb53b9/commits/d8ec9cccf7'
     // // Alex more cubes
     // 'https://latest.speckle.systems/streams/4658eb53b9/commits/31a8d5ff2b'
     // Tekla
@@ -586,7 +586,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04@fac9360249'
 
     // Text test stream
-    'https://latest.speckle.systems/projects/109e01c8c0/models/1eee4edbe6'
+    // 'https://latest.speckle.systems/projects/109e01c8c0/models/1eee4edbe6'
 
     // Single billboaded text
     // 'https://latest.speckle.systems/projects/f28ad5b38a/models/b63ebcd807'

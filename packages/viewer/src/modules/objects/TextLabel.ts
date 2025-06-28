@@ -157,7 +157,7 @@ export class TextLabel extends Text {
     this._collisionMesh.visible = this.DEBUG_BILLBOARDS
     this.add(this._collisionMesh)
 
-    void this.updateParams(params)
+    this.updateParams(params).then().catch
   }
 
   public async updateParams(params: TextLabelParams, onUpdateComplete?: () => void) {
@@ -392,16 +392,18 @@ export class TextLabel extends Text {
         ? this._params.backgroundMargins ?? new Vector2()
         : new Vector2()
 
-    const geometry = this.RectangleRounded(
-      offset,
-      boxSize.x + margins.x,
-      boxSize.y + margins.y,
-      radius,
-      5
-    )
-    geometry.computeBoundingBox()
-    geometry.computeBoundingSphere()
-    this._background.geometry = geometry
+    if (!box.isInfiniteBox()) {
+      const geometry = this.RectangleRounded(
+        offset,
+        boxSize.x + margins.x,
+        boxSize.y + margins.y,
+        radius,
+        5
+      )
+      geometry.computeBoundingBox()
+      geometry.computeBoundingSphere()
+      this._background.geometry = geometry
+    }
 
     const color = new Color(this._params.backgroundColor).convertSRGBToLinear()
     ;(this._background.material as SpeckleBasicMaterial).color = color
