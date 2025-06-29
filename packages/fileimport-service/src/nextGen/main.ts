@@ -1,16 +1,16 @@
 import { AppState } from '@speckle/shared/workers'
 import { initializeQueue } from '@speckle/shared/queue'
-import { FILE_IMPORT_TIME_LIMIT_MIN, REDIS_URL, QUEUE_NAME } from '@/nextGen/config.js'
 import type {
   JobPayload,
   FileImportResultPayload
 } from '@speckle/shared/workers/fileimport'
 import type Bull from 'bull'
-import { logger } from '@/observability/logging.js'
 import { Logger } from 'pino'
 import { ensureError, TIME_MS } from '@speckle/shared'
-import { jobProcessor } from './jobProcessor.js'
-import { startHealthCheckServer } from './healthcheck.js'
+import { FILE_IMPORT_TIME_LIMIT_MIN, REDIS_URL, QUEUE_NAME } from '../nextGen/config.js'
+import { logger } from '../observability/logging.js'
+import { jobProcessor } from '../nextGen/jobProcessor.js'
+import { startHealthCheckServer } from '../nextGen/healthcheck.js'
 
 let jobQueue: Bull.Queue<JobPayload> | undefined = undefined
 let appState: AppState = AppState.STARTING
