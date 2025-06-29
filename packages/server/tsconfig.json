@@ -113,7 +113,8 @@
     "test/**/*",
     "type-augmentations/**/*",
     "app.ts",
-    "bootstrap.js",
+    // "otel.ts",
+    "bootstrap.ts",
     "knexfile.ts"
   ],
   "exclude": ["node_modules", "coverage", "reports"]
