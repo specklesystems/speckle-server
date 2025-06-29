@@ -529,11 +529,11 @@ export class CameraController extends Extension implements SpeckleCamera {
     targetSphere.radius = this.fitToRadius(targetSphere.radius) * fit
     this._activeControls.fitToSphere(targetSphere)
 
-    this.updateCameraPlanes(box, fit)
-
     if (!transition) {
       this._activeControls.jumpToGoal()
     }
+
+    this.updateCameraPlanes(box, fit)
   }
 
   protected fitToRadius(radius: number) {
