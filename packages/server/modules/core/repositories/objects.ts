@@ -97,7 +97,7 @@ export const getStreamObjectCountFactory =
 export const insertObjectsFactory =
   (deps: { db: Knex }): StoreObjects =>
   async (objects: ObjectRecord[], options?: Partial<{ trx: Knex.Transaction }>) => {
-    const q = tables.objects(deps.db).insert(objects)
+    const q = tables.objects(deps.db).insert(objects).onConflict().ignore()
     if (options?.trx) q.transacting(options.trx)
     return await q
   }
