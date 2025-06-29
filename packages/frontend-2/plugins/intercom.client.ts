@@ -24,6 +24,16 @@ export const useIntercom = () => {
     public: { intercomAppId }
   } = useRuntimeConfig()
 
+  if (!intercomAppId) {
+    return {
+      show: () => {},
+      hide: () => {},
+      shutdown: () => {},
+      track: () => {},
+      updateCompany: () => {}
+    }
+  }
+
   const isInitialized = ref(false)
 
   useOnAuthStateChange()(
