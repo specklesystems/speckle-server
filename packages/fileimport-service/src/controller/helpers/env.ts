@@ -10,6 +10,10 @@ export const isTestEnv = () => {
   return process.env.NODE_ENV === 'test'
 }
 
+export function isProdEnv() {
+  return process.env.NODE_ENV === 'production'
+}
+
 export const isDevOrTestEnv = () => isDevEnv() || isTestEnv()
 
 export const useLegacyIfcImporter = () => {

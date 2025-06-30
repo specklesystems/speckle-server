@@ -16084,6 +16084,7 @@ __metadata:
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/compression": "npm:^1.7.2"
     "@types/connect-redis": "npm:^0.0.23"
+    "@types/content-disposition": "npm:^0.5.9"
     "@types/cookie-parser": "npm:^1.4.7"
     "@types/cors": "npm:^2.8.17"
     "@types/debug": "npm:^4.1.7"
@@ -16132,6 +16133,7 @@ __metadata:
     compression: "npm:^1.7.4"
     concurrently: "npm:^7.0.0"
     connect-redis: "npm:^6.1.1"
+    content-disposition: "npm:^0.5.4"
     cookie-parser: "npm:^1.4.6"
     cors: "npm:^2.8.5"
     cross-env: "npm:^7.0.3"
@@ -18691,6 +18693,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10/fe81351470f2d3165e8b12ce33542eef89ea893e36dd62e8f7d72566dfb7e448376ae962f9f3ea888547ce8b55a40020ca0e01d637fab5d99567673084542641
+  languageName: node
+  linkType: hard
+
+"@types/content-disposition@npm:^0.5.9":
+  version: 0.5.9
+  resolution: "@types/content-disposition@npm:0.5.9"
+  checksum: 10/d895703c0027ca6c4c0c1ede363909dbb590deec3b206a84b88a49c8b2840bcbd31b4ddeb2e1e6caa1af00801cc79c5b69a5c75a8152f2959810b10fe75a4e1f
   languageName: node
   linkType: hard
 

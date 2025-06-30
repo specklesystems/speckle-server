@@ -2,11 +2,13 @@ import Bull from 'bull'
 import { Redis } from 'ioredis'
 import { isRedisReady } from '../redis/isRedisReady.js'
 
-// we're caching this here, so that there is one client for the app lifecycle
-
 type ClientCache = Record<string, { client?: Redis; subscriber?: Redis }>
 
+// we're caching this here, so that there is one client for the app lifecycle
 const clientCache: ClientCache = {}
+
+// so we can get all active queues for monitoring
+const queueCache: Record<string, Bull.Queue> = {}
 
 export const initializeQueue = async <T>({
   queueName,
@@ -57,13 +59,23 @@ export const initializeQueue = async <T>({
       }
     }
   }
+
   const newQueue = new Bull<T>(queueName, opts)
-  // bull does not check if redis is ready...
-  //
-  // logger.info('Checking Redis connection is ready...')
+  queueCache[queueName] = newQueue
+
+  // When newQueue closed, remove from cache
+  newQueue.on('close', () => {
+    delete queueCache[queueName]
+  })
+  newQueue.client.on('end', () => {
+    delete queueCache[queueName]
+  })
+
   if (!clientCache[redisUrl].client)
     throw new Error('Redis client not properly initialized')
+
   await isRedisReady(clientCache[redisUrl].client)
-  // await isRedisReady(clientCache[redisUrl].subscriber)
   return await newQueue.isReady()
 }
+
+export const getActiveQueues = () => ({ ...queueCache })
