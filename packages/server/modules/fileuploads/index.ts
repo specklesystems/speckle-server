@@ -34,7 +34,7 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
-import { Roles, TIME } from '@speckle/shared'
+import { TIME } from '@speckle/shared'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
@@ -45,11 +45,6 @@ import {
   fileImportQueues
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
-import { createBullBoard } from 'bull-board'
-import { BullMQAdapter } from 'bull-board/bullMQAdapter'
-import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import {
   initializeMetrics,
   ObserveResult
@@ -114,32 +109,8 @@ export const init: SpeckleModule['init'] = async ({
   if (isInitial) {
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
       const rhinoQueue = await initializeRhinoQueue()
-      const rhinoRouter = createBullBoard([new BullMQAdapter(rhinoQueue.queue)]).router
-      app.use(
-        '/api/admin/fileimport-jobs/rhino',
-        async (req, res, next) => {
-          await authMiddlewareCreator([
-            validateServerRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
-              requiredRole: Roles.Server.Admin
-            })
-          ])(req, res, next)
-        },
-        rhinoRouter
-      )
-
       const ifcQueue = await initializeIfcQueue()
-      const ifcRouter = createBullBoard([new BullMQAdapter(ifcQueue.queue)]).router
-      app.use(
-        '/api/admin/fileimport-jobs/ifc',
-        async (req, res, next) => {
-          await authMiddlewareCreator([
-            validateServerRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
-              requiredRole: Roles.Server.Admin
-            })
-          ])(req, res, next)
-        },
-        ifcRouter
-      )
+
       ;({ observeResult } = initializeMetrics({
         registers: [metricsRegister],
         requestQueues: [rhinoQueue, ifcQueue]
@@ -153,8 +124,7 @@ export const init: SpeckleModule['init'] = async ({
 
     scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
 
-    // if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-    listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
+    await listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
       const projectDb = await getProjectDbClient({
@@ -167,7 +137,8 @@ export const init: SpeckleModule['init'] = async ({
         eventEmit: getEventBus().emit
       })(parsedMessage)
     })
-    listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
+
+    await listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
       const projectDb = await getProjectDbClient({
@@ -178,7 +149,6 @@ export const init: SpeckleModule['init'] = async ({
         emitEvent: getEventBus().emit
       })(parsedMessage)
     })
-    // }
 
     initializeEventListenersFactory({ db })()
     reportSubscriptionEventsFactory({

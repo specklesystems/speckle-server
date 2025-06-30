@@ -184,3 +184,20 @@ export const configureKnexClient = (
     : undefined
   return { public: knex(knexConfig), private: privateConfig }
 }
+
+export const getConnectionSettings = (
+  knex: Knex.Knex
+): {
+  connectionString?: string
+  ssl?: boolean
+  application_name?: string
+} => {
+  return (knex.client as Knex.Knex.Client).connectionSettings
+}
+
+export const obfuscateConnectionString = (connectionString: string): string => {
+  const url = new URL(connectionString)
+  const obfuscatedUrl = new URL(url)
+  obfuscatedUrl.password = '****'
+  return obfuscatedUrl.toString()
+}
