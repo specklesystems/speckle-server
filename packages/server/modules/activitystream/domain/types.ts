@@ -20,6 +20,8 @@ export type ResourceEventsToPayloadMap = {
     workspace_plan_created: z.infer<typeof WorkspacePlanCreatedActivity>
     workspace_plan_updated: z.infer<typeof WorkspacePlanUpdatedActivity>
     workspace_subscription_updated: z.infer<typeof WorkspaceSubscriptionUpdatedActivity>
+    workspace_seat_updated: z.infer<typeof WorkspaceSeatUpdatedActivity>
+    workspace_seat_deleted: z.infer<typeof WorkspaceSeatDeletedActivity>
   }
 }
 
@@ -44,6 +46,11 @@ const workspacePlan = z.object({
   ])
 })
 
+const workspaceSeat = z.object({
+  type: z.union([z.literal('editor'), z.literal('viewer')]),
+  userId: z.string()
+})
+
 const workspaceSubscription = z.object({
   billingInterval: z.union([z.literal('monthly'), z.literal('yearly')]),
   totalEditorSeats: z.number()
@@ -64,6 +71,17 @@ export const WorkspaceSubscriptionUpdatedActivity = z.object({
   version: z.literal('1'),
   new: z.intersection(workspacePlan, workspaceSubscription),
   old: z.union([workspacePlan, z.intersection(workspaceSubscription, workspacePlan)])
+})
+
+export const WorkspaceSeatUpdatedActivity = z.object({
+  version: z.literal('1'),
+  new: workspaceSeat,
+  old: z.nullable(workspaceSeat)
+})
+
+export const WorkspaceSeatDeletedActivity = z.object({
+  version: z.literal('1'),
+  old: workspaceSeat
 })
 
 // Stream Activity

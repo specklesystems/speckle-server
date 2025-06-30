@@ -30,7 +30,11 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 import { logger, moduleLogger } from '@/observability/logging'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  EventBusEmit,
+  EventPayload,
+  getEventBus
+} from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   isPaidPlan,
@@ -242,6 +246,8 @@ export const onWorkspaceRoleDeletedFactory =
     getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
     getWorkspaceCollaborators: GetWorkspaceCollaborators
     setStreamCollaborator: SetStreamCollaborator
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
+    emitEvent: EventBusEmit
   }) =>
   async ({
     acl: { userId, workspaceId },
@@ -304,7 +310,13 @@ export const onWorkspaceRoleDeletedFactory =
     }
 
     // Delete seat
+    const previousSeat = await deps.getWorkspaceUserSeat({ userId, workspaceId })
+    if (!previousSeat) return
     await deps.deleteWorkspaceSeat({ userId, workspaceId })
+    await deps.emitEvent({
+      eventName: WorkspaceEvents.SeatDeleted,
+      payload: { previousSeat, updatedByUserId }
+    })
   }
 
 export const onWorkspaceSeatUpdatedFactory =
@@ -718,40 +730,40 @@ export const workspaceTrackingFactory =
           )
         )
         break
+      case WorkspaceEvents.SeatDeleted:
       case WorkspaceEvents.SeatUpdated:
-        const seatWorkspace = await getWorkspace({
-          workspaceId: payload.seat.workspaceId
-        })
+        const workspaceId =
+          'seat' in payload
+            ? payload.seat.workspaceId
+            : payload.previousSeat.workspaceId
+
+        const seatWorkspace = await getWorkspace({ workspaceId })
         if (!seatWorkspace) break
 
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
-          payload.seat.workspaceId,
-          assign(
-            await buildWorkspaceTrackingProperties(seatWorkspace),
-            await checkForSpeckleMembers({ userId: payload.seat.userId })
-          )
+          workspaceId,
+          assign(await buildWorkspaceTrackingProperties(seatWorkspace))
         )
-
-        const userSeated = await getUser(payload.seat.userId)
+        const userSeated = await getUser(
+          'seat' in payload ? payload.seat.userId : payload.previousSeat.userId
+        )
         if (
-          payload.previousSeat?.type === WorkspaceSeatType.Viewer &&
-          payload.seat.type === WorkspaceSeatType.Editor
+          'seat' in payload &&
+          payload.seat?.type === WorkspaceSeatType.Editor &&
+          payload.previousSeat?.type !== WorkspaceSeatType.Editor
         ) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatAssigned,
-            workspaceId: payload.seat.workspaceId,
+            workspaceId,
             userEmail: userSeated?.email
           })
         }
 
-        if (
-          payload.previousSeat?.type === WorkspaceSeatType.Editor &&
-          payload.seat.type === WorkspaceSeatType.Viewer
-        ) {
+        if (payload.previousSeat?.type === WorkspaceSeatType.Editor) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatUnassigned,
-            workspaceId: payload.seat.workspaceId,
+            workspaceId,
             userEmail: userSeated?.email
           })
         }
@@ -996,7 +1008,9 @@ export const initializeEventListenersFactory =
                 revokeStreamPermissions: revokeStreamPermissionsFactory({
                   db: trx
                 })
-              })
+              }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              emitEvent: eventBus.emit
             })
 
             return await onWorkspaceRoleDeleted(payload)
