@@ -275,13 +275,13 @@ export const saveStreamActivityFactory =
 
 export const saveActivityFactory =
   ({ db }: { db: Knex }): SaveActivity =>
-  async (activity): Promise<{ id: string }> => {
+  async (activity) => {
     const id = cryptoRandomString({ length: 10 })
+    const createdAt = new Date()
 
-    await db(Activity.name).insert({
-      ...activity,
-      id
-    })
+    const [result] = await db<typeof activity & { id: string; createdAt: Date }>(
+      Activity.name
+    ).insert({ ...activity, id, createdAt }, '*')
 
-    return { id }
+    return result
   }
