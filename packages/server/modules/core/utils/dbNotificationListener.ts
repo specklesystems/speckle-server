@@ -18,6 +18,7 @@ import {
 } from '@speckle/shared/environment/db'
 import { getMainRegionConfig } from '@/modules/multiregion/regionConfig'
 import type pg from 'pg'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 export type MessageType = Notification
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
@@ -154,13 +155,16 @@ const setupConnection = async (connection: Client) => {
 const getDbConnectionSettings = async (): Promise<pg.ClientConfig> => {
   const base = getConnectionSettings(mainDb)
 
-  const {
-    postgres: { privateConnectionUri }
-  } = await getMainRegionConfig()
-
-  if (privateConnectionUri && isProdEnv()) {
-    // In local envs these URIs can be docker-compatible only, and can break local envs
-    return { ...base, connectionString: privateConnectionUri }
+  if (isMultiRegionEnabled() && isProdEnv()) {
+    const {
+      postgres: { privateConnectionUri }
+    } = await getMainRegionConfig()
+    if (privateConnectionUri) {
+      return {
+        ...base,
+        connectionString: privateConnectionUri
+      }
+    }
   }
 
   return base
