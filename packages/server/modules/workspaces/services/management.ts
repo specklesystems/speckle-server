@@ -180,7 +180,7 @@ export const createWorkspaceFactory =
       workspaceId: workspace.id,
       role: Roles.Workspace.Admin,
       updatedByUserId: userId,
-      skipEvent: true // skip RoleUpdated, cause we only want Created to come out of this
+      skipEvent: false // we want to record the assignments of seats/roles
     })
 
     // emit a workspace created event
