@@ -103,16 +103,14 @@ export const ensureValidWorkspaceRoleSeatFactory =
       })
     })
 
-    if (!params.skipEvent) {
-      await deps.eventEmit({
-        eventName: WorkspaceEvents.SeatUpdated,
-        payload: {
-          seat,
-          updatedByUserId: params.updatedByUserId,
-          previousSeat: workspaceSeat
-        }
-      })
-    }
+    await deps.eventEmit({
+      eventName: WorkspaceEvents.SeatUpdated,
+      payload: {
+        seat,
+        updatedByUserId: params.updatedByUserId,
+        previousSeat: workspaceSeat
+      }
+    })
 
     return seat
   }
@@ -129,7 +127,7 @@ export const assignWorkspaceSeatFactory =
     getWorkspaceUserSeat: GetWorkspaceUserSeat
     eventEmit: EventBusEmit
   }): AssignWorkspaceSeat =>
-  async ({ workspaceId, userId, type, assignedByUserId, skipEvent }) => {
+  async ({ workspaceId, userId, type, assignedByUserId }) => {
     const workspaceAcl = await getWorkspaceRoleForUser({ workspaceId, userId })
     if (!workspaceAcl) {
       throw new NotFoundError('User does not have a role in the workspace')
@@ -159,16 +157,14 @@ export const assignWorkspaceSeatFactory =
       type
     })
 
-    if (!skipEvent) {
-      await eventEmit({
-        eventName: WorkspaceEvents.SeatUpdated,
-        payload: {
-          seat,
-          updatedByUserId: assignedByUserId,
-          previousSeat
-        }
-      })
-    }
+    await eventEmit({
+      eventName: WorkspaceEvents.SeatUpdated,
+      payload: {
+        seat,
+        updatedByUserId: assignedByUserId,
+        previousSeat
+      }
+    })
 
     return seat
   }

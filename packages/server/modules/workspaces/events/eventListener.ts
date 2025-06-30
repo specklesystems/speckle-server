@@ -30,7 +30,11 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 import { logger, moduleLogger } from '@/observability/logging'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  EventBusEmit,
+  EventPayload,
+  getEventBus
+} from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   isPaidPlan,
@@ -87,7 +91,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   getBaseTrackingProperties,
   getClient,
-  mapPlanStatusToMixpanelEvent as mapPlanNameToMixpanelEventName,
+  mapPlanStatusToMixpanelEvent as mapNonValidPlanStatusToMixpanelEventName,
   MixpanelClient,
   MixpanelEvents,
   WORKSPACE_TRACKING_ID_KEY
@@ -137,6 +141,7 @@ import { assign } from 'lodash'
 import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { WorkspacePlans } from '@/modules/core/graph/generated/graphql'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -241,6 +246,8 @@ export const onWorkspaceRoleDeletedFactory =
     getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
     getWorkspaceCollaborators: GetWorkspaceCollaborators
     setStreamCollaborator: SetStreamCollaborator
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
+    emitEvent: EventBusEmit
   }) =>
   async ({
     acl: { userId, workspaceId },
@@ -303,7 +310,13 @@ export const onWorkspaceRoleDeletedFactory =
     }
 
     // Delete seat
+    const previousSeat = await deps.getWorkspaceUserSeat({ userId, workspaceId })
+    if (!previousSeat) return
     await deps.deleteWorkspaceSeat({ userId, workspaceId })
+    await deps.emitEvent({
+      eventName: WorkspaceEvents.SeatDeleted,
+      payload: { previousSeat, updatedByUserId }
+    })
   }
 
 export const onWorkspaceSeatUpdatedFactory =
@@ -573,63 +586,94 @@ export const workspaceTrackingFactory =
           workspaceId: payload.workspacePlan.workspaceId
         })
         if (!updatedPlanWorkspace) break
-        const subscription = await getWorkspaceSubscription({
-          workspaceId: payload.workspacePlan.workspaceId
-        })
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
           payload.workspacePlan.workspaceId,
           await buildWorkspaceTrackingProperties(updatedPlanWorkspace)
         )
+
+        // To not double track the events,
+        // paid plans always emit subscription events
+        // so we only track free plans
+        if (isPaidPlan(payload.workspacePlan.name)) break
+
         await mixpanel.track({
           eventName: MixpanelEvents.WorkspaceUpgraded,
           workspaceId: payload.workspacePlan.workspaceId,
           payload: {
             plan: payload.workspacePlan.name,
-            cycle: subscription?.billingInterval,
-            previousPlan: payload.previousPlan?.name
+            previousPlan: payload.previousWorkspacePlan?.name
           }
         })
 
         break
       case GatekeeperEvents.WorkspaceSubscriptionUpdated:
-        const editorSeatsChanged =
-          payload.subscription.totalEditorSeats -
-          payload.previousSubscription.totalEditorSeats
+        const status = payload.workspacePlan.status
+        const hasPricePerSeatChanged =
+          status === WorkspacePlanStatuses.Valid &&
+          (payload.workspacePlan.name !== payload.previousWorkspacePlan?.name ||
+            payload.subscription.billingInterval !==
+              payload.previousSubscription?.billingInterval)
 
-        if (editorSeatsChanged > 0 && isPaidPlan(payload.workspacePlan.name)) {
+        if (hasPricePerSeatChanged) {
+          await mixpanel.track({
+            eventName: MixpanelEvents.WorkspaceUpgraded,
+            workspaceId: payload.workspacePlan.workspaceId,
+            payload: {
+              plan: payload.workspacePlan.name,
+              cycle: payload.subscription.billingInterval,
+              previousPlan: payload.previousWorkspacePlan.name
+            }
+          })
+
+          break
+        }
+
+        const newStatusNoLongerValid =
+          status !== WorkspacePlanStatuses.Valid &&
+          status !== payload.previousWorkspacePlan.status
+
+        if (newStatusNoLongerValid) {
+          await mixpanel.track({
+            eventName: mapNonValidPlanStatusToMixpanelEventName[status],
+            workspaceId: payload.workspacePlan.workspaceId,
+            payload: {
+              planName: payload.workspacePlan.name
+            }
+          })
+
+          break
+        }
+
+        const editorSeatsChange =
+          payload.subscription.totalEditorSeats -
+          (payload.previousSubscription?.totalEditorSeats || 0)
+
+        if (editorSeatsChange > 0 && isPaidPlan(payload.workspacePlan.name)) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatsPurchased,
             workspaceId: payload.workspacePlan.workspaceId,
             payload: {
-              amount: editorSeatsChanged,
+              amount: editorSeatsChange,
               planName: payload.workspacePlan.name
             }
           })
         }
 
-        if (editorSeatsChanged < 0 && isPaidPlan(payload.workspacePlan.name)) {
+        if (editorSeatsChange < 0 && isPaidPlan(payload.workspacePlan.name)) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatsDownscaled,
             workspaceId: payload.workspacePlan.workspaceId,
             payload: {
-              amount: Math.abs(editorSeatsChanged),
+              amount: Math.abs(editorSeatsChange),
               planName: payload.workspacePlan.name
             }
           })
         }
 
-        if (payload.workspacePlan.status === WorkspacePlanStatuses.Valid) break
-        await mixpanel.track({
-          eventName: mapPlanNameToMixpanelEventName[payload.workspacePlan.status],
-          workspaceId: payload.workspacePlan.workspaceId,
-          payload: {
-            planName: payload.workspacePlan.name
-          }
-        })
         break
+      case GatekeeperEvents.WorkspacePlanCreated:
       case GatekeeperEvents.WorkspaceTrialExpired:
-        break
       case WorkspaceEvents.Authorizing:
         break
       case WorkspaceEvents.Created:
@@ -686,40 +730,40 @@ export const workspaceTrackingFactory =
           )
         )
         break
+      case WorkspaceEvents.SeatDeleted:
       case WorkspaceEvents.SeatUpdated:
-        const seatWorkspace = await getWorkspace({
-          workspaceId: payload.seat.workspaceId
-        })
+        const workspaceId =
+          'seat' in payload
+            ? payload.seat.workspaceId
+            : payload.previousSeat.workspaceId
+
+        const seatWorkspace = await getWorkspace({ workspaceId })
         if (!seatWorkspace) break
 
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
-          payload.seat.workspaceId,
-          assign(
-            await buildWorkspaceTrackingProperties(seatWorkspace),
-            await checkForSpeckleMembers({ userId: payload.seat.userId })
-          )
+          workspaceId,
+          assign(await buildWorkspaceTrackingProperties(seatWorkspace))
         )
-
-        const userSeated = await getUser(payload.seat.userId)
+        const userSeated = await getUser(
+          'seat' in payload ? payload.seat.userId : payload.previousSeat.userId
+        )
         if (
-          payload.previousSeat?.type === WorkspaceSeatType.Viewer &&
-          payload.seat.type === WorkspaceSeatType.Editor
+          'seat' in payload &&
+          payload.seat?.type === WorkspaceSeatType.Editor &&
+          payload.previousSeat?.type !== WorkspaceSeatType.Editor
         ) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatAssigned,
-            workspaceId: payload.seat.workspaceId,
+            workspaceId,
             userEmail: userSeated?.email
           })
         }
 
-        if (
-          payload.previousSeat?.type === WorkspaceSeatType.Editor &&
-          payload.seat.type === WorkspaceSeatType.Viewer
-        ) {
+        if (payload.previousSeat?.type === WorkspaceSeatType.Editor) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatUnassigned,
-            workspaceId: payload.seat.workspaceId,
+            workspaceId,
             userEmail: userSeated?.email
           })
         }
@@ -923,13 +967,19 @@ export const initializeEventListenersFactory =
         await onWorkspaceAuthorized(payload)
       }),
       eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
-        await upsertUnpaidWorkspacePlanFactory({ db })({
-          workspacePlan: {
-            name: 'free',
-            status: 'valid',
-            workspaceId: payload.workspace.id,
-            createdAt: new Date(),
-            updatedAt: new Date()
+        const workspacePlan = {
+          name: WorkspacePlans.Free,
+          status: WorkspacePlanStatuses.Valid,
+          workspaceId: payload.workspace.id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        await upsertUnpaidWorkspacePlanFactory({ db })({ workspacePlan })
+        await eventBus.emit({
+          eventName: GatekeeperEvents.WorkspacePlanCreated,
+          payload: {
+            workspacePlan,
+            userId: payload.createdByUserId
           }
         })
       }),
@@ -958,7 +1008,9 @@ export const initializeEventListenersFactory =
                 revokeStreamPermissions: revokeStreamPermissionsFactory({
                   db: trx
                 })
-              })
+              }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              emitEvent: eventBus.emit
             })
 
             return await onWorkspaceRoleDeleted(payload)
