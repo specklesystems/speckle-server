@@ -21,9 +21,9 @@ type ParsedMessage = {
   isNewBranch: boolean
 }
 const branchCreatedPayloadRegexp = /^(.+?):::(.*?):::(.*?):::(.*?)$/i
-export const parseMessagePayload = (payload: string): ParsedMessage => {
+export const parseMessagePayload = (payload: string | undefined): ParsedMessage => {
   const [, uploadId, streamId, branchName, newBranchCreated] =
-    branchCreatedPayloadRegexp.exec(payload) || [null, null, null, null]
+    branchCreatedPayloadRegexp.exec(payload || '') || [null, null, null, null]
 
   const isNewBranch = newBranchCreated === '1'
   return { uploadId, streamId, branchName, isNewBranch }
@@ -56,7 +56,7 @@ export const onFileImportProcessedFactory =
       const err = new FileUploadInternalError(
         upload.convertedMessage || 'Unknown error while uploading file.'
       )
-      logger.error(
+      logger.warn(
         { err, fileImportDetails: upload },
         'Error while processing file upload.'
       )

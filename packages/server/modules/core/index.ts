@@ -91,7 +91,7 @@ const coreModule: SpeckleModule<{
 
     if (isInitial) {
       // Setup global pg notification listener
-      setupResultListener()
+      await setupResultListener()
 
       // Init mp
       mp.initialize()
