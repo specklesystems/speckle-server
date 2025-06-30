@@ -17,6 +17,10 @@ import { Knex } from 'knex'
 import { getIfcDllPath, useLegacyIfcImporter } from '@/controller/helpers/env.js'
 import { isErrorOutput, isSuccessOutput } from '@/common/output.js'
 import { runProcessWithTimeout } from '@/common/processHandling.js'
+import {
+  getConnectionSettings,
+  obfuscateConnectionString
+} from '@speckle/shared/environment/db'
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -56,11 +60,23 @@ async function doTask(
   task: { id: string; streamId: string }
 ) {
   const taskId = task.id
+  let taskLogger = logger.child({ taskId })
+
+  // TODO: Troubleshooting listen/notify issues
+  const connectionSettings = getConnectionSettings(mainDb)
+  const mainDbConnectionString = obfuscateConnectionString(
+    connectionSettings.connectionString || ''
+  )
 
   // Mark task as started
   await mainDb.raw(`NOTIFY file_import_started, '${task.id}:::${task.streamId}::::::'`)
+  taskLogger.info(
+    {
+      mainDbConnectionString
+    },
+    'Notified file_import_started...'
+  )
 
-  let taskLogger = logger.child({ taskId })
   let tempUserToken: Nullable<string> = null
   let mainServerApi = null
   let taskServerApi = null

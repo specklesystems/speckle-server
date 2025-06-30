@@ -1,14 +1,20 @@
 import { MaybeAsync, Optional, md5, wait } from '@speckle/shared'
 import { dbNotificationLogger } from '@/observability/logging'
-import * as Knex from 'knex'
 import { Client, Notification } from 'pg'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import {
+  getRedisUrl,
+  postgresConnectionCreateTimeoutMillis
+} from '@/modules/shared/helpers/envHelper'
 import Redis from 'ioredis'
 import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { mainDb } from '@/db/knex'
 import { PartialDeep } from 'type-fest'
 import { merge } from 'lodash'
+import {
+  getConnectionSettings,
+  obfuscateConnectionString
+} from '@speckle/shared/environment/db'
 
 export type MessageType = Notification
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
@@ -142,12 +148,23 @@ const reconnect = async () => {
   try {
     await endConnection()
 
-    dbNotificationLogger.info('Attempting to (re-)connect...')
+    const connectionSettings = getConnectionSettings(mainDb)
+    const mainDbConnectionString = obfuscateConnectionString(
+      connectionSettings.connectionString || ''
+    )
+
+    dbNotificationLogger.info(
+      {
+        mainDbConnectionString
+      },
+      'Attempting to (re-)connect...'
+    )
 
     // creating externally managed PG connection from knex mainDB connection settings
-    const newConnection = new Client(
-      (mainDb.client as Knex.Knex.Client).connectionSettings
-    )
+    const newConnection = new Client({
+      ...getConnectionSettings(mainDb),
+      connectionTimeoutMillis: postgresConnectionCreateTimeoutMillis()
+    })
 
     // connect and test
     await newConnection.connect()
