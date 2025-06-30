@@ -73,6 +73,8 @@ const googleStrategyBuilderFactory =
         })
 
         try {
+          // seems very weird that the Google strategy is not parsing 'error' query params
+          // and generating a thrown error for us, but here we are.
           if ('error' in req.query) {
             switch (req.query.error) {
               case 'access_denied':
@@ -182,25 +184,6 @@ const googleStrategyBuilderFactory =
                 email: (e as UnverifiedEmailSSOLoginError).info().email
               })
             default:
-              // handle other common errors thrown by the underlying client libraries
-              if (
-                e.name === 'TokenError' &&
-                'code' in e &&
-                e.code === 'invalid_grant'
-              ) {
-                req.log.warn(
-                  { err: e },
-                  "Authentication error for strategy 'google' encountered an Invalid Grant error"
-                )
-                // This is a common error from Google and a number of reasons
-                // can cause it. Many user-related issues, so we will treat it as user-related.
-                // https://blog.timekit.io/google-oauth-invalid-grant-nightmare-and-how-to-fix-it-9f4efaf1da35
-                return done(null, false, {
-                  message: e.message,
-                  failureType: ExpectedAuthFailure.InvalidGrantError
-                })
-              }
-
               logger.error({ err: e }, 'Auth error for Google strategy')
               return done(e, false, { message: e.message })
           }
