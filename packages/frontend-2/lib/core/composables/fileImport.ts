@@ -31,15 +31,17 @@ export const FailedFileImportJobError = <const>{
   ImportFailed: 'ImportFailed'
 }
 
-export type FailedFileImportJobErrorType =
+export type FailedFileImportJobError =
   (typeof FailedFileImportJobError)[keyof typeof FailedFileImportJobError]
 
 export type FailedFileImportJob = {
   id: string
   fileName: string
   projectId: string
+  file?: File // only available if job failed before upload started
   modelId: string | null // null if error occurred before model was created
-  error: { type: FailedFileImportJobErrorType; message: string }
+  error: { type: FailedFileImportJobError; message: string }
+  date: Date
 }
 
 type GlobalFileImportErrorManagerState = {
@@ -212,6 +214,17 @@ graphql(`
   }
 `)
 
+export const useFileImportBaseSettings = () => {
+  const { maxSizeInBytes } = useServerFileUploadLimit()
+  const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
+
+  const accept = computed(
+    () => `.ifc,.stl,.obj${isNextGenFileImporterEnabled.value ? ',.skp' : ''}`
+  )
+
+  return { maxSizeInBytes, accept }
+}
+
 export function useFileImport(params: {
   project: MaybeRef<UseFileImport_ProjectFragment>
   /**
@@ -245,16 +258,12 @@ export function useFileImport(params: {
     errorCallback
   } = params
 
+  const { maxSizeInBytes, accept } = useFileImportBaseSettings()
   const logger = useLogger()
   const { importFile } = useFileImportApi()
-  const { maxSizeInBytes } = useServerFileUploadLimit()
   const authToken = useAuthCookie()
   const apiOrigin = useApiOrigin()
-  const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
 
-  const accept = computed(
-    () => `.ifc,.stl,.obj${isNextGenFileImporterEnabled.value ? ',.skp' : ''}`
-  )
   const upload = ref(
     null as Nullable<UploadFileItem & { model: Nullable<UseFileImport_ModelFragment> }>
   )
@@ -316,7 +325,8 @@ export function useFileImport(params: {
       fileName: upload.value.file.name,
       projectId: unref(project).id,
       modelId: upload.value.model?.id || null,
-      error
+      error,
+      date: new Date()
     }
 
     // Log error to console/seq

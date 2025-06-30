@@ -97,7 +97,8 @@ import {
   MissingFileExtensionError,
   ForbiddenFileTypeError,
   UniqueFileTypeSpecifier,
-  prettyFileSize
+  prettyFileSize,
+  resolveFileExtension
 } from '~~/src/helpers/form/file'
 import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
 export * from '~~/src/helpers/common/error'
@@ -180,7 +181,8 @@ export {
   keyboardClick,
   useDebouncedTextInput,
   buildManualPromise,
-  CommonProgressBar
+  CommonProgressBar,
+  resolveFileExtension
 }
 export type {
   LayoutDialogButton,

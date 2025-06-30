@@ -697,7 +697,8 @@ export function useProjectPendingVersionUpdateTracking(
               message:
                 event.version.convertedMessage ||
                 `${event.version.modelName} version could not be imported`
-            }
+            },
+            date: new Date()
           })
         }
       }

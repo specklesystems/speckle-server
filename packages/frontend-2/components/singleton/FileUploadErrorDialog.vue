@@ -1,19 +1,83 @@
 <template>
   <LayoutDialog v-model:open="open" :title="title" :buttons="buttons">
-    <p class="text-foreground-2 mt-2">
+    <p class="text-foreground-2 my-2">
       The following file uploads failed. You can retry them by re-uploading the files.
     </p>
-    <div v-for="job in failedJobs" :key="job.id" class="flex items-center gap-2">
-      <CommonBadge color-classes="bg-danger text-foundation">Failed</CommonBadge>
-      <span class="text-foreground">{{ job.fileName }}</span>
-    </div>
+    <LayoutTable
+      :items="failedJobs"
+      :columns="[
+        { id: 'file', header: 'File', classes: 'col-span-4' },
+        { id: 'error', header: 'Error', classes: 'col-span-5' },
+        { id: 'date', header: 'Date', classes: 'col-span-2' },
+        {
+          id: 'actions',
+          header: '',
+          classes: 'col-span-1 flex items-center justify-end'
+        }
+      ]"
+      class="text-foreground"
+      style="max-height: 300px"
+    >
+      <template #file="{ item }">
+        <div
+          v-tippy="{
+            content: item.fileName.length > 35 ? item.fileName : undefined,
+            placement: 'top-start',
+            delay: 300
+          }"
+          class="truncate text-foreground"
+        >
+          {{ item.fileName }}
+        </div>
+      </template>
+      <template #error="{ item }">
+        <span class="text-foreground">{{ getErrorMessage(item) }}</span>
+        <ErrorReference
+          v-if="shouldShowErrorReference(item)"
+          class="text-left"
+          @click="copyErrorReference(item)"
+        />
+      </template>
+      <template #date="{ item }">
+        <span v-tippy="formattedFullDate(item.date)" class="text-foreground-2">
+          {{ formattedRelativeDate(item.date) }}
+        </span>
+      </template>
+      <template #actions="{ item }">
+        <FormButton
+          v-tippy="'Go to project'"
+          :icon-left="ArrowRightIcon"
+          hide-text
+          size="sm"
+          color="outline"
+          @click="goToProject(item)"
+        />
+      </template>
+    </LayoutTable>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { LayoutDialogButton } from '@speckle/ui-components'
-import { useGlobalFileImportErrorManager } from '~/lib/core/composables/fileImport'
+import { ArrowRightIcon } from '@heroicons/vue/24/outline'
+import { throwUncoveredError } from '@speckle/shared'
+import {
+  prettyFileSize,
+  resolveFileExtension,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
+import { omit } from 'lodash-es'
+import { useNavigateToProject } from '~/lib/common/helpers/route'
+import { useGenerateErrorReference } from '~/lib/core/composables/error'
+import {
+  useGlobalFileImportErrorManager,
+  type FailedFileImportJob,
+  FailedFileImportJobError,
+  useFileImportBaseSettings
+} from '~/lib/core/composables/fileImport'
 
 const { clear, failedJobs } = useGlobalFileImportErrorManager()
+const { maxSizeInBytes, accept } = useFileImportBaseSettings()
+const { copyReference } = useGenerateErrorReference()
+const navigateToProject = useNavigateToProject()
 
 const open = computed({
   get: () => failedJobs.value.length > 0,
@@ -35,6 +99,57 @@ const buttons = computed((): LayoutDialogButton[] => [
     }
   }
 ])
+
+const shouldShowErrorReference = (job: FailedFileImportJob) => {
+  return (
+    job.error.type === FailedFileImportJobError.UploadFailed ||
+    job.error.type === FailedFileImportJobError.ImportFailed
+  )
+}
+
+const getErrorMessage = (job: FailedFileImportJob) => {
+  switch (job.error.type) {
+    case FailedFileImportJobError.FileTooLarge: {
+      let base = `The file is too large to be uploaded. The maximum file size is ${prettyFileSize(
+        maxSizeInBytes.value
+      )}`
+
+      if (job.file) {
+        base += ` while the file you tried to upload is ${prettyFileSize(
+          job.file.size
+        )}.`
+      } else {
+        base += '.'
+      }
+      return base
+    }
+    case FailedFileImportJobError.MissingFileExtensionError:
+      return `The file you tried to upload does not have a valid file extension.`
+    case FailedFileImportJobError.InvalidFileType: {
+      const fileExtension = resolveFileExtension(job.fileName)
+      return `The file you tried to upload (${fileExtension}) is not a supported file type. Only ${accept.value} are supported by this server.`
+    }
+    case FailedFileImportJobError.ImportFailed:
+    case FailedFileImportJobError.UploadFailed: {
+      const isImport = job.error.type === FailedFileImportJobError.ImportFailed
+      const base = `The file ${
+        isImport ? 'import' : 'upload'
+      } failed unexpectedly. Please copy the error reference and share it with server admins for further investigation.`
+      return base
+    }
+    default:
+      throwUncoveredError(job.error.type)
+  }
+}
+
+const copyErrorReference = async (job: FailedFileImportJob) => {
+  await copyReference({ date: job.date, extraPayload: omit(job, ['file']) })
+}
+
+const goToProject = async (job: FailedFileImportJob) => {
+  void navigateToProject({ id: job.projectId })
+  open.value = false
+}
 
 watch(failedJobs, (newJobs) => {
   if (newJobs.length > 0) {
