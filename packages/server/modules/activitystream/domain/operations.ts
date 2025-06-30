@@ -280,4 +280,4 @@ export type SaveActivity = <
   R extends keyof ResourceEventsToPayloadMap[T]
 >(
   args: Omit<Activity<T, R>, 'createdAt' | 'id'>
-) => Promise<{ id: string }>
+) => Promise<Activity<T, R>>
