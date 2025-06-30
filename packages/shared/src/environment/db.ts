@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import fs from 'node:fs/promises'
 import * as Knex from 'knex' // knex has broken types, hence the * as import
-import type pg from 'pg'
 import { Logger } from 'pino'
 import { isUndefined, get } from '#lodash'
 
@@ -188,7 +187,11 @@ export const configureKnexClient = (
 
 export const getConnectionSettings = (
   knex: Knex.Knex
-): Pick<pg.ClientConfig, 'application_name' | 'connectionString' | 'ssl'> => {
+): {
+  connectionString?: string
+  ssl?: boolean
+  application_name?: string
+} => {
   return (knex.client as Knex.Knex.Client).connectionSettings
 }
 
