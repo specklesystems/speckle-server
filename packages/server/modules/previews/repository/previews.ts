@@ -72,6 +72,10 @@ export const updateObjectPreviewFactory =
   async ({ objectPreview }) => {
     return await tables
       .objectPreview(db)
+      .where({
+        streamId: objectPreview.streamId,
+        objectId: objectPreview.objectId
+      })
       .update(objectPreview)
       .returning<ObjectPreviewRecord[]>('*')
   }
