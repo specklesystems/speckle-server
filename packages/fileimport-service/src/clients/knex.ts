@@ -10,8 +10,9 @@ const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
 const isDevEnv = process.env.NODE_ENV !== 'production'
 
-type DbClient = { public: Knex; private?: Knex }
+export type DbClient = { public: Knex; private?: Knex }
 let dbClients: { [key: string]: DbClient }
+
 export const getDbClients = async () => {
   if (dbClients) return dbClients
   const maxConnections = parseInt(
