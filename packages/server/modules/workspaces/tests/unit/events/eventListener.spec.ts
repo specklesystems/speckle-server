@@ -451,12 +451,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
         {
           previousSeat: undefined,
           seat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Editor }),
-          expectedEvent: undefined
-        },
-        {
-          previousSeat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Editor }),
-          seat: buildTestWorkspaceSeat({ type: WorkspaceSeatType.Editor }),
-          expectedEvent: undefined
+          expectedEvent: MixpanelEvents.EditorSeatAssigned // creation
         }
       ].forEach(({ previousSeat, seat, expectedEvent }) => {
         const title = expectedEvent

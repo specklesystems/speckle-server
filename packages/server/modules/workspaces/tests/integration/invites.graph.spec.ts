@@ -1218,8 +1218,10 @@ describe('Workspaces Invites GQL', () => {
 
       afterEach(async () => {
         // Serial execution to avoid race conditions
-        await unassignFromWorkspace(myInviteTargetWorkspace, otherGuy)
-        await leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
+        try {
+          await unassignFromWorkspace(myInviteTargetWorkspace, otherGuy)
+          await leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
+        } catch {}
 
         // Reset otherGuy's newly added verified email
         await Promise.all([

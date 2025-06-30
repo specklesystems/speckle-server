@@ -736,7 +736,11 @@ export const workspaceTrackingFactory =
         const userSeated = await getUser(
           'seat' in payload ? payload.seat.userId : payload.previousSeat.userId
         )
-        if ('seat' in payload && payload?.seat?.type === WorkspaceSeatType.Editor) {
+        if (
+          'seat' in payload &&
+          payload.seat?.type === WorkspaceSeatType.Editor &&
+          payload.previousSeat?.type !== WorkspaceSeatType.Editor
+        ) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatAssigned,
             workspaceId,
