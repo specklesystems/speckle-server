@@ -64,7 +64,7 @@ async function doTask(
 
   // TODO: Troubleshooting listen/notify issues
   const connectionSettings = getConnectionSettings(mainDb)
-  const cleanConnectionString = obfuscateConnectionString(
+  const mainDbConnectionString = obfuscateConnectionString(
     connectionSettings.connectionString || ''
   )
 
@@ -72,7 +72,7 @@ async function doTask(
   await mainDb.raw(`NOTIFY file_import_started, '${task.id}:::${task.streamId}::::::'`)
   taskLogger.info(
     {
-      cleanConnectionString
+      mainDbConnectionString
     },
     'Notified file_import_started...'
   )

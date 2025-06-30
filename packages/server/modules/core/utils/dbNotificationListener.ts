@@ -149,13 +149,13 @@ const reconnect = async () => {
     await endConnection()
 
     const connectionSettings = getConnectionSettings(mainDb)
-    const cleanConnectionString = obfuscateConnectionString(
+    const mainDbConnectionString = obfuscateConnectionString(
       connectionSettings.connectionString || ''
     )
 
     dbNotificationLogger.info(
       {
-        cleanConnectionString
+        mainDbConnectionString
       },
       'Attempting to (re-)connect...'
     )
