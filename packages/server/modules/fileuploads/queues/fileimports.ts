@@ -3,17 +3,20 @@ import {
   getFileImportServiceIFCQueueName,
   getFileImportServiceRhinoParserRedisUrl,
   getFileImportServiceRhinoQueueName,
-  getFileUploadTimeLimitMinutes,
+  getFileImportTimeLimitMinutes,
   getRedisUrl,
-  isProdEnv,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { Logger, logger } from '@/observability/logging'
-import { TIME_MS } from '@speckle/shared'
+import { TIME, TIME_MS } from '@speckle/shared'
 import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
 import { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import Bull from 'bull'
+import {
+  NumberOfFileImportRetries,
+  DelayBetweenFileImportRetriesMinutes
+} from '@/modules/fileuploads/domain/consts'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -33,14 +36,25 @@ const limiter = {
 }
 
 const defaultJobOptions = {
-  attempts: 5,
-  timeout: getFileUploadTimeLimitMinutes() * TIME_MS.minute,
+  attempts: NumberOfFileImportRetries,
+  timeout:
+    NumberOfFileImportRetries *
+    (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
+    TIME_MS.minute,
   backoff: {
     type: 'fixed',
-    delay: 5 * TIME_MS.minute
+    delay: DelayBetweenFileImportRetriesMinutes * TIME_MS.minute
   },
-  removeOnComplete: isProdEnv(),
-  removeOnFail: false
+  removeOnComplete: {
+    // retain completed jobs for 1 day or until it is the 100th completed job being retained, whichever comes first
+    age: 1 * TIME.day,
+    count: 100
+  },
+  removeOnFail: {
+    // retain completed jobs for 1 week or until it is the 1_000th failed job being retained, whichever comes first
+    age: 1 * TIME.week,
+    count: 1_000
+  }
 }
 
 const initializeQueue = async (params: {
@@ -75,15 +89,15 @@ const initializeQueue = async (params: {
 
 export const initializeRhinoQueue = async () =>
   initializeQueue({
-    label: 'Rhino File Import Queue',
+    label: 'rhino',
     queueName: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME,
     redisUrl: getFileImportServiceRhinoParserRedisUrl() ?? getRedisUrl(),
-    supportedFileTypes: ['obj']
+    supportedFileTypes: ['obj', 'stl', 'skp']
   })
 
-export const initalizeIfcQueue = async () =>
+export const initializeIfcQueue = async () =>
   initializeQueue({
-    label: 'IFC File Import Queue',
+    label: 'ifc',
     queueName: FILEIMPORT_SERVICE_IFC_QUEUE_NAME,
     redisUrl: getFileImportServiceIFCParserRedisUrl() ?? getRedisUrl(),
     supportedFileTypes: ['ifc']
@@ -92,6 +106,6 @@ export const initalizeIfcQueue = async () =>
 export const shutdownQueues = async (params: { logger: Logger }) => {
   for (const queue of fileImportQueues) {
     await queue.shutdown()
-    params.logger.info(`📄 FileUploads ${queue.label} shutdown`)
+    params.logger.info(`📄 FileUploads, shutdown queue for ${queue.label} parser`)
   }
 }

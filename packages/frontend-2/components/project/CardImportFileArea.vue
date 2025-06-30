@@ -51,7 +51,7 @@
             </NuxtLink>
             to publish a {{ modelName ? '' : 'new model' }} version to
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-            IFC/OBJ/STL file here.
+            IFC/OBJ/STL{{ isNextGenFileImporterEnabled ? '/SKP' : '' }} file here.
           </p>
           <div v-if="showEmptyState && !isDisabled" :class="buttonsClasses">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
@@ -88,6 +88,7 @@ import type {
   ProjectPageLatestItemsModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import { useIsNextGenFileImporterEnabled } from '~/composables/globals'
 
 type EmptyStateVariants = 'modelGrid' | 'modelList' | 'modelsSection'
 
@@ -130,6 +131,7 @@ const props = defineProps<{
   emptyStateVariant?: EmptyStateVariants
 }>()
 
+const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
 const { addFailedJob } = useGlobalFileImportErrorManager()
 const {
   maxSizeInBytes,

@@ -1,5 +1,5 @@
 import { UserEmails } from '@/modules/core/dbSchema'
-import { compositeCursorTools } from '@/modules/shared/helpers/graphqlHelper'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 import {
   CreateWorkspaceJoinRequest,
   GetWorkspaceJoinRequest,

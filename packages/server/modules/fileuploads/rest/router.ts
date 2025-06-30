@@ -3,7 +3,6 @@ import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -47,9 +46,7 @@ export const fileuploadRouterFactory = (): Router => {
       const branch = await getStreamBranchByName(projectId, branchName)
 
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName,
         saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-        publish,
         emit: getEventBus().emit
       })
       const saveFileUploads = async ({

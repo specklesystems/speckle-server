@@ -11,6 +11,7 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { BlobUploadStatus, type BlobPostResultItem } from '~~/lib/core/api/blobStorage'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~/lib/common/generated/gql'
+import { useIsNextGenFileImporterEnabled } from '~/composables/globals'
 import type {
   UseFileImport_ModelFragment,
   UseFileImport_ProjectFragment
@@ -249,8 +250,11 @@ export function useFileImport(params: {
   const { maxSizeInBytes } = useServerFileUploadLimit()
   const authToken = useAuthCookie()
   const apiOrigin = useApiOrigin()
+  const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
 
-  const accept = ref('.ifc,.stl,.obj')
+  const accept = computed(
+    () => `.ifc,.stl,.obj${isNextGenFileImporterEnabled.value ? ',.skp' : ''}`
+  )
   const upload = ref(
     null as Nullable<UploadFileItem & { model: Nullable<UseFileImport_ModelFragment> }>
   )

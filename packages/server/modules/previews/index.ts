@@ -2,19 +2,13 @@
 import { moduleLogger, previewLogger as logger } from '@/observability/logging'
 import { consumePreviewResultFactory } from '@/modules/previews/resultListener'
 
-import { db } from '@/db/knex'
 import {
   disablePreviews,
   getPreviewServiceRedisUrl,
   getRedisUrl,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
-import { createBullBoard } from 'bull-board'
-import { BullMQAdapter } from 'bull-board/bullMQAdapter'
-import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { ensureError, Roles, TIME } from '@speckle/shared'
-import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
+import { ensureError, TIME } from '@speckle/shared'
 import { previewRouterFactory } from '@/modules/previews/rest/router'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
@@ -99,22 +93,6 @@ export const init: SpeckleModule['init'] = async ({
       previewRequestQueue,
       previewResponseQueue
     })
-
-    const router = createBullBoard([
-      new BullMQAdapter(previewRequestQueue),
-      new BullMQAdapter(previewResponseQueue)
-    ]).router
-    app.use(
-      '/api/admin/preview-jobs',
-      async (req, res, next) => {
-        await authMiddlewareCreator([
-          validateServerRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
-            requiredRole: Roles.Server.Admin
-          })
-        ])(req, res, next)
-      },
-      router
-    )
 
     const previewRouter = previewRouterFactory({
       previewRequestQueue,

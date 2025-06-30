@@ -19,7 +19,7 @@ import {
 } from '@/modules/fileuploads/helpers/types'
 import { Knex } from 'knex'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
-import { compositeCursorTools } from '@/modules/shared/helpers/graphqlHelper'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 import { clamp } from 'lodash'
 
 const tables = {

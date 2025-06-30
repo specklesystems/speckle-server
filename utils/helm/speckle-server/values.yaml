@@ -132,11 +132,11 @@ file_size_limit_mb: 100
 ## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits.
 ## If this does not help, please reach out to Speckle at https://speckle.community/
 ##
-file_import_time_limit_min: 10
+file_import_time_limit_min: 30
 
 ## @param file_upload_url_expiry_minutes The number of minutes for which the file upload URL is valid. After this time, the URL will no longer be valid and the file cannot be uploaded.
 ##
-file_upload_url_expiry_minutes: 10
+file_upload_url_expiry_minutes: 1440
 
 ## @param objects_size_limit_mb This maximum size of the POST request body (unit is Megabytes) that can be sent to the Speckle Objects REST APIs.
 ##
@@ -223,9 +223,9 @@ db:
   ## @param db.connectionAcquisitionTimeoutMillis The maximum time in milliseconds to wait for a connection to be acquired from the connection pool.
   ##
   connectionAcquisitionTimeoutMillis: 15000
-  ## @param db.connectionCreationTimeoutMillis The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.
+  ## @param db.connectionCreateTimeoutMillis The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.
   ##
-  connectionCreationTimeoutMillis: 5000
+  connectionCreateTimeoutMillis: 5000
   ## @param db.knexAsyncStackTracesEnabled If enabled, will provide better stack traces for errors arising out of knex operations
   ##
   knexAsyncStackTracesEnabled: false
@@ -1463,7 +1463,7 @@ fileimport_service:
   ## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits does not help,
   ##  please reach out to Speckle at https://speckle.community/
   ##
-  time_limit_min: 10
+  time_limit_min: 30
 
 ## @section Monitoring
 ## @descriptionStart

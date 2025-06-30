@@ -1,5 +1,6 @@
 import {
   DeleteBlob,
+  ExpirePendingUploads,
   GetBlob,
   GetBlobMetadata,
   GetBlobMetadataCollection,
@@ -181,4 +182,25 @@ export const blobCollectionSummaryFactory =
       totalSize: summary.sum ? parseInt(summary.sum) : 0,
       totalCount: parseInt(summary.count)
     }
+  }
+
+export const expirePendingUploadsFactory =
+  (deps: { db: Knex }): ExpirePendingUploads =>
+  async (params) => {
+    const { timeoutThresholdSeconds, errMessage } = params
+    const updatedRows = await deps
+      .db(BlobStorage.name)
+      .where(BlobStorage.withoutTablePrefix.col.uploadStatus, BlobUploadStatus.Pending)
+      .andWhere(
+        BlobStorage.withoutTablePrefix.col.createdAt,
+        '<',
+        deps.db.raw(`now() - interval '${timeoutThresholdSeconds} seconds'`)
+      )
+      .update({
+        [BlobStorage.withoutTablePrefix.col.uploadStatus]: BlobUploadStatus.Error,
+        [BlobStorage.withoutTablePrefix.col.uploadError]: errMessage
+      })
+      .returning<BlobStorageItem[]>('*')
+
+    return updatedRows
   }

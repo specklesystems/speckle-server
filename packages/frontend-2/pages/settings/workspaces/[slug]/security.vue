@@ -13,6 +13,7 @@
         <template v-if="isSsoEnabled">
           <SettingsWorkspacesSecuritySsoWrapper :workspace="workspace" />
         </template>
+        <SettingsWorkspacesSecurityWorkspaceCreation :workspace="workspace" />
       </div>
     </div>
   </section>
@@ -31,6 +32,7 @@ graphql(`
     ...SettingsWorkspacesSecurityDiscoverability_Workspace
     ...SettingsWorkspacesSecuritySsoWrapper_Workspace
     ...SettingsWorkspacesSecurityDomainProtection_Workspace
+    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace
     id
     slug
   }

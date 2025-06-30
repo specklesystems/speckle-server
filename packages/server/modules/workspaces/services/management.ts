@@ -482,7 +482,7 @@ export const addOrUpdateWorkspaceRoleFactory =
         workspaceId,
         type: seatType,
         assignedByUserId: updatedByUserId,
-        skipEvent: true // skip SeatUpdated, cause we only want RoleUpdated to come out of this
+        skipEvent
       })
     } else {
       await ensureValidWorkspaceRoleSeat({

@@ -88,8 +88,10 @@ spec:
         {{- end }}
 
         env:
+          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
           - name: SPECKLE_SERVER_URL
             value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
+          {{- end }}
 
           {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
           - name: REDIS_URL
@@ -105,6 +107,7 @@ spec:
             value: "redis://redis"
           {{- end }}
 
+          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
@@ -129,12 +132,16 @@ spec:
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
+          {{- end }}
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ (or .Values.file_import_time_limit_min .Values.fileimport_service.time_limit_min) | quote }}
+          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
+          # DEPRECATED
           - name: MAX_OBJECT_SIZE_MB
-            value: {{ .Values.objects.max_object_size_mb | quote }}
-          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+            value: {{ .Values.server.max_object_size_mb | quote }}
+          {{- end }}
+          {{- if (and .Values.featureFlags.workspacesMultiRegionEnabled (not .Values.featureFlags.nextGenFileImporterEnabled)) }}
           - name: FF_WORKSPACES_MULTI_REGION_ENABLED
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
           - name: MULTI_REGION_CONFIG_PATH

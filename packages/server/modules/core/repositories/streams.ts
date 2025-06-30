@@ -45,7 +45,7 @@ import {
   decodeCursor,
   encodeCompositeCursor,
   encodeCursor
-} from '@/modules/shared/helpers/graphqlHelper'
+} from '@/modules/shared/helpers/dbHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
@@ -1078,6 +1078,7 @@ export const updateStreamFactory =
     return updatedStream
   }
 
+/** @deprecated Use `updateStreamFactory` */
 export const updateProjectFactory =
   ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {

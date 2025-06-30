@@ -190,12 +190,12 @@
     "file_import_time_limit_min": {
       "type": "number",
       "description": "The maximum time (unit is minutes) that the file import service will attempt to process the file before it is considered to have failed",
-      "default": 10
+      "default": 30
     },
     "file_upload_url_expiry_minutes": {
       "type": "number",
       "description": "The number of minutes for which the file upload URL is valid. After this time, the URL will no longer be valid and the file cannot be uploaded.",
-      "default": 10
+      "default": 1440
     },
     "objects_size_limit_mb": {
       "type": "number",
@@ -286,7 +286,7 @@
           "description": "The maximum time in milliseconds to wait for a connection to be acquired from the connection pool.",
           "default": 15000
         },
-        "connectionCreationTimeoutMillis": {
+        "connectionCreateTimeoutMillis": {
           "type": "number",
           "description": "The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.",
           "default": 5000
@@ -2410,7 +2410,7 @@
         "time_limit_min": {
           "type": "number",
           "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
-          "default": 10
+          "default": 30
         }
       }
     },

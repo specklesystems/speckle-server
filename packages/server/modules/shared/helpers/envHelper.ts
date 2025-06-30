@@ -100,12 +100,9 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+// This is the time limit for file import jobs to parse the files, not the upload time limit; see FILE_UPLOAD_URL_EXPIRY_MINUTES
 export function getFileImportTimeLimitMinutes() {
-  return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '10')
-}
-
-export function getFileUploadTimeLimitMinutes() {
-  return getIntFromEnv('FILE_UPLOAD_TIME_LIMIT_MIN', '10')
+  return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '30')
 }
 
 export function getMaximumRequestBodySizeMB() {
@@ -498,5 +495,5 @@ export const isRateLimiterEnabled = (): boolean => {
 }
 
 export const getFileUploadUrlExpiryMinutes = (): number => {
-  return getIntFromEnv('FILE_UPLOAD_URL_EXPIRY_MINUTES', '10')
+  return getIntFromEnv('FILE_UPLOAD_URL_EXPIRY_MINUTES', '1440')
 }

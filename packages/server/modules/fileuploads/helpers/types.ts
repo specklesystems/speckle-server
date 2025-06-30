@@ -46,4 +46,4 @@ export type FileUploadRecordV2 = {
   metadata: Nullable<FileUploadRecordMetadata>
 }
 
-export type FileUploadGraphQLReturn = FileUploadRecord
+export type FileUploadGraphQLReturn = FileUploadRecord | FileUploadRecordV2
