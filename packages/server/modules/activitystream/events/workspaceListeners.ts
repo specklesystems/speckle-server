@@ -28,12 +28,34 @@ const addWorkspaceSeatUpdatedActivityFactory =
     })
   }
 
+const addWorkspaceSeatDeletedActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  async ({
+    payload: { updatedByUserId, previousSeat }
+  }: EventPayload<typeof WorkspaceEvents.SeatDeleted>) => {
+    await saveActivity({
+      userId: updatedByUserId,
+      contextResourceType: 'workspace',
+      eventType: 'workspace_seat_deleted',
+      contextResourceId: previousSeat.workspaceId,
+      payload: {
+        version: '1' as const,
+        old: {
+          type: previousSeat.type,
+          userId: previousSeat.userId
+        }
+      }
+    })
+  }
+
 export const reportWorkspaceActivityFactory =
   (deps: { eventListen: EventBusListen; saveActivity: SaveActivity }) => () => {
     const addWorkspaceSeatUpdatedActivity = addWorkspaceSeatUpdatedActivityFactory(deps)
+    const addWorkspaceSeatDeletedActivity = addWorkspaceSeatDeletedActivityFactory(deps)
 
     const quitters = [
-      deps.eventListen(WorkspaceEvents.SeatUpdated, addWorkspaceSeatUpdatedActivity)
+      deps.eventListen(WorkspaceEvents.SeatUpdated, addWorkspaceSeatUpdatedActivity),
+      deps.eventListen(WorkspaceEvents.SeatDeleted, addWorkspaceSeatDeletedActivity)
     ]
 
     return () => quitters.forEach((q) => q())

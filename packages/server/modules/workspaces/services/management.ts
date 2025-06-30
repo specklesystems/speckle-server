@@ -42,7 +42,8 @@ import {
   WorkspaceNoVerifiedDomainsError,
   WorkspaceSlugTakenError,
   WorkspaceSlugInvalidError,
-  WorkspaceInvalidUpdateError
+  WorkspaceInvalidUpdateError,
+  WorkspaceRoleNotFoundError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
@@ -70,6 +71,7 @@ import {
   DeleteSsoProvider,
   GetWorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/operations'
+import { GetWorkspaceUserSeat } from '@/modules/gatekeeper/domain/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -353,17 +355,24 @@ export const deleteWorkspaceRoleFactory =
   ({
     getWorkspaceRoles,
     deleteWorkspaceRole,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    getWorkspaceUserSeat
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
   }) =>
   async ({
     workspaceId,
     userId,
     deletedByUserId
   }: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
+    const previousSeat = await getWorkspaceUserSeat({ workspaceId, userId })
+    if (!previousSeat) {
+      throw new WorkspaceRoleNotFoundError()
+    }
+
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (isUserLastWorkspaceAdmin(workspaceRoles, userId)) {
@@ -377,6 +386,10 @@ export const deleteWorkspaceRoleFactory =
     }
 
     // Emit deleted role
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.SeatDeleted,
+      payload: { previousSeat, updatedByUserId: deletedByUserId }
+    })
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleDeleted,
       payload: { acl: deletedRole, updatedByUserId: deletedByUserId }

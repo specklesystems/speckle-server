@@ -718,40 +718,36 @@ export const workspaceTrackingFactory =
           )
         )
         break
+      case WorkspaceEvents.SeatDeleted:
       case WorkspaceEvents.SeatUpdated:
-        const seatWorkspace = await getWorkspace({
-          workspaceId: payload.seat.workspaceId
-        })
+        const workspaceId =
+          'seat' in payload
+            ? payload.seat.workspaceId
+            : payload.previousSeat.workspaceId
+
+        const seatWorkspace = await getWorkspace({ workspaceId })
         if (!seatWorkspace) break
 
         mixpanel.groups.set(
           WORKSPACE_TRACKING_ID_KEY,
-          payload.seat.workspaceId,
-          assign(
-            await buildWorkspaceTrackingProperties(seatWorkspace),
-            await checkForSpeckleMembers({ userId: payload.seat.userId })
-          )
+          workspaceId,
+          assign(await buildWorkspaceTrackingProperties(seatWorkspace))
         )
-
-        const userSeated = await getUser(payload.seat.userId)
-        if (
-          payload.previousSeat?.type === WorkspaceSeatType.Viewer &&
-          payload.seat.type === WorkspaceSeatType.Editor
-        ) {
+        const userSeated = await getUser(
+          'seat' in payload ? payload.seat.userId : payload.previousSeat.userId
+        )
+        if ('seat' in payload && payload?.seat?.type === WorkspaceSeatType.Editor) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatAssigned,
-            workspaceId: payload.seat.workspaceId,
+            workspaceId,
             userEmail: userSeated?.email
           })
         }
 
-        if (
-          payload.previousSeat?.type === WorkspaceSeatType.Editor &&
-          payload.seat.type === WorkspaceSeatType.Viewer
-        ) {
+        if (payload.previousSeat?.type === WorkspaceSeatType.Editor) {
           await mixpanel.track({
             eventName: MixpanelEvents.EditorSeatUnassigned,
-            workspaceId: payload.seat.workspaceId,
+            workspaceId,
             userEmail: userSeated?.email
           })
         }

@@ -21,6 +21,7 @@ export type ResourceEventsToPayloadMap = {
     workspace_plan_updated: z.infer<typeof WorkspacePlanUpdatedActivity>
     workspace_subscription_updated: z.infer<typeof WorkspaceSubscriptionUpdatedActivity>
     workspace_seat_updated: z.infer<typeof WorkspaceSeatUpdatedActivity>
+    workspace_seat_deleted: z.infer<typeof WorkspaceSeatDeletedActivity>
   }
 }
 
@@ -76,6 +77,11 @@ export const WorkspaceSeatUpdatedActivity = z.object({
   version: z.literal('1'),
   new: workspaceSeat,
   old: z.nullable(workspaceSeat)
+})
+
+export const WorkspaceSeatDeletedActivity = z.object({
+  version: z.literal('1'),
+  old: workspaceSeat
 })
 
 // Stream Activity

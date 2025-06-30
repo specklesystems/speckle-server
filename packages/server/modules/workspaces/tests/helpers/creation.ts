@@ -481,6 +481,7 @@ export const unassignFromWorkspace = async (
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
+    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 

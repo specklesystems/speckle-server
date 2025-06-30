@@ -66,6 +66,12 @@ export class WorkspacesNotYetImplementedError extends BaseError {
   static statusCode = 501
 }
 
+export class WorkspaceRoleNotFoundError extends BaseError {
+  static defaultMessage = 'Workspace role not found'
+  static code = 'WORKSPACE_ROLE_NOT_FOUND_ERROR'
+  static statusCode = 404
+}
+
 export class WorkspaceNotFoundError extends BaseError {
   static defaultMessage = 'Workspace not found'
   static code = 'WORKSPACE_NOT_FOUND_ERROR'
