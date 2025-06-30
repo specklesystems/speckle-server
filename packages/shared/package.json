@@ -87,7 +87,8 @@
       "./package.json": "./package.json",
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
-      "./environment/multiRegionConfig": "./src/environment/multiRegionConfig.ts",
+      "./environment/db": "./src/environment/db.ts",
+      "./environment/multiRegionConfig": "./src/environment/db.ts",
       "./observability": "./src/observability/index.ts",
       "./observability/mixpanel": "./src/observability/mixpanel.ts",
       "./blobs": "./src/blobs/index.ts",
@@ -136,14 +137,24 @@
         "default": "./dist/commonjs/environment/index.js"
       }
     },
-    "./environment/multiRegionConfig": {
+    "./environment/db": {
       "import": {
-        "types": "./dist/esm/environment/multiRegionConfig.d.ts",
-        "default": "./dist/esm/environment/multiRegionConfig.js"
+        "types": "./dist/esm/environment/db.d.ts",
+        "default": "./dist/esm/environment/db.js"
       },
       "require": {
-        "types": "./dist/commonjs/environment/multiRegionConfig.d.ts",
-        "default": "./dist/commonjs/environment/multiRegionConfig.js"
+        "types": "./dist/commonjs/environment/db.d.ts",
+        "default": "./dist/commonjs/environment/db.js"
+      }
+    },
+    "./environment/multiRegionConfig": {
+      "import": {
+        "types": "./dist/esm/environment/db.d.ts",
+        "default": "./dist/esm/environment/db.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/db.d.ts",
+        "default": "./dist/commonjs/environment/db.js"
       }
     },
     "./observability": {

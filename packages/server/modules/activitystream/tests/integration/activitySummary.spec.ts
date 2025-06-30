@@ -6,7 +6,10 @@ import {
   sendActivityNotificationsFactory
 } from '@/modules/activitystream/services/summary'
 import { expect } from 'chai'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
 import {
   ActivityDigestMessage,
   NotificationType,
@@ -14,7 +17,7 @@ import {
 } from '@/modules/notifications/helpers/types'
 import {
   getActivityFactory,
-  saveActivityFactory
+  saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import {
@@ -75,7 +78,7 @@ const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
-const saveActivity = saveActivityFactory({ db })
+const saveActivity = saveStreamActivityFactory({ db })
 const createActivitySummary = createActivitySummaryFactory({
   getStream,
   getActivity: getActivityFactory({ db }),
@@ -221,9 +224,9 @@ describe('Activity summary @activity', () => {
       )
       await saveActivity({
         streamId,
-        resourceType: ResourceTypes.Stream,
+        resourceType: StreamResourceTypes.Stream,
         resourceId: streamId,
-        actionType: ActionTypes.Stream.Create,
+        actionType: StreamActionTypes.Stream.Create,
         userId: userA.id,
         info: {},
         message: 'foo'

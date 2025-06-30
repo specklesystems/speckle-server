@@ -1,14 +1,24 @@
 import { MaybeAsync, Optional, md5, wait } from '@speckle/shared'
 import { dbNotificationLogger } from '@/observability/logging'
-import * as Knex from 'knex'
 import { Client, Notification } from 'pg'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import {
+  getRedisUrl,
+  isProdEnv,
+  postgresConnectionCreateTimeoutMillis
+} from '@/modules/shared/helpers/envHelper'
 import Redis from 'ioredis'
 import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { mainDb } from '@/db/knex'
 import { PartialDeep } from 'type-fest'
 import { merge } from 'lodash'
+import {
+  getConnectionSettings,
+  obfuscateConnectionString
+} from '@speckle/shared/environment/db'
+import { getMainRegionConfig } from '@/modules/multiregion/regionConfig'
+import type pg from 'pg'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 export type MessageType = Notification
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
@@ -138,16 +148,49 @@ const setupConnection = async (connection: Client) => {
   await setupListeners(connection)
 }
 
+/**
+ * We have to skip the connection pool, cause it breaks LISTEN/NOTIFY. Thus, if available,
+ * we're using the main DB connection settings from the multiRegion config
+ */
+const getDbConnectionSettings = async (): Promise<pg.ClientConfig> => {
+  const base = getConnectionSettings(mainDb)
+
+  if (isMultiRegionEnabled() && isProdEnv()) {
+    const {
+      postgres: { privateConnectionUri }
+    } = await getMainRegionConfig()
+    if (privateConnectionUri) {
+      return {
+        ...base,
+        connectionString: privateConnectionUri
+      }
+    }
+  }
+
+  return base
+}
+
 const reconnect = async () => {
   try {
     await endConnection()
 
-    dbNotificationLogger.info('Attempting to (re-)connect...')
+    const connectionSettings = await getDbConnectionSettings()
+    const mainDbConnectionString = obfuscateConnectionString(
+      connectionSettings.connectionString || ''
+    )
+
+    dbNotificationLogger.info(
+      {
+        mainDbConnectionString
+      },
+      'Attempting to (re-)connect...'
+    )
 
     // creating externally managed PG connection from knex mainDB connection settings
-    const newConnection = new Client(
-      (mainDb.client as Knex.Knex.Client).connectionSettings
-    )
+    const newConnection = new Client({
+      ...connectionSettings,
+      connectionTimeoutMillis: postgresConnectionCreateTimeoutMillis()
+    })
 
     // connect and test
     await newConnection.connect()
