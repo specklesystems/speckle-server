@@ -872,7 +872,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
               async ({ db, emit }) => {
                 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
                   deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                   emitWorkspaceEvent: emit
                 })
@@ -1066,7 +1065,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
               const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
                 deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
                 emitWorkspaceEvent: emit
               })
 

@@ -560,20 +560,6 @@ const buildDeleteWorkspaceRoleAndTestContext = (
 
       return deletedRole
     },
-    getWorkspaceUserSeat: async ({ workspaceId, userId }) => {
-      const role = context.workspaceRoles.find(
-        (user) => user.userId === userId && user.workspaceId === workspaceId
-      )
-      if (!role) return undefined
-      return {
-        // fake it
-        workspaceId: role.workspaceId,
-        userId: role.userId,
-        type: WorkspaceSeatType.Editor,
-        createdAt: role.createdAt,
-        updatedAt: role.createdAt
-      }
-    },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
       context.eventData[eventName] = {
         isCalled: true,

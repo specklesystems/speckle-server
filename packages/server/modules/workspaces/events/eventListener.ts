@@ -30,7 +30,11 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 import { logger, moduleLogger } from '@/observability/logging'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  EventBusEmit,
+  EventPayload,
+  getEventBus
+} from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   isPaidPlan,
@@ -242,6 +246,8 @@ export const onWorkspaceRoleDeletedFactory =
     getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
     getWorkspaceCollaborators: GetWorkspaceCollaborators
     setStreamCollaborator: SetStreamCollaborator
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
+    emitEvent: EventBusEmit
   }) =>
   async ({
     acl: { userId, workspaceId },
@@ -304,7 +310,13 @@ export const onWorkspaceRoleDeletedFactory =
     }
 
     // Delete seat
+    const previousSeat = await deps.getWorkspaceUserSeat({ userId, workspaceId })
+    if (!previousSeat) return
     await deps.deleteWorkspaceSeat({ userId, workspaceId })
+    await deps.emitEvent({
+      eventName: WorkspaceEvents.SeatDeleted,
+      payload: { previousSeat, updatedByUserId }
+    })
   }
 
 export const onWorkspaceSeatUpdatedFactory =
@@ -996,7 +1008,9 @@ export const initializeEventListenersFactory =
                 revokeStreamPermissions: revokeStreamPermissionsFactory({
                   db: trx
                 })
-              })
+              }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              emitEvent: eventBus.emit
             })
 
             return await onWorkspaceRoleDeleted(payload)
