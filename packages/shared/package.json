@@ -88,6 +88,7 @@
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
       "./environment/db": "./src/environment/db.ts",
+      "./environment/multiRegionConfig": "./src/environment/db.ts",
       "./observability": "./src/observability/index.ts",
       "./observability/mixpanel": "./src/observability/mixpanel.ts",
       "./blobs": "./src/blobs/index.ts",
