@@ -4,6 +4,7 @@ import { Client, Notification } from 'pg'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import {
   getRedisUrl,
+  isProdEnv,
   postgresConnectionCreateTimeoutMillis
 } from '@/modules/shared/helpers/envHelper'
 import Redis from 'ioredis'
@@ -15,6 +16,8 @@ import {
   getConnectionSettings,
   obfuscateConnectionString
 } from '@speckle/shared/environment/db'
+import { getMainRegionConfig } from '@/modules/multiregion/regionConfig'
+import type pg from 'pg'
 
 export type MessageType = Notification
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
@@ -144,11 +147,30 @@ const setupConnection = async (connection: Client) => {
   await setupListeners(connection)
 }
 
+/**
+ * We have to skip the connection pool, cause it breaks LISTEN/NOTIFY. Thus, if available,
+ * we're using the main DB connection settings from the multiRegion config
+ */
+const getDbConnectionSettings = async (): Promise<pg.ClientConfig> => {
+  const base = getConnectionSettings(mainDb)
+
+  const {
+    postgres: { privateConnectionUri }
+  } = await getMainRegionConfig()
+
+  if (privateConnectionUri && isProdEnv()) {
+    // In local envs these URIs can be docker-compatible only, and can break local envs
+    return { ...base, connectionString: privateConnectionUri }
+  }
+
+  return base
+}
+
 const reconnect = async () => {
   try {
     await endConnection()
 
-    const connectionSettings = getConnectionSettings(mainDb)
+    const connectionSettings = await getDbConnectionSettings()
     const mainDbConnectionString = obfuscateConnectionString(
       connectionSettings.connectionString || ''
     )
@@ -162,7 +184,7 @@ const reconnect = async () => {
 
     // creating externally managed PG connection from knex mainDB connection settings
     const newConnection = new Client({
-      ...getConnectionSettings(mainDb),
+      ...connectionSettings,
       connectionTimeoutMillis: postgresConnectionCreateTimeoutMillis()
     })
 

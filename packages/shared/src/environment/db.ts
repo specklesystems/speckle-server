@@ -198,7 +198,6 @@ export const getConnectionSettings = (
 export const obfuscateConnectionString = (connectionString: string): string => {
   const url = new URL(connectionString)
   const obfuscatedUrl = new URL(url)
-  obfuscatedUrl.username = '***'
-  obfuscatedUrl.password = '***'
+  obfuscatedUrl.password = '****'
   return obfuscatedUrl.toString()
 }
