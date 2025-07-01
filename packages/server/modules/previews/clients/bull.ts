@@ -2,8 +2,36 @@ import { Queue, type Job } from 'bull'
 import type { EventEmitter } from 'stream'
 import { initializeQueue } from '@speckle/shared/queue'
 import { JobPayload, PreviewResultPayload } from '@speckle/shared/workers/previews'
+import {
+  DelayBetweenPreviewRetriesMinutes,
+  NumberOfPreviewRetries
+} from '@/modules/previews/domain/consts'
+import { TIME, TIME_MS } from '@speckle/shared'
+import { getPreviewServiceTimeoutMilliseconds } from '@/modules/shared/helpers/envHelper'
 
 interface QueueEventEmitter extends EventEmitter {}
+
+const defaultJobOptions = {
+  attempts: NumberOfPreviewRetries,
+  timeout:
+    NumberOfPreviewRetries *
+    (getPreviewServiceTimeoutMilliseconds() +
+      DelayBetweenPreviewRetriesMinutes * TIME_MS.minute),
+  backoff: {
+    type: 'fixed',
+    delay: DelayBetweenPreviewRetriesMinutes * TIME_MS.minute
+  },
+  removeOnComplete: {
+    // retain completed jobs for 1 day or until it is the 100th completed job being retained, whichever comes first
+    age: 1 * TIME.day,
+    count: 100
+  },
+  removeOnFail: {
+    // retain completed jobs for 1 week or until it is the 1_000th failed job being retained, whichever comes first
+    age: 1 * TIME.week,
+    count: 1_000
+  }
+}
 
 export const addRequestQueueListeners = (params: {
   requestQueue: QueueEventEmitter
@@ -18,9 +46,12 @@ export const addRequestQueueListeners = (params: {
     requestActiveHandler
   } = params
 
+  // The error event is triggered when an error in the Redis backend is thrown.
   requestQueue.removeListener('error', requestErrorHandler)
   requestQueue.on('error', requestErrorHandler)
 
+  // The failed event is triggered when a job fails by throwing an exception during execution.
+  // https://api.docs.bullmq.io/interfaces/v5.QueueEventsListener.html#failed
   requestQueue.removeListener('failed', requestFailedHandler)
   requestQueue.on('failed', requestFailedHandler)
 
@@ -50,7 +81,10 @@ export const createRequestAndResponseQueues = async (params: {
 
   const previewRequestQueue = await initializeQueue<JobPayload>({
     queueName: requestQueueName,
-    redisUrl
+    redisUrl,
+    options: {
+      defaultJobOptions
+    }
   })
 
   addRequestQueueListeners({
