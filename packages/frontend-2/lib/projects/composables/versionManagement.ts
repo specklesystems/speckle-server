@@ -50,7 +50,7 @@ import { intersection, isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
 import {
-  FailedFileImportJobError,
+  useFailedFileImportJobUtils,
   useGlobalFileImportErrorManager
 } from '~/lib/core/composables/fileImport'
 
@@ -628,6 +628,7 @@ export function useProjectPendingVersionUpdateTracking(
   )
 
   const { addFailedJob } = useGlobalFileImportErrorManager()
+  const { convertUploadToFailedJob } = useFailedFileImportJobUtils()
   const { userId } = useActiveUser()
   const isEnabled = computed(() => !!(hasLock.value || handler))
   const { onResult: onProjectPendingVersionsUpdate } = useSubscription(
@@ -687,19 +688,7 @@ export function useProjectPendingVersionUpdateTracking(
       } else if (failure) {
         // Report w/ dialog to uploader user
         if (event.version.userId === userId.value) {
-          addFailedJob({
-            id: event.id,
-            projectId: unref(projectId),
-            modelId,
-            fileName: event.version.fileName,
-            error: {
-              type: FailedFileImportJobError.ImportFailed,
-              message:
-                event.version.convertedMessage ||
-                `${event.version.modelName} version could not be imported`
-            },
-            date: new Date()
-          })
+          addFailedJob(convertUploadToFailedJob(event.version))
         }
       }
     }

@@ -62,12 +62,7 @@
 </template>
 <script setup lang="ts">
 import { ArrowRightIcon } from '@heroicons/vue/24/outline'
-import { throwUncoveredError } from '@speckle/shared'
-import {
-  prettyFileSize,
-  resolveFileExtension,
-  type LayoutDialogButton
-} from '@speckle/ui-components'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { omit } from 'lodash-es'
 import { useNavigateToProject } from '~/lib/common/helpers/route'
 import { useGenerateErrorReference } from '~/lib/core/composables/error'
@@ -75,11 +70,12 @@ import {
   useGlobalFileImportErrorManager,
   type FailedFileImportJob,
   FailedFileImportJobError,
-  useFileImportBaseSettings
+  useFailedFileImportJobUtils
 } from '~/lib/core/composables/fileImport'
 
 const { clear, failedJobs } = useGlobalFileImportErrorManager()
-const { maxSizeInBytes, accept } = useFileImportBaseSettings()
+const { getErrorMessage } = useFailedFileImportJobUtils()
+
 const { copyReference } = useGenerateErrorReference()
 const navigateToProject = useNavigateToProject()
 
@@ -109,39 +105,6 @@ const shouldShowErrorReference = (job: FailedFileImportJob) => {
     job.error.type === FailedFileImportJobError.UploadFailed ||
     job.error.type === FailedFileImportJobError.ImportFailed
   )
-}
-
-const getErrorMessage = (job: FailedFileImportJob) => {
-  switch (job.error.type) {
-    case FailedFileImportJobError.FileTooLarge: {
-      let base = `The file is too large to be uploaded. The maximum file size is ${prettyFileSize(
-        maxSizeInBytes.value
-      )}`
-
-      if (job.file) {
-        base += ` while the file you tried to upload is ${prettyFileSize(
-          job.file.size
-        )}.`
-      } else {
-        base += '.'
-      }
-      return base
-    }
-    case FailedFileImportJobError.MissingFileExtensionError:
-      return `The file you tried to upload does not have a valid file extension.`
-    case FailedFileImportJobError.InvalidFileType: {
-      const fileExtension = resolveFileExtension(job.fileName)
-      return `The file you tried to upload (${fileExtension}) is not a supported file type. Only ${accept.value} are supported by this server.`
-    }
-    case FailedFileImportJobError.ImportFailed:
-    case FailedFileImportJobError.UploadFailed: {
-      const isImport = job.error.type === FailedFileImportJobError.ImportFailed
-      const base = `The file ${isImport ? 'import' : 'upload'} failed unexpectedly.`
-      return base
-    }
-    default:
-      throwUncoveredError(job.error.type)
-  }
 }
 
 const copyErrorReference = async (job: FailedFileImportJob) => {

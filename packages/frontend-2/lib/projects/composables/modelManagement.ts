@@ -42,7 +42,7 @@ import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
 import { isUndefined } from 'lodash-es'
 import {
-  FailedFileImportJobError,
+  useFailedFileImportJobUtils,
   useGlobalFileImportErrorManager
 } from '~/lib/core/composables/fileImport'
 
@@ -351,6 +351,7 @@ export function useProjectPendingModelUpdateTracking(
   )
   const apollo = useApolloClient().client
   const { addFailedJob } = useGlobalFileImportErrorManager()
+  const { convertUploadToFailedJob } = useFailedFileImportJobUtils()
   const { userId } = useActiveUser()
 
   onProjectPendingModelUpdate((res) => {
@@ -400,19 +401,7 @@ export function useProjectPendingModelUpdateTracking(
       } else if (failure) {
         // Report w/ dialog to uploader user
         if (event.model.userId === userId.value) {
-          addFailedJob({
-            id: event.id,
-            projectId: unref(projectId),
-            modelId: event.model.id,
-            fileName: event.model.fileName,
-            error: {
-              type: FailedFileImportJobError.ImportFailed,
-              message:
-                event.model.convertedMessage ||
-                `${event.model.modelName} version could not be imported`
-            },
-            date: new Date()
-          })
+          addFailedJob(convertUploadToFailedJob(event.model))
         }
       }
     }

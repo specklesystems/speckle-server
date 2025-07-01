@@ -1,5 +1,5 @@
 import type { MaybeRef } from '@vueuse/core'
-import { buildManualPromise, ensureError } from '@speckle/shared'
+import { buildManualPromise, ensureError, throwUncoveredError } from '@speckle/shared'
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
 import type {
@@ -13,6 +13,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~/lib/common/generated/gql'
 import { useIsNextGenFileImporterEnabled } from '~/composables/globals'
 import type {
+  UseFailedFileImportJobUtils_FileUploadFragment,
   UseFileImport_ModelFragment,
   UseFileImport_ProjectFragment
 } from '~/lib/common/generated/gql/graphql'
@@ -20,8 +21,12 @@ import { useApolloClient } from '@vue/apollo-composable'
 import {
   FileTooLargeError,
   ForbiddenFileTypeError,
-  MissingFileExtensionError
+  MissingFileExtensionError,
+  prettyFileSize,
+  resolveFileExtension
 } from '@speckle/ui-components'
+import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+import dayjs from 'dayjs'
 
 export const FailedFileImportJobError = <const>{
   InvalidFileType: 'InvalidFileType',
@@ -46,6 +51,81 @@ export type FailedFileImportJob = {
 
 type GlobalFileImportErrorManagerState = {
   jobs: FailedFileImportJob[]
+}
+
+graphql(`
+  fragment UseFailedFileImportJobUtils_FileUpload on FileUpload {
+    id
+    fileName
+    projectId
+    modelId
+    updatedAt
+    convertedStatus
+    convertedMessage
+  }
+`)
+
+export const useFailedFileImportJobUtils = () => {
+  const { maxSizeInBytes, accept } = useFileImportBaseSettings()
+
+  const convertUploadToFailedJob = (
+    upload: UseFailedFileImportJobUtils_FileUploadFragment
+  ): FailedFileImportJob => {
+    if (upload.convertedStatus !== FileUploadConvertedStatus.Error) {
+      throw new Error('Cannot convert upload to failed job if it is not in error state')
+    }
+
+    return {
+      id: upload.id,
+      projectId: upload.projectId,
+      modelId: upload.modelId || null,
+      fileName: upload.fileName,
+      date: dayjs(upload.updatedAt).toDate(),
+      error: {
+        type: FailedFileImportJobError.ImportFailed,
+        message:
+          upload.convertedMessage || 'An unknown error occurred during file import'
+      }
+    }
+  }
+
+  const getErrorMessage = (job: FailedFileImportJob) => {
+    switch (job.error.type) {
+      case FailedFileImportJobError.FileTooLarge: {
+        let base = `The file is too large to be uploaded. The maximum file size is ${prettyFileSize(
+          maxSizeInBytes.value
+        )}`
+
+        if (job.file) {
+          base += ` while the file you tried to upload is ${prettyFileSize(
+            job.file.size
+          )}.`
+        } else {
+          base += '.'
+        }
+        return base
+      }
+      case FailedFileImportJobError.MissingFileExtensionError:
+        return `The file you tried to upload does not have a valid file extension.`
+      case FailedFileImportJobError.InvalidFileType: {
+        const fileExtension = resolveFileExtension(job.fileName)
+        return `The file you tried to upload (${fileExtension}) is not a supported file type. Only ${accept.value} are supported by this server.`
+      }
+      case FailedFileImportJobError.ImportFailed:
+      case FailedFileImportJobError.UploadFailed: {
+        const isImport = job.error.type === FailedFileImportJobError.ImportFailed
+        const base = `The file ${isImport ? 'import' : 'upload'} failed unexpectedly.`
+        return base
+      }
+      default:
+        throwUncoveredError(job.error.type)
+    }
+  }
+
+  return {
+    convertUploadToFailedJob,
+    getErrorMessage
+  }
 }
 
 export const useGlobalFileImportErrorManager = () => {
