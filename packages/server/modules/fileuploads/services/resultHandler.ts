@@ -5,14 +5,6 @@ import {
   UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
 import {
-  FileImportSubscriptions,
-  PublishSubscription
-} from '@/modules/shared/utils/subscriptions'
-import {
-  ProjectFileImportUpdatedMessageType,
-  ProjectPendingVersionsUpdatedMessageType
-} from '@/test/graphql/generated/graphql'
-import {
   jobResultStatusToFileUploadStatus,
   jobResultToConvertedMessage
 } from '@/modules/fileuploads/helpers/convert'
@@ -20,11 +12,13 @@ import { ensureError } from '@speckle/shared'
 import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { ObserveResult } from '@/modules/fileuploads/observability/metrics'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 
 type OnFileImportResultDeps = {
   getFileInfo: GetFileInfoV2
   updateFileUpload: UpdateFileUpload
-  publish: PublishSubscription
+  eventEmit: EventBusEmit
   observeResult?: ObserveResult
   logger: Logger
 }
@@ -102,23 +96,15 @@ export const onFileImportResultFactory =
       throw err
     }
 
-    await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
-      projectPendingVersionsUpdated: {
-        id: updatedFile.id,
-        type: ProjectPendingVersionsUpdatedMessageType.Updated,
-        version: updatedFile
-      },
-      projectId: updatedFile.streamId,
-      branchName: updatedFile.branchName
-    })
-
-    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
-      projectFileImportUpdated: {
-        id: updatedFile.id,
-        type: ProjectFileImportUpdatedMessageType.Updated,
-        upload: updatedFile
-      },
-      projectId: updatedFile.streamId
+    await deps.eventEmit({
+      eventName: FileuploadEvents.Updated,
+      payload: {
+        upload: {
+          ...updatedFile,
+          projectId: updatedFile.streamId
+        },
+        isNewModel: false // next gen file uploads don't support this
+      }
     })
 
     logger.info('File upload status updated')

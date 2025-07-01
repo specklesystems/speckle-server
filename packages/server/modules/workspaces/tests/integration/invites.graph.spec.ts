@@ -997,7 +997,7 @@ describe('Workspaces Invites GQL', () => {
         expect(res).to.not.haveGraphQLErrors()
 
         const unrelatedInvite = res.data?.workspace.invitedTeam?.find(
-          (t) => t.workspaceId === unrelatedWorkspace.id
+          (t) => t.workspace.id === unrelatedWorkspace.id
         )
         expect(unrelatedInvite).to.be.not.ok
       })
@@ -1359,7 +1359,7 @@ describe('Workspaces Invites GQL', () => {
         expect(res2.data?.activeUser?.workspaceInvites).to.be.ok
         expect(
           res2.data!.activeUser!.workspaceInvites.find(
-            (i) => i.workspaceId === brokenWorkspace.id
+            (i) => i.workspace.id === brokenWorkspace.id
           )
         ).to.not.be.ok
       })
@@ -1388,7 +1388,7 @@ describe('Workspaces Invites GQL', () => {
           expect(res.data!.workspaceInvite!.inviteId).to.equal(
             processableWorkspaceInvite.inviteId
           )
-          expect(res.data!.workspaceInvite!.workspaceId).to.equal(
+          expect(res.data!.workspaceInvite!.workspace.id).to.equal(
             myInviteTargetWorkspace.id
           )
           expect(res.data!.workspaceInvite!.token).to.equal(
@@ -1418,7 +1418,7 @@ describe('Workspaces Invites GQL', () => {
             expect(res.data?.activeUser?.workspaceInvites![0].inviteId).to.equal(
               processableWorkspaceInvite.inviteId
             )
-            expect(res.data?.activeUser?.workspaceInvites![0].workspaceId).to.equal(
+            expect(res.data?.activeUser?.workspaceInvites![0].workspace.id).to.equal(
               myInviteTargetWorkspace.id
             )
           } else {

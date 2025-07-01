@@ -112,6 +112,36 @@ export const passportAuthenticationCallbackFactory =
         'Unknown authentication error. Please contact server admins'
       )
 
+      // google will throw a TokenError for various reasons, such as invalid_grant, and the Google strategy will not call the verify method
+      if (err.name === 'TokenError' && 'code' in err) {
+        switch (err.code) {
+          // invalid_grant is a common error from strategies such as Google and a number of reasons
+          // can cause it. Many user-related issues, so we will treat it as user-related.
+          // https://blog.timekit.io/google-oauth-invalid-grant-nightmare-and-how-to-fix-it-9f4efaf1da35
+          case 'invalid_grant':
+            req.log.warn(
+              { err: e, strategy },
+              'Authentication error for strategy "{strategy}" encountered an Invalid Grant error'
+            )
+            res.redirect(
+              buildRedirectUrl({
+                resolveAuthRedirectPath,
+                path: defaultErrorPath(
+                  'Failed to authenticate, please refer to your SSO provider.'
+                )
+              })
+            )
+            return
+          default:
+            req.log.info(
+              // log at info level, as the error logging will be handled below
+              { err, strategy },
+              'Authentication error for strategy "{strategy}" encountered an unexpected TokenError of code "{err.code}"'
+            )
+          // fall through to the unknown error handler
+        }
+      }
+
       // unknown and unexpected error
       req.log.error({ err, strategy }, 'Authentication error for strategy "{strategy}"')
       return next(err)
@@ -129,13 +159,24 @@ export const passportAuthenticationCallbackFactory =
     const infoMsg = resolveInfoMessage(info)
     switch (failureType) {
       case ExpectedAuthFailure.UserInputError:
-      case ExpectedAuthFailure.InviteNotFoundError:
       case ExpectedAuthFailure.InvalidGrantError:
         res.redirect(
           buildRedirectUrl({
             resolveAuthRedirectPath,
             path: defaultErrorPath(
-              infoMsg || 'Failed to authenticate, contact server admins'
+              infoMsg ||
+                'Failed to authenticate, please try again. Contact server admins if this is a persistent error.'
+            )
+          })
+        )
+        return
+      case ExpectedAuthFailure.InviteNotFoundError:
+        res.redirect(
+          buildRedirectUrl({
+            resolveAuthRedirectPath,
+            path: defaultErrorPath(
+              infoMsg ||
+                'This server is invite only. The invite link may have expired or the invite may have been revoked. Please authenticate yourself through a valid invite link.'
             )
           })
         )
@@ -152,8 +193,8 @@ export const passportAuthenticationCallbackFactory =
       case null:
         // unexpected error or missing info
         req.log.error(
-          { info, strategy },
-          "Authentication error for strategy '{strategy}' encountered an unexpected failure type or 'info' parameter is missing or invalid"
+          { info, authStrategy: strategy },
+          "Authentication error for strategy '{authStrategy}' encountered an unexpected failure type or 'info' parameter is missing or invalid"
         )
         const message = infoMsg || 'Failed to authenticate, contact server admins'
         res.redirect(

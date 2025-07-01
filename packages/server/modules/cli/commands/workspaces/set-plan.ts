@@ -61,6 +61,7 @@ const command: CommandModule<
       emitEvent: getEventBus().emit
     })
     await updateWorkspacePlan({
+      userId: null,
       workspaceId: workspace.id,
       name: args.plan,
       status: args.status

@@ -505,11 +505,15 @@ type WorkspaceRoleTestContext = {
   workspaceRoles: WorkspaceAcl[]
   workspaceProjects: StreamRecord[]
   workspaceProjectRoles: StreamAclRecord[]
-  eventData: {
-    isCalled: boolean
-    eventName: string
-    payload: unknown
-  }
+  eventData: Partial<
+    Record<
+      WorkspaceEvents,
+      {
+        isCalled: boolean
+        payload: unknown
+      }
+    >
+  >
   workspace: Partial<Workspace & { domains: Partial<WorkspaceDomain[]> }>
 }
 
@@ -520,11 +524,7 @@ const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
     workspaceRoles: [],
     workspaceProjects: [],
     workspaceProjectRoles: [],
-    eventData: {
-      isCalled: false,
-      eventName: '',
-      payload: {}
-    },
+    eventData: {},
     workspace: {
       id: workspaceId,
       domains: []
@@ -561,9 +561,10 @@ const buildDeleteWorkspaceRoleAndTestContext = (
       return deletedRole
     },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
-      context.eventData.isCalled = true
-      context.eventData.eventName = eventName
-      context.eventData.payload = payload
+      context.eventData[eventName] = {
+        isCalled: true,
+        payload
+      }
 
       switch (eventName) {
         case WorkspaceEvents.RoleDeleted: {
@@ -610,9 +611,10 @@ const buildUpdateWorkspaceRoleAndTestContext = (
       context.workspaceRoles.push(role)
     },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
-      context.eventData.isCalled = true
-      context.eventData.eventName = eventName
-      context.eventData.payload = payload
+      context.eventData[eventName] = {
+        isCalled: true,
+        payload
+      }
 
       switch (eventName) {
         case WorkspaceEvents.RoleDeleted: {
@@ -731,9 +733,8 @@ describe('Workspace role services', () => {
         deletedByUserId
       })
 
-      expect(context.eventData.isCalled).to.be.true
-      expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
-      expect(context.eventData.payload).to.deep.equal({
+      expect(context.eventData[WorkspaceEvents.RoleDeleted]?.isCalled).to.be.true
+      expect(context.eventData[WorkspaceEvents.RoleDeleted]?.payload).to.deep.equal({
         acl: role,
         updatedByUserId: deletedByUserId
       })
@@ -833,12 +834,11 @@ describe('Workspace role services', () => {
       await updateWorkspaceRole({ ...role, updatedByUserId: workspaceOwnerId })
 
       const payload = {
-        ...(context.eventData
-          .payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
+        ...(context.eventData[WorkspaceEvents.RoleUpdated]
+          ?.payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
       }
 
-      expect(context.eventData.isCalled).to.be.true
-      expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
+      expect(context.eventData[WorkspaceEvents.RoleUpdated]?.isCalled).to.be.true
       expect(payload).to.deep.equal({
         acl: role,
         updatedByUserId: workspaceOwnerId

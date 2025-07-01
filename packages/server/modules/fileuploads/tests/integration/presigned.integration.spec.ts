@@ -36,10 +36,7 @@ import {
   insertNewUploadAndNotifyFactory,
   insertNewUploadAndNotifyFactoryV2
 } from '@/modules/fileuploads/services/management'
-import {
-  getBranchesByIdsFactory,
-  getStreamBranchByNameFactory
-} from '@/modules/core/repositories/branches'
+import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import {
   getFileInfoFactoryV2,
@@ -55,7 +52,6 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 
@@ -145,13 +141,10 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
                 })
               }),
               saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-              publish,
               emit: getEventBus().emit
             })
           : insertNewUploadAndNotifyFactory({
-              getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
               saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-              publish,
               emit: getEventBus().emit
             })
 

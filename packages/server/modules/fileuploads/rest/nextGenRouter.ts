@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { db } from '@/db/knex'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -95,7 +94,6 @@ export const nextGenFileImporterRouterFactory = (params: {
           queues: params.queues,
           pushJobToFileImporter,
           saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-          publish,
           emit: getEventBus().emit
         })
 
@@ -182,7 +180,7 @@ export const nextGenFileImporterRouterFactory = (params: {
         updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
         observeResult: params.observeResult,
-        publish
+        eventEmit: getEventBus().emit
       })
 
       await onFileImportResult({

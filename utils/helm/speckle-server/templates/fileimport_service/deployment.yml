@@ -139,7 +139,7 @@ spec:
           {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
           # DEPRECATED
           - name: MAX_OBJECT_SIZE_MB
-            value: {{ .Values.objects.max_object_size_mb | quote }}
+            value: {{ .Values.server.max_object_size_mb | quote }}
           {{- end }}
           {{- if (and .Values.featureFlags.workspacesMultiRegionEnabled (not .Values.featureFlags.nextGenFileImporterEnabled)) }}
           - name: FF_WORKSPACES_MULTI_REGION_ENABLED

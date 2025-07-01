@@ -172,19 +172,18 @@ export const createWorkspaceFactory =
     } satisfies Workspace
     await upsertWorkspace({ workspace })
 
+    // emit a workspace created event
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Created,
+      payload: { workspace, createdByUserId: userId }
+    })
+
     // assign the creator as workspace administrator
     await addOrUpdateWorkspaceRole({
       userId,
       workspaceId: workspace.id,
       role: Roles.Workspace.Admin,
-      updatedByUserId: userId,
-      skipEvent: true // skip RoleUpdated, cause we only want Created to come out of this
-    })
-
-    // emit a workspace created event
-    await emitWorkspaceEvent({
-      eventName: WorkspaceEvents.Created,
-      payload: { workspace, createdByUserId: userId }
+      updatedByUserId: userId
     })
 
     return { ...workspace }
@@ -423,7 +422,6 @@ export const addOrUpdateWorkspaceRoleFactory =
     role: nextWorkspaceRole,
     preventRoleDowngrade,
     updatedByUserId,
-    skipEvent,
     seatType
   }): Promise<void> => {
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -481,32 +479,28 @@ export const addOrUpdateWorkspaceRoleFactory =
         userId,
         workspaceId,
         type: seatType,
-        assignedByUserId: updatedByUserId,
-        skipEvent: true // skip SeatUpdated, cause we only want RoleUpdated to come out of this
+        assignedByUserId: updatedByUserId
       })
     } else {
       await ensureValidWorkspaceRoleSeat({
         userId,
         workspaceId,
         role: nextWorkspaceRole,
-        updatedByUserId,
-        skipEvent
+        updatedByUserId
       })
     }
 
-    if (!skipEvent) {
-      await emitWorkspaceEvent({
-        eventName: WorkspaceEvents.RoleUpdated,
-        payload: {
-          acl: {
-            userId,
-            workspaceId,
-            role: nextWorkspaceRole
-          },
-          updatedByUserId
-        }
-      })
-    }
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.RoleUpdated,
+      payload: {
+        acl: {
+          userId,
+          workspaceId,
+          role: nextWorkspaceRole
+        },
+        updatedByUserId
+      }
+    })
   }
 
 export const addDomainToWorkspaceFactory =

@@ -139,7 +139,7 @@ import {
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { isWorkspaceRole } from '@/modules/workspaces/domain/logic'
+import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -183,7 +183,7 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import { BadRequestError } from '@/modules/shared/errors'
+import { BadRequestError, UnauthorizedError } from '@/modules/shared/errors'
 import {
   dismissWorkspaceJoinRequestFactory,
   requestToJoinWorkspaceFactory
@@ -583,6 +583,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspacePlanName: name
           })
 
+          const userId = ctx.userId
+          if (!userId) throw new UnauthorizedError()
+
           const updateWorkspacePlan = updateWorkspacePlanFactory({
             getWorkspace: getWorkspaceFactory({ db }),
             upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
@@ -591,7 +594,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
 
           await withOperationLogging(
-            async () => await updateWorkspacePlan({ workspaceId, name, status }),
+            async () =>
+              await updateWorkspacePlan({ userId, workspaceId, name, status }),
             {
               logger,
               operationName: 'updateWorkspacePlan',
@@ -1864,17 +1868,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       PendingWorkspaceCollaborator: {
-        workspaceName: async (parent, _args, ctx) => {
+        workspace: async (parent, _args, ctx) => {
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
             parent.workspaceId
           )
-          return workspace!.name
-        },
-        workspaceSlug: async (parent, _args, ctx) => {
-          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
-            parent.workspaceId
-          )
-          return workspace!.slug
+          return toLimitedWorkspace(workspace!)
         },
         invitedBy: async (parent, _args, ctx) => {
           const { invitedById } = parent
