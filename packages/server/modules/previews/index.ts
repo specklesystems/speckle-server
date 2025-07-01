@@ -16,7 +16,6 @@ import {
   observeMetricsFactory
 } from '@/modules/previews/observability/metrics'
 import { responseHandlerFactory } from '@/modules/previews/services/responses'
-import { adminRouterFactory } from '@/modules/previews/rest/admin'
 import { createRequestAndResponseQueues } from '@/modules/previews/clients/bull'
 import { buildConsumePreviewResult } from '@/modules/previews/resultListener'
 import {
@@ -83,12 +82,6 @@ export const init: SpeckleModule['init'] = async ({
     previewRequestQueue,
     previewResponseQueue
   })
-
-  const adminRouter = adminRouterFactory({
-    previewRequestQueue,
-    previewResponseQueue
-  })
-  app.use(adminRouter)
 
   const previewRouter = previewRouterFactory({
     previewRequestQueue,
