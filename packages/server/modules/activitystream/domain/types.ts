@@ -60,14 +60,11 @@ const workspaceSubscription = z.object({
   totalEditorSeats: z.number()
 })
 
-const projectRole = z.object({
-  role: z.union([
-    z.literal('stream:owner'),
-    z.literal('stream:contributor'),
-    z.literal('stream:reviewer')
-  ]),
-  userId: z.string()
-})
+const projectRole = z.union([
+  z.literal('stream:owner'),
+  z.literal('stream:contributor'),
+  z.literal('stream:reviewer')
+])
 
 export const WorkspacePlanCreatedActivity = z.object({
   version: z.literal('1'),
@@ -99,13 +96,15 @@ export const WorkspaceSeatDeletedActivity = z.object({
 
 export const ProjectRoleUpdatedActivity = z.object({
   version: z.literal('1'),
+  userId: z.string(),
   new: projectRole,
   old: z.nullable(projectRole)
 })
 
 export const ProjectRoleDeletedActivity = z.object({
   version: z.literal('1'),
-  old: projectRole
+  userId: z.string(),
+  old: z.nullable(projectRole)
 })
 
 // Stream Activity

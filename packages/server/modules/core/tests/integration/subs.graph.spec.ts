@@ -20,6 +20,7 @@ import {
   deleteStreamFactory,
   getCommitStreamFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   getStreamsFactory,
   grantStreamPermissionsFactory,
   markBranchStreamUpdatedFactory,
@@ -188,6 +189,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser: getUserFactory({ db }),
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -195,6 +197,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 

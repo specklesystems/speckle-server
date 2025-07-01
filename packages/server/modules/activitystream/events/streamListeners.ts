@@ -21,7 +21,7 @@ import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus
 const addProjectPermissionsAddedActivityFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
   async ({
-    payload: { activityUserId, project }
+    payload: { activityUserId, project, role, targetUserId, previousRole }
   }: EventPayload<typeof ProjectEvents.PermissionsAdded>) => {
     await saveActivity({
       contextResourceId: project.id,
@@ -30,11 +30,9 @@ const addProjectPermissionsAddedActivityFactory =
       userId: activityUserId,
       payload: {
         version: '1',
-        new: {
-          role: 'stream:contributor', // TODO
-          userId: activityUserId
-        },
-        old: null // TODO
+        userId: targetUserId,
+        new: role,
+        old: previousRole
       }
     })
   }
@@ -42,7 +40,7 @@ const addProjectPermissionsAddedActivityFactory =
 const addProjectPermissionsRevokedActivityFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
   async ({
-    payload: { activityUserId, project, removedUserId }
+    payload: { activityUserId, project, removedUserId, role }
   }: EventPayload<typeof ProjectEvents.PermissionsRevoked>) => {
     await saveActivity({
       contextResourceId: project.id,
@@ -51,10 +49,8 @@ const addProjectPermissionsRevokedActivityFactory =
       userId: activityUserId,
       payload: {
         version: '1',
-        old: {
-          role: 'stream:contributor', // TODO:
-          userId: removedUserId
-        }
+        userId: removedUserId,
+        old: role
       }
     })
   }

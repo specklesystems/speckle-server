@@ -455,7 +455,7 @@ export const getStreamRolesFactory =
   async (userId: string, streamIds: string[]) => {
     const q = tables
       .streams(deps.db)
-      .select<{ id: string; role: Nullable<string> }[]>([
+      .select<{ id: string; role: Nullable<StreamRoles> }[]>([
         Streams.col.id,
         StreamAcl.col.role
       ])

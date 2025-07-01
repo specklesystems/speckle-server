@@ -2,6 +2,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   AddOrUpdateStreamCollaborator,
   GetStream,
+  GetStreamRoles,
   GrantStreamPermissions,
   IsStreamCollaborator,
   RemoveStreamCollaborator,
@@ -92,6 +93,7 @@ export const removeStreamCollaboratorFactory =
     validateStreamAccess: ValidateStreamAccess
     isStreamCollaborator: IsStreamCollaborator
     revokeStreamPermissions: RevokeStreamPermissions
+    getStreamRoles: GetStreamRoles
     emitEvent: EventBusEmit
   }): RemoveStreamCollaborator =>
   async (streamId, userId, removedById, removerResourceAccessRules, options) => {
@@ -113,6 +115,7 @@ export const removeStreamCollaboratorFactory =
       }
     }
 
+    const { [streamId]: role } = await deps.getStreamRoles(userId, [streamId])
     const stream = await deps.revokeStreamPermissions({ streamId, userId }, options)
     if (!stream) {
       throw new LogicError('Stream not found')
@@ -123,7 +126,8 @@ export const removeStreamCollaboratorFactory =
       payload: {
         project: stream,
         activityUserId: removedById,
-        removedUserId: userId
+        removedUserId: userId,
+        role: role || null
       }
     })
 
@@ -145,6 +149,7 @@ export const addOrUpdateStreamCollaboratorFactory =
     validateStreamAccess: ValidateStreamAccess
     getUser: GetUser
     grantStreamPermissions: GrantStreamPermissions
+    getStreamRoles: GetStreamRoles
     emitEvent: EventBusEmit
   }): AddOrUpdateStreamCollaborator =>
   async (
@@ -194,6 +199,7 @@ export const addOrUpdateStreamCollaboratorFactory =
       }
     })
 
+    const { [streamId]: previousRole } = await deps.getStreamRoles(userId, [streamId])
     const stream = (await deps.grantStreamPermissions(
       {
         streamId,
@@ -204,13 +210,16 @@ export const addOrUpdateStreamCollaboratorFactory =
     )) as StreamRecord // validateStreamAccess already checked that it exists
 
     if (!fromInvite) {
+      // why not?
+
       await deps.emitEvent({
         eventName: ProjectEvents.PermissionsAdded,
         payload: {
           project: stream,
           activityUserId: addedById,
           targetUserId: userId,
-          role: role as StreamRoles
+          role: role as StreamRoles,
+          previousRole: previousRole || null
         }
       })
     }
