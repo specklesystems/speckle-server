@@ -1,5 +1,6 @@
 import {
   GetWorkspacePlan,
+  GetWorkspaceSubscription,
   UpsertWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
 import {
@@ -17,6 +18,7 @@ export const updateWorkspacePlanFactory =
     getWorkspace,
     upsertWorkspacePlan,
     getWorkspacePlan,
+    getWorkspaceSubscription,
     emitEvent
   }: {
     getWorkspace: GetWorkspace
@@ -24,6 +26,7 @@ export const updateWorkspacePlanFactory =
     // responsible for protecting the permutations
     upsertWorkspacePlan: UpsertWorkspacePlan
     getWorkspacePlan: GetWorkspacePlan
+    getWorkspaceSubscription: GetWorkspaceSubscription
     emitEvent: EventBusEmit
   }) =>
   async ({
@@ -41,6 +44,7 @@ export const updateWorkspacePlanFactory =
     let workspacePlan: WorkspacePlan
     const previousWorkspacePlan = await getWorkspacePlan({ workspaceId })
     if (!previousWorkspacePlan) throw new WorkspacePlanNotFoundError()
+    const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
 
     const createdAt = new Date()
     const updatedAt = new Date()
@@ -70,6 +74,8 @@ export const updateWorkspacePlanFactory =
       case WorkspacePlans.ProUnlimitedInvoiced:
         switch (status) {
           case 'valid':
+            if (workspaceSubscription) throw new InvalidWorkspacePlanStatus()
+
             workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
             await upsertWorkspacePlan({ workspacePlan })
             break

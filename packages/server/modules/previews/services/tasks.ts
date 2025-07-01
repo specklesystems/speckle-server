@@ -4,7 +4,7 @@ import {
   GetPaginatedObjectPreviewsPage,
   GetPaginatedObjectPreviewsTotalCount,
   RequestObjectPreview,
-  UpsertObjectPreview
+  UpdateObjectPreview
 } from '@/modules/previews/domain/operations'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import { Roles, Scopes, TIME_MS } from '@speckle/shared'
@@ -37,7 +37,7 @@ export const getPaginatedObjectPreviewInErrorStateFactory =
 
 export const retryFailedPreviewsFactory = (deps: {
   getPaginatedObjectPreviewsInErrorState: GetPaginatedObjectPreviewsInErrorState
-  upsertObjectPreview: UpsertObjectPreview
+  updateObjectPreview: UpdateObjectPreview
   getStreamCollaborators: GetStreamCollaborators
   serverOrigin: string
   createAppToken: CreateAndStoreAppToken
@@ -45,7 +45,7 @@ export const retryFailedPreviewsFactory = (deps: {
 }) => {
   const {
     getPaginatedObjectPreviewsInErrorState,
-    upsertObjectPreview,
+    updateObjectPreview,
     getStreamCollaborators,
     serverOrigin,
     createAppToken,
@@ -79,7 +79,7 @@ export const retryFailedPreviewsFactory = (deps: {
     const objPreview = items[0]
     const { streamId, objectId } = objPreview
 
-    await upsertObjectPreview({
+    await updateObjectPreview({
       objectPreview: {
         ...objPreview,
         previewStatus: PreviewStatus.PENDING, // move it to pending so it doesn't get picked up again
