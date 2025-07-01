@@ -56,12 +56,13 @@ input AppTokenCreateInput {
 }
 
 type EmbedToken {
-  id: String!
-  name: String!
+  tokenId: String!
+  projectId: String!
+  userId: String!
+  modelIds: String!
   createdAt: DateTime!
   lifespan: BigInt!
   lastUsed: DateTime!
-  modelIds: String!
 }
 
 input EmbedTokenCreateInput {
@@ -95,7 +96,7 @@ extend type Mutation {
 
 extend type ProjectMutations {
   createEmbedToken(token: EmbedTokenCreateInput!): String!
-  revokeEmbedToken(token: String!): Boolean!
+  revokeEmbedToken(token: String!, projectId: String!): Boolean!
 }
 
 extend type Project {

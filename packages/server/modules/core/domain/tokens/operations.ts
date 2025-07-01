@@ -46,16 +46,22 @@ export type GetUserPersonalAccessTokens = (userId: string) => Promise<
   }[]
 >
 
-export type ListProjectEmbedTokens = (projectId: string) => Promise<EmbedApiToken[]>
+export type ListProjectEmbedTokens = (args: { projectId: string }) => Promise<
+  (EmbedApiToken & {
+    createdAt: Date
+    lastUsed: Date
+    lifespan: number | bigint
+  })[]
+>
 
 export type RevokeTokenById = (tokenId: string) => Promise<boolean>
 
 export type RevokeUserTokenById = (tokenId: string, userId: string) => Promise<boolean>
 
-export type RevokeEmbedTokenById = (
-  tokenId: string,
+export type RevokeEmbedTokenById = (args: {
+  tokenId: string
   projectId: string
-) => Promise<boolean>
+}) => Promise<boolean>
 
 export type GetApiTokenById = (tokenId: string) => Promise<Optional<ApiToken>>
 

@@ -1,6 +1,8 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
+  listProjectEmbedTokensFactory,
+  revokeEmbedTokenByIdFactory,
   storeApiTokenFactory,
   storeEmbedApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
@@ -13,6 +15,15 @@ import {
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 
 export = {
+  Project: {
+    embedTokens: async (parent, _args, context) => {
+      // TODO: Policy
+
+      return await listProjectEmbedTokensFactory({ db })({
+        projectId: parent.id
+      })
+    }
+  },
   ProjectMutations: {
     createEmbedToken: async (_parent, args, context) => {
       // TODO: Policy
@@ -28,6 +39,14 @@ export = {
       })({
         ...removeNullOrUndefinedKeys(args.token),
         userId: context.userId!
+      })
+    },
+    revokeEmbedToken: async (_parent, args, context) => {
+      // TODO: Policy
+
+      return await revokeEmbedTokenByIdFactory({ db })({
+        tokenId: args.token,
+        projectId: args.projectId
       })
     }
   }
