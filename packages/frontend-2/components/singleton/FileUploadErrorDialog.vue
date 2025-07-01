@@ -1,7 +1,10 @@
 <template>
   <LayoutDialog v-model:open="open" :title="title" :buttons="buttons">
     <p class="text-foreground-2 my-2">
-      The following file uploads failed. You can retry them by re-uploading the files.
+      The following file upload{{ failedJobs.length > 1 ? 's' : '' }} failed. You can
+      retry {{ failedJobs.length > 1 ? 'them' : 'it' }} by re-uploading the file{{
+        failedJobs.length > 1 ? 's' : ''
+      }}.
     </p>
     <LayoutTable
       :items="failedJobs"
@@ -31,10 +34,11 @@
         </div>
       </template>
       <template #error="{ item }">
-        <span class="text-foreground">{{ getErrorMessage(item) }}</span>
+        <span class="text-foreground">{{ getErrorMessage(item) + ' ' }}</span>
         <ErrorReference
           v-if="shouldShowErrorReference(item)"
-          class="text-left"
+          class="text-left inline"
+          size="text-body-xs"
           @click="copyErrorReference(item)"
         />
       </template>
@@ -132,9 +136,7 @@ const getErrorMessage = (job: FailedFileImportJob) => {
     case FailedFileImportJobError.ImportFailed:
     case FailedFileImportJobError.UploadFailed: {
       const isImport = job.error.type === FailedFileImportJobError.ImportFailed
-      const base = `The file ${
-        isImport ? 'import' : 'upload'
-      } failed unexpectedly. Please copy the error reference and share it with server admins for further investigation.`
+      const base = `The file ${isImport ? 'import' : 'upload'} failed unexpectedly.`
       return base
     }
     default:
