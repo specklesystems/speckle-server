@@ -4,6 +4,7 @@ export default defineNuxtPlugin(() => {
   const { hasActiveUploads, unregisterAllActiveUploads } = useGlobalFileImportManager()
   const router = useRouter()
 
+  // Handle nuxt navigation
   router.beforeEach((to, from, next) => {
     // Ignore if same route
     if (to.fullPath === from.fullPath) return next()
@@ -21,5 +22,13 @@ export default defineNuxtPlugin(() => {
       }
     }
     next()
+  })
+
+  // Handle the user trying to close the tab or browser
+  window.addEventListener('beforeunload', (e) => {
+    if (hasActiveUploads.value) {
+      e.preventDefault()
+      e.returnValue = ''
+    }
   })
 })

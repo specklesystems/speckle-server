@@ -10,7 +10,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import { ensureError, Nullable, wait } from '@speckle/shared'
+import { ensureError, Nullable } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
@@ -81,9 +81,6 @@ export const fileuploadRouterFactory = (): Router => {
         userId,
         logger,
         onFinishAllFileUploads: async (uploadResults) => {
-          // TODO: Test long uploads
-          await wait(10000)
-
           try {
             await saveFileUploads({
               uploadResults
