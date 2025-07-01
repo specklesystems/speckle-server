@@ -5,8 +5,6 @@ import type {
   BuildConsumePreviewResult,
   ObserveMetrics
 } from '@/modules/previews/domain/operations'
-import { DatabaseError } from 'pg'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { fromJobId, previewResultPayload } from '@speckle/shared/workers/previews'
 
 const parseMessage = (data: string) =>
@@ -66,21 +64,6 @@ export const responseHandlerFactory = (deps: {
       })
     } catch (e) {
       const err = ensureError(e, 'Unknown error when consuming preview result')
-
-      if (
-        err instanceof StreamNotFoundError ||
-        (err instanceof DatabaseError &&
-          err.constraint === 'object_preview_streamid_foreign' &&
-          err.detail?.includes('is not present in table "streams".'))
-      ) {
-        jobLogger.warn(
-          { err },
-          'Failed to consume preview result; the stream does not exist. Probably deleted while preview was generated.'
-        )
-        done() // don't pass the error to done, as we don't want to retry the job
-        return
-      }
-
       jobLogger.error({ err }, 'Failed to consume preview result')
       done(err)
       return
