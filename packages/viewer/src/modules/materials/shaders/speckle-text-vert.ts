@@ -108,6 +108,7 @@ void main() {
                 // That's why we multiply by 2.
                 mvPosition.xy += position.xy * billboardPixelOffsetSize.zw * 2. + billboardPixelOffsetSize.xy * 2.;
                 /** Back to view space for convenience */
+                mvPosition *= div;
                 mvPosition = invProjection * mvPosition;
             #else
                 mvPosition = (viewMatrix * vec4(billboardPosition, 1.) + vec4(position.x, position.y, 0., 0.0));
@@ -123,17 +124,8 @@ void main() {
 
     gl_Position = projectionMatrix * mvPosition;
 
-
 	#include <logdepthbuf_vertex>
-	// #include <clipping_planes_vertex> COMMENTED CHUNK
-    #if NUM_CLIPPING_PLANES > 0
-        #if defined(BILLBOARD) || defined(BILLBOARD_FIXED)
-            vec4 movelViewProjection = gl_Position * div;
-            vClipPosition = - (invProjection * movelViewProjection).xyz;
-        #else
-	        vClipPosition = - mvPosition.xyz;
-        #endif
-    #endif
+	#include <clipping_planes_vertex> 
 	#include <worldpos_vertex>
 	#include <envmap_vertex>
 	#include <fog_vertex>

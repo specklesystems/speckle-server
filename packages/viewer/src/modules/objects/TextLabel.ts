@@ -5,6 +5,7 @@ import {
   Color,
   DoubleSide,
   Float32BufferAttribute,
+  FrontSide,
   Int16BufferAttribute,
   Material,
   Matrix4,
@@ -96,7 +97,7 @@ export const DefaultTextLabelParams: Required<TextLabelParams> = {
 
 export class TextLabel extends Text {
   /** Needs a raycast to start rendering */
-  private readonly DEBUG_BILLBOARDS = true
+  private readonly DEBUG_BILLBOARDS = false
 
   declare material: SpeckleTextMaterial
 
@@ -121,12 +122,9 @@ export class TextLabel extends Text {
     super()
     this.material = new SpeckleTextMaterial({}).getDerivedMaterial()
     this.material.toneMapped = false
-    this.material.side = DoubleSide
 
     this._backgroundMaterial = new SpeckleBasicMaterial({})
     this._backgroundMaterial.toneMapped = false
-    this._backgroundMaterial.side = DoubleSide
-    this._backgroundMaterial.depthTest = false
 
     this._background = new Mesh(undefined, this._backgroundMaterial)
     /** Otherwise three.js looses it's shit when rendering it billboarded */
@@ -178,6 +176,11 @@ export class TextLabel extends Text {
         if (transformedParams.fontSize) {
           transformedParams.fontSize *= window.devicePixelRatio
         }
+        this.material.side = FrontSide
+        this._backgroundMaterial.side = FrontSide
+      } else {
+        this.material.side = DoubleSide
+        this._backgroundMaterial.side = DoubleSide
       }
 
       if (transformedParams.text) this.text = transformedParams.text
@@ -274,6 +277,7 @@ export class TextLabel extends Text {
     if (this._params.billboard === 'screen') {
       const box = new Box3().copy(this._textBounds)
       if (box.getSize(new Vector3()).length() === 0) return
+      if (box.isInfiniteBox()) return
 
       const min = new Vector3().copy(box.min)
       const max = new Vector3().copy(box.max)

@@ -223,10 +223,9 @@ export class MeasurementPointGizmo extends Group {
     this.text = new TextLabel({
       textColor: new Color(this._style.textColor),
       fontSize:
-        (this._style.textPixelHeight !== undefined
+        this._style.textPixelHeight !== undefined
           ? this._style.textPixelHeight
-          : DefaultMeasurementPointGizmoStyle.textPixelHeight) *
-        window.devicePixelRatio,
+          : DefaultMeasurementPointGizmoStyle.textPixelHeight,
       textOpacity:
         this._style.textOpacity !== undefined
           ? this._style.textOpacity
@@ -239,6 +238,8 @@ export class MeasurementPointGizmo extends Group {
       backgroundMargins: new Vector2(35, 10),
       objectLayer: ObjectLayers.MEASUREMENTS
     })
+    this.text.material.depthTest = false
+    this.text.depthOffset = -0.1
 
     this.add(this.point)
     this.add(this.normalIndicator)

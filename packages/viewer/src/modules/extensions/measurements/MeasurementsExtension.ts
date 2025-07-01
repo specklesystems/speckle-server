@@ -151,7 +151,7 @@ export class MeasurementsExtension extends Extension {
         this.renderer.scene,
         camera,
         data,
-        [ObjectLayers.STREAM_CONTENT_MESH, ObjectLayers.STREAM_CONTENT_TEXT],
+        ObjectLayers.STREAM_CONTENT_MESH,
         true,
         this.renderer.clippingVolume
       ) || []

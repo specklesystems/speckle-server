@@ -365,7 +365,7 @@ export default class TextBatch implements Batch {
           const geometry = text.geometry
           geometry.computeBoundingBox()
           const textBvh = AccelerationStructure.buildBVH(
-            geometry.index.array,
+            geometry.index?.array as number[],
             vertices,
             DefaultBVHOptions
           )
