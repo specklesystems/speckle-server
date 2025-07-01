@@ -136,7 +136,7 @@ export const speckleBasicVert = /* glsl */ `
 #endif
 
 #ifdef BILLBOARD_SCREEN
-    uniform vec2 billboardPixelSize;
+    uniform vec4 billboardPixelOffsetSize;
 #endif
 
 void main() {
@@ -196,7 +196,7 @@ void main() {
         gl_Position = projectionMatrix * (viewMatrix * vec4(modelMatrix[3].xyz, 1.0));
         float div = gl_Position.w;
         gl_Position /= gl_Position.w;
-        gl_Position.xy += position.xy * billboardPixelSize * 2.;
+        gl_Position.xy += position.xy * billboardPixelOffsetSize.zw * 2. + billboardPixelOffsetSize.xy * 2.;
     #else
         gl_Position = projectionMatrix * mvPosition;
     #endif

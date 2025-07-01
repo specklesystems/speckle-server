@@ -10,7 +10,7 @@ export const speckleTextVert = /* glsl */ `
 #endif
 
 #ifdef BILLBOARD_SCREEN
-    uniform vec2 billboardPixelSize;
+    uniform vec4 billboardPixelOffsetSize;
 #endif
 
 
@@ -106,7 +106,7 @@ void main() {
                 // windowX = ((ndc.x + 1) / 2) * width;
                 // windowY = ((ndc.y + 1) / 2) * height;
                 // That's why we multiply by 2.
-                mvPosition.xy += position.xy * billboardPixelSize * 2.;
+                mvPosition.xy += position.xy * billboardPixelOffsetSize.zw * 2. + billboardPixelOffsetSize.xy * 2.;
                 /** Back to view space for convenience */
                 mvPosition = invProjection * mvPosition;
             #else

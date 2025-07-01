@@ -8,10 +8,9 @@ import {
   SelectionExtension,
   HybridCameraController,
   SectionTool,
-  TextLabel,
   InputEvent,
-  InputType,
-  ObjectLayers
+  ObjectLayers,
+  TextLabel
 } from '@speckle/viewer'
 
 import './style.css'
@@ -25,7 +24,7 @@ import {
 import { SectionOutlines } from '@speckle/viewer'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
-import { Mesh, Raycaster } from 'three'
+import { Color, Mesh, Raycaster, Vector2 } from 'three'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -89,16 +88,27 @@ const createViewer = async (containerName: string, _stream: string) => {
     }
   })
 
-  // const label = new TextLabel() as unknown as Mesh
-  // label.rotateX(Math.PI * 0.5)
-  // label.position.set(2.5, 0, 0)
-  // viewer.getRenderer().scene.add(label)
+  const label = new TextLabel({
+    text: 'y: 1.00m',
+    textColor: new Color(0xffffff),
+    fontSize: 50,
+    billboard: 'screen',
+    anchorX: 'left',
+    anchorY: 'middle',
+    backgroundColor: new Color(0xfb0404),
+    backgroundMargins: new Vector2(0, 0),
+    backgroundCornerRadius: 0,
+    objectLayer: ObjectLayers.OVERLAY
+  }) as unknown as Mesh
+  label.rotateX(Math.PI * 0.5)
+  label.position.set(2.5, 0, 0)
+  viewer.getRenderer().scene.add(label)
 
   const raycaster = new Raycaster()
   raycaster.layers.set(ObjectLayers.OVERLAY)
   viewer.getRenderer().input.on(InputEvent.Click, (arg) => {
-    // raycaster.setFromCamera(arg, viewer.getRenderer().renderingCamera)
-    // console.log(raycaster.intersectObject(label))
+    raycaster.setFromCamera(arg, viewer.getRenderer().renderingCamera)
+    console.log(raycaster.intersectObject(label))
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {

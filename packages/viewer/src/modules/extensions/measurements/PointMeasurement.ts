@@ -35,7 +35,7 @@ export class PointMeasurement extends Measurement {
   protected yLabelPosition: Vector3 = new Vector3()
   protected zLabelPosition: Vector3 = new Vector3()
   protected readonly pixelsOffX = 50 * window.devicePixelRatio
-  protected readonly pixelsOffY = 27 * window.devicePixelRatio
+  protected readonly pixelsOffY = 25 * window.devicePixelRatio
 
   public set isVisible(value: boolean) {
     this.gizmo.visible = value
@@ -51,42 +51,48 @@ export class PointMeasurement extends Measurement {
     this.add(this.gizmo)
 
     this.xLabel = new TextLabel({
+      text: 'sample',
       textColor: new Color(0xffffff),
-      fontSize: 17 * window.devicePixelRatio,
+      fontSize: 12,
       billboard: 'screen',
       anchorX: 'left',
       anchorY: 'middle',
       backgroundColor: new Color(0xfb0404),
-      backgroundMargins: new Vector2(50, 10),
-      backgroundCornerRadius: 0,
+      backgroundMargins: new Vector2(35, 10),
+      backgroundCornerRadius: 0.3,
       objectLayer: ObjectLayers.MEASUREMENTS
     })
+    this.xLabel.name = 'XLabel'
     this.add(this.xLabel)
 
     this.yLabel = new TextLabel({
+      text: 'sample',
       textColor: new Color(0xffffff),
-      fontSize: 17 * window.devicePixelRatio,
+      fontSize: 12,
       anchorX: 'left',
       anchorY: 'middle',
       billboard: 'screen',
       backgroundColor: new Color(0x03c903),
-      backgroundMargins: new Vector2(50, 10),
-      backgroundCornerRadius: 0,
+      backgroundMargins: new Vector2(35, 10),
+      backgroundCornerRadius: 0.3,
       objectLayer: ObjectLayers.MEASUREMENTS
     })
+    this.yLabel.name = 'YLabel'
     this.add(this.yLabel)
 
     this.zLabel = new TextLabel({
+      text: 'sample',
       textColor: new Color(0xffffff),
-      fontSize: 17 * window.devicePixelRatio,
+      fontSize: 12,
       billboard: 'screen',
       anchorX: 'left',
       anchorY: 'middle',
       backgroundColor: new Color(0x047efb),
-      backgroundMargins: new Vector2(50, 10),
-      backgroundCornerRadius: 0,
+      backgroundMargins: new Vector2(35, 10),
+      backgroundCornerRadius: 0.3,
       objectLayer: ObjectLayers.MEASUREMENTS
     })
+    this.zLabel.name = 'ZLabel'
     this.add(this.zLabel)
 
     this.layers.set(ObjectLayers.MEASUREMENTS)
@@ -154,7 +160,7 @@ export class PointMeasurement extends Measurement {
     this.zLabel.position.copy(this.zLabelPosition)
     const xP = this.xLabel
       .updateParams({
-        text: `x : ${(this.startPoint.x * getConversionFactor('m', this.units)).toFixed(
+        text: `X : ${(this.startPoint.x * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`
       })
@@ -164,7 +170,7 @@ export class PointMeasurement extends Measurement {
       })
     const yP = this.yLabel
       .updateParams({
-        text: `y : ${(this.startPoint.y * getConversionFactor('m', this.units)).toFixed(
+        text: `Y : ${(this.startPoint.y * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`
       })
@@ -175,7 +181,7 @@ export class PointMeasurement extends Measurement {
 
     const zP = this.zLabel
       .updateParams({
-        text: `z : ${(this.startPoint.z * getConversionFactor('m', this.units)).toFixed(
+        text: `Z : ${(this.startPoint.z * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`
       })

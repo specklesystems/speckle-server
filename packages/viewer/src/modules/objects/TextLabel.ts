@@ -47,36 +47,36 @@ export interface TextLabelParams {
 }
 
 /** Screen */
-// export const DefaultTextLabelParams: Required<TextLabelParams> = {
-//   text: 'Test Text',
-//   fontSize: 40,
-//   maxWidth: Number.POSITIVE_INFINITY,
-//   anchorX: 'center',
-//   anchorY: 'middle',
-//   billboard: 'screen',
-//   backgroundColor: new Color(0xff0000),
-//   backgroundCornerRadius: 0.5,
-//   backgroundMargins: new Vector2(50, 10),
-//   textColor: new Color(0x00ffff),
-//   textOpacity: 1,
-//   objectLayer: ObjectLayers.OVERLAY
-// }
-
-// /** World Billboard*/
 export const DefaultTextLabelParams: Required<TextLabelParams> = {
   text: 'Test Text',
-  fontSize: 1,
+  fontSize: 40,
   maxWidth: Number.POSITIVE_INFINITY,
-  anchorX: 'center',
+  anchorX: 'left',
   anchorY: 'middle',
-  billboard: 'world',
+  billboard: 'screen',
   backgroundColor: new Color(0xff0000),
   backgroundCornerRadius: 0.5,
-  backgroundMargins: new Vector2(0.75, 0.1),
+  backgroundMargins: new Vector2(50, 10),
   textColor: new Color(0x00ffff),
   textOpacity: 1,
   objectLayer: ObjectLayers.OVERLAY
 }
+
+// /** World Billboard*/
+// export const DefaultTextLabelParams: Required<TextLabelParams> = {
+//   text: 'Test Text',
+//   fontSize: 1,
+//   maxWidth: Number.POSITIVE_INFINITY,
+//   anchorX: 'left',
+//   anchorY: 'middle',
+//   billboard: 'world',
+//   backgroundColor: new Color(0xff0000),
+//   backgroundCornerRadius: 0.5,
+//   backgroundMargins: new Vector2(0.75, 0.1),
+//   textColor: new Color(0x00ffff),
+//   textOpacity: 1,
+//   objectLayer: ObjectLayers.OVERLAY
+// }
 
 // /** World */
 // export const DefaultTextLabelParams: Required<TextLabelParams> = {
@@ -95,7 +95,8 @@ export const DefaultTextLabelParams: Required<TextLabelParams> = {
 // }
 
 export class TextLabel extends Text {
-  private readonly DEBUG_BILLBOARDS = false
+  /** Needs a raycast to start rendering */
+  private readonly DEBUG_BILLBOARDS = true
 
   declare material: SpeckleTextMaterial
 
@@ -168,26 +169,38 @@ export class TextLabel extends Text {
           `TextLabel requires a SpeckleTextMaterial instance. Found ${mat.constructor.name}`
         )
       }
-      if (params.text) this.text = params.text
-      if (params.fontSize) this.fontSize = params.fontSize
-      if (params.anchorX) this.anchorX = params.anchorX
-      if (params.anchorY) this.anchorY = params.anchorY
-      if (params.maxWidth) this.maxWidth = params.maxWidth
 
-      if (params.textColor !== undefined) {
-        this.material.color.copy(params.textColor)
+      /** Automatically scale with DPR */
+      const transformedParams = Object.assign({}, params)
+      if (params.billboard === 'screen') {
+        if (transformedParams.backgroundMargins)
+          transformedParams.backgroundMargins.multiplyScalar(window.devicePixelRatio)
+        if (transformedParams.fontSize) {
+          transformedParams.fontSize *= window.devicePixelRatio
+        }
+      }
+
+      if (transformedParams.text) this.text = transformedParams.text
+      if (transformedParams.fontSize) this.fontSize = transformedParams.fontSize
+      if (transformedParams.anchorX) this.anchorX = transformedParams.anchorX
+      if (transformedParams.anchorY) this.anchorY = transformedParams.anchorY
+      if (transformedParams.maxWidth) this.maxWidth = transformedParams.maxWidth
+
+      if (transformedParams.textColor !== undefined) {
+        this.material.color.copy(transformedParams.textColor)
         this.material.color.convertSRGBToLinear()
       }
-      if (params.textOpacity !== undefined) this.material.opacity = params.textOpacity
+      if (transformedParams.textOpacity !== undefined)
+        this.material.opacity = transformedParams.textOpacity
 
-      if (params.objectLayer !== undefined) {
-        this.layers.set(params.objectLayer)
-        this._collisionMesh.layers.set(params.objectLayer)
-        this._background.layers.set(params.objectLayer)
+      if (transformedParams.objectLayer !== undefined) {
+        this.layers.set(transformedParams.objectLayer)
+        this._collisionMesh.layers.set(transformedParams.objectLayer)
+        this._background.layers.set(transformedParams.objectLayer)
       }
 
       this.material.needsUpdate = true
-      Object.assign(this._params, params)
+      Object.assign(this._params, transformedParams)
 
       if (this._needsSync) {
         this.sync(() => {
@@ -260,6 +273,8 @@ export class TextLabel extends Text {
     /** Screen space billboarding */
     if (this._params.billboard === 'screen') {
       const box = new Box3().copy(this._textBounds)
+      if (box.getSize(new Vector3()).length() === 0) return
+
       const min = new Vector3().copy(box.min)
       const max = new Vector3().copy(box.max)
       quadVerts[0].set(min.x, min.y, 0)
@@ -269,8 +284,8 @@ export class TextLabel extends Text {
 
       const billboardSize =
         this._params.backgroundColor !== null
-          ? this._backgroundMaterial.userData.billboardPixelSize.value
-          : this._backgroundMaterial.userData.billboardPixelSize.value
+          ? this._backgroundMaterial.userData.billboardPixelOffsetSize.value
+          : this._backgroundMaterial.userData.billboardPixelOffsetSize.value
       const invProjection = raycaster.camera.projectionMatrixInverse
       const invView = raycaster.camera.matrixWorld
 
@@ -282,7 +297,8 @@ export class TextLabel extends Text {
 
       for (let i = 0; i < quadVerts.length; i++) {
         _vec3.copy(quadVerts[i])
-        _vec3.multiply(new Vector3(billboardSize.x * 2, billboardSize.y * 2, 0))
+        _vec3.multiply(new Vector3(billboardSize.z * 2, billboardSize.w * 2, 0))
+        _vec3.add(new Vector3(billboardSize.x * 2, billboardSize.y * 2, 0))
         _vec4.set(clip.x, clip.y, clip.z, 1)
         _vec4.add(new Vector4(_vec3.x, _vec3.y, 0, 0))
         _vec4.multiplyScalar(pDiv)
@@ -302,16 +318,18 @@ export class TextLabel extends Text {
     this._collisionMesh.geometry.attributes.position.needsUpdate = true
     this._collisionMesh.geometry.computeBoundingBox()
     this._collisionMesh.geometry.computeBoundingSphere()
+
     /** No need to manually call. _collisionMesh is a child and will get automatically raycasted */
-    // this._collisionMesh.raycast(raycaster, intersects)
+    this._collisionMesh.raycast(raycaster, intersects)
+    // super.raycast(raycaster, intersects)
   }
 
   /** Gets the current bounds reported by troika taking `fontSize` into account */
   private textBoundsToBox(target: Box3 = new Box3()): Box3 {
     const { textRenderInfo } = this
-    /** We're using visibleBounds for a better fit */
+    /** visibleBounds generally is a better fit, *however* it reports faulty on some glyphs and messes up the text size */
     const bounds = textRenderInfo.visibleBounds
-    // console.log('bounds -> ', bounds)
+
     const vertices = []
     vertices.push(
       bounds[0],
@@ -328,10 +346,37 @@ export class TextLabel extends Text {
       0
     )
     target.setFromArray(vertices)
+
     return target
   }
 
-  /** Text's visibleBounds, the one we're working with bounds-wise is not a unit quad
+  /** Gets the current bounds reported by troika taking `fontSize` into account */
+  private textVisibleBoundsToBox(target: Box3 = new Box3()): Box3 {
+    const { textRenderInfo } = this
+    /** visibleBounds generally is a better fit, *however* it reports faulty on some glyphs and messes up the text size */
+    const bounds = textRenderInfo.visibleBounds
+
+    const vertices = []
+    vertices.push(
+      bounds[0],
+      bounds[3],
+      0,
+      bounds[2],
+      bounds[3],
+      0,
+      bounds[0],
+      bounds[1],
+      0,
+      bounds[2],
+      bounds[1],
+      0
+    )
+    target.setFromArray(vertices)
+
+    return target
+  }
+
+  /** Text's blockBounds, the one we're working with bounds-wise is not a unit quad
       When using BILLBOARD_SCREEN we store the desired pixel size in the text's `fontSize` property
       This makes troika compute a large text since it thinks our pixels are world units.
       So we divide the text bounds by the font size to get the size of the unit text bounds, or
@@ -352,7 +397,6 @@ export class TextLabel extends Text {
       let unitSize = bounds.getSize(_vec3)
       /** We need to keep aspect ratio for text */
       this.material.billboardPixelSize = new Vector2(1 / unitSize.y, 1 / unitSize.y)
-
       /** Same thing for background */
       if (!this._background.geometry.boundingBox)
         this._background.geometry.computeBoundingBox()
@@ -369,6 +413,30 @@ export class TextLabel extends Text {
         1 / unitSize.y + (margins.x * (1 / unitSize.x)) / this.fontSize,
         1 / unitSize.y + (margins.y * (1 / unitSize.y)) / this.fontSize
       )
+
+      const billboardPixelOffset = new Vector2(0, 0)
+      switch (this.anchorX) {
+        case 'left':
+          billboardPixelOffset.x = -margins.x * 0.5
+          break
+        case 'right':
+          billboardPixelOffset.x = margins.x * 0.5
+          break
+        default:
+          break
+      }
+
+      switch (this.anchorY) {
+        case 'top':
+          billboardPixelOffset.y = -margins.y * 0.5
+          break
+        case 'bottom':
+          billboardPixelOffset.x = margins.y * 0.5
+          break
+        default:
+          break
+      }
+      this._backgroundMaterial.billboardPixelOffset = billboardPixelOffset
     }
   }
 

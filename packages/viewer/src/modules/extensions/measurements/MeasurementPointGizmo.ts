@@ -52,7 +52,7 @@ const DefaultMeasurementPointGizmoStyle = {
   pointOpacity: 1,
   textColor: 0xffffff,
   textOpacity: 1,
-  textPixelHeight: 17,
+  textPixelHeight: 12,
   pointPixelHeight: 5
 }
 
@@ -235,7 +235,8 @@ export class MeasurementPointGizmo extends Group {
       anchorX: 'center',
       anchorY: 'middle',
       backgroundColor: new Color(0x047efb),
-      backgroundMargins: new Vector2(50, 10),
+      backgroundCornerRadius: 0.3,
+      backgroundMargins: new Vector2(35, 10),
       objectLayer: ObjectLayers.MEASUREMENTS
     })
 
@@ -420,6 +421,7 @@ export class MeasurementPointGizmo extends Group {
     this.normalIndicator.material = this.getNormalIndicatorMaterial()
     this.line.material = this.getLineMaterial()
     this.point.material = this.getPointMaterial()
+    void this.text.updateParams({ textColor: new Color(this._style.textColor) })
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {

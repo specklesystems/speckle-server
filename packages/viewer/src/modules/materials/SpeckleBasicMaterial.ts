@@ -11,7 +11,8 @@ import {
   Scene,
   Camera,
   BufferGeometry,
-  Object3D
+  Object3D,
+  Vector4
 } from 'three'
 import { Matrix4 } from 'three'
 
@@ -21,11 +22,13 @@ import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 const matBuff: Matrix4 = new Matrix4()
 const vec2Buff0: Vector2 = new Vector2()
 const vec2Buff1: Vector2 = new Vector2()
+const vec2Buff2: Vector2 = new Vector2()
 
 export type BillboardingType = 'world' | 'screen'
 
 class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
   protected _billboardPixelSize: Vector2 = new Vector2()
+  protected _billboardPixelOffset: Vector2 = new Vector2()
 
   protected get vertexProgram(): string {
     return speckleBasicVert
@@ -47,7 +50,7 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       tTransforms: null,
       objCount: 1,
       invProjection: new Matrix4(),
-      billboardPixelSize: new Vector2()
+      billboardPixelOffsetSize: new Vector4()
     }
   }
 
@@ -57,6 +60,14 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
 
   public set billboardPixelSize(value: Vector2) {
     this._billboardPixelSize.copy(value)
+  }
+
+  public get billboardPixeOffset(): Vector2 {
+    return this._billboardPixelOffset
+  }
+
+  public set billboardPixelOffset(value: Vector2) {
+    this._billboardPixelOffset.copy(value)
   }
 
   constructor(parameters: MeshBasicMaterialParameters, defines: string[] = []) {
@@ -80,7 +91,9 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
     const toStandard = to as SpeckleBasicMaterial
     const fromStandard = from as SpeckleBasicMaterial
     toStandard.color.copy(fromStandard.color)
-    to.userData.billboardPixelSize.value.copy(from.userData.billboardPixelSize.value)
+    to.userData.billboardPixelOffsetSize.value.copy(
+      from.userData.billboardPixelOffsetSize.value
+    )
   }
 
   public setBillboarding(type: BillboardingType | null) {
@@ -115,9 +128,22 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
 
     if (this.defines && this.defines['BILLBOARD_SCREEN']) {
       _this.getDrawingBufferSize(vec2Buff0)
-      const billboardPixelSizeNDC = vec2Buff1.copy(this._billboardPixelSize)
+      const billboardPixelOffsetNDC = vec2Buff1.set(
+        this._billboardPixelOffset.x,
+        this._billboardPixelOffset.y
+      )
+      const billboardPixelSizeNDC = vec2Buff2.set(
+        this._billboardPixelSize.x,
+        this._billboardPixelSize.y
+      )
+      billboardPixelOffsetNDC.divide(vec2Buff0)
       billboardPixelSizeNDC.divide(vec2Buff0)
-      this.userData.billboardPixelSize.value.copy(billboardPixelSizeNDC)
+      this.userData.billboardPixelOffsetSize.value.set(
+        billboardPixelOffsetNDC.x,
+        billboardPixelOffsetNDC.y,
+        billboardPixelSizeNDC.x,
+        billboardPixelSizeNDC.y
+      )
       this.needsUpdate = true
     }
 
