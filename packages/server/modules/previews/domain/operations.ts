@@ -28,7 +28,8 @@ export type PaginatedObjectPreviewsParams = {
   limit: number
   cursor?: MaybeNullOrUndefined<string>
   filter?: MaybeNullOrUndefined<{
-    status: (typeof PreviewStatus)[keyof typeof PreviewStatus]
+    status?: (typeof PreviewStatus)[keyof typeof PreviewStatus]
+    maxNumberOfAttempts?: number
   }>
 }
 
@@ -58,7 +59,9 @@ export type UpsertObjectPreview = (params: {
 }) => Promise<void>
 
 export type UpdateObjectPreview = (params: {
-  objectPreview: PartialBy<ObjectPreview, 'preview' | 'priority'>
+  objectPreview: PartialBy<Omit<ObjectPreview, 'attempts'>, 'preview' | 'priority'> & {
+    incrementAttempts?: boolean
+  }
 }) => Promise<ObjectPreview[]>
 
 export type ObjectPreviewRequest = {

@@ -16,7 +16,7 @@ import {
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
-import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/dbHelper'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 
 const ObjectPreview = buildTableHelper('object_preview', [
   'streamId',
@@ -24,7 +24,8 @@ const ObjectPreview = buildTableHelper('object_preview', [
   'previewStatus',
   'priority',
   'lastUpdate',
-  'preview'
+  'preview',
+  'attempts'
 ])
 const Previews = buildTableHelper('previews', ['id', 'data'])
 
@@ -51,29 +52,38 @@ export const getPaginatedObjectsPreviewsBaseQueryFactory =
     if (params.filter?.status) {
       query.where('previewStatus', params.filter.status)
     }
-
+    if (params.filter?.maxNumberOfAttempts) {
+      query.where('attempts', '<', params.filter.maxNumberOfAttempts)
+    }
     return query
   }
+
+const getCursorTools = () =>
+  compositeCursorTools({
+    schema: ObjectPreview,
+    cols: ['attempts', 'lastUpdate']
+  })
 
 export const getPaginatedObjectPreviewsPageFactory =
   (deps: { db: Knex }): GetPaginatedObjectPreviewsPage =>
   async (params) => {
     const { limit, cursor } = params
+    const { applyCursorSortAndFilter, resolveNewCursor } = getCursorTools()
+
     const query = getPaginatedObjectsPreviewsBaseQueryFactory(deps)(params)
-      .orderBy('lastUpdate', 'desc') //newest first
-      .limit(limit)
 
     if (cursor) {
-      query.where('lastUpdate', '<', decodeCursor(cursor)) //everything older than the cursor
+      applyCursorSortAndFilter({ query, cursor }) //default is descending order for both, so the latest items will be returned first
     }
 
+    query.limit(limit)
+
     const items = await query
+    const newCursor = resolveNewCursor(items)
 
     return {
       items,
-      cursor: items.length
-        ? encodeCursor(items[items.length - 1].lastUpdate.toISOString())
-        : null
+      cursor: newCursor
     }
   }
 
@@ -97,13 +107,15 @@ export const storeObjectPreviewFactory =
     objectId,
     priority
   }: Pick<ObjectPreviewRecord, 'streamId' | 'objectId' | 'priority'>) => {
-    const insertionObject: SetOptional<ObjectPreviewRecord, 'lastUpdate' | 'preview'> =
-      {
-        streamId,
-        objectId,
-        priority,
-        previewStatus: PreviewStatus.PENDING
-      }
+    const insertionObject: SetOptional<
+      ObjectPreviewRecord,
+      'lastUpdate' | 'preview' | 'attempts'
+    > = {
+      streamId,
+      objectId,
+      priority,
+      previewStatus: PreviewStatus.PENDING
+    }
     const sqlQuery = tables.objectPreview(db).insert(insertionObject)
 
     await sqlQuery
@@ -124,6 +136,7 @@ export const updateObjectPreviewFactory =
         streamId: objectPreview.streamId,
         objectId: objectPreview.objectId
       })
+      .increment('attempts', objectPreview.incrementAttempts ? 1 : 0) // false by default
       .update(objectPreview)
       .returning<ObjectPreviewRecord[]>('*')
   }

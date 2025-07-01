@@ -19,14 +19,18 @@ export const getPaginatedObjectPreviewInErrorStateFactory =
     getPaginatedObjectPreviewsTotalCount: GetPaginatedObjectPreviewsTotalCount
   }): GetPaginatedObjectPreviewsInErrorState =>
   async (params) => {
+    const filter = {
+      status: PreviewStatus.ERROR,
+      maxNumberOfAttempts: 3 // only retry items that have errored less than 3 times
+    }
     const [result, totalCount] = await Promise.all([
       deps.getPaginatedObjectPreviewsPage({
         ...params,
-        filter: { status: PreviewStatus.ERROR }
+        filter
       }),
       deps.getPaginatedObjectPreviewsTotalCount({
         ...params,
-        filter: { status: PreviewStatus.ERROR }
+        filter
       })
     ])
     return {
