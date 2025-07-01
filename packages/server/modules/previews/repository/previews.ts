@@ -4,7 +4,7 @@ import {
   GetPreviewImage,
   StoreObjectPreview,
   StorePreview,
-  UpsertObjectPreview
+  UpdateObjectPreview
 } from '@/modules/previews/domain/operations'
 import {
   ObjectPreview as ObjectPreviewRecord,
@@ -67,14 +67,17 @@ export const storePreviewFactory =
     await tables.previews(db).insert(preview).onConflict().ignore()
   }
 
-export const upsertObjectPreviewFactory =
-  ({ db }: { db: Knex }): UpsertObjectPreview =>
+export const updateObjectPreviewFactory =
+  ({ db }: { db: Knex }): UpdateObjectPreview =>
   async ({ objectPreview }) => {
-    await tables
+    return await tables
       .objectPreview(db)
-      .insert(objectPreview)
-      .onConflict(['streamId', 'objectId'])
-      .merge()
+      .where({
+        streamId: objectPreview.streamId,
+        objectId: objectPreview.objectId
+      })
+      .update(objectPreview)
+      .returning<ObjectPreviewRecord[]>('*')
   }
 
 export const getPreviewImageFactory =
