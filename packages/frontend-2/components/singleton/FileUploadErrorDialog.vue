@@ -67,13 +67,13 @@ import { omit } from 'lodash-es'
 import { useNavigateToProject } from '~/lib/common/helpers/route'
 import { useGenerateErrorReference } from '~/lib/core/composables/error'
 import {
-  useGlobalFileImportErrorManager,
+  useGlobalFileImportManager,
   type FailedFileImportJob,
   FailedFileImportJobError,
   useFailedFileImportJobUtils
 } from '~/lib/core/composables/fileImport'
 
-const { clear, failedJobs } = useGlobalFileImportErrorManager()
+const { clearFailedJobs, failedJobs } = useGlobalFileImportManager()
 const { getErrorMessage } = useFailedFileImportJobUtils()
 
 const { copyReference } = useGenerateErrorReference()
@@ -83,7 +83,7 @@ const open = computed({
   get: () => failedJobs.value.length > 0,
   set: (value) => {
     if (!value) {
-      clear()
+      clearFailedJobs()
     }
   }
 })

@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import {
   useFileImport,
-  useGlobalFileImportErrorManager
+  useGlobalFileImportManager
 } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
@@ -132,7 +132,7 @@ const props = defineProps<{
 }>()
 
 const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
-const { addFailedJob } = useGlobalFileImportErrorManager()
+const { addFailedJob } = useGlobalFileImportManager()
 const {
   maxSizeInBytes,
   onFilesSelected,
