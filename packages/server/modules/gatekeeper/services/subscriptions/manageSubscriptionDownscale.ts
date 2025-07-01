@@ -65,6 +65,7 @@ export const downscaleWorkspaceSubscriptionFactory =
     })
 
     const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: editorsCount,
       workspacePlan: workspacePlan.name,
@@ -110,7 +111,13 @@ export const manageSubscriptionDownscaleFactory =
           log.info('Did not need to downscale the workspace subscription')
         }
       } catch (err) {
-        log.error({ err }, 'Failed to downscale workspace subscription')
+        log.error(
+          {
+            err,
+            workspaceId: workspaceSubscription.workspaceId
+          },
+          'Failed to downscale workspace subscription'
+        )
       }
       const subscriptionData = await getStripeSubscriptionData(
         workspaceSubscription.subscriptionData
