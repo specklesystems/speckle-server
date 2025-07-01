@@ -1,4 +1,5 @@
 import {
+  EmbedApiTokenRecord,
   PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
@@ -6,6 +7,7 @@ import {
 import { ApiTokenRecord } from '@/modules/auth/repositories'
 import {
   ApiTokens,
+  EmbedApiTokens,
   PersonalApiTokens,
   TokenResourceAccess,
   TokenScopes,
@@ -19,6 +21,7 @@ import {
   RevokeTokenById,
   RevokeUserTokenById,
   StoreApiToken,
+  StoreEmbedApiToken,
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
@@ -38,7 +41,8 @@ const tables = {
     db<TokenResourceAccessRecord>(TokenResourceAccess.name),
   userServerAppTokens: (db: Knex) =>
     db<UserServerAppTokenRecord>(UserServerAppTokens.name),
-  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name)
+  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name),
+  embedApiTokens: (db: Knex) => db<EmbedApiTokenRecord>(EmbedApiTokens.name)
 }
 
 export const storeApiTokenFactory =
@@ -71,6 +75,13 @@ export const storePersonalApiTokenFactory =
   (deps: { db: Knex }): StorePersonalApiToken =>
   async (token) => {
     const [newToken] = await tables.personalApiTokens(deps.db).insert(token, '*')
+    return newToken
+  }
+
+export const storeEmbedApiTokenFactory =
+  (deps: { db: Knex }): StoreEmbedApiToken =>
+  async (token) => {
+    const [newToken] = await tables.embedApiTokens(deps.db).insert(token).returning('*')
     return newToken
   }
 

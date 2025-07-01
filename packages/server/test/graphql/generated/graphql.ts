@@ -1004,6 +1004,22 @@ export type EmailVerificationRequestInput = {
   id: Scalars['ID']['input'];
 };
 
+export type EmbedToken = {
+  __typename?: 'EmbedToken';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  lastUsed: Scalars['DateTime']['output'];
+  lifespan: Scalars['BigInt']['output'];
+  modelIds: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type EmbedTokenCreateInput = {
+  lifespan?: InputMaybe<Scalars['BigInt']['input']>;
+  modelIds: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName: Scalars['String']['output'];
@@ -2098,6 +2114,7 @@ export type Project = {
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
+  embedTokens: Array<EmbedToken>;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
@@ -2579,6 +2596,7 @@ export type ProjectMutations = {
   batchDelete: Scalars['Boolean']['output'];
   /** Create new project */
   create: Project;
+  createEmbedToken: Scalars['String']['output'];
   /**
    * Create onboarding/tutorial project. If one is already created for the active user, that
    * one will be returned instead.
@@ -2590,6 +2608,7 @@ export type ProjectMutations = {
   invites: ProjectInviteMutations;
   /** Leave a project. Only possible if you're not the last remaining owner. */
   leave: Scalars['Boolean']['output'];
+  revokeEmbedToken: Scalars['Boolean']['output'];
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
@@ -2612,6 +2631,11 @@ export type ProjectMutationsCreateArgs = {
 };
 
 
+export type ProjectMutationsCreateEmbedTokenArgs = {
+  token: EmbedTokenCreateInput;
+};
+
+
 export type ProjectMutationsDeleteArgs = {
   id: Scalars['String']['input'];
 };
@@ -2619,6 +2643,11 @@ export type ProjectMutationsDeleteArgs = {
 
 export type ProjectMutationsLeaveArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type ProjectMutationsRevokeEmbedTokenArgs = {
+  token: Scalars['String']['input'];
 };
 
 

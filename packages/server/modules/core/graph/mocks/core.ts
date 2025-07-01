@@ -10,6 +10,11 @@ const mocks: SpeckleModuleMocksConfig = {
       blob: () => {
         return store.get('BlobMetadata') as any
       }
+    },
+    ProjectMutations: {
+      createEmbedToken: () => {
+        return faker.string.hexadecimal({ length: 42 })
+      }
     }
   }),
   mocks: {

@@ -1,5 +1,6 @@
 import {
   ApiToken,
+  EmbedApiToken,
   PersonalApiToken,
   TokenResourceAccessDefinition,
   TokenResourceIdentifierType,
@@ -31,6 +32,8 @@ export type StorePersonalApiToken = (
   token: PersonalApiToken
 ) => Promise<PersonalApiToken>
 
+export type StoreEmbedApiToken = (token: EmbedApiToken) => Promise<EmbedApiToken>
+
 export type GetUserPersonalAccessTokens = (userId: string) => Promise<
   {
     id: string
@@ -43,9 +46,16 @@ export type GetUserPersonalAccessTokens = (userId: string) => Promise<
   }[]
 >
 
+export type ListProjectEmbedTokens = (projectId: string) => Promise<EmbedApiToken[]>
+
 export type RevokeTokenById = (tokenId: string) => Promise<boolean>
 
 export type RevokeUserTokenById = (tokenId: string, userId: string) => Promise<boolean>
+
+export type RevokeEmbedTokenById = (
+  tokenId: string,
+  projectId: string
+) => Promise<boolean>
 
 export type GetApiTokenById = (tokenId: string) => Promise<Optional<ApiToken>>
 
@@ -85,5 +95,16 @@ export type CreateAndStorePersonalAccessToken = (
   scopes: ServerScope[],
   lifespan?: number | bigint
 ) => Promise<string>
+
+export type CreateAndStoreEmbedToken = (args: {
+  projectId: string
+  userId: string
+  /**
+   * The models (and optional versions) included in the embed.
+   * @example 'foo123,bar456@baz789'
+   */
+  modelIds: string
+  lifespan?: number | bigint
+}) => Promise<string>
 
 export type ValidateToken = (tokenString: string) => Promise<TokenValidationResult>

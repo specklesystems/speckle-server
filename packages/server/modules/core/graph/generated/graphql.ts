@@ -1023,6 +1023,22 @@ export type EmailVerificationRequestInput = {
   id: Scalars['ID']['input'];
 };
 
+export type EmbedToken = {
+  __typename?: 'EmbedToken';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  lastUsed: Scalars['DateTime']['output'];
+  lifespan: Scalars['BigInt']['output'];
+  modelIds: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type EmbedTokenCreateInput = {
+  lifespan?: InputMaybe<Scalars['BigInt']['input']>;
+  modelIds: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName: Scalars['String']['output'];
@@ -2117,6 +2133,7 @@ export type Project = {
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
+  embedTokens: Array<EmbedToken>;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
@@ -2598,6 +2615,7 @@ export type ProjectMutations = {
   batchDelete: Scalars['Boolean']['output'];
   /** Create new project */
   create: Project;
+  createEmbedToken: Scalars['String']['output'];
   /**
    * Create onboarding/tutorial project. If one is already created for the active user, that
    * one will be returned instead.
@@ -2609,6 +2627,7 @@ export type ProjectMutations = {
   invites: ProjectInviteMutations;
   /** Leave a project. Only possible if you're not the last remaining owner. */
   leave: Scalars['Boolean']['output'];
+  revokeEmbedToken: Scalars['Boolean']['output'];
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
@@ -2631,6 +2650,11 @@ export type ProjectMutationsCreateArgs = {
 };
 
 
+export type ProjectMutationsCreateEmbedTokenArgs = {
+  token: EmbedTokenCreateInput;
+};
+
+
 export type ProjectMutationsDeleteArgs = {
   id: Scalars['String']['input'];
 };
@@ -2638,6 +2662,11 @@ export type ProjectMutationsDeleteArgs = {
 
 export type ProjectMutationsLeaveArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type ProjectMutationsRevokeEmbedTokenArgs = {
+  token: Scalars['String']['input'];
 };
 
 
@@ -5443,6 +5472,8 @@ export type ResolversTypes = {
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
+  EmbedToken: ResolverTypeWrapper<EmbedToken>;
+  EmbedTokenCreateInput: EmbedTokenCreateInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   FileUploadCollection: ResolverTypeWrapper<Omit<FileUploadCollection, 'items'> & { items: Array<ResolversTypes['FileUpload']> }>;
   FileUploadMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -5785,6 +5816,8 @@ export type ResolversParentTypes = {
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
+  EmbedToken: EmbedToken;
+  EmbedTokenCreateInput: EmbedTokenCreateInput;
   FileUpload: FileUploadGraphQLReturn;
   FileUploadCollection: Omit<FileUploadCollection, 'items'> & { items: Array<ResolversParentTypes['FileUpload']> };
   FileUploadMutations: MutationsObjectGraphQLReturn;
@@ -6467,6 +6500,16 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
+export type EmbedTokenResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmbedToken'] = ResolversParentTypes['EmbedToken']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastUsed?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  lifespan?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+  modelIds?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUpload'] = ResolversParentTypes['FileUpload']> = {
   branchName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   convertedCommitId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -6819,6 +6862,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   embedOptions?: Resolver<ResolversTypes['ProjectEmbedOptions'], ParentType, ContextType>;
+  embedTokens?: Resolver<Array<ResolversTypes['EmbedToken']>, ParentType, ContextType>;
   hasAccessToFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectHasAccessToFeatureArgs, 'featureName'>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invitableCollaborators?: Resolver<ResolversTypes['WorkspaceCollaboratorCollection'], ParentType, ContextType, RequireFields<ProjectInvitableCollaboratorsArgs, 'limit'>>;
@@ -6953,10 +6997,12 @@ export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType e
   automationMutations?: Resolver<ResolversTypes['ProjectAutomationMutations'], ParentType, ContextType, RequireFields<ProjectMutationsAutomationMutationsArgs, 'projectId'>>;
   batchDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsBatchDeleteArgs, 'ids'>>;
   create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, Partial<ProjectMutationsCreateArgs>>;
+  createEmbedToken?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<ProjectMutationsCreateEmbedTokenArgs, 'token'>>;
   createForOnboarding?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
   invites?: Resolver<ResolversTypes['ProjectInviteMutations'], ParentType, ContextType>;
   leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsLeaveArgs, 'id'>>;
+  revokeEmbedToken?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsRevokeEmbedTokenArgs, 'token'>>;
   update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'update'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -7912,6 +7958,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CountOnlyCollection?: CountOnlyCollectionResolvers<ContextType>;
   CurrencyBasedPrices?: CurrencyBasedPricesResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
+  EmbedToken?: EmbedTokenResolvers<ContextType>;
   FileUpload?: FileUploadResolvers<ContextType>;
   FileUploadCollection?: FileUploadCollectionResolvers<ContextType>;
   FileUploadMutations?: FileUploadMutationsResolvers<ContextType>;

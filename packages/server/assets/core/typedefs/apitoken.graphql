@@ -55,6 +55,21 @@ input AppTokenCreateInput {
   limitResources: [TokenResourceIdentifierInput!]
 }
 
+type EmbedToken {
+  id: String!
+  name: String!
+  createdAt: DateTime!
+  lifespan: BigInt!
+  lastUsed: DateTime!
+  modelIds: String!
+}
+
+input EmbedTokenCreateInput {
+  projectId: String!
+  modelIds: String!
+  lifespan: BigInt
+}
+
 extend type Mutation {
   """
   Creates an personal api token.
@@ -76,4 +91,13 @@ extend type Mutation {
   appTokenCreate(token: AppTokenCreateInput!): String!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "tokens:write")
+}
+
+extend type ProjectMutations {
+  createEmbedToken(token: EmbedTokenCreateInput!): String!
+  revokeEmbedToken(token: String!): Boolean!
+}
+
+extend type Project {
+  embedTokens: [EmbedToken!]!
 }
