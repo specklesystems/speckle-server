@@ -16,7 +16,7 @@ import {
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
-import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/dbHelper'
 
 const ObjectPreview = buildTableHelper('object_preview', [
   'streamId',
