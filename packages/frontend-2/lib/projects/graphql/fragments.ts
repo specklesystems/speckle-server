@@ -84,6 +84,7 @@ export const pendingFileUploadFragment = graphql(`
     fileType
     fileName
     userId
+    updatedAt
   }
 `)
 

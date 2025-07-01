@@ -271,9 +271,20 @@ const versionCount = computed(() => {
 })
 
 const pendingVersion = computed(() => {
-  return isPendingModelFragment(props.model)
-    ? null
-    : props.model.pendingImportedVersions[0]
+  if (isPendingModelFragment(props.model)) {
+    return null
+  }
+
+  const lastPendingVersion = props.model.pendingImportedVersions[0]
+  const lastVersion = props.model.lastVersion?.items[0]
+  if (!lastVersion || !lastPendingVersion) return lastPendingVersion
+
+  // If pending version is older than newest version, hide it (may be a stuck import)
+  if (dayjs(lastPendingVersion.updatedAt).isBefore(dayjs(lastVersion.createdAt))) {
+    return null
+  }
+
+  return lastPendingVersion
 })
 
 const onCardClick = (event: KeyboardEvent | MouseEvent) => {
