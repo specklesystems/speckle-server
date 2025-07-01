@@ -72,12 +72,18 @@ export const retryFailedPreviewsFactory = (deps: {
       return { cursor: null }
     }
 
-    logger.info(
-      `Found ${totalCount} object previews in error state. Attempting to retry one...`
-    )
-
     const objPreview = items[0]
     const { streamId, objectId } = objPreview
+
+    logger.info(
+      {
+        totalErroredPreviewCount: totalCount,
+        streamId, //legacy
+        projectId: streamId,
+        objectId
+      },
+      'Found {totalErroredPreviewCount} object previews in error state. Attempting to retry one: ${projectId}.${objectId}'
+    )
 
     await updateObjectPreview({
       objectPreview: {
