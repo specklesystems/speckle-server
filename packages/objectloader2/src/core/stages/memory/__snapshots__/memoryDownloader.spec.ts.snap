@@ -1,0 +1,12 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MemoryDownloader > should add found item to results queue 1`] = `
+Map {
+  "id1" => {
+    "foo": "foo",
+  },
+  "id2" => {
+    "foo": "bar",
+  },
+}
+`;

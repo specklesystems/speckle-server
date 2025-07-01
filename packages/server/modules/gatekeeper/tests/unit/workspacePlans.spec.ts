@@ -4,10 +4,17 @@ import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { WorkspacePlan } from '@speckle/shared'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  UnpaidWorkspacePlans,
+  WorkspacePlan
+} from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'
+import { buildTestWorkspacePlan } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
+import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 describe('workspacePlan services @gatekeeper', () => {
   describe('updateWorkspacePlanFactory creates a function, that', () => {
@@ -17,15 +24,18 @@ describe('workspacePlan services @gatekeeper', () => {
         upsertWorkspacePlan: () => {
           expect.fail()
         },
+        getWorkspacePlan: async () => null,
         emitEvent: () => {
           expect.fail()
         }
       })
+
       const err = await expectToThrow(async () => {
         await updateWorkspacePlan({
+          userId: cryptoRandomString({ length: 10 }),
           workspaceId: cryptoRandomString({ length: 10 }),
-          name: 'business',
-          status: 'expired'
+          name: PaidWorkspacePlans.Team,
+          status: PaidWorkspacePlanStatuses.Canceled
         })
       })
       expect(err.message).to.equal(new WorkspaceNotFoundError().message)
@@ -34,100 +44,97 @@ describe('workspacePlan services @gatekeeper', () => {
     const invalidPlanMessage = new InvalidWorkspacePlanStatus().message
     ;(
       [
-        { planName: 'foobar', cases: [['trial', uncoveredErrorMessage]] },
         {
-          planName: 'starter',
+          planName: 'foobar',
+          cases: [[PaidWorkspacePlanStatuses.Canceled, uncoveredErrorMessage]]
+        },
+        {
+          planName: PaidWorkspacePlans.Team,
           cases: [
-            ['trial', null],
-            ['expired', null],
-            ['valid', null],
-            ['cancelationScheduled', null],
-            ['canceled', null],
-            ['paymentFailed', null],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, null],
+            [PaidWorkspacePlanStatuses.Canceled, null],
+            [PaidWorkspacePlanStatuses.PaymentFailed, null],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'business',
+          planName: PaidWorkspacePlans.Pro,
           cases: [
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['valid', null],
-            ['cancelationScheduled', null],
-            ['canceled', null],
-            ['paymentFailed', null],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, null],
+            [PaidWorkspacePlanStatuses.Canceled, null],
+            [PaidWorkspacePlanStatuses.PaymentFailed, null],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'plus',
+          planName: PaidWorkspacePlans.TeamUnlimited,
           cases: [
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['valid', null],
-            ['cancelationScheduled', null],
-            ['canceled', null],
-            ['paymentFailed', null],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, null],
+            [PaidWorkspacePlanStatuses.Canceled, null],
+            [PaidWorkspacePlanStatuses.PaymentFailed, null],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'academia',
+          planName: PaidWorkspacePlans.ProUnlimited,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, null],
+            [PaidWorkspacePlanStatuses.Canceled, null],
+            [PaidWorkspacePlanStatuses.PaymentFailed, null],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'unlimited',
+          planName: UnpaidWorkspacePlans.Academia,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'starterInvoiced',
+          planName: UnpaidWorkspacePlans.Free,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'plusInvoiced',
+          planName: UnpaidWorkspacePlans.Unlimited,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'businessInvoiced',
+          planName: UnpaidWorkspacePlans.TeamUnlimitedInvoiced,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
+            ['foobar', uncoveredErrorMessage]
+          ]
+        },
+        {
+          planName: UnpaidWorkspacePlans.ProUnlimitedInvoiced,
+          cases: [
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
             ['foobar', uncoveredErrorMessage]
           ]
         }
@@ -148,6 +155,12 @@ describe('workspacePlan services @gatekeeper', () => {
                   return { id: workspaceId } as WorkspaceWithOptionalRole
                 },
                 upsertWorkspacePlan: fail,
+                getWorkspacePlan: async () =>
+                  buildTestWorkspacePlan({
+                    workspaceId,
+                    status: WorkspacePlanStatuses.Valid,
+                    name: UnpaidWorkspacePlans.Free
+                  }),
                 emitEvent: fail
               })
               await updateWorkspacePlan({
@@ -180,6 +193,12 @@ describe('workspacePlan services @gatekeeper', () => {
                 return { id: workspaceId } as WorkspaceWithOptionalRole
               },
               upsertWorkspacePlan,
+              getWorkspacePlan: async () =>
+                buildTestWorkspacePlan({
+                  workspaceId,
+                  status: WorkspacePlanStatuses.Valid,
+                  name: UnpaidWorkspacePlans.Free
+                }),
               emitEvent
             })
             await updateWorkspacePlan({
@@ -190,12 +209,61 @@ describe('workspacePlan services @gatekeeper', () => {
               status
             })
             const expectedPlan = { workspaceId, name: planName, status }
-            expect(omit(storedWorkspacePlan, 'createdAt')).to.deep.equal(expectedPlan)
+            expect(omit(storedWorkspacePlan, 'createdAt', 'updatedAt')).to.deep.equal(
+              expectedPlan
+            )
             expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
-            expect(eventPayload).to.deep.equal({ workspacePlan: expectedPlan })
+            expect(eventPayload).to.nested.include({
+              'workspacePlan.workspaceId': expectedPlan.workspaceId,
+              'workspacePlan.status': expectedPlan.status,
+              'workspacePlan.name': expectedPlan.name
+            })
           }
         })
       )
+    })
+
+    it('sends the previous workspace plan in the event payload when present', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
+      let emittedEventName: string | undefined = undefined
+      let eventPayload: unknown = undefined
+      const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        eventPayload = payload
+      }
+
+      const updateWorkspacePlan = updateWorkspacePlanFactory({
+        getWorkspace: async () => {
+          return { id: workspaceId } as WorkspaceWithOptionalRole
+        },
+        upsertWorkspacePlan: async () => {},
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            workspaceId,
+            name: PaidWorkspacePlans.Team,
+            status: WorkspacePlanStatuses.Valid
+          }),
+        emitEvent
+      })
+
+      await updateWorkspacePlan({
+        userId,
+        status: WorkspacePlanStatuses.Valid,
+        workspaceId,
+        name: PaidWorkspacePlans.ProUnlimited
+      })
+
+      expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
+      expect(eventPayload).to.nested.include({
+        userId,
+        'workspacePlan.workspaceId': workspaceId,
+        'workspacePlan.status': WorkspacePlanStatuses.Valid,
+        'workspacePlan.name': PaidWorkspacePlans.ProUnlimited,
+        'previousWorkspacePlan.workspaceId': workspaceId,
+        'previousWorkspacePlan.name': PaidWorkspacePlans.Team,
+        'previousWorkspacePlan.status': WorkspacePlanStatuses.Valid
+      })
     })
   })
 })

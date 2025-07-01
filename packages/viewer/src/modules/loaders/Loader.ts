@@ -3,11 +3,15 @@ import EventEmitter from '../EventEmitter.js'
 export enum LoaderEvent {
   LoadProgress = 'load-progress',
   LoadCancelled = 'load-cancelled',
-  LoadWarning = 'load-warning'
+  LoadWarning = 'load-warning',
+  Converted = 'converted',
+  Traversed = 'traversed'
 }
 
 export interface LoaderEventPayload {
   [LoaderEvent.LoadProgress]: { progress: number; id: string }
+  [LoaderEvent.Converted]: { count: number }
+  [LoaderEvent.Traversed]: { count: number }
   [LoaderEvent.LoadCancelled]: string
   [LoaderEvent.LoadWarning]: { message: string }
 }

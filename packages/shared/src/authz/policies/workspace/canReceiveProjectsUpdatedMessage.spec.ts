@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canReceiveWorkspaceProjectsUpdatedMessagePolicy } from './canReceiveProjectsUpdatedMessage.js'
 import { OverridesOf } from '../../../tests/helpers/types.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import { Roles } from '../../../core/constants.js'
 import { TIME_MS } from '../../../core/index.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
@@ -10,6 +10,7 @@ import {
   ServerNoSessionError,
   WorkspaceNoAccessError
 } from '../../domain/authErrors.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
   const buildSUT = (
@@ -20,15 +21,11 @@ describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: true,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.Guest,
-      getWorkspace: async () => ({
-        id: 'workspace-id',
-        slug: 'workspace-slug'
-      }),
+      getWorkspace: getWorkspaceFake({ id: 'workspace-id', slug: 'workspace-slug' }),
       getWorkspaceRole: async () => Roles.Workspace.Guest,
       getWorkspaceSsoProvider: async () => ({
         providerId: 'provider-id'
@@ -73,8 +70,7 @@ describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: true,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getProjectRole: async () => null
     })
@@ -95,8 +91,7 @@ describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: true,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getServerRole: async () => null
     })

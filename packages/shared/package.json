@@ -21,6 +21,7 @@
     "lint:ci": "yarn lint:tsc",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "test:ci": "vitest --run --coverage",
     "test:coverage": "vitest --coverage",
     "test:single-run": "vitest run"
   },
@@ -45,6 +46,7 @@
   },
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
+    "bull": "*",
     "knex": "*",
     "mixpanel": "^0.17.0",
     "pino": "^8.7.0",
@@ -63,6 +65,7 @@
     "@typescript-eslint/parser": "^7.12.0",
     "@vitest/coverage-v8": "^3.0.9",
     "@vitest/ui": "^3.0.9",
+    "bull": "^4.16.5",
     "crypto-random-string": "^5.0.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
@@ -84,8 +87,20 @@
       "./package.json": "./package.json",
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
+      "./environment/db": "./src/environment/db.ts",
+      "./environment/multiRegionConfig": "./src/environment/db.ts",
       "./observability": "./src/observability/index.ts",
+      "./observability/mixpanel": "./src/observability/mixpanel.ts",
+      "./blobs": "./src/blobs/index.ts",
+      "./previews": "./src/previews/index.ts",
       "./authz": "./src/authz/index.ts",
+      "./queue": "./src/queue/index.ts",
+      "./redis": "./src/redis/index.ts",
+      "./workers": "./src/workers/index.ts",
+      "./workers/previews": "./src/workers/previews/index.ts",
+      "./workers/fileimport": "./src/workers/fileimport/index.ts",
+      "./viewer": "./src/viewer/index.ts",
+      "./viewer/route": "./src/viewer/helpers/route.ts",
       "./dist/*": "./dist/*"
     },
     "exclude": [
@@ -122,6 +137,26 @@
         "default": "./dist/commonjs/environment/index.js"
       }
     },
+    "./environment/db": {
+      "import": {
+        "types": "./dist/esm/environment/db.d.ts",
+        "default": "./dist/esm/environment/db.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/db.d.ts",
+        "default": "./dist/commonjs/environment/db.js"
+      }
+    },
+    "./environment/multiRegionConfig": {
+      "import": {
+        "types": "./dist/esm/environment/db.d.ts",
+        "default": "./dist/esm/environment/db.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/db.d.ts",
+        "default": "./dist/commonjs/environment/db.js"
+      }
+    },
     "./observability": {
       "import": {
         "types": "./dist/esm/observability/index.d.ts",
@@ -132,6 +167,36 @@
         "default": "./dist/commonjs/observability/index.js"
       }
     },
+    "./observability/mixpanel": {
+      "import": {
+        "types": "./dist/esm/observability/mixpanel.d.ts",
+        "default": "./dist/esm/observability/mixpanel.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/observability/mixpanel.d.ts",
+        "default": "./dist/commonjs/observability/mixpanel.js"
+      }
+    },
+    "./blobs": {
+      "import": {
+        "types": "./dist/esm/blobs/index.d.ts",
+        "default": "./dist/esm/blobs/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/blobs/index.d.ts",
+        "default": "./dist/commonjs/blobs/index.js"
+      }
+    },
+    "./previews": {
+      "import": {
+        "types": "./dist/esm/previews/index.d.ts",
+        "default": "./dist/esm/previews/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/previews/index.d.ts",
+        "default": "./dist/commonjs/previews/index.js"
+      }
+    },
     "./authz": {
       "import": {
         "types": "./dist/esm/authz/index.d.ts",
@@ -140,6 +205,76 @@
       "require": {
         "types": "./dist/commonjs/authz/index.d.ts",
         "default": "./dist/commonjs/authz/index.js"
+      }
+    },
+    "./queue": {
+      "import": {
+        "types": "./dist/esm/queue/index.d.ts",
+        "default": "./dist/esm/queue/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/queue/index.d.ts",
+        "default": "./dist/commonjs/queue/index.js"
+      }
+    },
+    "./redis": {
+      "import": {
+        "types": "./dist/esm/redis/index.d.ts",
+        "default": "./dist/esm/redis/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/redis/index.d.ts",
+        "default": "./dist/commonjs/redis/index.js"
+      }
+    },
+    "./workers": {
+      "import": {
+        "types": "./dist/esm/workers/index.d.ts",
+        "default": "./dist/esm/workers/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/workers/index.d.ts",
+        "default": "./dist/commonjs/workers/index.js"
+      }
+    },
+    "./workers/previews": {
+      "import": {
+        "types": "./dist/esm/workers/previews/index.d.ts",
+        "default": "./dist/esm/workers/previews/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/workers/previews/index.d.ts",
+        "default": "./dist/commonjs/workers/previews/index.js"
+      }
+    },
+    "./workers/fileimport": {
+      "import": {
+        "types": "./dist/esm/workers/fileimport/index.d.ts",
+        "default": "./dist/esm/workers/fileimport/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/workers/fileimport/index.d.ts",
+        "default": "./dist/commonjs/workers/fileimport/index.js"
+      }
+    },
+    "./viewer": {
+      "import": {
+        "types": "./dist/esm/viewer/index.d.ts",
+        "default": "./dist/esm/viewer/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/viewer/index.d.ts",
+        "default": "./dist/commonjs/viewer/index.js"
+      }
+    },
+    "./viewer/route": {
+      "import": {
+        "types": "./dist/esm/viewer/helpers/route.d.ts",
+        "default": "./dist/esm/viewer/helpers/route.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/viewer/helpers/route.d.ts",
+        "default": "./dist/commonjs/viewer/helpers/route.js"
       }
     },
     "./dist/*": "./dist/*"

@@ -1,10 +1,11 @@
 <template>
   <form>
+    <slot name="project" />
     <div class="flex flex-col gap-y-3 text-foreground mb-3">
       <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
         <div class="flex flex-col gap-y-3 flex-1">
           <div class="flex flex-row gap-x-3">
-            <div class="flex-1">
+            <div class="flex-1 flex gap-2">
               <FormTextInput
                 v-model="item.value.email"
                 :name="`email-${item.key}`"
@@ -23,6 +24,12 @@
                   })
                 ]"
                 @paste="handlePaste($event, index)"
+              />
+              <FormSelectWorkspaceSeatType
+                v-model="item.value.seatType"
+                :allow-unset="false"
+                :name="`seatType-${item.key}`"
+                :show-label="index === 0"
               />
             </div>
           </div>
@@ -44,7 +51,9 @@
         </FormButton>
       </div>
     </div>
-    <slot />
+    <p class="text-body-2xs text-foreground-2 leading-5">
+      {{ infoText }}
+    </p>
   </form>
 </template>
 <script setup lang="ts">
@@ -56,11 +65,28 @@ import type {
 } from '~~/lib/invites/helpers/types'
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  Roles,
+  type WorkspaceRoles,
+  type MaybeNullOrUndefined,
+  SeatTypes
+} from '@speckle/shared'
 import { canHaveRole } from '~/lib/invites/helpers/validation'
 import { parsePastedEmails } from '~/lib/invites/helpers/helpers'
+import { graphql } from '~/lib/common/generated/gql'
+import type { InviteDialogSharedSelectUsers_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
+
+graphql(`
+  fragment InviteDialogSharedSelectUsers_Workspace on Workspace {
+    id
+    slug
+    defaultSeatType
+  }
+`)
 
 const props = defineProps<{
+  workspace: MaybeNullOrUndefined<InviteDialogSharedSelectUsers_WorkspaceFragment>
   invites: InviteWorkspaceItem[]
   allowedDomains: MaybeNullOrUndefined<string[]>
   targetRole?: WorkspaceRoles
@@ -77,9 +103,19 @@ const {
   remove: removeInvite
 } = useFieldArray<InviteWorkspaceItem>('fields')
 
+const workspaceSlug = computed(() => props.workspace?.slug || '')
+const { isPaidPlan, editorSeatPriceWithIntervalFormatted } =
+  useWorkspacePlan(workspaceSlug)
+
+const infoText = computed(() => {
+  if (!isPaidPlan.value) return ''
+  return `Viewer seats are free. You'll be charged ${editorSeatPriceWithIntervalFormatted.value} for each Editor seat when they accept. We'll use any unused Editor seats from your plan first.`
+})
+
 const addInviteItem = () => {
   pushInvite({
     ...emptyInviteWorkspaceItem,
+    seatType: props.workspace?.defaultSeatType || SeatTypes.Viewer,
     workspaceRole: props.targetRole || Roles.Workspace.Guest,
     projectRole: Roles.Stream.Reviewer
   })

@@ -10,6 +10,7 @@
     :allow-unset="allowUnset"
     :label-id="labelId"
     :button-id="buttonId"
+    menu-max-height-classes="max-h-[30vh]"
     :help="help"
     by="id"
   >

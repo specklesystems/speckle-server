@@ -1,8 +1,5 @@
 import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
-import {
-  discoverableWorkspacesQuery,
-  discoverableWorkspacesRequestsQuery
-} from '../graphql/queries'
+import { discoverableWorkspacesQuery } from '~/lib/workspaces/graphql/queries'
 import {
   dismissDiscoverableWorkspaceMutation,
   requestToJoinWorkspaceMutation
@@ -15,41 +12,61 @@ import {
   getFirstErrorMessage,
   getCacheId
 } from '~~/lib/common/helpers/graphql'
+import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 
 graphql(`
-  fragment DiscoverableList_Discoverable on User {
-    discoverableWorkspaces {
-      id
-      name
-      logo
-      description
-      slug
-      team {
-        totalCount
-        items {
+  fragment DiscoverableWorkspace_LimitedWorkspace on LimitedWorkspace {
+    id
+    name
+    logo
+    description
+    slug
+    discoverabilityAutoJoinEnabled
+    team {
+      totalCount
+      items {
+        user {
+          id
+          name
           avatar
         }
+      }
+    }
+    adminTeam {
+      user {
+        id
+        name
+        avatar
       }
     }
   }
 `)
 
 graphql(`
-  fragment DiscoverableList_Requests on User {
-    workspaceJoinRequests {
-      items {
-        id
-        status
-        workspace {
+  fragment WorkspaceJoinRequests_LimitedWorkspaceJoinRequest on LimitedWorkspaceJoinRequest {
+    id
+    status
+    workspace {
+      id
+      name
+      logo
+      slug
+      discoverabilityAutoJoinEnabled
+      adminTeam {
+        user {
           id
           name
-          logo
-          slug
-          team {
-            totalCount
-            items {
-              avatar
-            }
+          avatar
+        }
+      }
+      team {
+        totalCount
+        items {
+          user {
+            id
+            name
+            avatar
           }
         }
       }
@@ -60,13 +77,8 @@ graphql(`
 export const useDiscoverableWorkspaces = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  const { result: discoverableResult, loading: discoverableLoading } = useQuery(
+  const { result, loading, refetch } = useQuery(
     discoverableWorkspacesQuery,
-    undefined,
-    { enabled: isWorkspacesEnabled }
-  )
-  const { result: requestsResult, loading: joinRequestsLoading } = useQuery(
-    discoverableWorkspacesRequestsQuery,
     undefined,
     {
       enabled: isWorkspacesEnabled
@@ -82,11 +94,11 @@ export const useDiscoverableWorkspaces = () => {
   const apollo = useApolloClient().client
 
   const discoverableWorkspaces = computed(
-    () => discoverableResult.value?.activeUser?.discoverableWorkspaces
+    () => result.value?.activeUser?.discoverableWorkspaces
   )
 
   const workspaceJoinRequests = computed(
-    () => requestsResult.value?.activeUser?.workspaceJoinRequests
+    () => result.value?.activeUser?.workspaceJoinRequests
   )
 
   const discoverableWorkspacesAndJoinRequests = computed(() => {
@@ -132,63 +144,56 @@ export const useDiscoverableWorkspaces = () => {
     () => discoverableWorkspacesAndJoinRequests.value?.length || 0
   )
 
-  const requestToJoinWorkspace = async (workspaceId: string, location: string) => {
-    const cache = apollo.cache
+  const requestToJoinWorkspace = async (
+    workspace: DiscoverableWorkspace_LimitedWorkspaceFragment,
+    location: string
+  ) => {
     const activeUserId = activeUser.value?.id
 
     if (!activeUserId) return
 
     const result = await requestToJoin({
-      input: { workspaceId }
+      input: { workspaceId: workspace.id }
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
-      cache.modify({
-        id: getCacheId('User', activeUserId),
-        fields: {
-          discoverableWorkspaces(existingRefs = [], { readField }) {
-            return existingRefs.filter(
-              (ref: CacheObjectReference<'LimitedWorkspace'>) => {
-                const id = readField('id', ref)
-                return id !== workspaceId
-              }
-            )
-          },
-          workspaceJoinRequests(existingRefs = []) {
-            // Add the workspace to join requests with Pending status
-            const workspace = discoverableWorkspaces.value?.find(
-              (w) => w.id === workspaceId
-            )
-            if (workspace) {
-              return {
-                ...existingRefs,
-                items: [
-                  ...(existingRefs?.items || []),
-                  {
-                    id: workspaceId,
-                    status: 'Pending',
-                    workspace
-                  }
-                ]
-              }
-            }
-            return existingRefs
-          }
-        }
+      await refetch()
+
+      apollo.query({
+        query: activeUserWorkspaceExistenceCheckQuery,
+        variables: {
+          filter: { personalOnly: true }
+        },
+        fetchPolicy: 'network-only'
       })
 
-      mixpanel.track('Workspace Join Request Sent', {
-        workspaceId,
-        location,
-        // eslint-disable-next-line camelcase
-        workspace_id: workspaceId
-      })
+      if (workspace.discoverabilityAutoJoinEnabled) {
+        mixpanel.track('Workspace Auto Joined', {
+          workspaceId: workspace.id,
+          location,
+          // eslint-disable-next-line camelcase
+          workspace_id: workspace.id
+        })
 
-      triggerNotification({
-        title: 'Request sent',
-        description: 'Your request to join the workspace has been sent.',
-        type: ToastNotificationType.Success
-      })
+        triggerNotification({
+          title: 'Workspace joined',
+          description: `You have joined ${workspace.name}.`,
+          type: ToastNotificationType.Success
+        })
+      } else {
+        mixpanel.track('Workspace Join Request Sent', {
+          workspaceId: workspace.id,
+          location,
+          // eslint-disable-next-line camelcase
+          workspace_id: workspace.id
+        })
+
+        triggerNotification({
+          title: 'Request sent',
+          description: 'Your request to join the workspace has been sent.',
+          type: ToastNotificationType.Success
+        })
+      }
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({
@@ -236,10 +241,6 @@ export const useDiscoverableWorkspaces = () => {
       })
     }
   }
-
-  const loading = computed(() => {
-    return discoverableLoading.value || joinRequestsLoading.value
-  })
 
   return {
     hasDiscoverableWorkspaces,

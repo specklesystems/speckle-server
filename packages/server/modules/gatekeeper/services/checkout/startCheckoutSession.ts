@@ -5,7 +5,8 @@ import {
   DeleteCheckoutSession,
   GetWorkspaceCheckoutSession,
   GetWorkspacePlan,
-  SaveCheckoutSession
+  SaveCheckoutSession,
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import {
@@ -40,6 +41,7 @@ export const startCheckoutSessionFactory =
   }) =>
   async ({
     workspaceId,
+    userId,
     workspaceSlug,
     workspacePlan,
     billingInterval,
@@ -47,6 +49,7 @@ export const startCheckoutSessionFactory =
     currency
   }: {
     workspaceId: string
+    userId: string
     workspaceSlug: string
     workspacePlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
@@ -97,13 +100,6 @@ export const startCheckoutSessionFactory =
             checkoutSessionId: existingCheckoutSession?.id
           })
         break
-
-      // maybe, we can reactivate canceled plans via the sub in stripe, but this is fine too
-      // it will create a new customer and a new sub though, the reactivation would use the existing customer
-      case 'trial':
-      case 'expired':
-        // lets go ahead and pay
-        break
       default:
         throwUncoveredError(existingWorkspacePlan)
     }
@@ -130,7 +126,7 @@ export const startCheckoutSessionFactory =
 
     const editorsCount = await countSeatsByTypeInWorkspace({
       workspaceId,
-      type: 'editor'
+      type: WorkspaceSeatType.Editor
     })
     if (!editorsCount) {
       throw new InvalidWorkspacePlanUpgradeError('Workspace has no seats')
@@ -138,6 +134,7 @@ export const startCheckoutSessionFactory =
 
     const checkoutSession = await createCheckoutSession({
       workspaceId,
+      userId,
       workspaceSlug,
       billingInterval,
       workspacePlan,

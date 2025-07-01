@@ -17,6 +17,7 @@ import {
   CreateProjectVersionDocument,
   CreateWorkspaceDocument,
   CreateWorkspaceProjectDocument,
+  GetProjectVersionsDocument,
   GetProjectWithModelVersionsDocument,
   GetProjectWithVersionsDocument
 } from '@/test/graphql/generated/graphql'
@@ -42,13 +43,26 @@ import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 import { CreateVersionInput } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createTestUser, login } from '@/test/authHelper'
+import { buildBasicTestUser, createTestUser, login } from '@/test/authHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
+import {
+  BasicTestCommit,
+  createTestCommit,
+  createTestObject
+} from '@/test/speckle-helpers/commitHelper'
 import { BranchCommits, Commits, StreamCommits } from '@/modules/core/dbSchema'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import dayjs from 'dayjs'
-import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import {
+  buildBasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
+import {
+  buildBasicTestModel,
+  buildBasicTestProject,
+  buildBasicTestVersion
+} from '@/modules/core/tests/helpers/creation'
+import { Optional } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -83,7 +97,7 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 
-const { FF_BILLING_INTEGRATION_ENABLED, FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } =
+const { FF_BILLING_INTEGRATION_ENABLED, FF_PERSONAL_PROJECTS_LIMITS_ENABLED } =
   getFeatureFlags()
 
 describe('Versions graphql @core', () => {
@@ -136,7 +150,157 @@ describe('Versions graphql @core', () => {
       }
     )
   })
-  ;(FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED ? describe : describe.skip)(
+  ;(FF_BILLING_INTEGRATION_ENABLED ? describe : describe.skip)(
+    'version limit query @new-versions',
+    () => {
+      const updateCommitCreatedAtDate = async (
+        id: string,
+        createdAt: Date // Make the project read-only
+      ) => await db('commits').update({ createdAt }).where({ id })
+
+      const user = buildBasicTestUser()
+      const workspace = buildBasicTestWorkspace()
+      const model1 = buildBasicTestModel()
+      const model2 = buildBasicTestModel()
+      const project = buildBasicTestProject()
+      const version1 = buildBasicTestVersion()
+      const version2 = buildBasicTestVersion()
+      const version3 = buildBasicTestVersion()
+      let objectId1: Optional<string> = undefined
+      let objectId2: Optional<string> = undefined
+      let objectId3: Optional<string> = undefined
+
+      before(async () => {
+        user.id = await createUser(user)
+        await createTestWorkspace(workspace, user, {
+          addPlan: { name: 'free', status: 'valid' }
+        })
+        project.workspaceId = workspace.id
+        await createTestStream(project, user)
+        await createTestBranch({
+          branch: model1,
+          stream: project,
+          owner: user
+        })
+        await createTestBranch({
+          branch: model2,
+          stream: project,
+          owner: user
+        })
+
+        objectId1 = await createTestObject({
+          projectId: project.id,
+          object: { test: 'a' }
+        })
+        objectId2 = await createTestObject({
+          projectId: project.id,
+          object: { test: 'b' }
+        })
+        objectId3 = await createTestObject({
+          projectId: project.id,
+          object: { test: 'c' }
+        })
+
+        version1.objectId = objectId1
+        version1.authorId = user.id
+        version1.branchName = model1.name
+        version1.branchId = model1.id
+        version1.streamId = project.id
+
+        version2.objectId = objectId2
+        version2.authorId = user.id
+        version2.branchName = model2.name
+        version2.branchId = model2.id
+        version2.streamId = project.id
+
+        version3.objectId = objectId3
+        version3.authorId = user.id
+        version3.branchName = model2.name // model 2 has 2 versions
+        version3.branchId = model2.id
+        version3.streamId = project.id
+
+        await createTestCommit(version1, { owner: user })
+        await createTestCommit(version2, { owner: user })
+        await createTestCommit(version3, { owner: user })
+      })
+
+      it('shows the referencedObject of all user versions', async () => {
+        const apollo = await testApolloServer({ authUserId: user.id })
+        await updateCommitCreatedAtDate(version1.id, new Date())
+        await updateCommitCreatedAtDate(version2.id, new Date())
+        await updateCommitCreatedAtDate(version3.id, new Date())
+
+        const res = await apollo.execute(GetProjectVersionsDocument, {
+          projectId: project.id
+        })
+
+        const versions = res.data?.project?.versions?.items
+        expect(res).to.not.haveGraphQLErrors()
+        expect(versions)
+          .to.be.a('array')
+          .and.to.have.lengthOf(3)
+          .and.to.deep.contain({
+            id: version1.id,
+            referencedObject: objectId1
+          })
+          .and.to.deep.contain({
+            id: version2.id,
+            referencedObject: objectId2
+          })
+          .and.to.deep.contain({
+            id: version3.id,
+            referencedObject: objectId3
+          })
+      })
+
+      it('hides those ones that are more than 7 day old', async () => {
+        const apollo = await testApolloServer({ authUserId: user.id })
+        const tenDaysAgo = dayjs().subtract(10, 'day').toDate()
+        await updateCommitCreatedAtDate(version1.id, new Date())
+        await updateCommitCreatedAtDate(version2.id, new Date())
+        await updateCommitCreatedAtDate(version3.id, tenDaysAgo)
+
+        const res = await apollo.execute(GetProjectVersionsDocument, {
+          projectId: project.id
+        })
+
+        const versions = res.data?.project?.versions?.items
+        expect(res).to.not.haveGraphQLErrors()
+        expect(versions).to.be.a('array').and.to.have.lengthOf(3).and.to.deep.contain({
+          id: version3.id,
+          referencedObject: null
+        })
+      })
+
+      it('does not hide the latest commit of a model even if its +7 days old', async () => {
+        const apollo = await testApolloServer({ authUserId: user.id })
+        const tenDaysAgo = dayjs().subtract(10, 'day').toDate()
+        const elevenDaysAgo = dayjs().subtract(11, 'day').toDate()
+        await updateCommitCreatedAtDate(version1.id, new Date())
+        await updateCommitCreatedAtDate(version2.id, tenDaysAgo)
+        await updateCommitCreatedAtDate(version3.id, elevenDaysAgo)
+
+        const res = await apollo.execute(GetProjectVersionsDocument, {
+          projectId: project.id
+        })
+
+        const versions = res.data?.project?.versions?.items
+        expect(res).to.not.haveGraphQLErrors()
+        expect(versions)
+          .to.be.a('array')
+          .and.to.have.lengthOf(3)
+          .and.to.deep.contain({
+            id: version2.id,
+            referencedObject: objectId2
+          })
+          .and.to.deep.contain({
+            id: version3.id,
+            referencedObject: null
+          })
+      })
+    }
+  )
+  ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? describe : describe.skip)(
     'Version.referencedObject',
     () => {
       const tenDaysAgo = dayjs().subtract(10, 'day').toDate()

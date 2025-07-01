@@ -1,4 +1,5 @@
 import {
+  getSubscriptionState,
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
@@ -16,33 +17,50 @@ import {
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
-import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import {
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
-  throwUncoveredError
+  throwUncoveredError,
+  WorkspacePlans
 } from '@speckle/shared'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, isEqual, omit } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
+import { Logger } from '@/observability/logging'
 
 export const handleSubscriptionUpdateFactory =
   ({
     upsertPaidWorkspacePlan,
     getWorkspacePlan,
     getWorkspaceSubscriptionBySubscriptionId,
-    upsertWorkspaceSubscription
+    upsertWorkspaceSubscription,
+    emitEvent
   }: {
     getWorkspacePlan: GetWorkspacePlan
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getWorkspaceSubscriptionBySubscriptionId: GetWorkspaceSubscriptionBySubscriptionId
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
+    emitEvent: EventBusEmit
   }) =>
-  async ({ subscriptionData }: { subscriptionData: SubscriptionData }) => {
-    // we're only handling marking the sub scheduled for cancelation right now
+  async ({
+    subscriptionData,
+    logger
+  }: {
+    subscriptionData: SubscriptionData
+    logger: Logger
+  }) => {
+    // we're only handling marking the sub scheduled for cancellation right now
     const subscription = await getWorkspaceSubscriptionBySubscriptionId({
       subscriptionId: subscriptionData.subscriptionId
     })
-    if (!subscription) throw new WorkspaceSubscriptionNotFoundError()
+    if (!subscription) {
+      if (subscriptionData.status === 'incomplete') {
+        // the checkout was not completed, so not finding a matching workspace subscription is expected
+        return
+      }
+      throw new WorkspaceSubscriptionNotFoundError()
+    }
 
     const workspacePlan = await getWorkspacePlan({
       workspaceId: subscription.workspaceId
@@ -68,51 +86,160 @@ export const handleSubscriptionUpdateFactory =
       status = 'canceled'
     }
 
-    if (status) {
-      switch (workspacePlan.name) {
-        case 'starter':
-        case 'plus':
-        case 'business':
-        case 'team':
-        case 'teamUnlimited':
-        case 'pro':
-        case 'proUnlimited':
-          break
-        case 'unlimited':
-        case 'academia':
-        case 'starterInvoiced':
-        case 'plusInvoiced':
-        case 'businessInvoiced':
-        case 'proUnlimitedInvoiced':
-        case 'teamUnlimitedInvoiced':
-        case 'free':
-          throw new WorkspacePlanMismatchError()
-        default:
-          throwUncoveredError(workspacePlan)
-      }
+    if (!status) {
+      logger.info({ workspaceId: subscription.workspaceId }, 'Nothing to update')
+      return
+    }
 
-      await upsertPaidWorkspacePlan({
-        workspacePlan: { ...workspacePlan, status }
-      })
-      // if there is a status in the sub, we recognize, we need to update our state
-      await upsertWorkspaceSubscription({
-        workspaceSubscription: {
-          ...subscription,
-          updatedAt: new Date(),
-          subscriptionData
+    switch (workspacePlan.name) {
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
+        break
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Enterprise:
+        throw new WorkspacePlanMismatchError()
+      default:
+        throwUncoveredError(workspacePlan)
+    }
+
+    const updateIntent = subscription.updateIntent
+    let planName
+    let billingInterval
+    let currentBillingCycleEnd
+    let currency
+    let updatedAt
+    let userId
+
+    if (updateIntent) {
+      // this is the branch where a user intents to upgrade his subscription
+      // if stripe comes back with a status, and we have a update intent in the subscription
+      // we're assuming that the target that the user wants to upgrade was written in the update intent
+      userId = updateIntent.userId
+      planName = updateIntent.planName
+      updatedAt = updateIntent.updatedAt
+      currency = updateIntent.currency
+      billingInterval = updateIntent.billingInterval
+      currentBillingCycleEnd = updateIntent.currentBillingCycleEnd
+
+      const productsAreEquivalent = (
+        a: Array<{ priceId: string; quantity: number }>,
+        b: Array<{ priceId: string; quantity: number }>
+      ) =>
+        a.every((item) => {
+          return !!b.find(
+            (bi) => bi.priceId === item.priceId && bi.quantity === item.quantity
+          )
+        })
+
+      if (!productsAreEquivalent(updateIntent.products, subscriptionData.products)) {
+        logger.error(
+          {
+            event: subscriptionData.products,
+            target: updateIntent.products,
+            workspaceId: subscription.workspaceId,
+            targetPlanName: planName,
+            planName: workspacePlan.name
+          },
+          'Fatal: Stripe product ID mismatch with subscription update intent'
+        )
+      }
+    } else {
+      userId = null
+      planName = workspacePlan.name
+      billingInterval = subscription.billingInterval
+      currentBillingCycleEnd = subscription.currentBillingCycleEnd
+      currency = subscription.currency
+      updatedAt = new Date()
+
+      // Stripe can have many cases were we receive an event
+      // - subscription cancellation schedules
+      // - subscription cancellations
+      // - payment failures
+      // - duplicated events
+      // - manual changes in the dashboard
+      // - ...
+      // at the moment, we are assuming this new status and update the status as given by stripe
+      // take into account that manual subscription updates in stripe dashboard can lead into
+      // errors, as changing quantity in the products may work, but changing product ids wont update
+      // the workspace plan and will result in errors
+    }
+
+    const newWorkspacePlan = {
+      ...workspacePlan,
+      status,
+      name: planName,
+      updatedAt
+    }
+
+    const newSubscription = {
+      ...subscription,
+      currency,
+      currentBillingCycleEnd,
+      billingInterval,
+      updateIntent: null,
+      updatedAt,
+      subscriptionData
+    }
+
+    await upsertPaidWorkspacePlan({
+      workspacePlan: newWorkspacePlan
+    })
+    await upsertWorkspaceSubscription({
+      workspaceSubscription: newSubscription
+    })
+
+    const payload = {
+      userId,
+      workspacePlan: newWorkspacePlan,
+      previousWorkspacePlan: workspacePlan,
+      subscription: getSubscriptionState(newSubscription),
+      previousSubscription: getSubscriptionState(subscription)
+    }
+
+    const planHasChanged = !isEqual(
+      omit(payload.workspacePlan, ['updatedAt', 'createdAt']),
+      omit(payload.previousWorkspacePlan, ['updatedAt', 'createdAt'])
+    )
+
+    if (planHasChanged) {
+      await emitEvent({
+        eventName: GatekeeperEvents.WorkspacePlanUpdated,
+        payload: {
+          userId,
+          workspacePlan: payload.workspacePlan,
+          previousWorkspacePlan: payload.previousWorkspacePlan
         }
+      })
+    }
+
+    const susbcriptionHasChanged = !isEqual(
+      payload.subscription,
+      payload.previousSubscription
+    )
+
+    if (planHasChanged || susbcriptionHasChanged) {
+      await emitEvent({
+        eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+        payload
       })
     }
   }
 
-export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
+export const addWorkspaceSubscriptionSeatIfNeededFactory =
   ({
     getWorkspacePlan,
     getWorkspaceSubscription,
     getWorkspacePlanProductId,
     getWorkspacePlanPriceId,
     reconcileSubscriptionData,
-    countSeatsByTypeInWorkspace
+    countSeatsByTypeInWorkspace,
+    upsertWorkspaceSubscription
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
@@ -120,11 +247,14 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
     getWorkspacePlanPriceId: GetWorkspacePlanPriceId
     reconcileSubscriptionData: ReconcileSubscriptionData
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
+    upsertWorkspaceSubscription: UpsertWorkspaceSubscription
   }) =>
   async ({
+    updatedByUserId,
     workspaceId,
     seatType
   }: {
+    updatedByUserId: string
     workspaceId: string
     seatType: WorkspaceSeatType
   }) => {
@@ -134,31 +264,24 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
     const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
     if (!workspaceSubscription) return
     // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
-    const isNewPlan = isNewPlanType(workspacePlan.name)
-    if (!isNewPlan) {
-      // old plans not supported
-      return
-    }
 
     switch (workspacePlan.name) {
-      case 'team':
-      case 'teamUnlimited':
-      case 'pro':
-      case 'proUnlimited':
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
         // If viewer seat type, we don't need to do anything
-        if (seatType === WorkspaceSeatType.Viewer) return
-      case 'starter':
-      case 'plus':
-      case 'business':
-        break
-      case 'unlimited':
-      case 'academia':
-      case 'starterInvoiced':
-      case 'plusInvoiced':
-      case 'businessInvoiced':
-      case 'proUnlimitedInvoiced':
-      case 'teamUnlimitedInvoiced':
-      case 'free':
+        if (seatType === WorkspaceSeatType.Viewer) {
+          return
+        } else {
+          break
+        }
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.Free:
+      case WorkspacePlans.Enterprise:
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -192,6 +315,20 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
       if (currentPlanProduct.quantity >= productAmount) return
       currentPlanProduct.quantity = productAmount
     }
+    await upsertWorkspaceSubscription({
+      workspaceSubscription: {
+        ...workspaceSubscription,
+        updateIntent: {
+          userId: updatedByUserId,
+          products: subscriptionData.products,
+          planName: workspacePlan.name,
+          currentBillingCycleEnd: workspaceSubscription.currentBillingCycleEnd,
+          currency: workspaceSubscription.currency,
+          billingInterval: workspaceSubscription.billingInterval,
+          updatedAt: new Date()
+        }
+      }
+    })
     await reconcileSubscriptionData({
       subscriptionData,
       prorationBehavior: 'always_invoice'
@@ -208,7 +345,7 @@ export const getTotalSeatsCountByPlanFactory =
     workspacePlan,
     subscriptionData
   }: {
-    workspacePlan: PaidWorkspacePlansNew
+    workspacePlan: PaidWorkspacePlans
     subscriptionData: Pick<SubscriptionData, 'products'>
   }) => {
     const productId = getWorkspacePlanProductId({

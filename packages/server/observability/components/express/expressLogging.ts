@@ -26,16 +26,7 @@ const DetermineRequestId = (
 export const sanitizeHeaders = (headers: Record<string, unknown>) =>
   Object.fromEntries(
     Object.entries(headers).filter(
-      ([key]) =>
-        ![
-          'cookie',
-          'authorization',
-          'cf-connecting-ip',
-          'true-client-ip',
-          'x-real-ip',
-          'x-forwarded-for',
-          'x-original-forwarded-for'
-        ].includes(key.toLocaleLowerCase())
+      ([key]) => !['cookie', 'authorization'].includes(key.toLocaleLowerCase())
     )
   )
 
@@ -50,14 +41,23 @@ export const sanitizeQueryParams = (
   return query
 }
 
+const shouldBeLoggedAsDebug = (req: IncomingMessage) => {
+  const path = getRequestPath(req)
+  if (!path) return false
+  return [
+    '/metrics',
+    '/readiness',
+    '/liveness',
+    '/graphql' // graphql endpoint is logged by the graphql middleware
+  ].includes(path)
+}
+
 export const LoggingExpressMiddleware = HttpLogger({
   logger,
   autoLogging: true,
   genReqId: GenerateRequestId,
   customLogLevel: (req, res, err) => {
-    const path = getRequestPath(req)
-    const shouldBeDebug = ['/metrics', '/readiness', '/liveness'].includes(path || '')
-    if (shouldBeDebug) return 'debug'
+    if (shouldBeLoggedAsDebug(req)) return 'debug'
 
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'

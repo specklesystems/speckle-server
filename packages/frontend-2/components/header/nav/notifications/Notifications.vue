@@ -10,7 +10,7 @@
           <div class="relative">
             <div
               v-if="!menuOpen && hasNotifications"
-              class="absolute -top-[4px] -right-[4px] size-2 bg-primary rounded-full"
+              class="absolute -top-[4px] -right-[4px] size-2 bg-danger rounded-full"
             />
 
             <BellIcon v-if="!menuOpen" class="w-5 h-5" />
@@ -72,9 +72,18 @@ const { result: workspaceInviteResult } = useQuery(
 const projectsInvites = computed(
   () => projectInviteResult.value?.activeUser?.projectInvites
 )
-const workspacesInvites = computed(
-  () => workspaceInviteResult.value?.activeUser?.workspaceInvites
-)
+const workspacesInvites = computed(() => {
+  const invites = workspaceInviteResult.value?.activeUser?.workspaceInvites
+
+  // Filter out implicit workspace invites that already show up as project invites here (same ID)
+  return (
+    invites?.filter((invite) => {
+      return !projectsInvites.value?.some(
+        (projectInvite) => projectInvite.id === invite.id
+      )
+    }) || []
+  )
+})
 
 const hasNotifications = computed(
   () => projectsInvites.value?.length || workspacesInvites.value?.length

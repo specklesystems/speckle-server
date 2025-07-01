@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canDeleteProjectPolicy } from './canDelete.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import { Roles } from '../../../core/constants.js'
 import { TIME_MS } from '../../../core/index.js'
 
@@ -10,12 +10,10 @@ describe('canDeleteProjectPolicy', () => {
     overrides?: Partial<Parameters<typeof canDeleteProjectPolicy>[0]>
   ) =>
     canDeleteProjectPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Owner,
       getServerRole: async () => Roles.Server.User,
@@ -32,11 +30,9 @@ describe('canDeleteProjectPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspace-id'
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),

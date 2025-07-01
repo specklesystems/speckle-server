@@ -33,18 +33,13 @@
         <!-- Empty model action -->
         <div
           v-if="itemType === StructureItemType.EmptyModel"
-          :key="`add-submodel-${canCreateModel?.authorized}`"
-          v-tippy="
-            canCreateModel?.authorized
-              ? undefined
-              : canCreateModel?.message || 'You do not have permission to create models'
-          "
+          v-tippy="canCreateModel.cantClickCreateReason.value"
         >
           <FormButton
             color="subtle"
             :icon-left="PlusIcon"
             size="sm"
-            :disabled="!canCreateModel.authorized"
+            :disabled="!canCreateModel.canClickCreate.value"
             @click.stop="$emit('create-submodel', model?.name || '')"
           >
             submodel
@@ -52,35 +47,34 @@
         </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
-        <ProjectCardImportFileArea
-          v-if="!isPendingFileUpload(item)"
-          ref="importArea"
-          :project-id="project.id"
-          :model-name="item.fullName"
-          :disabled="!canCreateModel.authorized"
-          class="hidden"
-        />
-        <div
-          v-if="
-            !isPendingFileUpload(item) &&
-            (pendingVersion || itemType === StructureItemType.EmptyModel)
-          "
-          class="flex items-center h-full"
-        >
-          <ProjectPendingFileImportStatus
-            v-if="pendingVersion"
-            :upload="pendingVersion"
-            type="subversion"
-            class="px-4 w-full"
-          />
-          <ProjectCardImportFileArea
-            v-else
-            :project-id="project.id"
-            :model-name="item.fullName"
-            :disabled="!canCreateModel.authorized"
-            class="h-full w-full"
-          />
-        </div>
+        <template v-if="!isPendingFileUpload(item)">
+          <div
+            v-show="
+              pendingVersion ||
+              itemType === StructureItemType.EmptyModel ||
+              isVersionUploading
+            "
+            class="flex items-center h-full"
+          >
+            <ProjectPendingFileImportStatus
+              v-if="pendingVersion"
+              :upload="pendingVersion"
+              type="subversion"
+              class="px-4 w-full h-16"
+            />
+            <!-- Import area must exist even if hidden, so that we can trigger uploads from actions -->
+            <ProjectCardImportFileArea
+              v-show="!pendingVersion"
+              ref="importArea"
+              empty-state-variant="modelList"
+              :project="project"
+              :model-name="item.fullName"
+              :model="item.model || undefined"
+              class="h-full w-full"
+              @uploading="onVersionUploading"
+            />
+          </div>
+        </template>
         <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
           <div class="text-body-3xs text-foreground-2 text-right">
             Updated
@@ -124,7 +118,12 @@
       </div>
       <!-- Preview or icon section -->
       <div
-        v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
+        v-if="
+          !isPendingFileUpload(item) &&
+          item.model?.previewUrl &&
+          !pendingVersion &&
+          !isVersionUploading
+        "
         class="w-20 h-16"
       >
         <NuxtLink
@@ -238,6 +237,8 @@ import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { useCanCreateModel } from '~/lib/projects/composables/permissions'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -255,6 +256,8 @@ graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
     ...ProjectPageModelsActions_Project
+    ...ProjectCardImportFileArea_Project
+    ...UseCanCreateModel_Project
     permissions {
       canCreateModel {
         ...FullPermissionCheckResult
@@ -270,6 +273,7 @@ graphql(`
     fullName
     model {
       ...ProjectPageLatestItemsModelItem
+      ...ProjectCardImportFileArea_Model
     }
     hasChildren
     updatedAt
@@ -298,6 +302,7 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+const isVersionUploading = ref(false)
 
 const mp = useMixpanel()
 const trackFederateModels = () =>
@@ -310,7 +315,10 @@ const trackFederateModels = () =>
 
 const showActionsMenu = ref(false)
 
-const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
+const canCreateModel = useCanCreateModel({
+  project: computed(() => props.project)
+})
+
 const canEdit = computed(() =>
   isPendingFileUpload(props.item) ? undefined : props.item.model?.permissions.canUpdate
 )
@@ -423,7 +431,12 @@ const onModelUpdated = () => {
 }
 
 const triggerVersionUpload = () => {
+  if (isVersionUploading.value) return
   importArea.value?.triggerPicker()
+}
+
+const onVersionUploading = (payload: FileAreaUploadingPayload) => {
+  isVersionUploading.value = !!(payload.isUploading || payload.error)
 }
 
 const onVersionsClick = () => {

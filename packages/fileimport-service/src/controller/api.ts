@@ -3,7 +3,7 @@ import crs from 'crypto-random-string'
 import bcrypt from 'bcrypt'
 import { chunk } from 'lodash-es'
 import { logger as parentLogger } from '@/observability/logging.js'
-import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import * as Observability from '@speckle/shared/observability'
 import type { Knex } from 'knex'
 import type { Logger } from 'pino'
 
@@ -165,7 +165,7 @@ export class ServerAPI {
   }
 
   prepInsertionObject(streamId: string, obj: SpeckleObject): SpeckleObjectWithId {
-    const maximumObjectSizeMB = parseInt(process.env['MAX_OBJECT_SIZE_MB'] || '10')
+    const maximumObjectSizeMB = parseInt(process.env['MAX_OBJECT_SIZE_MB'] || '100')
     const MAX_OBJECT_SIZE = maximumObjectSizeMB * 1024 * 1024
 
     if (obj.hash) obj.id = obj.hash
@@ -313,7 +313,7 @@ export class ServerAPI {
       .where({ id: tokenId.slice(0, 10) })
       .del()
 
-    if (delCount === 0) throw new Error('Token revokation failed')
+    if (delCount === 0) throw new Error('Token revocation failed')
     return true
   }
 }

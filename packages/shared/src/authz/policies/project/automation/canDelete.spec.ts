@@ -13,18 +13,19 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
+import { getWorkspaceFake } from '../../../../tests/fakes.js'
 
 const buildCanDeletePolicy = (
   overrides?: Partial<Parameters<typeof canDeleteAutomationPolicy>[0]>
 ) =>
   canDeleteAutomationPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getProject: async () => ({
       id: 'project-id',
       workspaceId: null,
-      isDiscoverable: false,
-      isPublic: false,
-      allowPublicComments: false
+      allowPublicComments: false,
+      visibility: ProjectVisibility.Private
     }),
     getProjectRole: async () => Roles.Stream.Owner,
     getServerRole: async () => Roles.Server.User,
@@ -131,11 +132,10 @@ describe('canDeleteAutomation', () => {
       getProject: async () => ({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false,
+        visibility: ProjectVisibility.Private,
         allowPublicComments: false
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),

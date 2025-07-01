@@ -1,4 +1,4 @@
-import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import * as Observability from '@speckle/shared/observability'
 
 // loggers for specific components within normal operation
 export const logger = Observability.extendLoggerComponent(

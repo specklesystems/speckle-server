@@ -1,13 +1,18 @@
 <template>
-  <div class="flex justify-center flex-col text-center my-12">
-    <h3 class="text-heading mt-2 text-foreground">
-      {{ title }}
-    </h3>
-    <h4 v-if="text" class="text-body-xs mb-4 mt-2 max-w-xs mx-auto text-foreground-2">
-      {{ text }}
-    </h4>
-    <div class="flex flex-col items-center gap-2">
-      <slot name="cta"></slot>
+  <div
+    class="w-full flex justify-center items-center p-20 gap-8 text-balance flex-col text-center"
+  >
+    <slot name="illustration"></slot>
+    <div>
+      <p class="text-foreground-2 text-heading-sm p-0 m-0">
+        {{ title }}
+      </p>
+      <p v-if="text" class="text-body-xs max-w-xs mx-auto text-foreground-2 mt-2 p-0">
+        {{ text }}
+      </p>
+      <div class="w-full flex flex-row justify-center max-w-xs mx-auto mt-3 flex-wrap">
+        <slot name="cta"></slot>
+      </div>
     </div>
   </div>
 </template>

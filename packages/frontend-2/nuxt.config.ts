@@ -55,19 +55,18 @@ export default defineNuxtConfig({
     redisUrl: '',
     public: {
       ...featureFlags,
-      apiOrigin: 'UNDEFINED',
+      apiOrigin: '',
       backendApiOrigin: '',
       baseUrl: '',
-      mixpanelApiHost: 'UNDEFINED',
-      mixpanelTokenId: 'UNDEFINED',
-      survicateWorkspaceKey: '',
+      mixpanelApiHost: '',
+      mixpanelTokenId: '',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
       logCsrEmitProps: false,
       logClientApiToken: '',
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
-      serverName: 'UNDEFINED',
+      serverName: 'unknown',
       viewerDebug: false,
       debugCoreWebVitals: false,
       datadogAppId: '',
@@ -75,7 +74,7 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      ghostApiKey: ''
+      intercomAppId: ''
     }
   },
 
@@ -146,26 +145,7 @@ export default defineNuxtConfig({
     }
   },
 
-  app: {
-    pageTransition: { name: 'page', mode: 'out-in' }
-  },
-
   routeRules: {
-    // Necessary because of redirects from backend in auth flows
-    '/': {
-      cors: true,
-      headers: {
-        'access-control-allow-methods': 'GET',
-        'Access-Control-Expose-Headers': '*'
-      }
-    },
-    '/authn/login': {
-      cors: true,
-      headers: {
-        'access-control-allow-methods': 'GET',
-        'Access-Control-Expose-Headers': '*'
-      }
-    },
     '/functions': {
       redirect: {
         to: '/',

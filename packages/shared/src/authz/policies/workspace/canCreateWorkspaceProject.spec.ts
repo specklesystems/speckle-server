@@ -68,7 +68,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
   describe('user server roles', () => {
     it('forbids creation for unknown users', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return null
         },
@@ -104,7 +104,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
     })
     it('forbids creation for anyone not having minimum server:user role', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:guest'
         },
@@ -145,7 +145,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
 
     it('forbids creation when workspace not found', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -182,7 +182,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
 
     it('forbids creation when sso session is not found', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -225,7 +225,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
   describe('user workspace roles', () => {
     it('forbids creation for users without a workspace role', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -261,7 +261,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
     })
     it('WorkspaceNotEnoughPermissionsError for workspace guests', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -298,7 +298,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
     })
     it('forbids non-editor seats from creating projects', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -340,7 +340,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
   describe('workspace plans', () => {
     it('forbids creation if plan fails to load', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -376,7 +376,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
     })
     it('forbids creation if plan is read-only', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -391,7 +391,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         },
         getWorkspacePlan: async () => {
           return {
-            status: 'expired'
+            status: 'canceled'
           } as WorkspacePlan
         },
         getWorkspaceLimits: async () => {
@@ -417,7 +417,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
   describe('workspace limits', () => {
     it('forbids creation if limits fail to load', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -428,7 +428,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {
@@ -455,7 +455,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
     })
     it('allows creation if plan has no limits', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -466,7 +466,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {
@@ -496,7 +496,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
     })
     it('forbids creation if current project count fails to load', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -507,7 +507,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {
@@ -539,7 +539,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
     })
     it('allows creation if new project is within plan limits', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -550,7 +550,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {
@@ -580,7 +580,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
     })
     it('forbids creation if new project is not within plan limits', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
         getServerRole: async () => {
           return 'server:user'
         },
@@ -591,7 +591,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {

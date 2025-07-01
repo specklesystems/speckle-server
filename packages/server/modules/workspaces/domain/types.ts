@@ -1,21 +1,9 @@
 export { WorkspaceInviteResourceTarget } from '@/modules/workspacesCore/domain/types'
 import { LimitedUserRecord, UserWithRole } from '@/modules/core/helpers/types'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { WorkspaceRoles } from '@speckle/shared'
 
-declare module '@/modules/serverinvites/domain/types' {
-  interface InviteResourceTargetTypeMap {
-    workspace: 'workspace'
-  }
-}
-
-declare module '@/modules/serverinvites/helpers/core' {
-  interface ResourceTargetTypeRoleTypeMap {
-    [WorkspaceInviteResourceType]: WorkspaceRoles
-  }
-}
-
 export type WorkspaceTeamMember = UserWithRole<LimitedUserRecord> & {
+  email: string | null
   workspaceRole: WorkspaceRoles
   workspaceRoleCreatedAt: Date
   workspaceId: string

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { OverridesOf } from '../../../tests/helpers/types.js'
 import { canBroadcastProjectActivityPolicy } from './canBroadcastActivity.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
@@ -13,18 +13,20 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { TIME_MS } from '../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canBroadcastProjectActivityPolicy', () => {
   const buildSUT = (
     overrides?: OverridesOf<typeof canBroadcastProjectActivityPolicy>
   ) =>
     canBroadcastProjectActivityPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
@@ -43,11 +45,10 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),
@@ -79,8 +80,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getProjectRole: async () => null
     })
@@ -187,8 +187,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
         getProject: getProjectFake({
           id: 'project-id',
           workspaceId: 'workspace-id',
-          isDiscoverable: false,
-          isPublic: true
+          visibility: ProjectVisibility.Public
         })
       })
 

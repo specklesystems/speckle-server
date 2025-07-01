@@ -1,10 +1,11 @@
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanFactory,
-  getWorkspaceSubscriptionFactory
+  getWorkspaceSubscriptionFactory,
+  upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
-import { addWorkspaceSubscriptionSeatIfNeededFactoryNew } from '@/modules/gatekeeper/services/subscriptions'
+import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeeper/services/subscriptions'
 import {
   getWorkspacePlanPriceId,
   getWorkspacePlanProductId
@@ -21,7 +22,7 @@ export const initializeEventListenersFactory =
     const quitCbs = [
       eventBus.listen(WorkspaceEvents.SeatUpdated, async ({ payload }) => {
         const addWorkspaceSubscriptionSeatIfNeeded =
-          addWorkspaceSubscriptionSeatIfNeededFactoryNew({
+          addWorkspaceSubscriptionSeatIfNeededFactory({
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
             getWorkspacePlanPriceId,
@@ -29,11 +30,13 @@ export const initializeEventListenersFactory =
             reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
               stripe
             }),
+            upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
             countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db })
           })
 
         await addWorkspaceSubscriptionSeatIfNeeded({
           ...payload.seat,
+          updatedByUserId: payload.updatedByUserId,
           seatType: payload.seat.type
         })
       })

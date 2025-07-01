@@ -10,18 +10,20 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import { TIME_MS } from '../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canReadProjectSettingsPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>) =>
     canReadProjectSettingsPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
@@ -40,11 +42,10 @@ describe('canReadProjectSettingsPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),

@@ -7,18 +7,18 @@ import {
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { NotFoundError } from '@/modules/shared/errors'
 import {
+  AddOrUpdateWorkspaceRole,
   ApproveWorkspaceJoinRequest,
   CreateWorkspaceJoinRequest,
   DenyWorkspaceJoinRequest,
-  EnsureValidWorkspaceRoleSeat,
   GetWorkspace,
+  GetWorkspaceCollaborators,
   GetWorkspaceJoinRequest,
   GetWorkspaceWithDomains,
   SendWorkspaceJoinRequestApprovedEmail,
   SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
-  UpdateWorkspaceJoinRequestStatus,
-  UpsertWorkspaceRole
+  UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
 import { Roles } from '@speckle/shared'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
@@ -51,14 +51,18 @@ export const requestToJoinWorkspaceFactory =
   ({
     createWorkspaceJoinRequest,
     sendWorkspaceJoinRequestReceivedEmail,
+    addOrUpdateWorkspaceRole,
     getUserById,
     getWorkspaceWithDomains,
+    getWorkspaceTeam,
     getUserEmails
   }: {
     createWorkspaceJoinRequest: CreateWorkspaceJoinRequest
     sendWorkspaceJoinRequestReceivedEmail: SendWorkspaceJoinRequestReceivedEmail
+    addOrUpdateWorkspaceRole: AddOrUpdateWorkspaceRole
     getUserById: GetUser
     getWorkspaceWithDomains: GetWorkspaceWithDomains
+    getWorkspaceTeam: GetWorkspaceCollaborators
     getUserEmails: FindEmailsByUserId
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
@@ -85,13 +89,37 @@ export const requestToJoinWorkspaceFactory =
       throw new WorkspaceProtectedError()
     }
 
-    await createWorkspaceJoinRequest({
+    if (workspace.discoverabilityAutoJoinEnabled) {
+      const {
+        items: [workspaceAdmin]
+      } = await getWorkspaceTeam({
+        workspaceId,
+        limit: 1,
+        filter: {
+          roles: [Roles.Workspace.Admin]
+        }
+      })
+      await addOrUpdateWorkspaceRole({
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        updatedByUserId: workspaceAdmin.id
+      })
+      return true
+    }
+
+    const joinRequest = await createWorkspaceJoinRequest({
       workspaceJoinRequest: {
         userId,
         workspaceId,
         status: 'pending'
       }
     })
+
+    if (!joinRequest || joinRequest.status !== 'pending') {
+      // The request was already created, so don't send the email again
+      return true
+    }
 
     await sendWorkspaceJoinRequestReceivedEmail({
       workspace,
@@ -108,18 +136,16 @@ export const approveWorkspaceJoinRequestFactory =
     getUserById,
     getWorkspace,
     getWorkspaceJoinRequest,
-    upsertWorkspaceRole,
     emit,
-    ensureValidWorkspaceRoleSeat
+    addOrUpdateWorkspaceRole
   }: {
     updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
     sendWorkspaceJoinRequestApprovedEmail: SendWorkspaceJoinRequestApprovedEmail
     getUserById: GetUser
     getWorkspace: GetWorkspace
     getWorkspaceJoinRequest: GetWorkspaceJoinRequest
-    upsertWorkspaceRole: UpsertWorkspaceRole
     emit: EventBus['emit']
-    ensureValidWorkspaceRoleSeat: EnsureValidWorkspaceRoleSeat
+    addOrUpdateWorkspaceRole: AddOrUpdateWorkspaceRole
   }): ApproveWorkspaceJoinRequest =>
   async ({ userId, workspaceId, approvedByUserId }) => {
     const requester = await getUserById(userId)
@@ -147,23 +173,14 @@ export const approveWorkspaceJoinRequestFactory =
       status: 'approved'
     })
 
-    const role = Roles.Workspace.Member
-    await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
-    await ensureValidWorkspaceRoleSeat({
+    await addOrUpdateWorkspaceRole({
       userId,
       workspaceId,
-      role,
+      role: Roles.Workspace.Member,
       updatedByUserId: approvedByUserId
     })
 
     await emit({ eventName: WorkspaceEvents.Updated, payload: { workspace } })
-    await emit({
-      eventName: WorkspaceEvents.RoleUpdated,
-      payload: {
-        acl: { workspaceId, userId, role },
-        updatedByUserId: approvedByUserId
-      }
-    })
 
     await sendWorkspaceJoinRequestApprovedEmail({
       workspace,

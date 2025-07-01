@@ -19,17 +19,16 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
-import { getProjectFake } from '../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../tests/fakes.js'
 import { TIME_MS } from '../../core/index.js'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
 describe('ensureMinimumProjectRoleFragment', () => {
   const buildSUT = (overrides?: OverridesOf<typeof ensureMinimumProjectRoleFragment>) =>
     ensureMinimumProjectRoleFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
@@ -37,7 +36,10 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getWorkspaceRole: async () => null,
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       ...overrides
     })
 
@@ -48,10 +50,9 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getProject: getProjectFake({
         id: 'projectId',
         workspaceId: 'workspaceId',
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Workspace
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -143,6 +144,44 @@ describe('ensureMinimumProjectRoleFragment', () => {
       expect(result).toBeAuthOKResult()
     })
 
+    it('succeeds if user has implicit owner role even in private project', async () => {
+      const result = await buildWorkspaceSUT({
+        getWorkspaceRole: async () => Roles.Workspace.Admin,
+        getProjectRole: async () => null,
+        getProject: getProjectFake({
+          id: 'projectId',
+          workspaceId: 'workspaceId',
+          visibility: ProjectVisibility.Private
+        })
+      })({
+        userId: 'userId',
+        projectId: 'projectId',
+        role: Roles.Stream.Reviewer
+      })
+
+      expect(result).toBeAuthOKResult()
+    })
+
+    it('fails if user doesnt have explicit project role and project is private', async () => {
+      const result = await buildWorkspaceSUT({
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getProjectRole: async () => null,
+        getProject: getProjectFake({
+          id: 'projectId',
+          workspaceId: 'workspaceId',
+          visibility: ProjectVisibility.Private
+        })
+      })({
+        userId: 'userId',
+        projectId: 'projectId',
+        role: Roles.Stream.Reviewer
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
+
     it('fails if implicit role is not enough', async () => {
       const result = await buildWorkspaceSUT({
         getWorkspaceRole: async () => Roles.Workspace.Member,
@@ -167,11 +206,12 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
     checkIfPubliclyReadableProjectFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       ...overrides
     })
 
@@ -200,8 +240,7 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
       getProject: getProjectFake({
         id: 'projectId',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       })
     })
 
@@ -216,9 +255,7 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
     const sut = buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       })
     })
     const result = await sut({
@@ -235,11 +272,9 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
     ensureProjectWorkspaceAccessFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -253,11 +288,9 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: 'workspaceId',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspaceId'
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -391,14 +424,15 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
     ensureImplicitProjectMemberWithReadAccessFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -413,11 +447,10 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       getProject: getProjectFake({
         id: 'projectId',
         workspaceId: 'workspaceId',
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -537,6 +570,27 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       expect(result).toBeAuthOKResult()
     })
 
+    it('fails w/o explicit project role if private project', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => null,
+        getProject: getProjectFake({
+          id: 'projectId',
+          workspaceId: 'workspaceId',
+          visibility: ProjectVisibility.Private
+        })
+      })
+
+      const result = await sut({
+        userId: 'userId',
+        projectId: 'projectId',
+        role: Roles.Stream.Reviewer
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
+
     it('succeeds w/o sso session, if workspace guest w/ explicit project role', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceRole: async () => Roles.Workspace.Guest,
@@ -612,13 +666,11 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
     ensureImplicitProjectMemberWithWriteAccessFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -633,11 +685,10 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       getProject: getProjectFake({
         id: 'projectId',
         workspaceId: 'workspaceId',
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),

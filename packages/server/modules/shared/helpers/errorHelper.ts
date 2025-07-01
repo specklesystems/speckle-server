@@ -41,6 +41,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspaceProjectMoveInvalidError.code:
     case Authz.CommentNoAccessError.code:
     case Authz.ProjectNotEnoughPermissionsError.code:
+    case Authz.WorkspaceNoFeatureAccessError.code:
+    case Authz.EligibleForExclusiveWorkspaceError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspaceSsoSessionNoAccessError.code:
       throw new SsoSessionMissingOrExpiredError(e.message, {
@@ -61,6 +63,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.ModelNotFoundError.code:
     case Authz.VersionNotFoundError.code:
       return new NotFoundError(e.message)
+    case Authz.PersonalProjectsLimitedError.code:
+      return new BadRequestError(e.message)
     default:
       throwUncoveredError(e)
   }

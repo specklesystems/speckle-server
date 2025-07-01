@@ -6,3 +6,21 @@ export class FileUploadInternalError extends BaseError {
   static code = 'FILE_UPLOAD_ERROR'
   static statusCode = 500
 }
+
+export class FileImportJobNotFoundError extends BaseError {
+  static defaultMessage = 'The file upload job was not found.'
+  static code = 'FILE_IMPORT_JOB_NOT_FOUND'
+  static statusCode = 404
+}
+
+export class FileImportInvalidJobResultPayload extends BaseError {
+  static defaultMessage = 'The file upload job result was invalid.'
+  static code = 'FILE_IMPORT_INVALID_JOB_RESULT_PAYLOAD'
+  static statusCode = 400
+}
+
+export class UnsupportedFileTypeError extends BaseError {
+  static code = 'UNSUPPORTED_FILE_TYPE'
+  static defaultMessage = 'The provided file type is not supported for importing.'
+  static statusCode = 400
+}

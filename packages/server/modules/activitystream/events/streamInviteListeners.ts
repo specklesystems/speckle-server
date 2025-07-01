@@ -1,5 +1,8 @@
-import { SaveActivity } from '@/modules/activitystream/domain/operations'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import { SaveStreamActivity } from '@/modules/activitystream/domain/operations'
+import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import {
@@ -15,7 +18,7 @@ import { Roles } from '@speckle/shared'
  */
 const addStreamInviteSentOutActivityFactory =
   (deps: {
-    saveActivity: SaveActivity
+    saveActivity: SaveStreamActivity
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   async (payload: EventPayload<typeof ServerInvitesEvents.Created>) => {
@@ -28,9 +31,9 @@ const addStreamInviteSentOutActivityFactory =
 
     await deps.saveActivity({
       streamId: project.id,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: project.id,
-      actionType: ActionTypes.Stream.InviteSent,
+      actionType: StreamActionTypes.Stream.InviteSent,
       userId: invite.inviterId,
       message: `User ${invite.inviterId} has invited ${targetDisplay} to stream ${project.id}`,
       info: {
@@ -45,11 +48,11 @@ const addStreamInviteSentOutActivityFactory =
  */
 const addStreamInviteAcceptedActivityFactory =
   (deps: {
-    saveActivity: SaveActivity
+    saveActivity: SaveStreamActivity
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   async (payload: EventPayload<typeof ServerInvitesEvents.Finalized>) => {
-    const { invite } = payload.payload
+    const { invite, trueFinalizerUserId } = payload.payload
     const project = await deps.getProjectInviteProject({ invite })
     if (!project) return
 
@@ -58,14 +61,18 @@ const addStreamInviteAcceptedActivityFactory =
       getResourceTypeRole(invite.resource, ProjectInviteResourceType) ||
       Roles.Stream.Contributor
 
+    const differentFinalizer = trueFinalizerUserId !== userTarget.userId
+
     await deps.saveActivity({
       streamId: project.id,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: project.id,
-      actionType: ActionTypes.Stream.InviteAccepted,
-      userId: userTarget.userId!,
-      info: { inviterUser: invite.inviterId, role },
-      message: `User ${userTarget.userId!} has accepted an invitation to become a ${role}`
+      actionType: StreamActionTypes.Stream.InviteAccepted,
+      userId: trueFinalizerUserId,
+      info: { inviterUser: invite.inviterId, role, targetUserId: userTarget.userId! },
+      message: differentFinalizer
+        ? `User ${trueFinalizerUserId} has auto-accepted ${userTarget.userId!} invitation to become a ${role}`
+        : `User ${userTarget.userId!} has accepted an invitation to become a ${role}`
     })
   }
 
@@ -74,7 +81,7 @@ const addStreamInviteAcceptedActivityFactory =
  */
 const addStreamInviteDeclinedActivityFactory =
   (deps: {
-    saveActivity: SaveActivity
+    saveActivity: SaveStreamActivity
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   async (payload: EventPayload<typeof ServerInvitesEvents.Finalized>) => {
@@ -85,9 +92,9 @@ const addStreamInviteDeclinedActivityFactory =
     const userTarget = resolveTarget(invite.target)
     await deps.saveActivity({
       streamId: project.id,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: project.id,
-      actionType: ActionTypes.Stream.InviteDeclined,
+      actionType: StreamActionTypes.Stream.InviteDeclined,
       userId: userTarget.userId!,
       message: `User ${userTarget.userId!} declined to join the stream ${project.id}`,
       info: { targetId: userTarget!, inviterId: invite.inviterId }
@@ -97,7 +104,7 @@ const addStreamInviteDeclinedActivityFactory =
 export const reportStreamInviteActivityFactory =
   (deps: {
     eventListen: EventBusListen
-    saveActivity: SaveActivity
+    saveActivity: SaveStreamActivity
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   () => {

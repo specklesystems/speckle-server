@@ -4,14 +4,16 @@ import {
   CreateProject,
   DeleteProject,
   GetProject,
-  ProjectVisibility,
   StoreModel,
   StoreProject,
-  StoreProjectRole
+  StoreProjectRole,
+  WaitForRegionProject
 } from '@/modules/core/domain/projects/operations'
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
+import { mapGqlToDbProjectVisibility } from '@/modules/core/helpers/project'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
@@ -21,32 +23,27 @@ import cryptoRandomString from 'crypto-random-string'
 export const createNewProjectFactory =
   ({
     storeProject,
-    getProject,
-    deleteProject,
     storeProjectRole,
     storeModel,
+    waitForRegionProject,
     emitEvent
   }: {
     storeProject: StoreProject
-    getProject: GetProject
-    deleteProject: DeleteProject
     storeProjectRole: StoreProjectRole
-    emitEvent: EventBusEmit
     storeModel: StoreModel
+    waitForRegionProject: WaitForRegionProject
+    emitEvent: EventBusEmit
   }): CreateProject =>
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
-    const publicVisibilities: ProjectVisibility[] = ['PUBLIC', 'UNLISTED']
-    const isPublic = !visibility || publicVisibilities.includes(visibility)
-
-    // const isDiscoverable = visibility === 'PUBLIC'
-    const isDiscoverable = false // discoverability disabled for now
+    visibility =
+      visibility ||
+      (workspaceId ? ProjectVisibility.Workspace : ProjectVisibility.Private)
 
     const project: Project = {
       id: cryptoRandomString({ length: 10 }),
       name: name || generateProjectName(),
       description: description || '',
-      isPublic,
-      isDiscoverable,
+      visibility: mapGqlToDbProjectVisibility(visibility),
       createdAt: new Date(),
       clonedFrom: null,
       updatedAt: new Date(),
@@ -59,25 +56,10 @@ export const createNewProjectFactory =
     const projectId = project.id
     // if regionKey, we need to make sure it is actually written and synced
     if (regionKey) {
-      try {
-        await retry(
-          async () => {
-            const replicatedProject = await getProject({ projectId })
-            if (!replicatedProject) throw new StreamNotFoundError()
-          },
-          { maxAttempts: 10, delay: isTestEnv() ? TIME_MS.second : undefined }
-        )
-      } catch (err) {
-        if (err instanceof StreamNotFoundError) {
-          // delete from region
-          await deleteProject({ projectId })
-          throw new RegionalProjectCreationError(undefined, {
-            info: { projectId, regionKey }
-          })
-        }
-        // else throw as is
-        throw err
-      }
+      await waitForRegionProject({
+        projectId,
+        regionKey
+      })
     }
     await storeProjectRole({ projectId, userId: ownerId, role: Roles.Stream.Owner })
     await storeModel({
@@ -94,9 +76,36 @@ export const createNewProjectFactory =
         input: {
           description: project.description,
           name: project.name,
-          visibility: isPublic ? 'PUBLIC' : isDiscoverable ? 'UNLISTED' : 'PRIVATE'
+          visibility
         }
       }
     })
     return project
+  }
+
+export const waitForRegionProjectFactory =
+  (deps: {
+    getProject: GetProject
+    deleteProject: DeleteProject
+  }): WaitForRegionProject =>
+  async ({ projectId, regionKey, maxAttempts = 10 }) => {
+    try {
+      await retry(
+        async () => {
+          const replicatedProject = await deps.getProject({ projectId })
+          if (!replicatedProject) throw new StreamNotFoundError()
+        },
+        { maxAttempts, delay: isTestEnv() ? TIME_MS.second : undefined }
+      )
+    } catch (err) {
+      if (err instanceof StreamNotFoundError) {
+        // delete from region
+        await deps.deleteProject({ projectId })
+        throw new RegionalProjectCreationError(undefined, {
+          info: { projectId, regionKey }
+        })
+      }
+      // else throw as is
+      throw err
+    }
   }

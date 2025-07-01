@@ -121,16 +121,14 @@ export const discoverableWorkspacesQuery = graphql(`
   query DiscoverableWorkspaces {
     activeUser {
       id
-      ...DiscoverableList_Discoverable
-    }
-  }
-`)
-
-export const discoverableWorkspacesRequestsQuery = graphql(`
-  query DiscoverableWorkspacesRequests {
-    activeUser {
-      id
-      ...DiscoverableList_Requests
+      discoverableWorkspaces {
+        ...DiscoverableWorkspace_LimitedWorkspace
+      }
+      workspaceJoinRequests {
+        items {
+          ...WorkspaceJoinRequests_LimitedWorkspaceJoinRequest
+        }
+      }
     }
   }
 `)
@@ -208,6 +206,14 @@ export const workspaceMoveProjectManagerUserQuery = graphql(`
   ) {
     activeUser {
       ...WorkspaceMoveProjectSelectWorkspace_User
+    }
+  }
+`)
+
+export const useCanCreateWorkspaceQuery = graphql(`
+  query UseCanCreateWorkspace {
+    activeUser {
+      ...UseCanCreateWorkspace_User
     }
   }
 `)

@@ -41,6 +41,7 @@ import { CubeIcon } from '@heroicons/vue/24/outline'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
+import type { ProjectPageLatestItemsModelItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   useCreateNewModel,
@@ -48,8 +49,14 @@ import {
 } from '~~/lib/projects/composables/modelManagement'
 import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 
+type FormValues = {
+  name: string
+  description: string
+}
+
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
+  (e: 'submit', val: { model: ProjectPageLatestItemsModelItemFragment }): void
 }>()
 
 const props = defineProps<{
@@ -61,9 +68,13 @@ const props = defineProps<{
    * E.g. if creating a model under "a/b", then put "a/b" here
    */
   parentModelName?: string
+  /**
+   * Prefill the model name input. Takes precedence over `parentModelName`.
+   */
+  modelName?: string
 }>()
 
-const { handleSubmit } = useForm<{ name: string; description: string }>()
+const { handleSubmit } = useForm<FormValues>()
 const anyMutationsLoading = useMutationLoading()
 const rules = useModelNameValidationRules()
 const createModel = useCreateNewModel()
@@ -78,11 +89,15 @@ const openState = computed({
 })
 
 const onSubmit = handleSubmit(async ({ name, description }) => {
-  await createModel({
+  const res = await createModel({
     name: sanitizeModelName(name),
     description,
     projectId: props.projectId
   })
+
+  if (!res?.id) return
+  emit('submit', { model: res })
+
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
   openState.value = false
 })
@@ -91,7 +106,13 @@ watch(
   () => props.open,
   (isOpen, oldIsOpen) => {
     if (isOpen && isOpen !== oldIsOpen) {
-      newModelName.value = props.parentModelName ? `${props.parentModelName}/` : ''
+      if (props.modelName) {
+        newModelName.value = props.modelName
+      } else if (props.parentModelName) {
+        newModelName.value = `${props.parentModelName}/`
+      } else {
+        newModelName.value = ''
+      }
       newDescription.value = ''
     }
   }

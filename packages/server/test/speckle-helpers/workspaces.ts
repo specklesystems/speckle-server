@@ -13,8 +13,12 @@ export const createAndStoreTestWorkspaceFactory =
       updatedAt: new Date(),
       description: null,
       logo: null,
+      isExclusive: false,
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false,
+      discoverabilityAutoJoinEnabled: false,
+      defaultSeatType: null,
+      isEmbedSpeckleBrandingHidden: false,
       ...workspaceOverrides
     }
 

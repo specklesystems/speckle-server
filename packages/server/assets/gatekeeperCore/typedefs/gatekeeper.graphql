@@ -3,10 +3,6 @@ extend type WorkspaceMutations {
 }
 
 enum PaidWorkspacePlans {
-  starter
-  plus
-  business
-  # New plans
   team
   teamUnlimited
   pro
@@ -60,21 +56,15 @@ type WorkspaceBillingMutations {
 
 enum WorkspacePlans {
   free
-  starter
-  plus
-  business
   unlimited
   academia
-  starterInvoiced
-  plusInvoiced
-  businessInvoiced
-  # New plans
   team
   teamUnlimited
   teamUnlimitedInvoiced
   pro
   proUnlimited
   proUnlimitedInvoiced
+  enterprise
 }
 
 enum WorkspacePlanStatuses {
@@ -82,8 +72,6 @@ enum WorkspacePlanStatuses {
   paymentFailed
   cancelationScheduled
   canceled
-  trial
-  expired
 }
 
 enum WorkspacePaymentMethod {
@@ -161,10 +149,16 @@ extend type Workspace {
   planPrices: WorkspacePaidPlanPrices
 }
 
+extend type Project {
+  hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
+}
+
 enum WorkspaceFeatureName {
   domainBasedSecurityPolicies
   oidcSso
+  hideSpeckleBranding
   workspaceDataRegionSpecificity
+  exclusiveMembership
 }
 
 type WorkspacePlanPrice {

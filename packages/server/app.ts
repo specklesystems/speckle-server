@@ -35,7 +35,7 @@ import type { ConnectionContext } from 'subscriptions-transport-ws'
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
-import knex, { db } from '@/db/knex'
+import knex from '@/db/knex'
 import { monitorActiveConnections } from '@/observability/components/httpServer/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import {
@@ -43,17 +43,16 @@ import {
   isDevEnv,
   isTestEnv,
   isApolloMonitoringEnabled,
-  enableMixpanel,
   getPort,
   getBindAddress,
   shutdownTimeoutSeconds,
   asyncRequestContextEnabled,
   getMaximumRequestBodySizeMB,
-  isCompressionEnabled
+  isCompressionEnabled,
+  isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
-import * as ModulesSetup from '@/modules'
+import * as ModulesSetup from '@/modules/index'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
-import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
@@ -62,7 +61,6 @@ import {
   buildContext,
   compressionMiddlewareFactory,
   determineClientIpAddressMiddleware,
-  mixpanelTrackerHelperMiddlewareFactory,
   requestBodyParsingMiddlewareFactory,
   setContentSecurityPolicyHeaderMiddleware
 } from '@/modules/shared/middleware'
@@ -72,7 +70,6 @@ import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
-import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
 import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
@@ -81,11 +78,13 @@ import { SetOptional } from 'type-fest'
 import {
   enterNewRequestContext,
   getRequestContext,
-  initiateRequestContextMiddleware
-} from '@/observability/components/express/requestContext'
+  isRequestContext
+} from '@/observability/utils/requestContext'
 import { randomUUID } from 'crypto'
 import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
 import { initApolloSubscriptionMonitoring } from '@/observability/components/apollo/metrics/apolloSubscriptionMonitoring'
+import { initiateRequestContextMiddleware } from '@/observability/components/express/requestContextMiddleware'
+import { createRateLimiterMiddleware } from '@/modules/core/rest/ratelimiter'
 import { TIME_MS } from '@speckle/shared'
 
 const GRAPHQL_PATH = '/graphql'
@@ -224,7 +223,7 @@ export function buildApolloSubscriptionServer(params: {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
             headers: sanitizeHeaders(headers),
-            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
+            ...(isRequestContext(reqCtx) ? { req: { id: reqCtx.requestId } } : {})
           },
           'Websocket disconnected.'
         )
@@ -340,11 +339,9 @@ export async function init() {
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
-  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
+  app.use(createRateLimiterMiddleware({ rateLimiterEnabled: isRateLimiterEnabled() })) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
   app.use(setContentSecurityPolicyHeaderMiddleware)
-  if (enableMixpanel())
-    app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init({ app, metricsRegister: prometheusClient.register })
@@ -401,7 +398,8 @@ const shouldUseFrontendProxy = () => isDevEnv()
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'
   const frontendPort = process.env.FRONTEND_PORT || 8081
-  const { createProxyMiddleware } = await import('http-proxy-middleware')
+  const { createProxyMiddleware } =
+    require('http-proxy-middleware') as typeof import('http-proxy-middleware')
 
   // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
   // slowing everything down

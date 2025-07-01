@@ -4,19 +4,27 @@ import {
   metricInputFileSize,
   metricOperationErrors
 } from '@/controller/prometheusMetrics.js'
-import { getDbClients } from '@/knex.js'
+import { DbClient, getDbClients } from '@/clients/knex.js'
 
 import { downloadFile } from '@/controller/filesApi.js'
 import fs from 'fs'
-import { spawn } from 'child_process'
 
 import { ServerAPI } from '@/controller/api.js'
 import { downloadDependencies } from '@/controller/objDependencies.js'
 import { logger } from '@/observability/logging.js'
 import { Nullable, Scopes, wait, TIME_MS } from '@speckle/shared'
 import { Knex } from 'knex'
-import { Logger } from 'pino'
-import { getIfcDllPath, useLegacyIfcImporter } from '@/controller/helpers/env.js'
+import {
+  getIfcDllPath,
+  isProdEnv,
+  useLegacyIfcImporter
+} from '@/controller/helpers/env.js'
+import { isErrorOutput, isSuccessOutput } from '@/common/output.js'
+import { runProcessWithTimeout } from '@/common/processHandling.js'
+import {
+  getConnectionSettings,
+  obfuscateConnectionString
+} from '@speckle/shared/environment/db'
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -44,23 +52,42 @@ async function startTask(knex: Knex) {
       LIMIT 1
     ) as task
     WHERE file_uploads."id" = task."id"
-    RETURNING file_uploads."id"
-  `)) satisfies { rows: { id: string }[] }
+    RETURNING file_uploads."id", file_uploads."streamId"
+  `)) satisfies { rows: { id: string; streamId: string }[] }
   return rows[0]
 }
 
 async function doTask(
-  mainDb: Knex,
+  mainDbs: DbClient,
   regionName: string,
   taskDb: Knex,
-  task: { id: string }
+  task: { id: string; streamId: string }
 ) {
+  const mainDb = mainDbs.public
+
+  // In local envs these URIs can be docker-compatible only, and can break local envs
+  const mainDbPrivate = isProdEnv() && mainDbs.private ? mainDbs.private : mainDb
+
   const taskId = task.id
+  let taskLogger = logger.child({ taskId })
+
+  // TODO: Troubleshooting listen/notify issues
+  const connectionSettings = getConnectionSettings(mainDbPrivate)
+  const mainDbConnectionString = obfuscateConnectionString(
+    connectionSettings.connectionString || ''
+  )
 
   // Mark task as started
-  await mainDb.raw(`NOTIFY file_import_started, '${task.id}'`)
+  await mainDbPrivate.raw(
+    `NOTIFY file_import_started, '${task.id}:::${task.streamId}::::::'`
+  )
+  taskLogger.info(
+    {
+      mainDbConnectionString
+    },
+    'Notified file_import_started...'
+  )
 
-  let taskLogger = logger.child({ taskId })
   let tempUserToken: Nullable<string> = null
   let mainServerApi = null
   let taskServerApi = null
@@ -134,7 +161,7 @@ async function doTask(
       userId: info.userId,
       name: 'temp upload token',
       scopes: [Scopes.Streams.Write, Scopes.Streams.Read, Scopes.Profile.Read],
-      lifespan: 1_000_000
+      lifespan: TIME_LIMIT + 5 * TIME_MS.minute // plus 5 minutes buffer to download the file and other overhead
     })
     tempUserToken = token
 
@@ -178,7 +205,8 @@ async function doTask(
           {
             USER_TOKEN: tempUserToken
           },
-          TIME_LIMIT
+          TIME_LIMIT,
+          TMP_RESULTS_PATH
         )
       } else {
         await runProcessWithTimeout(
@@ -197,7 +225,8 @@ async function doTask(
           {
             USER_TOKEN: tempUserToken
           },
-          TIME_LIMIT
+          TIME_LIMIT,
+          TMP_RESULTS_PATH
         )
       }
     } else if (info.fileType.toLowerCase() === 'stl') {
@@ -219,7 +248,8 @@ async function doTask(
         {
           USER_TOKEN: tempUserToken
         },
-        TIME_LIMIT
+        TIME_LIMIT,
+        TMP_RESULTS_PATH
       )
     } else if (info.fileType.toLowerCase() === 'obj') {
       await downloadDependencies({
@@ -249,7 +279,8 @@ async function doTask(
         {
           USER_TOKEN: tempUserToken
         },
-        TIME_LIMIT
+        TIME_LIMIT,
+        TMP_RESULTS_PATH
       )
     } else {
       throw new Error(`File type ${info.fileType} is not supported`)
@@ -293,7 +324,7 @@ async function doTask(
     metricOperationErrors.labels(fileTypeForMetric).inc()
   } finally {
     const { streamId, branchName } = branchMetadata
-    await mainDb.raw(
+    await mainDbPrivate.raw(
       `NOTIFY file_import_update, '${task.id}:::${streamId}:::${branchName}:::${
         newBranchCreated ? 1 : 0
       }'`
@@ -322,116 +353,8 @@ function maybeErrorToString(error: unknown): string {
   }
 }
 
-function isSuccessOutput(
-  maybeSuccessOutput: unknown
-): maybeSuccessOutput is { success: true; commitId: string } {
-  return (
-    !!maybeSuccessOutput &&
-    typeof maybeSuccessOutput === 'object' &&
-    'success' in maybeSuccessOutput &&
-    typeof maybeSuccessOutput.success === 'boolean' &&
-    maybeSuccessOutput.success &&
-    'commitId' in maybeSuccessOutput &&
-    typeof maybeSuccessOutput.commitId === 'string'
-  )
-}
-
-function isErrorOutput(
-  maybeErrorOutput: unknown
-): maybeErrorOutput is { success: false; error: string } {
-  return (
-    !!maybeErrorOutput &&
-    typeof maybeErrorOutput === 'object' &&
-    'error' in maybeErrorOutput &&
-    typeof maybeErrorOutput.error === 'string' &&
-    !!maybeErrorOutput.error
-  )
-}
-
-function runProcessWithTimeout(
-  processLogger: Logger,
-  cmd: string,
-  cmdArgs: string[],
-  extraEnv: Record<string, string>,
-  timeoutMs: number
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    let boundLogger = processLogger.child({ cmd, args: cmdArgs })
-    boundLogger.info('Starting process.')
-    const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
-
-    boundLogger = boundLogger.child({ pid: childProc.pid })
-    childProc.stdout.on('data', (data) => {
-      handleData(data, false, boundLogger)
-    })
-
-    childProc.stderr.on('data', (data) => {
-      handleData(data, true, boundLogger)
-    })
-
-    let timedOut = false
-
-    const timeout = setTimeout(() => {
-      boundLogger.warn('Process timed out. Killing process...')
-
-      timedOut = true
-      childProc.kill(9)
-      const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
-      const output = {
-        success: false,
-        error: rejectionReason
-      }
-      fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
-      reject(new Error(rejectionReason))
-    }, timeoutMs)
-
-    childProc.on('close', (code) => {
-      boundLogger.info({ exitCode: code }, "Process exited with code '{exitCode}'")
-
-      if (timedOut) {
-        return // ignore `close` calls after killing (the promise was already rejected)
-      }
-
-      clearTimeout(timeout)
-
-      if (code === 0) {
-        resolve()
-      } else {
-        reject(new Error(`Parser exited with code ${code}`))
-      }
-    })
-  })
-}
-
-function handleData(data: unknown, isErr: boolean, logger: Logger) {
-  try {
-    if (!Buffer.isBuffer(data)) return
-    const dataAsString = data.toString()
-    dataAsString.split('\n').forEach((line) => {
-      if (!line) return
-      try {
-        JSON.parse(line) // verify if the data is already in JSON format
-        process.stdout.write('\n')
-      } catch {
-        wrapLogLine(line, isErr, logger)
-      }
-    })
-  } catch {
-    wrapLogLine(JSON.stringify(data), isErr, logger)
-  }
-}
-
-function wrapLogLine(line: string, isErr: boolean, logger: Logger) {
-  if (isErr) {
-    logger.error({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
-    return
-  }
-  logger.info({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
-}
-
 const doStuff = async () => {
   const dbClients = await getDbClients()
-  const mainDb = dbClients.main.public
   const dbClientsIterator = infiniteDbClientsIterator(dbClients)
   while (!shouldExit) {
     const [regionName, taskDb]: [string, Knex] = dbClientsIterator.next().value
@@ -442,7 +365,7 @@ const doStuff = async () => {
         await wait(1 * TIME_MS.second)
         continue
       }
-      await doTask(mainDb, regionName, taskDb, task)
+      await doTask(dbClients.main, regionName, taskDb, task)
       await wait(10)
     } catch (err) {
       metricOperationErrors.labels('main_loop').inc()

@@ -2,7 +2,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { workspacePlanQuery } from '~~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   UnpaidWorkspacePlans,
   WorkspacePlanBillingIntervals,
   isPaidPlan as isPaidPlanShared,
@@ -48,17 +48,17 @@ graphql(`
   }
 `)
 
-export const useWorkspacePlan = (slug: string) => {
+export const useWorkspacePlan = (slug: MaybeRef<string>) => {
   const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
   const { prices } = useActiveWorkspacePlanPrices()
 
   const { result } = useQuery(
     workspacePlanQuery,
     () => ({
-      slug
+      slug: unref(slug)
     }),
     () => ({
-      enabled: isBillingIntegrationEnabled.value
+      enabled: isBillingIntegrationEnabled.value && !!unref(slug).length
     })
   )
 
@@ -69,8 +69,8 @@ export const useWorkspacePlan = (slug: string) => {
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
   const isBusinessPlan = computed(
     () =>
-      plan.value?.name === PaidWorkspacePlansNew.Pro ||
-      plan.value?.name === PaidWorkspacePlansNew.ProUnlimited
+      plan.value?.name === PaidWorkspacePlans.Pro ||
+      plan.value?.name === PaidWorkspacePlans.ProUnlimited
   )
   const isUnlimitedPlan = computed(
     () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
@@ -88,9 +88,6 @@ export const useWorkspacePlan = (slug: string) => {
   })
 
   // Plan status information
-  const statusIsExpired = computed(
-    () => plan.value?.status === WorkspacePlanStatuses.Expired
-  )
   const statusIsCanceled = computed(
     () => plan.value?.status === WorkspacePlanStatuses.Canceled
   )
@@ -110,15 +107,15 @@ export const useWorkspacePlan = (slug: string) => {
   // Seat information
   const seats = computed(() => result.value?.workspaceBySlug?.seats)
   const hasAvailableEditorSeats = computed(() => {
-    if (seats.value?.editors.available && seats.value?.editors.assigned) {
-      return seats.value?.editors.available - seats.value?.editors.assigned > 0
+    if (seats.value?.editors.available) {
+      return seats.value.editors.available > 0
     }
     return false
   })
   const editorSeatPriceFormatted = computed(() => {
     if (plan.value?.name && isPaidPlanShared(plan.value?.name)) {
       return formatPrice(
-        prices.value?.[plan.value?.name as PaidWorkspacePlansNew]?.[
+        prices.value?.[plan.value?.name as PaidWorkspacePlans]?.[
           intervalIsYearly.value
             ? WorkspacePlanBillingIntervals.Yearly
             : WorkspacePlanBillingIntervals.Monthly
@@ -132,9 +129,13 @@ export const useWorkspacePlan = (slug: string) => {
     })
   })
 
+  const editorSeatPriceWithIntervalFormatted = computed(() => {
+    const price = editorSeatPriceFormatted.value
+    return `${price}/${intervalIsYearly.value ? 'year' : 'month'}`
+  })
+
   return {
     plan,
-    statusIsExpired,
     statusIsCanceled,
     isFreePlan,
     billingInterval,
@@ -145,6 +146,7 @@ export const useWorkspacePlan = (slug: string) => {
     seats,
     hasAvailableEditorSeats,
     editorSeatPriceFormatted,
+    editorSeatPriceWithIntervalFormatted,
     isUnlimitedPlan,
     isBusinessPlan,
     isPaidPlan,

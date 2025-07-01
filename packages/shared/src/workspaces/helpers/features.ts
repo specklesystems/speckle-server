@@ -19,7 +19,9 @@ export const WorkspacePlanFeatures = <const>{
   // Optional/plan specific
   DomainSecurity: 'domainBasedSecurityPolicies',
   SSO: 'oidcSso',
-  CustomDataRegion: 'workspaceDataRegionSpecificity'
+  CustomDataRegion: 'workspaceDataRegionSpecificity',
+  HideSpeckleBranding: 'hideSpeckleBranding',
+  ExclusiveMembership: 'exclusiveMembership'
 }
 
 export type WorkspacePlanFeatures =
@@ -46,6 +48,15 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.CustomDataRegion]: {
     displayName: 'Custom data residency',
     description: 'Store your data in EU, UK, North America, or Asia Pacific'
+  },
+  [WorkspacePlanFeatures.HideSpeckleBranding]: {
+    displayName: 'Customised viewer',
+    description: 'Hide the Speckle branding in embedded viewer'
+  },
+  [WorkspacePlanFeatures.ExclusiveMembership]: {
+    displayName: 'Exclusive workspace membership',
+    description:
+      'Members of exclusive workspaces cannot join or create other workspaces'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -86,26 +97,6 @@ const baseFeatures = [
 export const WorkspacePaidPlanConfigs: {
   [plan in PaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
-  // Old
-  [PaidWorkspacePlans.Starter]: {
-    plan: PaidWorkspacePlans.Starter,
-    features: [...baseFeatures],
-    limits: unlimited
-  },
-  [PaidWorkspacePlans.Plus]: {
-    plan: PaidWorkspacePlans.Plus,
-    features: [...baseFeatures, WorkspacePlanFeatures.SSO],
-    limits: unlimited
-  },
-  [PaidWorkspacePlans.Business]: {
-    plan: PaidWorkspacePlans.Business,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
-    ],
-    limits: unlimited
-  },
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
     features: [...baseFeatures],
@@ -116,7 +107,6 @@ export const WorkspacePaidPlanConfigs: {
       commentHistory: { value: 30, unit: 'day' }
     }
   },
-  // New
   [PaidWorkspacePlans.TeamUnlimited]: {
     plan: PaidWorkspacePlans.TeamUnlimited,
     features: [...baseFeatures],
@@ -133,7 +123,8 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: {
       projectCount: 10,
@@ -148,7 +139,8 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: {
       projectCount: null,
@@ -162,14 +154,27 @@ export const WorkspacePaidPlanConfigs: {
 export const WorkspaceUnpaidPlanConfigs: {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
-  // Old
+  [UnpaidWorkspacePlans.Enterprise]: {
+    plan: UnpaidWorkspacePlans.Enterprise,
+    features: [
+      ...baseFeatures,
+      WorkspacePlanFeatures.DomainSecurity,
+      WorkspacePlanFeatures.SSO,
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.ExclusiveMembership
+    ],
+    limits: unlimited
+  },
   [UnpaidWorkspacePlans.Unlimited]: {
     plan: UnpaidWorkspacePlans.Unlimited,
     features: [
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.ExclusiveMembership
     ],
     limits: unlimited
   },
@@ -179,23 +184,11 @@ export const WorkspaceUnpaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.HideSpeckleBranding
     ],
     limits: unlimited
   },
-  [UnpaidWorkspacePlans.StarterInvoiced]: {
-    ...WorkspacePaidPlanConfigs.starter,
-    plan: UnpaidWorkspacePlans.StarterInvoiced
-  },
-  [UnpaidWorkspacePlans.PlusInvoiced]: {
-    ...WorkspacePaidPlanConfigs.plus,
-    plan: UnpaidWorkspacePlans.PlusInvoiced
-  },
-  [UnpaidWorkspacePlans.BusinessInvoiced]: {
-    ...WorkspacePaidPlanConfigs.business,
-    plan: UnpaidWorkspacePlans.BusinessInvoiced
-  },
-  // New
   [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
     ...WorkspacePaidPlanConfigs.teamUnlimited,
     plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
@@ -258,4 +251,16 @@ export const workspaceReachedPlanLimit = (
   if (!limits.projectCount || !limits.modelCount) return false
 
   return projectCount === limits.projectCount || modelCount === limits.modelCount
+}
+
+export const workspacePlanHasAccessToFeature = ({
+  plan,
+  feature
+}: {
+  plan: WorkspacePlans
+  feature: WorkspacePlanFeatures
+}): boolean => {
+  const planConfig = WorkspacePlanConfigs[plan]
+  const hasAccess = planConfig.features.includes(feature)
+  return hasAccess
 }

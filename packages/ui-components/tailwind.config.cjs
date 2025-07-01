@@ -1,4 +1,4 @@
-const speckleTheme = require('@speckle/tailwind-theme')
+const { plugin: speckleTheme } = require('@speckle/tailwind-theme')
 const { tailwindContentEntries } = require('@speckle/tailwind-theme/tailwind-configure')
 const formsPlugin = require('@tailwindcss/forms')
 
@@ -8,7 +8,8 @@ module.exports = {
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx,vue}',
+    './src/**/*.stories.{js,ts,jsx,tsx,vue}',
     ...tailwindContentEntries()
   ],
-  plugins: [speckleTheme.default, formsPlugin]
+  plugins: [speckleTheme, formsPlugin]
 }

@@ -2,21 +2,39 @@ import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
 import {
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
-  SaveUploadFile
+  SaveUploadFile,
+  SaveUploadFileV2,
+  SaveUploadFileInput,
+  SaveUploadFileInputV2,
+  GetFileInfoV2,
+  UpdateFileUpload,
+  GetModelUploadsItems,
+  GetModelUploadsBaseArgs,
+  GetModelUploadsTotalCount
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
-  FileUploadRecord
+  FileUploadRecord,
+  FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
 import { Knex } from 'knex'
+import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
+import { clamp } from 'lodash'
 
 const tables = {
   fileUploads: (db: Knex) => db<FileUploadRecord>(FileUploads.name)
 }
 
+const getCursorTools = () =>
+  compositeCursorTools({
+    schema: FileUploads,
+    cols: ['convertedLastUpdate', 'id']
+  })
+
 export const getFileInfoFactory =
   (deps: { db: Knex }): GetFileInfo =>
-  async (params: { fileId: string }) => {
+  async (params) => {
     const { fileId } = params
     const fileInfo = await tables
       .fileUploads(deps.db)
@@ -24,6 +42,22 @@ export const getFileInfoFactory =
       .select<FileUploadRecord[]>('*')
       .first()
     return fileInfo
+  }
+
+export const getFileInfoFactoryV2 =
+  (deps: { db: Knex }): GetFileInfoV2 =>
+  async (params) => {
+    const { fileId, projectId } = params
+    const q = tables
+      .fileUploads(deps.db)
+      .where({ [FileUploads.col.id]: fileId })
+      .select<FileUploadRecord[]>('*')
+
+    if (projectId) q.andWhere(FileUploads.col.streamId, projectId)
+    const fileInfo = await q.first()
+    if (!fileInfo) return undefined
+
+    return { ...fileInfo, projectId: fileInfo.streamId } satisfies FileUploadRecordV2
   }
 
 export const getStreamFileUploadsFactory =
@@ -49,10 +83,24 @@ export const getStreamFileUploadsFactory =
     return fileInfos
   }
 
-export type SaveUploadFileInput = Pick<
-  FileUploadRecord,
-  'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
-> & { fileId: string }
+// While we haven't fully migrated to new endpoint
+const mapFileUploadRecordToV2 = (record: FileUploadRecord): FileUploadRecordV2 => {
+  return {
+    id: record.id,
+    projectId: record.streamId,
+    modelId: record.modelId,
+    userId: record.userId,
+    fileName: record.fileName,
+    fileType: record.fileType,
+    fileSize: record.fileSize,
+    uploadComplete: record.uploadComplete,
+    uploadDate: record.uploadDate,
+    convertedStatus: record.convertedStatus,
+    convertedLastUpdate: record.convertedLastUpdate,
+    convertedMessage: record.convertedMessage,
+    convertedCommitId: record.convertedCommitId
+  } as FileUploadRecordV2
+}
 
 export const saveUploadFileFactory =
   (deps: { db: Knex }): SaveUploadFile =>
@@ -63,7 +111,8 @@ export const saveUploadFileFactory =
     userId,
     fileName,
     fileType,
-    fileSize
+    fileSize,
+    modelId
   }: SaveUploadFileInput) => {
     const dbFile: Partial<FileUploadRecord> = {
       id: fileId,
@@ -73,10 +122,38 @@ export const saveUploadFileFactory =
       fileName,
       fileType,
       fileSize,
-      uploadComplete: true
+      uploadComplete: true,
+      modelId
     }
     const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
     return newRecord as FileUploadRecord
+  }
+
+export const saveUploadFileFactoryV2 =
+  (deps: { db: Knex }): SaveUploadFileV2 =>
+  async ({
+    fileId,
+    projectId,
+    modelId,
+    userId,
+    fileName,
+    fileType,
+    fileSize,
+    modelName
+  }: SaveUploadFileInputV2) => {
+    const dbFile: Partial<SaveUploadFileV2> = {
+      id: fileId,
+      streamId: projectId,
+      branchName: modelName, // @deprecated
+      userId,
+      modelId,
+      fileName,
+      fileType,
+      fileSize,
+      uploadComplete: true
+    }
+    const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
+    return mapFileUploadRecordToV2(newRecord)
   }
 
 export const expireOldPendingUploadsFactory =
@@ -166,4 +243,61 @@ export const getBranchPendingVersionsFactory =
       )
 
     return await q
+  }
+
+export const updateFileUploadFactory =
+  (deps: { db: Knex }): UpdateFileUpload =>
+  async (params) => {
+    const { id, upload } = params
+    const updatedFile = await tables
+      .fileUploads(deps.db)
+      .update(upload)
+      .where({ [FileUploads.col.id]: id })
+      .returning<FileUploadRecord[]>('*')
+
+    if (updatedFile.length === 0) {
+      throw new FileImportJobNotFoundError(`File with id ${id} not found`)
+    }
+    return updatedFile[0]
+  }
+
+const getModelUploadsBaseQueryFactory =
+  (deps: { db: Knex }) => (params: GetModelUploadsBaseArgs) => {
+    const { projectId, modelId } = params
+    const q = tables
+      .fileUploads(deps.db)
+      .where(FileUploads.col.streamId, projectId)
+      .andWhere(FileUploads.col.modelId, modelId)
+
+    return q
+  }
+
+export const getModelUploadsItemsFactory =
+  (deps: { db: Knex }): GetModelUploadsItems =>
+  async (params) => {
+    const limit = clamp(params.limit || 0, 0, 100)
+    const { applyCursorSortAndFilter, resolveNewCursor } = getCursorTools()
+
+    const q = getModelUploadsBaseQueryFactory(deps)(params).limit(limit)
+
+    applyCursorSortAndFilter({
+      query: q,
+      cursor: params.cursor
+    })
+
+    const rows = await q
+    const newCursor = resolveNewCursor(rows)
+
+    return {
+      items: rows,
+      cursor: newCursor
+    }
+  }
+
+export const getModelUploadsTotalCountFactory =
+  (deps: { db: Knex }): GetModelUploadsTotalCount =>
+  async (params) => {
+    const q = getModelUploadsBaseQueryFactory(deps)(params)
+    const [{ count }] = await q.count()
+    return parseInt(count + '')
   }

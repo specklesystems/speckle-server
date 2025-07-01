@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { Roles } from '../../../../core/constants.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
-import { getModelFake, getProjectFake } from '../../../../tests/fakes.js'
+import {
+  getModelFake,
+  getProjectFake,
+  getWorkspaceFake
+} from '../../../../tests/fakes.js'
 import {
   ModelNotFoundError,
   ProjectNoAccessError,
@@ -17,12 +21,10 @@ import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
 
 const buildSUT = (overrides?: Partial<Parameters<typeof canDeleteModelPolicy>[0]>) =>
   canDeleteModelPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getProject: getProjectFake({
       id: 'project-id',
-      workspaceId: null,
-      isDiscoverable: false,
-      isPublic: false
+      workspaceId: null
     }),
     getModel: getModelFake({
       id: 'model-id',
@@ -45,11 +47,9 @@ const buildWorkspaceSUT = (
   buildSUT({
     getProject: getProjectFake({
       id: 'project-id',
-      workspaceId: 'workspace-id',
-      isDiscoverable: false,
-      isPublic: false
+      workspaceId: 'workspace-id'
     }),
-    getWorkspace: async () => ({
+    getWorkspace: getWorkspaceFake({
       id: 'workspace-id',
       slug: 'workspace-slug'
     }),

@@ -35,7 +35,10 @@ import {
 } from '@/modules/workspaces/domain/sso/types'
 import {
   getWorkspaceBySlugFactory,
+  getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
+  getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
@@ -49,6 +52,7 @@ import {
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory,
   findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
@@ -126,6 +130,16 @@ import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billi
 import cryptoRandomString from 'crypto-random-string'
 import { base64Encode } from '@/modules/shared/helpers/cryptoHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import {
+  assignWorkspaceSeatFactory,
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -333,7 +347,33 @@ export const getSsoRouter = (): Router => {
                     }),
                     emitEvent: getEventBus().emit
                   }),
-                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+                  addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+                    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({
+                      db: trx
+                    }),
+                    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                      db: trx
+                    }),
+                    getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+                    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+                    emitWorkspaceEvent: getEventBus().emit,
+                    ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
+                      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                        getWorkspace: getWorkspaceFactory({ db: trx })
+                      }),
+                      eventEmit: getEventBus().emit
+                    }),
+                    assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                        db: trx
+                      }),
+                      eventEmit: getEventBus().emit,
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx })
+                    })
+                  }),
                   findInvite: findInviteFactory({ db: trx }),
                   deleteInvite: deleteInviteFactory({ db: trx })
                 }),

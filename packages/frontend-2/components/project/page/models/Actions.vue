@@ -30,8 +30,13 @@
       @deleted="$emit('model-updated')"
     />
     <ProjectModelPageDialogEmbed
-      v-model:open="embedDialogOpen"
+      v-model:open="isEmbedDialogOpen"
       :project="project"
+      :model-id="model.id"
+    />
+    <ProjectPageModelsUploadsDialog
+      v-model:open="isUploadsDialogOpen"
+      :project-id="project.id"
       :model-id="model.id"
     />
   </div>
@@ -50,6 +55,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { modelVersionsRoute } from '~/lib/common/helpers/route'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment ProjectPageModelsActions on Model {
@@ -72,6 +78,10 @@ graphql(`
 graphql(`
   fragment ProjectPageModelsActions_Project on Project {
     id
+    workspace {
+      id
+      slug
+    }
     ...ProjectsModelPageEmbed_Project
   }
 `)
@@ -83,7 +93,8 @@ enum ActionTypes {
   ViewVersions = 'view-versions',
   UploadVersion = 'upload-version',
   CopyId = 'copy-id',
-  Embed = 'embed'
+  Embed = 'embed',
+  ViewUploads = 'view-uploads'
 }
 
 const emit = defineEmits<{
@@ -105,14 +116,42 @@ const { copy } = useClipboard()
 const menuId = useId()
 const { isLoggedIn } = useActiveUser()
 const router = useRouter()
+const mp = useMixpanel()
+const { statusIsCanceled } = useWorkspacePlan(props.project.workspace?.slug || '')
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
-const embedDialogOpen = ref(false)
 
 const canEdit = computed(() => props.model.permissions.canUpdate)
 const canDelete = computed(() => props.model.permissions.canDelete)
 const canCreateVersion = computed(() => props.model.permissions.canCreateVersion)
+
+const uploadVersionDisabled = computed(() => {
+  if (canCreateVersion.value.code === 'WORKSPACES_NOT_AUTHORIZED_ERROR') {
+    return {
+      disabled: true,
+      tooltip: `Your project role doesn't allow creating new model versions`
+    }
+  }
+  if (statusIsCanceled.value) {
+    return {
+      disabled: true,
+      tooltip:
+        "The workspace's subscription is cancelled, so no new model versions can be created"
+    }
+  }
+  if (!canCreateVersion.value.authorized) {
+    return {
+      disabled: true,
+      tooltip: canCreateVersion.value.message || 'Insufficient permissions'
+    }
+  }
+
+  return {
+    disabled: false,
+    tooltip: ''
+  }
+})
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ...(isLoggedIn.value
@@ -132,14 +171,17 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
       title: 'View versions',
       id: ActionTypes.ViewVersions
     },
+    {
+      title: 'View uploads',
+      id: ActionTypes.ViewUploads
+    },
     ...(isLoggedIn.value
       ? [
           {
             title: 'Upload new version...',
             id: ActionTypes.UploadVersion,
-            disabled: !canCreateVersion.value.authorized,
-            disabledTooltip:
-              canCreateVersion.value.message || 'Insufficient permissions'
+            disabled: uploadVersionDisabled.value.disabled,
+            disabledTooltip: uploadVersionDisabled.value.tooltip
           }
         ]
       : [])
@@ -172,8 +214,14 @@ const isDeleteDialogOpen = computed({
   get: () => openDialog.value === ActionTypes.Delete,
   set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.Delete : null)
 })
-
-const mp = useMixpanel()
+const isEmbedDialogOpen = computed({
+  get: () => openDialog.value === ActionTypes.Embed,
+  set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.Embed : null)
+})
+const isUploadsDialogOpen = computed({
+  get: () => openDialog.value === ActionTypes.ViewUploads,
+  set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.ViewUploads : null)
+})
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
@@ -181,6 +229,8 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
   switch (item.id) {
     case ActionTypes.Rename:
     case ActionTypes.Delete:
+    case ActionTypes.Embed:
+    case ActionTypes.ViewUploads:
       openDialog.value = item.id
       break
     case ActionTypes.Share:
@@ -195,9 +245,6 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.CopyId:
       copy(props.model.id, { successMessage: 'Copied model ID to clipboard' })
-      break
-    case ActionTypes.Embed:
-      embedDialogOpen.value = true
       break
   }
 }

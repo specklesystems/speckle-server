@@ -1,9 +1,9 @@
 'use strict'
-const Environment = require('@speckle/shared/dist/commonjs/environment/index.js')
+const Environment = require('@speckle/shared/environment')
 const {
   loadMultiRegionsConfig,
   configureKnexClient
-} = require('@speckle/shared/dist/commonjs/environment/multiRegionConfig.js')
+} = require('@speckle/shared/environment/multiRegionConfig')
 const { logger } = require('./observability/logging')
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()

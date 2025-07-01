@@ -6,10 +6,7 @@
     <div class="flex flex-col gap-4 w-full max-w-lg items-center">
       <FormRadioGroup v-model="includeUnlimitedAddon" :options="options" is-stacked />
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
-        <div
-          :key="`add-on-${includeUnlimitedAddon}`"
-          v-tippy="!includeUnlimitedAddon ? 'Please choose an option' : ''"
-        >
+        <div v-tippy="!includeUnlimitedAddon ? 'Please choose an option' : ''">
           <FormButton
             :disabled="!includeUnlimitedAddon"
             size="lg"
@@ -30,7 +27,7 @@
 <script setup lang="ts">
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { type PaidWorkspacePlansNew, WorkspacePlans } from '@speckle/shared'
+import { type PaidWorkspacePlans, WorkspacePlans } from '@speckle/shared'
 import { useWorkspaceAddonPrices } from '~/lib/billing/composables/prices'
 import { Currency, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { formatPrice } from '~/lib/billing/helpers/plan'
@@ -46,7 +43,7 @@ const includeUnlimitedAddon = ref<AddonIncludedSelect | undefined>(undefined)
 const addOnPrice = computed(() => {
   if (!state.value.plan) return null
   const price =
-    addonPrices.value?.[Currency.Usd]?.[state.value.plan as PaidWorkspacePlansNew]
+    addonPrices.value?.[Currency.Usd]?.[state.value.plan as PaidWorkspacePlans]
   if (!price) return null
 
   return formatPrice({

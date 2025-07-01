@@ -19,9 +19,10 @@ import {
   QueryAllUserResourceInvites
 } from '@/modules/serverinvites/domain/operations'
 import {
+  ExtendedInvite,
   InviteResourceTarget,
   PrimaryInviteResourceTarget,
-  ServerInviteRecord
+  ProjectInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
 import {
   InviteCreateValidationError,
@@ -30,6 +31,7 @@ import {
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
+  isPrimaryResourceTarget,
   isProjectResourceTarget,
   resolveInviteTargetTitle,
   resolveTarget
@@ -62,9 +64,9 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
-import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
-import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import {
@@ -74,6 +76,8 @@ import {
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
+import { LogicError } from '@/modules/shared/errors'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 
 export const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -107,7 +111,8 @@ export const createWorkspaceInviteFactory =
           ...(input.serverRole
             ? { [ServerInviteResourceType]: mapServerRoleToValue(input.serverRole) }
             : {})
-        }
+        },
+        workspaceSeatType: input.seatType || undefined
       }
 
     return await deps.createAndSendInvite(
@@ -152,20 +157,26 @@ export const collectAndValidateWorkspaceTargetsFactory =
     )
       ? primaryResourceTarget
       : null
+    const chosenWorkspaceSeatType =
+      primaryResourceTarget.workspaceSeatType || WorkspaceSeatType.Viewer
 
-    const targetRole =
+    const targetWorkspaceRole =
       primaryWorkspaceResourceTarget?.role ||
       input.primaryResourceTarget.secondaryResourceRoles?.[
         WorkspaceInviteResourceType
       ] ||
       Roles.Workspace.Guest
+    const targetWorkspaceSeatType =
+      targetWorkspaceRole === Roles.Workspace.Admin
+        ? WorkspaceSeatType.Editor
+        : chosenWorkspaceSeatType
 
     // Role based checks
-    if (!Object.values(Roles.Workspace).includes(targetRole)) {
+    if (!Object.values(Roles.Workspace).includes(targetWorkspaceRole)) {
       throw new InviteCreateValidationError('Unexpected workspace invite role')
     }
 
-    if (targetRole === Roles.Workspace.Admin) {
+    if (targetWorkspaceRole === Roles.Workspace.Admin) {
       const serverGuestInvite = baseTargets.find(
         (target) =>
           target.resourceType === ServerInviteResourceType &&
@@ -220,11 +231,32 @@ export const collectAndValidateWorkspaceTargetsFactory =
     const projectTarget = baseTargets.find(isProjectResourceTarget)
     const projectRole = projectTarget?.role
     if (projectRole && targetUser) {
+      // If target seat type was specified w/ invite, use that (cause we're gonna switch to that upon accept)
+      const seatType =
+        primaryResourceTarget.workspaceSeatType ||
+        (workspaceRoleAndSeat
+          ? workspaceRoleAndSeat.seat.type
+          : targetWorkspaceSeatType)
+
       await deps.validateWorkspaceMemberProjectRoleFactory({
         workspaceId,
         userId: targetUser.id,
-        projectRole
+        projectRole,
+        workspaceAccess: workspaceRoleAndSeat
+          ? {
+              role: workspaceRoleAndSeat.role.role,
+              seatType
+            }
+          : {
+              role: targetWorkspaceRole,
+              seatType
+            }
       })
+
+      // If project target is primary and user target is already a workspace member, mark invite as auto-acceptable
+      if (isPrimaryResourceTarget(projectTarget) && workspaceRole) {
+        projectTarget.autoAccept = true
+      }
     }
 
     // Do further validation only if we're actually planning to invite to a workspace
@@ -258,7 +290,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
     }
 
     if (
-      targetRole !== Roles.Workspace.Guest &&
+      targetWorkspaceRole !== Roles.Workspace.Guest &&
       workspace.domainBasedMembershipProtectionEnabled
     ) {
       const workspaceDomains = await deps.getWorkspaceDomains({
@@ -302,7 +334,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
       : {
           resourceId: workspaceId,
           resourceType: WorkspaceInviteResourceType,
-          role: targetRole
+          role: targetWorkspaceRole
         }
 
     return [...baseTargets, finalWorkspaceResourceTarget]
@@ -373,23 +405,34 @@ ${inviter.name} has just sent you this invitation to join the "${workspace.name}
   }
 
 function buildPendingWorkspaceCollaboratorModel(
-  invite: ServerInviteRecord<WorkspaceInviteResourceTarget>,
+  invite: ExtendedInvite<WorkspaceInviteResourceTarget | ProjectInviteResourceTarget>,
   targetUser: Nullable<UserRecord>,
   token?: string
 ): PendingWorkspaceCollaboratorGraphQLReturn {
   const { userEmail } = resolveTarget(invite.target)
+  if (!invite.workspace) {
+    throw new LogicError(
+      'Retrieved implicit workspace invite without workspace metadata'
+    )
+  }
+
+  const resource = invite.resource
 
   return {
     id: `invite:${invite.id}`,
     inviteId: invite.id,
-    workspaceId: invite.resource.resourceId,
     title: resolveInviteTargetTitle(invite, targetUser),
-    role: invite.resource.role || Roles.Workspace.Member,
     invitedById: invite.inviterId,
     user: targetUser ? removePrivateFields(targetUser) : null,
     updatedAt: invite.updatedAt,
     email: targetUser?.email || userEmail || '',
-    token
+    token,
+    workspaceId: invite.workspace.id,
+    role:
+      (isWorkspaceResourceTarget(resource)
+        ? resource.role
+        : resource.secondaryResourceRoles?.[WorkspaceInviteResourceType]) ||
+      Roles.Workspace.Member
   }
 }
 
@@ -416,10 +459,7 @@ export const getUserPendingWorkspaceInviteFactory =
       workspaceId = (await deps.getWorkspaceBySlug({ workspaceSlug }))?.id
     }
 
-    const invite = await deps.findInvite<
-      typeof WorkspaceInviteResourceType,
-      WorkspaceRoles
-    >({
+    const invite = await deps.findInvite<WorkspaceInviteResourceTarget>({
       target: !token ? userTarget : undefined,
       token: token || undefined,
       resourceFilter: {
@@ -449,10 +489,7 @@ export const getUserPendingWorkspaceInvitesFactory =
       throw new InviteNotFoundError('Nonexistant user specified')
     }
 
-    const invites = await deps.getUserResourceInvites<
-      typeof WorkspaceInviteResourceType,
-      WorkspaceRoles
-    >({
+    const invites = await deps.getUserResourceInvites<WorkspaceInviteResourceTarget>({
       userId,
       resourceType: WorkspaceInviteResourceType
     })
@@ -471,10 +508,7 @@ export const getPendingWorkspaceCollaboratorsFactory =
     const { workspaceId, filter } = params
 
     // Get all pending invites
-    const invites = await deps.queryAllResourceInvites<
-      typeof WorkspaceInviteResourceType,
-      WorkspaceRoles
-    >({
+    const invites = await deps.queryAllResourceInvites<WorkspaceInviteResourceTarget>({
       resourceId: workspaceId,
       resourceType: WorkspaceInviteResourceType,
       search: filter?.search || undefined
@@ -494,20 +528,29 @@ export const getPendingWorkspaceCollaboratorsFactory =
 
       results.push(buildPendingWorkspaceCollaboratorModel(invite, user))
     }
-
     return results
   }
 
 export const validateWorkspaceInviteBeforeFinalizationFactory =
-  (deps: { getWorkspace: GetWorkspace }): ValidateResourceInviteBeforeFinalization =>
+  (deps: {
+    getWorkspace: GetWorkspace
+    validateProjectInviteBeforeFinalization: ValidateResourceInviteBeforeFinalization
+  }): ValidateResourceInviteBeforeFinalization =>
   async (params) => {
     const { invite, finalizerUserId, action, finalizerResourceAccessLimits } = params
 
-    if (invite.resource.resourceType !== WorkspaceInviteResourceType) {
-      throw new InviteFinalizingError(
-        'Attempting to finalize non-workspace invite as workspace invite',
-        { info: { invite, finalizerUserId } }
-      )
+    const resourceType = invite.resource.resourceType
+    if (resourceType !== WorkspaceInviteResourceType) {
+      // If this is a project invite, delegate to the project invite validator
+      // (may be an implicit workspace invite)
+      if (resourceType === ProjectInviteResourceType) {
+        return await deps.validateProjectInviteBeforeFinalization(params)
+      } else {
+        throw new InviteFinalizingError(
+          'Attempting to finalize non-workspace invite as workspace invite',
+          { info: { invite, finalizerUserId } }
+        )
+      }
     }
 
     // If decline, skip all further validation
@@ -557,16 +600,23 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
 export const processFinalizedWorkspaceInviteFactory =
   (deps: {
     getWorkspace: GetWorkspace
-    updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
+    updateWorkspaceRole: ReturnType<typeof addOrUpdateWorkspaceRoleFactory>
+    processFinalizedProjectInvite: ProcessFinalizedResourceInvite
   }): ProcessFinalizedResourceInvite =>
   async (params) => {
     const { invite, finalizerUserId, action } = params
 
     if (!isWorkspaceResourceTarget(invite.resource)) {
-      throw new InviteFinalizingError(
-        'Attempting to finalize non-workspace invite as workspace invite',
-        { info: params }
-      )
+      // If this is a project invite, delegate to the project invite processor
+      // (may be an implicit workspace invite)
+      if (isProjectResourceTarget(invite.resource)) {
+        return deps.processFinalizedProjectInvite(params)
+      } else {
+        throw new InviteFinalizingError(
+          'Attempting to finalize non-workspace invite as workspace invite',
+          { info: params }
+        )
+      }
     }
 
     if (action === InviteFinalizationAction.DECLINE) {
@@ -591,7 +641,8 @@ export const processFinalizedWorkspaceInviteFactory =
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member,
         preventRoleDowngrade: true,
-        updatedByUserId: invite.inviterId
+        updatedByUserId: invite.inviterId,
+        seatType: invite.resource.workspaceSeatType
       })
     }
   }

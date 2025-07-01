@@ -1,48 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
   doesPlanIncludeUnlimitedProjectsAddon,
-  isNewWorkspacePlan,
   isSelfServeAvailablePlan,
   WorkspacePlans
 } from './plans.js'
 
 describe('plan helpers', () => {
-  describe('isNewWorkspacePlan', () => {
-    const planCases: {
-      [P in WorkspacePlans]: boolean
-    } = <const>{
-      business: false,
-      businessInvoiced: false,
-      plus: false,
-      plusInvoiced: false,
-      starter: false,
-      starterInvoiced: false,
-      free: true,
-      academia: true,
-      unlimited: true,
-      pro: true,
-      proUnlimited: true,
-      proUnlimitedInvoiced: true,
-      team: true,
-      teamUnlimited: true,
-      teamUnlimitedInvoiced: true
-    }
-    it.each(Object.entries(planCases))('plan %s is new type -> %s', (plan, isNew) => {
-      const result = isNewWorkspacePlan(plan as WorkspacePlans)
-      expect(result).toStrictEqual(isNew)
-    })
-  })
-
   describe('doesPlanIncludeUnlimitedProjectsAddon', () => {
     const planCases: {
       [P in WorkspacePlans]: boolean
     } = <const>{
-      business: false,
-      businessInvoiced: false,
-      plus: false,
-      plusInvoiced: false,
-      starter: false,
-      starterInvoiced: false,
       free: false,
       academia: false,
       unlimited: false,
@@ -51,7 +18,8 @@ describe('plan helpers', () => {
       proUnlimitedInvoiced: false,
       team: false,
       teamUnlimited: true,
-      teamUnlimitedInvoiced: false
+      teamUnlimitedInvoiced: false,
+      enterprise: false
     }
     it.each(Object.entries(planCases))(
       'plan %s include the paid unlimited projects addon -> %s',
@@ -66,12 +34,6 @@ describe('plan helpers', () => {
     const planCases: {
       [P in WorkspacePlans]: boolean
     } = <const>{
-      business: false,
-      businessInvoiced: false,
-      plus: false,
-      plusInvoiced: false,
-      starter: false,
-      starterInvoiced: false,
       free: true,
       academia: false,
       unlimited: false,
@@ -80,7 +42,8 @@ describe('plan helpers', () => {
       proUnlimitedInvoiced: false,
       team: true,
       teamUnlimited: true,
-      teamUnlimitedInvoiced: false
+      teamUnlimitedInvoiced: false,
+      enterprise: false
     }
     it.each(Object.entries(planCases))(
       'is plan %s available self served -> %s',

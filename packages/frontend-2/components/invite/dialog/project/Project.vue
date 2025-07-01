@@ -1,51 +1,61 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    prevent-close-on-click-outside
-    :buttons="dialogButtons"
-    max-width="md"
-  >
-    <template #header>Invite to project</template>
-    <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
-      Search existing workspace members or invite entirely new.
-    </p>
-    <form @submit="onSubmit">
-      <div class="flex flex-col gap-y-3 text-foreground">
-        <template v-for="(item, index) in fields" :key="item.key">
-          <InviteDialogProjectRow
-            v-model="item.value"
-            :item="item"
-            :index="index"
-            :show-delete="fields.length > 1"
-            :can-invite-new-members="isAdmin || !isInWorkspace"
-            :show-project-roles="!isInWorkspace"
-            :show-label="index === 0"
-            :is-in-workspace="isInWorkspace"
-            @remove="removeInvite(index)"
-            @update:model-value="(value: InviteProjectItem) => (item.value = value)"
-            @add-multiple-emails="addMultipleEmails"
-          />
-        </template>
-        <div>
-          <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
-            Add another user
-          </FormButton>
+  <div>
+    <LayoutDialog
+      v-model:open="isOpen"
+      prevent-close-on-click-outside
+      :buttons="dialogButtons"
+      max-width="md"
+    >
+      <template #header>
+        {{ isInWorkspace && !isAdmin ? 'Add to project' : 'Invite to project' }}
+      </template>
+      <p v-if="isInWorkspace" class="text-foreground text-body-xs mb-3">
+        {{
+          isAdmin
+            ? 'Search for existing workspace users or invite new users.'
+            : 'Search for existing workspace users.'
+        }}
+      </p>
+      <form @submit="onSubmit">
+        <div class="flex flex-col gap-y-3 text-foreground">
+          <template v-for="(item, index) in fields" :key="item.key">
+            <InviteDialogProjectRow
+              v-model="item.value"
+              :project="project"
+              :item="item"
+              :index="index"
+              :show-delete="fields.length > 1"
+              show-project-roles
+              :show-label="index === 0"
+              @remove="removeInvite(index)"
+              @update:model-value="(value: InviteProjectItem) => (item.value = value)"
+              @add-multiple-emails="addMultipleEmails"
+            />
+          </template>
+          <div>
+            <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+              Add another user
+            </FormButton>
+          </div>
         </div>
-      </div>
-    </form>
-    <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      As a project owner you can only add existing workspace members to the project. Ask
-      a workspace admin if you need to invite new people to the workspace.
-    </p>
-    <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      New people you invite will join as workspace guests on a free Viewer seat with
-      access only to this project. Give them an Editor seat later if they need to
-      contribute to this project beyond just viewing and commenting.
-    </p>
-  </LayoutDialog>
+      </form>
+      <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
+        As a project owner you can only add existing workspace users to the project. Ask
+        a workspace admin if you need to invite new users to the workspace.
+      </p>
+      <p v-else-if="workspaceCostInfo" class="text-foreground-2 text-body-2xs py-3">
+        {{ workspaceCostInfo }}
+      </p>
+    </LayoutDialog>
+    <WorkspaceAdditionalSeatsChargeDisclaimer
+      v-model:open="showAdditionalSeatsDisclaimer"
+      :editor-count="purchasableEditorCount"
+      :workspace-slug="workspaceSlug"
+      @confirm="sendInvites"
+    />
+  </div>
 </template>
+
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
@@ -60,7 +70,8 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { Roles } from '@speckle/shared'
+import { Roles, SeatTypes } from '@speckle/shared'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment InviteDialogProject_Project on Project {
@@ -76,7 +87,9 @@ graphql(`
         domain
         id
       }
+      ...WorkspacesPlan_Workspace
     }
+    ...InviteDialogProjectRow_Project
   }
 `)
 
@@ -104,6 +117,12 @@ const {
   remove: removeInvite
 } = useFieldArray<InviteProjectItem>('fields')
 
+const showAdditionalSeatsDisclaimer = ref(false)
+
+const workspaceSlug = computed(() => props.project.workspace?.slug || '')
+const { isPaidPlan, editorSeatPriceWithIntervalFormatted } =
+  useWorkspacePlan(workspaceSlug)
+
 const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -114,13 +133,32 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
 
   {
-    text: 'Invite',
+    text: isInWorkspace.value && !isAdmin.value ? 'Add' : 'Invite',
     props: {
       submit: true
     },
     onClick: onSubmit
   }
 ])
+
+const workspaceCostInfo = computed(() => {
+  if (!isPaidPlan.value || !isInWorkspace.value) return ''
+  return `Viewer seats are free. You'll be charged ${editorSeatPriceWithIntervalFormatted.value} for each Editor seat when they accept. We'll use any unused Editor seats from your plan first.`
+})
+
+const purchasableEditorCount = computed(() => {
+  if (!isPaidPlan.value) return 0
+  const seatsAvailable = props.project.workspace?.seats?.editors?.available || 0
+  const newEditorContributors = fields.value.filter((i) => {
+    // Has to be a contributor
+    if (i.value.projectRole !== Roles.Stream.Contributor) return false
+
+    // Has to not have a seat already
+    if (i.value.userInfo?.seatType === SeatTypes.Editor) return false
+    return true
+  }).length
+  return Math.max(0, newEditorContributors - seatsAvailable)
+})
 
 const addInviteItem = () => {
   pushInvite({
@@ -145,12 +183,20 @@ const addMultipleEmails = (emails: string[]) => {
   })
 }
 
-const onSubmit = handleSubmit(async () => {
+const onSubmit = () => {
+  if (purchasableEditorCount.value > 0) {
+    showAdditionalSeatsDisclaimer.value = true
+  } else {
+    sendInvites()
+  }
+}
+
+const sendInvites = handleSubmit(async () => {
   const invites = fields.value
     .filter((invite) => invite.value.email || invite.value.userId)
     .map((invite) => invite.value)
 
-  const inputs: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[] =
+  const inputs: Array<ProjectInviteCreateInput | WorkspaceProjectInviteCreateInput> =
     invites.map((u) => ({
       role: u.projectRole,
       ...(isInWorkspace.value
@@ -158,10 +204,13 @@ const onSubmit = handleSubmit(async () => {
           ? { email: u.email }
           : { userId: u.userId }
         : { email: u.email }),
-      ...(props.project?.workspace?.id
+      ...(isInWorkspace.value
         ? {
-            workspaceRole: Roles.Workspace.Guest
+            workspaceRole: u.userInfo?.role || Roles.Workspace.Guest
           }
+        : {}),
+      ...(isInWorkspace.value && u.projectRole !== Roles.Stream.Reviewer
+        ? { seatType: SeatTypes.Editor }
         : {})
     }))
 
@@ -170,20 +219,22 @@ const onSubmit = handleSubmit(async () => {
     return
   }
 
-  await createInvite(props.project.id, inputs)
+  const result = await createInvite(props.project.id, inputs)
 
-  mixpanel.track('Invite Action', {
-    type: 'project invite',
-    name: 'send',
-    multiple: inputs.length !== 1,
-    count: inputs.length,
-    hasProject: true,
-    isNewWorkspaceMember: isAdmin.value,
-    // eslint-disable-next-line camelcase
-    workspace_id: props.project.workspace?.id
-  })
+  if (result?.id) {
+    mixpanel.track('Invite Action', {
+      type: 'project invite',
+      name: 'send',
+      multiple: inputs.length !== 1,
+      count: inputs.length,
+      hasProject: true,
+      isNewWorkspaceMember: isAdmin.value,
+      // eslint-disable-next-line camelcase
+      workspace_id: props.project.workspace?.id
+    })
 
-  isOpen.value = false
+    isOpen.value = false
+  }
 })
 
 watch(isOpen, (newVal, oldVal) => {

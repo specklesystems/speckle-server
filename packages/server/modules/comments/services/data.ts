@@ -83,7 +83,13 @@ export function convertStateToLegacyData(state: SerializedViewerState): LegacyDa
       passMax: state.viewer.metadata.filteringState?.passMax || null,
       hiddenIds: state.ui.filters.hiddenObjectIds.slice(),
       isolatedIds: state.ui.filters.isolatedObjectIds.slice(),
-      sectionBox: state.ui.sectionBox,
+      sectionBox: {
+        min: (state.ui?.sectionBox?.min as number[]) || [0, 0, 0],
+        max: (state.ui?.sectionBox?.max as number[]) || [0, 0, 0],
+        rotation: (state.ui?.sectionBox?.rotation as number[]) || [
+          1, 0, 0, 0, 1, 0, 0, 0, 1
+        ]
+      },
       propertyInfoKey: state.ui.filters.propertyFilter.key
     },
     location: {
@@ -91,7 +97,13 @@ export function convertStateToLegacyData(state: SerializedViewerState): LegacyDa
       y: selectionLocation[1] || 0,
       z: selectionLocation[2] || 0
     },
-    sectionBox: state.ui.sectionBox,
+    sectionBox: {
+      min: (state.ui?.sectionBox?.min as number[]) || [0, 0, 0],
+      max: (state.ui?.sectionBox?.max as number[]) || [0, 0, 0],
+      rotation: (state.ui?.sectionBox?.rotation as number[]) || [
+        1, 0, 0, 0, 1, 0, 0, 0, 1
+      ]
+    },
     selection: null
   }
   return ret
@@ -140,7 +152,7 @@ export const convertLegacyDataToStateFactory =
         filters: {
           isolatedObjectIds: data.filters?.isolatedIds || [],
           hiddenObjectIds: data.filters?.hiddenIds || [],
-          selectedObjectIds: [],
+          selectedObjectApplicationIds: {},
           propertyFilter: {
             key: data.filters?.propertyInfoKey || null,
             isApplied: true
@@ -160,7 +172,8 @@ export const convertLegacyDataToStateFactory =
         sectionBox: sectionBox
           ? {
               min: (sectionBox.min as number[]) || [0, 0, 0],
-              max: (sectionBox.max as number[]) || [0, 0, 0]
+              max: (sectionBox.max as number[]) || [0, 0, 0],
+              rotation: (sectionBox.rotation as number[]) || [1, 0, 0, 0, 1, 0, 0, 0, 1]
             }
           : null,
         lightConfig: {},

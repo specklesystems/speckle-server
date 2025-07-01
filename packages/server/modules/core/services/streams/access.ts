@@ -15,7 +15,6 @@ import {
   StreamInvalidAccessError
 } from '@/modules/core/errors/stream'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { BadRequestError, ForbiddenError, LogicError } from '@/modules/shared/errors'
 import { DependenciesOf } from '@/modules/shared/helpers/factory'
@@ -190,7 +189,8 @@ export const addOrUpdateStreamCollaboratorFactory =
         activityUserId: addedById,
         targetUserId: userId,
         role: role as StreamRoles,
-        projectId: streamId
+        projectId: streamId,
+        fromInvite
       }
     })
 
@@ -203,16 +203,7 @@ export const addOrUpdateStreamCollaboratorFactory =
       { trackProjectUpdate }
     )) as StreamRecord // validateStreamAccess already checked that it exists
 
-    if (fromInvite) {
-      await deps.emitEvent({
-        eventName: ServerInvitesEvents.Finalized,
-        payload: {
-          invite: fromInvite,
-          finalizerUserId: addedById,
-          accept: true
-        }
-      })
-    } else {
+    if (!fromInvite) {
       await deps.emitEvent({
         eventName: ProjectEvents.PermissionsAdded,
         payload: {

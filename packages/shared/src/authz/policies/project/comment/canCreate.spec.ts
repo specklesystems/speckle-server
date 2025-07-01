@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { OverridesOf } from '../../../../tests/helpers/types.js'
 import { canCreateProjectCommentPolicy } from './canCreate.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
-import { getProjectFake } from '../../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes.js'
 import { Roles } from '../../../../core/constants.js'
 import {
   ProjectNoAccessError,
@@ -12,16 +12,15 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canCreateProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canCreateProjectCommentPolicy>) =>
     canCreateProjectCommentPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.User,
@@ -39,12 +38,11 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false,
-        allowPublicComments: false
+        allowPublicComments: false,
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),
@@ -76,8 +74,7 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true,
+        visibility: ProjectVisibility.Public,
         allowPublicComments: true
       }),
       getProjectRole: async () => null
@@ -112,8 +109,7 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true,
+        visibility: ProjectVisibility.Public,
         allowPublicComments: false
       })
     })

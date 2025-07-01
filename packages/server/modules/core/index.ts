@@ -44,6 +44,7 @@ import {
 } from '@/modules/stats/repositories'
 import { getServerTotalModelCountFactory } from '@/modules/core/services/branch/retrieval'
 import { getServerTotalVersionCountFactory } from '@/modules/core/services/commit/retrieval'
+import { bullMonitoringRouterFactory } from '@/modules/core/rest/monitoring'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -90,14 +91,15 @@ const coreModule: SpeckleModule<{
 
     if (isInitial) {
       // Setup global pg notification listener
-      setupResultListener()
+      await setupResultListener()
 
       // Init mp
       mp.initialize()
 
       // Setup test subs
       if (isTestEnv()) {
-        const { startEmittingTestSubs } = await import('@/test/graphqlHelper')
+        const { startEmittingTestSubs } =
+          require('@/test/graphqlHelper') as typeof import('@/test/graphqlHelper')
         stopTestSubs = await startEmittingTestSubs()
       }
 
@@ -122,7 +124,7 @@ const coreModule: SpeckleModule<{
       })()
     }
   },
-  async finalize() {
+  async finalize({ app }) {
     // Update server profile in mp
     await updateServerMixpanelProfileFactory({
       getServerInfo: getCachedServerInfoFactory({ db }),
@@ -134,6 +136,9 @@ const coreModule: SpeckleModule<{
       getServerTotalVersionCount: getServerTotalVersionCountFactory(),
       logger: coreLogger
     })()
+
+    // Run BullMQ monitor once the app is fully ready
+    app.use(bullMonitoringRouterFactory())
   },
   async shutdown() {
     await shutdownResultListener()

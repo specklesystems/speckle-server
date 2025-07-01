@@ -2,7 +2,11 @@ import { MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { WorkspaceSsoProviderRecord } from '@/modules/workspaces/domain/sso/types'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
-import { Workspace, WorkspaceJoinRequest } from '@/modules/workspacesCore/domain/types'
+import {
+  LimitedWorkspace,
+  Workspace,
+  WorkspaceJoinRequest
+} from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
 export type WorkspaceGraphQLReturn = Workspace
@@ -36,6 +40,9 @@ export type PendingWorkspaceCollaboratorGraphQLReturn = {
 }
 
 export type WorkspaceCollaboratorGraphQLReturn = WorkspaceTeamMember
+
+export type LimitedWorkspaceGraphQLReturn = LimitedWorkspace
+export type LimitedWorkspaceCollaboratorGraphQLReturn = WorkspaceTeamMember
 
 export type WorkspacePermissionChecksGraphQLReturn = {
   workspaceId: string

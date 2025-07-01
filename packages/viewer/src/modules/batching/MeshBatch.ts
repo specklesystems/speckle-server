@@ -193,6 +193,7 @@ export class MeshBatch extends PrimitiveBatch {
   public buildBatch(): Promise<void> {
     let indicesCount = 0
     let attributeCount = 0
+    const bounds: Box3 = new Box3()
     for (let k = 0; k < this.renderViews.length; k++) {
       const ervee = this.renderViews[k]
       /** Catering to typescript
@@ -206,6 +207,7 @@ export class MeshBatch extends PrimitiveBatch {
       }
       indicesCount += ervee.renderData.geometry.attributes.INDEX.length
       attributeCount += ervee.renderData.geometry.attributes.POSITION.length
+      bounds.union(ervee.aabb)
     }
 
     const hasVertexColors =
@@ -278,8 +280,10 @@ export class MeshBatch extends PrimitiveBatch {
       batchIndices,
       hasVertexColors ? color : undefined
     )
+    const needsRTE = Geometry.needsRTE(bounds)
+    if (needsRTE) Geometry.updateRTEGeometry(geometry, position)
 
-    this.primitive = new SpeckleMesh(geometry)
+    this.primitive = new SpeckleMesh(geometry, needsRTE)
     this.primitive.setBatchObjects(batchObjects, this.transformStorage)
     this.primitive.setBatchMaterial(this.batchMaterial)
     this.primitive.buildTAS()
@@ -342,8 +346,6 @@ export class MeshBatch extends PrimitiveBatch {
     this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
     this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
     geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
-
-    Geometry.updateRTEGeometry(geometry, position)
 
     return geometry
   }

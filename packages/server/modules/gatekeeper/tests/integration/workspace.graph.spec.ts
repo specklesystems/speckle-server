@@ -35,7 +35,7 @@ import {
 } from '@/test/speckle-helpers/branchHelper'
 import { createTestCommit, createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { Roles } from '@speckle/shared'
+import { PaidWorkspacePlans, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
@@ -79,7 +79,7 @@ describe('Workspaces Billing', () => {
           ownerId: ''
         }
         await createTestWorkspace(workspace, testAdminUser, {
-          addPlan: { name: 'business', status: 'valid' }
+          addPlan: { name: PaidWorkspacePlans.Team, status: 'valid' }
         })
 
         const res = await apollo.execute(GetWorkspaceDocument, {
@@ -89,7 +89,7 @@ describe('Workspaces Billing', () => {
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace?.readOnly).to.be.false
       })
-      it('should return true for workspace plan status expired', async () => {
+      it('should return true for workspace plan status canceled', async () => {
         const workspace = {
           id: '',
           name: 'test ws',
@@ -97,7 +97,7 @@ describe('Workspaces Billing', () => {
           ownerId: ''
         }
         await createTestWorkspace(workspace, testAdminUser, {
-          addPlan: { name: 'business', status: 'expired' }
+          addPlan: { name: PaidWorkspacePlans.Team, status: 'canceled' }
         })
 
         const res = await apollo.execute(GetWorkspaceDocument, {
@@ -106,24 +106,6 @@ describe('Workspaces Billing', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace?.readOnly).to.be.true
-      })
-      it('should return false for workspace plan status trial', async () => {
-        const workspace = {
-          id: '',
-          name: 'test ws',
-          slug: cryptoRandomString({ length: 10 }),
-          ownerId: ''
-        }
-        await createTestWorkspace(workspace, testAdminUser, {
-          addPlan: { name: 'business', status: 'trial' }
-        })
-
-        const res = await apollo.execute(GetWorkspaceDocument, {
-          workspaceId: workspace.id
-        })
-
-        expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace?.readOnly).to.be.false
       })
     }
   )
@@ -155,6 +137,7 @@ describe('Workspaces Billing', () => {
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
               currency: 'usd',
               billingInterval: 'monthly',
+              updateIntent: null,
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),
                 customerId: cryptoRandomString({ length: 10 }),
@@ -205,6 +188,7 @@ describe('Workspaces Billing', () => {
               updatedAt: new Date(),
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
               currency: 'usd',
+              updateIntent: null,
               billingInterval: 'monthly',
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),
@@ -316,7 +300,8 @@ describe('Workspaces Billing', () => {
           authorId: user.id,
           objectId,
           streamId: project.id,
-          branchName: modelWithVersions.name
+          branchName: modelWithVersions.name,
+          branchId: ''
         })
 
         const session = await login(user)

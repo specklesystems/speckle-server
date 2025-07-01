@@ -113,6 +113,15 @@ export default function (app: Express) {
   app.options('/auth/token', corsMiddlewareFactory())
   app.post('/auth/token', corsMiddlewareFactory(), async (req, res) => {
     try {
+      if (!req.body.appId)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided. App Id is required.`
+        )
+      if (!req.body.appSecret)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided. App Secret is required.`
+        )
+
       const createRefreshToken = createRefreshTokenFactory({ db })
       const getApp = getAppFactory({ db })
       const createAppToken = createAppTokenFactory({
@@ -143,9 +152,11 @@ export default function (app: Express) {
       })
 
       // Token refresh
-      if (req.body.refreshToken) {
-        if (!req.body.appId || !req.body.appSecret)
-          throw new BadRequestError('Invalid request - App Id and Secret are required.')
+      if ('refreshToken' in req.body) {
+        if (!req.body.refreshToken)
+          throw new BadRequestError(
+            'Invalid request, insufficient information provided. A valid refresh token is required.'
+          )
 
         const authResponse = await withOperationLogging(
           async () =>
@@ -164,14 +175,13 @@ export default function (app: Express) {
       }
 
       // Access-code - token exchange
-      if (
-        !req.body.appId ||
-        !req.body.appSecret ||
-        !req.body.accessCode ||
-        !req.body.challenge
-      )
+      if (!req.body.accessCode)
         throw new BadRequestError(
-          `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
+          `Invalid request, insufficient information provided. Access Code is required.`
+        )
+      if (!req.body.challenge)
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided. Challenge is required.`
         )
 
       const authResponse = await withOperationLogging(

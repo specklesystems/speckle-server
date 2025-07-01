@@ -52,18 +52,17 @@ import {
 import { type InlineView } from './modules/extensions/CameraController.js'
 import { type CanonicalView } from './modules/extensions/CameraController.js'
 import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
-import {
-  SectionTool,
-  SectionToolEvent,
-  SectionToolEventPayload
-} from './modules/extensions/SectionTool.js'
-import { SectionOutlines } from './modules/extensions/SectionOutlines.js'
+
+import { SectionOutlines } from './modules/extensions/sections/SectionOutlines.js'
 import {
   FilteringExtension,
   type FilteringState
 } from './modules/extensions/FilteringExtension.js'
 import { Extension } from './modules/extensions/Extension.js'
-import { ExplodeExtension } from './modules/extensions/ExplodeExtension.js'
+import {
+  ExplodeEvent,
+  ExplodeExtension
+} from './modules/extensions/ExplodeExtension.js'
 import {
   DiffExtension,
   type DiffResult,
@@ -97,16 +96,12 @@ import { PointBatch } from './modules/batching/PointBatch.js'
 import TextBatch from './modules/batching/TextBatch.js'
 import { ArcticViewPipeline } from './modules/pipeline/Pipelines/ArcticViewPipeline.js'
 import { DefaultPipeline } from './modules/pipeline/Pipelines/DefaultPipeline.js'
-import { EdgesPipeline } from './modules/pipeline/Pipelines/EdgesPipeline.js'
 import { PenViewPipeline } from './modules/pipeline/Pipelines/PenViewPipeline.js'
-import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
+import { SolidViewPipeline } from './modules/pipeline/Pipelines/SolidViewPipeline.js'
 import { TAAPipeline } from './modules/pipeline/Pipelines/TAAPipeline.js'
 import SpeckleRenderer from './modules/SpeckleRenderer.js'
-import { MRTEdgesPipeline } from './modules/pipeline/Pipelines/MRT/MRTEdgesPipeline.js'
 import { RenderTree } from './modules/tree/RenderTree.js'
 import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
-import { MRTShadedViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTShadedViewPipeline.js'
-import { MRTPenViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTPenViewPipeline.js'
 import { ViewMode, ViewModes } from './modules/extensions/ViewModes.js'
 import {
   BaseGPass,
@@ -116,7 +111,10 @@ import {
   PassOptions,
   ProgressiveGPass
 } from './modules/pipeline/Passes/GPass.js'
-import { Pipeline } from './modules/pipeline/Pipelines/Pipeline.js'
+import {
+  DefaultPipelineOptions,
+  Pipeline
+} from './modules/pipeline/Pipelines/Pipeline.js'
 import { ProgressivePipeline } from './modules/pipeline/Pipelines/ProgressivePipeline.js'
 import { DepthPass, DepthPassOptions } from './modules/pipeline/Passes/DepthPass.js'
 import { GeometryPass } from './modules/pipeline/Passes/GeometryPass.js'
@@ -151,9 +149,14 @@ import { StencilPass } from './modules/pipeline/Passes/StencilPass.js'
 import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
 import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
 import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
-import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
+import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
+import {
+  SectionTool,
+  SectionToolEvent,
+  SectionToolEventPayload
+} from './modules/extensions/sections/SectionTool.js'
 import { WebXrViewer } from './modules/WebXrViewer.js'
 import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
 import {
@@ -161,6 +164,19 @@ import {
   EdgesPass,
   EdgesPassOptions
 } from './modules/pipeline/Passes/EdgesPass.js'
+import {
+  Measurement,
+  MeasurementState
+} from './modules/extensions/measurements/Measurement.js'
+import { PointToPointMeasurement } from './modules/extensions/measurements/PointToPointMeasurement.js'
+import { PerpendicularMeasurement } from './modules/extensions/measurements/PerpendicularMeasurement.js'
+import { AreaMeasurement } from './modules/extensions/measurements/AreaMeasurement.js'
+import { PointMeasurement } from './modules/extensions/measurements/PointMeasurement.js'
+import {
+  DefaultEdgesPipelineOptions,
+  EdgesPipeline
+} from './modules/pipeline/Pipelines/EdgesPipeline.js'
+import { Geometry } from './modules/converter/Geometry.js'
 
 export {
   Viewer,
@@ -176,7 +192,13 @@ export {
   WorldTree,
   RenderTree,
   VisualDiffMode,
+  Measurement,
+  PointToPointMeasurement,
+  PerpendicularMeasurement,
+  AreaMeasurement,
+  PointMeasurement,
   MeasurementType,
+  MeasurementState,
   Units,
   Extension,
   SelectionExtension,
@@ -187,10 +209,12 @@ export {
   FilteringExtension,
   CameraEvent,
   ExplodeExtension,
+  ExplodeEvent,
   DiffExtension,
   Loader,
   SpeckleConverter,
   GeometryConverter,
+  Geometry,
   SpeckleLoader,
   ObjLoader,
   LoaderEvent,
@@ -251,14 +275,13 @@ export {
   ProgressivePipeline,
   DefaultPipeline,
   EdgesPipeline,
-  ShadedViewPipeline,
+  SolidViewPipeline,
   PenViewPipeline,
   ArcticViewPipeline,
   TAAPipeline,
-  MRTEdgesPipeline,
-  MRTShadedViewPipeline,
-  MRTPenViewPipeline,
-  BasitPipeline,
+  ShadedViewPipeline,
+  DefaultPipelineOptions,
+  DefaultEdgesPipelineOptions,
   ViewModes,
   ViewMode,
   FilterMaterial,

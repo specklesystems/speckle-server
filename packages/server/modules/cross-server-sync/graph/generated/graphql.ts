@@ -993,18 +993,6 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
-export type DiscoverableWorkspaceCollaborator = {
-  __typename?: 'DiscoverableWorkspaceCollaborator';
-  avatar?: Maybe<Scalars['String']['output']>;
-};
-
-export type DiscoverableWorkspaceCollaboratorCollection = {
-  __typename?: 'DiscoverableWorkspaceCollaboratorCollection';
-  cursor?: Maybe<Scalars['String']['output']>;
-  items: Array<DiscoverableWorkspaceCollaborator>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -1044,6 +1032,39 @@ export type FileUpload = {
   userId: Scalars['String']['output'];
 };
 
+export type FileUploadCollection = {
+  __typename?: 'FileUploadCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<FileUpload>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type FileUploadMutations = {
+  __typename?: 'FileUploadMutations';
+  /**
+   * Generate a pre-signed url to which a file can be uploaded.
+   * After uploading the file, call mutation startFileImport to register the completed upload.
+   */
+  generateUploadUrl: GenerateFileUploadUrlOutput;
+  /**
+   * Before calling this mutation, call generateUploadUrl to get the
+   * pre-signed url and blobId. Then upload the file to that url.
+   * Once the upload to the pre-signed url is completed, this mutation should be
+   * called to register the completed upload and create the blob metadata.
+   */
+  startFileImport: FileUpload;
+};
+
+
+export type FileUploadMutationsGenerateUploadUrlArgs = {
+  input: GenerateFileUploadUrlInput;
+};
+
+
+export type FileUploadMutationsStartFileImportArgs = {
+  input: StartFileImportInput;
+};
+
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
@@ -1077,6 +1098,24 @@ export type GendoAiRenderInput = {
   /** The generation prompt. */
   prompt: Scalars['String']['input'];
   versionId: Scalars['ID']['input'];
+};
+
+export type GenerateFileUploadUrlInput = {
+  fileName: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+export type GenerateFileUploadUrlOutput = {
+  __typename?: 'GenerateFileUploadUrlOutput';
+  fileId: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type GetModelUploadsInput = {
+  /** The cursor for pagination. */
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  /** The maximum number of uploads to return. */
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type InvitableCollaboratorsFilter = {
@@ -1212,8 +1251,12 @@ export type LimitedUserWorkspaceRoleArgs = {
 /** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
+  /** Workspace admins ordered by join date */
+  adminTeam: Array<LimitedWorkspaceCollaborator>;
   /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, the users with a matching domain may join the workspace directly */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Workspace id */
   id: Scalars['ID']['output'];
   /** Optional base64 encoded workspace logo image */
@@ -1223,7 +1266,7 @@ export type LimitedWorkspace = {
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
   /** Workspace members visible to people with verified email domain */
-  team?: Maybe<DiscoverableWorkspaceCollaboratorCollection>;
+  team?: Maybe<LimitedWorkspaceCollaboratorCollection>;
 };
 
 
@@ -1231,6 +1274,18 @@ export type LimitedWorkspace = {
 export type LimitedWorkspaceTeamArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
+};
+
+export type LimitedWorkspaceCollaborator = {
+  __typename?: 'LimitedWorkspaceCollaborator';
+  user: LimitedUser;
+};
+
+export type LimitedWorkspaceCollaboratorCollection = {
+  __typename?: 'LimitedWorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<LimitedWorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type LimitedWorkspaceJoinRequest = {
@@ -1281,6 +1336,8 @@ export type Model = {
   permissions: ModelPermissionChecks;
   previewUrl?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+  /** Get all file uploads ever done in this model */
+  uploads: FileUploadCollection;
   version: Version;
   versions: VersionCollection;
 };
@@ -1294,6 +1351,11 @@ export type ModelCommentThreadsArgs = {
 
 export type ModelPendingImportedVersionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ModelUploadsArgs = {
+  input?: InputMaybe<GetModelUploadsInput>;
 };
 
 
@@ -1458,6 +1520,7 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
    */
   commitsMove: Scalars['Boolean']['output'];
+  fileUploadMutations: FileUploadMutations;
   /**
    * Delete a pending invite
    * Note: The required scope to invoke this is not given out to app or personal access tokens
@@ -1922,11 +1985,8 @@ export type OnboardingCompletionInput = {
 };
 
 export const PaidWorkspacePlans = {
-  Business: 'business',
-  Plus: 'plus',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',
-  Starter: 'starter',
   Team: 'team',
   TeamUnlimited: 'teamUnlimited'
 } as const;
@@ -1971,6 +2031,7 @@ export type PendingStreamCollaborator = {
   token?: Maybe<Scalars['String']['output']>;
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
+  workspaceSlug?: Maybe<Scalars['String']['output']>;
 };
 
 export type PendingWorkspaceCollaborator = {
@@ -1995,9 +2056,7 @@ export type PendingWorkspaceCollaborator = {
   updatedAt: Scalars['DateTime']['output'];
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
-  workspaceId: Scalars['String']['output'];
-  workspaceName: Scalars['String']['output'];
-  workspaceSlug: Scalars['String']['output'];
+  workspace: LimitedWorkspace;
 };
 
 export type PendingWorkspaceCollaboratorsFilter = {
@@ -2034,6 +2093,9 @@ export type Project = {
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  /** Public project-level configuration for embedded viewer */
+  embedOptions: ProjectEmbedOptions;
+  hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
   /** Collaborators who have been invited, but not yet accepted. */
@@ -2072,7 +2134,7 @@ export type Project = {
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
-  visibility: SimpleProjectVisibility;
+  visibility: ProjectVisibility;
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
@@ -2112,6 +2174,11 @@ export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectHasAccessToFeatureArgs = {
+  featureName: WorkspaceFeatureName;
 };
 
 
@@ -2367,6 +2434,11 @@ export type ProjectCreateInput = {
   visibility?: InputMaybe<ProjectVisibility>;
 };
 
+export type ProjectEmbedOptions = {
+  __typename?: 'ProjectEmbedOptions';
+  hideSpeckleBranding: Scalars['Boolean']['output'];
+};
+
 export type ProjectFileImportUpdatedMessage = {
   __typename?: 'ProjectFileImportUpdatedMessage';
   /** Upload ID */
@@ -2591,8 +2663,11 @@ export type ProjectPermissionChecks = {
   canCreateComment: PermissionCheckResult;
   canCreateModel: PermissionCheckResult;
   canDelete: PermissionCheckResult;
+  canInvite: PermissionCheckResult;
   canLeave: PermissionCheckResult;
+  canLoad: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
+  canPublish: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
@@ -2613,7 +2688,6 @@ export type ProjectRole = {
 };
 
 export type ProjectTestAutomationCreateInput = {
-  functionId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
@@ -2691,9 +2765,14 @@ export const ProjectVersionsUpdatedMessageType = {
 
 export type ProjectVersionsUpdatedMessageType = typeof ProjectVersionsUpdatedMessageType[keyof typeof ProjectVersionsUpdatedMessageType];
 export const ProjectVisibility = {
+  /** Only accessible to explicit collaborators */
   Private: 'PRIVATE',
+  /** Accessible to everyone (even non-logged in users) */
   Public: 'PUBLIC',
-  Unlisted: 'UNLISTED'
+  /** Legacy - same as public */
+  Unlisted: 'UNLISTED',
+  /** Accessible to everyone in the project's workspace */
+  Workspace: 'WORKSPACE'
 } as const;
 
 export type ProjectVisibility = typeof ProjectVisibility[keyof typeof ProjectVisibility];
@@ -3025,6 +3104,7 @@ export type Role = {
 export type RootPermissionChecks = {
   __typename?: 'RootPermissionChecks';
   canCreatePersonalProject: PermissionCheckResult;
+  canCreateWorkspace: PermissionCheckResult;
 };
 
 /** Available scopes. */
@@ -3243,13 +3323,6 @@ export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
 
-/** Visibility without the "discoverable" option */
-export const SimpleProjectVisibility = {
-  Private: 'PRIVATE',
-  Unlisted: 'UNLISTED'
-} as const;
-
-export type SimpleProjectVisibility = typeof SimpleProjectVisibility[keyof typeof SimpleProjectVisibility];
 export type SmartTextEditorValue = {
   __typename?: 'SmartTextEditorValue';
   /** File attachments, if any */
@@ -3271,6 +3344,17 @@ export const SortDirection = {
 } as const;
 
 export type SortDirection = typeof SortDirection[keyof typeof SortDirection];
+export type StartFileImportInput = {
+  /**
+   * The etag is returned by the blob storage provider in the response body after a successful upload.
+   * It is used to verify the integrity of the uploaded file.
+   */
+  etag: Scalars['String']['input'];
+  fileId: Scalars['String']['input'];
+  modelId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type Stream = {
   __typename?: 'Stream';
   /**
@@ -3326,6 +3410,7 @@ export type Stream = {
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
    * and searches
+   * @deprecated Discoverability as a feature has been removed.
    */
   isDiscoverable: Scalars['Boolean']['output'];
   /** Whether the stream can be viewed by non-contributors */
@@ -4122,12 +4207,14 @@ export type UserMeta = {
   __typename?: 'UserMeta';
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  speckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
 
@@ -4137,6 +4224,11 @@ export type UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs = {
 
 
 export type UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
+};
+
+
+export type UserMetaMutationsSetSpeckleConBannerDismissedArgs = {
   value: Scalars['Boolean']['input'];
 };
 
@@ -4207,6 +4299,7 @@ export type UserUpdateInput = {
 };
 
 export type UserWorkspacesFilter = {
+  completed?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4466,17 +4559,25 @@ export type Workspace = {
    * region.
    */
   defaultRegion?: Maybe<ServerRegionItem>;
+  /** The default seat assigned to users that join a workspace. Used during workspace discovery or on invites without seat types. */
+  defaultSeatType: WorkspaceSeatType;
   description?: Maybe<Scalars['String']['output']>;
+  /** If true, allow users to automatically join discoverable workspaces (instead of requesting to join) */
+  discoverabilityAutoJoinEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable discovery of the workspace */
   discoverabilityEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable restriction to invite users to workspace as Guests only */
   domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
   /** Verified workspace domains */
   domains?: Maybe<Array<WorkspaceDomain>>;
+  /** Workspace-level configuration for models in embedded viewer */
+  embedOptions: WorkspaceEmbedOptions;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
+  /** Exclusive workspaces do not allow their workspace members to create or join other workspaces as members. */
+  isExclusive: Scalars['Boolean']['output'];
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
@@ -4564,6 +4665,7 @@ export type WorkspaceBillingMutationsUpgradePlanArgs = {
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** Date that the user joined the workspace. */
   joinDate: Scalars['DateTime']['output'];
@@ -4624,8 +4726,15 @@ export type WorkspaceDomainDeleteInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type WorkspaceEmbedOptions = {
+  __typename?: 'WorkspaceEmbedOptions';
+  hideSpeckleBranding: Scalars['Boolean']['output'];
+};
+
 export const WorkspaceFeatureName = {
   DomainBasedSecurityPolicies: 'domainBasedSecurityPolicies',
+  ExclusiveMembership: 'exclusiveMembership',
+  HideSpeckleBranding: 'hideSpeckleBranding',
   OidcSso: 'oidcSso',
   WorkspaceDataRegionSpecificity: 'workspaceDataRegionSpecificity'
 } as const;
@@ -4636,6 +4745,8 @@ export type WorkspaceInviteCreateInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   /** Defaults to the member role, if not specified */
   role?: InputMaybe<WorkspaceRole>;
+  /** The workspace seat type to assign to the user upon accepting the invite. */
+  seatType?: InputMaybe<WorkspaceSeatType>;
   /** Defaults to User, if not specified */
   serverRole?: InputMaybe<ServerRole>;
   /** Either this or email must be filled */
@@ -4702,6 +4813,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceJoinRequest = {
   __typename?: 'WorkspaceJoinRequest';
   createdAt: Scalars['DateTime']['output'];
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   status: WorkspaceJoinRequestStatus;
   user: LimitedUser;
@@ -4753,7 +4865,6 @@ export type WorkspaceMutations = {
   /** Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed" */
   dismiss: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
-  join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
   requestToJoin: Scalars['Boolean']['output'];
@@ -4761,6 +4872,7 @@ export type WorkspaceMutations = {
   setDefaultRegion: Workspace;
   update: Workspace;
   updateCreationState: Scalars['Boolean']['output'];
+  updateEmbedOptions: WorkspaceEmbedOptions;
   updateRole: Workspace;
   updateSeatType: Workspace;
 };
@@ -4796,11 +4908,6 @@ export type WorkspaceMutationsDismissArgs = {
 };
 
 
-export type WorkspaceMutationsJoinArgs = {
-  input: JoinWorkspaceInput;
-};
-
-
 export type WorkspaceMutationsLeaveArgs = {
   id: Scalars['ID']['input'];
 };
@@ -4824,6 +4931,11 @@ export type WorkspaceMutationsUpdateArgs = {
 
 export type WorkspaceMutationsUpdateCreationStateArgs = {
   input: WorkspaceCreationStateInput;
+};
+
+
+export type WorkspaceMutationsUpdateEmbedOptionsArgs = {
+  input: WorkspaceUpdateEmbedOptionsInput;
 };
 
 
@@ -4854,7 +4966,11 @@ export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof 
 export type WorkspacePermissionChecks = {
   __typename?: 'WorkspacePermissionChecks';
   canCreateProject: PermissionCheckResult;
+  canEditEmbedOptions: PermissionCheckResult;
+  canInvite: PermissionCheckResult;
+  canMakeWorkspaceExclusive: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
+  canReadMemberEmail: PermissionCheckResult;
 };
 
 
@@ -4880,9 +4996,7 @@ export type WorkspacePlanPrice = {
 export const WorkspacePlanStatuses = {
   CancelationScheduled: 'cancelationScheduled',
   Canceled: 'canceled',
-  Expired: 'expired',
   PaymentFailed: 'paymentFailed',
-  Trial: 'trial',
   Valid: 'valid'
 } as const;
 
@@ -4895,16 +5009,11 @@ export type WorkspacePlanUsage = {
 
 export const WorkspacePlans = {
   Academia: 'academia',
-  Business: 'business',
-  BusinessInvoiced: 'businessInvoiced',
+  Enterprise: 'enterprise',
   Free: 'free',
-  Plus: 'plus',
-  PlusInvoiced: 'plusInvoiced',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',
   ProUnlimitedInvoiced: 'proUnlimitedInvoiced',
-  Starter: 'starter',
-  StarterInvoiced: 'starterInvoiced',
   Team: 'team',
   TeamUnlimited: 'teamUnlimited',
   TeamUnlimitedInvoiced: 'teamUnlimitedInvoiced',
@@ -4924,6 +5033,11 @@ export type WorkspaceProjectInviteCreateInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * The workspace seat type to assign to the user upon accepting the invite
+   * (if user is a workspace member already, the seat type will be updated)
+   */
+  seatType?: InputMaybe<WorkspaceSeatType>;
   /** Can only be specified if guest mode is on or if the user is an admin */
   serverRole?: InputMaybe<Scalars['String']['input']>;
   /** Either this or email must be filled */
@@ -5098,13 +5212,21 @@ export type WorkspaceTeamFilter = {
   seatType?: InputMaybe<WorkspaceSeatType>;
 };
 
+export type WorkspaceUpdateEmbedOptionsInput = {
+  hideSpeckleBranding: Scalars['Boolean']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
 export type WorkspaceUpdateInput = {
   /** @deprecated Always the reviewer role. Will be removed in the future. */
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
+  defaultSeatType?: InputMaybe<WorkspaceSeatType>;
   description?: InputMaybe<Scalars['String']['input']>;
+  discoverabilityAutoJoinEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
+  isExclusive?: InputMaybe<Scalars['Boolean']['input']>;
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -5175,7 +5297,7 @@ export type CrossSyncProjectMetadataQueryVariables = Exact<{
 }>;
 
 
-export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: SimpleProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, createdAt: string, model: { __typename?: 'Model', id: string, name: string } }> } } };
+export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, createdAt: string, model: { __typename?: 'Model', id: string, name: string } }> } } };
 
 export type CrossSyncClientTestQueryVariables = Exact<{ [key: string]: never; }>;
 

@@ -1,3 +1,5 @@
+import { UserEmails } from '@/modules/core/dbSchema'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 import {
   CreateWorkspaceJoinRequest,
   GetWorkspaceJoinRequest,
@@ -23,7 +25,11 @@ const tables = {
 export const createWorkspaceJoinRequestFactory =
   ({ db }: { db: Knex }): CreateWorkspaceJoinRequest =>
   async ({ workspaceJoinRequest }) => {
-    const res = await tables.workspaceJoinRequests(db).insert(workspaceJoinRequest, '*')
+    const res = await tables
+      .workspaceJoinRequests(db)
+      .insert(workspaceJoinRequest, '*')
+      .onConflict()
+      .ignore()
     return res[0]
   }
 
@@ -66,6 +72,12 @@ const adminWorkspaceJoinRequestsBaseQueryFactory =
         WorkspaceAcl.col.workspaceId,
         WorkspaceJoinRequests.col.workspaceId
       )
+      .join(UserEmails.name, UserEmails.col.userId, WorkspaceJoinRequests.col.userId)
+      // returning the primary here as a shortcut
+      // should be doing an intersection with the workspace domains, the users emails
+      // and be distincted to a single user
+      // but for now, multi email usage is low enough to not warrant that here
+      .where(UserEmails.col.primary, '=', true)
       .where(WorkspaceAcl.col.role, Roles.Workspace.Admin)
       .where(WorkspaceAcl.col.userId, filter.userId)
       .where(WorkspaceJoinRequests.col.workspaceId, filter.workspaceId)
@@ -85,15 +97,30 @@ export const getAdminWorkspaceJoinRequestsFactory =
     cursor?: string
     limit: number
   }) => {
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: WorkspaceJoinRequests,
+      cols: ['createdAt', 'userId']
+    })
     const query = adminWorkspaceJoinRequestsBaseQueryFactory(db)(filter)
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
 
-    if (cursor) {
-      query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
-    }
-    return await query
-      .select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols)
-      .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
+    query
+      .select<WorkspaceJoinRequest[]>([
+        ...WorkspaceJoinRequests.cols,
+        UserEmails.col.email
+      ])
       .limit(limit)
+
+    const items = await query
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
+    }
   }
 
 export const countAdminWorkspaceJoinRequestsFactory =
@@ -124,7 +151,7 @@ const workspaceJoinRequestsBaseQueryFactory =
 
 export const getWorkspaceJoinRequestsFactory =
   ({ db }: { db: Knex }) =>
-  ({
+  async ({
     filter,
     cursor,
     limit
@@ -134,14 +161,24 @@ export const getWorkspaceJoinRequestsFactory =
     limit: number
   }) => {
     const query = workspaceJoinRequestsBaseQueryFactory(db)(filter)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: WorkspaceJoinRequests,
+      cols: ['createdAt', 'userId']
+    })
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
 
-    if (cursor) {
-      query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
+    query.select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols).limit(limit)
+
+    const items = await query
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
     }
-    return query
-      .select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols)
-      .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
-      .limit(limit)
   }
 
 export const countWorkspaceJoinRequestsFactory =

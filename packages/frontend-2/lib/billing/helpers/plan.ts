@@ -20,19 +20,14 @@ export const formatName = (plan?: MaybeNullOrUndefined<WorkspacePlans>) => {
   const formattedPlanNames: Record<WorkspacePlans, string> = {
     [WorkspacePlans.Unlimited]: 'Unlimited',
     [WorkspacePlans.Academia]: 'Academia',
-    [WorkspacePlans.StarterInvoiced]: 'Starter (invoiced)',
-    [WorkspacePlans.PlusInvoiced]: 'Plus (Invoiced)',
-    [WorkspacePlans.BusinessInvoiced]: 'Business (Invoiced)',
-    [WorkspacePlans.Starter]: 'Starter',
-    [WorkspacePlans.Plus]: 'Plus',
-    [WorkspacePlans.Business]: 'Business',
     [WorkspacePlans.Free]: 'Free',
     [WorkspacePlans.Team]: 'Starter',
     [WorkspacePlans.TeamUnlimited]: 'Starter',
     [WorkspacePlans.TeamUnlimitedInvoiced]: 'Starter (Invoiced)',
     [WorkspacePlans.Pro]: 'Business',
     [WorkspacePlans.ProUnlimited]: 'Business',
-    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business (Invoiced)'
+    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business (Invoiced)',
+    [WorkspacePlans.Enterprise]: 'Enterprise'
   }
   return formattedPlanNames[plan]
 }

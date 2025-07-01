@@ -13,10 +13,14 @@ type ProjectPermissionChecks {
   canReadWebhooks: PermissionCheckResult!
   canLeave: PermissionCheckResult!
   canRequestRender: PermissionCheckResult!
+  canPublish: PermissionCheckResult!
+  canLoad: PermissionCheckResult!
+  canInvite: PermissionCheckResult!
 }
 
 type RootPermissionChecks {
   canCreatePersonalProject: PermissionCheckResult!
+  canCreateWorkspace: PermissionCheckResult!
 }
 
 extend type User {

@@ -3,6 +3,7 @@ import {
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
+import { SubscriptionState } from '@/modules/gatekeeperCore/domain/events'
 import {
   Workspace,
   WorkspaceSeat,
@@ -13,9 +14,6 @@ import {
   Optional,
   PaidWorkspacePlan,
   PaidWorkspacePlans,
-  PaidWorkspacePlansNew,
-  PaidWorkspacePlansOld,
-  TrialWorkspacePlan,
   UnpaidWorkspacePlan,
   WorkspacePlan,
   WorkspacePlanBillingIntervals
@@ -42,10 +40,6 @@ export type GetWorkspaceWithPlan = (args: {
   workspaceId: string
 }) => Promise<Optional<Workspace & { plan: Nullable<WorkspacePlan> }>>
 
-export type UpsertTrialWorkspacePlan = (args: {
-  workspacePlan: TrialWorkspacePlan
-}) => Promise<void>
-
 export type UpsertPaidWorkspacePlan = (args: {
   workspacePlan: PaidWorkspacePlan
 }) => Promise<void>
@@ -67,6 +61,7 @@ export type SessionPaymentStatus = 'paid' | 'unpaid'
 export type CheckoutSession = SessionInput & {
   url: string
   workspaceId: string
+  userId: string
   workspacePlan: PaidWorkspacePlans
   paymentStatus: SessionPaymentStatus
   billingInterval: WorkspacePlanBillingIntervals
@@ -98,6 +93,7 @@ export type UpdateCheckoutSessionStatus = (args: {
 
 export type CreateCheckoutSession = (args: {
   workspaceId: string
+  userId: string
   workspaceSlug: string
   editorsCount: number
   workspacePlan: PaidWorkspacePlans
@@ -113,16 +109,33 @@ export type WorkspaceSubscription = {
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
   currency: Currency
+  updateIntent: SubscriptionUpdateIntent | null
   subscriptionData: SubscriptionData
 }
+
+export type SubscriptionUpdateIntent = {
+  userId: string
+  products: SubscriptionIntentProduct[]
+  planName: PaidWorkspacePlans
+} & Pick<
+  WorkspaceSubscription,
+  // status is not needed cause its always provided by stripe
+  'currentBillingCycleEnd' | 'currency' | 'billingInterval' | 'updatedAt'
+>
+
 const subscriptionProduct = z.object({
   productId: z.string(),
-  subscriptionItemId: z.string(),
+  subscriptionItemId: z.string(), // does not exist until billing is called with success
   priceId: z.string(),
   quantity: z.number()
 })
 
 export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
+
+type SubscriptionIntentProduct = Pick<
+  SubscriptionProduct,
+  'productId' | 'priceId' | 'quantity'
+>
 
 export const SubscriptionData = z.object({
   subscriptionId: z.string().min(1),
@@ -131,7 +144,7 @@ export const SubscriptionData = z.object({
   status: z.union([
     z.literal('incomplete'),
     z.literal('incomplete_expired'),
-    z.literal('trialing'),
+    z.literal('trialing'), // TODO: Should we get rid of trial related states?
     z.literal('active'),
     z.literal('past_due'),
     z.literal('canceled'),
@@ -145,21 +158,22 @@ export const SubscriptionData = z.object({
 export type SubscriptionData = z.infer<typeof SubscriptionData>
 
 export const calculateSubscriptionSeats = ({
-  subscriptionData,
-  guestSeatProductId
+  subscriptionData
 }: {
   subscriptionData: SubscriptionData
-  guestSeatProductId: string
-}): { plan: number; guest: number } => {
-  const guestProduct = subscriptionData.products.find(
-    (p) => p.productId === guestSeatProductId
-  )
-
-  const planProduct = subscriptionData.products.find(
-    (p) => p.productId !== guestSeatProductId
-  )
-  return { guest: guestProduct?.quantity || 0, plan: planProduct?.quantity || 0 }
+}): number => {
+  const product = subscriptionData.products[0]
+  return product?.quantity || 0
 }
+
+export const getSubscriptionState = (
+  subscription: WorkspaceSubscription
+): SubscriptionState => ({
+  billingInterval: subscription.billingInterval,
+  totalEditorSeats: calculateSubscriptionSeats({
+    subscriptionData: subscription.subscriptionData
+  })
+})
 
 export type UpsertWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
@@ -189,16 +203,6 @@ export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-export type GbpOnlyPrice = { gbp: string }
-type GbpOnlyProductPrice = {
-  monthly: GbpOnlyPrice
-  yearly: GbpOnlyPrice
-}
-type OldProductPriceIds = Record<
-  PaidWorkspacePlansOld | 'guest',
-  { productId: string } & GbpOnlyProductPrice
->
-
 export type MultiCurrencyPrice = {
   usd: string
   gbp: string
@@ -208,19 +212,10 @@ type MultiCurrencyProductPrice = {
   yearly: MultiCurrencyPrice
 }
 
-export const isMultiCurrencyPrice = (
-  priceIds: GbpOnlyPrice | MultiCurrencyPrice
-): priceIds is MultiCurrencyPrice =>
-  Object.values(Currency)
-    .map((c) => c in priceIds)
-    .every((p) => p === true)
-
-type NewProductPriceIds = Record<
-  PaidWorkspacePlansNew,
+export type WorkspacePlanProductAndPriceIds = Record<
+  PaidWorkspacePlans,
   { productId: string } & MultiCurrencyProductPrice
 >
-
-export type WorkspacePlanProductAndPriceIds = OldProductPriceIds & NewProductPriceIds
 
 export type GetWorkspacePlanProductAndPriceIds = () => WorkspacePlanProductAndPriceIds
 export type SubscriptionDataInput = OverrideProperties<

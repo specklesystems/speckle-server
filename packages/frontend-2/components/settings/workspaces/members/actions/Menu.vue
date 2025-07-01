@@ -7,6 +7,7 @@
       mount-menu-on-body
       size="lg"
       :menu-position="HorizontalDirection.Left"
+      :menu-id="`member-actions-${targetUser.id}`"
       @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
     >
       <FormButton
@@ -111,7 +112,7 @@ const showDialog = ref(false)
 const dialogType = ref<WorkspaceUserActionTypes>()
 
 const { isLastAdmin } = useWorkspaceLastAdminCheck({
-  workspaceSlug: props.workspace?.slug || ''
+  workspaceSlug: computed(() => props.workspace?.slug)
 })
 
 const computedKey = computed(() => `${props.targetUser.id}-${props.targetUser.role}`)

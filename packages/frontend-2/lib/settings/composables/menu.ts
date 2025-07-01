@@ -59,7 +59,7 @@ export const useSettingsMenu = () => {
       title: 'Security',
       name: settingsWorkspaceRoutes.security.name,
       route: (slug?: string) => settingsWorkspaceRoutes.security.route(slug),
-      permission: [Roles.Workspace.Admin]
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Billing',
@@ -151,12 +151,10 @@ export const useSettingsMembersActions = (params: {
   const { activeUser } = useActiveUser()
 
   const { isLastAdmin } = useWorkspaceLastAdminCheck({
-    workspaceSlug: params.workspaceSlug.value || ''
+    workspaceSlug: computed(() => params.workspaceSlug.value)
   })
 
-  const { statusIsExpired, statusIsCanceled } = useWorkspacePlan(
-    params.workspaceSlug.value || ''
-  )
+  const { statusIsCanceled } = useWorkspacePlan(params.workspaceSlug.value || '')
 
   const targetUserRole = computed(() => {
     return params.targetUser.value.role
@@ -247,8 +245,8 @@ export const useSettingsMembersActions = (params: {
       headerItems.push({
         title: 'Upgrade to editor...',
         id: WorkspaceUserActionTypes.UpgradeEditor,
-        disabled: statusIsExpired.value || statusIsCanceled.value,
-        disabledTooltip: 'This workspace has an expired or canceled plan'
+        disabled: statusIsCanceled.value,
+        disabledTooltip: 'This workspace has a canceled plan'
       })
     }
     if (showDowngradeEditor.value) {
@@ -256,13 +254,10 @@ export const useSettingsMembersActions = (params: {
         title: 'Downgrade to viewer...',
         id: WorkspaceUserActionTypes.DowngradeEditor,
         disabled:
-          targetUserRole.value === Roles.Workspace.Admin ||
-          statusIsExpired.value ||
-          statusIsCanceled.value,
-        disabledTooltip:
-          statusIsExpired.value || statusIsCanceled.value
-            ? 'This workspace has an expired or canceled plan'
-            : 'Admins must be on an Editor seat'
+          targetUserRole.value === Roles.Workspace.Admin || statusIsCanceled.value,
+        disabledTooltip: statusIsCanceled.value
+          ? 'This workspace has a canceled plan'
+          : 'Admins must be on an Editor seat'
       })
     }
     // This will return post new workspace plan launch

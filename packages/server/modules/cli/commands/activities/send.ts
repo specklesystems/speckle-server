@@ -18,7 +18,7 @@ const command: CommandModule = {
     })
   },
   handler: async (argv) => {
-    initializeQueue()
+    await initializeQueue()
     const numberOfDays = argv.days as number
     const end = new Date()
     const start = new Date(end.getTime())

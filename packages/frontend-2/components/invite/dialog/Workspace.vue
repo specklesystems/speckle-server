@@ -1,29 +1,48 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    :buttons="dialogButtons"
-    prevent-close-on-click-outside
-    max-width="md"
-    @update:open="isOpen = false"
-  >
-    <template #header>{{ title }}</template>
-    <InviteDialogWorkspaceSelectRole
-      v-if="isSelectingRole"
-      v-model:selected-role="selectedRole"
-      :workspace-name="workspace?.name || ''"
-    />
-    <InviteDialogSharedSelectUsers
-      v-else
-      ref="selectUsers"
-      :invites="invites"
-      :allowed-domains="allowedDomains"
-      :target-role="selectedRole"
+  <div>
+    <LayoutDialog
+      v-if="workspace"
+      v-model:open="isOpen"
+      :buttons="dialogButtons"
+      prevent-close-on-click-outside
+      max-width="md"
+      @update:open="isOpen = false"
     >
-      <p class="text-body-2xs text-foreground-2 leading-5">
-        {{ infoText }}
-      </p>
-    </InviteDialogSharedSelectUsers>
-  </LayoutDialog>
+      <template #header>{{ title }}</template>
+      <InviteDialogWorkspaceSelectRole
+        v-if="isSelectingRole"
+        v-model:selected-role="selectedRole"
+        :workspace-name="workspace?.name || ''"
+      />
+      <InviteDialogSharedSelectUsers
+        v-else
+        ref="selectUsers"
+        :invites="invites"
+        :allowed-domains="allowedDomains"
+        :target-role="selectedRole"
+        :workspace="workspace"
+      >
+        <template #project>
+          <FormSelectProjects
+            v-if="selectedRole === Roles.Workspace.Guest"
+            v-model="project"
+            label="Project (optional)"
+            show-label
+            mount-menu-on-body
+            allow-unset
+            :workspace-id="workspace?.id"
+            class="mb-4"
+          />
+        </template>
+      </InviteDialogSharedSelectUsers>
+    </LayoutDialog>
+    <WorkspaceAdditionalSeatsChargeDisclaimer
+      v-model:open="showAdditionalSeatsDisclaimer"
+      :editor-count="purchasableEditorCount"
+      :workspace-slug="workspace?.slug || ''"
+      @confirm="onSelectUsersSubmit"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -31,27 +50,44 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   InviteDialogWorkspace_WorkspaceFragment,
-  WorkspaceInviteCreateInput
+  WorkspaceInviteCreateInput,
+  FormSelectProjects_ProjectFragment,
+  WorkspaceProjectInviteCreateInput
 } from '~/lib/common/generated/gql/graphql'
 import type { InviteWorkspaceItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
-import { Roles, type MaybeNullOrUndefined, type WorkspaceRoles } from '@speckle/shared'
+import {
+  Roles,
+  SeatTypes,
+  type MaybeNullOrUndefined,
+  type WorkspaceRoles
+} from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
-import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/management'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 import { matchesDomainPolicy } from '~/lib/invites/helpers/validation'
+import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment InviteDialogWorkspace_Workspace on Workspace {
     id
     name
+    slug
     domainBasedMembershipProtectionEnabled
+    defaultSeatType
     domains {
       domain
       id
     }
+    seats {
+      editors {
+        available
+      }
+    }
+    ...InviteDialogSharedSelectUsers_Workspace
+    ...WorkspacesPlan_Workspace
   }
 `)
 
@@ -62,16 +98,16 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const mixpanel = useMixpanel()
 const inviteToWorkspace = useInviteUserToWorkspace()
+const inviteToProject = useInviteUserToProject()
 
+const workspaceSlug = computed(() => props.workspace?.slug || '')
+const { isPaidPlan } = useWorkspacePlan(workspaceSlug)
+
+const showAdditionalSeatsDisclaimer = ref(false)
 const isSelectingRole = ref(true)
 const selectedRole = ref<WorkspaceRoles>(Roles.Workspace.Member)
-const invites = ref<InviteWorkspaceItem[]>([
-  {
-    ...emptyInviteWorkspaceItem,
-    workspaceRole: selectedRole.value,
-    serverRole: Roles.Server.User
-  }
-])
+const project = ref<FormSelectProjects_ProjectFragment>()
+const invites = ref<InviteWorkspaceItem[]>([])
 const selectUsers = ref<{
   submitForm: () => Promise<InviteWorkspaceItem[]>
 }>()
@@ -101,12 +137,14 @@ const allowedDomains = computed(() =>
     ? props.workspace.domains?.map((d) => d.domain)
     : null
 )
-const infoText = computed(() => {
-  if (selectedRole.value === Roles.Workspace.Member) {
-    return 'Inviting is free. Members join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to projects beyond viewing and commenting.'
-  }
 
-  return `Inviting is free. Guests join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to a project beyond viewing and commenting.`
+const purchasableEditorCount = computed(() => {
+  if (!isPaidPlan.value) return 0
+  const seatsAvailable = props.workspace?.seats?.editors?.available || 0
+  const editorSeatsToAdd = invites.value.filter(
+    (i) => i.seatType === SeatTypes.Editor
+  ).length
+  return Math.max(0, editorSeatsToAdd - seatsAvailable)
 })
 
 const onBack = () => {
@@ -121,53 +159,88 @@ const onSubmit = async () => {
   if (isSelectingRole.value) {
     isSelectingRole.value = false
   } else {
-    const invites = await selectUsers.value?.submitForm()
-    if (invites?.length) {
-      onSelectUsersSubmit(invites)
+    const newInvites = await selectUsers.value?.submitForm()
+    if (newInvites?.length) {
+      invites.value = newInvites
+
+      if (purchasableEditorCount.value > 0) {
+        showAdditionalSeatsDisclaimer.value = true
+      } else {
+        onSelectUsersSubmit()
+      }
     }
   }
 }
 
 const canBeMember = (email: string) => matchesDomainPolicy(email, allowedDomains.value)
 
-const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
-  invites.value = updatedInvites
+const onSelectUsersSubmit = async () => {
+  if (!invites.value.length || !props.workspace?.id) return
 
-  const inputs: WorkspaceInviteCreateInput[] = invites.value.map((invite) => ({
-    role: canBeMember(invite.email)
-      ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
-      : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest),
-    email: invite.email,
-    serverRole: invite.serverRole
-      ? mapServerRoleToGqlServerRole(invite.serverRole)
-      : undefined
-  }))
+  if (selectedRole.value === Roles.Workspace.Guest && project.value) {
+    const inputs: WorkspaceProjectInviteCreateInput[] = invites.value.map((invite) => ({
+      role:
+        invite.seatType === SeatTypes.Editor
+          ? Roles.Stream.Contributor
+          : Roles.Stream.Reviewer,
+      email: invite.email,
+      workspaceRole: selectedRole.value,
+      seatType: invite.seatType
+    }))
 
-  if (!inputs.length || !props.workspace?.id) return
+    await inviteToProject(project.value.id, inputs)
+  } else {
+    const inputs: WorkspaceInviteCreateInput[] = invites.value.map((invite) => ({
+      role: canBeMember(invite.email)
+        ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
+        : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest),
+      email: invite.email,
+      seatType: invite.seatType
+    }))
 
-  await inviteToWorkspace({ workspaceId: props.workspace.id, inputs })
+    await inviteToWorkspace({ workspaceId: props.workspace.id, inputs })
+  }
+
   isOpen.value = false
   mixpanel.track('Invite Action', {
     type: 'workspace invite',
     name: 'send',
-    multiple: inputs.length !== 1,
-    count: inputs.length,
+    multiple: invites.value.length !== 1,
+    count: invites.value.length,
     to: 'email',
+    hasProject: !!project.value,
+    workspaceRole: selectedRole.value,
     // eslint-disable-next-line camelcase
     workspace_id: props.workspace.id
   })
 }
 
+const initInvites = () => {
+  invites.value = [
+    {
+      ...emptyInviteWorkspaceItem,
+      seatType: props.workspace?.defaultSeatType || SeatTypes.Viewer,
+      workspaceRole: selectedRole.value,
+      serverRole: Roles.Server.User
+    }
+  ]
+}
+
 watch(isOpen, (newVal) => {
   if (newVal) {
     isSelectingRole.value = true
-    invites.value = [
-      {
-        ...emptyInviteWorkspaceItem,
-        workspaceRole: Roles.Workspace.Member,
-        serverRole: Roles.Server.User
-      }
-    ]
+    selectedRole.value = Roles.Workspace.Member
+    project.value = undefined
+    initInvites()
   }
 })
+
+watch(
+  () => props.workspace,
+  (newVal) => {
+    if (newVal) {
+      initInvites()
+    }
+  }
+)
 </script>

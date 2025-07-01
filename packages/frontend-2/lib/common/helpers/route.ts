@@ -16,12 +16,12 @@ export const verifyEmailCountdownRoute = '/verify-email?source=registration'
 export const serverManagementRoute = '/server-management'
 export const connectorsRoute = '/connectors'
 export const tutorialsRoute = '/tutorials'
-export const docsPageUrl = 'https://speckle.guide/'
+export const docsPageUrl = 'https://docs.speckle.systems/'
 export const forumPageUrl = 'https://speckle.community/'
 export const defaultZapierWebhookUrl =
   'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
-export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
-
+export const guideBillingUrl = 'https://docs.speckle.systems/workspaces/billing'
+export const bookDemoRoute = '/book-a-demo'
 export const onboardingRoute = '/onboarding'
 
 export const settingsUserRoutes = {
@@ -132,8 +132,7 @@ export const automateFunctionRoute = (functionId: string) =>
 export const workspaceRoute = (slug?: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
-export const workspaceCreateRoute = (slug?: string) =>
-  slug ? `/workspaces/${slug}/create` : '/workspaces/actions/create'
+export const workspaceCreateRoute = '/workspaces/actions/create'
 
 export const workspaceJoinRoute = '/workspaces/actions/join'
 
@@ -210,7 +209,4 @@ export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
   return true
 }
 
-// Link to Workspace roles and seats documentation
-// TODO: Add link when ready
-export const LearnMoreRolesSeatsUrl = 'https://speckle.guide/'
 export const LearnMoreMoveProjectsUrl = 'https://speckle.systems/pricing'
