@@ -23,8 +23,17 @@ export const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   )
 
   if (product === undefined && seatCount === 0) return
-  if (product === undefined) throw new LogicError('Product not found at mutation')
-  if (seatCount < 0) throw new LogicError('Invalid seat count, cannot be negative')
+  if (product === undefined) {
+    throw new LogicError('Product not found at mutation')
+  }
+
+  if (seatCount < 0) {
+    throw new LogicError('Invalid seat count, cannot be negative')
+  }
+
+  if (product.quantity < seatCount) {
+    throw new SubscriptionStateError('Subscription missing an upscale')
+  }
 
   if (seatCount === 0) {
     const prodIndex = subscriptionData.products.indexOf(product)
@@ -32,10 +41,5 @@ export const mutateSubscriptionDataWithNewValidSeatNumbers = ({
     return
   }
 
-  if (product.quantity >= seatCount) {
-    product.quantity = seatCount
-    return
-  }
-
-  throw new SubscriptionStateError('Subscription missing an upscale')
+  product.quantity = seatCount
 }
