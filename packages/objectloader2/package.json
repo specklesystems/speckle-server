@@ -34,7 +34,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@speckle/shared": "workspace:^",
-    "dexie": "^4.0.11"
+    "dexie": "^4.0.11",
+    "flexsearch": "^0.7.31"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.5",
@@ -49,7 +50,8 @@
     "tshy": "^3.0.2",
     "typescript": "^5.2.2",
     "vitest": "^3.0.7",
-    "vitest-fetch-mock": "^0.4.5"
+    "vitest-fetch-mock": "^0.4.5",
+    "@types/flexsearch": "^0.7.3"
   },
   "exports": {
     "./package.json": "./package.json",
