@@ -8,12 +8,16 @@ import {
   PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
   UnpaidWorkspacePlans,
-  WorkspacePlan
+  WorkspacePlan,
+  WorkspacePlans
 } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'
-import { buildTestWorkspacePlan } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
+import {
+  buildTestWorkspacePlan,
+  buildTestWorkspaceSubscription
+} from '@/modules/gatekeeper/tests/helpers/workspacePlan'
 import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 describe('workspacePlan services @gatekeeper', () => {
@@ -25,6 +29,7 @@ describe('workspacePlan services @gatekeeper', () => {
           expect.fail()
         },
         getWorkspacePlan: async () => null,
+        getWorkspaceSubscription: async () => null,
         emitEvent: () => {
           expect.fail()
         }
@@ -161,6 +166,7 @@ describe('workspacePlan services @gatekeeper', () => {
                     status: WorkspacePlanStatuses.Valid,
                     name: UnpaidWorkspacePlans.Free
                   }),
+                getWorkspaceSubscription: async () => null,
                 emitEvent: fail
               })
               await updateWorkspacePlan({
@@ -199,6 +205,7 @@ describe('workspacePlan services @gatekeeper', () => {
                   status: WorkspacePlanStatuses.Valid,
                   name: UnpaidWorkspacePlans.Free
                 }),
+              getWorkspaceSubscription: async () => null,
               emitEvent
             })
             await updateWorkspacePlan({
@@ -223,6 +230,37 @@ describe('workspacePlan services @gatekeeper', () => {
       )
     })
 
+    it('does not allow updating if a plan has a current subscription', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
+
+      const updateWorkspacePlan = updateWorkspacePlanFactory({
+        getWorkspace: async () => {
+          return { id: workspaceId } as WorkspaceWithOptionalRole
+        },
+        upsertWorkspacePlan: async () => {},
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            workspaceId,
+            name: PaidWorkspacePlans.Team,
+            status: WorkspacePlanStatuses.Valid
+          }),
+        getWorkspaceSubscription: async () => buildTestWorkspaceSubscription(),
+        emitEvent: async () => {}
+      })
+
+      const update = updateWorkspacePlan({
+        userId,
+        workspaceId,
+        status: WorkspacePlanStatuses.Valid,
+        name: WorkspacePlans.Academia
+      })
+
+      await expect(update).to.eventually.rejectedWith(
+        'Workspace plan cannot be in the specified status'
+      )
+    })
+
     it('sends the previous workspace plan in the event payload when present', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const userId = cryptoRandomString({ length: 10 })
@@ -244,6 +282,7 @@ describe('workspacePlan services @gatekeeper', () => {
             name: PaidWorkspacePlans.Team,
             status: WorkspacePlanStatuses.Valid
           }),
+        getWorkspaceSubscription: async () => null,
         emitEvent
       })
 
