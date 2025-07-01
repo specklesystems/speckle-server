@@ -1046,6 +1046,8 @@ export type FileUpload = {
   /** Alias for streamId */
   projectId: Scalars['String']['output'];
   streamId: Scalars['String']['output'];
+  /** Date when upload was last updated */
+  updatedAt: Scalars['DateTime']['output'];
   uploadComplete: Scalars['Boolean']['output'];
   uploadDate: Scalars['DateTime']['output'];
   /** The user's id that uploaded this file. */
@@ -6480,6 +6482,7 @@ export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends
   modelName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   uploadComplete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   uploadDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

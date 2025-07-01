@@ -36,6 +36,7 @@
         </NuxtLink>
         <ProjectPageModelsActions
           v-if="project && showActions && !isPendingModelFragment(model)"
+          ref="actions"
           v-model:open="showActionsMenu"
           :model="model"
           :project="project"
@@ -93,10 +94,20 @@
         </div>
       </div>
       <div class="relative z-20 flex justify-between items-center w-full h-8 pl-2">
-        <ProjectPageModelsCardUpdatedTime
-          class="text-body-3xs text-foreground-2"
-          :updated-at="updatedAtFullDate"
-        />
+        <div class="flex flex-col">
+          <ProjectPageModelsCardUpdatedTime
+            class="text-body-3xs text-foreground-2"
+            :updated-at="updatedAtFullDate"
+          />
+          <NuxtLink
+            v-if="showLastUploadFailed"
+            v-keyboard-clickable
+            class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
+            @click.stop="actions?.showUploads()"
+          >
+            Last upload failed
+          </NuxtLink>
+        </div>
         <div class="flex items-center gap-1">
           <div
             v-if="!isPendingModelFragment(model)"
@@ -134,6 +145,8 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
 import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+import dayjs from 'dayjs'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -145,6 +158,25 @@ graphql(`
     permissions {
       canCreateModel {
         ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment ProjectPageModelsCard_Model on Model {
+    id
+    lastUpload: uploads(input: { limit: 1, cursor: null }) {
+      items {
+        id
+        updatedAt
+        convertedStatus
+      }
+    }
+    lastVersion: versions(limit: 1, cursor: null) {
+      items {
+        id
+        createdAt
       }
     }
   }
@@ -178,9 +210,27 @@ const importArea = ref(
   }>
 )
 
+const actions = ref(
+  null as Nullable<{
+    showUploads: () => void
+  }>
+)
+
 const isVersionUploading = ref(false)
 const showActionsMenu = ref(false)
 const hovered = ref(false)
+
+const showLastUploadFailed = computed(() => {
+  if (isPendingModelFragment(props.model)) return false
+  const lastUpload = props.model.lastUpload?.items[0]
+  const lastVersion = props.model.lastVersion?.items[0]
+
+  // Only show if last upload failed & there is no last version,
+  // or last version is older than last upload
+  if (lastUpload?.convertedStatus !== FileUploadConvertedStatus.Error) return false
+  if (!lastVersion) return true
+  return dayjs(lastUpload.updatedAt).isAfter(dayjs(lastVersion.createdAt))
+})
 
 const containerClasses = computed(() => {
   const classParts = [
