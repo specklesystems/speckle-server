@@ -43,6 +43,7 @@ import {
   GetInvitationTargetUsers,
   GetProjectInviteProject
 } from '@/modules/serverinvites/services/operations'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import {
   MaybeNullOrUndefined,
   Nullable,
@@ -70,6 +71,7 @@ export const createProjectInviteFactory =
      */
     secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
     allowWorkspacedProjects?: boolean
+    workspaceSeatType?: WorkspaceSeatType
   }) => {
     const {
       input,
@@ -116,7 +118,8 @@ export const createProjectInviteFactory =
         secondaryResourceRoles: {
           ...(secondaryResourceRoles || {}),
           ...(serverRole ? { [ServerInviteResourceType]: serverRole } : undefined)
-        }
+        },
+        workspaceSeatType: params.workspaceSeatType
       }
     await deps.createAndSendInvite(
       {

@@ -1,31 +1,26 @@
-import { Commits, knex, StreamCommits } from '@/modules/core/dbSchema'
+import { BranchCommits, knex, Branches, Commits } from '@/modules/core/dbSchema'
 import { Version } from '@/modules/core/domain/commits/types'
 import { Knex } from 'knex'
+import { groupBy } from 'lodash-es'
 
-const tables = {
-  versions: (db: Knex) => db<Version>(Commits.name)
-}
-
-export const getLastVersionByProjectIdFactory =
+export const getLastVersionsByProjectIdFactory =
   ({ db }: { db: Knex }) =>
   async ({
     projectIds
   }: {
     projectIds: readonly string[]
-  }): Promise<Record<string, Version & { projectId: string }>> => {
-    const results = await tables
-      .versions(db)
-      .join(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
-      .whereIn(StreamCommits.col.streamId, projectIds)
-      .distinctOn(StreamCommits.col.streamId)
-      .select([...Commits.cols, knex.raw(`stream_commits."streamId" as "projectId"`)])
+  }): Promise<Record<string, Array<Version & { projectId: string }>>> => {
+    const res = await db(Branches.name)
+      .whereIn(Branches.col.streamId, projectIds)
+      .join(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+      .join(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+      .distinctOn(Branches.col.id)
+      .select([...Commits.cols, knex.raw(`branches."streamId" as "projectId"`)])
       .orderBy([
-        { column: StreamCommits.col.streamId, order: 'desc' },
-        { column: Commits.col.createdAt, order: 'desc' }
+        { column: Branches.col.id, order: 'desc' },
+        { column: Commits.col.createdAt, order: 'desc' },
+        { column: Commits.col.id, order: 'desc' }
       ])
 
-    return results.reduce<Record<string, Version & { projectId: string }>>(
-      (acc, curr) => ({ ...acc, [curr.projectId]: curr }),
-      {}
-    )
+    return groupBy(res, 'projectId')
   }

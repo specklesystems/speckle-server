@@ -78,7 +78,7 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
         info: { filename: string; encoding: string; mimeType: string }
       ) => {
         const { filename: fileName } = info
-        const fileType = fileName?.split('.')?.pop()?.toLowerCase()
+        const fileType = fileName?.split('.')?.pop()?.toLowerCase().trim()
         logger = logger.child({ fileName, fileType })
         const registerUploadResult = (processingPromise: Promise<ProcessingResult>) => {
           finalizePromises.push(
@@ -86,16 +86,7 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
           )
         }
 
-        let blobId = crs({ length: 10 })
-        let clientHash = null
-        if (formKey.includes('hash:')) {
-          clientHash = formKey.split(':')[1]
-          if (clientHash && clientHash !== '') {
-            // logger.debug(`I have a client hash (${clientHash})`)
-            blobId = clientHash
-          }
-        }
-
+        const blobId = crs({ length: 10 })
         logger = logger.child({ blobId })
 
         uploadOperations[blobId] = uploadFileStream(

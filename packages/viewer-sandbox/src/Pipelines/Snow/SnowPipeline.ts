@@ -141,7 +141,7 @@ export class SnowPipeline extends ProgressivePipeline {
         const batchMaterial: SpeckleStandardMaterial = batches[k]
           .batchMaterial as SpeckleStandardMaterial
         if (!this.batchSnowMaterials[batches[k].id]) {
-          const snowMaterial = new SnowMaterial({}, ['USE_RTE'])
+          const snowMaterial = new SnowMaterial({})
           snowMaterial.copy(batchMaterial)
           snowMaterial.normalMap = snowTexture
           this.batchSnowMaterials[batches[k].id] = snowMaterial

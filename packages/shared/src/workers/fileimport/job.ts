@@ -7,21 +7,36 @@ const job = z.object({
 
 export const jobPayload = job.merge(
   z.object({
-    url: z.string(),
+    serverUrl: z.string().url().describe('The url of the server'),
+    projectId: z.string(),
+    modelId: z.string(),
     token: z.string(),
-    responseUrl: z.string().url(),
     blobId: z.string(),
     fileType: z.string(),
+    fileName: z.string(),
     timeOutSeconds: z
       .number()
       .int()
-      .default(20 * TIME.minute)
+      .default(30 * TIME.minute)
   })
 )
 export type JobPayload = z.infer<typeof jobPayload>
 
 const baseFileImportResult = z.object({
-  durationSeconds: z.number().describe('Duration to import the file, in seconds')
+  durationSeconds: z
+    .number()
+    .describe('Total duration to download & import the file, in seconds'),
+  downloadDurationSeconds: z
+    .number()
+    .describe(
+      'Duration to download the file, in seconds. This is a sub-component of the total duration.'
+    ),
+  parseDurationSeconds: z
+    .number()
+    .describe(
+      'Duration to parse the file, in seconds. This is a sub-component of the total duration.'
+    ),
+  parser: z.string().describe('The parser used for the import')
 })
 
 export type FileImportResult = z.infer<typeof baseFileImportResult>
@@ -36,9 +51,11 @@ export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
 
 const fileImportErrorPayload = z.object({
   status: z.literal('error'),
-  reasons: z.array(z.string()).min(1),
+  reason: z.string(),
   result: baseFileImportResult
 })
+
+export type FileImportErrorPayload = z.infer<typeof fileImportErrorPayload>
 
 export const fileImportResultPayload = z.discriminatedUnion('status', [
   fileImportSuccessPayload,

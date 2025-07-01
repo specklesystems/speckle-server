@@ -1,4 +1,4 @@
-import { MathUtils, WebGLCapabilities } from 'three'
+import { Box3, MathUtils, Matrix4, WebGLCapabilities } from 'three'
 import LineBatch from './LineBatch.js'
 import Materials, {
   FilterMaterialType,
@@ -107,9 +107,36 @@ export default class Batcher {
         const rvs = nodes
           .map((node: TreeNode) => node.model.renderView)
           /** This disconsiders orphaned nodes caused by incorrect id duplication in the stream */
-          .filter((rv) => rv)
+          .filter((rv: NodeRenderView) => rv)
 
-        if (Number.parseInt(v) < this.minInstancedBatchVertices || !instanced) {
+        /** Determine if the instance geometry needs RTE */
+        let needsRTE = Geometry.needsRTE(rvs[0].aabb)
+        if (!needsRTE) {
+          /** Get all the transforms for this instance geometry */
+          const transforms: Array<Matrix4> = rvs
+            .map((rv: NodeRenderView) => rv.renderData.geometry.transform)
+            .filter((t): t is Matrix4 => t !== null) // This is lunacy
+
+          const testBox: Box3 = new Box3().copy(rvs[0].aabb)
+          const scratchBox: Box3 = new Box3()
+          /** Go through each transform and test. */
+          for (let k = 0; k < transforms.length; k++) {
+            scratchBox.copy(testBox)
+            scratchBox.applyMatrix4(transforms[k])
+            needsRTE ||= Geometry.needsRTE(scratchBox)
+            /** If we find one that needs RTE we break early */
+            if (needsRTE) break
+          }
+        }
+
+        /** We currently do not use RTE with hardware instancing
+         * Explanation: https://www.notion.so/speckle/On-demand-RTE-fa57fff0685c4302a6970e81df3cab5b?pvs=4#1fbb78fc7aa680c4acc0de8929e92924
+         */
+        if (
+          Number.parseInt(v) < this.minInstancedBatchVertices ||
+          !instanced ||
+          needsRTE
+        ) {
           rvs.forEach((nodeRv) => {
             const geometry = nodeRv.renderData.geometry
             geometry.instanced = false

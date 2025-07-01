@@ -50,24 +50,8 @@ import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { Version } from '@/modules/core/domain/commits/types'
-import { GraphQLResolveInfo } from 'graphql'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { isCreatedBeyondHistoryLimitCutoffFactory } from '@/modules/gatekeeperCore/utils/limits'
-
-/**
- * Simple utility to check if version is inside a Model or a Project
- */
-const getTypeFromPath = (info: GraphQLResolveInfo): 'Model' | 'Project' | null => {
-  let currentPath = info.path
-  while (currentPath) {
-    if (currentPath.typename === 'Model' || currentPath.typename === 'Project') {
-      return currentPath.typename
-    }
-    currentPath = currentPath.prev!
-  }
-  return null
-}
 
 const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
@@ -116,7 +100,7 @@ export default {
       const path = `/preview/${stream.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
     },
-    referencedObject: async (parent, _args, ctx, info) => {
+    referencedObject: async (parent, _args, ctx) => {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
       const project = await ctx.loaders
         .forRegion({ db: projectDB })
@@ -134,18 +118,12 @@ export default {
         project
       })
 
-      let lastVersion: Version | null
-      if (getTypeFromPath(info) === 'Model') {
-        lastVersion = await ctx.loaders
-          .forRegion({ db: projectDB })
-          .branches.getLatestCommit.load(parent.branchId)
-      } else {
-        lastVersion = await ctx.loaders
-          .forRegion({ db: projectDB })
-          .streams.getLastVersion.load(parent.streamId)
-      }
+      const latestVersions = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .streams.getLatestVersions.load(parent.streamId)
 
-      if (lastVersion?.id === parent.id) return parent.referencedObject
+      if (latestVersions?.find((lv) => lv.id === parent.id))
+        return parent.referencedObject
       if (isBeyondLimit) return null
       return parent.referencedObject
     }

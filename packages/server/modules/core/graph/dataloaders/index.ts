@@ -92,7 +92,7 @@ import {
   CommitWithStreamBranchMetadata
 } from '@/modules/core/domain/commits/types'
 import { logger } from '@/observability/logging'
-import { getLastVersionByProjectIdFactory } from '@/modules/core/repositories/versions'
+import { getLastVersionsByProjectIdFactory } from '@/modules/core/repositories/versions'
 import { StreamRoles } from '@speckle/shared'
 
 declare module '@/modules/core/loaders' {
@@ -137,7 +137,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getStreamsSourceApps = getStreamsSourceAppsFactory({ db })
     const getUsers = getUsersFactory({ db })
     const getStreamsCollaborators = getStreamsCollaboratorsFactory({ db })
-    const getLastVersionByProjectId = getLastVersionByProjectIdFactory({ db })
+    const getLastestVersionsByProjectId = getLastVersionsByProjectIdFactory({ db })
     const getStreamsCollaboratorCounts = getStreamsCollaboratorCountsFactory({
       db
     })
@@ -371,11 +371,11 @@ const dataLoadersDefinition = defineRequestDataloaders(
             }
           }
         })(),
-        getLastVersion: createLoader<string, Nullable<CommitRecord>>(
+        getLatestVersions: createLoader<string, Array<CommitRecord>>(
           async (projectIds) => {
             const results = keyBy(
-              await getLastVersionByProjectId({ projectIds }),
-              (c) => c.projectId
+              await getLastestVersionsByProjectId({ projectIds }),
+              (c) => c[0].projectId
             )
             return projectIds.map((projectId) => results[projectId] || null)
           }

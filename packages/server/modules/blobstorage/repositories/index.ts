@@ -1,5 +1,7 @@
 import {
   DeleteBlob,
+  ExpirePendingUploads,
+  GetBlob,
   GetBlobMetadata,
   GetBlobMetadataCollection,
   GetBlobs,
@@ -18,6 +20,7 @@ import {
   ResourceMismatch
 } from '@/modules/shared/errors'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 import { Knex } from 'knex'
 
 export const BlobStorage = buildTableHelper('blob_storage', [
@@ -54,6 +57,20 @@ export const getBlobsFactory =
     return await q
   }
 
+export const getBlobFactory =
+  (deps: { db: Knex }): GetBlob =>
+  async (params) => {
+    const { streamId, blobId } = params
+
+    const q = tables
+      .blobStorage(deps.db)
+      .where('id', blobId)
+      .andWhere('streamId', streamId)
+      .first()
+
+    return await q
+  }
+
 export const getAllStreamBlobIdsFactory =
   (deps: { db: Knex }) => async (params: { streamId: string }) => {
     const { streamId } = params
@@ -83,14 +100,20 @@ export const deleteBlobFactory =
 
 export const updateBlobFactory =
   (deps: { db: Knex }): UpdateBlob =>
-  async (params: { id: string; item: Partial<BlobStorageItem>; streamId?: string }) => {
-    const { id, item, streamId } = params
+  async (params: {
+    id: string
+    item: Partial<BlobStorageItem>
+    filter?: { streamId?: string; uploadStatus?: BlobUploadStatus }
+  }) => {
+    const { id, item } = params
+    const { streamId, uploadStatus } = params.filter || {}
     const q = tables
       .blobStorage(deps.db)
       .where(BlobStorage.col.id, id)
       .update(item, '*')
 
     if (streamId) q.andWhere(BlobStorage.col.streamId, streamId)
+    if (uploadStatus) q.andWhere(BlobStorage.col.uploadStatus, uploadStatus)
 
     const [res] = await q
     return res
@@ -159,4 +182,25 @@ export const blobCollectionSummaryFactory =
       totalSize: summary.sum ? parseInt(summary.sum) : 0,
       totalCount: parseInt(summary.count)
     }
+  }
+
+export const expirePendingUploadsFactory =
+  (deps: { db: Knex }): ExpirePendingUploads =>
+  async (params) => {
+    const { timeoutThresholdSeconds, errMessage } = params
+    const updatedRows = await deps
+      .db(BlobStorage.name)
+      .where(BlobStorage.withoutTablePrefix.col.uploadStatus, BlobUploadStatus.Pending)
+      .andWhere(
+        BlobStorage.withoutTablePrefix.col.createdAt,
+        '<',
+        deps.db.raw(`now() - interval '${timeoutThresholdSeconds} seconds'`)
+      )
+      .update({
+        [BlobStorage.withoutTablePrefix.col.uploadStatus]: BlobUploadStatus.Error,
+        [BlobStorage.withoutTablePrefix.col.uploadError]: errMessage
+      })
+      .returning<BlobStorageItem[]>('*')
+
+    return updatedRows
   }

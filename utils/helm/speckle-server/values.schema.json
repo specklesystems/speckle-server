@@ -104,6 +104,11 @@
           "type": "boolean",
           "description": "Enables the next generation file importer",
           "default": false
+        },
+        "largeFileUploadsEnabled": {
+          "type": "boolean",
+          "description": "Enables the ability to upload large files to Speckle",
+          "default": false
         }
       }
     },
@@ -154,6 +159,11 @@
           "type": "string",
           "description": "The name of the Kubernetes pod in which the ingress controller is deployed.",
           "default": "ingress-nginx"
+        },
+        "client_max_body_size_mb": {
+          "type": "number",
+          "description": "This maximum size of the body of any request (except file uploads) that can be sent to Speckle. For file uploads, the maximum size is defined by the `.file_size_limit_mb` parameter.",
+          "default": 10
         }
       }
     },
@@ -179,8 +189,18 @@
     },
     "file_import_time_limit_min": {
       "type": "number",
-      "description": "The maximum time (unit is minutes) that a file import can take before it is considered to have failed",
-      "default": 10
+      "description": "The maximum time (unit is minutes) that the file import service will attempt to process the file before it is considered to have failed",
+      "default": 30
+    },
+    "file_upload_url_expiry_minutes": {
+      "type": "number",
+      "description": "The number of minutes for which the file upload URL is valid. After this time, the URL will no longer be valid and the file cannot be uploaded.",
+      "default": 1440
+    },
+    "objects_size_limit_mb": {
+      "type": "number",
+      "description": "This maximum size of the POST request body (unit is Megabytes) that can be sent to the Speckle Objects REST APIs.",
+      "default": 100
     },
     "enable_prometheus_monitoring": {
       "type": "boolean",
@@ -266,7 +286,7 @@
           "description": "The maximum time in milliseconds to wait for a connection to be acquired from the connection pool.",
           "default": 15000
         },
-        "connectionCreationTimeoutMillis": {
+        "connectionCreateTimeoutMillis": {
           "type": "number",
           "description": "The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.",
           "default": 5000
@@ -513,6 +533,61 @@
               "type": "string",
               "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
               "default": ""
+            }
+          }
+        },
+        "fileImportService": {
+          "type": "object",
+          "properties": {
+            "rhino": {
+              "type": "object",
+              "properties": {
+                "connectionString": {
+                  "type": "object",
+                  "properties": {
+                    "secretName": {
+                      "type": "string",
+                      "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+                      "default": ""
+                    },
+                    "secretKey": {
+                      "type": "string",
+                      "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
+                      "default": ""
+                    }
+                  }
+                },
+                "queueName": {
+                  "type": "string",
+                  "description": "Optional. The name of the queue created within the Redis cluster.",
+                  "default": "fileimport-service-jobs"
+                }
+              }
+            },
+            "ifc": {
+              "type": "object",
+              "properties": {
+                "connectionString": {
+                  "type": "object",
+                  "properties": {
+                    "secretName": {
+                      "type": "string",
+                      "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+                      "default": ""
+                    },
+                    "secretKey": {
+                      "type": "string",
+                      "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
+                      "default": ""
+                    }
+                  }
+                },
+                "queueName": {
+                  "type": "string",
+                  "description": "Optional. The name of the queue created within the Redis cluster.",
+                  "default": "fileimport-service-jobs"
+                }
+              }
             }
           }
         },
@@ -2335,7 +2410,7 @@
         "time_limit_min": {
           "type": "number",
           "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
-          "default": 10
+          "default": 30
         }
       }
     },

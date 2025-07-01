@@ -1,4 +1,4 @@
-import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   CreateProjectVersionDocument,
@@ -115,7 +115,7 @@ describe('Versions', () => {
         expect(res.data?.versionMutations.markReceived).to.be.true
 
         const activities = await getStreamActivities(myPrivateStream.id, {
-          actionType: ActionTypes.Commit.Receive,
+          actionType: StreamActionTypes.Commit.Receive,
           userId: me.id
         })
         expect(activities).to.have.length(1)

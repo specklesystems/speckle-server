@@ -148,6 +148,16 @@ export const removeNullOrUndefinedKeys = <T extends Record<string, unknown>>(
   return ret as NonNullableProperties<NullableKeysToOptional<T>>
 }
 
+export const coerceUndefinedValuesToNull = <T extends Record<string, unknown>>(
+  obj: T
+) => {
+  const ret = {} as Record<string, Exclude<T[keyof T], undefined> | null>
+  for (const [key, value] of Object.entries(obj)) {
+    ret[key] = isUndefined(value) ? null : (value as Exclude<T[keyof T], undefined>)
+  }
+  return ret
+}
+
 export const isArrayOf = <T>(arr: unknown, guard: (v: unknown) => v is T): arr is T[] =>
   Array.isArray(arr) && arr.every(guard)
 

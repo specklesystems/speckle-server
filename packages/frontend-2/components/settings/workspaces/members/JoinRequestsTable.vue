@@ -4,12 +4,13 @@
       class="mt-2 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
-        { id: 'createdAt', header: 'Requested at', classes: 'col-span-3' },
-        { id: 'status', header: 'Status', classes: 'col-span-3' },
+        { id: 'email', header: 'Email', classes: 'col-span-3' },
+        { id: 'createdAt', header: 'Requested at', classes: 'col-span-2' },
+        { id: 'status', header: 'Status', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-3 flex items-center justify-end'
+          classes: 'col-span-2 flex items-center justify-end'
         }
       ]"
       :items="joinRequests"
@@ -21,6 +22,11 @@
           <span class="truncate text-body-xs text-foreground">
             {{ item.user.name }}
           </span>
+        </div>
+      </template>
+      <template #email="{ item }">
+        <div class="flex">
+          <span class="truncate text-body-xs text-foreground">{{ item.email }}</span>
         </div>
       </template>
       <template #createdAt="{ item }">
@@ -77,6 +83,7 @@ graphql(`
         id
         createdAt
         status
+        email
         user {
           id
           avatar

@@ -13,8 +13,7 @@ import type {
   WorkspaceUpdateInput,
   AddDomainToWorkspaceInput
 } from '~~/lib/common/generated/gql/graphql'
-import type { WorkspaceDomain, Workspace } from '~/lib/common/generated/gql/graphql'
-import { gql } from '@apollo/client'
+import type { Workspace } from '~/lib/common/generated/gql/graphql'
 
 export function useUpdateWorkspace() {
   const { mutate, loading } = useMutation(settingsUpdateWorkspaceMutation)
@@ -49,14 +48,7 @@ export function useAddWorkspaceDomain() {
   const { triggerNotification } = useGlobalToast()
 
   return {
-    mutate: async (
-      input: AddDomainToWorkspaceInput,
-      domains: WorkspaceDomain[],
-      discoverabilityEnabled: boolean,
-      domainBasedMembershipProtectionEnabled: boolean,
-      hasAccessToSSO: boolean,
-      hasAccessToDomainBasedSecurityPolicies: boolean
-    ) => {
+    mutate: async (input: AddDomainToWorkspaceInput) => {
       const result = await apollo
         .mutate({
           mutation: settingsAddWorkspaceDomainMutation,
@@ -64,36 +56,6 @@ export function useAddWorkspaceDomain() {
             input: {
               domain: input.domain,
               workspaceId: input.workspaceId
-            }
-          },
-          optimisticResponse: {
-            workspaceMutations: {
-              addDomain: {
-                __typename: 'Workspace',
-                id: input.workspaceId,
-                slug: (
-                  apollo.readFragment({
-                    id: getCacheId('Workspace', input.workspaceId),
-                    fragment: gql`
-                      fragment AddDomainWorkspace on Workspace {
-                        slug
-                      }
-                    `
-                  }) as Workspace
-                ).slug,
-                domains: [
-                  ...domains,
-                  {
-                    __typename: 'WorkspaceDomain',
-                    id: '',
-                    domain: input.domain
-                  }
-                ],
-                discoverabilityEnabled,
-                domainBasedMembershipProtectionEnabled,
-                hasAccessToSSO,
-                hasAccessToDomainBasedSecurityPolicies
-              }
             }
           },
           update: (cache, res) => {

@@ -5,13 +5,13 @@
   "private": true,
   "scripts": {
     "build": "NODE_OPTIONS=--max-old-space-size=8192 nuxt build",
+    "build:postinstall": "nuxt prepare",
     "build:sourcemaps": "BUILD_SOURCEMAPS=true yarn build",
     "dev:nuxt": "nuxt dev",
     "dev:app": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
     "dev": "yarn dev:app",
     "preview": "nuxt preview",
     "analyze": "nuxt analyze",
-    "postinstall": "yarn ensure:tailwind-deps && nuxt prepare",
     "lint:js": "eslint .",
     "lint:tsc": "vue-tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
@@ -24,7 +24,7 @@
     "datadog:publish-sourcemaps:dev": "DATADOG_SITE=\"datadoghq.eu\" datadog-ci sourcemaps upload ./.output/public/_nuxt --service=\"fe2-dev/test\" --release-version=\"unknown\" --minified-path-prefix=/_nuxt"
   },
   "dependencies": {
-    "@apollo/client": "^3.12.4",
+    "@apollo/client": "^3.13.8",
     "@artmizu/nuxt-prometheus": "^2.2.1",
     "@datadog/browser-rum": "^5.11.0",
     "@headlessui/vue": "^1.7.13",
@@ -55,7 +55,7 @@
     "@tiptap/suggestion": "2.10.3",
     "@tiptap/vue-3": "2.10.3",
     "@tryghost/content-api": "^1.11.21",
-    "@vue/apollo-composable": "npm:@speckle/apollo-composable@4.2.1-patch.1",
+    "@vue/apollo-composable": "^4.2.2",
     "@vue/apollo-ssr": "4.0.0",
     "@vueuse/core": "^10.9.0",
     "apollo-upload-client": "^18.0.1",
@@ -82,7 +82,7 @@
     "ua-parser-js": "^1.0.38",
     "vee-validate": "4.7.0",
     "vue-advanced-cropper": "^2.8.8",
-    "vue-tippy": "^6.7.0",
+    "vue-tippy": "^6.7.1",
     "ws": "^8.17.1"
   },
   "devDependencies": {
@@ -141,7 +141,7 @@
     "tailwindcss": "^3.4.1",
     "type-fest": "^4.24.0",
     "typescript": "^4.8.3",
-    "vue-tsc": "^2.2.2",
+    "vue-tsc": "^2.2.10",
     "wait-on": "^6.0.1",
     "znv": "^0.4.0",
     "zod": "^3.22.4"

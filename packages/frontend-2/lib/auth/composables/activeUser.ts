@@ -15,6 +15,7 @@ export const activeUserQuery = graphql(`
         id
         email
         verified
+        primary
       }
       company
       bio
@@ -28,6 +29,7 @@ export const activeUserQuery = graphql(`
       versions(limit: 0) {
         totalCount
       }
+      ...ProjectsAdd_User
     }
   }
 `)

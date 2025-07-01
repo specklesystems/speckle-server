@@ -76,7 +76,10 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { itEach } from '@/test/assertionHelper'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
-import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
 
@@ -394,6 +397,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
           eventEmit: async () => {}
         })({
           workspaceId: workspace.id,
@@ -406,6 +410,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
           eventEmit: async () => {}
         })({
           workspaceId: otherWorkspace.id,
@@ -424,6 +429,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
           eventEmit: async () => {}
         })({
           workspaceId: workspace.id,
@@ -457,6 +463,11 @@ describe('Workspaces GQL CRUD', () => {
           limit: 10,
           cursor: resA.data?.workspace.team.cursor
         })
+        const resC = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          limit: 10,
+          cursor: resB.data?.workspace.team.cursor
+        })
 
         expect(resA).to.not.haveGraphQLErrors()
         expect(resA.data?.workspace.team.items.length).to.equal(2)
@@ -469,7 +480,11 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(resB).to.not.haveGraphQLErrors()
         expect(resB.data?.workspace.team.items.length).to.equal(4)
-        expect(resB.data?.workspace.team.cursor).to.be.null
+        expect(resB.data?.workspace.team.cursor).to.be.not.null
+
+        expect(resC).to.not.haveGraphQLErrors()
+        expect(resC.data?.workspace.team.items.length).to.equal(0)
+        expect(resC.data?.workspace.team.cursor).to.be.null
       })
 
       it('should return correct total count', async () => {

@@ -1,22 +1,29 @@
 /* eslint-disable camelcase */
-import { Mixpanel } from 'mixpanel'
+import { MixpanelClient } from '@/modules/shared/utils/mixpanel'
 
+export type MixpanelFakeEventRecord = Array<Parameters<MixpanelClient['track']>[0]>
 type MixpanelFakeStorage = {
+  events?: MixpanelFakeEventRecord
   people?: Record<string, object | string>
   groups?: Record<string, object | string>
 }
 
 export const buildMixpanelFake = ({
+  events,
   people,
   groups
-}: MixpanelFakeStorage = {}): Mixpanel => {
+}: MixpanelFakeStorage = {}): MixpanelClient => {
   const notImplemented = () => {
     throw new Error('Faked mixpanel function has no implementation')
   }
 
   return {
     init: notImplemented,
-    track: notImplemented,
+    track: async (args) => {
+      if (events) {
+        events.push(args)
+      }
+    },
     track_batch: notImplemented,
     import: notImplemented,
     import_batch: notImplemented,

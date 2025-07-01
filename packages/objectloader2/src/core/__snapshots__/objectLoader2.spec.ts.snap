@@ -1,0 +1,149 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`objectloader2 > add extra header 1`] = `
+{
+  "base": {
+    "__closure": {
+      "child1Id": 100,
+    },
+    "id": "rootId",
+    "speckle_type": "type",
+  },
+  "baseId": "rootId",
+}
+`;
+
+exports[`objectloader2 > can get a root object from cache 1`] = `
+{
+  "base": {
+    "id": "baseId",
+    "speckle_type": "type",
+  },
+  "baseId": "baseId",
+}
+`;
+
+exports[`objectloader2 > can get a root object from downloader 1`] = `
+{
+  "base": {
+    "id": "baseId",
+    "speckle_type": "type",
+  },
+  "baseId": "baseId",
+}
+`;
+
+exports[`objectloader2 > can get root/child object from memory cache using iterator and getObject 1`] = `
+[
+  {
+    "__closure": {
+      "child1Id": 100,
+    },
+    "id": "rootId",
+    "speckle_type": "type",
+  },
+  {
+    "id": "child1Id",
+    "speckle_type": "type",
+  },
+]
+`;
+
+exports[`objectloader2 > can get root/child object from memory cache using iterator and getObject 2`] = `
+{
+  "id": "child1Id",
+  "speckle_type": "type",
+}
+`;
+
+exports[`objectloader2 > can get root/child object from memory downloader using iterator and getObject 1`] = `
+[
+  {
+    "__closure": {
+      "child1Id": 100,
+    },
+    "id": "rootId",
+    "speckle_type": "type",
+  },
+  {
+    "id": "child1Id",
+    "speckle_type": "type",
+  },
+]
+`;
+
+exports[`objectloader2 > can get root/child object from memory downloader using iterator and getObject 2`] = `
+{
+  "id": "child1Id",
+  "speckle_type": "type",
+}
+`;
+
+exports[`objectloader2 > can get single object from cache using iterator 1`] = `
+[
+  {
+    "id": "baseId",
+    "speckle_type": "type",
+  },
+]
+`;
+
+exports[`objectloader2 > createFromJSON test 1`] = `
+[
+  {
+    "__closure": {
+      "0e61e61edee00404ec6e0f9f594bce24": 100,
+      "f70738e3e3e593ac11099a6ed6b71154": 100,
+    },
+    "applicationId": "1",
+    "arr": null,
+    "attachedProp": null,
+    "crazyProp": null,
+    "detachedProp": null,
+    "detachedProp2": null,
+    "dynamicProp": 123,
+    "id": "efeadaca70a85ae6d3acfc93a8b380db",
+    "list": [
+      {
+        "__closure": null,
+        "referencedId": "0e61e61edee00404ec6e0f9f594bce24",
+        "speckle_type": "reference",
+      },
+    ],
+    "list2": [
+      {
+        "__closure": null,
+        "referencedId": "f70738e3e3e593ac11099a6ed6b71154",
+        "speckle_type": "reference",
+      },
+    ],
+    "speckle_type": "Speckle.Core.Tests.Unit.Models.BaseTests+SampleObjectBase2",
+  },
+  {
+    "applicationId": null,
+    "data": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+    ],
+    "id": "0e61e61edee00404ec6e0f9f594bce24",
+    "speckle_type": "Speckle.Core.Models.DataChunk",
+  },
+  {
+    "applicationId": null,
+    "data": [
+      1,
+      10,
+    ],
+    "id": "f70738e3e3e593ac11099a6ed6b71154",
+    "speckle_type": "Speckle.Core.Models.DataChunk",
+  },
+]
+`;

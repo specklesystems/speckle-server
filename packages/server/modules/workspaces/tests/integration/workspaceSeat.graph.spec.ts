@@ -10,7 +10,7 @@ import {
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import {
   GetProjectCollaboratorsDocument,
   UpdateWorkspaceSeatTypeDocument,
@@ -37,12 +37,19 @@ describe('Workspace Seats @graphql', () => {
     role: Roles.Server.Admin,
     verified: true
   }
+  const workspaceMember: BasicTestUser = {
+    id: '',
+    name: 'Workspace Seats User Guy',
+    email: createRandomEmail(),
+    role: Roles.Server.User,
+    verified: true
+  }
 
   let apollo: TestApolloServer
 
   before(async () => {
     await beforeEachContext()
-    await createTestUser(workspaceAdmin)
+    await createTestUsers([workspaceAdmin, workspaceMember])
 
     apollo = await testApolloServer({ authUserId: workspaceAdmin.id })
   })

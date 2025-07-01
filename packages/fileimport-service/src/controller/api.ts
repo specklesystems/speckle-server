@@ -165,7 +165,7 @@ export class ServerAPI {
   }
 
   prepInsertionObject(streamId: string, obj: SpeckleObject): SpeckleObjectWithId {
-    const maximumObjectSizeMB = parseInt(process.env['MAX_OBJECT_SIZE_MB'] || '10')
+    const maximumObjectSizeMB = parseInt(process.env['MAX_OBJECT_SIZE_MB'] || '100')
     const MAX_OBJECT_SIZE = maximumObjectSizeMB * 1024 * 1024
 
     if (obj.hash) obj.id = obj.hash
@@ -313,7 +313,7 @@ export class ServerAPI {
       .where({ id: tokenId.slice(0, 10) })
       .del()
 
-    if (delCount === 0) throw new Error('Token revokation failed')
+    if (delCount === 0) throw new Error('Token revocation failed')
     return true
   }
 }

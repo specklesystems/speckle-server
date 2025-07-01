@@ -8,11 +8,17 @@ import {
   PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
   UnpaidWorkspacePlans,
-  WorkspacePlan
+  WorkspacePlan,
+  WorkspacePlans
 } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash-es'
+import {
+  buildTestWorkspacePlan,
+  buildTestWorkspaceSubscription
+} from '@/modules/gatekeeper/tests/helpers/workspacePlan'
+import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 describe('workspacePlan services @gatekeeper', () => {
   describe('updateWorkspacePlanFactory creates a function, that', () => {
@@ -22,12 +28,16 @@ describe('workspacePlan services @gatekeeper', () => {
         upsertWorkspacePlan: () => {
           expect.fail()
         },
+        getWorkspacePlan: async () => null,
+        getWorkspaceSubscription: async () => null,
         emitEvent: () => {
           expect.fail()
         }
       })
+
       const err = await expectToThrow(async () => {
         await updateWorkspacePlan({
+          userId: cryptoRandomString({ length: 10 }),
           workspaceId: cryptoRandomString({ length: 10 }),
           name: PaidWorkspacePlans.Team,
           status: PaidWorkspacePlanStatuses.Canceled
@@ -150,6 +160,13 @@ describe('workspacePlan services @gatekeeper', () => {
                   return { id: workspaceId } as WorkspaceWithOptionalRole
                 },
                 upsertWorkspacePlan: fail,
+                getWorkspacePlan: async () =>
+                  buildTestWorkspacePlan({
+                    workspaceId,
+                    status: WorkspacePlanStatuses.Valid,
+                    name: UnpaidWorkspacePlans.Free
+                  }),
+                getWorkspaceSubscription: async () => null,
                 emitEvent: fail
               })
               await updateWorkspacePlan({
@@ -182,6 +199,13 @@ describe('workspacePlan services @gatekeeper', () => {
                 return { id: workspaceId } as WorkspaceWithOptionalRole
               },
               upsertWorkspacePlan,
+              getWorkspacePlan: async () =>
+                buildTestWorkspacePlan({
+                  workspaceId,
+                  status: WorkspacePlanStatuses.Valid,
+                  name: UnpaidWorkspacePlans.Free
+                }),
+              getWorkspaceSubscription: async () => null,
               emitEvent
             })
             await updateWorkspacePlan({
@@ -192,12 +216,93 @@ describe('workspacePlan services @gatekeeper', () => {
               status
             })
             const expectedPlan = { workspaceId, name: planName, status }
-            expect(omit(storedWorkspacePlan, 'createdAt')).to.deep.equal(expectedPlan)
+            expect(omit(storedWorkspacePlan, 'createdAt', 'updatedAt')).to.deep.equal(
+              expectedPlan
+            )
             expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
-            expect(eventPayload).to.deep.equal({ workspacePlan: expectedPlan })
+            expect(eventPayload).to.nested.include({
+              'workspacePlan.workspaceId': expectedPlan.workspaceId,
+              'workspacePlan.status': expectedPlan.status,
+              'workspacePlan.name': expectedPlan.name
+            })
           }
         })
       )
+    })
+
+    it('does not allow updating if a plan has a current subscription', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
+
+      const updateWorkspacePlan = updateWorkspacePlanFactory({
+        getWorkspace: async () => {
+          return { id: workspaceId } as WorkspaceWithOptionalRole
+        },
+        upsertWorkspacePlan: async () => {},
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            workspaceId,
+            name: PaidWorkspacePlans.Team,
+            status: WorkspacePlanStatuses.Valid
+          }),
+        getWorkspaceSubscription: async () => buildTestWorkspaceSubscription(),
+        emitEvent: async () => {}
+      })
+
+      const update = updateWorkspacePlan({
+        userId,
+        workspaceId,
+        status: WorkspacePlanStatuses.Valid,
+        name: WorkspacePlans.Academia
+      })
+
+      await expect(update).to.eventually.rejectedWith(
+        'Workspace plan cannot be in the specified status'
+      )
+    })
+
+    it('sends the previous workspace plan in the event payload when present', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const userId = cryptoRandomString({ length: 10 })
+      let emittedEventName: string | undefined = undefined
+      let eventPayload: unknown = undefined
+      const emitEvent: EventBusEmit = async ({ eventName, payload }) => {
+        emittedEventName = eventName
+        eventPayload = payload
+      }
+
+      const updateWorkspacePlan = updateWorkspacePlanFactory({
+        getWorkspace: async () => {
+          return { id: workspaceId } as WorkspaceWithOptionalRole
+        },
+        upsertWorkspacePlan: async () => {},
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            workspaceId,
+            name: PaidWorkspacePlans.Team,
+            status: WorkspacePlanStatuses.Valid
+          }),
+        getWorkspaceSubscription: async () => null,
+        emitEvent
+      })
+
+      await updateWorkspacePlan({
+        userId,
+        status: WorkspacePlanStatuses.Valid,
+        workspaceId,
+        name: PaidWorkspacePlans.ProUnlimited
+      })
+
+      expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
+      expect(eventPayload).to.nested.include({
+        userId,
+        'workspacePlan.workspaceId': workspaceId,
+        'workspacePlan.status': WorkspacePlanStatuses.Valid,
+        'workspacePlan.name': PaidWorkspacePlans.ProUnlimited,
+        'previousWorkspacePlan.workspaceId': workspaceId,
+        'previousWorkspacePlan.name': PaidWorkspacePlans.Team,
+        'previousWorkspacePlan.status': WorkspacePlanStatuses.Valid
+      })
     })
   })
 })

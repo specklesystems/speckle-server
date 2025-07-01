@@ -30,6 +30,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
+import contentDisposition from 'content-disposition'
 
 export const blobStorageRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -136,7 +137,7 @@ export const blobStorageRouterFactory = (): Router => {
       })
       res.writeHead(200, {
         'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${fileName}"`
+        'Content-Disposition': contentDisposition(fileName)
       })
       fileStream.pipe(res)
     }

@@ -22,7 +22,7 @@
           :value="option.value.toString()"
           name="measurementType"
           :icon="option.icon"
-          :checked="measurementParams.type === option.value"
+          :checked="measurementOptions.type === option.value"
           size="sm"
           @change="updateMeasurementsType(option)"
         />
@@ -32,16 +32,25 @@
       <FormCheckbox
         name="Snap to vertices"
         hide-label
-        :model-value="measurementParams.vertexSnap"
-        @update:model-value="() => toggleMeasurementsSnap()"
+        :model-value="measurementOptions.vertexSnap"
+        @update:model-value="toggleMeasurementsSnap"
       />
       <span class="text-body-2xs font-medium">Snap to vertices</span>
+    </div>
+    <div class="py-1.5 px-3 flex items-center border-b border-outline-2">
+      <FormCheckbox
+        name="Chain Measurements"
+        hide-label
+        :model-value="measurementOptions.chain"
+        @update:model-value="toggleMeasurementsChaining"
+      />
+      <span class="text-body-2xs font-medium">Chain Measurements</span>
     </div>
     <div class="pb-3 flex flex-col">
       <div class="flex flex-col gap-1.5 p-3 pt-2 pb-3">
         <h6 class="text-body-2xs font-medium">Units</h6>
         <ViewerMeasurementsUnitSelect
-          v-model="selectedUnit"
+          v-model="measurementOptions.units"
           mount-menu-on-body
           class="w-1/2"
           @update:model-value="onChangeMeasurementUnits"
@@ -52,15 +61,15 @@
         <div class="flex gap-2 items-center">
           <input
             id="precision"
-            v-model="measurementPrecision"
+            v-model="measurementOptions.precision"
             class="h-2 mr-2 flex-1"
             type="range"
             min="1"
             max="5"
             step="1"
-            :onchange="onChangeMeasurementPrecision"
+            @change="(e: Event) => onChangeMeasurementPrecision((e.target as HTMLInputElement).value)"
           />
-          <span class="text-xs w-4">{{ measurementPrecision }}</span>
+          <span class="text-xs w-4">{{ measurementOptions.precision }}</span>
         </div>
       </div>
     </div>
@@ -80,59 +89,78 @@ interface MeasurementTypeOption {
 
 defineEmits(['close'])
 
-const measurementPrecision = ref(2)
-const selectedUnit = ref('m')
-
-const measurementParams = ref({
-  visible: true,
-  type: MeasurementType.POINTTOPOINT,
-  vertexSnap: true,
-  units: selectedUnit.value,
-  precision: measurementPrecision.value
-})
-
-const { setMeasurementOptions, clearMeasurements } = useMeasurementUtilities()
+const { measurementOptions, setMeasurementOptions, clearMeasurements } =
+  useMeasurementUtilities()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
-  measurementParams.value.type = selectedOption.value
-  setMeasurementOptions(measurementParams.value)
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    type: selectedOption.value
+  })
 }
 
 const onChangeMeasurementUnits = (newUnit: string) => {
-  selectedUnit.value = newUnit
-  measurementParams.value.units = newUnit
-  setMeasurementOptions(measurementParams.value)
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    units: newUnit
+  })
+}
+
+const toggleMeasurementsChaining = () => {
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    chain: !measurementOptions.value.chain
+  })
 }
 
 const toggleMeasurementsSnap = () => {
-  measurementParams.value.vertexSnap = !measurementParams.value.vertexSnap
-  setMeasurementOptions(measurementParams.value)
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    vertexSnap: !measurementOptions.value.vertexSnap
+  })
 }
 
-const onChangeMeasurementPrecision = () => {
-  measurementParams.value.precision = measurementPrecision.value
-  setMeasurementOptions(measurementParams.value)
+const onChangeMeasurementPrecision = (newPrecision?: string) => {
+  if (!newPrecision) return
+  setMeasurementOptions({
+    ...measurementOptions.value,
+    precision: Number(newPrecision)
+  })
 }
 
-const IconPointToPoint = resolveComponent(
+const IconMeasurePointToPoint = resolveComponent(
   'IconMeasurePointToPoint'
 ) as ConcreteComponent
-const IconPerpendicular = resolveComponent(
+const IconMeasurePerpendicular = resolveComponent(
   'IconMeasurePerpendicular'
 ) as ConcreteComponent
+const IconMeasurePoint = resolveComponent('IconMeasurePoint') as ConcreteComponent
+const IconMeasureArea = resolveComponent('IconMeasureArea') as ConcreteComponent
 
 const measurementTypeOptions = [
   {
     title: 'Point to Point',
-    icon: IconPointToPoint,
+    icon: IconMeasurePointToPoint,
     value: MeasurementType.POINTTOPOINT,
     description: 'Measure between two points'
   },
   {
     title: 'Perpendicular',
-    icon: IconPerpendicular,
+    icon: IconMeasurePerpendicular,
     value: MeasurementType.PERPENDICULAR,
-    description: 'Tip: Double-click to quick-measure'
+    description: 'Measure at a 90° angle'
+  },
+  {
+    title: 'Area',
+    icon: IconMeasureArea,
+    value: MeasurementType.AREA,
+    description: 'Measure area between points'
+  },
+  {
+    title: 'Point coordinates',
+    icon: IconMeasurePoint,
+    value: MeasurementType.POINT,
+    description: 'Measure XYZ coordinates'
   }
 ]
 </script>

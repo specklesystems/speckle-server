@@ -1,5 +1,6 @@
 import {
   AutomationCreationError,
+  AutomationRevisionCreationError,
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
 import {
@@ -406,10 +407,7 @@ const buildAutomationUpdate = () => {
               })
           )
 
-          expect(
-            e instanceof Automate.UnformattableTriggerDefinitionSchemaError,
-            e.toString()
-          ).to.be.true
+          expect(e instanceof AutomationRevisionCreationError, e.toString()).to.be.true
         })
       })
 

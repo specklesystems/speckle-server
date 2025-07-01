@@ -292,6 +292,7 @@ export const useMoveProjectToWorkspaceMutation = graphql(`
       projects {
         moveToWorkspace(workspaceId: $workspaceId, projectId: $projectId) {
           id
+          workspaceId
           workspace {
             id
             projects {

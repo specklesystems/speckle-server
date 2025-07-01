@@ -84,3 +84,4 @@ bin/
 # Server
 multiregion.json
 multiregion.test.json
+packages/*/.tshy/

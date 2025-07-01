@@ -7,9 +7,10 @@ import {
 import { ServerScope } from '@speckle/shared'
 import { Merge } from 'type-fest'
 
-const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const workspaceScopes = FF_WORKSPACES_MODULE_ENABLED ? [Scopes.Workspaces.Read] : []
+const automateScopes = FF_AUTOMATE_MODULE_ENABLED ? [Scopes.Automate.ReportResults] : []
 
 export enum DefaultAppIds {
   Web = 'spklwebapp',
@@ -120,7 +121,8 @@ const SpeckleExcel = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    ...workspaceScopes
   ]
 }
 
@@ -137,7 +139,8 @@ const SpecklePowerBi = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    ...workspaceScopes
   ]
 }
 
@@ -156,9 +159,7 @@ const SpeckleAutomate = {
     Scopes.Tokens.Write,
     Scopes.Streams.Read,
     Scopes.Streams.Write,
-    ...(getFeatureFlags().FF_AUTOMATE_MODULE_ENABLED
-      ? [Scopes.Automate.ReportResults]
-      : [])
+    ...automateScopes
   ]
 }
 

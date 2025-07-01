@@ -6,7 +6,8 @@ import { EventBus, getEventBus } from '@/modules/shared/services/eventBus'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import {
   getActiveUserStreamsFactory,
-  saveActivityFactory
+  saveActivityFactory,
+  saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -26,6 +27,8 @@ import { reportStreamInviteActivityFactory } from '@/modules/activitystream/even
 import { getProjectInviteProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { reportStreamActivityFactory } from '@/modules/activitystream/events/streamListeners'
 import { TIME_MS } from '@speckle/shared'
+import { reportGatekeeperActivityFactory } from '@/modules/activitystream/events/gatekeeperListeners'
+import { reportWorkspaceActivityFactory } from '@/modules/activitystream/events/workspaceListeners'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -41,37 +44,45 @@ const initializeEventListeners = ({
   eventBus: EventBus
   db: Knex
 }) => {
-  const saveActivity = saveActivityFactory({ db })
+  const saveStreamActivity = saveStreamActivityFactory({ db })
   const reportUserActivity = reportUserActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportAccessRequestActivity = reportAccessRequestActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportBranchActivity = reportBranchActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportCommitActivity = reportCommitActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportCommentActivity = reportCommentActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
   })
   const reportStreamInviteActivity = reportStreamInviteActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity,
+    saveActivity: saveStreamActivity,
     getProjectInviteProject: getProjectInviteProjectFactory({
       getStream: getStreamFactory({ db })
     })
   })
   const reportStreamActivity = reportStreamActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity: saveStreamActivity
+  })
+  const reportGatekeeperActivity = reportGatekeeperActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity: saveActivityFactory({ db })
+  })
+  const reportWorkspaceActivity = reportWorkspaceActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity: saveActivityFactory({ db })
   })
 
   const quitCbs = [
@@ -81,7 +92,9 @@ const initializeEventListeners = ({
     reportCommitActivity(),
     reportCommentActivity(),
     reportStreamInviteActivity(),
-    reportStreamActivity()
+    reportStreamActivity(),
+    reportGatekeeperActivity(),
+    reportWorkspaceActivity()
   ]
 
   return () => quitCbs.forEach((quit) => quit())

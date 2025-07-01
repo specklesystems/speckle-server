@@ -5,7 +5,6 @@ import {
   GetWorkspaceSubscription,
   ReconcileSubscriptionData,
   SubscriptionDataInput,
-  UpsertPaidWorkspacePlan,
   UpsertWorkspaceSubscription,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
@@ -26,7 +25,8 @@ import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgra
 import {
   PaidWorkspacePlans,
   throwUncoveredError,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanBillingIntervals,
+  WorkspacePlans
 } from '@speckle/shared'
 import { cloneDeep } from 'lodash-es'
 
@@ -38,8 +38,7 @@ export const upgradeWorkspaceSubscriptionFactory =
     getWorkspaceSubscription,
     reconcileSubscriptionData,
     updateWorkspaceSubscription,
-    countSeatsByTypeInWorkspace,
-    upsertWorkspacePlan
+    countSeatsByTypeInWorkspace
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspacePlanProductId: GetWorkspacePlanProductId
@@ -48,13 +47,14 @@ export const upgradeWorkspaceSubscriptionFactory =
     reconcileSubscriptionData: ReconcileSubscriptionData
     updateWorkspaceSubscription: UpsertWorkspaceSubscription
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
-    upsertWorkspacePlan: UpsertPaidWorkspacePlan
   }) =>
   async ({
+    userId,
     workspaceId,
     targetPlan,
     billingInterval
   }: {
+    userId: string
     workspaceId: string
     targetPlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
@@ -65,16 +65,17 @@ export const upgradeWorkspaceSubscriptionFactory =
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
     switch (workspacePlan.name) {
-      case 'unlimited':
-      case 'academia':
-      case 'teamUnlimitedInvoiced':
-      case 'proUnlimitedInvoiced':
-      case 'free': // Upgrade from free is handled through startCheckout since it is from free to paid
+      case WorkspacePlans.Unlimited:
+      case WorkspacePlans.Academia:
+      case WorkspacePlans.TeamUnlimitedInvoiced:
+      case WorkspacePlans.ProUnlimitedInvoiced:
+      case WorkspacePlans.Enterprise:
+      case WorkspacePlans.Free: // Upgrade from free is handled through startCheckout since it is from free to paid
         throw new WorkspaceNotPaidPlanError()
-      case 'team':
-      case 'teamUnlimited':
-      case 'pro':
-      case 'proUnlimited':
+      case WorkspacePlans.Team:
+      case WorkspacePlans.TeamUnlimited:
+      case WorkspacePlans.Pro:
+      case WorkspacePlans.ProUnlimited:
         break
       default:
         throwUncoveredError(workspacePlan)
@@ -134,9 +135,7 @@ export const upgradeWorkspaceSubscriptionFactory =
       default:
         throwUncoveredError(billingInterval)
     }
-    // must update the billing interval to the new one
-    workspaceSubscription.billingInterval = billingInterval
-    workspaceSubscription.currentBillingCycleEnd = calculateNewBillingCycleEnd({
+    const currentBillingCycleEnd = calculateNewBillingCycleEnd({
       workspaceSubscription
     })
 
@@ -155,8 +154,6 @@ export const upgradeWorkspaceSubscriptionFactory =
       type: WorkspaceSeatType.Editor
     })
 
-    workspaceSubscription.updatedAt = new Date()
-
     // set current plan seat count to 0
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: 0,
@@ -165,29 +162,31 @@ export const upgradeWorkspaceSubscriptionFactory =
       workspacePlan: workspacePlan.name
     })
 
-    // set target plan seat count to current seat count
-    subscriptionData.products.push({
+    // set target plan and subscription
+    const newProduct = {
       quantity: editorsCount,
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
         billingInterval,
         currency: workspaceSubscription.currency
-      }),
-      subscriptionItemId: undefined
-    })
+      })
+    }
 
+    workspaceSubscription.updateIntent = {
+      userId,
+      planName: targetPlan,
+      billingInterval,
+      currentBillingCycleEnd,
+      currency: workspaceSubscription.currency,
+      updatedAt: new Date(),
+      products: [newProduct]
+    }
+    await updateWorkspaceSubscription({ workspaceSubscription })
+
+    subscriptionData.products.push(newProduct)
     await reconcileSubscriptionData({
       subscriptionData,
       prorationBehavior: 'always_invoice'
     })
-    await upsertWorkspacePlan({
-      workspacePlan: {
-        status: workspacePlan.status,
-        workspaceId,
-        name: targetPlan,
-        createdAt: new Date()
-      }
-    })
-    await updateWorkspaceSubscription({ workspaceSubscription })
   }

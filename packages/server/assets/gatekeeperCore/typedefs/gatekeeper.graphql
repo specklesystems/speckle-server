@@ -64,6 +64,7 @@ enum WorkspacePlans {
   pro
   proUnlimited
   proUnlimitedInvoiced
+  enterprise
 }
 
 enum WorkspacePlanStatuses {
@@ -148,10 +149,16 @@ extend type Workspace {
   planPrices: WorkspacePaidPlanPrices
 }
 
+extend type Project {
+  hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
+}
+
 enum WorkspaceFeatureName {
   domainBasedSecurityPolicies
   oidcSso
+  hideSpeckleBranding
   workspaceDataRegionSpecificity
+  exclusiveMembership
 }
 
 type WorkspacePlanPrice {

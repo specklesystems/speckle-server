@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canReceiveWorkspaceProjectsUpdatedMessagePolicy } from './canReceiveProjectsUpdatedMessage.js'
 import { OverridesOf } from '../../../tests/helpers/types.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 import { Roles } from '../../../core/constants.js'
 import { TIME_MS } from '../../../core/index.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
@@ -25,10 +25,7 @@ describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.Guest,
-      getWorkspace: async () => ({
-        id: 'workspace-id',
-        slug: 'workspace-slug'
-      }),
+      getWorkspace: getWorkspaceFake({ id: 'workspace-id', slug: 'workspace-slug' }),
       getWorkspaceRole: async () => Roles.Workspace.Guest,
       getWorkspaceSsoProvider: async () => ({
         providerId: 'provider-id'

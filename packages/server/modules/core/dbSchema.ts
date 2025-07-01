@@ -299,6 +299,7 @@ export const UsersMeta = buildMetaTableHelper(
     'activeWorkspace',
     'isProjectsActive',
     'newWorkspaceExplainerDismissed',
+    'speckleConBannerDismissed',
     'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',
@@ -428,6 +429,16 @@ export const ServerAccessRequests = buildTableHelper('server_access_requests', [
   'resourceId',
   'createdAt',
   'updatedAt'
+])
+
+export const Activity = buildTableHelper('activity', [
+  'id',
+  'contextResourceId',
+  'contextResourceType',
+  'eventType',
+  'userId',
+  'payload',
+  'createdAt'
 ])
 
 export const StreamActivity = buildTableHelper('stream_activity', [

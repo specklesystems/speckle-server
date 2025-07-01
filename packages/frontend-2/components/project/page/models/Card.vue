@@ -61,15 +61,15 @@
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
-          class="px-4 w-full h-full"
+          class="px-4 w-full h-48"
         />
         <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
           :upload="pendingVersion"
           type="subversion"
-          class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
+          class="px-4 w-full h-48 text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
-        <template v-else-if="previewUrl">
+        <template v-else-if="previewUrl && !isVersionUploading">
           <NuxtLink
             :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
             class="relative z-20 bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
@@ -78,17 +78,17 @@
           </NuxtLink>
         </template>
         <div
-          v-if="!isPendingModelFragment(model)"
-          v-show="!previewUrl && !pendingVersion"
+          v-if="!isPendingModelFragment(model) && project"
+          v-show="!pendingVersion && (isVersionUploading || !previewUrl)"
           class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
             ref="importArea"
             empty-state-variant="modelGrid"
-            :project-id="projectId"
-            :model-name="model.name"
+            :project="project"
+            :model="model"
             class="w-full h-full"
-            :disabled="!canCreateModel?.authorized"
+            @uploading="onVersionUploading"
           />
         </div>
       </div>
@@ -133,6 +133,7 @@ import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -140,6 +141,7 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
+    ...ProjectCardImportFileArea_Project
     permissions {
       canCreateModel {
         ...FullPermissionCheckResult
@@ -175,10 +177,11 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+
+const isVersionUploading = ref(false)
 const showActionsMenu = ref(false)
 const hovered = ref(false)
 
-const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const containerClasses = computed(() => {
   const classParts = [
     'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full z-[0]'
@@ -232,6 +235,10 @@ const onCardClick = (event: KeyboardEvent | MouseEvent) => {
     return
   }
   emit('click', event)
+}
+
+const onVersionUploading = (payload: FileAreaUploadingPayload) => {
+  isVersionUploading.value = !!(payload.isUploading || payload.error)
 }
 
 const triggerVersionUpload = () => {

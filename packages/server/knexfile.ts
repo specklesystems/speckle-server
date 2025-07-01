@@ -19,7 +19,7 @@ import {
   configureKnexClient,
   KnexConfigArgs,
   RegionServerConfig
-} from '@speckle/shared/environment/multiRegionConfig'
+} from '@speckle/shared/environment/db'
 
 function walk(dir: string) {
   let results: string[] = []

@@ -164,6 +164,7 @@ const oidcStrategyBuilderFactory =
                 logger.info({ err: e }, 'Auth error for OIDC strategy')
                 // note; passportjs suggests that err should be null for user input errors.
                 // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
+                // as openid-client <6.0.0 does not support a third 'info' parameter for the callback function.
                 return done(e, undefined)
               default:
                 logger.error({ err: e }, 'Auth error for OIDC strategy')

@@ -28,7 +28,8 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { InviteNotFoundError } from '@/modules/serverinvites/errors'
+import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
+import { ServerNoAccessError } from '@speckle/shared/authz'
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -72,6 +73,25 @@ const googleStrategyBuilderFactory =
         })
 
         try {
+          // seems very weird that the Google strategy is not parsing 'error' query params
+          // and generating a thrown error for us, but here we are.
+          if ('error' in req.query) {
+            switch (req.query.error) {
+              case 'access_denied':
+                logger.info('User was denied access by Google')
+                return done(null, false, {
+                  message: 'Access to Google account denied by Google',
+                  failureType: ExpectedAuthFailure.UserInputError
+                })
+              default:
+                const errMessage = `Unexpected error from Google strategy: ${req.query.error}`
+                logger.error(errMessage)
+                return done(new ServerNoAccessError(errMessage), false, {
+                  message: errMessage
+                })
+            }
+          }
+
           const email = profile.emails?.[0].value
           if (!email) {
             throw new EnvironmentResourceError('No email provided by Google')
@@ -100,7 +120,7 @@ const googleStrategyBuilderFactory =
           // if the server is invite only and we have no invite id, throw.
           if (serverInfo.inviteOnly && !req.session.token) {
             throw new UserInputError(
-              'This server is invite only. Please authenticate yourself through a valid invite link.'
+              'This server is invite only. The invite link may have expired or the invite may have been revoked. Please authenticate yourself through a valid invite link.'
             )
           }
 
@@ -142,14 +162,27 @@ const googleStrategyBuilderFactory =
             err,
             'Unexpected issue occured while authenticating with Google'
           )
-          switch (e.constructor) {
-            case UnverifiedEmailSSOLoginError:
-            case UserInputError:
-            case InviteNotFoundError:
+          switch (e.constructor.name) {
+            case ExpectedAuthFailure.UserInputError:
+            case ExpectedAuthFailure.InviteNotFoundError:
               logger.info({ err: e }, 'Auth error for Google strategy')
-              // note; passportjs suggests that err should be null for user input errors.
-              // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
-              return done(e, false, { message: e.message })
+              // note; passportjs suggests err should be null for user input errors.
+              // We also need to pass the error type in the info parameter
+              // so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              return done(null, false, {
+                message: e.message,
+                failureType: e.constructor.name as ExpectedAuthFailure
+              })
+            case ExpectedAuthFailure.UnverifiedEmailSSOLoginError:
+              logger.info({ err: e }, 'Auth error for Google strategy')
+              // note; passportjs suggests err should be null for user input errors.
+              // We also need to pass the error type in the info parameter
+              // so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              return done(null, false, {
+                message: e.message,
+                failureType: e.constructor.name as ExpectedAuthFailure,
+                email: (e as UnverifiedEmailSSOLoginError).info().email
+              })
             default:
               logger.error({ err: e }, 'Auth error for Google strategy')
               return done(e, false, { message: e.message })

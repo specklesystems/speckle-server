@@ -72,7 +72,7 @@ Use `yarn cli bull monitor` to serve a Web UI for our Bull queues (e.g. Notifica
 
 ### Frontend
 
-- In **development** mode, the Speckle Server will proxy the frontend from `127.0.0.1:3000` to `127.0.0.1:8080`.
+- In **development** mode, the frontend is available at `http://127.0.0.1:8081`.
   If you don't see anything, ensure you've run `yarn dev` in the frontend package.
 
 - In **production** mode, the frontend is served by an `nginx` container that proxy server requests to the server (depending on the requested path). For more information about making a production deployment, check out [our detailed guide](https://speckle.guide/dev/server-setup.html)

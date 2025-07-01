@@ -124,6 +124,7 @@ export const reconcileWorkspaceSubscriptionFactory =
     for (const removedProduct of removedProducts) {
       items.push({ id: removedProduct.subscriptionItemId, deleted: true })
     }
+
     // workspaceSubscription.subscriptionData.products.
     // const item = workspaceSubscription.subscriptionData.products.find(p => p.)
     await stripe.subscriptions.update(subscriptionData.subscriptionId, {

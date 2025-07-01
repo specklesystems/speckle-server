@@ -48,7 +48,10 @@ import {
   getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
-import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  createNewProjectFactory,
+  waitForRegionProjectFactory
+} from '@/modules/core/services/projects'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   addOrUpdateStreamCollaboratorFactory,
@@ -114,6 +117,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -249,7 +253,7 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
-export default {
+const resolvers: Resolvers = {
   Query: {
     async project(_parent, args, context) {
       throwIfResourceAccessNotAllowed({
@@ -265,6 +269,29 @@ export default {
       throwIfAuthNotOk(canQuery)
 
       const project = await getStream({ streamId: args.id })
+      if (!project) {
+        // This should not be happening, because canQuery should've thrown
+        // And yet it does...so extra logging is necessary
+
+        // Test canQuery again - is it a cache issue?
+        context.clearCache()
+        const canQueryAgain = await context.authPolicies.project.canRead({
+          projectId: args.id,
+          userId: context.userId
+        })
+
+        context.log.error(
+          {
+            projectId: args.id,
+            userId: context.userId,
+            project,
+            canQuery,
+            canQueryAgain
+          },
+          'Unexpected project not found'
+        )
+        throw new StreamNotFoundError('Project not found')
+      }
 
       if (project?.visibility !== ProjectRecordVisibility.Public) {
         await validateScopes(context.scopes, Scopes.Streams.Read)
@@ -439,11 +466,13 @@ export default {
 
       const createNewProject = createNewProjectFactory({
         storeProject: storeProjectFactory({ db: projectDb }),
-        getProject: getProjectFactory({ db }),
-        deleteProject: deleteProjectFactory({ db: projectDb }),
         storeModel: storeModelFactory({ db: projectDb }),
         // THIS MUST GO TO THE MAIN DB
         storeProjectRole: storeProjectRoleFactory({ db }),
+        waitForRegionProject: waitForRegionProjectFactory({
+          getProject: getProjectFactory({ db }),
+          deleteProject: deleteProjectFactory({ db: projectDb })
+        }),
         emitEvent: getEventBus().emit
       })
 
@@ -494,7 +523,7 @@ export default {
       // Reset loader cache
       ctx.clearCache()
 
-      return ret
+      return ret!
     },
     async leave(_parent, args, context) {
       const projectId = args.id
@@ -546,7 +575,8 @@ export default {
         return {
           totalCount: await ctx.loaders.users.getOwnStreamCount.load(ctx.userId!),
           items: [],
-          cursor: null
+          cursor: null,
+          numberOfHidden: 0
         }
       }
 
@@ -599,7 +629,7 @@ export default {
   Project: {
     async role(parent, _args, ctx) {
       // If role already resolved, return that
-      if (has(parent, 'role')) return parent.role
+      if (has(parent, 'role')) return parent.role || null
 
       return await ctx.loaders.streams.getRole.load(parent.id)
     },
@@ -676,4 +706,6 @@ export default {
       )
     }
   }
-} as Resolvers
+}
+
+export default resolvers

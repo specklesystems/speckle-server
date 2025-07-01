@@ -52,7 +52,7 @@ import {
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
 import { isFinished } from '@/modules/automate/domain/logic'
-import { mixpanel } from '@/modules/shared/utils/mixpanel'
+import { getClient, MixpanelEvents } from '@/modules/shared/utils/mixpanel'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
@@ -300,21 +300,25 @@ const initializeEventListeners = () => {
           getUser: legacyGetUserFactory({ db: projectDb })
         })(fullRun, automationWithRevision.projectId)
 
-        const mp = mixpanel({ userEmail, req: undefined })
-        await mp.track('Automate Function Run Finished', {
-          automationId,
-          automationRevisionId: automationWithRevision.id,
-          automationName: automationWithRevision.name,
-          runId: run.id,
-          functionId: fn?.functionId,
-          functionName: fn?.functionName,
-          functionType: fn?.isFeatured ? 'public' : 'private',
-          functionRunId: functionRun.id,
-          status: functionRun.status,
-          durationInSeconds: functionRun.elapsed / TIME_MS.second,
-          durationInMilliseconds: functionRun.elapsed,
-          /* eslint-disable-next-line camelcase */
-          workspace_id: project?.workspaceId
+        const mp = getClient()
+        if (!mp) return
+        await mp.track({
+          eventName: MixpanelEvents.AutomateFunctionRunFinished,
+          userEmail,
+          workspaceId: project?.workspaceId,
+          payload: {
+            automationId,
+            automationRevisionId: automationWithRevision.id,
+            automationName: automationWithRevision.name,
+            runId: run.id,
+            functionId: fn?.functionId,
+            functionName: fn?.functionName,
+            functionType: fn?.isFeatured ? 'public' : 'private',
+            functionRunId: functionRun.id,
+            status: functionRun.status,
+            durationInSeconds: functionRun.elapsed / TIME_MS.second,
+            durationInMilliseconds: functionRun.elapsed
+          }
         })
       }
     ),
@@ -348,15 +352,19 @@ const initializeEventListeners = () => {
           getUser: legacyGetUserFactory({ db: projectDb })
         })(automationRun, automation.projectId)
 
-        const mp = mixpanel({ userEmail, req: undefined })
-        await mp.track('Automation Run Triggered', {
-          automationId: automation.id,
-          automationName: automation.name,
-          automationRunId: automationRun.id,
-          projectId: automation.projectId,
-          source,
-          /* eslint-disable-next-line camelcase */
-          workspace_id: project?.workspaceId
+        const mp = getClient()
+        if (!mp) return
+        await mp.track({
+          eventName: MixpanelEvents.AutomationRunTriggered,
+          workspaceId: project?.workspaceId,
+          userEmail,
+          payload: {
+            automationId: automation.id,
+            automationName: automation.name,
+            automationRunId: automationRun.id,
+            projectId: automation.projectId,
+            source
+          }
         })
       }
     )

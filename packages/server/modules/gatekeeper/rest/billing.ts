@@ -15,13 +15,12 @@ import {
   upsertWorkspaceSubscriptionFactory,
   updateCheckoutSessionStatusFactory,
   upsertPaidWorkspacePlanFactory,
-  getWorkspaceSubscriptionBySubscriptionIdFactory
+  getWorkspaceSubscriptionBySubscriptionIdFactory,
+  getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
-import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
 import { extendLoggerComponent } from '@/observability/logging'
 import {
@@ -30,6 +29,8 @@ import {
   stripeEventId
 } from '@/observability/domain/fields'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { asOperation } from '@/modules/shared/command'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -117,37 +118,30 @@ export const getBillingRouter = (): Router => {
             })
             logger.info(OperationStatus.start, '[{operationName} ({operationStatus})] ')
 
-            await withOperationLogging(
-              async () => {
+            await asOperation(
+              async ({ db, emit }) => {
                 try {
-                  await withTransaction(
-                    async ({ db }) => {
-                      const completeCheckout = completeCheckoutSessionFactory({
-                        getCheckoutSession: getCheckoutSessionFactory({ db }),
-                        updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory(
-                          {
-                            db
-                          }
-                        ),
-                        upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-                        upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory(
-                          {
-                            db
-                          }
-                        ),
-                        getSubscriptionData: getSubscriptionDataFactory({
-                          stripe
-                        }),
-                        emitEvent: getEventBus().emit
-                      })
+                  const completeCheckout = completeCheckoutSessionFactory({
+                    getCheckoutSession: getCheckoutSessionFactory({ db }),
+                    updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory({
+                      db
+                    }),
+                    upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                    upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                      db
+                    }),
+                    getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                    getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                    getSubscriptionData: getSubscriptionDataFactory({
+                      stripe
+                    }),
+                    emitEvent: emit
+                  })
 
-                      return completeCheckout({
-                        sessionId: session.id,
-                        subscriptionId
-                      })
-                    },
-                    { db }
-                  )
+                  return completeCheckout({
+                    sessionId: session.id,
+                    subscriptionId
+                  })
                 } catch (e) {
                   if (e instanceof WorkspaceAlreadyPaidError) {
                     // ignore the request, this is prob a replay from stripe
@@ -159,9 +153,10 @@ export const getBillingRouter = (): Router => {
               },
               {
                 logger,
-                operationName: 'completeCheckoutSession',
-                operationDescription:
-                  'Payment succeeded or Stripe session completed, and payment was paid'
+                name: 'completeCheckoutSession',
+                description:
+                  'Payment succeeded or Stripe session completed, and payment was paid',
+                transaction: true
               }
             )
 
@@ -208,8 +203,9 @@ export const getBillingRouter = (): Router => {
               upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
               getWorkspaceSubscriptionBySubscriptionId:
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-            })({ subscriptionData: parseSubscriptionData(event.data.object) }),
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
+              emitEvent: getEventBus().emit
+            })({ subscriptionData: parseSubscriptionData(event.data.object), logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
@@ -230,8 +226,9 @@ export const getBillingRouter = (): Router => {
               upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
               getWorkspaceSubscriptionBySubscriptionId:
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-            })({ subscriptionData }),
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
+              emitEvent: getEventBus().emit
+            })({ subscriptionData, logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',

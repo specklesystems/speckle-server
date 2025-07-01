@@ -36,6 +36,7 @@ import {
   GetPaginatedProjectModelsItems,
   GetPaginatedProjectModelsTotalCount,
   GetPaginatedStreamBranchesPage,
+  GetProjectModelById,
   GetStreamBranchByName,
   GetStreamBranchCount,
   GetStreamBranchCounts,
@@ -78,6 +79,12 @@ export const getBranchByIdFactory =
     const [branch] = await getBranchesByIdsFactory(deps)([branchId], options)
     return branch as Optional<BranchRecord>
   }
+
+export const getProjectModelByIdFactory = (deps: { db: Knex }): GetProjectModelById => {
+  const getBranchById = getBranchByIdFactory(deps)
+  return async (params) =>
+    await getBranchById(params.modelId, { streamId: params.projectId })
+}
 
 export const getStreamBranchesByNameFactory =
   (deps: { db: Knex }): GetStreamBranchesByName =>

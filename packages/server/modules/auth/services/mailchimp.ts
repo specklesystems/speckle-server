@@ -5,8 +5,6 @@ import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { OnboardingCompletionInput } from '@/modules/core/graph/generated/graphql'
-import { MailchimpResourceError } from '@/modules/auth/errors'
-import { ensureError } from '@speckle/shared'
 
 let mailchimpInitialized = false
 
@@ -55,18 +53,8 @@ export async function updateMailchimpMemberTags(
   initializeMailchimp()
   const subscriberHash = md5(user.email.toLowerCase())
 
-  // Check if user is already in audience (meaning they consented to marketing emails)
-  try {
-    await mailchimp.lists.getListMember(listId, subscriberHash)
-  } catch (e) {
-    throw new MailchimpResourceError(
-      'User not found in Mailchimp audience. They should have been added during registration.',
-      {
-        info: { userEmailHash: subscriberHash },
-        cause: ensureError(e, 'Mailchimp API error')
-      }
-    )
-  }
+  // Add user to audience if they are not already in it
+  await addToMailchimpAudience(user, listId)
 
   const tags: { name: string; status: 'active' | 'inactive' }[] = []
 

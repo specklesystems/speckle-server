@@ -94,7 +94,7 @@ const props = defineProps<{
 }>()
 
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
-const { limits } = useWorkspaceLimits(props.slug)
+const { limits } = useWorkspaceLimits({ slug: computed(() => props.slug) })
 const { seats, statusIsCanceled, isSelfServePlan } = useWorkspacePlan(props.slug)
 
 const formatUsageText = (current: number, max: number, type: string) => {
