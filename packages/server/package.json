@@ -208,6 +208,7 @@
     "enforce-unique": "^1.3.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "esmock": "^2.7.1",
     "http-proxy-middleware": "v3.0.0-beta.0",
     "ioredis-mock": "^8.9.0",
     "mocha": "^10.1.0",

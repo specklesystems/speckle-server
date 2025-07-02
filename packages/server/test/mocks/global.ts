@@ -32,8 +32,8 @@ export const EnvHelperMock = mockRequireModule<
   typeof import('@/modules/shared/helpers/envHelper')
 >(
   [
-    '@/modules/shared/helpers/envHelper',
-    require.resolve('../../modules/shared/helpers/envHelper')
+    '@/modules/shared/helpers/envHelper'
+    // require.resolve('../../modules/shared/helpers/envHelper')
   ],
   ['@/modules/shared/index']
 )

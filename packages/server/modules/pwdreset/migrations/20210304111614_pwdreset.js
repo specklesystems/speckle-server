@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('pwdreset_tokens', (table) => {
     table.string('id').defaultTo(knex.raw('gen_random_uuid()')).primary()
     table.string('email', 256).notNullable()
@@ -7,6 +7,8 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('pwdreset_tokens')
 }
+
+export { up, down }

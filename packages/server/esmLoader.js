@@ -16,6 +16,7 @@ const aliases = {
   '#/': packageRoot + '/'
 }
 
+// Mock entire packages
 const packageAliases = {
   lodash: 'lodash-es'
 }
@@ -46,7 +47,10 @@ function resolveAlias(specifier) {
   return null // No alias found, fall back to default resolution
 }
 
-export async function resolve(specifier, context, nextResolve) {
+/**
+ * Adjust global ESM resolution logic to allow for path/package aliases, dir imports and extensionless imports
+ */
+export async function resolve(specifier, _context, nextResolve) {
   // Resolve alias
   const aliasResolved = resolveAlias(specifier)
   specifier = aliasResolved || specifier
@@ -86,5 +90,3 @@ export async function resolve(specifier, context, nextResolve) {
 
   throw throwableError
 }
-
-export { packageRoot, appRoot }

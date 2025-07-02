@@ -3,7 +3,7 @@
 import { Factory, FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import { isArray, isFunction } from 'lodash-es'
-import mock from 'mock-require'
+// import mock from 'mock-require'
 import { ConditionalPick } from 'type-fest'
 
 export type MockedFunctionImplementation = (...args: any[]) => MaybeAsync<any>
@@ -67,7 +67,7 @@ export function mockRequireModule<
   // Initialize mock with all paths (relative path, absolute alias path - both need to be specified
   // cause of a limitation in mock-require)
   for (const modulePath of modulePaths) {
-    mock(modulePath, mockDefinition)
+    // mock(modulePath, mockDefinition)
   }
 
   /**
@@ -76,7 +76,7 @@ export function mockRequireModule<
    */
   const reRequireDependencies = () => {
     for (const dependencyPath of dependencyPaths) {
-      mock.reRequire(dependencyPath)
+      // mock.reRequire(dependencyPath)
     }
   }
   reRequireDependencies()
@@ -130,7 +130,7 @@ export function mockRequireModule<
       }
 
       for (const modulePath of modulePaths) {
-        mock.stop(modulePath)
+        // mock.stop(modulePath)
       }
 
       if (reRequireDeps) reRequireDependencies()
