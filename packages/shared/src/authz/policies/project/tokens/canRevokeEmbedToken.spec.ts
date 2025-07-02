@@ -1,14 +1,14 @@
 import cryptoRandomString from 'crypto-random-string'
-import { Roles } from '../../../../core'
-import { parseFeatureFlags } from '../../../../environment'
-import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes'
-import { canRevokeEmbedTokenPolicy } from './canRevokeEmbedToken'
+import { Roles } from '../../../../core/constants.js'
+import { parseFeatureFlags } from '../../../../environment/index.js'
+import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes.js'
+import { canRevokeEmbedTokenPolicy } from './canRevokeEmbedToken.js'
 import { assert, describe, expect, it } from 'vitest'
 import {
   ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
   WorkspacePlanNoFeatureAccessError
-} from '../../../domain/authErrors'
+} from '../../../domain/authErrors.js'
 
 const buildCanRevokeEmbedToken = (
   overrides?: Partial<Parameters<typeof canRevokeEmbedTokenPolicy>[0]>

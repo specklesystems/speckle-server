@@ -6,16 +6,6 @@ import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
 import { ProjectNoAccessError } from '../../../domain/authErrors.js'
 
-// | typeof Loaders.getProject
-// | typeof Loaders.getEnv
-// | typeof Loaders.getServerRole
-// | typeof Loaders.getWorkspaceRole
-// | typeof Loaders.getWorkspace
-// | typeof Loaders.getWorkspaceSsoProvider
-// | typeof Loaders.getWorkspaceSsoSession
-// | typeof Loaders.getProjectRole
-// | typeof Loaders.getAdminOverrideEnabled,
-
 const buildCanReadEmbedTokens = (
   overrides?: Partial<Parameters<typeof canReadEmbedTokensPolicy>[0]>
 ) => {
