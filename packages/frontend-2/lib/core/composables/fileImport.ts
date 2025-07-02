@@ -28,6 +28,7 @@ import {
 } from '@speckle/ui-components'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 import dayjs from 'dayjs'
+import { uniqBy } from 'lodash-es'
 
 export const FailedFileImportJobError = <const>{
   InvalidFileType: 'InvalidFileType',
@@ -140,7 +141,7 @@ export const useGlobalFileImportManager = () => {
   )
 
   const addFailedJob = (job: FailedFileImportJob) => {
-    state.value.failedJobs = [...state.value.failedJobs, job]
+    state.value.failedJobs = uniqBy([...state.value.failedJobs, job], (job) => job.id)
   }
 
   const clearFailedJobs = () => {
