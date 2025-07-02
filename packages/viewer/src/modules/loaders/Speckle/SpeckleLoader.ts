@@ -142,6 +142,13 @@ export class SpeckleLoader extends Loader {
     await this.converter.applyMaterials()
     await this.converter.handleDuplicates()
     await this.loader.disposeAsync()
+    console.warn('Search', this.loader.getPropertyManager().getStats())
+
+    const results = await this.loader.getPropertyManager().search({
+      operator: 'AND',
+      queries: [{ value: 'door' }]
+    })
+    console.warn('Search results: ', results)
 
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()

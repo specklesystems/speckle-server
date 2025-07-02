@@ -8,6 +8,7 @@ export interface Base {
   id: string
   speckle_type: string
   __closure?: Record<string, number>
+  properties?: Record<string, object | string | number | boolean | undefined>
 }
 
 export interface Reference {
@@ -18,4 +19,19 @@ export interface Reference {
 
 export interface DataChunk extends Base {
   data?: Base[]
+}
+
+export interface SearchQuery {
+  operator: 'AND' | 'OR'
+  queries: Array<{
+    key?: string
+    value: string
+    exact?: boolean
+  }>
+}
+
+export interface SearchResult {
+  id: string
+  key: string
+  value: string
 }

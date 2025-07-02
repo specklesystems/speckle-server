@@ -15922,6 +15922,7 @@ __metadata:
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     fake-indexeddb: "npm:^6.0.0"
+    flexsearch: "npm:^0.8.205"
     prettier: "npm:^3.3.2"
     tshy: "npm:^3.0.2"
     typescript: "npm:^5.2.2"
@@ -30037,6 +30038,13 @@ __metadata:
   version: 3.3.3
   resolution: "flatted@npm:3.3.3"
   checksum: 10/8c96c02fbeadcf4e8ffd0fa24983241e27698b0781295622591fc13585e2f226609d95e422bcf2ef044146ffacb6b68b1f20871454eddf75ab3caa6ee5f4a1fe
+  languageName: node
+  linkType: hard
+
+"flexsearch@npm:^0.8.205":
+  version: 0.8.205
+  resolution: "flexsearch@npm:0.8.205"
+  checksum: 10/f491a76b1413322dbf4cb81dcf42b3179d36bc4b4be11e5acc2c68913ccaf93837ba1da2f9661dad940e5b42795358dbd48a102b0e7f45d244aa59138c4dfe8e
   languageName: node
   linkType: hard
 

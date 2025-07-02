@@ -1,4 +1,5 @@
 import { DefermentManager } from '../deferment/defermentManager.js'
+import { PropertyManager } from '../properties/PropertyManager.js'
 import AggregateQueue from '../queues/aggregateQueue.js'
 import AsyncGeneratorQueue from '../queues/asyncGeneratorQueue.js'
 import { CustomLogger } from '../types/functions.js'
@@ -25,6 +26,8 @@ export class ObjectLoader2 {
 
   #root?: Item = undefined
 
+  #propertyManager: PropertyManager
+
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
     this.#logger = options.logger || ((): void => {})
@@ -50,6 +53,11 @@ export class ObjectLoader2 {
     this.#cacheReader = new CacheReader(this.#database, this.#deferments, cacheOptions)
     this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
     this.#cacheWriter = new CacheWriter(this.#database, this.#deferments, cacheOptions)
+    this.#propertyManager = new PropertyManager()
+  }
+
+  getPropertyManager(): PropertyManager {
+    return this.#propertyManager
   }
 
   async disposeAsync(): Promise<void> {
@@ -89,6 +97,7 @@ export class ObjectLoader2 {
       return
     }
     if (!rootItem.base.__closure) {
+       this.#propertyManager.indexProperties(rootItem.base)
       yield rootItem.base
       return
     }
@@ -108,6 +117,7 @@ export class ObjectLoader2 {
     this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
+      this.#propertyManager.indexProperties(item.base!)
       yield item.base! //always defined, as we add it to the queue
       count++
       if (count >= total) {
