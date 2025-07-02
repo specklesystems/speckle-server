@@ -15913,7 +15913,6 @@ __metadata:
   resolution: "@speckle/objectloader2@workspace:packages/objectloader2"
   dependencies:
     "@speckle/shared": "workspace:^"
-    "@types/flexsearch": "npm:^0.7.3"
     "@types/lodash": "npm:^4.17.5"
     "@types/lodash-es": "npm:^4.17.6"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
@@ -15923,7 +15922,7 @@ __metadata:
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     fake-indexeddb: "npm:^6.0.0"
-    flexsearch: "npm:^0.7.31"
+    flexsearch: "npm:^0.8.205"
     prettier: "npm:^3.3.2"
     tshy: "npm:^3.0.2"
     typescript: "npm:^5.2.2"
@@ -18957,13 +18956,6 @@ __metadata:
   version: 5.0.2
   resolution: "@types/flat@npm:5.0.2"
   checksum: 10/e21d51d872e788bdb381887c2880f717ba4377beb4055078136127134858efd15044655610f1fce4832d9a103ded468a25335203fc53f36db08edd5ab5a8b3db
-  languageName: node
-  linkType: hard
-
-"@types/flexsearch@npm:^0.7.3":
-  version: 0.7.6
-  resolution: "@types/flexsearch@npm:0.7.6"
-  checksum: 10/93aaed91f5847a0c85e19b339147067897c92385de842071c959bf3f1efb8c7095acce460385aa285c75c67022d78979b4cae6ecb754bdb74348bf4976160ae3
   languageName: node
   linkType: hard
 
@@ -30040,10 +30032,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flexsearch@npm:^0.7.31":
-  version: 0.7.43
-  resolution: "flexsearch@npm:0.7.43"
-  checksum: 10/79c0bceee435bd40fd0a0d8ba72f1bd07f622374a73bd3ceb874f7c7dd9a0fe9863b5c66a4037c2fa534e726f718d010ac99377d1924e347823b51ce641180e5
+"flexsearch@npm:^0.8.205":
+  version: 0.8.205
+  resolution: "flexsearch@npm:0.8.205"
+  checksum: 10/f491a76b1413322dbf4cb81dcf42b3179d36bc4b4be11e5acc2c68913ccaf93837ba1da2f9661dad940e5b42795358dbd48a102b0e7f45d244aa59138c4dfe8e
   languageName: node
   linkType: hard
 
