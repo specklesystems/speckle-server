@@ -1021,11 +1021,14 @@ export type FileUpload = {
   id: Scalars['String']['output'];
   /** Model associated with the file upload, if it exists already */
   model?: Maybe<Model>;
+  modelId?: Maybe<Scalars['String']['output']>;
   /** Alias for branchName */
   modelName: Scalars['String']['output'];
   /** Alias for streamId */
   projectId: Scalars['String']['output'];
   streamId: Scalars['String']['output'];
+  /** Date when upload was last updated */
+  updatedAt: Scalars['DateTime']['output'];
   uploadComplete: Scalars['Boolean']['output'];
   uploadDate: Scalars['DateTime']['output'];
   /** The user's id that uploaded this file. */

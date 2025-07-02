@@ -216,7 +216,7 @@ const calculateLoaderId = () => {
 }
 
 const onModelUploading = (payload: FileAreaUploadingPayload) => {
-  isModelUploading.value = !!(payload.isUploading || payload.error)
+  isModelUploading.value = payload.isUploading
 }
 
 watch(areQueriesLoading, (newVal) => {
