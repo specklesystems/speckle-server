@@ -73,7 +73,10 @@
   </FormFileUploadZone>
 </template>
 <script setup lang="ts">
-import { useFileImport } from '~~/lib/core/composables/fileImport'
+import {
+  useFileImport,
+  useGlobalFileImportManager
+} from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
@@ -129,7 +132,7 @@ const props = defineProps<{
 }>()
 
 const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
-
+const { addFailedJob } = useGlobalFileImportManager()
 const {
   maxSizeInBytes,
   onFilesSelected,
@@ -152,6 +155,11 @@ const {
         showNewModelDialog.value = true
       }
     }
+  },
+  errorCallback: ({ failedJob }) => {
+    // Register global file upload error and reset upload
+    addFailedJob(failedJob)
+    resetSelected()
   }
 })
 
@@ -307,10 +315,7 @@ watch(isUploading, (newVal, oldVal) => {
 
   if (!newVal && oldVal) {
     // Reset file upload state when upload finishes
-    // but only if it was successful! otherwise we wanna show the error
-    if (!errorMessage.value) {
-      resetSelected()
-    }
+    resetSelected()
   }
 })
 

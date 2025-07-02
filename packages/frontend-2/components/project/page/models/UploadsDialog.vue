@@ -2,9 +2,10 @@
   <LayoutDialog v-model:open="open" title="Model upload history" :buttons="buttons">
     <LayoutTable
       :columns="[
+        { id: 'job', header: 'Job #', classes: 'col-span-1' },
         { id: 'file', header: 'File', classes: 'col-span-5' },
+        { id: 'status', header: 'Status', classes: 'col-span-1' },
         { id: 'size', header: 'Size', classes: 'col-span-2' },
-        { id: 'status', header: 'Status', classes: 'col-span-2' },
         { id: 'date', header: 'Date', classes: 'col-span-2' },
         {
           id: 'actions',
@@ -17,6 +18,9 @@
       empty-message="This model has no uploads"
       style="max-height: 300px"
     >
+      <template #job="{ item }">
+        <span class="text-foreground-2">{{ item.id }}</span>
+      </template>
       <template #file="{ item }">
         <div
           v-tippy="{
@@ -78,6 +82,7 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageModelsUploadsDialog_FileUploadFragment } from '~/lib/common/generated/gql/graphql'
+import { useFailedFileImportJobUtils } from '~/lib/core/composables/fileImport'
 import { useFileDownload } from '~/lib/core/composables/fileUpload'
 import { prettyFileSize } from '~~/lib/core/helpers/file'
 
@@ -92,6 +97,7 @@ graphql(`
     uploadDate
     uploadComplete
     branchName
+    ...UseFailedFileImportJobUtils_FileUpload
   }
 `)
 
@@ -125,6 +131,7 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true })
 
+const { getErrorMessage, convertUploadToFailedJob } = useFailedFileImportJobUtils()
 const {
   identifier,
   onInfiniteLoad,
@@ -193,7 +200,8 @@ const getStatusOptions = (item: ProjectPageModelsUploadsDialog_FileUploadFragmen
       ],
     tooltip:
       item.convertedStatus === FileUploadConvertedStatus.Error
-        ? item.convertedMessage
+        ? getErrorMessage(convertUploadToFailedJob(item)) +
+          ` Error: ${item.convertedMessage}`
         : undefined,
     colorClasses
   }
