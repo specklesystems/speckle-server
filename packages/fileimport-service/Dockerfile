@@ -20,6 +20,9 @@ RUN apt-get update -y \
      ca-certificates=20240203 \
      curl=8.5.0-2ubuntu10.6 \
      gosu=1.17-1ubuntu0.24.04.3 \
+    && curl -L -o speckleifc.tar.gz https://github.com/specklesystems/speckleifc/archive/refs/tags/v0.1.2.tar.gz \
+    && tar -xzf speckleifc.tar.gz \
+    && rm speckleifc.tar.gz \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
@@ -29,13 +32,9 @@ RUN apt-get update -y \
      nodejs=22.14.0-1nodesource1 \
     && npm install -g corepack@0.30.0 \
     && corepack enable \
-    # && DEBIAN_FRONTEND=noninteractive apt-get remove curl -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get remove curl -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-RUN curl -L -o speckleifc.tar.gz https://github.com/specklesystems/speckleifc/archive/refs/tags/v0.1.0.tar.gz \
-    && tar -xzf speckleifc.tar.gz \
-    && rm speckleifc.tar.gz
 
 # download yarn dependencies for building shared libraries
 COPY .yarnrc.yml .

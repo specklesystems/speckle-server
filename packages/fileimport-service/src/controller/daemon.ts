@@ -237,7 +237,8 @@ async function doTask(
           taskLogger,
           process.env['PYTHON_BINARY_PATH'] || 'python3',
           [
-            './speckleifc-0.1.0/src/speckleifc/__main__.py',
+            '-m',
+            'speckleifc',
             TMP_FILE_PATH,
             TMP_RESULTS_PATH,
             info.streamId,
@@ -245,7 +246,9 @@ async function doTask(
             existingBranch?.id || ''
           ],
           {
-            USER_TOKEN: tempUserToken
+            USER_TOKEN: tempUserToken,
+            //speckleifc is not installed to sys (e.g. via pip), so we need to point it to the directory explicitly
+            PYTHONPATH: '/speckle-server/speckleifc-0.1.2/src/'
           },
           TIME_LIMIT,
           TMP_RESULTS_PATH

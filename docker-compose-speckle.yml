@@ -143,8 +143,9 @@ services:
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
-      SPECKLE_SERVER_URL: 'http://speckle-server:3000'
+      SPECKLE_SERVER_URL: 'http://localhost:3000'
       FILE_IMPORT_TIME_LIMIT_MIN: 10
+      USE_EXPERIMENTAL_IFC_IMPORTER: 'true'
       REDIS_URL: 'redis://redis'
     depends_on:
       - speckle-server
