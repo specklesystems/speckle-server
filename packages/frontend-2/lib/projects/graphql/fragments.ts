@@ -83,6 +83,8 @@ export const pendingFileUploadFragment = graphql(`
     convertedLastUpdate
     fileType
     fileName
+    userId
+    updatedAt
   }
 `)
 
@@ -103,6 +105,7 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     previewUrl
     createdAt
     updatedAt
+    ...ProjectPageModelsCard_Model
     ...ProjectPageModelsCardRenameDialog
     ...ProjectPageModelsCardDeleteDialog
     ...ProjectPageModelsActions

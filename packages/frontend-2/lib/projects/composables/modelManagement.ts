@@ -41,6 +41,10 @@ import { modelRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
 import { isUndefined } from 'lodash-es'
+import {
+  useFailedFileImportJobUtils,
+  useGlobalFileImportManager
+} from '~/lib/core/composables/fileImport'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   name = name.trim()
@@ -346,7 +350,9 @@ export function useProjectPendingModelUpdateTracking(
     { enabled: isEnabled }
   )
   const apollo = useApolloClient().client
-  const { triggerNotification } = useGlobalToast()
+  const { addFailedJob } = useGlobalFileImportManager()
+  const { convertUploadToFailedJob } = useFailedFileImportJobUtils()
+  const { userId } = useActiveUser()
 
   onProjectPendingModelUpdate((res) => {
     if (!res.data?.projectPendingModelsUpdated.id || !hasLock.value) return
@@ -393,13 +399,10 @@ export function useProjectPendingModelUpdateTracking(
           { fieldNameWhitelist: ['pendingImportedModels'] }
         )
       } else if (failure) {
-        triggerNotification({
-          type: ToastNotificationType.Danger,
-          title: 'File import failed',
-          description:
-            event.model.convertedMessage ||
-            `${event.model.modelName} could not be imported`
-        })
+        // Report w/ dialog to uploader user
+        if (event.model.userId === userId.value) {
+          addFailedJob(convertUploadToFailedJob(event.model))
+        }
       }
     }
   })
