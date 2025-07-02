@@ -104,7 +104,7 @@ export const ProjectRoleUpdatedActivity = z.object({
 export const ProjectRoleDeletedActivity = z.object({
   version: z.literal('1'),
   userId: z.string(),
-  old: z.nullable(projectRole)
+  old: projectRole
 })
 
 // Stream Activity

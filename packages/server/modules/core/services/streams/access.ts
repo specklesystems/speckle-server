@@ -121,15 +121,17 @@ export const removeStreamCollaboratorFactory =
       throw new LogicError('Stream not found')
     }
 
-    await deps.emitEvent({
-      eventName: ProjectEvents.PermissionsRevoked,
-      payload: {
-        project: stream,
-        activityUserId: removedById,
-        removedUserId: userId,
-        role: role || null
-      }
-    })
+    if (role) {
+      await deps.emitEvent({
+        eventName: ProjectEvents.PermissionsRevoked,
+        payload: {
+          project: stream,
+          activityUserId: removedById,
+          removedUserId: userId,
+          role
+        }
+      })
+    }
 
     return stream
   }
@@ -209,20 +211,16 @@ export const addOrUpdateStreamCollaboratorFactory =
       { trackProjectUpdate }
     )) as StreamRecord // validateStreamAccess already checked that it exists
 
-    if (!fromInvite) {
-      // why not?
-
-      await deps.emitEvent({
-        eventName: ProjectEvents.PermissionsAdded,
-        payload: {
-          project: stream,
-          activityUserId: addedById,
-          targetUserId: userId,
-          role: role as StreamRoles,
-          previousRole: previousRole || null
-        }
-      })
-    }
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project: stream,
+        activityUserId: addedById,
+        targetUserId: userId,
+        role: role as StreamRoles,
+        previousRole: previousRole || null
+      }
+    })
 
     return stream
   }

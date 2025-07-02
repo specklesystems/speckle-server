@@ -60,6 +60,6 @@ export type ProjectEventsPayloads = {
     activityUserId: string
     removedUserId: string
     project: Project
-    role: Nullable<StreamRoles>
+    role: StreamRoles
   }
 }
