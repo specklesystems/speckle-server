@@ -164,6 +164,12 @@ export default {
         }
       )
       return Authz.toGraphqlResult(canCreatePersonalProject)
+    },
+    canCreateWorkspace: async (_parent, _args, ctx) => {
+      const policyResult = await ctx.authPolicies.workspace.canCreateWorkspace({
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(policyResult)
     }
   }
 } as Resolvers

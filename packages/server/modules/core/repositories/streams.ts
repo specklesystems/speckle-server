@@ -45,7 +45,7 @@ import {
   decodeCursor,
   encodeCompositeCursor,
   encodeCursor
-} from '@/modules/shared/helpers/graphqlHelper'
+} from '@/modules/shared/helpers/dbHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
@@ -107,7 +107,8 @@ import {
   GetUserDeletableStreams,
   GetStreamsCollaborators,
   GetStreamsCollaboratorCounts,
-  GetImplicitUserProjectsCountFactory
+  GetImplicitUserProjectsCountFactory,
+  GrantProjectPermissions
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
@@ -1077,6 +1078,7 @@ export const updateStreamFactory =
     return updatedStream
   }
 
+/** @deprecated Use `updateStreamFactory` */
 export const updateProjectFactory =
   ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {
@@ -1200,6 +1202,16 @@ export const grantStreamPermissionsFactory =
     const streams = await streamsQuery.where({ id: streamId })
     return streams[0] as StreamRecord
   }
+
+/**
+ * Convenience wrapper around grantStreamPermissions, renaming streams -> projects
+ */
+export const grantProjectPermissionsFactory = (
+  deps: Parameters<typeof grantStreamPermissionsFactory>[0]
+): GrantProjectPermissions => {
+  const grant = grantStreamPermissionsFactory(deps)
+  return async (params) => await grant({ ...params, streamId: params.projectId })
+}
 
 export const deleteProjectRoleFactory =
   ({ db }: { db: Knex }): DeleteProjectRole =>

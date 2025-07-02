@@ -10,6 +10,7 @@ import { runProcessWithTimeout } from '@/common/processHandling.js'
 import { DOTNET_BINARY_PATH, RHINO_IMPORTER_PATH } from './config.js'
 import { getIfcDllPath } from '@/controller/helpers/env.js'
 import { z } from 'zod'
+import { TIME_MS } from '@speckle/shared'
 
 const jobSuccess = z.object({
   success: z.literal(true),
@@ -42,15 +43,25 @@ export const jobProcessor = async ({
   const jobMessage =
     'Processed job {jobId} with result {status}. It took {elapsed} seconds.'
 
+  let parserUsed = 'none'
+
   const tmp = tmpdir()
   const jobDir = path.join(tmp, job.jobId)
+  let downloadDurationSeconds = 0
+  let parseDurationSeconds = 0
+
   fs.rmSync(jobDir, { force: true, recursive: true })
   fs.mkdirSync(jobDir)
-  try {
-    const fileType = job.fileType.toLowerCase()
-    const sourceFilePath = path.join(jobDir, job.fileName)
-    const resultsPath = path.join(jobDir, 'import_results.json')
+  const fileType = job.fileType.toLowerCase()
+  const sourceFilePath = path.join(jobDir, job.fileName)
+  const resultsPath = path.join(jobDir, 'import_results.json')
 
+  const elapsedDownloadDuration = (() => {
+    const start = new Date().getTime()
+    return () => (new Date().getTime() - start) / TIME_MS.second
+  })()
+
+  try {
     await downloadFile({
       speckleServerUrl: job.serverUrl,
       fileId: job.blobId,
@@ -60,8 +71,55 @@ export const jobProcessor = async ({
       logger
     })
 
+    downloadDurationSeconds = elapsedDownloadDuration()
+  } catch (err) {
+    if (!downloadDurationSeconds) downloadDurationSeconds = elapsedDownloadDuration()
+
+    if (getAppState() === AppState.SHUTTINGDOWN) {
+      // likely that the job was cancelled due to the service shutting down
+      logger.warn(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
+    } else {
+      logger.error(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
+    }
+
+    const reason =
+      err instanceof Error
+        ? err.stack ?? err.toString()
+        : 'unknown error while downloading file'
+
+    try {
+      // try and clean up the job directory
+      fs.rmSync(jobDir, { recursive: true })
+    } finally {
+      // return the error result whether or not the cleanup succeeded
+      return {
+        status: 'error',
+        result: {
+          parser: parserUsed,
+          durationSeconds: getElapsed(),
+          downloadDurationSeconds,
+          parseDurationSeconds
+        },
+        reason
+      }
+    }
+  }
+
+  const elapsedParseDuration = (() => {
+    const start = new Date().getTime()
+    return () => (new Date().getTime() - start) / TIME_MS.second
+  })()
+
+  try {
     switch (fileType) {
       case 'ifc':
+        parserUsed = 'ifc'
         await runProcessWithTimeout(
           taskLogger,
           DOTNET_BINARY_PATH,
@@ -76,14 +134,17 @@ export const jobProcessor = async ({
             'regionName'
           ],
           {
+            SPECKLE_SERVER_URL: job.serverUrl,
             USER_TOKEN: job.token
           },
-          timeout,
+          Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
           resultsPath
         )
         break
       case 'stl':
       case 'obj':
+      case 'skp':
+        parserUsed = 'rhino'
         await runProcessWithTimeout(
           taskLogger,
           RHINO_IMPORTER_PATH,
@@ -96,15 +157,19 @@ export const jobProcessor = async ({
             job.token
           ],
           {
+            SPECKLE_SERVER_URL: job.serverUrl,
             USER_TOKEN: job.token
           },
-          timeout,
+          Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
           resultsPath
         )
         break
       default:
         throw new Error(`File type ${fileType} is not supported`)
     }
+
+    parseDurationSeconds = elapsedParseDuration()
+
     const output = jobResult.safeParse(JSON.parse(readFileSync(resultsPath, 'utf8')))
 
     if (!output.success) {
@@ -118,23 +183,43 @@ export const jobProcessor = async ({
     const versionId = output.data.commitId
     return {
       status: 'success',
-      result: { versionId, durationSeconds: getElapsed() },
+      result: {
+        versionId,
+        durationSeconds: getElapsed(),
+        downloadDurationSeconds,
+        parseDurationSeconds,
+        parser: parserUsed
+      },
       warnings: []
     }
   } catch (err) {
+    if (!parseDurationSeconds) parseDurationSeconds = elapsedParseDuration()
+
     if (getAppState() === AppState.SHUTTINGDOWN) {
       // likely that the job was cancelled due to the service shutting down
-      logger.warn({ err, elapsed: getElapsed(), status: 'error' }, jobMessage)
+      logger.warn(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
     } else {
-      logger.error({ err, elapsed: getElapsed(), status: 'error' }, jobMessage)
+      logger.error(
+        { err, jobId: job.jobId, elapsed: getElapsed(), status: 'error' },
+        jobMessage
+      )
     }
 
-    const reason = err instanceof Error ? err.stack ?? err.toString() : 'unknown error'
+    const reason =
+      err instanceof Error
+        ? err.stack ?? err.toString()
+        : 'unknown error while parsing file'
 
     return {
       status: 'error',
       result: {
-        durationSeconds: getElapsed()
+        parser: parserUsed,
+        durationSeconds: getElapsed(),
+        downloadDurationSeconds,
+        parseDurationSeconds
       },
       reason
     }

@@ -3,7 +3,8 @@ import { parseEnv } from 'znv'
 
 export const {
   REDIS_URL,
-  FILEIMPORT_TIMEOUT,
+  QUEUE_NAME,
+  FILE_IMPORT_TIME_LIMIT_MIN,
   LOG_LEVEL,
   LOG_PRETTY,
   DOTNET_BINARY_PATH,
@@ -11,7 +12,8 @@ export const {
   RHINO_IMPORTER_PATH
 } = parseEnv(process.env, {
   REDIS_URL: z.string().url(),
-  FILEIMPORT_TIMEOUT: z.number().default(3600000),
+  QUEUE_NAME: z.string().default('fileimport-service-jobs'),
+  FILE_IMPORT_TIME_LIMIT_MIN: z.number().default(30), // minutes
   LOG_LEVEL: z.string().default('info'),
   LOG_PRETTY: z.boolean().default(false),
   DOTNET_BINARY_PATH: z.string().default('dotnet'),

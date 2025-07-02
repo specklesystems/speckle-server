@@ -63,6 +63,7 @@ export class PointMeasurement extends Measurement {
       objectLayer: ObjectLayers.MEASUREMENTS
     })
     this.xLabel.name = 'XLabel'
+    this.xLabel.material.depthTest = false
     this.add(this.xLabel)
 
     this.yLabel = new TextLabel({
@@ -78,6 +79,7 @@ export class PointMeasurement extends Measurement {
       objectLayer: ObjectLayers.MEASUREMENTS
     })
     this.yLabel.name = 'YLabel'
+    this.yLabel.material.depthTest = false
     this.add(this.yLabel)
 
     this.zLabel = new TextLabel({
@@ -93,6 +95,7 @@ export class PointMeasurement extends Measurement {
       objectLayer: ObjectLayers.MEASUREMENTS
     })
     this.zLabel.name = 'ZLabel'
+    this.zLabel.material.depthTest = false
     this.add(this.zLabel)
 
     this.layers.set(ObjectLayers.MEASUREMENTS)
@@ -158,37 +161,23 @@ export class PointMeasurement extends Measurement {
     this.xLabel.position.copy(this.xLabelPosition)
     this.yLabel.position.copy(this.yLabelPosition)
     this.zLabel.position.copy(this.zLabelPosition)
-    const xP = this.xLabel
-      .updateParams({
-        text: `X : ${(this.startPoint.x * getConversionFactor('m', this.units)).toFixed(
-          this.precision
-        )} ${this.units}`
-      })
-      .then(() => {
-        if (this.xLabel.backgroundMesh) this.xLabel.backgroundMesh.renderOrder = 3
-        this.xLabel.textMesh.renderOrder = 4
-      })
-    const yP = this.yLabel
-      .updateParams({
-        text: `Y : ${(this.startPoint.y * getConversionFactor('m', this.units)).toFixed(
-          this.precision
-        )} ${this.units}`
-      })
-      .then(() => {
-        if (this.yLabel.backgroundMesh) this.yLabel.backgroundMesh.renderOrder = 3
-        this.yLabel.textMesh.renderOrder = 4
-      })
+    const xP = this.xLabel.updateParams({
+      text: `X : ${(this.startPoint.x * getConversionFactor('m', this.units)).toFixed(
+        this.precision
+      )} ${this.units}`
+    })
 
-    const zP = this.zLabel
-      .updateParams({
-        text: `Z : ${(this.startPoint.z * getConversionFactor('m', this.units)).toFixed(
-          this.precision
-        )} ${this.units}`
-      })
-      .then(() => {
-        if (this.zLabel.backgroundMesh) this.zLabel.backgroundMesh.renderOrder = 3
-        this.zLabel.textMesh.renderOrder = 4
-      })
+    const yP = this.yLabel.updateParams({
+      text: `Y : ${(this.startPoint.y * getConversionFactor('m', this.units)).toFixed(
+        this.precision
+      )} ${this.units}`
+    })
+
+    const zP = this.zLabel.updateParams({
+      text: `Z : ${(this.startPoint.z * getConversionFactor('m', this.units)).toFixed(
+        this.precision
+      )} ${this.units}`
+    })
 
     this.gizmo.updateNormalIndicator(this.startPoint, this.startNormal)
     this.gizmo.updatePoint(this.startPoint)

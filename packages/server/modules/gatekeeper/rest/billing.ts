@@ -15,7 +15,8 @@ import {
   upsertWorkspaceSubscriptionFactory,
   updateCheckoutSessionStatusFactory,
   upsertPaidWorkspacePlanFactory,
-  getWorkspaceSubscriptionBySubscriptionIdFactory
+  getWorkspaceSubscriptionBySubscriptionIdFactory,
+  getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
@@ -130,6 +131,7 @@ export const getBillingRouter = (): Router => {
                       db
                     }),
                     getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                    getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
                     getSubscriptionData: getSubscriptionDataFactory({
                       stripe
                     }),
@@ -203,7 +205,7 @@ export const getBillingRouter = (): Router => {
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
               upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
               emitEvent: getEventBus().emit
-            })({ subscriptionData: parseSubscriptionData(event.data.object) }),
+            })({ subscriptionData: parseSubscriptionData(event.data.object), logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
@@ -226,7 +228,7 @@ export const getBillingRouter = (): Router => {
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
               upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
               emitEvent: getEventBus().emit
-            })({ subscriptionData }),
+            })({ subscriptionData, logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',

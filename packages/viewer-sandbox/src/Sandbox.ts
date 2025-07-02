@@ -1311,16 +1311,16 @@ export default class Sandbox {
       loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
         if (arg.count > traversedCount) {
           traversedCount = arg.count
-          if (traversedCount % 777 === 0) {
-            console.log(`Traversed Data ${traversedCount}`)
+          if (traversedCount % 500 === 0) {
+            console.log(`Traversed ${traversedCount}`)
           }
         }
       })
       loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
         if (arg.count > renderedCount) {
           renderedCount = arg.count
-          if (renderedCount % 777 === 0) {
-            console.log(`Rendering Data ${renderedCount}`)
+          if (renderedCount % 500 === 0) {
+            console.log(`Converting Data ${renderedCount}`)
           }
         }
       })

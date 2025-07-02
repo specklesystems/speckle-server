@@ -135,6 +135,9 @@ const getStream = () => {
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
     'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+
+    //large tower
+    //'https://app.speckle.systems/projects/e2a7b596f2/models/ddaf8349f5'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -596,6 +599,8 @@ const getStream = () => {
 
     // Single billboaded text
     // 'https://latest.speckle.systems/projects/f28ad5b38a/models/b63ebcd807'
+    // Duplicate display values
+    // 'https://app.speckle.systems/projects/1466fe31c6/models/2eaf0f0571'
   )
 }
 

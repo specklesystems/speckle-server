@@ -124,6 +124,8 @@ export class TextLabel extends Text {
 
   public constructor(params: TextLabelParams = DefaultTextLabelParams) {
     super()
+    this.depthOffset = -0.1
+
     this.material = new SpeckleTextMaterial({}).getDerivedMaterial()
     this.material.toneMapped = false
 

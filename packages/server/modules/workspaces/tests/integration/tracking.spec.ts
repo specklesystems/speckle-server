@@ -58,19 +58,17 @@ describe('Tracking Workspaces', () => {
   before(async () => {
     await truncateTables([Workspaces.name])
     await createTestUser(testUser)
-    await Promise.all(
-      [...Array(30)].map(() =>
-        createTestWorkspace(
-          {
-            id: createRandomString(),
-            ownerId: createRandomString(),
-            slug: createRandomString(),
-            name: createRandomString()
-          },
-          testUser
-        )
+    for (let i = 0; i < 30; i++) {
+      await createTestWorkspace(
+        {
+          id: createRandomString(),
+          ownerId: createRandomString(),
+          slug: createRandomString(),
+          name: createRandomString()
+        },
+        testUser
       )
-    )
+    }
   })
 
   it('updates all existing workspaces an update workpspace', async () => {

@@ -76,9 +76,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.12.4, @apollo/client@npm:^3.7.0, @apollo/client@npm:^3.8.0":
-  version: 3.12.4
-  resolution: "@apollo/client@npm:3.12.4"
+"@apollo/client@npm:^3.13.8, @apollo/client@npm:^3.7.0, @apollo/client@npm:^3.8.0":
+  version: 3.13.8
+  resolution: "@apollo/client@npm:3.13.8"
   dependencies:
     "@graphql-typed-document-node/core": "npm:^3.1.1"
     "@wry/caches": "npm:^1.0.0"
@@ -89,14 +89,13 @@ __metadata:
     optimism: "npm:^0.18.0"
     prop-types: "npm:^15.7.2"
     rehackt: "npm:^0.1.0"
-    response-iterator: "npm:^0.2.6"
     symbol-observable: "npm:^4.0.0"
     ts-invariant: "npm:^0.10.3"
     tslib: "npm:^2.3.0"
     zen-observable-ts: "npm:^1.2.5"
   peerDependencies:
     graphql: ^15.0.0 || ^16.0.0
-    graphql-ws: ^5.5.5
+    graphql-ws: ^5.5.5 || ^6.0.3
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || >=19.0.0-rc
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || >=19.0.0-rc
     subscriptions-transport-ws: ^0.9.0 || ^0.11.0
@@ -109,7 +108,7 @@ __metadata:
       optional: true
     subscriptions-transport-ws:
       optional: true
-  checksum: 10/9659ccf03ab5d6708cf191a1bd09c33ab5f958a8d66e783f81ccc899448b362a51cecf7d62c0ff5b852e60a340238e6903b3c96dcb5cf68dfb8a438ee6cd24bb
+  checksum: 10/a2fb3990ea25b96df2719ae0e925c07acc84cbf73da8871233169d65f01ae506cc0a52f6a83c40dea06bb3c9a5eb46a34f3e9b6e545931bae8c48f9bf4652e7a
   languageName: node
   linkType: hard
 
@@ -1858,6 +1857,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@aws-sdk/s3-request-presigner@npm:3.352.0":
+  version: 3.352.0
+  resolution: "@aws-sdk/s3-request-presigner@npm:3.352.0"
+  dependencies:
+    "@aws-sdk/middleware-endpoint": "npm:3.347.0"
+    "@aws-sdk/protocol-http": "npm:3.347.0"
+    "@aws-sdk/signature-v4-multi-region": "npm:3.347.0"
+    "@aws-sdk/smithy-client": "npm:3.347.0"
+    "@aws-sdk/types": "npm:3.347.0"
+    "@aws-sdk/util-format-url": "npm:3.347.0"
+    tslib: "npm:^2.5.0"
+  checksum: 10/90b16c953ce88f6342c8f23789260c15190eaebc3eb15cf76a04b377c00ee00893f91ce43f676c6a3e1c13376587cd083f1ccf59a908cdefed4d758595e964a0
+  languageName: node
+  linkType: hard
+
 "@aws-sdk/service-error-classification@npm:3.347.0":
   version: 3.347.0
   resolution: "@aws-sdk/service-error-classification@npm:3.347.0"
@@ -2104,6 +2118,17 @@ __metadata:
     "@smithy/util-endpoints": "npm:^3.0.4"
     tslib: "npm:^2.6.2"
   checksum: 10/bc735ac0d7c58d12e5ef820050879bba7300534ff9e05a3f0c3cb32ac5874e208b7e000e5cb4d04f407789cef0e48926e1564a5edc89f64a141b3494970f6ba4
+  languageName: node
+  linkType: hard
+
+"@aws-sdk/util-format-url@npm:3.347.0":
+  version: 3.347.0
+  resolution: "@aws-sdk/util-format-url@npm:3.347.0"
+  dependencies:
+    "@aws-sdk/querystring-builder": "npm:3.347.0"
+    "@aws-sdk/types": "npm:3.347.0"
+    tslib: "npm:^2.5.0"
+  checksum: 10/fc71ec300fbea62e0c8bd1cfae2d4fcc81b578ca0a7254c9d29af81c75d96f89dbbdff8a291cba633d2636a142b68abc1cc59d6d77f65a743e593d6e2aa7c414
   languageName: node
   linkType: hard
 
@@ -15722,7 +15747,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/frontend-2@workspace:packages/frontend-2"
   dependencies:
-    "@apollo/client": "npm:^3.12.4"
+    "@apollo/client": "npm:^3.13.8"
     "@artmizu/nuxt-prometheus": "npm:^2.2.1"
     "@datadog/browser-rum": "npm:^5.11.0"
     "@datadog/datadog-ci": "npm:^3.5.0"
@@ -15784,7 +15809,7 @@ __metadata:
     "@types/ua-parser-js": "npm:^0.7.39"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
-    "@vue/apollo-composable": "npm:@speckle/apollo-composable@4.2.1-patch.1"
+    "@vue/apollo-composable": "npm:^4.2.2"
     "@vue/apollo-ssr": "npm:4.0.0"
     "@vueuse/core": "npm:^10.9.0"
     apollo-upload-client: "npm:^18.0.1"
@@ -16026,6 +16051,7 @@ __metadata:
     "@apollo/server": "npm:^4.11.0"
     "@aws-sdk/client-s3": "npm:^3.276.0"
     "@aws-sdk/lib-storage": "npm:^3.100.0"
+    "@aws-sdk/s3-request-presigner": "npm:3.352.0"
     "@bull-board/express": "npm:^4.2.2"
     "@faker-js/faker": "npm:^8.4.1"
     "@godaddy/terminus": "npm:^4.9.0"
@@ -16058,6 +16084,7 @@ __metadata:
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/compression": "npm:^1.7.2"
     "@types/connect-redis": "npm:^0.0.23"
+    "@types/content-disposition": "npm:^0.5.9"
     "@types/cookie-parser": "npm:^1.4.7"
     "@types/cors": "npm:^2.8.17"
     "@types/debug": "npm:^4.1.7"
@@ -16106,6 +16133,7 @@ __metadata:
     compression: "npm:^1.7.4"
     concurrently: "npm:^7.0.0"
     connect-redis: "npm:^6.1.1"
+    content-disposition: "npm:^0.5.4"
     cookie-parser: "npm:^1.4.6"
     cors: "npm:^2.8.5"
     cross-env: "npm:^7.0.3"
@@ -18668,6 +18696,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/content-disposition@npm:^0.5.9":
+  version: 0.5.9
+  resolution: "@types/content-disposition@npm:0.5.9"
+  checksum: 10/d895703c0027ca6c4c0c1ede363909dbb590deec3b206a84b88a49c8b2840bcbd31b4ddeb2e1e6caa1af00801cc79c5b69a5c75a8152f2959810b10fe75a4e1f
+  languageName: node
+  linkType: hard
+
 "@types/cookie-parser@npm:^1.4.7":
   version: 1.4.7
   resolution: "@types/cookie-parser@npm:1.4.7"
@@ -20650,9 +20685,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/apollo-composable@npm:@speckle/apollo-composable@4.2.1-patch.1":
-  version: 4.2.1-patch.1
-  resolution: "@speckle/apollo-composable@npm:4.2.1-patch.1"
+"@vue/apollo-composable@npm:^4.2.2":
+  version: 4.2.2
+  resolution: "@vue/apollo-composable@npm:4.2.2"
   dependencies:
     throttle-debounce: "npm:^5.0.0"
     ts-essentials: "npm:^9.4.0"
@@ -20665,7 +20700,7 @@ __metadata:
   peerDependenciesMeta:
     "@vue/composition-api":
       optional: true
-  checksum: 10/f8816269d1e0294b817af863417a49bce353e0324a7c984f9c71a057d4b3415e1708ac6bf41907951a7fe467cf0a1dfacfec9e78db9985ba7f2773cbba0a2e38
+  checksum: 10/1c26ac821016d79158812da0510e6da7148767e4f86f82cb0926391ecfee768c7238865e3bee14bf8a7a186f7ca8ec5c9586b3544bdc61909c52049c75ef3dd0
   languageName: node
   linkType: hard
 
@@ -43630,13 +43665,6 @@ __metadata:
   bin:
     resolve: bin/resolve
   checksum: 10/d4d878bfe3702d215ea23e75e0e9caf99468e3db76f5ca100d27ebdc527366fee3877e54bce7d47cc72ca8952fc2782a070d238bfa79a550eeb0082384c3b81a
-  languageName: node
-  linkType: hard
-
-"response-iterator@npm:^0.2.6":
-  version: 0.2.6
-  resolution: "response-iterator@npm:0.2.6"
-  checksum: 10/ef7c74693ef3891461955a666e753585b298fe0de1baaf0d190e7a6818e4311e459d72f4a36f04aa8f49eda9b5f97124e5534be01e40d9e008795125d0bbb374
   languageName: node
   linkType: hard
 

@@ -1,8 +1,5 @@
 import { db } from '@/db/knex'
-import {
-  createBranchFactory,
-  getStreamBranchByNameFactory
-} from '@/modules/core/repositories/branches'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
@@ -66,7 +63,6 @@ import {
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 
 export const initUploadTestEnvironment = () => {
   const getServerInfo = getServerInfoFactory({ db })
@@ -115,8 +111,7 @@ export const initUploadTestEnvironment = () => {
       db
     }),
     notifyUploadStatus: notifyChangeInFileStatus({
-      getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-      publish
+      eventEmit: getEventBus().emit
     })
   })
 

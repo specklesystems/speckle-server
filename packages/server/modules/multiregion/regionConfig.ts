@@ -12,7 +12,7 @@ import {
   MainRegionConfig,
   MultiRegionConfig,
   loadMultiRegionsConfig
-} from '@speckle/shared/environment/multiRegionConfig'
+} from '@speckle/shared/environment/db'
 
 let multiRegionConfig: Optional<MultiRegionConfig> = undefined
 

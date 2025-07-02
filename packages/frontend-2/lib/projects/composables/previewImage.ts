@@ -35,13 +35,15 @@ export function usePreviewImageBlob(
   const basePanoramaUrl = computed(() => unref(previewUrl) + '/all')
   const isEnabled = computed(() => (import.meta.server ? true : unref(enabled)))
   const cacheBust = ref(0)
+  const isPanoramaPlaceholder = ref(false)
 
   const ret = {
     previewUrl: computed(() => url.value),
     panoramaPreviewUrl: computed(() => panoramaUrl.value),
     isLoadingPanorama,
     shouldLoadPanorama,
-    hasDoneFirstLoad: computed(() => hasDoneFirstLoad.value)
+    hasDoneFirstLoad: computed(() => hasDoneFirstLoad.value),
+    isPanoramaPlaceholder: computed(() => isPanoramaPlaceholder.value)
   }
 
   // Preload the image
@@ -168,6 +170,9 @@ export function usePreviewImageBlob(
           img.onload = resolve
           img.onerror = reject
         })
+
+        // If width is 700px or less, it's the placeholder not the actual panorama
+        isPanoramaPlaceholder.value = img.naturalWidth <= 700
       }
 
       panoramaUrl.value = blobUrl

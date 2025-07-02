@@ -20,7 +20,8 @@ export const WorkspacePlanFeatures = <const>{
   DomainSecurity: 'domainBasedSecurityPolicies',
   SSO: 'oidcSso',
   CustomDataRegion: 'workspaceDataRegionSpecificity',
-  HideSpeckleBranding: 'hideSpeckleBranding'
+  HideSpeckleBranding: 'hideSpeckleBranding',
+  ExclusiveMembership: 'exclusiveMembership'
 }
 
 export type WorkspacePlanFeatures =
@@ -51,6 +52,11 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.HideSpeckleBranding]: {
     displayName: 'Customised viewer',
     description: 'Hide the Speckle branding in embedded viewer'
+  },
+  [WorkspacePlanFeatures.ExclusiveMembership]: {
+    displayName: 'Exclusive workspace membership',
+    description:
+      'Members of exclusive workspaces cannot join or create other workspaces'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -155,7 +161,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.ExclusiveMembership
     ],
     limits: unlimited
   },
@@ -166,7 +173,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.ExclusiveMembership
     ],
     limits: unlimited
   },
@@ -243,4 +251,16 @@ export const workspaceReachedPlanLimit = (
   if (!limits.projectCount || !limits.modelCount) return false
 
   return projectCount === limits.projectCount || modelCount === limits.modelCount
+}
+
+export const workspacePlanHasAccessToFeature = ({
+  plan,
+  feature
+}: {
+  plan: WorkspacePlans
+  feature: WorkspacePlanFeatures
+}): boolean => {
+  const planConfig = WorkspacePlanConfigs[plan]
+  const hasAccess = planConfig.features.includes(feature)
+  return hasAccess
 }

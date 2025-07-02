@@ -1,6 +1,5 @@
 import cryptoRandomString from 'crypto-random-string'
 import { db } from '@/db/knex'
-import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import {
   getFileInfoFactory,
   saveUploadFileFactory,
@@ -10,7 +9,6 @@ import {
   insertNewUploadAndNotifyFactory,
   insertNewUploadAndNotifyFactoryV2
 } from '@/modules/fileuploads/services/management'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { testLogger as logger } from '@/observability/logging'
 import { sleep } from '@/test/helpers'
 import { expect } from 'chai'
@@ -18,7 +16,7 @@ import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { TIME } from '@speckle/shared'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
-import { assign } from 'lodash'
+import { assign, get } from 'lodash'
 import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/creation'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
@@ -56,9 +54,7 @@ describe('FileUploads @fileuploads', () => {
   describe('Convert files', () => {
     it('Should garbage collect expired files', async () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish,
         emit: async () => {}
       })
       const fileId = cryptoRandomString({ length: 10 })
@@ -69,11 +65,14 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
       await sleep(2000)
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 })
-      const results = await getFileInfoFactory({ db })({ fileId })
+      const results = await getFileInfoFactory({ db })({
+        fileId
+      })
       if (!results) {
         expect(results).to.not.be.undefined
         return //HACK to appease typescript
@@ -83,9 +82,7 @@ describe('FileUploads @fileuploads', () => {
 
     it('Should not garbage collect files that are not expired', async () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish,
         emit: async () => {}
       })
       const fileId = cryptoRandomString({ length: 10 })
@@ -96,11 +93,14 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
       // timeout far in the future, so it won't be garbage collected
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 * TIME.hour })
-      const results = await getFileInfoFactory({ db })({ fileId })
+      const results = await getFileInfoFactory({ db })({
+        fileId
+      })
       if (!results) {
         expect(results).to.not.be.undefined
         return //HACK to appease typescript
@@ -116,9 +116,7 @@ describe('FileUploads @fileuploads', () => {
         emittedEventPayload = payload
       }
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db }),
         saveUploadFile: saveUploadFileFactory({ db }),
-        publish,
         emit
       })
       const fileId = cryptoRandomString({ length: 10 })
@@ -129,17 +127,20 @@ describe('FileUploads @fileuploads', () => {
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
-        fileType: 'text/plain'
+        fileType: 'text/plain',
+        modelId: null
       })
 
-      const results = await getFileInfoFactory({ db })({ fileId })
+      const results = await getFileInfoFactory({ db })({
+        fileId
+      })
       if (!results) {
         expect(results).to.not.be.undefined
         return //HACK to appease typescript
       }
       expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
       expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
-      expect(emittedEventPayload).to.be.deep.equal({
+      expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
         userId: userOneId,
         projectId: createdStreamId,
         fileSize: 100,
@@ -169,16 +170,19 @@ describe('FileUploads @fileuploads', () => {
 
         const pushJobToFileImporter = pushJobToFileImporterFactory({
           getServerOrigin: () => serverOrigin,
-          scheduleJob: async (jobData) => {
-            assign(result, jobData)
-          },
+
           createAppToken: async (args) => {
             usedUserId = args.userId
             return token
           }
         })
 
-        await pushJobToFileImporter(upload)
+        await pushJobToFileImporter({
+          scheduleJob: async (jobData) => {
+            assign(result, jobData)
+          },
+          ...upload
+        })
 
         expect(usedUserId).to.equal(upload.userId)
         const expected: JobPayload = {
@@ -189,7 +193,7 @@ describe('FileUploads @fileuploads', () => {
           modelId: upload.modelId,
           fileType: upload.fileType,
           projectId: upload.projectId,
-          timeOutSeconds: 1200,
+          timeOutSeconds: 1800,
           blobId: upload.blobId
         }
         expect(result).to.deep.equal(expected)
@@ -203,13 +207,17 @@ describe('FileUploads @fileuploads', () => {
           emittedEventPayload = payload
         }
         const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+          queues: [
+            {
+              scheduleJob: async () => {},
+              supportedFileTypes: ['txt']
+            }
+          ],
           pushJobToFileImporter: pushJobToFileImporterFactory({
             getServerOrigin: () => serverOrigin,
-            scheduleJob: async () => {},
             createAppToken: async () => token
           }),
           saveUploadFile: saveUploadFileFactoryV2({ db }),
-          publish,
           emit
         })
         const fileId = cryptoRandomString({ length: 10 })
@@ -219,23 +227,25 @@ describe('FileUploads @fileuploads', () => {
           fileId,
           fileName: 'testfile.txt',
           fileSize: 100,
-          fileType: 'text/plain',
+          fileType: 'txt',
           modelId: createdBranch.id,
           modelName: createdBranch.name
         })
 
-        const results = await getFileInfoFactory({ db })({ fileId })
+        const results = await getFileInfoFactory({ db })({
+          fileId
+        })
         if (!results) {
           expect(results).to.not.be.undefined
           return //HACK to appease typescript
         }
         expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
         expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
-        expect(emittedEventPayload).to.be.deep.equal({
+        expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
           userId: userOneId,
           projectId: createdStreamId,
           fileSize: 100,
-          fileType: 'text/plain'
+          fileType: 'txt'
         })
       })
     }
