@@ -57,14 +57,16 @@ const DefaultMeasurementPointGizmoStyle = {
 }
 
 export class MeasurementPointGizmo extends Group {
-  private normalIndicator: LineSegments2
+  public normalIndicator: LineSegments2
   private normalIndicatorBuffer: Float64Array = new Float64Array(24)
   private normalIndicatorNormal: Vector3 = new Vector3()
   private normalIndicatorTangent: Vector3 = new Vector3()
   private normalIndicatorBitangent: Vector3 = new Vector3()
-  private line: LineSegments2
-  private point: Mesh<CircleGeometry, SpeckleBasicMaterial>
-  private text: TextLabel
+
+  public line: LineSegments2
+  public point: Mesh<CircleGeometry, SpeckleBasicMaterial>
+  public text: TextLabel
+
   private _style: MeasurementPointGizmoStyle = Object.assign(
     {},
     DefaultMeasurementPointGizmoStyle

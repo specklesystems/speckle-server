@@ -87,12 +87,12 @@ const createViewer = async (containerName: string, _stream: string) => {
   // const label = new TextLabel({
   //   text: 'y: 1.00m',
   //   textColor: new Color(0xffffff),
-  //   fontSize: 20,
-  //   billboard: 'screen',
+  //   fontSize: 1,
+  //   billboard: 'world',
   //   anchorX: 'left',
   //   anchorY: 'middle',
   //   backgroundColor: new Color(0xfb0404),
-  //   backgroundMargins: new Vector2(50, 10),
+  //   backgroundMargins: new Vector2(0.75, 0.1),
   //   backgroundCornerRadius: 0.5,
   //   objectLayer: ObjectLayers.OVERLAY
   // }) as unknown as Mesh

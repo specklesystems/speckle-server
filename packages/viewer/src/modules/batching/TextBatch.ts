@@ -14,7 +14,7 @@ import {
 import Materials from '../materials/Materials.js'
 import { SpeckleBatchedText } from '../objects/SpeckleBatchedText.js'
 //@ts-ignore
-import { Text } from 'troika-three-text'
+import { AnchorX, AnchorY, Text } from 'troika-three-text'
 import {
   AccelerationStructure,
   BatchObject,
@@ -274,7 +274,7 @@ export default class TextBatch implements Batch {
     ])
   }
 
-  protected alignmentXToAnchorX(value: number): string {
+  protected alignmentXToAnchorX(value: number): AnchorX {
     switch (value) {
       case 0:
         return 'left'
@@ -287,10 +287,10 @@ export default class TextBatch implements Batch {
     }
   }
 
-  protected alignmentYToAnchorY(value: number): string {
+  protected alignmentYToAnchorY(value: number): AnchorY {
     switch (value) {
       case 0:
-        return 'left'
+        return 'top'
       case 1:
         return 'middle'
       case 2:
@@ -311,7 +311,15 @@ export default class TextBatch implements Batch {
       let needsBillboard = false
       let textSynced = this.renderViews.length
       for (let k = 0; k < this.renderViews.length; k++) {
-        const textMeta = this.renderViews[k].renderData.geometry.metaData
+        const textMeta = this.renderViews[k].renderData.geometry
+          .metaData as unknown as {
+          value: string
+          height: number
+          maxWidth: number
+          alignmentH: number
+          alignmentV: number
+          screenOriented: boolean
+        }
         const text = new Text()
         this.renderViews[k].renderData.geometry.bakeTransform?.decompose(
           text.position,
@@ -323,11 +331,10 @@ export default class TextBatch implements Batch {
           text.fontSize = textMeta.height
           text.maxWidth =
             textMeta.maxWidth !== null ? textMeta.maxWidth : Number.POSITIVE_INFINITY
-          text.anchorX = this.alignmentXToAnchorX(textMeta.alignmentH as number)
-          text.anchorY = this.alignmentYToAnchorY(textMeta.alignmentV as number)
+          text.anchorX = this.alignmentXToAnchorX(textMeta.alignmentH)
+          text.anchorY = this.alignmentYToAnchorY(textMeta.alignmentV)
         }
-        needsBillboard ||=
-          textMeta !== undefined ? (textMeta.screenOriented as boolean) : false
+        needsBillboard ||= textMeta !== undefined ? textMeta.screenOriented : false
 
         text.material = new SpeckleTextMaterial({
           color: 0xff0000 // control color
