@@ -7,10 +7,7 @@ import {
   ViewModes,
   SelectionExtension,
   HybridCameraController,
-  SectionTool,
-  InputEvent,
-  ObjectLayers,
-  TextLabel
+  SectionTool
 } from '@speckle/viewer'
 
 import './style.css'
@@ -24,7 +21,6 @@ import {
 import { SectionOutlines } from '@speckle/viewer'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
-import { Color, Mesh, Raycaster, Vector2 } from 'three'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)

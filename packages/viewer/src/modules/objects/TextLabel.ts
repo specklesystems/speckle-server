@@ -118,6 +118,10 @@ export class TextLabel extends Text {
     return this._textBounds
   }
 
+  public get backgroundMaterial(): SpeckleBasicMaterial {
+    return this._backgroundMaterial
+  }
+
   public constructor(params: TextLabelParams = DefaultTextLabelParams) {
     super()
     this.material = new SpeckleTextMaterial({}).getDerivedMaterial()
@@ -330,32 +334,6 @@ export class TextLabel extends Text {
 
   /** Gets the current bounds reported by troika taking `fontSize` into account */
   private textBoundsToBox(target: Box3 = new Box3()): Box3 {
-    const { textRenderInfo } = this
-    /** visibleBounds generally is a better fit, *however* it reports faulty on some glyphs and messes up the text size */
-    const bounds = textRenderInfo.visibleBounds
-
-    const vertices = []
-    vertices.push(
-      bounds[0],
-      bounds[3],
-      0,
-      bounds[2],
-      bounds[3],
-      0,
-      bounds[0],
-      bounds[1],
-      0,
-      bounds[2],
-      bounds[1],
-      0
-    )
-    target.setFromArray(vertices)
-
-    return target
-  }
-
-  /** Gets the current bounds reported by troika taking `fontSize` into account */
-  private textVisibleBoundsToBox(target: Box3 = new Box3()): Box3 {
     const { textRenderInfo } = this
     /** visibleBounds generally is a better fit, *however* it reports faulty on some glyphs and messes up the text size */
     const bounds = textRenderInfo.visibleBounds
