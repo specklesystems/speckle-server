@@ -47,7 +47,7 @@
     "vue": "^3.3.0"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.18",
+    "@headlessui/vue": "npm:@speckle/headlessui-vue@1.7.23-alpha.0",
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
     "@storybook/test": "^8.1.10",
