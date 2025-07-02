@@ -253,10 +253,18 @@ const onButtonClick = () => {
   showActionsMenu.value = !showActionsMenu.value
 }
 
+const showUploads = () => {
+  openDialog.value = ActionTypes.ViewUploads
+}
+
 // doing it this way with 2 watchers so that using the 'open' prop is optional
 watch(showActionsMenu, (newVal) => emit('update:open', newVal))
 watch(
   () => props.open || false,
   (newVal) => (showActionsMenu.value = newVal)
 )
+
+defineExpose({
+  showUploads
+})
 </script>

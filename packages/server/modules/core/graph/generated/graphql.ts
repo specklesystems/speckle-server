@@ -1058,11 +1058,14 @@ export type FileUpload = {
   id: Scalars['String']['output'];
   /** Model associated with the file upload, if it exists already */
   model?: Maybe<Model>;
+  modelId?: Maybe<Scalars['String']['output']>;
   /** Alias for branchName */
   modelName: Scalars['String']['output'];
   /** Alias for streamId */
   projectId: Scalars['String']['output'];
   streamId: Scalars['String']['output'];
+  /** Date when upload was last updated */
+  updatedAt: Scalars['DateTime']['output'];
   uploadComplete: Scalars['Boolean']['output'];
   uploadDate: Scalars['DateTime']['output'];
   /** The user's id that uploaded this file. */
@@ -2093,9 +2096,7 @@ export type PendingWorkspaceCollaborator = {
   updatedAt: Scalars['DateTime']['output'];
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
-  workspaceId: Scalars['String']['output'];
-  workspaceName: Scalars['String']['output'];
-  workspaceSlug: Scalars['String']['output'];
+  workspace: LimitedWorkspace;
 };
 
 export type PendingWorkspaceCollaboratorsFilter = {
@@ -6525,9 +6526,11 @@ export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends
   fileType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  modelId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   modelName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   uploadComplete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   uploadDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -6833,9 +6836,7 @@ export type PendingWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, 
   token?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
-  workspaceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  workspaceName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  workspaceSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  workspace?: Resolver<ResolversTypes['LimitedWorkspace'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

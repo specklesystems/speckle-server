@@ -438,6 +438,16 @@ export const ServerAccessRequests = buildTableHelper('server_access_requests', [
   'updatedAt'
 ])
 
+export const Activity = buildTableHelper('activity', [
+  'id',
+  'contextResourceId',
+  'contextResourceType',
+  'eventType',
+  'userId',
+  'payload',
+  'createdAt'
+])
+
 export const StreamActivity = buildTableHelper('stream_activity', [
   'streamId',
   'time',

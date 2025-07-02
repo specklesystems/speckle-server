@@ -1,83 +1,58 @@
 import { ProjectSubscriptions } from '@/modules/shared/utils/subscriptions'
-import { MessageType } from '@/modules/core/utils/dbNotificationListener'
-import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { PreviewResultPayload } from '@speckle/shared/workers/previews'
 import { throwUncoveredError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import crypto from 'crypto'
-import { StorePreview, UpsertObjectPreview } from '@/modules/previews/domain/operations'
+import {
+  BuildConsumePreviewResult,
+  ConsumePreviewResult,
+  StorePreview,
+  UpdateObjectPreview
+} from '@/modules/previews/domain/operations'
 import { joinImages } from 'join-images'
 import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
+import {
+  storePreviewFactory,
+  updateObjectPreviewFactory
+} from '@/modules/previews/repository/previews'
+import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 
-const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
-
-export const messageProcessor = async (msg: MessageType) => {
-  if (msg.channel !== 'preview_generation_update') return
-  const [, status, streamId, objectId] = payloadRegexp.exec(msg.payload) || [
-    null,
-    null,
-    null,
-    null
-  ]
-
-  if (status !== 'finished' || !objectId || !streamId) return
-
-  // Get all commits with that objectId
-  const projectDb = await getProjectDbClient({ projectId: streamId })
-  const commits = await getObjectCommitsWithStreamIdsFactory({ db: projectDb })(
-    [objectId],
-    {
-      streamIds: [streamId]
-    }
-  )
-  if (!commits.length) return
-
-  await Promise.all(
-    commits.map((c) =>
-      publish(ProjectSubscriptions.ProjectVersionsPreviewGenerated, {
-        projectVersionsPreviewGenerated: {
-          versionId: c.id,
-          projectId: c.streamId,
-          objectId
-        }
-      })
-    )
-  )
+export const buildConsumePreviewResult: BuildConsumePreviewResult = async (deps) => {
+  const { logger, projectId } = deps
+  const projectDb = await getProjectDbClient({ projectId })
+  return consumePreviewResultFactory({
+    logger,
+    storePreview: storePreviewFactory({ db: projectDb }),
+    updateObjectPreview: updateObjectPreviewFactory({ db: projectDb }),
+    getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({
+      db: projectDb
+    })
+  })
 }
 
 export const consumePreviewResultFactory =
   ({
     logger,
-    upsertObjectPreview,
+    updateObjectPreview,
     storePreview,
     getObjectCommitsWithStreamIds
   }: {
     logger: Logger
-    upsertObjectPreview: UpsertObjectPreview
+    updateObjectPreview: UpdateObjectPreview
     storePreview: StorePreview
     getObjectCommitsWithStreamIds: GetObjectCommitsWithStreamIds
-  }) =>
-  async ({
-    projectId,
-    objectId,
-    previewResult
-  }: {
-    projectId: string
-    objectId: string
-    previewResult: PreviewResultPayload
-  }) => {
-    const streamId = projectId
+  }): ConsumePreviewResult =>
+  async ({ projectId, objectId, previewResult }) => {
     const lastUpdate = new Date()
     const priority = PreviewPriority.LOW
     const log = logger.child({
       jobId: previewResult.jobId,
       status: previewResult.status,
       durationSeconds: previewResult.result.durationSeconds,
-      projectId: streamId,
-      streamId, // for legacy reasons
+      projectId,
+      streamId: projectId, // for legacy reasons
       objectId
     })
 
@@ -87,10 +62,10 @@ export const consumePreviewResultFactory =
     switch (previewResult.status) {
       case 'error':
         log.warn({ reason: previewResult.reason }, previewMessage)
-        await upsertObjectPreview({
+        await updateObjectPreview({
           objectPreview: {
             objectId,
-            streamId,
+            streamId: projectId,
             lastUpdate,
             preview: { err: previewResult.reason },
             priority,
@@ -136,10 +111,10 @@ export const consumePreviewResultFactory =
 
         preview['all'] = fullImgId
 
-        await upsertObjectPreview({
+        await updateObjectPreview({
           objectPreview: {
             objectId,
-            streamId,
+            streamId: projectId,
             lastUpdate,
             preview,
             priority,
@@ -147,7 +122,7 @@ export const consumePreviewResultFactory =
           }
         })
         const commits = await getObjectCommitsWithStreamIds([objectId], {
-          streamIds: [streamId]
+          streamIds: [projectId]
         })
         if (!commits.length) break
 

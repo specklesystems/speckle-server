@@ -4,7 +4,7 @@ import {
   metricInputFileSize,
   metricOperationErrors
 } from '@/controller/prometheusMetrics.js'
-import { getDbClients } from '@/clients/knex.js'
+import { DbClient, getDbClients } from '@/clients/knex.js'
 
 import { downloadFile } from '@/controller/filesApi.js'
 import fs from 'fs'
@@ -14,9 +14,17 @@ import { downloadDependencies } from '@/controller/objDependencies.js'
 import { logger } from '@/observability/logging.js'
 import { Nullable, Scopes, wait, TIME_MS } from '@speckle/shared'
 import { Knex } from 'knex'
-import { getIfcDllPath, useLegacyIfcImporter } from '@/controller/helpers/env.js'
+import {
+  getIfcDllPath,
+  isProdEnv,
+  useLegacyIfcImporter
+} from '@/controller/helpers/env.js'
 import { isErrorOutput, isSuccessOutput } from '@/common/output.js'
 import { runProcessWithTimeout } from '@/common/processHandling.js'
+import {
+  getConnectionSettings,
+  obfuscateConnectionString
+} from '@speckle/shared/environment/db'
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -50,17 +58,36 @@ async function startTask(knex: Knex) {
 }
 
 async function doTask(
-  mainDb: Knex,
+  mainDbs: DbClient,
   regionName: string,
   taskDb: Knex,
   task: { id: string; streamId: string }
 ) {
+  const mainDb = mainDbs.public
+
+  // In local envs these URIs can be docker-compatible only, and can break local envs
+  const mainDbPrivate = isProdEnv() && mainDbs.private ? mainDbs.private : mainDb
+
   const taskId = task.id
+  let taskLogger = logger.child({ taskId })
+
+  // TODO: Troubleshooting listen/notify issues
+  const connectionSettings = getConnectionSettings(mainDbPrivate)
+  const mainDbConnectionString = obfuscateConnectionString(
+    connectionSettings.connectionString || ''
+  )
 
   // Mark task as started
-  await mainDb.raw(`NOTIFY file_import_started, '${task.id}:::${task.streamId}::::::'`)
+  await mainDbPrivate.raw(
+    `NOTIFY file_import_started, '${task.id}:::${task.streamId}::::::'`
+  )
+  taskLogger.info(
+    {
+      mainDbConnectionString
+    },
+    'Notified file_import_started...'
+  )
 
-  let taskLogger = logger.child({ taskId })
   let tempUserToken: Nullable<string> = null
   let mainServerApi = null
   let taskServerApi = null
@@ -134,7 +161,7 @@ async function doTask(
       userId: info.userId,
       name: 'temp upload token',
       scopes: [Scopes.Streams.Write, Scopes.Streams.Read, Scopes.Profile.Read],
-      lifespan: 1_000_000
+      lifespan: TIME_LIMIT + 5 * TIME_MS.minute // plus 5 minutes buffer to download the file and other overhead
     })
     tempUserToken = token
 
@@ -297,7 +324,7 @@ async function doTask(
     metricOperationErrors.labels(fileTypeForMetric).inc()
   } finally {
     const { streamId, branchName } = branchMetadata
-    await mainDb.raw(
+    await mainDbPrivate.raw(
       `NOTIFY file_import_update, '${task.id}:::${streamId}:::${branchName}:::${
         newBranchCreated ? 1 : 0
       }'`
@@ -328,7 +355,6 @@ function maybeErrorToString(error: unknown): string {
 
 const doStuff = async () => {
   const dbClients = await getDbClients()
-  const mainDb = dbClients.main.public
   const dbClientsIterator = infiniteDbClientsIterator(dbClients)
   while (!shouldExit) {
     const [regionName, taskDb]: [string, Knex] = dbClientsIterator.next().value
@@ -339,7 +365,7 @@ const doStuff = async () => {
         await wait(1 * TIME_MS.second)
         continue
       }
-      await doTask(mainDb, regionName, taskDb, task)
+      await doTask(dbClients.main, regionName, taskDb, task)
       await wait(10)
     } catch (err) {
       metricOperationErrors.labels('main_loop').inc()

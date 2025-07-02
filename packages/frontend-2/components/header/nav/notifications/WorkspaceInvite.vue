@@ -10,7 +10,7 @@
       has invited you to join
       <template v-if="showWorkspaceName">
         the workspace
-        <span class="font-medium">{{ invite.workspaceName }}</span>
+        <span class="font-medium">{{ invite.workspace.name }}</span>
       </template>
       <template v-else>this workspace</template>
     </template>
@@ -29,8 +29,10 @@ graphql(`
       id
       ...LimitedUserAvatar
     }
-    workspaceId
-    workspaceName
+    workspace {
+      id
+      name
+    }
     token
     user {
       id
