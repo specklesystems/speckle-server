@@ -21,6 +21,7 @@ import { useApolloClient } from '@vue/apollo-composable'
 import {
   FileTooLargeError,
   ForbiddenFileTypeError,
+  generateFileId,
   MissingFileExtensionError,
   prettyFileSize,
   resolveFileExtension
@@ -49,8 +50,9 @@ export type FailedFileImportJob = {
   date: Date
 }
 
-type GlobalFileImportErrorManagerState = {
-  jobs: FailedFileImportJob[]
+type GlobalFileImportManagerState = {
+  failedJobs: FailedFileImportJob[]
+  activeUploads: string[]
 }
 
 graphql(`
@@ -128,27 +130,52 @@ export const useFailedFileImportJobUtils = () => {
   }
 }
 
-export const useGlobalFileImportErrorManager = () => {
-  const state = useState<GlobalFileImportErrorManagerState>(
-    'global_file_import_error_manager',
+export const useGlobalFileImportManager = () => {
+  const state = useState<GlobalFileImportManagerState>(
+    'global_file_import_manager',
     () => ({
-      jobs: []
+      failedJobs: [],
+      activeUploads: []
     })
   )
 
   const addFailedJob = (job: FailedFileImportJob) => {
-    state.value.jobs = [...state.value.jobs, job]
+    state.value.failedJobs = [...state.value.failedJobs, job]
   }
 
-  const clear = () => {
-    state.value.jobs = []
+  const clearFailedJobs = () => {
+    state.value.failedJobs = []
   }
 
-  const failedJobs = computed(() => state.value.jobs)
+  const registerActiveUpload = (uploadId: string) => {
+    if (!state.value.activeUploads.includes(uploadId)) {
+      state.value.activeUploads = [...state.value.activeUploads, uploadId]
+    }
+  }
+
+  const unregisterActiveUpload = (uploadId: string) => {
+    state.value.activeUploads = state.value.activeUploads.filter(
+      (id) => id !== uploadId
+    )
+  }
+
+  const unregisterAllActiveUploads = () => {
+    state.value.activeUploads = []
+  }
+
+  const hasActiveUploads = computed(() => {
+    return state.value.activeUploads.length > 0
+  })
+
+  const failedJobs = computed(() => state.value.failedJobs)
 
   return {
+    registerActiveUpload,
+    unregisterActiveUpload,
+    unregisterAllActiveUploads,
+    hasActiveUploads,
     addFailedJob,
-    clear,
+    clearFailedJobs,
     failedJobs
   }
 }
@@ -179,6 +206,7 @@ export const useFileImportApi = () => {
     public: { FF_LARGE_FILE_IMPORTS_ENABLED }
   } = useRuntimeConfig()
   const apollo = useApolloClient().client
+  const { registerActiveUpload, unregisterActiveUpload } = useGlobalFileImportManager()
 
   const importFileV2: ImportFile = async (params, callbacks) => {
     const { file, projectId, modelId } = params
@@ -276,8 +304,32 @@ export const useFileImportApi = () => {
     return res
   }
 
+  const importFile: ImportFile = async (...args) => {
+    const resolveUploadId = () => {
+      const params = args[0]
+
+      const fileId = generateFileId(params.file)
+      return JSON.stringify({
+        fileId,
+        projectId: params.projectId,
+        modelId: params.modelId,
+        modelName: params.modelName
+      })
+    }
+
+    const uploadId = resolveUploadId()
+    try {
+      registerActiveUpload(uploadId)
+      return await (FF_LARGE_FILE_IMPORTS_ENABLED ? importFileV2 : importFileLegacy)(
+        ...args
+      )
+    } finally {
+      unregisterActiveUpload(uploadId)
+    }
+  }
+
   return {
-    importFile: FF_LARGE_FILE_IMPORTS_ENABLED ? importFileV2 : importFileLegacy
+    importFile
   }
 }
 

@@ -51,7 +51,7 @@ import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
 import {
   useFailedFileImportJobUtils,
-  useGlobalFileImportErrorManager
+  useGlobalFileImportManager
 } from '~/lib/core/composables/fileImport'
 
 export function useProjectVersionUpdateTracking(
@@ -627,7 +627,7 @@ export function useProjectPendingVersionUpdateTracking(
     computed(() => `useProjectPendingVersionUpdateTracking-${unref(projectId)}`)
   )
 
-  const { addFailedJob } = useGlobalFileImportErrorManager()
+  const { addFailedJob } = useGlobalFileImportManager()
   const { convertUploadToFailedJob } = useFailedFileImportJobUtils()
   const { userId } = useActiveUser()
   const isEnabled = computed(() => !!(hasLock.value || handler))

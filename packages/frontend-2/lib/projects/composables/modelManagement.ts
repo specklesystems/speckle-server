@@ -43,7 +43,7 @@ import { useLock } from '~~/lib/common/composables/singleton'
 import { isUndefined } from 'lodash-es'
 import {
   useFailedFileImportJobUtils,
-  useGlobalFileImportErrorManager
+  useGlobalFileImportManager
 } from '~/lib/core/composables/fileImport'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
@@ -350,7 +350,7 @@ export function useProjectPendingModelUpdateTracking(
     { enabled: isEnabled }
   )
   const apollo = useApolloClient().client
-  const { addFailedJob } = useGlobalFileImportErrorManager()
+  const { addFailedJob } = useGlobalFileImportManager()
   const { convertUploadToFailedJob } = useFailedFileImportJobUtils()
   const { userId } = useActiveUser()
 

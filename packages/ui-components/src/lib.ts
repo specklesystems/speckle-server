@@ -98,7 +98,8 @@ import {
   ForbiddenFileTypeError,
   UniqueFileTypeSpecifier,
   prettyFileSize,
-  resolveFileExtension
+  resolveFileExtension,
+  generateFileId
 } from '~~/src/helpers/form/file'
 import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
 export * from '~~/src/helpers/common/error'
@@ -182,7 +183,8 @@ export {
   useDebouncedTextInput,
   buildManualPromise,
   CommonProgressBar,
-  resolveFileExtension
+  resolveFileExtension,
+  generateFileId
 }
 export type {
   LayoutDialogButton,
