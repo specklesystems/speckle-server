@@ -1,7 +1,29 @@
 import z from 'zod'
 
+const JobIdSeparator = '.'
+
+export const jobIdSchema = z
+  .string()
+  .refine((data) => data.split(JobIdSeparator).length === 2, {
+    message: 'jobId must be in the format "projectId.objectId"'
+  })
+
+export const toJobId = (params: { projectId: string; objectId: string }): string => {
+  return `${params.projectId}${JobIdSeparator}${params.objectId}`
+}
+export const fromJobId = (jobId: string): { projectId: string; objectId: string } => {
+  return jobIdSchema
+    .transform((data) => {
+      return {
+        projectId: data.split(JobIdSeparator)[0],
+        objectId: data.split(JobIdSeparator)[1]
+      }
+    })
+    .parse(jobId)
+}
+
 const job = z.object({
-  jobId: z.string()
+  jobId: jobIdSchema
 })
 
 export const jobPayload = job.merge(
