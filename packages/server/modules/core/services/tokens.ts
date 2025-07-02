@@ -27,6 +27,7 @@ import { GetTokenAppInfo } from '@/modules/auth/domain/operations'
 import { GetUserRole } from '@/modules/core/domain/users/operations'
 import { TokenCreateError } from '@/modules/core/errors/user'
 import cryptoRandomString from 'crypto-random-string'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 
 /*
   Tokens
@@ -136,11 +137,11 @@ export const createEmbedTokenFactory =
     const { id, token } = await deps.createToken({
       userId,
       name: cryptoRandomString({ length: 10 }),
-      scopes: [Scopes.Streams.Read, Scopes.Profile.Read],
+      scopes: [Scopes.Streams.Read],
       limitResources: [
         {
           id: projectId,
-          type: 'project'
+          type: TokenResourceIdentifierType.Project
         }
       ],
       lifespan

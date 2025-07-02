@@ -98,6 +98,7 @@ export const listProjectEmbedTokensFactory =
         ApiTokens.col.lastUsed,
         ApiTokens.col.lifespan
       )
+      .orderBy(ApiTokens.col.createdAt, 'desc')
       .leftJoin(ApiTokens.name, ApiTokens.col.id, EmbedApiTokens.col.tokenId)
       .where({ projectId })) as (EmbedApiTokenRecord &
       Pick<ApiTokenRecord, 'createdAt' | 'lastUsed' | 'lifespan'>)[]

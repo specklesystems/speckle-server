@@ -15,7 +15,7 @@ export const defineAuthError = <
   code: ErrorCode
   message: string
 }): {
-  new(
+  new (
     ...args: Payload extends undefined
       ? [params?: { message?: string } | string]
       : [params: { payload: Payload; message?: string } | string]
@@ -187,6 +187,6 @@ export type AllAuthErrors = ValueOf<{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...args: any[]
   ) => infer R
-  ? R
-  : never
+    ? R
+    : never
 }>

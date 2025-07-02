@@ -44,7 +44,7 @@ type PolicyErrors = InstanceType<
   | typeof WorkspacePlanNoFeatureAccessError
 >
 
-export const canCreateEmbedTokenPolicy: AuthPolicy<
+export const canRevokeEmbedTokenPolicy: AuthPolicy<
   PolicyLoaderKeys,
   PolicyArgs,
   PolicyErrors

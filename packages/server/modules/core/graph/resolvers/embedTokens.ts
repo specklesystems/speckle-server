@@ -12,12 +12,20 @@ import {
   createEmbedTokenFactory,
   createTokenFactory
 } from '@/modules/core/services/tokens'
+import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 
 export = {
   Project: {
     embedTokens: async (parent, _args, context) => {
-      // TODO: Policy
+      const canReadEmbedTokens =
+        await context.authPolicies.project.tokens.canReadEmbedTokens({
+          userId: context.userId,
+          projectId: parent.id
+        })
+      if (!canReadEmbedTokens.isOk) {
+        throw mapAuthToServerError(canReadEmbedTokens.error)
+      }
 
       return await listProjectEmbedTokensFactory({ db })({
         projectId: parent.id
@@ -26,7 +34,14 @@ export = {
   },
   ProjectMutations: {
     createEmbedToken: async (_parent, args, context) => {
-      // TODO: Policy
+      const canCreateEmbedToken =
+        await context.authPolicies.project.tokens.canCreateEmbedToken({
+          userId: context.userId,
+          projectId: args.token.projectId
+        })
+      if (!canCreateEmbedToken.isOk) {
+        throw mapAuthToServerError(canCreateEmbedToken.error)
+      }
 
       return await createEmbedTokenFactory({
         createToken: createTokenFactory({
@@ -42,7 +57,14 @@ export = {
       })
     },
     revokeEmbedToken: async (_parent, args, context) => {
-      // TODO: Policy
+      const canRevokeEmbedToken =
+        await context.authPolicies.project.tokens.canRevokeEmbedToken({
+          userId: context.userId,
+          projectId: args.projectId
+        })
+      if (!canRevokeEmbedToken.isOk) {
+        throw mapAuthToServerError(canRevokeEmbedToken.error)
+      }
 
       return await revokeEmbedTokenByIdFactory({ db })({
         tokenId: args.token,

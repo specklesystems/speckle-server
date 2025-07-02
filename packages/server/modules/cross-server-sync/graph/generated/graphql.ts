@@ -1006,11 +1006,12 @@ export type EmailVerificationRequestInput = {
 export type EmbedToken = {
   __typename?: 'EmbedToken';
   createdAt: Scalars['DateTime']['output'];
-  id: Scalars['String']['output'];
   lastUsed: Scalars['DateTime']['output'];
   lifespan: Scalars['BigInt']['output'];
   modelIds: Scalars['String']['output'];
-  name: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  tokenId: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
 };
 
 export type EmbedTokenCreateInput = {
@@ -2646,6 +2647,7 @@ export type ProjectMutationsLeaveArgs = {
 
 
 export type ProjectMutationsRevokeEmbedTokenArgs = {
+  projectId: Scalars['String']['input'];
   token: Scalars['String']['input'];
 };
 

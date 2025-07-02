@@ -51,22 +51,22 @@ export const canUseWorkspacePlanFeature: AuthPolicy<
   PolicyErrors
 > =
   (loaders) =>
-    async ({ userId, workspaceId, feature }) => {
-      const isWorkspaceAdmin = await ensureUserIsWorkspaceAdminFragment(loaders)({
-        userId,
-        workspaceId
-      })
-      if (isWorkspaceAdmin.isErr) return err(isWorkspaceAdmin.error)
-      const ensuredNotReadOnly = await ensureWorkspaceNotReadOnlyFragment(loaders)({
-        workspaceId
-      })
-      if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
+  async ({ userId, workspaceId, feature }) => {
+    const isWorkspaceAdmin = await ensureUserIsWorkspaceAdminFragment(loaders)({
+      userId,
+      workspaceId
+    })
+    if (isWorkspaceAdmin.isErr) return err(isWorkspaceAdmin.error)
+    const ensuredNotReadOnly = await ensureWorkspaceNotReadOnlyFragment(loaders)({
+      workspaceId
+    })
+    if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
 
-      const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-      if (!workspacePlan) return err(new WorkspacePlanNoFeatureAccessError())
-      const canUseFeature = workspacePlanHasAccessToFeature({
-        plan: workspacePlan.name,
-        feature
-      })
-      return canUseFeature ? ok() : err(new WorkspacePlanNoFeatureAccessError())
-    }
+    const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
+    if (!workspacePlan) return err(new WorkspacePlanNoFeatureAccessError())
+    const canUseFeature = workspacePlanHasAccessToFeature({
+      plan: workspacePlan.name,
+      feature
+    })
+    return canUseFeature ? ok() : err(new WorkspacePlanNoFeatureAccessError())
+  }

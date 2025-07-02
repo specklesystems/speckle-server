@@ -1026,11 +1026,12 @@ export type EmailVerificationRequestInput = {
 export type EmbedToken = {
   __typename?: 'EmbedToken';
   createdAt: Scalars['DateTime']['output'];
-  id: Scalars['String']['output'];
   lastUsed: Scalars['DateTime']['output'];
   lifespan: Scalars['BigInt']['output'];
   modelIds: Scalars['String']['output'];
-  name: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  tokenId: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
 };
 
 export type EmbedTokenCreateInput = {
@@ -2666,6 +2667,7 @@ export type ProjectMutationsLeaveArgs = {
 
 
 export type ProjectMutationsRevokeEmbedTokenArgs = {
+  projectId: Scalars['String']['input'];
   token: Scalars['String']['input'];
 };
 
@@ -6502,11 +6504,12 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
 
 export type EmbedTokenResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmbedToken'] = ResolversParentTypes['EmbedToken']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   lastUsed?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   lifespan?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
   modelIds?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tokenId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7002,7 +7005,7 @@ export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType e
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
   invites?: Resolver<ResolversTypes['ProjectInviteMutations'], ParentType, ContextType>;
   leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsLeaveArgs, 'id'>>;
-  revokeEmbedToken?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsRevokeEmbedTokenArgs, 'token'>>;
+  revokeEmbedToken?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsRevokeEmbedTokenArgs, 'projectId' | 'token'>>;
   update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'update'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

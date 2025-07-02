@@ -31,6 +31,9 @@ import { canLoadPolicy } from './project/canLoad.js'
 import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
 import { canCreateWorkspacePolicy } from './workspace/canCreateWorkspace.js'
 import { canUseWorkspacePlanFeature } from './workspace/canUseWorkspacePlanFeature.js'
+import { canCreateEmbedTokenPolicy } from './project/tokens/canCreateEmbedToken.js'
+import { canRevokeEmbedTokenPolicy } from './project/tokens/canRevokeEmbedToken.js'
+import { canReadEmbedTokensPolicy } from './project/tokens/canReadEmbedTokens.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -55,6 +58,11 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canUpdate: canUpdateProjectVersionPolicy(loaders),
       canReceive: canLoadPolicy(loaders),
       canRequestRender: canRequestProjectVersionRenderPolicy(loaders)
+    },
+    tokens: {
+      canReadEmbedTokens: canReadEmbedTokensPolicy(loaders),
+      canCreateEmbedToken: canCreateEmbedTokenPolicy(loaders),
+      canRevokeEmbedToken: canRevokeEmbedTokenPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),
