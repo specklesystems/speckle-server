@@ -33,6 +33,7 @@ export const onFileImportProcessedFactory =
   (deps: OnFileImportProcessedDeps) =>
   async ({ uploadId, streamId, branchName, isNewBranch }: ParsedMessage) => {
     if (!uploadId || !streamId || !branchName) return
+    let boundLogger = logger.child({ streamId, projectId: streamId, uploadId })
 
     const [upload, branch] = await Promise.all([
       deps.getFileInfo({ fileId: uploadId }),
@@ -40,6 +41,13 @@ export const onFileImportProcessedFactory =
     ])
     if (!upload) return
     if (upload.streamId !== streamId) return
+
+    boundLogger = boundLogger.child({
+      modelId: upload.modelId,
+      branchId: upload.modelId,
+      branchName: upload.branchName,
+      fileImportDetails: upload
+    })
 
     // Update upload to reference the actual model/branch created
     if (branch) {
@@ -56,12 +64,9 @@ export const onFileImportProcessedFactory =
       const err = new FileUploadInternalError(
         upload.convertedMessage || 'Unknown error while uploading file.'
       )
-      logger.warn(
-        { err, fileImportDetails: upload },
-        'Error while processing file upload.'
-      )
+      boundLogger.warn({ err }, 'Error while processing file upload.')
     } else {
-      logger.info({ fileImportDetails: upload }, 'File upload processed.')
+      boundLogger.info('File upload processed.')
     }
 
     await deps.eventEmit({
