@@ -1,2 +1,2 @@
-export const calNamespace = '15min'
-export const calLink = 'moritzhenschel/15min'
+export const calNamespace = 'introduction-to-speckle'
+export const calLink = 'jonathon-broughton/introduction-to-speckle'

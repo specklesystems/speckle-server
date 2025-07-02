@@ -3,9 +3,9 @@ import {
   NotificationHandler
 } from '@/modules/notifications/helpers/types'
 import {
-  ActionTypes,
+  StreamActionTypes,
   StreamActivityRecord,
-  AllActivityTypes,
+  AllStreamActivityTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
@@ -132,15 +132,15 @@ export const digestMostActiveStream: TopicDigesterFunction = (
 
   const commitCount = countByActivityType(
     mostActive.activity,
-    ActionTypes.Commit.Create
+    StreamActionTypes.Commit.Create
   )
 
   const commentCount =
-    countByActivityType(mostActive.activity, ActionTypes.Comment.Create) +
-    countByActivityType(mostActive.activity, ActionTypes.Comment.Reply)
+    countByActivityType(mostActive.activity, StreamActionTypes.Comment.Create) +
+    countByActivityType(mostActive.activity, StreamActionTypes.Comment.Reply)
 
   const receives = mostActive.activity.filter(
-    (a) => a.actionType === ActionTypes.Commit.Receive
+    (a) => a.actionType === StreamActionTypes.Commit.Receive
   )
   const numReceiveUsers = new Set(receives.map((a) => a.userId)).size
 
@@ -182,7 +182,7 @@ export const mostActiveComment: TopicDigesterFunction = (
 ) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const replyActions = activities.filter(
-    (a) => a.actionType === ActionTypes.Comment.Reply
+    (a) => a.actionType === StreamActionTypes.Comment.Reply
   )
   if (!replyActions.length) return null
 
@@ -227,7 +227,7 @@ export const mostActiveComment: TopicDigesterFunction = (
 export const commentMentionSummary: TopicDigesterFunction = (activitySummary) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const mentionActions = activities.filter(
-    (a) => a.actionType === ActionTypes.Comment.Mention
+    (a) => a.actionType === StreamActionTypes.Comment.Mention
   )
   const mentionFact = mentionActions.length
     ? `You have been mentioned in ${mentionActions.length} comments. Make sure to follow up on them.`
@@ -267,13 +267,16 @@ export const digestActiveStreams: TopicDigesterFunction = (
     //The stream was deleted
     if (!a.stream) return
 
-    const commitCount = countByActivityType(a.activity, ActionTypes.Commit.Create)
+    const commitCount = countByActivityType(a.activity, StreamActionTypes.Commit.Create)
 
     const commentCount =
-      countByActivityType(a.activity, ActionTypes.Comment.Create) +
-      countByActivityType(a.activity, ActionTypes.Comment.Reply)
+      countByActivityType(a.activity, StreamActionTypes.Comment.Create) +
+      countByActivityType(a.activity, StreamActionTypes.Comment.Reply)
 
-    const receiveCount = countByActivityType(a.activity, ActionTypes.Commit.Receive)
+    const receiveCount = countByActivityType(
+      a.activity,
+      StreamActionTypes.Commit.Receive
+    )
 
     const streamUrl = `${serverInfo.canonicalUrl}/streams/${a.stream.id}`
 
@@ -306,17 +309,17 @@ export const digestActiveStreams: TopicDigesterFunction = (
 export const closingOverview: TopicDigesterFunction = (activitySummary) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const commitCount = activities.filter(
-    (a) => a.actionType === ActionTypes.Commit.Create
+    (a) => a.actionType === StreamActionTypes.Commit.Create
   ).length
   const commentCount = activities.filter((a) => {
-    const actions: AllActivityTypes[] = [
-      ActionTypes.Comment.Create,
-      ActionTypes.Comment.Reply
+    const actions: AllStreamActivityTypes[] = [
+      StreamActionTypes.Comment.Create,
+      StreamActionTypes.Comment.Reply
     ]
     return a.actionType && actions.includes(a.actionType)
   }).length
   const receiveCount = activities.filter(
-    (a) => a.actionType === ActionTypes.Commit.Receive
+    (a) => a.actionType === StreamActionTypes.Commit.Receive
   ).length
 
   const factCount = [commitCount, commentCount, receiveCount].filter((f) => f > 0)
@@ -353,7 +356,7 @@ export const closingOverview: TopicDigesterFunction = (activitySummary) => {
 
 const countByActivityType = (
   activities: StreamScopeActivity[],
-  actionType: AllActivityTypes
+  actionType: AllStreamActivityTypes
 ): number => activities.filter((a) => a.actionType === actionType).length
 
 const sortedByActivityCount = (

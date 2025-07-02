@@ -312,6 +312,9 @@ export = {
     convertedVersionId: (parent) => parent.convertedCommitId,
     async model(parent, _args, ctx) {
       return await getFileUploadModel({ upload: parent, ctx })
+    },
+    updatedAt: (parent) => {
+      return parent.convertedLastUpdate || parent.uploadDate
     }
   },
   Mutation: {

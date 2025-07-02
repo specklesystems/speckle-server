@@ -8,13 +8,14 @@ import {
   GetTimelineCount,
   GetUserActivity,
   GetUserTimeline,
-  SaveActivity
+  SaveActivity,
+  SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
 import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
+import { Activity, StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { StreamAclRecord } from '@/modules/core/helpers/types'
 import {
@@ -27,6 +28,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import cryptoRandomString from 'crypto-random-string'
 
 const tables = {
   streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>
@@ -224,8 +226,8 @@ export const getUserActivityFactory =
   }
 
 // TODO: this function should be a service
-export const saveActivityFactory =
-  ({ db }: { db: Knex }): SaveActivity =>
+export const saveStreamActivityFactory =
+  ({ db }: { db: Knex }): SaveStreamActivity =>
   async ({ streamId, resourceType, resourceId, actionType, userId, info, message }) => {
     const dbObject = {
       streamId, // abc
@@ -269,4 +271,17 @@ export const saveActivityFactory =
         eventPayload: webhooksPayload
       })
     }
+  }
+
+export const saveActivityFactory =
+  ({ db }: { db: Knex }): SaveActivity =>
+  async (activity) => {
+    const id = cryptoRandomString({ length: 10 })
+    const createdAt = new Date()
+
+    const [result] = await db<typeof activity & { id: string; createdAt: Date }>(
+      Activity.name
+    ).insert({ ...activity, id, createdAt }, '*')
+
+    return result
   }

@@ -178,12 +178,13 @@ import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regio
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
+  getWorkspaceSubscriptionFactory,
   getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import { BadRequestError } from '@/modules/shared/errors'
+import { BadRequestError, UnauthorizedError } from '@/modules/shared/errors'
 import {
   dismissWorkspaceJoinRequestFactory,
   requestToJoinWorkspaceFactory
@@ -583,15 +584,20 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspacePlanName: name
           })
 
+          const userId = ctx.userId
+          if (!userId) throw new UnauthorizedError()
+
           const updateWorkspacePlan = updateWorkspacePlanFactory({
             getWorkspace: getWorkspaceFactory({ db }),
             upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
+            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
             emitEvent: getEventBus().emit
           })
 
           await withOperationLogging(
-            async () => await updateWorkspacePlan({ workspaceId, name, status }),
+            async () =>
+              await updateWorkspacePlan({ userId, workspaceId, name, status }),
             {
               logger,
               operationName: 'updateWorkspacePlan',

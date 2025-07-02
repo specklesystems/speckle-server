@@ -202,6 +202,6 @@ const gridClasses = computed(() => [
 ])
 
 const onModelUploading = (payload: FileAreaUploadingPayload) => {
-  isModelUploading.value = !!(payload.isUploading || payload.error)
+  isModelUploading.value = payload.isUploading
 }
 </script>
