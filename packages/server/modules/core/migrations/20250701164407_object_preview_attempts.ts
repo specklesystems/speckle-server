@@ -13,9 +13,13 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
+  // drop in a two step process to first remove the index then the column
   await knex.schema.alterTable(tableName, (table) => {
-    table.dropColumn(attemptsCol)
     table.dropIndex(['previewStatus', 'priority', 'lastUpdate', attemptsCol])
     table.index(['previewStatus', 'priority', 'lastUpdate'])
+  })
+
+  await knex.schema.alterTable(tableName, (table) => {
+    table.dropColumn(attemptsCol)
   })
 }
