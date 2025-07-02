@@ -8,7 +8,8 @@ import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { mochaHooks } from '@/test/hooks'
 
 const main = async () => {
-  const execution = yargs(hideBin(process.argv))
+  const y = yargs(hideBin(process.argv))
+  const execution = y
     .scriptName('yarn cli')
     .usage('$0 <cmd> [args]')
     .commandDir(path.resolve(__dirname, './commands'), { extensions: ['js', 'ts'] })
@@ -43,10 +44,10 @@ const main = async () => {
     })
     .help().argv
 
-  return execution
+  return { execution, y }
 }
 
-void main().then(() => {
+void main().then(({ y }) => {
   // weird TS typing issue
-  yargs.exit(0, undefined as unknown as Error)
+  y.exit(0, undefined as unknown as Error)
 })
