@@ -55,6 +55,9 @@ input AppTokenCreateInput {
   limitResources: [TokenResourceIdentifierInput!]
 }
 
+"""
+A token used to enable an embedded viewer for a private project
+"""
 type EmbedToken {
   tokenId: String!
   projectId: String!
@@ -67,6 +70,9 @@ type EmbedToken {
 
 input EmbedTokenCreateInput {
   projectId: String!
+  """
+  The model(s) and version(s) string used in the embed url
+  """
   modelIds: String!
   lifespan: BigInt
 }
