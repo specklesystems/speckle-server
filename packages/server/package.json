@@ -39,8 +39,8 @@
     "cli:download:commit": "cross-env LOG_PRETTY=true LOG_LEVEL=debug yarn cli download commit",
     "migrate": "yarn cli db migrate",
     "migrate:test": "cross-env NODE_ENV=test tsx --require ts-node/register --import=./esmLoader.js ./modules/cli/index.js db migrate",
-    "gqlgen": "yarn tsc ./modules/cli/bin/gqlgen.ts",
-    "gqlgen:watch": "yarn tsc ./modules/cli/bin/gqlgen.ts -- --watch",
+    "gqlgen": "yarn tsx ./modules/cli/bin/gqlgen.ts",
+    "gqlgen:watch": "yarn tsx ./modules/cli/bin/gqlgen.ts -- --watch",
     "stripe:listen": "stripe listen --forward-to 127.0.0.1:3000/api/v1/billing/webhooks"
   },
   "dependencies": {
@@ -143,11 +143,11 @@
   "devDependencies": {
     "@apollo/rover": "^0.23.0",
     "@faker-js/faker": "^8.4.1",
-    "@graphql-codegen/cli": "^5.0.5",
-    "@graphql-codegen/typed-document-node": "^5.1.1",
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/typed-document-node": "^5.1.2",
     "@graphql-codegen/typescript": "^4.1.6",
-    "@graphql-codegen/typescript-operations": "^4.6.0",
-    "@graphql-codegen/typescript-resolvers": "^4.5.0",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@graphql-codegen/typescript-resolvers": "^4.5.1",
     "@parcel/watcher": "^2.5.1",
     "@swc/core": "^1.11.11",
     "@tiptap/core": "^2.0.0-beta.176",

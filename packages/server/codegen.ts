@@ -1,11 +1,7 @@
 import type { CodegenConfig } from '@graphql-codegen/cli'
-import { wait } from '@speckle/shared'
 
-await wait(1000)
-
-const config: CodegenConfig = {
+const config: Omit<CodegenConfig, 'schema'> = {
   overwrite: true,
-  schema: ['modules/schema.ts'],
   documents: undefined,
   generates: {
     'modules/core/graph/generated/graphql.ts': {
@@ -45,6 +41,8 @@ const config: CodegenConfig = {
           ModelMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           VersionMutations:
+            '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
+          FileUploadMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           CommentMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
@@ -121,6 +119,8 @@ const config: CodegenConfig = {
             '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn',
           WorkspaceCollaborator:
             '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn',
+          LimitedWorkspace:
+            '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceGraphQLReturn',
           LimitedWorkspaceCollaborator:
             '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceCollaboratorGraphQLReturn',
           WorkspaceSubscriptionSeats:
