@@ -69,8 +69,7 @@ export const consumePreviewResultFactory =
             lastUpdate,
             preview: { err: previewResult.reason },
             priority,
-            previewStatus: PreviewStatus.ERROR,
-            incrementAttempts: true // increment attempts on error
+            previewStatus: PreviewStatus.ERROR
           }
         })
         break

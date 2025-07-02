@@ -48,8 +48,7 @@ export const requestFailedHandlerFactory =
         streamId: projectId,
         objectId,
         previewStatus: PreviewStatus.ERROR,
-        lastUpdate: new Date(),
-        incrementAttempts: true // increment attempts on error
+        lastUpdate: new Date()
       }
     })
     if (updatedRecords.length < 1) {
