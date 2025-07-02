@@ -17,7 +17,8 @@ import { Knex } from 'knex'
 import {
   getIfcDllPath,
   isProdEnv,
-  useLegacyIfcImporter
+  useLegacyIfcImporter,
+  useExperimentalIfcImporter
 } from '@/controller/helpers/env.js'
 import { isErrorOutput, isSuccessOutput } from '@/common/output.js'
 import { runProcessWithTimeout } from '@/common/processHandling.js'
@@ -208,7 +209,10 @@ async function doTask(
           TIME_LIMIT,
           TMP_RESULTS_PATH
         )
-      } else {
+      } else if (
+        info.fileName.toLowerCase().endsWith('.dotnetimporter.ifc') ||
+        !useExperimentalIfcImporter()
+      ) {
         await runProcessWithTimeout(
           taskLogger,
           process.env['DOTNET_BINARY_PATH'] || 'dotnet',
@@ -221,6 +225,24 @@ async function doTask(
             existingBranch?.id || '',
             info.branchName,
             regionName
+          ],
+          {
+            USER_TOKEN: tempUserToken
+          },
+          TIME_LIMIT,
+          TMP_RESULTS_PATH
+        )
+      } else {
+        await runProcessWithTimeout(
+          taskLogger,
+          process.env['PYTHON_BINARY_PATH'] || 'python3',
+          [
+            './speckleifc-0.1.0/src/speckleifc/__main__.py',
+            TMP_FILE_PATH,
+            TMP_RESULTS_PATH,
+            info.streamId,
+            `File upload: ${info.fileName}`,
+            existingBranch?.id || ''
           ],
           {
             USER_TOKEN: tempUserToken
