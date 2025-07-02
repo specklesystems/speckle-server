@@ -1,129 +1,124 @@
 import { Base, SearchQuery, SearchResult } from '../types/types.js'
-import FlexSearch, { Document } from 'flexsearch'
-
-interface IndexDoc {
-  id: string
-  key: string
-  value: string
-  [key: string]: string
-}
+import { Charset, Document, DocumentData } from 'flexsearch'
 
 export class PropertyManager {
-  private index: Document<IndexDoc, true>
+  private index: Document
+  private count: number = 0
 
   constructor() {
-    this.index = new FlexSearch.Document({
+    this.index = new Document({
       document: {
         id: 'id',
-        index: ['value'],
-        store: ['key', 'value']
+        index: ['key', 'value'],
+        store: ['id', 'key', 'value']
       },
+      encoder: Charset.Normalize,
       tokenize: 'full'
     })
   }
 
-  public async indexProperties(base: Base): Promise<void> {
-    if (!base.properties) return
+  public getStats(): string {
+    return `Count: ${this.count}`
+  }
 
-    const properties = this.flattenProperties(base.id, base.properties)
-    for (const prop of properties) {
-      const doc: IndexDoc = {
-        id: prop.id,
-        key: prop.key,
-        value: prop.value
+  public indexProperties(base: Base): void {
+    if (
+      !base ||
+      base.speckle_type === 'Speckle.Core.Models.DataChunk' ||
+      base.speckle_type === 'Objects.Geometry.Mesh'
+    ) {
+      return
+    }
+
+    const properties = this.flattenObject(
+      base as unknown as Record<string, unknown>,
+      ['id', 'referencedId', '__closure'],
+      ['null', 'undefined', '[]', '{}', '""', 'reference']
+    )
+    for (const prop of Object.keys(properties)) {
+      const doc: DocumentData = {
+        id: base.id,
+        key: prop,
+        value: JSON.stringify(properties[prop])
       }
-      await this.index.addAsync(doc)
+      this.index.add(this.count++, doc)
     }
   }
 
-  private flattenProperties(
-    objectId: string,
-    properties: Record<string, unknown>
-  ): Array<{ id: string; key: string; value: string }> {
-    const flatProps: Array<{ id: string; key: string; value: string }> = []
-    for (const key in properties) {
-      if (Object.prototype.hasOwnProperty.call(properties, key)) {
-        const value = properties[key]
-        if (typeof value === 'object' && value !== null) {
-          flatProps.push(
-            ...this.flattenProperties(objectId, value as Record<string, unknown>)
-          )
-        } else {
-          flatProps.push({
-            id: `${objectId}-${key}`,
-            key,
-            value: String(value)
-          })
-        }
+  private flattenObject(
+    obj: Record<string, unknown>,
+    keysToIgnore: string[] = [],
+    valuesToIgnore: string[] = [],
+    prefix: string = ''
+  ): Record<string, unknown> {
+    return Object.keys(obj).reduce((acc: Record<string, unknown>, key: string) => {
+      if (keysToIgnore.includes(key)) {
+        return acc // Skip keys that are in the ignore list
       }
-    }
-    return flatProps
+      const currentKey = prefix ? `${prefix}.${key}` : key
+      const value = obj[key]
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        // Recursively flatten nested objects
+        Object.assign(
+          acc,
+          this.flattenObject(
+            value as Record<string, unknown>,
+            keysToIgnore,
+            valuesToIgnore,
+            currentKey
+          )
+        )
+      } else if (Array.isArray(value)) {
+        // Handle arrays: flatten each element with indexed keys
+        value.forEach((item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            Object.assign(
+              acc,
+              this.flattenObject(
+                item as Record<string, unknown>,
+                keysToIgnore,
+                valuesToIgnore,
+                `${currentKey}.${index}`
+              )
+            )
+          } else {
+            acc[`${currentKey}.${index}`] = item
+          }
+        })
+      } else {
+        if (valuesToIgnore.includes(String(value))) {
+          return acc // Skip keys that are in the ignore list
+        }
+        // Assign primitive values directly
+        acc[currentKey] = value
+      }
+      return acc
+    }, {})
   }
 
   public async search(query: SearchQuery): Promise<SearchResult[]> {
-    const { operator, queries } = query
-    const searchResults: Set<string> = new Set()
+    const { queries } = query
 
-    const queryPromises = queries.map((q) => {
-      return this.index.searchAsync(q.value, {
-        index: 'value',
-        suggest: true
-      })
+    const resultsPerQuery = await this.index.searchAsync(queries[0].value, {
+      enrich: true,
+      limit: 50,
+      suggest: true
     })
 
-    const resultsPerQuery = (await Promise.all(
-      queryPromises
-    ));
-
-    for (let i = 0; i < resultsPerQuery.length; i++) {
-      const results = resultsPerQuery[i]
-      const q = queries[i]
-      const objectIds = new Set<string>()
-      results.forEach((fieldResult) => {
-        fieldResult.result.forEach((doc) => {
-          if (doc === q.key) {
-            objectIds.add(doc.split('-')[0])
-          }
-        })
-      })
-
-      if (i === 0) {
-        objectIds.forEach((id) => searchResults.add(id))
-      } else {
-        if (operator === 'AND') {
-          const intersection = new Set(
-            [...searchResults].filter((x) => objectIds.has(x))
-          )
-          searchResults.clear()
-          intersection.forEach((id) => searchResults.add(id))
-        } else {
-          objectIds.forEach((id) => searchResults.add(id))
-        }
-      }
-    }
-
     const finalResults: SearchResult[] = []
-    searchResults.forEach((objectId) => {
-      queries.forEach((q) => {
+    resultsPerQuery.forEach((q) => {
+      q.result.forEach((r) => {
+        if (!r.doc) {
+          return // Skip if no document found
+        }
         finalResults.push({
-          key: q.key,
-          value: q.value,
-          objectId
+          id: r.doc['id'] as string,
+          key: r.doc['key'] as string,
+          value: r.doc['value'] as string
         })
       })
     })
 
     return finalResults
-  }
-
-  public clearPropertyIndex(): void {
-    this.index = new FlexSearch.Document({
-      document: {
-        id: 'id',
-        index: ['value'],
-        store: ['key', 'value']
-      },
-      tokenize: 'full'
-    })
   }
 }

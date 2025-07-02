@@ -35,7 +35,7 @@
   "dependencies": {
     "@speckle/shared": "workspace:^",
     "dexie": "^4.0.11",
-    "flexsearch": "^0.7.31"
+    "flexsearch": "^0.8.205"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.5",
@@ -50,8 +50,7 @@
     "tshy": "^3.0.2",
     "typescript": "^5.2.2",
     "vitest": "^3.0.7",
-    "vitest-fetch-mock": "^0.4.5",
-    "@types/flexsearch": "^0.7.3"
+    "vitest-fetch-mock": "^0.4.5"
   },
   "exports": {
     "./package.json": "./package.json",

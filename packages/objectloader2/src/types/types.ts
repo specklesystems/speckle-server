@@ -24,14 +24,14 @@ export interface DataChunk extends Base {
 export interface SearchQuery {
   operator: 'AND' | 'OR'
   queries: Array<{
-    key: string
+    key?: string
     value: string
     exact?: boolean
   }>
 }
 
 export interface SearchResult {
+  id: string
   key: string
   value: string
-  objectId: string
 }
