@@ -5,16 +5,15 @@ import { generate } from '@graphql-codegen/cli'
 import { graphSchema } from '@/modules'
 import baseConfig from '../../../codegen'
 import watcher from '@parcel/watcher'
-import { fileURLToPath } from 'url'
-import { dirname, resolve } from 'path'
+import { resolve } from 'path'
+import { getModuleDirectory } from '@speckle/shared/environment/node'
 
 /**
  * CUSTOM GQL CODEGEN BINARY, TO SUPPORT TOP-LEVEL AWAIT WHICH WE NEED TO BUILD OUR SCHEMA
  */
 
 const watch = process.argv.includes('--watch') || process.argv.includes('-w')
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __dirname = getModuleDirectory(import.meta)
 const root = resolve(__dirname, '../../../')
 
 const getSchemaString = async () => {
@@ -27,7 +26,8 @@ const getUpdatedConfig = async () => {
   const schemaString = await getSchemaString()
   const config: CodegenConfig = {
     ...baseConfig,
-    schema: [schemaString]
+    schema: [schemaString],
+    watch: false // we handle it ourselves
   }
   return config
 }
