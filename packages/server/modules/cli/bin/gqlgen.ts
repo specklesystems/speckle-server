@@ -32,8 +32,8 @@ const getUpdatedConfig = async () => {
   return config
 }
 
-await generate(await getUpdatedConfig())
 if (!watch) {
+  await generate(await getUpdatedConfig())
   process.exit(0)
 } else {
   // Watch for changes in the schema and regenerate
