@@ -31,7 +31,7 @@
           <template v-for="(column, colIndex) in columns" :key="column.id">
             <div :class="getClasses(column.id, colIndex)" tabindex="0">
               <slot :name="column.id" :item="item">
-                <div class="text-gray-900 font-medium order-1">Placeholder</div>
+                <div class="text-foreground-2 font-medium order-1">Placeholder</div>
               </slot>
             </div>
           </template>
