@@ -13,7 +13,9 @@ import {
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
+import { getActivityHelper } from '@/modules/activitystream/tests/helpers/activity'
 import {
+  Activity,
   ServerAccessRequests,
   StreamActivity,
   Streams,
@@ -378,7 +380,11 @@ describe('Stream access requests', () => {
     let validReqId: string
 
     beforeEach(async () => {
-      await truncateTables([ServerAccessRequests.name, StreamActivity.name])
+      await truncateTables([
+        ServerAccessRequests.name,
+        StreamActivity.name,
+        Activity.name
+      ])
       await removeStreamCollaborator(
         myPrivateStream.id,
         otherGuy.id,
@@ -427,9 +433,10 @@ describe('Stream access requests', () => {
 
         // activity stream item should be inserted
         if (accept) {
-          const streamActivity = await getStreamActivities(myPrivateStream.id, {
-            actionType: StreamActionTypes.Stream.PermissionsAdd,
-            userId: me.id
+          const streamActivity = await getActivityHelper({
+            projectId: myPrivateStream.id,
+            userId: me.id,
+            eventType: 'project_role_updated'
           })
           expect(streamActivity).to.have.lengthOf(1)
 

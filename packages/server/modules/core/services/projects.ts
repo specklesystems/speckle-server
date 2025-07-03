@@ -68,16 +68,6 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
-    await emitEvent({
-      eventName: ProjectEvents.PermissionsAdded,
-      payload: {
-        project,
-        activityUserId: ownerId,
-        targetUserId: ownerId,
-        role: Roles.Stream.Owner,
-        previousRole: null
-      }
-    })
 
     await emitEvent({
       eventName: ProjectEvents.Created,
@@ -89,6 +79,17 @@ export const createNewProjectFactory =
           name: project.name,
           visibility
         }
+      }
+    })
+
+    await emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project,
+        activityUserId: ownerId,
+        targetUserId: ownerId,
+        role: Roles.Stream.Owner,
+        previousRole: null
       }
     })
     return project
