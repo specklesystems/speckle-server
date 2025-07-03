@@ -151,7 +151,8 @@ def import_obj(
         host=os.getenv("SPECKLE_SERVER_URL", "127.0.0.1:3000"), use_ssl=False
     )
     token = os.environ["USER_TOKEN"]
-    assert token
+    if not token:
+        raise Exception('Expected an env var "USER_TOKEN"')
     client.authenticate_with_token(token)
 
     if model_id:

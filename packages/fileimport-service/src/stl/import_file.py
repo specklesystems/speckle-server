@@ -49,7 +49,10 @@ def import_stl(
     client = SpeckleClient(
         host=os.getenv("SPECKLE_SERVER_URL", "127.0.0.1:3000"), use_ssl=False
     )
-    client.authenticate_with_token(os.environ["USER_TOKEN"])
+    token = os.environ["USER_TOKEN"]
+    if not token:
+        raise Exception('Expected an env var "USER_TOKEN"')
+    client.authenticate_with_token(token)
 
     if model_id:
         model = client.model.get(model_id, project_id)
