@@ -94,6 +94,11 @@ export const parseFeatureFlags = (
     },
     FF_PERSONAL_PROJECTS_LIMITS_ENABLED: {
       schema: z.boolean(),
+      defaults: { _: false }
+    },
+    // Enables retrying errored previews
+    FF_RETRY_ERRORED_PREVIEWS_ENABLED: {
+      schema: z.boolean(),
       description:
         'Enables limits on personal projects. Requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
       defaults: { _: false }
@@ -138,6 +143,7 @@ export type FeatureFlags = {
   FF_FORCE_ONBOARDING: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
+  FF_RETRY_ERRORED_PREVIEWS_ENABLED: boolean
   FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
   FF_LARGE_FILE_IMPORTS_ENABLED: boolean

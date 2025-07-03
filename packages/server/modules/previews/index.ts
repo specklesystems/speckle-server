@@ -1,11 +1,15 @@
 /* istanbul ignore file */
+import cron from 'node-cron'
 import { moduleLogger, previewLogger as logger } from '@/observability/logging'
-
+import { buildConsumePreviewResult } from '@/modules/previews/resultListener'
 import {
   disablePreviews,
+  getFeatureFlags,
   getPreviewServiceRedisUrl,
+  getPrivateObjectsServerOrigin,
   getRedisUrl,
-  getServerOrigin
+  getServerOrigin,
+  previewServiceShouldUsePrivateObjectsServerUrl
 } from '@/modules/shared/helpers/envHelper'
 import type { Queue } from 'bull'
 import { ensureError } from '@speckle/shared'
@@ -15,17 +19,117 @@ import {
   initializeMetrics,
   observeMetricsFactory
 } from '@/modules/previews/observability/metrics'
-import { responseHandlerFactory } from '@/modules/previews/services/responses'
-import { createRequestAndResponseQueues } from '@/modules/previews/clients/bull'
-import { buildConsumePreviewResult } from '@/modules/previews/resultListener'
 import {
   requestActiveHandlerFactory,
   requestErrorHandlerFactory,
-  requestFailedHandlerFactory
+  requestFailedHandlerFactory,
+  requestObjectPreviewFactory
 } from '@/modules/previews/queues/previews'
+import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import {
+  getProjectDbClient,
+  getRegisteredDbClients
+} from '@/modules/multiregion/utils/dbSelector'
+import {
+  getPaginatedObjectPreviewInErrorStateFactory,
+  retryFailedPreviewsFactory
+} from '@/modules/previews/services/tasks'
+import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { db } from '@/db/knex'
+import { createRequestAndResponseQueues } from '@/modules/previews/clients/bull'
+import { responseHandlerFactory } from '@/modules/previews//services/responses'
+import {
+  getPaginatedObjectPreviewsPageFactory,
+  getPaginatedObjectPreviewsTotalCountFactory,
+  updateObjectPreviewFactory
+} from '@/modules/previews/repository/previews'
 import type { BuildUpdateObjectPreview } from '@/modules/previews/domain/operations'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { updateObjectPreviewFactory } from '@/modules/previews/repository/previews'
+
+const { FF_RETRY_ERRORED_PREVIEWS_ENABLED } = getFeatureFlags()
+
+let scheduledTasks: cron.ScheduledTask[] = []
+
+const scheduleRetryFailedPreviews = async ({
+  scheduleExecution,
+  previewRequestQueue,
+  responseQueueName
+}: {
+  scheduleExecution: ScheduleExecution
+  previewRequestQueue: Queue
+  responseQueueName: string
+}) => {
+  let previewResurrectionHandlers: {
+    handler: ReturnType<typeof retryFailedPreviewsFactory>
+    cursor: string | null
+  }[] = []
+  const regionClients = await getRegisteredDbClients()
+  for (const projectDb of [db, ...regionClients]) {
+    previewResurrectionHandlers.push({
+      handler: retryFailedPreviewsFactory({
+        getPaginatedObjectPreviewsInErrorState:
+          getPaginatedObjectPreviewInErrorStateFactory({
+            getPaginatedObjectPreviewsPage: getPaginatedObjectPreviewsPageFactory({
+              db: projectDb
+            }),
+            getPaginatedObjectPreviewsTotalCount:
+              getPaginatedObjectPreviewsTotalCountFactory({
+                db: projectDb
+              })
+          }),
+        updateObjectPreview: updateObjectPreviewFactory({
+          db: projectDb
+        }),
+        requestObjectPreview: requestObjectPreviewFactory({
+          queue: previewRequestQueue,
+          responseQueue: responseQueueName
+        }),
+        serverOrigin: previewServiceShouldUsePrivateObjectsServerUrl()
+          ? getPrivateObjectsServerOrigin()
+          : getServerOrigin(),
+        getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
+        createAppToken: createAppTokenFactory({
+          storeApiToken: storeApiTokenFactory({ db }),
+          storeTokenScopes: storeTokenScopesFactory({ db }),
+          storeTokenResourceAccessDefinitions:
+            storeTokenResourceAccessDefinitionsFactory({
+              db
+            }),
+          storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+        })
+      }),
+      cursor: null
+    })
+  }
+
+  const cronExpression = '*/5 * * * *' // every 5 minutes
+  return scheduleExecution(
+    cronExpression,
+    'PreviewResurrection',
+    async (_scheduledTime, { logger }) => {
+      previewResurrectionHandlers = await Promise.all(
+        previewResurrectionHandlers.map(async ({ handler, cursor }) => {
+          const newCursor = await handler({
+            logger,
+            previousCursor: cursor
+          })
+          return { handler, cursor: newCursor.cursor }
+        })
+      )
+    }
+  )
+}
 
 const JobQueueName = 'preview-service-jobs'
 const ResponseQueueNamePrefix = 'preview-service-results'
@@ -50,6 +154,11 @@ export const init: SpeckleModule['init'] = async ({
   } else {
     moduleLogger.info('📸 Init object preview module')
   }
+
+  const scheduleExecution = scheduleExecutionFactory({
+    acquireTaskLock: acquireTaskLockFactory({ db }),
+    releaseTaskLock: releaseTaskLockFactory({ db })
+  })
 
   const responseQueueName = `${ResponseQueueNamePrefix}-${
     new URL(getServerOrigin()).hostname
@@ -77,6 +186,18 @@ export const init: SpeckleModule['init'] = async ({
     return
   }
 
+  scheduledTasks = [
+    ...(FF_RETRY_ERRORED_PREVIEWS_ENABLED
+      ? [
+          await scheduleRetryFailedPreviews({
+            scheduleExecution,
+            previewRequestQueue,
+            responseQueueName
+          })
+        ]
+      : [])
+  ]
+
   const { previewJobsProcessedSummary } = initializeMetrics({
     registers: [metricsRegister],
     previewRequestQueue,
@@ -99,3 +220,9 @@ export const init: SpeckleModule['init'] = async ({
 }
 
 export const finalize = () => {}
+
+export const shutdown: SpeckleModule['shutdown'] = async () => {
+  scheduledTasks.forEach((task) => {
+    task.stop()
+  })
+}
