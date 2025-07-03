@@ -6,7 +6,7 @@ const cryptoRandomString = require('crypto-random-string')
 const Activity = () => knex('activity')
 const WorkspaceSeats = () => knex('workspace_seats')
 const WorkspacePlans = () => knex('workspace_plans')
-// const WorkspaceSubcriptions = () => knex('workspace_subscriptions')
+const WorkspaceSubscriptions = () => knex('workspace_subscriptions')
 
 const getUntrackedWorkspaceSeats = (limit, offset) => {
   return WorkspaceSeats()
@@ -51,40 +51,46 @@ const getUntrackedWorkspacePlans = (limit, offset) => {
     .limit(limit)
 }
 
-// eslint-disable-next-line no-unused-vars
 const getUntrackedSubscriptions = (limit, offset) => {
-  return WorkspacePlans()
+  return WorkspaceSubscriptions()
     .select([
       'workspace_subscriptions.workspaceId',
+      'workspace_plans.name',
+      'workspace_plans.status',
       'workspace_subscriptions.billingInterval',
       'workspace_subscriptions.subscriptionData',
       'workspace_subscriptions.createdAt'
     ])
+    .join(
+      'workspace_plans',
+      'workspace_subscriptions.workspaceId',
+      'workspace_plans.workspaceId'
+    )
     .whereRaw(
       `NOT EXISTS (
         SELECT * FROM activity
         WHERE activity."contextResourceId" = workspace_plans."workspaceId"
           AND activity."payload"#>>'{new,status}' = workspace_plans."status"
           AND activity."payload"#>>'{new,name}' = workspace_plans."name"
-          AND activity."eventType" IN ('workspace_plan_updated', 'workspace_plan_created')
+          AND activity."payload"#>>'{new,billingInterval}' = workspace_subscriptions."billingInterval"
+          AND activity."payload"#>>'{new,totalEditorSeats}' = workspace_subscriptions."subscriptionData"#>>'{products,0,quantity}'
+          AND activity."eventType" = 'workspace_subscription_updated'
           AND activity."contextResourceType" = 'workspace'
       )`
     )
     .offset(offset)
     .limit(limit)
-} // ??
+}
 
 const main = async () => {
   const BATCH_SIZE = 10_000 // there is something wrong with this batching
 
   let seats = []
   let offset = 0
-  let count = 0
 
   do {
     seats = await getUntrackedWorkspaceSeats(BATCH_SIZE, offset)
     offset += seats.length
-    count += seats.length
 
     const activities = seats.map((seat) => ({
       id: cryptoRandomString({ length: 10 }),
@@ -105,16 +111,14 @@ const main = async () => {
     }
   } while (seats.length)
 
-  console.log(`Total seats processed: ${count}`)
+  console.log(`Total seats processed: ${offset}`)
 
   let plans = []
   offset = 0
-  count = 0
 
   do {
     plans = await getUntrackedWorkspacePlans(BATCH_SIZE, offset)
     offset += plans.length
-    count += plans.length
 
     const activities = plans.map((plan) => ({
       id: cryptoRandomString({ length: 10 }),
@@ -135,7 +139,41 @@ const main = async () => {
     }
   } while (plans.length)
 
-  console.log(`Total plans processed: ${count}`)
+  console.log(`Total plans processed: ${offset}`)
+
+  let subscriptions = []
+  offset = 0
+
+  do {
+    subscriptions = await getUntrackedSubscriptions(BATCH_SIZE, offset)
+    offset += subscriptions.length
+
+    const activities = subscriptions.map((subscription) => ({
+      id: cryptoRandomString({ length: 10 }),
+      contextResourceId: subscription.workspaceId,
+      contextResourceType: 'workspace',
+      eventType: 'workspace_subscription_updated',
+      payload: {
+        new: {
+          name: subscription.name,
+          status: subscription.status,
+          billingInterval: subscription.billingInterval,
+          totalEditorSeats: subscription.subscriptionData.products[0].quantity
+        },
+        old: {
+          name: 'free',
+          status: 'valid'
+        }
+      },
+      createdAt: subscription.createdAt
+    }))
+
+    if (activities.length) {
+      await Activity().insert(activities)
+    }
+  } while (subscriptions.length)
+
+  console.log(`Total subscriptions processed: ${offset}`)
 }
 
 main()
