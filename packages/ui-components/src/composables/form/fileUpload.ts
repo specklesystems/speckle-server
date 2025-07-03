@@ -135,7 +135,7 @@ export function usePrepareUploadableFiles(params: {
   }
 }
 
-class FileTooLargeError extends BaseError {
+export class FileTooLargeError extends BaseError {
   static defaultMessage = "The selected file's size is too large"
 }
 
