@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 import stl
 from specklepy.objects.geometry import Mesh
 from specklepy.transports.server import ServerTransport
@@ -6,6 +7,7 @@ from specklepy.api.client import SpeckleClient
 from specklepy.api import operations
 from specklepy.core.api.inputs import CreateModelInput, CreateVersionInput
 from specklepy.objects.models.units import Units
+from specklepy.core.api.models import Version
 
 import sys
 import os
@@ -13,18 +15,14 @@ import os
 DEFAULT_BRANCH = "uploads"
 
 
-def import_stl() -> tuple[str, str]:
-    (
-        file_path,
-        tmp_results_path,
-        _,
-        project_id,
-        branch_name,
-        commit_message,
-        _,
-        model_id,
-        _,
-    ) = sys.argv[1:]
+def import_stl(
+    file_path: str,
+    project_id: str,
+    model_id: Optional[str],
+    branch_name: str,
+    commit_message: str,
+) -> Version:
+
     print(f"ImportSTL argv[1:]: {sys.argv[1:]}")
 
     # Parse input
@@ -80,17 +78,28 @@ def import_stl() -> tuple[str, str]:
     )
     version = client.version.create(create_version)
 
-    return version.id, tmp_results_path
+    return version
 
 
 if __name__ == "__main__":
     from pathlib import Path
 
+    (
+        file_path,
+        tmp_results_path,
+        _,
+        project_id,
+        branch_name,
+        commit_message,
+        _,
+        model_id,
+        _,
+    ) = sys.argv[1:]
     try:
-        commit_id, tmp_results_path = import_stl()
-        if isinstance(commit_id, Exception):
-            raise commit_id
-        results = {"success": True, "commitId": commit_id}
+        version = import_stl(
+            file_path, project_id, model_id, branch_name, commit_message
+        )
+        results = {"success": True, "commitId": version.id}
     except Exception as ex:
         results = {"success": False, "error": str(ex)}
         print(ex)
