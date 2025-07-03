@@ -129,6 +129,11 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import {
+  getProjectFactory,
+  getUserProjectRolesFactory
+} from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -281,6 +286,9 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  getUserProjectRoles: getUserProjectRolesFactory({ db }),
+  getProject: getProjectFactory({ db }),
+  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db }),
   emitEvent: getEventBus().emit

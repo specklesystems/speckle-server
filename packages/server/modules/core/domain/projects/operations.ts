@@ -38,7 +38,7 @@ export type DeleteProjectRole = (args: {
 
 export type DeleteProject = (args: { projectId: string }) => Promise<void>
 
-export type GetRolesByUserId = ({
+export type GetUserProjectRoles = ({
   userId,
   workspaceId
 }: {

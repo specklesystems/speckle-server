@@ -51,6 +51,11 @@ import { asOperation } from '@/modules/shared/command'
 import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import {
+  getProjectFactory,
+  getUserProjectRolesFactory
+} from '@/modules/core/repositories/projects'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -67,6 +72,9 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  getUserProjectRoles: getUserProjectRolesFactory({ db }),
+  getProject: getProjectFactory({ db }),
+  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db }),
   emitEvent: getEventBus().emit

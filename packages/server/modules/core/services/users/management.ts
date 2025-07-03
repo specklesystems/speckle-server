@@ -34,7 +34,8 @@ import {
   isNullOrUndefined,
   NullableKeysToOptional,
   Roles,
-  ServerRoles
+  ServerRoles,
+  StreamRoles
 } from '@speckle/shared'
 import { pick } from 'lodash'
 import bcrypt from 'bcrypt'
@@ -54,6 +55,13 @@ import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import {
+  GetProject,
+  GetUserProjectRoles
+} from '@/modules/core/domain/projects/operations'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -288,6 +296,9 @@ export const deleteUserFactory =
     isLastAdminUser: IsLastAdminUser
     getUserDeletableStreams: GetUserDeletableStreams
     deleteAllUserInvites: DeleteAllUserInvites
+    getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
+    getUserProjectRoles: GetUserProjectRoles
+    getProject: GetProject
     deleteUserRecord: DeleteUserRecord
     emitEvent: EventBusEmit
   }): DeleteUser =>
@@ -306,6 +317,33 @@ export const deleteUserFactory =
     // Delete all invites (they don't have a FK, so we need to do this manually)
     // THIS REALLY SHOULD BE A REACTION TO THE USER DELETED EVENT EMITTED HER
     await deps.deleteAllUserInvites(id)
+
+    const workspaceSeats = await deps.getUserWorkspaceSeats({ userId: id })
+    for (const seat of workspaceSeats) {
+      await deps.emitEvent({
+        eventName: WorkspaceEvents.SeatDeleted,
+        payload: {
+          updatedByUserId: id,
+          previousSeat: seat
+        }
+      })
+    }
+
+    const projectRoles = await deps.getUserProjectRoles({ userId: id })
+    for (const projectRole of projectRoles) {
+      const project = await deps.getProject({ projectId: projectRole.resourceId })
+      if (!project) continue
+
+      await deps.emitEvent({
+        eventName: ProjectEvents.PermissionsRevoked,
+        payload: {
+          activityUserId: id,
+          removedUserId: id,
+          role: projectRole.role as StreamRoles,
+          project
+        }
+      })
+    }
 
     const deleted = await deps.deleteUserRecord(id)
     if (deleted) {

@@ -6,7 +6,6 @@ import {
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   updateProjectFactory,
-  getRolesByUserIdFactory,
   getStreamFactory,
   deleteStreamFactory,
   revokeStreamPermissionsFactory,
@@ -195,7 +194,10 @@ import {
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
-import { getProjectFactory } from '@/modules/core/repositories/projects'
+import {
+  getProjectFactory,
+  getUserProjectRolesFactory
+} from '@/modules/core/repositories/projects'
 import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
@@ -1852,7 +1854,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return parent.workspaceRoleCreatedAt
         },
         projectRoles: async (parent) => {
-          const projectRoles = await getRolesByUserIdFactory({ db })({
+          const projectRoles = await getUserProjectRolesFactory({ db })({
             userId: parent.id,
             workspaceId: parent.workspaceId
           })

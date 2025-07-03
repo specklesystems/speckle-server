@@ -44,6 +44,11 @@ import { dbLogger } from '@/observability/logging'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
+import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import {
+  getProjectFactory,
+  getUserProjectRolesFactory
+} from '@/modules/core/repositories/projects'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -81,6 +86,9 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  getUserProjectRoles: getUserProjectRolesFactory({ db }),
+  getProject: getProjectFactory({ db }),
+  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db }),
   emitEvent: getEventBus().emit
