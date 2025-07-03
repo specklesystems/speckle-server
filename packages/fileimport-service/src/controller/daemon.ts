@@ -5,27 +5,24 @@ import {
   metricOperationErrors
 } from '@/controller/prometheusMetrics.js'
 import { DbClient, getDbClients } from '@/clients/knex.js'
-
 import { downloadFile } from '@/controller/filesApi.js'
 import fs from 'fs'
-
 import { ServerAPI } from '@/controller/api.js'
 import { downloadDependencies } from '@/controller/objDependencies.js'
 import { logger } from '@/observability/logging.js'
 import { Nullable, Scopes, wait, TIME_MS } from '@speckle/shared'
 import { Knex } from 'knex'
-import {
-  getIfcDllPath,
-  isProdEnv,
-  useLegacyIfcImporter,
-  useExperimentalIfcImporter
-} from '@/controller/helpers/env.js'
+import { getIfcDllPath, isProdEnv } from '@/controller/helpers/env.js'
 import { isErrorOutput, isSuccessOutput } from '@/common/output.js'
 import { runProcessWithTimeout } from '@/common/processHandling.js'
 import {
   getConnectionSettings,
   obfuscateConnectionString
 } from '@speckle/shared/environment/db'
+import { getFeatureFlags } from '@speckle/shared/environment'
+
+const { FF_LEGACY_IFC_IMPORTER_ENABLED, FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED } =
+  getFeatureFlags()
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -184,7 +181,7 @@ async function doTask(
     if (info.fileType.toLowerCase() === 'ifc') {
       if (
         info.fileName.toLowerCase().endsWith('.legacyimporter.ifc') ||
-        useLegacyIfcImporter()
+        FF_LEGACY_IFC_IMPORTER_ENABLED
       ) {
         await runProcessWithTimeout(
           taskLogger,
@@ -211,7 +208,7 @@ async function doTask(
         )
       } else if (
         info.fileName.toLowerCase().endsWith('.dotnetimporter.ifc') ||
-        !useExperimentalIfcImporter()
+        !FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
       ) {
         await runProcessWithTimeout(
           taskLogger,
