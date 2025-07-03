@@ -245,7 +245,7 @@ async function doTask(
           {
             USER_TOKEN: tempUserToken,
             //speckleifc is not installed to sys (e.g. via pip), so we need to point it to the directory explicitly
-            PYTHONPATH: '/speckle-server/speckleifc-0.1.2/src/'
+            PYTHONPATH: '/speckle-server/speckleifc/src/'
           },
           TIME_LIMIT,
           TMP_RESULTS_PATH
