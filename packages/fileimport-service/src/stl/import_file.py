@@ -4,22 +4,25 @@ from specklepy.objects.geometry import Mesh
 from specklepy.transports.server import ServerTransport
 from specklepy.api.client import SpeckleClient
 from specklepy.api import operations
+from specklepy.core.api.inputs import CreateModelInput, CreateVersionInput
+from specklepy.objects.models.units import Units
 
-import sys, os
+import sys
+import os
 
 DEFAULT_BRANCH = "uploads"
 
 
-def import_stl():
+def import_stl() -> tuple[str, str]:
     (
         file_path,
         tmp_results_path,
         _,
-        stream_id,
+        project_id,
         branch_name,
         commit_message,
         _,
-        _,
+        model_id,
         _,
     ) = sys.argv[1:]
     print(f"ImportSTL argv[1:]: {sys.argv[1:]}")
@@ -34,10 +37,12 @@ def import_stl():
     vertices = stl_mesh.points.flatten().tolist()
     faces = []
     for i in range(stl_mesh.points.shape[0]):
-        faces.extend([0, 3 * i, 3 * i + 1, 3 * i + 2])
+        faces.extend([3, 3 * i, 3 * i + 1, 3 * i + 2])
 
     speckle_mesh = Mesh(
-        vertices=vertices, faces=faces, colors=[], textureCoordinates=[]
+        vertices=vertices,
+        faces=faces,
+        units=Units.none,
     )
     print("Constructed Speckle Mesh object")
 
@@ -48,29 +53,34 @@ def import_stl():
     )
     client.authenticate_with_token(os.environ["USER_TOKEN"])
 
-    if not client.branch.get(stream_id, branch_name):
-        client.branch.create(
-            stream_id,
-            branch_name,
-            "File upload branch" if branch_name == "uploads" else "",
+    if model_id:
+        model = client.model.get(model_id, project_id)
+    else:
+        model = client.model.create(
+            CreateModelInput(
+                name=branch_name,
+                description="File upload branch" if branch_name == "uploads" else "",
+                project_id=project_id,
+            ),
         )
 
-    transport = ServerTransport(client=client, stream_id=stream_id)
+    transport = ServerTransport(client=client, stream_id=project_id)
     id = operations.send(
         base=speckle_mesh,
         transports=[transport],
         use_default_cache=False,
     )
 
-    commit_id = client.commit.create(
-        stream_id=stream_id,
+    create_version = CreateVersionInput(
+        project_id=project_id,
         object_id=id,
-        branch_name=(branch_name or DEFAULT_BRANCH),
+        model_id=model.id,
         message=(commit_message or "STL file upload"),
         source_application="STL",
     )
+    version = client.version.create(create_version)
 
-    return commit_id, tmp_results_path
+    return version.id, tmp_results_path
 
 
 if __name__ == "__main__":
