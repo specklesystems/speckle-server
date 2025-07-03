@@ -40,6 +40,7 @@ export async function downloadFile({
   )
 
   let response
+  const tokenId = token.substring(0, 10)
   try {
     response = await fetch(downloadUrl.toString(), {
       headers: {
@@ -47,16 +48,30 @@ export async function downloadFile({
       }
     })
   } catch (e) {
-    throw ensureError(e, 'Unknown error while fetching file')
+    throw new Error(
+      `Error while fetching file ${fileId} from ${downloadUrl.toString()} with token ID ${tokenId}. Message: ${
+        e instanceof Error ? e.message : String(e)
+      }`,
+      {
+        cause: e
+      }
+    )
   }
 
   if (response === undefined || !response.ok) {
     boundLogger.error(
-      { downloadUrl, status: response?.status, statusText: response?.statusText },
-      'Failed to download file {fileId} from {downloadUrl}. HTTP {status}: {statusText}'
+      {
+        downloadUrl: downloadUrl.toString(),
+        tokenId,
+        status: response?.status,
+        statusText: response?.statusText
+      },
+      "Failed to download file '{fileId}' from '{downloadUrl}' with token ID '{tokenId}'. HTTP {status}: {statusText}"
     )
     throw new Error(
-      `Failed to download file ${fileId}. HTTP ${response?.status}: ${response?.statusText}`
+      `Failed to download file '${fileId}' from '${downloadUrl.toString()}' with token ID '${tokenId}'. HTTP ${
+        response?.status
+      }: ${response?.statusText}`
     )
   }
   if (!response.body) {
@@ -89,13 +104,14 @@ export async function getFileInfoByName({
   streamId: string
   token: string
 }) {
-  const response = await fetch(
-    `${speckleServerUrl}/api/stream/${streamId}/blobs?fileName=${fileName}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
+  const fileInfoUrl = new URL(
+    `/api/stream/${streamId}/blobs?fileName=${fileName}`,
+    speckleServerUrl
   )
+  const response = await fetch(fileInfoUrl.toString(), {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
   return response.json() as Promise<{ blobs: { id: string }[] }>
 }
