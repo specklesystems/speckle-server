@@ -4,13 +4,17 @@ import {
   CreateProject,
   DeleteProject,
   GetProject,
+  QueryAllUserProjects,
   StoreModel,
   StoreProject,
   StoreProjectRole,
   WaitForRegionProject
 } from '@/modules/core/domain/projects/operations'
-import { Project } from '@/modules/core/domain/streams/types'
-import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
+import { Project, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import {
+  ProjectQueryError,
+  RegionalProjectCreationError
+} from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { mapGqlToDbProjectVisibility } from '@/modules/core/helpers/project'
@@ -19,6 +23,7 @@ import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
+import { LegacyGetStreams } from '@/modules/core/domain/streams/operations'
 
 export const createNewProjectFactory =
   ({
@@ -120,4 +125,36 @@ export const waitForRegionProjectFactory =
       // else throw as is
       throw err
     }
+  }
+
+export const queryAllUserProjectsFactory = ({
+  getStreams
+}: {
+  getStreams: LegacyGetStreams
+}): QueryAllUserProjects =>
+  async function* queryAllWorkspaceProjects({
+    userId
+  }): AsyncGenerator<StreamWithOptionalRole[], void, unknown> {
+    let cursor: Date | null = null
+    let iterationCount = 0
+
+    do {
+      if (iterationCount > 500) throw new ProjectQueryError()
+
+      const { streams, cursorDate } = await getStreams({
+        cursor,
+        orderBy: null,
+        limit: 100,
+        visibility: null,
+        searchQuery: null,
+        streamIdWhitelist: null,
+        workspaceIdWhitelist: null,
+        userId
+      })
+
+      yield streams
+
+      cursor = cursorDate
+      iterationCount++
+    } while (!!cursor)
   }

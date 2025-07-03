@@ -38,7 +38,8 @@ import {
   markCommitStreamUpdatedFactory,
   deleteStreamFactory,
   getUserDeletableStreamsFactory,
-  getStreamRolesFactory
+  getStreamRolesFactory,
+  legacyGetStreamsFactory
 } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
@@ -130,10 +131,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import {
-  getProjectFactory,
-  getUserProjectRolesFactory
-} from '@/modules/core/repositories/projects'
+import { queryAllUserProjectsFactory } from '@/modules/core/services/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -286,8 +284,9 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  getUserProjectRoles: getUserProjectRolesFactory({ db }),
-  getProject: getProjectFactory({ db }),
+  queryAllUserProjects: queryAllUserProjectsFactory({
+    getStreams: legacyGetStreamsFactory({ db })
+  }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db }),

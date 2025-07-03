@@ -33,7 +33,8 @@ import {
 } from '@/modules/core/services/users/management'
 import {
   deleteStreamFactory,
-  getUserDeletableStreamsFactory
+  getUserDeletableStreamsFactory,
+  legacyGetStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { dbLogger } from '@/observability/logging'
 import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
@@ -52,10 +53,7 @@ import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/t
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import {
-  getProjectFactory,
-  getUserProjectRolesFactory
-} from '@/modules/core/repositories/projects'
+import { queryAllUserProjectsFactory } from '@/modules/core/services/projects'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -72,8 +70,9 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  getUserProjectRoles: getUserProjectRolesFactory({ db }),
-  getProject: getProjectFactory({ db }),
+  queryAllUserProjects: queryAllUserProjectsFactory({
+    getStreams: legacyGetStreamsFactory({ db })
+  }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db }),

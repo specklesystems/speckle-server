@@ -34,8 +34,7 @@ import {
   isNullOrUndefined,
   NullableKeysToOptional,
   Roles,
-  ServerRoles,
-  StreamRoles
+  ServerRoles
 } from '@speckle/shared'
 import { pick } from 'lodash'
 import bcrypt from 'bcrypt'
@@ -58,10 +57,8 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import {
-  GetProject,
-  GetUserProjectRoles
-} from '@/modules/core/domain/projects/operations'
+import { QueryAllUserProjects } from '@/modules/core/domain/projects/operations'
+import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -297,9 +294,8 @@ export const deleteUserFactory =
     getUserDeletableStreams: GetUserDeletableStreams
     deleteAllUserInvites: DeleteAllUserInvites
     getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
-    getUserProjectRoles: GetUserProjectRoles
-    getProject: GetProject
     deleteUserRecord: DeleteUserRecord
+    queryAllUserProjects: QueryAllUserProjects
     emitEvent: EventBusEmit
   }): DeleteUser =>
   async (id, invokerId) => {
@@ -329,20 +325,24 @@ export const deleteUserFactory =
       })
     }
 
-    const projectRoles = await deps.getUserProjectRoles({ userId: id })
-    for (const projectRole of projectRoles) {
-      const project = await deps.getProject({ projectId: projectRole.resourceId })
-      if (!project) continue
+    const emitRevokeEventIfUserHasRole = async (project: StreamWithOptionalRole) => {
+      if (!project.role) return
 
       await deps.emitEvent({
         eventName: ProjectEvents.PermissionsRevoked,
         payload: {
           activityUserId: id,
           removedUserId: id,
-          role: projectRole.role as StreamRoles,
+          role: project.role,
           project
         }
       })
+    }
+
+    for await (const projectsPage of deps.queryAllUserProjects({
+      userId: id
+    })) {
+      await Promise.all(projectsPage.map(emitRevokeEventIfUserHasRole))
     }
 
     const deleted = await deps.deleteUserRecord(id)
