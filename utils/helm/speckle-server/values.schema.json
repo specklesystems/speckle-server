@@ -112,12 +112,12 @@
         },
         "experimentalIfcImporterEnabled": {
           "type": "boolean",
-          "description": "Enables the ability to parse IFC files using the experimental IFC importer, requires the files to have suffix `.dotnetimporter.ifc`",
+          "description": "Enables the ability to parse IFC files using the experimental IFC importer",
           "default": false
         },
         "enableLegacyIfcImporter": {
           "type": "boolean",
-          "description": "Enables the ability to parse IFC files using the experimental IFC importer, requires the files to have suffix `.legacyimporter.ifc`",
+          "description": "Enables the ability to parse IFC files using the experimental IFC importer.",
           "default": false
         }
       }

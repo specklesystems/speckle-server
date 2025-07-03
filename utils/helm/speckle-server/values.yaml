@@ -65,9 +65,9 @@ featureFlags:
   nextGenFileImporterEnabled: false
   ## @param featureFlags.largeFileUploadsEnabled Enables the ability to upload large files to Speckle
   largeFileUploadsEnabled: false
-  ## @param featureFlags.experimentalIfcImporterEnabled Enables the ability to parse IFC files using the experimental IFC importer, requires the files to have suffix `.dotnetimporter.ifc`
+  ## @param featureFlags.experimentalIfcImporterEnabled Enables the ability to parse IFC files using the experimental IFC importer
   experimentalIfcImporterEnabled: false
-  ## @param featureFlags.enableLegacyIfcImporter Enables the ability to parse IFC files using the experimental IFC importer, requires the files to have suffix `.legacyimporter.ifc`
+  ## @param featureFlags.enableLegacyIfcImporter Enables the ability to parse IFC files using the experimental IFC importer.
   enableLegacyIfcImporter: false
 
 analytics:

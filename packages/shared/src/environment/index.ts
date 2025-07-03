@@ -113,13 +113,13 @@ export const parseFeatureFlags = (
     FF_LEGACY_IFC_IMPORTER_ENABLED: {
       schema: z.boolean(),
       description:
-        'Enables the legacy javascript based webIFC file importer (pre-2025). Once enabled, this importer can be accessed by appending `.legacyimporter.ifc` to the uploaded file name. This is deprecated and will be removed in the future.',
+        'Enables the legacy javascript based webIFC file importer (pre-2025). Even if disabled this importer can be accessed by appending `.legacyimporter.ifc` to the uploaded file name. This is deprecated and will be removed in the future.',
       defaults: { _: false }
     },
     FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: {
       schema: z.boolean(),
       description:
-        'Enables the IFC file importer based on IFCOpenShell (as of July 2025). Once enabled, this importer can be accessed by appending `.dotnetimporter.ifc` to the uploaded file name.',
+        'Enables the IFC file importer based on IFCOpenShell (as of July 2025). Even if enabled, the previous webIFC & .Net importer can be accessed by appending `.dotnetimporter.ifc` to the uploaded file name.',
       defaults: { _: false }
     }
   })
