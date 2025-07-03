@@ -59,7 +59,10 @@ export type UpsertObjectPreview = (params: {
 }) => Promise<void>
 
 export type UpdateObjectPreview = (params: {
-  objectPreview: PartialBy<Omit<ObjectPreview, 'attempts'>, 'preview' | 'priority'> & {
+  objectPreview: PartialBy<
+    Omit<ObjectPreview, 'attempts' | 'lastUpdate'>,
+    'preview' | 'priority' | 'previewStatus'
+  > & {
     incrementAttempts?: boolean
   }
 }) => Promise<ObjectPreview[]>

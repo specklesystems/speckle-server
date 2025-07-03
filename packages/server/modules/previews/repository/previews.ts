@@ -17,6 +17,7 @@ import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
+import { omit } from 'lodash'
 
 const ObjectPreview = buildTableHelper('object_preview', [
   'streamId',
@@ -61,7 +62,7 @@ export const getPaginatedObjectsPreviewsBaseQueryFactory =
 const getCursorTools = () =>
   compositeCursorTools({
     schema: ObjectPreview,
-    cols: ['attempts', 'lastUpdate']
+    cols: ['priority', 'attempts', 'lastUpdate']
   })
 
 export const getPaginatedObjectPreviewsPageFactory =
@@ -73,7 +74,7 @@ export const getPaginatedObjectPreviewsPageFactory =
     const query = getPaginatedObjectsPreviewsBaseQueryFactory(deps)(params)
 
     if (cursor) {
-      applyCursorSortAndFilter({ query, cursor }) //default is descending order for both, so the latest items will be returned first
+      applyCursorSortAndFilter({ query, cursor }) //FIXME default is descending order for both, so the latest items will be returned first. Need a way to specify sort order by column.
     }
 
     query.limit(limit)
@@ -137,7 +138,10 @@ export const updateObjectPreviewFactory =
         objectId: objectPreview.objectId
       })
       .increment('attempts', objectPreview.incrementAttempts ? 1 : 0) // false by default
-      .update(objectPreview)
+      .update({
+        ...omit(objectPreview, 'incrementAttempts'),
+        lastUpdate: new Date() // always update the lastUpdate field
+      })
       .returning<ObjectPreviewRecord[]>('*')
   }
 

@@ -94,7 +94,6 @@ export const retryFailedPreviewsFactory = (deps: {
         ...objPreview,
         previewStatus: PreviewStatus.PENDING, // move it to pending so it doesn't get picked up again
         priority: PreviewPriority.LOW, // reset the priority to low so it doesn't block other previews
-        lastUpdate: new Date(), //if this pending item is processed and subsequently errors, this ensures it will be placed behind the cursor so won't be repeated until we reach the end of all errored items and reset the cursor to null
         incrementAttempts: true // increment the number of attempts
       }
     })
