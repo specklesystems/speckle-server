@@ -52,7 +52,7 @@ const DefaultMeasurementPointGizmoStyle = {
   pointOpacity: 1,
   textColor: 0xffffff,
   textOpacity: 1,
-  textPixelHeight: 12,
+  textPixelHeight: 11,
   pointPixelHeight: 5
 }
 
@@ -237,7 +237,7 @@ export class MeasurementPointGizmo extends Group {
       anchorY: 'middle',
       backgroundColor: new Color(0x047efb),
       backgroundCornerRadius: 0.3,
-      backgroundMargins: new Vector2(35, 10),
+      backgroundMargins: new Vector2(30, 10),
       objectLayer: ObjectLayers.MEASUREMENTS
     })
     this.text.material.depthTest = false

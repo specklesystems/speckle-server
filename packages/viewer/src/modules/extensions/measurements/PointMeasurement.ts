@@ -53,12 +53,12 @@ export class PointMeasurement extends Measurement {
     this.xLabel = new TextLabel({
       text: 'sample',
       textColor: new Color(0xffffff),
-      fontSize: 12,
+      fontSize: 11,
       billboard: 'screen',
       anchorX: 'left',
       anchorY: 'middle',
       backgroundColor: new Color(0xfb0404),
-      backgroundMargins: new Vector2(35, 10),
+      backgroundMargins: new Vector2(30, 10),
       backgroundCornerRadius: 0.3,
       objectLayer: ObjectLayers.MEASUREMENTS
     })
@@ -69,12 +69,12 @@ export class PointMeasurement extends Measurement {
     this.yLabel = new TextLabel({
       text: 'sample',
       textColor: new Color(0xffffff),
-      fontSize: 12,
+      fontSize: 11,
       anchorX: 'left',
       anchorY: 'middle',
       billboard: 'screen',
       backgroundColor: new Color(0x03c903),
-      backgroundMargins: new Vector2(35, 10),
+      backgroundMargins: new Vector2(30, 10),
       backgroundCornerRadius: 0.3,
       objectLayer: ObjectLayers.MEASUREMENTS
     })
@@ -85,12 +85,12 @@ export class PointMeasurement extends Measurement {
     this.zLabel = new TextLabel({
       text: 'sample',
       textColor: new Color(0xffffff),
-      fontSize: 12,
+      fontSize: 11,
       billboard: 'screen',
       anchorX: 'left',
       anchorY: 'middle',
       backgroundColor: new Color(0x047efb),
-      backgroundMargins: new Vector2(35, 10),
+      backgroundMargins: new Vector2(30, 10),
       backgroundCornerRadius: 0.3,
       objectLayer: ObjectLayers.MEASUREMENTS
     })
