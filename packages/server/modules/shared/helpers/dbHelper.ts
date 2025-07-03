@@ -233,6 +233,8 @@ export const compositeCursorTools = <
       (c) => isObjectLike(c) && args.cols.every((col) => has(c, col))
     )
 
+  type SortOptions = 'desc' | 'asc'
+
   /**
    * Invoke this on the knex querybuilder to filter the query by the cursor and apply
    * appropriate ordering
@@ -246,13 +248,24 @@ export const compositeCursorTools = <
     /**
      * How the results are sorted. Descending by default.
      */
-    sort?: 'desc' | 'asc'
+    sort?: SortOptions | { column: [keyof Cursor][number]; sortOrder: SortOptions }[]
   }) => {
-    const { query, sort = 'desc' } = params
+    const defaultSortOrder = 'desc'
+    const { query, sort = defaultSortOrder } = params
 
     // Apply orderBy for each cursor column w/ proper sort direction
     args.cols.forEach((col) => {
-      query.orderBy(args.schema.col[col], sort)
+      let colSortOrder = defaultSortOrder
+      if (Array.isArray(sort)) {
+        const sortCol = sort.find((s) => s.column === args.schema.col[col])
+        if (sortCol) {
+          colSortOrder = sortCol.sortOrder
+        }
+      } else {
+        colSortOrder = sort
+      }
+
+      query.orderBy(args.schema.col[col], colSortOrder)
     })
 
     const cursor = isString(params.cursor) ? decode(params.cursor) : params.cursor
