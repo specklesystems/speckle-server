@@ -117,7 +117,7 @@
         },
         "enableLegacyIfcImporter": {
           "type": "boolean",
-          "description": "Enables the ability to parse IFC files using the experimental IFC importer.",
+          "description": "Enables the ability to parse IFC files using the legacy IFC importer.",
           "default": false
         }
       }
