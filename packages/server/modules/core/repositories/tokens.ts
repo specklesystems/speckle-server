@@ -18,12 +18,9 @@ import {
   GetTokenResourceAccessDefinitionsById,
   GetTokenScopesById,
   GetUserPersonalAccessTokens,
-  ListProjectEmbedTokens,
-  RevokeEmbedTokenById,
   RevokeTokenById,
   RevokeUserTokenById,
   StoreApiToken,
-  StoreEmbedApiToken,
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
@@ -78,30 +75,6 @@ export const storePersonalApiTokenFactory =
   async (token) => {
     const [newToken] = await tables.personalApiTokens(deps.db).insert(token, '*')
     return newToken
-  }
-
-export const storeEmbedApiTokenFactory =
-  (deps: { db: Knex }): StoreEmbedApiToken =>
-  async (token) => {
-    const [newToken] = await tables.embedApiTokens(deps.db).insert(token).returning('*')
-    return newToken
-  }
-
-export const listProjectEmbedTokensFactory =
-  (deps: { db: Knex }): ListProjectEmbedTokens =>
-  async (projectId) => {
-    return (await tables
-      .embedApiTokens(deps.db)
-      .select(
-        ...EmbedApiTokens.cols,
-        ApiTokens.col.createdAt,
-        ApiTokens.col.lastUsed,
-        ApiTokens.col.lifespan
-      )
-      .orderBy(ApiTokens.col.createdAt, 'desc')
-      .leftJoin(ApiTokens.name, ApiTokens.col.id, EmbedApiTokens.col.tokenId)
-      .where({ projectId })) as (EmbedApiTokenRecord &
-      Pick<ApiTokenRecord, 'createdAt' | 'lastUsed' | 'lifespan'>)[]
   }
 
 export const getUserPersonalAccessTokensFactory =
@@ -170,18 +143,6 @@ export const revokeUserTokenByIdFactory =
       .where({ id: tokenId, owner: userId })
       .del()
     if (delCount === 0) throw new UserInputError('Did not revoke token')
-    return true
-  }
-
-export const revokeEmbedTokenByIdFactory =
-  (deps: { db: Knex }): RevokeEmbedTokenById =>
-  async ({ tokenId: token, projectId }) => {
-    const tokenId = token.slice(0, 10)
-    const delCount = await tables
-      .embedApiTokens(deps.db)
-      .where({ tokenId, projectId })
-      .delete()
-    if (delCount === 0) throw new UserInputError('Did not revoke embed token')
     return true
   }
 

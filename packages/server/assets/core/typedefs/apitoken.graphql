@@ -61,8 +61,8 @@ A token used to enable an embedded viewer for a private project
 type EmbedToken {
   tokenId: String!
   projectId: String!
-  userId: String!
-  modelIds: String!
+  user: LimitedUser
+  resourceIdString: String!
   createdAt: DateTime!
   lifespan: BigInt!
   lastUsed: DateTime!
@@ -73,8 +73,13 @@ input EmbedTokenCreateInput {
   """
   The model(s) and version(s) string used in the embed url
   """
-  modelIds: String!
+  resourceIdString: String!
   lifespan: BigInt
+}
+
+type CreateEmbedTokenReturn {
+  token: String!
+  tokenMetadata: EmbedToken!
 }
 
 extend type Mutation {
@@ -101,8 +106,9 @@ extend type Mutation {
 }
 
 extend type ProjectMutations {
-  createEmbedToken(token: EmbedTokenCreateInput!): String!
+  createEmbedToken(token: EmbedTokenCreateInput!): CreateEmbedTokenReturn!
   revokeEmbedToken(token: String!, projectId: String!): Boolean!
+  revokeEmbedTokens(projectId: String!): Boolean!
 }
 
 extend type Project {

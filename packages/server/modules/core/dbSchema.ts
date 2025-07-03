@@ -410,7 +410,7 @@ export const EmbedApiTokens = buildTableHelper('embed_api_tokens', [
   'tokenId',
   'projectId',
   'userId',
-  'modelIds'
+  'resourceIdString'
 ])
 
 export const UserServerAppTokens = buildTableHelper('user_server_app_tokens', [

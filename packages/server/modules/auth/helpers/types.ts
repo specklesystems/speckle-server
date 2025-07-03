@@ -78,7 +78,7 @@ export type EmbedApiTokenRecord = {
   projectId: string
   tokenId: string
   userId: string
-  modelIds: string
+  resourceIdString: string
 }
 
 export type TokenScopeRecord = {

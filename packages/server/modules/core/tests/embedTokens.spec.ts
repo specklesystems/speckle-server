@@ -76,10 +76,10 @@ describe('Embed tokens', () => {
     const res = await adminApollo.execute(CreateEmbedTokenDocument, {
       token: {
         projectId: projectA.id,
-        modelIds: 'foo123'
+        resourceIdString: 'foo123'
       }
     })
-    const token = res.data!.projectMutations.createEmbedToken
+    const token = res.data!.projectMutations.createEmbedToken.token
 
     apollo = await testApolloServer({
       context: await createTestContext({

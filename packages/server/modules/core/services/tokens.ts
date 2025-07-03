@@ -27,7 +27,10 @@ import { GetTokenAppInfo } from '@/modules/auth/domain/operations'
 import { GetUserRole } from '@/modules/core/domain/users/operations'
 import { TokenCreateError } from '@/modules/core/errors/user'
 import cryptoRandomString from 'crypto-random-string'
-import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import {
+  EmbedApiToken,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
 
 /*
   Tokens
@@ -133,7 +136,7 @@ export const createEmbedTokenFactory =
     createToken: CreateAndStoreUserToken
     storeEmbedToken: StoreEmbedApiToken
   }): CreateAndStoreEmbedToken =>
-  async ({ projectId, userId, modelIds, lifespan }) => {
+  async ({ projectId, userId, resourceIdString, lifespan }) => {
     const { id, token } = await deps.createToken({
       userId,
       name: cryptoRandomString({ length: 10 }),
@@ -147,14 +150,16 @@ export const createEmbedTokenFactory =
       lifespan
     })
 
-    await deps.storeEmbedToken({
+    const tokenMetadata: EmbedApiToken = {
       projectId,
       tokenId: id,
       userId,
-      modelIds
-    })
+      resourceIdString
+    }
 
-    return token
+    await deps.storeEmbedToken(tokenMetadata)
+
+    return { token, tokenMetadata }
   }
 
 export const validateTokenFactory =

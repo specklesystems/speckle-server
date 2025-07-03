@@ -1,21 +1,22 @@
 import cryptoRandomString from 'crypto-random-string'
-import { Roles } from '../../../../core/constants.js'
-import { parseFeatureFlags } from '../../../../environment/index.js'
-import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes.js'
-import { canCreateEmbedTokenPolicy } from './canCreateEmbedToken.js'
+import { Roles } from '../../../core/constants.js'
+import { parseFeatureFlags } from '../../../environment/index.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
+import { canUpdateEmbedTokensPolicy } from './canUpdateEmbedTokens.js'
 import { assert, describe, expect, it } from 'vitest'
 import {
   ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
   WorkspacePlanNoFeatureAccessError
-} from '../../../domain/authErrors.js'
+} from '../../domain/authErrors.js'
+import { OverridesOf } from '../../../tests/helpers/types.js'
 
-const buildCanCreateEmbedToken = (
-  overrides?: Partial<Parameters<typeof canCreateEmbedTokenPolicy>[0]>
+const buildCanUpdateEmbedTokens = (
+  overrides?: OverridesOf<typeof canUpdateEmbedTokensPolicy>
 ) => {
   const workspaceId = cryptoRandomString({ length: 9 })
 
-  return canCreateEmbedTokenPolicy({
+  return canUpdateEmbedTokensPolicy({
     getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getServerRole: async () => {
       return Roles.Server.User
@@ -52,39 +53,39 @@ const buildCanCreateEmbedToken = (
   })
 }
 
-const canCreateEmbedTokenArgs = () => ({
+const canUpdateEmbedTokensArgs = () => ({
   userId: cryptoRandomString({ length: 9 }),
   projectId: cryptoRandomString({ length: 9 })
 })
 
-describe('canCreateEmbedTokenArgs returns a function, that', () => {
+describe('canUpdateEmbedTokensArgs returns a function, that', () => {
   it('requires a user session', async () => {
-    const result = await buildCanCreateEmbedToken({
+    const result = await buildCanUpdateEmbedTokens({
       getServerRole: async () => {
         return null
       }
-    })(canCreateEmbedTokenArgs())
+    })(canUpdateEmbedTokensArgs())
 
     expect(result).toBeAuthErrorResult({
       code: ServerNoAccessError.code
     })
   })
   it('requires user to be project owner', async () => {
-    const result = await buildCanCreateEmbedToken({
+    const result = await buildCanUpdateEmbedTokens({
       getWorkspaceRole: async () => {
         return Roles.Workspace.Member
       },
       getProjectRole: async () => {
         return Roles.Stream.Contributor
       }
-    })(canCreateEmbedTokenArgs())
+    })(canUpdateEmbedTokensArgs())
 
     expect(result).toBeAuthErrorResult({
       code: ProjectNotEnoughPermissionsError.code
     })
   })
   it('does not check workspace plan if workspaces not enabled', async () => {
-    const result = await buildCanCreateEmbedToken({
+    const result = await buildCanUpdateEmbedTokens({
       getEnv: async () =>
         parseFeatureFlags({
           FF_WORKSPACES_MODULE_ENABLED: 'false'
@@ -92,12 +93,12 @@ describe('canCreateEmbedTokenArgs returns a function, that', () => {
       getWorkspacePlan: async () => {
         assert.fail()
       }
-    })(canCreateEmbedTokenArgs())
+    })(canUpdateEmbedTokensArgs())
 
     expect(result).toBeAuthOKResult()
   })
   it('does not check workspace plan if project is not in a workspace', async () => {
-    const result = await buildCanCreateEmbedToken({
+    const result = await buildCanUpdateEmbedTokens({
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null
@@ -105,12 +106,12 @@ describe('canCreateEmbedTokenArgs returns a function, that', () => {
       getWorkspacePlan: async () => {
         assert.fail()
       }
-    })(canCreateEmbedTokenArgs())
+    })(canUpdateEmbedTokensArgs())
 
     expect(result).toBeAuthOKResult()
   })
   it('requires a paid workspace plan, if project is in a workspace', async () => {
-    const result = await buildCanCreateEmbedToken({
+    const result = await buildCanUpdateEmbedTokens({
       getWorkspacePlan: async () => {
         return {
           status: 'valid',
@@ -120,14 +121,14 @@ describe('canCreateEmbedTokenArgs returns a function, that', () => {
           updatedAt: new Date()
         }
       }
-    })(canCreateEmbedTokenArgs())
+    })(canUpdateEmbedTokensArgs())
 
     expect(result).toBeAuthErrorResult({
       code: WorkspacePlanNoFeatureAccessError.code
     })
   })
   it('allows action on paid workspace plans', async () => {
-    const result = await buildCanCreateEmbedToken()(canCreateEmbedTokenArgs())
+    const result = await buildCanUpdateEmbedTokens()(canUpdateEmbedTokensArgs())
     expect(result).toBeAuthOKResult()
   })
 })

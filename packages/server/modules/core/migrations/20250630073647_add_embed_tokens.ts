@@ -20,7 +20,7 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('users')
       .onDelete('cascade')
-    table.string('modelIds').notNullable()
+    table.string('resourceIdString').notNullable()
     table.primary(['projectId', 'tokenId'])
   })
 }

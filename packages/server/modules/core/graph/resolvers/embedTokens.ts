@@ -1,31 +1,37 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
-  listProjectEmbedTokensFactory,
-  revokeEmbedTokenByIdFactory,
   storeApiTokenFactory,
-  storeEmbedApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
 import {
+  listProjectEmbedTokensFactory,
+  revokeEmbedTokenByIdFactory,
+  revokeProjectEmbedTokensFactory,
+  storeEmbedApiTokenFactory
+} from '@/modules/core/repositories/embedTokens'
+import {
   createEmbedTokenFactory,
   createTokenFactory
 } from '@/modules/core/services/tokens'
-import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
-export = {
+const resolvers: Resolvers = {
+  EmbedToken: {
+    user: async (parent) => {
+      return await getUserFactory({ db })(parent.userId)
+    }
+  },
   Project: {
     embedTokens: async (parent, _args, context) => {
-      const canReadEmbedTokens =
-        await context.authPolicies.project.tokens.canReadEmbedTokens({
-          userId: context.userId,
-          projectId: parent.id
-        })
-      if (!canReadEmbedTokens.isOk) {
-        throw mapAuthToServerError(canReadEmbedTokens.error)
-      }
+      const canReadEmbedTokens = await context.authPolicies.project.canReadEmbedTokens({
+        userId: context.userId,
+        projectId: parent.id
+      })
+      throwIfAuthNotOk(canReadEmbedTokens)
 
       return await listProjectEmbedTokensFactory({ db })({
         projectId: parent.id
@@ -35,13 +41,11 @@ export = {
   ProjectMutations: {
     createEmbedToken: async (_parent, args, context) => {
       const canCreateEmbedToken =
-        await context.authPolicies.project.tokens.canCreateEmbedToken({
+        await context.authPolicies.project.canUpdateEmbedTokens({
           userId: context.userId,
           projectId: args.token.projectId
         })
-      if (!canCreateEmbedToken.isOk) {
-        throw mapAuthToServerError(canCreateEmbedToken.error)
-      }
+      throwIfAuthNotOk(canCreateEmbedToken)
 
       return await createEmbedTokenFactory({
         createToken: createTokenFactory({
@@ -58,18 +62,30 @@ export = {
     },
     revokeEmbedToken: async (_parent, args, context) => {
       const canRevokeEmbedToken =
-        await context.authPolicies.project.tokens.canRevokeEmbedToken({
+        await context.authPolicies.project.canUpdateEmbedTokens({
           userId: context.userId,
           projectId: args.projectId
         })
-      if (!canRevokeEmbedToken.isOk) {
-        throw mapAuthToServerError(canRevokeEmbedToken.error)
-      }
+      throwIfAuthNotOk(canRevokeEmbedToken)
 
       return await revokeEmbedTokenByIdFactory({ db })({
         tokenId: args.token,
         projectId: args.projectId
       })
+    },
+    revokeEmbedTokens: async (_parent, args, context) => {
+      const canRevokeEmbedTokens =
+        await context.authPolicies.project.canUpdateEmbedTokens({
+          userId: context.userId,
+          projectId: args.projectId
+        })
+      throwIfAuthNotOk(canRevokeEmbedTokens)
+
+      await revokeProjectEmbedTokensFactory({ db })({ projectId: args.projectId })
+
+      return true
     }
   }
-} as Resolvers
+}
+
+export default resolvers

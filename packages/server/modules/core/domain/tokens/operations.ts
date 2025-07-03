@@ -63,6 +63,8 @@ export type RevokeEmbedTokenById = (args: {
   projectId: string
 }) => Promise<boolean>
 
+export type RevokeProjectEmbedTokens = (args: { projectId: string }) => Promise<void>
+
 export type GetApiTokenById = (tokenId: string) => Promise<Optional<ApiToken>>
 
 export type GetTokenScopesById = (tokenId: string) => Promise<TokenScope[]>
@@ -109,8 +111,11 @@ export type CreateAndStoreEmbedToken = (args: {
    * The models (and optional versions) included in the embed.
    * @example 'foo123,bar456@baz789'
    */
-  modelIds: string
+  resourceIdString: string
   lifespan?: number | bigint
-}) => Promise<string>
+}) => Promise<{
+  token: string
+  tokenMetadata: EmbedApiToken
+}>
 
 export type ValidateToken = (tokenString: string) => Promise<TokenValidationResult>
