@@ -100,7 +100,8 @@ export const parseFeatureFlags = (
     },
     FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
       schema: z.boolean(),
-      description: 'Enables the new file importer.',
+      description:
+        'Enables the new file importer. Requires FF_LARGE_FILE_IMPORTS_ENABLED to be true.',
       defaults: { _: false }
     },
     FF_LARGE_FILE_IMPORTS_ENABLED: {
