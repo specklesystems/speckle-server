@@ -67,8 +67,8 @@ featureFlags:
   largeFileUploadsEnabled: false
   ## @param featureFlags.experimentalIfcImporterEnabled Enables the ability to parse IFC files using the experimental IFC importer
   experimentalIfcImporterEnabled: false
-  ## @param featureFlags.enableLegacyIfcImporter Enables the ability to parse IFC files using the legacy IFC importer.
-  enableLegacyIfcImporter: false
+  ## @param featureFlags.legacyIfcImporterEnabled Enables the ability to parse IFC files using the legacy IFC importer.
+  legacyIfcImporterEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

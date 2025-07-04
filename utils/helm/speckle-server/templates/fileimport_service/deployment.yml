@@ -155,9 +155,9 @@ spec:
           - name: FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
             value: {{ .Values.featureFlags.experimentalIfcImporterEnabled | quote }}
           {{- end }}
-          {{- if .Values.featureFlags.enableLegacyIfcImporter }}
+          {{- if .Values.featureFlags.legacyIfcImporterEnabled }}
           - name: FF_LEGACY_IFC_IMPORTER_ENABLED
-            value: {{ .Values.featureFlags.enableLegacyIfcImporter | quote }}
+            value: {{ .Values.featureFlags.legacyIfcImporterEnabled | quote }}
           {{- end }}
           {{- with .Values.fileimport_service.additionalEnvVars }}
           {{- toYaml . | nindent 10}}
