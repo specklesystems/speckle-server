@@ -83,7 +83,7 @@ export const initializeRegion = async (params: {
     })
 
     // ensure it works
-    const ensure = ensureStorageAccessFactory({ storage })
+    const ensure = ensureStorageAccessFactory({ storage: publicStorage })
     await ensure({ createBucketIfNotExists: config.createBucketIfNotExists })
 
     // Only add, if clients already initialized
