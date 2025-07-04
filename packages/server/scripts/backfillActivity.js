@@ -7,6 +7,9 @@ const Activity = () => knex('activity')
 const WorkspaceSeats = () => knex('workspace_seats')
 const WorkspacePlans = () => knex('workspace_plans')
 const WorkspaceSubscriptions = () => knex('workspace_subscriptions')
+const ProjectRoles = () => knex('stream_acl')
+
+// maybe I can name it backfill
 
 const getUntrackedWorkspaceSeats = (limit, offset) => {
   return WorkspaceSeats()
@@ -20,9 +23,9 @@ const getUntrackedWorkspaceSeats = (limit, offset) => {
       `NOT EXISTS (
         SELECT * FROM activity
         WHERE activity."contextResourceId" = workspace_seats."workspaceId"
-          AND activity."payload"#>>'{new,userId}' = workspace_seats."userId"
-          AND activity."eventType" = 'workspace_seat_updated'
           AND activity."contextResourceType" = 'workspace'
+          AND activity."eventType" = 'workspace_seat_updated'
+          AND activity."payload"#>>'{new,userId}' = workspace_seats."userId"
       )`
     )
     .offset(offset)
@@ -41,10 +44,10 @@ const getUntrackedWorkspacePlans = (limit, offset) => {
       `NOT EXISTS (
         SELECT * FROM activity
         WHERE activity."contextResourceId" = workspace_plans."workspaceId"
+          AND activity."contextResourceType" = 'workspace'
+          AND activity."eventType" IN ('workspace_plan_updated', 'workspace_plan_created')
           AND activity."payload"#>>'{new,status}' = workspace_plans."status"
           AND activity."payload"#>>'{new,name}' = workspace_plans."name"
-          AND activity."eventType" IN ('workspace_plan_updated', 'workspace_plan_created')
-          AND activity."contextResourceType" = 'workspace'
       )`
     )
     .offset(offset)
@@ -70,12 +73,29 @@ const getUntrackedSubscriptions = (limit, offset) => {
       `NOT EXISTS (
         SELECT * FROM activity
         WHERE activity."contextResourceId" = workspace_plans."workspaceId"
+          AND activity."contextResourceType" = 'workspace'
+          AND activity."eventType" = 'workspace_subscription_updated'
           AND activity."payload"#>>'{new,status}' = workspace_plans."status"
           AND activity."payload"#>>'{new,name}' = workspace_plans."name"
           AND activity."payload"#>>'{new,billingInterval}' = workspace_subscriptions."billingInterval"
           AND activity."payload"#>>'{new,totalEditorSeats}' = workspace_subscriptions."subscriptionData"#>>'{products,0,quantity}'
-          AND activity."eventType" = 'workspace_subscription_updated'
-          AND activity."contextResourceType" = 'workspace'
+      )`
+    )
+    .offset(offset)
+    .limit(limit)
+}
+
+const getUntrackedProjectRoles = (limit, offset) => {
+  return ProjectRoles()
+    .select(['stream_acl.resourceId', 'stream_acl.userId', 'stream_acl.role'])
+    .whereRaw(
+      `NOT EXISTS (
+        SELECT * FROM activity
+        WHERE activity."contextResourceId" = stream_acl."resourceId"
+          AND activity."contextResourceType" = 'project'
+          AND activity."eventType" = 'project_role_updated'
+          AND activity."payload"#>>'{userId}' = stream_acl."userId"
+          AND activity."payload"#>>'{new}' = stream_acl."role"
       )`
     )
     .offset(offset)
@@ -98,6 +118,7 @@ const main = async () => {
       contextResourceType: 'workspace',
       eventType: 'workspace_seat_updated',
       payload: {
+        version: '1',
         new: {
           userId: seat.userId,
           type: seat.type
@@ -126,6 +147,7 @@ const main = async () => {
       contextResourceType: 'workspace',
       eventType: 'workspace_plan_created',
       payload: {
+        version: '1',
         new: {
           name: plan.name,
           status: plan.status
@@ -154,6 +176,7 @@ const main = async () => {
       contextResourceType: 'workspace',
       eventType: 'workspace_subscription_updated',
       payload: {
+        version: '1',
         new: {
           name: subscription.name,
           status: subscription.status,
@@ -174,6 +197,33 @@ const main = async () => {
   } while (subscriptions.length)
 
   console.log(`Total subscriptions processed: ${offset}`)
+
+  let projectRoles = []
+
+  do {
+    projectRoles = await getUntrackedProjectRoles(BATCH_SIZE, offset)
+    offset += projectRoles.length
+
+    const activities = projectRoles.map((projectRole) => ({
+      id: cryptoRandomString({ length: 10 }),
+      contextResourceId: projectRole.resourceId,
+      contextResourceType: 'project',
+      eventType: 'project_role_updated',
+      payload: {
+        version: '1',
+        userId: projectRole.userId,
+        new: projectRole.role,
+        old: null
+      },
+      createdAt: new Date() // TODO: ?? no created at field
+    }))
+
+    if (projectRoles.length) {
+      await Activity().insert(activities)
+    }
+  } while (projectRoles.length)
+
+  console.log(`Total projects processed: ${offset}`)
 }
 
 main()
