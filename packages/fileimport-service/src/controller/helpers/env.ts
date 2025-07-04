@@ -16,10 +16,6 @@ export function isProdEnv() {
 
 export const isDevOrTestEnv = () => isDevEnv() || isTestEnv()
 
-export const useLegacyIfcImporter = () => {
-  return ['true', '1'].includes(process.env.USE_LEGACY_IFC_IMPORTER || 'false')
-}
-
 export const getPackageRootDirPath = () => {
   const __filename = url.fileURLToPath(import.meta.url)
   const __dirname = path.dirname(__filename)
