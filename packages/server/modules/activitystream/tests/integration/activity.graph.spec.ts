@@ -52,7 +52,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import type http from 'node:http'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
-import { getActivityHelper } from '@/modules/activitystream/tests/helpers/activity'
+import { getActivityHelperFactory } from '@/modules/activitystream/tests/helpers/activity'
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
@@ -104,6 +104,8 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
+
+const getActivityHelper = getActivityHelperFactory({ db })
 
 let server: http.Server
 let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']

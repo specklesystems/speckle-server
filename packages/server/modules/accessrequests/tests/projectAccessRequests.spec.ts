@@ -12,7 +12,7 @@ import {
   requestProjectAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
-import { getActivityHelper } from '@/modules/activitystream/tests/helpers/activity'
+import { getActivityHelperFactory } from '@/modules/activitystream/tests/helpers/activity'
 import {
   Activity,
   ServerAccessRequests,
@@ -85,7 +85,6 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
-
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
@@ -93,6 +92,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
+const getActivityHelper = getActivityHelperFactory({ db })
 
 const isNotCollaboratorError = (e: unknown) =>
   e instanceof StreamAccessUpdateError &&
