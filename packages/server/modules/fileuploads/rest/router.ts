@@ -15,8 +15,7 @@ import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
-const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED, FF_LARGE_FILE_IMPORTS_ENABLED } =
-  getFeatureFlags()
+const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -24,7 +23,7 @@ export const fileuploadRouterFactory = (): Router => {
   const app = Router()
 
   /**
-   * @deprecated If FF_LARGE_FILE_IMPORTS_ENABLED or FF_NEXT_GEN_FILE_IMPORTER_ENABLED is enabled.
+   * @deprecated use POST /graphql (mutation.fileUploadMutations.generateUploadUrl), then PUT (to the provided url), then POST /graphql (mutation.fileUploadMutations.startFileImport)
    */
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
@@ -100,12 +99,7 @@ export const fileuploadRouterFactory = (): Router => {
           if (FF_LARGE_FILE_IMPORTS_ENABLED) {
             res.setHeader(
               'Warning',
-              'Deprecated API; use graphql mutation.fileUploadMutations.generateUploadUrl then mutation.fileUploadMutations.startFileImport'
-            )
-          } else if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-            res.setHeader(
-              'Warning',
-              'Deprecated API; use POST /api/projects/:streamId/models/:modelId/fileimporter/jobs'
+              'Deprecated API; use POST /graphql (mutation.fileUploadMutations.generateUploadUrl), then PUT (to the provided url), then POST /graphql (mutation.fileUploadMutations.startFileImport)'
             )
           }
 
