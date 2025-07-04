@@ -233,6 +233,23 @@ export const compositeCursorTools = <
       (c) => isObjectLike(c) && args.cols.every((col) => has(c, col))
     )
 
+  type SortOptions = 'desc' | 'asc'
+  type ColumnSortOption = { column: [keyof Cursor][number]; sortOrder: SortOptions }
+  type ColumnSortOptions = SortOptions | ColumnSortOption[]
+
+  const defaultSortOrder = 'desc'
+
+  const columnSortOrder = (sort: ColumnSortOptions, col: [keyof Cursor][number]) => {
+    if (sort === 'desc' || sort === 'asc') return sort
+
+    let colSortOrder = defaultSortOrder
+    const sortCol = sort.find((s) => s.column === args.schema.col[col])
+    if (sortCol) {
+      colSortOrder = sortCol.sortOrder
+    }
+    return colSortOrder
+  }
+
   /**
    * Invoke this on the knex querybuilder to filter the query by the cursor and apply
    * appropriate ordering
@@ -246,13 +263,14 @@ export const compositeCursorTools = <
     /**
      * How the results are sorted. Descending by default.
      */
-    sort?: 'desc' | 'asc'
+    sort?: ColumnSortOptions
   }) => {
-    const { query, sort = 'desc' } = params
+    const { query, sort = defaultSortOrder } = params
 
     // Apply orderBy for each cursor column w/ proper sort direction
     args.cols.forEach((col) => {
-      query.orderBy(args.schema.col[col], sort)
+      const colSortOrder = columnSortOrder(sort, col)
+      query.orderBy(args.schema.col[col], colSortOrder)
     })
 
     const cursor = isString(params.cursor) ? decode(params.cursor) : params.cursor
@@ -261,15 +279,24 @@ export const compositeCursorTools = <
     // Apply cursor filter
     const colCount = args.cols.length
 
-    const sql = `(${times(colCount, () => '??').join(', ')}) ${
-      sort === 'desc' ? '<' : '>'
-    } (${times(colCount, () => '?').join(', ')})` // string like (??, ??) < (?, ?)
+    if (sort === 'desc' || sort === 'asc') {
+      const sql = `(${times(colCount, () => '??').join(', ')}) ${
+        sort === 'desc' ? '<' : '>'
+      } (${times(colCount, () => '?').join(', ')})` // string like (??, ??) < (?, ?)
 
-    // e.g. WHERE (table.updatedAt, table.id) < ('2023-10-01T00:00:00.000Z', '12345')
-    query.andWhereRaw(sql, [
-      ...args.cols.map((col) => args.schema.col[col]),
-      ...args.cols.map((col) => cursor[col].toString())
-    ])
+      // e.g. WHERE (table.updatedAt, table.id) < ('2023-10-01T00:00:00.000Z', '12345')
+      query.andWhereRaw(sql, [
+        ...args.cols.map((col) => args.schema.col[col]),
+        ...args.cols.map((col) => cursor[col].toString())
+      ])
+    } else {
+      args.cols.forEach((col) => {
+        const colSortOrder = columnSortOrder(sort, col)
+        const sortOperator = colSortOrder === 'desc' ? '<' : '>'
+        // e.g. WHERE table.updatedAt < '2023-10-01T00:00:00.000Z' AND WHERE table.id > '12345'
+        query.andWhereRaw(`?? ${sortOperator} ?`, [args.schema.col[col], cursor[col]])
+      })
+    }
 
     return query
   }
