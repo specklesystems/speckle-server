@@ -24,7 +24,7 @@ export const storeEmbedApiTokenFactory =
 
 export const listProjectEmbedTokensFactory =
   (deps: { db: Knex }): ListProjectEmbedTokens =>
-  async (projectId) => {
+  async ({ projectId }) => {
     return (await tables
       .embedApiTokens(deps.db)
       .select(
@@ -35,7 +35,7 @@ export const listProjectEmbedTokensFactory =
       )
       .orderBy(ApiTokens.col.createdAt, 'desc')
       .leftJoin(ApiTokens.name, ApiTokens.col.id, EmbedApiTokens.col.tokenId)
-      .where({ projectId })) as (EmbedApiTokenRecord &
+      .where(EmbedApiTokens.col.projectId, projectId)) as (EmbedApiTokenRecord &
       Pick<ApiTokenRecord, 'createdAt' | 'lastUsed' | 'lifespan'>)[]
   }
 
