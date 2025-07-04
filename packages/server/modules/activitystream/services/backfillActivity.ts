@@ -213,7 +213,8 @@ const mapUntrackedProjectRoleToActivity = (
 export const backfillMissingActivityFactory =
   ({ db }: { db: Knex }) =>
   async ({ logger }: { logger: Logger }) => {
-    // TODO: adjust this numbers
+    logger.info('Activity backfill started')
+
     const BATCH_SIZE = 3000
     const MAX_ITERATIONS = 100
     const TASKS = [
@@ -244,7 +245,7 @@ export const backfillMissingActivityFactory =
         activities = await task(BATCH_SIZE)
 
         if (activities.length) {
-          db(ActivityModel.name).insert(activities)
+          await db(ActivityModel.name).insert(activities)
           activities.forEach((activity) => activityIds.push(activity.id))
         }
 
@@ -261,4 +262,6 @@ export const backfillMissingActivityFactory =
         'Fatal: Activity was backfilled'
       )
     }
+
+    logger.info('Activity backfill ended')
   }
