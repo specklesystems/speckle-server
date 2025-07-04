@@ -163,6 +163,7 @@ export const jobProcessor = async ({
             ],
             {
               USER_TOKEN: job.token,
+              SPECKLE_SERVER_URL: job.serverUrl,
               //speckleifc is not installed to sys (e.g. via pip), so we need to point it to the directory explicitly
               PYTHONPATH: '/speckle-server/speckleifc/src/'
             },
