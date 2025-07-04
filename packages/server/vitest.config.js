@@ -17,6 +17,13 @@ const exclude = [
 
 const workerExecArgv = ['--import', './esmLoader.js', '--import', 'tsx']
 
+// Fixing double-load issue where graphql's index.js and index.mjs are both loaded at the same
+// time causing various errors like instanceof checks not working.
+// Node.js natively loads CJS (.js) version
+// Vite importer loads .mjs version, because of the "module" field in package.json
+// The proper fix would be a fixed package.json in graphql, but this is a workaround
+const graphqlMjsRoot = await import.meta.resolve('graphql')
+
 export default defineConfig({
   plugins: [
     tsconfigPaths()
@@ -62,13 +69,13 @@ export default defineConfig({
         execArgv: workerExecArgv
       }
     }
-  }
+  },
   // optimizeDeps: {
   //   include: ['knex', /knex/i]
   // }
-  // resolve: {
-  //   alias: {
-  //     '@': new URL('./', import.meta.url).pathname
-  //   }
-  // }
+  resolve: {
+    alias: {
+      graphql: graphqlMjsRoot
+    }
+  }
 })

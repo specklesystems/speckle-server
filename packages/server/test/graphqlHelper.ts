@@ -33,6 +33,7 @@ import { PingPongDocument } from '@/test/graphql/generated/graphql'
 import { BaseError } from '@/modules/shared/errors'
 import EventEmitter from 'eventemitter2'
 import { expectToThrow } from '@/test/assertionHelper'
+import { testLogger } from '@/observability/logging'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse<R>
 
@@ -357,26 +358,32 @@ export const testApolloSubscriptionServer = async () => {
         query,
         variables
       })
-      const sub = observable.subscribe(async (eventData) => {
-        const res = eventData as FormattedExecutionResult<R>
-        const asyncHandler = async () => handler(res)
+      const sub = observable.subscribe(
+        async (eventData) => {
+          const res = eventData as FormattedExecutionResult<R>
+          const asyncHandler = async () => handler(res)
 
-        // Invoke handler
-        try {
-          await asyncHandler()
-        } catch (e) {
-          // If we throw here, this will be an unhandled rejection, lets throw in waitForMsg instead
-          eventBus.emit('error', e)
-        }
+          // Invoke handler
+          try {
+            await asyncHandler()
+          } catch (e) {
+            // If we throw here, this will be an unhandled rejection, lets throw in waitForMsg instead
+            eventBus.emit('error', e)
+          }
 
-        // Mark msg received
-        try {
-          messages.push(res)
-          await eventBus.emitAsync('message', res)
-        } catch (e) {
-          eventBus.emit('error', e)
+          // Mark msg received
+          try {
+            messages.push(res)
+            await eventBus.emitAsync('message', res)
+          } catch (e) {
+            eventBus.emit('error', e)
+          }
+        },
+        (e) => {
+          errHandler(e)
+          testLogger.error(e, 'Test subscription subscribe error handler hit')
         }
-      })
+      )
 
       /**
        * Unsubscribe from the subscription
