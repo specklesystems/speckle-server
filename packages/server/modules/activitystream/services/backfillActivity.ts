@@ -225,12 +225,22 @@ export const backfillMissingActivityFactory =
 
     const activityIds: string[] = []
 
-    TASKS.forEach(async (task) => {
+    for (const task of TASKS) {
       let iterations = 0
       let activities = []
 
       do {
-        if (iterations >= MAX_ITERATIONS) throw new MaxBackfillIterationsReached()
+        if (iterations >= MAX_ITERATIONS) {
+          logger.error(
+            {
+              total: activityIds.length,
+              activityIds
+            },
+            'Fatal: Activity max iterations reached'
+          )
+          throw new MaxBackfillIterationsReached()
+        }
+
         activities = await task(BATCH_SIZE)
 
         if (activities.length) {
@@ -240,7 +250,7 @@ export const backfillMissingActivityFactory =
 
         iterations++
       } while (activities.length)
-    })
+    }
 
     if (activityIds.length) {
       logger.error(
