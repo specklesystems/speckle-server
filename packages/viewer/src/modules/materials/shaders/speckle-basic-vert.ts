@@ -131,13 +131,12 @@ export const speckleBasicVert = /* glsl */ `
 
 #endif
 
-#if defined(BILLBOARD) || defined(BILLBOARD_FIXED)
-    uniform vec3 billboardPos;
+#if defined(BILLBOARD) || defined(BILLBOARD_SCREEN)
     uniform mat4 invProjection;
 #endif
-#ifdef BILLBOARD_FIXED
-    uniform vec2 billboardSize;
-    uniform vec2 billboardOffset;
+
+#ifdef BILLBOARD_SCREEN
+    uniform vec4 billboardPixelOffsetSize;
 #endif
 
 void main() {
@@ -192,12 +191,12 @@ void main() {
     
     #if defined(BILLBOARD)
         float div = 1.;
-        gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0) + vec4(position.x, position.y, 0., 0.0));
-    #elif defined(BILLBOARD_FIXED)
-        gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0));
+        gl_Position = projectionMatrix * (viewMatrix * vec4(modelMatrix[3].xyz, 1.0) + vec4(position.x, position.y, 0., 0.0));
+    #elif defined(BILLBOARD_SCREEN)
+        gl_Position = projectionMatrix * (viewMatrix * vec4(modelMatrix[3].xyz, 1.0));
         float div = gl_Position.w;
         gl_Position /= gl_Position.w;
-        gl_Position.xy += (position.xy + billboardOffset) * billboardSize;
+        gl_Position.xy += position.xy * billboardPixelOffsetSize.zw * 2. + billboardPixelOffsetSize.xy * 2.;
     #else
         gl_Position = projectionMatrix * mvPosition;
     #endif
@@ -206,7 +205,7 @@ void main() {
 	#include <logdepthbuf_vertex>
 	// #include <clipping_planes_vertex> COMMENTED CHUNK
     #if NUM_CLIPPING_PLANES > 0
-        #if defined(BILLBOARD) || defined(BILLBOARD_FIXED)
+        #if defined(BILLBOARD) || defined(BILLBOARD_SCREEN)
             vec4 movelViewProjection = gl_Position * div;
             vClipPosition = - (invProjection * movelViewProjection).xyz;
         #else

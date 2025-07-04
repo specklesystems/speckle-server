@@ -232,14 +232,17 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.setDamperDecayTime(this._options.damperDecay)
 
     const billboardMaterial = new SpeckleBasicMaterial({ color: 0x047efb }, [
-      'BILLBOARD_FIXED'
+      'BILLBOARD_SCREEN'
     ])
     billboardMaterial.opacity = 0.75
     billboardMaterial.transparent = true
     billboardMaterial.color.convertSRGBToLinear()
     billboardMaterial.toneMapped = false
     billboardMaterial.depthTest = false
-    billboardMaterial.billboardPixelHeight = 15 * window.devicePixelRatio
+    billboardMaterial.billboardPixelSize = new Vector2(
+      15 * window.devicePixelRatio,
+      15 * window.devicePixelRatio
+    )
 
     this.orbitSphere = new Mesh(new SphereGeometry(0.5, 32, 16), billboardMaterial)
     this.orbitSphere.layers.set(ObjectLayers.OVERLAY)
@@ -863,9 +866,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       this._options.orbitAroundCursor && this.usePivotal
         ? this.pivotPoint
         : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
-    /** TO DO: Revisit and set by writing to it's position */
-    const mat = this.orbitSphere.material as SpeckleBasicMaterial
-    mat.userData.billboardPos.value.copy(spherePos)
+    this.orbitSphere.position.copy(spherePos)
 
     /** We'd rather have a palpable epsilon for regular sized streams, but also
      *  compute a custom one for microscopic ones

@@ -78,7 +78,7 @@ import { GeometryType } from './modules/batching/Batch.js'
 import { MeshBatch } from './modules/batching/MeshBatch.js'
 import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial.js'
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
-import { SpeckleText } from './modules/objects/SpeckleText.js'
+import { TextLabel } from './modules/objects/TextLabel.js'
 import { NodeRenderView } from './modules/tree/NodeRenderView.js'
 import {
   CONTAINED,
@@ -234,7 +234,7 @@ export {
   SpeckleStandardMaterial,
   SpeckleBasicMaterial,
   SpeckleTextMaterial,
-  SpeckleText,
+  TextLabel,
   NodeRenderView,
   SpeckleGeometryConverter,
   Assets,
