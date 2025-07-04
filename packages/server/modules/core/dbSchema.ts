@@ -406,6 +406,13 @@ export const PersonalApiTokens = buildTableHelper('personal_api_tokens', [
   'userId'
 ])
 
+export const EmbedApiTokens = buildTableHelper('embed_api_tokens', [
+  'tokenId',
+  'projectId',
+  'userId',
+  'resourceIdString'
+])
+
 export const UserServerAppTokens = buildTableHelper('user_server_app_tokens', [
   'appId',
   'userId',

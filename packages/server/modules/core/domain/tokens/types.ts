@@ -1,4 +1,5 @@
 import {
+  EmbedApiTokenRecord,
   PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
@@ -26,3 +27,5 @@ export type TokenResourceAccessDefinition = TokenResourceAccessRecord
 export type UserServerAppToken = UserServerAppTokenRecord
 
 export type PersonalApiToken = PersonalApiTokenRecord
+
+export type EmbedApiToken = EmbedApiTokenRecord

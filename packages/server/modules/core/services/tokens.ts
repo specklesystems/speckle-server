@@ -4,9 +4,10 @@ import {
   TokenResourceAccessRecord,
   TokenValidationResult
 } from '@/modules/core/helpers/types'
-import { Optional, ServerScope } from '@speckle/shared'
+import { Optional, Scopes, ServerScope } from '@speckle/shared'
 import {
   CreateAndStoreAppToken,
+  CreateAndStoreEmbedToken,
   CreateAndStorePersonalAccessToken,
   CreateAndStoreUserToken,
   GetApiTokenById,
@@ -14,6 +15,7 @@ import {
   GetTokenScopesById,
   RevokeUserTokenById,
   StoreApiToken,
+  StoreEmbedApiToken,
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
@@ -24,6 +26,11 @@ import {
 import { GetTokenAppInfo } from '@/modules/auth/domain/operations'
 import { GetUserRole } from '@/modules/core/domain/users/operations'
 import { TokenCreateError } from '@/modules/core/errors/user'
+import cryptoRandomString from 'crypto-random-string'
+import {
+  EmbedApiToken,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
 
 /*
   Tokens
@@ -122,6 +129,37 @@ export const createPersonalAccessTokenFactory =
     await deps.storePersonalApiToken({ userId, tokenId: id })
 
     return token
+  }
+
+export const createEmbedTokenFactory =
+  (deps: {
+    createToken: CreateAndStoreUserToken
+    storeEmbedToken: StoreEmbedApiToken
+  }): CreateAndStoreEmbedToken =>
+  async ({ projectId, userId, resourceIdString, lifespan }) => {
+    const { id, token } = await deps.createToken({
+      userId,
+      name: cryptoRandomString({ length: 10 }),
+      scopes: [Scopes.Streams.Read],
+      limitResources: [
+        {
+          id: projectId,
+          type: TokenResourceIdentifierType.Project
+        }
+      ],
+      lifespan
+    })
+
+    const tokenMetadata: EmbedApiToken = {
+      projectId,
+      tokenId: id,
+      userId,
+      resourceIdString
+    }
+
+    await deps.storeEmbedToken(tokenMetadata)
+
+    return { token, tokenMetadata }
   }
 
 export const validateTokenFactory =

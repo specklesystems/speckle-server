@@ -1,4 +1,5 @@
 import {
+  EmbedApiTokenRecord,
   PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
@@ -6,6 +7,7 @@ import {
 import { ApiTokenRecord } from '@/modules/auth/repositories'
 import {
   ApiTokens,
+  EmbedApiTokens,
   PersonalApiTokens,
   TokenResourceAccess,
   TokenScopes,
@@ -38,7 +40,8 @@ const tables = {
     db<TokenResourceAccessRecord>(TokenResourceAccess.name),
   userServerAppTokens: (db: Knex) =>
     db<UserServerAppTokenRecord>(UserServerAppTokens.name),
-  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name)
+  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name),
+  embedApiTokens: (db: Knex) => db<EmbedApiTokenRecord>(EmbedApiTokens.name)
 }
 
 export const storeApiTokenFactory =

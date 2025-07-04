@@ -3,6 +3,7 @@ import {
   LegacyStreamCommit,
   LegacyUserCommit
 } from '@/modules/core/domain/commits/types'
+import { EmbedApiToken } from '@/modules/core/domain/tokens/types'
 import {
   LimitedUser,
   StreamRole,
@@ -154,3 +155,5 @@ export type VersionPermissionChecksGraphQLReturn = {
   versionId: string
   projectId: string
 }
+
+export type EmbedTokenGraphQLReturn = EmbedApiToken

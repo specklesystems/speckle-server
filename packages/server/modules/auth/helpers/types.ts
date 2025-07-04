@@ -74,6 +74,13 @@ export type PersonalApiTokenRecord = {
   tokenId: string
 }
 
+export type EmbedApiTokenRecord = {
+  projectId: string
+  tokenId: string
+  userId: string
+  resourceIdString: string
+}
+
 export type TokenScopeRecord = {
   tokenId: string
   scopeName: ServerScope

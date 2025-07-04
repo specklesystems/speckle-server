@@ -10,7 +10,7 @@ import {
   ServerNoSessionError,
   ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
-  WorkspaceNoFeatureAccessError,
+  WorkspacePlanNoFeatureAccessError,
   WorkspaceNotEnoughPermissionsError,
   WorkspaceReadOnlyError
 } from '../../domain/authErrors.js'
@@ -151,7 +151,7 @@ describe('canUseFeature', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: WorkspaceNoFeatureAccessError.code
+      code: WorkspacePlanNoFeatureAccessError.code
     })
   })
 

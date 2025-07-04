@@ -24,6 +24,7 @@ generates:
         ProjectAccessRequestMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
         User: '@/modules/core/helpers/graphTypes#UserGraphQLReturn'
+        EmbedToken: '@/modules/core/helpers/graphTypes#EmbedTokenGraphQLReturn'
         ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         UserMetaMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         UserEmailMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
