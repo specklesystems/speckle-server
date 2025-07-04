@@ -12,9 +12,8 @@ export const PreviewJobDurationStep = {
 export const initializeMetrics = (params: {
   registers: Registry[]
   previewRequestQueue: Bull.Queue
-  previewResponseQueue: Bull.Queue
 }) => {
-  const { registers, previewRequestQueue, previewResponseQueue } = params
+  const { registers, previewRequestQueue } = params
 
   // ======= Request Queue =======
   // add a metric to gauge the length of the preview job queue
@@ -86,16 +85,6 @@ export const initializeMetrics = (params: {
   previewRequestQueue.on('failed', failedHandler)
 
   // ======= Response Queue =======
-  registers.forEach((r) =>
-    r.removeSingleMetric('speckle_server_preview_jobs_response_queue_pending')
-  )
-  new Gauge({
-    name: 'speckle_server_preview_jobs_response_queue_pending',
-    help: 'Number of responses to preview jobs waiting in the response queue',
-    async collect() {
-      this.set(await previewResponseQueue.count())
-    }
-  })
 
   registers.forEach((r) =>
     r.removeSingleMetric('speckle_server_preview_jobs_response_completed_count')
@@ -116,14 +105,10 @@ export const initializeMetrics = (params: {
   const responseCompletedHandler = () => {
     previewJobsResponseCompletedCounter.inc()
   }
-  previewResponseQueue.removeListener('completed', responseCompletedHandler)
-  previewResponseQueue.on('completed', responseCompletedHandler)
 
   const responseFailedHandler = () => {
     previewJobsResponseFailedCounter.inc()
   }
-  previewResponseQueue.removeListener('failed', responseFailedHandler)
-  previewResponseQueue.on('failed', responseFailedHandler)
 
   // ======= Responses =======
 
@@ -138,7 +123,11 @@ export const initializeMetrics = (params: {
     ageBuckets: 5
   })
 
-  return { previewJobsProcessedSummary }
+  return {
+    previewJobsProcessedSummary,
+    responseCompletedHandler,
+    responseFailedHandler
+  }
 }
 
 export const observeMetricsFactory = (deps: {

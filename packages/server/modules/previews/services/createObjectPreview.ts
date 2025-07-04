@@ -61,10 +61,16 @@ export const createObjectPreviewFactory =
       serverOrigin
     ).toString()
 
+    const responseUrl = new URL(
+      `/api/projects/${streamId}/previews/jobs/${jobId}/results`,
+      serverOrigin
+    ).toString()
+
     await requestObjectPreview({
       jobId,
       token,
-      url
+      url,
+      responseUrl
     })
     return true
   }
