@@ -74,7 +74,9 @@ isEnabled
           Promise.resolve()
         )
         MultiRegionBlobStorageSelectorMock.mockFunction('initializeRegion', async () =>
-          Promise.resolve(undefined as unknown as ObjectStorage)
+          Promise.resolve(
+            undefined as unknown as { private: ObjectStorage; public: ObjectStorage }
+          )
         )
 
         await beforeEachContext()

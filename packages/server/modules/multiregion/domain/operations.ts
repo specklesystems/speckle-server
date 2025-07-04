@@ -64,8 +64,8 @@ export type UpdateAndValidateRegion = (params: {
 
 export type GetProjectObjectStorage = (args: {
   projectId: string
-}) => Promise<ObjectStorage>
+}) => Promise<{ private: ObjectStorage; public: ObjectStorage }>
 
 export type GetRegionObjectStorage = (args: {
   regionKey: string
-}) => Promise<ObjectStorage>
+}) => Promise<{ private: ObjectStorage; public: ObjectStorage }>

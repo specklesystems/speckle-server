@@ -52,7 +52,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
     }
 
     let projectDb: Knex
-    let projectStorage: ObjectStorage
+    let projectStorage: { private: ObjectStorage; public: ObjectStorage }
     let getBlobMetadata: GetBlobMetadata
 
     before(async () => {
@@ -77,7 +77,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
       before(() => {
         SUT = generatePresignedUrlFactory({
           getSignedUrl: getSignedUrlFactory({
-            objectStorage: projectStorage
+            objectStorage: projectStorage.public
           }),
           upsertBlob: upsertBlobFactory({
             db: projectDb
@@ -117,7 +117,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
       before(() => {
         generatePresignedUrl = generatePresignedUrlFactory({
           getSignedUrl: getSignedUrlFactory({
-            objectStorage: projectStorage
+            objectStorage: projectStorage.public
           }),
           upsertBlob: upsertBlobFactory({
             db: projectDb
@@ -126,7 +126,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
         SUT = registerCompletedUploadFactory({
           getBlob: getBlobFactory({ db: projectDb }),
           getBlobMetadata: getBlobMetadataFromStorage({
-            objectStorage: projectStorage
+            objectStorage: projectStorage.public
           }),
           updateBlob: updateBlobFactory({
             db: projectDb

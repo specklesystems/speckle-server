@@ -32,7 +32,19 @@ const regionConfigSchema = z.object({
       .optional()
   }),
   blobStorage: z.object({
-    endpoint: z.string().url().describe('URL of the S3-compatible storage endpoint'),
+    endpoint: z
+      .string()
+      .url()
+      .describe(
+        'URL of the S3-compatible storage endpoint, accessible from the server'
+      ),
+    publicEndpoint: z
+      .string()
+      .url()
+      .optional()
+      .describe(
+        'Public URL of the S3-compatible storage endpoint, accessible from clients via the public internet'
+      ),
     accessKey: z.string().describe('Access key for the S3-compatible storage endpoint'),
     secretKey: z.string().describe('Secret key for the S3-compatible storage endpoint'),
     bucket: z.string().describe('Name of the S3-compatible storage bucket'),

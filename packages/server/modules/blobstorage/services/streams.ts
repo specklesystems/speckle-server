@@ -45,7 +45,7 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
       getProjectObjectStorage({ projectId: streamId })
     ])
 
-    const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
+    const storeFileStream = storeFileStreamFactory({ storage: projectStorage.private })
     const updateBlob = updateBlobFactory({ db: projectDb })
     const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
 
@@ -66,9 +66,9 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
     })
 
     const getObjectAttributes = getObjectAttributesFactory({
-      storage: projectStorage
+      storage: projectStorage.private
     })
-    const deleteObject = deleteObjectFactory({ storage: projectStorage })
+    const deleteObject = deleteObjectFactory({ storage: projectStorage.private })
 
     busboy.on(
       'file',

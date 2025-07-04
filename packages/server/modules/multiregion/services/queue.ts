@@ -165,9 +165,11 @@ export const startQueue = async () => {
         const { projectId, regionKey } = job.data.payload
 
         const sourceDb = await getProjectDbClient({ projectId })
-        const sourceObjectStorage = await getProjectObjectStorage({ projectId })
+        const sourceObjectStorage = (await getProjectObjectStorage({ projectId }))
+          .private
         const targetDb = await getRegionDb({ regionKey })
-        const targetObjectStorage = await getRegionObjectStorage({ regionKey })
+        const targetObjectStorage = (await getRegionObjectStorage({ regionKey }))
+          .private
 
         // Move project to target region
         const project = await withTransaction(
