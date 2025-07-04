@@ -11,7 +11,7 @@ const ProjectRoles = () => knex('stream_acl')
 
 // maybe I can name it backfill
 
-const getUntrackedWorkspaceSeats = (limit, offset) => {
+const getUntrackedWorkspaceSeats = (limit) => {
   return WorkspaceSeats()
     .select([
       'workspace_seats.workspaceId',
@@ -26,13 +26,13 @@ const getUntrackedWorkspaceSeats = (limit, offset) => {
           AND activity."contextResourceType" = 'workspace'
           AND activity."eventType" = 'workspace_seat_updated'
           AND activity."payload"#>>'{new,userId}' = workspace_seats."userId"
+          AND activity."payload"#>>'{new,type}' = workspace_seats."type"
       )`
     )
-    .offset(offset)
     .limit(limit)
 }
 
-const getUntrackedWorkspacePlans = (limit, offset) => {
+const getUntrackedWorkspacePlans = (limit) => {
   return WorkspacePlans()
     .select([
       'workspace_plans.workspaceId',
@@ -50,11 +50,11 @@ const getUntrackedWorkspacePlans = (limit, offset) => {
           AND activity."payload"#>>'{new,name}' = workspace_plans."name"
       )`
     )
-    .offset(offset)
+    .orderBy('workspace_plans.createdAt', 'desc')
     .limit(limit)
 }
 
-const getUntrackedSubscriptions = (limit, offset) => {
+const getUntrackedSubscriptions = (limit) => {
   return WorkspaceSubscriptions()
     .select([
       'workspace_subscriptions.workspaceId',
@@ -81,13 +81,19 @@ const getUntrackedSubscriptions = (limit, offset) => {
           AND activity."payload"#>>'{new,totalEditorSeats}' = workspace_subscriptions."subscriptionData"#>>'{products,0,quantity}'
       )`
     )
-    .offset(offset)
+    .orderBy('workspace_subscriptions.createdAt', 'desc')
     .limit(limit)
 }
 
-const getUntrackedProjectRoles = (limit, offset) => {
+const getUntrackedProjectRoles = (limit) => {
   return ProjectRoles()
-    .select(['stream_acl.resourceId', 'stream_acl.userId', 'stream_acl.role'])
+    .select([
+      'stream_acl.resourceId',
+      'stream_acl.userId',
+      'stream_acl.role',
+      'streams.createdAt'
+    ])
+    .join('streams', 'streams.id', 'stream_acl.resourceId')
     .whereRaw(
       `NOT EXISTS (
         SELECT * FROM activity
@@ -98,19 +104,24 @@ const getUntrackedProjectRoles = (limit, offset) => {
           AND activity."payload"#>>'{new}' = stream_acl."role"
       )`
     )
-    .offset(offset)
+    .orderBy('stream_acl.resourceId', 'desc')
+    .orderBy('stream_acl.userId', 'desc')
     .limit(limit)
 }
 
 const main = async () => {
-  const BATCH_SIZE = 10_000 // there is something wrong with this batching
+  const BATCH_SIZE = 2
+  const MAX_ITERATIONS = 100
 
   let seats = []
-  let offset = 0
+  let count = 0
+  let iterations = 0
 
   do {
-    seats = await getUntrackedWorkspaceSeats(BATCH_SIZE, offset)
-    offset += seats.length
+    if (iterations > MAX_ITERATIONS) throw new Error('Max iterations reached')
+    seats = await getUntrackedWorkspaceSeats(BATCH_SIZE, count)
+    count += seats.length
+    iterations++
 
     const activities = seats.map((seat) => ({
       id: cryptoRandomString({ length: 10 }),
@@ -132,14 +143,17 @@ const main = async () => {
     }
   } while (seats.length)
 
-  console.log(`Total seats processed: ${offset}`)
+  console.log(`Total seats processed: ${count}`)
 
   let plans = []
-  offset = 0
+  count = 0
+  iterations = 0
 
   do {
-    plans = await getUntrackedWorkspacePlans(BATCH_SIZE, offset)
-    offset += plans.length
+    if (iterations > MAX_ITERATIONS) throw new Error('Max iterations reached')
+    plans = await getUntrackedWorkspacePlans(BATCH_SIZE)
+    count += plans.length
+    iterations++
 
     const activities = plans.map((plan) => ({
       id: cryptoRandomString({ length: 10 }),
@@ -161,14 +175,17 @@ const main = async () => {
     }
   } while (plans.length)
 
-  console.log(`Total plans processed: ${offset}`)
+  console.log(`Total plans processed: ${count}`)
 
   let subscriptions = []
-  offset = 0
+  count = 0
+  iterations++
 
   do {
-    subscriptions = await getUntrackedSubscriptions(BATCH_SIZE, offset)
-    offset += subscriptions.length
+    if (iterations > MAX_ITERATIONS) throw new Error('Max iterations reached')
+    subscriptions = await getUntrackedSubscriptions(BATCH_SIZE)
+    count += subscriptions.length
+    iterations++
 
     const activities = subscriptions.map((subscription) => ({
       id: cryptoRandomString({ length: 10 }),
@@ -196,13 +213,15 @@ const main = async () => {
     }
   } while (subscriptions.length)
 
-  console.log(`Total subscriptions processed: ${offset}`)
+  console.log(`Total subscriptions processed: ${count}`)
 
   let projectRoles = []
 
   do {
-    projectRoles = await getUntrackedProjectRoles(BATCH_SIZE, offset)
-    offset += projectRoles.length
+    if (iterations > MAX_ITERATIONS) throw new Error('Max iterations reached')
+    projectRoles = await getUntrackedProjectRoles(BATCH_SIZE)
+    count += projectRoles.length
+    iterations++
 
     const activities = projectRoles.map((projectRole) => ({
       id: cryptoRandomString({ length: 10 }),
@@ -215,7 +234,7 @@ const main = async () => {
         new: projectRole.role,
         old: null
       },
-      createdAt: new Date() // TODO: ?? no created at field
+      createdAt: projectRole.createdAt // this is stream created at
     }))
 
     if (projectRoles.length) {
@@ -223,7 +242,7 @@ const main = async () => {
     }
   } while (projectRoles.length)
 
-  console.log(`Total projects processed: ${offset}`)
+  console.log(`Total projects processed: ${count}`)
 }
 
 main()
