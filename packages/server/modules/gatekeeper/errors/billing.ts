@@ -77,3 +77,9 @@ export class UnsupportedWorkspacePlanError extends BaseError {
   static code = 'UNSUPPORTED_WORKSPACE_PLAN_ERROR'
   static statusCode = 400
 }
+
+export class SubscriptionStateError extends BaseError {
+  static defaultMessage = 'Subscription has an unexpected state'
+  static code = 'SUBSCRIPTION_STATE_ERROR'
+  static statusCode = 500
+}

@@ -5,7 +5,7 @@ import { getStripeEndpointSigningKey } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import { completeCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
-  getSubscriptionDataFactory,
+  getStripeSubscriptionDataFactory,
   parseSubscriptionData
 } from '@/modules/gatekeeper/clients/stripe'
 import {
@@ -132,7 +132,7 @@ export const getBillingRouter = (): Router => {
                     }),
                     getWorkspacePlan: getWorkspacePlanFactory({ db }),
                     getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
-                    getSubscriptionData: getSubscriptionDataFactory({
+                    getSubscriptionData: getStripeSubscriptionDataFactory({
                       stripe
                     }),
                     emitEvent: emit
@@ -256,7 +256,7 @@ const getSubscriptionFromEventFactory =
       return null
     }
     if (typeof subscription === 'string') {
-      return await getSubscriptionDataFactory({ stripe })({
+      return await getStripeSubscriptionDataFactory({ stripe })({
         subscriptionId: subscription
       })
     }
