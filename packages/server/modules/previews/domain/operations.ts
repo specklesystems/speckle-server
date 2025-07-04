@@ -1,7 +1,6 @@
 import type { ObjectPreview } from '@/modules/previews/domain/types'
 import type { Nullable, Optional, PartialBy } from '@speckle/shared'
 import type { Request, Response } from 'express'
-import type { Logger } from '@/observability/logging'
 import { PreviewResultPayload } from '@speckle/shared/workers/previews'
 
 export type GetObjectPreviewInfo = (params: {
@@ -31,6 +30,7 @@ export type ObjectPreviewRequest = {
   url: string
   token: string
   jobId: string
+  responseUrl: string
 }
 
 export type Preview = {
@@ -81,11 +81,6 @@ export type ConsumePreviewResult = ({
   objectId: string
   previewResult: PreviewResultPayload
 }) => Promise<void>
-
-export type BuildConsumePreviewResult = (deps: {
-  logger: Logger
-  projectId: string
-}) => Promise<ConsumePreviewResult>
 
 export type BuildUpdateObjectPreview = (params: {
   projectId: string

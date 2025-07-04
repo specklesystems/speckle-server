@@ -9,15 +9,9 @@ import type { JobPayload } from '@speckle/shared/workers/previews'
 import { fromJobId, jobIdSchema } from '@speckle/shared/workers/previews'
 
 export const requestObjectPreviewFactory =
-  ({
-    responseQueue,
-    queue
-  }: {
-    responseQueue: string
-    queue: Queue<JobPayload>
-  }): RequestObjectPreview =>
-  async ({ jobId, token, url }) => {
-    const payload = { jobId, token, url, responseQueue }
+  ({ queue }: { queue: Queue<JobPayload> }): RequestObjectPreview =>
+  async ({ jobId, token, url, responseUrl }) => {
+    const payload = { jobId, token, url, responseUrl }
     await queue.add(payload, { removeOnComplete: true, attempts: 3 })
   }
 

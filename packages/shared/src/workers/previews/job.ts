@@ -28,9 +28,15 @@ const job = z.object({
 
 export const jobPayload = job.merge(
   z.object({
-    url: z.string(),
-    token: z.string(),
-    responseQueue: z.string()
+    url: z.string().describe('The URL of the object to preview'),
+    token: z
+      .string()
+      .describe('The authentication token to access the object and post the result'),
+    responseUrl: z
+      .string()
+      .describe(
+        'The URL to which the job result will be sent. This is typically a webhook endpoint'
+      )
   })
 )
 export type JobPayload = z.infer<typeof jobPayload>

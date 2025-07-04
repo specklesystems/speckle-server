@@ -1,11 +1,9 @@
 import { ProjectSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { throwUncoveredError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import crypto from 'crypto'
 import {
-  BuildConsumePreviewResult,
   ConsumePreviewResult,
   StorePreview,
   UpdateObjectPreview
@@ -13,24 +11,6 @@ import {
 import { joinImages } from 'join-images'
 import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
-import {
-  storePreviewFactory,
-  updateObjectPreviewFactory
-} from '@/modules/previews/repository/previews'
-import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
-
-export const buildConsumePreviewResult: BuildConsumePreviewResult = async (deps) => {
-  const { logger, projectId } = deps
-  const projectDb = await getProjectDbClient({ projectId })
-  return consumePreviewResultFactory({
-    logger,
-    storePreview: storePreviewFactory({ db: projectDb }),
-    updateObjectPreview: updateObjectPreviewFactory({ db: projectDb }),
-    getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({
-      db: projectDb
-    })
-  })
-}
 
 export const consumePreviewResultFactory =
   ({
