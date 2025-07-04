@@ -9,8 +9,6 @@ const WorkspacePlans = () => knex('workspace_plans')
 const WorkspaceSubscriptions = () => knex('workspace_subscriptions')
 const ProjectRoles = () => knex('stream_acl')
 
-// maybe I can name it backfill
-
 const getUntrackedWorkspaceSeats = (limit) => {
   return WorkspaceSeats()
     .select([
