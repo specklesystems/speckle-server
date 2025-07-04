@@ -1,5 +1,6 @@
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   getStreamsCollaboratorCountsFactory,
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
@@ -1007,7 +1008,8 @@ export const initializeEventListenersFactory =
                 }),
                 revokeStreamPermissions: revokeStreamPermissionsFactory({
                   db: trx
-                })
+                }),
+                getStreamRoles: getStreamRolesFactory({ db: trx })
               }),
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
               emitEvent: eventBus.emit
@@ -1039,7 +1041,8 @@ export const initializeEventListenersFactory =
                 }),
                 revokeStreamPermissions: revokeStreamPermissionsFactory({
                   db: trx
-                })
+                }),
+                getStreamRoles: getStreamRolesFactory({ db: trx })
               }),
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
               getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
@@ -1065,7 +1068,8 @@ export const initializeEventListenersFactory =
                 isStreamCollaborator: isStreamCollaboratorFactory({
                   getStream: getStreamFactory({ db })
                 }),
-                revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx })
+                revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
+                getStreamRoles: getStreamRolesFactory({ db: trx })
               }),
               queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
                 getStreams

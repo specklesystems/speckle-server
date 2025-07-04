@@ -258,7 +258,7 @@ export type GetStreamRoles = (
   userId: string,
   streamIds: string[]
 ) => Promise<{
-  [streamId: string]: Nullable<string>
+  [streamId: string]: Nullable<StreamRoles>
 }>
 
 export type GetUserStreamCounts = (params: {

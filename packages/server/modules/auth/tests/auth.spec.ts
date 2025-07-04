@@ -22,7 +22,8 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import {
   getStreamFactory,
   createStreamFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -95,6 +96,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),

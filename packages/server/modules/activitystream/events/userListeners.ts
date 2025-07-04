@@ -9,11 +9,11 @@ import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus
 import { UserEvents } from '@/modules/core/domain/users/events'
 
 const addUserCreatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }) =>
+  ({ saveStreamActivity }: { saveStreamActivity: SaveStreamActivity }) =>
   async (payload: EventPayload<typeof UserEvents.Created>) => {
     const { user } = payload.payload
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId: null,
       resourceType: StreamResourceTypes.User,
       resourceId: user.id,
@@ -25,7 +25,7 @@ const addUserCreatedActivityFactory =
   }
 
 const addUserUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }) =>
+  ({ saveStreamActivity }: { saveStreamActivity: SaveStreamActivity }) =>
   async (params: {
     oldUser: UserRecord
     update: UserUpdateInput
@@ -33,7 +33,7 @@ const addUserUpdatedActivityFactory =
   }) => {
     const { oldUser, update, updaterId } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId: null,
       resourceType: StreamResourceTypes.User,
       resourceId: oldUser.id,
@@ -45,11 +45,11 @@ const addUserUpdatedActivityFactory =
   }
 
 const addUserDeletedActivityFactory =
-  (deps: { saveActivity: SaveStreamActivity }) =>
+  (deps: { saveStreamActivity: SaveStreamActivity }) =>
   async (params: { targetUserId: string; invokerUserId: string }) => {
     const { targetUserId, invokerUserId } = params
 
-    await deps.saveActivity({
+    await deps.saveStreamActivity({
       streamId: null,
       resourceType: 'user',
       resourceId: targetUserId,
@@ -61,7 +61,8 @@ const addUserDeletedActivityFactory =
   }
 
 export const reportUserActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveStreamActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveStreamActivity: SaveStreamActivity }) =>
+  () => {
     const addUserDeletedActivity = addUserDeletedActivityFactory(deps)
     const addUserUpdatedActivity = addUserUpdatedActivityFactory(deps)
     const addUserCreatedActivity = addUserCreatedActivityFactory(deps)

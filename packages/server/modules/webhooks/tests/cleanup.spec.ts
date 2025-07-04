@@ -8,6 +8,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -87,6 +88,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),

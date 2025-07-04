@@ -11,3 +11,9 @@ export class ProjectNotFoundError extends BaseError {
   static code = 'PROJECT_NOT_FOUND'
   static statusCode = 404
 }
+
+export class ProjectQueryError extends BaseError {
+  static defaultMessage = 'Unexpected error during query operation'
+  static code = 'PROJECT_QUERY_ERROR'
+  static statusCode = 500
+}

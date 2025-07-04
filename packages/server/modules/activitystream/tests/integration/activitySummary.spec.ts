@@ -24,6 +24,7 @@ import {
   createStreamFactory,
   deleteStreamFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -97,6 +98,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),

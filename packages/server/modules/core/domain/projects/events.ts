@@ -6,7 +6,7 @@ import {
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import { StreamRoles } from '@speckle/shared'
+import { Nullable, StreamRoles } from '@speckle/shared'
 
 export const projectEventsNamespace = 'projects' as const
 
@@ -54,10 +54,12 @@ export type ProjectEventsPayloads = {
     targetUserId: string
     role: StreamRoles
     project: Project
+    previousRole: Nullable<StreamRoles>
   }
   [ProjectEvents.PermissionsRevoked]: {
     activityUserId: string
     removedUserId: string
     project: Project
+    role: StreamRoles
   }
 }

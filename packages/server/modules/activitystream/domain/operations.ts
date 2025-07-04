@@ -1,4 +1,5 @@
 import {
+  Activity,
   ActivitySummary,
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput,
@@ -7,7 +8,6 @@ import {
   StreamActionType
 } from '@/modules/activitystream/domain/types'
 import {
-  Activity,
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'

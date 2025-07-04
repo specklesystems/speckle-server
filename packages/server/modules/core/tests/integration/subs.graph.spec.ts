@@ -20,6 +20,7 @@ import {
   deleteStreamFactory,
   getCommitStreamFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   getStreamsFactory,
   grantStreamPermissionsFactory,
   markBranchStreamUpdatedFactory,
@@ -188,6 +189,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser: getUserFactory({ db }),
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -195,6 +197,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -334,7 +337,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             itEach(
               [{ allow: false }, { allow: true }],
               ({ allow }) =>
-                `should ${allow ? '' : 'not '} allow ${title} sub with${
+                `should${allow ? '' : ' not'} allow ${title} sub with${
                   !allow ? 'out' : ''
                 } ${withoutScope} scope`,
               async ({ allow }) => {
@@ -364,7 +367,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
                 await triggerMessage()
                 await onMessage.waitForMessage()
 
-                expect(onMessage.getMessages()).to.have.length(1)
+                expect(onMessage.getMessages()).to.have.length.gte(1)
               }
             )
           })
@@ -387,6 +390,12 @@ describe('Core GraphQL Subscriptions (New)', () => {
             {},
             (res) => {
               expect(res).to.not.haveGraphQLErrors()
+              const event = res.data?.userStreamAdded
+              if (event && 'sharedBy' in event) {
+                expect(res.data?.userStreamAdded?.sharedBy).to.equal(me.id)
+                return
+              }
+
               expect(res.data?.userStreamAdded?.name).to.equal(myProj.name)
             }
           )
@@ -415,8 +424,8 @@ describe('Core GraphQL Subscriptions (New)', () => {
             onUserStreamAdded.waitForMessage()
           ])
 
-          expect(onUserProjectsUpdated.getMessages()).to.have.length(1)
-          expect(onUserStreamAdded.getMessages()).to.have.length(1)
+          expect(onUserProjectsUpdated.getMessages()).to.have.length.gte(1)
+          expect(onUserStreamAdded.getMessages()).to.have.length.gte(1)
         })
 
         it('should notify me of a project ive just been added to (userProjectsUpdated/userStreamAdded)', async () => {

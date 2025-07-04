@@ -18,7 +18,8 @@ import { authorizeResolver } from '@/modules/shared'
 import {
   getStreamFactory,
   revokeStreamPermissionsFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import {
   getUserFactory,
@@ -76,6 +77,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -83,6 +85,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const getUsers = legacyGetPaginatedUsersFactory({ db })

@@ -6,13 +6,13 @@ import {
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   updateProjectFactory,
-  getRolesByUserIdFactory,
   getStreamFactory,
   deleteStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
-  getStreamCollaboratorsFactory
+  getStreamCollaboratorsFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -194,7 +194,10 @@ import {
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
-import { getProjectFactory } from '@/modules/core/repositories/projects'
+import {
+  getProjectFactory,
+  getUserProjectRolesFactory
+} from '@/modules/core/repositories/projects'
 import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
@@ -331,6 +334,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -406,6 +410,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
@@ -1849,7 +1854,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return parent.workspaceRoleCreatedAt
         },
         projectRoles: async (parent) => {
-          const projectRoles = await getRolesByUserIdFactory({ db })({
+          const projectRoles = await getUserProjectRolesFactory({ db })({
             userId: parent.id,
             workspaceId: parent.workspaceId
           })

@@ -71,6 +71,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -91,6 +92,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const getServerInfo = getServerInfoFactory({ db })

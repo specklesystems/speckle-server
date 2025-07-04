@@ -2,6 +2,7 @@ import { StreamAcl, Streams } from '@/modules/core/dbSchema'
 import {
   DeleteProject,
   GetProject,
+  GetUserProjectRoles,
   StoreProject,
   StoreProjectRole,
   StoreProjectRoles
@@ -50,4 +51,18 @@ export const storeProjectRolesFactory =
         role: role.role
       }))
     )
+  }
+
+export const getUserProjectRolesFactory =
+  ({ db }: { db: Knex }): GetUserProjectRoles =>
+  async ({ userId, workspaceId }) => {
+    const query = db<StreamAclRecord>(StreamAcl.name).where({ userId })
+
+    if (workspaceId) {
+      query
+        .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+        .where({ workspaceId })
+    }
+
+    return await query
   }
