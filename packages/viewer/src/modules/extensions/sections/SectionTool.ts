@@ -314,7 +314,7 @@ export class SectionTool extends Extension {
     // this.cameraProvider.on(CameraEvent.FrameUpdate, (data: boolean) => {
     //   this.allowSelection = !data
     // })
-    /** Hook up to the le click */
+    /** Hook up to le click */
     this.viewer.getRenderer().input.on(InputEvent.Click, this.clickHandler.bind(this))
 
     /** Start off disabled */
@@ -631,13 +631,14 @@ export class SectionTool extends Extension {
     args: Vector2 & { event: PointerEvent; multiSelect: boolean }
   ) {
     if (this.dragging) return
+    if (!this.enabled || !this.visible) return
 
     /** We only test against our hit box mesh */
     this.raycaster.setFromCamera(args, this.cameraProvider.renderingCamera)
     let intersectedObjects: Array<Intersection> = []
-    if (this.display.visible) {
-      intersectedObjects = this.raycaster.intersectObject(this.boxHitMesh)
-    }
+
+    intersectedObjects = this.raycaster.intersectObject(this.boxHitMesh)
+
     /** If we did not hit it, reset it to default */
     if (!intersectedObjects.length) {
       this.translateControls.attach(this.translationRotationAnchor)

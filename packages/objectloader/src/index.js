@@ -614,10 +614,16 @@ class ObjectLoader {
     const response = await this.fetch(this.requestUrlRootObj, { headers: this.headers })
     if (!response.ok) {
       if ([401, 403].includes(response.status)) {
-        throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
+        throw new ObjectLoaderRuntimeError(
+          `You do not have access to the root object! Object URI: '${
+            this.requestUrlRootObj
+          }', Token ID: '${this.token.substring(0, 10)}'. Response: '${
+            response.status
+          } ${response.statusText}'`
+        )
       }
       throw new ObjectLoaderRuntimeError(
-        `Failed to fetch root object: ${response.status} ${response.statusText})`
+        `Failed to fetch root object. Object URI: '${this.requestUrlRootObj}'. Response: '${response.status} ${response.statusText}'`
       )
     }
     const responseText = await response.text()
