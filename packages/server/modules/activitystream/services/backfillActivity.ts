@@ -6,12 +6,9 @@ import { WorkspaceSeats } from '@/modules/workspacesCore/helpers/db'
 import { StreamRoles, WorkspacePlan } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
-import { MaxBackfillIterations } from '@/modules/activitystream/errors/activityStream'
+import { MaxBackfillIterationsReached } from '@/modules/activitystream/errors/activityStream'
 import { Logger } from '@/observability/logging'
-import {
-  Activity,
-  ResourceEventsToPayloadMap
-} from '@/modules/activitystream/domain/types'
+import { Activity } from '@/modules/activitystream/domain/types'
 import {
   BillingInterval,
   WorkspacePlans
@@ -20,8 +17,8 @@ import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 
 const getUntrackedWorkspaceSeatsFactory =
   ({ db }: { db: Knex }) =>
-  async (limit: number): Promise<WorkspaceSeat[]> => {
-    return await db<WorkspaceSeat>(WorkspaceSeats.name)
+  async (limit: number) => {
+    const workspaceSeats = await db<WorkspaceSeat>(WorkspaceSeats.name)
       .select('*')
       .whereRaw(
         `NOT EXISTS (
@@ -34,12 +31,33 @@ const getUntrackedWorkspaceSeatsFactory =
         )`
       )
       .limit(limit)
+
+    return workspaceSeats.map(mapUntrackedSeatToActivity)
   }
+
+const mapUntrackedSeatToActivity = (
+  seat: WorkspaceSeat
+): Activity<'workspace', 'workspace_seat_updated'> => ({
+  id: cryptoRandomString({ length: 10 }),
+  contextResourceId: seat.workspaceId,
+  contextResourceType: 'workspace' as const,
+  eventType: 'workspace_seat_updated' as const,
+  userId: null,
+  payload: {
+    version: '1' as const,
+    new: {
+      userId: seat.userId,
+      type: seat.type
+    },
+    old: null
+  },
+  createdAt: seat.createdAt
+})
 
 const getUntrackedWorkspacePlansFactory =
   ({ db }: { db: Knex }) =>
-  async (limit: number): Promise<WorkspacePlan[]> => {
-    return await db<WorkspacePlan>('workspace_plans')
+  async (limit: number) => {
+    const workspacePlans = await db<WorkspacePlan>('workspace_plans')
       .select('*')
       .whereRaw(
         `NOT EXISTS (
@@ -53,7 +71,27 @@ const getUntrackedWorkspacePlansFactory =
       )
       .orderBy('workspace_plans.createdAt', 'desc')
       .limit(limit)
+
+    return workspacePlans.map(mapUntrackedWorkspacePlanToActivity)
   }
+
+const mapUntrackedWorkspacePlanToActivity = (
+  plan: WorkspacePlan
+): Activity<'workspace', 'workspace_plan_created'> => ({
+  id: cryptoRandomString({ length: 10 }),
+  contextResourceId: plan.workspaceId,
+  contextResourceType: 'workspace' as const,
+  eventType: 'workspace_plan_created' as const,
+  userId: null,
+  payload: {
+    version: '1' as const,
+    new: {
+      name: plan.name,
+      status: plan.status
+    }
+  },
+  createdAt: plan.createdAt
+})
 
 type PlanSubscriptionPair = {
   workspaceId: string
@@ -66,8 +104,8 @@ type PlanSubscriptionPair = {
 
 const getUntrackedSubscriptionsFactory =
   ({ db }: { db: Knex }) =>
-  async (limit: number): Promise<PlanSubscriptionPair[]> => {
-    return (await db<PlanSubscriptionPair>('workspace_subscriptions')
+  async (limit: number) => {
+    const results = (await db<PlanSubscriptionPair>('workspace_subscriptions')
       .select([
         'workspace_subscriptions.workspaceId',
         'workspace_plans.name',
@@ -95,14 +133,42 @@ const getUntrackedSubscriptionsFactory =
       )
       .orderBy('workspace_subscriptions.createdAt', 'desc')
       .limit(limit)) as PlanSubscriptionPair[]
+
+    return results.map(mapUntrackedPlanSubscriptionPairToActivity)
   }
+
+const mapUntrackedPlanSubscriptionPairToActivity = (
+  subscription: PlanSubscriptionPair
+): Activity<'workspace', 'workspace_subscription_updated'> => ({
+  id: cryptoRandomString({ length: 10 }),
+  contextResourceId: subscription.workspaceId,
+  contextResourceType: 'workspace' as const,
+  eventType: 'workspace_subscription_updated' as const,
+  userId: null,
+  payload: {
+    version: '1' as const,
+    new: {
+      name: subscription.name,
+      status: subscription.status,
+      billingInterval: subscription.billingInterval,
+      totalEditorSeats: subscription.subscriptionData.products[0].quantity
+    },
+    old: {
+      name: 'free' as const,
+      status: 'valid' as const
+    }
+  },
+  createdAt: subscription.createdAt
+})
 
 type StreamAclWithCreatedAt = StreamAclRecord & { createdAt: Date }
 
 const getUntrackedProjectRolesFactory =
   ({ db }: { db: Knex }) =>
-  (limit: number): Promise<StreamAclWithCreatedAt[]> => {
-    return db<StreamAclWithCreatedAt>(StreamAcl.name)
+  async (limit: number) => {
+    const results: StreamAclWithCreatedAt[] = await db<StreamAclWithCreatedAt>(
+      StreamAcl.name
+    )
       .select([
         'stream_acl.resourceId',
         'stream_acl.userId',
@@ -123,20 +189,26 @@ const getUntrackedProjectRolesFactory =
       .orderBy('stream_acl.resourceId', 'desc')
       .orderBy('stream_acl.userId', 'desc')
       .limit(limit)
+
+    return results.map(mapUntrackedProjectRoleToActivity)
   }
 
-export type SaveActivities = <
-  T extends keyof ResourceEventsToPayloadMap,
-  R extends keyof ResourceEventsToPayloadMap[T]
->(
-  args: Activity<T, R>[]
-) => Promise<void>
-
-const saveActivitiesFactory =
-  ({ db }: { db: Knex }): SaveActivities =>
-  async (items) => {
-    await db(ActivityModel.name).insert(items)
-  }
+const mapUntrackedProjectRoleToActivity = (
+  projectRole: StreamAclWithCreatedAt
+): Activity<'project', 'project_role_updated'> => ({
+  id: cryptoRandomString({ length: 10 }),
+  contextResourceId: projectRole.resourceId,
+  contextResourceType: 'project' as const,
+  eventType: 'project_role_updated' as const,
+  userId: null,
+  payload: {
+    version: '1' as const,
+    userId: projectRole.userId,
+    new: projectRole.role as StreamRoles,
+    old: null
+  },
+  createdAt: projectRole.createdAt
+})
 
 export const backfillMissingActivityFactory =
   ({ db }: { db: Knex }) =>
@@ -144,138 +216,31 @@ export const backfillMissingActivityFactory =
     // TODO: adjust this numbers
     const BATCH_SIZE = 3000
     const MAX_ITERATIONS = 100
-
-    const getUntrackedWorkspaceSeats = getUntrackedWorkspaceSeatsFactory({ db })
-    const getUntrackedWorkspacePlans = getUntrackedWorkspacePlansFactory({ db })
-    const getUntrackedSubscriptions = getUntrackedSubscriptionsFactory({ db })
-    const getUntrackedProjectRoles = getUntrackedProjectRolesFactory({ db })
-    const saveActivities = saveActivitiesFactory({ db })
+    const TASKS = [
+      getUntrackedWorkspaceSeatsFactory({ db }),
+      getUntrackedWorkspacePlansFactory({ db }),
+      getUntrackedSubscriptionsFactory({ db }),
+      getUntrackedProjectRolesFactory({ db })
+    ]
 
     const activityIds: string[] = []
-    let seats = []
-    let iterations = 0
 
-    do {
-      if (iterations > MAX_ITERATIONS) throw new MaxBackfillIterations()
-      seats = await getUntrackedWorkspaceSeats(BATCH_SIZE)
-      iterations++
+    TASKS.forEach(async (task) => {
+      let iterations = 0
+      let activities = []
 
-      const activities = seats.map((seat) => ({
-        id: cryptoRandomString({ length: 10 }),
-        contextResourceId: seat.workspaceId,
-        contextResourceType: 'workspace' as const,
-        eventType: 'workspace_seat_updated' as const,
-        userId: null,
-        payload: {
-          version: '1' as const,
-          new: {
-            userId: seat.userId,
-            type: seat.type
-          },
-          old: null
-        },
-        createdAt: seat.createdAt
-      }))
+      do {
+        if (iterations >= MAX_ITERATIONS) throw new MaxBackfillIterationsReached()
+        activities = await task(BATCH_SIZE)
 
-      if (activities.length) {
-        await saveActivities(activities)
-        activities.forEach((activity) => activityIds.push(activity.id))
-      }
-    } while (seats.length)
+        if (activities.length) {
+          db(ActivityModel.name).insert(activities)
+          activities.forEach((activity) => activityIds.push(activity.id))
+        }
 
-    let plans = []
-    iterations = 0
-
-    do {
-      if (iterations > MAX_ITERATIONS) throw new MaxBackfillIterations()
-      plans = await getUntrackedWorkspacePlans(BATCH_SIZE)
-      iterations++
-
-      const activities = plans.map((plan) => ({
-        id: cryptoRandomString({ length: 10 }),
-        contextResourceId: plan.workspaceId,
-        contextResourceType: 'workspace' as const,
-        eventType: 'workspace_plan_created' as const,
-        userId: null,
-        payload: {
-          version: '1' as const,
-          new: {
-            name: plan.name,
-            status: plan.status
-          }
-        },
-        createdAt: plan.createdAt
-      }))
-
-      if (activities.length) {
-        await saveActivities(activities)
-        activities.forEach((activity) => activityIds.push(activity.id))
-      }
-    } while (plans.length)
-
-    let subscriptions = []
-    iterations++
-
-    do {
-      if (iterations > MAX_ITERATIONS) throw new MaxBackfillIterations()
-      subscriptions = await getUntrackedSubscriptions(BATCH_SIZE)
-      iterations++
-
-      const activities = subscriptions.map((subscription) => ({
-        id: cryptoRandomString({ length: 10 }),
-        contextResourceId: subscription.workspaceId,
-        contextResourceType: 'workspace' as const,
-        eventType: 'workspace_subscription_updated' as const,
-        userId: null,
-        payload: {
-          version: '1' as const,
-          new: {
-            name: subscription.name,
-            status: subscription.status,
-            billingInterval: subscription.billingInterval,
-            totalEditorSeats: subscription.subscriptionData.products[0].quantity
-          },
-          old: {
-            name: 'free' as const,
-            status: 'valid' as const
-          }
-        },
-        createdAt: subscription.createdAt
-      }))
-
-      if (activities.length) {
-        await saveActivities(activities)
-        activities.forEach((activity) => activityIds.push(activity.id))
-      }
-    } while (subscriptions.length)
-
-    let projectRoles = []
-
-    do {
-      if (iterations > MAX_ITERATIONS) throw new MaxBackfillIterations()
-      projectRoles = await getUntrackedProjectRoles(BATCH_SIZE)
-      iterations++
-
-      const activities = projectRoles.map((projectRole) => ({
-        id: cryptoRandomString({ length: 10 }),
-        contextResourceId: projectRole.resourceId,
-        contextResourceType: 'project' as const,
-        eventType: 'project_role_updated' as const,
-        userId: null,
-        payload: {
-          version: '1' as const,
-          userId: projectRole.userId,
-          new: projectRole.role as StreamRoles,
-          old: null
-        },
-        createdAt: projectRole.createdAt // this is stream created at
-      }))
-
-      if (projectRoles.length) {
-        await saveActivities(activities)
-        activities.forEach((activity) => activityIds.push(activity.id))
-      }
-    } while (projectRoles.length)
+        iterations++
+      } while (activities.length)
+    })
 
     if (activityIds.length) {
       logger.error(

@@ -6,8 +6,8 @@ export class InvalidActionTypeError extends BaseError {
   static statusCode = 400
 }
 
-export class MaxBackfillIterations extends BaseError {
+export class MaxBackfillIterationsReached extends BaseError {
   static defaultMessage = 'Max backfill iterations reached'
-  static code = 'MAX_BACKFILL_ITERATIONS'
-  static statusCode = 400
+  static code = 'MAX_BACKFILL_ITERATIONS_REACHED'
+  static statusCode = 500
 }
