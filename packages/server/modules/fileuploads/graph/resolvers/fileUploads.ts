@@ -25,7 +25,9 @@ import {
 } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
+  fileImportServiceShouldUsePrivateObjectsServerUrl,
   getFileUploadUrlExpiryMinutes,
+  getPrivateObjectsServerOrigin,
   getServerOrigin,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
@@ -134,7 +136,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
     const generatePresignedUrl = generatePresignedUrlFactory({
       getSignedUrl: getSignedUrlFactory({
-        objectStorage: projectStorage
+        objectStorage: projectStorage.public
       }),
       upsertBlob: upsertBlobFactory({
         db: projectDb
@@ -189,7 +191,9 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     ])
 
     const pushJobToFileImporter = pushJobToFileImporterFactory({
-      getServerOrigin,
+      getServerOrigin: fileImportServiceShouldUsePrivateObjectsServerUrl()
+        ? getPrivateObjectsServerOrigin
+        : getServerOrigin,
       createAppToken: createAppTokenFactory({
         storeApiToken: storeApiTokenFactory({ db }),
         storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -221,7 +225,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
             db: projectDb
           }),
           getBlobMetadata: getBlobMetadataFromStorage({
-            objectStorage: projectStorage
+            objectStorage: projectStorage.private
           })
         }),
         insertNewUploadAndNotify: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
