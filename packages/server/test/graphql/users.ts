@@ -47,6 +47,19 @@ const getActiveUserQuery = gql`
   ${baseUserFieldsFragment}
 `
 
+export const activeUserUpdateMutation = gql`
+  mutation activeUserUpdateMutation($user: UserUpdateInput!) {
+    activeUserMutations {
+      update(user: $user) {
+        name
+        bio
+        company
+        avatar
+      }
+    }
+  }
+`
+
 export const getActiveUserWithWorkspaceJoinRequestsQuery = gql`
   query GetActiveUserWithWorkspaceJoinRequests {
     activeUser {
