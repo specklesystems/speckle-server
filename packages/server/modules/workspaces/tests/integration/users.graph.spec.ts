@@ -149,7 +149,8 @@ describe('ActiveUserMutations', () => {
       const updatedName = name + '-updated'
       const resB = await apollo.execute(ActiveUserUpdateMutationDocument, {
         user: {
-          name: updatedName
+          name: updatedName,
+          avatar: null
         }
       })
       expect(resB).to.not.haveGraphQLErrors()
@@ -178,7 +179,7 @@ describe('ActiveUserMutations', () => {
 
     const resB = await apollo.execute(ActiveUserUpdateMutationDocument, {
       user: {
-        avatar: null
+        avatar: ''
       }
     })
     expect(resB).to.not.haveGraphQLErrors()
