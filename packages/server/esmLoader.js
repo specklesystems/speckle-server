@@ -4,8 +4,10 @@ import { register } from 'node:module'
 import { appRoot, packageRoot } from './root.js'
 
 /**
- * Must be invoked through --import when running the node app to set up path aliases
- * and extensionless imports
+ * Must be invoked through --import when running the node app to set up the following:
+ * - Custom path aliases for imports
+ * - Extensionless imports
+ * - Directory imports like in CJS
  */
 
 /**

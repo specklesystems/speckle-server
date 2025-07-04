@@ -1,5 +1,5 @@
+import { isGraphQLError } from '@/modules/shared/helpers/graphqlHelper'
 import { ApolloServerOptions, BaseContext } from '@apollo/server'
-import { GraphQLError } from 'graphql'
 import { omit } from 'lodash-es'
 import VError from 'verror'
 
@@ -20,7 +20,8 @@ export function buildErrorFormatter(params: {
   // TODO: Add support for client-aware errors and obfuscate everything else
   return function (formattedError, error) {
     let realError = error || formattedError
-    if (realError instanceof GraphQLError && realError.originalError) {
+
+    if (isGraphQLError(realError) && realError.originalError) {
       realError = realError.originalError
     }
 

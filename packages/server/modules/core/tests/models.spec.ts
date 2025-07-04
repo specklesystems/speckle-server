@@ -13,7 +13,6 @@ import { beforeEachContext } from '@/test/hooks'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import { omit } from 'lodash-es'
-import { before, describe } from 'mocha'
 
 describe('Models', () => {
   const me: BasicTestUser = {

@@ -16271,7 +16271,6 @@ __metadata:
     "@types/mailchimp__mailchimp_marketing": "npm:^3.0.9"
     "@types/mjml": "npm:^4.7.0"
     "@types/mocha": "npm:^10.0.0"
-    "@types/mock-require": "npm:^2.0.1"
     "@types/module-alias": "npm:^2.0.1"
     "@types/netmask": "npm:^2.0.0"
     "@types/node": "npm:^18.19.38"
@@ -16323,7 +16322,6 @@ __metadata:
     enforce-unique: "npm:^1.3.0"
     eslint: "npm:^8.11.0"
     eslint-config-prettier: "npm:^8.5.0"
-    esmock: "npm:^2.7.1"
     eventemitter2: "npm:^6.4.7"
     express: "npm:^4.20.0"
     express-async-errors: "npm:^3.1.1"
@@ -16351,7 +16349,6 @@ __metadata:
     mocha: "npm:^10.1.0"
     mocha-junit-reporter: "npm:^2.0.2"
     mocha-multi: "npm:1.1.7"
-    mock-require: "npm:^3.0.3"
     mock-socket: "npm:^9.3.1"
     module-alias: "npm:^2.2.2"
     netmask: "npm:^2.0.2"
@@ -16384,7 +16381,6 @@ __metadata:
     stripe: "npm:^17.1.0"
     subscriptions-transport-ws: "npm:^0.11.0"
     supertest: "npm:^4.0.2"
-    testdouble: "npm:^3.20.2"
     true-myth: "npm:^8.5.0"
     ts-node: "npm:^10.9.2"
     tsconfig-paths: "npm:^4.0.0"
@@ -16395,6 +16391,9 @@ __metadata:
     ua-parser-js: "npm:^1.0.38"
     undici: "npm:^5.28.4"
     verror: "npm:^1.10.1"
+    vite-plugin-commonjs: "npm:^0.10.4"
+    vite-tsconfig-paths: "npm:^5.1.4"
+    vitest: "npm:^3.2.4"
     ws: "npm:^8.17.1"
     xml-escape: "npm:^1.1.0"
     yargs: "npm:^17.3.1"
@@ -19499,15 +19498,6 @@ __metadata:
   version: 10.0.0
   resolution: "@types/mocha@npm:10.0.0"
   checksum: 10/40fcc44fd78ce095f2620467b7c10f788deab7c04ef3a9bc337155c45a31d616e9f8f667d640670b77542411598f58e950d5c67ae96cbb5aaada8a13a68efdf0
-  languageName: node
-  linkType: hard
-
-"@types/mock-require@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "@types/mock-require@npm:2.0.1"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 10/8749a4b3fcb9f3d6ebaeff442f00997ca59c4806bc00fea648a1fd06b1ea8510a6900b8e47070561ddf15ce98abc80dfe24ff21a307c2b0d1a6845bd865f708b
   languageName: node
   linkType: hard
 
@@ -29027,13 +29017,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esmock@npm:^2.7.1":
-  version: 2.7.1
-  resolution: "esmock@npm:2.7.1"
-  checksum: 10/9f6ee0cdef1c496c7c66b2b3dee182c089447a0bc96f989f58c313b02689b17a2440d4f2221d0e7ae36d38ba4676683a0cf0fc5b863b41b0db46d8e818ff4fa7
-  languageName: node
-  linkType: hard
-
 "espree@npm:^10.0.1":
   version: 10.0.1
   resolution: "espree@npm:10.0.1"
@@ -30670,13 +30653,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-caller-file@npm:^1.0.2":
-  version: 1.0.3
-  resolution: "get-caller-file@npm:1.0.3"
-  checksum: 10/0b776558c1d94ac131ec0d47bf9da4e00a38e7d3a6cbde534e0e4656c13ead344e69ef7ed2c0bca16620cc2e1e26529f90e2336c8962736517b64890d583a2a0
-  languageName: node
-  linkType: hard
-
 "get-caller-file@npm:^2.0.1, get-caller-file@npm:^2.0.5":
   version: 2.0.5
   resolution: "get-caller-file@npm:2.0.5"
@@ -31362,6 +31338,13 @@ __metadata:
   version: 0.1.4
   resolution: "globjoin@npm:0.1.4"
   checksum: 10/1e7e0f145f6572134e999b5511767698c8196e891f50db76a25189c897f355aec1b7e62f9eeaa0626db55460353470ac6bec4aa118beb710e4543037e705647a
+  languageName: node
+  linkType: hard
+
+"globrex@npm:^0.1.2":
+  version: 0.1.2
+  resolution: "globrex@npm:0.1.2"
+  checksum: 10/81ce62ee6f800d823d6b7da7687f841676d60ee8f51f934ddd862e4057316d26665c4edc0358d4340a923ac00a514f8b67c787e28fe693aae16350f4e60d55e9
   languageName: node
   linkType: hard
 
@@ -33443,13 +33426,6 @@ __metadata:
     call-bind: "npm:^1.0.2"
     has-tostringtag: "npm:^1.0.0"
   checksum: 10/36d9174d16d520b489a5e9001d7d8d8624103b387be300c50f860d9414556d0485d74a612fdafc6ebbd5c89213d947dcc6b6bff6b2312093f71ea03cbb19e564
-  languageName: node
-  linkType: hard
-
-"is-regexp@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "is-regexp@npm:1.0.0"
-  checksum: 10/be692828e24cba479ec33644326fa98959ec68ba77965e0291088c1a741feaea4919d79f8031708f85fd25e39de002b4520622b55460660b9c369e6f7187faef
   languageName: node
   linkType: hard
 
@@ -38183,16 +38159,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mock-require@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "mock-require@npm:3.0.3"
-  dependencies:
-    get-caller-file: "npm:^1.0.2"
-    normalize-path: "npm:^2.1.1"
-  checksum: 10/4ae5bfd19428e47fadbf4d830d22aba28af237dab4d6e76a5bb49cac6415c2c7646acd66fd50cefce277a3470e413146c345a68ce236cf3047b340a06bcdc2b2
-  languageName: node
-  linkType: hard
-
 "mock-socket@npm:^9.3.1":
   version: 9.3.1
   resolution: "mock-socket@npm:9.3.1"
@@ -42722,16 +42688,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"quibble@npm:^0.9.2":
-  version: 0.9.2
-  resolution: "quibble@npm:0.9.2"
-  dependencies:
-    lodash: "npm:^4.17.21"
-    resolve: "npm:^1.22.8"
-  checksum: 10/376c292ee01a2330f97a7388da79dc46aa3d08304c2c4f9a1ef8ef51000708ec8fd3487ba8036401ef7e4265f3c9d7eaaa742a9e2622aa7238cd2c3fc872c321
-  languageName: node
-  linkType: hard
-
 "quick-format-unescaped@npm:^4.0.3":
   version: 4.0.4
   resolution: "quick-format-unescaped@npm:4.0.4"
@@ -46108,16 +46064,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stringify-object-es5@npm:^2.5.0":
-  version: 2.5.0
-  resolution: "stringify-object-es5@npm:2.5.0"
-  dependencies:
-    is-plain-obj: "npm:^1.0.0"
-    is-regexp: "npm:^1.0.0"
-  checksum: 10/eb81599d625fc49e26f44bf94262855ae6fb56bae44148aed50bd2eb930752942d45183aa3f106e24d7b60c4797c936573bedec5caa4d81d96b399bc4c323c98
-  languageName: node
-  linkType: hard
-
 "strip-ansi-cjs@npm:strip-ansi@^6.0.1, strip-ansi@npm:^6.0.0, strip-ansi@npm:^6.0.1":
   version: 6.0.1
   resolution: "strip-ansi@npm:6.0.1"
@@ -47109,18 +47055,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"testdouble@npm:^3.20.2":
-  version: 3.20.2
-  resolution: "testdouble@npm:3.20.2"
-  dependencies:
-    lodash: "npm:^4.17.21"
-    quibble: "npm:^0.9.2"
-    stringify-object-es5: "npm:^2.5.0"
-    theredoc: "npm:^1.0.0"
-  checksum: 10/cdc27769ba5c0869d1e6172d1dba1aec621c8006a650865d10a340cf56c56fea6b53fd7c59e191aec743c9bdcf2c367a6d82a47b7e0663548738450d88ace024
-  languageName: node
-  linkType: hard
-
 "text-decoder@npm:^1.1.0":
   version: 1.2.1
   resolution: "text-decoder@npm:1.2.1"
@@ -47143,13 +47077,6 @@ __metadata:
   dependencies:
     any-promise: "npm:^1.0.0"
   checksum: 10/486e1283a867440a904e36741ff1a177faa827cf94d69506f7e3ae4187b9afdf9ec368b3d8da225c192bfe2eb943f3f0080594156bf39f21b57cd1411e2e7f6d
-  languageName: node
-  linkType: hard
-
-"theredoc@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "theredoc@npm:1.0.0"
-  checksum: 10/9c6c2c010bdcf1ccdb22505b5637513e70c3f86838f8035ed7dde38be2f00ea0ff79536dd2f53707872549554b6c4a8d88caa5bf1cbeaf1a2e6b70b07f4349de
   languageName: node
   linkType: hard
 
@@ -47707,6 +47634,20 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: 10/a91a15b3c9f76ac462f006fa88b6bfa528130dcfb849dd7ef7f9d640832ab681e235b8a2bc58ecde42f72851cc1d5d4e22c901b0c11aa51001ea1d395074b794
+  languageName: node
+  linkType: hard
+
+"tsconfck@npm:^3.0.3":
+  version: 3.1.6
+  resolution: "tsconfck@npm:3.1.6"
+  peerDependencies:
+    typescript: ^5.0.0
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  bin:
+    tsconfck: bin/tsconfck.js
+  checksum: 10/8574595286850273bf83319b4e67ca760088df3c36f7ca1425aaf797416672e854271bd31e75c9b3e1836ed5b66410c6bc38cbbda9c638a5416c6a682ed94132
   languageName: node
   linkType: hard
 
@@ -49353,6 +49294,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vite-plugin-commonjs@npm:^0.10.4":
+  version: 0.10.4
+  resolution: "vite-plugin-commonjs@npm:0.10.4"
+  dependencies:
+    acorn: "npm:^8.12.1"
+    magic-string: "npm:^0.30.11"
+    vite-plugin-dynamic-import: "npm:^1.6.0"
+  checksum: 10/ce7df43281bb9a2fd3c429996c1c543d5fd29921e6165f2694135ab65b16e6c0b4ee89081b81a00d8522e5aa1f88b8901c0a72fdd89ccb1db7c633e464e43ae9
+  languageName: node
+  linkType: hard
+
 "vite-plugin-dts@npm:^4.5.4":
   version: 4.5.4
   resolution: "vite-plugin-dts@npm:4.5.4"
@@ -49373,6 +49325,18 @@ __metadata:
     vite:
       optional: true
   checksum: 10/1504a8da02f8015c3138ef57a690179ad9b9d4369a054ae48b52a1c8cbc7ad05474551eab309cd90cf758800e17b67ccd13317aa5f8e28efde957547c7a339fb
+  languageName: node
+  linkType: hard
+
+"vite-plugin-dynamic-import@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "vite-plugin-dynamic-import@npm:1.6.0"
+  dependencies:
+    acorn: "npm:^8.12.1"
+    es-module-lexer: "npm:^1.5.4"
+    fast-glob: "npm:^3.3.2"
+    magic-string: "npm:^0.30.11"
+  checksum: 10/816b17e792e02087c215382d9bcdd6174ec49b2901db59583172fbe25b56adfccb4f1da4dc2bd103559e752856f1d1ae2ce02ccc8e45f6b666ab98f138b53657
   languageName: node
   linkType: hard
 
@@ -49414,6 +49378,22 @@ __metadata:
   peerDependencies:
     vite: ^3.0.0-0 || ^4.0.0-0 || ^5.0.0-0 || ^6.0.0-0
   checksum: 10/773ea7cb52461b00ffe7b3509ef8ea414cde7d0cf86bc996a9e9b9f1c882275f1aacf79b1bdcf438c477e849193730620b44c561384bc9c50e31d1c1c3b8182c
+  languageName: node
+  linkType: hard
+
+"vite-tsconfig-paths@npm:^5.1.4":
+  version: 5.1.4
+  resolution: "vite-tsconfig-paths@npm:5.1.4"
+  dependencies:
+    debug: "npm:^4.1.1"
+    globrex: "npm:^0.1.2"
+    tsconfck: "npm:^3.0.3"
+  peerDependencies:
+    vite: "*"
+  peerDependenciesMeta:
+    vite:
+      optional: true
+  checksum: 10/b409dbd17829f560021a71dba3e473b9c06dcf5fdc9d630b72c1f787145ec478b38caff1be04868971ac8bdcbf0f5af45eeece23dbc9c59c54b901f867740ae0
   languageName: node
   linkType: hard
 

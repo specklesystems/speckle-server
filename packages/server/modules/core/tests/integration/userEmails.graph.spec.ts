@@ -1,6 +1,5 @@
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
-import { describe, it } from 'mocha'
 import {
   createRandomEmail,
   createRandomPassword

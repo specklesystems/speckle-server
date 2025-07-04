@@ -24,7 +24,6 @@ import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commi
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import { times } from 'lodash-es'
-import { describe } from 'mocha'
 
 enum BatchActionType {
   Move,

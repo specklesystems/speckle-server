@@ -725,18 +725,20 @@ describe('Objects @core-objects', () => {
     expect(commitChildren.objects.length).to.equal(2)
   })
 
-  it('should stream objects back', (done) => {
+  it('should stream objects back', async () => {
     let tcount = 0
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    getObjectChildrenStream({ streamId: stream.id, objectId: commitId }).then(
-      (stream) => {
-        stream.on('data', () => tcount++)
-        stream.on('end', () => {
-          expect(tcount).to.equal(3333)
-          done()
-        })
-      }
-    )
+
+    const childrenStream = await getObjectChildrenStream({
+      streamId: stream.id,
+      objectId: commitId
+    })
+    await new Promise<void>((resolve) => {
+      childrenStream.on('data', () => tcount++)
+      childrenStream.on('end', () => {
+        expect(tcount).to.equal(3333)
+        resolve()
+      })
+    })
   })
 
   it('should not deadlock when batch inserting in random order', async function () {

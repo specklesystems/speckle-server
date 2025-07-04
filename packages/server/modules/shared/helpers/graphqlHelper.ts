@@ -12,6 +12,7 @@ import {
 } from '@/modules/shared/errors'
 import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
+import { get } from 'lodash-es'
 
 /**
  * All dataloaders must at the very least follow this type
@@ -62,4 +63,12 @@ export const isUserGraphqlError = (error: GraphQLError): boolean => {
   ]
   const code = error.extensions?.code as string
   return userCodes.includes(code)
+}
+
+/**
+ * CJS/ESM interop issue - some code loads GraphQLError from a CJS file, other from ESM file, thus the same class exists through multiple references
+ * and `instanceof` checks fail
+ */
+export const isGraphQLError = (error: unknown): error is GraphQLError => {
+  return error instanceof GraphQLError || get(error, 'name') === GraphQLError.name
 }

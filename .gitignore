@@ -85,3 +85,4 @@ bin/
 multiregion.json
 multiregion.test.json
 packages/*/.tshy/
+.vite-node

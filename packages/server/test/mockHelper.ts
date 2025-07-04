@@ -3,8 +3,10 @@
 import { Factory, FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import { isArray, isFunction } from 'lodash-es'
-// import mock from 'mock-require'
 import { ConditionalPick } from 'type-fest'
+import { vi } from 'vitest'
+
+const allMockInitPromises: Array<Promise<void>> = []
 
 export type MockedFunctionImplementation = (...args: any[]) => MaybeAsync<any>
 
@@ -34,23 +36,42 @@ export function mockRequireModule<
   type MockedFunc<F extends MockTypeFunctionProp> = (
     ...args: Parameters<MockTypeFunctionsOnly[F]>
   ) => ReturnType<MockTypeFunctionsOnly[F]>
+  type MockTarget = { original: MockType | undefined }
 
+  // const mocks = createMockImport(import.meta.url)
   const { preventDestroy } = params
   modulePaths = isArray(modulePaths) ? modulePaths : [modulePaths]
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   dependencyPaths = isArray(dependencyPaths) ? dependencyPaths : [dependencyPaths]
 
+  let initPromise: Promise<void> | undefined = undefined
   let isDisabled = false
   let functionReplacements: Partial<
     Record<MockTypeFunctionProp, MockedFunc<MockTypeFunctionProp>>
   > = {}
 
-  // TODO: Fix, move mocks to ESM, needs a complete rewrite possibly
-  // const originalModule = require(modulePaths[0]) as MockType
-  const originalModule = {} as MockType
-  const mockDefinition = new Proxy<MockType>(originalModule, {
+  const reRequireDependencies = async () => {
+    /**
+     * Re-requires the specified modules, in case they were required before the mock was set up
+     * and thus don't have the mocked module
+     */
+    // await Promise.all(dependencyPaths.map((p) => mocks.reImport(p)))
+    // vi.resetModules()
+  }
+
+  // Do sync init first (so that it's done ASAP)
+  const mockTarget: MockTarget = { original: undefined }
+  const mockDefinition = new Proxy<MockTarget>(mockTarget, {
     get(target, prop) {
+      if (!target.original) {
+        throw new Error(
+          "Attempting to access mock before it's initialized: " +
+            JSON.stringify({ prop, origina: !!target.original })
+        )
+      }
+
       const realProp = prop as keyof MockTypeFunctionsOnly
-      const propVal = target[realProp]
+      const propVal = target.original[realProp]
 
       if (!isFunction(propVal)) return propVal
       return function (this: unknown, ...args: Parameters<typeof propVal>[]) {
@@ -61,27 +82,50 @@ export function mockRequireModule<
 
         return potentialReplacement.apply(this, args)
       }
-    }
+    },
+    ownKeys: (target) => Reflect.ownKeys(target.original || {}),
+    has: (target, prop) => prop in (target.original || {})
   })
+
+  /**
+   * TODO:
+   * - Do we need to re-requiure?
+   * - Do we need to mock all of the different paths?
+   */
 
   // Initialize mock with all paths (relative path, absolute alias path - both need to be specified
   // cause of a limitation in mock-require)
-  for (const modulePath of modulePaths) {
-    // mock(modulePath, mockDefinition)
+  // for (const modulePath of modulePaths) {
+  //   // mocks.mockImport(modulePath, mockDefinition)
+  //   // await replaceEsm(modulePath, mockDefinition)
+  //   vi.doMock(modulePath, () => mockDefinition)
+  // }
+  vi.doMock(modulePaths[0], () => mockDefinition)
+
+  const asyncInit = async () => {
+    const originalModule = (await vi.importActual(modulePaths[0])) as MockType
+    mockTarget.original = originalModule
+    await reRequireDependencies()
   }
 
-  /**
-   * Re-requires the specified modules, in case they were required before the mock was set up
-   * and thus don't have the mocked module
-   */
-  const reRequireDependencies = () => {
-    for (const dependencyPath of dependencyPaths) {
-      // mock.reRequire(dependencyPath)
+  const memoizedAsyncInit = () => {
+    if (!initPromise) {
+      initPromise = asyncInit()
+      allMockInitPromises.push(initPromise)
     }
+
+    return initPromise
   }
-  reRequireDependencies()
+
+  // Start initializing asynchronously & store in global cache
+  void memoizedAsyncInit()
 
   const core = {
+    /**
+     * Initialize the mock. Has to be done before the mock can actually be used.
+     */
+    init: memoizedAsyncInit,
+
     /**
      * Set (or unset) a mocked implementation of a function
      */
@@ -120,8 +164,7 @@ export function mockRequireModule<
       isDisabled = false
     },
     /**
-     * Unmock entirely
-     * Note: All requires done before this point will still point to the mocks
+     * Alias for disable
      */
     destroy(reRequireDeps = true) {
       if (preventDestroy) {
@@ -130,10 +173,10 @@ export function mockRequireModule<
       }
 
       for (const modulePath of modulePaths) {
-        // mock.stop(modulePath)
+        vi.doUnmock(modulePath)
       }
 
-      if (reRequireDeps) reRequireDependencies()
+      if (reRequireDeps) void reRequireDependencies()
     },
     /**
      * Re-require specified dependencies
@@ -280,4 +323,11 @@ export function createGlobalMock<MockType extends object = Record<string, unknow
     hijackFunction,
     resetMockedFunctions
   }
+}
+
+/**
+ * Ensure all mocks have been initialized
+ */
+export const ensureMocksInitialized = async () => {
+  await Promise.all(allMockInitPromises)
 }
