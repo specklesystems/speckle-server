@@ -15,6 +15,8 @@ const exclude = [
   ...(!featureFlags.FF_WORKSPACES_MODULE_ENABLED ? ['modules/workspaces/**/*'] : [])
 ]
 
+const workerExecArgv = ['--import', './esmLoader.js', '--import', 'tsx']
+
 export default defineConfig({
   plugins: [
     tsconfigPaths()
@@ -42,7 +44,7 @@ export default defineConfig({
     fileParallelism: false, // TODO: for now, keep it the same way it was w/ mocha,
     globals: true,
     environment: 'node',
-    reporters: ['verbose', 'hanging-process'],
+    reporters: ['verbose'],
     hookTimeout: 10000000, // TODO: while troubleshooting,
     // deps: {
     //   inline: ['knex', /knex/i]
@@ -54,12 +56,10 @@ export default defineConfig({
     // }
     poolOptions: {
       forks: {
-        // this one can theoretically crash vitest worker threads, be careful
-        // but its needed to enable worker threads to --import esmLoader & tsx
-        execArgv: [...process.execArgv]
+        execArgv: workerExecArgv
       },
       threads: {
-        execArgv: [...process.execArgv]
+        execArgv: workerExecArgv
       }
     }
   }

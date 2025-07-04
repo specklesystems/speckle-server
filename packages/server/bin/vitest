@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+import path from 'path'
+
+/**
+ * Find bin and run it (we don't want to hardcode a specific node_modules path).
+ * We use this so that we can pass in specific flags to node before the bin even begins to run
+ */
+const relativeBinPath = '../vitest.mjs'
+
+const mochaPath = await import.meta.resolve('vitest')
+const mochaPathDir = path.dirname(mochaPath)
+const mochaBinPath = path.join(mochaPathDir, relativeBinPath)
+await import(mochaBinPath)
