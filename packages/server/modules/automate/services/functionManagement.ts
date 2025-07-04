@@ -3,6 +3,7 @@ import {
   ExecutionEngineFunctionTemplateId,
   createFunction,
   getFunctionFactory,
+  regenerateFunctionToken,
   updateFunction as updateExecEngineFunction
 } from '@/modules/automate/clients/executionEngine'
 import {
@@ -289,4 +290,31 @@ export const handleAutomateFunctionCreatorAuthCallbackFactory =
     req.session?.destroy?.(noop)
 
     return res.redirect(redirectUrl.toString())
+  }
+
+export const regenerateFunctionTokenFactory =
+  (deps: {
+    regenerateFunctionToken: typeof regenerateFunctionToken
+    getFunction: ReturnType<typeof getFunctionFactory>
+    createStoredAuthCode: CreateStoredAuthCode
+  }) =>
+  async (params: { functionId: string; userId: string }) => {
+    const { functionId, userId } = params
+
+    const existingFunction = await deps.getFunction({ functionId })
+    if (!existingFunction) {
+      throw new AutomateFunctionUpdateError('Function not found')
+    }
+
+    const authCode = await deps.createStoredAuthCode({
+      userId,
+      action: AuthCodePayloadAction.UpdateFunction
+    })
+
+    const res = await deps.regenerateFunctionToken({
+      functionId,
+      authCode
+    })
+
+    return res.token
   }

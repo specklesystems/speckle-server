@@ -338,6 +338,8 @@ type AutomateMutations {
     @hasServerRole(role: SERVER_ADMIN)
   updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
     @hasScope(scope: "automate-functions:write")
+  regenerateFunctionToken(functionId: String!): String!
+    @hasScope(scope: "automate-functions:write")
 }
 
 extend type Project {

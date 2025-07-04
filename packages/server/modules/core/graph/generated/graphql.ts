@@ -392,6 +392,7 @@ export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
   createFunctionWithoutVersion: AutomateFunctionToken;
+  regenerateFunctionToken: Scalars['String']['output'];
   updateFunction: AutomateFunction;
 };
 
@@ -403,6 +404,11 @@ export type AutomateMutationsCreateFunctionArgs = {
 
 export type AutomateMutationsCreateFunctionWithoutVersionArgs = {
   input: CreateAutomateFunctionWithoutVersionInput;
+};
+
+
+export type AutomateMutationsRegenerateFunctionTokenArgs = {
+  functionId: Scalars['String']['input'];
 };
 
 
@@ -6216,6 +6222,7 @@ export type AutomateFunctionTokenResolvers<ContextType = GraphQLContext, ParentT
 export type AutomateMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateMutations'] = ResolversParentTypes['AutomateMutations']> = {
   createFunction?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType, RequireFields<AutomateMutationsCreateFunctionArgs, 'input'>>;
   createFunctionWithoutVersion?: Resolver<ResolversTypes['AutomateFunctionToken'], ParentType, ContextType, RequireFields<AutomateMutationsCreateFunctionWithoutVersionArgs, 'input'>>;
+  regenerateFunctionToken?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<AutomateMutationsRegenerateFunctionTokenArgs, 'functionId'>>;
   updateFunction?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType, RequireFields<AutomateMutationsUpdateFunctionArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

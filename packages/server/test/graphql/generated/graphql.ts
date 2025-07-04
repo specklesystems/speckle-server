@@ -373,6 +373,7 @@ export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
   createFunctionWithoutVersion: AutomateFunctionToken;
+  regenerateFunctionToken: Scalars['String']['output'];
   updateFunction: AutomateFunction;
 };
 
@@ -384,6 +385,11 @@ export type AutomateMutationsCreateFunctionArgs = {
 
 export type AutomateMutationsCreateFunctionWithoutVersionArgs = {
   input: CreateAutomateFunctionWithoutVersionInput;
+};
+
+
+export type AutomateMutationsRegenerateFunctionTokenArgs = {
+  functionId: Scalars['String']['input'];
 };
 
 
