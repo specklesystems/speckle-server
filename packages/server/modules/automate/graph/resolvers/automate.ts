@@ -646,6 +646,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             createStoredAuthCode: createStoredAuthCodeFactory({
               redis: getGenericRedis()
             })
+          })({
+            functionId,
+            userId: context.userId!
           })
         }
       },
