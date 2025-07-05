@@ -85,6 +85,8 @@ const previewErrorPayload = job.merge(
   })
 )
 
+export type PreviewErrorPayload = z.infer<typeof previewErrorPayload>
+
 export const previewResultPayload = z.discriminatedUnion('status', [
   previewSuccessPayload,
   previewErrorPayload

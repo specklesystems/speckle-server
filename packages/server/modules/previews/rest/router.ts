@@ -53,8 +53,6 @@ import { fromJobId, previewResultPayload } from '@speckle/shared/workers/preview
 import { observeMetricsFactory } from '@/modules/previews/observability/metrics'
 import { Summary } from 'prom-client'
 import { consumePreviewResultFactory } from '@/modules/previews/resultListener'
-import { ensureError } from '@speckle/shared'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -317,7 +315,6 @@ export const previewRouterFactory = ({
     '/api/projects/:streamId/previews/jobs/:jobId/results',
     authMiddlewareCreator(
       streamWritePermissionsPipelineFactory({
-        //FIXME this should be a new scope stream:previews or similar
         getStream: getStreamFactory({ db })
       })
     ),
@@ -365,30 +362,13 @@ export const previewRouterFactory = ({
         })
       })
 
-      try {
-        observeMetrics({ payload: jobResult })
+      observeMetrics({ payload: jobResult })
 
-        await consumePreviewResult({
-          projectId,
-          objectId,
-          previewResult: jobResult
-        })
-      } catch (e) {
-        const err = ensureError(e, 'Unknown error when consuming preview result')
-
-        switch (err.name) {
-          case StreamNotFoundError.name:
-            logger.warn(
-              { err },
-              'Failed to consume preview result; the stream does not exist. Probably deleted while the preview was being generated.'
-            )
-            break
-          default:
-            logger.error({ err }, 'Failed to consume preview result')
-        }
-
-        // in either case, we shall acknowledge to the worker that we have received the job result
-      }
+      await consumePreviewResult({
+        projectId,
+        objectId,
+        previewResult: jobResult
+      })
 
       res.status(200).send({
         message: 'Job result processed successfully'
