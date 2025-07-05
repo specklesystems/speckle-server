@@ -15,6 +15,7 @@ export enum AuthCodePayloadAction {
   ListUserFunctions = 'listUserFunctions',
   BecomeFunctionAuthor = 'becomeFunctionAuthor',
   GetAvailableGithubOrganizations = 'getAvailableGithubOrganizations',
+  GenerateFunctionToken = 'generateFunctionToken',
   UpdateFunction = 'updateFunction'
 }
 

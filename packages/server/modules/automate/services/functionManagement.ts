@@ -308,7 +308,7 @@ export const regenerateFunctionTokenFactory =
 
     const authCode = await deps.createStoredAuthCode({
       userId,
-      action: AuthCodePayloadAction.UpdateFunction
+      action: AuthCodePayloadAction.GenerateFunctionToken
     })
 
     const res = await deps.regenerateFunctionToken({
