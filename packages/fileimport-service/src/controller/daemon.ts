@@ -5,26 +5,24 @@ import {
   metricOperationErrors
 } from '@/controller/prometheusMetrics.js'
 import { DbClient, getDbClients } from '@/clients/knex.js'
-
 import { downloadFile } from '@/controller/filesApi.js'
 import fs from 'fs'
-
 import { ServerAPI } from '@/controller/api.js'
 import { downloadDependencies } from '@/controller/objDependencies.js'
 import { logger } from '@/observability/logging.js'
 import { Nullable, Scopes, wait, TIME_MS } from '@speckle/shared'
 import { Knex } from 'knex'
-import {
-  getIfcDllPath,
-  isProdEnv,
-  useLegacyIfcImporter
-} from '@/controller/helpers/env.js'
+import { getIfcDllPath, isProdEnv } from '@/controller/helpers/env.js'
 import { isErrorOutput, isSuccessOutput } from '@/common/output.js'
 import { runProcessWithTimeout } from '@/common/processHandling.js'
 import {
   getConnectionSettings,
   obfuscateConnectionString
 } from '@speckle/shared/environment/db'
+import { getFeatureFlags } from '@speckle/shared/environment'
+
+const { FF_LEGACY_IFC_IMPORTER_ENABLED, FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED } =
+  getFeatureFlags()
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -183,7 +181,7 @@ async function doTask(
     if (info.fileType.toLowerCase() === 'ifc') {
       if (
         info.fileName.toLowerCase().endsWith('.legacyimporter.ifc') ||
-        useLegacyIfcImporter()
+        FF_LEGACY_IFC_IMPORTER_ENABLED
       ) {
         await runProcessWithTimeout(
           taskLogger,
@@ -208,7 +206,10 @@ async function doTask(
           TIME_LIMIT,
           TMP_RESULTS_PATH
         )
-      } else {
+      } else if (
+        info.fileName.toLowerCase().endsWith('.dotnetimporter.ifc') ||
+        !FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
+      ) {
         await runProcessWithTimeout(
           taskLogger,
           process.env['DOTNET_BINARY_PATH'] || 'dotnet',
@@ -224,6 +225,27 @@ async function doTask(
           ],
           {
             USER_TOKEN: tempUserToken
+          },
+          TIME_LIMIT,
+          TMP_RESULTS_PATH
+        )
+      } else {
+        await runProcessWithTimeout(
+          taskLogger,
+          process.env['PYTHON_BINARY_PATH'] || 'python3',
+          [
+            '-m',
+            'speckleifc',
+            TMP_FILE_PATH,
+            TMP_RESULTS_PATH,
+            info.streamId,
+            `File upload: ${info.fileName}`,
+            existingBranch?.id || ''
+          ],
+          {
+            USER_TOKEN: tempUserToken,
+            //speckleifc is not installed to sys (e.g. via pip), so we need to point it to the directory explicitly
+            PYTHONPATH: '/speckle-server/speckleifc/src/'
           },
           TIME_LIMIT,
           TMP_RESULTS_PATH
