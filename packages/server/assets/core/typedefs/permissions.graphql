@@ -16,6 +16,9 @@ type ProjectPermissionChecks {
   canPublish: PermissionCheckResult!
   canLoad: PermissionCheckResult!
   canInvite: PermissionCheckResult!
+  canCreateEmbedTokens: PermissionCheckResult!
+  canRevokeEmbedTokens: PermissionCheckResult!
+  canReadEmbedTokens: PermissionCheckResult!
 }
 
 type RootPermissionChecks {

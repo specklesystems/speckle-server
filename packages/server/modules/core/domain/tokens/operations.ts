@@ -46,13 +46,21 @@ export type GetUserPersonalAccessTokens = (userId: string) => Promise<
   }[]
 >
 
-export type ListProjectEmbedTokens = (args: { projectId: string }) => Promise<
+export type ListProjectEmbedTokens = (args: {
+  projectId: string
+  filter?: {
+    limit?: number
+    cursor?: string | null
+  }
+}) => Promise<
   (EmbedApiToken & {
     createdAt: Date
     lastUsed: Date
     lifespan: number | bigint
   })[]
 >
+
+export type CountProjectEmbedTokens = (args: { projectId: string }) => Promise<number>
 
 export type RevokeTokenById = (tokenId: string) => Promise<boolean>
 
@@ -116,6 +124,18 @@ export type CreateAndStoreEmbedToken = (args: {
 }) => Promise<{
   token: string
   tokenMetadata: EmbedApiToken
+}>
+
+export type GetPaginatedProjectEmbedTokens = (args: {
+  projectId: string
+  filter?: {
+    limit?: number
+    cursor?: string
+  }
+}) => Promise<{
+  items: EmbedApiToken[]
+  totalCount: number
+  cursor: string | null
 }>
 
 export type ValidateToken = (tokenString: string) => Promise<TokenValidationResult>

@@ -2,6 +2,7 @@ import { EmbedApiTokenRecord } from '@/modules/auth/helpers/types'
 import { ApiTokenRecord } from '@/modules/auth/repositories'
 import { ApiTokens, EmbedApiTokens } from '@/modules/core/dbSchema'
 import {
+  CountProjectEmbedTokens,
   ListProjectEmbedTokens,
   RevokeEmbedTokenById,
   RevokeProjectEmbedTokens,
@@ -9,6 +10,7 @@ import {
 } from '@/modules/core/domain/tokens/operations'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { Knex } from 'knex'
+import { clamp } from 'lodash'
 
 const tables = {
   apiTokens: (db: Knex) => db<ApiTokenRecord>(ApiTokens.name),
@@ -22,10 +24,24 @@ export const storeEmbedApiTokenFactory =
     return newToken
   }
 
+export const countProjectEmbedTokensFactory =
+  (deps: { db: Knex }): CountProjectEmbedTokens =>
+  async ({ projectId }) => {
+    const [{ count }] = await tables
+      .embedApiTokens(deps.db)
+      .where(EmbedApiTokens.col.projectId, projectId)
+      .count()
+    return Number.parseInt(count as string)
+  }
+
 export const listProjectEmbedTokensFactory =
   (deps: { db: Knex }): ListProjectEmbedTokens =>
-  async ({ projectId }) => {
-    return (await tables
+  async ({ projectId, filter = {} }) => {
+    const { limit = 10, cursor } = filter
+
+    if (limit === 0) return []
+
+    const q = tables
       .embedApiTokens(deps.db)
       .select(
         ...EmbedApiTokens.cols,
@@ -35,7 +51,14 @@ export const listProjectEmbedTokensFactory =
       )
       .orderBy(ApiTokens.col.createdAt, 'desc')
       .leftJoin(ApiTokens.name, ApiTokens.col.id, EmbedApiTokens.col.tokenId)
-      .where(EmbedApiTokens.col.projectId, projectId)) as (EmbedApiTokenRecord &
+      .where(EmbedApiTokens.col.projectId, projectId)
+      .limit(clamp(limit, 0, 50))
+
+    if (cursor) {
+      q.andWhere(ApiTokens.col.createdAt, '<', cursor)
+    }
+
+    return (await q) as (EmbedApiTokenRecord &
       Pick<ApiTokenRecord, 'createdAt' | 'lastUsed' | 'lifespan'>)[]
   }
 
