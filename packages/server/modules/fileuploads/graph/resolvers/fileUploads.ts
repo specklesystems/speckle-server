@@ -70,6 +70,11 @@ import cryptoRandomString from 'crypto-random-string'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
+import {
+  FileUploadRecord,
+  FileUploadRecordV2
+} from '@/modules/fileuploads/helpers/types'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
@@ -253,11 +258,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     }
   }
 }
-import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
-import {
-  FileUploadRecord,
-  FileUploadRecordV2
-} from '@/modules/fileuploads/helpers/types'
 
 export = {
   Stream: {
