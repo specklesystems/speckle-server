@@ -43,10 +43,11 @@ import {
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
 import {
-  initializeRhinoQueue,
-  initializeIfcQueue,
+  initializeRhinoQueueFactory,
+  initializeIfcQueueFactory,
   shutdownQueues,
-  fileImportQueues
+  fileImportQueues,
+  initializeQueueFactory
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
 import {
@@ -54,6 +55,11 @@ import {
   ObserveResult
 } from '@/modules/fileuploads/observability/metrics'
 import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/subscriptionListeners'
+import {
+  requestActiveHandlerFactory,
+  requestErrorHandlerFactory,
+  requestFailedHandlerFactory
+} from '@/modules/fileuploads/services/requestHandler'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -117,8 +123,20 @@ export const init: SpeckleModule['init'] = async ({
 
   if (isInitial) {
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-      const rhinoQueue = await initializeRhinoQueue()
-      const ifcQueue = await initializeIfcQueue()
+      const rhinoQueue = await initializeRhinoQueueFactory({
+        initializeQueue: initializeQueueFactory({
+          jobActiveHandler: requestActiveHandlerFactory({ logger: moduleLogger }),
+          jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
+          jobFailedHandler: requestFailedHandlerFactory({ logger: moduleLogger })
+        })
+      })()
+      const ifcQueue = await initializeIfcQueueFactory({
+        initializeQueue: initializeQueueFactory({
+          jobActiveHandler: requestActiveHandlerFactory({ logger: moduleLogger }),
+          jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
+          jobFailedHandler: requestFailedHandlerFactory({ logger: moduleLogger })
+        })
+      })()
 
       ;({ observeResult } = initializeMetrics({
         registers: [metricsRegister],

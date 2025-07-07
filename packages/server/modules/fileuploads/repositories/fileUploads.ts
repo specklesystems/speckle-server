@@ -162,11 +162,10 @@ export const expireOldPendingUploadsFactory =
     const updatedRows = await deps
       .db(FileUploads.name)
       .whereIn(FileUploads.withoutTablePrefix.col.convertedStatus, [
-        FileUploadConvertedStatus.Converting,
-        FileUploadConvertedStatus.Queued
+        FileUploadConvertedStatus.Converting
       ])
       .andWhere(
-        FileUploads.withoutTablePrefix.col.uploadDate,
+        FileUploads.withoutTablePrefix.col.convertedLastUpdate,
         '<',
         deps.db.raw(`now() - interval '${params.timeoutThresholdSeconds} seconds'`)
       )
