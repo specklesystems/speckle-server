@@ -9,7 +9,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { Logger, logger } from '@/observability/logging'
 import { TIME, TIME_MS } from '@speckle/shared'
-import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
+import { initializeQueue as setupQueue } from '@speckle/shared/queue'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
 import { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import Bull from 'bull'

@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import { getFeatureFlags } from '@speckle/shared/dist/commonjs/environment/index.js'
+import { getFeatureFlags } from '@speckle/shared/environment'
 import { defineConfig } from 'vitest/config'
 import tsconfigPaths from 'vite-tsconfig-paths'
 // import commonjs from 'vite-plugin-commonjs'

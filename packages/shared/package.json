@@ -102,6 +102,8 @@
       "./workers/fileimport": "./src/workers/fileimport/index.ts",
       "./viewer": "./src/viewer/index.ts",
       "./viewer/route": "./src/viewer/helpers/route.ts",
+      "./viewer/state": "./src/viewer/helpers/state.ts",
+      "./automate": "./src/automate/index.ts",
       "./dist/*": "./dist/*"
     },
     "exclude": [
@@ -286,6 +288,26 @@
       "require": {
         "types": "./dist/commonjs/viewer/helpers/route.d.ts",
         "default": "./dist/commonjs/viewer/helpers/route.js"
+      }
+    },
+    "./viewer/state": {
+      "import": {
+        "types": "./dist/esm/viewer/helpers/state.d.ts",
+        "default": "./dist/esm/viewer/helpers/state.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/viewer/helpers/state.d.ts",
+        "default": "./dist/commonjs/viewer/helpers/state.js"
+      }
+    },
+    "./automate": {
+      "import": {
+        "types": "./dist/esm/automate/index.d.ts",
+        "default": "./dist/esm/automate/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/automate/index.d.ts",
+        "default": "./dist/commonjs/automate/index.js"
       }
     },
     "./dist/*": "./dist/*"
