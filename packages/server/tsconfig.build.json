@@ -3,7 +3,8 @@
   "exclude": [
     "**/*.spec.js",
     "**/*.spec.ts",
-    "./modules/cli/**/*",
+    "modules/cli/**/*",
+    "**/tests/**/*",
     "test/**/*",
     "codegen.ts"
   ]

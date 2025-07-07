@@ -5,7 +5,7 @@ import { hideBin } from 'yargs/helpers'
 import '../../bootstrap.js'
 import { cliLogger as logger } from '@/observability/logging'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { mochaHooks } from '@/test/hooks'
+import { beforeEntireTestRun } from '@/test/hooks'
 
 const main = async () => {
   const y = yargs(hideBin(process.argv))
@@ -26,7 +26,7 @@ const main = async () => {
       // In test env, run beforeAll hooks to properly initialize everything first
       if (isBeforeAllSet && isTestEnv()) {
         logger.info('Running test beforeAll hooks...')
-        await (mochaHooks.beforeAll as () => Promise<void>)()
+        await beforeEntireTestRun()
       }
     })
     .fail((msg, err, yargs) => {
