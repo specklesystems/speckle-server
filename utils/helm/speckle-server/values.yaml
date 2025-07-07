@@ -67,6 +67,10 @@ featureFlags:
   nextGenFileImporterEnabled: false
   ## @param featureFlags.largeFileUploadsEnabled Enables the ability to upload large files to Speckle
   largeFileUploadsEnabled: false
+  ## @param featureFlags.experimentalIfcImporterEnabled Enables the ability to parse IFC files using the experimental IFC importer
+  experimentalIfcImporterEnabled: false
+  ## @param featureFlags.legacyIfcImporterEnabled Enables the ability to parse IFC files using the legacy IFC importer.
+  legacyIfcImporterEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

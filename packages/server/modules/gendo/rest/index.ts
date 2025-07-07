@@ -59,7 +59,9 @@ export default function (app: express.Express) {
         getProjectObjectStorage({ projectId })
       ])
 
-      const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
+      const storeFileStream = storeFileStreamFactory({
+        storage: projectStorage.private
+      })
       const updateRenderRequest = updateRenderRequestFactory({
         getRenderByGenerationId: getRenderByGenerationIdFactory({ db: projectDb }),
         uploadFileStream: uploadFileStreamFactory({

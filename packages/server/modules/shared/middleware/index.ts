@@ -106,13 +106,15 @@ export async function createAuthContextFromToken(
     if (!tokenValidationResult.valid)
       return { auth: false, err: new ForbiddenError('Your token is not valid.') }
 
-    const { scopes, userId, role, appId, resourceAccessRules } = tokenValidationResult
+    const { scopes, userId, tokenId, role, appId, resourceAccessRules } =
+      tokenValidationResult
 
     return {
       auth: true,
       userId,
       role,
       token,
+      tokenId,
       scopes,
       appId,
       resourceAccessRules: resourceAccessRules
