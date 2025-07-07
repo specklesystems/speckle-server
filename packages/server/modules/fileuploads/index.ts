@@ -35,7 +35,11 @@ import {
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
 import { TIME } from '@speckle/shared'
-import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
+import {
+  DelayBetweenFileImportRetriesMinutes,
+  FileUploadDatabaseEvents,
+  NumberOfFileImportRetries
+} from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
 import {
@@ -85,7 +89,12 @@ const scheduleFileImportExpiry = async ({
         fileImportExpiryHandlers.map((handler) =>
           handler({
             logger,
-            timeoutThresholdSeconds: (getFileImportTimeLimitMinutes() + 1) * TIME.minute // additional buffer of 1 minute
+            timeoutThresholdSeconds:
+              (NumberOfFileImportRetries *
+                (getFileImportTimeLimitMinutes() +
+                  DelayBetweenFileImportRetriesMinutes) +
+                1) * // additional buffer of 1 minute
+              TIME.minute
           })
         )
       )

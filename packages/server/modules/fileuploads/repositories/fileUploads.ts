@@ -172,7 +172,10 @@ export const expireOldPendingUploadsFactory =
       )
       .update({
         [FileUploads.withoutTablePrefix.col.convertedStatus]:
-          FileUploadConvertedStatus.Error
+          FileUploadConvertedStatus.Error,
+        [FileUploads.withoutTablePrefix.col.convertedMessage]:
+          'File import job timed out',
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: knex.fn.now()
       })
       .returning<FileUploadRecord[]>('*')
 
