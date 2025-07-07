@@ -18,8 +18,7 @@ import {
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 
 const resolvers: Resolvers = {
   EmbedToken: {
@@ -48,15 +47,11 @@ const resolvers: Resolvers = {
           projectId: args.token.projectId
         })
       throwIfAuthNotOk(canCreateEmbedToken)
-
-      const canAccess = isResourceAllowed({
+      throwIfResourceAccessNotAllowed({
         resourceId: args.token.projectId,
         resourceType: 'project',
         resourceAccessRules: context.resourceAccessRules
       })
-      if (!canAccess) {
-        throw new ForbiddenError('You are not authorized to access this resource.')
-      }
 
       return await createEmbedTokenFactory({
         createToken: createTokenFactory({
@@ -78,15 +73,11 @@ const resolvers: Resolvers = {
           projectId: args.projectId
         })
       throwIfAuthNotOk(canRevokeEmbedToken)
-
-      const canAccess = isResourceAllowed({
+      throwIfResourceAccessNotAllowed({
         resourceId: args.projectId,
         resourceType: 'project',
         resourceAccessRules: context.resourceAccessRules
       })
-      if (!canAccess) {
-        throw new ForbiddenError('You are not authorized to access this resource.')
-      }
 
       return await revokeEmbedTokenByIdFactory({ db })({
         tokenId: args.token,
@@ -100,15 +91,11 @@ const resolvers: Resolvers = {
           projectId: args.projectId
         })
       throwIfAuthNotOk(canRevokeEmbedTokens)
-
-      const canAccess = isResourceAllowed({
+      throwIfResourceAccessNotAllowed({
         resourceId: args.projectId,
         resourceType: 'project',
         resourceAccessRules: context.resourceAccessRules
       })
-      if (!canAccess) {
-        throw new ForbiddenError('You are not authorized to access this resource.')
-      }
 
       await revokeProjectEmbedTokensFactory({ db })({ projectId: args.projectId })
 
