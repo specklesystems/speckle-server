@@ -26,9 +26,54 @@ export class CacheReader {
     this.#logger = options.logger || ((): void => {})
   }
 
+  private logToMainUI(message: string): void {
+    console.log(`[Main] ${message}`)
+  }
+
+  private logToWorkerResponseUI(message: string): void {
+    console.log(`[FromWorker] ${message}`)
+  }
+
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
     this.#foundQueue = foundQueue
     this.#notFoundQueue = notFoundQueue
+  }
+
+  private initializeIndexedDbReaderWorker(): void {
+    this.logToMainUI('Initializing RingBufferQueues...')
+    const rawMainToWorkerRbq = RingBufferQueue.create(BUFFER_CAPACITY_BYTES)
+    this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq)
+    const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
+    this.logToMainUI(
+      `Main-to-Worker StringQueue created with ${
+        BUFFER_CAPACITY_BYTES / 1024
+      }KB capacity.`
+    )
+
+    const rawWorkerToMainRbq = RingBufferQueue.create(BUFFER_CAPACITY_BYTES)
+    this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq)
+    const workerToMainSab = rawWorkerToMainRbq.getSharedArrayBuffer()
+    this.logToMainUI(
+      `Worker-to-Main ItemQueue created with ${
+        BUFFER_CAPACITY_BYTES / 1024
+      }KB capacity.`
+    )
+
+    this.logToMainUI('Starting Web Worker...')
+    this.indexedDbReaderWorker = new Worker(
+      new URL('../../workers/IndexDbReaderWorker.js', import.meta.url),
+      { type: 'module' }
+    )
+    this.initializeWorker(this.indexedDbReaderWorker)
+
+    this.logToMainUI('Sending SharedArrayBuffers and capacities to worker...')
+    this.indexedDbReaderWorker.postMessage({
+      type: WorkerMessageType.INIT_QUEUES,
+      mainToWorkerSab,
+      mainToWorkerCapacityBytes: BUFFER_CAPACITY_BYTES,
+      workerToMainSab,
+      workerToMainCapacityBytes: BUFFER_CAPACITY_BYTES
+    })
   }
 
   async getObject(params: { id: string }): Promise<Base> {
