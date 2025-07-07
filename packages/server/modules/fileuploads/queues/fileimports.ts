@@ -87,21 +87,27 @@ const initializeQueue = async (params: {
   return fileImportQueue
 }
 
-export const initializeRhinoQueue = async () =>
-  initializeQueue({
+export const initializeRhinoQueue = async () => {
+  const rhinoImportServiceRedisUrl = getFileImportServiceRhinoParserRedisUrl()
+
+  return initializeQueue({
     label: 'rhino',
     queueName: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME,
-    redisUrl: getFileImportServiceRhinoParserRedisUrl() ?? getRedisUrl(),
+    redisUrl: rhinoImportServiceRedisUrl ? rhinoImportServiceRedisUrl : getRedisUrl(),
     supportedFileTypes: ['obj', 'stl', 'skp']
   })
+}
 
-export const initializeIfcQueue = async () =>
-  initializeQueue({
+export const initializeIfcQueue = async () => {
+  const ifcImportServiceRedisUrl = getFileImportServiceIFCParserRedisUrl()
+
+  return initializeQueue({
     label: 'ifc',
     queueName: FILEIMPORT_SERVICE_IFC_QUEUE_NAME,
-    redisUrl: getFileImportServiceIFCParserRedisUrl() ?? getRedisUrl(),
+    redisUrl: ifcImportServiceRedisUrl ? ifcImportServiceRedisUrl : getRedisUrl(),
     supportedFileTypes: ['ifc']
   })
+}
 
 export const shutdownQueues = async (params: { logger: Logger }) => {
   for (const queue of fileImportQueues) {

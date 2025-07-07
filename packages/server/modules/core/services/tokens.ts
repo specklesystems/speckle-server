@@ -187,13 +187,13 @@ export const validateTokenFactory =
     const token = await deps.getApiTokenById(tokenId)
 
     if (!token) {
-      return { valid: false }
+      return { valid: false, tokenId }
     }
 
     const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
     if (timeDiff > token.lifespan) {
       await deps.revokeUserTokenById(tokenId, token.owner)
-      return { valid: false }
+      return { valid: false, tokenId }
     }
 
     const valid = await bcrypt.compare(tokenContent, token.tokenDigest)
@@ -213,7 +213,8 @@ export const validateTokenFactory =
         role: role!,
         scopes: scopes.map((s) => s.scopeName),
         appId: app?.id || null,
-        resourceAccessRules: resourceAccessRules.length ? resourceAccessRules : null
+        resourceAccessRules: resourceAccessRules.length ? resourceAccessRules : null,
+        tokenId
       }
-    } else return { valid: false }
+    } else return { valid: false, tokenId }
   }
