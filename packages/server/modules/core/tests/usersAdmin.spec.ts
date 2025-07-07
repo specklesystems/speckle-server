@@ -44,6 +44,7 @@ import { dbLogger } from '@/observability/logging'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
+import { it } from 'vitest'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -134,19 +135,23 @@ describe('User admin @user-services', () => {
     expect(await countUsers()).to.equal(1)
   })
 
-  it('Get users query limit is sanitized to upper limit', async () => {
-    const userInputs = Array(250)
-      .fill(undefined)
-      .map((v, i) => createNewDroid(i))
+  it(
+    'Get users query limit is sanitized to upper limit',
+    async () => {
+      const userInputs = Array(250)
+        .fill(undefined)
+        .map((v, i) => createNewDroid(i))
 
-    expect(await countUsers()).to.equal(1)
+      expect(await countUsers()).to.equal(1)
 
-    await Promise.all(userInputs.map((userInput) => createUser(userInput)))
-    expect(await countUsers()).to.equal(251)
+      await Promise.all(userInputs.map((userInput) => createUser(userInput)))
+      expect(await countUsers()).to.equal(251)
 
-    const users = await getUsers(2000000)
-    expect(users).to.have.lengthOf(200)
-  }).timeout(10 * TIME_MS.second)
+      const users = await getUsers(2000000)
+      expect(users).to.have.lengthOf(200)
+    },
+    { timeout: 10 * TIME_MS.second }
+  )
 
   it('Get users offset is applied', async () => {
     const users = await getUsers(200, 200)

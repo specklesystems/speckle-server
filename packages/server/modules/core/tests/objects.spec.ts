@@ -78,6 +78,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { ObjectRecord } from '@/modules/core/helpers/types'
+import { it } from 'vitest'
 
 const sampleCommit = JSON.parse(`{
   "Objects": [
@@ -254,49 +255,59 @@ describe('Objects @core-objects', () => {
   const objs: Array<Record<string, unknown> & { id?: string }> = []
   const objs2: Array<Record<string, unknown> & { id?: string }> = []
 
-  it(`Should create ${objCount_1} objects`, async () => {
-    for (let i = 0; i < objCount_1; i++) {
-      objs.push({
-        amazingness: i * i,
-        somethingness: `Sample ${i % 2 === 0 ? 'SUPER MEGA' : '1010101000010101'} ERRR`
-      })
-    }
+  it(
+    `Should create ${objCount_1} objects`,
+    async () => {
+      for (let i = 0; i < objCount_1; i++) {
+        objs.push({
+          amazingness: i * i,
+          somethingness: `Sample ${
+            i % 2 === 0 ? 'SUPER MEGA' : '1010101000010101'
+          } ERRR`
+        })
+      }
 
-    const ids = await createObjects({ streamId: stream.id, objects: objs })
+      const ids = await createObjects({ streamId: stream.id, objects: objs })
 
-    expect(ids).to.have.lengthOf(objCount_1)
-  }).timeout(30000)
+      expect(ids).to.have.lengthOf(objCount_1)
+    },
+    { timeout: 30000 }
+  )
 
-  it(`Should create ${objCount_2} objects`, async () => {
-    for (let i = 0; i < objCount_2; i++) {
-      objs2.push({
-        amazingness: i * i,
-        somethingness: `Sample HASH ${
-          i % 2 === 0 ? 'SUPER MEGA HASH CHANGE' : '100101'
-        } ERRR`,
-        x: 10,
-        y: i * 2,
-        z: i * 0.23432,
-        random: {
-          blargh:
-            'A a auctor arcu id enim felis, luctus sed sit lacus enim phasellus ultricies, quis fermentum, platea placerat vel integer. Enim urna natoque eros id volutpat voluptatum, vitae pede nec in nam. In libero nullam, habitasse auctor a laoreet justo. Vestibulum enim laoreet quis magna in. Non pharetra sit semper vitae ac fusce, non nisl molestie porttitor leo sed, quam vulputate, suscipit sed elit fringilla justo viverra, mattis dignissim ullamcorper a in. Pellentesque velit posuere ipsum, eu pharetra. Magna ac orci sit, malesuada lacinia mauris sed sunt ac neque. Mollis volutpat cras a, donec ac, etiam commodo id fringilla et tempor mi, pellentesque lacus ac morbi ultrices. Diam amet felis aliquam nibh nunc sed. Rhoncus malesuada in malesuada proin sed nam, viverra ante sollicitudin eu augue risus nisl, velit interdum vivamus dictumst. Phasellus fusce wisi non ipsum elit gravida. Nunc scelerisque, interdum adipiscing quam integer commodo, modi tempor sociis sociosqu dui nullam.A a auctor arcu id enim felis, luctus sed sit lacus enim phasellus ultricies, quis fermentum, platea placerat vel integer. Enim urna natoque eros id volutpat voluptatum, vitae pede nec in nam. In libero nullam, habitasse auctor a laoreet justo. Vestibulum enim laoreet quis magna in. Non pharetra sit semper vitae ac fusce, non nisl molestie porttitor leo sed, quam vulputate, suscipit sed elit fringilla justo viverra, mattis dignissim ullamcorper a in. Pellentesque velit posuere ipsum, eu pharetra. Magna ac orci sit, malesuada lacinia mauris sed sunt ac neque. Mollis volutpat cras a, donec ac, etiam commodo id fringilla et tempor mi, pellentesque lacus ac morbi ultrices. Diam amet felis aliquam nibh nunc sed. Rhoncus malesuada in malesuada proin sed nam, viverra ante sollicitudin eu augue risus nisl, velit interdum vivamus dictumst. Phasellus fusce wisi non ipsum elit gravida. Nunc scelerisque, interdum adipiscing quam integer commodo, modi tempor sociis sociosqu dui nullam.Lorem ipsum dolor sit amet, lorem scelerisque curabitur elementum eligendi, sed ut nibh. Nullam ac ut proin tortor tortor, ultrices odio litora eu, at lectus. Nulla et est, donec at, rutrum massa eros elit nisl sed, integer amet fusce tempus phasellus aliquam posuere, molestie adipiscing quas magnis convallis tellus. Exercitation purus aliquam, tortor pellentesque. Consequat arcu quis eros, turpis ultrices tempor elementum, platea cursus dignissim nulla. Ultrices vestibulum sit et taciti ut, nunc interdum. In eleifend amet sed a tortor, sed condimentum pede nam magna, nisl nam tristique pede ut at, eleifend sit ac vitae orci, nec wisi vestibulum tortor facilisis. Cras nunc debitis duis placerat curabitur, conubia vel ullamcorper vestibulum morbi donec, molestie rutrum.Cras elit ut, quis diam sed sollicitudin morbi rhoncus, ante velit, at ipsum debitis. Ut ipsum, et sed morbi odio libero viverra eget, nihil blandit nonummy mauris. Et sed nisl fermentum nunc sapien erat, dolor mattis pellentesque nec sapien faucibus, praesent lectus odio rhoncus id dolor, velit at lorem iaculis condimentum. Id suscipit amet nec rutrum, erat magnis amet id, lacus tristique. Neque id mauris dapibus consectetuer ut scelerisque, tincidunt fringilla quis dolores, praesent ipsum, nec tortor ultricies, posuere a fusce et magna.'
-        },
-        __tree: [
-          '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f6723',
-          '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e623237f67' +
-            i / 2.0,
-          '79eb41764cc2c065de752bd704asdf4aa.' + i + '.' + i * i,
-          '79eb41764cc2c065de752bd704bfc4aa.' + i + '.' + i * i + 3
-        ]
-      })
-    }
+  it(
+    `Should create ${objCount_2} objects`,
+    async () => {
+      for (let i = 0; i < objCount_2; i++) {
+        objs2.push({
+          amazingness: i * i,
+          somethingness: `Sample HASH ${
+            i % 2 === 0 ? 'SUPER MEGA HASH CHANGE' : '100101'
+          } ERRR`,
+          x: 10,
+          y: i * 2,
+          z: i * 0.23432,
+          random: {
+            blargh:
+              'A a auctor arcu id enim felis, luctus sed sit lacus enim phasellus ultricies, quis fermentum, platea placerat vel integer. Enim urna natoque eros id volutpat voluptatum, vitae pede nec in nam. In libero nullam, habitasse auctor a laoreet justo. Vestibulum enim laoreet quis magna in. Non pharetra sit semper vitae ac fusce, non nisl molestie porttitor leo sed, quam vulputate, suscipit sed elit fringilla justo viverra, mattis dignissim ullamcorper a in. Pellentesque velit posuere ipsum, eu pharetra. Magna ac orci sit, malesuada lacinia mauris sed sunt ac neque. Mollis volutpat cras a, donec ac, etiam commodo id fringilla et tempor mi, pellentesque lacus ac morbi ultrices. Diam amet felis aliquam nibh nunc sed. Rhoncus malesuada in malesuada proin sed nam, viverra ante sollicitudin eu augue risus nisl, velit interdum vivamus dictumst. Phasellus fusce wisi non ipsum elit gravida. Nunc scelerisque, interdum adipiscing quam integer commodo, modi tempor sociis sociosqu dui nullam.A a auctor arcu id enim felis, luctus sed sit lacus enim phasellus ultricies, quis fermentum, platea placerat vel integer. Enim urna natoque eros id volutpat voluptatum, vitae pede nec in nam. In libero nullam, habitasse auctor a laoreet justo. Vestibulum enim laoreet quis magna in. Non pharetra sit semper vitae ac fusce, non nisl molestie porttitor leo sed, quam vulputate, suscipit sed elit fringilla justo viverra, mattis dignissim ullamcorper a in. Pellentesque velit posuere ipsum, eu pharetra. Magna ac orci sit, malesuada lacinia mauris sed sunt ac neque. Mollis volutpat cras a, donec ac, etiam commodo id fringilla et tempor mi, pellentesque lacus ac morbi ultrices. Diam amet felis aliquam nibh nunc sed. Rhoncus malesuada in malesuada proin sed nam, viverra ante sollicitudin eu augue risus nisl, velit interdum vivamus dictumst. Phasellus fusce wisi non ipsum elit gravida. Nunc scelerisque, interdum adipiscing quam integer commodo, modi tempor sociis sociosqu dui nullam.Lorem ipsum dolor sit amet, lorem scelerisque curabitur elementum eligendi, sed ut nibh. Nullam ac ut proin tortor tortor, ultrices odio litora eu, at lectus. Nulla et est, donec at, rutrum massa eros elit nisl sed, integer amet fusce tempus phasellus aliquam posuere, molestie adipiscing quas magnis convallis tellus. Exercitation purus aliquam, tortor pellentesque. Consequat arcu quis eros, turpis ultrices tempor elementum, platea cursus dignissim nulla. Ultrices vestibulum sit et taciti ut, nunc interdum. In eleifend amet sed a tortor, sed condimentum pede nam magna, nisl nam tristique pede ut at, eleifend sit ac vitae orci, nec wisi vestibulum tortor facilisis. Cras nunc debitis duis placerat curabitur, conubia vel ullamcorper vestibulum morbi donec, molestie rutrum.Cras elit ut, quis diam sed sollicitudin morbi rhoncus, ante velit, at ipsum debitis. Ut ipsum, et sed morbi odio libero viverra eget, nihil blandit nonummy mauris. Et sed nisl fermentum nunc sapien erat, dolor mattis pellentesque nec sapien faucibus, praesent lectus odio rhoncus id dolor, velit at lorem iaculis condimentum. Id suscipit amet nec rutrum, erat magnis amet id, lacus tristique. Neque id mauris dapibus consectetuer ut scelerisque, tincidunt fringilla quis dolores, praesent ipsum, nec tortor ultricies, posuere a fusce et magna.'
+          },
+          __tree: [
+            '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f6723',
+            '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e623237f67' +
+              i / 2.0,
+            '79eb41764cc2c065de752bd704asdf4aa.' + i + '.' + i * i,
+            '79eb41764cc2c065de752bd704bfc4aa.' + i + '.' + i * i + 3
+          ]
+        })
+      }
 
-    const myIds = await createObjects({ streamId: stream.id, objects: objs2 })
+      const myIds = await createObjects({ streamId: stream.id, objects: objs2 })
 
-    myIds.forEach((h, i) => (objs2[i].id = h))
+      myIds.forEach((h, i) => (objs2[i].id = h))
 
-    expect(myIds).to.have.lengthOf(objCount_2)
-  }).timeout(30000)
+      expect(myIds).to.have.lengthOf(objCount_2)
+    },
+    { timeout: 30000 }
+  )
 
   it(`Should create a single object w/ a ton of closures`, async () => {
     const obj = {
@@ -336,73 +347,77 @@ describe('Objects @core-objects', () => {
 
   let parentObjectId: string
 
-  it('Should get object children', async () => {
-    const objs_1 = createManyObjects(100, 'noise__')
-    const ids = await createObjects({ streamId: stream.id, objects: objs_1 })
-    // console.log( ids )
-    // console.log(ids[ 0 ])
+  it(
+    'Should get object children',
+    async () => {
+      const objs_1 = createManyObjects(100, 'noise__')
+      const ids = await createObjects({ streamId: stream.id, objects: objs_1 })
+      // console.log( ids )
+      // console.log(ids[ 0 ])
 
-    // The below are just performance benchmarking.
-    // let objs_2 = createManyObjects( 20000, 'noise_2' )
-    // let ids2 = await createObjects( {streamId: stream.id, objects: objs_2} )
+      // The below are just performance benchmarking.
+      // let objs_2 = createManyObjects( 20000, 'noise_2' )
+      // let ids2 = await createObjects( {streamId: stream.id, objects: objs_2} )
 
-    // let objs_3 = createManyObjects( 100000, 'noise_3' )
-    // let ids3 = await createObjects( {streamId: stream.id, objects: objs_3} )
+      // let objs_3 = createManyObjects( 100000, 'noise_3' )
+      // let ids3 = await createObjects( {streamId: stream.id, objects: objs_3} )
 
-    // let { rows } = await getObjectChildren( { objectId: ids[0], select: ['id', 'name', 'sortValueB'] } )
-    // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
+      // let { rows } = await getObjectChildren( { objectId: ids[0], select: ['id', 'name', 'sortValueB'] } )
+      // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
 
-    const limit = 50
-    const { objects: rows_1, cursor: cursor_1 } = await getObjectChildren({
-      streamId: stream.id,
-      limit,
-      objectId: ids[0],
-      select: [
-        'nest.mallard',
-        'test.value',
-        'test.secondValue',
-        'nest.arr[0]',
-        'nest.arr[1]'
-      ]
-    })
+      const limit = 50
+      const { objects: rows_1, cursor: cursor_1 } = await getObjectChildren({
+        streamId: stream.id,
+        limit,
+        objectId: ids[0],
+        select: [
+          'nest.mallard',
+          'test.value',
+          'test.secondValue',
+          'nest.arr[0]',
+          'nest.arr[1]'
+        ]
+      })
 
-    expect(rows_1.length).to.equal(limit)
-    expect(rows_1[0]).to.be.an('object')
-    expect(rows_1[0]).to.have.property('id')
-    expect(rows_1[0]).to.have.nested.property('data.test.secondValue')
-    expect(rows_1[0]).to.have.nested.property('data.nest.mallard')
+      expect(rows_1.length).to.equal(limit)
+      expect(rows_1[0]).to.be.an('object')
+      expect(rows_1[0]).to.have.property('id')
+      expect(rows_1[0]).to.have.nested.property('data.test.secondValue')
+      expect(rows_1[0]).to.have.nested.property('data.nest.mallard')
 
-    expect(cursor_1).to.be.a('string')
+      expect(cursor_1).to.be.a('string')
 
-    const { objects: rows_2 } = await getObjectChildren({
-      streamId: stream.id,
-      limit,
-      objectId: ids[0],
-      select: [
-        'nest.mallard',
-        'test.value',
-        'test.secondValue',
-        'nest.arr[0]',
-        'nest.arr[1]'
-      ],
-      cursor: cursor_1
-    })
+      const { objects: rows_2 } = await getObjectChildren({
+        streamId: stream.id,
+        limit,
+        objectId: ids[0],
+        select: [
+          'nest.mallard',
+          'test.value',
+          'test.secondValue',
+          'nest.arr[0]',
+          'nest.arr[1]'
+        ],
+        cursor: cursor_1
+      })
 
-    expect(rows_2.length).to.equal(50)
-    expect(rows_2[0]).to.be.an('object')
-    expect(rows_2[0]).to.have.property('id')
-    expect(rows_2[0]).to.have.nested.property('data.test.secondValue')
-    expect(rows_2[0]).to.have.nested.property('data.nest.mallard')
+      expect(rows_2.length).to.equal(50)
+      expect(rows_2[0]).to.be.an('object')
+      expect(rows_2[0]).to.have.property('id')
+      expect(rows_2[0]).to.have.nested.property('data.test.secondValue')
+      expect(rows_2[0]).to.have.nested.property('data.nest.mallard')
 
-    const { objects } = await getObjectChildren({
-      streamId: stream.id,
-      objectId: ids[0],
-      limit: 1000
-    })
-    expect(objects.length).to.equal(100)
+      const { objects } = await getObjectChildren({
+        streamId: stream.id,
+        objectId: ids[0],
+        limit: 1000
+      })
+      expect(objects.length).to.equal(100)
 
-    parentObjectId = ids[0]
-  }).timeout(30000)
+      parentObjectId = ids[0]
+    },
+    { timeout: 3000 }
+  )
 
   it('should query object children, ascending order', async () => {
     // we're assuming the prev test objects exist
@@ -741,38 +756,41 @@ describe('Objects @core-objects', () => {
     })
   })
 
-  it('should not deadlock when batch inserting in random order', async function () {
-    this.timeout(5000)
-    const objs = createManyObjects(5000, 'perlin merlin magic')
+  it(
+    'should not deadlock when batch inserting in random order',
+    async function () {
+      const objs = createManyObjects(5000, 'perlin merlin magic')
 
-    function shuffleArray(array: Array<unknown>) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[array[i], array[j]] = [array[j], array[i]]
+      function shuffleArray(array: Array<unknown>) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1))
+          ;[array[i], array[j]] = [array[j], array[i]]
+        }
       }
-    }
 
-    const shuffledVersions = []
-    for (let i = 0; i < 3; i++) {
-      const shuffledVersion = objs.slice()
-      shuffleArray(shuffledVersion)
-      shuffledVersions.push(shuffledVersion)
-    }
+      const shuffledVersions = []
+      for (let i = 0; i < 3; i++) {
+        const shuffledVersion = objs.slice()
+        shuffleArray(shuffledVersion)
+        shuffledVersions.push(shuffledVersion)
+      }
 
-    const promisses = []
-    for (let i = 0; i < shuffledVersions.length; i++) {
-      const promise = createObjectsBatched({
-        streamId: stream.id,
-        objects: shuffledVersions[i]
-      })
-      promise.catch(() => {})
-      promisses.push(promise)
-    }
+      const promisses = []
+      for (let i = 0; i < shuffledVersions.length; i++) {
+        const promise = createObjectsBatched({
+          streamId: stream.id,
+          objects: shuffledVersions[i]
+        })
+        promise.catch(() => {})
+        promisses.push(promise)
+      }
 
-    for (let i = 0; i < promisses.length; i++) {
-      await promisses[i]
-    }
-  })
+      for (let i = 0; i < promisses.length; i++) {
+        await promisses[i]
+      }
+    },
+    { timeout: 5000 }
+  )
 })
 
 function createManyObjects(num: number, noise: string | number) {

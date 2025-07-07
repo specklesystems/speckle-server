@@ -91,6 +91,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { beforeAll as before } from 'vitest'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -230,10 +231,9 @@ const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 
 
 describe('Server stats services @stats-services', function () {
   before(async function () {
-    this.timeout(15000)
     await beforeEachContext()
     await seedDb(params)
-  })
+  }, 15000)
 
   it('should return the total number of users on this server', async () => {
     const res = await getTotalUserCountFactory({ db })()
@@ -283,7 +283,6 @@ describe('Server stats api @stats-api', function () {
     `
 
   before(async function () {
-    this.timeout(15000)
     const ctx = await beforeEachContext()
     ;({ sendRequest } = await initializeTestServer(ctx))
 
@@ -312,7 +311,7 @@ describe('Server stats api @stats-api', function () {
     )}`
 
     await seedDb(params)
-  })
+  }, 15000)
 
   it('Should not get stats if user is not admin', async () => {
     const res = await sendRequest(adminUser.badToken, { query: fullQuery })
