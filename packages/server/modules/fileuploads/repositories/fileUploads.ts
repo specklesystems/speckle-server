@@ -10,7 +10,8 @@ import {
   UpdateFileUpload,
   GetModelUploadsItems,
   GetModelUploadsBaseArgs,
-  GetModelUploadsTotalCount
+  GetModelUploadsTotalCount,
+  UpdateFileStatus
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
@@ -259,6 +260,30 @@ export const updateFileUploadFactory =
 
     if (updatedFile.length === 0) {
       throw new FileImportJobNotFoundError(`File with id ${id} not found`)
+    }
+    return updatedFile[0]
+  }
+
+export const updateFileStatusFactory =
+  (deps: { db: Knex }): UpdateFileStatus =>
+  async (params) => {
+    const updatedFile = await tables
+      .fileUploads(deps.db)
+      .update({
+        [FileUploads.withoutTablePrefix.col.convertedStatus]: params.status,
+        [FileUploads.withoutTablePrefix.col.convertedMessage]: params.convertedMessage,
+        [FileUploads.withoutTablePrefix.col.convertedCommitId]:
+          params.convertedCommitId,
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: knex.fn.now()
+      })
+      .where({
+        [FileUploads.withoutTablePrefix.col.id]: params.fileId,
+        [FileUploads.withoutTablePrefix.col.streamId]: params.projectId
+      })
+      .returning<FileUploadRecord[]>('*')
+
+    if (updatedFile.length === 0) {
+      throw new FileImportJobNotFoundError(`File with id ${params.fileId} not found`)
     }
     return updatedFile[0]
   }

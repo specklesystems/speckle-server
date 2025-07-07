@@ -22,7 +22,8 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   expireOldPendingUploadsFactory,
   getFileInfoFactory,
-  updateFileUploadFactory
+  updateFileUploadFactory,
+  updateFileStatusFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
@@ -60,6 +61,7 @@ import {
   requestErrorHandlerFactory,
   requestFailedHandlerFactory
 } from '@/modules/fileuploads/services/requestHandler'
+import { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -108,6 +110,12 @@ const scheduleFileImportExpiry = async ({
   )
 }
 
+const updateFileStatusBuilder: UpdateFileStatusForProjectFactory = async (params) => {
+  const { projectId } = params
+  const projectDb = await getProjectDbClient({ projectId })
+  return updateFileStatusFactory({ db: projectDb })
+}
+
 export const init: SpeckleModule['init'] = async ({
   app,
   isInitial,
@@ -125,16 +133,28 @@ export const init: SpeckleModule['init'] = async ({
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
       const rhinoQueue = await initializeRhinoQueueFactory({
         initializeQueue: initializeQueueFactory({
-          jobActiveHandler: requestActiveHandlerFactory({ logger: moduleLogger }),
+          jobActiveHandler: requestActiveHandlerFactory({
+            logger: moduleLogger,
+            updateFileStatusBuilder
+          }),
           jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
-          jobFailedHandler: requestFailedHandlerFactory({ logger: moduleLogger })
+          jobFailedHandler: requestFailedHandlerFactory({
+            logger: moduleLogger,
+            updateFileStatusForProjectFactory: updateFileStatusBuilder
+          })
         })
       })()
       const ifcQueue = await initializeIfcQueueFactory({
         initializeQueue: initializeQueueFactory({
-          jobActiveHandler: requestActiveHandlerFactory({ logger: moduleLogger }),
+          jobActiveHandler: requestActiveHandlerFactory({
+            logger: moduleLogger,
+            updateFileStatusBuilder
+          }),
           jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
-          jobFailedHandler: requestFailedHandlerFactory({ logger: moduleLogger })
+          jobFailedHandler: requestFailedHandlerFactory({
+            logger: moduleLogger,
+            updateFileStatusForProjectFactory: updateFileStatusBuilder
+          })
         })
       })()
 

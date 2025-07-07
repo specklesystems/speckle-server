@@ -1,6 +1,6 @@
 import { Logger } from '@/observability/logging'
 import { ActiveEventCallback, ErrorEventCallback, FailedEventCallback } from 'bull'
-import { UpdateFileUpload } from '@/modules/fileuploads/domain/operations'
+import { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 import { ensureError } from '@speckle/shared'
@@ -8,7 +8,7 @@ import { ensureError } from '@speckle/shared'
 export const requestActiveHandlerFactory =
   (deps: {
     logger: Logger
-    updateFileUpload: UpdateFileUpload
+    updateFileStatusBuilder: UpdateFileStatusForProjectFactory
   }): ActiveEventCallback<JobPayload> =>
   async (job) => {
     deps.logger.info(
@@ -23,12 +23,15 @@ export const requestActiveHandlerFactory =
       },
       "File import job for file '${fileName}' accepted for project '${projectId} with file type '${fileType}'; updating status to 'Converting'."
     )
-    await deps.updateFileUpload({
-      id: job.data.blobId,
-      upload: {
-        convertedStatus: FileUploadConvertedStatus.Converting,
-        convertedLastUpdate: new Date()
-      }
+    const updateFileStatus = await deps.updateFileStatusBuilder({
+      projectId: job.data.projectId
+    })
+    await updateFileStatus({
+      fileId: job.data.blobId,
+      projectId: job.data.projectId,
+      status: FileUploadConvertedStatus.Converting,
+      convertedMessage: 'File import job accepted and converting started',
+      convertedCommitId: null
     })
   }
 
@@ -46,7 +49,7 @@ export const requestErrorHandlerFactory =
 export const requestFailedHandlerFactory =
   (deps: {
     logger: Logger
-    updateFileUpload: UpdateFileUpload
+    updateFileStatusForProjectFactory: UpdateFileStatusForProjectFactory
   }): FailedEventCallback<JobPayload> =>
   async (job, e) => {
     const err = ensureError(
@@ -66,12 +69,15 @@ export const requestFailedHandlerFactory =
       },
       "File import job for file '${fileName}' failed for ${projectId} with file type ${fileType}. Updating status to 'Error'."
     )
-    await deps.updateFileUpload({
-      id: job.data.blobId,
-      upload: {
-        convertedStatus: FileUploadConvertedStatus.Error,
-        convertedLastUpdate: new Date(),
-        convertedMessage: err.message
-      }
+    const updateFileStatus = await deps.updateFileStatusForProjectFactory({
+      projectId: job.data.projectId
+    })
+
+    await updateFileStatus({
+      fileId: job.data.blobId,
+      projectId: job.data.projectId,
+      status: FileUploadConvertedStatus.Error,
+      convertedMessage: err.message,
+      convertedCommitId: null
     })
   }
