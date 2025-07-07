@@ -53,6 +53,7 @@ export default defineConfig({
     environment: 'node',
     reporters: ['verbose'],
     hookTimeout: 10000000, // TODO: while troubleshooting,
+    slowTestThreshold: 1, // TODO: for debugging
     // deps: {
     //   inline: ['knex', /knex/i]
     // },
