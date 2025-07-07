@@ -18,6 +18,8 @@ import {
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { isResourceAllowed } from '@/modules/core/helpers/token'
+import { ForbiddenError } from '@/modules/shared/errors'
 
 const resolvers: Resolvers = {
   EmbedToken: {
@@ -47,6 +49,15 @@ const resolvers: Resolvers = {
         })
       throwIfAuthNotOk(canCreateEmbedToken)
 
+      const canAccess = isResourceAllowed({
+        resourceId: args.token.projectId,
+        resourceType: 'project',
+        resourceAccessRules: context.resourceAccessRules
+      })
+      if (!canAccess) {
+        throw new ForbiddenError('You are not authorized to access this resource.')
+      }
+
       return await createEmbedTokenFactory({
         createToken: createTokenFactory({
           storeApiToken: storeApiTokenFactory({ db }),
@@ -68,6 +79,15 @@ const resolvers: Resolvers = {
         })
       throwIfAuthNotOk(canRevokeEmbedToken)
 
+      const canAccess = isResourceAllowed({
+        resourceId: args.projectId,
+        resourceType: 'project',
+        resourceAccessRules: context.resourceAccessRules
+      })
+      if (!canAccess) {
+        throw new ForbiddenError('You are not authorized to access this resource.')
+      }
+
       return await revokeEmbedTokenByIdFactory({ db })({
         tokenId: args.token,
         projectId: args.projectId
@@ -80,6 +100,15 @@ const resolvers: Resolvers = {
           projectId: args.projectId
         })
       throwIfAuthNotOk(canRevokeEmbedTokens)
+
+      const canAccess = isResourceAllowed({
+        resourceId: args.projectId,
+        resourceType: 'project',
+        resourceAccessRules: context.resourceAccessRules
+      })
+      if (!canAccess) {
+        throw new ForbiddenError('You are not authorized to access this resource.')
+      }
 
       await revokeProjectEmbedTokensFactory({ db })({ projectId: args.projectId })
 

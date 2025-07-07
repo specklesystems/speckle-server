@@ -107,8 +107,10 @@ extend type Mutation {
 
 extend type ProjectMutations {
   createEmbedToken(token: EmbedTokenCreateInput!): CreateEmbedTokenReturn!
+    @hasScope(scope: "tokens:write")
   revokeEmbedToken(token: String!, projectId: String!): Boolean!
-  revokeEmbedTokens(projectId: String!): Boolean!
+    @hasScope(scope: "tokens:write")
+  revokeEmbedTokens(projectId: String!): Boolean! @hasScope(scope: "tokens:write")
 }
 
 extend type Project {

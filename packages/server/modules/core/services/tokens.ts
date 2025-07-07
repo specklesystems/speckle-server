@@ -31,6 +31,10 @@ import {
   EmbedApiToken,
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
+import {
+  createGetParamFromResources,
+  parseUrlParameters
+} from '@speckle/shared/viewer/route'
 
 /*
   Tokens
@@ -137,6 +141,10 @@ export const createEmbedTokenFactory =
     storeEmbedToken: StoreEmbedApiToken
   }): CreateAndStoreEmbedToken =>
   async ({ projectId, userId, resourceIdString, lifespan }) => {
+    const validatedResourceIdString = createGetParamFromResources(
+      parseUrlParameters(resourceIdString)
+    )
+
     const { id, token } = await deps.createToken({
       userId,
       name: cryptoRandomString({ length: 10 }),
@@ -154,7 +162,7 @@ export const createEmbedTokenFactory =
       projectId,
       tokenId: id,
       userId,
-      resourceIdString
+      resourceIdString: validatedResourceIdString
     }
 
     await deps.storeEmbedToken(tokenMetadata)
