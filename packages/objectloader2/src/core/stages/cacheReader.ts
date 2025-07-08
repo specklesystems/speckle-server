@@ -72,7 +72,7 @@ export class CacheReader {
         this.#notFoundQueue?.add(batch[i])
       }
     }
-    console.warn('processBatch: left, time', items.length, performance.now() - start)
+    this.#logger('processBatch: left, time', items.length, performance.now() - start)
   }
 
    dispose(): void {
