@@ -7,8 +7,10 @@ import {
   getRequestLogger,
   loggerWithMaybeContext
 } from '@/observability/utils/requestContext'
+import type Mail from 'nodemailer/lib/mailer'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { EmailsEvents } from '@/modules/emails/domain/events'
 
-export type { SendEmailParams } from '@/modules/emails/domain/operations'
 /**
  * Send out an e-mail
  */
@@ -19,6 +21,7 @@ export const sendEmail: SendEmail = async ({
   text,
   html
 }: SendEmailParams): Promise<boolean> => {
+  const eventBus = getEventBus()
   const logger = getRequestLogger() || loggerWithMaybeContext({ logger: emailLogger })
   const transporter = getTransporter()
   if (!transporter) {
@@ -27,13 +30,20 @@ export const sendEmail: SendEmail = async ({
   }
   try {
     const emailFrom = getEmailFromAddress()
-    await transporter.sendMail({
+    const opts: Mail.Options = {
       from: from || `"Speckle" <${emailFrom}>`,
       to,
       subject,
       text,
       html
+    }
+
+    await transporter.sendMail(opts)
+    await eventBus.emit({
+      eventName: EmailsEvents.Sent,
+      payload: opts
     })
+
     const emails = typeof to === 'string' ? [to] : to
     const distinctIds = await Promise.all(
       emails.map((email) => resolveMixpanelUserId(email))
@@ -52,3 +62,5 @@ export const sendEmail: SendEmail = async ({
 
   return false
 }
+
+export type { SendEmailParams } from '@/modules/emails/domain/operations'

@@ -305,26 +305,6 @@ export function mockRequireModule<
 export type MockApiType = ReturnType<typeof mockRequireModule>
 
 /**
- * Create global mock. Essentially the same as mockRequireModule() but simplified
- * with safeguards so that you can't destroy it and break it in other tests
- *
- * Note: Global mocks should be registered in test/hooks.js before everything else!
- */
-export function createGlobalMock<MockType extends object = Record<string, unknown>>(
-  modulePath: string
-) {
-  const globalMock = mockRequireModule<MockType>([modulePath], [], {
-    preventDestroy: true
-  })
-  const { hijackFunction, resetMockedFunctions } = globalMock
-
-  return {
-    hijackFunction,
-    resetMockedFunctions
-  }
-}
-
-/**
  * Ensure all mocks have been initialized
  */
 export const ensureMocksInitialized = async () => {

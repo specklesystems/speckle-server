@@ -25,7 +25,6 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { EmailSendingServiceMock } from '@/test/mocks/global'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   BasicTestStream,
@@ -89,9 +88,7 @@ describe('Server registration', () => {
     })
   })
 
-  afterEach(() => {
-    EmailSendingServiceMock.resetMockedFunctions()
-  })
+  afterEach(() => {})
 
   describe('with local strategy (email/pw)', () => {
     it('works', async () => {

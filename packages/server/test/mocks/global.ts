@@ -1,13 +1,8 @@
-import { createGlobalMock, mockRequireModule } from '@/test/mockHelper'
+import { mockRequireModule } from '@/test/mockHelper'
 
 /**
  * Global mocks that can be re-used. Early setup ensures that mocks work.
  */
-
-// TODO: For capturing sent emails
-export const EmailSendingServiceMock = createGlobalMock<
-  typeof import('@/modules/emails/services/sending')
->('@/modules/emails/services/sending')
 
 // TODO: For mocking out service/repo calls through GQL resolvers
 export const CommentsRepositoryMock = mockRequireModule<

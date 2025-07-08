@@ -30,11 +30,7 @@ import {
   purgeNotifications
 } from '@/test/notificationsHelper'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import {
-  EmailSendingServiceMock,
-  CommentsRepositoryMock,
-  StreamsRepositoryMock
-} from '@/test/mocks/global'
+import { CommentsRepositoryMock, StreamsRepositoryMock } from '@/test/mocks/global'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import {
   checkStreamResourceAccessFactory,
@@ -145,6 +141,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
 
 type LegacyCommentRecord = CommentRecord & {
   total_count: string
@@ -351,11 +348,10 @@ function generateRandomCommentText() {
   return buildCommentInputFromString(crs({ length: 10 }))
 }
 
-const mailerMock = EmailSendingServiceMock
 const commentRepoMock = CommentsRepositoryMock
 const streamsRepoMock = StreamsRepositoryMock
 
-describe('Comments @comments TEST123', () => {
+describe('Comments @comments', () => {
   let app: express.Express
 
   let notificationsState: NotificationsStateManager
@@ -1918,6 +1914,20 @@ describe('Comments @comments TEST123', () => {
         })
 
         describe('and mentioning a user', () => {
+          let emailListener: TestEmailListener
+
+          before(async () => {
+            emailListener = await createEmailListener()
+          })
+
+          after(async () => {
+            await emailListener.destroy()
+          })
+
+          afterEach(() => {
+            emailListener.reset()
+          })
+
           const createOrReplyCommentWithMention = (targetUserId: string, input = {}) =>
             createOrReplyComment({
               text: {
@@ -1940,10 +1950,7 @@ describe('Comments @comments TEST123', () => {
             })
 
           it('a valid mention triggers a notification', async () => {
-            const sendEmailInvocations = mailerMock.hijackFunction(
-              'sendEmail',
-              async () => false
-            )
+            const { getSends } = emailListener.listen({ times: 2 })
 
             const waitForAck = notificationsState.waitForAck(
               (e) => e.result?.type === NotificationType.MentionedInComment
@@ -1958,7 +1965,8 @@ describe('Comments @comments TEST123', () => {
             // Wait for
             await waitForAck
 
-            const emailParams = sendEmailInvocations.args[0][0]
+            const emailSends = getSends()
+            const emailParams = emailSends[0]
             expect(emailParams).to.be.ok
             expect(emailParams.subject).to.contain('mentioned in a Speckle comment')
             expect(emailParams.to).to.eq(otherUser.email)
