@@ -230,7 +230,8 @@ export async function createTestStream(
       const regionDb = await getRegionDb({ regionKey: streamObj.regionKey })
       const project = await createStreamFactory({ db: regionDb })({
         ...omit(streamObj, ['id', 'ownerId', 'visibility']),
-        isPublic: visibility === ProjectVisibility.Public
+        isPublic: visibility === ProjectVisibility.Public,
+        ownerId: owner.id
       })
       try {
         await retry(
