@@ -107,7 +107,6 @@ import {
   getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
 import {
@@ -231,6 +230,7 @@ import {
 } from '@/modules/serverinvites/services/coreFinalization'
 import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 import { copyWorkspaceFactory } from '@/modules/workspaces/repositories/projectRegions'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -774,7 +774,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
               deleteProject: deleteStreamFactory({ db }),
               deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              queryAllProjects: queryAllProjectsFactory({
                 getStreams: legacyGetStreamsFactory({ db })
               }),
               deleteSsoProvider: deleteSsoProviderFactory({ db }),

@@ -46,7 +46,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllUserProjectsFactory } from '@/modules/core/services/projects'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -84,7 +84,7 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  queryAllUserProjects: queryAllUserProjectsFactory({
+  queryAllProjects: queryAllProjectsFactory({
     getStreams: legacyGetStreamsFactory({ db })
   }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),

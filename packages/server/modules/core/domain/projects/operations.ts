@@ -74,6 +74,14 @@ export type WaitForRegionProject = (params: {
   maxAttempts?: number
 }) => Promise<void>
 
-export type QueryAllUserProjects = (args: {
-  userId: string
-}) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
+export type QueryAllProjects = (
+  args:
+    | {
+        userId: string
+        workspaceId?: string
+      }
+    | {
+        userId?: string
+        workspaceId: string
+      }
+) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>

@@ -131,7 +131,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllUserProjectsFactory } from '@/modules/core/services/projects'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -284,7 +284,7 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  queryAllUserProjects: queryAllUserProjectsFactory({
+  queryAllProjects: queryAllProjectsFactory({
     getStreams: legacyGetStreamsFactory({ db })
   }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),

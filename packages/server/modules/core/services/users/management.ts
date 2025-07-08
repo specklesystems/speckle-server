@@ -57,7 +57,7 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import { QueryAllUserProjects } from '@/modules/core/domain/projects/operations'
+import { QueryAllProjects } from '@/modules/core/domain/projects/operations'
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
@@ -295,7 +295,7 @@ export const deleteUserFactory =
     deleteAllUserInvites: DeleteAllUserInvites
     getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
     deleteUserRecord: DeleteUserRecord
-    queryAllUserProjects: QueryAllUserProjects
+    queryAllProjects: QueryAllProjects
     emitEvent: EventBusEmit
   }): DeleteUser =>
   async (id, invokerId) => {
@@ -339,7 +339,7 @@ export const deleteUserFactory =
       })
     }
 
-    for await (const projectsPage of deps.queryAllUserProjects({
+    for await (const projectsPage of deps.queryAllProjects({
       userId: id
     })) {
       await Promise.all(projectsPage.map(emitRevokeEventIfUserHasRole))
