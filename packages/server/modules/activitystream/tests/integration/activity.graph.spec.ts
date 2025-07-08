@@ -284,14 +284,24 @@ describe('Activity @activity', () => {
 
     const activity = { items: await getActivityHelper({ userId: userIz.id }) }
 
-    expect(activity.items.length).to.equal(2)
+    expect(activity.items.length).to.equal(3)
     expect(activity).to.nested.include({
       'items[0].eventType': 'project_role_updated',
-      'items[0].payload.new': 'stream:reviewer',
+      'items[0].payload.new': 'stream:owner',
       'items[0].payload.old': null,
+      'items[0].userId': userIz.id, // created branch
+
       'items[1].eventType': 'project_role_updated',
-      'items[1].payload.new': 'stream:contributor',
-      'items[1].payload.old': 'stream:reviewer'
+      'items[1].payload.new': 'stream:reviewer',
+      'items[1].payload.old': null,
+      'items[1].payload.userId': userCr.id,
+      'items[1].userId': userIz.id, // added user
+
+      'items[2].eventType': 'project_role_updated',
+      'items[2].payload.new': 'stream:contributor',
+      'items[2].payload.old': 'stream:reviewer',
+      'items[2].payload.userId': userCr.id,
+      'items[2].userId': userIz.id // made him a contibutor
     })
   })
 
