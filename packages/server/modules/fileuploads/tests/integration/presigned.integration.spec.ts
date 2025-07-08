@@ -75,7 +75,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
     }
 
     let projectDb: Knex
-    let projectStorage: ObjectStorage
+    let projectStorage: { private: ObjectStorage; public: ObjectStorage }
 
     before(async () => {
       await beforeEachContext()
@@ -112,7 +112,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
       before(() => {
         generatePresignedUrl = generatePresignedUrlFactory({
           getSignedUrl: getSignedUrlFactory({
-            objectStorage: projectStorage
+            objectStorage: projectStorage.public
           }),
           upsertBlob: upsertBlobFactory({
             db: projectDb
@@ -152,7 +152,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
           registerCompletedUpload: registerCompletedUploadFactory({
             getBlob: getBlobFactory({ db: projectDb }),
             getBlobMetadata: getBlobMetadataFromStorage({
-              objectStorage: projectStorage
+              objectStorage: projectStorage.public
             }),
             updateBlob: updateBlobFactory({
               db: projectDb

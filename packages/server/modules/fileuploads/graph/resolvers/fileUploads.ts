@@ -25,7 +25,9 @@ import {
 } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
+  fileImportServiceShouldUsePrivateObjectsServerUrl,
   getFileUploadUrlExpiryMinutes,
+  getPrivateObjectsServerOrigin,
   getServerOrigin,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
@@ -68,6 +70,11 @@ import cryptoRandomString from 'crypto-random-string'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
+import {
+  FileUploadRecord,
+  FileUploadRecordV2
+} from '@/modules/fileuploads/helpers/types'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
@@ -134,7 +141,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
     const generatePresignedUrl = generatePresignedUrlFactory({
       getSignedUrl: getSignedUrlFactory({
-        objectStorage: projectStorage
+        objectStorage: projectStorage.public
       }),
       upsertBlob: upsertBlobFactory({
         db: projectDb
@@ -189,7 +196,9 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     ])
 
     const pushJobToFileImporter = pushJobToFileImporterFactory({
-      getServerOrigin,
+      getServerOrigin: fileImportServiceShouldUsePrivateObjectsServerUrl()
+        ? getPrivateObjectsServerOrigin
+        : getServerOrigin,
       createAppToken: createAppTokenFactory({
         storeApiToken: storeApiTokenFactory({ db }),
         storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -221,7 +230,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
             db: projectDb
           }),
           getBlobMetadata: getBlobMetadataFromStorage({
-            objectStorage: projectStorage
+            objectStorage: projectStorage.private
           })
         }),
         insertNewUploadAndNotify: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
@@ -249,11 +258,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     }
   }
 }
-import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
-import {
-  FileUploadRecord,
-  FileUploadRecordV2
-} from '@/modules/fileuploads/helpers/types'
 
 export default {
   Stream: {

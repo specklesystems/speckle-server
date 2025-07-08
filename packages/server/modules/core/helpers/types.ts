@@ -147,12 +147,22 @@ export type ObjectRecord = {
 
 export type InvalidTokenResult = {
   valid: false
+  /**
+   * The ID of the token used for validation.
+   * This is the first 10 characters of the token string.
+   */
+  tokenId: string
 }
 
 export type ValidTokenResult = {
   valid: true
   scopes: string[]
   userId: string
+  /**
+   * The ID of the token used for validation.
+   * This is the first 10 characters of the token string.
+   */
+  tokenId: string
   role: ServerRoles
   /**
    * Set, if the token is an app token

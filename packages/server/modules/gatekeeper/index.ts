@@ -25,7 +25,7 @@ import {
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
-  getSubscriptionDataFactory,
+  getStripeSubscriptionDataFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
@@ -53,17 +53,21 @@ const scheduleWorkspaceSubscriptionDownscale = ({
   scheduleExecution: ScheduleExecution
 }) => {
   const stripe = getStripeClient()
+  const getStripeSubscriptionData = getStripeSubscriptionDataFactory({ stripe })
   const manageSubscriptionDownscale = manageSubscriptionDownscaleFactory({
     downscaleWorkspaceSubscription: downscaleWorkspaceSubscriptionFactory({
       countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
-      reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe }),
+      reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+        stripe,
+        getStripeSubscriptionData
+      }),
       getWorkspacePlanProductId
     }),
     getWorkspaceSubscriptions: getWorkspaceSubscriptionsPastBillingCycleEndFactory({
       db
     }),
-    getSubscriptionData: getSubscriptionDataFactory({ stripe }),
+    getStripeSubscriptionData,
     updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
   })
 

@@ -125,6 +125,10 @@ export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
   return getBooleanFromEnv('PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
 }
 
+export const fileImportServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
+  return getBooleanFromEnv('FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
+}
+
 export const getFileImportServiceRhinoParserRedisUrl = (): string | undefined => {
   return getStringFromEnv('FILEIMPORT_SERVICE_RHINO_REDIS_URL', { unsafe: true })
 }
@@ -427,6 +431,10 @@ export function getS3SecretKey() {
 
 export function getS3Endpoint() {
   return getStringFromEnv('S3_ENDPOINT')
+}
+
+export function getS3PublicEndpoint() {
+  return getStringFromEnv('S3_PUBLIC_ENDPOINT', { unsafe: true })
 }
 
 export function getS3Region(aDefault: string = 'us-east-1') {

@@ -124,7 +124,9 @@ export const blobStorageRouterFactory = (): Router => {
 
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
       const getFileStream = getFileStreamFactory({ getBlobMetadata })
-      const getObjectStream = getObjectStreamFactory({ storage: projectStorage })
+      const getObjectStream = getObjectStreamFactory({
+        storage: projectStorage.private
+      })
 
       const { fileName } = await getBlobMetadata({
         streamId: req.params.streamId,
@@ -160,7 +162,7 @@ export const blobStorageRouterFactory = (): Router => {
       ])
 
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
-      const deleteObject = deleteObjectFactory({ storage: projectStorage })
+      const deleteObject = deleteObjectFactory({ storage: projectStorage.private })
       const deleteBlob = fullyDeleteBlobFactory({
         getBlobMetadata,
         deleteBlob: deleteBlobFactory({ db: projectDb }),
