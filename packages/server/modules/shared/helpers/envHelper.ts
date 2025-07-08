@@ -395,7 +395,7 @@ export function isEmailEnabled() {
 }
 
 export const getRhinoQueuePostgresConnectionString = () =>
-  getStringFromEnv('RHINO_QUEUE_POSTGRES_CONNECTION_STRING')
+  getStringFromEnv('RHINO_QUEUE_POSTGRES_URL')
 
 export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '8')
