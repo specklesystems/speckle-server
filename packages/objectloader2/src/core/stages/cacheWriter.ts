@@ -39,8 +39,9 @@ export class CacheWriter implements Queue<Item> {
   }
 
   async disposeAsync(): Promise<void> {
-    await this.#writeQueue?.disposeAsync()
+    this.#writeQueue?.dispose()
     this.#disposed = true
+    return Promise.resolve()
   }
 
   get isDisposed(): boolean {

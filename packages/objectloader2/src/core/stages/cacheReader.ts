@@ -61,6 +61,7 @@ export class CacheReader {
   }
 
   #processBatch = async (batch: string[]): Promise<void> => {
+    const start = performance.now()
     const items = await this.#database.getAll(batch)
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
@@ -71,9 +72,10 @@ export class CacheReader {
         this.#notFoundQueue?.add(batch[i])
       }
     }
+    console.warn('processBatch: left, time', items.length, performance.now() - start)
   }
 
-  async disposeAsync(): Promise<void> {
-    await this.#readQueue?.disposeAsync()
+   dispose(): void {
+    this.#readQueue?.dispose()
   }
 }
