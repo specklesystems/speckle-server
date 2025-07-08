@@ -355,7 +355,7 @@ const mailerMock = EmailSendingServiceMock
 const commentRepoMock = CommentsRepositoryMock
 const streamsRepoMock = StreamsRepositoryMock
 
-describe('Comments @comments', () => {
+describe('Comments @comments TEST123', () => {
   let app: express.Express
 
   let notificationsState: NotificationsStateManager

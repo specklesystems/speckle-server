@@ -358,6 +358,8 @@ export const shutdownAll = async () => {
   await shutdown({ graphqlServer: undefined })
 }
 
+let hasGlobalSetupRun = false
+
 export const beforeEntireTestRun = async () => {
   if (isMultiRegionTestMode()) {
     logger.info('Running tests in multi-region mode...')
@@ -370,6 +372,15 @@ export const beforeEntireTestRun = async () => {
 
   // Init app
   await buildApp()
+  hasGlobalSetupRun = true
+}
+
+export const beforeEntireTestRunIfNeeded = async () => {
+  if (!hasGlobalSetupRun) {
+    await beforeEntireTestRun()
+  } else {
+    logger.info('Global setup already run, skipping...')
+  }
 }
 
 export const afterEntireTestRun = async () => {

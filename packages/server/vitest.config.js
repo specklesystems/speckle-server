@@ -15,7 +15,10 @@ const exclude = [
   ...(!featureFlags.FF_WORKSPACES_MODULE_ENABLED ? ['modules/workspaces/**/*'] : [])
 ]
 
+// duplicate main process argv
 const workerExecArgv = ['--import', './esmLoader.js', '--import', 'tsx']
+// const workerExecArgv = [...process.execArgv]
+// console.log(workerExecArgv)
 
 // Fixing double-load issue where graphql's index.js and index.mjs are both loaded at the same
 // time causing various errors like instanceof checks not working.
@@ -62,12 +65,17 @@ export default defineConfig({
     //     inline: ['knex', /knex/i]
     //   }
     // }
+    // TODO: perf troubleshooting
+    isolate: false,
+    // pool: 'threads',
     poolOptions: {
       forks: {
         execArgv: workerExecArgv
       },
       threads: {
         execArgv: workerExecArgv
+        // isolate: false,
+        // singleThread: true
       }
     }
   },

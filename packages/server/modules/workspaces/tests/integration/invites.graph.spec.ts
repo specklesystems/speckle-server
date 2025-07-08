@@ -86,7 +86,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   emitEvent: getEventBus().emit
 })
 
-describe('Workspaces Invites GQL', () => {
+describe('Workspaces Invites GQL TEST123', () => {
   let app: Express
 
   const me: BasicTestUser = {

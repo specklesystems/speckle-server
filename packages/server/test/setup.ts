@@ -10,7 +10,7 @@ import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import graphqlChaiPlugin from '@/test/plugins/graphql'
 import * as vitest from 'vitest'
 import { ensureMocksInitialized } from '@/test/mockHelper.js'
-import { buildApp, shutdownAll } from '@/test/hooks.js'
+import { buildApp, shutdownAll, beforeEntireTestRunIfNeeded } from '@/test/hooks.js'
 import { testLogger as logger } from '@/observability/logging'
 import originalChai from 'chai'
 import { chai } from 'vitest'
@@ -42,11 +42,12 @@ vitest.beforeAll(async () => {
   // Ensure all mocks are initialized
   await ensureMocksInitialized()
 
-  // TODO: Optimization? We shouldnt be doing this twice. Add logger.info for proper tracing of whats going on w/ component=test
-  // Ensure app is initialized
-  await buildApp()
+  // // TODO: Optimization? We shouldnt be doing this twice. Add logger.info for proper tracing of whats going on w/ component=test
+  // // Ensure app is initialized
+  // await buildApp()
+  await beforeEntireTestRunIfNeeded()
 })
 
 vitest.afterAll(async () => {
-  await shutdownAll()
+  // await shutdownAll()
 })
