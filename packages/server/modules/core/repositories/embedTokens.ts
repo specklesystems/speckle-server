@@ -43,7 +43,10 @@ export const listProjectEmbedTokensFactory =
 
     const q = tables
       .embedApiTokens(deps.db)
-      .select(
+      .select<
+        (EmbedApiTokenRecord &
+          Pick<ApiTokenRecord, 'createdAt' | 'lastUsed' | 'lifespan'>)[]
+      >(
         ...EmbedApiTokens.cols,
         ApiTokens.col.createdAt,
         ApiTokens.col.lastUsed,
@@ -58,8 +61,7 @@ export const listProjectEmbedTokensFactory =
       q.andWhere(ApiTokens.col.createdAt, '<', cursor)
     }
 
-    return (await q) as (EmbedApiTokenRecord &
-      Pick<ApiTokenRecord, 'createdAt' | 'lastUsed' | 'lifespan'>)[]
+    return await q
   }
 
 export const revokeEmbedTokenByIdFactory =
