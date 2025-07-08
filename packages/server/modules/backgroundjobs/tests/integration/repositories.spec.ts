@@ -87,7 +87,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       const retrievedJob = await getBackgroundJob({ jobId: job.id })
 
       expect(retrievedJob).to.not.be.null
-      expect(retrievedJob).to.equal(job)
+      expect(retrievedJob).to.deep.equal(job)
     })
 
     it('should return null for non-existent job ID', async () => {
