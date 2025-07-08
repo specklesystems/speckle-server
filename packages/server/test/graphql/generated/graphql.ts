@@ -269,6 +269,7 @@ export type AutomateFunction = {
   isFeatured: Scalars['Boolean']['output'];
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  permissions: AutomateFunctionPermissionChecks;
   releases: AutomateFunctionReleaseCollection;
   repo: BasicGitRepositoryMetadata;
   /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
@@ -289,6 +290,11 @@ export type AutomateFunctionCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<AutomateFunction>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type AutomateFunctionPermissionChecks = {
+  __typename?: 'AutomateFunctionPermissionChecks';
+  canRegenerateToken: PermissionCheckResult;
 };
 
 export type AutomateFunctionRelease = {

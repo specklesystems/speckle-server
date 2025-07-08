@@ -47,6 +47,7 @@ generates:
         FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
         AutomateFunction: '@/modules/automate/helpers/graphTypes#AutomateFunctionGraphQLReturn'
         AutomateFunctionRelease: '@/modules/automate/helpers/graphTypes#AutomateFunctionReleaseGraphQLReturn'
+        AutomateFunctionPermissionChecks: '@/modules/automate/helpers/graphTypes#AutomateFunctionPermissionChecksGraphQLReturn'
         Automation: '@/modules/automate/helpers/graphTypes#AutomationGraphQLReturn'
         AutomationPermissionChecks: '@/modules/automate/helpers/graphTypes#AutomationPermissionChecksGraphQLReturn'
         AutomationRevision: '@/modules/automate/helpers/graphTypes#AutomationRevisionGraphQLReturn'
