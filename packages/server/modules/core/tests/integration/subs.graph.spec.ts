@@ -94,7 +94,6 @@ import {
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { faker } from '@faker-js/faker'
 import { Optional, Roles, Scopes, ServerScope, WorkspacePlans } from '@speckle/shared'
-import { getFeatureFlags } from '@speckle/shared/environment'
 import { expect } from 'chai'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -219,8 +218,6 @@ describe('Core GraphQL Subscriptions (New)', () => {
   after(async () => {
     subServer.quit()
   })
-
-  const { FF_WORKSPACES_MULTI_REGION_ENABLED } = getFeatureFlags()
 
   const modes = [
     { isMultiRegion: false },
@@ -375,16 +372,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
                   await triggerMessage()
                   await onMessage.waitForMessage()
 
-                  if (
-                    FF_WORKSPACES_MULTI_REGION_ENABLED &&
-                    !allow &&
-                    title === 'userProjectsUpdated()'
-                  ) {
-                    // exceptional case for multiregion
-                    expect(onMessage.getMessages()).to.have.lengthOf(1)
-                  } else {
-                    expect(onMessage.getMessages()).to.have.lengthOf(expectedMessages)
-                  }
+                  expect(onMessage.getMessages()).to.have.lengthOf(expectedMessages)
                 }
               )
             }
