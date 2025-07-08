@@ -7,7 +7,7 @@ export default class BatchingQueue<T> {
   #processFunction: (batch: T[]) => Promise<void>
   #timeoutId: ReturnType<typeof setTimeout> | null = null
   #isProcessing = false
-    #logger: CustomLogger
+  #logger: CustomLogger
 
   #disposed = false
   #batchTimeout: number

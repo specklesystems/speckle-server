@@ -75,7 +75,7 @@ export class CacheReader {
     this.#logger('processBatch: left, time', items.length, performance.now() - start)
   }
 
-   dispose(): void {
+  dispose(): void {
     this.#readQueue?.dispose()
   }
 }
