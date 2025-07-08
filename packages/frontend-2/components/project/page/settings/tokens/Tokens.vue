@@ -14,14 +14,18 @@
         { id: 'createdBy', header: 'Created by', classes: 'col-span-4' }
       ]"
       :items="embedTokens"
-      :buttons="[
-        {
-          icon: TrashIcon,
-          label: 'Delete',
-          disabled: !canUpdate?.authorized,
-          action: openDeleteWebhookDialog
-        }
-      ]"
+      :buttons="
+        canRevoke?.authorized
+          ? [
+              {
+                icon: TrashIcon,
+                label: 'Delete',
+                disabled: !canUpdate?.authorized,
+                action: openDeleteWebhookDialog
+              }
+            ]
+          : undefined
+      "
     >
       <template #createdAt="{ item }">
         {{ formattedFullDate(item.createdAt) }}
@@ -58,7 +62,10 @@ graphql(`
   fragment ProjectPageSettingsTokens_Project on Project {
     id
     permissions {
-      canUpdate {
+      canReadEmbedTokens {
+        ...FullPermissionCheckResult
+      }
+      canRevokeEmbedTokens {
         ...FullPermissionCheckResult
       }
     }
@@ -72,13 +79,21 @@ const { result: pageResult } = useQuery(projectEmbedTokensQuery, () => ({
   projectId: projectId.value
 }))
 
-const canUpdate = computed(() => pageResult.value?.project?.permissions?.canUpdate)
+const canUpdate = computed(
+  () => pageResult.value?.project?.permissions?.canReadEmbedTokens
+)
+const canRevoke = computed(
+  () => pageResult.value?.project?.permissions?.canRevokeEmbedTokens
+)
 const tokenToDelete = ref<EmbedTokenItem | null>(null)
 const showDeleteTokenDialog = ref(false)
 const deleteEmbedToken = useDeleteEmbedToken()
 
-const embedTokens = computed<EmbedTokenItem[]>(() => {
-  return pageResult.value?.project?.embedTokens || []
+const embedTokens = computed(() => {
+  return (pageResult.value?.project?.embedTokens?.items || []).map((token) => ({
+    ...token,
+    id: token.tokenId
+  }))
 })
 
 const openDeleteWebhookDialog = (item: EmbedTokenItem) => {
@@ -87,6 +102,8 @@ const openDeleteWebhookDialog = (item: EmbedTokenItem) => {
 }
 
 const onDeleteToken = () => {
+  if (!tokenToDelete.value?.tokenId) return
+
   deleteEmbedToken({
     projectId: projectId.value,
     token: tokenToDelete.value?.tokenId

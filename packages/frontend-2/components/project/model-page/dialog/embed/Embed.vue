@@ -131,10 +131,16 @@ import { SpeckleViewer } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { useCreateEmbedToken } from '~~/lib/projects/composables/tokenManagement'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
     id
+    permissions {
+      canCreateEmbedTokens {
+        ...FullPermissionCheckResult
+      }
+    }
     workspace {
       id
       slug
@@ -163,6 +169,7 @@ const { copy } = useClipboard()
 const {
   public: { baseUrl }
 } = useRuntimeConfig()
+const createEmbedToken = useCreateEmbedToken()
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
@@ -174,6 +181,7 @@ const disableModelLink = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const hideSpeckleBranding = ref(false)
+const embedToken = ref<string | null>(null)
 
 const routeModelId = computed(() => route.params.modelId as string)
 
@@ -258,11 +266,13 @@ const workspaceSlug = computed(() => {
 const canEditEmbedOptions = computed(() => {
   return props.project.workspace?.permissions?.canEditEmbedOptions
 })
+const canCreateEmbedTokens = computed(() => {
+  return props.project.permissions?.canCreateEmbedTokens?.authorized
+})
 const workspaceHideSpeckleBrandingEnabled = computed(() => {
   if (!isWorkspacesEnabled.value) return false
   return props.project.workspace?.embedOptions?.hideSpeckleBranding
 })
-
 const hideSpeckleBrandingTooltip = computed(() => {
   if (!isWorkspacesEnabled.value) return ''
   if (workspaceHideSpeckleBrandingEnabled.value) {
@@ -325,4 +335,17 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(async () => {
+  if (canCreateEmbedTokens.value) {
+    const token = await createEmbedToken({
+      projectId: props.project.id,
+      resourceIdString: routeModelId.value
+    })
+
+    if (token) {
+      embedToken.value = token
+    }
+  }
+})
 </script>

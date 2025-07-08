@@ -354,13 +354,17 @@ export const projectEmbedTokensQuery = graphql(`
       name
       ...ProjectPageSettingsTokens_Project
       embedTokens {
-        createdAt
-        lastUsed
-        resourceIdString
-        tokenId
-        user {
-          avatar
-          name
+        cursor
+        totalCount
+        items {
+          createdAt
+          lastUsed
+          resourceIdString
+          tokenId
+          user {
+            avatar
+            name
+          }
         }
       }
     }

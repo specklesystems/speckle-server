@@ -2,7 +2,10 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { deleteEmbedTokenMutation } from '~~/lib/projects/graphql/mutations'
+import {
+  deleteEmbedTokenMutation,
+  createEmbedTokenMutation
+} from '~~/lib/projects/graphql/mutations'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
 import { useApolloClient } from '@vue/apollo-composable'
 
@@ -35,5 +38,22 @@ export const useDeleteEmbedToken = () => {
         description: getFirstErrorMessage(result?.errors)
       })
     }
+  }
+}
+
+export const useCreateEmbedToken = () => {
+  const apollo = useApolloClient().client
+
+  return async (input: { projectId: string; resourceIdString: string }) => {
+    const { projectId, resourceIdString } = input
+
+    const result = await apollo
+      .mutate({
+        mutation: createEmbedTokenMutation,
+        variables: { token: { projectId, resourceIdString } }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    return result.data?.projectMutations.createEmbedToken.token
   }
 }

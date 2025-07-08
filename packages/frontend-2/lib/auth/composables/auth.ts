@@ -167,6 +167,11 @@ export const useAuthCookie = () =>
     maxAge: 60 * 60 * 24 * 30 // 30 days
   })
 
+export const useEmbedTokenCookie = () =>
+  useSynchronizedCookie<Optional<string>>('embedToken', {
+    maxAge: 60 * 60 * 24 * 30 // 30 days
+  })
+
 export const useAuthManager = (
   options?: Partial<{
     /**
@@ -200,6 +205,16 @@ export const useAuthManager = (
    * Observable auth cookie
    */
   const authToken = useAuthCookie()
+
+  /**
+   * Observable embed token cookie
+   */
+  const embedToken = useEmbedTokenCookie()
+
+  /**
+   * Get the effective auth token (embed token takes precedence)
+   */
+  const effectiveAuthToken = computed(() => embedToken.value || authToken.value)
 
   /**
    * Set/clear new token value and redirect to home
@@ -318,11 +333,31 @@ export const useAuthManager = (
   }
 
   /**
+   * Watch for embed token in query string and save it
+   */
+  const watchEmbedToken = () => {
+    if (import.meta.server) return
+
+    watch(
+      () => route.query['token'] as Optional<string>,
+      async (newVal, oldVal) => {
+        if (newVal && newVal !== oldVal) {
+          embedToken.value = newVal
+          // Reset auth state to reload user data with new token
+          await resetAuthState()
+        }
+      },
+      { immediate: true }
+    )
+  }
+
+  /**
    * Sets up querystring watchers that trigger various auth related activities like email verification status reports etc.
    */
   const watchAuthQueryString = () => {
     watchLoginAccessCode()
     watchEmailVerificationStatus()
+    watchEmbedToken()
   }
 
   /**
@@ -401,6 +436,28 @@ export const useAuthManager = (
   }
 
   /**
+   * Clear embed token
+   */
+  const clearEmbedToken = () => {
+    embedToken.value = undefined
+  }
+
+  /**
+   * Check if embed token is active
+   */
+  const hasEmbedToken = computed(() => !!embedToken.value)
+
+  /**
+   * Check if user is authenticated (either via regular auth or embed token)
+   */
+  const isAuthenticated = computed(() => !!effectiveAuthToken.value)
+
+  /**
+   * Check if user is authenticated via embed token (not regular auth)
+   */
+  const isEmbedMode = computed(() => !!embedToken.value && !authToken.value)
+
+  /**
    * Log out
    */
   const logout = async (
@@ -415,6 +472,7 @@ export const useAuthManager = (
     }>
   ) => {
     await saveNewToken(undefined, { skipRedirect: true })
+    clearEmbedToken()
 
     if (!options?.skipToast) {
       triggerNotification({
@@ -441,6 +499,12 @@ export const useAuthManager = (
 
   return {
     authToken,
+    embedToken,
+    effectiveAuthToken,
+    hasEmbedToken,
+    isAuthenticated,
+    isEmbedMode,
+    clearEmbedToken,
     loginWithEmail,
     signUpWithEmail,
     signInOrSignUpWithSso,

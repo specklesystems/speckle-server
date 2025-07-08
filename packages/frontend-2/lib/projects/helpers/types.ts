@@ -16,5 +16,5 @@ export type WebhookFormValues = {
 }
 
 export type EmbedTokenItem = NonNullable<
-  Get<ProjectEmbedTokensQuery, 'project.embedTokens[0]'>
+  Get<ProjectEmbedTokensQuery, 'project.embedTokens.items[0]'>
 >
