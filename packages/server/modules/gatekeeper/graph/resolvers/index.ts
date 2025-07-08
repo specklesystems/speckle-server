@@ -17,6 +17,7 @@ import { db } from '@/db/knex'
 import {
   createCustomerPortalUrlFactory,
   getRecurringPricesFactory,
+  getStripeSubscriptionDataFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import {
@@ -458,7 +459,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
-              stripe
+              stripe,
+              getStripeSubscriptionData: getStripeSubscriptionDataFactory({ stripe })
             }),
             countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({
               db
