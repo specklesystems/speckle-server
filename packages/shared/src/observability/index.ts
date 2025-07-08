@@ -12,7 +12,9 @@ type LogFormatter = (logObject: Record<string, unknown>) => Record<string, unkno
 const allowPrettyDebugger = ['1', 'true'].includes(
   process.env.ALLOW_PRETTY_DEBUGGER || 'false'
 )
-const debugNamespaces = (process.env.LOG_FILTER || '').split(',')
+const debugNamespaces = (process.env.LOG_FILTER || '')
+  .split(',')
+  .filter((s) => !!s?.length)
 
 const defaultLevelFormatterFactory =
   (pretty: boolean): LogLevelFormatter =>
@@ -69,7 +71,7 @@ export function getLogger(
       options: {
         colorize: true,
         destination: 2, //stderr
-        ignore: 'time',
+        // ignore: 'time',
         levelFirst: true,
         singleLine: true
       }

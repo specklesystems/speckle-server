@@ -1,7 +1,7 @@
 import { afterEntireTestRun, beforeEntireTestRun } from '@/test/hooks'
 
 export async function setup() {
-  await beforeEntireTestRun()
+  // await beforeEntireTestRun()
 }
 
 export async function teardown() {

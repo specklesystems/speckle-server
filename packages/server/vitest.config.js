@@ -54,7 +54,7 @@ export default defineConfig({
     fileParallelism: false, // TODO: for now, keep it the same way it was w/ mocha,
     globals: true,
     environment: 'node',
-    reporters: ['verbose'],
+    reporters: ['basic'],
     hookTimeout: 10000000, // TODO: while troubleshooting,
     slowTestThreshold: 1, // TODO: for debugging
     // deps: {
@@ -67,6 +67,8 @@ export default defineConfig({
     // }
     // TODO: perf troubleshooting
     isolate: false,
+    silent: false,
+    disableConsoleIntercept: true,
     // pool: 'threads',
     poolOptions: {
       forks: {
