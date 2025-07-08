@@ -4,7 +4,6 @@ import { Factory, FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import { isArray, isFunction } from 'lodash-es'
 import { ConditionalPick } from 'type-fest'
-import { vi } from 'vitest'
 
 const allMockInitPromises: Array<Promise<void>> = []
 
@@ -100,12 +99,12 @@ export function mockRequireModule<
   //   // await replaceEsm(modulePath, mockDefinition)
   //   vi.doMock(modulePath, () => mockDefinition)
   // }
-  vi.doMock(modulePaths[0], () => mockDefinition)
+  // vi.doMock(modulePaths[0], () => mockDefinition)
 
   const asyncInit = async () => {
-    const originalModule = (await vi.importActual(modulePaths[0])) as MockType
-    mockTarget.original = originalModule
-    await reRequireDependencies()
+    // const originalModule = (await vi.importActual(modulePaths[0])) as MockType
+    // mockTarget.original = originalModule
+    // await reRequireDependencies()
   }
 
   const memoizedAsyncInit = () => {
@@ -173,7 +172,7 @@ export function mockRequireModule<
       }
 
       for (const modulePath of modulePaths) {
-        vi.doUnmock(modulePath)
+        // vi.doUnmock(modulePath)
       }
 
       if (reRequireDeps) void reRequireDependencies()

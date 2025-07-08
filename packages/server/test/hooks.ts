@@ -1,4 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-restricted-imports */
+import '../bootstrap.js'
+
+// Register global mocks as early as possible
+import '@/test/mocks/global'
+
+import chaiAsPromised from 'chai-as-promised'
+import chaiHttp from 'chai-http'
+import deepEqualInAnyOrder from 'deep-equal-in-any-order'
+import graphqlChaiPlugin from '@/test/plugins/graphql'
 import { knex as mainDb } from '@/db/knex'
 import chai from 'chai'
 import { init, startHttp, shutdown } from '@/app'
@@ -42,6 +52,12 @@ import { set } from 'lodash-es'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import * as mocha from 'mocha'
+
+// Register chai plugins
+chai.use(chaiAsPromised)
+chai.use(chaiHttp)
+chai.use(deepEqualInAnyOrder)
+chai.use(graphqlChaiPlugin)
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs
@@ -358,8 +374,6 @@ export const shutdownAll = async () => {
   await shutdown({ graphqlServer: undefined })
 }
 
-let hasGlobalSetupRun = false
-
 export const beforeEntireTestRun = async () => {
   if (isMultiRegionTestMode()) {
     logger.info('Running tests in multi-region mode...')
@@ -372,15 +386,6 @@ export const beforeEntireTestRun = async () => {
 
   // Init app
   await buildApp()
-  hasGlobalSetupRun = true
-}
-
-export const beforeEntireTestRunIfNeeded = async () => {
-  if (!hasGlobalSetupRun) {
-    await beforeEntireTestRun()
-  } else {
-    logger.info('Global setup already run, skipping...')
-  }
 }
 
 export const afterEntireTestRun = async () => {
@@ -390,4 +395,9 @@ export const afterEntireTestRun = async () => {
     await unlockFactory({ db })()
   })
   await shutdownAll()
+}
+
+export const mochaHooks: mocha.RootHookObject = {
+  beforeAll: beforeEntireTestRun,
+  afterAll: afterEntireTestRun
 }

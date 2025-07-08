@@ -47,7 +47,6 @@ import { expect } from 'chai'
 import { parse, Parser } from 'csv-parse'
 import { createReadStream } from 'fs'
 import { createObjectsBatchedAndNoClosuresFactory } from '@/modules/core/services/objects/management'
-import { it } from 'vitest'
 
 const IS_NODE_22_OR_ABOVE = process.versions.node.split('.').map(Number)[0] >= 22
 
@@ -242,9 +241,8 @@ describe('Objects streaming REST @core', () => {
         parseInt(postGaugeContents),
         `After the test, we did not have sufficient DB connections free: ${postGaugeContents}`
       ).to.gte(4) //expect all connections to become available again after the client closes them
-    },
-    { timeout: 50000 }
-  )
+    }
+  ).timeout(50000)
 })
 
 const forceCloseStreamingConnection = async (params: {

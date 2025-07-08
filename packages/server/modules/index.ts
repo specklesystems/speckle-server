@@ -124,7 +124,7 @@ async function getSpeckleModules() {
   const moduleNames = getEnabledModuleNames()
 
   for (const dir of moduleNames) {
-    const moduleIndex = await import(`./${dir}/index.ts`) // TODO: Ts or JS? Test env override?
+    const moduleIndex = await import(`./${dir}/index`)
 
     // CJS/ESM interop is weird
     let moduleDefinition: SpeckleModule
