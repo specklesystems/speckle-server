@@ -113,6 +113,12 @@ extend type ProjectMutations {
   revokeEmbedTokens(projectId: String!): Boolean! @hasScope(scope: "tokens:write")
 }
 
+type EmbedTokenCollection {
+  items: [EmbedToken!]!
+  totalCount: Int!
+  cursor: String
+}
+
 extend type Project {
-  embedTokens: [EmbedToken!]!
+  embedTokens(cursor: String, limit: Int): EmbedTokenCollection!
 }
