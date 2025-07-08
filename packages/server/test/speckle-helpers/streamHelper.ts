@@ -254,7 +254,7 @@ export async function createTestStream(
       }
       // avoid emiting duplicated events
       await db('stream_acl').insert({
-        streamId: project.id,
+        resourceId: project.id,
         userId: owner.id,
         role: Roles.Stream.Owner
       })
