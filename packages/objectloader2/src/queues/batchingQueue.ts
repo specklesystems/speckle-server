@@ -4,11 +4,30 @@ export default class BatchingQueue<T> {
   #queue: KeyedQueue<string, T> = new KeyedQueue<string, T>()
   #batchSize: number
   #processFunction: (batch: T[]) => Promise<void>
-  private timeoutId: number | null = null
-  private isProcessing = false
+  #timeoutId: ReturnType<typeof setTimeout> | null = null
+  #isProcessing = false
 
   #disposed = false
   #batchTimeout: number
+
+  // Helper methods for cross-environment timeout handling
+  #getSetTimeoutFn(): typeof setTimeout {
+    // First check for window object (browser), then fallback to global (node), then just use setTimeout
+    return typeof window !== 'undefined'
+      ? window.setTimeout.bind(window)
+      : typeof global !== 'undefined'
+      ? global.setTimeout
+      : setTimeout
+  }
+
+  #getClearTimeoutFn(): typeof clearTimeout {
+    // First check for window object (browser), then fallback to global (node), then just use clearTimeout
+    return typeof window !== 'undefined'
+      ? window.clearTimeout.bind(window)
+      : typeof global !== 'undefined'
+      ? global.clearTimeout
+      : clearTimeout
+  }
 
   constructor(params: {
     batchSize: number
@@ -40,24 +59,24 @@ export default class BatchingQueue<T> {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.#flush()
     } else {
-      if (this.timeoutId) {
-        clearTimeout(this.timeoutId)
+      if (this.#timeoutId) {
+        this.#getClearTimeoutFn()(this.#timeoutId)
       }
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      this.timeoutId = window.setTimeout(() => this.#flush(), this.#batchTimeout)
+      this.#timeoutId = this.#getSetTimeoutFn()(() => this.#flush(), this.#batchTimeout)
     }
   }
 
   async #flush(): Promise<void> {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId)
-      this.timeoutId = null
+    if (this.#timeoutId) {
+      this.#getClearTimeoutFn()(this.#timeoutId)
+      this.#timeoutId = null
     }
 
-    if (this.isProcessing || this.#queue.size === 0) {
+    if (this.#isProcessing || this.#queue.size === 0) {
       return
     }
-    this.isProcessing = true
+    this.#isProcessing = true
 
     const batchToProcess = this.#getBatch(this.#batchSize)
 
@@ -66,7 +85,7 @@ export default class BatchingQueue<T> {
     } catch (error) {
       console.error('Batch processing failed:', error)
     } finally {
-      this.isProcessing = false
+      this.#isProcessing = false
     }
     this.#addCheck()
   }
