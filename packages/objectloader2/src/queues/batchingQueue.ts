@@ -1,3 +1,4 @@
+import { CustomLogger } from '../types/functions.js'
 import KeyedQueue from './keyedQueue.js'
 
 export default class BatchingQueue<T> {
@@ -6,6 +7,7 @@ export default class BatchingQueue<T> {
   #processFunction: (batch: T[]) => Promise<void>
   #timeoutId: ReturnType<typeof setTimeout> | null = null
   #isProcessing = false
+    #logger: CustomLogger
 
   #disposed = false
   #batchTimeout: number
@@ -33,14 +35,19 @@ export default class BatchingQueue<T> {
     batchSize: number
     maxWaitTime: number
     processFunction: (batch: T[]) => Promise<void>
+    logger?: CustomLogger
   }) {
     this.#batchSize = params.batchSize
     this.#processFunction = params.processFunction
     this.#batchTimeout = params.maxWaitTime
+    this.#logger = params.logger || ((): void => {})
   }
 
   dispose(): void {
     this.#disposed = true
+    if (this.#timeoutId) {
+      this.#getClearTimeoutFn()(this.#timeoutId)
+    }
   }
 
   add(key: string, item: T): void {
@@ -83,7 +90,7 @@ export default class BatchingQueue<T> {
     try {
       await this.#processFunction(batchToProcess)
     } catch (error) {
-      console.error('Batch processing failed:', error)
+      this.#logger('Batch processing failed:', error)
     } finally {
       this.#isProcessing = false
     }
