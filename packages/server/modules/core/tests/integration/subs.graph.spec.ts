@@ -276,6 +276,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
           type ScopeTest = {
             title: string
             withoutScope: ServerScope
+            expectedMessages: number
             sub: () => {
               query: any
               variables: any
@@ -296,6 +297,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             {
               title: 'streamUpdated()',
               withoutScope: Scopes.Streams.Read,
+              expectedMessages: 1,
               sub: () => ({
                 query: OnStreamUpdatedDocument,
                 variables: { streamId: randomProject.id }
@@ -305,6 +307,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             {
               title: 'projectUpdated()',
               withoutScope: Scopes.Streams.Read,
+              expectedMessages: 1,
               sub: () => ({
                 query: OnProjectUpdatedDocument,
                 variables: { projectId: randomProject.id }
@@ -314,6 +317,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             {
               title: 'userProjectsUpdated()',
               withoutScope: Scopes.Profile.Read,
+              expectedMessages: 2,
               sub: () => ({
                 query: OnUserProjectsUpdatedDocument,
                 variables: {}
@@ -333,44 +337,46 @@ describe('Core GraphQL Subscriptions (New)', () => {
             }
           ]
 
-          scopeTests.forEach(({ title, withoutScope, sub, triggerMessage }) => {
-            itEach(
-              [{ allow: false }, { allow: true }],
-              ({ allow }) =>
-                `should${allow ? '' : ' not'} allow ${title} sub with${
-                  !allow ? 'out' : ''
-                } ${withoutScope} scope`,
-              async ({ allow }) => {
-                testClient = await subServer.buildClient({
-                  authUserId: me.id,
-                  scopes: allow
-                    ? AllScopes
-                    : AllScopes.filter((s) => s !== withoutScope)
-                })
+          scopeTests.forEach(
+            ({ title, withoutScope, sub, triggerMessage, expectedMessages }) => {
+              itEach(
+                [{ allow: false }, { allow: true }],
+                ({ allow }) =>
+                  `should${allow ? '' : ' not'} allow ${title} sub with${
+                    !allow ? 'out' : ''
+                  } ${withoutScope} scope`,
+                async ({ allow }) => {
+                  testClient = await subServer.buildClient({
+                    authUserId: me.id,
+                    scopes: allow
+                      ? AllScopes
+                      : AllScopes.filter((s) => s !== withoutScope)
+                  })
 
-                const { query, variables } = sub()
-                const onMessage = await testClient.subscribe(
-                  query,
-                  variables,
-                  (res) => {
-                    if (allow) {
-                      expect(res).to.not.haveGraphQLErrors()
-                    } else {
-                      expect(res).to.haveGraphQLErrors(
-                        'Your auth token does not have the required scope'
-                      )
+                  const { query, variables } = sub()
+                  const onMessage = await testClient.subscribe(
+                    query,
+                    variables,
+                    (res) => {
+                      if (allow) {
+                        expect(res).to.not.haveGraphQLErrors()
+                      } else {
+                        expect(res).to.haveGraphQLErrors(
+                          'Your auth token does not have the required scope'
+                        )
+                      }
                     }
-                  }
-                )
-                await testClient.waitForReadiness()
+                  )
+                  await testClient.waitForReadiness()
 
-                await triggerMessage()
-                await onMessage.waitForMessage()
+                  await triggerMessage()
+                  await onMessage.waitForMessage()
 
-                expect(onMessage.getMessages()).to.have.length.gte(1)
-              }
-            )
-          })
+                  expect(onMessage.getMessages()).to.have.lengthOf(expectedMessages)
+                }
+              )
+            }
+          )
         })
 
         it('should notify me of a new project (userProjectsUpdated/userStreamAdded)', async () => {
@@ -424,8 +430,10 @@ describe('Core GraphQL Subscriptions (New)', () => {
             onUserStreamAdded.waitForMessage()
           ])
 
-          expect(onUserProjectsUpdated.getMessages()).to.have.length.gte(1)
-          expect(onUserStreamAdded.getMessages()).to.have.length.gte(1)
+          const EXPECTED_EVENTS = isMultiRegionTestMode() ? 1 : 2
+
+          expect(onUserProjectsUpdated.getMessages()).to.have.lengthOf(EXPECTED_EVENTS)
+          expect(onUserStreamAdded.getMessages()).to.have.lengthOf(EXPECTED_EVENTS)
         })
 
         it('should notify me of a project ive just been added to (userProjectsUpdated/userStreamAdded)', async () => {
