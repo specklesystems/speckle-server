@@ -28,11 +28,15 @@
       </p>
       <div class="flex gap-1 mt-2">
         <div
-          v-tippy="{
-            content: `Please <a href='${loginRoute}'>login</a> or <a href='${registerRoute}'>register</a> to download connectors`,
-            allowHTML: true,
-            interactive: true
-          }"
+          v-tippy="
+            canDownload
+              ? undefined
+              : {
+                  content: `Please <a href='${loginRoute}'>login</a> or <a href='${registerRoute}'>register</a> to download connectors`,
+                  allowHTML: true,
+                  interactive: true
+                }
+          "
         >
           <FormButton
             color="outline"
