@@ -10,4 +10,4 @@ const command: CommandModule = {
   handler: noop
 }
 
-export default command
+export = command

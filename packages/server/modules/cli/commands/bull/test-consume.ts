@@ -27,4 +27,4 @@ const command: CommandModule = {
   }
 }
 
-export default command
+export = command

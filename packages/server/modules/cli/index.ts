@@ -1,18 +1,20 @@
 /* eslint-disable no-restricted-imports */
+import '../../bootstrap.js'
 import path from 'path'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import '../../bootstrap.js'
 import { cliLogger as logger } from '@/observability/logging'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { beforeEntireTestRun } from '@/test/hooks'
+import { getModuleDirectory } from '@speckle/shared/environment/node'
 
 const main = async () => {
-  const y = yargs(hideBin(process.argv))
-  const execution = y
+  await yargs(hideBin(process.argv))
     .scriptName('yarn cli')
     .usage('$0 <cmd> [args]')
-    .commandDir(path.resolve(__dirname, './commands'), { extensions: ['js', 'ts'] })
+    .commandDir(path.resolve(getModuleDirectory(import.meta), './commands'), {
+      extensions: ['js', 'ts']
+    })
     .option('beforeAll', {
       type: 'boolean',
       default: false,
@@ -40,14 +42,12 @@ const main = async () => {
         console.log('\n', 'Specify --help for available options')
       }
 
-      process.exit(1)
+      process.exit(0)
     })
-    .help().argv
+    .help()
+    .parseAsync()
 
-  return { execution, y }
+  process.exit(0)
 }
 
-void main().then(({ y }) => {
-  // weird TS typing issue
-  y.exit(0, undefined as unknown as Error)
-})
+await main()

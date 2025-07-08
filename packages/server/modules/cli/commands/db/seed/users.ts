@@ -140,4 +140,4 @@ const command: CommandModule<unknown, { count: number; batchsize: number }> = {
   }
 }
 
-export default command
+export = command

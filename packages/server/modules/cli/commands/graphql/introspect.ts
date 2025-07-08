@@ -30,4 +30,4 @@ const command: CommandModule<unknown, { file: string }> = {
   }
 }
 
-export default command
+export = command

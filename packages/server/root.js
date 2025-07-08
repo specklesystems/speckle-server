@@ -3,7 +3,9 @@ import { fileURLToPath } from 'url'
 
 // Conditionally change appRoot and packageRoot according to whether we're running from /dist/ or not (ts-node)
 const isTsNode =
-  !!process[Symbol.for('ts-node.register.instance')] || process.env.VITEST === 'true'
+  !!process[Symbol.for('ts-node.register.instance')] ||
+  process.env.VITEST === 'true' ||
+  process.env.RUNNING_MOCHA === 'true'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 

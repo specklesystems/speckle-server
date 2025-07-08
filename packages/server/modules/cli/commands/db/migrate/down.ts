@@ -34,4 +34,4 @@ const command: CommandModule<unknown, { times: number } & CommonDbArgs> = {
   }
 }
 
-export default command
+export = command

@@ -49,4 +49,4 @@ const command: CommandModule<unknown, { name: string; module: string }> = {
   }
 }
 
-export default command
+export = command

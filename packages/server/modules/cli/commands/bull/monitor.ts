@@ -56,4 +56,4 @@ const command: CommandModule<unknown, { testQueueId: string }> = {
   }
 }
 
-export default command
+export = command
