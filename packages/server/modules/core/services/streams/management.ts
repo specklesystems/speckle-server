@@ -72,6 +72,19 @@ export const createStreamReturnRecordFactory =
       authorId: ownerId
     })
 
+    if (ownerId) {
+      await deps.emitEvent({
+        eventName: ProjectEvents.PermissionsAdded,
+        payload: {
+          project: stream,
+          activityUserId: ownerId,
+          targetUserId: ownerId,
+          role: Roles.Stream.Owner,
+          previousRole: null
+        }
+      })
+    }
+
     // Invite contributors?
     if (!isProjectCreateInput(params) && params.withContributors?.length) {
       // TODO: should be injected in the resolver
