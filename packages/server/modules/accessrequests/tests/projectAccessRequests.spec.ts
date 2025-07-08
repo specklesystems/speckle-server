@@ -12,7 +12,7 @@ import {
   requestProjectAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
-import { getActivityHelperFactory } from '@/modules/activitystream/tests/helpers/activity'
+import { getActivityFactory } from '@/modules/activitystream/repositories/index'
 import {
   Activity,
   ServerAccessRequests,
@@ -92,7 +92,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
-const getActivityHelper = getActivityHelperFactory({ db })
+const getActivityHelper = getActivityFactory({ db })
 
 const isNotCollaboratorError = (e: unknown) =>
   e instanceof StreamAccessUpdateError &&

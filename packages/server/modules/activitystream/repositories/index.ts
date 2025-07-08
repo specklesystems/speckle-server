@@ -1,5 +1,6 @@
 import {
   GetActiveUserStreams,
+  GetActivity,
   GetActivityCountByResourceId,
   GetActivityCountByStreamId,
   GetActivityCountByUserId,
@@ -29,6 +30,7 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import cryptoRandomString from 'crypto-random-string'
+import { AnyActivity } from '@/modules/activitystream/domain/types'
 
 const tables = {
   streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>
@@ -36,7 +38,7 @@ const tables = {
   streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name)
 }
 
-export const getActivityFactory =
+export const geUserStreamActivityFactory =
   ({ db }: { db: Knex }) =>
   async (
     streamId: string,
@@ -284,4 +286,36 @@ export const saveActivityFactory =
     ).insert({ ...activity, id, createdAt }, '*')
 
     return result
+  }
+
+export const getActivityFactory =
+  ({ db }: { db: Knex }): GetActivity =>
+  async (filters = {}): Promise<AnyActivity[]> => {
+    const { workspaceId, projectId, eventType, userId } = filters
+
+    const q = db<AnyActivity>(Activity.name).select('*')
+
+    if (projectId) {
+      q.where(Activity.col.contextResourceId, projectId).andWhere(
+        Activity.col.contextResourceType,
+        'project'
+      )
+    }
+
+    if (workspaceId) {
+      q.where(Activity.col.contextResourceId, workspaceId).andWhere(
+        Activity.col.contextResourceType,
+        'workspace'
+      )
+    }
+
+    if (eventType) {
+      q.andWhere(Activity.col.eventType, eventType)
+    }
+
+    if (userId) {
+      q.andWhere(Activity.col.userId, userId)
+    }
+
+    return (await q) as AnyActivity[]
   }
