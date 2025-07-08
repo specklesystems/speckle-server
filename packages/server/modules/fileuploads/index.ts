@@ -23,7 +23,8 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   expireOldPendingUploadsFactory,
   getFileInfoFactory,
-  updateFileUploadFactory
+  updateFileUploadFactory,
+  updateFileStatusFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
@@ -36,15 +37,20 @@ import {
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
 import { TIME } from '@speckle/shared'
-import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
+import {
+  DelayBetweenFileImportRetriesMinutes,
+  FileUploadDatabaseEvents,
+  NumberOfFileImportRetries
+} from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
 import {
-  initializeRhinoQueue,
-  initializeIfcQueue,
+  initializeRhinoQueueFactory,
+  initializeIfcQueueFactory,
   shutdownQueues,
   fileImportQueues,
-  initializePostgresQueue
+  initializePostgresQueue,
+  initializeQueueFactory
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
 import {
@@ -53,6 +59,12 @@ import {
 } from '@/modules/fileuploads/observability/metrics'
 import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/subscriptionListeners'
 import { configureClient } from '@/knexfile'
+import {
+  requestActiveHandlerFactory,
+  requestErrorHandlerFactory,
+  requestFailedHandlerFactory
+} from '@/modules/fileuploads/services/requestHandler'
+import { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
 
 const {
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED,
@@ -92,12 +104,23 @@ const scheduleFileImportExpiry = async ({
         fileImportExpiryHandlers.map((handler) =>
           handler({
             logger,
-            timeoutThresholdSeconds: (getFileImportTimeLimitMinutes() + 1) * TIME.minute // additional buffer of 1 minute
+            timeoutThresholdSeconds:
+              (NumberOfFileImportRetries *
+                (getFileImportTimeLimitMinutes() +
+                  DelayBetweenFileImportRetriesMinutes) +
+                1) * // additional buffer of 1 minute
+              TIME.minute
           })
         )
       )
     }
   )
+}
+
+const updateFileStatusBuilder: UpdateFileStatusForProjectFactory = async (params) => {
+  const { projectId } = params
+  const projectDb = await getProjectDbClient({ projectId })
+  return updateFileStatusFactory({ db: projectDb })
 }
 
 export const init: SpeckleModule['init'] = async ({
@@ -126,7 +149,6 @@ export const init: SpeckleModule['init'] = async ({
             db
           })
         ]
-
         if (FF_RHINO_FILE_IMPORTER_ENABLED) {
           const connectionUri = getRhinoQueuePostgresConnectionString()
           const rhinoQueueDb = configureClient({ postgres: { connectionUri } })
@@ -143,9 +165,37 @@ export const init: SpeckleModule['init'] = async ({
         await Promise.all(queueInits)
         //stick to the bull queue based mechanism by default
       } else {
-        const queueInits = [initializeIfcQueue()]
+        const queueInits = [
+          initializeRhinoQueueFactory({
+            initializeQueue: initializeQueueFactory({
+              jobActiveHandler: requestActiveHandlerFactory({
+                logger: moduleLogger,
+                updateFileStatusBuilder
+              }),
+              jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
+              jobFailedHandler: requestFailedHandlerFactory({
+                logger: moduleLogger,
+                updateFileStatusForProjectFactory: updateFileStatusBuilder
+              })
+            })
+          })()
+        ]
         if (FF_RHINO_FILE_IMPORTER_ENABLED) {
-          queueInits.push(initializeRhinoQueue())
+          queueInits.push(
+            initializeIfcQueueFactory({
+              initializeQueue: initializeQueueFactory({
+                jobActiveHandler: requestActiveHandlerFactory({
+                  logger: moduleLogger,
+                  updateFileStatusBuilder
+                }),
+                jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
+                jobFailedHandler: requestFailedHandlerFactory({
+                  logger: moduleLogger,
+                  updateFileStatusForProjectFactory: updateFileStatusBuilder
+                })
+              })
+            })()
+          )
         }
         const requestQueues = await Promise.all(queueInits)
 
