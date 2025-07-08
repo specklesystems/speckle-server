@@ -342,7 +342,9 @@ export const deleteUserFactory =
     for await (const projectsPage of deps.queryAllProjects({
       userId: id
     })) {
-      await Promise.all(projectsPage.map(emitRevokeEventIfUserHasRole))
+      for (const project of projectsPage) {
+        await emitRevokeEventIfUserHasRole(project)
+      }
     }
 
     const deleted = await deps.deleteUserRecord(id)
