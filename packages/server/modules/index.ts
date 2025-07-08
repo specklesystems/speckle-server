@@ -85,6 +85,7 @@ const getEnabledModuleNames = () => {
     'activitystream',
     'apiexplorer',
     'auth',
+    'backgroundjobs',
     'blobstorage',
     'comments',
     'core',

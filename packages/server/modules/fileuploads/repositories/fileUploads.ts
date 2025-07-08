@@ -1,4 +1,4 @@
-import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
+import { Branches, FileUploads } from '@/modules/core/dbSchema'
 import {
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
@@ -74,7 +74,7 @@ export const getStreamFileUploadsFactory =
         ]).orWhere(
           FileUploads.col.uploadDate,
           '>=',
-          knex.raw(`now()-'1 day'::interval`)
+          deps.db.raw(`now()-'1 day'::interval`)
         )
       })
       .orderBy([
@@ -194,7 +194,11 @@ const getPendingUploadsBaseQueryFactory =
       .orderBy(FileUploads.col.uploadDate, 'desc')
 
     if (ignoreOld) {
-      q.andWhere(FileUploads.col.uploadDate, '>=', knex.raw(`now()-'1 day'::interval`))
+      q.andWhere(
+        FileUploads.col.uploadDate,
+        '>=',
+        deps.db.raw(`now()-'1 day'::interval`)
+      )
     }
 
     if (limit) {
@@ -219,7 +223,7 @@ export const getStreamPendingModelsFactory =
 
     if (options?.branchNamePattern) {
       q.whereRaw(
-        knex.raw(`?? ~* ?`, [FileUploads.col.branchName, options.branchNamePattern])
+        deps.db.raw(`?? ~* ?`, [FileUploads.col.branchName, options.branchNamePattern])
       )
     }
 

@@ -17,7 +17,7 @@ export const parseFeatureFlags = (
   input: Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>,
   options?: Partial<{
     /**
-     * Whether to prevent inputs from being overriden by disable/enable all
+     * Whether to prevent inputs from being overridden by disable/enable all
      * Default: true
      */
     forceInputs: boolean
@@ -103,6 +103,16 @@ export const parseFeatureFlags = (
       description: 'Enables the new file importer.',
       defaults: { _: false }
     },
+    FF_RHINO_FILE_IMPORTER_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the Rhino based file importer.',
+      defaults: { _: false }
+    },
+    FF_BACKGROUND_JOBS_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the postgres based background job mechanism',
+      defaults: { _: false }
+    },
     FF_LARGE_FILE_IMPORTS_ENABLED: {
       schema: z.boolean(),
       description:
@@ -140,6 +150,8 @@ export type FeatureFlags = {
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
   FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
+  FF_RHINO_FILE_IMPORTER_ENABLED: boolean
+  FF_BACKGROUND_JOBS_ENABLED: boolean
   FF_LARGE_FILE_IMPORTS_ENABLED: boolean
 }
 
