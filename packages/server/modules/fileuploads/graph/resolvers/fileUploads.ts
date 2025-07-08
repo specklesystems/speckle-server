@@ -70,6 +70,7 @@ import {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
@@ -245,12 +246,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     }
   }
 }
-import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
-import {
-  FileUploadRecord,
-  FileUploadRecordV2
-} from '@/modules/fileuploads/helpers/types'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 export = {
   Stream: {
