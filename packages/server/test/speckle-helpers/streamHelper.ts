@@ -251,7 +251,8 @@ export async function createTestStream(
         // else throw as is
         throw err
       }
-      await grantStreamPermissionsFactory({ db })({
+      // avoid emiting duplicated events
+      await db('stream_acl').insert({
         streamId: project.id,
         userId: owner.id,
         role: Roles.Stream.Owner

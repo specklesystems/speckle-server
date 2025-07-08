@@ -94,6 +94,7 @@ import {
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { faker } from '@faker-js/faker'
 import { Optional, Roles, Scopes, ServerScope, WorkspacePlans } from '@speckle/shared'
+import { getFeatureFlags } from '@speckle/shared/environment'
 import { expect } from 'chai'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -200,6 +201,8 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
+
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
 describe('Core GraphQL Subscriptions (New)', () => {
   let me: BasicTestUser
@@ -317,7 +320,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             {
               title: 'userProjectsUpdated()',
               withoutScope: Scopes.Profile.Read,
-              expectedMessages: 2,
+              expectedMessages: FF_WORKSPACES_MODULE_ENABLED ? 2 : 1,
               sub: () => ({
                 query: OnUserProjectsUpdatedDocument,
                 variables: {}
@@ -430,10 +433,9 @@ describe('Core GraphQL Subscriptions (New)', () => {
             onUserStreamAdded.waitForMessage()
           ])
 
-          const EXPECTED_EVENTS = isMultiRegionTestMode() ? 1 : 2
-
-          expect(onUserProjectsUpdated.getMessages()).to.have.lengthOf(EXPECTED_EVENTS)
-          expect(onUserStreamAdded.getMessages()).to.have.lengthOf(EXPECTED_EVENTS)
+          const expectedMessages = FF_WORKSPACES_MODULE_ENABLED ? 2 : 1
+          expect(onUserProjectsUpdated.getMessages()).to.have.lengthOf(expectedMessages)
+          expect(onUserStreamAdded.getMessages()).to.have.lengthOf(expectedMessages)
         })
 
         it('should notify me of a project ive just been added to (userProjectsUpdated/userStreamAdded)', async () => {
