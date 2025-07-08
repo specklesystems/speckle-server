@@ -28,6 +28,7 @@ const config: Omit<CodegenConfig, 'schema'> = {
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn',
           User: '@/modules/core/helpers/graphTypes#UserGraphQLReturn',
+          EmbedToken: '@/modules/core/helpers/graphTypes#EmbedTokenGraphQLReturn',
           ActiveUserMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           UserMetaMutations:
