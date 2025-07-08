@@ -14,7 +14,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   getFeatureFlags,
-  getRhinoQueuePostgresConnectionString,
+  getFileImporterQueuePostgresUrl,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -65,6 +65,7 @@ import {
   requestFailedHandlerFactory
 } from '@/modules/fileuploads/services/requestHandler'
 import { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 
 const {
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED,
@@ -142,15 +143,23 @@ export const init: SpeckleModule['init'] = async ({
       // this freature flag is going away soon, it will be on by default
       // once we switch stabilize the background jobs mechanism
       if (FF_BACKGROUND_JOBS_ENABLED) {
+        const connectionUri = getFileImporterQueuePostgresUrl()
+        const queueDb = connectionUri
+          ? configureClient({ postgres: { connectionUri } }).public
+          : db
         const queueInits = [
           initializePostgresQueue({
             label: 'ifc',
             supportedFileTypes: ['ifc'],
-            db
+            db: queueDb
           })
         ]
         if (FF_RHINO_FILE_IMPORTER_ENABLED) {
-          const connectionUri = getRhinoQueuePostgresConnectionString()
+          const connectionUri = getFileImporterQueuePostgresUrl()
+          if (!connectionUri)
+            throw new MisconfiguredEnvironmentError(
+              'Need a dedicated queue for Rhino based fileimports'
+            )
           const rhinoQueueDb = configureClient({ postgres: { connectionUri } })
           queueInits.push(
             initializePostgresQueue({
@@ -166,7 +175,7 @@ export const init: SpeckleModule['init'] = async ({
         //stick to the bull queue based mechanism by default
       } else {
         const queueInits = [
-          initializeRhinoQueueFactory({
+          initializeIfcQueueFactory({
             initializeQueue: initializeQueueFactory({
               jobActiveHandler: requestActiveHandlerFactory({
                 logger: moduleLogger,
@@ -182,7 +191,7 @@ export const init: SpeckleModule['init'] = async ({
         ]
         if (FF_RHINO_FILE_IMPORTER_ENABLED) {
           queueInits.push(
-            initializeIfcQueueFactory({
+            initializeRhinoQueueFactory({
               initializeQueue: initializeQueueFactory({
                 jobActiveHandler: requestActiveHandlerFactory({
                   logger: moduleLogger,

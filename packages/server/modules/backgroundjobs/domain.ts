@@ -1,7 +1,7 @@
 import { z } from 'zod'
 export const BackgroundJobStatus = {
   Queued: 'queued',
-  Processing: 'processing',
+  // Processing: 'processing',
   Succeeded: 'succeeded',
   Failed: 'failed'
 } as const
