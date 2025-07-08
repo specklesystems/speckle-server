@@ -189,7 +189,7 @@ export const getPaginatedProjectEmbedTokensFactory =
       deps.listEmbedTokens({
         projectId,
         filter: {
-          cursor,
+          createdBefore: cursor,
           limit: 10
         }
       }),

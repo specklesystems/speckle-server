@@ -50,7 +50,7 @@ export type ListProjectEmbedTokens = (args: {
   projectId: string
   filter?: {
     limit?: number
-    cursor?: string | null
+    createdBefore?: string | null
   }
 }) => Promise<
   (EmbedApiToken & {

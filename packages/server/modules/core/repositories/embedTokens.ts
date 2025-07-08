@@ -37,7 +37,7 @@ export const countProjectEmbedTokensFactory =
 export const listProjectEmbedTokensFactory =
   (deps: { db: Knex }): ListProjectEmbedTokens =>
   async ({ projectId, filter = {} }) => {
-    const { limit = 10, cursor } = filter
+    const { limit = 10, createdBefore } = filter
 
     if (limit === 0) return []
 
@@ -57,8 +57,8 @@ export const listProjectEmbedTokensFactory =
       .where(EmbedApiTokens.col.projectId, projectId)
       .limit(clamp(limit, 0, 50))
 
-    if (cursor) {
-      q.andWhere(ApiTokens.col.createdAt, '<', cursor)
+    if (createdBefore) {
+      q.andWhere(ApiTokens.col.createdAt, '<', createdBefore)
     }
 
     return await q
