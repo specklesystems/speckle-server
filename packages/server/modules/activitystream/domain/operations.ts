@@ -1,7 +1,6 @@
 import {
   Activity,
   ActivitySummary,
-  AnyActivity,
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput,
   ResourceEventsToPayloadMap,
@@ -290,4 +289,4 @@ type GetActivitArgs = Partial<{
   userId: string
 }>
 
-export type GetActivity = (filters: GetActivitArgs) => Promise<AnyActivity[]>
+export type GetActivity = (filters: GetActivitArgs) => Promise<Activity[]>

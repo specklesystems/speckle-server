@@ -16,7 +16,11 @@ import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { Activity, StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
+import {
+  Activity as ActivityModel,
+  StreamAcl,
+  StreamActivity
+} from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { StreamAclRecord } from '@/modules/core/helpers/types'
 import {
@@ -30,7 +34,7 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import cryptoRandomString from 'crypto-random-string'
-import { AnyActivity } from '@/modules/activitystream/domain/types'
+import { Activity } from '@/modules/activitystream/domain/types'
 
 const tables = {
   streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>
@@ -282,7 +286,7 @@ export const saveActivityFactory =
     const createdAt = new Date()
 
     const [result] = await db<typeof activity & { id: string; createdAt: Date }>(
-      Activity.name
+      ActivityModel.name
     ).insert({ ...activity, id, createdAt }, '*')
 
     return result
@@ -290,32 +294,32 @@ export const saveActivityFactory =
 
 export const getActivityFactory =
   ({ db }: { db: Knex }): GetActivity =>
-  async (filters = {}): Promise<AnyActivity[]> => {
+  async (filters = {}): Promise<Activity[]> => {
     const { workspaceId, projectId, eventType, userId } = filters
 
-    const q = db<AnyActivity>(Activity.name).select('*')
+    const q = db<Activity>(ActivityModel.name).select('*')
 
     if (projectId) {
-      q.where(Activity.col.contextResourceId, projectId).andWhere(
-        Activity.col.contextResourceType,
+      q.where(ActivityModel.col.contextResourceId, projectId).andWhere(
+        ActivityModel.col.contextResourceType,
         'project'
       )
     }
 
     if (workspaceId) {
-      q.where(Activity.col.contextResourceId, workspaceId).andWhere(
-        Activity.col.contextResourceType,
+      q.where(ActivityModel.col.contextResourceId, workspaceId).andWhere(
+        ActivityModel.col.contextResourceType,
         'workspace'
       )
     }
 
     if (eventType) {
-      q.andWhere(Activity.col.eventType, eventType)
+      q.andWhere(ActivityModel.col.eventType, eventType)
     }
 
     if (userId) {
-      q.andWhere(Activity.col.userId, userId)
+      q.andWhere(ActivityModel.col.userId, userId)
     }
 
-    return (await q) as AnyActivity[]
+    return await q
   }

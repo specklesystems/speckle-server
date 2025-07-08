@@ -30,8 +30,8 @@ export type ResourceEventsToPayloadMap = {
 }
 
 export interface Activity<
-  T extends keyof ResourceEventsToPayloadMap,
-  R extends keyof ResourceEventsToPayloadMap[T]
+  T extends keyof ResourceEventsToPayloadMap = keyof ResourceEventsToPayloadMap,
+  R extends keyof ResourceEventsToPayloadMap[T] = keyof ResourceEventsToPayloadMap[T]
 > {
   id: string
   contextResourceId: string
@@ -41,12 +41,6 @@ export interface Activity<
   payload: ResourceEventsToPayloadMap[T][R]
   createdAt: Date
 }
-
-export interface AnyActivity
-  extends Activity<
-    keyof ResourceEventsToPayloadMap,
-    keyof ResourceEventsToPayloadMap[keyof ResourceEventsToPayloadMap]
-  > {}
 
 const workspacePlan = z.object({
   name: z.union([
