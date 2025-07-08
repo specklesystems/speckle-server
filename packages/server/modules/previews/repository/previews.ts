@@ -62,7 +62,7 @@ export const getPaginatedObjectsPreviewsBaseQueryFactory =
 const getCursorTools = () =>
   compositeCursorTools({
     schema: ObjectPreview,
-    cols: ['priority', 'attempts', 'lastUpdate']
+    cols: ['lastUpdate']
   })
 
 export const getPaginatedObjectPreviewsPageFactory =
@@ -74,7 +74,7 @@ export const getPaginatedObjectPreviewsPageFactory =
     const query = getPaginatedObjectsPreviewsBaseQueryFactory(deps)(params)
 
     if (cursor) {
-      applyCursorSortAndFilter({ query, cursor }) //FIXME default is descending order for both, so the latest items will be returned first. Need a way to specify sort order by column.
+      applyCursorSortAndFilter({ query, cursor })
     }
 
     query.limit(limit)
