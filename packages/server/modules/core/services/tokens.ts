@@ -6,13 +6,16 @@ import {
 } from '@/modules/core/helpers/types'
 import { Optional, Scopes, ServerScope } from '@speckle/shared'
 import {
+  CountProjectEmbedTokens,
   CreateAndStoreAppToken,
   CreateAndStoreEmbedToken,
   CreateAndStorePersonalAccessToken,
   CreateAndStoreUserToken,
   GetApiTokenById,
+  GetPaginatedProjectEmbedTokens,
   GetTokenResourceAccessDefinitionsById,
   GetTokenScopesById,
+  ListProjectEmbedTokens,
   RevokeUserTokenById,
   StoreApiToken,
   StoreEmbedApiToken,
@@ -35,6 +38,10 @@ import {
   createGetParamFromResources,
   parseUrlParameters
 } from '@speckle/shared/viewer/route'
+import {
+  decodeIsoDateCursor,
+  encodeIsoDateCursor
+} from '@/modules/shared/helpers/dbHelper'
 
 /*
   Tokens
@@ -168,6 +175,34 @@ export const createEmbedTokenFactory =
     await deps.storeEmbedToken(tokenMetadata)
 
     return { token, tokenMetadata }
+  }
+
+export const getPaginatedProjectEmbedTokensFactory =
+  (deps: {
+    listEmbedTokens: ListProjectEmbedTokens
+    countEmbedTokens: CountProjectEmbedTokens
+  }): GetPaginatedProjectEmbedTokens =>
+  async ({ projectId, filter = {} }) => {
+    const cursor = filter.cursor ? decodeIsoDateCursor(filter.cursor) : null
+
+    const [items, totalCount] = await Promise.all([
+      deps.listEmbedTokens({
+        projectId,
+        filter: {
+          createdBefore: cursor,
+          limit: 10
+        }
+      }),
+      deps.countEmbedTokens({ projectId })
+    ])
+
+    const lastItem = items.at(-1)
+
+    return {
+      items,
+      totalCount,
+      cursor: lastItem ? encodeIsoDateCursor(lastItem.createdAt) : null
+    }
   }
 
 export const validateTokenFactory =
