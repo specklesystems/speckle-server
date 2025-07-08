@@ -636,6 +636,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         regenerateFunctionToken: async (_parent, args, context) => {
           const { functionId } = args
 
+          const authResult =
+            await context.authPolicies.automate.function.canRegenerateToken({
+              functionId,
+              userId: context.userId
+            })
+          throwIfAuthNotOk(authResult)
+
           const logger = context.log.child({
             functionId
           })

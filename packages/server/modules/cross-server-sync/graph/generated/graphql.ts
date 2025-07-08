@@ -273,7 +273,7 @@ export type AutomateFunction = {
   /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
   supportedSourceApps: Array<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
-  workspaceIds?: Maybe<Array<Scalars['String']['output']>>;
+  workspaceIds: Array<Scalars['String']['output']>;
 };
 
 

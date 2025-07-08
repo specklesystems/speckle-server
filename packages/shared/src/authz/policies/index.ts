@@ -31,8 +31,14 @@ import { canLoadPolicy } from './project/canLoad.js'
 import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
 import { canCreateWorkspacePolicy } from './workspace/canCreateWorkspace.js'
 import { canUseWorkspacePlanFeature } from './workspace/canUseWorkspacePlanFeature.js'
+import { canEditFunctionPolicy } from './automate/function/canEditFunction.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
+  automate: {
+    function: {
+      canRegenerateToken: canEditFunctionPolicy(loaders)
+    }
+  },
   project: {
     automation: {
       canCreate: canCreateAutomationPolicy(loaders),

@@ -147,7 +147,7 @@ type AutomateFunction {
   Only returned if user is a part of this speckle server
   """
   creator: LimitedUser
-  workspaceIds: [String!]
+  workspaceIds: [String!]!
 }
 
 type AutomateFunctionToken {

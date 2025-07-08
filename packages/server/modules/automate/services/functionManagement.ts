@@ -108,7 +108,7 @@ export const convertFunctionToGraphQLReturn = (
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
     functionCreator,
-    workspaceIds: fn.workspaceIds
+    workspaceIds: fn.workspaceIds ?? []
   }
 
   return ret
@@ -186,7 +186,8 @@ export const createFunctionFromTemplateFactory =
       functionCreator: {
         speckleServerOrigin: getServerOrigin(),
         speckleUserId: user.id
-      }
+      },
+      workspaceIds: []
     }
 
     return {
