@@ -3,7 +3,8 @@ import { db } from '@/db/knex'
 import {
   getFileInfoFactory,
   saveUploadFileFactory,
-  saveUploadFileFactoryV2
+  saveUploadFileFactoryV2,
+  updateFileStatusFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   insertNewUploadAndNotifyFactory,
@@ -57,6 +58,7 @@ describe('FileUploads @fileuploads', () => {
         saveUploadFile: saveUploadFileFactory({ db }),
         emit: async () => {}
       })
+      const updateFileStatus = updateFileStatusFactory({ db })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
         streamId: createdStreamId,
@@ -67,6 +69,13 @@ describe('FileUploads @fileuploads', () => {
         fileSize: 100,
         fileType: 'text/plain',
         modelId: null
+      })
+      await updateFileStatus({
+        fileId,
+        projectId: createdStreamId,
+        status: FileUploadConvertedStatus.Converting,
+        convertedMessage: 'Converting started',
+        convertedCommitId: null
       })
       await sleep(2000)
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 })

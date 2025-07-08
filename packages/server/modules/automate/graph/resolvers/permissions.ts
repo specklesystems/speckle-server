@@ -35,10 +35,11 @@ export default {
   },
   AutomateFunctionPermissionChecks: {
     canRegenerateToken: async (parent, _args, context) => {
-      const authResult = await context.authPolicies.automate.function.canRegenerateToken({
-        functionId: parent.functionId,
-        userId: context.userId
-      })
+      const authResult =
+        await context.authPolicies.automate.function.canRegenerateToken({
+          functionId: parent.functionId,
+          userId: context.userId
+        })
       return Authz.toGraphqlResult(authResult)
     }
   },

@@ -116,7 +116,7 @@ export const WorkspaceLimitsReachedError = defineAuthError<
   message: 'Workspace limits have been reached'
 })
 
-export const WorkspaceNoFeatureAccessError = defineAuthError({
+export const WorkspacePlanNoFeatureAccessError = defineAuthError({
   code: 'WorkspaceNoFeatureAccess',
   message: 'Your workspace plan does not have access to this feature.'
 })

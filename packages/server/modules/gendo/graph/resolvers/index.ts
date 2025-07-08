@@ -119,7 +119,9 @@ export = FF_GENDOAI_MODULE_ENABLED
             token: getGendoAIKey()
           })
 
-          const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
+          const storeFileStream = storeFileStreamFactory({
+            storage: projectStorage.private
+          })
           const createRenderRequest = createRenderRequestFactory({
             uploadFileStream: uploadFileStreamFactory({
               storeFileStream,
