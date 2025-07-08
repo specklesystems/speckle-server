@@ -307,3 +307,11 @@ export const useMoveProjectToWorkspaceMutation = graphql(`
     }
   }
 `)
+
+export const deleteEmbedTokenMutation = graphql(`
+  mutation DeleteEmbedToken($projectId: String!, $token: String!) {
+    projectMutations {
+      revokeEmbedToken(projectId: $projectId, token: $token)
+    }
+  }
+`)
