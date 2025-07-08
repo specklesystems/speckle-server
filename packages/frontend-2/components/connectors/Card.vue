@@ -43,7 +43,7 @@
             size="sm"
             :disabled="enableButton"
             external
-            :to="latestAvailableVersion?.Url"
+            :to="canDownload ? latestAvailableVersion?.Url : undefined"
             @click="
               mixpanel.track('Connector Card Install Clicked', {
                 connector: props.connector.slug
@@ -87,7 +87,7 @@ const mixpanel = useMixpanel()
 const { data: versionData, status } = useFetch(
   `https://releases.speckle.dev/manager2/feeds/${props.connector.slug}-v3.json`,
   {
-    immediate: !props.connector.isComingSoon
+    immediate: !props.connector.isComingSoon && props.canDownload
   }
 )
 
