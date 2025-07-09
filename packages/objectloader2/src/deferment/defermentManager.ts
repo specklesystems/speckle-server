@@ -27,7 +27,7 @@ export class DefermentManager {
     return this.deferments.get(id)
   }
 
-   defer(params: { id: string }): [Promise<Base>, boolean] {
+  defer(params: { id: string }): [Promise<Base>, boolean] {
     if (this.disposed) throw new Error('DefermentManager is disposed')
     this.trackDefermentRequest(params.id)
     const now = this.now()

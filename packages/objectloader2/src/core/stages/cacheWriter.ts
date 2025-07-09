@@ -32,7 +32,7 @@ export class CacheWriter implements Queue<Item> {
         maxWaitTime: this.#options.maxCacheBatchWriteWait,
         processFunction: async (batch: Item[]): Promise<void> => {
           await this.writeAll(batch)
-        },
+        }
       })
     }
     this.#defermentManager.undefer(item)
@@ -41,8 +41,8 @@ export class CacheWriter implements Queue<Item> {
 
   async writeAll(items: Item[]): Promise<void> {
     const start = performance.now()
-      await this.#database.saveBatch({ batch: items })
-      this.#logger('writeBatch: left, time', items.length, performance.now() - start)
+    await this.#database.saveBatch({ batch: items })
+    this.#logger('writeBatch: left, time', items.length, performance.now() - start)
   }
 
   async disposeAsync(): Promise<void> {
