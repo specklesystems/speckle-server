@@ -216,6 +216,11 @@ const updatedUrl = computed(() => {
     url.pathname += routeModelId.value
   }
 
+  // Add token parameter if embed token exists
+  if (embedToken.value) {
+    url.searchParams.set('token', embedToken.value)
+  }
+
   // Construct the embed options as a hash fragment
   const embedOptions: Record<string, boolean> = { isEnabled: true }
   embedDialogOptions.forEach((option) => {
@@ -336,16 +341,20 @@ watch(
   { immediate: true }
 )
 
-onMounted(async () => {
-  if (canCreateEmbedTokens.value) {
-    const token = await createEmbedToken({
-      projectId: props.project.id,
-      resourceIdString: routeModelId.value
-    })
+watch(
+  isOpen,
+  async (newValue) => {
+    if (newValue && canCreateEmbedTokens.value) {
+      const token = await createEmbedToken({
+        projectId: props.project.id,
+        resourceIdString: routeModelId.value
+      })
 
-    if (token) {
-      embedToken.value = token
+      if (token) {
+        embedToken.value = token
+      }
     }
-  }
-})
+  },
+  { immediate: true }
+)
 </script>
