@@ -368,6 +368,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
                 if (isMultiRegion && title === 'userProjectsUpdated()') {
                   // should have 2 but sometimes the expectancy hits before it gets the second event only in multiregion setups and for this specific case
                   expect(onMessage.getMessages()).to.have.length.gte(1)
+                  expect(onMessage.getMessages()).to.have.length.lessThan(3)
                 } else {
                   expect(onMessage.getMessages()).to.have.lengthOf(expectedMessages)
                 }
