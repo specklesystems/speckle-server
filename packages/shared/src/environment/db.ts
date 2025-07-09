@@ -29,7 +29,13 @@ const regionConfigSchema = z.object({
     publicTlsCertificate: z
       .string()
       .describe('Public TLS ("CA") certificate for the Postgres server')
+      .optional(),
+    skipInitialization: z
+      .boolean()
       .optional()
+      .describe(
+        'Skip database initialization (migration run & replication setup). Only used in tests.'
+      )
   }),
   blobStorage: z.object({
     endpoint: z
