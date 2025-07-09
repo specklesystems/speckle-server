@@ -147,3 +147,11 @@ export const settingsWorkspacesSecurityQuery = graphql(`
     }
   }
 `)
+
+export const settingsWorkspacesAutomationQuery = graphql(`
+  query SettingsWorkspaceAutomation($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...SettingsWorkspacesAutomation_Workspace
+    }
+  }
+`)

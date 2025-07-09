@@ -270,12 +270,13 @@ export type AutomateFunction = {
   isFeatured: Scalars['Boolean']['output'];
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  permissions: AutomateFunctionPermissionChecks;
   releases: AutomateFunctionReleaseCollection;
   repo: BasicGitRepositoryMetadata;
   /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
   supportedSourceApps: Array<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
-  workspaceIds?: Maybe<Array<Scalars['String']['output']>>;
+  workspaceIds: Array<Scalars['String']['output']>;
 };
 
 
@@ -290,6 +291,11 @@ export type AutomateFunctionCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<AutomateFunction>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type AutomateFunctionPermissionChecks = {
+  __typename?: 'AutomateFunctionPermissionChecks';
+  canRegenerateToken: PermissionCheckResult;
 };
 
 export type AutomateFunctionRelease = {
@@ -374,6 +380,7 @@ export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
   createFunctionWithoutVersion: AutomateFunctionToken;
+  regenerateFunctionToken: Scalars['String']['output'];
   updateFunction: AutomateFunction;
 };
 
@@ -385,6 +392,11 @@ export type AutomateMutationsCreateFunctionArgs = {
 
 export type AutomateMutationsCreateFunctionWithoutVersionArgs = {
   input: CreateAutomateFunctionWithoutVersionInput;
+};
+
+
+export type AutomateMutationsRegenerateFunctionTokenArgs = {
+  functionId: Scalars['String']['input'];
 };
 
 
@@ -922,6 +934,12 @@ export type CreateCommentReplyInput = {
   threadId: Scalars['String']['input'];
 };
 
+export type CreateEmbedTokenReturn = {
+  __typename?: 'CreateEmbedTokenReturn';
+  token: Scalars['String']['output'];
+  tokenMetadata: EmbedToken;
+};
+
 export type CreateModelInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -1000,20 +1018,30 @@ export type EmailVerificationRequestInput = {
   id: Scalars['ID']['input'];
 };
 
+/** A token used to enable an embedded viewer for a private project */
 export type EmbedToken = {
   __typename?: 'EmbedToken';
   createdAt: Scalars['DateTime']['output'];
-  id: Scalars['String']['output'];
   lastUsed: Scalars['DateTime']['output'];
   lifespan: Scalars['BigInt']['output'];
-  modelIds: Scalars['String']['output'];
-  name: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  resourceIdString: Scalars['String']['output'];
+  tokenId: Scalars['String']['output'];
+  user?: Maybe<LimitedUser>;
+};
+
+export type EmbedTokenCollection = {
+  __typename?: 'EmbedTokenCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<EmbedToken>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type EmbedTokenCreateInput = {
   lifespan?: InputMaybe<Scalars['BigInt']['input']>;
-  modelIds: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
+  /** The model(s) and version(s) string used in the embed url */
+  resourceIdString: Scalars['String']['input'];
 };
 
 export type FileUpload = {
@@ -2111,7 +2139,7 @@ export type Project = {
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
-  embedTokens: Array<EmbedToken>;
+  embedTokens: EmbedTokenCollection;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
@@ -2190,6 +2218,12 @@ export type ProjectCommentArgs = {
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectEmbedTokensArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -2593,7 +2627,7 @@ export type ProjectMutations = {
   batchDelete: Scalars['Boolean']['output'];
   /** Create new project */
   create: Project;
-  createEmbedToken: Scalars['String']['output'];
+  createEmbedToken: CreateEmbedTokenReturn;
   /**
    * Create onboarding/tutorial project. If one is already created for the active user, that
    * one will be returned instead.
@@ -2606,6 +2640,7 @@ export type ProjectMutations = {
   /** Leave a project. Only possible if you're not the last remaining owner. */
   leave: Scalars['Boolean']['output'];
   revokeEmbedToken: Scalars['Boolean']['output'];
+  revokeEmbedTokens: Scalars['Boolean']['output'];
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
@@ -2644,7 +2679,13 @@ export type ProjectMutationsLeaveArgs = {
 
 
 export type ProjectMutationsRevokeEmbedTokenArgs = {
+  projectId: Scalars['String']['input'];
   token: Scalars['String']['input'];
+};
+
+
+export type ProjectMutationsRevokeEmbedTokensArgs = {
+  projectId: Scalars['String']['input'];
 };
 
 
@@ -2690,6 +2731,7 @@ export type ProjectPermissionChecks = {
   canBroadcastActivity: PermissionCheckResult;
   canCreateAutomation: PermissionCheckResult;
   canCreateComment: PermissionCheckResult;
+  canCreateEmbedTokens: PermissionCheckResult;
   canCreateModel: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canInvite: PermissionCheckResult;
@@ -2698,9 +2740,11 @@ export type ProjectPermissionChecks = {
   canMoveToWorkspace: PermissionCheckResult;
   canPublish: PermissionCheckResult;
   canRead: PermissionCheckResult;
+  canReadEmbedTokens: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
   canRequestRender: PermissionCheckResult;
+  canRevokeEmbedTokens: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
   canUpdateAllowPublicComments: PermissionCheckResult;
 };
@@ -5316,7 +5360,7 @@ export type AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment = { __
 
 export type AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplateFragment = { __typename?: 'AutomateFunctionTemplate', id: AutomateFunctionTemplateLanguage, title: string, logo: string, url: string };
 
-export type AutomateFunctionPageHeader_FunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, logo?: string | null, workspaceIds?: Array<string> | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number } };
+export type AutomateFunctionPageHeader_FunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, logo?: string | null, workspaceIds: Array<string>, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number } };
 
 export type AutomateFunctionPageHeader_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, slug: string };
 
@@ -5546,6 +5590,8 @@ export type SettingsWorkspacesGeneralEditAvatar_WorkspaceFragment = { __typename
 
 export type SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, slug: string };
 
+export type SettingsWorkspacesAutomationFunctions_WorkspaceFragment = { __typename?: 'Workspace', id: string, automateFunctions: { __typename?: 'AutomateFunctionCollection', items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, logo?: string | null, creator?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, permissions: { __typename?: 'AutomateFunctionPermissionChecks', canRegenerateToken: { __typename?: 'PermissionCheckResult', authorized: boolean, message: string, code: string, payload?: {} | null } } }> } };
+
 export type WorkspaceBillingPage_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null, slug: string, subscription?: { __typename?: 'WorkspaceSubscription', billingInterval: BillingInterval, currentBillingCycleEnd: string, currency: Currency } | null, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses, createdAt: string, usage: { __typename?: 'WorkspacePlanUsage', projectCount: number, modelCount: number } } | null };
 
 export type SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, inviteId: string, role: string, title: string, updatedAt: string, email?: string | null, user?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } };
@@ -5750,7 +5796,7 @@ export type UpdateAutomateFunctionMutationVariables = Exact<{
 }>;
 
 
-export type UpdateAutomateFunctionMutation = { __typename?: 'Mutation', automateMutations: { __typename?: 'AutomateMutations', updateFunction: { __typename?: 'AutomateFunction', id: string, name: string, description: string, logo?: string | null, supportedSourceApps: Array<string>, tags: Array<string>, workspaceIds?: Array<string> | null, isFeatured: boolean, creator?: { __typename?: 'LimitedUser', id: string } | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, createdAt: string, commitId: string }> } } } };
+export type UpdateAutomateFunctionMutation = { __typename?: 'Mutation', automateMutations: { __typename?: 'AutomateMutations', updateFunction: { __typename?: 'AutomateFunction', id: string, name: string, description: string, logo?: string | null, supportedSourceApps: Array<string>, tags: Array<string>, workspaceIds: Array<string>, isFeatured: boolean, creator?: { __typename?: 'LimitedUser', id: string } | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, createdAt: string, commitId: string }> } } } };
 
 export type SearchAutomateFunctionReleasesQueryVariables = Exact<{
   functionId: Scalars['ID']['input'];
@@ -6810,6 +6856,13 @@ export type SettingsWorkspaceSecurityQueryVariables = Exact<{
 
 export type SettingsWorkspaceSecurityQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, slug: string, defaultSeatType: WorkspaceSeatType, discoverabilityAutoJoinEnabled: boolean, role?: string | null, discoverabilityEnabled: boolean, domainBasedMembershipProtectionEnabled: boolean, isExclusive: boolean, hasAccessToDomainBasedSecurityPolicies: boolean, hasAccessToSSO: boolean, hasAccessToExclusiveMembership: boolean, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null, sso?: { __typename?: 'WorkspaceSso', provider?: { __typename?: 'WorkspaceSsoProvider', id: string, name: string, clientId: string, issuerUrl: string } | null } | null, permissions: { __typename?: 'WorkspacePermissionChecks', canMakeWorkspaceExclusive: { __typename?: 'PermissionCheckResult', authorized: boolean, message: string } } } };
 
+export type SettingsWorkspaceAutomationQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+}>;
+
+
+export type SettingsWorkspaceAutomationQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, slug: string, automateFunctions: { __typename?: 'AutomateFunctionCollection', items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, logo?: string | null, creator?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, permissions: { __typename?: 'AutomateFunctionPermissionChecks', canRegenerateToken: { __typename?: 'PermissionCheckResult', authorized: boolean, message: string, code: string, payload?: {} | null } } }> } } };
+
 export type AppAuthorAvatarFragment = { __typename?: 'AppAuthor', id: string, name: string, avatar?: string | null };
 
 export type LimitedUserAvatarFragment = { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null };
@@ -7379,14 +7432,14 @@ export type ResolveCommentLinkQueryVariables = Exact<{
 
 export type ResolveCommentLinkQuery = { __typename?: 'Query', project: { __typename?: 'Project', comment?: { __typename?: 'Comment', id: string, viewerResources: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> } | null } };
 
-export type AutomateFunctionPage_AutomateFunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, description: string, logo?: string | null, supportedSourceApps: Array<string>, tags: Array<string>, workspaceIds?: Array<string> | null, isFeatured: boolean, creator?: { __typename?: 'LimitedUser', id: string } | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, createdAt: string, commitId: string }> } };
+export type AutomateFunctionPage_AutomateFunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, description: string, logo?: string | null, supportedSourceApps: Array<string>, tags: Array<string>, workspaceIds: Array<string>, isFeatured: boolean, creator?: { __typename?: 'LimitedUser', id: string } | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, createdAt: string, commitId: string }> } };
 
 export type AutomateFunctionPageQueryVariables = Exact<{
   functionId: Scalars['ID']['input'];
 }>;
 
 
-export type AutomateFunctionPageQuery = { __typename?: 'Query', automateFunction: { __typename?: 'AutomateFunction', id: string, name: string, description: string, logo?: string | null, supportedSourceApps: Array<string>, tags: Array<string>, workspaceIds?: Array<string> | null, isFeatured: boolean, creator?: { __typename?: 'LimitedUser', id: string } | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, createdAt: string, commitId: string }> } }, activeUser?: { __typename?: 'User', workspaces: { __typename?: 'WorkspaceCollection', items: Array<{ __typename?: 'Workspace', id: string, name: string, slug: string }> } } | null };
+export type AutomateFunctionPageQuery = { __typename?: 'Query', automateFunction: { __typename?: 'AutomateFunction', id: string, name: string, description: string, logo?: string | null, supportedSourceApps: Array<string>, tags: Array<string>, workspaceIds: Array<string>, isFeatured: boolean, creator?: { __typename?: 'LimitedUser', id: string } | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, createdAt: string, commitId: string }> } }, activeUser?: { __typename?: 'User', workspaces: { __typename?: 'WorkspaceCollection', items: Array<{ __typename?: 'Workspace', id: string, name: string, slug: string }> } } | null };
 
 export type AutomateFunctionPageWorkspaceQueryVariables = Exact<{
   workspaceId: Scalars['String']['input'];
@@ -7409,6 +7462,8 @@ export type SettingsServerRegionsQueryVariables = Exact<{ [key: string]: never; 
 
 
 export type SettingsServerRegionsQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', multiRegion: { __typename?: 'ServerMultiRegionConfiguration', availableKeys: Array<string>, regions: Array<{ __typename?: 'ServerRegionItem', id: string, name: string, key: string, description?: string | null }> } } };
+
+export type SettingsWorkspacesAutomation_WorkspaceFragment = { __typename?: 'Workspace', id: string, slug: string, automateFunctions: { __typename?: 'AutomateFunctionCollection', items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, logo?: string | null, creator?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, permissions: { __typename?: 'AutomateFunctionPermissionChecks', canRegenerateToken: { __typename?: 'PermissionCheckResult', authorized: boolean, message: string, code: string, payload?: {} | null } } }> } };
 
 export type SettingsWorkspacesGeneral_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, slug: string, description?: string | null, logo?: string | null, role?: string | null, plan?: { __typename?: 'WorkspacePlan', status: WorkspacePlanStatuses, name: WorkspacePlans } | null, embedOptions: { __typename?: 'WorkspaceEmbedOptions', hideSpeckleBranding: boolean }, permissions: { __typename?: 'WorkspacePermissionChecks', canEditEmbedOptions: { __typename?: 'PermissionCheckResult', authorized: boolean, code: string, message: string, payload?: {} | null } } };
 
@@ -7633,6 +7688,8 @@ export const ProjectPageAutomationHeader_ProjectFragmentDoc = {"kind":"Document"
 export const ProjectPageAutomationPage_ProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationPage_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"workspaceId"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageAutomationHeader_Project"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsPageTeamDialogManagePermissions_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"workspaceId"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsModelPageEmbed_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsPageTeamDialogManagePermissions_Project"}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"embedOptions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hideSpeckleBranding"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canEditEmbedOptions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageModelsActions_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsModelPageEmbed_Project"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"UseFileImport_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectCardImportFileArea_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canCreateModel"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"UseFileImport_Project"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageModelsCardProject"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageModelsActions_Project"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectCardImportFileArea_Project"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canCreateModel"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationHeader_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"workspaceId"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageModelsCardProject"}}]}}]} as unknown as DocumentNode<ProjectPageAutomationPage_ProjectFragment, unknown>;
 export const SettingsSharedProjects_ProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsSharedProjects_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsDeleteDialog_Project"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canDelete"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}},{"kind":"Field","name":{"kind":"Name","value":"canReadSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}},{"kind":"Field","name":{"kind":"Name","value":"canRead"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsDeleteDialog_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canDelete"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}}]} as unknown as DocumentNode<SettingsSharedProjects_ProjectFragment, unknown>;
 export const SettingsServerProjects_ProjectCollectionFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsServerProjects_ProjectCollection"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectCollection"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsSharedProjects_Project"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsDeleteDialog_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canDelete"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsSharedProjects_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsDeleteDialog_Project"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canDelete"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}},{"kind":"Field","name":{"kind":"Name","value":"canReadSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}},{"kind":"Field","name":{"kind":"Name","value":"canRead"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}}]} as unknown as DocumentNode<SettingsServerProjects_ProjectCollectionFragment, unknown>;
+export const SettingsWorkspacesAutomationFunctions_WorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesAutomationFunctions_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"50"}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"includeFeatured"},"value":{"kind":"BooleanValue","value":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"creator"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canRegenerateToken"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<SettingsWorkspacesAutomationFunctions_WorkspaceFragment, unknown>;
+export const SettingsWorkspacesAutomation_WorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesAutomation_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesAutomationFunctions_Workspace"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesAutomationFunctions_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"50"}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"includeFeatured"},"value":{"kind":"BooleanValue","value":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"creator"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canRegenerateToken"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<SettingsWorkspacesAutomation_WorkspaceFragment, unknown>;
 export const SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesGeneralEditAvatar_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]} as unknown as DocumentNode<SettingsWorkspacesGeneralEditAvatar_WorkspaceFragment, unknown>;
 export const SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspaceGeneralDeleteDialog_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]} as unknown as DocumentNode<SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment, unknown>;
 export const SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesGeneralEditSlugDialog_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}}]} as unknown as DocumentNode<SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragment, unknown>;
@@ -7809,6 +7866,7 @@ export const SettingsWorkspacesMembersSearchDocument = {"kind":"Document","defin
 export const SettingsWorkspacesInvitesSearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SettingsWorkspacesInvitesSearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"invitesFilter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"PendingWorkspaceCollaboratorsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceBySlug"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesMembersTableHeader_Workspace"}},{"kind":"Field","name":{"kind":"Name","value":"invitedTeam"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"invitesFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"InviteDialogSharedSelectUsers_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"defaultSeatType"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"WorkspacesPlan_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"plan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"paymentMethod"}},{"kind":"Field","name":{"kind":"Name","value":"usage"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectCount"}},{"kind":"Field","name":{"kind":"Name","value":"modelCount"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"seats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"editors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assigned"}},{"kind":"Field","name":{"kind":"Name","value":"available"}}]}},{"kind":"Field","name":{"kind":"Name","value":"viewers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assigned"}},{"kind":"Field","name":{"kind":"Name","value":"available"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"subscription"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"billingInterval"}},{"kind":"Field","name":{"kind":"Name","value":"currentBillingCycleEnd"}},{"kind":"Field","name":{"kind":"Name","value":"currency"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"InviteDialogWorkspace_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"domainBasedMembershipProtectionEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"defaultSeatType"}},{"kind":"Field","name":{"kind":"Name","value":"domains"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"domain"}},{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"seats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"editors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"available"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"InviteDialogSharedSelectUsers_Workspace"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"WorkspacesPlan_Workspace"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedUserAvatar"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedUser"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesMembersTableHeader_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"InviteDialogWorkspace_Workspace"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canInvite"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PendingWorkspaceCollaborator"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inviteId"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"invitedBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}}]}}]} as unknown as DocumentNode<SettingsWorkspacesInvitesSearchQuery, SettingsWorkspacesInvitesSearchQueryVariables>;
 export const SettingsWorkspacesProjectsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SettingsWorkspacesProjects"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"WorkspaceProjectsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceBySlug"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesProjects_Workspace"}},{"kind":"Field","name":{"kind":"Name","value":"projects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesProjects_ProjectCollection"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsDeleteDialog_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canDelete"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsSharedProjects_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsDeleteDialog_Project"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canDelete"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}},{"kind":"Field","name":{"kind":"Name","value":"canReadSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}},{"kind":"Field","name":{"kind":"Name","value":"canRead"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesProjects_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"plan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canCreateProject"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesProjects_ProjectCollection"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectCollection"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsSharedProjects_Project"}}]}}]}}]} as unknown as DocumentNode<SettingsWorkspacesProjectsQuery, SettingsWorkspacesProjectsQueryVariables>;
 export const SettingsWorkspaceSecurityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SettingsWorkspaceSecurity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceBySlug"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesSecurity_Workspace"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesSecurityDefaultSeat_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"defaultSeatType"}},{"kind":"Field","name":{"kind":"Name","value":"discoverabilityAutoJoinEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesSecurityDomainManagement_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"discoverabilityEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"domainBasedMembershipProtectionEnabled"}},{"kind":"Field","alias":{"kind":"Name","value":"hasAccessToDomainBasedSecurityPolicies"},"name":{"kind":"Name","value":"hasAccessToFeature"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"featureName"},"value":{"kind":"EnumValue","value":"domainBasedSecurityPolicies"}}]},{"kind":"Field","alias":{"kind":"Name","value":"hasAccessToSSO"},"name":{"kind":"Name","value":"hasAccessToFeature"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"featureName"},"value":{"kind":"EnumValue","value":"oidcSso"}}]},{"kind":"Field","name":{"kind":"Name","value":"domains"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"domain"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesSecurityDiscoverability_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"domains"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"domain"}}]}},{"kind":"Field","name":{"kind":"Name","value":"discoverabilityEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"discoverabilityAutoJoinEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"defaultSeatType"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesSecuritySsoWrapper_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"sso"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"provider"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"clientId"}},{"kind":"Field","name":{"kind":"Name","value":"issuerUrl"}}]}}]}},{"kind":"Field","alias":{"kind":"Name","value":"hasAccessToSSO"},"name":{"kind":"Name","value":"hasAccessToFeature"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"featureName"},"value":{"kind":"EnumValue","value":"oidcSso"}}]}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesSecurityDomainProtection_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"domainBasedMembershipProtectionEnabled"}},{"kind":"Field","alias":{"kind":"Name","value":"hasAccessToDomainBasedSecurityPolicies"},"name":{"kind":"Name","value":"hasAccessToFeature"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"featureName"},"value":{"kind":"EnumValue","value":"domainBasedSecurityPolicies"}}]},{"kind":"Field","name":{"kind":"Name","value":"domains"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesSecurityWorkspaceCreation_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"isExclusive"}},{"kind":"Field","alias":{"kind":"Name","value":"hasAccessToExclusiveMembership"},"name":{"kind":"Name","value":"hasAccessToFeature"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"featureName"},"value":{"kind":"EnumValue","value":"exclusiveMembership"}}]},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canMakeWorkspaceExclusive"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesSecurity_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesSecurityDefaultSeat_Workspace"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesSecurityDomainManagement_Workspace"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesSecurityDiscoverability_Workspace"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesSecuritySsoWrapper_Workspace"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesSecurityDomainProtection_Workspace"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesSecurityWorkspaceCreation_Workspace"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}}]} as unknown as DocumentNode<SettingsWorkspaceSecurityQuery, SettingsWorkspaceSecurityQueryVariables>;
+export const SettingsWorkspaceAutomationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SettingsWorkspaceAutomation"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceBySlug"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesAutomation_Workspace"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesAutomationFunctions_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"50"}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"includeFeatured"},"value":{"kind":"BooleanValue","value":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"creator"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canRegenerateToken"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesAutomation_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesAutomationFunctions_Workspace"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}}]} as unknown as DocumentNode<SettingsWorkspaceAutomationQuery, SettingsWorkspaceAutomationQueryVariables>;
 export const ActiveUserMetaDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActiveUserMeta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"newWorkspaceExplainerDismissed"}},{"kind":"Field","name":{"kind":"Name","value":"legacyProjectsExplainerCollapsed"}},{"kind":"Field","name":{"kind":"Name","value":"speckleConBannerDismissed"}}]}}]}}]}}]} as unknown as DocumentNode<ActiveUserMetaQuery, ActiveUserMetaQueryVariables>;
 export const UpdateWorkspaceExplainerDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateWorkspaceExplainer"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"value"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setNewWorkspaceExplainerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"value"}}}]}]}}]}}]}}]} as unknown as DocumentNode<UpdateWorkspaceExplainerMutation, UpdateWorkspaceExplainerMutationVariables>;
 export const UpdateLegacyProjectsExplainerDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateLegacyProjectsExplainer"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"value"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setLegacyProjectsExplainerCollapsed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"value"}}}]}]}}]}}]}}]} as unknown as DocumentNode<UpdateLegacyProjectsExplainerMutation, UpdateLegacyProjectsExplainerMutationVariables>;
@@ -7899,6 +7957,7 @@ export type AllObjectTypes = {
   AuthStrategy: AuthStrategy,
   AutomateFunction: AutomateFunction,
   AutomateFunctionCollection: AutomateFunctionCollection,
+  AutomateFunctionPermissionChecks: AutomateFunctionPermissionChecks,
   AutomateFunctionRelease: AutomateFunctionRelease,
   AutomateFunctionReleaseCollection: AutomateFunctionReleaseCollection,
   AutomateFunctionRun: AutomateFunctionRun,
@@ -7929,8 +7988,10 @@ export type AllObjectTypes = {
   Commit: Commit,
   CommitCollection: CommitCollection,
   CountOnlyCollection: CountOnlyCollection,
+  CreateEmbedTokenReturn: CreateEmbedTokenReturn,
   CurrencyBasedPrices: CurrencyBasedPrices,
   EmbedToken: EmbedToken,
+  EmbedTokenCollection: EmbedTokenCollection,
   FileUpload: FileUpload,
   FileUploadCollection: FileUploadCollection,
   FileUploadMutations: FileUploadMutations,
@@ -8158,6 +8219,7 @@ export type AutomateFunctionFieldArgs = {
   isFeatured: {},
   logo: {},
   name: {},
+  permissions: {},
   releases: AutomateFunctionReleasesArgs,
   repo: {},
   supportedSourceApps: {},
@@ -8168,6 +8230,9 @@ export type AutomateFunctionCollectionFieldArgs = {
   cursor: {},
   items: {},
   totalCount: {},
+}
+export type AutomateFunctionPermissionChecksFieldArgs = {
+  canRegenerateToken: {},
 }
 export type AutomateFunctionReleaseFieldArgs = {
   commitId: {},
@@ -8209,6 +8274,7 @@ export type AutomateFunctionTokenFieldArgs = {
 export type AutomateMutationsFieldArgs = {
   createFunction: AutomateMutationsCreateFunctionArgs,
   createFunctionWithoutVersion: AutomateMutationsCreateFunctionWithoutVersionArgs,
+  regenerateFunctionToken: AutomateMutationsRegenerateFunctionTokenArgs,
   updateFunction: AutomateMutationsUpdateFunctionArgs,
 }
 export type AutomateRunFieldArgs = {
@@ -8389,17 +8455,27 @@ export type CommitCollectionFieldArgs = {
 export type CountOnlyCollectionFieldArgs = {
   totalCount: {},
 }
+export type CreateEmbedTokenReturnFieldArgs = {
+  token: {},
+  tokenMetadata: {},
+}
 export type CurrencyBasedPricesFieldArgs = {
   gbp: {},
   usd: {},
 }
 export type EmbedTokenFieldArgs = {
   createdAt: {},
-  id: {},
   lastUsed: {},
   lifespan: {},
-  modelIds: {},
-  name: {},
+  projectId: {},
+  resourceIdString: {},
+  tokenId: {},
+  user: {},
+}
+export type EmbedTokenCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
 }
 export type FileUploadFieldArgs = {
   branchName: {},
@@ -8694,7 +8770,7 @@ export type ProjectFieldArgs = {
   createdAt: {},
   description: {},
   embedOptions: {},
-  embedTokens: {},
+  embedTokens: ProjectEmbedTokensArgs,
   hasAccessToFeature: ProjectHasAccessToFeatureArgs,
   id: {},
   invitableCollaborators: ProjectInvitableCollaboratorsArgs,
@@ -8807,6 +8883,7 @@ export type ProjectMutationsFieldArgs = {
   invites: {},
   leave: ProjectMutationsLeaveArgs,
   revokeEmbedToken: ProjectMutationsRevokeEmbedTokenArgs,
+  revokeEmbedTokens: ProjectMutationsRevokeEmbedTokensArgs,
   update: ProjectMutationsUpdateArgs,
   updateRole: ProjectMutationsUpdateRoleArgs,
 }
@@ -8824,6 +8901,7 @@ export type ProjectPermissionChecksFieldArgs = {
   canBroadcastActivity: {},
   canCreateAutomation: {},
   canCreateComment: {},
+  canCreateEmbedTokens: {},
   canCreateModel: {},
   canDelete: {},
   canInvite: {},
@@ -8832,9 +8910,11 @@ export type ProjectPermissionChecksFieldArgs = {
   canMoveToWorkspace: ProjectPermissionChecksCanMoveToWorkspaceArgs,
   canPublish: {},
   canRead: {},
+  canReadEmbedTokens: {},
   canReadSettings: {},
   canReadWebhooks: {},
   canRequestRender: {},
+  canRevokeEmbedTokens: {},
   canUpdate: {},
   canUpdateAllowPublicComments: {},
 }
@@ -9539,6 +9619,7 @@ export type AllObjectFieldArgTypes = {
   AuthStrategy: AuthStrategyFieldArgs,
   AutomateFunction: AutomateFunctionFieldArgs,
   AutomateFunctionCollection: AutomateFunctionCollectionFieldArgs,
+  AutomateFunctionPermissionChecks: AutomateFunctionPermissionChecksFieldArgs,
   AutomateFunctionRelease: AutomateFunctionReleaseFieldArgs,
   AutomateFunctionReleaseCollection: AutomateFunctionReleaseCollectionFieldArgs,
   AutomateFunctionRun: AutomateFunctionRunFieldArgs,
@@ -9569,8 +9650,10 @@ export type AllObjectFieldArgTypes = {
   Commit: CommitFieldArgs,
   CommitCollection: CommitCollectionFieldArgs,
   CountOnlyCollection: CountOnlyCollectionFieldArgs,
+  CreateEmbedTokenReturn: CreateEmbedTokenReturnFieldArgs,
   CurrencyBasedPrices: CurrencyBasedPricesFieldArgs,
   EmbedToken: EmbedTokenFieldArgs,
+  EmbedTokenCollection: EmbedTokenCollectionFieldArgs,
   FileUpload: FileUploadFieldArgs,
   FileUploadCollection: FileUploadCollectionFieldArgs,
   FileUploadMutations: FileUploadMutationsFieldArgs,
