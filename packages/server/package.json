@@ -22,7 +22,7 @@
     "dev": "concurrently \"npm:build:watch\" \"npm:run:watch\" \"yarn gqlgen:watch\" -n tsc,server,gqlgen",
     "build:clean": "rimraf ./dist && yarn build",
     "dev:clean": "yarn build:clean && yarn dev",
-    "ts-mocha": "RUNNING_MOCHA=true tsx ./bin/mocha",
+    "ts-mocha": "tsx ./bin/mocha",
     "test": "cross-env NODE_ENV=test LOG_FILTER=test LOG_PRETTY=true yarn ts-mocha",
     "test:all-ff": "cross-env ENABLE_ALL_FFS=true yarn test",
     "test:multiregion": "cross-env RUN_TESTS_IN_MULTIREGION_MODE=true FF_WORKSPACES_MODULE_ENABLED=true FF_WORKSPACES_MULTI_REGION_ENABLED=true yarn test --grep @multiregion",
