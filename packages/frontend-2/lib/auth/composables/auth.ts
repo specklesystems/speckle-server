@@ -336,12 +336,10 @@ export const useAuthManager = (
    * Watch for embed token in query string and save it
    */
   const watchEmbedToken = () => {
-    if (import.meta.server) return
-
     watch(
       () => route.query['token'] as Optional<string>,
       async (newVal, oldVal) => {
-        if (newVal && newVal !== oldVal) {
+        if (newVal && newVal !== oldVal && newVal !== embedToken.value) {
           embedToken.value = newVal
           // Reset auth state to reload user data with new token
           await resetAuthState()
