@@ -23,12 +23,9 @@ export const sendEmail: SendEmail = async ({
 }: SendEmailParams): Promise<boolean> => {
   const eventBus = getEventBus()
   const logger = getRequestLogger() || loggerWithMaybeContext({ logger: emailLogger })
-  const transporter = getTransporter()
 
   try {
-    const emailFrom = getEmailFromAddress()
-    const options: Mail.Options = {
-      from: from || `"Speckle" <${emailFrom}>`,
+    const baseOptions = {
       to,
       subject,
       text,
@@ -37,8 +34,15 @@ export const sendEmail: SendEmail = async ({
 
     await eventBus.emit({
       eventName: EmailsEvents.PreparingToSend,
-      payload: { options }
+      payload: { options: baseOptions }
     })
+
+    const transporter = getTransporter()
+    const emailFrom = getEmailFromAddress()
+    const options: Mail.Options = {
+      ...baseOptions,
+      from: from || `"Speckle" <${emailFrom}>`
+    }
 
     if (!transporter) {
       logger.warn('No email transport present. Cannot send emails. Skipping send...')
