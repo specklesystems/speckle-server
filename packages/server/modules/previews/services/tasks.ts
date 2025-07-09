@@ -6,7 +6,7 @@ import {
   RequestObjectPreview,
   UpdateObjectPreview
 } from '@/modules/previews/domain/operations'
-import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
+import { PreviewStatus } from '@/modules/previews/domain/consts'
 import { Roles, Scopes, TIME_MS } from '@speckle/shared'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
@@ -17,11 +17,12 @@ export const getPaginatedObjectPreviewInErrorStateFactory =
   (deps: {
     getPaginatedObjectPreviewsPage: GetPaginatedObjectPreviewsPage
     getPaginatedObjectPreviewsTotalCount: GetPaginatedObjectPreviewsTotalCount
+    maximumNumberOfAttempts?: number
   }): GetPaginatedObjectPreviewsInErrorState =>
   async (params) => {
     const filter = {
       status: PreviewStatus.ERROR,
-      maxNumberOfAttempts: 3 // only retry items that have errored less than 3 times
+      maxNumberOfAttempts: deps.maximumNumberOfAttempts ?? 3 // only retry items that have errored less than 3 times
     }
     const [result, totalCount] = await Promise.all([
       deps.getPaginatedObjectPreviewsPage({
@@ -55,25 +56,16 @@ export const retryFailedPreviewsFactory = (deps: {
     createAppToken,
     requestObjectPreview
   } = deps
-  return async (params: {
-    logger: Logger
-    previousCursor: string | null
-  }): Promise<{ cursor: string | null }> => {
-    const { logger, previousCursor } = params
-    const {
-      items,
-      cursor: newCursor,
-      totalCount
-    } = await getPaginatedObjectPreviewsInErrorState({
-      limit: 1, //get the most recent item that has errored after the cursor
-      cursor: previousCursor
+  return async (params: { logger: Logger }): Promise<boolean> => {
+    const { logger } = params
+    const { items, totalCount } = await getPaginatedObjectPreviewsInErrorState({
+      limit: 1, //get the least recent item that has errored
+      cursor: null // always get the first item
     })
     if (items.length === 0) {
       //NOTE we rely on the items returned, as this accounts for the cursor position. More errored items might have been added since the last time we checked and changed the totalCount.
       logger.info('No object previews in error state found. Resetting cursor.')
-      // Reset the cursor if we have no items; we have reached the end of the list
-      // and can start from the beginning again.
-      return { cursor: null }
+      return false
     }
 
     const objPreview = items[0]
@@ -93,7 +85,6 @@ export const retryFailedPreviewsFactory = (deps: {
       objectPreview: {
         ...objPreview,
         previewStatus: PreviewStatus.PENDING, // move it to pending so it doesn't get picked up again
-        priority: PreviewPriority.LOW, // reset the priority to low so it doesn't block other previews
         incrementAttempts: true // increment the number of attempts
       }
     })
@@ -123,6 +114,6 @@ export const retryFailedPreviewsFactory = (deps: {
 
     await requestObjectPreview({ jobId: `${streamId}.${objectId}`, token, url })
 
-    return { cursor: newCursor }
+    return true
   }
 }

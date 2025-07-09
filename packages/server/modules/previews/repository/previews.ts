@@ -62,7 +62,7 @@ export const getPaginatedObjectsPreviewsBaseQueryFactory =
 const getCursorTools = () =>
   compositeCursorTools({
     schema: ObjectPreview,
-    cols: ['lastUpdate']
+    cols: ['lastUpdate', 'objectId']
   })
 
 export const getPaginatedObjectPreviewsPageFactory =
@@ -74,7 +74,7 @@ export const getPaginatedObjectPreviewsPageFactory =
     const query = getPaginatedObjectsPreviewsBaseQueryFactory(deps)(params)
 
     if (cursor) {
-      applyCursorSortAndFilter({ query, cursor })
+      applyCursorSortAndFilter({ query, cursor, sort: 'desc' })
     }
 
     query.limit(limit)

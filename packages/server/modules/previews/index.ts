@@ -72,7 +72,6 @@ const scheduleRetryFailedPreviews = async ({
 }) => {
   let previewResurrectionHandlers: {
     handler: ReturnType<typeof retryFailedPreviewsFactory>
-    cursor: string | null
   }[] = []
   const regionClients = await getRegisteredDbClients()
   for (const projectDb of [db, ...regionClients]) {
@@ -108,8 +107,7 @@ const scheduleRetryFailedPreviews = async ({
             }),
           storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
         })
-      }),
-      cursor: null
+      })
     })
   }
 
@@ -119,12 +117,11 @@ const scheduleRetryFailedPreviews = async ({
     'PreviewResurrection',
     async (_scheduledTime, { logger }) => {
       previewResurrectionHandlers = await Promise.all(
-        previewResurrectionHandlers.map(async ({ handler, cursor }) => {
-          const newCursor = await handler({
-            logger,
-            previousCursor: cursor
+        previewResurrectionHandlers.map(async ({ handler }) => {
+          await handler({
+            logger
           })
-          return { handler, cursor: newCursor.cursor }
+          return { handler }
         })
       )
     }
