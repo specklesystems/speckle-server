@@ -1,17 +1,27 @@
 import { CommandModule } from 'yargs'
-import { cliLogger } from '@/logging/logging'
-import { getWorkspaceBySlugOrIdFactory } from '@/modules/workspaces/repositories/workspaces'
+import { cliLogger as logger } from '@/observability/logging'
+import {
+  getWorkspaceBySlugOrIdFactory,
+  getWorkspaceFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
-import { PaidWorkspacePlanStatuses } from '@/modules/gatekeeper/domain/billing'
-import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
-import { PaidWorkspacePlans } from '@/modules/gatekeeper/domain/workspacePricing'
+import {
+  getWorkspacePlanFactory,
+  getWorkspaceSubscriptionFactory,
+  upsertWorkspacePlanFactory
+} from '@/modules/gatekeeper/repositories/billing'
+import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import { WorkspacePlans, WorkspacePlanStatuses } from '@speckle/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
 
 const command: CommandModule<
   unknown,
   {
     workspaceSlugOrId: string
-    status: PaidWorkspacePlanStatuses
-    plan: PaidWorkspacePlans
+    // you need to know what you are doing, status and plan pairing validity is not ensured here
+    status: WorkspacePlanStatuses
+    plan: WorkspacePlans
   }
 > = {
   command: 'set-plan <workspaceSlugOrId> [plan] [status]',
@@ -24,41 +34,42 @@ const command: CommandModule<
     plan: {
       describe: 'Plan to set the status for',
       type: 'string',
-      default: 'business',
-      choices: ['business', 'starter', 'plus']
+      default: WorkspacePlans.Team,
+      choices: Object.values(WorkspacePlans)
     },
     status: {
       describe: 'Status to set for the workspace plan',
       type: 'string',
       default: 'valid',
-      choices: [
-        'valid',
-        'trial',
-        'expired',
-        'paymentFailed',
-        'cancelationScheduled',
-        'canceled'
-      ]
+      choices: ['valid', 'paymentFailed', 'cancelationScheduled', 'canceled']
     }
   },
   handler: async (args) => {
-    cliLogger.info(
+    logger.info(
       `Setting plan for workspace '${args.workspaceSlugOrId}' to '${args.plan}' with status '${args.status}'`
     )
     const workspace = await getWorkspaceBySlugOrIdFactory({ db })(args)
     if (!workspace) {
-      throw new Error(`Workspace w/ slug or id '${args.workspaceSlugOrId}' not found`)
+      throw new WorkspaceNotFoundError(
+        `Workspace w/ slug or id '${args.workspaceSlugOrId}' not found`
+      )
     }
 
-    await upsertPaidWorkspacePlanFactory({ db })({
-      workspacePlan: {
-        createdAt: new Date(),
-        workspaceId: workspace.id,
-        name: args.plan,
-        status: args.status
-      }
+    const updateWorkspacePlan = updateWorkspacePlanFactory({
+      getWorkspace: getWorkspaceFactory({ db }),
+      upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
+      getWorkspacePlan: getWorkspacePlanFactory({ db }),
+      getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+      emitEvent: getEventBus().emit
     })
-    cliLogger.info(`Plan set!`)
+    await updateWorkspacePlan({
+      userId: null,
+      workspaceId: workspace.id,
+      name: args.plan,
+      status: args.status
+    })
+
+    logger.info(`Plan set!`)
   }
 }
 

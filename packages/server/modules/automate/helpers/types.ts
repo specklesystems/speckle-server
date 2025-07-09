@@ -8,6 +8,7 @@ export type AutomationRecord = {
   enabled: boolean
   createdAt: Date
   updatedAt: Date
+  isDeleted: boolean
 } & (
   | {
       executionEngineAutomationId: string
@@ -66,7 +67,7 @@ export type AutomationRunRecord = {
   executionEngineRunId: string | null
 }
 
-export type AutomateRevisionFunctionRecord = {
+export type AutomationRevisionFunctionRecord = {
   functionReleaseId: string
   functionId: string
   functionInputs: string | null
@@ -74,8 +75,12 @@ export type AutomateRevisionFunctionRecord = {
 }
 
 export enum RunTriggerSource {
+  /** Triggered in response to an external event like a new version. */
   Automatic = 'automatic',
-  Manual = 'manual'
+  /** Requested directly by the user in-app. */
+  Manual = 'manual',
+  /** Requested as part of a test automation. */
+  Test = 'test'
 }
 
 export const VersionCreationTriggerType = <const>'versionCreation'
@@ -118,7 +123,7 @@ export type AutomationTokenRecord = {
 }
 
 export type AutomationRevisionWithTriggersFunctions = AutomationRevisionRecord & {
-  functions: AutomateRevisionFunctionRecord[]
+  functions: AutomationRevisionFunctionRecord[]
   triggers: AutomationTriggerDefinitionRecord[]
 }
 

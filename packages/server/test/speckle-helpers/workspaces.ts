@@ -1,6 +1,5 @@
 import { UpsertWorkspace } from '@/modules/workspaces/domain/operations'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
-import { Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 
 export const createAndStoreTestWorkspaceFactory =
@@ -14,9 +13,12 @@ export const createAndStoreTestWorkspaceFactory =
       updatedAt: new Date(),
       description: null,
       logo: null,
+      isExclusive: false,
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false,
-      defaultProjectRole: Roles.Stream.Contributor,
+      discoverabilityAutoJoinEnabled: false,
+      defaultSeatType: null,
+      isEmbedSpeckleBrandingHidden: false,
       ...workspaceOverrides
     }
 

@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="relative z-50" @close="onClose">
+    <Dialog as="div" class="relative z-50" open @close="onClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -39,7 +39,7 @@
                 ? 'translate-y-[100%]'
                 : 'translate-y-4'
             } md:translate-y-4`"
-            @after-leave="$emit('fully-closed')"
+            @after-leave="onFullyClosed"
           >
             <DialogPanel
               :class="dialogPanelClasses"
@@ -80,12 +80,18 @@
                 v-if="!hideCloser"
                 color="subtle"
                 size="sm"
-                class="absolute z-20 top-4 right-5 shrink-0 !w-6 !h-6 !p-0"
+                class="absolute z-20 top-4 right-5 shrink-0 !w-6 !h-6 !p-0 text-foreground-2"
+                :class="closerClasses"
                 @click="open = false"
               >
-                <XMarkIcon class="h-6 w-6 text-foreground-2" />
+                <XMarkIcon class="h-6 w-6" />
               </FormButton>
-              <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
+              <div
+                ref="slotContainer"
+                v-memo="isClosing ? [memoKey] : [(memoKey = Math.random())]"
+                :class="slotContainerClasses"
+                @scroll="onScroll"
+              >
                 <slot>Put your content here!</slot>
               </div>
               <div
@@ -97,16 +103,24 @@
                 }"
               >
                 <template v-if="buttons">
-                  <FormButton
+                  <div
                     v-for="(button, index) in buttons"
                     :key="button.id || index"
-                    v-bind="button.props || {}"
-                    :disabled="button.props?.disabled || button.disabled"
-                    :submit="button.props?.submit || button.submit"
-                    @click="($event) => button.onClick?.($event)"
+                    v-tippy="
+                      button.props?.disabled || button.disabled
+                        ? button.disabledMessage
+                        : undefined
+                    "
                   >
-                    {{ button.text }}
-                  </FormButton>
+                    <FormButton
+                      v-bind="button.props || {}"
+                      :disabled="button.props?.disabled || button.disabled"
+                      :submit="button.props?.submit || button.submit"
+                      @click="($event) => button.onClick?.($event)"
+                    >
+                      {{ button.text }}
+                    </FormButton>
+                  </div>
                 </template>
                 <template v-else>
                   <slot name="buttons" />
@@ -123,10 +137,10 @@
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
-import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
-import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
+import { isClient, useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
+import { computed, onUnmounted, ref, useSlots, watch, type SetupContext } from 'vue'
 import { throttle } from 'lodash'
-import { isClient } from '@vueuse/core'
+import { directive as vTippy } from 'vue-tippy'
 
 type MaxWidthValue = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 type FullscreenValues = 'mobile' | 'desktop' | 'all' | 'none'
@@ -159,13 +173,19 @@ const props = withDefaults(
      */
     onSubmit?: (e: SubmitEvent) => void
     isTransparent?: boolean
+    closerClasses?: string
+    hideTitle?: boolean
+    hideButtons?: boolean
   }>(),
   {
     fullscreen: 'mobile'
   }
 )
 
-const slots = useSlots()
+const slots: SetupContext['slots'] = useSlots()
+
+const isClosing = ref(false)
+const memoKey = ref(Math.random())
 
 const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(true)
@@ -181,8 +201,10 @@ useResizeObserver(
 )
 
 const isForm = computed(() => !!props.onSubmit)
-const hasButtons = computed(() => props.buttons || slots.buttons)
-const hasTitle = computed(() => !!props.title || !!slots.header)
+const hasButtons = computed(
+  () => (props.buttons || slots.buttons) && !props.hideButtons
+)
+const hasTitle = computed(() => !props.hideTitle && (!!props.title || !!slots.header))
 
 const open = computed({
   get: () => props.open,
@@ -287,6 +309,11 @@ const onClose = () => {
   open.value = false
 }
 
+const onFullyClosed = () => {
+  emit('fully-closed')
+  isClosing.value = false
+}
+
 const onFormSubmit = (e: SubmitEvent) => {
   props.onSubmit?.(e)
 }
@@ -300,27 +327,32 @@ const onScroll = throttle((e: { target: EventTarget | null }) => {
   scrolledToBottom.value = scrollTop + offsetHeight >= scrollHeight
 }, 60)
 
-// Toggle 'dialog-open' class on <html> to prevent scroll jumping and disable background scroll.
-// This maintains user scroll position when Headless UI dialogs are activated.
-watch(open, (newValue) => {
-  if (isClient) {
-    const html = document.documentElement
-    if (newValue) {
-      html.classList.add('dialog-open')
-    } else {
-      html.classList.remove('dialog-open')
+watch(
+  open,
+  (newValue, oldValue) => {
+    if (isClient) {
+      // Toggle 'dialog-open' class on <html> to prevent scroll jumping and disable background scroll.
+      // This maintains user scroll position when Headless UI dialogs are activated.
+      const html = document.documentElement
+      if (newValue) {
+        html.classList.add('dialog-open')
+      } else {
+        html.classList.remove('dialog-open')
+      }
     }
-  }
-})
+
+    if (!newValue && oldValue) {
+      isClosing.value = true
+    }
+  },
+  { flush: 'sync' }
+)
 
 // Clean up when the component unmounts
 onUnmounted(() => {
-  if (isClient) {
-    document.documentElement.classList.remove('dialog-open')
-  }
+  document.documentElement.classList.remove('dialog-open')
 })
 </script>
-
 <style>
 html.dialog-open {
   overflow: visible !important;

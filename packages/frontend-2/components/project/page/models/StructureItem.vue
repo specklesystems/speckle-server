@@ -14,12 +14,21 @@
               {{ name }}
             </span>
           </NuxtLink>
-          <span v-if="model">
+          <template v-if="model">
+            <NuxtLink
+              v-if="showLastUploadFailed"
+              v-tippy="'Last upload failed'"
+              v-keyboard-clickable
+              class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
+              @click.stop="actions?.showUploads()"
+            >
+              <ExclamationCircleIcon class="w-4 h-4" />
+            </NuxtLink>
             <ProjectPageModelsActions
+              ref="actions"
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
-              :can-edit="canContribute"
               :menu-position="
                 itemType === StructureItemType.EmptyModel
                   ? HorizontalDirection.Right
@@ -29,52 +38,53 @@
               @model-updated="$emit('model-updated')"
               @upload-version="triggerVersionUpload"
             />
-          </span>
+          </template>
         </div>
         <!-- Empty model action -->
-        <NuxtLink
+        <div
           v-if="itemType === StructureItemType.EmptyModel"
-          :class="[
-            'cursor-pointer ml-2 text-xs text-foreground-2 flex items-center space-x-1',
-            'opacity-0 group-hover:opacity-100 transition duration-200',
-            'hover:text-primary p-1'
-          ]"
-          @click.stop="$emit('create-submodel', model?.name || '')"
+          v-tippy="canCreateModel.cantClickCreateReason.value"
         >
-          <PlusIcon class="w-3 h-3" />
-          submodel
-        </NuxtLink>
+          <FormButton
+            color="subtle"
+            :icon-left="PlusIcon"
+            size="sm"
+            :disabled="!canCreateModel.canClickCreate.value"
+            @click.stop="$emit('create-submodel', model?.name || '')"
+          >
+            submodel
+          </FormButton>
+        </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
-        <ProjectCardImportFileArea
-          v-if="!isPendingFileUpload(item)"
-          ref="importArea"
-          :project-id="project.id"
-          :model-name="item.fullName"
-          :disabled="project?.workspace?.readOnly"
-          class="hidden"
-        />
-        <div
-          v-if="
-            !isPendingFileUpload(item) &&
-            (pendingVersion || itemType === StructureItemType.EmptyModel)
-          "
-          class="flex items-center h-full"
-        >
-          <ProjectPendingFileImportStatus
-            v-if="pendingVersion"
-            :upload="pendingVersion"
-            type="subversion"
-            class="px-4 w-full"
-          />
-          <ProjectCardImportFileArea
-            v-else
-            :project-id="project.id"
-            :model-name="item.fullName"
-            :disabled="project?.workspace?.readOnly"
-            class="h-full w-full"
-          />
-        </div>
+        <template v-if="!isPendingFileUpload(item)">
+          <div
+            v-show="
+              pendingVersion ||
+              itemType === StructureItemType.EmptyModel ||
+              isVersionUploading
+            "
+            class="flex items-center h-full"
+          >
+            <ProjectPendingFileImportStatus
+              v-if="pendingVersion"
+              :upload="pendingVersion"
+              type="subversion"
+              class="px-4 w-full h-16"
+            />
+            <!-- Import area must exist even if hidden, so that we can trigger uploads from actions -->
+            <ProjectCardImportFileArea
+              v-show="!pendingVersion"
+              ref="importArea"
+              empty-state-variant="modelList"
+              :project="project"
+              :model-name="item.fullName"
+              :model="item.model || undefined"
+              class="h-full w-full"
+              @uploading="onVersionUploading"
+            />
+          </div>
+        </template>
         <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
           <div class="text-body-3xs text-foreground-2 text-right">
             Updated
@@ -82,7 +92,7 @@
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="space-x-2 flex flex-row pils">
+          <div class="space-x-2 flex flex-row">
             <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
               <IconDiscussions class="w-4 h-4" />
               <span>{{ model?.commentThreadCount.totalCount }}</span>
@@ -118,7 +128,12 @@
       </div>
       <!-- Preview or icon section -->
       <div
-        v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
+        v-if="
+          !isPendingFileUpload(item) &&
+          item.model?.previewUrl &&
+          !pendingVersion &&
+          !isVersionUploading
+        "
         class="w-20 h-16"
       >
         <NuxtLink
@@ -137,6 +152,23 @@
       v-if="hasSubmodels"
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
+      <!-- So that we can trigger View Uploads from Last Upload Failed -->
+      <ProjectPageModelsActions
+        v-if="model"
+        ref="actions"
+        v-model:open="showActionsMenu"
+        :model="model"
+        :project="project"
+        :menu-position="
+          itemType === StructureItemType.EmptyModel
+            ? HorizontalDirection.Right
+            : HorizontalDirection.Left
+        "
+        class="hidden"
+        @click.stop.prevent
+        @model-updated="$emit('model-updated')"
+        @upload-version="triggerVersionUpload"
+      />
       <button
         class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
         href="/test"
@@ -152,9 +184,21 @@
         </div>
         <!-- Name -->
         <FolderIcon class="w-4 h-4 text-foreground" />
-        <div class="ml-2 text-heading text-foreground flex-grow text-left">
-          {{ name }}
+        <div class="ml-2 flex-grow text-left flex items-center gap-2">
+          <div class="text-heading text-foreground">
+            {{ name }}
+          </div>
+          <NuxtLink
+            v-if="showLastUploadFailed"
+            v-tippy="'Last upload failed'"
+            v-keyboard-clickable
+            class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
+            @click.stop="actions?.showUploads()"
+          >
+            <ExclamationCircleIcon class="w-4 h-4" />
+          </NuxtLink>
         </div>
+
         <!-- Preview -->
         <div class="flex flex-col items-end sm:flex-row sm:items-center gap-1 sm:gap-4">
           <!-- Commented out so that we need to load less data, can be added back -->
@@ -204,14 +248,13 @@
             <ProjectPageModelsStructureItem
               :item="child"
               :project="project"
-              :can-contribute="canContribute"
               class="flex-grow"
               @model-updated="onModelUpdated"
               @create-submodel="emit('create-submodel', $event)"
             />
           </div>
         </template>
-        <div v-if="canContribute" class="mr-8"></div>
+        <div v-if="canEdit" class="mr-8"></div>
       </div>
     </div>
   </div>
@@ -219,7 +262,7 @@
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { FolderIcon } from '@heroicons/vue/24/outline'
+import { ExclamationCircleIcon, FolderIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,
@@ -233,6 +276,10 @@ import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { useCanCreateModel } from '~/lib/projects/composables/permissions'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import dayjs from 'dayjs'
+import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -249,11 +296,14 @@ enum StructureItemType {
 graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
-    workspace {
-      id
-      readOnly
-    }
     ...ProjectPageModelsActions_Project
+    ...ProjectCardImportFileArea_Project
+    ...UseCanCreateModel_Project
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -264,6 +314,8 @@ graphql(`
     fullName
     model {
       ...ProjectPageLatestItemsModelItem
+      ...ProjectCardImportFileArea_Model
+      ...ProjectPageModelsCard_Model
     }
     hasChildren
     updatedAt
@@ -282,11 +334,8 @@ const emit = defineEmits<{
 const props = defineProps<{
   item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
   project: ProjectPageModelsStructureItem_ProjectFragment
-  canContribute?: boolean
   isSearchResult?: boolean
 }>()
-
-provide('projectId', props.project.id)
 
 const router = useRouter()
 
@@ -295,6 +344,12 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+const actions = ref(
+  null as Nullable<{
+    showUploads: () => void
+  }>
+)
+const isVersionUploading = ref(false)
 
 const mp = useMixpanel()
 const trackFederateModels = () =>
@@ -306,6 +361,14 @@ const trackFederateModels = () =>
   })
 
 const showActionsMenu = ref(false)
+
+const canCreateModel = useCanCreateModel({
+  project: computed(() => props.project)
+})
+
+const canEdit = computed(() =>
+  isPendingFileUpload(props.item) ? undefined : props.item.model?.permissions.canUpdate
+)
 
 const itemType = computed<StructureItemType>(() => {
   if (isPendingFileUpload(props.item)) return StructureItemType.PendingModel
@@ -357,7 +420,36 @@ const model = computed(() =>
 const pendingModel = computed(() =>
   isPendingFileUpload(props.item) ? props.item : null
 )
-const pendingVersion = computed(() => model.value?.pendingImportedVersions[0])
+
+const pendingVersion = computed(() => {
+  if (!model.value) {
+    return null
+  }
+
+  const lastPendingVersion = model.value.pendingImportedVersions[0]
+  const lastVersion = model.value.lastVersion?.items[0]
+  if (!lastVersion || !lastPendingVersion) return lastPendingVersion
+
+  // If pending version is older than newest version, hide it (may be a stuck import)
+  if (dayjs(lastPendingVersion.updatedAt).isBefore(dayjs(lastVersion.createdAt))) {
+    return null
+  }
+
+  return lastPendingVersion
+})
+
+const showLastUploadFailed = computed(() => {
+  if (!model.value) return false
+  const lastUpload = model.value.lastUpload?.items[0]
+  const lastVersion = model.value.lastVersion?.items[0]
+
+  // Only show if last upload failed & there is no last version,
+  // or last version is older than last upload
+  if (lastUpload?.convertedStatus !== FileUploadConvertedStatus.Error) return false
+  if (!lastVersion) return true
+  return dayjs(lastUpload.updatedAt).isAfter(dayjs(lastVersion.createdAt))
+})
+
 const hasChildren = computed(() =>
   props.isSearchResult || isPendingFileUpload(props.item)
     ? false
@@ -415,7 +507,12 @@ const onModelUpdated = () => {
 }
 
 const triggerVersionUpload = () => {
+  if (isVersionUploading.value) return
   importArea.value?.triggerPicker()
+}
+
+const onVersionUploading = (payload: FileAreaUploadingPayload) => {
+  isVersionUploading.value = payload.isUploading
 }
 
 const onVersionsClick = () => {

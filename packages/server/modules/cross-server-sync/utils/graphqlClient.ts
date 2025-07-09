@@ -5,10 +5,11 @@ import {
   HttpLink,
   gql,
   ApolloQueryResult
-} from '@apollo/client/core'
-import { setContext } from '@apollo/client/link/context'
+} from '@apollo/client/core/core.cjs'
+import { setContext } from '@apollo/client/link/context/context.cjs'
 import { getServerVersion } from '@/modules/shared/helpers/envHelper'
 import { CrossSyncClientTestQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 export type GraphQLClient = ApolloClient<NormalizedCacheObject>
 
@@ -23,7 +24,7 @@ export const assertValidGraphQLResult = (
   operationName: string
 ) => {
   if (res.errors?.length) {
-    throw new Error(
+    throw new EnvironmentResourceError(
       `GQL operation '${operationName}' failed because of errors: ` +
         JSON.stringify(res.errors)
     )
@@ -67,7 +68,7 @@ export const createApolloClient = async (
   assertValidGraphQLResult(res, 'Target server test query')
 
   if (!res.data?._) {
-    throw new Error(
+    throw new EnvironmentResourceError(
       "Couldn't construct working Apollo Client, test query failed cause of unexpected response: " +
         JSON.stringify(res.data)
     )

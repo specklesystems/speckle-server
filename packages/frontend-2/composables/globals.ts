@@ -42,6 +42,14 @@ export const useIsMultipleEmailsEnabled = () => {
   return ref(FF_MULTIPLE_EMAILS_MODULE_ENABLED)
 }
 
+export const useIsOnboardingForced = () => {
+  const {
+    public: { FF_FORCE_ONBOARDING }
+  } = useRuntimeConfig()
+
+  return ref(FF_FORCE_ONBOARDING)
+}
+
 export const useIsGendoModuleEnabled = () => {
   const {
     public: { FF_GENDOAI_MODULE_ENABLED }
@@ -49,11 +57,22 @@ export const useIsGendoModuleEnabled = () => {
   return ref(FF_GENDOAI_MODULE_ENABLED)
 }
 
+export const useWorkspaceNewPlansEnabled = () => {
+  return ref(true)
+}
+
 export const useIsBillingIntegrationEnabled = () => {
   const {
     public: { FF_BILLING_INTEGRATION_ENABLED }
   } = useRuntimeConfig()
   return ref(FF_BILLING_INTEGRATION_ENABLED)
+}
+
+export const useIsNextGenFileImporterEnabled = () => {
+  const {
+    public: { FF_NEXT_GEN_FILE_IMPORTER_ENABLED }
+  } = useRuntimeConfig()
+  return ref(FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
 }
 
 export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy }

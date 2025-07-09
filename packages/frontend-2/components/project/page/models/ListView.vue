@@ -1,11 +1,13 @@
 <template>
   <div>
-    <div v-if="topLevelItems.length && project" class="space-y-2 max-w-full">
+    <div
+      v-if="topLevelItems.length && project && !isModelUploading"
+      class="space-y-2 max-w-full"
+    >
       <div v-for="item in topLevelItems" :key="item.id">
         <ProjectPageModelsStructureItem
           :item="item"
           :project="project"
-          :can-contribute="canContribute"
           :is-search-result="isUsingSearch"
           @model-updated="onModelUpdated"
           @create-submodel="onCreateSubmodel"
@@ -27,9 +29,10 @@
       />
       <div v-else>
         <ProjectCardImportFileArea
-          :project-id="projectId"
-          :disabled="project?.workspace?.readOnly"
+          v-if="project"
+          :project="project"
           class="h-36 col-span-4"
+          @uploading="onModelUploading"
         />
       </div>
     </template>
@@ -38,9 +41,9 @@
       :settings="{ identifier: infiniteLoaderId }"
       @infinite="infiniteLoad"
     />
-    <ProjectPageModelsNewDialog
+    <ProjectModelsAdd
       v-model:open="showNewDialog"
-      :project-id="projectId"
+      :project="project"
       :parent-model-name="newSubmodelParent || undefined"
     />
   </div>
@@ -58,11 +61,11 @@ import {
   projectModelsTreeTopLevelQuery,
   projectModelsTreeTopLevelPaginationQuery
 } from '~~/lib/projects/graphql/queries'
-import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import type { Nullable, SourceAppDefinition } from '@speckle/shared'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
 import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -82,6 +85,7 @@ const logger = useLogger()
 
 const infiniteLoadCacheBuster = ref(0)
 const newSubmodelParent = ref('')
+
 const showNewDialog = computed({
   get: () => !!newSubmodelParent.value,
   set: (newVal) => {
@@ -110,6 +114,7 @@ const baseQueryVariables = computed(
 )
 
 const infiniteLoaderId = ref('')
+const isModelUploading = ref(false)
 
 // Base query (all pending uploads + first page of models)
 const {
@@ -156,9 +161,7 @@ const topLevelItems = computed(
       props.disablePagination ? 8 : undefined
     )
 )
-const canContribute = computed(() =>
-  props.project ? canModifyModels(props.project) : false
-)
+
 const isUsingSearch = computed(() => !!resultVariables.value?.filter?.search)
 const moreToLoad = computed(
   () =>
@@ -210,6 +213,10 @@ const calculateLoaderId = () => {
   const vars = baseQueryVariables.value
   const id = JSON.stringify(vars.filter) + `${infiniteLoadCacheBuster.value}`
   infiniteLoaderId.value = id
+}
+
+const onModelUploading = (payload: FileAreaUploadingPayload) => {
+  isModelUploading.value = payload.isUploading
 }
 
 watch(areQueriesLoading, (newVal) => {

@@ -30,7 +30,11 @@ import {
   modifyObjectField,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { useNavigateToHome, workspaceRoute } from '~~/lib/common/helpers/route'
+import {
+  useNavigateToHome,
+  workspaceRoute,
+  projectRoute
+} from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
@@ -46,7 +50,6 @@ import {
   createWorkspaceProjectMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
-import { projectRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useRouter } from 'vue-router'
 
@@ -210,7 +213,7 @@ export function useUpdateUserRole(
     } else {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Project permissions updated'
+        title: input.role ? 'Project role updated' : 'User removed from project'
       })
     }
 
@@ -244,7 +247,7 @@ export function useUpdateUserRole(
     } else {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Workspace project permissions updated'
+        title: input.role ? 'Project role updated' : 'User removed from project'
       })
     }
 
@@ -306,8 +309,8 @@ export function useInviteUserToProject() {
         type: ToastNotificationType.Danger,
         title:
           input.length > 1
-            ? "Couldn't send invites"
-            : `Coudldn't send invite to ${input[0].email}`,
+            ? "Couldn't send project invites"
+            : "Couldn't send project invite",
         description: err
       })
     } else {
@@ -316,10 +319,14 @@ export function useInviteUserToProject() {
           type: ToastNotificationType.Success,
           title:
             input.length > 1
-              ? 'Invites successfully send'
-              : `Invite successfully sent to ${input[0].email}`
+              ? 'Project invites successfully sent'
+              : 'Project invite successfully sent'
         })
       }
+    }
+
+    if (hideToasts && err) {
+      throw new Error(err)
     }
 
     return res
@@ -485,13 +492,13 @@ export function useProcessProjectInvite() {
           type: input.accept
             ? ToastNotificationType.Success
             : ToastNotificationType.Info,
-          title: input.accept ? 'Invite accepted' : 'Invite dismissed'
+          title: input.accept ? 'Project invite accepted' : 'Project invite dismissed'
         })
       } else {
         const errMsg = getFirstErrorMessage(errors)
         triggerNotification({
           type: ToastNotificationType.Danger,
-          title: "Couldn't process invite",
+          title: "Couldn't process project invite",
           description: errMsg
         })
       }
@@ -546,6 +553,7 @@ export function useMoveProjectToWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
   const { mutate } = useMutation(useMoveProjectToWorkspaceMutation)
+  const { activeUser } = useActiveUser()
 
   return async (params: {
     projectId: string
@@ -553,6 +561,8 @@ export function useMoveProjectToWorkspace() {
     workspaceName: string
     eventSource?: string
   }) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
     const { projectId, workspaceId, workspaceName, eventSource } = params
 
     const res = await mutate(
@@ -562,6 +572,7 @@ export function useMoveProjectToWorkspace() {
           if (!data?.workspaceMutations.projects.moveToWorkspace) return
           if (!workspaceId) return
 
+          // Add to workspace.projects
           modifyObjectField(
             cache,
             getCacheId('Workspace', workspaceId),
@@ -569,6 +580,21 @@ export function useMoveProjectToWorkspace() {
             ({ helpers: { createUpdatedValue, ref } }) => {
               return createUpdatedValue(({ update }) => {
                 update('items', (items) => [ref('Project', projectId), ...items])
+              })
+            }
+          )
+
+          // Remove from personalOnly user projects
+          modifyObjectField(
+            cache,
+            getCacheId('User', userId),
+            'projects',
+            ({ variables, helpers: { createUpdatedValue, ref } }) => {
+              if (!variables.filter?.personalOnly) return
+              return createUpdatedValue(({ update }) => {
+                update('items', (items) =>
+                  items.filter((item) => item.__ref !== ref('Project', projectId).__ref)
+                )
               })
             }
           )

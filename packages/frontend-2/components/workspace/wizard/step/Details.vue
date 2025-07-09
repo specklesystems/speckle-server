@@ -1,5 +1,8 @@
 <template>
-  <WorkspaceWizardStep title="Create a workspace" description="Start with a good name">
+  <WorkspaceWizardStep
+    title="Create a workspace"
+    description="A workspace is a shared space for your projects and collaborators"
+  >
     <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <FormTextInput
         id="workspace-name"
@@ -10,6 +13,7 @@
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
         auto-focus
+        :disabled="disabled"
         size="lg"
         @update:model-value="updateShortId"
       />
@@ -17,15 +21,15 @@
         <FormTextInput
           id="workspace-slug"
           v-model:model-value="state.slug"
-          name="slug"
+          name="short-id"
           label="Short ID"
           color="foundation"
           :loading="loading"
-          :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
+          :rules="isStringOfLength({ maxLength: 30, minLength: 3 })"
           :custom-error-message="error?.graphQLErrors[0]?.message"
           show-label
           size="lg"
-          :disabled="disableSlugEdit"
+          :disabled="disableSlugEdit || disabled"
           @update:model-value="onSlugChange"
         />
         <p class="text-body-2xs mt-1.5 text-foreground-2">
@@ -51,6 +55,7 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   disableSlugEdit: boolean
+  disabled?: boolean
 }>()
 
 const mixpanel = useMixpanel()
@@ -75,7 +80,10 @@ const getShortIdHelp = computed(
 )
 const disableContinue = computed(
   () =>
-    !state.value.name || !state.value.slug || !!error.value?.graphQLErrors[0]?.message
+    !state.value.name ||
+    !state.value.slug ||
+    !!error.value?.graphQLErrors[0]?.message ||
+    props.disabled
 )
 
 const updateShortId = debounce((newName: string) => {

@@ -1,5 +1,34 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const projectPageTeamDialogFragment = graphql(`
+  fragment ProjectPageTeamDialog on Project {
+    id
+    name
+    role
+    allowPublicComments
+    visibility
+    team {
+      id
+      role
+      user {
+        ...LimitedUserAvatar
+        role
+      }
+    }
+    invitedTeam {
+      id
+      title
+      inviteId
+      role
+      user {
+        ...LimitedUserAvatar
+        role
+      }
+    }
+    ...ProjectsPageTeamDialogManagePermissions_Project
+  }
+`)
+
 export const projectDashboardItemNoModelsFragment = graphql(`
   fragment ProjectDashboardItemNoModels on Project {
     id
@@ -23,6 +52,7 @@ export const projectDashboardItemFragment = graphql(`
   fragment ProjectDashboardItem on Project {
     id
     ...ProjectDashboardItemNoModels
+    ...ProjectCardImportFileArea_Project
     models(limit: 4) {
       totalCount
       items {
@@ -53,6 +83,8 @@ export const pendingFileUploadFragment = graphql(`
     convertedLastUpdate
     fileType
     fileName
+    userId
+    updatedAt
   }
 `)
 
@@ -73,11 +105,21 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     previewUrl
     createdAt
     updatedAt
+    ...ProjectPageModelsCard_Model
     ...ProjectPageModelsCardRenameDialog
     ...ProjectPageModelsCardDeleteDialog
     ...ProjectPageModelsActions
+    ...ProjectCardImportFileArea_Model
     automationsStatus {
       ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
+    }
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canDelete {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -89,6 +131,26 @@ export const projectUpdatableMetadataFragment = graphql(`
     description
     visibility
     allowPublicComments
+    permissions {
+      canRead {
+        ...FullPermissionCheckResult
+      }
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canUpdateAllowPublicComments {
+        ...FullPermissionCheckResult
+      }
+      canReadSettings {
+        ...FullPermissionCheckResult
+      }
+      canReadWebhooks {
+        ...FullPermissionCheckResult
+      }
+      canLeave {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -105,6 +167,8 @@ export const projectPageLatestItemsModelsFragment = graphql(`
       totalCount
     }
     ...ProjectPageModelsStructureItem_Project
+    ...ProjectCardImportFileArea_Project
+    ...ProjectModelsAdd_Project
   }
 `)
 

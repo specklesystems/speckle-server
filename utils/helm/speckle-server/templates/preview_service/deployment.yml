@@ -1,3 +1,4 @@
+{{- if .Values.preview_service.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,8 +12,10 @@ spec:
     matchLabels:
       app: speckle-preview-service
       project: speckle-server
+  {{- with .Values.preview_service.deploymentStrategy }}
   strategy:
-    type: RollingUpdate
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -25,25 +28,30 @@ spec:
 
         ports:
           - name: metrics
-            containerPort: {{ .Values.preview_service.monitoring.metricsPort }}
+            containerPort: {{ .Values.preview_service.port }}
             protocol: TCP
 
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
-          exec:
-            command:
-              - node
-              - -e
-              - {{ printf "process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > %s)" .Values.preview_service.puppeteer.timeoutMilliseconds }}
+          httpGet:
+            path: /liveness
+            port: metrics
+
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: metrics
 
         resources:
+          {{- with .Values.preview_service.requests }}
           requests:
-            cpu: {{ .Values.preview_service.requests.cpu }}
-            memory: {{ .Values.preview_service.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.preview_service.limits }}
           limits:
-            cpu: {{ .Values.preview_service.limits.cpu }}
-            memory: {{ .Values.preview_service.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
@@ -55,51 +63,31 @@ spec:
           runAsNonRoot: true
           runAsUser: 800
 
-        volumeMounts:
-        {{- if .Values.db.useCertificate }}
-          - name: postgres-certificate
-            mountPath: /postgres-certificate
-        {{- end }}
-        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
-          - name: multi-region-config
-            mountPath: /multi-region-config
-            readOnly: true
-        {{- end }}
-
         env:
           - name: HOST
-            value: '127.0.0.1' # Only accept connections from localhost, as preview service does not need to be exposed outside the container.
-          - name: METRICS_HOST
             value: '0.0.0.0' # Expose metrics outside of the container so it can be scraped by Prometheus
           - name: PORT
             value: {{ .Values.preview_service.port | quote }}
 
-          - name: PROMETHEUS_METRICS_PORT
-            value: {{ .Values.preview_service.monitoring.metricsPort | quote }}
-
-          - name: PG_CONNECTION_STRING
+          # *** Redis ***
+          {{- if .Values.preview_service.dedicatedPreviewsQueue }}
+          - name: REDIS_URL
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
-                key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
-          {{- if .Values.preview_service.postgresMaxConnections }}
-          - name: POSTGRES_MAX_CONNECTIONS_PREVIEW_SERVICE
-            value: {{ .Values.preview_service.postgresMaxConnections | quote }}
+                name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
+                key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
+          {{- else }}
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
+                key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
           {{- end }}
-          - name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
-            value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
-          - name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
-            value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
           - name: LOG_LEVEL
             value: {{ .Values.preview_service.logLevel | quote }}
           - name: LOG_PRETTY
             value: {{ .Values.preview_service.logPretty | quote }}
-
-          {{- if .Values.db.useCertificate }}
-          - name: NODE_EXTRA_CA_CERTS
-            value: "/postgres-certificate/ca-certificate.crt"
-          {{- end }}
 
           {{- if .Values.preview_service.puppeteer.userDataDirectory }}
           - name: USER_DATA_DIR
@@ -110,11 +98,14 @@ spec:
           - name: PREVIEW_TIMEOUT
             value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
           {{- end }}
-          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
-          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
-            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
-          - name: MULTI_REGION_CONFIG_PATH
-            value: "/multi-region-config/multi-region-config.json"
+
+          {{- if .Values.preview_service.gpu.enabled }}
+          - name: GPU_ENABLED
+            value: {{ .Values.preview_service.gpu.enabled | quote }}
+          {{- end }}
+
+          {{- with .Values.preview_service.additionalEnvVars }}
+          {{- toYaml . | nindent 10 }}
           {{- end }}
 
       {{- if .Values.preview_service.affinity }}
@@ -132,6 +123,12 @@ spec:
       priorityClassName: low-priority
       {{- if .Values.preview_service.serviceAccount.create }}
       serviceAccountName: {{ include "preview_service.name" $ }}
+      {{- else }}
+      {{- /* NOTE: If there is a service account, Kubernetes adds the imagePullSecrets to Pods automatically. */}}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
 
       securityContext:
@@ -142,21 +139,4 @@ spec:
         runAsGroup: 30000
         seccompProfile:
           type: RuntimeDefault
-
-      # Should be > preview generation time ( 1 hour for good measure )
-      terminationGracePeriodSeconds: 3600
-
-      volumes:
-      {{- if .Values.db.useCertificate }}
-        - name: postgres-certificate
-          configMap:
-            name: postgres-certificate
-      {{- end }}
-      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
-        - name: multi-region-config
-          secret:
-            secretName: {{ .Values.multiRegion.config.secretName }}
-            items:
-            - key: {{ .Values.multiRegion.config.secretKey }}
-              path: "multi-region-config.json"
-      {{- end }}
+{{- end }}

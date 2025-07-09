@@ -53,6 +53,7 @@ const toggleCheckboxPlayFunction: VuePlayFunction = async (params) => {
   // expect(checkbox.checked).toBeFalsy()
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultArgs = {
   name: 'test1',
   label: 'Example Checkbox',

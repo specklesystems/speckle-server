@@ -1,4 +1,3 @@
-import { getStreamRoute } from '@/modules/core/helpers/routeHelper'
 import {
   InviteCreateValidationError,
   InviteFinalizedForNewEmail,
@@ -7,16 +6,12 @@ import {
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
-  isProjectResourceTarget,
   ResolvedTargetData,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 
-import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
-import {
-  InviteResourceTargetType,
-  ServerInviteRecord
-} from '@/modules/serverinvites/domain/types'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   DeleteInvite,
   DeleteInvitesByTarget,
@@ -114,27 +109,10 @@ export const convertToFinalizationValidation = (params: {
  * Note: Important auth query string params like the access_code are added separately
  * in auth middlewares
  */
-export const resolveAuthRedirectPathFactory =
-  (): ResolveAuthRedirectPath => (invite?: ServerInviteRecord) => {
-    if (useNewFrontend()) {
-      // All post-auth redirects are handled by the frontend itself
-      return getFrontendOrigin()
-    }
-
-    /**
-     * @deprecated Deprecated user flow, only relevant in FE1. Thus no need to update it w/ support for workspaces
-     * and other new features.
-     */
-    if (invite) {
-      const primaryTarget = invite.resource
-      if (isProjectResourceTarget(primaryTarget)) {
-        return `${getStreamRoute(primaryTarget.resourceId)}`
-      }
-    }
-
-    // Fall-back to base URL (for server invites)
-    return getFrontendOrigin()
-  }
+export const resolveAuthRedirectPathFactory = (): ResolveAuthRedirectPath => () => {
+  // All post-auth redirects are handled by the frontend itself
+  return getFrontendOrigin()
+}
 
 /**
  * Validate that the new user has a valid invite for registering to the server
@@ -219,16 +197,14 @@ export const finalizeResourceInviteFactory =
       finalizerUserId,
       accept,
       token,
-      resourceType,
       finalizerResourceAccessLimits,
-      allowAttachingNewEmail
+      allowAttachingNewEmail,
+      trueFinalizerId
     } = params
 
     const finalizerUserTarget = buildUserTarget(finalizerUserId)
     const invite = await findInvite({
-      token,
-      // target: allowAttachingNewEmail ? undefined : finalizerUserTarget,
-      resourceFilter: resourceType ? { resourceType } : undefined
+      token
     })
     if (!invite) {
       throw new InviteNotFoundError('Attempted to finalize nonexistant invite', {
@@ -337,7 +313,8 @@ export const finalizeResourceInviteFactory =
       payload: {
         invite,
         accept,
-        finalizerUserId
+        finalizerUserId,
+        trueFinalizerUserId: trueFinalizerId || finalizerUserId
       }
     })
   }
@@ -355,26 +332,14 @@ export const cancelResourceInviteFactory =
   }) =>
   async (params: {
     inviteId: string
-    resourceId: string
-    resourceType: InviteResourceTargetType
     cancelerId: string
     cancelerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   }) => {
     const { findInvite, validateResourceAccess, deleteInvite, emitEvent } = deps
-    const {
-      inviteId,
-      resourceId,
-      resourceType,
-      cancelerId,
-      cancelerResourceAccessLimits
-    } = params
+    const { inviteId, cancelerId, cancelerResourceAccessLimits } = params
 
     const invite = await findInvite({
-      inviteId,
-      resourceFilter: {
-        resourceId,
-        resourceType
-      }
+      inviteId
     })
     if (!invite) {
       throw new InviteNotFoundError('Attempted to cancel nonexistant invite', {

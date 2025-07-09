@@ -4,20 +4,11 @@ export const projectAccessCheckQuery = graphql(`
   query ProjectAccessCheck($id: String!) {
     project(id: $id) {
       id
-      visibility
-      workspace {
-        id
-        slug
+      permissions {
+        canRead {
+          ...FullPermissionCheckResult
+        }
       }
-    }
-  }
-`)
-
-export const projectRoleCheckQuery = graphql(`
-  query ProjectRoleCheck($id: String!) {
-    project(id: $id) {
-      id
-      role
     }
   }
 `)
@@ -32,19 +23,11 @@ export const projectsDashboardQuery = graphql(`
         totalCount
         items {
           ...ProjectDashboardItem
+          ...WorkspaceMoveProject_Project
         }
       }
       ...ProjectsHiddenProjectWarning_User
-      ...ProjectsDashboardHeaderProjects_User
-    }
-  }
-`)
-
-export const projectsDashboardWorkspaceQuery = graphql(`
-  query ProjectsDashboardWorkspaceQuery {
-    activeUser {
-      id
-      ...ProjectsDashboardHeaderWorkspaces_User
+      ...ProjectsDashboard_User
     }
   }
 `)
@@ -163,6 +146,7 @@ export const latestCommentThreadsQuery = graphql(`
           ...ProjectPageLatestItemsCommentItem
         }
       }
+      ...ViewerResourcesLimitAlert_Project
     }
   }
 `)
@@ -258,6 +242,11 @@ export const projectAutomationsTabQuery = graphql(`
         }
         ...AutomateFunctionCreateDialog_Workspace
       }
+      permissions {
+        canCreateAutomation {
+          ...FullPermissionCheckResult
+        }
+      }
       ...FormSelectProjects_Project
     }
     ...AutomateFunctionsPageHeader_Query
@@ -336,6 +325,7 @@ export const projectWebhooksQuery = graphql(`
     project(id: $projectId) {
       id
       name
+      ...ProjectPageSettingsWebhooks_Project
       webhooks {
         items {
           streamId
@@ -372,11 +362,18 @@ export const projectBlobInfoQuery = graphql(`
   }
 `)
 
-export const projectWorkspaceSelectQuery = graphql(`
-  query ProjectWorkspaceSelect {
-    activeUser {
+export const moveToWorkspaceDryRunQuery = graphql(`
+  query MoveToWorkspaceDryRun($workspaceId: String!, $projectId: String!, $limit: Int) {
+    project(id: $projectId) {
       id
-      ...ProjectsAddDialog_User
+      moveToWorkspaceDryRun(workspaceId: $workspaceId) {
+        addedToWorkspaceTotalCount
+        addedToWorkspace(limit: $limit) {
+          avatar
+          id
+          name
+        }
+      }
     }
   }
 `)

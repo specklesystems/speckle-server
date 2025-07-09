@@ -23,15 +23,24 @@
           hide-description
           :hide-items="[Roles.Workspace.Guest]"
         />
+        <FormSelectSeatType
+          v-if="showSeatFilter"
+          v-model="seatType"
+          fully-control-value
+          clearable
+          class="!min-w-40"
+          hide-description
+        />
       </div>
-      <template v-if="showInviteButton">
-        <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
-          <FormButton :disabled="!isWorkspaceAdmin">Invite</FormButton>
-        </div>
-        <FormButton v-else @click="() => (isInviteDialogOpen = !isInviteDialogOpen)">
+      <div v-tippy="inviteTooltipText">
+        <FormButton
+          v-if="!isWorkspaceGuest"
+          :disabled="!canInvite"
+          @click="isInviteDialogOpen = !isInviteDialogOpen"
+        >
           Invite
         </FormButton>
-      </template>
+      </div>
     </div>
     <InviteDialogWorkspace
       v-if="workspace"
@@ -45,13 +54,24 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  Roles,
+  type WorkspaceRoles,
+  type MaybeNullOrUndefined,
+  type WorkspaceSeatType
+} from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
     id
+    slug
     role
     ...InviteDialogWorkspace_Workspace
+    permissions {
+      canInvite {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -59,13 +79,19 @@ const props = defineProps<{
   searchPlaceholder: string
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   showRoleFilter?: boolean
-  showInviteButton?: boolean
+  showSeatFilter?: boolean
 }>()
 
 const search = defineModel<string>('search')
 const role = defineModel<WorkspaceRoles>('role')
+const seatType = defineModel<WorkspaceSeatType>('seatType')
 const { on, bind } = useDebouncedTextInput({ model: search })
+
 const isInviteDialogOpen = ref(false)
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
+const canInvite = computed(() => props.workspace?.permissions.canInvite.authorized)
+const inviteTooltipText = computed(() =>
+  canInvite.value ? undefined : props.workspace?.permissions.canInvite.message
+)
 </script>

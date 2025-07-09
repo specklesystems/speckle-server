@@ -10,7 +10,6 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { requestNewEmailVerificationFactory as requestNewEmailVerificationFactoryOld } from '@/modules/emails/services/verification/request.old'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {
   deleteServerOnlyInvitesFactory,
@@ -31,32 +30,19 @@ import {
   verifyUserEmailFactory
 } from '@/modules/core/services/users/emailVerification'
 import { commandFactory } from '@/modules/shared/command'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-
-const { FF_FORCE_EMAIL_VERIFICATION } = getFeatureFlags()
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getUser = getUserFactory({ db })
-const requestNewEmailVerification = FF_FORCE_EMAIL_VERIFICATION
-  ? requestNewEmailVerificationFactory({
-      findEmail: findEmailFactory({ db }),
-      getUser,
-      getServerInfo: getServerInfoFactory({ db }),
-      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-        db
-      }),
-      renderEmail,
-      sendEmail
-    })
-  : requestNewEmailVerificationFactoryOld({
-      findEmail: findEmailFactory({ db }),
-      getUser,
-      getServerInfo: getServerInfoFactory({ db }),
-      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-        db
-      }),
-      renderEmail,
-      sendEmail
-    })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo: getServerInfoFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+    db
+  }),
+  renderEmail,
+  sendEmail
+})
 
 export = {
   ActiveUserMutations: {
@@ -69,6 +55,7 @@ export = {
   },
   UserEmailMutations: {
     create: async (_parent, args, ctx) => {
+      const logger = ctx.log
       const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
         createUserEmail: createUserEmailFactory({ db }),
         ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
@@ -80,35 +67,78 @@ export = {
         requestNewEmailVerification
       })
 
-      await validateAndCreateUserEmail({
-        userEmail: {
-          userId: ctx.userId!,
-          email: args.input.email,
-          primary: false
+      await withOperationLogging(
+        async () =>
+          await validateAndCreateUserEmail({
+            userEmail: {
+              userId: ctx.userId!,
+              email: args.input.email,
+              primary: false
+            }
+          }),
+        {
+          logger,
+          operationName: 'createUser',
+          operationDescription: `Create a new user`
         }
-      })
+      )
 
       return ctx.loaders.users.getUser.load(ctx.userId!)
     },
     delete: async (_parent, args, ctx) => {
-      await deleteUserEmailFactory({ db })({
-        userId: ctx.userId!,
-        id: args.input.id
+      const userId = args.input.id
+      const logger = ctx.log.child({
+        userIdToOperateOn: userId
       })
+      await withOperationLogging(
+        async () =>
+          await deleteUserEmailFactory({ db })({
+            userId: ctx.userId!,
+            id: args.input.id
+          }),
+        {
+          logger,
+          operationName: 'deleteUser',
+          operationDescription: `Delete a user`
+        }
+      )
       return ctx.loaders.users.getUser.load(ctx.userId!)
     },
     setPrimary: async (_parent, args, ctx) => {
-      await setPrimaryUserEmailFactory({ db })({
-        userId: ctx.userId!,
-        id: args.input.id
+      const logger = ctx.log.child({
+        userIdToOperateOn: args.input.id
       })
+      await withOperationLogging(
+        async () =>
+          await setPrimaryUserEmailFactory({ db })({
+            userId: ctx.userId!,
+            id: args.input.id
+          }),
+        {
+          logger,
+          operationName: 'setPrimaryUserEmail',
+          operationDescription: `Set an email as a user's primary email`
+        }
+      )
       return ctx.loaders.users.getUser.load(ctx.userId!)
     },
-    requestNewEmailVerification: async (_parent, args) => {
-      await requestNewEmailVerification(args.input.id)
+    requestNewEmailVerification: async (_parent, args, ctx) => {
+      const userIdToOperateOn = args.input.id
+      const logger = ctx.log.child({
+        userIdToOperateOn
+      })
+      await withOperationLogging(
+        async () => await requestNewEmailVerification(userIdToOperateOn),
+        {
+          logger,
+          operationName: 'requestNewEmailVerification',
+          operationDescription: `Request a new email verification`
+        }
+      )
       return null
     },
-    verify: async (_parent, args) => {
+    verify: async (_parent, args, ctx) => {
+      const logger = ctx.log
       const { email, code } = args.input
       const verifyUserEmail = commandFactory({
         db,
@@ -121,7 +151,11 @@ export = {
             deleteVerifications: deleteVerificationsFactory({ db })
           })
       })
-      await verifyUserEmail({ email, code })
+      await withOperationLogging(async () => await verifyUserEmail({ email, code }), {
+        logger,
+        operationName: 'verifyUserEmail',
+        operationDescription: `Verify a user email`
+      })
       return true
     }
   }

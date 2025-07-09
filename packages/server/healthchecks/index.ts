@@ -1,4 +1,4 @@
-import { healthCheckLogger } from '@/logging/logging'
+import { healthCheckLogger } from '@/observability/logging'
 import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers/envHelper'
 import { handleLivenessFactory, handleReadinessFactory } from '@/healthchecks/health'
 import { FreeConnectionsCalculator, ReadinessHandler } from '@/healthchecks/types'

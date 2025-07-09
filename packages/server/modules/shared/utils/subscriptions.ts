@@ -56,7 +56,7 @@ import {
   SubscriptionWorkspaceUpdatedArgs,
   WorkspaceUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
-import { Merge } from 'type-fest'
+import { Merge, OverrideProperties } from 'type-fest'
 import {
   ModelGraphQLReturn,
   ProjectGraphQLReturn,
@@ -246,7 +246,6 @@ type SubscriptionTypeMap = {
         { version: FileUploadGraphQLReturn }
       >
       projectId: string
-      branchName: string
     }
     variables: SubscriptionProjectPendingVersionsUpdatedArgs
   }
@@ -276,8 +275,10 @@ type SubscriptionTypeMap = {
   }
   [CommentSubscriptions.CommentThreadActivity]: {
     payload: {
-      commentThreadActivity: Partial<CommentThreadActivityMessage> &
-        Pick<CommentThreadActivityMessage, 'type'>
+      commentThreadActivity: OverrideProperties<
+        CommentThreadActivityMessage,
+        { reply?: CommentRecord }
+      >
       streamId: string
       commentId: string
     }
@@ -299,7 +300,7 @@ type SubscriptionTypeMap = {
         comment: CommentRecord
       }
       streamId: string
-      resourceIds: string[]
+      resourceIds: string
     }
     variables: SubscriptionCommentActivityArgs
   }
@@ -411,7 +412,10 @@ export type PublishSubscription = typeof publish
 
 /**
  * Subscribe to a GQL subscription and use the filter function to filter subscribers
- * depending on the payload, variables and/or GQL context
+ * depending on the payload, variables and/or GQL context.
+ *
+ * Additionally clear "request" caches after each event, so that dataloaders/authloaders don't
+ * get cached
  */
 export const filteredSubscribe = <T extends SubscriptionEvent>(
   event: T,
@@ -426,7 +430,21 @@ export const filteredSubscribe = <T extends SubscriptionEvent>(
   // https://github.com/dotansimha/graphql-code-generator/issues/7197#issuecomment-1098014584
   return withFilter(
     () => pubsub.asyncIterator([event]),
-    filterFn
+    async (...args: Parameters<typeof filterFn>) => {
+      const [, , ctx] = args
+
+      // Clear ctx cache on return false/throw, otherwise subsequent iterations
+      // will have a stale cache.
+      // No need to do this on return true, as the cache will be cleared in the formatResponse handler
+      try {
+        const res = await filterFn(...args)
+        if (!res) ctx.clearCache()
+        return res
+      } catch (e) {
+        ctx.clearCache()
+        throw e
+      }
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) as unknown as SubscriptionSubscribeFn<any, any, any, any>
 }

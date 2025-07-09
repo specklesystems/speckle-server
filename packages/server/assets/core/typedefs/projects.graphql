@@ -7,9 +7,22 @@ extend type Query {
 }
 
 enum ProjectVisibility {
+  """
+  Only accessible to explicit collaborators
+  """
   PRIVATE
+  """
+  Legacy - same as public
+  """
   UNLISTED
+  """
+  Accessible to everyone (even non-logged in users)
+  """
   PUBLIC
+  """
+  Accessible to everyone in the project's workspace
+  """
+  WORKSPACE
 }
 
 """
@@ -72,13 +85,11 @@ type ProjectInviteMutations {
   """
   create(projectId: ID!, input: ProjectInviteCreateInput!): Project!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   """
   Batch invite to project
   """
   batchCreate(projectId: ID!, input: [ProjectInviteCreateInput!]!): Project!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
 
   """
   Accept or decline a project invite
@@ -88,9 +99,7 @@ type ProjectInviteMutations {
   """
   Cancel a pending stream invite. Can only be invoked by a project owner.
   """
-  cancel(projectId: ID!, inviteId: String!): Project!
-    @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
+  cancel(projectId: ID!, inviteId: String!): Project! @hasScope(scope: "users:invite")
 }
 
 type ProjectMutations {
@@ -150,6 +159,7 @@ extend type User {
     limit: Int! = 25
     cursor: String
     filter: UserProjectsFilter
+    sortBy: [String!]
   ): UserProjectCollection! @isOwner
 }
 
@@ -199,7 +209,22 @@ input UserProjectsFilter {
   Only include projects where user has the specified roles
   """
   onlyWithRoles: [String!]
+
+  """
+  Only include projects in the specified workspace
+  """
   workspaceId: ID
+
+  """
+  Only include personal projects (not in any workspace)
+  """
+  personalOnly: Boolean
+
+  """
+  If set to true, will also include streams that the user may not have an explicit role on,
+  but has implicit access to because of workspaces
+  """
+  includeImplicitAccess: Boolean
 }
 
 enum UserProjectsUpdatedMessageType {

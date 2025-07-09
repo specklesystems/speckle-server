@@ -1,6 +1,6 @@
 <template>
   <div>
-    <template v-if="itemsCount">
+    <template v-if="itemsCount && !isModelUploading">
       <ProjectModelsBasicCardView
         :items="items"
         :project="project"
@@ -22,12 +22,16 @@
         v-if="isFiltering"
         @clear-search="() => $emit('clear-search')"
       />
-      <div v-else>
+      <div v-else-if="!hideFileUpload">
         <ProjectCardImportFileArea
-          :disabled="project?.workspace?.readOnly"
-          :project-id="projectId"
+          v-if="project"
+          :project="project"
           class="h-36 col-span-4"
+          @uploading="onModelUploading"
         />
+      </div>
+      <div v-else class="text-center my-6">
+        <p class="text-heading-sm text-foreground">No models</p>
       </div>
     </template>
     <InfiniteLoading
@@ -51,6 +55,7 @@ import {
 import type { Nullable, Optional, SourceAppDefinition } from '@speckle/shared'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -72,6 +77,7 @@ const props = withDefaults(
     sourceApps?: SourceAppDefinition[]
     contributors?: FormUsersSelectItemFragment[]
     smallView?: boolean
+    hideFileUpload?: boolean
   }>(),
   {
     showActions: true,
@@ -111,6 +117,7 @@ const latestModelsQueryVariables = computed(
 )
 
 const infiniteLoaderId = ref('')
+const isModelUploading = ref(false)
 
 // Base query (all pending uploads + first page of models)
 const {
@@ -194,6 +201,10 @@ const calculateLoaderId = () => {
   const vars = latestModelsQueryVariables.value
   const id = JSON.stringify(vars.filter)
   infiniteLoaderId.value = id
+}
+
+const onModelUploading = (payload: FileAreaUploadingPayload) => {
+  isModelUploading.value = payload.isUploading
 }
 
 watch(areQueriesLoading, (newVal) => {

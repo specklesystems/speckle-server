@@ -3,10 +3,11 @@ import { MathUtils, Matrix4 } from 'three'
 import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
 import { NodeMap } from '../../tree/NodeMap.js'
 import { SpeckleType, type SpeckleObject } from '../../../index.js'
-import type ObjectLoader from '@speckle/objectloader'
 import Logger from '../../utils/Logger.js'
+import { ObjectLoader2 } from '@speckle/objectloader2'
+import { SpeckleTypeAllRenderables } from '../GeometryConverter.js'
 
-export type ConverterResultDelegate = () => Promise<void>
+export type ConverterResultDelegate = (count: number) => void
 export type SpeckleConverterNodeDelegate =
   | ((object: SpeckleObject, node: TreeNode) => Promise<void>)
   | null
@@ -16,7 +17,7 @@ export type SpeckleConverterNodeDelegate =
  * Warning: HIC SVNT DRACONES.
  */
 export default class SpeckleConverter {
-  protected objectLoader: ObjectLoader
+  protected objectLoader: ObjectLoader2
   protected activePromises: number
   protected maxChildrenPromises: number
   protected spoofIDs = false
@@ -29,6 +30,8 @@ export default class SpeckleConverter {
   protected renderMaterialMap: { [id: string]: SpeckleObject } = {}
   protected colorMap: { [id: string]: SpeckleObject } = {}
   protected instanceCounter = 0
+  protected duplicateCounter = 0
+  private traverseCount = 0
 
   protected readonly NodeConverterMapping: {
     [name: string]: SpeckleConverterNodeDelegate
@@ -57,12 +60,13 @@ export default class SpeckleConverter {
     InstanceProxy: this.InstanceProxyToNode.bind(this),
     RenderMaterialProxy: this.RenderMaterialProxyToNode.bind(this),
     ColorProxy: this.ColorProxyToNode.bind(this),
+    Region: this.RegionToNode.bind(this),
     Parameter: null
   }
 
   protected readonly IgnoreNodes = ['Parameter']
 
-  constructor(objectLoader: ObjectLoader, tree: WorldTree) {
+  constructor(objectLoader: ObjectLoader2, tree: WorldTree) {
     if (!objectLoader) {
       Logger.warn(
         'Converter initialized without a corresponding object loader. Any objects that include references will throw errors.'
@@ -88,179 +92,194 @@ export default class SpeckleConverter {
     callback: ConverterResultDelegate,
     node: TreeNode | null = null
   ) {
-    // Exit on primitives (string, ints, bools, bigints, etc.)
-    if (obj === null || typeof obj !== 'object') return
-    if (obj.referencedId) obj = await this.resolveReference(obj)
+    try {
+      // Exit on primitives (string, ints, bools, bigints, etc.)
+      if (obj === null || typeof obj !== 'object') return
+      if (obj.referencedId) obj = await this.resolveReference(obj)
 
-    const childrenConversionPromisses = []
+      const childrenConversionPromisses = []
 
-    // Traverse arrays, and exit early (we don't want to iterate through many numbers)
-    if (Array.isArray(obj)) {
-      for (const element of obj) {
-        if (typeof element !== 'object') break // exit early for non-object based arrays
-        if (this.activePromises >= this.maxChildrenPromises) {
-          await this.traverse(objectURL, element, callback, node)
-        } else {
-          const childPromise = this.traverse(objectURL, element, callback, node)
-          childrenConversionPromisses.push(childPromise)
+      // Traverse arrays, and exit early (we don't want to iterate through many numbers)
+      if (Array.isArray(obj)) {
+        for (const element of obj) {
+          if (typeof element !== 'object') break // exit early for non-object based arrays
+          if (this.activePromises >= this.maxChildrenPromises) {
+            await this.traverse(objectURL, element, callback, node)
+          } else {
+            const childPromise = this.traverse(objectURL, element, callback, node)
+            childrenConversionPromisses.push(childPromise)
+          }
         }
-      }
-      this.activePromises += childrenConversionPromisses.length
-      await Promise.all(childrenConversionPromisses)
-      this.activePromises -= childrenConversionPromisses.length
-      return
-    }
-
-    /** These are not needed as nodes */
-    if (this.IgnoreNodes.includes(this.getSpeckleType(obj))) {
-      return
-    }
-    /** Ignore objects with no id */
-    if (!obj.id) return
-
-    const childNode: TreeNode = this.tree.parse({
-      id: this.getNodeId(obj),
-      raw: obj,
-      atomic: true,
-      children: []
-    })
-
-    if (node === null) {
-      /** We're adding a parent for the entire model (subtree) */
-      this.subtree = this.tree.parse({
-        id: objectURL,
-        /* Hack required by frontend*/
-        raw: { id: objectURL, children: [obj] },
-        atomic: true,
-        children: []
-      })
-      this.tree.addSubtree(this.subtree)
-      this.tree.addNode(childNode, this.subtree)
-    } else {
-      this.tree.addNode(childNode, node)
-    }
-
-    // If we can convert it, we should invoke the respective conversion routine.
-    if (this.directNodeConverterExists(obj)) {
-      try {
-        await this.convertToNode(obj, childNode)
-        await callback()
-        return
-      } catch (e) {
-        Logger.warn(
-          `(Traversing - direct) Failed to convert ${this.getSpeckleType(
-            obj
-          )} with id: ${obj.id}`,
-          e
-        )
-      }
-    }
-
-    const target: SpeckleObject = obj
-
-    // Check if the object has a display value of sorts
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let displayValue = this.getDisplayValue(target) as any
-
-    if (displayValue) {
-      childNode.model.atomic = true
-    } else {
-      childNode.model.atomic = false
-    }
-
-    if (displayValue) {
-      if (!Array.isArray(displayValue)) {
-        displayValue = await this.resolveReference(displayValue)
-        if (!displayValue.units) displayValue.units = obj.units
-        try {
-          const nestedNode: TreeNode = this.tree.parse({
-            id: this.getNodeId(displayValue),
-            raw: displayValue,
-            atomic: false,
-            children: []
-          })
-          this.tree.addNode(nestedNode, childNode)
-          await this.convertToNode(displayValue, nestedNode)
-          await callback()
-        } catch (e) {
-          Logger.warn(
-            `(Traversing) Failed to convert obj with id: ${obj.id} — ${
-              (e as never)['message']
-            }`
-          )
-        }
-      } else {
-        for (const element of displayValue) {
-          const val = await this.resolveReference(element)
-          if (!val.units) val.units = obj.units
-          const nestedNode: TreeNode = this.tree.parse({
-            id: this.getNodeId(val),
-            raw: val,
-            atomic: false,
-            children: []
-          })
-          this.tree.addNode(nestedNode, childNode)
-          await this.convertToNode(val, nestedNode)
-          await callback()
-        }
-      }
-
-      // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
-      /** 10.25.2023 This might be serious legacy stuff that we might not need anymore */
-      /** 22.11.2024 We have just added stuff to this serious legacy stuff that might not be needed anymore (joke's on us, it is needed) */
-      if (
-        obj.speckle_type.toLowerCase().includes('builtelements') ||
-        obj.speckle_type.toLowerCase().includes('objects.data')
-      ) {
-        const elements = this.getElementsValue(obj)
-        if (elements) {
-          childrenConversionPromisses.push(
-            this.traverse(objectURL, elements as SpeckleObject, callback, childNode)
-          )
+        if (childrenConversionPromisses.length > 0) {
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
           this.activePromises -= childrenConversionPromisses.length
         }
-
         return
       }
-    }
 
-    // Last attempt: iterate through all object keys and see if we can display anything!
-    // traverses the object in case there's any sub-objects we can convert.
-    for (const prop in target) {
-      if (prop === '__parents' || prop === 'bbox' || prop === '__closure') continue
-      if (
-        ['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(prop)
-      )
-        continue
-      if (typeof target[prop] !== 'object' || target[prop] === null) continue
-
-      if (this.activePromises >= this.maxChildrenPromises) {
-        await this.traverse(
-          objectURL,
-          target[prop] as SpeckleObject,
-          callback,
-          childNode
-        )
-      } else {
-        const childPromise = this.traverse(
-          objectURL,
-          target[prop] as SpeckleObject,
-          callback,
-          childNode
-        )
-        childrenConversionPromisses.push(childPromise)
+      /** These are not needed as nodes */
+      if (this.IgnoreNodes.includes(this.getSpeckleType(obj))) {
+        return
       }
+      /** Ignore objects with no id */
+      if (!obj.id) return
+
+      const childNode: TreeNode = this.tree.parse({
+        id: this.getNodeId(obj),
+        raw: obj,
+        atomic: true,
+        children: []
+      })
+
+      if (node === null) {
+        /** We're adding a parent for the entire model (subtree) */
+        this.subtree = this.tree.parse({
+          id: objectURL,
+          /* Hack required by frontend*/
+          raw: { id: objectURL, children: [obj] },
+          atomic: true,
+          children: []
+        })
+        this.tree.addSubtree(this.subtree)
+        this.addNode(childNode, this.subtree)
+      } else {
+        this.addNode(childNode, node)
+      }
+
+      // If we can convert it, we should invoke the respective conversion routine.
+      if (this.directNodeConverterExists(obj)) {
+        try {
+          await this.convertToNode(obj, childNode)
+          return
+        } catch (e) {
+          Logger.warn(
+            `(Traversing - direct) Failed to convert ${this.getSpeckleType(
+              obj
+            )} with id: ${obj.id}`,
+            e
+          )
+        }
+      }
+
+      const target: SpeckleObject = obj
+
+      // Check if the object has a display value of sorts
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let displayValue = this.getDisplayValue(target) as any
+
+      if (displayValue) {
+        childNode.model.atomic = true
+      } else {
+        childNode.model.atomic = false
+      }
+
+      if (displayValue) {
+        if (!Array.isArray(displayValue)) {
+          displayValue = await this.resolveReference(displayValue)
+          if (!displayValue.units) displayValue.units = obj.units
+          try {
+            const nestedNode: TreeNode = this.tree.parse({
+              id: this.getNodeId(displayValue),
+              raw: displayValue,
+              atomic: false,
+              children: []
+            })
+            this.addNode(nestedNode, childNode)
+            await this.convertToNode(displayValue, nestedNode)
+          } catch (e) {
+            Logger.warn(
+              `(Traversing) Failed to convert obj with id: ${obj.id} — ${
+                (e as never)['message']
+              }`
+            )
+          }
+        } else {
+          for (const element of displayValue) {
+            const val = await this.resolveReference(element)
+            if (!val.units) val.units = obj.units
+            const nestedNode: TreeNode = this.tree.parse({
+              id: this.getNodeId(val),
+              raw: val,
+              atomic: false,
+              children: []
+            })
+            this.addNode(nestedNode, childNode)
+            await this.convertToNode(val, nestedNode)
+          }
+        }
+
+        // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
+        /** 10.25.2023 This might be serious legacy stuff that we might not need anymore */
+        /** 22.11.2024 We have just added stuff to this serious legacy stuff that might not be needed anymore (joke's on us, it is needed) */
+        if (
+          obj.speckle_type.toLowerCase().includes('builtelements') ||
+          obj.speckle_type.toLowerCase().includes('objects.data')
+        ) {
+          const elements = this.getElementsValue(obj)
+          if (elements) {
+            childrenConversionPromisses.push(
+              this.traverse(objectURL, elements as SpeckleObject, callback, childNode)
+            )
+            this.activePromises += childrenConversionPromisses.length
+            await Promise.all(childrenConversionPromisses)
+            this.activePromises -= childrenConversionPromisses.length
+          }
+
+          return
+        }
+      }
+
+      // Last attempt: iterate through all object keys and see if we can display anything!
+      // traverses the object in case there's any sub-objects we can convert.
+      for (const prop in target) {
+        if (prop === '__parents' || prop === 'bbox' || prop === '__closure') continue
+        if (
+          ['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(
+            prop
+          )
+        )
+          continue
+        if (typeof target[prop] !== 'object' || target[prop] === null) continue
+
+        if (this.activePromises >= this.maxChildrenPromises) {
+          await this.traverse(
+            objectURL,
+            target[prop] as SpeckleObject,
+            callback,
+            childNode
+          )
+        } else {
+          const childPromise = this.traverse(
+            objectURL,
+            target[prop] as SpeckleObject,
+            callback,
+            childNode
+          )
+          childrenConversionPromisses.push(childPromise)
+        }
+      }
+      if (childrenConversionPromisses.length > 0) {
+        this.activePromises += childrenConversionPromisses.length
+        await Promise.all(childrenConversionPromisses)
+        this.activePromises -= childrenConversionPromisses.length
+      }
+    } finally {
+      callback(this.traverseCount++)
     }
-    this.activePromises += childrenConversionPromisses.length
-    await Promise.all(childrenConversionPromisses)
-    this.activePromises -= childrenConversionPromisses.length
   }
 
   private getNodeId(obj: SpeckleObject): string {
     if (this.spoofIDs) return MathUtils.generateUUID()
+
     return obj.id
+  }
+
+  private addNode(node: TreeNode, parent: TreeNode) {
+    if (this.tree.hasNodeId(node.model.id, parent.model.subtreeId)) {
+      node.model.id = this.getDuplicateId(node.model.id, ++this.duplicateCounter)
+    }
+    this.tree.addNode(node, parent)
   }
 
   /**
@@ -275,9 +294,9 @@ export default class SpeckleConverter {
 
     const chunked: unknown[] = []
     for (const ref of arr) {
-      const real: Record<string, unknown> = await this.objectLoader.getObject(
-        ref.referencedId
-      )
+      const real: Record<string, unknown> = (await this.objectLoader.getObject({
+        id: ref.referencedId
+      })) as unknown as Record<string, number>
       chunked.push(real.data)
       // await this.asyncPause()
     }
@@ -295,9 +314,9 @@ export default class SpeckleConverter {
    */
   private async resolveReference(obj: SpeckleObject): Promise<SpeckleObject> {
     if (obj.referencedId) {
-      const resolvedObj = (await this.objectLoader.getObject(
-        obj.referencedId
-      )) as SpeckleObject
+      const resolvedObj = (await this.objectLoader.getObject({
+        id: obj.referencedId
+      })) as SpeckleObject
       // this.asyncPause()
       return resolvedObj
     } else return obj
@@ -401,6 +420,14 @@ export default class SpeckleConverter {
     return baseId.substring(0, index) + NodeMap.COMPOUND_ID_CHAR + counter
   }
 
+  private getDuplicateId(baseId: string, counter: number) {
+    const index = baseId.indexOf(NodeMap.DUPLICATE_ID_CHAR)
+    if (index === -1) {
+      return baseId + NodeMap.DUPLICATE_ID_CHAR + counter
+    }
+    return baseId.substring(0, index) + NodeMap.DUPLICATE_ID_CHAR + counter
+  }
+
   private getEmptyTransformData(id: string) {
     // eslint-disable-next-line camelcase
     return { id, speckle_type: 'Transform', units: 'm', matrix: new Array(16) }
@@ -447,7 +474,7 @@ export default class SpeckleConverter {
           instanced
         })
 
-        this.tree.addNode(valueNode, node)
+        this.addNode(valueNode, node)
         await this.displayableLookup(value, valueNode, instanced)
       }
     }
@@ -476,7 +503,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(transformNode, instanceNode)
+    this.addNode(transformNode, instanceNode)
 
     const childNode: TreeNode = this.tree.parse({
       id: this.getCompoundId(defGeometry.id, this.instanceCounter++),
@@ -485,7 +512,7 @@ export default class SpeckleConverter {
       children: [],
       instanced: true
     })
-    this.tree.addNode(childNode, transformNode)
+    this.addNode(childNode, transformNode)
 
     await this.displayableLookup(defGeometry, childNode, true)
   }
@@ -501,7 +528,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(childNode, instanceNode)
+    this.addNode(childNode, instanceNode)
     await this.displayableLookup(elementObj, childNode, false)
   }
 
@@ -628,7 +655,7 @@ export default class SpeckleConverter {
     const definition = this.instanceDefinitionLookupTable[definitionId]
     const transformNode = this.createTransformNode(obj)
 
-    this.tree.addNode(transformNode, node)
+    this.addNode(transformNode, node)
     const objectApplicationIds = this.getInstanceProxyDefinitionObjects(
       definition.model.raw
     )
@@ -649,7 +676,7 @@ export default class SpeckleConverter {
         children: [],
         instanced: true
       })
-      this.tree.addNode(instancedNode, transformNode)
+      this.addNode(instancedNode, transformNode)
       await this.convertToNode(speckleData, instancedNode)
     }
   }
@@ -724,31 +751,40 @@ export default class SpeckleConverter {
       /** Create the final instances */
       await this.convertToNode(node.model.raw, node)
       count++
-      // if (count === 3) break
     }
   }
 
   public async applyMaterials() {
-    let renderMaterialCount = Object.keys(this.renderMaterialMap).length
-    let colorCount = Object.keys(this.colorMap).length
+    const renderMaterialCount = Object.keys(this.renderMaterialMap).length
+    const colorCount = Object.keys(this.colorMap).length
     if (renderMaterialCount === 0 && colorCount === 0) return
 
     /** Do a short async walk */
     await this.tree.walkAsync((node: TreeNode) => {
       if (!node.model.raw.applicationId) return true
       const applicationId = node.model.raw.applicationId.toString()
-      if (this.renderMaterialMap[applicationId] !== undefined) {
+      /** With instances, render materials proxy can reference parents of original instanced data.
+       *  However, after they are instanced, they sometimes (or maybe often) do not have the same
+       *  parents anymore, so they can't inherit the render materials naturally.
+       *
+       *  That's why we check they parent layer application id and write the render material data
+       *  into the node themselves, sort of like 'baking' them in.
+       *
+       *  One side-effect is that we can no longer assume that each proxy is only getting applied once
+       *  so we cannot early break out of the walk
+       */
+      const parentApplicationId = node.model.raw.parentLayerApplicationId
+
+      if (this.renderMaterialMap[applicationId]) {
         node.model.raw.renderMaterial = this.renderMaterialMap[applicationId]
-        renderMaterialCount--
+      } else if (this.renderMaterialMap[parentApplicationId]) {
+        node.model.raw.renderMaterial = this.renderMaterialMap[parentApplicationId]
       }
 
       /** For non-instanced objects just use the color if any is present */
       if (this.colorMap[applicationId] !== undefined && !node.model.instanced) {
         node.model.color = this.colorMap[applicationId].value
-        colorCount--
       }
-      /** Break out when all applicationIds are accounted for*/
-      if (renderMaterialCount === 0 && colorCount === 0) return false
       return true
     }, this.subtree)
 
@@ -857,7 +893,7 @@ export default class SpeckleConverter {
         ...(node.model.instanced && { instanced: node.model.instanced })
       })
       await this.convertToNode(ref, nestedNode)
-      this.tree.addNode(nestedNode, node)
+      this.addNode(nestedNode, node)
 
       // deletes known unneeded fields
       delete obj.Edges
@@ -897,6 +933,36 @@ export default class SpeckleConverter {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     node.model.raw.colors = await this.dechunk(obj.colors)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    node.model.raw.vertexNormals = await this.dechunk(obj.vertexNormals)
+  }
+
+  private async RegionToNode(obj: SpeckleObject, node: TreeNode) {
+    try {
+      if (!obj) return
+
+      let displayValue = this.getDisplayValue(obj)
+
+      if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
+      if (!displayValue) return
+
+      const ref = await this.resolveReference(displayValue as SpeckleObject)
+      const nestedNode: TreeNode = this.tree.parse({
+        id: node.model.instanced
+          ? this.getCompoundId(ref.id, this.instanceCounter++)
+          : this.getNodeId(ref),
+        raw: ref,
+        atomic: false,
+        children: [],
+        ...(node.model.instanced && { instanced: node.model.instanced })
+      })
+      await this.convertToNode(ref, nestedNode)
+      this.addNode(nestedNode, node)
+    } catch (e) {
+      Logger.warn(`Failed to convert Region id: ${obj.id}`)
+      throw e
+    }
   }
 
   private async TextToNode(_obj: SpeckleObject, _node: TreeNode) {
@@ -912,7 +978,7 @@ export default class SpeckleConverter {
         atomic: false,
         children: []
       })
-      this.tree.addNode(childNode, node)
+      this.addNode(childNode, node)
       await this.convertToNode(displayValue, childNode)
     }
     /**
@@ -942,7 +1008,7 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-    this.tree.addNode(textNode, node)
+    this.addNode(textNode, node)
     await this.convertToNode(textObj, textNode)
   }
 
@@ -1022,5 +1088,33 @@ export default class SpeckleConverter {
 
   private async EllipseToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
+  }
+
+  /** We shouldn't need to work with duplicates */
+  public handleDuplicates(): Promise<void> {
+    /** We're generally interested in handling renderable duplicates. Otherwise we're overbloat everything with millions of parameters and such */
+    const SpeckleTypeDuplicableRenderables: SpeckleType[] =
+      SpeckleTypeAllRenderables.slice()
+    /** We remove Point because speckle data contains tons of points that are not really renderable */
+    SpeckleTypeDuplicableRenderables.splice(
+      SpeckleTypeAllRenderables.indexOf(SpeckleType.Point),
+      1
+    )
+    const duplicates = this.tree.getRenderTree(this.subtree.model.id)?.getDuplicates()
+    for (const k in duplicates) {
+      const baseObject = this.tree.findId(k)
+      if (!baseObject) {
+        Logger.warn(`Base duplicated object ${k} not found!`)
+        continue
+      }
+      const speckleType = this.getSpeckleType(baseObject[0].model.raw) as SpeckleType
+      if (!SpeckleTypeDuplicableRenderables.includes(speckleType)) continue
+
+      for (const m in duplicates[k]) {
+        /** Normally we'd only need the geometry related data cloned, but this covers 100% */
+        duplicates[k][m].model.raw = structuredClone(duplicates[k][m].model.raw)
+      }
+    }
+    return Promise.resolve()
   }
 }

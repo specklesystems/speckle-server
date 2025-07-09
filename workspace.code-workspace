@@ -5,16 +5,8 @@
       "name": "🖥️ server"
     },
     {
-      "path": "packages/frontend",
-      "name": "🪟 frontend"
-    },
-    {
       "path": "packages/frontend-2",
-      "name": "🏬 frontend 2.0"
-    },
-    {
-      "path": "packages/dui3",
-      "name": "🥉 dui 3.0"
+      "name": "🏬 frontend"
     },
     {
       "path": "packages/tailwind-theme",
@@ -26,7 +18,11 @@
     },
     {
       "path": "packages/preview-service",
-      "name": "🖼️ preview-service"
+      "name": "🏃 preview-service"
+    },
+    {
+      "path": "packages/preview-frontend",
+      "name": "🖼️ preview-frontend"
     },
     {
       "path": "packages/viewer",
@@ -49,6 +45,10 @@
       "name": "⬇️ objectloader"
     },
     {
+      "path": "packages/objectloader2",
+      "name": "⬇️ objectloader2"
+    },
+    {
       "path": "packages/objectsender",
       "name": "⬆️ objectsender"
     },
@@ -63,6 +63,10 @@
     {
       "path": "packages/ui-components-nuxt",
       "name": "🌟 ui-components-nuxt"
+    },
+    {
+      "path": "packages/monitor-deployment",
+      "name": "📊 monitor-deployment"
     },
     {
       "path": ".",
@@ -129,8 +133,10 @@
     },
     "vue.complete.casing.props": "kebab",
     "vue.inlayHints.missingProps": true,
-    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"],
-    "eslint.experimental.useFlatConfig": true
+    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"]
+    // "vitest.nodeEnv": {
+    //   "DISABLE_ALL_FFS": "1"
+    // }
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

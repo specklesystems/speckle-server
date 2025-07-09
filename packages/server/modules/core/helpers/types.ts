@@ -43,18 +43,26 @@ export type ServerAclRecord = {
   role: string
 }
 
+export const ProjectRecordVisibility = <const>{
+  Public: 'public',
+  Private: 'private',
+  Workspace: 'workspace'
+}
+
+export type ProjectRecordVisibility =
+  (typeof ProjectRecordVisibility)[keyof typeof ProjectRecordVisibility]
+
 export type StreamRecord = {
   id: string
   name: string
   description: Nullable<string>
-  isPublic: boolean
   clonedFrom: Nullable<string>
   createdAt: Date
   updatedAt: Date
   allowPublicComments: boolean
-  isDiscoverable: boolean
   workspaceId: Nullable<string>
   regionKey: Nullable<string>
+  visibility: ProjectRecordVisibility
 }
 
 export type StreamAclRecord = {
@@ -92,6 +100,7 @@ export type ServerInfo = ServerConfigRecord & {
   configuration: {
     objectSizeLimitBytes: number
     objectMultipartUploadSizeLimitBytes: number
+    isEmailEnabled: boolean
   }
 }
 
@@ -136,21 +145,24 @@ export type ObjectRecord = {
   streamId: string
 }
 
-export type ObjectChildrenClosureRecord = {
-  parent: string
-  child: string
-  minDepth: number
-  streamId: string
-}
-
 export type InvalidTokenResult = {
   valid: false
+  /**
+   * The ID of the token used for validation.
+   * This is the first 10 characters of the token string.
+   */
+  tokenId: string
 }
 
 export type ValidTokenResult = {
   valid: true
   scopes: string[]
   userId: string
+  /**
+   * The ID of the token used for validation.
+   * This is the first 10 characters of the token string.
+   */
+  tokenId: string
   role: ServerRoles
   /**
    * Set, if the token is an app token

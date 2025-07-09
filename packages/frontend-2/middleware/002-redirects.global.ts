@@ -73,7 +73,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const apollo = useApolloClientFromNuxt()
   const resourceBuilder = () => SpeckleViewer.ViewerRoute.resourceBuilder()
 
-  if (['/streams', '/commits'].includes(path)) {
+  if (['/streams', '/commits', '/streams/', '/commits/'].includes(path)) {
     return navigateTo(homeRoute)
   }
 
@@ -129,6 +129,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       ...(to.query['transparent'] === 'true' ? { isTransparent: true } : {}),
       ...(to.query['hidecontrols'] === 'true' ? { hideControls: true } : {}),
       ...(to.query['hideselectioninfo'] === 'true' ? { hideSelectionInfo: true } : {}),
+      ...(to.query['disablemodellink'] === 'true' ? { disableModelLink: true } : {}),
       ...(to.query['noscroll'] === 'true' ? { noScroll: true } : {}),
       ...(to.query['autoload'] === 'true'
         ? { manualLoad: false }

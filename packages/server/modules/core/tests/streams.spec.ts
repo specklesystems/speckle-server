@@ -59,32 +59,30 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
+  deleteStreamAndNotifyFactory,
   legacyCreateStreamFactory,
-  legacyUpdateStreamFactory
+  updateStreamAndNotifyFactory
 } from '@/modules/core/services/streams/management'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
+  deleteAllResourceInvitesFactory,
+  deleteInvitesByTargetFactory,
+  deleteServerOnlyInvitesFactory,
+  findInviteFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -100,7 +98,24 @@ import {
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { addBranchDeletedActivityFactory } from '@/modules/activitystream/services/branchActivity'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -115,10 +130,6 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
   emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity: addBranchDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
@@ -131,11 +142,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -143,6 +150,51 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
 })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
 
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -162,7 +214,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -171,13 +224,20 @@ const createStream = legacyCreateStreamFactory({
     emitEvent: getEventBus().emit
   })
 })
-const deleteStream = deleteStreamFactory({ db })
-const updateStream = legacyUpdateStreamFactory({
-  updateStream: updateStreamFactory({ db })
+const deleteStream = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  getStream,
+  emitEvent: getEventBus().emit,
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+
+const updateStream = updateStreamAndNotifyFactory({
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 
 const revokeStreamPermissions = revokeStreamPermissionsFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({
   authorizeResolver
 })
@@ -185,14 +245,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -200,21 +253,20 @@ const isStreamCollaborator = isStreamCollaboratorFactory({
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 const getStreamsUsers = getStreamsCollaboratorsFactory({ db })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@gmail.com',
+    email: 'didimitrie@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
 
   const userTwo: BasicTestUser = {
     name: 'Dimitrie Stefanescu 2',
-    email: 'didimitrie2@gmail.com',
+    email: 'didimitrie2@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
@@ -285,11 +337,14 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should update a stream', async () => {
-      await updateStream({
-        id: testStream.id,
-        name: 'Modified Name',
-        description: 'Wooot'
-      })
+      await updateStream(
+        {
+          id: testStream.id,
+          name: 'Modified Name',
+          description: 'Wooot'
+        },
+        userOne.id
+      )
       const stream = await getStream({ streamId: testStream.id })
       expect(stream?.name).to.equal('Modified Name')
       expect(stream?.description).to.equal('Wooot')
@@ -320,7 +375,7 @@ describe('Streams @core-streams', () => {
         ownerId: userOne.id
       })
 
-      await deleteStream(id)
+      await deleteStream(id, userOne.id)
       const stream = await getStream({ streamId: id })
 
       expect(stream).to.not.be.ok
@@ -361,7 +416,7 @@ describe('Streams @core-streams', () => {
           throw new Error('This should have thrown')
         })
         .catch((err) => {
-          expect(err.message).to.include('cannot revoke permissions.')
+          expect(err.message).to.include('A project needs at least one project owner')
         })
     })
 
@@ -449,7 +504,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should update stream updatedAt on stream update ', async () => {
-      await updateStream({ id: updatableStream.id, name: 'TU1' })
+      await updateStream({ id: updatableStream.id, name: 'TU1' }, userOne.id)
       const su = await getStream({ streamId: updatableStream.id })
 
       expect(su?.updatedAt).to.be.ok
@@ -547,7 +602,7 @@ describe('Streams @core-streams', () => {
     const TOTAL_OWN_STREAM_COUNT = OWNED_STREAM_COUNT + SHARED_STREAM_COUNT
 
     const PUBLIC_STREAM_COUNT = 15
-    const DISCOVERABLE_STREAM_COUNT = PUBLIC_STREAM_COUNT - 5
+    const DISCOVERABLE_STREAM_COUNT = PUBLIC_STREAM_COUNT
 
     let userOneStreams: BasicTestStream[]
     let userTwoStreams: BasicTestStream[]
@@ -558,7 +613,6 @@ describe('Streams @core-streams', () => {
 
       async function setupStreams(user: BasicTestUser): Promise<BasicTestStream[]> {
         let remainingPublicStreams = PUBLIC_STREAM_COUNT
-        let remainingDiscoverableStreams = DISCOVERABLE_STREAM_COUNT
 
         // creating test streams
         const streamDefinitions = times(
@@ -566,7 +620,6 @@ describe('Streams @core-streams', () => {
           (i): BasicTestStream => ({
             name: `${user.name} test stream #${i}`,
             isPublic: remainingPublicStreams-- > 0,
-            isDiscoverable: remainingDiscoverableStreams-- > 0,
             id: '',
             ownerId: ''
           })
@@ -628,7 +681,7 @@ describe('Streams @core-streams', () => {
     ) => {
       const { limitedUserQuery } = options
       const expectedTotalCount = isOtherUser
-        ? SHARED_STREAM_COUNT + DISCOVERABLE_STREAM_COUNT // only shared streams + discoverable ones
+        ? SHARED_STREAM_COUNT + DISCOVERABLE_STREAM_COUNT // only public
         : TOTAL_OWN_STREAM_COUNT // all owned & shared streams
 
       const requestPage = async (cursor?: Nullable<string>) => {

@@ -1,133 +1,21 @@
 import {
-  CheckoutSession,
-  CreateCheckoutSession,
   GetCheckoutSession,
-  GetWorkspacePlan,
-  SaveCheckoutSession,
   UpdateCheckoutSessionStatus,
   UpsertWorkspaceSubscription,
   UpsertPaidWorkspacePlan,
   GetSubscriptionData,
-  GetWorkspaceCheckoutSession,
-  DeleteCheckoutSession
+  getSubscriptionState,
+  GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import {
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals
-} from '@/modules/gatekeeper/domain/workspacePricing'
 import {
   CheckoutSessionNotFoundError,
   WorkspaceAlreadyPaidError,
-  WorkspaceCheckoutSessionInProgressError
+  WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
-import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
-import { Roles, throwUncoveredError } from '@speckle/shared'
-
-export const startCheckoutSessionFactory =
-  ({
-    getWorkspaceCheckoutSession,
-    deleteCheckoutSession,
-    getWorkspacePlan,
-    countRole,
-    createCheckoutSession,
-    saveCheckoutSession
-  }: {
-    getWorkspaceCheckoutSession: GetWorkspaceCheckoutSession
-    deleteCheckoutSession: DeleteCheckoutSession
-    getWorkspacePlan: GetWorkspacePlan
-    countRole: CountWorkspaceRoleWithOptionalProjectRole
-    createCheckoutSession: CreateCheckoutSession
-    saveCheckoutSession: SaveCheckoutSession
-  }) =>
-  async ({
-    workspaceId,
-    workspaceSlug,
-    workspacePlan,
-    billingInterval,
-    isCreateFlow
-  }: {
-    workspaceId: string
-    workspaceSlug: string
-    workspacePlan: PaidWorkspacePlans
-    billingInterval: WorkspacePlanBillingIntervals
-    isCreateFlow: boolean
-  }): Promise<CheckoutSession> => {
-    // get workspace plan, if we're already on a paid plan, do not allow checkout
-    // paid plans should use a subscription modification
-    const existingWorkspacePlan = await getWorkspacePlan({ workspaceId })
-
-    // it will technically not be possible to not have
-    if (existingWorkspacePlan) {
-      // maybe we can just ignore the plan not existing, cause we're putting it on a plan post checkout
-      switch (existingWorkspacePlan.status) {
-        // valid and paymentFailed, but not canceled status is not something we need a checkout for
-        // we already have their credit card info
-        case 'valid':
-        case 'paymentFailed':
-        case 'cancelationScheduled':
-          throw new WorkspaceAlreadyPaidError()
-        case 'canceled':
-          const existingCheckoutSession = await getWorkspaceCheckoutSession({
-            workspaceId
-          })
-          if (existingCheckoutSession)
-            await deleteCheckoutSession({
-              checkoutSessionId: existingCheckoutSession?.id
-            })
-          break
-
-        // maybe, we can reactivate canceled plans via the sub in stripe, but this is fine too
-        // it will create a new customer and a new sub though, the reactivation would use the existing customer
-        case 'trial':
-        case 'expired':
-          // lets go ahead and pay
-          break
-        default:
-          throwUncoveredError(existingWorkspacePlan)
-      }
-    }
-
-    // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
-    const workspaceCheckoutSession = await getWorkspaceCheckoutSession({
-      workspaceId
-    })
-    if (workspaceCheckoutSession) {
-      if (workspaceCheckoutSession.paymentStatus === 'paid')
-        // this is should not be possible, but its better to be checking it here, than double charging the customer
-        throw new WorkspaceAlreadyPaidError()
-      if (
-        new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-        1000
-        // 10 * 60 * 1000
-      ) {
-        await deleteCheckoutSession({
-          checkoutSessionId: workspaceCheckoutSession.id
-        })
-      } else {
-        throw new WorkspaceCheckoutSessionInProgressError()
-      }
-    }
-
-    const [adminCount, memberCount, guestCount] = await Promise.all([
-      countRole({ workspaceId, workspaceRole: Roles.Workspace.Admin }),
-      countRole({ workspaceId, workspaceRole: Roles.Workspace.Member }),
-      countRole({ workspaceId, workspaceRole: Roles.Workspace.Guest })
-    ])
-
-    const checkoutSession = await createCheckoutSession({
-      workspaceId,
-      workspaceSlug,
-
-      billingInterval,
-      workspacePlan,
-      guestCount,
-      seatCount: adminCount + memberCount,
-      isCreateFlow
-    })
-
-    await saveCheckoutSession({ checkoutSession })
-    return checkoutSession
-  }
+import { throwUncoveredError } from '@speckle/shared'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { GetWorkspacePlan } from '@speckle/shared/dist/commonjs/authz/domain/workspaces/operations.js'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 export const completeCheckoutSessionFactory =
   ({
@@ -135,13 +23,19 @@ export const completeCheckoutSessionFactory =
     updateCheckoutSessionStatus,
     upsertWorkspaceSubscription,
     upsertPaidWorkspacePlan,
-    getSubscriptionData
+    getWorkspacePlan,
+    getWorkspaceSubscription,
+    getSubscriptionData,
+    emitEvent
   }: {
     getCheckoutSession: GetCheckoutSession
     updateCheckoutSessionStatus: UpdateCheckoutSessionStatus
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
+    getWorkspacePlan: GetWorkspacePlan
+    getWorkspaceSubscription: GetWorkspaceSubscription
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getSubscriptionData: GetSubscriptionData
+    emitEvent: EventBusEmit
   }) =>
   /**
    * Complete a paid checkout session
@@ -156,6 +50,16 @@ export const completeCheckoutSessionFactory =
     const checkoutSession = await getCheckoutSession({ sessionId })
     if (!checkoutSession) throw new CheckoutSessionNotFoundError()
 
+    const previousWorkspacePlan = await getWorkspacePlan({
+      workspaceId: checkoutSession.workspaceId
+    })
+    if (!previousWorkspacePlan) throw new WorkspacePlanNotFoundError()
+
+    // on states like cancellations, there is a subscription
+    const previousSubscription = await getWorkspaceSubscription({
+      workspaceId: checkoutSession.workspaceId
+    })
+
     switch (checkoutSession.paymentStatus) {
       case 'paid':
         // if the session is already paid, we do not need to provision anything
@@ -168,30 +72,22 @@ export const completeCheckoutSessionFactory =
     // TODO: make sure, the subscription data price plan matches the checkout session workspacePlan
 
     await updateCheckoutSessionStatus({ sessionId, paymentStatus: 'paid' })
+
     // a plan determines the workspace feature set
+    const workspacePlan = {
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: checkoutSession.workspaceId,
+      name: checkoutSession.workspacePlan,
+      status: 'valid'
+    } as const
     await upsertPaidWorkspacePlan({
-      workspacePlan: {
-        createdAt: new Date(),
-        workspaceId: checkoutSession.workspaceId,
-        name: checkoutSession.workspacePlan,
-        status: 'valid'
-      }
+      workspacePlan
     })
     const subscriptionData = await getSubscriptionData({
       subscriptionId
     })
-    const currentBillingCycleEnd = new Date()
-    switch (checkoutSession.billingInterval) {
-      case 'monthly':
-        currentBillingCycleEnd.setMonth(currentBillingCycleEnd.getMonth() + 1)
-        break
-      case 'yearly':
-        currentBillingCycleEnd.setMonth(currentBillingCycleEnd.getMonth() + 12)
-        break
-
-      default:
-        throwUncoveredError(checkoutSession.billingInterval)
-    }
+    const currentBillingCycleEnd = subscriptionData.currentPeriodEnd
 
     const workspaceSubscription = {
       createdAt: new Date(),
@@ -199,10 +95,31 @@ export const completeCheckoutSessionFactory =
       currentBillingCycleEnd,
       workspaceId: checkoutSession.workspaceId,
       billingInterval: checkoutSession.billingInterval,
+      currency: checkoutSession.currency,
+      updateIntent: null,
       subscriptionData
     }
-
     await upsertWorkspaceSubscription({
       workspaceSubscription
+    })
+    await emitEvent({
+      eventName: GatekeeperEvents.WorkspacePlanUpdated,
+      payload: {
+        userId: checkoutSession.userId,
+        workspacePlan,
+        previousWorkspacePlan
+      }
+    })
+    await emitEvent({
+      eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+      payload: {
+        userId: checkoutSession.userId,
+        workspacePlan,
+        previousWorkspacePlan,
+        subscription: getSubscriptionState(workspaceSubscription),
+        previousSubscription: previousSubscription
+          ? getSubscriptionState(previousSubscription)
+          : null
+      }
     })
   }

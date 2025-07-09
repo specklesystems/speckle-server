@@ -10,6 +10,9 @@ export const workspaceFragment = gql`
     updatedAt
     logo
     readOnly
+    discoverabilityEnabled
+    role
+    seatType
   }
 `
 
@@ -36,6 +39,7 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
+    visibility
     team {
       id
       role
@@ -99,6 +103,15 @@ export const getActiveUserDiscoverableWorkspacesQuery = gql`
         id
         name
         description
+        team {
+          items {
+            user {
+              avatar
+            }
+          }
+          totalCount
+          cursor
+        }
       }
     }
   }
@@ -116,9 +129,9 @@ export const updateWorkspaceQuery = gql`
 `
 
 export const getActiveUserWorkspacesQuery = gql`
-  query GetActiveUserWorkspaces {
+  query GetActiveUserWorkspaces($filter: UserWorkspacesFilter) {
     activeUser {
-      workspaces {
+      workspaces(filter: $filter) {
         items {
           ...TestWorkspace
         }
@@ -222,9 +235,14 @@ export const leaveWorkspaceMutation = gql`
 `
 
 export const getProjectWorkspaceQuery = gql`
-  query ActiveUserProjectsWorkspace {
+  query ActiveUserProjectsWorkspace(
+    $limit: Int
+    $cursor: String
+    $filter: UserProjectsFilter
+  ) {
     activeUser {
-      projects {
+      projects(filter: $filter, limit: $limit, cursor: $cursor) {
+        totalCount
         items {
           id
           workspace {
@@ -255,11 +273,44 @@ export const moveProjectToWorkspaceMutation = gql`
         moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
           id
           workspaceId
+          visibility
           team {
             id
             role
           }
         }
+      }
+    }
+  }
+`
+
+export const updateWorkspaceEmbedOptionsMutation = gql`
+  mutation UpdateEmbedOptions($input: WorkspaceUpdateEmbedOptionsInput!) {
+    workspaceMutations {
+      updateEmbedOptions(input: $input) {
+        hideSpeckleBranding
+      }
+    }
+  }
+`
+
+export const getWorkspaceEmbedOptions = gql`
+  query WorkspaceEmbedOptions($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      embedOptions {
+        hideSpeckleBranding
+      }
+    }
+  }
+`
+
+export const getProjectEmbedOptions = gql`
+  query ProjectEmbedOptions($projectId: String!) {
+    project(id: $projectId) {
+      id
+      embedOptions {
+        hideSpeckleBranding
       }
     }
   }

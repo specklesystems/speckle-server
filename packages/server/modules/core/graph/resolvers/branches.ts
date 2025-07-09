@@ -1,11 +1,9 @@
-import { authorizeResolver, BranchPubsubEvents } from '@/modules/shared'
+import { BranchPubsubEvents } from '@/modules/shared'
 import {
   createBranchAndNotifyFactory,
   updateBranchAndNotifyFactory,
   deleteBranchAndNotifyFactory
 } from '@/modules/core/services/branch/management'
-
-import { Roles } from '@speckle/shared'
 import {
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
@@ -17,21 +15,24 @@ import {
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 import {
-  addBranchCreatedActivityFactory,
-  addBranchDeletedActivityFactory,
-  addBranchUpdatedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
   getStreamFactory,
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { filteredSubscribe, publish } from '@/modules/shared/utils/subscriptions'
+import { filteredSubscribe } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  mapAuthToServerError,
+  throwIfAuthNotOk
+} from '@/modules/shared/helpers/errorHelper'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 export = {
   Query: {},
@@ -77,59 +78,107 @@ export = {
   },
   Mutation: {
     async branchCreate(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.branch.streamId,
-        Roles.Stream.Contributor,
-        context.resourceAccessRules
-      )
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.branch.streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
 
-      const projectDB = await getProjectDbClient({ projectId: args.branch.streamId })
+      const projectId = args.branch.streamId
+
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const canCreate = await context.authPolicies.project.model.canCreate({
+        userId: context.userId,
+        projectId
+      })
+
+      if (!canCreate.isOk) {
+        throw mapAuthToServerError(canCreate.error)
+      }
+
+      const projectDB = await getProjectDbClient({ projectId })
       const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDB })
       const createBranchAndNotify = createBranchAndNotifyFactory({
         getStreamBranchByName,
         createBranch: createBranchFactory({ db: projectDB }),
-        addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        eventEmit: getEventBus().emit
       })
-      const { id } = await createBranchAndNotify(args.branch, context.userId!)
+      const { id } = await withOperationLogging(
+        async () => await createBranchAndNotify(args.branch, context.userId!),
+        {
+          logger,
+          operationName: 'createBranch',
+          operationDescription: `Create a new Branch`
+        }
+      )
 
       return id
     },
 
-    async branchUpdate(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.branch.streamId,
-        Roles.Stream.Contributor,
-        context.resourceAccessRules
-      )
+    async branchUpdate(_parent, args, ctx) {
+      const projectId = args.branch.streamId
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.branch.streamId,
+        resourceAccessRules: ctx.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
 
-      const projectDB = await getProjectDbClient({ projectId: args.branch.streamId })
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const canUpdate = await ctx.authPolicies.project.model.canUpdate({
+        userId: ctx.userId,
+        projectId
+      })
+      throwIfAuthNotOk(canUpdate)
+
+      const projectDB = await getProjectDbClient({ projectId })
       const getBranchById = getBranchByIdFactory({ db: projectDB })
       const updateBranchAndNotify = updateBranchAndNotifyFactory({
         getBranchById,
         updateBranch: updateBranchFactory({ db: projectDB }),
-        addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        eventEmit: getEventBus().emit
       })
-      const newBranch = await updateBranchAndNotify(args.branch, context.userId!)
+      const newBranch = await withOperationLogging(
+        async () => await updateBranchAndNotify(args.branch, ctx.userId!),
+        {
+          logger,
+          operationName: 'updateBranch',
+          operationDescription: `Update a Branch`
+        }
+      )
       return !!newBranch
     },
 
     async branchDelete(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.branch.streamId,
-        Roles.Stream.Contributor,
-        context.resourceAccessRules
-      )
+      const projectId = args.branch.streamId
+      const modelId = args.branch.id
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.branch.streamId,
+        resourceAccessRules: context.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
 
-      const projectDB = await getProjectDbClient({ projectId: args.branch.streamId })
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        modelId
+      })
+
+      const canDelete = await context.authPolicies.project.model.canDelete({
+        userId: context.userId,
+        projectId,
+        modelId
+      })
+      throwIfAuthNotOk(canDelete)
+
+      const projectDB = await getProjectDbClient({ projectId })
       const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db: projectDB })
       const getStream = getStreamFactory({ db: projectDB })
       const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
@@ -137,13 +186,16 @@ export = {
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
         markBranchStreamUpdated,
-        addBranchDeletedActivity: addBranchDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        }),
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
-      const deleted = await deleteBranchAndNotify(args.branch, context.userId!)
+      const deleted = await withOperationLogging(
+        async () => await deleteBranchAndNotify(args.branch, context.userId!),
+        {
+          logger,
+          operationName: 'deleteBranch',
+          operationDescription: `Delete a Branch`
+        }
+      )
       return deleted
     }
   },
@@ -152,12 +204,17 @@ export = {
       subscribe: filteredSubscribe(
         BranchPubsubEvents.BranchCreated,
         async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.streamId,
+            resourceAccessRules: context.resourceAccessRules,
+            resourceType: TokenResourceIdentifierType.Project
+          })
+
+          const canRead = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
+          })
+          throwIfAuthNotOk(canRead)
 
           return payload.streamId === variables.streamId
         }
@@ -167,12 +224,17 @@ export = {
       subscribe: filteredSubscribe(
         BranchPubsubEvents.BranchUpdated,
         async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.streamId,
+            resourceAccessRules: context.resourceAccessRules,
+            resourceType: TokenResourceIdentifierType.Project
+          })
+
+          const canRead = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
+          })
+          throwIfAuthNotOk(canRead)
 
           const streamMatch = payload.streamId === variables.streamId
           if (streamMatch && variables.branchId) {
@@ -187,12 +249,17 @@ export = {
       subscribe: filteredSubscribe(
         BranchPubsubEvents.BranchDeleted,
         async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.streamId,
+            resourceAccessRules: context.resourceAccessRules,
+            resourceType: TokenResourceIdentifierType.Project
+          })
+
+          const canRead = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
+          })
+          throwIfAuthNotOk(canRead)
 
           return payload.streamId === variables.streamId
         }

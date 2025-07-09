@@ -92,7 +92,7 @@ describe('Email verifications @emails', () => {
 
     const emailParams = sendEmailInvocations.args[0][0]
     expect(emailParams).to.be.ok
-    expect(emailParams.subject).to.contain('Speckle Account E-mail Verification')
+    expect(emailParams.subject).to.contain('Speckle account email verification')
 
     const verification = await getPendingToken({ email: newGuy.email })
     expect(verification).to.be.ok
@@ -157,7 +157,7 @@ describe('Email verifications @emails', () => {
 
         const emailParams = sendEmailInvocations.args[0][0]
         expect(emailParams).to.be.ok
-        expect(emailParams.subject).to.contain('Speckle Account E-mail Verification')
+        expect(emailParams.subject).to.contain('Speckle account email verification')
         expect(emailParams.html).to.be.ok
         expect(emailParams.text).to.be.ok
 

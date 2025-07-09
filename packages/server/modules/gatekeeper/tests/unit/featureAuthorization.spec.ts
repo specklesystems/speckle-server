@@ -1,5 +1,5 @@
-import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import { PaidWorkspacePlans, WorkspacePlanFeatures } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -18,24 +18,29 @@ describe('featureAuthorization @gatekeeper', () => {
     })
     ;(
       [
-        ['starter', 'expired', 'oidcSso', false],
-        ['starter', 'valid', 'oidcSso', false],
-        ['starter', 'valid', 'workspaceDataRegionSpecificity', false],
-        ['plus', 'valid', 'workspaceDataRegionSpecificity', false],
-        ['plus', 'canceled', 'oidcSso', false],
-        ['plus', 'valid', 'oidcSso', true],
-        ['business', 'valid', 'workspaceDataRegionSpecificity', true]
+        [PaidWorkspacePlans.Team, 'canceled', WorkspacePlanFeatures.SSO, false],
+        [PaidWorkspacePlans.Team, 'valid', WorkspacePlanFeatures.SSO, false],
+        [
+          PaidWorkspacePlans.Team,
+          'valid',
+          WorkspacePlanFeatures.CustomDataRegion,
+          false
+        ],
+        [PaidWorkspacePlans.Pro, 'canceled', WorkspacePlanFeatures.SSO, false],
+        [PaidWorkspacePlans.Pro, 'valid', WorkspacePlanFeatures.SSO, true],
+        [PaidWorkspacePlans.Pro, 'valid', WorkspacePlanFeatures.CustomDataRegion, true]
       ] as const
     ).forEach(([plan, status, workspaceFeature, expectedResult]) => {
       it(`returns ${expectedResult} for ${plan} @ ${status} for ${workspaceFeature}`, async () => {
         const workspaceId = cryptoRandomString({ length: 10 })
         const canWorkspaceAccessFeature = canWorkspaceAccessFeatureFactory({
-          getWorkspacePlan: async () =>
-            ({
-              name: plan,
-              status,
-              workspaceId
-            } as WorkspacePlan)
+          getWorkspacePlan: async () => ({
+            name: plan,
+            status,
+            workspaceId,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
         })
         const result = await canWorkspaceAccessFeature({
           workspaceId,

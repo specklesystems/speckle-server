@@ -27,7 +27,7 @@ The external dependencies are **PostgreSQL** and **Redis**. To get the dependenc
 
 After you have PostgreSQL and Redis running, in the `packages/server` folder:
 
-- copy the `.env-example` file to `.env`,
+- copy the `.env.example` file to `.env`,
 - (if you plan to run tests) copy the `.env.test-example` file to `.env.test`
 - If you have a custom setup, open and edit the `.env` & `.env.test` files, filling in the required variables,
 - run `yarn install`,
@@ -57,8 +57,8 @@ You can get the best DX by typing your resolvers with the `Resolvers` type and t
 
 ### Migrations
 
-To create new migrations use `yarn migrate create`. Note that migrations are only ever read from the `./dist` folder to avoid scenarious when both the TS and JS version of the same migration is executed, so if you ever create a new migration make sure
-you build the app into `/dist` if you want it to be applied.
+To create new migrations use `yarn migrate create`. Note that migrations are only ever read from the `./dist` folder to avoid scenarios when both the TS and JS version of the same migration is executed, so if you ever create a new migration make sure
+you build the app into `./dist` if you want it to be applied.
 
 ### CLI
 
@@ -72,7 +72,7 @@ Use `yarn cli bull monitor` to serve a Web UI for our Bull queues (e.g. Notifica
 
 ### Frontend
 
-- In **development** mode, the Speckle Server will proxy the frontend from `127.0.0.1:3000` to `127.0.0.1:8080`.
+- In **development** mode, the frontend is available at `http://127.0.0.1:8081`.
   If you don't see anything, ensure you've run `yarn dev` in the frontend package.
 
 - In **production** mode, the frontend is served by an `nginx` container that proxy server requests to the server (depending on the requested path). For more information about making a production deployment, check out [our detailed guide](https://speckle.guide/dev/server-setup.html)

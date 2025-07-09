@@ -1,6 +1,7 @@
 <template>
   <button
-    class="flex items-center justify-between hover:bg-highlight-1 text-foreground w-full h-full text-body-2xs sm:text-body-xs py-1 px-2 rounded-md"
+    v-tippy="description ? description : undefined"
+    class="flex items-center justify-between hover:bg-highlight-1 text-foreground w-full h-full text-body-2xs py-1.5 pr-2 pl-1 rounded-md"
     :class="{ 'bg-highlight-1': active }"
   >
     <div v-if="!hideActiveTick" class="w-5 shrink-0">
@@ -17,6 +18,7 @@
 <script setup lang="ts">
 defineProps<{
   label: string
+  description?: string
   active?: boolean
   hideActiveTick?: boolean
   shortcut?: string

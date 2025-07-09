@@ -64,7 +64,7 @@ export const isStringOfLength =
     if (!isUndefined(minLength) && val.length < minLength)
       return `Value needs to be at least ${minLength} characters long`
     if (!isUndefined(maxLength) && val.length > maxLength)
-      return `Value needs to be no more than ${maxLength} characters long`
+      return `Value can't be longer than ${maxLength} characters`
     return true
   }
 
@@ -94,6 +94,13 @@ export const isUrl: GenericValidateFunction<string> = (value) => {
 }
 
 export const isItemSelected: GenericValidateFunction<unknown[]> = (val) => {
+  if (Array.isArray(val) && val.length > 0) {
+    return true
+  }
+  return 'Value should have at least a single item selected'
+}
+
+export const isMultiItemSelected = <T>(val: T[] | unknown): true | string => {
   if (Array.isArray(val) && val.length > 0) {
     return true
   }

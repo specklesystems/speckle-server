@@ -1,7 +1,7 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { authLogger, moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import db from '@/db/knex'
 import { initializeDefaultAppsFactory } from '@/modules/auth/services/serverApps'
 import {
@@ -30,7 +30,7 @@ import azureAdStrategyBuilderFactory from '@/modules/auth/strategies/azureAd'
 import googleStrategyBuilderFactory from '@/modules/auth/strategies/google'
 import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
 import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
-import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
 import {
   countAdminUsersFactory,
@@ -54,38 +54,24 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { requestNewEmailVerificationFactory as requestNewEmailVerificationFactoryOld } from '@/modules/emails/services/verification/request.old'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { initializeEventListenerFactory } from '@/modules/auth/services/postAuth'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 
-const { FF_FORCE_EMAIL_VERIFICATION } = getFeatureFlags()
 const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = FF_FORCE_EMAIL_VERIFICATION
-  ? requestNewEmailVerificationFactory({
-      findEmail,
-      getUser: getUserFactory({ db }),
-      getServerInfo: getServerInfoFactory({ db }),
-      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-        db
-      }),
-      renderEmail,
-      sendEmail
-    })
-  : requestNewEmailVerificationFactoryOld({
-      findEmail,
-      getUser: getUserFactory({ db }),
-      getServerInfo: getServerInfoFactory({ db }),
-      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-        db
-      }),
-      renderEmail,
-      sendEmail
-    })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo: getServerInfoFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+    db
+  }),
+  renderEmail,
+  sendEmail
+})
 
 const createUser = createUserFactory({
   getServerInfo: getServerInfoFactory({ db }),
@@ -134,7 +120,9 @@ const commonBuilderDeps = {
   validateServerInvite,
   finalizeInvitedServerRegistration,
   resolveAuthRedirectPath,
-  passportAuthenticateHandlerBuilder: passportAuthenticateHandlerBuilderFactory()
+  passportAuthenticateHandlerBuilder: passportAuthenticateHandlerBuilderFactory({
+    resolveAuthRedirectPath
+  })
 }
 const setupStrategies = setupStrategiesFactory({
   githubStrategyBuilder: githubStrategyBuilderFactory({
@@ -147,17 +135,20 @@ const setupStrategies = setupStrategiesFactory({
     validateUserPassword: validateUserPasswordFactory({
       getUserByEmail: getUserByEmailFactory({ db })
     }),
-    getRateLimitResult,
-    createUser
+    createUser,
+    throwIfRateLimited: throwIfRateLimitedFactory({
+      rateLimiterEnabled: isRateLimiterEnabled()
+    })
   }),
   oidcStrategyBuilder: oidcStrategyBuilderFactory({ ...commonBuilderDeps }),
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUser: legacyGetUserFactory({ db })
+  getUser: legacyGetUserFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 
 let authStrategies: AuthStrategyMetadata[]
 
-export const init: SpeckleModule['init'] = async (app, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ app }) => {
   moduleLogger.info('🔑 Init auth module')
 
   // Initialize authn strategies
@@ -170,15 +161,6 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
   for (const scope of authScopes) {
     await registerFunc({ scope })
-  }
-
-  // Listen to event emitters
-  if (isInitial) {
-    const initializeEventListener = initializeEventListenerFactory({
-      eventBus: getEventBus(),
-      logger: authLogger
-    })
-    initializeEventListener()
   }
 }
 

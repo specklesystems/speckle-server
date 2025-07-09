@@ -7,12 +7,12 @@ import type {
 import type {
   DocumentParameter,
   OptionsParameter
-} from '@vue/apollo-composable/dist/useQuery'
+} from '@vue/apollo-composable/dist/useQuery.js'
 import { useQuery } from '@vue/apollo-composable'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
 import { isUndefined } from 'lodash-es'
-import { type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { useScopedState } from '~/lib/common/composables/scopedState'
 
 export const useApolloClientIfAvailable = () => {
@@ -68,6 +68,9 @@ type SerializableObject = {
     | SerializableObject
     | SerializableValue[]
     | SerializableObject[]
+    | Array<SerializableValue | SerializableObject>
+    | undefined
+    | null
 }
 
 type BasicCursorContainer = {
@@ -106,6 +109,8 @@ export const usePaginatedQuery = <
     | SerializableObject
     | SerializableValue[]
     | SerializableObject[]
+    | Array<SerializableValue | SerializableObject>
+
   /**
    * Predicate for resolving the current paginated result from the query result. Return undefined
    * if query hasn't finished loading yet.
@@ -136,10 +141,24 @@ export const usePaginatedQuery = <
     options,
     resolveCurrentResult,
     resolveNextPageVariables,
-    resolveInitialResult,
-    resolveCursorFromVariables
+    resolveInitialResult
   } = params
   const cacheBusterKey = ref(0)
+  const loadingCompleted = ref(false)
+
+  // can't be a computed, because we have to invoke it on the result of the fetchMore call,
+  // before the result has been merged into the cache and the results become merged with results
+  // of previous pages
+  const hasMoreToLoad = (result: BasicPaginatedResult | undefined) => {
+    if (isUndefined(result)) return true
+
+    const itemCount = result.items.length
+    const totalCount = result.totalCount
+    const hasMoreItemsAccordingToCount = itemCount < totalCount
+    const hasEmptyResponse = !result.items.length && !result.cursor?.length
+
+    return hasMoreItemsAccordingToCount && !hasEmptyResponse
+  }
 
   const useQueryReturn = useQuery(query, baseVariables, options || {})
   const queryKey = computed(
@@ -149,14 +168,10 @@ export const usePaginatedQuery = <
   const currentResult = computed(() =>
     resolveCurrentResult(useQueryReturn.result.value)
   )
-  const hasMoreToLoad = computed(() => {
-    const currentRes = currentResult.value
-    if (isUndefined(currentRes)) return true
 
-    const itemCount = currentRes.items.length
-    const totalCount = currentRes.totalCount
-    return itemCount < totalCount
-  })
+  const isVeryFirstLoading = computed(
+    () => useQueryReturn.loading.value && !currentResult.value?.items.length
+  )
 
   const getCursorForNextPage = () => {
     const currRes = currentResult.value
@@ -168,13 +183,20 @@ export const usePaginatedQuery = <
   }
 
   const onInfiniteLoad = async (state: InfiniteLoaderState) => {
+    const loadComplete = () => {
+      state.complete()
+      loadingCompleted.value = true
+    }
+
     const cursor = getCursorForNextPage()
-    if (!hasMoreToLoad.value || !cursor) return state.complete()
+    let loadMore = hasMoreToLoad(currentResult.value)
+    if (!loadMore || !cursor) return loadComplete()
 
     try {
-      await useQueryReturn.fetchMore({
+      const res = await useQueryReturn.fetchMore({
         variables: resolveNextPageVariables(baseVariables.value, cursor)
       })
+      loadMore = hasMoreToLoad(resolveCurrentResult(res?.data))
     } catch (e) {
       logger.error(e)
       state.error()
@@ -182,23 +204,25 @@ export const usePaginatedQuery = <
     }
 
     state.loaded()
-    if (!hasMoreToLoad.value) {
-      state.complete()
+    if (!loadMore) {
+      loadComplete()
     }
   }
 
   const bustCache = () => {
     cacheBusterKey.value++
+    loadingCompleted.value = false
   }
 
-  // If for some reason the query is invoked w/ baseVariables & null cursor, we should bust the cache,
-  // & reset loader state, cause a refetch was triggered for some reason (maybe a cache eviction)
-  useQueryReturn.onResult(() => {
-    const vars = useQueryReturn.variables.value
-    const cursor = vars ? resolveCursorFromVariables(vars) : undefined
+  // If after the query runs there is still more to load, but loading is marked as complete (which can happen
+  // if cache is evicted and initial query reruns) - we should bust the cache,
+  // & reset loader state, so infinite loader restarts
+  useQueryReturn.onResult((res) => {
+    if (res.loading) return
 
-    if (!cursor) {
-      // TODO: Maybe add check to skip this on initial result? Lets see how well this works first
+    // If more to load & loading completed, bust cache
+    const moreToLoad = hasMoreToLoad(resolveCurrentResult(res?.data))
+    if (moreToLoad && loadingCompleted.value) {
       bustCache()
     }
   })
@@ -207,7 +231,8 @@ export const usePaginatedQuery = <
     query: useQueryReturn,
     identifier: queryKey,
     onInfiniteLoad,
-    bustCache
+    bustCache,
+    isVeryFirstLoading
   }
 }
 

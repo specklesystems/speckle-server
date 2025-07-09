@@ -250,6 +250,9 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
             const rand = faker.datatype.boolean()
             return getMockRef('LimitedUser', { id: !rand ? ctx.userId : undefined })
           }),
+          repo: resolveAndCache(() => {
+            return {}
+          }),
           releases: () => store.get('AutomateFunctionReleaseCollection') as any
         },
         AutomateFunctionRelease: {
@@ -298,15 +301,20 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
               ? faker.image.imageUrl(undefined, undefined, undefined, true)
               : null
           },
-          repoUrl: () =>
-            'https://github.com/specklesystems/speckle-automate-code-compliance-window-safety',
+          repo: {
+            url: 'https://github.com/specklesystems/speckle-automate-code-compliance-window-safety',
+            owner: 'specklesystems',
+            name: 'speckle-automate-code-compliance-window-safety'
+          },
           automationCount: () => faker.number.int({ min: 0, max: 99 }),
           description: () => {
             // Example markdown description
-            return `# ${faker.commerce.productName()}\n${faker.lorem.paragraphs(
-              1,
-              '\n\n'
-            )}\n## Features \n- ${faker.lorem.sentence()}\n - ${faker.lorem.sentence()}\n - ${faker.lorem.sentence()}`
+            // return [
+            //   '# Header',
+            //   '## Subheader',
+            //   'Some body copy and a [link to somewhere](https://google.com)'
+            // ].join('\n')
+            return faker.lorem.sentence(20)
           },
           supportedSourceApps: () => {
             const base = SourceAppNames
@@ -347,7 +355,23 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
                 },
                 'Required Boolean': {
                   description: faker.lorem.sentence(5),
+                  default: true,
                   type: 'boolean'
+                },
+                Enum: {
+                  description: faker.lorem.sentence(5),
+                  type: 'string',
+                  default: 'bar',
+                  oneOf: [
+                    {
+                      const: 'foo',
+                      title: 'FOO'
+                    },
+                    {
+                      const: 'bar',
+                      title: 'BAR'
+                    }
+                  ]
                 },
                 Integer: {
                   description: faker.lorem.sentence(5),
@@ -355,6 +379,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
                 },
                 'Required Integer': {
                   description: faker.lorem.sentence(5),
+                  default: 2,
                   type: 'integer'
                 },
                 String: {
@@ -363,6 +388,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
                 },
                 'Required String': {
                   description: faker.lorem.sentence(5),
+                  default: 'Foobar',
                   type: 'string'
                 }
               },

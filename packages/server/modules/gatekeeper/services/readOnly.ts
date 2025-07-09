@@ -1,22 +1,7 @@
-import { GetWorkspacePlan, WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { GetWorkspacePlanByProjectId } from '@/modules/gatekeeper/domain/operations'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
-import { throwUncoveredError } from '@speckle/shared'
-
-const isWorkspacePlanStatusReadOnly = (status: WorkspacePlan['status']) => {
-  switch (status) {
-    case 'cancelationScheduled':
-    case 'valid':
-    case 'trial':
-    case 'paymentFailed':
-      return false
-    case 'expired':
-    case 'canceled':
-      return true
-    default:
-      throwUncoveredError(status)
-  }
-}
+import { isWorkspacePlanStatusReadOnly } from '@speckle/shared'
 
 export const isWorkspaceReadOnlyFactory =
   ({ getWorkspacePlan }: { getWorkspacePlan: GetWorkspacePlan }) =>

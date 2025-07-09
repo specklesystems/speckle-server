@@ -26,14 +26,16 @@ import FormRadio from '~~/src/components/form/Radio.vue'
 import FormRadioGroup from '~~/src/components/form/RadioGroup.vue'
 import FormTextArea from '~~/src/components/form/TextArea.vue'
 import FormTextInput from '~~/src/components/form/TextInput.vue'
-import * as ValidationHelpers from '~~/src/helpers/common/validation'
+import * as ValidationHelpers from './helpers/common/validation' // dts plugin bug, hence the relative path
 import { useWrappingContainerHiddenCount } from '~~/src/composables/layout/resize'
 import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import FormSelectBadges from '~~/src/components/form/select/Badges.vue'
+import FormSelectMulti from '~~/src/components/form/select/Multi.vue'
 import FormSwitch from '~~/src/components/form/Switch.vue'
 import FormClipboardInput from '~~/src/components/form/ClipboardInput.vue'
+import FormCodeInput from '~~/src/components/form/CodeInput.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
 import { onKeyboardShortcut, useFormCheckboxModel } from '~~/src/composables/form/input'
@@ -85,13 +87,20 @@ import UserAvatar from '~~/src/components/user/Avatar.vue'
 import UserAvatarGroup from '~~/src/components/user/AvatarGroup.vue'
 import UserAvatarEditable from '~~/src/components/user/AvatarEditable.vue'
 import FormFileUploadZone from '~~/src/components/form/file-upload/Zone.vue'
-import { BlobUploadStatus } from '~~/src/composables/form/fileUpload'
-import type {
-  UploadableFileItem,
-  UploadFileItem,
-  BlobPostResultItem
+import {
+  type UploadableFileItem,
+  type UploadFileItem,
+  type BlobPostResultItem,
+  FileTooLargeError
 } from '~~/src/composables/form/fileUpload'
-import { UniqueFileTypeSpecifier, prettyFileSize } from '~~/src/helpers/form/file'
+import {
+  MissingFileExtensionError,
+  ForbiddenFileTypeError,
+  UniqueFileTypeSpecifier,
+  prettyFileSize,
+  resolveFileExtension,
+  generateFileId
+} from '~~/src/helpers/form/file'
 import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
 export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
@@ -103,10 +112,12 @@ export type { UserAvatarSize } from '~~/src/composables/user/avatar'
 import CommonProgressBar from '~~/src/components/common/ProgressBar.vue'
 
 export {
+  MissingFileExtensionError,
+  ForbiddenFileTypeError,
+  FileTooLargeError,
   CommonLoadingIcon,
   UniqueFileTypeSpecifier,
   prettyFileSize,
-  BlobUploadStatus,
   FormFileUploadZone,
   UserAvatar,
   UserAvatarGroup,
@@ -129,12 +140,14 @@ export {
   FormTextInput,
   FormSwitch,
   FormClipboardInput,
+  FormCodeInput,
   ValidationHelpers,
   useWrappingContainerHiddenCount,
   useFormSelectChildInternals,
   FormSelectBase,
   FormSelectBadges,
   FormSelectSourceApps,
+  FormSelectMulti,
   CommonLoadingBar,
   SourceAppBadge,
   onKeyboardShortcut,
@@ -169,7 +182,9 @@ export {
   keyboardClick,
   useDebouncedTextInput,
   buildManualPromise,
-  CommonProgressBar
+  CommonProgressBar,
+  resolveFileExtension,
+  generateFileId
 }
 export type {
   LayoutDialogButton,

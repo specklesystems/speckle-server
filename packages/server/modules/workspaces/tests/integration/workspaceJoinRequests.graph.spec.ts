@@ -1,33 +1,17 @@
 import { db } from '@/db/knex'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import { createTestUser, login } from '@/test/authHelper'
 import {
-  BasicTestUser,
-  createAuthTokenForUser,
-  createTestUser
-} from '@/test/authHelper'
-import {
+  DismissWorkspaceDocument,
+  GetActiveUserWithWorkspaceJoinRequestsDocument,
   GetWorkspaceWithJoinRequestsDocument,
   RequestToJoinWorkspaceDocument
 } from '@/test/graphql/generated/graphql'
-import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { AllScopes, Roles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import { upsertWorkspaceRoleFactory } from '@/modules/workspaces/repositories/workspaces'
-
-async function login(user: BasicTestUser) {
-  const token = await createAuthTokenForUser(user.id, AllScopes)
-  return await testApolloServer({
-    context: await createTestContext({
-      auth: true,
-      userId: user.id,
-      token,
-      role: user.role,
-      scopes: AllScopes
-    })
-  })
-}
 
 before(async () => {
   await beforeEachContext()
@@ -64,6 +48,15 @@ describe('WorkspaceJoinRequests GQL', () => {
         discoverabilityEnabled: true
       }
       await createTestWorkspace(workspace1, admin, { domain: 'example.org' })
+
+      const dismissedWorkspace = {
+        id: createRandomString(),
+        name: 'should not be visible',
+        ownerId: admin.id,
+        description: '',
+        discoverabilityEnabled: true
+      }
+      await createTestWorkspace(dismissedWorkspace, admin, { domain: 'example.org' })
 
       const workspace2 = {
         id: createRandomString(),
@@ -116,6 +109,23 @@ describe('WorkspaceJoinRequests GQL', () => {
       })
       expect(joinReq2).to.not.haveGraphQLErrors()
 
+      // User requests to join dismissedWorkspace
+      const joinReqDismissed = await sessionUser2.execute(
+        RequestToJoinWorkspaceDocument,
+        {
+          input: {
+            workspaceId: dismissedWorkspace.id
+          }
+        }
+      )
+      expect(joinReqDismissed).to.not.haveGraphQLErrors()
+      const dismissReq = await sessionUser2.execute(DismissWorkspaceDocument, {
+        input: {
+          workspaceId: dismissedWorkspace.id
+        }
+      })
+      expect(dismissReq).to.not.haveGraphQLErrors()
+
       const sessionAdmin = await login(admin)
       const workspace1Res = await sessionAdmin.execute(
         GetWorkspaceWithJoinRequestsDocument,
@@ -152,6 +162,117 @@ describe('WorkspaceJoinRequests GQL', () => {
       expect(items2[0].status).to.equal('pending')
       expect(items2[0].workspace.id).to.equal(workspace2.id)
       expect(items2[0].user.id).to.equal(user2.id)
+
+      const workspaceDismissedRes = await sessionAdmin.execute(
+        GetWorkspaceWithJoinRequestsDocument,
+        {
+          workspaceId: dismissedWorkspace.id
+        }
+      )
+      expect(workspaceDismissedRes).to.not.haveGraphQLErrors()
+      const { items: itemsDismissed, totalCount: totalCountDismissed } =
+        workspaceDismissedRes.data!.workspace!.adminWorkspacesJoinRequests!
+
+      expect(totalCountDismissed).to.equal(0)
+      expect(itemsDismissed).to.have.length(0)
+    })
+  })
+
+  describe('User.workspaceJoinRequests', () => {
+    it('should return the workspace join requests for the user', async () => {
+      const admin = await createTestUser({
+        name: 'admin user',
+        role: Roles.Server.User,
+        email: `${createRandomString()}@example.org`,
+        verified: true
+      })
+
+      const user = await createTestUser({
+        name: 'user 1',
+        role: Roles.Server.User,
+        email: `${createRandomString()}@example.org`,
+        verified: true
+      })
+
+      const workspace1 = {
+        id: createRandomString(),
+        name: 'Workspace 1',
+        ownerId: admin.id,
+        description: '',
+        discoverabilityEnabled: true
+      }
+      await createTestWorkspace(workspace1, admin, { domain: 'example.org' })
+
+      const workspace2 = {
+        id: createRandomString(),
+        name: 'Workspace 2',
+        ownerId: admin.id,
+        description: '',
+        discoverabilityEnabled: true
+      }
+      await createTestWorkspace(workspace2, admin, { domain: 'example.org' })
+
+      const workspaceDismissed = {
+        id: createRandomString(),
+        name: 'should not see',
+        ownerId: admin.id,
+        description: '',
+        discoverabilityEnabled: true
+      }
+      await createTestWorkspace(workspaceDismissed, admin, { domain: 'example.org' })
+
+      const sessionUser = await login(user)
+
+      // User requests to join workspace1
+      const joinReq1 = await sessionUser.execute(RequestToJoinWorkspaceDocument, {
+        input: {
+          workspaceId: workspace1.id
+        }
+      })
+      expect(joinReq1).to.not.haveGraphQLErrors()
+
+      // User requests to join workspace2
+      const joinReq2 = await sessionUser.execute(RequestToJoinWorkspaceDocument, {
+        input: {
+          workspaceId: workspace2.id
+        }
+      })
+      expect(joinReq2).to.not.haveGraphQLErrors()
+
+      // User requests to join workspaceDismissed
+      const joinReqDismissed = await sessionUser.execute(
+        RequestToJoinWorkspaceDocument,
+        {
+          input: {
+            workspaceId: workspaceDismissed.id
+          }
+        }
+      )
+      expect(joinReqDismissed).to.not.haveGraphQLErrors()
+      const dismissReq = await sessionUser.execute(DismissWorkspaceDocument, {
+        input: {
+          workspaceId: workspaceDismissed.id
+        }
+      })
+      expect(dismissReq).to.not.haveGraphQLErrors()
+
+      const res = await sessionUser.execute(
+        GetActiveUserWithWorkspaceJoinRequestsDocument,
+        {}
+      )
+      expect(res).to.not.haveGraphQLErrors()
+
+      const { items, totalCount } = res.data!.activeUser!.workspaceJoinRequests!
+
+      expect(totalCount).to.equal(2)
+
+      expect(items).to.have.length(2)
+      expect(items[0].status).to.equal('pending')
+      expect(items[0].workspace.id).to.equal(workspace2.id)
+      expect(items[0].user.id).to.equal(user.id)
+      expect(items[1].status).to.equal('pending')
+      expect(items[1].workspace.id).to.equal(workspace1.id)
+      expect(items[1].user.id).to.equal(user.id)
     })
   })
 })

@@ -14,8 +14,8 @@ import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/gra
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useZapier } from '~/lib/core/composables/zapier'
-import { defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment BillingActions_Workspace on Workspace {
@@ -49,10 +49,14 @@ export const useBillingActions = () => {
   const { mutate: cancelCheckoutSessionMutation } = useMutation(
     settingsBillingCancelCheckoutSessionMutation
   )
-  const { sendWebhook } = useZapier()
+  const logger = useLogger()
+  const { $intercom } = useNuxtApp()
 
-  const billingPortalRedirect = async (workspaceId?: string) => {
-    if (!workspaceId) return
+  const billingPortalRedirect = async (workspaceId: MaybeNullOrUndefined<string>) => {
+    if (!workspaceId) {
+      logger.error('[Billing Portal] No workspaceId provided, returning early')
+      return
+    }
 
     mixpanel.track('Workspace Billing Portal Button Clicked', {
       // eslint-disable-next-line camelcase
@@ -67,7 +71,12 @@ export const useBillingActions = () => {
     })
 
     if (result.data?.workspace.customerPortalUrl) {
-      window.location.href = result.data.workspace.customerPortalUrl
+      window.open(result.data.workspace.customerPortalUrl, '_blank')
+    } else {
+      logger.warn(
+        '[Billing Portal] No portal URL returned, full response:',
+        result.data
+      )
     }
   }
 
@@ -112,12 +121,6 @@ export const useBillingActions = () => {
     workspaceId: string
   }) => {
     const { plan, cycle, workspaceId } = args
-    mixpanel.track('Workspace Upgrade Button Clicked', {
-      plan,
-      cycle,
-      // eslint-disable-next-line camelcase
-      workspace_id: workspaceId
-    })
 
     const result = await apollo
       .mutate({
@@ -154,19 +157,24 @@ export const useBillingActions = () => {
       .catch(convertThrowIntoFetchResult)
 
     if (result.data) {
-      mixpanel.track('Workspace Upgraded', {
+      const metaData = {
         plan,
         cycle,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
+      }
+      $intercom.track('Workspace Upgraded', {
+        ...metaData,
+        isExistingSubscription: false
       })
+      $intercom.updateCompany()
 
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace plan upgraded',
         description: `Your workspace is now on ${
           cycle === BillingInterval.Yearly ? 'an annual' : 'a monthly'
-        } ${plan} plan`
+        } ${formatName(plan)} plan`
       })
     } else {
       const errMsg = getFirstGqlErrorMessage(result?.errors)
@@ -188,9 +196,7 @@ export const useBillingActions = () => {
     })
   }
 
-  const validateCheckoutSession = async (
-    workspace: BillingActions_WorkspaceFragment
-  ) => {
+  const validateCheckoutSession = (workspace: BillingActions_WorkspaceFragment) => {
     const sessionIdQuery = route.query?.session_id
     const paymentStatusQuery = route.query?.payment_status
 
@@ -212,25 +218,18 @@ export const useBillingActions = () => {
           title: 'Your workspace plan was successfully updated'
         })
 
-        mixpanel.track('Workspace Upgraded', {
+        const metaData = {
           plan: workspace.plan?.name,
           cycle: workspace.subscription?.billingInterval,
           // eslint-disable-next-line camelcase
           workspace_id: workspace.id
-        })
-
-        if (import.meta.server) {
-          await sendWebhook(defaultZapierWebhookUrl, {
-            workspaceId: workspace.id,
-            workspaceName: workspace.name,
-            plan: workspace.plan?.name ?? '',
-            cycle: workspace.subscription?.billingInterval ?? '',
-            status: WorkspacePlanStatuses.Valid,
-            invitedTeamCount: workspace.invitedTeam?.length ?? 0,
-            teamCount: workspace.team?.totalCount ?? 0,
-            defaultRegion: workspace.defaultRegion?.name ?? ''
-          })
         }
+
+        $intercom.track('Workspace Upgraded', {
+          ...metaData,
+          isExistingSubscription: false
+        })
+        $intercom.updateCompany()
       }
 
       const currentQueryParams = { ...route.query }

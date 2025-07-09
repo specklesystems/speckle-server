@@ -1,9 +1,11 @@
+import { Project } from '@/modules/core/domain/streams/types'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
 import { ResourceTargetTypeRoleTypeMap } from '@/modules/serverinvites/helpers/core'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { ServerRoles, StreamRoles } from '@speckle/shared'
 
 export interface InviteResourceTargetTypeMap {
@@ -35,6 +37,17 @@ export type PrimaryInviteResourceTarget<
    * If invite also has secondary resource targets, you can specify the expected roles here
    */
   secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
+
+  /**
+   * Whether the invite should be auto accepted or not. If this is true, no invite is actually created or email sent,
+   * and the accept process is done automatically without user involvement.
+   */
+  autoAccept?: boolean
+
+  /**
+   * If invite causes the user to join a workspace, this should be the assigned seat type
+   */
+  workspaceSeatType?: WorkspaceSeatType
 }
 
 export type ServerInviteResourceTarget = InviteResourceTarget<
@@ -58,4 +71,11 @@ export type ServerInviteRecord<
   message: Nullable<string>
   resource: PrimaryInviteResourceTarget<Resource>
   token: string
+}
+
+export type ExtendedInvite<
+  Resource extends InviteResourceTarget = InviteResourceTarget
+> = ServerInviteRecord<Resource> & {
+  workspace?: Workspace
+  project?: Project
 }

@@ -11,12 +11,23 @@
           Something went wrong with your payment. Please try again.
         </template>
       </CommonAlert>
+      <CommonAlert
+        v-if="!canClickCreate"
+        color="danger"
+        class="w-lg mb-6 max-w-lg mx-auto"
+      >
+        <template #title>
+          {{ cantClickCreateReason }}
+        </template>
+      </CommonAlert>
       <WorkspaceWizardStepDetails
         v-if="currentStep === WizardSteps.Details"
         :disable-slug-edit="!!workspaceId"
+        :disabled="!canClickCreate"
       />
-      <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
       <WorkspaceWizardStepPricing v-else-if="currentStep === WizardSteps.Pricing" />
+      <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
+      <WorkspaceWizardStepAddOns v-else-if="currentStep === WizardSteps.AddOns" />
       <WorkspaceWizardStepRegion v-else-if="currentStep === WizardSteps.Region" />
     </template>
   </div>
@@ -31,6 +42,7 @@ import type { WorkspaceWizardState } from '~~/lib/workspaces/helpers/types'
 import { PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { useCanCreateWorkspace } from '~/lib/projects/composables/permissions'
 
 graphql(`
   fragment WorkspaceWizard_Workspace on Workspace {
@@ -51,6 +63,8 @@ const { cancelCheckoutSession } = useBillingActions()
 const route = useRoute()
 const mixpanel = useMixpanel()
 const { goToStep, currentStep, isLoading, state } = useWorkspacesWizard()
+
+const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace()
 
 const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,
@@ -79,13 +93,21 @@ onResult((result) => {
       id: props.workspaceId ?? (route.query.workspaceId as string)
     }
 
-    // If the users comes back from Stripe, we need to go to the last relevant step and show an error
+    // If the user comes back from Stripe, we need to go to the last relevant step and show an error
     if (route.query.workspaceId as string) {
-      goToStep(
-        newState.plan === PaidWorkspacePlans.Business
-          ? WizardSteps.Region
-          : WizardSteps.Pricing
-      )
+      if (
+        newState.plan === PaidWorkspacePlans.Pro ||
+        newState.plan === PaidWorkspacePlans.ProUnlimited
+      ) {
+        goToStep(WizardSteps.Region)
+      } else if (
+        newState.plan === PaidWorkspacePlans.Team ||
+        newState.plan === PaidWorkspacePlans.TeamUnlimited
+      ) {
+        goToStep(WizardSteps.AddOns)
+      } else {
+        goToStep(WizardSteps.Pricing)
+      }
 
       if (route.query.payment_status === 'canceled' && props.workspaceId) {
         showPaymentError.value = true

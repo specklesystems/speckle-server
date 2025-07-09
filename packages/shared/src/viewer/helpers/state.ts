@@ -2,10 +2,14 @@ import { intersection, isObjectLike } from '#lodash'
 import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes.js'
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors/index.js'
+import { coerceUndefinedValuesToNull } from '../../core/index.js'
 
+/** Redefining these is unfortunate. Especially since they are not part of viewer-core */
 enum MeasurementType {
   PERPENDICULAR = 0,
-  POINTTOPOINT = 1
+  POINTTOPOINT = 1,
+  AREA = 2,
+  POINT = 3
 }
 
 interface MeasurementOptions {
@@ -14,6 +18,13 @@ interface MeasurementOptions {
   vertexSnap?: boolean
   units?: string
   precision?: number
+  chain?: boolean
+}
+
+export interface SectionBoxData {
+  min: number[]
+  max: number[]
+  rotation?: number[]
 }
 
 /**
@@ -22,8 +33,10 @@ interface MeasurementOptions {
  * - ui.spotlightUserId swapped for spotlightUserSessionId
  * v1.1 -> v1.2
  * - ui.diff added
+ * v1.2 -> v1.3
+ * - ui.filters.selectedObjectIds removed in favor of ui.filters.selectedObjectApplicationIds
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.2
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.3
 
 export type SerializedViewerState = {
   projectId: string
@@ -62,7 +75,8 @@ export type SerializedViewerState = {
     filters: {
       isolatedObjectIds: string[]
       hiddenObjectIds: string[]
-      selectedObjectIds: string[]
+      /** Map of object id => application id or null, if no application id */
+      selectedObjectApplicationIds: Record<string, string | null>
       propertyFilter: {
         key: Nullable<string>
         isApplied: boolean
@@ -75,10 +89,7 @@ export type SerializedViewerState = {
       zoom: number
     }
     viewMode: number
-    sectionBox: Nullable<{
-      min: number[]
-      max: number[]
-    }>
+    sectionBox: Nullable<SectionBoxData>
     lightConfig: {
       intensity?: number
       indirectLightIntensity?: number
@@ -94,7 +105,16 @@ export type SerializedViewerState = {
   }
 }
 
-type UnformattedState = PartialDeep<SerializedViewerState>
+type UnformattedState = PartialDeep<
+  SerializedViewerState & {
+    // Properties removed from earlier viewer state versions
+    ui: {
+      filters: {
+        selectedObjectIds: string[]
+      }
+    }
+  }
+>
 
 /**
  * Note: This only does superficial validation. To really ensure that all of the keys are there, even if prefilled with default values, make sure you invoke
@@ -135,6 +155,18 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
   const measurementOptions = {
     ...defaultMeasurementOptions,
     ...state.ui?.measurement?.options
+  }
+
+  const selectedObjectApplicationIds = {
+    // Parse legacy object ids array as object
+    ...(state.ui?.filters?.selectedObjectIds?.reduce((ret, id) => {
+      ret[id] = null
+      return ret
+    }, {} as Record<string, string | null>) ?? {}),
+    // Sanitize incoming object
+    ...coerceUndefinedValuesToNull(
+      state.ui?.filters?.selectedObjectApplicationIds || {}
+    )
   }
 
   return {
@@ -185,7 +217,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         ...(state.ui?.filters || {}),
         isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
         hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
-        selectedObjectIds: state.ui?.filters?.selectedObjectIds || [],
+        selectedObjectApplicationIds,
         propertyFilter: {
           ...(state.ui?.filters?.propertyFilter || {}),
           key: state.ui?.filters?.propertyFilter?.key || null,
@@ -202,10 +234,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       viewMode: state.ui?.viewMode || 0,
       sectionBox:
         state.ui?.sectionBox?.min?.length && state.ui?.sectionBox.max?.length
-          ? {
-              min: state.ui.sectionBox.min,
-              max: state.ui.sectionBox.max
-            }
+          ? // Complains otherwise
+            (state.ui.sectionBox as SectionBoxData)
           : null,
       lightConfig: {
         ...(state.ui?.lightConfig || {}),

@@ -25,6 +25,7 @@ import Materials from '../materials/Materials.js'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.js'
 import { SpeckleRaycaster } from './SpeckleRaycaster.js'
 import Logger from '../utils/Logger.js'
+import { getNextBatchIndex } from '../batching/Batch.js'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -67,9 +68,11 @@ export default class SpeckleMesh extends Mesh {
   private batchMaterialStack: Array<Material> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
-  private _batchObjects!: BatchObject[]
+  private _batchObjects: BatchObject[]
+  private _batchIndex: number
+  private _needsRTE: boolean
   private transformsBuffer: Float32Array | undefined = undefined
-  private transformStorage!: TransformStorage
+  private transformStorage: TransformStorage
 
   public transformsTextureUniform: DataTexture
   public transformsArrayUniforms: Matrix4[] | null = null
@@ -82,8 +85,18 @@ export default class SpeckleMesh extends Mesh {
     return this._batchObjects
   }
 
-  constructor(geometry: BufferGeometry) {
+  public get batchIndex(): number {
+    return this._batchIndex
+  }
+
+  public get needsRTE(): boolean {
+    return this._needsRTE
+  }
+
+  constructor(geometry: BufferGeometry, RTE = false) {
     super(geometry)
+    this._batchIndex = getNextBatchIndex()
+    this._needsRTE = RTE
   }
 
   public setBatchMaterial(material: Material) {
@@ -154,6 +167,10 @@ export default class SpeckleMesh extends Mesh {
     let cachedMaterial = this.lookupMaterial(material)
     if (!cachedMaterial) {
       const clone = material.clone()
+      if (this._needsRTE) {
+        if (!clone.defines) clone.defines = {}
+        clone.defines['USE_RTE'] = ' '
+      }
       this.materialCache[material.id] = clone
       this.materialCacheLUT[clone.id] = material.id
       cachedMaterial = clone

@@ -25,7 +25,7 @@ import {
   ProjectPendingVersionsUpdatedMessageType,
   ProjectVersionsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
-import { modelRoute } from '~~/lib/common/helpers/route'
+import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import {
   onProjectPendingVersionsUpdatedSubscription,
   onProjectVersionsUpdateSubscription
@@ -49,6 +49,10 @@ import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelMan
 import { intersection, isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
+import {
+  useFailedFileImportJobUtils,
+  useGlobalFileImportManager
+} from '~/lib/core/composables/fileImport'
 
 export function useProjectVersionUpdateTracking(
   projectId: MaybeRef<string>,
@@ -85,10 +89,12 @@ export function useProjectVersionUpdateTracking(
     const event = res.data.projectVersionsUpdated
     const version = event.version
     if (
-      [
-        ProjectVersionsUpdatedMessageType.Created,
-        ProjectVersionsUpdatedMessageType.Updated
-      ].includes(event.type) &&
+      (
+        [
+          ProjectVersionsUpdatedMessageType.Created,
+          ProjectVersionsUpdatedMessageType.Updated
+        ] as string[]
+      ).includes(event.type) &&
       version
     ) {
       // Added new model w/ versions OR updated model that now has versions (it might not have had them previously)
@@ -555,7 +561,11 @@ export function useMoveVersions() {
       const deleteCount = input.versionIds.length
       triggerNotification({
         type: ToastNotificationType.Info,
-        title: `${deleteCount} version${deleteCount > 1 ? 's' : ''} moved`
+        title: `${deleteCount} version${deleteCount > 1 ? 's' : ''} moved`,
+        cta: {
+          title: 'View versions',
+          url: modelVersionsRoute(input.projectId, data.versionMutations.moveToModel.id)
+        }
       })
     } else {
       const errMsg = getFirstErrorMessage(errors)
@@ -616,6 +626,10 @@ export function useProjectPendingVersionUpdateTracking(
   const { hasLock } = useLock(
     computed(() => `useProjectPendingVersionUpdateTracking-${unref(projectId)}`)
   )
+
+  const { addFailedJob } = useGlobalFileImportManager()
+  const { convertUploadToFailedJob } = useFailedFileImportJobUtils()
+  const { userId } = useActiveUser()
   const isEnabled = computed(() => !!(hasLock.value || handler))
   const { onResult: onProjectPendingVersionsUpdate } = useSubscription(
     onProjectPendingVersionsUpdatedSubscription,
@@ -626,7 +640,6 @@ export function useProjectPendingVersionUpdateTracking(
   )
 
   const apollo = useApolloClient().client
-  const { triggerNotification } = useGlobalToast()
 
   onProjectPendingVersionsUpdate((res) => {
     if (!res.data?.projectPendingVersionsUpdated.id || !hasLock.value) return
@@ -673,13 +686,10 @@ export function useProjectPendingVersionUpdateTracking(
           { fieldNameWhitelist: ['pendingImportedVersions'] }
         )
       } else if (failure) {
-        triggerNotification({
-          type: ToastNotificationType.Danger,
-          title: 'File import failed',
-          description:
-            event.version.convertedMessage ||
-            `${event.version.modelName} version could not be imported`
-        })
+        // Report w/ dialog to uploader user
+        if (event.version.userId === userId.value) {
+          addFailedJob(convertUploadToFailedJob(event.version))
+        }
       }
     }
   })

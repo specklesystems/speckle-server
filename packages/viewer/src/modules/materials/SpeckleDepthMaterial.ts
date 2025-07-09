@@ -78,9 +78,8 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
       this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
       this.userData.rteModelViewMatrix.value.copy(_this.RTEBuffers.rteViewModelMatrix)
+      this.needsUpdate = true
     }
-
-    this.needsUpdate = true
   }
 }
 

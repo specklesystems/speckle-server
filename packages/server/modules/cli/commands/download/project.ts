@@ -1,5 +1,5 @@
 import { CommandModule } from 'yargs'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
@@ -19,7 +19,6 @@ import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/ma
 import {
   getObjectFactory,
   getStreamObjectsFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
@@ -27,10 +26,6 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
-import {
-  addCommentCreatedActivityFactory,
-  addReplyAddedActivityFactory
-} from '@/modules/activitystream/services/commentActivity'
 import {
   createCommitFactory,
   getAllBranchCommitsFactory,
@@ -46,7 +41,7 @@ import {
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { db, mainDb } from '@/db/knex'
+import { db } from '@/db/knex'
 import {
   getCommentFactory,
   getCommentsResourcesFactory,
@@ -57,17 +52,16 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
-import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  createNewProjectFactory,
+  waitForRegionProjectFactory
+} from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
   getProjectFactory,
@@ -169,13 +163,7 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      emitEvent: getEventBus().emit,
-      addCommentCreatedActivity: addCommentCreatedActivityFactory({
-        getViewerResourcesFromLegacyIdentifiers,
-        getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
       getComment: getCommentFactory({ db: projectDb }),
@@ -184,13 +172,9 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
       emitEvent: getEventBus().emit,
-      addReplyAddedActivity: addReplyAddedActivityFactory({
-        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
-          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
-          getViewerResourcesFromLegacyIdentifiers
-        }),
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
+      getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+        getViewerResourcesFromLegacyIdentifiers
       })
     })
 
@@ -202,30 +186,27 @@ const command: CommandModule<
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-      emitEvent: getEventBus().emit,
-      addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
 
     const getUser = getUserFactory({ db })
 
     const createNewProject = createNewProjectFactory({
       storeProject: storeProjectFactory({ db: projectDb }),
-      getProject: getProjectFactory({ db: projectDb }),
-      deleteProject: deleteProjectFactory({ db: projectDb }),
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
+      waitForRegionProject: waitForRegionProjectFactory({
+        getProject: getProjectFactory({ db: projectDb }),
+        deleteProject: deleteProjectFactory({ db: projectDb })
+      }),
       emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({
       storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
         db: projectDb
-      }),
-      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+      })
     })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
@@ -247,13 +228,10 @@ const command: CommandModule<
       createBranchAndNotify: createBranchAndNotifyFactory({
         getStreamBranchByName,
         createBranch: createBranchFactory({ db: projectDb }),
-        addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db: mainDb }),
-          publish
-        })
+        eventEmit: getEventBus().emit
       })
     })
-    await downloadProject({ ...argv, regionKey }, { logger: cliLogger })
+    await downloadProject({ ...argv, regionKey }, { logger })
   }
 }
 

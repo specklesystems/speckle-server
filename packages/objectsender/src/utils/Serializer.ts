@@ -1,10 +1,10 @@
 /* eslint-disable camelcase */
-import { SHA1 } from './Sha1'
 import { ITransport } from '../transports/ITransport'
 import { Base } from './Base'
 import { IDisposable } from './IDisposable'
 import { isObjectLike, get } from '#lodash'
 import { getChunkSize, isChunkable, isDetached } from './Decorators'
+import { md5 } from '@speckle/shared'
 
 type BasicSpeckleObject = Record<string, unknown> & {
   speckle_type: string
@@ -26,7 +26,7 @@ export class Serializer implements IDisposable {
   constructor(
     transport: ITransport,
     chunkSize: number = 1000,
-    hashingFunction: (s: string) => string = SHA1
+    hashingFunction: (s: string) => string = md5
   ) {
     this.chunkSize = chunkSize
     this.detachLineage = [true] // first ever call is always detached
@@ -35,7 +35,7 @@ export class Serializer implements IDisposable {
     this.closureTable = {}
     this.transport = transport
     this.uniqueId = 0
-    this.hashingFunction = hashingFunction || SHA1
+    this.hashingFunction = hashingFunction || md5
   }
 
   async write(obj: Base) {
@@ -57,7 +57,7 @@ export class Serializer implements IDisposable {
       if (value === undefined || propKey === 'id' || propKey.startsWith('_')) continue
 
       // 1. primitives (numbers, bools, strings)
-      if (typeof value !== 'object') {
+      if (value === null || typeof value !== 'object') {
         traversed[propKey] = value
         continue
       }
@@ -144,7 +144,7 @@ export class Serializer implements IDisposable {
 
     // Pop it in
     if ((detached || root) && this.transport) {
-      await this.transport.write(serializedObject, size)
+      await this.transport.write(serializedObject, size, hash)
     }
 
     // We've reached the end, let's flush
@@ -205,6 +205,7 @@ export class Serializer implements IDisposable {
       return res.traversed
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     throw new Error(`Unsupported type '${typeof value}': ${value}.`)
   }
 
@@ -239,7 +240,7 @@ export class Serializer implements IDisposable {
     const h = this.hashingFunction(s)
     const f = s.substring(0, 1) + `"id":"${h}",` + s.substring(1)
     return {
-      hash: SHA1(s),
+      hash: h,
       serializedObject: f,
       size: s.length // approx, good enough as we're just limiting artificially batch sizes based on this
     }

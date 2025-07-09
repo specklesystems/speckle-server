@@ -36,10 +36,10 @@
         </NuxtLink>
         <ProjectPageModelsActions
           v-if="project && showActions && !isPendingModelFragment(model)"
+          ref="actions"
           v-model:open="showActionsMenu"
           :model="model"
           :project="project"
-          :can-edit="canEdit"
           @click.stop.prevent
           @upload-version="triggerVersionUpload"
         />
@@ -62,15 +62,15 @@
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
-          class="px-4 w-full h-full"
+          class="px-4 w-full h-48"
         />
         <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
           :upload="pendingVersion"
           type="subversion"
-          class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
+          class="px-4 w-full h-48 text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
-        <template v-else-if="previewUrl">
+        <template v-else-if="previewUrl && !isVersionUploading">
           <NuxtLink
             :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
             class="relative z-20 bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
@@ -79,24 +79,35 @@
           </NuxtLink>
         </template>
         <div
-          v-if="!isPendingModelFragment(model)"
-          v-show="!previewUrl && !pendingVersion"
+          v-if="!isPendingModelFragment(model) && project"
+          v-show="!pendingVersion && (isVersionUploading || !previewUrl)"
           class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
             ref="importArea"
-            :project-id="projectId"
-            :model-name="model.name"
+            empty-state-variant="modelGrid"
+            :project="project"
+            :model="model"
             class="w-full h-full"
-            :disabled="project?.workspace?.readOnly"
+            @uploading="onVersionUploading"
           />
         </div>
       </div>
       <div class="relative z-20 flex justify-between items-center w-full h-8 pl-2">
-        <ProjectPageModelsCardUpdatedTime
-          class="text-body-3xs text-foreground-2"
-          :updated-at="updatedAtFullDate"
-        />
+        <div class="flex flex-col">
+          <ProjectPageModelsCardUpdatedTime
+            class="text-body-3xs text-foreground-2"
+            :updated-at="updatedAtFullDate"
+          />
+          <NuxtLink
+            v-if="showLastUploadFailed"
+            v-keyboard-clickable
+            class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
+            @click.stop="actions?.showUploads()"
+          >
+            Last upload failed
+          </NuxtLink>
+        </div>
         <div class="flex items-center gap-1">
           <div
             v-if="!isPendingModelFragment(model)"
@@ -131,9 +142,11 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
-import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+import dayjs from 'dayjs'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -141,9 +154,30 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
-    workspace {
-      id
-      readOnly
+    ...ProjectCardImportFileArea_Project
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment ProjectPageModelsCard_Model on Model {
+    id
+    lastUpload: uploads(input: { limit: 1, cursor: null }) {
+      items {
+        id
+        updatedAt
+        convertedStatus
+      }
+    }
+    lastVersion: versions(limit: 1, cursor: null) {
+      items {
+        id
+        createdAt
+      }
     }
   }
 `)
@@ -167,9 +201,6 @@ const props = withDefaults(
   }
 )
 
-// TODO: Get rid of this, its not reactive. Is it even necessary?
-provide('projectId', props.projectId)
-
 const router = useRouter()
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
 
@@ -178,8 +209,28 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+
+const actions = ref(
+  null as Nullable<{
+    showUploads: () => void
+  }>
+)
+
+const isVersionUploading = ref(false)
 const showActionsMenu = ref(false)
 const hovered = ref(false)
+
+const showLastUploadFailed = computed(() => {
+  if (isPendingModelFragment(props.model)) return false
+  const lastUpload = props.model.lastUpload?.items[0]
+  const lastVersion = props.model.lastVersion?.items[0]
+
+  // Only show if last upload failed & there is no last version,
+  // or last version is older than last upload
+  if (lastUpload?.convertedStatus !== FileUploadConvertedStatus.Error) return false
+  if (!lastVersion) return true
+  return dayjs(lastUpload.updatedAt).isAfter(dayjs(lastVersion.createdAt))
+})
 
 const containerClasses = computed(() => {
   const classParts = [
@@ -215,15 +266,25 @@ const updatedAtFullDate = computed(() => {
     : props.model.updatedAt
 })
 
-const canEdit = computed(() => (props.project ? canModifyModels(props.project) : false))
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
 })
 
 const pendingVersion = computed(() => {
-  return isPendingModelFragment(props.model)
-    ? null
-    : props.model.pendingImportedVersions[0]
+  if (isPendingModelFragment(props.model)) {
+    return null
+  }
+
+  const lastPendingVersion = props.model.pendingImportedVersions[0]
+  const lastVersion = props.model.lastVersion?.items[0]
+  if (!lastVersion || !lastPendingVersion) return lastPendingVersion
+
+  // If pending version is older than newest version, hide it (may be a stuck import)
+  if (dayjs(lastPendingVersion.updatedAt).isBefore(dayjs(lastVersion.createdAt))) {
+    return null
+  }
+
+  return lastPendingVersion
 })
 
 const onCardClick = (event: KeyboardEvent | MouseEvent) => {
@@ -235,6 +296,10 @@ const onCardClick = (event: KeyboardEvent | MouseEvent) => {
     return
   }
   emit('click', event)
+}
+
+const onVersionUploading = (payload: FileAreaUploadingPayload) => {
+  isVersionUploading.value = payload.isUploading
 }
 
 const triggerVersionUpload = () => {

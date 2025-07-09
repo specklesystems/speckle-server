@@ -230,7 +230,7 @@ export default class Materials {
     return 'filterType' in material
   }
 
-  public static isRendeMaterial(
+  public static isRenderMaterial(
     materialData:
       | Material
       | FilterMaterial
@@ -273,10 +273,13 @@ export default class Materials {
       (renderView.geometryType === GeometryType.LINE ||
         renderView.geometryType === GeometryType.POINT)
 
+    const displayStyleFirst = renderView.geometryType === GeometryType.LINE
     if (!materialData) {
-      materialData =
-        renderView.renderData.renderMaterial || renderView.renderData.displayStyle
+      materialData = displayStyleFirst
+        ? renderView.renderData.displayStyle || renderView.renderData.renderMaterial
+        : renderView.renderData.renderMaterial || renderView.renderData.displayStyle
     }
+
     /** DUI3 rules which apply only if the technical material exist (color proxies) in absence of a render material or display style from DUI2
      *  The technical material will contribute to the material hash
      */
@@ -284,7 +287,7 @@ export default class Materials {
       mat += Materials.minimalMaterialToString(colorMaterialData)
     } else if (materialData) {
       mat =
-        Materials.isRendeMaterial(materialData) &&
+        Materials.isRenderMaterial(materialData) &&
         (renderView.geometryType === GeometryType.MESH ||
           renderView.geometryType === GeometryType.POINT || // Maybe even include GeometryType.POINT_CLOUD actually?
           renderView.geometryType === GeometryType.TEXT)
@@ -292,6 +295,8 @@ export default class Materials {
           : Materials.isDisplayStyle(materialData) &&
             renderView.geometryType !== GeometryType.MESH
           ? Materials.displayStyleToString(materialData)
+          : Materials.isRenderMaterial(materialData)
+          ? Materials.renderMaterialToString(materialData)
           : ''
       if ((materialData as MaterialOptions).stencilOutlines) {
         mat += '/' + (materialData as MaterialOptions).stencilOutlines
@@ -332,87 +337,66 @@ export default class Materials {
   }
 
   private async createDefaultMeshMaterials() {
-    this.meshGhostMaterial = new SpeckleGhostMaterial(
-      {
-        color: 0xffffff,
-        side: FrontSide,
-        transparent: true,
-        opacity: 0.1
-      },
-      ['USE_RTE']
-    )
+    this.meshGhostMaterial = new SpeckleGhostMaterial({
+      color: 0xffffff,
+      side: FrontSide,
+      transparent: true,
+      opacity: 0.1
+    })
     this.meshGhostMaterial.depthWrite = false
     this.meshGhostMaterial.alphaTest = 1
 
-    this.meshGradientMaterial = new SpeckleStandardColoredMaterial(
-      {
-        side: DoubleSide,
-        transparent: false,
-        opacity: 1
-      },
-      ['USE_RTE']
-    )
+    this.meshGradientMaterial = new SpeckleStandardColoredMaterial({
+      side: DoubleSide,
+      transparent: false,
+      opacity: 1
+    })
     ;(this.meshGradientMaterial as SpeckleStandardColoredMaterial).setGradientTexture(
       await Assets.getTexture(defaultGradient)
     )
     this.meshGradientMaterial.clipShadows = true
 
-    this.meshTransparentGradientMaterial = new SpeckleStandardColoredMaterial(
-      {
-        side: DoubleSide,
-        transparent: true,
-        opacity: 0.5
-      },
-      ['USE_RTE']
-    )
+    this.meshTransparentGradientMaterial = new SpeckleStandardColoredMaterial({
+      side: DoubleSide,
+      transparent: true,
+      opacity: 0.5
+    })
     ;(
       this.meshTransparentGradientMaterial as SpeckleStandardColoredMaterial
     ).setGradientTexture(await Assets.getTexture(defaultGradient))
     this.meshTransparentGradientMaterial.clipShadows = true
 
-    this.meshColoredMaterial = new SpeckleStandardColoredMaterial(
-      {
-        side: DoubleSide,
-        transparent: false,
-        wireframe: false
-      },
-      ['USE_RTE']
-    )
+    this.meshColoredMaterial = new SpeckleStandardColoredMaterial({
+      side: DoubleSide,
+      transparent: false,
+      wireframe: false
+    })
     this.meshColoredMaterial.clipShadows = true
 
-    this.meshTransparentColoredMaterial = new SpeckleStandardColoredMaterial(
-      {
-        side: DoubleSide,
-        transparent: true,
-        opacity: 0.5
-      },
-      ['USE_RTE']
-    )
+    this.meshTransparentColoredMaterial = new SpeckleStandardColoredMaterial({
+      side: DoubleSide,
+      transparent: true,
+      opacity: 0.5
+    })
 
-    this.meshHiddenMaterial = new SpeckleStandardMaterial(
-      {
-        side: DoubleSide,
-        transparent: false,
-        opacity: 1,
-        wireframe: false
-      },
-      ['USE_RTE']
-    )
+    this.meshHiddenMaterial = new SpeckleStandardMaterial({
+      side: DoubleSide,
+      transparent: false,
+      opacity: 1,
+      wireframe: false
+    })
     this.meshHiddenMaterial.visible = false
   }
 
   private async createLineDefaultMaterials() {
-    this.lineGhostMaterial = new SpeckleLineMaterial(
-      {
-        color: 0xffffff,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    this.lineGhostMaterial = new SpeckleLineMaterial({
+      color: 0xffffff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).color = new Color(0xffffff)
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).worldUnits = true
@@ -420,18 +404,17 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).resolution = new Vector2()
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).toneMapped = false
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).opacity = 0.1
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).transparent = true
 
-    this.lineColoredMaterial = new SpeckleLineMaterial(
-      {
-        color: 0xffffff,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    this.lineColoredMaterial = new SpeckleLineMaterial({
+      color: 0xffffff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).color = new Color(0xffffff)
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).worldUnits = false
@@ -440,17 +423,14 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).resolution = new Vector2()
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).toneMapped = false
 
-    this.lineHiddenMaterial = new SpeckleLineMaterial(
-      {
-        color: 0xffffff,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    this.lineHiddenMaterial = new SpeckleLineMaterial({
+      color: 0xffffff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).color = new Color(0xff0000)
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).worldUnits = false
@@ -461,16 +441,13 @@ export default class Materials {
   }
 
   private async createDefaultPointMaterials() {
-    this.pointGhostMaterial = new SpecklePointMaterial(
-      {
-        color: 0xffffff,
-        vertexColors: false,
-        size: 2,
-        opacity: 0.01,
-        sizeAttenuation: false
-      },
-      ['USE_RTE']
-    )
+    this.pointGhostMaterial = new SpecklePointMaterial({
+      color: 0xffffff,
+      vertexColors: false,
+      size: 2,
+      opacity: 0.01,
+      sizeAttenuation: false
+    })
 
     this.pointCloudColouredMaterial = new SpecklePointColouredMaterial(
       {
@@ -479,7 +456,7 @@ export default class Materials {
         size: 2,
         sizeAttenuation: false
       },
-      ['USE_RTE', 'USE_GRADIENT_RAMP']
+      ['USE_GRADIENT_RAMP']
     )
     ;(this.pointCloudColouredMaterial as SpecklePointMaterial).toneMapped = false
     this.pointCloudGradientMaterial = new SpecklePointColouredMaterial(
@@ -489,7 +466,7 @@ export default class Materials {
         size: 2,
         sizeAttenuation: false
       },
-      ['USE_RTE', 'USE_GRADIENT_RAMP']
+      ['USE_GRADIENT_RAMP']
     )
     ;(
       this.pointCloudGradientMaterial as SpecklePointColouredMaterial
@@ -498,14 +475,11 @@ export default class Materials {
   }
 
   private async createDefaultTextMaterials() {
-    this.textGhostMaterial = new SpeckleTextMaterial(
-      {
-        color: 0xffffff,
-        opacity: 0.1,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    this.textGhostMaterial = new SpeckleTextMaterial({
+      color: 0xffffff,
+      opacity: 0.1,
+      side: DoubleSide
+    })
     this.textGhostMaterial.transparent =
       this.textGhostMaterial.opacity < 1 ? true : false
     this.textGhostMaterial.depthWrite = this.textGhostMaterial.transparent
@@ -518,14 +492,11 @@ export default class Materials {
       this.textGhostMaterial as SpeckleTextMaterial
     ).getDerivedMaterial()
 
-    this.textColoredMaterial = new SpeckleTextMaterial(
-      {
-        color: 0xffffff,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    this.textColoredMaterial = new SpeckleTextMaterial({
+      color: 0xffffff,
+      opacity: 1,
+      side: DoubleSide
+    })
     this.textColoredMaterial.transparent =
       this.textColoredMaterial.opacity < 1 ? true : false
     this.textColoredMaterial.depthWrite = this.textColoredMaterial.transparent
@@ -538,14 +509,11 @@ export default class Materials {
       this.textColoredMaterial as SpeckleTextMaterial
     ).getDerivedMaterial()
 
-    this.textHiddenMaterial = new SpeckleTextMaterial(
-      {
-        color: 0xffffff,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    this.textHiddenMaterial = new SpeckleTextMaterial({
+      color: 0xffffff,
+      opacity: 1,
+      side: DoubleSide
+    })
     this.textHiddenMaterial.visible = false
     this.textHiddenMaterial.toneMapped = false
     ;(this.textHiddenMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
@@ -556,32 +524,26 @@ export default class Materials {
   }
 
   private async createDefaultNullMaterials() {
-    this.materialMap[Materials.NullRenderMaterialHash] = new SpeckleStandardMaterial(
-      {
-        color: 0x7f7f7f,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    this.materialMap[Materials.NullRenderMaterialHash] = new SpeckleStandardMaterial({
+      color: 0x7f7f7f,
+      emissive: 0x0,
+      roughness: 1,
+      metalness: 0,
+      side: DoubleSide
+    })
     ;(
       this.materialMap[Materials.NullRenderMaterialHash] as SpeckleStandardMaterial
     ).color.convertSRGBToLinear()
 
     this.materialMap[Materials.NullRenderMaterialVertexColorsHash] =
-      new SpeckleStandardMaterial(
-        {
-          color: 0xffffff,
-          emissive: 0x0,
-          roughness: 1,
-          metalness: 0,
-          side: DoubleSide,
-          vertexColors: true
-        },
-        ['USE_RTE']
-      )
+      new SpeckleStandardMaterial({
+        color: 0xffffff,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide,
+        vertexColors: true
+      })
     ;(
       this.materialMap[
         Materials.NullRenderMaterialVertexColorsHash
@@ -589,17 +551,14 @@ export default class Materials {
     ).color.convertSRGBToLinear()
 
     const hash = Materials.NullDisplayStyleHash // So prettier doesn't fuck up everything
-    this.materialMap[hash] = new SpeckleLineMaterial(
-      {
-        color: 0x7f7f7f,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    this.materialMap[hash] = new SpeckleLineMaterial({
+      color: 0x7f7f7f,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     ;(<SpeckleLineMaterial>this.materialMap[hash]).color = new Color(0x7f7f7f)
     ;(<SpeckleLineMaterial>this.materialMap[hash]).color.convertSRGBToLinear()
     ;(<SpeckleLineMaterial>this.materialMap[hash]).linewidth = 1
@@ -608,14 +567,11 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.materialMap[hash]).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.materialMap[hash]).resolution = new Vector2()
 
-    this.materialMap[Materials.NullTextDisplayStyle] = new SpeckleTextMaterial(
-      {
-        color: 0x7f7f7f,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    this.materialMap[Materials.NullTextDisplayStyle] = new SpeckleTextMaterial({
+      color: 0x7f7f7f,
+      opacity: 1,
+      side: DoubleSide
+    })
     this.materialMap[Materials.NullTextDisplayStyle].transparent = false
     this.materialMap[Materials.NullTextDisplayStyle].depthWrite = true
     this.materialMap[Materials.NullTextDisplayStyle].toneMapped = false
@@ -623,50 +579,38 @@ export default class Materials {
       this.materialMap[Materials.NullTextDisplayStyle] as SpeckleTextMaterial
     ).color.convertSRGBToLinear()
 
-    this.materialMap[Materials.NullPointMaterialHash] = new SpecklePointMaterial(
-      {
-        color: 0x7f7f7f,
-        vertexColors: false,
-        size: 2,
-        sizeAttenuation: false
-      },
-      ['USE_RTE']
-    )
+    this.materialMap[Materials.NullPointMaterialHash] = new SpecklePointMaterial({
+      color: 0x7f7f7f,
+      vertexColors: false,
+      size: 2,
+      sizeAttenuation: false
+    })
     ;(
       this.materialMap[Materials.NullPointMaterialHash] as SpecklePointMaterial
     ).color.convertSRGBToLinear()
 
     this.materialMap[Materials.NullPointCloudVertexColorsMaterialHash] =
-      new SpecklePointMaterial(
-        {
-          color: 0xffffff,
-          vertexColors: true,
-          size: 2,
-          sizeAttenuation: false
-        },
-        ['USE_RTE']
-      )
-    this.materialMap[Materials.NullPointCloudMaterialHash] = new SpecklePointMaterial(
-      {
+      new SpecklePointMaterial({
         color: 0xffffff,
-        vertexColors: false,
+        vertexColors: true,
         size: 2,
         sizeAttenuation: false
-      },
-      ['USE_RTE']
-    )
+      })
+    this.materialMap[Materials.NullPointCloudMaterialHash] = new SpecklePointMaterial({
+      color: 0xffffff,
+      vertexColors: false,
+      size: 2,
+      sizeAttenuation: false
+    })
 
     this.materialMap[Materials.NullRenderMaterialInstancedHash] =
-      new SpeckleStandardMaterial(
-        {
-          color: 0x7f7f7f,
-          emissive: 0x0,
-          roughness: 1,
-          metalness: 0,
-          side: DoubleSide
-        },
-        ['USE_RTE']
-      )
+      new SpeckleStandardMaterial({
+        color: 0x7f7f7f,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide
+      })
     ;(
       this.materialMap[
         Materials.NullRenderMaterialInstancedHash
@@ -674,17 +618,14 @@ export default class Materials {
     ).color.convertSRGBToLinear()
 
     this.materialMap[Materials.NullRenderMaterialInstancedVertexColorHash] =
-      new SpeckleStandardMaterial(
-        {
-          color: 0xffffff,
-          emissive: 0x0,
-          roughness: 1,
-          metalness: 0,
-          side: DoubleSide,
-          vertexColors: true
-        },
-        ['USE_RTE']
-      )
+      new SpeckleStandardMaterial({
+        color: 0xffffff,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide,
+        vertexColors: true
+      })
     ;(
       this.materialMap[
         Materials.NullRenderMaterialInstancedVertexColorHash
@@ -702,17 +643,14 @@ export default class Materials {
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
-    const mat: SpeckleStandardMaterial = new SpeckleStandardMaterial(
-      {
-        color: materialData.color,
-        emissive: 0x0, // materialData.emissive. Disabling this for now
-        roughness: materialData.roughness,
-        metalness: materialData.metalness,
-        opacity: materialData.opacity,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    const mat: SpeckleStandardMaterial = new SpeckleStandardMaterial({
+      color: materialData.color,
+      emissive: 0x0, // materialData.emissive. Disabling this for now
+      roughness: materialData.roughness,
+      metalness: materialData.metalness,
+      opacity: materialData.opacity,
+      side: DoubleSide
+    })
     mat.vertexColors = materialData.vertexColors
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
@@ -724,17 +662,14 @@ export default class Materials {
   }
 
   private makeLineMaterial(materialData: DisplayStyle): Material {
-    const mat: SpeckleLineMaterial = new SpeckleLineMaterial(
-      {
-        color: materialData.color,
-        linewidth: materialData.lineWeight > 0 ? materialData.lineWeight : 1,
-        worldUnits: materialData.lineWeight > 0 ? true : false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
+    const mat: SpeckleLineMaterial = new SpeckleLineMaterial({
+      color: materialData.color,
+      linewidth: materialData.lineWeight > 0 ? materialData.lineWeight : 1,
+      worldUnits: materialData.lineWeight > 0 ? true : false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+    })
     mat.color = new Color(materialData.color)
     mat.color.convertSRGBToLinear()
     mat.opacity = materialData.opacity !== undefined ? materialData.opacity : 1
@@ -761,18 +696,15 @@ export default class Materials {
         ? 0xffffff
         : materialData.color
       : materialData.color
-    const mat = new SpecklePointMaterial(
-      {
-        color: safeColor,
-        ...(materialData.opacity !== undefined && { opacity: materialData.opacity }),
-        ...(materialData.vertexColors !== undefined && {
-          vertexColors: materialData.vertexColors
-        }),
-        size: 2,
-        sizeAttenuation: false
-      },
-      ['USE_RTE']
-    )
+    const mat = new SpecklePointMaterial({
+      color: safeColor,
+      ...(materialData.opacity !== undefined && { opacity: materialData.opacity }),
+      ...(materialData.vertexColors !== undefined && {
+        vertexColors: materialData.vertexColors
+      }),
+      size: 2,
+      sizeAttenuation: false
+    })
     if (mat.opacity !== undefined) mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
     mat.toneMapped = false
@@ -787,14 +719,11 @@ export default class Materials {
      */
     if (!materialData) return this.materialMap[Materials.NullTextDisplayStyle]
 
-    const mat = new SpeckleTextMaterial(
-      {
-        color: materialData.color,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    const mat = new SpeckleTextMaterial({
+      color: materialData.color,
+      opacity: 1,
+      side: DoubleSide
+    })
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
     mat.toneMapped = false

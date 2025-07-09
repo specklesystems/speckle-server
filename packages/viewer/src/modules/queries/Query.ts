@@ -23,6 +23,7 @@ export interface PointQueryResult {
   y: number
   z?: number
   w?: number
+  inFrustum?: boolean
 }
 
 export interface IntersectionQueryResult {

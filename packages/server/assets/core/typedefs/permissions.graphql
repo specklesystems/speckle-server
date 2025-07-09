@@ -1,0 +1,50 @@
+extend type Project {
+  permissions: ProjectPermissionChecks!
+}
+
+type ProjectPermissionChecks {
+  canCreateModel: PermissionCheckResult!
+  canMoveToWorkspace(workspaceId: String): PermissionCheckResult!
+  canRead: PermissionCheckResult!
+  canUpdate: PermissionCheckResult!
+  canDelete: PermissionCheckResult!
+  canUpdateAllowPublicComments: PermissionCheckResult!
+  canReadSettings: PermissionCheckResult!
+  canReadWebhooks: PermissionCheckResult!
+  canLeave: PermissionCheckResult!
+  canRequestRender: PermissionCheckResult!
+  canPublish: PermissionCheckResult!
+  canLoad: PermissionCheckResult!
+  canInvite: PermissionCheckResult!
+  canCreateEmbedTokens: PermissionCheckResult!
+  canRevokeEmbedTokens: PermissionCheckResult!
+  canReadEmbedTokens: PermissionCheckResult!
+}
+
+type RootPermissionChecks {
+  canCreatePersonalProject: PermissionCheckResult!
+  canCreateWorkspace: PermissionCheckResult!
+}
+
+extend type User {
+  permissions: RootPermissionChecks! @isOwner
+}
+
+type ModelPermissionChecks {
+  canUpdate: PermissionCheckResult!
+  canDelete: PermissionCheckResult!
+  canCreateVersion: PermissionCheckResult!
+}
+
+extend type Model {
+  permissions: ModelPermissionChecks!
+}
+
+type VersionPermissionChecks {
+  canUpdate: PermissionCheckResult!
+  canReceive: PermissionCheckResult!
+}
+
+extend type Version {
+  permissions: VersionPermissionChecks!
+}

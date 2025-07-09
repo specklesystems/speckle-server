@@ -28,13 +28,17 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { generators, UserinfoResponse } from 'openid-client'
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import {
+  OidcProfile,
   OidcProvider,
   SsoSessionState,
   WorkspaceSsoProvider
 } from '@/modules/workspaces/domain/sso/types'
 import {
   getWorkspaceBySlugFactory,
+  getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
+  getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
@@ -48,6 +52,7 @@ import {
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory,
   findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
@@ -79,7 +84,11 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
+import {
+  getDefaultSsoSessionExpirationDate,
+  isValidOidcProfile,
+  getEmailFromOidcProfile
+} from '@/modules/workspaces/domain/sso/logic'
 import {
   GetWorkspaceBySlug,
   GetWorkspaceRoles
@@ -89,7 +98,10 @@ import {
   UpsertUserSsoSession
 } from '@/modules/workspaces/domain/sso/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
-import { FindEmail } from '@/modules/core/domain/userEmails/operations'
+import {
+  FindEmail,
+  FindEmailsByUserId
+} from '@/modules/core/domain/userEmails/operations'
 import {
   buildAuthErrorRedirectUrl,
   buildAuthFinalizeRedirectUrl,
@@ -118,12 +130,23 @@ import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billi
 import cryptoRandomString from 'crypto-random-string'
 import { base64Encode } from '@/modules/shared/helpers/cryptoHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import {
+  assignWorkspaceSeatFactory,
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
 const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUser: legacyGetUserFactory({ db })
+  getUser: legacyGetUserFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 
 const moveWorkspaceIdToSessionMiddleware: RequestHandler<
@@ -249,85 +272,125 @@ export const getSsoRouter = (): Router => {
       query: oidcCallbackRequestQuery
     }),
     async (req, res, next) => {
-      const trx = await db.transaction()
-      const handleOidcCallback = handleOidcCallbackFactory({
-        getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-        getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
-        createOidcProvider: createOidcProviderFactory({
-          getOIDCProviderValidationRequest: getOIDCProviderValidationRequestFactory({
-            redis: getGenericRedis(),
-            decrypt: getDecryptor()
-          }),
-          saveSsoProviderRegistration: saveSsoProviderRegistrationFactory({
-            getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
-              db: trx,
-              decrypt: getDecryptor()
-            }),
-            storeProviderRecord: storeSsoProviderRecordFactory({
-              db: trx,
-              encrypt: getEncryptor()
-            }),
-            associateSsoProviderWithWorkspace: associateSsoProviderWithWorkspaceFactory(
-              {
-                db: trx
-              }
-            )
-          })
-        }),
-        getOidcProvider: getOidcProviderFactory({
-          getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
-            db: trx,
-            decrypt: getDecryptor()
-          })
-        }),
-        getOidcProviderUserData: getOidcProviderUserDataFactory(),
-        tryGetSpeckleUserData: tryGetSpeckleUserDataFactory({
-          findEmail: findEmailFactory({ db: trx }),
-          getUser: getUserFactory({ db: trx })
-        }),
-        createWorkspaceUserFromSsoProfile: createWorkspaceUserFromSsoProfileFactory({
-          createUser: createUserFactory({
-            getServerInfo: getServerInfoFactory({ db: trx }),
-            findEmail: findEmailFactory({ db: trx }),
-            storeUser: storeUserFactory({ db: trx }),
-            countAdminUsers: countAdminUsersFactory({ db: trx }),
-            storeUserAcl: storeUserAclFactory({ db: trx }),
-            validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-              createUserEmail: createUserEmailFactory({ db: trx }),
-              ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
-                db: trx
+      try {
+        await withTransaction(
+          async ({ db: trx }) => {
+            const handleOidcCallback = handleOidcCallbackFactory({
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
+              createOidcProvider: createOidcProviderFactory({
+                getOIDCProviderValidationRequest:
+                  getOIDCProviderValidationRequestFactory({
+                    redis: getGenericRedis(),
+                    decrypt: getDecryptor()
+                  }),
+                saveSsoProviderRegistration: saveSsoProviderRegistrationFactory({
+                  getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
+                    db: trx,
+                    decrypt: getDecryptor()
+                  }),
+                  storeProviderRecord: storeSsoProviderRecordFactory({
+                    db: trx,
+                    encrypt: getEncryptor()
+                  }),
+                  associateSsoProviderWithWorkspace:
+                    associateSsoProviderWithWorkspaceFactory({
+                      db: trx
+                    })
+                })
               }),
-              findEmail: findEmailFactory({ db: trx }),
-              updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: trx }),
-                updateAllInviteTargets: updateAllInviteTargetsFactory({ db: trx })
+              getOidcProvider: getOidcProviderFactory({
+                getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
+                  db: trx,
+                  decrypt: getDecryptor()
+                })
               }),
-              requestNewEmailVerification: requestNewEmailVerificationFactory({
+              getOidcProviderUserData: getOidcProviderUserDataFactory(),
+              tryGetSpeckleUserData: tryGetSpeckleUserDataFactory({
                 findEmail: findEmailFactory({ db: trx }),
                 getUser: getUserFactory({ db: trx }),
-                getServerInfo: getServerInfoFactory({ db: trx }),
-                deleteOldAndInsertNewVerification:
-                  deleteOldAndInsertNewVerificationFactory({ db: trx }),
-                renderEmail,
-                sendEmail
-              })
-            }),
-            emitEvent: getEventBus().emit
-          }),
-          upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
-          findInvite: findInviteFactory({ db: trx }),
-          deleteInvite: deleteInviteFactory({ db: trx })
-        }),
-        linkUserWithSsoProvider: linkUserWithSsoProviderFactory({
-          findEmailsByUserId: findEmailsByUserIdFactory({ db: trx }),
-          createUserEmail: createUserEmailFactory({ db: trx }),
-          updateUserEmail: updateUserEmailFactory({ db: trx })
-        }),
-        upsertUserSsoSession: upsertUserSsoSessionFactory({ db: trx })
-      })
+                getUserEmails: findEmailsByUserIdFactory({ db: trx })
+              }),
+              createWorkspaceUserFromSsoProfile:
+                createWorkspaceUserFromSsoProfileFactory({
+                  createUser: createUserFactory({
+                    getServerInfo: getServerInfoFactory({ db: trx }),
+                    findEmail: findEmailFactory({ db: trx }),
+                    storeUser: storeUserFactory({ db: trx }),
+                    countAdminUsers: countAdminUsersFactory({ db: trx }),
+                    storeUserAcl: storeUserAclFactory({ db: trx }),
+                    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+                      createUserEmail: createUserEmailFactory({ db: trx }),
+                      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
+                        db: trx
+                      }),
+                      findEmail: findEmailFactory({ db: trx }),
+                      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+                        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({
+                          db: trx
+                        }),
+                        updateAllInviteTargets: updateAllInviteTargetsFactory({
+                          db: trx
+                        })
+                      }),
+                      requestNewEmailVerification: requestNewEmailVerificationFactory({
+                        findEmail: findEmailFactory({ db: trx }),
+                        getUser: getUserFactory({ db: trx }),
+                        getServerInfo: getServerInfoFactory({ db: trx }),
+                        deleteOldAndInsertNewVerification:
+                          deleteOldAndInsertNewVerificationFactory({
+                            db: trx
+                          }),
+                        renderEmail,
+                        sendEmail
+                      })
+                    }),
+                    emitEvent: getEventBus().emit
+                  }),
+                  addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+                    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({
+                      db: trx
+                    }),
+                    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                      db: trx
+                    }),
+                    getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+                    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+                    emitWorkspaceEvent: getEventBus().emit,
+                    ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
+                      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                        getWorkspace: getWorkspaceFactory({ db: trx })
+                      }),
+                      eventEmit: getEventBus().emit
+                    }),
+                    assignWorkspaceSeat: assignWorkspaceSeatFactory({
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                        db: trx
+                      }),
+                      eventEmit: getEventBus().emit,
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx })
+                    })
+                  }),
+                  findInvite: findInviteFactory({ db: trx }),
+                  deleteInvite: deleteInviteFactory({ db: trx })
+                }),
+              linkUserWithSsoProvider: linkUserWithSsoProviderFactory({
+                findEmailsByUserId: findEmailsByUserIdFactory({ db: trx }),
+                createUserEmail: createUserEmailFactory({ db: trx }),
+                updateUserEmail: updateUserEmailFactory({ db: trx }),
+                logger: req.log
+              }),
+              upsertUserSsoSession: upsertUserSsoSessionFactory({ db: trx })
+            })
 
-      try {
-        await withTransaction(handleOidcCallback(req, res, next), trx)
+            await handleOidcCallback(req, res, next)
+          },
+          { db }
+        )
+
         return next()
       } catch (e) {
         const errorMessage = getErrorMessage(e)
@@ -352,6 +415,7 @@ export const getSsoRouter = (): Router => {
   return router
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const workspaceSsoAuthRequestParams = z.object({
   workspaceSlug: z.string().min(1)
 })
@@ -642,7 +706,7 @@ const getOidcProviderUserDataFactory =
       WorkspaceSsoOidcCallbackRequestQuery
     >,
     provider: OidcProvider
-  ): Promise<UserinfoResponse<{ email: string }>> => {
+  ): Promise<UserinfoResponse<OidcProfile>> => {
     if (!req.session.ssoNonce) throw new OidcStateInvalidError()
 
     const codeVerifier = await parseCodeVerifier(req)
@@ -658,31 +722,63 @@ const getOidcProviderUserDataFactory =
     if (!oidcProviderUserData) {
       throw new SsoProviderProfileMissingError()
     }
-    if (!oidcProviderUserData.email) {
+    if (!isValidOidcProfile(oidcProviderUserData)) {
+      req.log.error(
+        { providedClaims: Object.keys(oidcProviderUserData) },
+        'Missing required properties on OIDC provider.'
+      )
       throw new SsoProviderProfileMissingPropertiesError(['email'])
     }
 
-    return oidcProviderUserData as UserinfoResponse<{ email: string }>
+    return oidcProviderUserData as UserinfoResponse<OidcProfile>
   }
 
 const tryGetSpeckleUserDataFactory =
-  ({ findEmail, getUser }: { findEmail: FindEmail; getUser: GetUser }) =>
+  ({
+    findEmail,
+    getUser,
+    getUserEmails
+  }: {
+    findEmail: FindEmail
+    getUser: GetUser
+    getUserEmails: FindEmailsByUserId
+  }) =>
   async (
     req: Request<WorkspaceSsoAuthRequestParams>,
-    oidcProviderUserData: UserinfoResponse<{ email: string }>
+    oidcProviderUserData: UserinfoResponse<OidcProfile>
   ): Promise<UserWithOptionalRole | null> => {
     // Get currently signed-in user, if available
     const currentSessionUser = await getUser(req.context.userId ?? '')
 
     // Get user with email that matches OIDC provider user email, if match exists
-    const userEmail = await findEmail({ email: oidcProviderUserData.email })
+    const providerEmail = getEmailFromOidcProfile(oidcProviderUserData)
+    const userEmail = await findEmail({ email: providerEmail.toLowerCase() })
     if (!!userEmail && !userEmail.verified) throw new SsoUserEmailUnverifiedError()
     const existingSpeckleUser = await getUser(userEmail?.userId ?? '')
+
+    // Log details about users we're comparing
+    req.log.info(
+      {
+        providerEmail,
+        currentSessionUserId: currentSessionUser?.id,
+        existingSpeckleUserId: existingSpeckleUser?.id
+      },
+      'Computing active user information given current auth context:'
+    )
 
     // Confirm existing user matches signed-in user, if both are present
     if (!!currentSessionUser && !!existingSpeckleUser) {
       if (currentSessionUser.id !== existingSpeckleUser.id) {
-        throw new SsoUserClaimedError()
+        const currentSessionUserEmails = await getUserEmails({
+          userId: currentSessionUser.id
+        })
+
+        throw new SsoUserClaimedError({
+          currentUser: currentSessionUser,
+          currentUserEmails: currentSessionUserEmails,
+          existingUser: existingSpeckleUser,
+          existingUserEmail: providerEmail
+        })
       }
     }
 

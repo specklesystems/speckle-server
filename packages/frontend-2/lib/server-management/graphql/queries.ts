@@ -54,7 +54,7 @@ export const getUsersQuery = graphql(`
   }
 `)
 
-export const getProjectsQuery = graphql(`
+export const adminPanelProjectsQuery = graphql(`
   query AdminPanelProjectsList(
     $query: String
     $orderBy: String

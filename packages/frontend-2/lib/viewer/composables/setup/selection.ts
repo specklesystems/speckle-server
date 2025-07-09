@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { MeasurementType } from '@speckle/viewer'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -87,7 +85,11 @@ function useSelectOrZoomOnSelection() {
         const isMeasureMode = state.ui.measurement.enabled.value
         const measurementType = state.ui.measurement.options.value.type
 
-        if (isMeasureMode && measurementType === MeasurementType.PERPENDICULAR) {
+        if (
+          isMeasureMode &&
+          (measurementType === MeasurementType.PERPENDICULAR ||
+            measurementType === MeasurementType.AREA)
+        ) {
           return
         }
         if (!args) return zoom()

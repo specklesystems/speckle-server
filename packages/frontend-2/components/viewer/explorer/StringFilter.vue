@@ -1,13 +1,25 @@
 <template>
-  <div class="pr-3 pl-2 flex flex-col space-y-2 pb-2">
+  <div class="pr-3 p-2 flex flex-col space-y-2">
+    <div class="sticky top-0 bg-foundation">
+      <FormTextInput
+        v-model="searchString"
+        name="filter search"
+        placeholder="Search for a value"
+        size="sm"
+        color="foundation"
+        :show-clear="!!searchString"
+        class="!text-body-2xs"
+      />
+    </div>
     <ViewerExplorerStringFilterItem
-      v-for="(vg, index) in groupsLimited"
+      v-for="(vg, index) in filteredGroup"
       :key="index"
       :item="vg"
+      :search-term="searchString"
     />
-    <div v-if="itemCount < filter.valueGroups.length" class="mb-2">
+    <div v-if="itemCount < totalFilteredCount" class="mb-2">
       <FormButton size="sm" text full-width @click="itemCount += 30">
-        View more ({{ filter.valueGroups.length - itemCount }})
+        View more ({{ totalFilteredCount - itemCount }})
       </FormButton>
     </div>
   </div>
@@ -19,7 +31,20 @@ const props = defineProps<{
 }>()
 
 const itemCount = ref(30)
-const groupsLimited = computed(() => {
-  return props.filter.valueGroups.slice(0, itemCount.value)
+const searchString = ref<string | undefined>(undefined)
+
+const filteredGroups = computed(() => {
+  if (!searchString.value) return props.filter.valueGroups
+
+  const searchLower = searchString.value.toLowerCase()
+  return props.filter.valueGroups.filter((f) =>
+    f.value.toLowerCase().includes(searchLower)
+  )
 })
+
+const filteredGroup = computed(() => {
+  return filteredGroups.value.slice(0, itemCount.value)
+})
+
+const totalFilteredCount = computed(() => filteredGroups.value.length)
 </script>

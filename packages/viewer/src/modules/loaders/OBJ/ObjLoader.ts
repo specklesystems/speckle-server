@@ -20,7 +20,7 @@ export class ObjLoader extends Loader {
     return this.isFinished
   }
 
-  public constructor(targetTree: WorldTree, resource: string, resourceData?: string) {
+  public constructor(targetTree: WorldTree, resource: string, resourceData?: unknown) {
     super(resource, resourceData)
     this.tree = targetTree
     this.baseLoader = new OBJLoader()
@@ -35,12 +35,12 @@ export class ObjLoader extends Loader {
             this._resource,
             (group: Group) => {
               this.converter
-                .traverse(this._resource, group, async () => {})
+                .traverse(this._resource, group, () => {})
                 .then(() => {
                   loadResolve()
                 })
                 .catch(() => {
-                  loadReject()
+                  loadReject(new Error())
                 })
             },
             (event: ProgressEvent) => {
@@ -51,7 +51,7 @@ export class ObjLoader extends Loader {
             },
             (event: ErrorEvent) => {
               Logger.error(`Loading obj ${this._resource} failed with ${event.error}`)
-              loadReject()
+              loadReject(new Error())
             }
           )
         } else {
@@ -59,12 +59,12 @@ export class ObjLoader extends Loader {
             .traverse(
               this._resource,
               this.baseLoader.parse(this._resourceData as string),
-              async () => {}
+              () => {}
             )
             .then(() => loadResolve())
             .catch((err) => {
               Logger.error(`Loading obj ${this._resource} failed with ${err}`)
-              loadReject()
+              loadReject(new Error())
             })
         }
       })
@@ -78,12 +78,12 @@ export class ObjLoader extends Loader {
             resolve(res)
           } else {
             Logger.error(`Could not get render tree for ${this._resource}`)
-            reject()
+            reject(new Error())
           }
         })
         .catch(() => {
           Logger.error(`Could not load ${this._resource}`)
-          reject()
+          reject(new Error())
         })
     })
   }

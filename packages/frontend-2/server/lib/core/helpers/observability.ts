@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-import * as Observability from '@speckle/shared/dist/esm/observability/index.js'
+import * as Observability from '@speckle/shared/observability'
 import type { IncomingMessage } from 'node:http'
 import { get } from 'lodash-es'
 import type { Logger } from 'pino'

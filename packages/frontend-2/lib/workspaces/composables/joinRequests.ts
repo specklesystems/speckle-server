@@ -3,9 +3,10 @@ import {
   approveWorkspaceJoinRequestMutation,
   denyWorkspaceJoinRequestMutation
 } from '~/lib/workspaces/graphql/mutations'
-import type {
-  ApproveWorkspaceJoinRequestInput,
-  DenyWorkspaceJoinRequestInput
+import {
+  type ApproveWorkspaceJoinRequestInput,
+  type DenyWorkspaceJoinRequestInput,
+  WorkspaceJoinRequestStatus
 } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
@@ -14,11 +15,13 @@ import {
   modifyObjectField,
   getCacheId
 } from '~~/lib/common/helpers/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export const useWorkspaceJoinRequest = () => {
   const { mutate: approveMutation } = useMutation(approveWorkspaceJoinRequestMutation)
   const { mutate: denyMutation } = useMutation(denyWorkspaceJoinRequestMutation)
   const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
 
   const approve = async (
     input: ApproveWorkspaceJoinRequestInput,
@@ -28,22 +31,11 @@ export const useWorkspaceJoinRequest = () => {
       { input },
       {
         update: (cache) => {
-          cache.evict({
-            id: getCacheId('WorkspaceJoinRequest', requestId)
-          })
-
           modifyObjectField(
             cache,
-            getCacheId('Workspace', input.workspaceId),
-            'adminWorkspacesJoinRequests',
-            ({ helpers: { createUpdatedValue } }) => {
-              return createUpdatedValue(({ update }) => {
-                update('totalCount', (totalCount) => totalCount - 1)
-              })
-            },
-            {
-              autoEvictFiltered: true
-            }
+            getCacheId('WorkspaceJoinRequest', requestId),
+            'status',
+            () => WorkspaceJoinRequestStatus.Approved
           )
         }
       }
@@ -53,6 +45,11 @@ export const useWorkspaceJoinRequest = () => {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace join request approved'
+      })
+
+      mixpanel.track('Workspace Join Request Approved', {
+        // eslint-disable-next-line camelcase
+        workspace_id: input.workspaceId
       })
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
@@ -69,22 +66,11 @@ export const useWorkspaceJoinRequest = () => {
       { input },
       {
         update: (cache) => {
-          cache.evict({
-            id: getCacheId('WorkspaceJoinRequest', requestId)
-          })
-
           modifyObjectField(
             cache,
-            getCacheId('Workspace', input.workspaceId),
-            'adminWorkspacesJoinRequests',
-            ({ helpers: { createUpdatedValue } }) => {
-              return createUpdatedValue(({ update }) => {
-                update('totalCount', (totalCount) => totalCount - 1)
-              })
-            },
-            {
-              autoEvictFiltered: true
-            }
+            getCacheId('WorkspaceJoinRequest', requestId),
+            'status',
+            () => WorkspaceJoinRequestStatus.Denied
           )
         }
       }
@@ -94,6 +80,11 @@ export const useWorkspaceJoinRequest = () => {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace join request denied'
+      })
+
+      mixpanel.track('Workspace Join Request Denied', {
+        // eslint-disable-next-line camelcase
+        workspace_id: input.workspaceId
       })
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)

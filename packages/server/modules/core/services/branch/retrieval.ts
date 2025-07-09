@@ -4,7 +4,7 @@ import {
   ProjectModelsTreeArgs,
   StreamBranchesArgs
 } from '@/modules/core/graph/generated/graphql'
-import { last } from 'lodash'
+import { last, sum } from 'lodash'
 import { Merge } from 'type-fest'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
@@ -19,8 +19,11 @@ import {
   GetPaginatedStreamBranches,
   GetPaginatedStreamBranchesPage,
   GetProjectTopLevelModelsTree,
-  GetStreamBranchCount
+  GetStreamBranchCount,
+  GetTotalModelCount
 } from '@/modules/core/domain/branches/operations'
+import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { getTotalModelCountFactory } from '@/modules/core/repositories/branches'
 
 export const getPaginatedStreamBranchesFactory =
   (deps: {
@@ -107,3 +110,15 @@ export const getProjectTopLevelModelsTreeFactory =
       cursor: lastItem ? lastItem.updatedAt.toISOString() : null
     }
   }
+
+export const getServerTotalModelCountFactory = (): GetTotalModelCount => async () => {
+  const allDbs = await getAllRegisteredDbClients()
+  const allDbCounts = await Promise.all(
+    Object.values(allDbs).map(async ({ client: db }) => {
+      const getTotalModelCount = getTotalModelCountFactory({ db })
+      return await getTotalModelCount()
+    })
+  )
+
+  return sum(allDbCounts)
+}

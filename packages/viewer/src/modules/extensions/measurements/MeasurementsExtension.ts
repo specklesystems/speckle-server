@@ -11,10 +11,14 @@ import { Extension } from '../Extension.js'
 import { InputEvent } from '../../input/Input.js'
 import { CameraController } from '../CameraController.js'
 import Logger from '../../utils/Logger.js'
+import { AreaMeasurement } from './AreaMeasurement.js'
+import { PointMeasurement } from './PointMeasurement.js'
 
 export enum MeasurementType {
   PERPENDICULAR,
-  POINTTOPOINT
+  POINTTOPOINT,
+  AREA,
+  POINT
 }
 
 export interface MeasurementOptions {
@@ -23,14 +27,16 @@ export interface MeasurementOptions {
   vertexSnap?: boolean
   units?: string
   precision?: number
+  chain?: boolean
 }
 
 const DefaultMeasurementsOptions = {
   visible: true,
-  type: MeasurementType.POINTTOPOINT,
+  type: MeasurementType.POINT,
   vertexSnap: true,
   units: 'm',
-  precision: 2
+  precision: 2,
+  chain: false
 }
 
 export class MeasurementsExtension extends Extension {
@@ -81,7 +87,6 @@ export class MeasurementsExtension extends Extension {
     Object.assign(this._options, options)
     if (resetMeasurement) {
       this.cancelMeasurement()
-      this.startMeasurement()
     }
     this.applyOptions()
   }
@@ -106,7 +111,6 @@ export class MeasurementsExtension extends Extension {
   }
 
   public onLateUpdate() {
-    if (!this._enabled) return
     const camera = this.renderer.renderingCamera
     if (!camera) return
 
@@ -114,14 +118,18 @@ export class MeasurementsExtension extends Extension {
     this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
 
     if (this._activeMeasurement)
-      this._activeMeasurement.frameUpdate(
-        camera,
-        this.screenBuff0,
-        this.renderer.sceneBox
-      )
+      this._enabled &&
+        this._activeMeasurement.frameUpdate(
+          camera,
+          this.screenBuff0,
+          this.renderer.sceneBox
+        )
     this.measurements.forEach((value: Measurement) => {
-      value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
+      ;(this._enabled || value instanceof PointMeasurement) &&
+        value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
     })
+
+    this._enabled && this.updateClippingPlanes(this.renderer.clippingPlanes)
   }
 
   public onResize() {
@@ -158,13 +166,18 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
-    /** Catering to typescript
-     *  There will always be an intersected face. We're casting against indexed meshes only
-     */
     this.pointBuff.copy(result[0].point)
     this.normalBuff.copy(result[0].face.normal)
 
-    if (this._options.vertexSnap) {
+    let vertexSnap = this._options.vertexSnap
+    if (this._activeMeasurement && this._activeMeasurement.snap)
+      vertexSnap = !this._activeMeasurement.snap(
+        data,
+        result[0],
+        this.pointBuff,
+        this.normalBuff
+      )
+    if (vertexSnap) {
       this.snap(result[0], this.pointBuff, this.normalBuff)
     }
 
@@ -173,13 +186,7 @@ export class MeasurementsExtension extends Extension {
       this._activeMeasurement.isVisible = true
     }
 
-    if (this._activeMeasurement.state === MeasurementState.DANGLING_START) {
-      this._activeMeasurement.startPoint.copy(this.pointBuff)
-      this._activeMeasurement.startNormal.copy(this.normalBuff)
-    } else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
-      this._activeMeasurement.endPoint.copy(this.pointBuff)
-      this._activeMeasurement.endNormal.copy(this.normalBuff)
-    }
+    this.activeMeasurement?.locationUpdated(this.pointBuff, this.normalBuff)
     void this._activeMeasurement.update().then(() => {
       this.viewer.requestRender()
     })
@@ -201,7 +208,13 @@ export class MeasurementsExtension extends Extension {
     }
 
     if (data.event.button === 2) {
-      this.cancelMeasurement()
+      if (
+        this._activeMeasurement &&
+        this._activeMeasurement instanceof AreaMeasurement
+      ) {
+        const count = this._activeMeasurement.removePoint()
+        if (count === 0) this.cancelMeasurement()
+      } else this.cancelMeasurement()
       return
     }
 
@@ -209,9 +222,9 @@ export class MeasurementsExtension extends Extension {
 
     if (!this._sceneHit) return
 
-    if (this._activeMeasurement.state === MeasurementState.DANGLING_START)
-      this._activeMeasurement.state = MeasurementState.DANGLING_END
-    else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
+    this._activeMeasurement.locationSelected()
+
+    if (this._activeMeasurement.state === MeasurementState.COMPLETE) {
       this.finishMeasurement()
     }
   }
@@ -227,6 +240,10 @@ export class MeasurementsExtension extends Extension {
     if (this._options.type === MeasurementType.PERPENDICULAR) {
       this.autoLazerMeasure(data)
       return
+    }
+    if (this._options.type === MeasurementType.AREA) {
+      ;(this._activeMeasurement as AreaMeasurement).autoFinish()
+      this.finishMeasurement()
     }
   }
 
@@ -294,6 +311,10 @@ export class MeasurementsExtension extends Extension {
       measurement = new PerpendicularMeasurement()
     else if (this._options.type === MeasurementType.POINTTOPOINT)
       measurement = new PointToPointMeasurement()
+    else if (this._options.type === MeasurementType.AREA)
+      measurement = new AreaMeasurement()
+    else if (this._options.type === MeasurementType.POINT)
+      measurement = new PointMeasurement()
     else throw new Error('Unsupported measurement type!')
 
     measurement.state = MeasurementState.DANGLING_START
@@ -324,7 +345,6 @@ export class MeasurementsExtension extends Extension {
   protected finishMeasurement() {
     if (!this._activeMeasurement) return
 
-    this._activeMeasurement.state = MeasurementState.COMPLETE
     void this._activeMeasurement.update()
     if (this._activeMeasurement.value > 0) {
       this.measurements.push(this._activeMeasurement)
@@ -332,7 +352,29 @@ export class MeasurementsExtension extends Extension {
       this.renderer.scene.remove(this._activeMeasurement)
       Logger.error('Ignoring zero value measurement!')
     }
-    this._activeMeasurement = null
+
+    if (this._options.chain) {
+      const startPoint = new Vector3()
+      const startNormal = new Vector3()
+      let oldMeasurement
+      switch (this._options.type) {
+        case MeasurementType.PERPENDICULAR:
+          oldMeasurement = this._activeMeasurement as PerpendicularMeasurement
+          startPoint.copy(oldMeasurement.midPoint)
+          startNormal.copy(oldMeasurement.startNormal)
+          break
+        default:
+          oldMeasurement = this._activeMeasurement
+          startPoint.copy(this.pointBuff)
+          startNormal.copy(this.normalBuff)
+          break
+      }
+      this._activeMeasurement = this.startMeasurement()
+      this._activeMeasurement.locationUpdated(startPoint, startNormal)
+      this._activeMeasurement.locationSelected()
+    } else this._activeMeasurement = null
+
+    this.viewer.requestRender()
   }
 
   public removeMeasurement() {
@@ -458,13 +500,18 @@ export class MeasurementsExtension extends Extension {
   }
 
   public async fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
-    const measurement = new PointToPointMeasurement()
-    measurement.startPoint.copy(startPoint)
-    measurement.endPoint.copy(endPoint)
-    measurement.state = MeasurementState.DANGLING_END
-    await measurement.update()
-    measurement.state = MeasurementState.COMPLETE
-    await measurement.update()
-    this.measurements.push(measurement)
+    /** Only point to point programatic measurements for now */
+    const cacheType = this._options.type
+    this._options.type = MeasurementType.POINTTOPOINT
+    this._activeMeasurement = this.startMeasurement()
+    this._activeMeasurement.isVisible = true
+    this._activeMeasurement.startPoint.copy(startPoint)
+    this._activeMeasurement.startNormal.copy(new Vector3(0, 0, 1))
+    await this._activeMeasurement.update()
+    this._activeMeasurement.state = MeasurementState.DANGLING_END
+    this._activeMeasurement.endPoint.copy(endPoint)
+    this._activeMeasurement.endNormal.copy(new Vector3(0, 0, 1))
+    await this._activeMeasurement.update()
+    this._options.type = cacheType
   }
 }

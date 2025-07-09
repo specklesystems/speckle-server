@@ -9,7 +9,7 @@
         <hr class="my-6 md:my-8 border-outline-2" />
         <SettingsUserProfileDeleteAccount :user="user" />
         <hr class="my-6 md:my-8 border-outline-2" />
-        <div class="text-xs text-foreground-2 w-full flex flex-col space-y-2">
+        <div class="text-body-2xs text-foreground-2 w-full flex flex-col space-y-2">
           <div class="flex">
             User ID: #{{ user.id }}
             <ClipboardIcon

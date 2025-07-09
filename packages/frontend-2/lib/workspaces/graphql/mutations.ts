@@ -15,6 +15,21 @@ export const workspaceUpdateRoleMutation = graphql(`
   }
 `)
 
+export const workspacesUpdateSeatTypeMutation = graphql(`
+  mutation WorkspacesUpdateSeatType($input: WorkspaceUpdateSeatTypeInput!) {
+    workspaceMutations {
+      updateSeatType(input: $input) {
+        team {
+          items {
+            id
+            seatType
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const inviteToWorkspaceMutation = graphql(`
   mutation InviteToWorkspace(
     $workspaceId: String!
@@ -38,7 +53,7 @@ export const createWorkspaceMutation = graphql(`
     workspaceMutations {
       create(input: $input) {
         id
-        ...SettingsDialog_Workspace
+        ...SettingsSidebar_Workspace
       }
     }
   }
@@ -118,6 +133,55 @@ export const denyWorkspaceJoinRequestMutation = graphql(`
   mutation DenyWorkspaceJoinRequest($input: DenyWorkspaceJoinRequestInput!) {
     workspaceJoinRequestMutations {
       deny(input: $input)
+    }
+  }
+`)
+
+export const requestToJoinWorkspaceMutation = graphql(`
+  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {
+    workspaceMutations {
+      requestToJoin(input: $input)
+    }
+  }
+`)
+
+export const dismissDiscoverableWorkspaceMutation = graphql(`
+  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {
+    workspaceMutations {
+      dismiss(input: $input)
+    }
+  }
+`)
+
+export const workspaceUpdateAutoJoinMutation = graphql(`
+  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        discoverabilityAutoJoinEnabled
+      }
+    }
+  }
+`)
+
+export const workspaceUpdateDefaultSeatTypeMutation = graphql(`
+  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        defaultSeatType
+      }
+    }
+  }
+`)
+
+export const workspaceUpdateExclusiveMutation = graphql(`
+  mutation WorkspaceUpdateExclusiveMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        isExclusive
+      }
     }
   }
 `)

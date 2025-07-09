@@ -2,13 +2,22 @@
   <div>
     <Portal to="navigation">
       <HeaderNavLink
-        v-if="project.workspace && isWorkspacesEnabled"
-        :to="workspaceRoute(project.workspace.slug)"
-        :name="project.workspace.name"
+        v-if="showWorkspaceLink"
+        :to="workspaceRoute(project.workspace?.slug)"
+        name="Projects"
         :separator="false"
       />
-      <HeaderNavLink v-else :to="projectsRoute" name="Projects" :separator="false" />
-      <HeaderNavLink :to="projectRoute(project.id)" :name="project.name" />
+      <HeaderNavLink
+        v-else-if="!isWorkspacesEnabled"
+        :to="projectsRoute"
+        name="Projects"
+        :separator="false"
+      />
+      <HeaderNavLink
+        :to="projectRoute(project.id)"
+        :name="project.name"
+        :separator="showWorkspaceLink || !isWorkspacesEnabled"
+      />
       <HeaderNavLink
         v-if="props.project.model"
         :to="modelVersionsRoute(project.id, props.project.model.id)"
@@ -46,6 +55,7 @@ graphql(`
       id
       slug
       name
+      role
     }
   }
 `)
@@ -55,4 +65,7 @@ const props = defineProps<{
 }>()
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const showWorkspaceLink = computed(
+  () => !!props.project.workspace?.role && isWorkspacesEnabled.value
+)
 </script>

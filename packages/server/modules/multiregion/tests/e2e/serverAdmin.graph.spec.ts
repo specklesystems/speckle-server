@@ -28,7 +28,7 @@ import { expect } from 'chai'
 const isEnabled = isMultiRegionEnabled()
 
 isEnabled
-  ? describe('Multi Region Server Settings', () => {
+  ? describe('Multi Region Server Settings @multiregion', () => {
       let testAdminUser: BasicTestUser
       let testBasicUser: BasicTestUser
       let apollo: TestApolloServer
@@ -74,7 +74,9 @@ isEnabled
           Promise.resolve()
         )
         MultiRegionBlobStorageSelectorMock.mockFunction('initializeRegion', async () =>
-          Promise.resolve(undefined as unknown as ObjectStorage)
+          Promise.resolve(
+            undefined as unknown as { private: ObjectStorage; public: ObjectStorage }
+          )
         )
 
         await beforeEachContext()

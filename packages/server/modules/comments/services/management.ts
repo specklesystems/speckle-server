@@ -1,9 +1,5 @@
-import { ensureError, Roles, SpeckleViewer } from '@speckle/shared'
-import { AuthContext } from '@/modules/shared/authz'
-import { ForbiddenError } from '@/modules/shared/errors'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import { ensureError, SpeckleViewer } from '@speckle/shared'
 import {
-  CreateCommentInput,
   CreateCommentReplyInput,
   EditCommentInput
 } from '@/modules/core/graph/generated/graphql'
@@ -18,7 +14,6 @@ import {
   formatSerializedViewerState,
   inputToDataStruct
 } from '@/modules/comments/services/data'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   ArchiveCommentAndNotify,
   CreateCommentReplyAndNotify,
@@ -26,6 +21,7 @@ import {
   EditCommentAndNotify,
   GetComment,
   GetViewerResourceItemsUngrouped,
+  GetViewerResourcesForComment,
   InsertCommentLinks,
   InsertCommentPayload,
   InsertComments,
@@ -35,80 +31,8 @@ import {
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
-import {
-  AddCommentArchivedActivity,
-  AddCommentCreatedActivity,
-  AddReplyAddedActivity
-} from '@/modules/activitystream/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
-
-type AuthorizeProjectCommentsAccessDeps = {
-  getStream: GetStream
-  adminOverrideEnabled: typeof adminOverrideEnabled
-}
-
-export const authorizeProjectCommentsAccessFactory =
-  (deps: AuthorizeProjectCommentsAccessDeps) =>
-  async (params: {
-    projectId: string
-    authCtx: AuthContext
-    requireProjectRole?: boolean
-  }) => {
-    const { projectId, authCtx, requireProjectRole } = params
-    if (authCtx.role === Roles.Server.ArchivedUser) {
-      throw new ForbiddenError('You are not authorized')
-    }
-
-    const project = await deps.getStream({
-      streamId: projectId,
-      userId: authCtx.userId
-    })
-    if (!project) {
-      throw new StreamInvalidAccessError('Stream not found')
-    }
-
-    let success = true
-    if (!project.isPublic && !authCtx.auth) success = false
-    if (!project.isPublic && !project.role) success = false
-    if (requireProjectRole && !project.role && !project.allowPublicComments)
-      success = false
-    if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin)
-      success = true
-
-    if (!success) {
-      throw new StreamInvalidAccessError('You are not authorized')
-    }
-
-    return project
-  }
-
-export const authorizeCommentAccessFactory =
-  (
-    deps: {
-      getComment: GetComment
-    } & AuthorizeProjectCommentsAccessDeps
-  ) =>
-  async (params: {
-    authCtx: AuthContext
-    commentId: string
-    requireProjectRole?: boolean
-  }) => {
-    const { authCtx, commentId, requireProjectRole } = params
-    const comment = await deps.getComment({
-      id: commentId,
-      userId: authCtx.userId
-    })
-    if (!comment) {
-      throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
-    }
-
-    return authorizeProjectCommentsAccessFactory(deps)({
-      projectId: comment.streamId,
-      authCtx,
-      requireProjectRole
-    })
-  }
 
 export const createCommentThreadAndNotifyFactory =
   (deps: {
@@ -118,9 +42,8 @@ export const createCommentThreadAndNotifyFactory =
     insertCommentLinks: InsertCommentLinks
     markCommentViewed: MarkCommentViewed
     emitEvent: EventBusEmit
-    addCommentCreatedActivity: AddCommentCreatedActivity
   }): CreateCommentThreadAndNotify =>
-  async (input: CreateCommentInput, userId: string) => {
+  async (input, userId, options) => {
     const [resources] = await Promise.all([
       deps.getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
       deps.validateInputAttachments(input.projectId, input.content.blobIds || [])
@@ -144,7 +67,10 @@ export const createCommentThreadAndNotifyFactory =
         blobIds: input.content.blobIds || undefined
       }),
       screenshot: input.screenshot,
-      data: dataStruct
+      data: dataStruct,
+      ...(options?.createdAt
+        ? { createdAt: options.createdAt, updatedAt: options.createdAt }
+        : {})
     }
 
     let comment: CommentRecord
@@ -180,17 +106,11 @@ export const createCommentThreadAndNotifyFactory =
       deps.emitEvent({
         eventName: CommentEvents.Created,
         payload: {
-          comment
+          comment,
+          input,
+          isThread: true,
+          resourceItems: resources
         }
-      }),
-      deps.addCommentCreatedActivity({
-        streamId: input.projectId,
-        userId,
-        input: {
-          ...input,
-          resolvedResourceItems: resources
-        },
-        comment
       })
     ])
 
@@ -205,7 +125,7 @@ export const createCommentReplyAndNotifyFactory =
     insertCommentLinks: InsertCommentLinks
     markCommentUpdated: MarkCommentUpdated
     emitEvent: EventBusEmit
-    addReplyAddedActivity: AddReplyAddedActivity
+    getViewerResourcesForComment: GetViewerResourcesForComment
   }): CreateCommentReplyAndNotify =>
   async (input: CreateCommentReplyInput, userId: string) => {
     const thread = await deps.getComment({ id: input.threadId, userId })
@@ -239,19 +159,20 @@ export const createCommentReplyAndNotifyFactory =
     }
 
     // Mark parent comment updated and emit events
+    const resourceItems = await deps.getViewerResourcesForComment(
+      reply.streamId,
+      reply.id
+    )
     await Promise.all([
       deps.markCommentUpdated(thread.id),
       deps.emitEvent({
         eventName: CommentEvents.Created,
         payload: {
-          comment: reply
+          comment: reply,
+          input,
+          isThread: false,
+          resourceItems
         }
-      }),
-      deps.addReplyAddedActivity({
-        streamId: thread.streamId,
-        input,
-        reply,
-        userId
       })
     ])
 
@@ -298,7 +219,8 @@ export const archiveCommentAndNotifyFactory =
     getComment: GetComment
     getStream: GetStream
     updateComment: UpdateComment
-    addCommentArchivedActivity: AddCommentArchivedActivity
+    emitEvent: EventBusEmit
+    getViewerResourcesForComment: GetViewerResourcesForComment
   }): ArchiveCommentAndNotify =>
   async (commentId: string, userId: string, archived = true) => {
     const comment = await deps.getComment({ id: commentId, userId })
@@ -309,10 +231,7 @@ export const archiveCommentAndNotifyFactory =
     }
 
     const stream = await deps.getStream({ streamId: comment.streamId, userId })
-    if (
-      !stream ||
-      (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)
-    ) {
+    if (!stream) {
       throw new CommentUpdateError(
         'You do not have permissions to archive this comment'
       )
@@ -321,16 +240,13 @@ export const archiveCommentAndNotifyFactory =
       archived
     })
 
-    await deps.addCommentArchivedActivity({
-      streamId: stream.id,
-      commentId,
-      userId,
-      input: {
-        archived,
-        streamId: stream.id,
-        commentId
-      },
-      comment: updatedComment!
+    await deps.emitEvent({
+      eventName: CommentEvents.Archived,
+      payload: {
+        userId,
+        input: { archived, commentId, streamId: stream.id },
+        comment: updatedComment!
+      }
     })
 
     return updatedComment

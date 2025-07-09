@@ -12,7 +12,7 @@ import {
   MainRegionConfig,
   MultiRegionConfig,
   loadMultiRegionsConfig
-} from '@speckle/shared/dist/commonjs/environment/multiRegionConfig.js'
+} from '@speckle/shared/environment/db'
 
 let multiRegionConfig: Optional<MultiRegionConfig> = undefined
 
@@ -33,19 +33,23 @@ const getMultiRegionConfig = async (): Promise<MultiRegionConfig> => {
     regions: {}
   })
 
-  if (isDevOrTestEnv() && !isMultiRegionEnabled()) {
-    return emptyReturn()
-  }
-
   if (!multiRegionConfig) {
     const relativePath = getMultiRegionConfigPath({ unsafe: isDevOrTestEnv() })
     if (!relativePath) return emptyReturn()
 
     const configPath = path.resolve(packageRoot, relativePath)
 
-    multiRegionConfig = await loadMultiRegionsConfig({
-      path: configPath
-    })
+    try {
+      multiRegionConfig = await loadMultiRegionsConfig({
+        path: configPath
+      })
+    } catch (e) {
+      if (isDevOrTestEnv() && !isMultiRegionEnabled()) {
+        return emptyReturn()
+      } else {
+        throw e
+      }
+    }
   }
 
   return multiRegionConfig

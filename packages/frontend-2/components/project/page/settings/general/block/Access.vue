@@ -1,27 +1,29 @@
 <template>
-  <ProjectPageSettingsBlock
-    background
-    title="Access"
-    :disabled-message="disabled ? 'You must be a project owner' : undefined"
-  >
+  <ProjectPageSettingsBlock background title="Access" :auth-check="canUpdate">
     <template #introduction>
-      <p class="text-body-xs text-foreground">
-        Choose how you want to share this project with others.
-      </p>
+      <p class="text-body-xs text-foreground">Choose who can access this project.</p>
     </template>
     <FormRadioGroup
       v-model="selectedOption"
       :options="radioOptions"
-      :disabled="disabled"
+      size="sm"
+      :disabled="!canUpdate.authorized"
       @update:model-value="emitUpdate"
     />
   </ProjectPageSettingsBlock>
 </template>
 
 <script setup lang="ts">
-import { LockClosedIcon, LinkIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
+import {
+  LockClosedIcon,
+  GlobeAltIcon,
+  BuildingOfficeIcon
+} from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
-import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import {
+  castToSupportedVisibility,
+  SupportedProjectVisibility
+} from '~/lib/projects/helpers/visibility'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsGeneralBlockAccess_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -29,49 +31,63 @@ graphql(`
   fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {
     id
     visibility
+    workspaceId
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockAccess_ProjectFragment
-  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'update-visibility', v: ProjectVisibility): void
+  (e: 'update-visibility', v: SupportedProjectVisibility): void
 }>()
 
-const selectedOption = ref(props.project.visibility || ProjectVisibility.Private)
+const selectedOption = ref(
+  castToSupportedVisibility(props.project.visibility) ||
+    SupportedProjectVisibility.Private
+)
 
 const radioOptions = computed(() => [
   {
-    value: ProjectVisibility.Public,
-    title: 'Discoverable',
-    introduction: 'Project is visible to everyone',
+    value: SupportedProjectVisibility.Public,
+    title: 'Public',
+    introduction: 'Anyone with the link can view',
     icon: GlobeAltIcon
   },
+  ...(props.project.workspaceId
+    ? [
+        {
+          value: SupportedProjectVisibility.Workspace,
+          introduction: 'All workspace members can view',
+          title: 'Workspace',
+          icon: BuildingOfficeIcon
+        }
+      ]
+    : []),
   {
-    value: ProjectVisibility.Unlisted,
-    title: 'Link shareable',
-    introduction: 'Anyone with the link can view',
-    icon: LinkIcon
-  },
-  {
-    value: ProjectVisibility.Private,
+    value: SupportedProjectVisibility.Private,
     title: 'Private',
-    introduction: 'Only collaborators can access',
+    introduction: 'Only for project members and admins',
     icon: LockClosedIcon
   }
 ])
+const canUpdate = computed(() => props.project.permissions.canUpdate)
 
 watch(
   () => props.project.visibility,
   (newVal) => {
-    selectedOption.value = newVal ?? ProjectVisibility.Private
+    selectedOption.value =
+      castToSupportedVisibility(newVal) || SupportedProjectVisibility.Private
   }
 )
 
-const emitUpdate = (value: ProjectVisibility) => {
+const emitUpdate = (value: SupportedProjectVisibility) => {
   emit('update-visibility', value)
 }
 </script>

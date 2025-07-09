@@ -1,4 +1,5 @@
 import {
+  EmbedApiTokenRecord,
   PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
@@ -6,6 +7,7 @@ import {
 import { ApiTokenRecord } from '@/modules/auth/repositories'
 import {
   ApiTokens,
+  EmbedApiTokens,
   PersonalApiTokens,
   TokenResourceAccess,
   TokenScopes,
@@ -29,6 +31,7 @@ import { UserInputError } from '@/modules/core/errors/userinput'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { ServerScope } from '@speckle/shared'
 import { Knex } from 'knex'
+import { TokenRevokationError } from '@/modules/core/errors/tokens'
 
 const tables = {
   apiTokens: (db: Knex) => db<ApiTokenRecord>(ApiTokens.name),
@@ -37,7 +40,8 @@ const tables = {
     db<TokenResourceAccessRecord>(TokenResourceAccess.name),
   userServerAppTokens: (db: Knex) =>
     db<UserServerAppTokenRecord>(UserServerAppTokens.name),
-  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name)
+  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name),
+  embedApiTokens: (db: Knex) => db<EmbedApiTokenRecord>(EmbedApiTokens.name)
 }
 
 export const storeApiTokenFactory =
@@ -126,7 +130,7 @@ export const revokeTokenByIdFactory =
       .where({ id: tokenId.slice(0, 10) })
       .del()
 
-    if (delCount === 0) throw new Error('Token revokation failed')
+    if (delCount === 0) throw new TokenRevokationError('Token revokation failed')
     return true
   }
 

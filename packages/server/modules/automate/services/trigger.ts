@@ -25,7 +25,7 @@ import {
 import { TriggerAutomationError } from '@/modules/automate/errors/runs'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { automateLogger } from '@/logging/logging'
+import { automateLogger } from '@/observability/logging'
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import {
@@ -46,6 +46,9 @@ import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationRunEvents } from '@/modules/automate/domain/events'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { getRequestLogger } from '@/observability/utils/requestContext'
+import { logWithErr } from '@/observability/utils/logLevels'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -62,6 +65,7 @@ export const onModelVersionCreateFactory =
   async (params: { modelId: string; versionId: string; projectId: string }) => {
     const { modelId, versionId, projectId } = params
     const { getAutomation, getAutomationRevision, getTriggers, triggerFunction } = deps
+    const logger = getRequestLogger() || automateLogger
 
     // get triggers where modelId matches
     const triggerDefinitions = await getTriggers({
@@ -93,8 +97,8 @@ export const onModelVersionCreateFactory =
             throw new AutomateInvalidTriggerError('Specified automation does not exist')
           }
 
-          if (automationRecord.isTestAutomation) {
-            // Do not trigger functions on test automations
+          if (automationRecord.isTestAutomation || automationRecord.isDeleted) {
+            // Do not trigger functions on test automations or deleted automations
             return
           }
 
@@ -105,12 +109,15 @@ export const onModelVersionCreateFactory =
               projectId,
               modelId: triggeringId,
               triggerType
-            }
+            },
+            source: RunTriggerSource.Automatic
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
-          automateLogger.error(
-            { error, params },
+          logWithErr(
+            logger,
+            error,
+            params,
             'Failure while triggering run onModelVersionCreate'
           )
         }
@@ -130,7 +137,7 @@ type CreateAutomationRunDataDeps = {
   getFunctionInputDecryptor: FunctionInputDecryptor
 }
 
-const createAutomationRunDataFactory =
+export const createAutomationRunDataFactory =
   (deps: CreateAutomationRunDataDeps) =>
   async (params: {
     manifests: BaseTriggerManifest[]
@@ -226,7 +233,7 @@ export const triggerAutomationRevisionRunFactory =
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
-    source?: RunTriggerSource
+    source: RunTriggerSource
   }): Promise<{ automationRunId: string }> => {
     const {
       automateRunTrigger,
@@ -237,7 +244,7 @@ export const triggerAutomationRevisionRunFactory =
       getFullAutomationRevisionMetadata,
       getCommit
     } = deps
-    const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
+    const { revisionId, manifest, source } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
       throw new AutomateInvalidTriggerError(
@@ -359,6 +366,12 @@ export const ensureRunConditionsFactory =
       )
     }
 
+    if (automationWithRevision.isDeleted) {
+      throw new AutomateInvalidTriggerError(
+        'This automation is deleted, cannot trigger it.'
+      )
+    }
+
     // if the automation is not active, do not trigger
     if (!automationWithRevision.enabled)
       throw new AutomateInvalidTriggerError(
@@ -413,7 +426,7 @@ type ComposeTriggerDataDeps = {
   getBranchLatestCommits: GetBranchLatestCommits
 }
 
-const composeTriggerDataFactory =
+export const composeTriggerDataFactory =
   (deps: ComposeTriggerDataDeps) =>
   async (params: {
     projectId: string
@@ -520,7 +533,7 @@ export const manuallyTriggerAutomationFactory =
     )
     if (!latestCommit) {
       throw new TriggerAutomationError(
-        'No version to trigger on found for the available triggers'
+        'Selected model has no versions so it cannot be used to trigger an automation.'
       )
     }
 
@@ -545,6 +558,7 @@ export type CreateTestAutomationRunDeps = {
   upsertAutomationRun: UpsertAutomationRun
   validateStreamAccess: ValidateStreamAccess
   getBranchLatestCommits: GetBranchLatestCommits
+  emitEvent: EventBusEmit
 } & CreateAutomationRunDataDeps &
   ComposeTriggerDataDeps
 
@@ -560,7 +574,8 @@ export const createTestAutomationRunFactory =
       getFullAutomationRevisionMetadata,
       upsertAutomationRun,
       validateStreamAccess,
-      getBranchLatestCommits
+      getBranchLatestCommits,
+      emitEvent
     } = deps
     const { projectId, automationId, userId } = params
 
@@ -572,7 +587,7 @@ export const createTestAutomationRunFactory =
       throw new TriggerAutomationError('Automation not found')
     }
 
-    if (!automationRecord.isTestAutomation) {
+    if (!isTestEnv() && !automationRecord.isTestAutomation) {
       throw new TriggerAutomationError(
         'Automation is not a test automation and cannot create test function runs'
       )
@@ -618,11 +633,39 @@ export const createTestAutomationRunFactory =
       }
     })
 
+    // Create test automation function run with "empty" data
     const automationRunRecord = await createAutomationRunDataFactory(deps)({
       manifests: triggerManifests,
       automationWithRevision: automationRevisionRecord
     })
+    automationRunRecord.functionRuns = [
+      {
+        functionId: '',
+        id: cryptoRandomString({ length: 15 }),
+        status: 'pending' as const,
+        elapsed: 0,
+        results: null,
+        contextView: null,
+        statusMessage: null,
+        resultVersions: [],
+        functionReleaseId: '',
+        functionInputs: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ]
     await upsertAutomationRun(automationRunRecord)
+
+    await emitEvent({
+      eventName: 'automationRuns.created',
+      payload: {
+        automation: automationRevisionRecord,
+        run: automationRunRecord,
+        source: RunTriggerSource.Test,
+        manifests: triggerManifests,
+        triggerType: VersionCreationTriggerType
+      }
+    })
 
     // TODO: Test functions only support one function run per automation
     const functionRunId = automationRunRecord.functionRuns[0].id

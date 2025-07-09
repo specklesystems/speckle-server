@@ -53,7 +53,7 @@ export class PassReader extends Extension {
 
   protected hasFramebuffer(pass: GPass) {
     const renderer = this.viewer.getRenderer().renderer
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     return renderer.properties.get(pass.outputTarget).__webglFramebuffer !== undefined
   }
 

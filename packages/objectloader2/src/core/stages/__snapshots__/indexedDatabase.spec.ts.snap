@@ -1,0 +1,18 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`IndexedDatabase > should add and get multiple items 1`] = `
+[
+  {
+    "base": {
+      "foo": "bar",
+    },
+    "baseId": "id1",
+  },
+  {
+    "base": {
+      "foo": "bar",
+    },
+    "baseId": "id2",
+  },
+]
+`;

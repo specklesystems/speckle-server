@@ -3,7 +3,7 @@
     <ProjectPageAutomationsHeader
       v-model:search="search"
       :workspace-slug="workspace?.slug"
-      :show-empty-state="shouldShowEmptyState"
+      :show-header="!shouldShowEmptyState && !loading"
       :creation-disabled-message="disableCreateAutomationMessage"
       @new-automation="onNewAutomation"
     />
@@ -60,7 +60,7 @@ import {
 } from '~/lib/projects/graphql/queries'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
-import { Roles } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import type { AutomateOnboardingAction } from '~/components/project/page/automations/EmptyState.vue'
 
 const route = useRoute()
@@ -88,26 +88,33 @@ const workspace = computed(() => result.value?.project?.workspace ?? undefined)
 const workspaceFunctionCount = computed(
   () => result.value?.project.workspace?.automateFunctions.totalCount ?? 0
 )
+
+const canCreateAutomation = computed(
+  () => result.value?.project?.permissions.canCreateAutomation
+)
+
 const hiddenActions = computed<AutomateOnboardingAction[]>(() => {
   return workspaceFunctionCount.value > 0 ? [] : ['view-functions']
 })
 const disabledActions = computed<
   { action: AutomateOnboardingAction; reason: string }[]
 >(() => {
+  if (!canCreateAutomation.value?.authorized) {
+    return [
+      {
+        action: 'create-automation',
+        reason:
+          canCreateAutomation.value?.message ??
+          'You are not authorized to create an automation.'
+      }
+    ]
+  }
   if (workspaceFunctionCount.value === 0) {
     return [
       {
         action: 'create-automation',
         reason:
           'You must create at least one function before you can create an automation.'
-      }
-    ]
-  }
-  if (result.value?.project?.role !== Roles.Stream.Owner) {
-    return [
-      {
-        action: 'create-automation',
-        reason: 'Only project owners can create new automations.'
       }
     ]
   }
@@ -146,7 +153,8 @@ const {
   query: projectAutomationsTabAutomationsPaginationQuery,
   baseVariables: computed(() => ({
     projectId: projectId.value,
-    search: search.value?.length ? search.value : null
+    search: search.value?.length ? search.value : null,
+    cursor: null as Nullable<string>
   })),
   options: () => ({
     enabled: isAutomateEnabled.value

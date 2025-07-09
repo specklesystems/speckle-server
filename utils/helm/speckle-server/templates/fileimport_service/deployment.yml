@@ -1,3 +1,4 @@
+{{- if .Values.fileimport_service.enabled }}
 {{- if ( or .Values.s3.endpoint .Values.s3.configMap.enabled ) }}
 apiVersion: apps/v1
 kind: Deployment
@@ -12,8 +13,10 @@ spec:
     matchLabels:
       app: speckle-fileimport-service
       project: speckle-server
+  {{- with .Values.fileimport_service.deploymentStrategy }}
   strategy:
-    type: RollingUpdate
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -23,6 +26,11 @@ spec:
       - name: main
         image: {{ default (printf "speckle/speckle-fileimport-service:%s" .Values.docker_image_tag) .Values.fileimport_service.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        args: #overwrites the Dockerfile CMD statement
+        {{- if .Values.fileimport_service.inspect.enabled }}
+          - {{ printf "--inspect=%s" .Values.fileimport_service.inspect.port }}
+        {{- end }}
+          - "bin/www.js"
 
         ports:
           - name: metrics
@@ -32,19 +40,27 @@ spec:
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          httpGet:
+            path: /healthz
+            port: 9080
+          {{- else }}
           exec:
             command:
               - /usr/bin/node
               - -e
-              - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000)
+              - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
+          {{- end }}
 
         resources:
+          {{- with .Values.fileimport_service.requests }}
           requests:
-            cpu: {{ .Values.fileimport_service.requests.cpu }}
-            memory: {{ .Values.fileimport_service.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.fileimport_service.limits }}
           limits:
-            cpu: {{ .Values.fileimport_service.limits.cpu }}
-            memory: {{ .Values.fileimport_service.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
@@ -72,9 +88,26 @@ spec:
         {{- end }}
 
         env:
+          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
           - name: SPECKLE_SERVER_URL
             value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
+          {{- end }}
 
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.redis.fileImportService.ifc.connectionString.secretName }}
+                key: {{ default "fileimport_service_ifc_redis_url" .Values.redis.fileImportService.ifc.connectionString.secretKey }}
+          - name: QUEUE_NAME
+            value: {{ .Values.redis.fileImportService.ifc.queueName | quote }}
+          {{- else }}
+          # Dummy value for backwards compatibility
+          - name: REDIS_URL
+            value: "redis://redis"
+          {{- end }}
+
+          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
@@ -99,20 +132,35 @@ spec:
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
+          {{- end }}
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
-            value: {{ .Values.fileimport_service.time_limit_min | quote }}
+            value: {{ (or .Values.file_import_time_limit_min .Values.fileimport_service.time_limit_min) | quote }}
+          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
+          # DEPRECATED
           - name: MAX_OBJECT_SIZE_MB
-            value: {{ .Values.objects.max_object_size_mb | quote }}
-          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+            value: {{ .Values.server.max_object_size_mb | quote }}
+          {{- end }}
+          {{- if (and .Values.featureFlags.workspacesMultiRegionEnabled (not .Values.featureFlags.nextGenFileImporterEnabled)) }}
           - name: FF_WORKSPACES_MULTI_REGION_ENABLED
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
           - name: MULTI_REGION_CONFIG_PATH
             value: "/multi-region-config/multi-region-config.json"
           {{- end }}
-          {{- if .Values.featureFlags.fileImportIFCDotNetEnabled }}
-          - name: FF_FILEIMPORT_IFC_DOTNET_ENABLED
-            value: {{ .Values.featureFlags.fileImportIFCDotNetEnabled | quote }}
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+            value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
+          {{- end }}
+          {{- if .Values.featureFlags.experimentalIfcImporterEnabled }}
+          - name: FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
+            value: {{ .Values.featureFlags.experimentalIfcImporterEnabled | quote }}
+          {{- end }}
+          {{- if .Values.featureFlags.legacyIfcImporterEnabled }}
+          - name: FF_LEGACY_IFC_IMPORTER_ENABLED
+            value: {{ .Values.featureFlags.legacyIfcImporterEnabled | quote }}
+          {{- end }}
+          {{- with .Values.fileimport_service.additionalEnvVars }}
+          {{- toYaml . | nindent 10}}
           {{- end }}
       {{- if .Values.fileimport_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.affinity "context" $) | nindent 8 }}
@@ -138,6 +186,12 @@ spec:
       priorityClassName: low-priority
       {{- if .Values.fileimport_service.serviceAccount.create }}
       serviceAccountName: {{ include "fileimport_service.name" $ }}
+      {{- else }}
+      {{- /* NOTE: If there is a service account, Kubernetes adds the imagePullSecrets to Pods automatically. */}}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       # Should be > File import timeout to allow finishing up imports
       terminationGracePeriodSeconds: 610
@@ -159,4 +213,5 @@ spec:
             - key: {{ .Values.multiRegion.config.secretKey }}
               path: "multi-region-config.json"
       {{- end }}
+{{- end }}
 {{- end }}

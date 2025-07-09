@@ -7,6 +7,7 @@ export interface AuthContext {
   auth: boolean
   userId?: string
   role?: ServerRoles
+  tokenId?: string
   token?: string
   scopes?: string[]
   stream?: StreamWithOptionalRole

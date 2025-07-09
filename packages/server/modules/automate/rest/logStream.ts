@@ -2,7 +2,7 @@ import { db } from '@/db/knex'
 import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
 import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
 import { getAutomationRunWithTokenFactory } from '@/modules/automate/repositories/automations'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -16,11 +16,12 @@ import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
+import { FunctionRunNotFoundError } from '@/modules/automate/errors/runs'
 
 export default (app: Application) => {
   app.get(
     '/api/v1/projects/:streamId/automations/:automationId/runs/:runId/logs',
-    corsMiddleware(),
+    corsMiddlewareFactory(),
     authMiddlewareCreator([
       validateServerRoleBuilderFactory({
         getRoles: getRolesFactory({ db })
@@ -47,10 +48,12 @@ export default (app: Application) => {
         automationRunId: runId
       })
       if (!run) {
-        throw new Error("Couldn't find automation or its run")
+        throw new FunctionRunNotFoundError("Couldn't find automation or its run")
       }
       if (!run.executionEngineRunId) {
-        throw new Error('No associated run found on the execution engine')
+        throw new FunctionRunNotFoundError(
+          'No associated run found on the execution engine'
+        )
       }
 
       const setPlaintextHeaders = () => {

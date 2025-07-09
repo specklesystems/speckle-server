@@ -24,7 +24,7 @@ import { clamp, keyBy, reduce } from 'lodash'
 import crs from 'crypto-random-string'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
-import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/dbHelper'
 import { isNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { Merge } from 'type-fest'
@@ -37,6 +37,7 @@ import {
   GetCommentParents,
   GetCommentReplyAuthorIds,
   GetCommentReplyCounts,
+  GetComments,
   GetCommentsResources,
   GetCommitCommentCounts,
   GetPaginatedBranchCommentsPage,
@@ -64,6 +65,10 @@ import {
 import { ExtendedComment } from '@/modules/comments/domain/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
+import { ResourceMismatch } from '@/modules/shared/errors'
+import { ObjectNotFoundError } from '@/modules/core/errors/object'
+import { CommentNotFoundError } from '@/modules/comments/errors'
 
 const tables = {
   streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
@@ -99,6 +104,18 @@ export const getCommentFactory =
       })
     }
     query.where({ id }).first()
+    return await query
+  }
+
+export const getCommentsFactory =
+  (deps: { db: Knex }): GetComments =>
+  async (params) => {
+    const { ids } = params
+    if (!ids.length) return []
+
+    const query = tables.comments(deps.db).select<CommentRecord[]>('*')
+    query.whereIn(Comments.col.id, ids)
+
     return await query
   }
 
@@ -740,9 +757,9 @@ export const checkStreamResourceAccessFactory =
           .select()
           .where({ commitId: res.resourceId, streamId })
           .first()
-        if (!linkage) throw new Error('Commit not found')
+        if (!linkage) throw new CommitNotFoundError('Commit not found')
         if (linkage.streamId !== streamId)
-          throw new Error(
+          throw new ResourceMismatch(
             'Stop hacking - that commit id is not part of the specified stream.'
           )
         break
@@ -753,7 +770,7 @@ export const checkStreamResourceAccessFactory =
           .select()
           .where({ id: res.resourceId, streamId })
           .first()
-        if (!obj) throw new Error('Object not found')
+        if (!obj) throw new ObjectNotFoundError('Object not found')
         break
       }
       case 'comment': {
@@ -761,15 +778,15 @@ export const checkStreamResourceAccessFactory =
           .comments(deps.db)
           .where({ id: res.resourceId })
           .first()
-        if (!comment) throw new Error('Comment not found')
+        if (!comment) throw new CommentNotFoundError('Comment not found')
         if (comment.streamId !== streamId)
-          throw new Error(
+          throw new ResourceMismatch(
             'Stop hacking - that comment is not part of the specified stream.'
           )
         break
       }
       default:
-        throw Error(
+        throw new ResourceMismatch(
           `resource type ${res.resourceType} is not supported as a comment target`
         )
     }

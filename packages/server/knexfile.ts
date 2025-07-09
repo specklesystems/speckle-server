@@ -12,14 +12,14 @@ import {
   postgresConnectionCreateTimeoutMillis,
   knexAsyncStackTracesEnabled
 } from '@/modules/shared/helpers/envHelper'
-import { dbLogger as logger } from '@/logging/logging'
+import { dbLogger as logger } from '@/observability/logging'
 import { Knex } from 'knex'
 import {
   createKnexConfig,
   configureKnexClient,
   KnexConfigArgs,
   RegionServerConfig
-} from '@speckle/shared/dist/commonjs/environment/multiRegionConfig.js'
+} from '@speckle/shared/environment/db'
 
 function walk(dir: string) {
   let results: string[] = []

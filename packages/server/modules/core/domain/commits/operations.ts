@@ -70,9 +70,10 @@ export type CreateCommitByBranchId = (
     sourceApplication: Nullable<string>
     totalChildrenCount?: MaybeNullOrUndefined<number>
     parents: Nullable<string[]>
-  }>,
-  options?: Partial<{
-    notify: boolean
+    /**
+     * Only used in tests: Allows to set the createdAt date
+     */
+    createdAt?: Nullable<Date>
   }>
 ) => Promise<CommitWithStreamBranchId>
 
@@ -86,11 +87,12 @@ export type CreateCommitByBranchName = (
     sourceApplication: Nullable<string>
     totalChildrenCount?: MaybeNullOrUndefined<number>
     parents: Nullable<string[]>
-  }>,
-  options?: Partial<{
-    notify: boolean
+    /**
+     * Only used in tests: Allows to set the createdAt date
+     */
+    createdAt?: Nullable<Date>
   }>
-) => Promise<Commit>
+) => Promise<CommitWithStreamBranchId>
 
 export type InsertBranchCommits = (
   branchCommits: BranchCommitRecord[],
@@ -297,3 +299,5 @@ export type LegacyGetPaginatedStreamCommits = (
   cursor: Nullable<string>
   totalCount: number
 }>
+
+export type GetTotalVersionCount = () => Promise<number>

@@ -1,40 +1,24 @@
-import {
-  decodeIsoDateCursor,
-  encodeIsoDateCursor
-} from '@/modules/shared/helpers/graphqlHelper'
-
-type Collection<T> = {
-  cursor: string | null
-  totalCount: number
-  items: T[]
-}
+import { Collection } from '@/modules/shared/helpers/dbHelper'
+import { MaybeNullOrUndefined } from '@speckle/shared'
 
 type GetPaginatedItemsArgs = {
   limit: number
-  cursor?: string
+  cursor?: MaybeNullOrUndefined<string>
 }
 
 export const getPaginatedItemsFactory =
-  <TArgs extends GetPaginatedItemsArgs, T extends { createdAt: Date }>({
+  <TArgs extends GetPaginatedItemsArgs, T>({
     getItems,
     getTotalCount
   }: {
-    getItems: (args: TArgs) => Promise<T[]>
+    getItems: (args: TArgs) => Promise<{ items: T[]; cursor: string | null }>
     getTotalCount: (args: Omit<TArgs, 'cursor' | 'limit'>) => Promise<number>
   }) =>
   async (args: TArgs): Promise<Collection<T>> => {
-    const maybeDecodedCursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
-    const items = await getItems({
-      ...args,
-      cursor: maybeDecodedCursor ?? undefined
-    })
-    const totalCount = await getTotalCount(args)
-
-    let cursor = null
-    if (items.length === args.limit) {
-      const lastItem = items.at(-1)
-      cursor = lastItem ? encodeIsoDateCursor(lastItem.createdAt) : null
-    }
+    const [totalCount, { items, cursor }] = await Promise.all([
+      getTotalCount(args),
+      args.limit === 0 ? { cursor: null, items: [] } : getItems(args)
+    ])
 
     return {
       items,

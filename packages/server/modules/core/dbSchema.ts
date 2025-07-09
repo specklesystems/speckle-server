@@ -114,11 +114,17 @@ type SchemaConfigParams = {
    * building subqueries or joining a table onto itself.
    */
   withCustomTablePrefix?: string
+
+  /**
+   * Will surround with quotes for putting directly in knex.raw() queries
+   */
+  quoted?: boolean
 }
 
 const createBaseInnerSchemaConfigBuilder =
   <T extends string, C extends string>(tableName: T, columns: C[]) =>
   (params: SchemaConfigParams = {}): BaseInnerSchemaConfig<T, C> => {
+    const quoted = params.quoted || false
     const aliasedTableName = params.withCustomTablePrefix
       ? `${tableName} as ${params.withCustomTablePrefix}`
       : tableName
@@ -141,7 +147,7 @@ const createBaseInnerSchemaConfigBuilder =
       col: reduce(
         columns,
         (prev, curr) => {
-          prev[curr] = colName(curr)
+          prev[curr] = colName(curr, { addQuotes: quoted })
           return prev
         },
         {} as Record<C, string>
@@ -154,7 +160,7 @@ const createBaseInnerSchemaConfigBuilder =
             (prefix?.length ? prefix + '.' : '') + '*'
           })) as "${name}"`
         ),
-      cols: columns.map((c) => colName(c))
+      cols: columns.map((c) => colName(c, { addQuotes: quoted }))
     }
   }
 
@@ -260,14 +266,13 @@ export const Streams = buildTableHelper(
     'id',
     'name',
     'description',
-    'isPublic',
     'clonedFrom',
     'createdAt',
     'updatedAt',
     'allowPublicComments',
-    'isDiscoverable',
     'workspaceId',
-    'regionKey'
+    'regionKey',
+    'visibility'
   ],
   StreamsMeta
 )
@@ -288,7 +293,18 @@ export const StreamFavorites = buildTableHelper('stream_favorites', [
 export const UsersMeta = buildMetaTableHelper(
   'users_meta',
   ['userId', 'key', 'value', 'createdAt', 'updatedAt'],
-  ['isOnboardingFinished', 'foo', 'bar', 'onboardingStreamId'],
+  [
+    'isOnboardingFinished',
+    'onboardingStreamId',
+    'activeWorkspace',
+    'isProjectsActive',
+    'newWorkspaceExplainerDismissed',
+    'speckleConBannerDismissed',
+    'legacyProjectsExplainerCollapsed',
+    // Used in tests
+    'foo',
+    'bar'
+  ],
   'userId'
 )
 
@@ -390,6 +406,13 @@ export const PersonalApiTokens = buildTableHelper('personal_api_tokens', [
   'userId'
 ])
 
+export const EmbedApiTokens = buildTableHelper('embed_api_tokens', [
+  'tokenId',
+  'projectId',
+  'userId',
+  'resourceIdString'
+])
+
 export const UserServerAppTokens = buildTableHelper('user_server_app_tokens', [
   'appId',
   'userId',
@@ -413,6 +436,16 @@ export const ServerAccessRequests = buildTableHelper('server_access_requests', [
   'resourceId',
   'createdAt',
   'updatedAt'
+])
+
+export const Activity = buildTableHelper('activity', [
+  'id',
+  'contextResourceId',
+  'contextResourceType',
+  'eventType',
+  'userId',
+  'payload',
+  'createdAt'
 ])
 
 export const StreamActivity = buildTableHelper('stream_activity', [
@@ -482,6 +515,7 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'streamId',
   'branchName',
   'userId',
+  'modelId',
   'fileName',
   'fileType',
   'fileSize',
@@ -583,7 +617,8 @@ export const Automations = buildTableHelper('automations', [
   'updatedAt',
   'userId',
   'executionEngineAutomationId',
-  'isTestAutomation'
+  'isTestAutomation',
+  'isDeleted'
 ])
 
 export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [

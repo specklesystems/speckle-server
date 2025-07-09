@@ -73,6 +73,7 @@
           :items="actionItems"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          :menu-id="`user-actions-${item.id}`"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
@@ -139,7 +140,8 @@ const {
   query: getUsersQuery,
   baseVariables: computed(() => ({
     query: search.value?.length ? search.value : null,
-    limit: 50
+    limit: 50,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.query || ''],
   resolveCurrentResult: (res) => res?.admin.userList,

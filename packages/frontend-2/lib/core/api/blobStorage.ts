@@ -1,4 +1,4 @@
-import { clamp } from 'lodash'
+import { clamp, isString } from 'lodash'
 import { BaseError } from '~~/lib/core/errors/base'
 import type {
   UploadableFileItem,
@@ -6,7 +6,7 @@ import type {
 } from '~~/lib/form/composables/fileUpload'
 import type { Optional } from '@speckle/shared'
 import type { Merge, SetRequired } from 'type-fest'
-import { BlobUploadStatus } from '@speckle/ui-components'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
 import type { BlobPostResultItem } from '@speckle/ui-components'
 
 export type BlobUploadPrincipal = {
@@ -193,6 +193,18 @@ export function uploadFiles(params: {
     }
   })
 
+  const getErrorMessage = (fallbackMessage: string) => {
+    if (req.response?.error && isString(req.response.error)) {
+      return req.response.error
+    }
+
+    if (req.status === 403) {
+      return 'You do not have permissions to do this'
+    }
+
+    return fallbackMessage
+  }
+
   req.addEventListener('load', () => {
     const uploadResults =
       (req.response as Optional<PostBlobResponse>)?.uploadResults || []
@@ -201,8 +213,8 @@ export function uploadFiles(params: {
 
       uploadFile.progress = 100
       uploadFile.result = uploadResults.find((r) => r.formKey === uploadFile.id) || {
-        uploadError: 'Unable to resolve upload results',
-        uploadStatus: BlobUploadStatus.Failure,
+        uploadError: getErrorMessage('Unable to resolve upload results'),
+        uploadStatus: BlobUploadStatus.Error,
         formKey: uploadFile.id
       }
     }
@@ -218,8 +230,8 @@ export function uploadFiles(params: {
 
       uploadFile.progress = 100
       uploadFile.result = uploadResults.find((r) => r.formKey === uploadFile.id) || {
-        uploadError: 'Upload request failed unexpectedly',
-        uploadStatus: BlobUploadStatus.Failure,
+        uploadError: getErrorMessage('Upload request failed unexpectedly'),
+        uploadStatus: BlobUploadStatus.Error,
         formKey: uploadFile.id
       }
     }

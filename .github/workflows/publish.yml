@@ -1,0 +1,91 @@
+on:
+  workflow_call:
+    inputs:
+      IMAGE_VERSION_TAG:
+        required: true
+        type: string
+      CLOUDFLARE_ACCOUNT_ID:
+        required: true
+        type: string
+      DOCKERHUB_USERNAME:
+        required: true
+        type: string
+    secrets:
+      DATADOG_API_KEY:
+        required: true
+      CLOUDFLARE_API_TOKEN:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      GH_DEVOPS_PAT:
+        required: true
+jobs:
+  helm-chart-oci:
+    runs-on: blacksmith
+    name: Helm chart oci
+    container:
+      image: speckle/pre-commit-runner:latest
+    env:
+      IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
+      DOCKER_REG_USER: ${{ inputs.DOCKERHUB_USERNAME }}
+      DOCKER_REG_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - run: git config --global --add safe.directory $PWD
+      - name: Publish Helm Chart
+        run: ./.github/workflows/scripts/publish_helm_chart_oci.sh
+
+  helm-chart-commit:
+    runs-on: blacksmith
+    name: Helm chart commit
+    container:
+      image: bitnami/python:3.12.0
+    env:
+      IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
+    steps:
+      - run: apt-get update -y
+      - run: apt-get install -y wget
+      - run: wget -qO /usr/local/bin/yq github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+      - run: chmod a+x /usr/local/bin/yq
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+          path: speckle
+      - uses: actions/checkout@v4.2.2
+        with:
+          repository: specklesystems/helm
+          path: helm
+          token: ${{ secrets.GH_DEVOPS_PAT }}
+      - run: chmod +x ./.github/workflows/scripts/publish_helm_chart_commit.sh
+        working-directory: speckle
+      - name: Commit Helm Chart
+        run: ./.github/workflows/scripts/publish_helm_chart_commit.sh
+        working-directory: speckle
+
+  viewer-sandbox-cloudflare-pages:
+    runs-on: blacksmith
+    name: Viewer sandbox cloudflare pages
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_PAGES_PROJECT_NAME: viewer
+      VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Build viewer-sandbox
+        run: yarn build
+        working-directory: 'packages/viewer-sandbox'
+      - name: Publish Viewer Sandbox to Cloudflare Pages
+        run: ./.github/workflows/scripts/publish_cloudflare_pages.sh

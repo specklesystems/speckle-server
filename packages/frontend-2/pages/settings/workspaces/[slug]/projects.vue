@@ -13,7 +13,7 @@
         v-model:search="search"
         :projects="projects"
         :workspace-id="result?.workspaceBySlug.id"
-        :disable-create="result?.workspaceBySlug.readOnly"
+        :workspace="workspace"
       />
       <InfiniteLoading
         v-if="projects?.length"
@@ -30,12 +30,30 @@ import { settingsWorkspacesProjectsQuery } from '~~/lib/settings/graphql/queries
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
+import type { Nullable } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {
     totalCount
     items {
       ...SettingsSharedProjects_Project
+    }
+  }
+`)
+
+graphql(`
+  fragment SettingsWorkspacesProjects_Workspace on Workspace {
+    id
+    name
+    slug
+    plan {
+      name
+    }
+    role
+    permissions {
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -49,9 +67,7 @@ useHead({
 })
 
 const route = useRoute()
-
 const search = ref('')
-
 const slug = computed(() => (route.params.slug as string) || '')
 
 const {
@@ -63,7 +79,8 @@ const {
   baseVariables: computed(() => ({
     limit: 50,
     filter: { search: search.value?.length ? search.value : null },
-    slug: slug.value
+    slug: slug.value,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.slug, vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.workspaceBySlug.projects,
@@ -73,7 +90,8 @@ const {
   }),
   resolveCursorFromVariables: (vars) => vars.cursor
 })
-
+const workspace = computed(() => result.value?.workspaceBySlug)
 const projects = computed(() => result.value?.workspaceBySlug.projects.items || [])
+
 useWorkspaceProjectsUpdatedTracking(computed(() => slug.value))
 </script>

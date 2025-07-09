@@ -7,9 +7,16 @@ import {
   NotificationPublisher,
   NotificationType
 } from '@/modules/notifications/helpers/types'
-import { AddStreamCommentMentionActivity } from '@/modules/activitystream/domain/operations'
+import {
+  AddStreamCommentMentionActivity,
+  SaveStreamActivity
+} from '@/modules/activitystream/domain/operations'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
+import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()
@@ -34,6 +41,32 @@ function collectMentionedUserIds(comment: CommentRecord): string[] {
 
   return findMentionedUserIds(doc)
 }
+
+/**
+ * Save "user mentioned in stream comment" activity item
+ */
+const addStreamCommentMentionActivityFactory =
+  ({
+    saveActivity
+  }: {
+    saveActivity: SaveStreamActivity
+  }): AddStreamCommentMentionActivity =>
+  async ({ streamId, mentionAuthorId, mentionTargetId, commentId, threadId }) => {
+    await saveActivity({
+      streamId,
+      resourceType: StreamResourceTypes.Comment,
+      resourceId: commentId,
+      actionType: StreamActionTypes.Comment.Mention,
+      userId: mentionAuthorId,
+      message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
+      info: {
+        mentionAuthorId,
+        mentionTargetId,
+        commentId,
+        threadId
+      }
+    })
+  }
 
 type SendNotificationsForUsersDeps = {
   publish: NotificationPublisher
@@ -93,8 +126,17 @@ const processCommentMentionsFactory =
  * @returns Callback to invoke when you wish to stop listening for comments events
  */
 export const notifyUsersOnCommentEventsFactory =
-  (deps: { eventBus: EventBus } & SendNotificationsForUsersDeps) => async () => {
-    const processCommentMentions = processCommentMentionsFactory(deps)
+  (deps: {
+    eventBus: EventBus
+    publish: NotificationPublisher
+    saveActivity: SaveStreamActivity
+  }) =>
+  async () => {
+    const addStreamCommentMentionActivity = addStreamCommentMentionActivityFactory(deps)
+    const processCommentMentions = processCommentMentionsFactory({
+      ...deps,
+      addStreamCommentMentionActivity
+    })
 
     const exitCbs = [
       deps.eventBus.listen(CommentEvents.Created, async ({ payload: { comment } }) => {

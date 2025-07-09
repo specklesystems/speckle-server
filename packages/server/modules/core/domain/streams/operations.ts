@@ -3,6 +3,7 @@ import {
   StreamWithOptionalRole,
   LimitedUserWithStreamRole,
   Stream,
+  Project,
   StreamFavoriteMetadata
 } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
@@ -21,18 +22,29 @@ import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/
 import { Knex } from 'knex'
 import type express from 'express'
 import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { Logger } from 'pino'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
   limit: number
   orderBy?: string | null | undefined
-  visibility?: string | null | undefined
+  visibility?: ProjectRecordVisibility | 'all' | null | undefined
   searchQuery?: string | null | undefined
   streamIdWhitelist?: string[] | null | undefined
   workspaceIdWhitelist?: string[] | null | undefined
   offset?: MaybeNullOrUndefined<number>
   publicOnly?: MaybeNullOrUndefined<boolean>
-}) => Promise<{ streams: Stream[]; totalCount: number; cursorDate: Nullable<Date> }>
+  /**
+   * For filling in stream.role for the specified user
+   */
+  userId?: string
+}) => Promise<{
+  streams: StreamWithOptionalRole[]
+  totalCount: number
+  cursorDate: Nullable<Date>
+}>
 
 export type GetStreams = (
   streamIds: string[],
@@ -74,7 +86,22 @@ export type GetStreamsCollaborators = (params: { streamIds: string[] }) => Promi
   [streamId: string]: Array<LimitedUserWithStreamRole>
 }>
 
+export type GetStreamsCollaboratorCounts = (params: {
+  streamIds: string[]
+  type?: StreamRoles
+}) => Promise<{
+  [streamId: string]:
+    | {
+        [role in StreamRoles]?: number
+      }
+    | undefined
+}>
+
 export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
+
+export type GetImplicitUserProjectsCountFactory = (params: {
+  userId: string
+}) => Promise<number>
 
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateArgs,
@@ -157,7 +184,21 @@ export type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
-  workspaceId?: string | null
+  /**
+   * Only allow streams in the specified workspace to be returned
+   */
+  workspaceId?: MaybeNullOrUndefined<string>
+
+  /**
+   * Only allow personal (non-workspace) streams to be returned
+   */
+  personalOnly?: MaybeNullOrUndefined<boolean>
+
+  /**
+   * If set to true, will also include streams that the user may not have an explicit role on,
+   * but has implicit access to because of workspaces
+   */
+  includeImplicitAccess?: MaybeNullOrUndefined<boolean>
 
   /**
    * Only with active sso session
@@ -174,6 +215,10 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
    * Pagination cursor
    */
   cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Fields used to sort the result (supports any UserRecord field plus role field of the StreamAcl)
+   */
+  sortBy?: MaybeNullOrUndefined<string[]>
 }
 
 export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
@@ -232,10 +277,18 @@ export type GetFavoritedStreamsCount = (
   streamIdWhitelist?: Optional<string[]>
 ) => Promise<number>
 
-export type RevokeStreamPermissions = (params: {
-  streamId: string
-  userId: string
-}) => Promise<Optional<Stream>>
+export type RevokeStreamPermissions = (
+  params: {
+    streamId: string
+    userId: string
+  },
+  options?: Partial<{
+    /**
+     * Whether to mark project record as updated
+     */
+    trackProjectUpdate: boolean
+  }>
+) => Promise<Optional<Stream>>
 
 export type GrantStreamPermissions = (
   params: {
@@ -248,6 +301,17 @@ export type GrantStreamPermissions = (
   }
 ) => Promise<Optional<Stream>>
 
+export type GrantProjectPermissions = (
+  params: {
+    projectId: string
+    userId: string
+    role: StreamRoles
+  },
+  options?: {
+    trackProjectUpdate?: boolean
+  }
+) => Promise<Optional<Project>>
+
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateArgs) & {
     ownerId: string
@@ -259,19 +323,11 @@ export type LegacyCreateStream = (
   params: StreamCreateInput & { ownerId: string }
 ) => Promise<string>
 
-export type DeleteStream = (
-  streamId: string,
-  deleterId: string,
-  deleterResourceAccessRules: ContextResourceAccessRules,
-  options?: {
-    skipAccessChecks?: boolean
-  }
-) => Promise<boolean>
+export type DeleteStream = (streamId: string, deleterId: string) => Promise<boolean>
 
 export type UpdateStream = (
   update: StreamUpdateInput | ProjectUpdateInput,
-  updaterId: string,
-  updaterResourceAccessRules: ContextResourceAccessRules
+  updaterId: string
 ) => Promise<Stream>
 
 export type LegacyUpdateStream = (
@@ -297,7 +353,7 @@ export type IsStreamCollaborator = (
 export type ValidateStreamAccess = (
   userId: MaybeNullOrUndefined<string>,
   streamId: string,
-  expectedRole?: string | undefined,
+  expectedRole?: string,
   userResourceAccessLimits?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) => Promise<boolean>
 
@@ -308,7 +364,15 @@ export type AddOrUpdateStreamCollaborator = (
   addedById: string,
   adderResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>,
   options?: Partial<{
-    fromInvite: boolean
+    fromInvite: ServerInviteRecord
+    /**
+     * Whether to mark project record as updated
+     */
+    trackProjectUpdate: boolean
+    /**
+     * Whether to skipp checking if setByUserId has access to the stream
+     */
+    skipAuthorization: boolean
   }>
 ) => Promise<Stream>
 
@@ -316,15 +380,49 @@ export type RemoveStreamCollaborator = (
   streamId: string,
   userId: string,
   removedById: string,
-  removerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  removerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>,
+  options?: Partial<{
+    /**
+     * Whether to mark project record as updated
+     */
+    trackProjectUpdate: boolean
+    /**
+     * Whether to skipp checking if setByUserId has access to the stream
+     */
+    skipAuthorization: boolean
+  }>
+) => Promise<Stream>
+
+export type SetStreamCollaborator = (
+  params: {
+    streamId: string
+    userId: string
+    /**
+     * Null/undefined means - remove collaborator
+     */
+    role: MaybeNullOrUndefined<StreamRoles>
+    setByUserId: string
+    setterResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  },
+  options?: Partial<{
+    /**
+     * Whether to mark project record as updated
+     */
+    trackProjectUpdate: boolean
+    /**
+     * Whether to skipp checking if setByUserId has access to the stream
+     */
+    skipAuthorization: boolean
+  }>
 ) => Promise<Stream>
 
 export type CloneStream = (userId: string, sourceStreamId: string) => Promise<Stream>
 
-export type CreateOnboardingStream = (
-  targetUserId: string,
+export type CreateOnboardingStream = (params: {
+  targetUserId: string
   targetUserResourceAccessRules: ContextResourceAccessRules
-) => Promise<Stream>
+  logger: Logger
+}) => Promise<Stream>
 
 export type GetDiscoverableStreams = (
   args: QueryDiscoverableStreamsArgs,

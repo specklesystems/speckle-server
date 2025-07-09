@@ -44,6 +44,7 @@ import {
   waitForRegionUsers
 } from '@/test/speckle-helpers/regions'
 import { faker } from '@faker-js/faker'
+import { WorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 
 enum WorkspaceIdentification {
@@ -93,7 +94,7 @@ describe('Workspace GQL Subscriptions', () => {
   ]
 
   modes.forEach(({ isMultiRegion }) => {
-    describe(`W/${!isMultiRegion ? 'o' : ''} multiregion`, () => {
+    describe(`W/${!isMultiRegion ? 'o' : ''} @multiregion`, () => {
       const myMainWorkspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
@@ -104,7 +105,8 @@ describe('Workspace GQL Subscriptions', () => {
       before(async () => {
         await waitForRegionUsers([me, otherGuy])
         await createTestWorkspace(myMainWorkspace, me, {
-          regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+          regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+          addPlan: WorkspacePlans.Pro
         })
       })
 
@@ -194,7 +196,8 @@ describe('Workspace GQL Subscriptions', () => {
 
         before(async () => {
           await createTestWorkspace(myTeamWorkspace, me, {
-            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+            addPlan: WorkspacePlans.Pro
           })
         })
 

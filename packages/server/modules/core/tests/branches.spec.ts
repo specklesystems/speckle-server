@@ -24,14 +24,11 @@ import {
   getStreamBranchCountFactory
 } from '@/modules/core/repositories/branches'
 import {
-  addBranchUpdatedActivityFactory,
-  addBranchDeletedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
   getStreamFactory,
   createStreamFactory,
   markBranchStreamUpdatedFactory,
-  markCommitStreamUpdatedFactory
+  markCommitStreamUpdatedFactory,
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
   createCommitByBranchIdFactory,
@@ -44,8 +41,7 @@ import {
 } from '@/modules/core/repositories/commits'
 import {
   getObjectFactory,
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   legacyCreateStreamFactory,
@@ -57,14 +53,13 @@ import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   getUsersFactory,
   getUserFactory,
@@ -83,12 +78,24 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { ensureError } from '@speckle/shared'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const db = knex
 const Commits = () => knex('commits')
@@ -104,20 +111,13 @@ const createBranch = createBranchFactory({ db: knex })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db: knex }),
   updateBranch: updateBranchFactory({ db: knex }),
-  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  eventEmit: getEventBus().emit
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db: knex }),
   emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity: addBranchDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 
@@ -131,11 +131,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -143,6 +139,51 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
 })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
 
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -162,7 +203,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -204,14 +246,13 @@ const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
   getStreamBranchCount: getStreamBranchCountFactory({ db })
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 describe('Branches @core-branches', () => {
   const user = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie4342@gmail.com',
+    email: 'didimitrie4342@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
@@ -283,7 +324,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
 
     try {
@@ -295,7 +336,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
 
     try {
@@ -309,7 +350,7 @@ describe('Branches @core-branches', () => {
       )
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
 
     try {
@@ -323,7 +364,7 @@ describe('Branches @core-branches', () => {
       )
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
 
     try {
@@ -335,7 +376,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(ensureError(err).message).to.contain('Branch names cannot start with')
+      expect(ensureError(err).message).to.contain('Model names cannot start with')
     }
   })
 

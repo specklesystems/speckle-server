@@ -78,51 +78,24 @@ export const speckleLineVert = /* glsl */ `
 			return length(p1.xy - p0.xy);
 		}
 
-		vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
-			/* 
-			Vector calculation for the high and low differences works on everything 
-			*BESIDES* Apple Silicon (or whatever they call it) GPUs
-
-			It would seem that when this code gets compiled, vector types get a lower precision(?)
-			which completely brakes the 2 float -> double reconstructio. Doing it separately for each 
-			vector component using floats works fine.
-			*/
-			vec3 highDifference;
-			vec3 lowDifference;
-			float t1 = position_low.x - relativeTo_low.x;
-			float e = t1 - position_low.x;
-			float t2 = ((-relativeTo_low.x - e) + (position_low.x - (t1 - e))) + position_high.x - relativeTo_high.x;
-			highDifference.x = t1 + t2;
-			lowDifference.x = t2 - (highDifference.x - t1);
-
-			t1 = position_low.y - relativeTo_low.y;
-			e = t1 - position_low.y;
-			t2 = ((-relativeTo_low.y - e) + (position_low.y - (t1 - e))) + position_high.y - relativeTo_high.y;
-			highDifference.y = t1 + t2;
-			lowDifference.y = t2 - (highDifference.y - t1);
-
-			t1 = position_low.z - relativeTo_low.z;
-			e = t1 - position_low.z;
-			t2 = ((-relativeTo_low.z - e) + (position_low.z - (t1 - e))) + position_high.z - relativeTo_high.z;
-			highDifference.z = t1 + t2;
-			lowDifference.z = t2 - (highDifference.z - t1);
-
-			vec3 position = highDifference.xyz + lowDifference.xyz;
-			return vec4(position, 1.);
-		}
-
-		vec4 computeRelativePosition(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
+		highp vec4 computeRelativePosition(in highp vec3 position_low, in highp vec3 position_high, in highp vec3 relativeTo_low, in highp vec3 relativeTo_high){
 			/* 
 			Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl 
 			Note here, we're storing the high part of the position encoding inside three's default 'position' attribute buffer so we avoid redundancy 
 			*/
-			vec3 t1 = position_low.xyz - relativeTo_low;
-			vec3 e = t1 - position_low.xyz;
-			vec3 t2 = ((-relativeTo_low - e) + (position_low.xyz - (t1 - e))) + position_high.xyz - relativeTo_high;
-			vec3 highDifference = t1 + t2;
-			vec3 lowDifference = t2 - (highDifference - t1);
+			highp vec3 t1 = position_low.xyz - relativeTo_low.xyz;
+			highp vec3 e = t1 - position_low.xyz;
+			/** This is redunant, but necessary as a workaround for Apple platforms */
+			highp float x = position_high.x - relativeTo_high.x;
+			highp float y = position_high.y - relativeTo_high.y;
+			highp float z = position_high.z - relativeTo_high.z;
+			highp vec3 v = vec3(x, y, z);
+			/** End of redundant part */
+			highp vec3 t2 = ((-relativeTo_low - e) + (position_low.xyz - (t1 - e))) + v;
+			highp vec3 highDifference = t1 + t2;
+			highp vec3 lowDifference = t2 - (highDifference.xyz - t1.xyz);
 			
-			vec3 position = highDifference.xyz + lowDifference.xyz;
+			highp vec3 position = highDifference.xyz + lowDifference.xyz;
 			return vec4(position, 1.);
 		}
 
@@ -159,7 +132,7 @@ export const speckleLineVert = /* glsl */ `
 				// vec3 highDifference = t1 + t2;
 				// vec3 lowDifference = t2 - (highDifference - t1);
 				// vec4 start = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
-				vec4 start = modelViewMatrix * computeRelativePositionSeparate(instanceStartLow.xyz, instanceStart.xyz, uViewer_low, uViewer_high);
+				vec4 start = modelViewMatrix * computeRelativePosition(instanceStartLow.xyz, instanceStart.xyz, uViewer_low, uViewer_high);
 				
 				// t1 = instanceEndLow.xyz - uViewer_low;
 				// e = t1 - instanceEndLow.xyz;
@@ -167,7 +140,7 @@ export const speckleLineVert = /* glsl */ `
 				// highDifference = t1 + t2;
 				// lowDifference = t2 - (highDifference - t1);
 				// vec4 end = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
-				vec4 end = modelViewMatrix * computeRelativePositionSeparate(instanceEndLow.xyz, instanceEnd.xyz, uViewer_low, uViewer_high);
+				vec4 end = modelViewMatrix * computeRelativePosition(instanceEndLow.xyz, instanceEnd.xyz, uViewer_low, uViewer_high);
             #else
                 vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
                 vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );

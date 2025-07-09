@@ -3,12 +3,16 @@ import {
   StreamActivitySummary
 } from '@/modules/activitystream/domain/types'
 import {
-  ActionTypes,
-  ResourceTypes,
+  StreamActionTypes,
+  StreamResourceTypes,
   StreamScopeActivity,
-  AllActivityTypes
+  AllStreamActivityTypes
 } from '@/modules/activitystream/helpers/types'
-import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import {
+  ProjectRecordVisibility,
+  ServerInfo,
+  UserRecord
+} from '@/modules/core/helpers/types'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import {
   digestMostActiveStream,
@@ -57,8 +61,9 @@ describe('Activity digest notifications @notifications', () => {
     version: 'testing 1 2 3',
     guestModeEnabled: false,
     configuration: {
-      objectMultipartUploadSizeLimitBytes: 1000000,
-      objectSizeLimitBytes: 1000000
+      objectMultipartUploadSizeLimitBytes: 1_000_000,
+      objectSizeLimitBytes: 1_000_000,
+      isEmailEnabled: true
     }
   }
 
@@ -94,13 +99,13 @@ describe('Activity digest notifications @notifications', () => {
   })
   describe('Topic digester functions', () => {
     const createActivity = (
-      actionType: AllActivityTypes = ActionTypes.Stream.Create,
+      actionType: AllStreamActivityTypes = StreamActionTypes.Stream.Create,
       streamId = 'stream',
       info = {}
     ) => ({
       streamId,
       time: new Date(),
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: 'stream',
       actionType,
       userId: 'me',
@@ -115,12 +120,11 @@ describe('Activity digest notifications @notifications', () => {
         id: streamName,
         description: 'tester',
         name: streamName,
-        isPublic: true,
+        visibility: ProjectRecordVisibility.Public,
         clonedFrom: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         allowPublicComments: true,
-        isDiscoverable: true,
         workspaceId: null,
         regionKey: null
       },
@@ -185,7 +189,7 @@ describe('Activity digest notifications @notifications', () => {
             createBasicActivity('not so active', []),
             createBasicActivity(mostActiveName, [
               createActivity(),
-              createActivity(ActionTypes.Commit.Create)
+              createActivity(StreamActionTypes.Commit.Create)
             ])
           ]
         }
@@ -203,7 +207,7 @@ describe('Activity digest notifications @notifications', () => {
             createBasicActivity('not so active', []),
             createBasicActivity(mostActiveName, [
               createActivity(),
-              createActivity(ActionTypes.Comment.Create)
+              createActivity(StreamActionTypes.Comment.Create)
             ])
           ]
         }
@@ -221,8 +225,8 @@ describe('Activity digest notifications @notifications', () => {
             createBasicActivity('not so active', []),
             createBasicActivity(mostActiveName, [
               createActivity(),
-              createActivity(ActionTypes.Comment.Create),
-              createActivity(ActionTypes.Commit.Create)
+              createActivity(StreamActionTypes.Comment.Create),
+              createActivity(StreamActionTypes.Commit.Create)
             ])
           ]
         }
@@ -240,7 +244,7 @@ describe('Activity digest notifications @notifications', () => {
             createBasicActivity('not so active', []),
             createBasicActivity(mostActiveName, [
               createActivity(),
-              createActivity(ActionTypes.Commit.Receive)
+              createActivity(StreamActionTypes.Commit.Receive)
             ])
           ]
         }
@@ -261,7 +265,7 @@ describe('Activity digest notifications @notifications', () => {
             createBasicActivity('not so active', []),
             createBasicActivity(mostActiveName, [
               createActivity(),
-              createActivity(ActionTypes.Comment.Create)
+              createActivity(StreamActionTypes.Comment.Create)
             ])
           ]
         }
@@ -275,18 +279,18 @@ describe('Activity digest notifications @notifications', () => {
           user,
           streamActivities: [
             createBasicActivity('not so active', [
-              createActivity(ActionTypes.Comment.Create),
-              createActivity(ActionTypes.Comment.Reply, 'not so active', {
+              createActivity(StreamActionTypes.Comment.Create),
+              createActivity(StreamActionTypes.Comment.Reply, 'not so active', {
                 input: { parentComment: 'another one' }
               })
             ]),
             createBasicActivity(mostActiveName, [
               createActivity(),
-              createActivity(ActionTypes.Comment.Create),
-              createActivity(ActionTypes.Comment.Reply, mostActiveName, {
+              createActivity(StreamActionTypes.Comment.Create),
+              createActivity(StreamActionTypes.Comment.Reply, mostActiveName, {
                 input: { parentComment }
               }),
-              createActivity(ActionTypes.Comment.Reply, mostActiveName, {
+              createActivity(StreamActionTypes.Comment.Reply, mostActiveName, {
                 input: { parentComment }
               })
             ])
@@ -318,8 +322,8 @@ describe('Activity digest notifications @notifications', () => {
           streamActivities: [
             createBasicActivity('stream', [
               createActivity(),
-              createActivity(ActionTypes.Comment.Mention),
-              createActivity(ActionTypes.Comment.Mention)
+              createActivity(StreamActionTypes.Comment.Mention),
+              createActivity(StreamActionTypes.Comment.Mention)
             ])
           ]
         }
@@ -341,8 +345,8 @@ describe('Activity digest notifications @notifications', () => {
         expect(digestTopic).to.be.null
       })
       it('uses activities from the 3 most active streams after the most active one', () => {
-        const expectedActivity = createActivity(ActionTypes.Branch.Update)
-        const alsoExpectedActivity = createActivity(ActionTypes.Comment.Reply)
+        const expectedActivity = createActivity(StreamActionTypes.Branch.Update)
+        const alsoExpectedActivity = createActivity(StreamActionTypes.Comment.Reply)
         const summary = {
           user,
           streamActivities: [
@@ -364,7 +368,7 @@ describe('Activity digest notifications @notifications', () => {
         `${start}${num}${end}`
 
       const testDigestActiveStreamPart = (
-        actionType: AllActivityTypes,
+        actionType: AllStreamActivityTypes,
         renderTag: (num: number) => string,
         serverInfo: ServerInfo
       ) => {
@@ -388,23 +392,28 @@ describe('Activity digest notifications @notifications', () => {
       const digestActiveStreamsData = [
         [
           'adds commit count to topic',
-          ActionTypes.Commit.Create,
+          StreamActionTypes.Commit.Create,
           'had ',
           ' new commits'
         ],
         [
           'adds receive count to topic',
-          ActionTypes.Commit.Receive,
+          StreamActionTypes.Commit.Receive,
           ' which were received ',
           ' times'
         ],
-        ['adds comment count to topic', ActionTypes.Comment.Create, 'It also got ', ' ']
+        [
+          'adds comment count to topic',
+          StreamActionTypes.Comment.Create,
+          'It also got ',
+          ' '
+        ]
       ]
 
       digestActiveStreamsData.map(([testName, actionType, start, end]) => {
         it(testName, () => {
           testDigestActiveStreamPart(
-            actionType as AllActivityTypes,
+            actionType as AllStreamActivityTypes,
             expectedTag(start, end),
             serverInfo
           )
@@ -417,7 +426,7 @@ describe('Activity digest notifications @notifications', () => {
           user,
           streamActivities: [
             createBasicActivity('activity', [
-              createActivity(ActionTypes.Comment.Create)
+              createActivity(StreamActionTypes.Comment.Create)
             ])
           ]
         }
@@ -429,8 +438,8 @@ describe('Activity digest notifications @notifications', () => {
           user,
           streamActivities: [
             createBasicActivity('activity', [
-              createActivity(ActionTypes.Comment.Reply),
-              createActivity(ActionTypes.Commit.Create)
+              createActivity(StreamActionTypes.Comment.Reply),
+              createActivity(StreamActionTypes.Commit.Create)
             ])
           ]
         }
@@ -444,8 +453,8 @@ describe('Activity digest notifications @notifications', () => {
           user,
           streamActivities: [
             createBasicActivity('activity', [
-              createActivity(ActionTypes.Comment.Create),
-              createActivity(ActionTypes.Commit.Create)
+              createActivity(StreamActionTypes.Comment.Create),
+              createActivity(StreamActionTypes.Commit.Create)
             ])
           ]
         }
@@ -459,8 +468,8 @@ describe('Activity digest notifications @notifications', () => {
           user,
           streamActivities: [
             createBasicActivity('activity', [
-              createActivity(ActionTypes.Comment.Reply),
-              createActivity(ActionTypes.Commit.Receive)
+              createActivity(StreamActionTypes.Comment.Reply),
+              createActivity(StreamActionTypes.Commit.Receive)
             ])
           ]
         }

@@ -1,15 +1,19 @@
-import {
+import type {
   DeleteBlob,
+  FullyDeleteBlob,
   GetBlobMetadata,
   StoreFileStream,
   UpdateBlob,
   UploadFileStream,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
-import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { type BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { BadRequestError } from '@/modules/shared/errors'
 import { getFileSizeLimitMB } from '@/modules/shared/helpers/envHelper'
-import { MaybeAsync } from '@speckle/shared'
+import { type MaybeAsync } from '@speckle/shared'
+import { BlobUploadStatus } from '@speckle/shared/blobs'
+import type { ProcessingResult } from '@/modules/blobstorage/domain/types'
 
 /**
  * File size limit in bytes
@@ -31,7 +35,7 @@ export const uploadFileStreamFactory =
     if (!userId || userId.length !== 10)
       throw new BadRequestError('The user id has to be of length 10')
 
-    const objectKey = `assets/${streamId}/${blobId}`
+    const objectKey = getObjectKey(streamId, blobId)
     const dbFile = {
       id: blobId,
       streamId,
@@ -40,8 +44,9 @@ export const uploadFileStreamFactory =
       fileName,
       fileType
     }
+
     // need to insert the upload data before starting otherwise the upload finished
-    // even might fire faster, than the db insert, causing missing asset data in the db
+    // event might fire faster, than the db insert, causing missing asset data in the db
     await deps.upsertBlob(dbFile)
 
     const { fileHash } = await deps.storeFileStream({ objectKey, fileStream })
@@ -86,8 +91,13 @@ const updateBlobMetadataFactory =
       blobId
     })
     const updateData = await updateCallback({ objectKey: objectKey! })
-    await deps.updateBlob({ id: blobId, item: updateData, streamId })
-    return { blobId, fileName, ...updateData }
+    await deps.updateBlob({ id: blobId, item: updateData, filter: { streamId } })
+    return {
+      blobId,
+      ...updateData,
+      fileName: updateData.fileName ?? fileName, // ensure the fileName is not undefined
+      fileSize: updateData.fileSize ?? null // ensure the fileSize is not undefined
+    }
   }
 
 export const markUploadSuccessFactory =
@@ -96,11 +106,11 @@ export const markUploadSuccessFactory =
     getObjectAttributes: (params: ObjectKeyPayload) => MaybeAsync<{ fileSize: number }>,
     streamId: string,
     blobId: string
-  ) => {
+  ): Promise<ProcessingResult> => {
     const updateBlobMetadata = updateBlobMetadataFactory(deps)
     return await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
       const { fileSize } = await getObjectAttributes({ objectKey })
-      return { uploadStatus: 1, fileSize }
+      return { uploadStatus: BlobUploadStatus.Completed, fileSize }
     })
   }
 
@@ -114,17 +124,21 @@ export const markUploadErrorFactory =
     streamId: string,
     blobId: string,
     error: string
-  ) => {
+  ): Promise<ProcessingResult> => {
     const updateBlobMetadata = updateBlobMetadataFactory(deps)
     return await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
       await deleteObject({ objectKey })
-      return { uploadStatus: 2, uploadError: error }
+      return { uploadStatus: BlobUploadStatus.Error, uploadError: error }
     })
   }
 
 export const markUploadOverFileSizeLimitFactory =
   (deps: UpdateBlobMetadataDeps) =>
-  async (deleteObject: DeleteObjectFromStorage, streamId: string, blobId: string) => {
+  async (
+    deleteObject: DeleteObjectFromStorage,
+    streamId: string,
+    blobId: string
+  ): Promise<ProcessingResult> => {
     const markUploadError = markUploadErrorFactory(deps)
     return await markUploadError(
       deleteObject,
@@ -135,20 +149,16 @@ export const markUploadOverFileSizeLimitFactory =
   }
 
 export const fullyDeleteBlobFactory =
-  (deps: { getBlobMetadata: GetBlobMetadata; deleteBlob: DeleteBlob }) =>
-  async ({
-    streamId,
-    blobId,
-    deleteObject
-  }: {
-    streamId: string
-    blobId: string
-    deleteObject: (params: ObjectKeyPayload) => MaybeAsync<void>
-  }) => {
+  (deps: {
+    getBlobMetadata: GetBlobMetadata
+    deleteBlob: DeleteBlob
+    deleteObject: DeleteObjectFromStorage
+  }): FullyDeleteBlob =>
+  async ({ streamId, blobId }) => {
     const { objectKey } = await deps.getBlobMetadata({
       streamId,
       blobId
     })
-    await deleteObject({ objectKey: objectKey! })
+    await deps.deleteObject({ objectKey: objectKey! })
     await deps.deleteBlob({ id: blobId, streamId })
   }

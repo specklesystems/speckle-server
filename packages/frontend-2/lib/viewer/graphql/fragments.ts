@@ -5,6 +5,7 @@ export const viewerCommentThreadFragment = graphql(`
     ...ViewerCommentsListItem
     ...ViewerCommentBubblesData
     ...ViewerCommentsReplyItem
+    ...ViewerCommentThreadData
   }
 `)
 

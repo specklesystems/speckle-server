@@ -8,7 +8,9 @@ import { assign } from 'lodash'
 export const createTestSubscriptionData = (
   overrides: Partial<SubscriptionData> = {}
 ): SubscriptionData => {
-  const defaultValues: SubscriptionData = {
+  const aMonthFromNow = new Date()
+  aMonthFromNow.setMonth(new Date().getMonth() + 1)
+  const defaultValues = {
     cancelAt: null,
     customerId: cryptoRandomString({ length: 10 }),
     products: [
@@ -20,7 +22,8 @@ export const createTestSubscriptionData = (
       }
     ],
     status: 'active',
-    subscriptionId: cryptoRandomString({ length: 10 })
+    subscriptionId: cryptoRandomString({ length: 10 }),
+    currentPeriodEnd: aMonthFromNow.toISOString()
   }
   return assign(defaultValues, overrides)
 }
@@ -34,6 +37,8 @@ export const createTestWorkspaceSubscription = (
     updatedAt: new Date(),
     currentBillingCycleEnd: new Date(),
     subscriptionData: createTestSubscriptionData(),
+    updateIntent: null,
+    currency: 'usd',
     workspaceId: cryptoRandomString({ length: 10 })
   }
   return assign(defaultValues, overrides)

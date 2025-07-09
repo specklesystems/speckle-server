@@ -10,9 +10,15 @@
     >
       <label :for="name" :class="labelClasses">
         <span>{{ title }}</span>
-        <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
-        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
+        <div v-if="!showRequired" class="text-body-2xs font-normal">(optional)</div>
       </label>
+      <span
+        v-if="labelPosition === 'left' && helpTipIdLeft"
+        :id="helpTipIdLeft"
+        :class="helpTipClasses"
+      >
+        {{ helpTip }}
+      </span>
     </div>
     <div
       class="relative"
@@ -33,10 +39,11 @@
         :placeholder="placeholder"
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
-        :aria-describedby="helpTipId"
+        :aria-describedby="labelPosition === 'left' ? helpTipIdLeft : helpTipIdTop"
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
+        @keydown.stop
       />
       <a
         v-if="shouldShowClear"
@@ -48,26 +55,10 @@
         <span class="text-xs sr-only">Clear input</span>
         <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
       </a>
-      <div
-        v-if="errorMessage"
-        :class="[
-          'pointer-events-none absolute top-0 bottom-0 right-0 flex items-start mt-2',
-          shouldShowClear ? 'pr-8' : 'pr-2'
-        ]"
-      >
-        <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
-      </div>
-      <div
-        v-if="showRequired && !errorMessage"
-        class="pointer-events-none absolute top-0 bottom-0 mt-0.5 text-4xl right-0 flex items-start text-danger opacity-50"
-        :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
-      >
-        *
-      </div>
     </div>
     <p
-      v-if="labelPosition === 'top' && helpTipId"
-      :id="helpTipId"
+      v-if="labelPosition === 'top' && helpTipIdTop"
+      :id="helpTipIdTop"
       :class="['mt-1.5', helpTipClasses]"
     >
       {{ helpTip }}
@@ -75,7 +66,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon } from '@heroicons/vue/20/solid'
 import type { Nullable } from '@speckle/shared'
 import type { RuleExpression } from 'vee-validate'
 import { computed, ref, toRefs } from 'vue'
@@ -134,7 +125,6 @@ const {
   coreClasses,
   title,
   value,
-  helpTipId,
   helpTipClasses,
   helpTip,
   errorMessage,
@@ -147,6 +137,9 @@ const {
   emit,
   inputEl: inputElement
 })
+
+const helpTipIdTop = computed(() => `${props.name}-help-top`)
+const helpTipIdLeft = computed(() => `${props.name}-help-left`)
 
 const iconClasses = computed(() => {
   const classParts: string[] = ['pl-2']
@@ -163,14 +156,14 @@ const iconClasses = computed(() => {
 const sizeClasses = computed((): string => {
   switch (props.size) {
     case 'sm':
-      return 'text-2xs !leading-tight'
+      return 'text-body sm:text-body-2xs'
     case 'lg':
-      return 'text-sm'
+      return 'text-body sm:text-sm'
     case 'xl':
-      return 'text-base'
+      return 'text-body sm:text-base'
     case 'base':
     default:
-      return 'text-body-xs'
+      return 'text-body sm:text-body-xs'
   }
 })
 

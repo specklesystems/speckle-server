@@ -1,4 +1,5 @@
 <template>
+  <!-- If multiple, use FormSelectMultiple instead -->
   <div>
     <Listbox
       :key="forceUpdateKey"
@@ -133,7 +134,10 @@
                     />
                   </div>
                 </label>
-                <div class="overflow-auto simple-scrollbar max-h-60">
+                <div
+                  class="overflow-auto simple-scrollbar"
+                  :class="props.menuMaxHeightClasses || 'max-h-[50vh] xl:max-h-80'"
+                >
                   <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                     <CommonLoadingBar :loading="true" />
                   </div>
@@ -247,7 +251,12 @@ import { useField } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
-import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse/core'
+import {
+  useElementBounding,
+  useMounted,
+  useIntersectionObserver,
+  isClient
+} from '@vueuse/core'
 import type { LabelPosition } from '~~/src/composables/form/input'
 import { directive as vTippy } from 'vue-tippy'
 
@@ -466,6 +475,29 @@ const props = defineProps({
     default: 'top'
   },
   tooltipText: {
+    type: String,
+    default: undefined
+  },
+  /**
+   * Optionally make the menu width wider/narrower than the button width by specifying the max width in pixels.
+   * Only supported when `mountMenuOnBody` is true.
+   */
+  menuMaxWidth: {
+    type: Number,
+    default: undefined
+  },
+  /**
+   * If menuMaxWidth is set and menu is wider than the button, this will determine the direction of the menu opening.
+   * Default: 'left' (opens to the left of the button)
+   */
+  menuOpenDirection: {
+    type: String as PropType<'left' | 'right'>,
+    default: 'left'
+  },
+  /**
+   * Custom max height classes for the dropdown menu. If not provided, defaults to 'max-h-[50vh] xl:max-h-80'
+   */
+  menuMaxHeightClasses: {
     type: String,
     default: undefined
   }
@@ -731,16 +763,59 @@ const listboxOptionsClasses = computed(() => {
 
 const listboxOptionsStyle = computed(() => {
   const style: CSSProperties = {}
+  if (!isClient) return style
 
   if (props.mountMenuOnBody) {
+    /**
+     * If menu width overridden (w/ menuMaxWidth) && mountMenuOnBody is true:
+     * 1.a. If menuMaxWidth is bigger than screen width, use screen width
+     * 1.b. If menumaxWidth is smaller than screen width, use menuMaxWidth
+     * 2. If 1.b. but menu is leaving screen bounds, make it open to the left, instead of right
+     */
+
+    const openToLeft = props.menuOpenDirection === 'left'
+
     const top = listboxButtonBounding.top.value
     const left = listboxButtonBounding.left.value
     const width = listboxButtonBounding.width.value
     const height = listboxButtonBounding.height.value
 
+    let finalWidth = width
+    let finalLeft = left
+
+    if (props.menuMaxWidth) {
+      const viewportWidth = window.innerWidth
+      const xMargin = 10 // how much space to leave in full-screen mode
+      const viewportWithoutMargins = viewportWidth - xMargin * 2
+
+      if (props.menuMaxWidth > viewportWithoutMargins) {
+        finalWidth = viewportWithoutMargins
+        finalLeft = xMargin
+      } else {
+        finalWidth = props.menuMaxWidth
+
+        if (openToLeft) {
+          finalLeft = left + width - props.menuMaxWidth
+          if (finalLeft < xMargin) {
+            finalLeft = xMargin
+          }
+        } else {
+          if (left + props.menuMaxWidth > viewportWithoutMargins) {
+            finalLeft = Math.max(left + width - props.menuMaxWidth, xMargin)
+          }
+        }
+      }
+    }
+
+    // if (props.menuOpenDirection === 'right') {
+    //   style.left = `${finalLeft}px`
+    // } else {
+    //   style.left = `${finalLeft}px`
+    // }
+
+    style.left = `${finalLeft}px`
+    style.width = `${finalWidth}px`
     style.top = `${top + height}px`
-    style.left = `${left}px`
-    style.width = `${width}px`
   }
 
   return style
@@ -792,6 +867,13 @@ watch(
 watch(searchValue, () => {
   if (!isAsyncSearchMode.value) return
   void debouncedSearch()
+})
+
+watch(isOpen, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    // Update menu location (to avoid flashing)
+    listboxButtonBounding.update()
+  }
 })
 
 onMounted(() => {

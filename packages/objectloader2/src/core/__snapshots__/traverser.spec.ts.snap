@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Traverser > root and two children with referenceId 1`] = `
+{
+  "applicationId": "1",
+  "arr": null,
+  "attachedProp": null,
+  "crazyProp": null,
+  "detachedProp": null,
+  "detachedProp2": null,
+  "dynamicProp": 123,
+  "id": "efeadaca70a85ae6d3acfc93a8b380db",
+  "list": [
+    {
+      "applicationId": null,
+      "data": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+      ],
+      "id": "0e61e61edee00404ec6e0f9f594bce24",
+      "speckle_type": "Speckle.Core.Models.DataChunk",
+    },
+  ],
+  "list2": [
+    {
+      "applicationId": null,
+      "data": [
+        1,
+        10,
+      ],
+      "id": "f70738e3e3e593ac11099a6ed6b71154",
+      "speckle_type": "Speckle.Core.Models.DataChunk",
+    },
+  ],
+  "speckle_type": "Speckle.Core.Tests.Unit.Models.BaseTests+SampleObjectBase2",
+}
+`;

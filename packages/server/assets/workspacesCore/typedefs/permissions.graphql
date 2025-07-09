@@ -1,0 +1,12 @@
+extend type Workspace {
+  permissions: WorkspacePermissionChecks!
+}
+
+type WorkspacePermissionChecks {
+  canCreateProject: PermissionCheckResult!
+  canInvite: PermissionCheckResult!
+  canMoveProjectToWorkspace(projectId: String): PermissionCheckResult!
+  canEditEmbedOptions: PermissionCheckResult!
+  canMakeWorkspaceExclusive: PermissionCheckResult!
+  canReadMemberEmail: PermissionCheckResult!
+}

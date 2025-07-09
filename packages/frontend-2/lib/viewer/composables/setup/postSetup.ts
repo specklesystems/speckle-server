@@ -1,6 +1,9 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
-  ViewMode,
+  ExplodeEvent,
+  ExplodeExtension,
+  LoaderEvent,
   type PropertyInfo,
   type StringPropertyInfo,
   type SunLightConfiguration
@@ -13,15 +16,10 @@ import {
   SectionOutlines,
   SectionToolEvent,
   SectionTool,
-  ViewModes,
-  ViewModeEvent
+  SpeckleLoader
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
-import type {
-  Project,
-  ProjectCommentThreadsArgs,
-  ViewerResourceItem
-} from '~~/lib/common/generated/gql/graphql'
+import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
   useInjectedViewer,
@@ -36,11 +34,7 @@ import {
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
-import {
-  getCacheId,
-  getObjectReference,
-  modifyObjectFields
-} from '~~/lib/common/helpers/graphql'
+import { getCacheId } from '~~/lib/common/helpers/graphql'
 import {
   useViewerOpenedThreadUpdateEmitter,
   useViewerThreadTracking
@@ -55,10 +49,10 @@ import {
   useCameraUtilities,
   useMeasurementUtilities
 } from '~~/lib/viewer/composables/ui'
-import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -95,24 +89,55 @@ function useViewerObjectAutoLoading() {
     resources: {
       response: { resourceItems }
     },
+    ui: { loadProgress },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
-  const loadObject = (
+  const loadingProgressMap: { [id: string]: number } = {}
+
+  viewer.on(ViewerEvent.LoadComplete, (id) => {
+    delete loadingProgressMap[id]
+    consolidateProgressInternal({ id, progress: 1 })
+  })
+
+  const consolidateProgressInternal = (args: { progress: number; id: string }) => {
+    loadingProgressMap[args.id] = args.progress
+    let min = 42
+    const values = Object.values(loadingProgressMap) as number[]
+    for (const num of values) {
+      min = Math.min(min, num)
+    }
+
+    loadProgress.value = min
+  }
+
+  const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
+
+  const loadObject = async (
     objectId: string,
     unload?: boolean,
     options?: Partial<{ zoomToObject: boolean }>
   ) => {
     const objectUrl = getObjectUrl(projectId.value, objectId)
+
     if (unload) {
-      viewer.unloadObject(objectUrl)
+      return viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObjectAsync(
+      const loader = new SpeckleLoader(
+        viewer.getWorldTree(),
         objectUrl,
         authToken.value || undefined,
         disableViewerCache ? false : undefined,
-        options?.zoomToObject
+        undefined
       )
+
+      loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThorttled(args))
+      loader.on(LoaderEvent.LoadCancelled, (id) => {
+        delete loadingProgressMap[id]
+        consolidateProgressInternal({ id, progress: 1 })
+      })
+
+      return viewer.loadObject(loader, options?.zoomToObject)
     }
   }
 
@@ -132,9 +157,15 @@ function useViewerObjectAutoLoading() {
       if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
-        const res = await Promise.all(
-          allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
-        )
+        /** Load sequentially */
+        const res = []
+        for (const i of allObjectIds) {
+          res.push(await loadObject(i, false, { zoomToObject }))
+        }
+        /** Load in parallel */
+        // const res = await Promise.all(
+        //   allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        // )
         if (res.length) {
           hasDoneInitialLoad.value = true
         }
@@ -231,21 +262,19 @@ function useViewerSubscriptionEventTracker() {
         })
 
         // Remove from project.commentThreads
-        modifyObjectFields<ProjectCommentThreadsArgs, Project['commentThreads']>(
+        modifyObjectField(
           cache,
           getCacheId('Project', projectId.value),
-          (fieldName, variables, data) => {
-            if (fieldName !== 'commentThreads') return
-            if (variables.filter?.includeArchived) return
+          'commentThreads',
+          ({ variables, helpers: { createUpdatedValue, readField } }) => {
+            if (variables.filter?.includeArchived) return // we want it in that list
 
-            const newItems = (data.items || []).filter(
-              (i) => i.__ref !== getObjectReference('Comment', event.id).__ref
-            )
-            return {
-              ...data,
-              ...(data.items ? { items: newItems } : {}),
-              ...(data.totalCount ? { totalCount: data.totalCount - 1 } : {})
-            }
+            return createUpdatedValue(({ update }) => {
+              update('totalCount', (totalCount) => totalCount - 1)
+              update('items', (items) =>
+                items.filter((i) => readField(i, 'id') !== event.id)
+              )
+            })
           }
         )
       } else if (isNew && comment) {
@@ -265,26 +294,37 @@ function useViewerSubscriptionEventTracker() {
           )
         } else {
           // Add comment thread
-          modifyObjectFields<ProjectCommentThreadsArgs, Project['commentThreads']>(
+          modifyObjectField(
             cache,
             getCacheId('Project', projectId.value),
-            (fieldName, _variables, data) => {
-              if (fieldName !== 'commentThreads') return
+            'commentThreads',
+            ({ helpers: { ref, createUpdatedValue, readField }, value }) => {
+              // In case this is actually an unarchived comment, we only want to add it if it doesnt
+              // exist in the includesArchived list already
+              const includesItem = value.items?.find(
+                (i) => readField(i, 'id') === comment.id
+              )
+              if (includesItem) return
 
-              const newItems = [
-                getObjectReference('Comment', comment.id),
-                ...(data.items || [])
-              ]
-              return {
-                ...data,
-                ...(data.items ? { items: newItems } : {}),
-                ...(data.totalCount ? { totalCount: data.totalCount + 1 } : {})
-              }
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => [ref('Comment', comment.id), ...items])
+              })
             }
           )
         }
       }
     }
+  )
+}
+
+function sectionBoxDataEquals(a: SectionBoxData, b: SectionBoxData): boolean {
+  const isEqual = (a: number[], b: number[]) =>
+    a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 1e-6)
+  return (
+    isEqual(a.min, b.min) &&
+    isEqual(a.max, b.max) &&
+    (a.rotation && b.rotation ? isEqual(a.rotation, b.rotation) : true)
   )
 }
 
@@ -311,7 +351,7 @@ function useViewerSectionBoxIntegration() {
   watch(
     sectionBox,
     (newVal, oldVal) => {
-      if (newVal && oldVal && newVal.equals(oldVal)) return
+      if (newVal && oldVal && sectionBoxDataEquals(newVal, oldVal)) return
       if (!newVal && !oldVal) return
 
       if (oldVal && !newVal) {
@@ -323,14 +363,11 @@ function useViewerSectionBoxIntegration() {
         return
       }
 
-      if (newVal && (!oldVal || !newVal.equals(oldVal))) {
+      if (newVal && (!oldVal || !sectionBoxDataEquals(newVal, oldVal))) {
         visible.value = true
         edited.value = false
 
-        instance.setSectionBox({
-          min: newVal.min,
-          max: newVal.max
-        })
+        instance.setSectionBox(newVal)
         instance.sectionBoxOn()
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
@@ -625,44 +662,6 @@ function useViewerFiltersIntegration() {
   )
 }
 
-function useViewerViewModeIntegration() {
-  const {
-    ui: { viewMode },
-    viewer: { instance }
-  } = useInjectedViewerState()
-
-  const viewModes = instance.getExtension(ViewModes)
-  const onViewModeChanged = (mode: ViewMode) => {
-    viewMode.value = mode
-  }
-
-  onMounted(() => {
-    if (!viewMode.value) {
-      viewMode.value = ViewMode.DEFAULT
-    }
-    viewModes.on(ViewModeEvent.Changed, onViewModeChanged)
-  })
-
-  onBeforeUnmount(() => {
-    // Reset view mode to default
-    viewModes.setViewMode(ViewMode.DEFAULT)
-    viewMode.value = ViewMode.DEFAULT
-
-    // Clean up event listener
-    viewModes.removeListener(ViewModeEvent.Changed, onViewModeChanged)
-  })
-
-  watch(
-    () => viewMode.value,
-    (newMode) => {
-      if (viewModes && newMode) {
-        viewModes.setViewMode(newMode)
-      }
-    },
-    { immediate: true }
-  )
-}
-
 function useLightConfigIntegration() {
   const {
     ui: { lightConfig },
@@ -705,6 +704,20 @@ function useExplodeFactorIntegration() {
     ui: { explodeFactor },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  const updateOutlines = () => {
+    const sectionOutlines = instance.getExtension(SectionOutlines)
+    if (sectionOutlines && sectionOutlines.enabled) sectionOutlines.requestUpdate(true)
+  }
+  onMounted(() => {
+    instance.getExtension(ExplodeExtension).on(ExplodeEvent.Finshed, updateOutlines)
+  })
+
+  onBeforeUnmount(() => {
+    instance
+      .getExtension(ExplodeExtension)
+      .removeListener(ExplodeEvent.Finshed, updateOutlines)
+  })
 
   // state -> viewer only. we don't need the reverse.
   watch(
@@ -874,8 +887,6 @@ function useDisableZoomOnEmbed() {
   watch(
     () => embedOptions.noScroll.value,
     (newNoScrollValue) => {
-      newNoScrollValue
-      viewer
       const cameraController: CameraController =
         viewer.instance.getExtension(CameraController)
 
@@ -901,7 +912,6 @@ export function useViewerPostSetup() {
   useViewerSectionBoxIntegration()
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
-  useViewerViewModeIntegration()
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()

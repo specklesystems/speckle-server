@@ -81,7 +81,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { type Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useElementVisibility, useResizeObserver } from '@vueuse/core'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 
@@ -109,7 +109,8 @@ const {
   panoramaPreviewUrl,
   shouldLoadPanorama,
   isLoadingPanorama,
-  hasDoneFirstLoad
+  hasDoneFirstLoad,
+  isPanoramaPlaceholder
 } = usePreviewImageBlob(basePreviewUrl, { enabled: isInViewport })
 
 const hovered = ref(false)
@@ -152,10 +153,15 @@ const shouldShowMainPreview = computed(
   () =>
     (!hovered.value && finalPreviewUrl.value) ||
     isLoadingPanorama.value ||
-    !props.panoramaOnHover
+    !props.panoramaOnHover ||
+    isPanoramaPlaceholder.value
 )
 const shouldShowPanoramicPreview = computed(
-  () => hovered.value && panoramaPreviewUrl.value && props.panoramaOnHover
+  () =>
+    hovered.value &&
+    panoramaPreviewUrl.value &&
+    props.panoramaOnHover &&
+    !isPanoramaPlaceholder.value
 )
 
 onMounted(() => setParentDimensions())

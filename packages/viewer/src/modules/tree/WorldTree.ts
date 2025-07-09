@@ -119,6 +119,18 @@ export class WorldTree {
     }
   }
 
+  public hasNodeId(id: string, subtreeId: number = 1) {
+    return this.nodeMaps[subtreeId] && this.nodeMaps[subtreeId].hasNodeId(id)
+  }
+
+  public hasInstanceId(id: string, subtreeId: number = 1) {
+    return this.nodeMaps[subtreeId] && this.nodeMaps[subtreeId].hasInstanceId(id)
+  }
+
+  public hasId(id: string, subtreeId: number = 1) {
+    return this.nodeMaps[subtreeId] && this.nodeMaps[subtreeId].hasId(id)
+  }
+
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
     if (!node && !this.supressWarnings) {
       Logger.warn(`Root will be used for searching. You might not want that`)
@@ -156,6 +168,10 @@ export class WorldTree {
 
   public getInstances(subtreeId: string): { [id: string]: Record<string, TreeNode> } {
     return this.nodeMaps[subtreeId].instances
+  }
+
+  public getDuplicates(subtreeId: string): { [id: string]: Record<string, TreeNode> } {
+    return this.nodeMaps[subtreeId].duplicates
   }
 
   /** TO DO: We might want to add boolean as return type here too */

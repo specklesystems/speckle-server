@@ -1,11 +1,12 @@
 import {
   ApiToken,
+  EmbedApiToken,
   PersonalApiToken,
   TokenResourceAccessDefinition,
+  TokenResourceIdentifierType,
   TokenScope,
   UserServerAppToken
 } from '@/modules/core/domain/tokens/types'
-import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { NullableKeysToOptional, Optional, ServerScope } from '@speckle/shared'
 import { SetOptional } from 'type-fest'
@@ -31,6 +32,8 @@ export type StorePersonalApiToken = (
   token: PersonalApiToken
 ) => Promise<PersonalApiToken>
 
+export type StoreEmbedApiToken = (token: EmbedApiToken) => Promise<EmbedApiToken>
+
 export type GetUserPersonalAccessTokens = (userId: string) => Promise<
   {
     id: string
@@ -43,9 +46,32 @@ export type GetUserPersonalAccessTokens = (userId: string) => Promise<
   }[]
 >
 
+export type ListProjectEmbedTokens = (args: {
+  projectId: string
+  filter?: {
+    limit?: number
+    createdBefore?: string | null
+  }
+}) => Promise<
+  (EmbedApiToken & {
+    createdAt: Date
+    lastUsed: Date
+    lifespan: number | bigint
+  })[]
+>
+
+export type CountProjectEmbedTokens = (args: { projectId: string }) => Promise<number>
+
 export type RevokeTokenById = (tokenId: string) => Promise<boolean>
 
 export type RevokeUserTokenById = (tokenId: string, userId: string) => Promise<boolean>
+
+export type RevokeEmbedTokenById = (args: {
+  tokenId: string
+  projectId: string
+}) => Promise<boolean>
+
+export type RevokeProjectEmbedTokens = (args: { projectId: string }) => Promise<void>
 
 export type GetApiTokenById = (tokenId: string) => Promise<Optional<ApiToken>>
 
@@ -59,6 +85,11 @@ export type UpdateApiToken = (
   tokenId: string,
   token: Partial<ApiToken>
 ) => Promise<ApiToken>
+
+export type TokenResourceIdentifierInput = {
+  id: string
+  type: TokenResourceIdentifierType
+}
 
 export type CreateAndStoreUserToken = (params: {
   userId: string
@@ -80,5 +111,31 @@ export type CreateAndStorePersonalAccessToken = (
   scopes: ServerScope[],
   lifespan?: number | bigint
 ) => Promise<string>
+
+export type CreateAndStoreEmbedToken = (args: {
+  projectId: string
+  userId: string
+  /**
+   * The models (and optional versions) included in the embed.
+   * @example 'foo123,bar456@baz789'
+   */
+  resourceIdString: string
+  lifespan?: number | bigint
+}) => Promise<{
+  token: string
+  tokenMetadata: EmbedApiToken
+}>
+
+export type GetPaginatedProjectEmbedTokens = (args: {
+  projectId: string
+  filter?: {
+    limit?: number
+    cursor?: string
+  }
+}) => Promise<{
+  items: EmbedApiToken[]
+  totalCount: number
+  cursor: string | null
+}>
 
 export type ValidateToken = (tokenString: string) => Promise<TokenValidationResult>

@@ -11,7 +11,6 @@ import dayjs from 'dayjs'
 import { Knex } from 'knex'
 import { hash } from 'bcrypt'
 import { EmailVerification } from '@/modules/emails/domain/types'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const tables = {
   emailVerifications: (db: Knex) => db<EmailVerification>(EmailVerifications.name)
@@ -64,7 +63,6 @@ function generateEmailVerificationCode() {
   return cryptoRandomString({ length: 6, type: 'numeric' })
 }
 
-const { FF_FORCE_EMAIL_VERIFICATION } = getFeatureFlags()
 /**
  * Delete all previous verification entries and create a new one
  */
@@ -81,15 +79,14 @@ export const deleteOldAndInsertNewVerificationFactory =
       withoutTablePrefix: true
     }).col
 
-    const newId = cryptoRandomString({ length: 20 })
     const code = generateEmailVerificationCode()
     await tables.emailVerifications(deps.db).insert({
-      [EmailVerificationCols.id]: newId,
+      [EmailVerificationCols.id]: cryptoRandomString({ length: 20 }),
       [EmailVerificationCols.email]: email,
       [EmailVerificationCols.code]: await hashEmailVerificationCode(code)
     })
 
-    return FF_FORCE_EMAIL_VERIFICATION ? code : newId
+    return code
   }
 
 export const getPendingVerificationByEmailFactory =

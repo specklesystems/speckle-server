@@ -47,6 +47,11 @@ export type GetBranchById = (
   }>
 ) => Promise<Optional<Branch>>
 
+export type GetProjectModelById = (params: {
+  projectId: string
+  modelId: string
+}) => Promise<Optional<Branch>>
+
 export type GetStreamBranchesByName = (
   streamId: string,
   names: string[],
@@ -218,3 +223,5 @@ export type VerifyUserEmail = ({
   email,
   code
 }: Pick<EmailVerification, 'email' | 'code'>) => Promise<void>
+
+export type GetTotalModelCount = () => Promise<number>

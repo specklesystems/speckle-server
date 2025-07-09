@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -17,7 +18,8 @@ import {
   countAdminUsersFactory,
   getUserFactory,
   storeUserAclFactory,
-  storeUserFactory
+  storeUserFactory,
+  UserWithOptionalRole
 } from '@/modules/core/repositories/users'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
@@ -35,7 +37,8 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
-import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
+import cryptoRandomString from 'crypto-random-string'
+import { assign, isArray, isNumber, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
@@ -84,11 +87,15 @@ export type BasicTestUser = {
    */
   id: string
   role?: ServerRoles
+  /**
+   * Even if disabled server-wide, allow personal emails for this user
+   */
+  allowPersonalEmail?: boolean
 } & Partial<UserRecord>
 
 const initTestUser = (user: Partial<BasicTestUser>): BasicTestUser => ({
   name: faker.person.fullName(),
-  email: faker.internet.email(),
+  email: `${cryptoRandomString({ length: 15 })}@example.org`,
   id: '',
   ...user
 })
@@ -115,10 +122,13 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   }
 
   if (!baseUser.email) {
-    setVal('email', `${kebabCase(baseUser.name)}@someemail.com`)
+    setVal('email', createRandomEmail().toLowerCase())
   }
 
-  const id = await createUser(omit(baseUser, ['id']), { skipPropertyValidation: true })
+  const id = await createUser(omit(baseUser, ['id', 'allowPersonalEmail']), {
+    skipPropertyValidation: true,
+    allowPersonalEmail: baseUser.allowPersonalEmail
+  })
   setVal('id', id)
 
   return baseUser
@@ -143,6 +153,36 @@ export type CreateTestUsersParams = {
    */
   serial?: boolean
 }
+
+export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>): BasicTestUser =>
+  assign(
+    {
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      email: createRandomEmail(),
+      verified: true
+    },
+    overrides
+  )
+
+export const buildTestUserWithOptionalRole = (
+  overrides?: Partial<UserWithOptionalRole>
+): UserWithOptionalRole =>
+  assign(
+    {
+      suuid: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      id: cryptoRandomString({ length: 10 }),
+      bio: cryptoRandomString({ length: 10 }),
+      company: cryptoRandomString({ length: 10 }),
+      avatar: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      email: createRandomEmail(),
+      verified: true,
+      role: null
+    },
+    overrides
+  )
 
 /**
  * Create multiple users for tests and update them to include their ID

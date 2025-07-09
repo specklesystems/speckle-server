@@ -65,8 +65,6 @@
   </fieldset>
 </template>
 <script setup lang="ts">
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import {
   type ControlElement,

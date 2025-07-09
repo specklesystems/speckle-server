@@ -57,7 +57,7 @@
           v-if="revisionFn"
           text
           target="_blank"
-          :to="automationFunctionRoute(revisionFn.release.function.id)"
+          :to="automateFunctionRoute(revisionFn.release.function.id)"
         >
           View function
         </FormButton>
@@ -75,7 +75,7 @@
 </template>
 <script setup lang="ts">
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
-import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { automateFunctionRoute } from '~/lib/common/helpers/route'
 import {
   useJsonFormsChangeHandler,
   hasJsonFormErrors as hasFormErrors
@@ -247,7 +247,7 @@ const onSave = async () => {
             parameters
           }
         ],
-        triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+        triggerDefinitions: {
           version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
           definitions: [
             {
@@ -255,7 +255,7 @@ const onSave = async () => {
               modelId: model.id
             }
           ]
-        }
+        } as Automate.AutomateTypes.TriggerDefinitionsSchema
       }
     })
     if (res?.id) {
@@ -280,7 +280,7 @@ const onSave = async () => {
 
 // Reset everything if props change
 watch(
-  () => <const>[props.revisionFn?.release.function.id, props.revisionFn?.release.id],
+  () => [props.revisionFn?.release.function.id, props.revisionFn?.release.id] as const,
   ([newFunctionId, newFunctionRevisionId], [oldFunctionId, oldFunctionRevisionId]) => {
     if (
       newFunctionId === oldFunctionId &&

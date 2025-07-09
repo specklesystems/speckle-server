@@ -3,8 +3,7 @@ import {
   CanWorkspaceAccessFeature,
   WorkspaceFeatureAccessFunction
 } from '@/modules/gatekeeper/domain/operations'
-import { workspacePlanFeatures } from '@/modules/gatekeeper/domain/workspacePricing'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, workspacePlanHasAccessToFeature } from '@speckle/shared'
 
 export const canWorkspaceAccessFeatureFactory =
   ({
@@ -17,17 +16,19 @@ export const canWorkspaceAccessFeatureFactory =
     if (!workspacePlan) return false
     switch (workspacePlan.status) {
       case 'valid':
-      case 'trial':
       case 'paymentFailed':
       case 'cancelationScheduled':
         break
-      case 'expired':
       case 'canceled':
         return false
       default:
         throwUncoveredError(workspacePlan)
     }
-    return workspacePlanFeatures[workspacePlan.name][workspaceFeature]
+
+    return workspacePlanHasAccessToFeature({
+      plan: workspacePlan.name,
+      feature: workspaceFeature
+    })
   }
 
 export const canWorkspaceUseOidcSsoFactory =

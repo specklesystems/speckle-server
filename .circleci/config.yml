@@ -2,7 +2,41 @@ version: 2.1
 
 orbs:
   snyk: snyk/snyk@2.0.3
-  # codecov: codecov/codecov@4.1.0
+  codecov: codecov/codecov@5.0.3
+
+aliases:
+  - &docker-base-image
+    docker:
+      - image: cimg/base:2024.02
+
+  - &docker-node-image
+    docker:
+      - image: cimg/node:22.6.0
+
+  - &docker-node-image-w-browsers
+    docker:
+      - image: cimg/node:22.6.0-browsers
+
+  - &yarn
+    run:
+      name: Install Dependencies
+      command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+
+  - &filters-allow-all
+    tags:
+      # run tests for any commit on any branch, including any tags
+      only: /.*/
+
+  - &ignored
+    branches:
+      ignore: /.*/
+    tags:
+      ignore: /.*/
+
+  - &branches-special
+    - main
+    - /^hotfix.*$/
+    - /^testing\d*$/
 
 workflows:
   test-build:
@@ -16,54 +50,66 @@ workflows:
                 - main
                 - hotfix*
 
-      - test-server: &test-server-job-definition
+      - get-version:
+          filters: *filters-allow-all
+
+      - docker-build-postgres-container:
+          context: &build-context
+            - github-readonly-public-repos
+            - docker-hub
+          filters: *filters-allow-all
+          requires:
+            - get-version
+
+      - test-server-multiregion:
           context:
             - speckle-server-licensing
             - stripe-integration
-          filters: &filters-allow-all
-            tags:
-              # run tests for any commit on any branch, including any tags
-              only: /.*/
+            - speckle-server-codecov
+          filters: *filters-allow-all
           requires:
-            - docker-publish-postgres-container
+            - docker-build-postgres-container
+
+      - test-server:
+          context:
+            - speckle-server-licensing
+            - stripe-integration
+            - speckle-server-codecov
+          filters: *ignored
+          requires:
+            - docker-build-postgres-container
 
       - test-server-no-ff:
-          filters: *filters-allow-all
+          filters: *ignored
           requires:
-            - docker-publish-postgres-container
-
-      - test-server-multiregion: *test-server-job-definition
+            - docker-build-postgres-container
 
       - test-frontend-2:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - test-viewer:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - test-objectsender:
-          filters: *filters-allow-all
+          filters: *ignored
+
+      - test-shared:
+          filters: *ignored
 
       - test-preview-service:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - test-ui-components:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
-          filters: *filters-allow-all
+          filters: *ignored
 
       - deployment-testing-approval:
           type: approval
-          filters: &filters-ignore-main-branch-or-all-tags
-            branches:
-              ignore: &branches-special
-                - main
-                - /^hotfix.*$/
-                - /^testing\d*$/
-            tags:
-              ignore: /.*/
+          filters: *ignored
 
       #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
       # - deployment-test-docker-compose:
@@ -85,15 +131,11 @@ workflows:
       #       - docker-build-docker-compose-ingress
 
       - deployment-test-helm-chart:
-          filters: &filters-deployment-testing
-            tags:
-              # run tests for any commit on any branch, including any tags
-              only: /.*/
+          filters: *ignored
           requires:
             - get-version
             - deployment-testing-approval
             - docker-build-server
-            - docker-build-frontend
             - docker-build-frontend-2
             - docker-build-previews
             - docker-build-webhooks
@@ -101,111 +143,73 @@ workflows:
             - docker-build-test-container
             - docker-build-monitor-container
 
-      - get-version:
-          filters: *filters-allow-all
-
       - pre-commit:
-          filters: *filters-allow-all
+          filters: *ignored
+
+      - lint-and-prettier:
+          filters: *ignored
 
       - docker-build-server:
-          context: &build-context
-            - github-readonly-public-repos
-          filters: &filters-build
-            tags:
-              only: /.*/
-          requires:
-            - get-version
-
-      - docker-build-frontend:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-frontend-2:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-webhooks:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-file-imports:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-previews:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-test-container:
           context: *build-context
-          filters: *filters-build
-          requires:
-            - get-version
-
-      - docker-build-postgres-container:
-          context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-monitor-container:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-docker-compose-ingress:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
-
-      - publish-approval:
-          type: approval
-          filters: *filters-ignore-main-branch-or-all-tags
 
       - docker-publish-server:
           context: &docker-hub-context
             - docker-hub
-          filters: &filters-publish
-            branches:
-              ignore: /pull\/[0-9]+/
-            tags:
-              only: /.*/
+          filters: *ignored
           requires:
             - docker-build-server
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
-            - test-server
-            - test-server-no-ff
-            - test-server-multiregion
-            - test-preview-service
-
-      - docker-publish-frontend:
-          context: *docker-hub-context
-          filters: *filters-publish
-          requires:
-            - docker-build-frontend
-            - get-version
-            - pre-commit
-            - publish-approval
-            - test-frontend-2
-            - test-viewer
-            - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -213,31 +217,41 @@ workflows:
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-frontend-2
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
             - test-preview-service
 
+      - docker-publish-frontend-2-sourcemaps:
+          context:
+            - github-readonly-public-repos
+            - datadog-sourcemaps-publish
+          filters: *ignored
+          requires:
+            - get-version
+
       - docker-publish-webhooks:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-webhooks
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -245,15 +259,16 @@ workflows:
 
       - docker-publish-file-imports:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-file-imports
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -261,15 +276,16 @@ workflows:
 
       - docker-publish-previews:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-previews
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -277,15 +293,16 @@ workflows:
 
       - docker-publish-test-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-test-container
             - get-version
             - pre-commit
-            - publish-approval
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -293,21 +310,27 @@ workflows:
 
       - docker-publish-postgres-container:
           context: *docker-hub-context
-          filters: *filters-publish
-          requires:
-            - docker-build-postgres-container
-
-      - docker-publish-monitor-container:
-          context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-monitor-container
             - get-version
             - pre-commit
-            - publish-approval
+            - test-server
+            - test-server-no-ff
+            - test-server-multiregion
+
+      - docker-publish-monitor-container:
+          context: *docker-hub-context
+          filters: *ignored
+          requires:
+            - docker-build-monitor-container
+            - get-version
+            - pre-commit
+            - lint-and-prettier
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -315,32 +338,27 @@ workflows:
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-docker-compose-ingress
             - get-version
             - pre-commit
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
             - test-preview-service
 
       - publish-helm-chart:
-          filters: &filters-publish
-            branches:
-              only: *branches-special
-            tags:
-              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
+          filters: *ignored
           requires:
             # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
             - deployment-test-helm-chart
             - docker-publish-docker-compose-ingress
             - docker-publish-file-imports
-            - docker-publish-frontend
             - docker-publish-frontend-2
             - docker-publish-monitor-container
             - docker-publish-previews
@@ -348,19 +366,26 @@ workflows:
             - docker-publish-test-container
             - docker-publish-webhooks
             - get-version
-            - publish-approval
 
-      - update-helm-documentation:
-          filters: *filters-publish
+      - publish-helm-chart-oci:
+          filters: *ignored
+          context:
+            - docker-hub
           requires:
-            - publish-helm-chart
+            # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
+            - deployment-test-helm-chart
+            - docker-publish-docker-compose-ingress
+            - docker-publish-file-imports
+            - docker-publish-frontend-2
+            - docker-publish-monitor-container
+            - docker-publish-previews
+            - docker-publish-server
+            - docker-publish-test-container
+            - docker-publish-webhooks
+            - get-version
 
       - publish-npm:
-          filters:
-            tags:
-              only: *filters-tag
-            branches:
-              ignore: /.*/
+          filters: *ignored
           context:
             - npm-registry
           requires:
@@ -372,29 +397,19 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
-          filters: *filters-publish
+          filters: *ignored
           context:
             - cloudflare-pages-edit
           requires:
             - test-viewer
 
-      - frontend-2-sourcemaps:
-          context:
-            - datadog-sourcemaps-publish
-          filters: *filters-publish
-          requires:
-            - get-version
-            - docker-build-frontend-2
-            - test-frontend-2
-            - publish-helm-chart
-
 jobs:
   get-version:
-    docker: &docker-base-image
-      - image: cimg/base:2024.02
+    <<: *docker-base-image
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -410,54 +425,56 @@ jobs:
           paths:
             - env-vars
 
+  lint-and-prettier:
+    <<: *docker-node-image
+    resource_class: xlarge
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - run:
+          name: Install Hardened Dependencies
+          command: YARN_ENABLE_HARDENED_MODE=1 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+      - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
+          name: Lint everything
+          command: yarn eslint:projectwide
+      - run:
+          name: Run prettier check
+          command: yarn prettier:check
+      - run:
+          name: Check JSON Schema is up to date
+          command: |
+            yarn helm:jsonschema:generate
+            git diff --exit-code
+
   pre-commit:
     parameters:
       config_file:
         default: ./.pre-commit-config.yaml
         description: Optional, path to pre-commit config file.
         type: string
-      deployment_config_file:
-        default: ./.pre-commit-config.deployment.yaml
-        description: Optional, path to additional pre-commit config file.
-        type: string
-      cache_prefix:
-        default: ''
-        description: |
-          Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
-        type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: xlarge
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
       - restore_cache:
           name: Restore pre-commit & Yarn Package cache
           keys:
-            - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
-            - yarn-packages-{{ checksum "yarn.lock" }}
+            - cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
       - save_cache:
-          key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+          key: cache-pre-commit--{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
       - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-      - run:
-          name: Build public packages
-          command: yarn build:public
-      - run:
           name: Run pre-commit
-          command: ./.husky/pre-commit
+          command: pre-commit run --all-files --config <<parameters.config_file>>
       - run:
           command: git --no-pager diff
           name: git diff
@@ -465,7 +482,7 @@ jobs:
 
   test-server: &test-server-job
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0
       - image: cimg/redis:7.2.4
       - image: 'speckle/speckle-postgres'
         environment:
@@ -494,65 +511,53 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
-      FF_BILLING_INTEGRATION_ENABLED: 'true'
+      ENABLE_ALL_FFS: 'true'
       RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
+      - *yarn
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Wait for dependencies to start
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
-
       - run:
-          command: touch .env.test
+          command: cp .env.test-example .env.test
           working_directory: 'packages/server'
-
       - run:
           name: 'Lint'
           command: yarn lint:ci
           working_directory: 'packages/server'
-
       - run:
-          command: yarn test:report
+          name: 'Run tests'
+          # Extra formatting to get timestamps on each line in CI (for profiling purposes)
+          command: |
+            GREP_FLAG=""
+
+            if [ "$RUN_TESTS_IN_MULTIREGION_MODE" == "true" ]; then
+              GREP_FLAG="--grep @multiregion"
+            fi
+
+            yarn test:report $GREP_FLAG --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
           working_directory: 'packages/server'
-
-      # - codecov/upload:
-      #     file: packages/server/coverage/lcov.info
-
+          no_output_timeout: 30m
+      - codecov/upload:
+          files: packages/server/coverage/lcov.info
       - run:
           name: Introspect GQL schema for subsequent checks
-          command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+          command: 'IGNORE_MISSING_MIGRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
-
       - run:
           name: Checking for GQL schema breakages against app.speckle.systems
           command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
-
       - run:
           name: Checking for GQL schema breakages against latest.speckle.systems
           command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
-
       - store_test_results:
           path: packages/server/reports
 
@@ -566,6 +571,7 @@ jobs:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
       PGDATABASE: speckle2_test
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
@@ -577,6 +583,7 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       DISABLE_ALL_FFS: 'true'
       RATELIMITER_ENABLED: 'false'
@@ -598,16 +605,24 @@ jobs:
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
         command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000' -c 'port=5434' -c 'wal_level=logical'
       - image: 'minio/minio'
         command: server /data --console-address ":9001" --address "0.0.0.0:9000"
       - image: 'minio/minio'
         command: server /data --console-address ":9021" --address "0.0.0.0:9020"
+      - image: 'minio/minio'
+        command: server /data --console-address ":9041" --address "0.0.0.0:9040"
     environment:
       # Same as test-server:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
       PGDATABASE: speckle2_test
-      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      POSTGRES_MAX_CONNECTIONS_SERVER: 50
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
@@ -619,82 +634,61 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_BILLING_INTEGRATION_ENABLED: 'true'
       # These are the only different env keys:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      FF_GATEKEEPER_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
+      FF_MOVE_PROJECT_REGION_ENABLED: 'true'
       RUN_TESTS_IN_MULTIREGION_MODE: true
       RATELIMITER_ENABLED: 'false'
 
   test-frontend-2:
-    docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+    <<: *docker-node-image-w-browsers
     resource_class: xlarge
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
+      - *yarn
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Lint everything
           command: yarn lint:ci
           working_directory: 'packages/frontend-2'
 
   test-viewer:
-    docker: *docker-node-browsers-image
+    <<: *docker-node-image-w-browsers
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
+      - *yarn
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
-          name: Lint everything
+          name: Lint viewer
           command: yarn lint:ci
           working_directory: 'packages/viewer'
-
       - run:
           name: Run tests
           command: yarn test
           working_directory: 'packages/viewer'
+      - run:
+          name: Lint viewer-sandbox
+          command: yarn lint:ci
+          working_directory: 'packages/viewer-sandbox'
+      - run:
+          name: Build viewer-sandbox
+          command: yarn build
+          working_directory: 'packages/viewer-sandbox'
 
   test-preview-service:
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0-browsers
       - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: preview_service_test
@@ -704,62 +698,64 @@ jobs:
     environment: {}
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
+      - *yarn
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Lint everything
           command: yarn lint:ci
           working_directory: 'packages/preview-service'
-
       - run:
           name: Copy .env.example to .env
           command: |
             #!/usr/bin/env bash
             cp packages/preview-service/.env.example packages/preview-service/.env
             sed -i~ '/^PG_CONNECTION_STRING=/s/=.*/="postgres:\/\/preview_service_test:preview_service_test@127.0.0.1:5432\/preview_service_test"/' packages/preview-service/.env
-
       - run:
           name: Run tests
           command: yarn test
           working_directory: 'packages/preview-service'
 
+  test-shared:
+    <<: *docker-node-image-w-browsers
+    resource_class: medium+
+    steps:
+      - checkout
+      - *yarn
+      - run:
+          name: Lint
+          command: yarn lint:ci
+          working_directory: 'packages/shared'
+      - run:
+          name: Run tests (all FFs)
+          command: ENABLE_ALL_FFS=1 yarn test:ci
+          working_directory: 'packages/shared'
+      - run:
+          name: Run tests (no FFs)
+          command: DISABLE_ALL_FFS=1 yarn test:ci
+          working_directory: 'packages/shared'
+      - codecov/upload:
+          files: packages/shared/coverage/coverage-final.json
+      - run:
+          name: Build
+          command: yarn build
+          working_directory: 'packages/shared'
+      - run:
+          name: Ensure ESM import works
+          command: node ./e2e/testEsm.mjs
+          working_directory: 'packages/shared'
+      - run:
+          name: Ensure CJS require works
+          command: node ./e2e/testCjs.cjs
+          working_directory: 'packages/shared'
+
   test-objectsender:
-    docker: *docker-node-browsers-image
+    <<: *docker-node-image-w-browsers
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
+      - *yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -771,78 +767,42 @@ jobs:
           path: 'packages/objectsender/coverage'
 
   test-ui-components:
-    docker: *docker-node-browsers-image
+    <<: *docker-node-image-w-browsers
     resource_class: xlarge
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
+          command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true yarn
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Lint tailwind theme
           command: yarn lint:ci
           working_directory: 'packages/tailwind-theme'
-
       - run:
           name: Lint ui components
           command: yarn lint:ci
           working_directory: 'packages/ui-components'
-
       - run:
           name: Lint component nuxt package
           command: yarn lint:ci
           working_directory: 'packages/ui-components-nuxt'
-
-      - run:
-          name: Install Playwright
-          command: cd ~ && npx playwright install --with-deps
-
       - run:
           name: Test via Storybook
           command: yarn storybook:test:ci
           working_directory: 'packages/ui-components'
 
   ui-components-chromatic:
+    <<: *docker-node-image
     resource_class: medium+
-    docker: &docker-node-image
-      - image: cimg/node:18.19.0
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
+      - *yarn
       - run:
           name: Build shared packages
           command: yarn build:public
-
       - run:
           name: Run chromatic
           command: yarn chromatic
@@ -854,24 +814,12 @@ jobs:
     # but it is not possible to scan npm/yarn package.json
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
-    docker: *docker-node-image
-    resource_class: medium
+    <<: *docker-node-image
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *yarn
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -893,7 +841,7 @@ jobs:
       - restore_cache:
           name: Restore nix cache
           keys:
-            - nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+            - nix-{{ checksum "./tests/deployment/docker-compose/docker-compose-shell.nix" }}
       - run:
           name: Install the nix package manager
           command: |
@@ -902,13 +850,13 @@ jobs:
       - run:
           name: Initialize nix shell
           command: |
-            nix-shell --run "echo Here, a nix shell for you" ./.circleci/deployment/docker-compose-shell.nix
+            nix-shell --run "echo Here, a nix shell for you" ./tests/deployment/docker-compose/docker-compose-shell.nix
       - save_cache:
-          key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+          key: nix-{{ checksum "./tests/deployment/docker-compose/docker-compose-shell.nix" }}
           paths:
             - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
+      - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./tests/deployment/docker-compose/Tiltfile" ./tests/deployment/helm/docker-compose-shell.nix
 
   deployment-test-helm-chart:
     machine:
@@ -927,7 +875,7 @@ jobs:
       - restore_cache:
           name: Restore nix cache
           keys:
-            - nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+            - nix-{{ checksum "./tests/deployment/helm/helm-chart-shell.nix" }}
       - run:
           name: Install the nix package manager
           command: |
@@ -938,20 +886,20 @@ jobs:
           command: |
             nix-shell \
             --run "echo Here, a nix shell for you" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            ./tests/deployment/helm/helm-chart-shell.nix
       - save_cache:
-          key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+          key: nix-{{ checksum "./tests/deployment/helm/helm-chart-shell.nix" }}
           paths:
             - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:
-          name: Template Helm Chart
+          name: Template Speckle Server Helm Chart
           command: |
             nix-shell \
             --run "helm template speckle-server ./utils/helm/speckle-server" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            ./tests/deployment/helm/helm-chart-shell.nix
       - run:
           name: Add 127.0.0.1 domains to /etc/hosts
           command: |
@@ -970,23 +918,21 @@ jobs:
               echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
               sudo chmod 775 "./postgres-data"
             fi
-
       - run:
           name: Deploy Kubernetes (kind) cluster
           command: |
             nix-shell \
-            --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
-            ./.circleci/deployment/helm-chart-shell.nix
-
+            --run "ctlptl apply --filename ./tests/deployment/helm/cluster-config.yaml" \
+            ./tests/deployment/helmhelm-chart-shell.nix
       - run:
           name: Deploy Kubernetes resources to cluster
           command: |
             nix-shell \
-            --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            --run "LOAD_DOCKER='true' tilt ci --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server --timeout 10m" \
+            ./tests/deployment/helm/helm-chart-shell.nix
 
   docker-build: &build-job
-    docker: *docker-base-image
+    <<: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -998,28 +944,37 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Push
           command: ./.circleci/build.sh
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - speckle*
 
   docker-build-server:
     <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
 
-  docker-build-frontend:
-    <<: *build-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: frontend
-
   docker-build-frontend-2:
     <<: *build-job
     resource_class: xlarge
     environment:
       SPECKLE_SERVER_PACKAGE: frontend-2
+
+  docker-publish-frontend-2-sourcemaps:
+    <<: *docker-node-image
+    resource_class: xlarge
+    working_directory: *work-dir
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend-2
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - setup_remote_docker:
+          version: default
+          docker_layer_caching: true
+      - run:
+          name: Build and Publish sourcemaps
+          command: ./.circleci/build_publish_fe2_sourcemaps.sh
 
   docker-build-previews:
     <<: *build-job
@@ -1060,7 +1015,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   docker-publish: &publish-job
-    docker: *docker-base-image
+    <<: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -1079,11 +1034,6 @@ jobs:
     <<: *publish-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
-
-  docker-publish-frontend:
-    <<: *publish-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: frontend
 
   docker-publish-frontend-2:
     <<: *publish-job
@@ -1129,26 +1079,15 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   publish-npm:
-    docker: *docker-node-image
+    <<: *docker-node-image
     working_directory: *work-dir
+    resource_class: large
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *yarn
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1157,7 +1096,6 @@ jobs:
       - run:
           name: try login to npm
           command: yarn npm whoami
-
       - run:
           name: build public packages
           command: yarn workspaces foreach -ptvW --no-private run build
@@ -1165,7 +1103,6 @@ jobs:
           name: bump all versions
           # bump all versions in dependency tree order but not in parallel
           command: yarn workspaces foreach -tvW version $IMAGE_VERSION_TAG
-
       - run:
           name: publish to npm
           command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
@@ -1186,40 +1123,26 @@ jobs:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
 
-  update-helm-documentation:
-    docker: *docker-node-image
+  publish-helm-chart-oci:
+    docker:
+      - image: speckle/pre-commit-runner:latest
     working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - add_ssh_keys:
-          fingerprints:
-            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
       - run:
-          name: Update Helm Documentation
-          command: ./.circleci/update_helm_documentation.sh
+          name: Publish Helm Chart
+          command: ./.circleci/publish_helm_chart_oci.sh
 
   publish-viewer-sandbox-cloudflare-pages:
-    docker: *docker-node-image
+    <<: *docker-node-image
     working_directory: *work-dir
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -1237,36 +1160,3 @@ jobs:
           environment:
             CLOUDFLARE_PAGES_PROJECT_NAME: viewer
             VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox
-
-  frontend-2-sourcemaps:
-    docker: *docker-node-image
-    resource_class: large
-    working_directory: *work-dir
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-      - run:
-          name: Build public packages
-          command: yarn build:public
-      - run:
-          name: Build FE2
-          command: NODE_ENV=production SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" yarn build:sourcemaps
-          working_directory: 'packages/frontend-2'
-      - run:
-          name: Upload source maps
-          command: ./.circleci/publish_fe2_sourcemaps.sh

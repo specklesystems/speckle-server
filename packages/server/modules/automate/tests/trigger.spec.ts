@@ -49,7 +49,7 @@ import {
   updateAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { Automate } from '@speckle/shared'
+import { Automate, TIME_MS } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
@@ -352,7 +352,7 @@ const createAppToken = createAppTokenFactory({
             },
             source: RunTriggerSource.Manual
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -389,6 +389,7 @@ const createAppToken = createAppTokenFactory({
           projectId: project.id,
           executionEngineAutomationId: cryptoRandomString({ length: 10 }),
           isTestAutomation: false,
+          isDeleted: false,
           userId
         }
         const automationToken = {
@@ -449,7 +450,7 @@ const createAppToken = createAppTokenFactory({
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)
-        if (!storedRun) throw 'cant fint the stored run'
+        if (!storedRun) throw new Error('cant fint the stored run')
 
         const expectedStatus = 'exception'
 
@@ -490,6 +491,7 @@ const createAppToken = createAppTokenFactory({
           projectId: project.id,
           executionEngineAutomationId: cryptoRandomString({ length: 10 }),
           isTestAutomation: false,
+          isDeleted: false,
           userId
         }
         const automationToken = {
@@ -532,7 +534,7 @@ const createAppToken = createAppTokenFactory({
             expect(payload.source).to.equal(RunTriggerSource.Manual)
             eventFired = true
           },
-          { timeout: 1000 }
+          { timeout: TIME_MS.second }
         )
         const executionEngineRunId = cryptoRandomString({ length: 10 })
         const { automationRunId } = await triggerAutomationRevisionRunFactory({
@@ -562,7 +564,7 @@ const createAppToken = createAppTokenFactory({
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)
-        if (!storedRun) throw 'cant fint the stored run'
+        if (!storedRun) throw new Error('cant fint the stored run')
 
         const expectedStatus = 'pending'
 
@@ -589,7 +591,7 @@ const createAppToken = createAppTokenFactory({
               versionId: cryptoRandomString({ length: 10 })
             }
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -610,6 +612,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
@@ -632,7 +635,7 @@ const createAppToken = createAppTokenFactory({
               versionId: cryptoRandomString({ length: 10 })
             }
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -653,6 +656,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 publicKey,
                 active: false,
@@ -675,7 +679,7 @@ const createAppToken = createAppTokenFactory({
               versionId: cryptoRandomString({ length: 10 })
             }
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -696,6 +700,7 @@ const createAppToken = createAppTokenFactory({
               enabled: true,
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 publicKey,
                 id: cryptoRandomString({ length: 10 }),
@@ -718,7 +723,7 @@ const createAppToken = createAppTokenFactory({
               versionId: cryptoRandomString({ length: 10 })
             }
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -746,6 +751,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 publicKey,
                 id: cryptoRandomString({ length: 10 }),
@@ -769,7 +775,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('Only model version triggers are supported')
@@ -795,6 +801,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
@@ -819,7 +826,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('The triggering version is not found')
@@ -845,6 +852,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
@@ -881,7 +889,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -908,6 +916,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
@@ -944,7 +953,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('Cannot find a token for the automation')
@@ -969,6 +978,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: null,
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: true,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
@@ -1005,7 +1015,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('This is a test automation')
@@ -1115,7 +1125,7 @@ const createAppToken = createAppTokenFactory({
             })
         )
         expect(e.message).to.eq(
-          'No version to trigger on found for the available triggers'
+          'Selected model has no versions so it cannot be used to trigger an automation.'
         )
       })
 
@@ -1125,7 +1135,8 @@ const createAppToken = createAppTokenFactory({
             id: '',
             objectId: '',
             streamId: testUserStream.id,
-            authorId: testUser.id
+            authorId: testUser.id,
+            branchId: ''
           })
         })
 
@@ -1213,7 +1224,8 @@ const createAppToken = createAppTokenFactory({
           authorId: testUser.id,
           streamId: testUserStream.id,
           branchName: testUserStreamModel.name,
-          objectId: ''
+          objectId: '',
+          branchId: ''
         }
 
         await createTestCommit(testVersion)
@@ -1382,7 +1394,7 @@ const createAppToken = createAppTokenFactory({
               expect(payload.functionRun.id).to.equal(functionRunId)
               eventFired = true
             },
-            { timeout: 1000 }
+            { timeout: TIME_MS.second }
           )
           await expect(report(params)).to.eventually.be.true
 

@@ -8,13 +8,14 @@
     :on-submit="onDialogSubmit"
     prevent-close-on-click-outside
   >
-    <div class="flex flex-col gap-11">
+    <div class="flex flex-col gap-6">
       <CommonStepsNumber
         v-if="shouldShowStepsWidget"
         v-model="stepsWidgetModel"
         :steps="stepsWidgetSteps"
         :go-vertical-below="TailwindBreakpoints.sm"
         non-interactive
+        class="pt-1"
       />
       <AutomateFunctionCreateDialogAuthorizeStep
         v-if="enumStep === FunctionCreateSteps.Authorize"
@@ -37,11 +38,6 @@
 </template>
 <script setup lang="ts">
 import {
-  ArrowRightIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/vue/24/outline'
-import {
   CommonStepsNumber,
   type LayoutDialogButton,
   TailwindBreakpoints
@@ -52,7 +48,7 @@ import type {
 } from '~/lib/automate/helpers/functions'
 import {
   automateGithubAppAuthorizationRoute,
-  automationFunctionRoute
+  automateFunctionRoute
 } from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
@@ -112,7 +108,8 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
       template: selectedTemplate.value.id,
       logo: values.image,
       name: values.name,
-      description: values.description
+      description: values.description,
+      org: values.org
     }
   })
 
@@ -235,7 +232,6 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'templateNext',
           text: 'Next',
           props: {
-            iconRight: ChevronRightIcon,
             disabled: !selectedTemplate.value
           },
           onClick: () => {
@@ -248,11 +244,9 @@ const buttons = computed((): LayoutDialogButton[] => {
       return [
         {
           id: 'detailsPrevious',
-          text: 'Previous',
+          text: 'Back',
           props: {
-            color: 'outline',
-            iconLeft: ChevronLeftIcon,
-            class: '!text-primary'
+            color: 'outline'
           },
           onClick: () => step.value--
         },
@@ -278,10 +272,9 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'doneGoToFunction',
           text: 'Go to Function',
           props: {
-            iconRight: ArrowRightIcon,
             fullWidth: true,
             to: createdFunction.value?.id
-              ? automationFunctionRoute(createdFunction.value.id)
+              ? automateFunctionRoute(createdFunction.value.id)
               : undefined
           }
         }
