@@ -1,3 +1,13 @@
+import dotenv from 'dotenv'
+
+export const isTestEnvironment = () => process.env['NODE_ENV'] === 'TEST'
+
+if (!isTestEnvironment()) {
+  dotenv.config()
+} else {
+  dotenv.config('.env.test')
+}
+
 import { z } from 'zod'
 import { parseEnv } from 'znv'
 

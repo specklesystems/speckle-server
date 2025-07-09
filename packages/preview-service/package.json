@@ -19,7 +19,7 @@
     "link:frontend": "yarn build:frontend && rimraf ./public && ln -s ../preview-frontend/dist ./public",
     "dev": "tsx --env-file=.env --watch src/main.ts",
     "publishTask": "tsx --env-file=.env scripts/publishTask.ts",
-    "test": "echo 'no tests configured'",
+    "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest run --sequence.shuffle",
     "lint": "yarn lint:tsc && yarn lint:eslint",
     "lint:ci": "yarn lint:tsc",
     "lint:tsc": "tsc --noEmit",
@@ -54,6 +54,7 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^4.6.4",
-    "typescript-eslint": "^7.12.0"
+    "typescript-eslint": "^7.12.0",
+    "vitest": "^1.6.0"
   }
 }
