@@ -58,6 +58,8 @@ export class CacheReader {
 
   requestAll(keys: string[]): void {
     this.#createReadQueue()
+    for (const key of keys) { this.#defermentManager.trackDefermentRequest(key) }
+
     this.#readQueue?.addAll(keys, keys)
   }
 

@@ -45,7 +45,7 @@ export class DefermentManager {
     return [notYetFound.getPromise(), false]
   }
 
-  private trackDefermentRequest(id: string): void {
+  trackDefermentRequest(id: string): void {
     const request = this.totalDefermentRequests.get(id)
     if (request) {
       this.totalDefermentRequests.set(id, request + 1)
