@@ -20,7 +20,7 @@
               {
                 icon: TrashIcon,
                 label: 'Delete',
-                action: openDeleteWebhookDialog
+                action: openDeleteTokenDialog
               }
             ]
           : undefined
@@ -116,7 +116,7 @@ const embedTokens = computed(() => {
   }))
 })
 
-const openDeleteWebhookDialog = (item: EmbedTokenItem) => {
+const openDeleteTokenDialog = (item: EmbedTokenItem) => {
   tokenToDelete.value = item
   showDeleteTokenDialog.value = true
 }
