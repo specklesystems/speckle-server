@@ -1,15 +1,17 @@
 import { describe, it, beforeAll, afterAll, expect } from 'vitest'
 import express from 'express'
-import { buildServer, initServer } from 'src/server'
+import { buildServer } from 'src/server'
 import { Server } from 'http'
 import { initializeQueue } from '@speckle/shared/queue'
 import { REDIS_URL } from '@/config.js'
 import Bull from 'bull'
 import { JobPayload } from '@speckle/shared/workers/previews'
 import { randomUUID } from 'crypto'
+import supertest, { SuperTest, Test } from 'supertest'
 
 describe('preview-service', () => {
   let server: Server
+  let request: SuperTest<Test>
   let jobQueue: Bull.Queue<JobPayload>
   let responseQueue: Bull.Queue<{
     jobId: string
@@ -29,10 +31,9 @@ describe('preview-service', () => {
 
   beforeAll(async () => {
     const app = express()
-
-    server = buildServer({ port: 0, app })
-
-    initServer(server)
+    app.use(express.static('public'))
+    request = supertest(app)
+    server = buildServer({ app })
 
     jobQueue = await initializeQueue({
       queueName: JOB_QUEUE,
@@ -43,6 +44,10 @@ describe('preview-service', () => {
       queueName: RESPONSE_QUEUE,
       redisUrl: REDIS_URL
     })
+
+    // TODO: remove this head start
+    // we should await the server somehow
+    await sleep(5000)
   })
 
   afterAll(async () => {
@@ -55,7 +60,13 @@ describe('preview-service', () => {
     expect(server).to.be.instanceOf(Server)
   })
 
-  it.skip('process a rendering task providing back the image', async () => {
+  it('hits the server', async () => {
+    const response = await request.get('/')
+
+    expect(response.status).to.equal(200)
+  })
+
+  it('process a rendering task providing back the image', async () => {
     const ID = 'test-job' + testId
 
     await jobQueue.add({
