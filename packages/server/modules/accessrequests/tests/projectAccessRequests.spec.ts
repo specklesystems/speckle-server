@@ -229,7 +229,7 @@ describe('Project access requests', () => {
         })
       )
 
-      emailListener.listen({ times: 1 })
+      const { getSends } = emailListener.listen({ times: 1 })
 
       const waitForAck = notificationsStateManager.waitForAck(
         (e) => e.result?.type === NotificationType.NewStreamAccessRequest
@@ -253,7 +253,7 @@ describe('Project access requests', () => {
       await waitForAck
 
       // email gets sent out
-      const sentEmails = emailListener.getSends()
+      const sentEmails = getSends()
       expect(sentEmails.length).to.eq(1)
       const emailParams = sentEmails[0]
 

@@ -140,7 +140,7 @@ describe('[Stream & Server Invites]', () => {
         const messagePart2 = 'yepppppp'
         const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
 
-        emailListener.listen({ times: 2 })
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const result = await createInvite({
           email: targetEmail,
@@ -152,8 +152,8 @@ describe('[Stream & Server Invites]', () => {
         expect(result.data?.serverInviteCreate).to.be.ok
 
         // Check that email was sent out
-        expect(emailListener.getSends()).to.have.lengthOf(1)
-        const emailParams = emailListener.getSends()[0]
+        expect(getSends()).to.have.lengthOf(1)
+        const emailParams = getSends()[0]
         expect(emailParams).to.be.ok
         expect(emailParams.to).to.eq(targetEmail)
         expect(emailParams.subject).to.be.ok
@@ -294,7 +294,7 @@ describe('[Stream & Server Invites]', () => {
               const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
               const targetEmail = email || user?.email
 
-              emailListener.listen({ times: 2 })
+              const { getSends } = emailListener.listen({ times: 2 })
 
               if (projectInvite) {
                 const result = await createProjectInvite({
@@ -324,7 +324,7 @@ describe('[Stream & Server Invites]', () => {
               }
 
               // Check that email was sent out
-              const emailSends = emailListener.getSends()
+              const emailSends = getSends()
               expect(emailSends).to.have.lengthOf(1)
 
               const emailParams = emailSends[0]
@@ -593,7 +593,7 @@ describe('[Stream & Server Invites]', () => {
         const emails = ['abababa1@mail.com', 'abababa2@mail.com', 'abababa3@mail.com']
         const message = 'ayyoyoyoyoy'
 
-        emailListener.listen({ times: emails.length })
+        const { getSends } = emailListener.listen({ times: emails.length })
 
         const result = await apollo.execute(BatchCreateServerInviteDocument, {
           input: emails.map((email) => ({
@@ -605,7 +605,7 @@ describe('[Stream & Server Invites]', () => {
         expect(result.errors).to.not.be.ok
         expect(result.data?.serverInviteBatchCreate).to.be.ok
 
-        const emailSends = emailListener.getSends()
+        const emailSends = getSends()
         expect(emailSends.length).to.eq(emails.length)
         for (const email of emails) {
           const emailParams = emailSends.find((p) => p.to === email)
@@ -642,7 +642,7 @@ describe('[Stream & Server Invites]', () => {
           }
         ]
 
-        emailListener.listen({ times: inputs.length })
+        const { getSends } = emailListener.listen({ times: inputs.length })
 
         const result = await apollo.execute(BatchCreateStreamInviteDocument, {
           input: inputs
@@ -651,7 +651,7 @@ describe('[Stream & Server Invites]', () => {
         expect(result.data?.streamInviteBatchCreate).to.be.ok
         expect(result.errors).to.not.be.ok
 
-        const emailSends = emailListener.getSends()
+        const emailSends = getSends()
         expect(emailSends.length).to.eq(inputs.length)
         for (const inputData of inputs) {
           const emailParams = emailSends.find((p) =>

@@ -224,11 +224,11 @@ export async function validateInviteExistanceFromEmail(
  */
 export const captureCreatedInvite = async (createInvite: () => MaybeAsync<unknown>) => {
   const emailListener = await createEmailListener({ destroyWhenNoListeners: true })
-  emailListener.listen({ times: 1 })
+  const { getSends } = emailListener.listen({ times: 1 })
 
   await Promise.resolve(createInvite())
 
-  const emails = emailListener.getSends()
+  const emails = getSends()
   expect(emails).to.have.lengthOf(1)
   const emailParams = emails[0]
   expect(emailParams).to.be.ok

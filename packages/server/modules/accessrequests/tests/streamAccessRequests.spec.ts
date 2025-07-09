@@ -204,7 +204,7 @@ describe('Stream access requests', () => {
     })
 
     it('operation succeeds', async () => {
-      emailListener.listen({ times: 1 })
+      const { getSends } = emailListener.listen({ times: 1 })
 
       const waitForAck = notificationsStateManager.waitForAck(
         (e) => e.result?.type === NotificationType.NewStreamAccessRequest
@@ -225,7 +225,7 @@ describe('Stream access requests', () => {
       await waitForAck
 
       // email gets sent out
-      const sentEmails = emailListener.getSends()
+      const sentEmails = getSends()
       expect(sentEmails.length).to.eq(1)
       const emailParams = sentEmails[0]
 

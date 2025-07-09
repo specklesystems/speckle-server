@@ -78,7 +78,7 @@ describe('Email verifications @emails', () => {
   })
 
   it('sends out 1 verification email immediately after new account creation', async () => {
-    emailListener.listen({ times: 2 })
+    const { getSends } = emailListener.listen({ times: 2 })
 
     const newGuy: BasicTestUser = {
       name: 'happy to be here',
@@ -89,7 +89,7 @@ describe('Email verifications @emails', () => {
 
     await createTestUser(newGuy)
 
-    const sentEmails = emailListener.getSends()
+    const sentEmails = getSends()
     const emailParams = sentEmails[0]
     expect(emailParams).to.be.ok
     expect(emailParams.subject).to.contain('Speckle account email verification')
@@ -146,13 +146,13 @@ describe('Email verifications @emails', () => {
         // delete previous requests for userA, if any
         await deleteVerifications(userA.email)
 
-        emailListener.listen({ times: 2 })
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const result = await invokeRequestVerification(userA)
         expect(result).to.not.haveGraphQLErrors()
         expect(result.data?.requestVerification).to.be.true
 
-        const sentEmails = emailListener.getSends()
+        const sentEmails = getSends()
         expect(sentEmails.length).to.eq(1)
 
         const emailParams = sentEmails[0]
