@@ -320,7 +320,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             {
               title: 'userProjectsUpdated()',
               withoutScope: Scopes.Profile.Read,
-              expectedMessages: FF_WORKSPACES_MULTI_REGION_ENABLED ? 1 : 2,
+              expectedMessages: 2,
               sub: () => ({
                 query: OnUserProjectsUpdatedDocument,
                 variables: {}
@@ -375,7 +375,16 @@ describe('Core GraphQL Subscriptions (New)', () => {
                   await triggerMessage()
                   await onMessage.waitForMessage()
 
-                  expect(onMessage.getMessages()).to.have.lengthOf(expectedMessages)
+                  if (
+                    FF_WORKSPACES_MULTI_REGION_ENABLED &&
+                    !allow &&
+                    title === 'userProjectsUpdated()'
+                  ) {
+                    // exceptional case for multiregion on allow userProjectsUpdated()
+                    expect(onMessage.getMessages()).to.have.lengthOf(1)
+                  } else {
+                    expect(onMessage.getMessages()).to.have.lengthOf(expectedMessages)
+                  }
                 }
               )
             }
