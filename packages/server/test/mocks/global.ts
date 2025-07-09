@@ -1,27 +1,14 @@
-import { mockRequireModule } from '@/test/mockHelper'
-
-/**
- * Global mocks that can be re-used. Early setup ensures that mocks work.
- */
-
-// TODO: For mocking env settings, specifically admin override
-export const EnvHelperMock = mockRequireModule<
-  typeof import('@/modules/shared/helpers/envHelper')
->(
-  [
-    '@/modules/shared/helpers/envHelper'
-    // require.resolve('../../modules/shared/helpers/envHelper')
-  ],
-  ['@/modules/shared/index']
-)
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 export const mockAdminOverride = () => {
+  const baseValue = adminOverrideEnabled()
+
   const enable = (enabled: boolean) => {
-    EnvHelperMock.mockFunction('adminOverrideEnabled', () => enabled)
+    process.env.ADMIN_OVERRIDE_ENABLED = enabled.toString()
   }
 
   const disable = () => {
-    EnvHelperMock.resetMockedFunction('adminOverrideEnabled')
+    process.env.ADMIN_OVERRIDE_ENABLED = baseValue.toString()
   }
 
   return { enable, disable }
