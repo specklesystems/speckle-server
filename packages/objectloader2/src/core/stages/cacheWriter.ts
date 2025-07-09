@@ -30,12 +30,19 @@ export class CacheWriter implements Queue<Item> {
       this.#writeQueue = new BatchingQueue({
         batchSize: this.#options.maxCacheWriteSize,
         maxWaitTime: this.#options.maxCacheBatchWriteWait,
-        processFunction: (batch: Item[]): Promise<void> =>
-          this.#database.saveBatch({ batch })
+        processFunction: async (batch: Item[]): Promise<void> => {
+          await this.writeAll(batch)
+        },
       })
     }
     this.#defermentManager.undefer(item)
     this.#writeQueue.add(item.baseId, item)
+  }
+
+  async writeAll(items: Item[]): Promise<void> {
+    const start = performance.now()
+      await this.#database.saveBatch({ batch: items })
+      this.#logger('writeBatch: left, time', items.length, performance.now() - start)
   }
 
   async disposeAsync(): Promise<void> {

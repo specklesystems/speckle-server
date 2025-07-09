@@ -22,23 +22,19 @@ export class DefermentManager {
     return Date.now()
   }
 
-  isDeferred(id: string): boolean {
-    return this.deferments.has(id)
-  }
-
   get(id: string): DeferredBase | undefined {
     if (this.disposed) throw new Error('DefermentManager is disposed')
     return this.deferments.get(id)
   }
 
-  async defer(params: { id: string }): Promise<Base> {
+   defer(params: { id: string }): [Promise<Base>, boolean] {
     if (this.disposed) throw new Error('DefermentManager is disposed')
     this.trackDefermentRequest(params.id)
     const now = this.now()
     const deferredBase = this.deferments.get(params.id)
     if (deferredBase) {
       deferredBase.setAccess(now)
-      return deferredBase.getPromise()
+      return [deferredBase.getPromise(), true]
     }
     const notYetFound = new DeferredBase(
       this.options.ttlms,
@@ -46,7 +42,7 @@ export class DefermentManager {
       now + this.options.ttlms
     )
     this.deferments.set(params.id, notYetFound)
-    return notYetFound.getPromise()
+    return [notYetFound.getPromise(), false]
   }
 
   private trackDefermentRequest(id: string): void {
@@ -131,7 +127,7 @@ export class DefermentManager {
         //we do not clean it up to allow the requests to resolve
         const requestCount = this.totalDefermentRequests.get(deferredBase.getId())
         if (requestCount && requestCount > 1) {
-          return
+          break
         }
         this.currentSize -= deferredBase.getSize() || 0
         this.deferments.delete(deferredBase.getId())

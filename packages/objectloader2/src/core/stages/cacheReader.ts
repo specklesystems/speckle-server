@@ -31,11 +31,12 @@ export class CacheReader {
     this.#notFoundQueue = notFoundQueue
   }
 
-  async getObject(params: { id: string }): Promise<Base> {
-    if (!this.#defermentManager.isDeferred(params.id)) {
+   getObject(params: { id: string }): Promise<Base> {
+    const [p, b] = this.#defermentManager.defer({ id: params.id })
+    if (!b) {
       this.#requestItem(params.id)
     }
-    return await this.#defermentManager.defer({ id: params.id })
+    return p
   }
 
   #createReadQueue(): void {
@@ -72,7 +73,7 @@ export class CacheReader {
         this.#notFoundQueue?.add(batch[i])
       }
     }
-    this.#logger('processBatch: left, time', items.length, performance.now() - start)
+    this.#logger('readBatch: left, time', items.length, performance.now() - start)
   }
 
   dispose(): void {
