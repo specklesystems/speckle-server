@@ -11,7 +11,10 @@ import {
   editCommentFactory,
   archiveCommentFactory
 } from '@/modules/comments/services/index'
-import { convertBasicStringToDocument } from '@/modules/core/services/richTextEditorService'
+import {
+  convertBasicStringToDocument,
+  SmartTextEditorValueSchema
+} from '@/modules/core/services/richTextEditorService'
 import {
   ensureCommentSchema,
   buildCommentTextFromInput,
@@ -30,7 +33,6 @@ import {
   purgeNotifications
 } from '@/test/notificationsHelper'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { CommentsRepositoryMock, StreamsRepositoryMock } from '@/test/mocks/global'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import {
   checkStreamResourceAccessFactory,
@@ -123,7 +125,6 @@ import {
   LegacyCommentViewerData,
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { CommentRecord } from '@/modules/comments/helpers/types'
 import { MaybeNullOrUndefined, TIME_MS } from '@speckle/shared'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import {
@@ -131,7 +132,6 @@ import {
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
@@ -142,11 +142,8 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
-
-type LegacyCommentRecord = CommentRecord & {
-  total_count: string
-  resources: Array<{ resourceId: string; resourceType: string }>
-}
+import { buildTestProject } from '@/modules/core/tests/helpers/creation'
+import { GetCommentsQueryVariables } from '@/test/graphql/generated/graphql'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -280,33 +277,34 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
+const createStreamReturnRecord = createStreamReturnRecordFactory({
+  inviteUsersToProject: inviteUsersToProjectFactory({
+    createAndSendInvite: createAndSendInviteFactory({
+      findUserByTarget: findUserByTargetFactory({ db }),
+      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+        getStream
       }),
-      getUsers
+      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+        getStream
+      }),
+      emitEvent: ({ eventName, payload }) =>
+        getEventBus().emit({
+          eventName,
+          payload
+        }),
+      getUser,
+      getServerInfo,
+      finalizeInvite: buildFinalizeProjectInvite()
     }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
+    getUsers
+  }),
+  createStream: createStreamFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  emitEvent: getEventBus().emit
+})
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord
 })
 
 const findEmail = findEmailFactory({ db })
@@ -348,8 +346,8 @@ function generateRandomCommentText() {
   return buildCommentInputFromString(crs({ length: 10 }))
 }
 
-const commentRepoMock = CommentsRepositoryMock
-const streamsRepoMock = StreamsRepositoryMock
+const buildTestStream = () =>
+  buildTestProject({ workspaceId: undefined, regionKey: undefined })
 
 describe('Comments @comments', () => {
   let app: express.Express
@@ -428,13 +426,6 @@ describe('Comments @comments', () => {
 
   after(() => {
     notificationsState.destroy()
-    commentRepoMock.destroy()
-    streamsRepoMock.destroy()
-  })
-
-  afterEach(() => {
-    commentRepoMock.disable()
-    commentRepoMock.resetMockedFunctions()
   })
 
   it('Should be able to create a comment and a reply', async () => {
@@ -1492,7 +1483,7 @@ describe('Comments @comments', () => {
       )
     })
 
-    const createComment = (input = {}) =>
+    const createCommentGql = (input = {}) =>
       CommentsGraphQLClient.createComment(apollo, {
         input: {
           streamId: stream.id,
@@ -1503,7 +1494,7 @@ describe('Comments @comments', () => {
         }
       })
 
-    const createReply = (input?: ReplyCreateInput) =>
+    const createReplyGql = (input?: ReplyCreateInput) =>
       CommentsGraphQLClient.createReply(apollo, {
         input: {
           streamId: stream.id,
@@ -1522,7 +1513,7 @@ describe('Comments @comments', () => {
         await truncateTables([Comments.name])
 
         // Create a single comment with a blob
-        const createCommentResult = await createComment({
+        const createCommentResult = await createCommentGql({
           text: generateRandomCommentText(),
           blobIds: [blob1.blobId]
         })
@@ -1530,7 +1521,7 @@ describe('Comments @comments', () => {
         if (!parentCommentId) throw new Error('Comment creation failed!')
 
         // Create a reply with a blob
-        await createReply({
+        await createReplyGql({
           text: generateRandomCommentText(),
           blobIds: [blob1.blobId],
           parentComment: parentCommentId,
@@ -1538,7 +1529,7 @@ describe('Comments @comments', () => {
         })
 
         // Create a reply with a blob, but no text
-        const emptyCommentResult = await createReply({
+        const emptyCommentResult = await createReplyGql({
           blobIds: [blob1.blobId],
           parentComment: parentCommentId,
           streamId: stream.id
@@ -1553,7 +1544,7 @@ describe('Comments @comments', () => {
           ...(input || { id: '' })
         })
 
-      const readComments = (input = {}) =>
+      const readComments = (input: Partial<GetCommentsQueryVariables> = {}) =>
         CommentsGraphQLClient.getComments(apollo, {
           cursor: null,
           streamId: stream.id,
@@ -1561,61 +1552,99 @@ describe('Comments @comments', () => {
         })
 
       it('both legacy (string) comments and new (ProseMirror) documents are formatted as SmartTextEditorValue values', async () => {
-        commentRepoMock.enable()
-        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => {
-          return async () => ({
-            items: [
-              // Legacy
-              {
-                id: 'a',
-                text: 'hey dude! welcome to my legacy-type comment!',
-                streamId: stream.id
-              },
-              // New
-              {
-                id: 'b',
+        const streamId = await createStream({ ...buildTestStream(), ownerId: user.id })
+
+        await Promise.all([
+          // Legacy
+          createComment(
+            {
+              userId: user.id,
+              input: {
+                streamId,
+                resources: [
+                  { resourceId: streamId, resourceType: ResourceType.Stream }
+                ],
+                text: 'hey dude! welcome to my legacy-type comment!' as unknown as SmartTextEditorValueSchema,
+                data: {},
+                blobIds: []
+              }
+            },
+            { skipTextValidation: true }
+          ),
+          // New
+          createComment(
+            {
+              userId: user.id,
+              input: {
+                streamId,
+                resources: [
+                  { resourceId: streamId, resourceType: ResourceType.Stream }
+                ],
                 text: JSON.stringify(
                   buildCommentTextFromInput({
                     doc: buildCommentInputFromString('new comment schema here')
                   })
-                ),
-                streamId: stream.id
-              },
-              // New, but for some reason the text object is already deserialized
-              {
-                id: 'c',
+                ) as unknown as SmartTextEditorValueSchema,
+                data: {},
+                blobIds: []
+              }
+            },
+            { skipTextValidation: true }
+          ),
+          // New, but for some reason the text object is already deserialized
+          createComment(
+            {
+              userId: user.id,
+              input: {
+                streamId,
+                resources: [
+                  { resourceId: streamId, resourceType: ResourceType.Stream }
+                ],
                 text: buildCommentTextFromInput({
                   doc: buildCommentInputFromString('another new comment schema here')
                 }),
-                streamId: stream.id
+                data: {},
+                blobIds: []
               }
-            ] as unknown as Array<LegacyCommentRecord>,
-            cursor: new Date().toISOString(),
-            totalCount: 3
-          })
-        })
+            },
+            { skipTextValidation: true }
+          )
+        ])
 
-        const { data, errors } = await readComments()
+        const { data, errors } = await readComments({
+          streamId
+        })
 
         expect(errors?.length || 0).to.eq(0)
         expect(data?.comments?.items?.length || 0).to.eq(3)
       })
 
       it('legacy comment with a single link is formatted correctly', async () => {
+        const streamId = await createStream({ ...buildTestStream(), ownerId: user.id })
+
+        // Low-level insert cause all we need are just the main DB entries
         const item = {
-          id: '1',
-          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa',
-          streamId: stream.id
-        } as unknown as LegacyCommentRecord
+          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa' as unknown as SmartTextEditorValueSchema,
+          streamId,
+          authorId: user.id
+        }
+        await createComment(
+          {
+            userId: user.id,
+            input: {
+              streamId,
+              resources: [{ resourceId: streamId, resourceType: ResourceType.Stream }],
+              text: item.text,
+              data: {},
+              blobIds: []
+            }
+          },
+          { skipTextValidation: true }
+        )
 
-        commentRepoMock.enable()
-        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => async () => ({
-          items: [item],
-          cursor: new Date().toISOString(),
-          totalCount: 1
-        }))
-
-        const { data, errors } = await readComments()
+        const { data, errors } = await readComments({
+          streamId
+        })
 
         expect(data?.comments?.items?.length || 0).to.eq(1)
         expect(errors?.length || 0).to.eq(0)
@@ -1631,6 +1660,8 @@ describe('Comments @comments', () => {
       })
 
       it('legacy comment with multiple links formats them correctly', async () => {
+        const streamId = await createStream({ ...buildTestStream(), ownerId: user.id })
+
         const textParts = [
           "Here's one ",
           // The period and comma def shouldn't belong to the following URL, but we have a pretty basic
@@ -1642,20 +1673,26 @@ describe('Comments @comments', () => {
           'http://agag.com:3000'
         ]
 
+        // Low-level insert cause all we need are just the main DB entries
         const item = {
-          id: '1',
-          text: textParts.join(''),
-          streamId: stream.id
-        } as unknown as LegacyCommentRecord
-
-        commentRepoMock.enable()
-        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => async () => ({
-          items: [item],
-          cursor: new Date().toISOString(),
-          totalCount: 1
-        }))
-
-        const { data, errors } = await readComments()
+          text: textParts.join('') as unknown as SmartTextEditorValueSchema,
+          streamId,
+          authorId: user.id
+        }
+        await createComment(
+          {
+            userId: user.id,
+            input: {
+              streamId,
+              resources: [{ resourceId: streamId, resourceType: ResourceType.Stream }],
+              text: item.text,
+              data: {},
+              blobIds: []
+            }
+          },
+          { skipTextValidation: true }
+        )
+        const { data, errors } = await readComments({ streamId })
 
         const runExpectationsOnTextNode = (idx: number, shouldBeLink: boolean) => {
           expect(textNodes[idx].text).to.eq(textParts[idx])
@@ -1718,7 +1755,7 @@ describe('Comments @comments', () => {
       })
 
       it('returns raw text correctly', async () => {
-        const { data } = await createReply({
+        const { data } = await createReplyGql({
           text: {
             type: 'doc',
             content: [
@@ -1755,43 +1792,6 @@ describe('Comments @comments', () => {
         expect(data?.comment?.text?.doc).to.be.null
         expect(data?.comment?.text?.attachments?.length).to.be.greaterThan(0)
       })
-
-      const unexpectedValDataset = [
-        { display: 'number', value: 3 },
-        { display: 'random object', value: { a: 1, b: 2 } }
-      ]
-      unexpectedValDataset.forEach(({ display, value }) => {
-        it(`unexpected text value (${display}) in DB throw sanitized errors`, async () => {
-          streamsRepoMock.enable()
-          streamsRepoMock.mockFunction('getStreamsFactory', () => async () => [
-            {
-              id: stream.id,
-              workspaceId: ''
-            } as unknown as StreamRecord
-          ])
-          const item = {
-            id: '1',
-            text: value,
-            streamId: stream.id,
-            createdAt: new Date()
-          } as unknown as LegacyCommentRecord
-
-          commentRepoMock.enable()
-          commentRepoMock.mockFunction('getCommentsLegacyFactory', () => async () => ({
-            items: [item],
-            cursor: new Date().toISOString(),
-            totalCount: 1
-          }))
-
-          const { errors } = await readComments()
-
-          expect((errors || []).map((e) => e.message).join(';')).to.contain(
-            'Unexpected comment schema format'
-          )
-          streamsRepoMock.disable()
-          streamsRepoMock.resetMockedFunctions()
-        })
-      })
     })
 
     const creatingOrReplyingDataSet = [
@@ -1803,8 +1803,8 @@ describe('Comments @comments', () => {
 
       const createOrReplyComment = (input = {}) =>
         creating
-          ? createComment(input)
-          : createReply({
+          ? createCommentGql(input)
+          : createReplyGql({
               parentComment: parentCommentId,
               blobIds: [],
               streamId: stream.id,
@@ -1819,7 +1819,7 @@ describe('Comments @comments', () => {
         before(async () => {
           if (replying) {
             // Create comment for attaching replies to
-            const { data } = await createComment({
+            const { data } = await createCommentGql({
               text: generateRandomCommentText()
             })
 

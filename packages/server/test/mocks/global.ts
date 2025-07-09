@@ -4,11 +4,6 @@ import { mockRequireModule } from '@/test/mockHelper'
  * Global mocks that can be re-used. Early setup ensures that mocks work.
  */
 
-// TODO: For mocking out service/repo calls through GQL resolvers
-export const CommentsRepositoryMock = mockRequireModule<
-  typeof import('@/modules/comments/repositories/comments')
->(['@/modules/comments/repositories/comments'])
-
 // TODO: FOr mocking DB selector util available DBs
 export const MultiRegionDbSelectorMock = mockRequireModule<
   typeof import('@/modules/multiregion/utils/dbSelector')
@@ -39,10 +34,6 @@ export const EnvHelperMock = mockRequireModule<
   ],
   ['@/modules/shared/index']
 )
-
-export const StreamsRepositoryMock = mockRequireModule<
-  typeof import('@/modules/core/repositories/streams')
->(['@/modules/core/repositories/streams'])
 
 export const mockAdminOverride = () => {
   const enable = (enabled: boolean) => {
