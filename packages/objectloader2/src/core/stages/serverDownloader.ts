@@ -195,7 +195,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
         return item
       }
     }
-    throw new ObjectLoaderRuntimeError('Invalid line format: ')
+    throw new ObjectLoaderRuntimeError('Invalid line format in response: ' + this.decodeChunk(line))
   }
 
   #processJson(baseId: string, unparsedBase: string): Item {
