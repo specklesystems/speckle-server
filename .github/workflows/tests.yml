@@ -198,7 +198,6 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith
-    if: false # disabled as there is nothing to run
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -209,6 +208,11 @@ jobs:
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/preview-service'
+      - name: Run tests
+        run: yarn test:ci
+        working-directory: 'packages/preview-service'
 
   docker-build-postgres-container:
     runs-on: blacksmith

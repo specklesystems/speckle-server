@@ -2,7 +2,7 @@ import { expect, describe, it, beforeAll, afterAll } from 'vitest'
 import { startServer } from './main'
 import { Server } from 'http'
 
-describe('Main preview-service', () => {
+describe('preview-service', () => {
   let server: Server
 
   beforeAll(async () => {
@@ -19,7 +19,7 @@ describe('Main preview-service', () => {
     expect(server).to.be.instanceOf(Server)
   })
 
-  it('should do something', () => {
+  it('test expectancies', () => {
     expect(true).to.eq(true)
   })
 })
