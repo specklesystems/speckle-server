@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock :auth-check="canUpdate" title="Tokens">
+  <ProjectPageSettingsBlock :auth-check="canRead" title="Tokens">
     <template #introduction>
       <p class="text-body-xs text-foreground">
         These tokens are used to embed non-public Speckle projects.
@@ -20,7 +20,6 @@
               {
                 icon: TrashIcon,
                 label: 'Delete',
-                disabled: !canUpdate?.authorized,
                 action: openDeleteWebhookDialog
               }
             ]
@@ -106,7 +105,7 @@ const {
 const tokenToDelete = ref<EmbedTokenItem | null>(null)
 const showDeleteTokenDialog = ref(false)
 
-const canUpdate = computed(() => result.value?.project?.permissions?.canReadEmbedTokens)
+const canRead = computed(() => result.value?.project?.permissions?.canReadEmbedTokens)
 const canRevoke = computed(
   () => result.value?.project?.permissions?.canRevokeEmbedTokens
 )
