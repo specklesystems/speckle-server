@@ -213,6 +213,7 @@
     "mocha-junit-reporter": "^2.0.2",
     "mocha-multi": "1.1.7",
     "mock-socket": "^9.3.1",
+    "moq.ts": "10.0.8",
     "node-mocks-http": "^1.12.1",
     "nodemon": "^3.1.9",
     "nyc": "^15.0.1",

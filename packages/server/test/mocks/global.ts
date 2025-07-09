@@ -4,11 +4,6 @@ import { mockRequireModule } from '@/test/mockHelper'
  * Global mocks that can be re-used. Early setup ensures that mocks work.
  */
 
-// TODO: FOr mocking stripe through GQL resolvers
-export const StripeClientMock = mockRequireModule<
-  typeof import('@/modules/gatekeeper/clients/stripe')
->(['@/modules/gatekeeper/clients/stripe'])
-
 // TODO: For mocking env settings, specifically admin override
 export const EnvHelperMock = mockRequireModule<
   typeof import('@/modules/shared/helpers/envHelper')

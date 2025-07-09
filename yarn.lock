@@ -16351,6 +16351,7 @@ __metadata:
     mocha-multi: "npm:1.1.7"
     mock-socket: "npm:^9.3.1"
     module-alias: "npm:^2.2.2"
+    moq.ts: "npm:10.0.8"
     netmask: "npm:^2.0.2"
     node-cron: "npm:^3.0.2"
     node-machine-id: "npm:^1.1.12"
@@ -38200,6 +38201,15 @@ __metadata:
   version: 2.29.4
   resolution: "moment@npm:2.29.4"
   checksum: 10/157c5af5a0ba8196e577bc67feb583303191d21ba1f7f2af30b3b40d4c63a64d505ba402be2a1454832082fac6be69db1e0d186c3279dae191e6634b0c33705c
+  languageName: node
+  linkType: hard
+
+"moq.ts@npm:10.0.8":
+  version: 10.0.8
+  resolution: "moq.ts@npm:10.0.8"
+  dependencies:
+    tslib: "npm:*"
+  checksum: 10/d2dce5da03f1290dee657504ead55fd6a82065627ec4d9fa193827e7b3b4f3c67dcb81826b52b63af7dc062b73f8213750d3e4063af3ceb032ae91c5bbe31789
   languageName: node
   linkType: hard
 

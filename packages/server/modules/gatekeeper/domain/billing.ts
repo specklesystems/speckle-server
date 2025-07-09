@@ -18,6 +18,7 @@ import {
   WorkspacePlan,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
+import type Stripe from 'stripe'
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
@@ -188,6 +189,8 @@ export type GetWorkspaceSubscriptions = () => Promise<WorkspaceSubscription[]>
 export type GetWorkspaceSubscriptionBySubscriptionId = (args: {
   subscriptionId: string
 }) => Promise<WorkspaceSubscription | null>
+
+export type GetStripeClient = () => Stripe
 
 export type GetSubscriptionData = (args: {
   subscriptionId: string
