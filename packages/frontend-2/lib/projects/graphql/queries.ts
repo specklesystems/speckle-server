@@ -348,12 +348,12 @@ export const projectWebhooksQuery = graphql(`
 `)
 
 export const projectEmbedTokensQuery = graphql(`
-  query ProjectEmbedTokens($projectId: String!) {
+  query ProjectEmbedTokens($projectId: String!, $cursor: String = null) {
     project(id: $projectId) {
       id
       name
       ...ProjectPageSettingsTokens_Project
-      embedTokens {
+      embedTokens(cursor: $cursor, limit: 20) {
         cursor
         totalCount
         items {

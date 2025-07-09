@@ -193,6 +193,10 @@ function createCache(): InMemoryCache {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('AutomationCollection')
           },
+          embedTokens: {
+            keyArgs: ['limit'],
+            merge: buildAbstractCollectionMergeFunction('EmbedTokenCollection')
+          },
           viewerResources: {
             merge: (_existing, incoming) => [...incoming]
           },

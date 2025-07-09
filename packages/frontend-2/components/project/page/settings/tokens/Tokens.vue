@@ -2,7 +2,7 @@
   <ProjectPageSettingsBlock :auth-check="canUpdate" title="Tokens">
     <template #introduction>
       <p class="text-body-xs text-foreground">
-        These tokens are used to embed private Speckle projects.
+        These tokens are used to embed non-public Speckle projects.
       </p>
     </template>
 
@@ -41,6 +41,13 @@
       </template>
     </LayoutTable>
 
+    <InfiniteLoading
+      v-if="embedTokens?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
+
     <ProjectPageSettingsTokensDeleteDialog
       v-model:open="showDeleteTokenDialog"
       :token="tokenToDelete"
@@ -50,13 +57,14 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
 import { TrashIcon } from '@heroicons/vue/24/outline'
 import { projectEmbedTokensQuery } from '~~/lib/projects/graphql/queries'
 import type { EmbedTokenItem } from '~~/lib/projects/helpers/types'
 import { graphql } from '~/lib/common/generated/gql'
 import { formattedFullDate } from '~/utils/dateFormatter'
 import { useDeleteEmbedToken } from '~~/lib/projects/composables/tokenManagement'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import type { Nullable } from '@speckle/shared'
 
 graphql(`
   fragment ProjectPageSettingsTokens_Project on Project {
@@ -72,25 +80,38 @@ graphql(`
   }
 `)
 
-const projectId = computed(() => route.params.id as string)
 const route = useRoute()
+const projectId = computed(() => route.params.id as string)
+const deleteEmbedToken = useDeleteEmbedToken()
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result: result }
+} = usePaginatedQuery({
+  query: projectEmbedTokensQuery,
+  baseVariables: computed(() => ({
+    limit: 20,
+    projectId: projectId.value,
+    cursor: null as Nullable<string>
+  })),
+  resolveKey: (vars) => [vars.projectId],
+  resolveCurrentResult: (res) => res?.project?.embedTokens,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
-const { result: pageResult } = useQuery(projectEmbedTokensQuery, () => ({
-  projectId: projectId.value
-}))
-
-const canUpdate = computed(
-  () => pageResult.value?.project?.permissions?.canReadEmbedTokens
-)
-const canRevoke = computed(
-  () => pageResult.value?.project?.permissions?.canRevokeEmbedTokens
-)
 const tokenToDelete = ref<EmbedTokenItem | null>(null)
 const showDeleteTokenDialog = ref(false)
-const deleteEmbedToken = useDeleteEmbedToken()
 
+const canUpdate = computed(() => result.value?.project?.permissions?.canReadEmbedTokens)
+const canRevoke = computed(
+  () => result.value?.project?.permissions?.canRevokeEmbedTokens
+)
 const embedTokens = computed(() => {
-  return (pageResult.value?.project?.embedTokens?.items || []).map((token) => ({
+  return (result.value?.project?.embedTokens?.items || []).map((token) => ({
     ...token,
     id: token.tokenId
   }))

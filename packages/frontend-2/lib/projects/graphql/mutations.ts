@@ -325,3 +325,11 @@ export const deleteEmbedTokenMutation = graphql(`
     }
   }
 `)
+
+export const deleteAllProjectEmbedTokensMutation = graphql(`
+  mutation RevokeEmbedTokens($projectId: String!) {
+    projectMutations {
+      revokeEmbedTokens(projectId: $projectId)
+    }
+  }
+`)
