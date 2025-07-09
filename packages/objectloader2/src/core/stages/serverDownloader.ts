@@ -72,17 +72,12 @@ export default class ServerDownloader implements Downloader {
     this.#downloadQueue = new BatchedPool<string>({
       concurrencyAndSizes: this.#getDownloadCountAndSizes(total),
       maxWaitTime: params.maxDownloadBatchWait,
-      processFunction: async (batch: string[]): Promise<void> => {
-        try {
-          await this.downloadBatch({
-            batch,
-            url: this.#requestUrlChildren,
-            headers: this.#headers
-          })
-        } catch (e: unknown) {
-          console.error(`Error downloading batch:`, e)
-        }
-      }
+      processFunction: (batch: string[]): Promise<void> =>
+        this.downloadBatch({
+          batch,
+          url: this.#requestUrlChildren,
+          headers: this.#headers
+        })
     })
   }
 
@@ -189,23 +184,16 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
   }
 
   processLine(line: Uint8Array): Item {
-    try {
-      for (let i = 0; i < line.length; i++) {
-        if (line[i] === 0x09) {
-          //this is a tab
-          const baseId = this.decodeChunk(line.subarray(0, i))
-          const json = line.subarray(i + 1)
-          const base = this.decodeChunk(json)
-          const item = this.#processJson(baseId, base)
-          item.size = json.length
-          return item
-        }
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === 0x09) {
+        //this is a tab
+        const baseId = this.decodeChunk(line.subarray(0, i))
+        const json = line.subarray(i + 1)
+        const base = this.decodeChunk(json)
+        const item = this.#processJson(baseId, base)
+        item.size = json.length
+        return item
       }
-    } catch (e: unknown) {
-      console.error('Error processing line:', e)
-
-      // rethrow the error with more context
-      throw new ObjectLoaderRuntimeError('Error processing line:')
     }
     throw new ObjectLoaderRuntimeError('Invalid line format: ')
   }
