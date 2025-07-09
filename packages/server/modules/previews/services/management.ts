@@ -16,6 +16,7 @@ import type { Logger } from 'pino'
 // import { createRequire } from 'node:module'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { fileURLToPath } from 'url'
 
 const defaultAngle = '0'
 
@@ -29,8 +30,12 @@ export const getObjectPreviewBufferOrFilepathFactory =
   }): GetObjectPreviewBufferOrFilepath =>
   async ({ streamId, objectId, angle }) => {
     const [noPreviewImage, previewErrorImage] = await Promise.all([
-      import.meta.resolve!('#/assets/previews/images/no_preview.png'),
-      import.meta.resolve!('#/assets/previews/images/preview_error.png')
+      import.meta.resolve!('#/assets/previews/images/no_preview.png').then(
+        fileURLToPath
+      ),
+      import.meta.resolve!('#/assets/previews/images/preview_error.png').then(
+        fileURLToPath
+      )
     ])
 
     angle = angle || defaultAngle
@@ -48,7 +53,9 @@ export const getObjectPreviewBufferOrFilepathFactory =
     if (!dbObj) {
       return {
         type: 'file',
-        file: require.resolve('#/assets/previews/images/preview_404.png'),
+        file: fileURLToPath(
+          await import.meta.resolve!('#/assets/previews/images/preview_404.png')
+        ),
         error: true,
         errorCode: 'OBJECT_NOT_FOUND'
       }

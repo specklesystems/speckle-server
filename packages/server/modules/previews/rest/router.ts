@@ -45,12 +45,15 @@ import {
 import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
 import type { Queue } from 'bull'
 import type { Knex } from 'knex'
+import { fileURLToPath } from 'url'
 
 const httpErrorImage = (httpErrorCode: number) =>
-  import.meta.resolve!(`#/assets/previews/images/preview_${httpErrorCode}.png`)
+  import.meta.resolve!(`#/assets/previews/images/preview_${httpErrorCode}.png`).then(
+    fileURLToPath
+  )
 
 const noPreviewImage = () =>
-  import.meta.resolve!('#/assets/previews/images/no_preview.png')
+  import.meta.resolve!('#/assets/previews/images/no_preview.png').then(fileURLToPath)
 
 const buildCreateObjectPreviewFunction = ({
   projectDb,
