@@ -68,6 +68,7 @@ import { ProjectVisibility } from '@/test/graphql/generated/graphql'
 import { faker } from '@faker-js/faker'
 import { retry } from '@lifeomic/attempt'
 import { ensureError, Roles, StreamRoles, TIME_MS } from '@speckle/shared'
+import { Knex } from 'knex'
 import { omit } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -121,34 +122,35 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
+const createStreamHelper = (database: Knex) =>
+  legacyCreateStreamFactory({
+    createStreamReturnRecord: createStreamReturnRecordFactory({
+      inviteUsersToProject: inviteUsersToProjectFactory({
+        createAndSendInvite: createAndSendInviteFactory({
+          findUserByTarget: findUserByTargetFactory({ db: database }),
+          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: database }),
+          collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+            getStream
           }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
+          buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+            getStream
+          }),
+          emitEvent: ({ eventName, payload }) =>
+            getEventBus().emit({
+              eventName,
+              payload
+            }),
+          getUser,
+          getServerInfo,
+          finalizeInvite: buildFinalizeProjectInvite()
+        }),
+        getUsers
       }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
+      createStream: createStreamFactory({ db: database }),
+      createBranch: createBranchFactory({ db: database }),
+      emitEvent: getEventBus().emit
+    })
   })
-})
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -228,7 +230,7 @@ export async function createTestStream(
     // Create personal project
     if (streamObj.regionKey) {
       const regionDb = await getRegionDb({ regionKey: streamObj.regionKey })
-      const project = await createStreamFactory({ db: regionDb })({
+      const projectId = await createStreamHelper(regionDb)({
         ...omit(streamObj, ['id', 'ownerId', 'visibility']),
         isPublic: visibility === ProjectVisibility.Public,
         ownerId: owner.id
@@ -238,7 +240,7 @@ export async function createTestStream(
           async () => {
             const replicatedProject = await getProjectFactory({
               db
-            })({ projectId: project.id })
+            })({ projectId })
             if (!replicatedProject) throw new StreamNotFoundError()
           },
           { maxAttempts: 10, delay: isTestEnv() ? TIME_MS.second : undefined }
@@ -246,7 +248,7 @@ export async function createTestStream(
       } catch (err) {
         if (err instanceof StreamNotFoundError) {
           throw new RegionalProjectCreationError(undefined, {
-            info: { projectId: project.id, regionKey: streamObj.regionKey }
+            info: { projectId, regionKey: streamObj.regionKey }
           })
         }
         // else throw as is
@@ -254,13 +256,13 @@ export async function createTestStream(
       }
       // avoid emiting duplicated events
       await db('stream_acl').insert({
-        resourceId: project.id,
+        resourceId: projectId,
         userId: owner.id,
         role: Roles.Stream.Owner
       })
-      id = project.id
+      id = projectId
     } else {
-      id = await createStream({
+      id = await createStreamHelper(db)({
         ...omit(streamObj, ['id', 'ownerId', 'visibility']),
         isPublic: visibility === ProjectVisibility.Public,
         ownerId: owner.id
