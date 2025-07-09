@@ -39,7 +39,7 @@ export async function makeOgImage(
 
   const logo = await sharp(
     fileURLToPath(
-      await import.meta.resolve!('#/assets/previews/images/speckle_logo_and_text.png')
+      import.meta.resolve('#/assets/previews/images/speckle_logo_and_text.png')
     )
   )
     .resize({ height: panelHeight })

@@ -13,7 +13,6 @@ import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
 import type { Logger } from 'pino'
-// import { createRequire } from 'node:module'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { fileURLToPath } from 'url'
@@ -30,12 +29,8 @@ export const getObjectPreviewBufferOrFilepathFactory =
   }): GetObjectPreviewBufferOrFilepath =>
   async ({ streamId, objectId, angle }) => {
     const [noPreviewImage, previewErrorImage] = await Promise.all([
-      import.meta.resolve!('#/assets/previews/images/no_preview.png').then(
-        fileURLToPath
-      ),
-      import.meta.resolve!('#/assets/previews/images/preview_error.png').then(
-        fileURLToPath
-      )
+      fileURLToPath(import.meta.resolve('#/assets/previews/images/no_preview.png')),
+      fileURLToPath(import.meta.resolve('#/assets/previews/images/preview_error.png'))
     ])
 
     angle = angle || defaultAngle
@@ -54,7 +49,7 @@ export const getObjectPreviewBufferOrFilepathFactory =
       return {
         type: 'file',
         file: fileURLToPath(
-          await import.meta.resolve!('#/assets/previews/images/preview_404.png')
+          import.meta.resolve('#/assets/previews/images/preview_404.png')
         ),
         error: true,
         errorCode: 'OBJECT_NOT_FOUND'

@@ -6,9 +6,7 @@ import { fileURLToPath } from 'url'
 
 async function getExplorerHtml() {
   const fileBaseContents = await readFile(
-    fileURLToPath(
-      await import.meta.resolve!('#/assets/apiexplorer/templates/explorer.html')
-    ),
+    fileURLToPath(import.meta.resolve('#/assets/apiexplorer/templates/explorer.html')),
     { encoding: 'utf-8' }
   )
   return fileBaseContents.replace(

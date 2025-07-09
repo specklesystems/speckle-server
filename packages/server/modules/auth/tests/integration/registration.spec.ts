@@ -88,8 +88,6 @@ describe('Server registration', () => {
     })
   })
 
-  afterEach(() => {})
-
   describe('with local strategy (email/pw)', () => {
     it('works', async () => {
       const challenge = 'asd123'

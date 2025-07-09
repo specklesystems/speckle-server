@@ -77,7 +77,7 @@ describe('FileUploads @fileuploads integration', () => {
 
   describe('Uploads files', () => {
     it('Should upload a single file', async () => {
-      const readmePath = fileURLToPath(await import.meta.resolve!('@/readme.md'))
+      const readmePath = fileURLToPath(import.meta.resolve('@/readme.md'))
       const response = await request(app)
         .post(`/api/file/autodetect/${createdStreamId}/main`)
         .set('Authorization', `Bearer ${userOneToken}`)
@@ -106,14 +106,10 @@ describe('FileUploads @fileuploads integration', () => {
       const response = await request(app)
         .post(`/api/file/autodetect/${createdStreamId}/main`)
         .set('Authorization', `Bearer ${userOneToken}`)
-        .attach(
-          'blob1',
-          fileURLToPath(await import.meta.resolve!('@/readme.md')),
-          'test1.ifc'
-        )
+        .attach('blob1', fileURLToPath(import.meta.resolve('@/readme.md')), 'test1.ifc')
         .attach(
           'blob2',
-          fileURLToPath(await import.meta.resolve!('@/package.json')),
+          fileURLToPath(import.meta.resolve('@/package.json')),
           'test2.ifc'
         )
       expect(response.status).to.equal(201)
@@ -225,7 +221,7 @@ describe('FileUploads @fileuploads integration', () => {
         .set('Accept', 'application/json')
         .attach(
           'test.ifc',
-          fileURLToPath(await import.meta.resolve!('@/readme.md')),
+          fileURLToPath(import.meta.resolve('@/readme.md')),
           'test.ifc'
         )
       expect(response.statusCode).to.equal(403)
@@ -249,7 +245,7 @@ describe('FileUploads @fileuploads integration', () => {
         .set('Accept', 'application/json')
         .attach(
           'test.ifc',
-          fileURLToPath(await import.meta.resolve!('@/readme.md')),
+          fileURLToPath(import.meta.resolve('@/readme.md')),
           'test.ifc'
         )
       expect(response.statusCode).to.equal(404) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
@@ -280,7 +276,7 @@ describe('FileUploads @fileuploads integration', () => {
         .set('Accept', 'application/json')
         .attach(
           'test.ifc',
-          fileURLToPath(await import.meta.resolve!('@/readme.md')),
+          fileURLToPath(import.meta.resolve('@/readme.md')),
           'test.ifc'
         )
 

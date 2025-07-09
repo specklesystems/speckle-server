@@ -135,8 +135,8 @@ describe('Blobs integration @blobstorage', () => {
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
-      .attach('blob1', fileURLToPath(await import.meta.resolve!('@/readme.md')))
-      .attach('blob2', fileURLToPath(await import.meta.resolve!('@/package.json')))
+      .attach('blob1', fileURLToPath(import.meta.resolve('@/readme.md')))
+      .attach('blob2', fileURLToPath(import.meta.resolve('@/package.json')))
     expect(response.status).to.equal(201)
     expect(response.body.uploadResults).to.exist
     const uploadResults = response.body.uploadResults
