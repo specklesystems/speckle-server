@@ -198,6 +198,18 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith
+    services:
+      redis:
+        image: redis:7.2.4
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    env:
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -205,7 +217,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=false PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - run: cp .env.test-example .env.test
