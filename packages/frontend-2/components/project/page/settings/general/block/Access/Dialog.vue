@@ -31,8 +31,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { SupportedProjectVisibility } from '~/lib/projects/helpers/visibility'
-import { useMutation } from '@vue/apollo-composable'
-import { deleteAllProjectEmbedTokensMutation } from '~/lib/projects/graphql/mutations'
+import { useDeleteAllEmbedTokens } from '~/lib/projects/composables/tokenManagement'
 
 const emit = defineEmits(['confirm', 'cancel'])
 
@@ -44,9 +43,8 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const { mutate: revokeAllEmbedTokens } = useMutation(
-  deleteAllProjectEmbedTokensMutation
-)
+const deleteAllEmbedTokens = useDeleteAllEmbedTokens()
+const { logger } = useLogger()
 
 const revokeEmbedTokens = ref(false)
 
@@ -79,7 +77,11 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 
 const onConfirm = async () => {
   if (revokeEmbedTokens.value) {
-    await revokeAllEmbedTokens({ projectId: props.projectId })
+    try {
+      await deleteAllEmbedTokens({ projectId: props.projectId })
+    } catch (error) {
+      logger.error('Failed to delete all embed tokens', error)
+    }
   }
 
   emit('confirm')

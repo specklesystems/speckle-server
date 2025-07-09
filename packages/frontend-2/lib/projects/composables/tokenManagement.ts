@@ -6,7 +6,8 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import {
   deleteEmbedTokenMutation,
-  createEmbedTokenMutation
+  createEmbedTokenMutation,
+  deleteAllProjectEmbedTokensMutation
 } from '~~/lib/projects/graphql/mutations'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useApolloClient } from '@vue/apollo-composable'
@@ -60,6 +61,29 @@ export const useDeleteEmbedToken = () => {
         description: getFirstErrorMessage(result?.errors)
       })
     }
+  }
+}
+
+export const useDeleteAllEmbedTokens = () => {
+  const apollo = useApolloClient().client
+
+  return async (input: { projectId: string }) => {
+    const { projectId } = input
+
+    await apollo
+      .mutate({
+        mutation: deleteAllProjectEmbedTokensMutation,
+        variables: { projectId },
+        update(cache, { data }) {
+          if (!data?.projectMutations.revokeEmbedTokens) return
+
+          cache.evict({
+            id: getCacheId('Project', projectId),
+            fieldName: 'embedTokens'
+          })
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
   }
 }
 
