@@ -1,12 +1,14 @@
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  modifyObjectField,
+  getCacheId
 } from '~~/lib/common/helpers/graphql'
 import {
   deleteEmbedTokenMutation,
   createEmbedTokenMutation
 } from '~~/lib/projects/graphql/mutations'
-import { useGlobalToast } from '~~/lib/common/composables/toast'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useApolloClient } from '@vue/apollo-composable'
 
 export const useDeleteEmbedToken = () => {
@@ -22,6 +24,26 @@ export const useDeleteEmbedToken = () => {
         variables: {
           projectId,
           token
+        },
+        update: (cache, { data }) => {
+          if (!data?.projectMutations.revokeEmbedToken) return
+
+          modifyObjectField(
+            cache,
+            getCacheId('Project', projectId),
+            'embedTokens',
+            ({ helpers: { createUpdatedValue } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => Math.max(totalCount - 1, 0))
+                update('items', (items) =>
+                  items.filter((item) => item.tokenId !== token)
+                )
+              })
+            },
+            {
+              autoEvictFiltered: true
+            }
+          )
         }
       })
       .catch(convertThrowIntoFetchResult)
