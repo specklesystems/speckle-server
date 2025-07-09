@@ -18,9 +18,12 @@ export const createEmailListener = async (
   let listenerQuitters: (() => void)[] = []
 
   // Global listener, tracks emails even if no listen() invoked
-  const quitGlobal = eventBus.listen(EmailsEvents.Sent, async ({ payload }) => {
-    collectedSends.push(payload)
-  })
+  const quitGlobal = eventBus.listen(
+    EmailsEvents.PreparingToSend,
+    async ({ payload }) => {
+      collectedSends.push(payload.options)
+    }
+  )
 
   /**
    * Reset .listen() calls and collected sends (by default)
@@ -53,9 +56,9 @@ export const createEmailListener = async (
     let timesReceived = 0
     const localSends: Mail.Options[] = []
 
-    const quit = eventBus.listen(EmailsEvents.Sent, async ({ payload }) => {
-      await params.handler?.(payload)
-      localSends.push(payload)
+    const quit = eventBus.listen(EmailsEvents.PreparingToSend, async ({ payload }) => {
+      await params.handler?.(payload.options)
+      localSends.push(payload.options)
       timesReceived += 1
 
       if (params.times && timesReceived >= params.times) {
@@ -65,7 +68,7 @@ export const createEmailListener = async (
 
     const wrappedQuit = async () => {
       quit()
-      listenerQuitters.splice(listenerQuitters.indexOf(quit), 1)
+      listenerQuitters.splice(listenerQuitters.indexOf(wrappedQuit), 1)
 
       // Destroy all listeners, if last one
       if (options?.destroyWhenNoListeners && listenerQuitters.length === 0) {

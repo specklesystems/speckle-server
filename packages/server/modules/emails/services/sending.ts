@@ -24,13 +24,10 @@ export const sendEmail: SendEmail = async ({
   const eventBus = getEventBus()
   const logger = getRequestLogger() || loggerWithMaybeContext({ logger: emailLogger })
   const transporter = getTransporter()
-  if (!transporter) {
-    logger.warn('No email transport present. Cannot send emails. Skipping send...')
-    return false
-  }
+
   try {
     const emailFrom = getEmailFromAddress()
-    const opts: Mail.Options = {
+    const options: Mail.Options = {
       from: from || `"Speckle" <${emailFrom}>`,
       to,
       subject,
@@ -38,10 +35,20 @@ export const sendEmail: SendEmail = async ({
       html
     }
 
-    await transporter.sendMail(opts)
+    await eventBus.emit({
+      eventName: EmailsEvents.PreparingToSend,
+      payload: { options }
+    })
+
+    if (!transporter) {
+      logger.warn('No email transport present. Cannot send emails. Skipping send...')
+      return false
+    }
+
+    await transporter.sendMail(options)
     await eventBus.emit({
       eventName: EmailsEvents.Sent,
-      payload: opts
+      payload: { options }
     })
 
     const emails = typeof to === 'string' ? [to] : to
