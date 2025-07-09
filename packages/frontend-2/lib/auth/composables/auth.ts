@@ -443,21 +443,6 @@ export const useAuthManager = (
   }
 
   /**
-   * Check if embed token is active
-   */
-  const hasEmbedToken = computed(() => !!embedToken.value)
-
-  /**
-   * Check if user is authenticated (either via regular auth or embed token)
-   */
-  const isAuthenticated = computed(() => !!effectiveAuthToken.value)
-
-  /**
-   * Check if user is authenticated via embed token (not regular auth)
-   */
-  const isEmbedMode = computed(() => !!embedToken.value && !authToken.value)
-
-  /**
    * Log out
    */
   const logout = async (
@@ -501,9 +486,6 @@ export const useAuthManager = (
     authToken,
     embedToken,
     effectiveAuthToken,
-    hasEmbedToken,
-    isAuthenticated,
-    isEmbedMode,
     clearEmbedToken,
     loginWithEmail,
     signUpWithEmail,
