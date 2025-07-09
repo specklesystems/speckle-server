@@ -6,7 +6,8 @@ import { DefermentManager } from './defermentManager.js'
 describe('deferments', () => {
   test('defer one', async () => {
     const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
-    const x = deferments.defer({ id: 'id' })
+    const [x, alreadyDeferred] = deferments.defer({ id: 'id' })
+    expect(alreadyDeferred).toBeFalsy()
     expect(x).toBeInstanceOf(Promise)
     deferments.undefer({ baseId: 'id', base: { id: 'id', speckle_type: 'type' } })
     const b = await x
@@ -17,7 +18,8 @@ describe('deferments', () => {
     const now = 1
     const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
     deferments['now'] = (): number => now
-    const x = deferments.defer({ id: 'id' })
+    const [x, alreadyDeferred] = deferments.defer({ id: 'id' })
+    expect(alreadyDeferred).toBeFalsy()
     expect(x).toBeInstanceOf(Promise)
     const d = deferments.get('id')
     expect(d).toBeDefined()
