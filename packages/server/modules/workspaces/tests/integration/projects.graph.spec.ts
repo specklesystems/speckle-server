@@ -873,8 +873,7 @@ describe('Workspace project GQL CRUD', () => {
       id: '',
       ownerId: '',
       name: 'Test Project',
-      visibility: ProjectRecordVisibility.Private,
-      regionKey: isMultiRegionTestMode() ? 'region1' : undefined
+      visibility: ProjectRecordVisibility.Private
     }
 
     const targetWorkspace: BasicTestWorkspace = {
@@ -997,59 +996,61 @@ describe('Workspace project GQL CRUD', () => {
       expect(adminWorkspaceRole?.role).to.equal(Roles.Workspace.Admin)
     })
 
-    describe('when the default server db region is not the main db', () => {
-      const regionalProject: StreamRecord = {
-        id: cryptoRandomString({ length: 9 }),
-        name: 'My Special Project',
-        description: null,
-        clonedFrom: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        allowPublicComments: false,
-        workspaceId: null,
-        regionKey: 'region1',
-        visibility: ProjectRecordVisibility.Public
-      }
-
-      beforeEach(async () => {
-        // Simulate non-main default db region
-        const regionDb = await getRegionDb({ regionKey: 'region1' })
-        await tables.streams(regionDb).insert(regionalProject)
-        await waitForRegionProjectFactory({
-          getProject: getProjectFactory({ db }),
-          deleteProject: deleteProjectFactory({ db: regionDb })
-        })({
-          projectId: regionalProject.id,
-          regionKey: 'region1'
-        })
-        await grantStreamPermissions({
-          streamId: regionalProject.id,
-          userId: serverAdminUser.id,
-          role: Roles.Stream.Owner
-        })
-      })
-
-      it('should update project without removing workspace association @multiregion', async () => {
-        const resA = await apollo.execute(MoveProjectToWorkspaceDocument, {
-          projectId: regionalProject.id,
-          workspaceId: targetWorkspace.id
-        })
-        const resB = await apollo.execute(UpdateProjectDocument, {
-          input: {
-            id: regionalProject.id,
-            name: 'Foo'
+    isMultiRegionTestMode()
+      ? describe('when the default server db region is not the main db', () => {
+          const regionalProject: StreamRecord = {
+            id: cryptoRandomString({ length: 9 }),
+            name: 'My Special Project',
+            description: null,
+            clonedFrom: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            allowPublicComments: false,
+            workspaceId: null,
+            regionKey: 'region1',
+            visibility: ProjectRecordVisibility.Public
           }
-        })
-        const resC = await apollo.execute(GetProjectDocument, {
-          id: regionalProject.id
-        })
 
-        expect(resA).to.not.haveGraphQLErrors()
-        expect(resB).to.not.haveGraphQLErrors()
-        expect(resC).to.not.haveGraphQLErrors()
-        expect(resC.data?.project?.workspaceId).to.equal(targetWorkspace.id)
-      })
-    })
+          beforeEach(async () => {
+            // Simulate non-main default db region
+            const regionDb = await getRegionDb({ regionKey: 'region1' })
+            await tables.streams(regionDb).insert(regionalProject)
+            await waitForRegionProjectFactory({
+              getProject: getProjectFactory({ db }),
+              deleteProject: deleteProjectFactory({ db: regionDb })
+            })({
+              projectId: regionalProject.id,
+              regionKey: 'region1'
+            })
+            await grantStreamPermissions({
+              streamId: regionalProject.id,
+              userId: serverAdminUser.id,
+              role: Roles.Stream.Owner
+            })
+          })
+
+          it('should update project without removing workspace association @multiregion', async () => {
+            const resA = await apollo.execute(MoveProjectToWorkspaceDocument, {
+              projectId: regionalProject.id,
+              workspaceId: targetWorkspace.id
+            })
+            const resB = await apollo.execute(UpdateProjectDocument, {
+              input: {
+                id: regionalProject.id,
+                name: 'Foo'
+              }
+            })
+            const resC = await apollo.execute(GetProjectDocument, {
+              id: regionalProject.id
+            })
+
+            expect(resA).to.not.haveGraphQLErrors()
+            expect(resB).to.not.haveGraphQLErrors()
+            expect(resC).to.not.haveGraphQLErrors()
+            expect(resC.data?.project?.workspaceId).to.equal(targetWorkspace.id)
+          })
+        })
+      : null
   })
 
   // moved over Alessandro's tests from core to here, since they are all related to workspaces
