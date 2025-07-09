@@ -22,12 +22,6 @@ repos:
     hooks:
       - id: ggshield-not-ci
 
-  - repo: https://github.com/psf/black
-    rev: '22.10.0'
-    hooks:
-      - id: black # python formatter
-        name: black (python formatter)
-
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.12.2
     hooks:
