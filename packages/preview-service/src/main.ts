@@ -44,8 +44,11 @@ let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefi
 // can close the browser
 let browser: Browser | undefined = undefined
 
-export const startServer = (port = PORT, host = HOST) =>
-  app.listen(port, host, async () => {
+export const startServer = ({
+  port,
+  host
+}: Partial<{ port: number; host: string }> = {}) =>
+  app.listen(port || PORT, host || HOST, async () => {
     logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
     appState = AppState.RUNNING
 

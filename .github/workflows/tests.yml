@@ -392,7 +392,7 @@ jobs:
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
-      - run: cp .env.test-example .env.test
+      - run: cp .env.test.example .env.test
         working-directory: 'packages/server'
       - name: 'Run test'
         run: yarn test:report

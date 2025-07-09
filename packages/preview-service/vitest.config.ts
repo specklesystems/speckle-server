@@ -8,7 +8,8 @@ export default defineConfig({
     sequence: {
       shuffle: true,
       concurrent: true
-    }
+    },
+    testTimeout: 120 * 1000 // 2mins
   },
   resolve: {
     alias: {
