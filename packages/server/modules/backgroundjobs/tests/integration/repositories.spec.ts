@@ -13,7 +13,10 @@ import { expect } from 'chai'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 
 describe('Background Jobs repositories @backgroundjobs', () => {
-  const storeBackgroundJob = storeBackgroundJobFactory({ db })
+  const storeBackgroundJob = storeBackgroundJobFactory({
+    db,
+    originServerUrl: 'http://example.org'
+  })
   const getBackgroundJob = getBackgroundJobFactory({ db })
 
   type TestJobPayload = BackgroundJobPayload & {

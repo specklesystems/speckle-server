@@ -5,6 +5,7 @@ import {
   getFileImportServiceRhinoQueueName,
   getFileImportTimeLimitMinutes,
   getRedisUrl,
+  getServerOrigin,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { Logger, fileUploadsLogger as logger } from '@/observability/logging'
@@ -130,7 +131,10 @@ export const initializePostgresQueue = async ({
 
   const scheduleBackgroundJob = scheduleBackgroundJobFactory({
     jobConfig: { maxAttempt: 3, timeoutMs: timeout },
-    storeBackgroundJob: storeBackgroundJobFactory({ db })
+    storeBackgroundJob: storeBackgroundJobFactory({
+      db,
+      originServerUrl: getServerOrigin()
+    })
   })
   const fileImportQueue = {
     label,
