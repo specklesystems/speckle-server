@@ -52,4 +52,33 @@ describe('WorkerRingBufferQueue', () => {
     const dequeuedItems = await queue.dequeue(1, 500)
     expect(dequeuedItems).toHaveLength(0)
   })
+
+  it('should not enqueue items when full and more', async () => {
+    const queue = WorkerRingBufferQueue.create(CAPACITY_BYTES, QUEUE_NAME)
+    expect(queue.isEmpty()).toBe(true)
+
+    // Fill the queue with maximum capacity
+    const largeItem = new Uint8Array(CAPACITY_BYTES - 5) // Account for length prefix
+    const enqueueResult = await queue.enqueue([largeItem], 500)
+    expect(enqueueResult).toBe(true)
+    expect(queue.isFull()).toBe(true)
+    expect(queue.isEmpty()).toBe(false)
+
+    // Attempt to enqueue another item
+    const enqueueOverflowResult = await queue.enqueue([new Uint8Array([1, 2, 3])], 500)
+    expect(enqueueOverflowResult).toBe(false)
+    expect(queue.isFull()).toBe(true)
+    expect(queue.isEmpty()).toBe(false)
+
+    const dVal = await queue.dequeue(12, 500)
+    expect(dVal.length).toBe(1)
+    expect(dVal[0].length).toBe(largeItem.length)
+    expect(queue.isFull()).toBe(false)
+    expect(queue.isEmpty()).toBe(true)
+
+    const regItem = await queue.enqueue([new Uint8Array([1, 2, 3])], 500)
+    expect(regItem).toBe(true)
+    expect(queue.isFull()).toBe(false)
+    expect(queue.isEmpty()).toBe(false)
+  })
 })

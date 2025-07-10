@@ -1,6 +1,7 @@
 import { delay } from '../types/functions.js'
 import { RingBufferQueue } from './RingBufferQueue.js'
 import { WorkerRingBuffer } from './WorkerRingBuffer.js'
+import { isEmpty } from 'lodash';
 // RingBufferState might be needed if queue logic directly manipulates or reads it.
 // For now, it seems RingBuffer internals handle state.
 
@@ -109,9 +110,9 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
       }
 
       if (messageLength > this.ringBuffer.capacity) {
-        console.error(
+        /*console.error(
           `Dequeue: Declared message length (${messageLength} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.capacity}). Possible data corruption.`
-        )
+        )*/
         break
       }
 
@@ -133,5 +134,13 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
       )
     }
     return Promise.resolve(dequeuedByteArrays)
+  }
+
+  isEmpty(): boolean {
+    return this.ringBuffer.isEmpty()
+  }
+
+  isFull(): boolean {
+    return this.ringBuffer.isFull()
   }
 }
