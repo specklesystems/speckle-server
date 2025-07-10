@@ -99,8 +99,7 @@ export const parseFeatureFlags = (
     // Enables retrying errored previews
     FF_RETRY_ERRORED_PREVIEWS_ENABLED: {
       schema: z.boolean(),
-      description:
-        'Enables limits on personal projects. Requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
+      description: 'Allows the retrying of previews which have previously failed.',
       defaults: { _: false }
     },
     FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
