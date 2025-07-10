@@ -10,7 +10,7 @@ import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import {
   getPaginatedObjectPreviewInErrorStateFactory,
   retryFailedPreviewsFactory
-} from '@/modules/previews/services/tasks'
+} from '@/modules/previews/services/retryErrors'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import {

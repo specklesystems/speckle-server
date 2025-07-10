@@ -11,7 +11,7 @@ import {
 } from '@/modules/previews/repository/previews'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import cryptoRandomString from 'crypto-random-string'
-import { getPaginatedObjectPreviewInErrorStateFactory } from '@/modules/previews/services/tasks'
+import { getPaginatedObjectPreviewInErrorStateFactory } from '@/modules/previews/services/retryErrors'
 import { wait } from '@speckle/shared'
 
 describe('Previews services @previews', () => {
