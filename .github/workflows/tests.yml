@@ -223,7 +223,7 @@ jobs:
       - run: cp .env.test-example .env.test
         working-directory: 'packages/preview-service'
       - name: Run tests
-        run: yarn test:ci
+        run: yarn test
         working-directory: 'packages/preview-service'
 
   docker-build-postgres-container:
