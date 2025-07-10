@@ -12,7 +12,10 @@ import {
   addOrUpdateStreamCollaboratorFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamRolesFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import {
   getUserFactory,
   storeUserFactory,
@@ -49,6 +52,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import type http from 'node:http'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { getActivitiesFactory } from '@/modules/activitystream/repositories/index'
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
@@ -57,6 +61,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -99,6 +104,8 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
+
+const getActivities = getActivitiesFactory({ db })
 
 let server: http.Server
 let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
@@ -265,11 +272,37 @@ describe('Activity @activity', () => {
     expect(activityC.length).to.equal(3)
     expect(activityC[0].actionType).to.equal('commit_create')
 
-    const { items: activityI } = await getUserActivity({ userId: userIz.id })
+    const activityI = await getUserActivity({ userId: userIz.id })
 
-    // iz1 to iz4 + user created + user added as collaborator
-    expect(activityI.length).to.equal(6)
-    expect(activityI[0].actionType).to.equal('stream_permissions_add')
+    expect(activityI.items.length).to.equal(4)
+    expect(activityI).to.nested.include({
+      'items[0].actionType': 'commit_create',
+      'items[1].actionType': 'branch_create',
+      'items[2].actionType': 'stream_create',
+      'items[3].actionType': 'user_create'
+    })
+
+    const activity = { items: await getActivities({ userId: userIz.id }) }
+
+    expect(activity.items.length).to.equal(3)
+    expect(activity).to.nested.include({
+      'items[0].eventType': 'project_role_updated',
+      'items[0].payload.new': 'stream:owner',
+      'items[0].payload.old': null,
+      'items[0].userId': userIz.id, // created branch
+
+      'items[1].eventType': 'project_role_updated',
+      'items[1].payload.new': 'stream:reviewer',
+      'items[1].payload.old': null,
+      'items[1].payload.userId': userCr.id,
+      'items[1].userId': userIz.id, // added user
+
+      'items[2].eventType': 'project_role_updated',
+      'items[2].payload.new': 'stream:contributor',
+      'items[2].payload.old': 'stream:reviewer',
+      'items[2].payload.userId': userCr.id,
+      'items[2].userId': userIz.id // made him a contibutor
+    })
   })
 
   after(async () => {
@@ -283,9 +316,9 @@ describe('Activity @activity', () => {
     expect(noErrors(res))
     const activity = res.body.data.activeUser.activity
 
-    expect(activity.items.length).to.equal(6)
-    expect(activity.totalCount).to.equal(6)
-    expect(activity.items[0].actionType).to.equal('stream_permissions_add')
+    expect(activity.items.length).to.equal(4)
+    expect(activity.totalCount).to.equal(4)
+    expect(activity.items[0].actionType).to.equal('commit_create')
     expect(activity.items[activity.totalCount - 1].actionType).to.equal('user_create')
   })
 
@@ -303,8 +336,8 @@ describe('Activity @activity', () => {
       query: `query {otherUser(id:"${userCr.id}") { name timeline { totalCount items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
-    expect(res.body.data.otherUser.timeline.items.length).to.equal(7) // sum of all actions in before hook
-    expect(res.body.data.otherUser.timeline.totalCount).to.equal(7)
+    expect(res.body.data.otherUser.timeline.items.length).to.equal(5) // sum of all actions in before hook
+    expect(res.body.data.otherUser.timeline.totalCount).to.equal(5)
   })
 
   it("Should get a stream's activity", async () => {
@@ -313,8 +346,8 @@ describe('Activity @activity', () => {
     })
     expect(noErrors(res))
     const activity = res.body.data.stream.activity
-    expect(activity.items.length).to.equal(5)
-    expect(activity.totalCount).to.equal(5)
+    expect(activity.items.length).to.equal(3)
+    expect(activity.totalCount).to.equal(3)
     expect(activity.items[activity.totalCount - 1].actionType).to.equal('stream_create')
   })
 
