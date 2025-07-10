@@ -1,9 +1,10 @@
 import { DefermentManager } from '../../deferment/defermentManager.js'
 import Queue from '../../queues/queue.js'
-import { CustomLogger, delay } from '../../types/functions.js'
+import { CustomLogger } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
 import { ItemQueue } from '../../workers/ItemQueue.js'
 import { MainRingBufferQueue } from '../../workers/MainRingBufferQueue.js'
+import { RingBuffer } from '../../workers/RingBuffer.js'
 import { StringQueue } from '../../workers/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
 import { CacheOptions } from '../options.js'
@@ -20,7 +21,7 @@ export class CacheReader {
 
   mainToWorkerQueue?: StringQueue
   workerToMainQueue?: ItemQueue
-  indexedDbReaderWorker?: Worker
+  indexedDbReader?: Worker
 
   constructor(defermentManager: DefermentManager, options: CacheOptions) {
     this.#defermentManager = defermentManager
@@ -32,19 +33,15 @@ export class CacheReader {
     console.log(`[Main] ${message}`)
   }
 
-  private logToWorkerResponseUI(message: string): void {
-    console.log(`[FromWorker] ${message}`)
-  }
-
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
     this.#foundQueue = foundQueue
     this.#notFoundQueue = notFoundQueue
-    this.initializeIndexedDbReaderWorker()
+    this.initializeIndexedDbReader()
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.#processBatch()
   }
 
-  private initializeIndexedDbReaderWorker(): void {
+  private initializeIndexedDbReader(): void {
     this.logToMainUI('Initializing RingBufferQueues...')
     const rawMainToWorkerRbq = MainRingBufferQueue.create(
       ID_BUFFER_CAPACITY_BYTES,
@@ -71,13 +68,13 @@ export class CacheReader {
     )
 
     this.logToMainUI('Starting Web Worker...')
-    this.indexedDbReaderWorker = new Worker(
-      new URL('../../workers/IndexDbReaderWorker.js', import.meta.url),
+    this.indexedDbReader = new Worker(
+      new URL('../../workers/IndexDbReader.js', import.meta.url),
       { type: 'module' }
     )
 
     this.logToMainUI('Sending SharedArrayBuffers and capacities to worker...')
-    this.indexedDbReaderWorker.postMessage({
+    this.indexedDbReader.postMessage({
       type: WorkerMessageType.INIT_QUEUES,
       mainToWorkerSab,
       mainToWorkerCapacityBytes: ID_BUFFER_CAPACITY_BYTES,
@@ -89,7 +86,14 @@ export class CacheReader {
   async getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      await this.mainToWorkerQueue?.enqueue([params.id])
+      while (
+        !(await this.mainToWorkerQueue?.enqueue(
+          [params.id],
+          RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
+        ))
+      ) {
+        this.#logger('getObject: retrying enqueue for id', params.id)
+      }
     }
     return await p
   }
@@ -99,18 +103,26 @@ export class CacheReader {
       this.#defermentManager.trackDefermentRequest(key)
     }
 
-    await this.mainToWorkerQueue?.enqueue(keys)
-    await delay(50)
-    /*for (let index = 0; index < keys.length; index++) {
-      const element = keys[index]
-      await this.mainToWorkerQueue?.enqueue([element])
-      await this.#delay(50)
-    }*/
+    while (keys.length > 0) {
+      const s = keys.slice(0, RingBuffer.DEFAULT_ENQUEUE_SIZE)
+      while (
+        !(await this.mainToWorkerQueue?.enqueue(
+          s,
+          RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
+        ))
+      ) {
+        this.#logger('requestAll: retrying enqueue for items', s.length)
+      }
+    }
   }
 
   #processBatch = async (): Promise<void> => {
     while (true) {
-      const items = (await this.workerToMainQueue?.dequeue(10000, 1000)) || []
+      const items =
+        (await this.workerToMainQueue?.dequeue(
+          RingBuffer.DEFAULT_DEQUEUE_SIZE,
+          RingBuffer.DEFAULT_DEQUEUE_TIMEOUT_MS
+        )) || []
       const start = performance.now()
       for (let i = 0; i < items.length; i++) {
         const item = items[i]

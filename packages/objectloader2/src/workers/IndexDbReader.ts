@@ -6,6 +6,7 @@ import { InitQueuesMessage } from './InitQueuesMessage.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { Item } from '../types/types.js'
 import { isWhitespaceOnly } from '../types/functions.js'
+import { RingBuffer } from './RingBuffer.js'
 
 let workerToMainQueue: ItemQueue | null = null
 let mainToWorkerQueue: StringQueue | null = null
@@ -33,7 +34,10 @@ async function processMessages(): Promise<void> {
   log('Starting to listen for messages from main thread...')
   while (true) {
     try {
-      const receivedMessages = await mainToWorkerQueue.dequeue(10000, 50000) // receivedMessages will be string[]
+      const receivedMessages = await mainToWorkerQueue.dequeue(
+        RingBuffer.DEFAULT_DEQUEUE_SIZE,
+        RingBuffer.DEFAULT_DEQUEUE_TIMEOUT_MS
+      ) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
         const items = await db.getAll(receivedMessages)
         const processedItems: Item[] = []
@@ -49,11 +53,13 @@ async function processMessages(): Promise<void> {
             processedItems.push({ baseId: receivedMessages[i] })
           }
         }
-        const success = await workerToMainQueue.enqueue(processedItems, 50000)
-        if (success) {
-          log(`${processedItems.length} items enqueued to workerToMainQueue successfully.`)
-        } else {
-          log(`Failed to enqueue Item to workerToMainQueue.`)
+        while (processedItems.length > 0) {
+          const s = processedItems.slice(0, RingBuffer.DEFAULT_ENQUEUE_SIZE)
+          while (
+            !(await workerToMainQueue.enqueue(s, RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS))
+          ) {
+            log('requestAll: retrying enqueue for items', s.length)
+          }
         }
       }
     } catch (e: unknown) {

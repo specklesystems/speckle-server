@@ -1,7 +1,7 @@
 import { delay } from '../types/functions.js'
 import { RingBufferQueue } from './RingBufferQueue.js'
 import { WorkerRingBuffer } from './WorkerRingBuffer.js'
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash'
 // RingBufferState might be needed if queue logic directly manipulates or reads it.
 // For now, it seems RingBuffer internals handle state.
 
@@ -85,7 +85,12 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
   dequeue(maxItems: number, timeoutMs: number): Promise<Uint8Array[]> {
     const dequeuedByteArrays: Uint8Array[] = []
 
+    const start = Date.now()
     for (let itemsRead = 0; itemsRead < maxItems; itemsRead++) {
+      if (Date.now() - start > timeoutMs) {
+        console.warn(`Dequeue operation timed out after ${timeoutMs}ms`)
+        break
+      }
       const lengthBytes = this.ringBuffer.shift(
         WorkerRingBufferQueue.LENGTH_PREFIX_BYTES,
         timeoutMs

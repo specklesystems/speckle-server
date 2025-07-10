@@ -41,7 +41,7 @@ export class MainRingBufferQueue implements RingBufferQueue {
     return this.ringBuffer.getSharedArrayBuffer()
   }
 
-  async enqueue(items: Uint8Array[], timeoutMs: number = Infinity): Promise<boolean> {
+  async enqueue(items: Uint8Array[], timeoutMs: number): Promise<boolean> {
     if (items.length === 0) {
       return true
     }
@@ -75,10 +75,15 @@ export class MainRingBufferQueue implements RingBufferQueue {
     return true
   }
 
-  async dequeue(maxItems: number, timeoutMs: number = Infinity): Promise<Uint8Array[]> {
+  async dequeue(maxItems: number, timeoutMs: number): Promise<Uint8Array[]> {
     const dequeuedByteArrays: Uint8Array[] = []
 
+    const start = Date.now();
     for (let itemsRead = 0; itemsRead < maxItems; itemsRead++) {
+      if (Date.now() - start > timeoutMs) {
+        console.warn(`Dequeue operation timed out after ${timeoutMs}ms`)
+        break
+      }
       const lengthBytes = await this.ringBuffer.shift(
         MainRingBufferQueue.LENGTH_PREFIX_BYTES,
         timeoutMs

@@ -5,4 +5,10 @@ export class RingBuffer {
   public static readonly CONTROL_BUFFER_SIZE_ELEMENTS = 3
   public static readonly CONTROL_BUFFER_BYTE_LENGTH =
     RingBuffer.CONTROL_BUFFER_SIZE_ELEMENTS * Int32Array.BYTES_PER_ELEMENT
+
+  public static readonly DEFAULT_DEQUEUE_SIZE = 10000
+  public static readonly DEFAULT_DEQUEUE_TIMEOUT_MS = 500
+
+  public static readonly DEFAULT_ENQUEUE_SIZE = 1000
+  public static readonly DEFAULT_ENQUEUE_TIMEOUT_MS = 500
 }
