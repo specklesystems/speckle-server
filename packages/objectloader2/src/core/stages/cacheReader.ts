@@ -3,8 +3,14 @@ import BatchingQueue from '../../queues/batchingQueue.js'
 import Queue from '../../queues/queue.js'
 import { CustomLogger } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
+import { ItemQueue } from '../../workers/ItemQueue.js'
+import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
+import { StringQueue } from '../../workers/StringQueue.js'
+import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
 import { Database } from '../interfaces.js'
 import { CacheOptions } from '../options.js'
+
+const BUFFER_CAPACITY_BYTES = 1024 * 1024 * 1024 // 1GB
 
 export class CacheReader {
   #database: Database
@@ -14,6 +20,10 @@ export class CacheReader {
   #readQueue: BatchingQueue<string> | undefined
   #foundQueue: Queue<Item> | undefined
   #notFoundQueue: Queue<string> | undefined
+
+  mainToWorkerQueue?: StringQueue
+  workerToMainQueue?: ItemQueue
+  indexedDbReaderWorker?: Worker
 
   constructor(
     database: Database,
@@ -37,6 +47,7 @@ export class CacheReader {
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
     this.#foundQueue = foundQueue
     this.#notFoundQueue = notFoundQueue
+    this.initializeIndexedDbReaderWorker()
   }
 
   private initializeIndexedDbReaderWorker(): void {
@@ -64,7 +75,6 @@ export class CacheReader {
       new URL('../../workers/IndexDbReaderWorker.js', import.meta.url),
       { type: 'module' }
     )
-    this.initializeWorker(this.indexedDbReaderWorker)
 
     this.logToMainUI('Sending SharedArrayBuffers and capacities to worker...')
     this.indexedDbReaderWorker.postMessage({
