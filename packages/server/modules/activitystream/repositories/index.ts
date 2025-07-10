@@ -1,6 +1,6 @@
 import {
   GetActiveUserStreams,
-  GetActivity,
+  GetActivities,
   GetActivityCountByResourceId,
   GetActivityCountByStreamId,
   GetActivityCountByUserId,
@@ -292,8 +292,8 @@ export const saveActivityFactory =
     return result
   }
 
-export const getActivityFactory =
-  ({ db }: { db: Knex }): GetActivity =>
+export const getActivitiesFactory =
+  ({ db }: { db: Knex }): GetActivities =>
   async (filters = {}): Promise<Activity[]> => {
     const { workspaceId, projectId, eventType, userId } = filters
 

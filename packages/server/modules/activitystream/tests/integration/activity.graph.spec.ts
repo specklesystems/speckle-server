@@ -52,7 +52,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import type http from 'node:http'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
-import { getActivityFactory } from '@/modules/activitystream/repositories/index'
+import { getActivitiesFactory } from '@/modules/activitystream/repositories/index'
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
@@ -105,7 +105,7 @@ const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
-const getActivityHelper = getActivityFactory({ db })
+const getActivities = getActivitiesFactory({ db })
 
 let server: http.Server
 let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
@@ -282,7 +282,7 @@ describe('Activity @activity', () => {
       'items[3].actionType': 'user_create'
     })
 
-    const activity = { items: await getActivityHelper({ userId: userIz.id }) }
+    const activity = { items: await getActivities({ userId: userIz.id }) }
 
     expect(activity.items.length).to.equal(3)
     expect(activity).to.nested.include({

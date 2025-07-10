@@ -13,7 +13,7 @@ import {
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
-import { getActivityFactory } from '@/modules/activitystream/repositories/index'
+import { getActivitiesFactory } from '@/modules/activitystream/repositories/index'
 import {
   Activity,
   ServerAccessRequests,
@@ -96,7 +96,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
-const getActivityHelper = getActivityFactory({ db })
+const getActivities = getActivitiesFactory({ db })
 
 const isNotCollaboratorError = (e: unknown) =>
   e instanceof StreamAccessUpdateError &&
@@ -434,7 +434,7 @@ describe('Stream access requests', () => {
 
         // activity stream item should be inserted
         if (accept) {
-          const streamActivity = await getActivityHelper({
+          const streamActivity = await getActivities({
             projectId: myPrivateStream.id,
             userId: me.id,
             eventType: 'project_role_updated'

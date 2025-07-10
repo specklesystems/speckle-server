@@ -282,11 +282,11 @@ export type SaveActivity = <
   args: Omit<Activity<T, R>, 'createdAt' | 'id'>
 ) => Promise<Activity<T, R>>
 
-type GetActivitArgs = Partial<{
+type GetActivityArgs = Partial<{
   workspaceId: string
   projectId: string
   eventType: string
   userId: string
 }>
 
-export type GetActivity = (filters: GetActivitArgs) => Promise<Activity[]>
+export type GetActivities = (filters: GetActivityArgs) => Promise<Activity[]>

@@ -62,7 +62,6 @@ import { BasicTestUser } from '@/test/authHelper'
 import { ProjectVisibility } from '@/test/graphql/generated/graphql'
 import { faker } from '@faker-js/faker'
 import { ensureError, Roles, StreamRoles } from '@speckle/shared'
-import { Knex } from 'knex'
 import { omit } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -116,35 +115,34 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
-const createStreamHelper = (database: Knex) =>
-  legacyCreateStreamFactory({
-    createStreamReturnRecord: createStreamReturnRecordFactory({
-      inviteUsersToProject: inviteUsersToProjectFactory({
-        createAndSendInvite: createAndSendInviteFactory({
-          findUserByTarget: findUserByTargetFactory({ db: database }),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: database }),
-          collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-            getStream
-          }),
-          buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-            getStream
-          }),
-          emitEvent: ({ eventName, payload }) =>
-            getEventBus().emit({
-              eventName,
-              payload
-            }),
-          getUser,
-          getServerInfo,
-          finalizeInvite: buildFinalizeProjectInvite()
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
         }),
-        getUsers
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
-      createStream: createStreamFactory({ db: database }),
-      createBranch: createBranchFactory({ db: database }),
-      emitEvent: getEventBus().emit
-    })
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    emitEvent: getEventBus().emit
   })
+})
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -221,7 +219,7 @@ export async function createTestStream(
     })
     id = newProject.id
   } else {
-    id = await createStreamHelper(db)({
+    id = await createStream({
       ...omit(streamObj, ['id', 'ownerId', 'visibility']),
       isPublic: visibility === ProjectVisibility.Public,
       ownerId: owner.id
