@@ -351,22 +351,7 @@ export const projectEmbedTokensQuery = graphql(`
   query ProjectEmbedTokens($projectId: String!, $cursor: String = null) {
     project(id: $projectId) {
       id
-      name
       ...ProjectPageSettingsTokens_Project
-      embedTokens(cursor: $cursor, limit: 20) {
-        cursor
-        totalCount
-        items {
-          createdAt
-          lastUsed
-          resourceIdString
-          tokenId
-          user {
-            avatar
-            name
-          }
-        }
-      }
     }
   }
 `)

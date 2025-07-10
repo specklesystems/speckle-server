@@ -314,17 +314,9 @@ export const createEmbedTokenMutation = graphql(`
       createEmbedToken(token: $token) {
         token
         tokenMetadata {
-          createdAt
-          lastUsed
-          lifespan
           projectId
-          resourceIdString
           tokenId
-          user {
-            id
-            avatar
-            name
-          }
+          ...ProjectPageSettingsTokens_EmbedToken
         }
       }
     }

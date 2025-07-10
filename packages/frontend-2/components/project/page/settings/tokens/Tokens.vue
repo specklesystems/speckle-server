@@ -66,14 +66,35 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import type { Nullable } from '@speckle/shared'
 
 graphql(`
+  fragment ProjectPageSettingsTokens_EmbedToken on EmbedToken {
+    createdAt
+    lastUsed
+    tokenId
+    user {
+      id
+      avatar
+      name
+    }
+  }
+`)
+
+graphql(`
   fragment ProjectPageSettingsTokens_Project on Project {
     id
+    name
     permissions {
       canReadEmbedTokens {
         ...FullPermissionCheckResult
       }
       canRevokeEmbedTokens {
         ...FullPermissionCheckResult
+      }
+    }
+    embedTokens(cursor: $cursor, limit: 20) {
+      cursor
+      totalCount
+      items {
+        ...ProjectPageSettingsTokens_EmbedToken
       }
     }
   }

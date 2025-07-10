@@ -94,40 +94,40 @@ export const useCreateEmbedToken = () => {
     const result = await mutate(
       {
         token: { projectId, resourceIdString }
+      },
+      {
+        update: (cache, { data }) => {
+          const createResult = data?.projectMutations.createEmbedToken
+          if (!createResult?.token || !createResult?.tokenMetadata) return
+
+          const tokenMetadata = createResult.tokenMetadata
+
+          modifyObjectField(
+            cache,
+            getCacheId('Project', projectId),
+            'embedTokens',
+            ({ helpers: { createUpdatedValue } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => [
+                  {
+                    ...tokenMetadata,
+                    user: tokenMetadata.user
+                      ? {
+                          __ref: getCacheId('LimitedUser', tokenMetadata.user.id)
+                        }
+                      : null
+                  },
+                  ...items
+                ])
+              })
+            },
+            {
+              autoEvictFiltered: true
+            }
+          )
+        }
       }
-      // {
-      //   update: (cache, { data }) => {
-      //     const createResult = data?.projectMutations.createEmbedToken
-      //     if (!createResult?.token || !createResult?.tokenMetadata) return
-
-      //     const tokenMetadata = createResult.tokenMetadata
-
-      //     modifyObjectField(
-      //       cache,
-      //       getCacheId('Project', projectId),
-      //       'embedTokens',
-      //       ({ helpers: { createUpdatedValue } }) => {
-      //         return createUpdatedValue(({ update }) => {
-      //           update('totalCount', (totalCount) => totalCount + 1)
-      //           update('items', (items) => [
-      //             {
-      //               ...tokenMetadata,
-      //               user: tokenMetadata.user
-      //                 ? {
-      //                     __ref: getCacheId('LimitedUser', tokenMetadata.user.id)
-      //                   }
-      //                 : null
-      //             },
-      //             ...items
-      //           ])
-      //         })
-      //       },
-      //       {
-      //         autoEvictFiltered: true
-      //       }
-      //     )
-      //   }
-      // }
     ).catch(convertThrowIntoFetchResult)
 
     return result?.data?.projectMutations.createEmbedToken.token
