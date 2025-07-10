@@ -211,7 +211,7 @@ jobs:
         ports:
           - 6379:6379
     env:
-      REDIS_URL: redis://127.0.0.1:6379
+      REDIS_URL: redis://redis:6379
       CHROMIUM_EXECUTABLE_PATH: '/usr/lib/chromium/'
     steps:
       - uses: actions/checkout@v4.2.2
@@ -220,7 +220,7 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=false PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=false PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
       - run: cp .env.test-example .env.test
