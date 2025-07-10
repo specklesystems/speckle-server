@@ -18,7 +18,7 @@ describe('Previews services @previews', () => {
   const storeObjectPreview = storeObjectPreviewFactory({ db })
   const updateObjectPreview = updateObjectPreviewFactory({ db })
 
-  describe('getPaginatedObjectPreviewInErrorStateFactory returns a function that, ', async () => {
+  describe('getPaginatedObjectPreviewInErrorStateFactory returns a function that, ', () => {
     const SUT = getPaginatedObjectPreviewInErrorStateFactory({
       getPaginatedObjectPreviewsPage: getPaginatedObjectPreviewsPageFactory({ db }),
       getPaginatedObjectPreviewsTotalCount: getPaginatedObjectPreviewsTotalCountFactory(
