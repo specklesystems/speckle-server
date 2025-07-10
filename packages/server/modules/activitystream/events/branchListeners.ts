@@ -16,11 +16,15 @@ import { EventBusListen } from '@/modules/shared/services/eventBus'
  * Save "branch created" activity
  */
 const addBranchCreatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddBranchCreatedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddBranchCreatedActivity =>
   async (params) => {
     const { branch } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId: branch.streamId,
       resourceType: StreamResourceTypes.Branch,
       resourceId: branch.id,
@@ -32,12 +36,16 @@ const addBranchCreatedActivityFactory =
   }
 
 const addBranchUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddBranchUpdatedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddBranchUpdatedActivity =>
   async (params) => {
     const { update, userId, oldBranch } = params
 
     const streamId = isBranchUpdateInput(update) ? update.streamId : update.projectId
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
       resourceType: StreamResourceTypes.Branch,
       resourceId: update.id,
@@ -49,13 +57,17 @@ const addBranchUpdatedActivityFactory =
   }
 
 const addBranchDeletedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddBranchDeletedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddBranchDeletedActivity =>
   async (params) => {
     const { input, userId, branchName } = params
 
     const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
     await Promise.all([
-      saveActivity({
+      saveStreamActivity({
         streamId,
         resourceType: StreamResourceTypes.Branch,
         resourceId: input.id,
@@ -68,7 +80,8 @@ const addBranchDeletedActivityFactory =
   }
 
 export const reportBranchActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveStreamActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveStreamActivity: SaveStreamActivity }) =>
+  () => {
     const addBranchCreatedActivity = addBranchCreatedActivityFactory(deps)
     const addBranchUpdatedActivity = addBranchUpdatedActivityFactory(deps)
     const addBranchDeletedActivity = addBranchDeletedActivityFactory(deps)

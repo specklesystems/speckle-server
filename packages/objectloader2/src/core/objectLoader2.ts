@@ -34,8 +34,8 @@ export class ObjectLoader2 {
       maxCacheReadSize: 10_000,
       maxCacheWriteSize: 10_000,
       maxWriteQueueSize: 40_000,
-      maxCacheBatchWriteWait: 3_000,
-      maxCacheBatchReadWait: 3_000
+      maxCacheBatchWriteWait: 1_000,
+      maxCacheBatchReadWait: 1_000
     }
 
     this.#gathered = new AsyncGeneratorQueue()
@@ -56,10 +56,10 @@ export class ObjectLoader2 {
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
-      this.#cacheReader.disposeAsync(),
       this.#cacheWriter.disposeAsync()
     ])
     this.#deferments.dispose()
+    this.#cacheReader.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {
