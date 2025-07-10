@@ -230,7 +230,7 @@ jobs:
       - run: yarn link:frontend
         working-directory: 'packages/preview-service'
       - name: Run tests
-        run: yarn test
+        run: yarn test:ci
         working-directory: 'packages/preview-service'
 
   docker-build-postgres-container:

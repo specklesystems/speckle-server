@@ -10,6 +10,13 @@ import { randomUUID } from 'crypto'
 import supertest, { SuperTest, Test } from 'supertest'
 import { TIME_MS } from '@speckle/shared'
 import fs from 'fs'
+import pixelmatch from 'pixelmatch'
+import { PNG } from 'pngjs'
+import path from 'path'
+
+const BASE_IMAGE = path.resolve(__dirname, 'snapshots/base.png')
+const TEST_RESULT = path.resolve(__dirname, 'snapshots/result.png')
+const DIFF = path.resolve(__dirname, 'snapshots/diff.png')
 
 describe('preview-service', () => {
   let server: Server
@@ -48,7 +55,8 @@ describe('preview-service', () => {
     })
 
     // TODO: remove this head start
-    // we should await the server somehow
+    // only awaiting for the server to start does not work
+    // we should await the start of the job processing
     await sleep(5 * TIME_MS.second)
   })
 
@@ -93,14 +101,37 @@ describe('preview-service', () => {
     expect(job.data.result).to.be.an('object')
     expect(job.data.result.screenshots).toBeDefined()
 
-    // write the image to a file
+    // write the image to a result file, for the next test
 
-    // const image =
-    //   '0' in job.data.result.screenshots
-    //     ? (job.data.result.screenshots['0'] as string)
-    //     : null
+    const image =
+      '0' in job.data.result.screenshots
+        ? (job.data.result.screenshots['0'] as string)
+        : null
 
-    // if (!image) expect.fail('No image found')
-    // fs.writeFileSync('test-image', image)
+    if (!image) expect.fail('No image found')
+
+    const clean = Buffer.from(image.replace(/^data:image\/png;base64,/, ''), 'base64')
+
+    fs.writeFileSync(TEST_RESULT, clean)
+  })
+
+  it('expects resulted image to be within a predefined threshold of difference with base image', async () => {
+    const base = PNG.sync.read(fs.readFileSync(BASE_IMAGE))
+    const result = PNG.sync.read(fs.readFileSync(TEST_RESULT))
+    const diff = new PNG({ width: base.width, height: base.height })
+    const totalPixels = base.width * base.height
+
+    const diffPixels = pixelmatch(
+      base.data,
+      result.data,
+      diff.data,
+      base.width,
+      base.height,
+      { threshold: 0.1 }
+    )
+
+    fs.writeFileSync(DIFF, PNG.sync.write(diff))
+    const diffPercentage = Number(((diffPixels / totalPixels) * 100).toFixed(2))
+    expect(diffPercentage).to.be.lessThan(10)
   })
 })

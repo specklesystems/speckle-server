@@ -7,8 +7,8 @@ export default defineConfig({
     exclude: [...configDefaults.exclude],
     // reporters: ['verbose', 'hanging-process'] //uncomment to debug hanging processes etc.
     sequence: {
-      shuffle: true,
-      concurrent: true
+      shuffle: false,
+      concurrent: false
     },
     testTimeout: 2 * TIME_MS.minute
   },

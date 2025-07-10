@@ -103,23 +103,6 @@ jobs:
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-preview-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/preview-service/Dockerfile
 
-  docker-build-ubuntu-chromium:
-    runs-on: blacksmith
-    name: Build ubuntu chromium
-    steps:
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
-        uses: useblacksmith/build-push-action@v1
-        with:
-          push: true
-          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-ubuntu-chromium:latest
-          file: ./utils/ubuntu-chromium/Dockerfile
-
   docker-build-webhook-service:
     runs-on: blacksmith
     name: Webhook service

@@ -96,8 +96,6 @@ export const buildServer = ({
 
     // nothing after this line is getting called, this blocks
     await jobQueue.process(async (payload, done) => {
-      console.log('processing!')
-
       let encounteredError = false
       let jobLogger = logger.child({
         payloadId: payload.id,
