@@ -119,6 +119,7 @@ export class ObjectLoader2 {
     }
     if (!this.#isRootStored) {
       await this.#database.saveBatch({ batch: [rootItem] })
+      this.#isRootStored = true
     }
   }
 
