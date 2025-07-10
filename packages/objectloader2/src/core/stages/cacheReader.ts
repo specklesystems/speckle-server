@@ -1,23 +1,19 @@
 import { DefermentManager } from '../../deferment/defermentManager.js'
-import BatchingQueue from '../../queues/batchingQueue.js'
 import Queue from '../../queues/queue.js'
 import { CustomLogger } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
 import { ItemQueue } from '../../workers/ItemQueue.js'
-import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
+import { MainRingBufferQueue } from '../../workers/MainRingBufferQueue.js'
 import { StringQueue } from '../../workers/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
-import { Database } from '../interfaces.js'
 import { CacheOptions } from '../options.js'
 
-const BUFFER_CAPACITY_BYTES = 1024 * 1024 * 1024 // 1GB
+const BUFFER_CAPACITY_BYTES = 1024 * 1024 * 200 // 200MB
 
 export class CacheReader {
-  #database: Database
   #defermentManager: DefermentManager
   #logger: CustomLogger
   #options: CacheOptions
-  #readQueue: BatchingQueue<string> | undefined
   #foundQueue: Queue<Item> | undefined
   #notFoundQueue: Queue<string> | undefined
 
@@ -25,12 +21,7 @@ export class CacheReader {
   workerToMainQueue?: ItemQueue
   indexedDbReaderWorker?: Worker
 
-  constructor(
-    database: Database,
-    defermentManager: DefermentManager,
-    options: CacheOptions
-  ) {
-    this.#database = database
+  constructor(defermentManager: DefermentManager, options: CacheOptions) {
     this.#defermentManager = defermentManager
     this.#options = options
     this.#logger = options.logger || ((): void => {})
@@ -48,11 +39,16 @@ export class CacheReader {
     this.#foundQueue = foundQueue
     this.#notFoundQueue = notFoundQueue
     this.initializeIndexedDbReaderWorker()
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.#processBatch()
   }
 
   private initializeIndexedDbReaderWorker(): void {
     this.logToMainUI('Initializing RingBufferQueues...')
-    const rawMainToWorkerRbq = RingBufferQueue.create(BUFFER_CAPACITY_BYTES)
+    const rawMainToWorkerRbq = MainRingBufferQueue.create(
+      BUFFER_CAPACITY_BYTES,
+      'MainToWorkerQueue'
+    )
     this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
     this.logToMainUI(
@@ -61,7 +57,10 @@ export class CacheReader {
       }KB capacity.`
     )
 
-    const rawWorkerToMainRbq = RingBufferQueue.create(BUFFER_CAPACITY_BYTES)
+    const rawWorkerToMainRbq = MainRingBufferQueue.create(
+      BUFFER_CAPACITY_BYTES,
+      'WorkerToMainQueue'
+    )
     this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq)
     const workerToMainSab = rawWorkerToMainRbq.getSharedArrayBuffer()
     this.logToMainUI(
@@ -86,56 +85,38 @@ export class CacheReader {
     })
   }
 
-  getObject(params: { id: string }): Promise<Base> {
+  async getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      this.#requestItem(params.id)
+      await this.mainToWorkerQueue?.enqueue([params.id])
     }
-    return p
+    return await p
   }
 
-  #createReadQueue(): void {
-    if (!this.#readQueue) {
-      this.#readQueue = new BatchingQueue({
-        batchSize: this.#options.maxCacheReadSize,
-        maxWaitTime: this.#options.maxCacheBatchReadWait,
-        processFunction: this.#processBatch
-      })
-    }
-  }
-
-  #requestItem(id: string): void {
-    this.#createReadQueue()
-    if (!this.#readQueue?.get(id)) {
-      this.#readQueue?.add(id, id)
-    }
-  }
-
-  requestAll(keys: string[]): void {
-    this.#createReadQueue()
+  async requestAll(keys: string[]): Promise<void> {
     for (const key of keys) {
       this.#defermentManager.trackDefermentRequest(key)
     }
 
-    this.#readQueue?.addAll(keys, keys)
+    await this.mainToWorkerQueue?.enqueue(keys)
   }
 
-  #processBatch = async (batch: string[]): Promise<void> => {
-    const start = performance.now()
-    const items = await this.#database.getAll(batch)
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i]
-      if (item) {
-        this.#foundQueue?.add(item)
-        this.#defermentManager.undefer(item)
-      } else {
-        this.#notFoundQueue?.add(batch[i])
+  #processBatch = async (): Promise<void> => {
+    while (true) {
+      const items = (await this.workerToMainQueue?.dequeue(10000, 5000)) || []
+      const start = performance.now()
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        if (item.base) {
+          this.#foundQueue?.add(item)
+          this.#defermentManager.undefer(item)
+        } else {
+          this.#notFoundQueue?.add(item.baseId)
+        }
       }
+      this.#logger('readBatch: left, time', items.length, performance.now() - start)
     }
-    this.#logger('readBatch: left, time', items.length, performance.now() - start)
   }
 
-  dispose(): void {
-    this.#readQueue?.dispose()
-  }
+  dispose(): void {}
 }

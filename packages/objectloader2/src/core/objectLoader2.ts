@@ -48,7 +48,7 @@ export class ObjectLoader2 {
       logger: this.#logger
     })
     this.#downloader = options.downloader
-    this.#cacheReader = new CacheReader(this.#database, this.#deferments, cacheOptions)
+    this.#cacheReader = new CacheReader(this.#deferments, cacheOptions)
     this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
     this.#cacheWriter = new CacheWriter(this.#database, this.#deferments, cacheOptions)
   }
@@ -108,7 +108,7 @@ export class ObjectLoader2 {
     })
     //only for root
     this.#gathered.add(rootItem)
-    this.#cacheReader.requestAll(children)
+    await this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
       yield item.base! //always defined, as we add it to the queue
