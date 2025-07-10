@@ -43,6 +43,7 @@ import {
   encodeIsoDateCursor
 } from '@/modules/shared/helpers/dbHelper'
 import { pick } from 'lodash'
+import { LogicError } from '@/modules/shared/errors'
 
 /*
   Tokens
@@ -178,11 +179,15 @@ export const createEmbedTokenFactory =
 
     const apiToken = await deps.getToken(id)
 
+    if (!apiToken) {
+      throw new LogicError('Failed to create api token for embed')
+    }
+
     return {
       token,
       tokenMetadata: {
         ...tokenMetadata,
-        ...pick(apiToken!, 'createdAt', 'lastUsed', 'lifespan')
+        ...pick(apiToken, 'createdAt', 'lastUsed', 'lifespan')
       }
     }
   }
