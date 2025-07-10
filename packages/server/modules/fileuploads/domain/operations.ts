@@ -69,10 +69,15 @@ export type ProcessFileImportResult = (params: {
 
 export type UpdateFileStatus = (params: {
   fileId: string
+  projectId: string
   status: FileUploadConvertedStatus
   convertedMessage: string
   convertedCommitId: string | null
 }) => Promise<FileUploadRecord>
+
+export type UpdateFileStatusForProjectFactory = (params: {
+  projectId: string
+}) => Promise<UpdateFileStatus>
 
 export type UploadedFile = UploadResult & { userId: string }
 
