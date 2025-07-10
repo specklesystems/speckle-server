@@ -14,7 +14,7 @@ import cryptoRandomString from 'crypto-random-string'
 describe('Previews repositories @previews', () => {
   const storeObjectPreview = storeObjectPreviewFactory({ db })
 
-  describe('updateObjectPreviewFactory returns a function that, ', async () => {
+  describe('updateObjectPreviewFactory returns a function that, ', () => {
     const SUT = updateObjectPreviewFactory({ db })
     let user: Awaited<ReturnType<typeof createTestUser>>
     let stream: Awaited<ReturnType<typeof createTestStream>>
