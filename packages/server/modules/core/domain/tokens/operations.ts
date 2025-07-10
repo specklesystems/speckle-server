@@ -123,7 +123,7 @@ export type CreateAndStoreEmbedToken = (args: {
   lifespan?: number | bigint
 }) => Promise<{
   token: string
-  tokenMetadata: EmbedApiToken
+  tokenMetadata: EmbedApiToken & Pick<ApiToken, 'createdAt' | 'lifespan' | 'lastUsed'>
 }>
 
 export type GetPaginatedProjectEmbedTokens = (args: {

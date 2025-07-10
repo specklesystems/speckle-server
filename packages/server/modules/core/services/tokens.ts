@@ -42,6 +42,7 @@ import {
   decodeIsoDateCursor,
   encodeIsoDateCursor
 } from '@/modules/shared/helpers/dbHelper'
+import { pick } from 'lodash'
 
 /*
   Tokens
@@ -145,6 +146,7 @@ export const createPersonalAccessTokenFactory =
 export const createEmbedTokenFactory =
   (deps: {
     createToken: CreateAndStoreUserToken
+    getToken: GetApiTokenById
     storeEmbedToken: StoreEmbedApiToken
   }): CreateAndStoreEmbedToken =>
   async ({ projectId, userId, resourceIdString, lifespan }) => {
@@ -174,7 +176,15 @@ export const createEmbedTokenFactory =
 
     await deps.storeEmbedToken(tokenMetadata)
 
-    return { token, tokenMetadata }
+    const apiToken = await deps.getToken(id)
+
+    return {
+      token,
+      tokenMetadata: {
+        ...tokenMetadata,
+        ...pick(apiToken!, 'createdAt', 'lastUsed', 'lifespan')
+      }
+    }
   }
 
 export const getPaginatedProjectEmbedTokensFactory =
