@@ -198,6 +198,8 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith
+    container:
+      image: zenika/alpine-chrome
     services:
       redis:
         image: redis:7.2.4
@@ -210,6 +212,7 @@ jobs:
           - 6379:6379
     env:
       REDIS_URL: redis://localhost:6379
+      CHROMIUM_EXECUTABLE_PATH: '/usr/lib/chromium/'
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -222,8 +225,6 @@ jobs:
         run: yarn build:public
       - run: cp .env.test-example .env.test
         working-directory: 'packages/preview-service'
-      - name: Install browser
-        run: sudo apt-get install chromium-browser
       - name: Run tests
         run: yarn test
         working-directory: 'packages/preview-service'
