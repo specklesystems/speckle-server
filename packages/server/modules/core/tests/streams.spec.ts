@@ -18,6 +18,7 @@ import {
   createStreamFactory,
   deleteStreamFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   getStreamsCollaboratorsFactory,
   grantStreamPermissionsFactory,
   markBranchStreamUpdatedFactory,
@@ -163,6 +164,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -245,6 +247,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const isStreamCollaborator = isStreamCollaboratorFactory({
