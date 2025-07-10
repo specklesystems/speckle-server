@@ -112,7 +112,7 @@ export default class ServerDownloader implements Downloader {
     }
 
     const reader = response.body.getReader()
-    let leftover = new Uint8Array(0)
+    let leftover: Uint8Array = new Uint8Array(0)
 
     let count = 0
     while (true) {
