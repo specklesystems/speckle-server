@@ -80,7 +80,17 @@ export class SpeckleLoader extends Loader {
     const streamId = segments[2]
     const objectId = segments[4]
 
-    return ObjectLoader2Factory.createFromUrl({ serverUrl, streamId, objectId, token })
+    return ObjectLoader2Factory.createFromUrl({
+      serverUrl,
+      streamId,
+      objectId,
+      token,
+      options: { logger: this.log }
+    })
+  }
+
+  log(m?: string, ...params: unknown[]) {
+    Logger.log(`[SpeckleLoader] ${m}`, ...params)
   }
 
   public async load(): Promise<boolean> {
