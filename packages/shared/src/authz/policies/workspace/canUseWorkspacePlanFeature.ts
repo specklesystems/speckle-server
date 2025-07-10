@@ -4,7 +4,7 @@ import {
   ServerNoSessionError,
   ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
-  WorkspaceNoFeatureAccessError,
+  WorkspacePlanNoFeatureAccessError,
   WorkspaceNotEnoughPermissionsError,
   WorkspaceReadOnlyError,
   WorkspacesNotEnabledError,
@@ -43,7 +43,7 @@ type PolicyErrors =
   | InstanceType<typeof ServerNoAccessError>
   | InstanceType<typeof ServerNotEnoughPermissionsError>
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
-  | InstanceType<typeof WorkspaceNoFeatureAccessError>
+  | InstanceType<typeof WorkspacePlanNoFeatureAccessError>
 
 export const canUseWorkspacePlanFeature: AuthPolicy<
   PolicyLoaderKeys,
@@ -63,10 +63,10 @@ export const canUseWorkspacePlanFeature: AuthPolicy<
     if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
 
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-    if (!workspacePlan) return err(new WorkspaceNoFeatureAccessError())
+    if (!workspacePlan) return err(new WorkspacePlanNoFeatureAccessError())
     const canUseFeature = workspacePlanHasAccessToFeature({
       plan: workspacePlan.name,
       feature
     })
-    return canUseFeature ? ok() : err(new WorkspaceNoFeatureAccessError())
+    return canUseFeature ? ok() : err(new WorkspacePlanNoFeatureAccessError())
   }
