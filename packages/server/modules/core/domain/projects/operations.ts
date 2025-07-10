@@ -1,4 +1,4 @@
-import { Project } from '@/modules/core/domain/streams/types'
+import { Project, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { MaybeNullOrUndefined, StreamRoles } from '@speckle/shared'
 
@@ -38,7 +38,7 @@ export type DeleteProjectRole = (args: {
 
 export type DeleteProject = (args: { projectId: string }) => Promise<void>
 
-export type GetRolesByUserId = ({
+export type GetUserProjectRoles = ({
   userId,
   workspaceId
 }: {
@@ -73,3 +73,15 @@ export type WaitForRegionProject = (params: {
   regionKey: string
   maxAttempts?: number
 }) => Promise<void>
+
+export type QueryAllProjects = (
+  args:
+    | {
+        userId: string
+        workspaceId?: string
+      }
+    | {
+        userId?: string
+        workspaceId: string
+      }
+) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
