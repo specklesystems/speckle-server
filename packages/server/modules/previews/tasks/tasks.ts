@@ -37,13 +37,12 @@ export const scheduleRetryFailedPreviews = async ({
   responseQueueName: string
   cronExpression: string
 }) => {
-  let previewResurrectionHandlers: {
-    handler: ReturnType<typeof retryFailedPreviewsFactory>
-  }[] = []
+  const previewResurrectionHandlers: ReturnType<typeof retryFailedPreviewsFactory>[] =
+    []
   const regionClients = await getRegisteredDbClients()
   for (const projectDb of [db, ...regionClients]) {
-    previewResurrectionHandlers.push({
-      handler: retryFailedPreviewsFactory({
+    previewResurrectionHandlers.push(
+      retryFailedPreviewsFactory({
         getPaginatedObjectPreviewsInErrorState:
           getPaginatedObjectPreviewInErrorStateFactory({
             getPaginatedObjectPreviewsPage: getPaginatedObjectPreviewsPageFactory({
@@ -75,19 +74,19 @@ export const scheduleRetryFailedPreviews = async ({
           storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
         })
       })
-    })
+    )
   }
 
   return scheduleExecution(
     cronExpression,
     'PreviewResurrection',
     async (_scheduledTime, { logger }) => {
-      previewResurrectionHandlers = await Promise.all(
-        previewResurrectionHandlers.map(async ({ handler }) => {
+      await Promise.all(
+        previewResurrectionHandlers.map(async (handler) => {
           await handler({
             logger
           })
-          return { handler }
+          return handler
         })
       )
     }
