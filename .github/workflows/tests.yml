@@ -223,7 +223,12 @@ jobs:
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=false PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 yarn --immutable
       - name: Build public packages
         run: yarn build:public
+      - run: dbus-daemon --system &> /dev/null
       - run: cp .env.test-example .env.test
+        working-directory: 'packages/preview-service'
+      - run: yarn build:frontend
+        working-directory: 'packages/preview-service'
+      - run: yarn link:frontend
         working-directory: 'packages/preview-service'
       - name: Run tests
         run: yarn test
