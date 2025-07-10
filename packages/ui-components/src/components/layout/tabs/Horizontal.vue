@@ -233,21 +233,13 @@ watch(
   }
 )
 
-// React to size changes of the active tab (e.g. when count badge disappears)
-watch(
-  () => activeItemRef.value,
-  (el, _prev, onCleanup) => {
-    if (!el) return
-    updateUnderline()
-
-    const { stop } = useResizeObserver(el, updateUnderline)
-    onCleanup(stop)
-  },
-  { immediate: true }
+const { stop: stopResizeObserver } = useResizeObserver(activeItemRef, () =>
+  updateUnderline()
 )
 
 onBeforeUnmount(() => {
   handleScroll.cancel()
+  stopResizeObserver()
 })
 </script>
 <style>
