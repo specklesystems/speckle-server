@@ -113,6 +113,27 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canInvite)
+    },
+    canReadEmbedTokens: async (parent, _args, ctx) => {
+      const canReadEmbedTokens = await ctx.authPolicies.project.canReadEmbedTokens({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canReadEmbedTokens)
+    },
+    canCreateEmbedTokens: async (parent, _args, ctx) => {
+      const canCreateEmbedTokens = await ctx.authPolicies.project.canUpdateEmbedTokens({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canCreateEmbedTokens)
+    },
+    canRevokeEmbedTokens: async (parent, _args, ctx) => {
+      const canUpdateEmbedTokens = await ctx.authPolicies.project.canUpdateEmbedTokens({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canUpdateEmbedTokens)
     }
   },
   ModelPermissionChecks: {
