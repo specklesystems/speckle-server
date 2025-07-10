@@ -223,7 +223,7 @@ jobs:
       - run: cp .env.test-example .env.test
         working-directory: 'packages/preview-service'
       - name: Install browser
-        run: apt-get install chromium-browser
+        run: sudo apt-get install chromium-browser
       - name: Run tests
         run: yarn test
         working-directory: 'packages/preview-service'
