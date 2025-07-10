@@ -11,7 +11,7 @@ export class StringQueue {
     this.textDecoder = new TextDecoder('utf-8', { fatal: false })
   }
 
-  async enqueue(messages: string[], timeoutMs: number = Infinity): Promise<boolean> {
+  async enqueue(messages: string[], timeoutMs: number): Promise<boolean> {
     if (messages.length === 0) return true
 
     const byteArrays: Uint8Array[] = []
@@ -31,7 +31,7 @@ export class StringQueue {
     return this.rbq.enqueue(byteArrays, timeoutMs)
   }
 
-  async dequeue(maxItems: number, timeoutMs: number = Infinity): Promise<string[]> {
+  async dequeue(maxItems: number, timeoutMs: number): Promise<string[]> {
     const byteArrays = await this.rbq.dequeue(maxItems, timeoutMs)
     const messages: string[] = [] // Array of strings
 
