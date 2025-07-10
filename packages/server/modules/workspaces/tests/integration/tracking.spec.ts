@@ -16,7 +16,6 @@ import {
   getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { db } from '@/db/knex'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
@@ -26,6 +25,7 @@ import { buildMixpanelFake } from '@/modules/shared/test/helpers/mixpanel'
 import { expect } from 'chai'
 import { truncateTables } from '@/test/hooks'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 describe('Tracking Workspaces', () => {
   const testUser: BasicTestUser = {
@@ -41,7 +41,7 @@ describe('Tracking Workspaces', () => {
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
       getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
       getWorkspaceModelCount: getWorkspaceModelCountFactory({
-        queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+        queryAllProjects: queryAllProjectsFactory({
           getStreams: legacyGetStreamsFactory({ db })
         }),
         getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory(
