@@ -12,6 +12,7 @@ import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import {
   createStreamFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { db } from '@/db/knex'
@@ -86,6 +87,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),

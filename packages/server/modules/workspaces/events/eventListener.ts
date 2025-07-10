@@ -1,5 +1,6 @@
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   getStreamsCollaboratorCountsFactory,
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
@@ -17,7 +18,6 @@ import {
   GetWorkspaceSeatCount,
   GetWorkspaceSeatTypeToProjectRoleMapping,
   GetWorkspacesProjectsCounts,
-  QueryAllWorkspaceProjects,
   ValidateWorkspaceMemberProjectRole
 } from '@/modules/workspaces/domain/operations'
 import {
@@ -44,7 +44,10 @@ import {
   throwUncoveredError,
   WorkspaceRoles
 } from '@speckle/shared'
-import { UpsertProjectRole } from '@/modules/core/domain/projects/operations'
+import {
+  QueryAllProjects,
+  UpsertProjectRole
+} from '@/modules/core/domain/projects/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
 import {
@@ -59,7 +62,6 @@ import {
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
-  queryAllWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
@@ -142,6 +144,7 @@ import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generat
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { WorkspacePlans } from '@/modules/core/graph/generated/graphql'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -241,7 +244,7 @@ export const onWorkspaceAuthorizedFactory =
 
 export const onWorkspaceRoleDeletedFactory =
   (deps: {
-    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    queryAllProjects: QueryAllProjects
     deleteWorkspaceSeat: DeleteWorkspaceSeat
     getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
     getWorkspaceCollaborators: GetWorkspaceCollaborators
@@ -269,7 +272,7 @@ export const onWorkspaceRoleDeletedFactory =
     })
 
     // Delete roles for all workspace projects
-    for await (const projectsPage of deps.queryAllWorkspaceProjects({
+    for await (const projectsPage of deps.queryAllProjects({
       workspaceId,
       userId
     })) {
@@ -322,7 +325,7 @@ export const onWorkspaceRoleDeletedFactory =
 export const onWorkspaceSeatUpdatedFactory =
   (deps: {
     getWorkspaceSeatTypeToProjectRoleMapping: GetWorkspaceSeatTypeToProjectRoleMapping
-    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    queryAllProjects: QueryAllProjects
     setStreamCollaborator: SetStreamCollaborator
     getWorkspaceWithPlan: GetWorkspaceWithPlan
     getWorkspaceRoleForUser: GetWorkspaceRoleForUser
@@ -357,7 +360,7 @@ export const onWorkspaceSeatUpdatedFactory =
     })
 
     // Ensure project roles are valid on seat type switch
-    for await (const projectsPage of deps.queryAllWorkspaceProjects({
+    for await (const projectsPage of deps.queryAllProjects({
       workspaceId,
       userId
     })) {
@@ -409,7 +412,7 @@ export const onWorkspaceSeatUpdatedFactory =
 
 export const onWorkspaceRoleUpdatedFactory =
   (deps: {
-    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    queryAllProjects: QueryAllProjects
     setStreamCollaborator: SetStreamCollaborator
     getWorkspaceUserSeat: GetWorkspaceUserSeat
     getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
@@ -444,7 +447,7 @@ export const onWorkspaceRoleUpdatedFactory =
     })
 
     // Enforce project roles based on workspace role and seat type, if project role exists
-    for await (const projectsPage of deps.queryAllWorkspaceProjects({
+    for await (const projectsPage of deps.queryAllProjects({
       workspaceId,
       userId
     })) {
@@ -926,9 +929,7 @@ export const initializeEventListenersFactory =
           getWorkspacePlan,
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
           getWorkspaceModelCount: getWorkspaceModelCountFactory({
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-              getStreams
-            }),
+            queryAllProjects: queryAllProjectsFactory({ getStreams }),
             getPaginatedProjectModelsTotalCount:
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
@@ -946,9 +947,7 @@ export const initializeEventListenersFactory =
           getWorkspacePlan,
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
           getWorkspaceModelCount: getWorkspaceModelCountFactory({
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-              getStreams
-            }),
+            queryAllProjects: queryAllProjectsFactory({ getStreams }),
             getPaginatedProjectModelsTotalCount:
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
@@ -987,9 +986,7 @@ export const initializeEventListenersFactory =
         await withTransaction(
           async ({ db: trx }) => {
             const onWorkspaceRoleDeleted = onWorkspaceRoleDeletedFactory({
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
+              queryAllProjects: queryAllProjectsFactory({ getStreams }),
               deleteWorkspaceSeat: deleteWorkspaceSeatFactory({ db: trx }),
               getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
               getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
@@ -1007,7 +1004,8 @@ export const initializeEventListenersFactory =
                 }),
                 revokeStreamPermissions: revokeStreamPermissionsFactory({
                   db: trx
-                })
+                }),
+                getStreamRoles: getStreamRolesFactory({ db: trx })
               }),
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
               emitEvent: eventBus.emit
@@ -1022,9 +1020,7 @@ export const initializeEventListenersFactory =
         await withTransaction(
           async ({ db: trx }) => {
             const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
+              queryAllProjects: queryAllProjectsFactory({ getStreams }),
               setStreamCollaborator: setStreamCollaboratorFactory({
                 getUser: getUserFactory({ db }),
                 validateStreamAccess: validateStreamAccessFactory({
@@ -1039,7 +1035,8 @@ export const initializeEventListenersFactory =
                 }),
                 revokeStreamPermissions: revokeStreamPermissionsFactory({
                   db: trx
-                })
+                }),
+                getStreamRoles: getStreamRolesFactory({ db: trx })
               }),
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
               getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
@@ -1065,11 +1062,10 @@ export const initializeEventListenersFactory =
                 isStreamCollaborator: isStreamCollaboratorFactory({
                   getStream: getStreamFactory({ db })
                 }),
-                revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx })
+                revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
+                getStreamRoles: getStreamRolesFactory({ db: trx })
               }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
+              queryAllProjects: queryAllProjectsFactory({ getStreams }),
               getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
               getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
               getWorkspaceSeatTypeToProjectRoleMapping:

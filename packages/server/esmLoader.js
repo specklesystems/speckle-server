@@ -18,11 +18,6 @@ const aliases = {
   '#/': packageRoot + '/'
 }
 
-// Mock entire packages
-const packageAliases = {
-  lodash: 'lodash-es'
-}
-
 /**
  * EXTENSIONS TO EVALUATE FOR EXTENSIONLESS IMPORTS
  */
@@ -39,11 +34,6 @@ function resolveAlias(specifier) {
     if (specifier.startsWith(alias)) {
       const relativePath = specifier.replace(alias, target)
       return pathToFileURL(path.resolve(relativePath)).href
-    }
-  }
-  for (const [alias, target] of Object.entries(packageAliases)) {
-    if (specifier === alias) {
-      return target
     }
   }
   return null // No alias found, fall back to default resolution

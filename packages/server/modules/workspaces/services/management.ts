@@ -4,7 +4,6 @@ import {
   EmitWorkspaceEvent,
   GetWorkspace,
   StoreWorkspaceDomain,
-  QueryAllWorkspaceProjects,
   UpsertWorkspace,
   UpsertWorkspaceRole,
   GetWorkspaceWithDomains,
@@ -70,6 +69,7 @@ import {
   DeleteSsoProvider,
   GetWorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/operations'
+import { QueryAllProjects } from '@/modules/core/domain/projects/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -295,14 +295,14 @@ export const deleteWorkspaceFactory =
   ({
     deleteWorkspace,
     deleteProject,
-    queryAllWorkspaceProjects,
+    queryAllProjects,
     deleteAllResourceInvites,
     deleteSsoProvider,
     emitWorkspaceEvent
   }: {
     deleteWorkspace: DeleteWorkspace
     deleteProject: DeleteStreamRecord
-    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    queryAllProjects: QueryAllProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
     deleteSsoProvider: DeleteSsoProvider
     emitWorkspaceEvent: EventBus['emit']
@@ -313,7 +313,7 @@ export const deleteWorkspaceFactory =
 
     // Cache project ids for post-workspace-delete cleanup
     const projectIds: string[] = []
-    for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+    for await (const projects of queryAllProjects({ workspaceId })) {
       projectIds.push(...projects.map((project) => project.id))
     }
 

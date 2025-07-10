@@ -19,7 +19,6 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import { getWorkspacesNonCompleteFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import {
   deleteStreamFactory,
   legacyGetStreamsFactory
@@ -31,6 +30,7 @@ import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/
 import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
 import { scheduleUpdateAllWorkspacesTracking } from '@/modules/workspaces/services/tracking'
 import { getClient } from '@/modules/shared/utils/mixpanel'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const {
   FF_WORKSPACES_MODULE_ENABLED,
@@ -62,7 +62,7 @@ const scheduleDeleteWorkspacesNonComplete = ({
       deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
       deleteProject: deleteStreamFactory({ db }),
       deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-      queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+      queryAllProjects: queryAllProjectsFactory({
         getStreams: legacyGetStreamsFactory({ db })
       }),
       deleteSsoProvider: deleteSsoProviderFactory({ db }),

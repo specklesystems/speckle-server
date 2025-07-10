@@ -52,7 +52,10 @@ import {
   WorkspaceProtectedError
 } from '@/modules/workspaces/errors/workspace'
 import cryptoRandomString from 'crypto-random-string'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamRolesFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
@@ -83,6 +86,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 

@@ -24,6 +24,7 @@ export class ObjectLoader2 {
   #gathered: AsyncGeneratorQueue<Item>
 
   #root?: Item = undefined
+  #isRootStored = false
 
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
@@ -34,8 +35,8 @@ export class ObjectLoader2 {
       maxCacheReadSize: 10_000,
       maxCacheWriteSize: 10_000,
       maxWriteQueueSize: 40_000,
-      maxCacheBatchWriteWait: 3_000,
-      maxCacheBatchReadWait: 3_000
+      maxCacheBatchWriteWait: 100, //100 ms, next to nothing!
+      maxCacheBatchReadWait: 100 //100 ms, next to nothing!
     }
 
     this.#gathered = new AsyncGeneratorQueue()
@@ -56,10 +57,10 @@ export class ObjectLoader2 {
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
-      this.#cacheReader.disposeAsync(),
       this.#cacheWriter.disposeAsync()
     ])
     this.#deferments.dispose()
+    this.#cacheReader.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {
@@ -67,6 +68,8 @@ export class ObjectLoader2 {
       this.#root = (await this.#database.getAll([this.#rootId]))[0]
       if (!this.#root) {
         this.#root = await this.#downloader.downloadSingle()
+      } else {
+        this.#isRootStored = true
       }
     }
     return this.#root
@@ -113,6 +116,10 @@ export class ObjectLoader2 {
       if (count >= total) {
         break
       }
+    }
+    if (!this.#isRootStored) {
+      await this.#database.saveBatch({ batch: [rootItem] })
+      this.#isRootStored = true
     }
   }
 

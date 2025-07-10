@@ -25,7 +25,7 @@ import {
   StreamActivitySummary
 } from '@/modules/activitystream/domain/types'
 import { createActivitySummaryFactory } from '@/modules/activitystream/services/summary'
-import { getActivityFactory } from '@/modules/activitystream/repositories'
+import { geUserStreamActivityFactory } from '@/modules/activitystream/repositories'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
@@ -439,7 +439,7 @@ const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
   }),
   createActivitySummary: createActivitySummaryFactory({
     getStream: getStreamFactory({ db }),
-    getActivity: getActivityFactory({ db }),
+    getActivity: geUserStreamActivityFactory({ db }),
     getUser: getUserFactory({ db })
   }),
   getServerInfo: getServerInfoFactory({ db }),

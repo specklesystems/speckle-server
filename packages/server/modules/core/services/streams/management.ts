@@ -92,6 +92,17 @@ export const createStreamReturnRecordFactory =
       }
     })
 
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project: stream,
+        activityUserId: ownerId,
+        targetUserId: ownerId,
+        role: Roles.Stream.Owner,
+        previousRole: null
+      }
+    })
+
     return stream
   }
 
