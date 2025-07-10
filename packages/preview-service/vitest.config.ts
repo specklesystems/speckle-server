@@ -10,7 +10,8 @@ export default defineConfig({
       shuffle: false,
       concurrent: false
     },
-    testTimeout: 2 * TIME_MS.minute
+    testTimeout: 2 * TIME_MS.minute,
+    fileParallelism: false
   },
   resolve: {
     alias: {
