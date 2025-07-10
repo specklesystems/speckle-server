@@ -1,3 +1,4 @@
+import { delay } from '../types/functions.js'
 import { RingBufferQueue } from './RingBufferQueue.js'
 import { WorkerRingBuffer } from './WorkerRingBuffer.js'
 // RingBufferState might be needed if queue logic directly manipulates or reads it.
@@ -58,7 +59,8 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
         this.ringBuffer.capacity
       ) {
         console.error(
-          `Message data (${messageLength} bytes) + prefix (${WorkerRingBufferQueue.LENGTH_PREFIX_BYTES} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.capacity} bytes). Skipping item.`
+          `Message data (${messageLength} bytes) + prefix (${WorkerRingBufferQueue.LENGTH_PREFIX_BYTES} bytes)
+          exceeds RingBuffer data capacity (${this.ringBuffer.capacity} bytes). Skipping item as message is too large.`
         )
         return Promise.resolve(false)
       }

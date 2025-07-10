@@ -141,40 +141,14 @@ export class MainRingBuffer {
       return false
     }
 
-    const startTime = Date.now()
 
     while (true) {
-      if (Date.now() - startTime >= timeoutMs) {
-        // console.warn("Push timed out before acquiring space.");
-        return false
-      }
-
       const currentWriteIndex = Atomics.load(
         this.controlBuffer,
         RingBuffer.WRITE_IDX_POS
       )
       const currentReadIndex = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
 
-      let space: number
-      if (currentWriteIndex >= currentReadIndex) {
-        space = this.capacity - currentWriteIndex // Space to end of buffer
-        if (currentReadIndex === 0) {
-          // If read is at start, don't overwrite it
-          space -= 1
-        }
-        // Also add space from start of buffer if readIndex is ahead
-        if (currentReadIndex > 0) {
-          // if read is not at the start, there's also space from buffer start up to readIdx -1
-          space += currentReadIndex - 1
-        } else {
-          // readIdx is 0
-          // if writeIdx >= readIdx, then available is (capacity - (writeIdx - readIdx)) -1
-          // space = (this.capacity - (currentWriteIndex - currentReadIndex)) -1;
-        }
-      } else {
-        // currentWriteIndex < currentReadIndex
-        space = currentReadIndex - currentWriteIndex - 1
-      }
 
       // Calculate actual contiguous and total available space more directly
       let availableSlots
@@ -203,8 +177,6 @@ export class MainRingBuffer {
         return true
       } else {
         Atomics.store(this.controlBuffer, RingBuffer.STATE_POS, RingBufferState.FULL)
-        const remainingTimeout = timeoutMs - (Date.now() - startTime)
-        if (remainingTimeout <= 0) return false
 
         // Wait for space: writer waits if its current writeIndex is problematic
         // It's better to wait on the readIndex, as space becomes available when readIdx changes.
@@ -219,7 +191,7 @@ export class MainRingBuffer {
           this.controlBuffer,
           RingBuffer.WRITE_IDX_POS,
           currentWriteIndex,
-          remainingTimeout
+          timeoutMs
         )
         let val
         if (outcome.async) {
@@ -249,13 +221,8 @@ export class MainRingBuffer {
       return null
     }
 
-    const startTime = Date.now()
 
     while (true) {
-      if (Date.now() - startTime >= timeoutMs) {
-        // console.warn("Shift timed out before acquiring data.");
-        return null
-      }
 
       const currentWriteIndex = Atomics.load(
         this.controlBuffer,
@@ -291,8 +258,6 @@ export class MainRingBuffer {
         return resultBuffer
       } else {
         Atomics.store(this.controlBuffer, RingBuffer.STATE_POS, RingBufferState.EMPTY)
-        const remainingTimeout = timeoutMs - (Date.now() - startTime)
-        if (remainingTimeout <= 0) return null
 
         // Wait for data: reader waits if currentReadIndex makes buffer seem empty relative to writeIndex
         // Reader waits on write_idx changing.
@@ -300,7 +265,7 @@ export class MainRingBuffer {
           this.controlBuffer,
           RingBuffer.READ_IDX_POS,
           currentReadIndex,
-          remainingTimeout
+          timeoutMs
         )
 
         let val
@@ -320,7 +285,7 @@ export class MainRingBuffer {
   // These synchronous wait methods are generally discouraged in main thread or async contexts
   // but can be useful in specific worker scenarios if blocking is acceptable.
   // Consider if these are truly needed or if async push/shift cover all uses.
-  waitForData(timeoutMs: number = Infinity): boolean {
+  /*waitForData(timeoutMs: number = Infinity): boolean {
     const currentReadIndex = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
     const result = Atomics.wait(
       this.controlBuffer,
@@ -340,5 +305,5 @@ export class MainRingBuffer {
       timeoutMs
     )
     return result === 'ok' || result === 'not-equal'
-  }
+  }*/
 }

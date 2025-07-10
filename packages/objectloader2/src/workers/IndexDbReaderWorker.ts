@@ -5,6 +5,7 @@ import { handleError, WorkerMessageType } from './WorkerMessageType.js'
 import { InitQueuesMessage } from './InitQueuesMessage.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { Item } from '../types/types.js'
+import { isWhitespaceOnly } from '../types/functions.js'
 
 let workerToMainQueue: ItemQueue | null = null
 let mainToWorkerQueue: StringQueue | null = null
@@ -32,7 +33,7 @@ async function processMessages(): Promise<void> {
   log('Starting to listen for messages from main thread...')
   while (true) {
     try {
-      const receivedMessages = await mainToWorkerQueue.dequeue(10000, 500) // receivedMessages will be string[]
+      const receivedMessages = await mainToWorkerQueue.dequeue(10000, 50000) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
         const items = await db.getAll(receivedMessages)
         const processedItems: Item[] = []
@@ -41,12 +42,16 @@ async function processMessages(): Promise<void> {
           if (item) {
             processedItems.push(item)
           } else {
+            if (isWhitespaceOnly(receivedMessages[i])) {
+              log('Received a whitespace-only message, skipping it.')
+              continue
+            }
             processedItems.push({ baseId: receivedMessages[i] })
           }
         }
-        const success = await workerToMainQueue.enqueue(processedItems, 500)
+        const success = await workerToMainQueue.enqueue(processedItems, 50000)
         if (success) {
-          log(`Item enqueued to workerToMainQueue successfully.`)
+          log(`${processedItems.length} items enqueued to workerToMainQueue successfully.`)
         } else {
           log(`Failed to enqueue Item to workerToMainQueue.`)
         }

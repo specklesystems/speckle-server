@@ -1,3 +1,4 @@
+import { delay } from '../types/functions.js'
 import Queue from './queue.js'
 
 export default class BatchedPool<T> implements Queue<T> {
@@ -35,7 +36,7 @@ export default class BatchedPool<T> implements Queue<T> {
         const batch = this.getBatch(batchSize)
         await this.#processFunction(batch)
       }
-      await this.#delay(this.#baseInterval)
+      await delay(this.#baseInterval)
     }
   }
 
@@ -52,7 +53,4 @@ export default class BatchedPool<T> implements Queue<T> {
     await Promise.all(workers)
   }
 
-  #delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
-  }
 }

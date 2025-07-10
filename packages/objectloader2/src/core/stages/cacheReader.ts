@@ -1,6 +1,6 @@
 import { DefermentManager } from '../../deferment/defermentManager.js'
 import Queue from '../../queues/queue.js'
-import { CustomLogger } from '../../types/functions.js'
+import { CustomLogger, delay } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
 import { ItemQueue } from '../../workers/ItemQueue.js'
 import { MainRingBufferQueue } from '../../workers/MainRingBufferQueue.js'
@@ -8,7 +8,8 @@ import { StringQueue } from '../../workers/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
 import { CacheOptions } from '../options.js'
 
-const BUFFER_CAPACITY_BYTES = 1024 * 5 // 5KB capacity for each queue
+const ID_BUFFER_CAPACITY_BYTES = 1024 * 50 // 5KB capacity for each queue
+const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 // 1MB capacity for each queue
 
 export class CacheReader {
   #defermentManager: DefermentManager
@@ -46,26 +47,26 @@ export class CacheReader {
   private initializeIndexedDbReaderWorker(): void {
     this.logToMainUI('Initializing RingBufferQueues...')
     const rawMainToWorkerRbq = MainRingBufferQueue.create(
-      BUFFER_CAPACITY_BYTES,
+      ID_BUFFER_CAPACITY_BYTES,
       'StringQueue MainToWorkerQueue'
     )
     this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
     this.logToMainUI(
       `Main-to-Worker StringQueue created with ${
-        BUFFER_CAPACITY_BYTES / 1024
+        ID_BUFFER_CAPACITY_BYTES / 1024
       }KB capacity.`
     )
 
     const rawWorkerToMainRbq = MainRingBufferQueue.create(
-      BUFFER_CAPACITY_BYTES,
+      BASE_BUFFER_CAPACITY_BYTES,
       'ItemQueue WorkerToMainQueue'
     )
     this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq)
     const workerToMainSab = rawWorkerToMainRbq.getSharedArrayBuffer()
     this.logToMainUI(
       `Worker-to-Main ItemQueue created with ${
-        BUFFER_CAPACITY_BYTES / 1024
+        BASE_BUFFER_CAPACITY_BYTES / 1024
       }KB capacity.`
     )
 
@@ -79,9 +80,9 @@ export class CacheReader {
     this.indexedDbReaderWorker.postMessage({
       type: WorkerMessageType.INIT_QUEUES,
       mainToWorkerSab,
-      mainToWorkerCapacityBytes: BUFFER_CAPACITY_BYTES,
+      mainToWorkerCapacityBytes: ID_BUFFER_CAPACITY_BYTES,
       workerToMainSab,
-      workerToMainCapacityBytes: BUFFER_CAPACITY_BYTES
+      workerToMainCapacityBytes: BASE_BUFFER_CAPACITY_BYTES
     })
   }
 
@@ -99,20 +100,17 @@ export class CacheReader {
     }
 
     await this.mainToWorkerQueue?.enqueue(keys)
-    await this.#delay(5000)
+    await delay(50)
     /*for (let index = 0; index < keys.length; index++) {
       const element = keys[index]
       await this.mainToWorkerQueue?.enqueue([element])
       await this.#delay(50)
     }*/
   }
-  #delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
-  }
 
   #processBatch = async (): Promise<void> => {
     while (true) {
-      const items = (await this.workerToMainQueue?.dequeue(10000, 5000)) || []
+      const items = (await this.workerToMainQueue?.dequeue(10000, 1000)) || []
       const start = performance.now()
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
