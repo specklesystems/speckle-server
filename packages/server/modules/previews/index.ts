@@ -30,7 +30,7 @@ import {
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { db } from '@/db/knex'
 import { createRequestAndResponseQueues } from '@/modules/previews/clients/bull'
-import { responseHandlerFactory } from '@/modules/previews//services/responses'
+import { responseHandlerFactory } from '@/modules/previews/services/responses'
 import { updateObjectPreviewFactory } from '@/modules/previews/repository/previews'
 import type { BuildUpdateObjectPreview } from '@/modules/previews/domain/operations'
 import { scheduleRetryFailedPreviews } from '@/modules/previews/tasks/tasks'
