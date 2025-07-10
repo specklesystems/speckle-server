@@ -41,19 +41,22 @@ const baseFileImportResult = z.object({
 
 export type FileImportResult = z.infer<typeof baseFileImportResult>
 
-const fileImportSuccessPayload = z.object({
-  status: z.literal('success'),
-  warnings: z.array(z.string()), //ok to be empty
-  result: baseFileImportResult.merge(z.object({ versionId: z.string() }))
-})
+const fileImportSuccessPayload = baseFileImportResult.merge(
+  z.object({
+    status: z.literal('success'),
+    warnings: z.array(z.string()), //ok to be empty
+    versionId: z.string()
+  })
+)
 
 export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
 
-const fileImportErrorPayload = z.object({
-  status: z.literal('error'),
-  reason: z.string(),
-  result: baseFileImportResult
-})
+const fileImportErrorPayload = baseFileImportResult.merge(
+  z.object({
+    status: z.literal('error'),
+    reason: z.string()
+  })
+)
 
 export type FileImportErrorPayload = z.infer<typeof fileImportErrorPayload>
 

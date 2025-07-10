@@ -166,13 +166,11 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         const payload: FileImportSuccessPayload = {
           status: 'success',
           warnings: [],
-          result: {
-            versionId: cryptoRandomString({ length: 10 }),
-            durationSeconds: randomInt(1, 3600),
-            downloadDurationSeconds: randomInt(1, 3600),
-            parseDurationSeconds: randomInt(1, 3600),
-            parser: 'ifc'
-          }
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
         }
         const response = await request(app)
           .post(
@@ -190,13 +188,11 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         const payload: FileImportSuccessPayload = {
           status: 'success',
           warnings: [],
-          result: {
-            versionId: cryptoRandomString({ length: 10 }),
-            durationSeconds: randomInt(1, 3600),
-            downloadDurationSeconds: randomInt(1, 3600),
-            parseDurationSeconds: randomInt(1, 3600),
-            parser: 'ifc'
-          }
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
         }
         const response = await request(app)
           .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
@@ -216,12 +212,10 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         const payload: FileImportErrorPayload = {
           status: 'error',
           reason: cryptoRandomString({ length: 10 }),
-          result: {
-            durationSeconds: randomInt(0, 3600),
-            downloadDurationSeconds: randomInt(0, 3600),
-            parseDurationSeconds: randomInt(1, 3600),
-            parser: 'ifc'
-          }
+          durationSeconds: randomInt(0, 3600),
+          downloadDurationSeconds: randomInt(0, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
         }
         const response = await request(app)
           .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)

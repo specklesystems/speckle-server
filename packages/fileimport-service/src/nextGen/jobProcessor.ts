@@ -103,12 +103,10 @@ export const jobProcessor = async ({
       // return the error result whether or not the cleanup succeeded
       return {
         status: 'error',
-        result: {
-          parser: parserUsed,
-          durationSeconds: getElapsed(),
-          downloadDurationSeconds,
-          parseDurationSeconds
-        },
+        parser: parserUsed,
+        durationSeconds: getElapsed(),
+        downloadDurationSeconds,
+        parseDurationSeconds,
         reason
       }
     }
@@ -215,13 +213,11 @@ export const jobProcessor = async ({
     const versionId = output.data.commitId
     return {
       status: 'success',
-      result: {
-        versionId,
-        durationSeconds: getElapsed(),
-        downloadDurationSeconds,
-        parseDurationSeconds,
-        parser: parserUsed
-      },
+      versionId,
+      durationSeconds: getElapsed(),
+      downloadDurationSeconds,
+      parseDurationSeconds,
+      parser: parserUsed,
       warnings: []
     }
   } catch (err) {
@@ -247,12 +243,10 @@ export const jobProcessor = async ({
 
     return {
       status: 'error',
-      result: {
-        parser: parserUsed,
-        durationSeconds: getElapsed(),
-        downloadDurationSeconds,
-        parseDurationSeconds
-      },
+      parser: parserUsed,
+      durationSeconds: getElapsed(),
+      downloadDurationSeconds,
+      parseDurationSeconds,
       reason
     }
   } finally {
