@@ -94,6 +94,15 @@ export const WorkspaceNotEnoughPermissionsError = defineAuthError({
   message: 'You do not have enough permissions in the workspace to perform this action'
 })
 
+export const EligibleForExclusiveWorkspaceError = defineAuthError({
+  code: 'UserEligibleForExclusiveWorkspace',
+  message:
+    'Cannot create workspace: ' +
+    'You are a member or eligible to become a member of an exclusive workspace. ' +
+    'This is due to you having received an invite to the workspace ' +
+    'or having a matching verified email.'
+})
+
 export const WorkspaceReadOnlyError = defineAuthError({
   code: 'WorkspaceReadOnly',
   message: 'The workspace is in a read only mode, upgrade your plan to unlock it'
@@ -107,7 +116,7 @@ export const WorkspaceLimitsReachedError = defineAuthError<
   message: 'Workspace limits have been reached'
 })
 
-export const WorkspaceNoFeatureAccessError = defineAuthError({
+export const WorkspacePlanNoFeatureAccessError = defineAuthError({
   code: 'WorkspaceNoFeatureAccess',
   message: 'Your workspace plan does not have access to this feature.'
 })

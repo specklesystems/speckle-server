@@ -24,10 +24,10 @@
     "datadog:publish-sourcemaps:dev": "DATADOG_SITE=\"datadoghq.eu\" datadog-ci sourcemaps upload ./.output/public/_nuxt --service=\"fe2-dev/test\" --release-version=\"unknown\" --minified-path-prefix=/_nuxt"
   },
   "dependencies": {
-    "@apollo/client": "^3.12.4",
+    "@apollo/client": "^3.13.8",
     "@artmizu/nuxt-prometheus": "^2.2.1",
     "@datadog/browser-rum": "^5.11.0",
-    "@headlessui/vue": "^1.7.13",
+    "@headlessui/vue": "npm:@speckle/headlessui-vue@1.7.23-alpha.0",
     "@heroicons/vue": "^2.0.12",
     "@intercom/messenger-js-sdk": "^0.0.14",
     "@jsonforms/core": "^3.5.1",
@@ -55,7 +55,7 @@
     "@tiptap/suggestion": "2.10.3",
     "@tiptap/vue-3": "2.10.3",
     "@tryghost/content-api": "^1.11.21",
-    "@vue/apollo-composable": "npm:@speckle/apollo-composable@4.2.1-patch.1",
+    "@vue/apollo-composable": "^4.2.2",
     "@vue/apollo-ssr": "4.0.0",
     "@vueuse/core": "^10.9.0",
     "apollo-upload-client": "^18.0.1",

@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div v-if="topLevelItems.length && project" class="space-y-2 max-w-full">
+    <div
+      v-if="topLevelItems.length && project && !isModelUploading"
+      class="space-y-2 max-w-full"
+    >
       <div v-for="item in topLevelItems" :key="item.id">
         <ProjectPageModelsStructureItem
           :item="item"
@@ -29,6 +32,7 @@
           v-if="project"
           :project="project"
           class="h-36 col-span-4"
+          @uploading="onModelUploading"
         />
       </div>
     </template>
@@ -61,6 +65,7 @@ import type { Nullable, SourceAppDefinition } from '@speckle/shared'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
 import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -109,6 +114,7 @@ const baseQueryVariables = computed(
 )
 
 const infiniteLoaderId = ref('')
+const isModelUploading = ref(false)
 
 // Base query (all pending uploads + first page of models)
 const {
@@ -207,6 +213,10 @@ const calculateLoaderId = () => {
   const vars = baseQueryVariables.value
   const id = JSON.stringify(vars.filter) + `${infiniteLoadCacheBuster.value}`
   infiniteLoaderId.value = id
+}
+
+const onModelUploading = (payload: FileAreaUploadingPayload) => {
+  isModelUploading.value = payload.isUploading
 }
 
 watch(areQueriesLoading, (newVal) => {

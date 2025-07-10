@@ -20,7 +20,23 @@ aliases:
   - &yarn
     run:
       name: Install Dependencies
-      command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+      command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+
+  - &filters-allow-all
+    tags:
+      # run tests for any commit on any branch, including any tags
+      only: /.*/
+
+  - &ignored
+    branches:
+      ignore: /.*/
+    tags:
+      ignore: /.*/
+
+  - &branches-special
+    - main
+    - /^hotfix.*$/
+    - /^testing\d*$/
 
 workflows:
   test-build:
@@ -34,58 +50,66 @@ workflows:
                 - main
                 - hotfix*
 
-      - test-server: &test-server-job-definition
+      - get-version:
+          filters: *filters-allow-all
+
+      - docker-build-postgres-container:
+          context: &build-context
+            - github-readonly-public-repos
+            - docker-hub
+          filters: *filters-allow-all
+          requires:
+            - get-version
+
+      - test-server-multiregion:
           context:
             - speckle-server-licensing
             - stripe-integration
             - speckle-server-codecov
-          filters: &filters-allow-all
-            tags:
-              # run tests for any commit on any branch, including any tags
-              only: /.*/
+          filters: *filters-allow-all
+          requires:
+            - docker-build-postgres-container
+
+      - test-server:
+          context:
+            - speckle-server-licensing
+            - stripe-integration
+            - speckle-server-codecov
+          filters: *ignored
           requires:
             - docker-build-postgres-container
 
       - test-server-no-ff:
-          filters: *filters-allow-all
+          filters: *ignored
           requires:
             - docker-build-postgres-container
 
-      - test-server-multiregion: *test-server-job-definition
-
       - test-frontend-2:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - test-viewer:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - test-objectsender:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - test-shared:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - test-preview-service:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - test-ui-components:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
-          filters: *filters-allow-all
+          filters: *ignored
 
       - deployment-testing-approval:
           type: approval
-          filters: &filters-ignore-main-branch-or-all-tags
-            branches:
-              ignore: &branches-special
-                - main
-                - /^hotfix.*$/
-                - /^testing\d*$/
-            tags:
-              ignore: /.*/
+          filters: *ignored
 
       #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
       # - deployment-test-docker-compose:
@@ -107,10 +131,7 @@ workflows:
       #       - docker-build-docker-compose-ingress
 
       - deployment-test-helm-chart:
-          filters: &filters-deployment-testing
-            tags:
-              # run tests for any commit on any branch, including any tags
-              only: /.*/
+          filters: *ignored
           requires:
             - get-version
             - deployment-testing-approval
@@ -122,91 +143,69 @@ workflows:
             - docker-build-test-container
             - docker-build-monitor-container
 
-      - get-version:
-          filters: *filters-allow-all
-
       - pre-commit:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - lint-and-prettier:
-          filters: *filters-allow-all
+          filters: *ignored
 
       - docker-build-server:
-          context: &build-context
-            - github-readonly-public-repos
-            - docker-hub
-          filters: &filters-build
-            tags:
-              only: /.*/
+          context: *build-context
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-frontend-2:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-webhooks:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-file-imports:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-previews:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-test-container:
           context: *build-context
-          filters: *filters-build
-          requires:
-            - get-version
-
-      - docker-build-postgres-container:
-          context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-monitor-container:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
 
       - docker-build-docker-compose-ingress:
           context: *build-context
-          filters: *filters-build
+          filters: *ignored
           requires:
             - get-version
-
-      - publish-approval:
-          type: approval
-          filters: *filters-ignore-main-branch-or-all-tags
 
       - docker-publish-server:
           context: &docker-hub-context
             - docker-hub
-          filters: &filters-publish
-            branches:
-              ignore: /pull\/[0-9]+/
-            tags:
-              only: /.*/
+          filters: *ignored
           requires:
             - docker-build-server
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -218,13 +217,12 @@ workflows:
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-frontend-2
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -238,20 +236,18 @@ workflows:
           context:
             - github-readonly-public-repos
             - datadog-sourcemaps-publish
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - get-version
-            - publish-approval
 
       - docker-publish-webhooks:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-webhooks
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -263,13 +259,12 @@ workflows:
 
       - docker-publish-file-imports:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-file-imports
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -281,13 +276,12 @@ workflows:
 
       - docker-publish-previews:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-previews
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -299,13 +293,12 @@ workflows:
 
       - docker-publish-test-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-test-container
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -317,25 +310,23 @@ workflows:
 
       - docker-publish-postgres-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-monitor-container
             - get-version
             - pre-commit
-            - publish-approval
             - test-server
             - test-server-no-ff
             - test-server-multiregion
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-monitor-container
             - get-version
             - pre-commit
             - lint-and-prettier
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -347,12 +338,11 @@ workflows:
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
-          filters: *filters-publish
+          filters: *ignored
           requires:
             - docker-build-docker-compose-ingress
             - get-version
             - pre-commit
-            - publish-approval
             - test-frontend-2
             - test-viewer
             - test-objectsender
@@ -363,11 +353,7 @@ workflows:
             - test-preview-service
 
       - publish-helm-chart:
-          filters: &filters-publish
-            branches:
-              only: *branches-special
-            tags:
-              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
+          filters: *ignored
           requires:
             # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
             - deployment-test-helm-chart
@@ -380,14 +366,26 @@ workflows:
             - docker-publish-test-container
             - docker-publish-webhooks
             - get-version
-            - publish-approval
+
+      - publish-helm-chart-oci:
+          filters: *ignored
+          context:
+            - docker-hub
+          requires:
+            # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
+            - deployment-test-helm-chart
+            - docker-publish-docker-compose-ingress
+            - docker-publish-file-imports
+            - docker-publish-frontend-2
+            - docker-publish-monitor-container
+            - docker-publish-previews
+            - docker-publish-server
+            - docker-publish-test-container
+            - docker-publish-webhooks
+            - get-version
 
       - publish-npm:
-          filters:
-            tags:
-              only: *filters-tag
-            branches:
-              ignore: /.*/
+          filters: *ignored
           context:
             - npm-registry
           requires:
@@ -403,7 +401,7 @@ workflows:
             - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
-          filters: *filters-publish
+          filters: *ignored
           context:
             - cloudflare-pages-edit
           requires:
@@ -433,7 +431,9 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
-      - *yarn
+      - run:
+          name: Install Hardened Dependencies
+          command: YARN_ENABLE_HARDENED_MODE=1 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -548,7 +548,7 @@ jobs:
           files: packages/server/coverage/lcov.info
       - run:
           name: Introspect GQL schema for subsequent checks
-          command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+          command: 'IGNORE_MISSING_MIGRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
       - run:
           name: Checking for GQL schema breakages against app.speckle.systems
@@ -773,7 +773,7 @@ jobs:
       - checkout
       - run:
           name: Install Dependencies
-          command: PUPPETEER_SKIP_DOWNLOAD=true yarn
+          command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -841,7 +841,7 @@ jobs:
       - restore_cache:
           name: Restore nix cache
           keys:
-            - nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+            - nix-{{ checksum "./tests/deployment/docker-compose/docker-compose-shell.nix" }}
       - run:
           name: Install the nix package manager
           command: |
@@ -850,13 +850,13 @@ jobs:
       - run:
           name: Initialize nix shell
           command: |
-            nix-shell --run "echo Here, a nix shell for you" ./.circleci/deployment/docker-compose-shell.nix
+            nix-shell --run "echo Here, a nix shell for you" ./tests/deployment/docker-compose/docker-compose-shell.nix
       - save_cache:
-          key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+          key: nix-{{ checksum "./tests/deployment/docker-compose/docker-compose-shell.nix" }}
           paths:
             - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
+      - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./tests/deployment/docker-compose/Tiltfile" ./tests/deployment/helm/docker-compose-shell.nix
 
   deployment-test-helm-chart:
     machine:
@@ -875,7 +875,7 @@ jobs:
       - restore_cache:
           name: Restore nix cache
           keys:
-            - nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+            - nix-{{ checksum "./tests/deployment/helm/helm-chart-shell.nix" }}
       - run:
           name: Install the nix package manager
           command: |
@@ -886,9 +886,9 @@ jobs:
           command: |
             nix-shell \
             --run "echo Here, a nix shell for you" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            ./tests/deployment/helm/helm-chart-shell.nix
       - save_cache:
-          key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+          key: nix-{{ checksum "./tests/deployment/helm/helm-chart-shell.nix" }}
           paths:
             - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
@@ -899,7 +899,7 @@ jobs:
           command: |
             nix-shell \
             --run "helm template speckle-server ./utils/helm/speckle-server" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            ./tests/deployment/helm/helm-chart-shell.nix
       - run:
           name: Add 127.0.0.1 domains to /etc/hosts
           command: |
@@ -922,14 +922,14 @@ jobs:
           name: Deploy Kubernetes (kind) cluster
           command: |
             nix-shell \
-            --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            --run "ctlptl apply --filename ./tests/deployment/helm/cluster-config.yaml" \
+            ./tests/deployment/helmhelm-chart-shell.nix
       - run:
           name: Deploy Kubernetes resources to cluster
           command: |
             nix-shell \
-            --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
-            ./.circleci/deployment/helm-chart-shell.nix
+            --run "LOAD_DOCKER='true' tilt ci --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server --timeout 10m" \
+            ./tests/deployment/helm/helm-chart-shell.nix
 
   docker-build: &build-job
     <<: *docker-base-image
@@ -1122,6 +1122,19 @@ jobs:
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
+
+  publish-helm-chart-oci:
+    docker:
+      - image: speckle/pre-commit-runner:latest
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run:
+          name: Publish Helm Chart
+          command: ./.circleci/publish_helm_chart_oci.sh
 
   publish-viewer-sandbox-cloudflare-pages:
     <<: *docker-node-image

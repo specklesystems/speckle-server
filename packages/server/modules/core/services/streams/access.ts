@@ -2,6 +2,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   AddOrUpdateStreamCollaborator,
   GetStream,
+  GetStreamRoles,
   GrantStreamPermissions,
   IsStreamCollaborator,
   RemoveStreamCollaborator,
@@ -15,7 +16,6 @@ import {
   StreamInvalidAccessError
 } from '@/modules/core/errors/stream'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { BadRequestError, ForbiddenError, LogicError } from '@/modules/shared/errors'
 import { DependenciesOf } from '@/modules/shared/helpers/factory'
@@ -93,6 +93,7 @@ export const removeStreamCollaboratorFactory =
     validateStreamAccess: ValidateStreamAccess
     isStreamCollaborator: IsStreamCollaborator
     revokeStreamPermissions: RevokeStreamPermissions
+    getStreamRoles: GetStreamRoles
     emitEvent: EventBusEmit
   }): RemoveStreamCollaborator =>
   async (streamId, userId, removedById, removerResourceAccessRules, options) => {
@@ -114,19 +115,23 @@ export const removeStreamCollaboratorFactory =
       }
     }
 
+    const { [streamId]: role } = await deps.getStreamRoles(userId, [streamId])
     const stream = await deps.revokeStreamPermissions({ streamId, userId }, options)
     if (!stream) {
       throw new LogicError('Stream not found')
     }
 
-    await deps.emitEvent({
-      eventName: ProjectEvents.PermissionsRevoked,
-      payload: {
-        project: stream,
-        activityUserId: removedById,
-        removedUserId: userId
-      }
-    })
+    if (role) {
+      await deps.emitEvent({
+        eventName: ProjectEvents.PermissionsRevoked,
+        payload: {
+          project: stream,
+          activityUserId: removedById,
+          removedUserId: userId,
+          role
+        }
+      })
+    }
 
     return stream
   }
@@ -146,6 +151,7 @@ export const addOrUpdateStreamCollaboratorFactory =
     validateStreamAccess: ValidateStreamAccess
     getUser: GetUser
     grantStreamPermissions: GrantStreamPermissions
+    getStreamRoles: GetStreamRoles
     emitEvent: EventBusEmit
   }): AddOrUpdateStreamCollaborator =>
   async (
@@ -190,10 +196,12 @@ export const addOrUpdateStreamCollaboratorFactory =
         activityUserId: addedById,
         targetUserId: userId,
         role: role as StreamRoles,
-        projectId: streamId
+        projectId: streamId,
+        fromInvite
       }
     })
 
+    const { [streamId]: previousRole } = await deps.getStreamRoles(userId, [streamId])
     const stream = (await deps.grantStreamPermissions(
       {
         streamId,
@@ -203,27 +211,16 @@ export const addOrUpdateStreamCollaboratorFactory =
       { trackProjectUpdate }
     )) as StreamRecord // validateStreamAccess already checked that it exists
 
-    if (fromInvite) {
-      await deps.emitEvent({
-        eventName: ServerInvitesEvents.Finalized,
-        payload: {
-          invite: fromInvite,
-          finalizerUserId: userId,
-          accept: true,
-          trueFinalizerUserId: addedById
-        }
-      })
-    } else {
-      await deps.emitEvent({
-        eventName: ProjectEvents.PermissionsAdded,
-        payload: {
-          project: stream,
-          activityUserId: addedById,
-          targetUserId: userId,
-          role: role as StreamRoles
-        }
-      })
-    }
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project: stream,
+        activityUserId: addedById,
+        targetUserId: userId,
+        role: role as StreamRoles,
+        previousRole: previousRole || null
+      }
+    })
 
     return stream
   }

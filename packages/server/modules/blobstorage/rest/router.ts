@@ -30,6 +30,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
+import contentDisposition from 'content-disposition'
 
 export const blobStorageRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -123,7 +124,9 @@ export const blobStorageRouterFactory = (): Router => {
 
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
       const getFileStream = getFileStreamFactory({ getBlobMetadata })
-      const getObjectStream = getObjectStreamFactory({ storage: projectStorage })
+      const getObjectStream = getObjectStreamFactory({
+        storage: projectStorage.private
+      })
 
       const { fileName } = await getBlobMetadata({
         streamId: req.params.streamId,
@@ -136,7 +139,7 @@ export const blobStorageRouterFactory = (): Router => {
       })
       res.writeHead(200, {
         'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${fileName}"`
+        'Content-Disposition': contentDisposition(fileName)
       })
       fileStream.pipe(res)
     }
@@ -159,7 +162,7 @@ export const blobStorageRouterFactory = (): Router => {
       ])
 
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
-      const deleteObject = deleteObjectFactory({ storage: projectStorage })
+      const deleteObject = deleteObjectFactory({ storage: projectStorage.private })
       const deleteBlob = fullyDeleteBlobFactory({
         getBlobMetadata,
         deleteBlob: deleteBlobFactory({ db: projectDb }),

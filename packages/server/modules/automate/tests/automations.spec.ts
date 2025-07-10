@@ -1,5 +1,6 @@
 import {
   AutomationCreationError,
+  AutomationRevisionCreationError,
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
 import {
@@ -47,7 +48,10 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamRolesFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { AutomationEvents } from '@/modules/automate/domain/events'
@@ -66,6 +70,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -406,10 +411,7 @@ const buildAutomationUpdate = () => {
               })
           )
 
-          expect(
-            e instanceof Automate.UnformattableTriggerDefinitionSchemaError,
-            e.toString()
-          ).to.be.true
+          expect(e instanceof AutomationRevisionCreationError, e.toString()).to.be.true
         })
       })
 

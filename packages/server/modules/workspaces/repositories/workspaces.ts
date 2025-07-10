@@ -13,17 +13,20 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  EligibleWorkspace,
   GetAllWorkspaces,
   GetPaginatedWorkspaceProjects,
   GetPaginatedWorkspaceProjectsArgs,
   GetPaginatedWorkspaceProjectsItems,
   GetPaginatedWorkspaceProjectsTotalCount,
   GetUserDiscoverableWorkspaces,
+  GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
   GetWorkspaceBySlug,
   GetWorkspaceBySlugOrId,
   GetWorkspaceCollaborators,
+  GetWorkspaceCollaboratorsBaseArgs,
   GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceCreationState,
   GetWorkspaceDomains,
@@ -33,6 +36,7 @@ import {
   GetWorkspaceSeatCount,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesNonComplete,
   GetWorkspacesProjectsCounts,
   GetWorkspacesRolesForUsers,
   QueryWorkspaces,
@@ -58,8 +62,16 @@ import {
   Workspaces,
   WorkspaceSeats
 } from '@/modules/workspaces/helpers/db'
-import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
-import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import {
+  knex,
+  ServerAcl,
+  ServerInvites,
+  StreamAcl,
+  Streams,
+  UserEmails,
+  Users
+} from '@/modules/core/dbSchema'
+import { removePrivateFields, UserRecord } from '@/modules/core/helpers/userHelper'
 
 import { clamp, has, isObjectLike } from 'lodash'
 import {
@@ -67,14 +79,16 @@ import {
   WorkspaceTeamMember
 } from '@/modules/workspaces/domain/types'
 import {
+  compositeCursorTools,
   decodeCompositeCursor,
   decodeCursor,
   encodeCompositeCursor,
   encodeCursor
-} from '@/modules/shared/helpers/graphqlHelper'
+} from '@/modules/shared/helpers/dbHelper'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const tables = {
+  users: (db: Knex) => db<UserRecord>(Users.name),
   branches: (db: Knex) => db<BranchRecord>('branches'),
   streams: (db: Knex) => db<StreamRecord>('streams'),
   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
@@ -87,6 +101,39 @@ const tables = {
   workspaceJoinRequests: (db: Knex) =>
     db<WorkspaceJoinRequest>('workspace_join_requests')
 }
+
+export const getUserEligibleWorkspacesFactory =
+  ({ db }: { db: Knex }): GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces =>
+  async ({ userId, domains }) => {
+    const q = tables
+      .workspaces(db)
+      .distinctOn(Workspaces.col.id)
+      .select<EligibleWorkspace[]>([...Workspaces.cols, DbWorkspaceAcl.col.role])
+      .joinRaw(
+        `left join ${DbWorkspaceAcl.name}
+        on ${Workspaces.col.id} = ${DbWorkspaceAcl.name}."${DbWorkspaceAcl.withoutTablePrefix.col.workspaceId}"
+        and ${DbWorkspaceAcl.name}."${DbWorkspaceAcl.withoutTablePrefix.col.userId}" = '${userId}'`
+      )
+      .joinRaw(
+        `left join ${ServerInvites.name}
+        on ${Workspaces.col.id} = ${ServerInvites.col.resource} ->> 'resourceId'
+        and ${ServerInvites.col.target} = '@${userId}'`
+      )
+      .leftJoin(
+        WorkspaceDomains.name,
+        WorkspaceDomains.col.workspaceId,
+        Workspaces.col.id
+      )
+      .whereNotNull(DbWorkspaceAcl.col.userId)
+      .orWhereNotNull(ServerInvites.col.target)
+    if (domains.length)
+      q.orWhere(function () {
+        this.where(Workspaces.col.discoverabilityEnabled, true)
+        this.whereIn(WorkspaceDomains.col.domain, domains)
+      })
+    const items = await q
+    return items
+  }
 
 export const getUserDiscoverableWorkspacesFactory =
   ({ db }: { db: Knex }): GetUserDiscoverableWorkspaces =>
@@ -104,6 +151,7 @@ export const getUserDiscoverableWorkspacesFactory =
         'description',
         'logo',
         'discoverabilityAutoJoinEnabled',
+        'isExclusive',
         tables
           .workspacesAcl(db)
           .select(knex.raw('count(*)::integer'))
@@ -266,15 +314,24 @@ const buildWorkspacesQuery = ({ db, search }: { db: Knex; search?: string }) => 
 export const queryWorkspacesFactory =
   ({ db }: { db: Knex }): QueryWorkspaces =>
   async ({ limit, cursor, filter }) => {
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: Workspaces,
+      cols: ['createdAt', 'id']
+    })
+
     const query = buildWorkspacesQuery({ db, search: filter?.search })
       .select()
-      .orderBy('createdAt', 'desc')
       .limit(limit)
 
-    if (cursor) {
-      query.andWhere('createdAt', '<', cursor)
-    }
-    return await query
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
+
+    const res = await query
+    const newCursor = resolveNewCursor(res)
+
+    return { items: res, cursor: newCursor }
   }
 
 export const countWorkspacesFactory =
@@ -303,7 +360,9 @@ export const upsertWorkspaceFactory =
         'domainBasedMembershipProtectionEnabled',
         'discoverabilityEnabled',
         'discoverabilityAutoJoinEnabled',
-        'isEmbedSpeckleBrandingHidden'
+        'defaultSeatType',
+        'isEmbedSpeckleBrandingHidden',
+        'isExclusive'
       ])
   }
 
@@ -398,19 +457,12 @@ export const upsertWorkspaceRoleFactory =
       .merge(['role'])
   }
 
-export const getWorkspaceCollaboratorsTotalCountFactory =
-  ({ db }: { db: Knex }): GetWorkspaceCollaboratorsTotalCount =>
-  async ({ workspaceId }) => {
-    const [res] = await DbWorkspaceAcl.knex(db).where({ workspaceId }).count()
-    const count = parseInt(res.count)
-    return count || 0
-  }
+const getWorkspaceCollaboratorsBaseQuery =
+  (deps: { db: Knex }) => (params: GetWorkspaceCollaboratorsBaseArgs) => {
+    const { workspaceId, filter = {} } = params
 
-export const getWorkspaceCollaboratorsFactory =
-  ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
-  async ({ workspaceId, filter = {}, cursor, limit = 25 }) => {
-    const query = db
-      .from(Users.name)
+    const query = tables
+      .users(deps.db)
       .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
         ...Users.cols,
         ServerAcl.col.role,
@@ -419,9 +471,14 @@ export const getWorkspaceCollaboratorsFactory =
         DbWorkspaceAcl.colAs('createdAt', 'workspaceRoleCreatedAt')
       )
       .join(DbWorkspaceAcl.name, DbWorkspaceAcl.col.userId, Users.col.id)
+      .join(UserEmails.name, Users.col.id, UserEmails.col.userId)
       .join(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
-      .orderBy('workspaceRoleCreatedAt', 'desc')
+      // this will only get the primary email of a user
+      // if the user has a secondary email matching the workspace's domain
+      // it will not be surfaced by this query
+      //
+      .andWhere(UserEmails.col.primary, true)
 
     const { search, roles, seatType, excludeUserIds } = filter || {}
 
@@ -452,9 +509,40 @@ export const getWorkspaceCollaboratorsFactory =
       })
     }
 
-    if (cursor) {
-      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)
-    }
+    return query
+  }
+
+export const getWorkspaceCollaboratorsTotalCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaboratorsTotalCount =>
+  async (params) => {
+    const q = db
+      .from(getWorkspaceCollaboratorsBaseQuery({ db })(params).as('t1'))
+      .count()
+
+    const [res] = await q
+    const count = parseInt(res.count + '')
+    return count || 0
+  }
+
+export const getWorkspaceCollaboratorsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
+  async (params) => {
+    const { limit = 25, hasAccessToEmail } = params
+    const query = getWorkspaceCollaboratorsBaseQuery({ db })(params)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: {
+        col: {
+          workspaceRoleCreatedAt: DbWorkspaceAcl.col.createdAt,
+          id: Users.col.id
+        }
+      },
+      cols: ['workspaceRoleCreatedAt', 'id']
+    })
+
+    applyCursorSortAndFilter({
+      query,
+      cursor: params.cursor
+    })
 
     if (limit) {
       query.limit(clamp(limit, 0, 100))
@@ -462,13 +550,15 @@ export const getWorkspaceCollaboratorsFactory =
 
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
+      email: hasAccessToEmail ? i.email : null,
       workspaceRole: i.workspaceRole,
       workspaceRoleCreatedAt: i.workspaceRoleCreatedAt,
       workspaceId: i.workspaceId,
       role: i.role
     }))
+    const newCursor = resolveNewCursor(items)
 
-    return items
+    return { items, cursor: newCursor }
   }
 
 export const storeWorkspaceDomainFactory =
@@ -517,6 +607,21 @@ export const getWorkspaceWithDomainsFactory =
         (domain: WorkspaceDomain | null) => domain !== null
       )
     } as Workspace & { domains: WorkspaceDomain[] }
+  }
+
+export const getWorkspacesNonCompleteFactory =
+  ({ db }: { db: Knex }): GetWorkspacesNonComplete =>
+  async ({ createdAtBefore }) => {
+    return tables
+      .workspaceCreationState(db)
+      .where({ [DbWorkspaceCreationState.col.completed]: false })
+      .innerJoin(
+        Workspaces.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      )
+      .where(Workspaces.col.createdAt, '<', createdAtBefore.toISOString())
+      .select([DbWorkspaceCreationState.col.workspaceId])
   }
 
 export const getUserIdsWithRoleInWorkspaceFactory =

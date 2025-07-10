@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'vitest'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
-import { Base } from '../types/types.js'
 import { TIME_MS } from '@speckle/shared'
-import { ObjectLoader2Factory } from '../operations/objectLoader2Factory.js'
+import { ObjectLoader2Factory } from '../core/objectLoader2Factory.js'
+import { Base } from '../types/types.js'
 
 describe('e2e', () => {
   test(
@@ -14,8 +14,10 @@ describe('e2e', () => {
         serverUrl: 'https://app.speckle.systems',
         streamId: 'da9e320dad',
         objectId: '31d10c0cea569a1e26809658ed27e281',
-        indexedDB: new IDBFactory(),
-        keyRange: IDBKeyRange
+        options: {
+          indexedDB: new IDBFactory(),
+          keyRange: IDBKeyRange
+        }
       })
 
       const getObjectPromise = loader.getObject({

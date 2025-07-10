@@ -12,7 +12,8 @@ export const WorkspaceEvents = {
   Deleted: `${eventPrefix}deleted`,
   RoleDeleted: `${eventPrefix}role-deleted`,
   RoleUpdated: `${eventPrefix}role-updated`,
-  SeatUpdated: `${eventPrefix}seat-updated`
+  SeatUpdated: `${eventPrefix}seat-updated`,
+  SeatDeleted: `${eventPrefix}seat-deleted`
 } as const
 
 export type WorkspaceEvents = (typeof WorkspaceEvents)[keyof typeof WorkspaceEvents]
@@ -37,6 +38,12 @@ type WorkspaceRoleUpdatedPayload = {
 }
 type WorkspaceSeatUpdatedPayload = {
   seat: WorkspaceSeat
+  previousSeat?: WorkspaceSeat
+  updatedByUserId: string
+}
+
+type WorkspaceSeatDeletedPayload = {
+  previousSeat: WorkspaceSeat
   updatedByUserId: string
 }
 
@@ -48,4 +55,5 @@ export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
   [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
   [WorkspaceEvents.SeatUpdated]: WorkspaceSeatUpdatedPayload
+  [WorkspaceEvents.SeatDeleted]: WorkspaceSeatDeletedPayload
 }

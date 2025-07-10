@@ -25,7 +25,7 @@ export const createTestBlob = async (params: { userId: string; projectId: string
   return await uploadFileStreamFactory({
     upsertBlob: upsertBlobFactory({ db: projectDb }),
     updateBlob: updateBlobFactory({ db: projectDb }),
-    storeFileStream: storeFileStreamFactory({ storage: projectStorage })
+    storeFileStream: storeFileStreamFactory({ storage: projectStorage.public })
   })(
     {
       userId,

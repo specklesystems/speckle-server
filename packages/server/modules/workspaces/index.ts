@@ -11,13 +11,26 @@ import { initializeEventListenersFactory } from '@/modules/workspaces/events/eve
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getSsoRouter } from '@/modules/workspaces/rest/sso'
 import { InvalidLicenseError } from '@/modules/gatekeeper/errors/license'
+import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
+import { getWorkspacesNonCompleteFactory } from '@/modules/workspaces/repositories/workspaces'
+import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
+import {
+  deleteStreamFactory,
+  legacyGetStreamsFactory
+} from '@/modules/core/repositories/streams'
+import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
 import { scheduleUpdateAllWorkspacesTracking } from '@/modules/workspaces/services/tracking'
 import { getClient } from '@/modules/shared/utils/mixpanel'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const {
   FF_WORKSPACES_MODULE_ENABLED,
@@ -36,6 +49,35 @@ const initScopes = async () => {
 const initRoles = async () => {
   const registerFunc = registerOrUpdateRole({ db })
   await Promise.all(workspaceRoles.map((role) => registerFunc({ role })))
+}
+
+const scheduleDeleteWorkspacesNonComplete = ({
+  scheduleExecution
+}: {
+  scheduleExecution: ScheduleExecution
+}) => {
+  const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
+    getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db }),
+    deleteWorkspace: deleteWorkspaceFactory({
+      deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
+      deleteProject: deleteStreamFactory({ db }),
+      deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+      queryAllProjects: queryAllProjectsFactory({
+        getStreams: legacyGetStreamsFactory({ db })
+      }),
+      deleteSsoProvider: deleteSsoProviderFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit
+    })
+  })
+
+  const every30Mins = '*/30 * * * *'
+  return scheduleExecution(
+    every30Mins,
+    'DeleteWorkspaceNonComplete',
+    async (_scheduledTime, { logger }) => {
+      await Promise.all([deleteWorkspacesNonComplete({ logger })])
+    }
+  )
 }
 
 const workspacesModule: SpeckleModule = {
@@ -60,10 +102,11 @@ const workspacesModule: SpeckleModule = {
         releaseTaskLock: releaseTaskLockFactory({ db })
       })
 
+      scheduledTasks = [scheduleDeleteWorkspacesNonComplete({ scheduleExecution })]
       if (FF_BILLING_INTEGRATION_ENABLED && mixpanel)
-        scheduledTasks = [
+        scheduledTasks.push(
           scheduleUpdateAllWorkspacesTracking({ scheduleExecution, mixpanel })
-        ]
+        )
 
       quitListeners = initializeEventListenersFactory({ db })()
     }

@@ -5,7 +5,7 @@ import { getStripeEndpointSigningKey } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import { completeCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
-  getSubscriptionDataFactory,
+  getStripeSubscriptionDataFactory,
   parseSubscriptionData
 } from '@/modules/gatekeeper/clients/stripe'
 import {
@@ -15,7 +15,8 @@ import {
   upsertWorkspaceSubscriptionFactory,
   updateCheckoutSessionStatusFactory,
   upsertPaidWorkspacePlanFactory,
-  getWorkspaceSubscriptionBySubscriptionIdFactory
+  getWorkspaceSubscriptionBySubscriptionIdFactory,
+  getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
@@ -29,6 +30,7 @@ import {
 } from '@/observability/domain/fields'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { asOperation } from '@/modules/shared/command'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -129,7 +131,8 @@ export const getBillingRouter = (): Router => {
                       db
                     }),
                     getWorkspacePlan: getWorkspacePlanFactory({ db }),
-                    getSubscriptionData: getSubscriptionDataFactory({
+                    getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                    getSubscriptionData: getStripeSubscriptionDataFactory({
                       stripe
                     }),
                     emitEvent: emit
@@ -200,8 +203,9 @@ export const getBillingRouter = (): Router => {
               upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
               getWorkspaceSubscriptionBySubscriptionId:
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-            })({ subscriptionData: parseSubscriptionData(event.data.object) }),
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
+              emitEvent: getEventBus().emit
+            })({ subscriptionData: parseSubscriptionData(event.data.object), logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
@@ -222,8 +226,9 @@ export const getBillingRouter = (): Router => {
               upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
               getWorkspaceSubscriptionBySubscriptionId:
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-            })({ subscriptionData }),
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
+              emitEvent: getEventBus().emit
+            })({ subscriptionData, logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
@@ -251,7 +256,7 @@ const getSubscriptionFromEventFactory =
       return null
     }
     if (typeof subscription === 'string') {
-      return await getSubscriptionDataFactory({ stripe })({
+      return await getStripeSubscriptionDataFactory({ stripe })({
         subscriptionId: subscription
       })
     }

@@ -30,8 +30,13 @@
       @deleted="$emit('model-updated')"
     />
     <ProjectModelPageDialogEmbed
-      v-model:open="embedDialogOpen"
+      v-model:open="isEmbedDialogOpen"
       :project="project"
+      :model-id="model.id"
+    />
+    <ProjectPageModelsUploadsDialog
+      v-model:open="isUploadsDialogOpen"
+      :project-id="project.id"
       :model-id="model.id"
     />
   </div>
@@ -88,7 +93,8 @@ enum ActionTypes {
   ViewVersions = 'view-versions',
   UploadVersion = 'upload-version',
   CopyId = 'copy-id',
-  Embed = 'embed'
+  Embed = 'embed',
+  ViewUploads = 'view-uploads'
 }
 
 const emit = defineEmits<{
@@ -115,7 +121,6 @@ const { statusIsCanceled } = useWorkspacePlan(props.project.workspace?.slug || '
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
-const embedDialogOpen = ref(false)
 
 const canEdit = computed(() => props.model.permissions.canUpdate)
 const canDelete = computed(() => props.model.permissions.canDelete)
@@ -166,6 +171,10 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
       title: 'View versions',
       id: ActionTypes.ViewVersions
     },
+    {
+      title: 'View uploads',
+      id: ActionTypes.ViewUploads
+    },
     ...(isLoggedIn.value
       ? [
           {
@@ -205,6 +214,14 @@ const isDeleteDialogOpen = computed({
   get: () => openDialog.value === ActionTypes.Delete,
   set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.Delete : null)
 })
+const isEmbedDialogOpen = computed({
+  get: () => openDialog.value === ActionTypes.Embed,
+  set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.Embed : null)
+})
+const isUploadsDialogOpen = computed({
+  get: () => openDialog.value === ActionTypes.ViewUploads,
+  set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.ViewUploads : null)
+})
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
@@ -212,6 +229,8 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
   switch (item.id) {
     case ActionTypes.Rename:
     case ActionTypes.Delete:
+    case ActionTypes.Embed:
+    case ActionTypes.ViewUploads:
       openDialog.value = item.id
       break
     case ActionTypes.Share:
@@ -227,14 +246,15 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
     case ActionTypes.CopyId:
       copy(props.model.id, { successMessage: 'Copied model ID to clipboard' })
       break
-    case ActionTypes.Embed:
-      embedDialogOpen.value = true
-      break
   }
 }
 
 const onButtonClick = () => {
   showActionsMenu.value = !showActionsMenu.value
+}
+
+const showUploads = () => {
+  openDialog.value = ActionTypes.ViewUploads
 }
 
 // doing it this way with 2 watchers so that using the 'open' prop is optional
@@ -243,4 +263,8 @@ watch(
   () => props.open || false,
   (newVal) => (showActionsMenu.value = newVal)
 )
+
+defineExpose({
+  showUploads
+})
 </script>

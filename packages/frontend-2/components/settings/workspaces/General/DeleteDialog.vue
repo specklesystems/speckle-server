@@ -54,7 +54,6 @@ import {
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
-import { useMixpanel } from '~/lib/core/composables/mp'
 import { homeRoute, defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
 import { useZapier } from '~/lib/core/composables/zapier'
 import { useForm } from 'vee-validate'
@@ -79,7 +78,6 @@ const { triggerNotification } = useGlobalToast()
 const { activeUser } = useActiveUser()
 const router = useRouter()
 const apollo = useApolloClient().client
-const mixpanel = useMixpanel()
 const { sendWebhook } = useZapier()
 const { resetForm } = useForm<{ feedback: string }>()
 const { mutateActiveWorkspaceSlug } = useNavigation()
@@ -122,12 +120,6 @@ const onDelete = async () => {
         { fieldNameWhitelist: ['workspaces'] }
       )
     }
-
-    mixpanel.track('Workspace Deleted', {
-      // eslint-disable-next-line camelcase
-      workspace_id: workspaceId,
-      feedback: feedback.value
-    })
 
     if (feedback.value) {
       await sendWebhook(defaultZapierWebhookUrl, {

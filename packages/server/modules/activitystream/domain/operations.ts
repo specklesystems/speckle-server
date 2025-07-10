@@ -1,7 +1,9 @@
 import {
+  Activity,
   ActivitySummary,
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput,
+  ResourceEventsToPayloadMap,
   ResourceType,
   StreamActionType
 } from '@/modules/activitystream/domain/types'
@@ -30,7 +32,7 @@ import {
 } from '@/modules/core/helpers/types'
 import { Nullable } from '@speckle/shared'
 
-export type GetActivity = (
+export type GetUserStreamActivity = (
   streamId: string,
   start: Date,
   end: Date,
@@ -159,7 +161,9 @@ export type GetUserActivity = ({
   items: StreamActivityRecord[]
 }>
 
-export type SaveActivity = (args: Omit<StreamActivityRecord, 'time'>) => Promise<void>
+export type SaveStreamActivity = (
+  args: Omit<StreamActivityRecord, 'time'>
+) => Promise<void>
 
 export type CreateActivitySummary = (args: {
   userId: string
@@ -270,3 +274,19 @@ export type AddBranchDeletedActivity = (params: {
   userId: string
   branchName: string
 }) => Promise<void>
+
+export type SaveActivity = <
+  T extends keyof ResourceEventsToPayloadMap,
+  R extends keyof ResourceEventsToPayloadMap[T]
+>(
+  args: Omit<Activity<T, R>, 'createdAt' | 'id'>
+) => Promise<Activity<T, R>>
+
+type GetActivitiesArgs = Partial<{
+  workspaceId: string
+  projectId: string
+  eventType: string
+  userId: string
+}>
+
+export type GetActivities = (filters: GetActivitiesArgs) => Promise<Activity[]>

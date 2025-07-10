@@ -7,6 +7,9 @@ const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 const resolvers: Resolvers = FF_GATEKEEPER_MODULE_ENABLED
   ? {}
   : {
+      Workspace: {
+        defaultSeatType: () => 'viewer'
+      },
       WorkspaceMutations: {
         billing: () => {
           throw new GatekeeperModuleDisabledError()

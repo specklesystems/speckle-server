@@ -19,7 +19,6 @@ import { canUpdateModelPolicy } from './project/model/canUpdate.js'
 import { canDeleteModelPolicy } from './project/model/canDelete.js'
 import { canCreateProjectVersionPolicy } from './project/version/canCreate.js'
 import { canUpdateProjectVersionPolicy } from './project/version/canUpdate.js'
-import { canReceiveProjectVersionPolicy } from './project/version/canReceive.js'
 import { canRequestProjectVersionRenderPolicy } from './project/version/canRequestRender.js'
 import { canCreateAutomationPolicy } from './project/automation/canCreate.js'
 import { canUpdateAutomationPolicy } from './project/automation/canUpdate.js'
@@ -29,7 +28,10 @@ import { canDeleteProjectPolicy } from './project/canDelete.js'
 import { canDeleteAutomationPolicy } from './project/automation/canDelete.js'
 import { canPublishPolicy } from './project/canPublish.js'
 import { canLoadPolicy } from './project/canLoad.js'
-import { canUpdateEmbedOptionsPolicy } from './workspace/canUpdateEmbedOptions.js'
+import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
+import { canCreateWorkspacePolicy } from './workspace/canCreateWorkspace.js'
+import { canUseWorkspacePlanFeature } from './workspace/canUseWorkspacePlanFeature.js'
+import { canUpdateEmbedTokensPolicy } from './project/canUpdateEmbedTokens.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -52,7 +54,7 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     version: {
       canCreate: canCreateProjectVersionPolicy(loaders),
       canUpdate: canUpdateProjectVersionPolicy(loaders),
-      canReceive: canReceiveProjectVersionPolicy(loaders),
+      canReceive: canLoadPolicy(loaders),
       canRequestRender: canRequestProjectVersionRenderPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
@@ -67,14 +69,18 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canLeave: canLeaveProjectPolicy(loaders),
     canInvite: canInviteToProjectPolicy(loaders),
     canPublish: canPublishPolicy(loaders),
-    canLoad: canLoadPolicy(loaders)
+    canLoad: canLoadPolicy(loaders),
+    canReadEmbedTokens: canUpdateEmbedTokensPolicy(loaders),
+    canUpdateEmbedTokens: canUpdateEmbedTokensPolicy(loaders)
   },
   workspace: {
     canCreateProject: canCreateWorkspaceProjectPolicy(loaders),
     canInvite: canInviteToWorkspacePolicy(loaders),
     canReceiveProjectsUpdatedMessage:
       canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders),
-    canUpdateEmbedOptions: canUpdateEmbedOptionsPolicy(loaders)
+    canUseWorkspacePlanFeature: canUseWorkspacePlanFeature(loaders),
+    canReadMemberEmail: canReadMemberEmailPolicy(loaders),
+    canCreateWorkspace: canCreateWorkspacePolicy(loaders)
   }
 })
 

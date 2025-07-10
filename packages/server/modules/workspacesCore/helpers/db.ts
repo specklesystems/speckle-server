@@ -11,7 +11,9 @@ export const Workspaces = buildTableHelper('workspaces', [
   'domainBasedMembershipProtectionEnabled',
   'discoverabilityEnabled',
   'discoverabilityAutoJoinEnabled',
-  'isEmbedSpeckleBrandingHidden'
+  'defaultSeatType',
+  'isEmbedSpeckleBrandingHidden',
+  'isExclusive'
 ])
 
 export const WorkspaceAcl = buildTableHelper('workspace_acl', [

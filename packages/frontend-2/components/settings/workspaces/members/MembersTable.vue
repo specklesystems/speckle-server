@@ -20,10 +20,10 @@
     <LayoutTable
       class="mt-6 mb-12"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-4' },
-        { id: 'seat', header: 'Seat', classes: 'col-span-3' },
-        { id: 'joined', header: 'Joined', classes: 'col-span-4' },
-        // { id: 'projects', header: 'Projects', classes: 'col-span-2' },
+        { id: 'name', header: 'Name', classes: 'col-span-3' },
+        { id: 'email', header: 'Email', classes: 'col-span-4' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
@@ -31,7 +31,7 @@
         }
       ]"
       :items="members"
-      :loading="loading"
+      :loading="isVeryFirstLoading"
       :empty-message="
         search.length || seatTypeFilter || roleFilter
           ? 'No results'
@@ -76,6 +76,13 @@
           </div>
         </div>
       </template>
+      <template #email="{ item }">
+        <div class="flex">
+          <span class="text-foreground-2 truncate">
+            {{ item.email }}
+          </span>
+        </div>
+      </template>
       <template #seat="{ item }">
         <SettingsWorkspacesMembersTableSeatType
           :seat-type="item.seatType"
@@ -85,31 +92,6 @@
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
-      <!-- <template #projects="{ item }">
-        <FormButton
-          v-if="
-            item.projectRoles.length > 0 &&
-            isWorkspaceAdmin &&
-            item.role !== Roles.Workspace.Admin
-          "
-          color="subtle"
-          size="sm"
-          class="!font-normal !text-foreground-2 -ml-2"
-          @click="
-            () => {
-              targetUser = item
-              showProjectPermissionsDialog = true
-            }
-          "
-        >
-          {{ item.projectRoles.length }}
-          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
-        </FormButton>
-        <div v-else class="text-foreground-2 max-w-max text-body-2xs select-none">
-          {{ item.projectRoles.length }}
-          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
-        </div>
-      </template> -->
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
@@ -134,24 +116,24 @@
 
 <script setup lang="ts">
 import { Roles, type Nullable, type WorkspaceRoles } from '@speckle/shared'
-import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import {
+  settingsWorkspacesMembersSearchQuery,
+  settingsWorkspacesMembersTableQuery
+} from '~~/lib/settings/graphql/queries'
+import type {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersActionsMenu_UserFragment
+  SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import type { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { useQuery } from '@vue/apollo-composable'
 
 graphql(`
   fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
-    projectRoles {
-      project {
-        id
-      }
-    }
+    email
     ...SettingsWorkspacesMembersActionsMenu_User
   }
 `)
@@ -160,6 +142,12 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
+const { activeUser } = useActiveUser()
+const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
+  slug: props.workspaceSlug
+}))
+
+const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 const search = ref('')
 const roleFilter = ref<WorkspaceRoles>()
 const seatTypeFilter = ref<WorkspaceSeatType>()
@@ -168,28 +156,29 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
-const { activeUser } = useActiveUser()
+const defaultRoles = shallowRef([Roles.Workspace.Admin, Roles.Workspace.Member])
 
 const {
   identifier,
   onInfiniteLoad,
-  query: { result, loading }
+  query: { result: membersResult },
+  isVeryFirstLoading
 } = usePaginatedQuery({
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
-    query: search.value?.length ? search.value : null,
     limit: 10,
     slug: props.workspaceSlug,
     filter: {
       search: search.value,
-      roles: roleFilter.value
-        ? [roleFilter.value]
-        : [Roles.Workspace.Admin, Roles.Workspace.Member],
+      roles: roleFilter.value ? [roleFilter.value] : defaultRoles.value,
       seatType: seatTypeFilter.value
     },
     cursor: null as Nullable<string>
   })),
-  resolveKey: (vars) => [vars.query || ''],
+  resolveKey: (vars) => ({
+    slug: vars.slug,
+    filter: vars.filter
+  }),
   resolveCurrentResult: (res) => res?.workspaceBySlug.team,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
@@ -199,16 +188,5 @@ const {
 })
 
 const workspace = computed(() => result.value?.workspaceBySlug)
-
-const members = computed(() => {
-  const memberArray = workspace.value?.team.items
-  return (memberArray || [])
-    .map((member) => ({
-      ...member,
-      seatType: member.seatType || WorkspaceSeatType.Viewer
-    }))
-    .filter((user) => user.role !== Roles.Workspace.Guest)
-})
-
-const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
+const members = computed(() => membersResult.value?.workspaceBySlug.team.items)
 </script>

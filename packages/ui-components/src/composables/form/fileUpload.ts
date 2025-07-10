@@ -10,6 +10,7 @@ import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
 import { computed, unref } from 'vue'
 import type { CSSProperties } from 'vue'
 import { BaseError } from '~~/src/lib'
+import type { BlobUploadStatus } from '@speckle/shared/blobs'
 
 /**
  * A file, as emitted out from FileUploadZone
@@ -23,11 +24,6 @@ export interface UploadableFileItem {
   id: string
 }
 
-export enum BlobUploadStatus {
-  Success = 1,
-  Failure = 2
-}
-
 export type BlobPostResultItem = {
   blobId?: string
   fileName?: string
@@ -36,7 +32,7 @@ export type BlobPostResultItem = {
   /**
    * Success = 1, Failure = 2
    */
-  uploadStatus: number
+  uploadStatus: BlobUploadStatus
   uploadError: string
 }
 
@@ -139,7 +135,7 @@ export function usePrepareUploadableFiles(params: {
   }
 }
 
-class FileTooLargeError extends BaseError {
+export class FileTooLargeError extends BaseError {
   static defaultMessage = "The selected file's size is too large"
 }
 

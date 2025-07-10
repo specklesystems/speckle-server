@@ -59,6 +59,7 @@ import {
 } from '@speckle/shared'
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -95,7 +96,8 @@ import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   assignWorkspaceSeatFactory,
-  ensureValidWorkspaceRoleSeatFactory
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
@@ -128,8 +130,12 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { createRandomString } from '@/modules/core/helpers/testHelpers'
 import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
+import {
+  WorkspaceSeat,
+  WorkspaceWithOptionalRole
+} from '@/modules/workspacesCore/domain/types'
+import { WorkspaceRole } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -205,7 +211,18 @@ export const createTestWorkspace = async (
       ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
         createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
         getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+        getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+          getWorkspace: getWorkspaceFactory({ db })
+        }),
         eventEmit: getEventBus().emit
+      }),
+      assignWorkspaceSeat: assignWorkspaceSeatFactory({
+        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+        getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+          db
+        }),
+        eventEmit: getEventBus().emit,
+        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
       })
     })
   })
@@ -274,6 +291,7 @@ export const createTestWorkspace = async (
         currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
         billingInterval: 'monthly',
         currency: 'usd',
+        updateIntent: null,
         subscriptionData: {
           subscriptionId: cryptoRandomString({ length: 10 }),
           customerId: cryptoRandomString({ length: 10 }),
@@ -353,10 +371,45 @@ export const buildBasicTestWorkspace = (
 ): BasicTestWorkspace =>
   assign(
     {
-      id: createRandomString(),
-      name: createRandomString(),
-      slug: createRandomString(),
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
       ownerId: ''
+    },
+    overrides
+  )
+
+export const buildTestWorkspaceSeat = (
+  overrides?: Partial<WorkspaceSeat>
+): WorkspaceSeat =>
+  assign(
+    {
+      workspaceId: cryptoRandomString({ length: 10 }),
+      userId: cryptoRandomString({ length: 10 }),
+      type: WorkspaceSeatType.Viewer,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    overrides
+  )
+
+export const buildTestWorkspaceWithOptionalRole = (
+  overrides?: Partial<WorkspaceWithOptionalRole>
+): WorkspaceWithOptionalRole =>
+  assign(
+    {
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
+      description: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      logo: cryptoRandomString({ length: 10 }),
+      domainBasedMembershipProtectionEnabled: false,
+      discoverabilityEnabled: true,
+      discoverabilityAutoJoinEnabled: true,
+      isEmbedSpeckleBrandingHidden: true,
+      role: WorkspaceRole.Member
     },
     overrides
   )
@@ -378,12 +431,24 @@ export const assignToWorkspace = async (
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
       getWorkspaceUserSeat,
+      getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+        getWorkspace: getWorkspaceFactory({ db })
+      }),
       eventEmit: getEventBus().emit
+    }),
+    assignWorkspaceSeat: assignWorkspaceSeatFactory({
+      createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+      getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+        db
+      }),
+      eventEmit: getEventBus().emit,
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
     })
   })
   const assignWorkspaceSeat = assignWorkspaceSeatFactory({
     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
     eventEmit: getEventBus().emit
   })
 
@@ -510,7 +575,18 @@ export const createWorkspaceInviteDirectly = async (
           ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
             createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
             getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+            getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+              getWorkspace: getWorkspaceFactory({ db })
+            }),
             eventEmit: getEventBus().emit
+          }),
+          assignWorkspaceSeat: assignWorkspaceSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+              db
+            }),
+            eventEmit: getEventBus().emit,
+            getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
           })
         }),
         processFinalizedProjectInvite: processFinalizedProjectInviteFactory({
@@ -519,6 +595,7 @@ export const createWorkspaceInviteDirectly = async (
             validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
             getUser: getUserFactory({ db }),
             grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+            getStreamRoles: getStreamRolesFactory({ db }),
             emitEvent: getEventBus().emit
           })
         })

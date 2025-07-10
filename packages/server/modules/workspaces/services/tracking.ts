@@ -4,7 +4,11 @@ import {
   GetWorkspacePlan,
   GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { getBaseTrackingProperties } from '@/modules/shared/utils/mixpanel'
+import {
+  getBaseTrackingProperties,
+  MixpanelClient,
+  WORKSPACE_TRACKING_ID_KEY
+} from '@/modules/shared/utils/mixpanel'
 import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
@@ -29,12 +33,9 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { db } from '@/db/knex'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
-import { Mixpanel } from 'mixpanel'
-
-export const WORKSPACE_TRACKING_ID_KEY = 'workspace_id'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 export type WorkspaceTrackingProperties = {
   name: string
@@ -77,8 +78,8 @@ export const buildWorkspaceTrackingPropertiesFactory =
       adminCount,
       memberCount,
       guestCount,
-      seatsViewerCount,
       seatsEditorCount,
+      seatsViewerCount,
       defaultRegion,
       plan,
       subscription,
@@ -137,6 +138,7 @@ export const buildWorkspaceTrackingPropertiesFactory =
       createdAt: workspace.createdAt,
       projectCount: workspacesProjectCount[workspace.id] || 0,
       modelCount,
+      lastSyncAt: new Date(),
       ...getBaseTrackingProperties()
     }
   }
@@ -156,7 +158,7 @@ export const updateAllWorkspacesTackingPropertiesFactory =
     mixpanel
   }: {
     logger: Logger
-    mixpanel: Mixpanel
+    mixpanel: MixpanelClient
   }) => Promise<void>) =>
   async ({ logger, mixpanel }) => {
     logger.info('Start full workspace tracking update')
@@ -204,7 +206,7 @@ export const scheduleUpdateAllWorkspacesTracking = ({
   mixpanel
 }: {
   scheduleExecution: ScheduleExecution
-  mixpanel: Mixpanel
+  mixpanel: MixpanelClient
 }) => {
   const updateAllWorkspacesTackingProperties =
     updateAllWorkspacesTackingPropertiesFactory({
@@ -213,7 +215,7 @@ export const scheduleUpdateAllWorkspacesTracking = ({
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
       getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
       getWorkspaceModelCount: getWorkspaceModelCountFactory({
-        queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+        queryAllProjects: queryAllProjectsFactory({
           getStreams: legacyGetStreamsFactory({ db })
         }),
         getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory(

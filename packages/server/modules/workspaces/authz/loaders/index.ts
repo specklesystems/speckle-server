@@ -8,9 +8,14 @@ import {
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderRecordFactory
 } from '@/modules/workspaces/repositories/sso'
-import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import {
+  getUserEligibleWorkspacesFactory,
+  getWorkspaceRoleForUserFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
+import { getUsersCurrentAndEligibleToBecomeAMemberWorkspaces } from '@/modules/workspaces/services/retrieval'
+import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 // TODO: Move everything to use dataLoaders
 export default defineModuleLoaders(async () => {
@@ -53,7 +58,7 @@ export default defineModuleLoaders(async () => {
     getWorkspaceModelCount: async ({ workspaceId }) => {
       // TODO: Dataloader that has to dynamically pick regional dbs?
       return await getWorkspaceModelCountFactory({
-        queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+        queryAllProjects: queryAllProjectsFactory({
           getStreams: legacyGetStreamsFactory({ db })
         }),
         getPaginatedProjectModelsTotalCount: async (projectId, params) => {
@@ -70,6 +75,12 @@ export default defineModuleLoaders(async () => {
     },
     getWorkspacePlan: async ({ workspaceId }) => {
       return await getWorkspacePlan({ workspaceId })
+    },
+    getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: async ({ userId }) => {
+      return await getUsersCurrentAndEligibleToBecomeAMemberWorkspaces({
+        findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+        getUserEligibleWorkspaces: getUserEligibleWorkspacesFactory({ db })
+      })({ userId })
     },
     getWorkspaceLimits: async ({ workspaceId }, { dataLoaders }) => {
       return await dataLoaders.gatekeeper!.getWorkspaceLimits.load(workspaceId)

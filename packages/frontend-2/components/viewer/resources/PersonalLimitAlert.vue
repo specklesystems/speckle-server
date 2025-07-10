@@ -39,6 +39,7 @@ import type {
   ViewerLimitAlertType,
   ViewerLimitAlertVariant
 } from '~/lib/common/helpers/permissions'
+import { usePersonalProjectLimits } from '~/lib/projects/composables/permissions'
 
 graphql(`
   fragment ViewerResourcesPersonalLimitAlert_Project on Project {
@@ -62,14 +63,11 @@ const props = withDefaults(
   }
 )
 
+const { versionLimitFormatted } = usePersonalProjectLimits()
 const showMoveDialog = ref(false)
 
 const text = computed(() => {
-  if (props.limitType === 'comment') {
-    return `Comment locked`
-  }
-
-  return `Version locked`
+  return `Move the project to a workspace to view ${props.limitType}s older than ${versionLimitFormatted.value}`
 })
 
 const actions = computed((): AlertAction[] => [

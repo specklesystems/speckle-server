@@ -45,7 +45,7 @@ import {
   decodeCursor,
   encodeCompositeCursor,
   encodeCursor
-} from '@/modules/shared/helpers/graphqlHelper'
+} from '@/modules/shared/helpers/dbHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
@@ -63,7 +63,6 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   DeleteProjectRole,
   UpdateProject,
-  GetRolesByUserId,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 import {
@@ -107,7 +106,8 @@ import {
   GetUserDeletableStreams,
   GetStreamsCollaborators,
   GetStreamsCollaboratorCounts,
-  GetImplicitUserProjectsCountFactory
+  GetImplicitUserProjectsCountFactory,
+  GrantProjectPermissions
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
@@ -454,7 +454,7 @@ export const getStreamRolesFactory =
   async (userId: string, streamIds: string[]) => {
     const q = tables
       .streams(deps.db)
-      .select<{ id: string; role: Nullable<string> }[]>([
+      .select<{ id: string; role: Nullable<StreamRoles> }[]>([
         Streams.col.id,
         StreamAcl.col.role
       ])
@@ -1077,6 +1077,7 @@ export const updateStreamFactory =
     return updatedStream
   }
 
+/** @deprecated Use `updateStreamFactory` */
 export const updateProjectFactory =
   ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {
@@ -1201,6 +1202,16 @@ export const grantStreamPermissionsFactory =
     return streams[0] as StreamRecord
   }
 
+/**
+ * Convenience wrapper around grantStreamPermissions, renaming streams -> projects
+ */
+export const grantProjectPermissionsFactory = (
+  deps: Parameters<typeof grantStreamPermissionsFactory>[0]
+): GrantProjectPermissions => {
+  const grant = grantStreamPermissionsFactory(deps)
+  return async (params) => await grant({ ...params, streamId: params.projectId })
+}
+
 export const deleteProjectRoleFactory =
   ({ db }: { db: Knex }): DeleteProjectRole =>
   async ({ projectId, userId }) => {
@@ -1316,20 +1327,6 @@ export const getOnboardingBaseStreamFactory =
       .first()
 
     return await q
-  }
-
-export const getRolesByUserIdFactory =
-  ({ db }: { db: Knex }): GetRolesByUserId =>
-  async ({ userId, workspaceId }) => {
-    const query = db<Pick<StreamAclRecord, 'role' | 'resourceId' | 'userId'>>(
-      StreamAcl.name
-    ).where({ userId })
-    if (workspaceId) {
-      query
-        .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
-        .where({ workspaceId })
-    }
-    return await query
   }
 
 /**

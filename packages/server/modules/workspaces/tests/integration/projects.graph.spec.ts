@@ -1,9 +1,15 @@
 import { db } from '@/db/knex'
-import { StreamAcl } from '@/modules/core/dbSchema'
-import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { StreamAcl, Streams } from '@/modules/core/dbSchema'
+import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  deleteProjectFactory,
+  getProjectFactory
+} from '@/modules/core/repositories/projects'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { waitForRegionProjectFactory } from '@/modules/core/services/projects'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   assignToWorkspace,
@@ -30,6 +36,7 @@ import {
   MoveProjectToWorkspaceDocument,
   ProjectUpdateRoleInput,
   ProjectVisibility,
+  UpdateProjectDocument,
   UpdateProjectRoleDocument,
   UpdateWorkspaceProjectRoleDocument
 } from '@/test/graphql/generated/graphql'
@@ -40,6 +47,7 @@ import {
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { mockAdminOverride } from '@/test/mocks/global'
+import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import {
   addToStream,
   BasicTestStream,
@@ -57,10 +65,15 @@ import {
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
+import { Knex } from 'knex'
 import { times } from 'lodash'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const adminOverrideMock = mockAdminOverride()
+
+const tables = {
+  streams: (db: Knex) => db.table<StreamRecord>(Streams.name)
+}
 
 describe('Workspace project GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -982,6 +995,62 @@ describe('Workspace project GQL CRUD', () => {
       expect(resB).to.not.haveGraphQLErrors()
       expect(adminWorkspaceRole?.role).to.equal(Roles.Workspace.Admin)
     })
+
+    isMultiRegionTestMode()
+      ? describe('when the default server db region is not the main db', () => {
+          const regionalProject: StreamRecord = {
+            id: cryptoRandomString({ length: 9 }),
+            name: 'My Special Project',
+            description: null,
+            clonedFrom: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            allowPublicComments: false,
+            workspaceId: null,
+            regionKey: 'region1',
+            visibility: ProjectRecordVisibility.Public
+          }
+
+          beforeEach(async () => {
+            // Simulate non-main default db region
+            const regionDb = await getRegionDb({ regionKey: 'region1' })
+            await tables.streams(regionDb).insert(regionalProject)
+            await waitForRegionProjectFactory({
+              getProject: getProjectFactory({ db }),
+              deleteProject: deleteProjectFactory({ db: regionDb })
+            })({
+              projectId: regionalProject.id,
+              regionKey: 'region1'
+            })
+            await grantStreamPermissions({
+              streamId: regionalProject.id,
+              userId: serverAdminUser.id,
+              role: Roles.Stream.Owner
+            })
+          })
+
+          it('should update project without removing workspace association @multiregion', async () => {
+            const resA = await apollo.execute(MoveProjectToWorkspaceDocument, {
+              projectId: regionalProject.id,
+              workspaceId: targetWorkspace.id
+            })
+            const resB = await apollo.execute(UpdateProjectDocument, {
+              input: {
+                id: regionalProject.id,
+                name: 'Foo'
+              }
+            })
+            const resC = await apollo.execute(GetProjectDocument, {
+              id: regionalProject.id
+            })
+
+            expect(resA).to.not.haveGraphQLErrors()
+            expect(resB).to.not.haveGraphQLErrors()
+            expect(resC).to.not.haveGraphQLErrors()
+            expect(resC.data?.project?.workspaceId).to.equal(targetWorkspace.id)
+          })
+        })
+      : null
   })
 
   // moved over Alessandro's tests from core to here, since they are all related to workspaces

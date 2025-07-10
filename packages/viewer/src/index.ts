@@ -152,7 +152,6 @@ import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewMo
 import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
-import { OrientedSectionTool } from './modules/extensions/sections/OrientedSectionTool.js'
 import {
   SectionTool,
   SectionToolEvent,
@@ -205,7 +204,6 @@ export {
   SelectionExtension,
   CameraController,
   SectionTool,
-  OrientedSectionTool,
   SectionOutlines,
   MeasurementsExtension,
   FilteringExtension,

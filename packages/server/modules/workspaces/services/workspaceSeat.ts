@@ -1,6 +1,7 @@
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   CreateWorkspaceSeat,
+  GetWorkspaceDefaultSeatType,
   GetWorkspaceUserSeat
 } from '@/modules/gatekeeper/domain/operations'
 import { NotFoundError } from '@/modules/shared/errors'
@@ -8,23 +9,29 @@ import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   AssignWorkspaceSeat,
   EnsureValidWorkspaceRoleSeat,
+  GetWorkspace,
   GetWorkspaceRoleForUser
 } from '@/modules/workspaces/domain/operations'
 import { InvalidWorkspaceSeatTypeError } from '@/modules/workspaces/errors/workspaceSeat'
+import { WorkspaceDefaultSeatType } from '@/modules/workspacesCore/domain/constants'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { z } from 'zod'
 
-const getDefaultWorkspaceSeatTypeByWorkspaceRole = ({
-  workspaceRole
-}: {
-  workspaceRole: WorkspaceRoles
-}): WorkspaceSeatType => {
-  if (workspaceRole === Roles.Workspace.Admin) {
-    return WorkspaceSeatType.Editor
+export const getWorkspaceDefaultSeatTypeFactory =
+  (deps: { getWorkspace: GetWorkspace }): GetWorkspaceDefaultSeatType =>
+  async ({ workspaceId, workspaceRole }) => {
+    // Default configured on workspace. `null` if never set by workspace admin
+    // Note: The unset state allows us to change the global default later on existing workspaces
+    const workspace = await deps.getWorkspace({ workspaceId })
+    const workspaceDefaultSeatType =
+      workspace?.defaultSeatType ?? WorkspaceDefaultSeatType
+
+    // Workspace admins require an editor seat
+    return workspaceRole === Roles.Workspace.Admin
+      ? WorkspaceSeatType.Editor
+      : workspaceDefaultSeatType
   }
-  return WorkspaceSeatType.Viewer
-}
 
 const WorkspaceRoleWorkspaceSeatTypeMapping = z.union([
   z.object({
@@ -68,6 +75,7 @@ export const ensureValidWorkspaceRoleSeatFactory =
   (deps: {
     createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceUserSeat: GetWorkspaceUserSeat
+    getWorkspaceDefaultSeatType: GetWorkspaceDefaultSeatType
     eventEmit: EventBusEmit
   }): EnsureValidWorkspaceRoleSeat =>
   async (params) => {
@@ -89,18 +97,20 @@ export const ensureValidWorkspaceRoleSeatFactory =
     const seat = await deps.createWorkspaceSeat({
       workspaceId: params.workspaceId,
       userId: params.userId,
-      type: getDefaultWorkspaceSeatTypeByWorkspaceRole({ workspaceRole: params.role })
+      type: await deps.getWorkspaceDefaultSeatType({
+        workspaceId: params.workspaceId,
+        workspaceRole: params.role
+      })
     })
 
-    if (!params.skipEvent) {
-      await deps.eventEmit({
-        eventName: WorkspaceEvents.SeatUpdated,
-        payload: {
-          seat,
-          updatedByUserId: params.updatedByUserId
-        }
-      })
-    }
+    await deps.eventEmit({
+      eventName: WorkspaceEvents.SeatUpdated,
+      payload: {
+        seat,
+        updatedByUserId: params.updatedByUserId,
+        previousSeat: workspaceSeat
+      }
+    })
 
     return seat
   }
@@ -109,10 +119,12 @@ export const assignWorkspaceSeatFactory =
   ({
     createWorkspaceSeat,
     getWorkspaceRoleForUser,
+    getWorkspaceUserSeat,
     eventEmit: eventEmit
   }: {
     createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
     eventEmit: EventBusEmit
   }): AssignWorkspaceSeat =>
   async ({ workspaceId, userId, type, assignedByUserId }) => {
@@ -138,6 +150,7 @@ export const assignWorkspaceSeatFactory =
       )
     }
 
+    const previousSeat = await getWorkspaceUserSeat({ workspaceId, userId })
     const seat = await createWorkspaceSeat({
       workspaceId,
       userId,
@@ -148,7 +161,8 @@ export const assignWorkspaceSeatFactory =
       eventName: WorkspaceEvents.SeatUpdated,
       payload: {
         seat,
-        updatedByUserId: assignedByUserId
+        updatedByUserId: assignedByUserId,
+        previousSeat
       }
     })
 

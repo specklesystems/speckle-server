@@ -406,6 +406,13 @@ export const PersonalApiTokens = buildTableHelper('personal_api_tokens', [
   'userId'
 ])
 
+export const EmbedApiTokens = buildTableHelper('embed_api_tokens', [
+  'tokenId',
+  'projectId',
+  'userId',
+  'resourceIdString'
+])
+
 export const UserServerAppTokens = buildTableHelper('user_server_app_tokens', [
   'appId',
   'userId',
@@ -429,6 +436,16 @@ export const ServerAccessRequests = buildTableHelper('server_access_requests', [
   'resourceId',
   'createdAt',
   'updatedAt'
+])
+
+export const Activity = buildTableHelper('activity', [
+  'id',
+  'contextResourceId',
+  'contextResourceType',
+  'eventType',
+  'userId',
+  'payload',
+  'createdAt'
 ])
 
 export const StreamActivity = buildTableHelper('stream_activity', [

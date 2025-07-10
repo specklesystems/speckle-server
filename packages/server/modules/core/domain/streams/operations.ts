@@ -3,6 +3,7 @@ import {
   StreamWithOptionalRole,
   LimitedUserWithStreamRole,
   Stream,
+  Project,
   StreamFavoriteMetadata
 } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
@@ -257,7 +258,7 @@ export type GetStreamRoles = (
   userId: string,
   streamIds: string[]
 ) => Promise<{
-  [streamId: string]: Nullable<string>
+  [streamId: string]: Nullable<StreamRoles>
 }>
 
 export type GetUserStreamCounts = (params: {
@@ -299,6 +300,17 @@ export type GrantStreamPermissions = (
     trackProjectUpdate?: boolean
   }
 ) => Promise<Optional<Stream>>
+
+export type GrantProjectPermissions = (
+  params: {
+    projectId: string
+    userId: string
+    role: StreamRoles
+  },
+  options?: {
+    trackProjectUpdate?: boolean
+  }
+) => Promise<Optional<Project>>
 
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateArgs) & {

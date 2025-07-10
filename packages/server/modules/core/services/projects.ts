@@ -4,12 +4,17 @@ import {
   CreateProject,
   DeleteProject,
   GetProject,
+  QueryAllProjects,
   StoreModel,
   StoreProject,
-  StoreProjectRole
+  StoreProjectRole,
+  WaitForRegionProject
 } from '@/modules/core/domain/projects/operations'
-import { Project } from '@/modules/core/domain/streams/types'
-import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
+import { Project, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import {
+  ProjectQueryError,
+  RegionalProjectCreationError
+} from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { mapGqlToDbProjectVisibility } from '@/modules/core/helpers/project'
@@ -18,22 +23,21 @@ import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
+import { LegacyGetStreams } from '@/modules/core/domain/streams/operations'
 
 export const createNewProjectFactory =
   ({
     storeProject,
-    getProject,
-    deleteProject,
     storeProjectRole,
     storeModel,
+    waitForRegionProject,
     emitEvent
   }: {
     storeProject: StoreProject
-    getProject: GetProject
-    deleteProject: DeleteProject
     storeProjectRole: StoreProjectRole
-    emitEvent: EventBusEmit
     storeModel: StoreModel
+    waitForRegionProject: WaitForRegionProject
+    emitEvent: EventBusEmit
   }): CreateProject =>
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
     visibility =
@@ -57,25 +61,10 @@ export const createNewProjectFactory =
     const projectId = project.id
     // if regionKey, we need to make sure it is actually written and synced
     if (regionKey) {
-      try {
-        await retry(
-          async () => {
-            const replicatedProject = await getProject({ projectId })
-            if (!replicatedProject) throw new StreamNotFoundError()
-          },
-          { maxAttempts: 10, delay: isTestEnv() ? TIME_MS.second : undefined }
-        )
-      } catch (err) {
-        if (err instanceof StreamNotFoundError) {
-          // delete from region
-          await deleteProject({ projectId })
-          throw new RegionalProjectCreationError(undefined, {
-            info: { projectId, regionKey }
-          })
-        }
-        // else throw as is
-        throw err
-      }
+      await waitForRegionProject({
+        projectId,
+        regionKey
+      })
     }
     await storeProjectRole({ projectId, userId: ownerId, role: Roles.Stream.Owner })
     await storeModel({
@@ -84,6 +73,7 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
+
     await emitEvent({
       eventName: ProjectEvents.Created,
       payload: {
@@ -96,5 +86,78 @@ export const createNewProjectFactory =
         }
       }
     })
+
+    await emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project,
+        activityUserId: ownerId,
+        targetUserId: ownerId,
+        role: Roles.Stream.Owner,
+        previousRole: null
+      }
+    })
     return project
+  }
+
+export const waitForRegionProjectFactory =
+  (deps: {
+    getProject: GetProject
+    deleteProject: DeleteProject
+  }): WaitForRegionProject =>
+  async ({ projectId, regionKey, maxAttempts = 10 }) => {
+    try {
+      await retry(
+        async () => {
+          const replicatedProject = await deps.getProject({ projectId })
+          if (!replicatedProject) throw new StreamNotFoundError()
+        },
+        { maxAttempts, delay: isTestEnv() ? TIME_MS.second : undefined }
+      )
+    } catch (err) {
+      if (err instanceof StreamNotFoundError) {
+        // delete from region
+        await deps.deleteProject({ projectId })
+        throw new RegionalProjectCreationError(undefined, {
+          info: { projectId, regionKey }
+        })
+      }
+      // else throw as is
+      throw err
+    }
+  }
+
+export const queryAllProjectsFactory = ({
+  getStreams
+}: {
+  getStreams: LegacyGetStreams
+}): QueryAllProjects =>
+  async function* queryAllWorkspaceProjects({
+    userId,
+    workspaceId
+  }): AsyncGenerator<StreamWithOptionalRole[], void, unknown> {
+    let cursor: Date | null = null
+    let iterationCount = 0
+
+    if (!userId && !workspaceId) throw new ProjectQueryError()
+
+    do {
+      if (iterationCount > 500) throw new ProjectQueryError()
+
+      const { streams, cursorDate } = await getStreams({
+        cursor,
+        orderBy: null,
+        limit: 100,
+        visibility: null,
+        searchQuery: null,
+        streamIdWhitelist: null,
+        workspaceIdWhitelist: workspaceId ? [workspaceId] : null,
+        userId
+      })
+
+      yield streams
+
+      cursor = cursorDate
+      iterationCount++
+    } while (!!cursor)
   }

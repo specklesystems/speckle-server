@@ -54,7 +54,10 @@ import {
   WorkspaceProtectedError
 } from '@/modules/workspaces/errors/workspace'
 import cryptoRandomString from 'crypto-random-string'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamRolesFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
@@ -84,6 +87,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -581,7 +585,22 @@ describe('Workspaces Invites GQL', () => {
           leaveStream(
             myProjectInviteTargetBasicProject,
             workspaceMemberWithNoProjectAccess
-          )
+          ),
+          // Switch workspaceGuest back to Viewer/Guest
+          assignToWorkspaces([
+            [
+              myProjectInviteTargetWorkspace,
+              workspaceGuest,
+              Roles.Workspace.Guest,
+              WorkspaceSeatType.Viewer
+            ],
+            [
+              myProjectInviteTargetWorkspaceWithNewPlan,
+              workspaceGuest,
+              Roles.Workspace.Guest,
+              WorkspaceSeatType.Viewer
+            ]
+          ])
         ])
       })
 
@@ -745,7 +764,7 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
       })
 
-      it("can't invite someone with a viewer seat to be a contributor", async () => {
+      it(`can't invite someone with a viewer seat to be a contributor`, async () => {
         const res = await gqlHelpers.createWorkspaceProjectInvite({
           projectId: myProjectInviteTargetWorkspaceNewPlanProject.id,
           inputs: [
@@ -758,6 +777,33 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.haveGraphQLErrors({ code: WorkspaceInvalidRoleError.code })
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
+      })
+
+      it('can invite someone with a viewer seat to be a contributor if seatType set to editor', async () => {
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceNewPlanProject.id,
+          inputs: [
+            {
+              userId: workspaceGuest.id,
+              role: Roles.Stream.Contributor,
+              seatType: WorkspaceSeatType.Editor
+            }
+          ]
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+
+        // invite should be auto-accepted
+        await gqlHelpers.validateResourceAccess({
+          shouldHaveAccess: true,
+          expectedWorkspaceRole: Roles.Workspace.Guest,
+          expectedWorkspaceSeatType: WorkspaceSeatType.Editor,
+          expectedProjectRole: Roles.Stream.Contributor,
+          streamId: myProjectInviteTargetWorkspaceNewPlanProject.id,
+          userId: workspaceGuest.id,
+          workspaceId: myProjectInviteTargetWorkspaceWithNewPlan.id
+        })
       })
 
       it("can't invite invalid domain email to domain protected workspace project", async () => {
@@ -955,7 +1001,7 @@ describe('Workspaces Invites GQL', () => {
         expect(res).to.not.haveGraphQLErrors()
 
         const unrelatedInvite = res.data?.workspace.invitedTeam?.find(
-          (t) => t.workspaceId === unrelatedWorkspace.id
+          (t) => t.workspace.id === unrelatedWorkspace.id
         )
         expect(unrelatedInvite).to.be.not.ok
       })
@@ -1066,6 +1112,7 @@ describe('Workspaces Invites GQL', () => {
         shouldHaveAccess: boolean | { workspace: boolean; project: boolean }
         expectedWorkspaceRole?: WorkspaceRoles
         expectedProjectRole?: StreamRoles
+        expectedWorkspaceSeatType?: WorkspaceSeatType
         streamId: string
       }) => {
         return gqlHelpers.validateResourceAccess({
@@ -1316,7 +1363,7 @@ describe('Workspaces Invites GQL', () => {
         expect(res2.data?.activeUser?.workspaceInvites).to.be.ok
         expect(
           res2.data!.activeUser!.workspaceInvites.find(
-            (i) => i.workspaceId === brokenWorkspace.id
+            (i) => i.workspace.id === brokenWorkspace.id
           )
         ).to.not.be.ok
       })
@@ -1345,7 +1392,7 @@ describe('Workspaces Invites GQL', () => {
           expect(res.data!.workspaceInvite!.inviteId).to.equal(
             processableWorkspaceInvite.inviteId
           )
-          expect(res.data!.workspaceInvite!.workspaceId).to.equal(
+          expect(res.data!.workspaceInvite!.workspace.id).to.equal(
             myInviteTargetWorkspace.id
           )
           expect(res.data!.workspaceInvite!.token).to.equal(
@@ -1375,7 +1422,7 @@ describe('Workspaces Invites GQL', () => {
             expect(res.data?.activeUser?.workspaceInvites![0].inviteId).to.equal(
               processableWorkspaceInvite.inviteId
             )
-            expect(res.data?.activeUser?.workspaceInvites![0].workspaceId).to.equal(
+            expect(res.data?.activeUser?.workspaceInvites![0].workspace.id).to.equal(
               myInviteTargetWorkspace.id
             )
           } else {
@@ -1413,11 +1460,116 @@ describe('Workspaces Invites GQL', () => {
           // Should have access to workspace visibility stream, not the other one
           await validateResourceAccess({
             shouldHaveAccess: accept,
-            streamId: myInviteTargetWorkspaceStream1.id
+            streamId: myInviteTargetWorkspaceStream1.id,
+            expectedWorkspaceSeatType: WorkspaceSeatType.Viewer
           })
           await validateResourceAccess({
             shouldHaveAccess: { workspace: accept, project: false },
             streamId: myInviteTargetPrivateWorkspaceStream1.id
+          })
+        }
+      )
+
+      itEach(
+        [WorkspaceSeatType.Editor, WorkspaceSeatType.Viewer],
+        (seatType) => `can specify ${seatType} seat type in workspace invite`,
+        async (seatType) => {
+          const workspaceInvite = await captureCreatedInvite(async () => {
+            await gqlHelpers.createInvite(
+              {
+                workspaceId: myInviteTargetWorkspace.id,
+                input: {
+                  userId: otherGuy.id,
+                  role: WorkspaceRole.Member,
+                  seatType
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+          expect(workspaceInvite.id).to.be.ok
+          expect(workspaceInvite.resource.workspaceSeatType).to.equal(seatType)
+
+          const res = await gqlHelpers.useInvite(
+            {
+              input: {
+                accept: true,
+                token: workspaceInvite.token
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspaceMutations?.invites?.use).to.be.ok
+
+          const invite = await findInviteFactory({ db })({
+            inviteId: processableWorkspaceInvite.inviteId
+          })
+          expect(invite).to.be.not.ok
+
+          // Should have access to workspace visibility stream, not the other one
+          await validateResourceAccess({
+            shouldHaveAccess: true,
+            streamId: myInviteTargetWorkspaceStream1.id,
+            expectedWorkspaceSeatType: seatType
+          })
+          await validateResourceAccess({
+            shouldHaveAccess: { workspace: true, project: false },
+            streamId: myInviteTargetPrivateWorkspaceStream1.id,
+            expectedWorkspaceSeatType: seatType
+          })
+        }
+      )
+
+      itEach(
+        [WorkspaceSeatType.Editor, WorkspaceSeatType.Viewer],
+        (seatType) => `can specify ${seatType} seat type in workspace project invite`,
+        async (seatType) => {
+          const projectInvite = await captureCreatedInvite(
+            async () =>
+              await gqlHelpers.createWorkspaceProjectInvite(
+                {
+                  projectId: myInviteTargetWorkspaceStream1.id,
+                  inputs: [
+                    {
+                      userId: otherGuy.id,
+                      role: Roles.Stream.Reviewer,
+                      seatType
+                    }
+                  ]
+                },
+                { assertNoErrors: true }
+              )
+          )
+          expect(projectInvite.id).to.be.ok
+          expect(projectInvite.resource.workspaceSeatType).to.equal(seatType)
+
+          const res = await gqlHelpers.useInvite(
+            {
+              input: {
+                accept: true,
+                token: projectInvite.token
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspaceMutations.invites.use).to.be.ok
+
+          await validateResourceAccess({
+            shouldHaveAccess: true,
+            streamId: myInviteTargetWorkspaceStream1.id,
+            expectedWorkspaceSeatType: seatType
           })
         }
       )
@@ -1468,7 +1620,8 @@ describe('Workspaces Invites GQL', () => {
 
           await validateResourceAccess({
             shouldHaveAccess: accept,
-            streamId: myInviteTargetWorkspaceStream1.id
+            streamId: myInviteTargetWorkspaceStream1.id,
+            expectedWorkspaceSeatType: WorkspaceSeatType.Editor // admin role
           })
 
           const verifiedEmails = await findVerifiedEmailsByUserIdFactory({
@@ -1641,6 +1794,7 @@ describe('Workspaces Invites GQL', () => {
         await validateResourceAccess({
           shouldHaveAccess: true,
           expectedWorkspaceRole: Roles.Workspace.Guest,
+          expectedWorkspaceSeatType: WorkspaceSeatType.Viewer,
           expectedProjectRole: Roles.Stream.Reviewer,
           streamId: myInviteTargetWorkspaceStream1.id
         })
@@ -1698,6 +1852,9 @@ describe('Workspaces Invites GQL', () => {
             expectedWorkspaceRole: withRole
               ? Roles.Workspace.Admin
               : Roles.Workspace.Guest,
+            expectedWorkspaceSeatType: withRole
+              ? WorkspaceSeatType.Editor
+              : WorkspaceSeatType.Viewer,
             expectedProjectRole: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer,
             streamId: myInviteTargetWorkspaceStream1.id
           })
@@ -1783,7 +1940,8 @@ describe('Workspaces Invites GQL', () => {
       await gqlHelpers.validateResourceAccess({
         shouldHaveAccess: true,
         userId: newUser.id,
-        workspaceId: otherWorkspace.id
+        workspaceId: otherWorkspace.id,
+        expectedWorkspaceSeatType: WorkspaceSeatType.Viewer
       })
     })
   })

@@ -19,7 +19,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
-import { getProjectFake } from '../../tests/fakes.js'
+import { getProjectFake, getWorkspaceFake } from '../../tests/fakes.js'
 import { TIME_MS } from '../../core/index.js'
 import { ProjectVisibility } from '../domain/projects/types.js'
 
@@ -52,7 +52,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
         workspaceId: 'workspaceId',
         visibility: ProjectVisibility.Workspace
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -290,7 +290,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
         id: 'projectId',
         workspaceId: 'workspaceId'
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -450,7 +450,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -688,7 +688,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),

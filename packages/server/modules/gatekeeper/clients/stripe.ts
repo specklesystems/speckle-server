@@ -41,7 +41,7 @@ export const createCustomerPortalUrlFactory =
     return session.url
   }
 
-export const getSubscriptionDataFactory =
+export const getStripeSubscriptionDataFactory =
   ({
     stripe
   }: // getWorkspacePlanPrice
@@ -92,9 +92,15 @@ export const parseSubscriptionData = (
 // this should be a reconcile subscriptions, we keep an accurate state in the DB
 // on each change, we're reconciling that state to stripe
 export const reconcileWorkspaceSubscriptionFactory =
-  ({ stripe }: { stripe: Stripe }): ReconcileSubscriptionData =>
+  ({
+    stripe,
+    getStripeSubscriptionData
+  }: {
+    stripe: Stripe
+    getStripeSubscriptionData: GetSubscriptionData
+  }): ReconcileSubscriptionData =>
   async ({ subscriptionData, prorationBehavior }) => {
-    const existingSubscriptionState = await getSubscriptionDataFactory({ stripe })({
+    const existingSubscriptionState = await getStripeSubscriptionData({
       subscriptionId: subscriptionData.subscriptionId
     })
     const items: Stripe.SubscriptionUpdateParams.Item[] = []
@@ -124,6 +130,7 @@ export const reconcileWorkspaceSubscriptionFactory =
     for (const removedProduct of removedProducts) {
       items.push({ id: removedProduct.subscriptionItemId, deleted: true })
     }
+
     // workspaceSubscription.subscriptionData.products.
     // const item = workspaceSubscription.subscriptionData.products.find(p => p.)
     await stripe.subscriptions.update(subscriptionData.subscriptionId, {

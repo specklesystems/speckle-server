@@ -5,7 +5,7 @@ import {
 } from '@/modules/serverinvites/domain/constants'
 import { ResourceTargetTypeRoleTypeMap } from '@/modules/serverinvites/helpers/core'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { ServerRoles, StreamRoles } from '@speckle/shared'
 
 export interface InviteResourceTargetTypeMap {
@@ -43,6 +43,11 @@ export type PrimaryInviteResourceTarget<
    * and the accept process is done automatically without user involvement.
    */
   autoAccept?: boolean
+
+  /**
+   * If invite causes the user to join a workspace, this should be the assigned seat type
+   */
+  workspaceSeatType?: WorkspaceSeatType
 }
 
 export type ServerInviteResourceTarget = InviteResourceTarget<
