@@ -212,7 +212,7 @@ jobs:
           - 6379:6379
     env:
       REDIS_URL: redis://redis:6379
-      CHROMIUM_EXECUTABLE_PATH: '/usr/lib/chromium/'
+      CHROMIUM_EXECUTABLE_PATH: '/usr/bin/chromium/'
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
