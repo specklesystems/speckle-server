@@ -18,7 +18,11 @@ import { MaybeNullOrUndefined } from '@speckle/shared'
  * Save "new commit created" activity item
  */
 const addCommitCreatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddCommitCreatedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddCommitCreatedActivity =>
   async (params: {
     commitId: string
     streamId: string
@@ -29,7 +33,7 @@ const addCommitCreatedActivityFactory =
     commit: CommitRecord
   }) => {
     const { commitId, input, streamId, userId, branchName, commit, modelId } = params
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
       resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
@@ -49,11 +53,15 @@ const addCommitCreatedActivityFactory =
   }
 
 const addCommitUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddCommitUpdatedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddCommitUpdatedActivity =>
   async (params) => {
     const { commitId, streamId, userId, originalCommit, update } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
       resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
@@ -65,7 +73,7 @@ const addCommitUpdatedActivityFactory =
   }
 
 const addCommitMovedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }) =>
+  ({ saveStreamActivity }: { saveStreamActivity: SaveStreamActivity }) =>
   async (params: {
     commitId: string
     streamId: string
@@ -75,7 +83,7 @@ const addCommitMovedActivityFactory =
     commit: CommitRecord
   }) => {
     const { commitId, streamId, userId, originalBranchId, newBranchId } = params
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
       resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
@@ -87,7 +95,11 @@ const addCommitMovedActivityFactory =
   }
 
 const addCommitDeletedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddCommitDeletedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddCommitDeletedActivity =>
   async (params: {
     commitId: string
     streamId: string
@@ -96,7 +108,7 @@ const addCommitDeletedActivityFactory =
     branchId: string
   }) => {
     const { commitId, streamId, userId, commit } = params
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
       resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
@@ -108,7 +120,7 @@ const addCommitDeletedActivityFactory =
   }
 
 const addCommitReceivedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }) =>
+  ({ saveStreamActivity }: { saveStreamActivity: SaveStreamActivity }) =>
   async (params: {
     streamId: string
     commitId: string
@@ -117,7 +129,7 @@ const addCommitReceivedActivityFactory =
     message: MaybeNullOrUndefined<string>
   }) => {
     const { streamId, commitId, userId, sourceApplication, message } = params
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
       resourceType: StreamResourceTypes.Commit,
       resourceId: commitId,
@@ -132,7 +144,8 @@ const addCommitReceivedActivityFactory =
   }
 
 export const reportCommitActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveStreamActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveStreamActivity: SaveStreamActivity }) =>
+  () => {
     const addCommitCreatedActivity = addCommitCreatedActivityFactory(deps)
     const addCommitUpdatedActivity = addCommitUpdatedActivityFactory(deps)
     const addCommitMovedActivity = addCommitMovedActivityFactory(deps)
