@@ -10,22 +10,21 @@ import {
   deleteAllProjectEmbedTokensMutation
 } from '~~/lib/projects/graphql/mutations'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { useApolloClient } from '@vue/apollo-composable'
+import { useMutation } from '@vue/apollo-composable'
 
 export const useDeleteEmbedToken = () => {
   const { triggerNotification } = useGlobalToast()
-  const apollo = useApolloClient().client
+  const { mutate } = useMutation(deleteEmbedTokenMutation)
 
   return async (input: { projectId: string; token: string }) => {
     const { projectId, token } = input
 
-    const result = await apollo
-      .mutate({
-        mutation: deleteEmbedTokenMutation,
-        variables: {
-          projectId,
-          token
-        },
+    const result = await mutate(
+      {
+        projectId,
+        token
+      },
+      {
         update: (cache, { data }) => {
           if (!data?.projectMutations.revokeEmbedToken) return
 
@@ -46,8 +45,8 @@ export const useDeleteEmbedToken = () => {
             }
           )
         }
-      })
-      .catch(convertThrowIntoFetchResult)
+      }
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data?.projectMutations.revokeEmbedToken) {
       triggerNotification({
@@ -65,15 +64,14 @@ export const useDeleteEmbedToken = () => {
 }
 
 export const useDeleteAllEmbedTokens = () => {
-  const apollo = useApolloClient().client
+  const { mutate } = useMutation(deleteAllProjectEmbedTokensMutation)
 
   return async (input: { projectId: string }) => {
     const { projectId } = input
 
-    await apollo
-      .mutate({
-        mutation: deleteAllProjectEmbedTokensMutation,
-        variables: { projectId },
+    await mutate(
+      { projectId },
+      {
         update(cache, { data }) {
           if (!data?.projectMutations.revokeEmbedTokens) return
 
@@ -82,24 +80,21 @@ export const useDeleteAllEmbedTokens = () => {
             fieldName: 'embedTokens'
           })
         }
-      })
-      .catch(convertThrowIntoFetchResult)
+      }
+    ).catch(convertThrowIntoFetchResult)
   }
 }
 
 export const useCreateEmbedToken = () => {
-  const apollo = useApolloClient().client
+  const { mutate } = useMutation(createEmbedTokenMutation)
 
   return async (input: { projectId: string; resourceIdString: string }) => {
     const { projectId, resourceIdString } = input
 
-    const result = await apollo
-      .mutate({
-        mutation: createEmbedTokenMutation,
-        variables: { token: { projectId, resourceIdString } }
-      })
-      .catch(convertThrowIntoFetchResult)
+    const result = await mutate({
+      token: { projectId, resourceIdString }
+    }).catch(convertThrowIntoFetchResult)
 
-    return result.data?.projectMutations.createEmbedToken.token
+    return result?.data?.projectMutations.createEmbedToken.token
   }
 }
