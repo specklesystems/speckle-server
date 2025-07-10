@@ -922,6 +922,12 @@ export type CreateCommentReplyInput = {
   threadId: Scalars['String']['input'];
 };
 
+export type CreateEmbedTokenReturn = {
+  __typename?: 'CreateEmbedTokenReturn';
+  token: Scalars['String']['output'];
+  tokenMetadata: EmbedToken;
+};
+
 export type CreateModelInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -1000,20 +1006,30 @@ export type EmailVerificationRequestInput = {
   id: Scalars['ID']['input'];
 };
 
+/** A token used to enable an embedded viewer for a private project */
 export type EmbedToken = {
   __typename?: 'EmbedToken';
   createdAt: Scalars['DateTime']['output'];
-  id: Scalars['String']['output'];
   lastUsed: Scalars['DateTime']['output'];
   lifespan: Scalars['BigInt']['output'];
-  modelIds: Scalars['String']['output'];
-  name: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  resourceIdString: Scalars['String']['output'];
+  tokenId: Scalars['String']['output'];
+  user?: Maybe<LimitedUser>;
+};
+
+export type EmbedTokenCollection = {
+  __typename?: 'EmbedTokenCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<EmbedToken>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type EmbedTokenCreateInput = {
   lifespan?: InputMaybe<Scalars['BigInt']['input']>;
-  modelIds: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
+  /** The model(s) and version(s) string used in the embed url */
+  resourceIdString: Scalars['String']['input'];
 };
 
 export type FileUpload = {
@@ -2111,7 +2127,7 @@ export type Project = {
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
-  embedTokens: Array<EmbedToken>;
+  embedTokens: EmbedTokenCollection;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
@@ -2190,6 +2206,12 @@ export type ProjectCommentArgs = {
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectEmbedTokensArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -2593,7 +2615,7 @@ export type ProjectMutations = {
   batchDelete: Scalars['Boolean']['output'];
   /** Create new project */
   create: Project;
-  createEmbedToken: Scalars['String']['output'];
+  createEmbedToken: CreateEmbedTokenReturn;
   /**
    * Create onboarding/tutorial project. If one is already created for the active user, that
    * one will be returned instead.
@@ -2606,6 +2628,7 @@ export type ProjectMutations = {
   /** Leave a project. Only possible if you're not the last remaining owner. */
   leave: Scalars['Boolean']['output'];
   revokeEmbedToken: Scalars['Boolean']['output'];
+  revokeEmbedTokens: Scalars['Boolean']['output'];
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
@@ -2644,7 +2667,13 @@ export type ProjectMutationsLeaveArgs = {
 
 
 export type ProjectMutationsRevokeEmbedTokenArgs = {
+  projectId: Scalars['String']['input'];
   token: Scalars['String']['input'];
+};
+
+
+export type ProjectMutationsRevokeEmbedTokensArgs = {
+  projectId: Scalars['String']['input'];
 };
 
 
@@ -2690,6 +2719,7 @@ export type ProjectPermissionChecks = {
   canBroadcastActivity: PermissionCheckResult;
   canCreateAutomation: PermissionCheckResult;
   canCreateComment: PermissionCheckResult;
+  canCreateEmbedTokens: PermissionCheckResult;
   canCreateModel: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canInvite: PermissionCheckResult;
@@ -2698,9 +2728,11 @@ export type ProjectPermissionChecks = {
   canMoveToWorkspace: PermissionCheckResult;
   canPublish: PermissionCheckResult;
   canRead: PermissionCheckResult;
+  canReadEmbedTokens: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
   canRequestRender: PermissionCheckResult;
+  canRevokeEmbedTokens: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
   canUpdateAllowPublicComments: PermissionCheckResult;
 };
@@ -7929,8 +7961,10 @@ export type AllObjectTypes = {
   Commit: Commit,
   CommitCollection: CommitCollection,
   CountOnlyCollection: CountOnlyCollection,
+  CreateEmbedTokenReturn: CreateEmbedTokenReturn,
   CurrencyBasedPrices: CurrencyBasedPrices,
   EmbedToken: EmbedToken,
+  EmbedTokenCollection: EmbedTokenCollection,
   FileUpload: FileUpload,
   FileUploadCollection: FileUploadCollection,
   FileUploadMutations: FileUploadMutations,
@@ -8389,17 +8423,27 @@ export type CommitCollectionFieldArgs = {
 export type CountOnlyCollectionFieldArgs = {
   totalCount: {},
 }
+export type CreateEmbedTokenReturnFieldArgs = {
+  token: {},
+  tokenMetadata: {},
+}
 export type CurrencyBasedPricesFieldArgs = {
   gbp: {},
   usd: {},
 }
 export type EmbedTokenFieldArgs = {
   createdAt: {},
-  id: {},
   lastUsed: {},
   lifespan: {},
-  modelIds: {},
-  name: {},
+  projectId: {},
+  resourceIdString: {},
+  tokenId: {},
+  user: {},
+}
+export type EmbedTokenCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
 }
 export type FileUploadFieldArgs = {
   branchName: {},
@@ -8694,7 +8738,7 @@ export type ProjectFieldArgs = {
   createdAt: {},
   description: {},
   embedOptions: {},
-  embedTokens: {},
+  embedTokens: ProjectEmbedTokensArgs,
   hasAccessToFeature: ProjectHasAccessToFeatureArgs,
   id: {},
   invitableCollaborators: ProjectInvitableCollaboratorsArgs,
@@ -8807,6 +8851,7 @@ export type ProjectMutationsFieldArgs = {
   invites: {},
   leave: ProjectMutationsLeaveArgs,
   revokeEmbedToken: ProjectMutationsRevokeEmbedTokenArgs,
+  revokeEmbedTokens: ProjectMutationsRevokeEmbedTokensArgs,
   update: ProjectMutationsUpdateArgs,
   updateRole: ProjectMutationsUpdateRoleArgs,
 }
@@ -8824,6 +8869,7 @@ export type ProjectPermissionChecksFieldArgs = {
   canBroadcastActivity: {},
   canCreateAutomation: {},
   canCreateComment: {},
+  canCreateEmbedTokens: {},
   canCreateModel: {},
   canDelete: {},
   canInvite: {},
@@ -8832,9 +8878,11 @@ export type ProjectPermissionChecksFieldArgs = {
   canMoveToWorkspace: ProjectPermissionChecksCanMoveToWorkspaceArgs,
   canPublish: {},
   canRead: {},
+  canReadEmbedTokens: {},
   canReadSettings: {},
   canReadWebhooks: {},
   canRequestRender: {},
+  canRevokeEmbedTokens: {},
   canUpdate: {},
   canUpdateAllowPublicComments: {},
 }
@@ -9569,8 +9617,10 @@ export type AllObjectFieldArgTypes = {
   Commit: CommitFieldArgs,
   CommitCollection: CommitCollectionFieldArgs,
   CountOnlyCollection: CountOnlyCollectionFieldArgs,
+  CreateEmbedTokenReturn: CreateEmbedTokenReturnFieldArgs,
   CurrencyBasedPrices: CurrencyBasedPricesFieldArgs,
   EmbedToken: EmbedTokenFieldArgs,
+  EmbedTokenCollection: EmbedTokenCollectionFieldArgs,
   FileUpload: FileUploadFieldArgs,
   FileUploadCollection: FileUploadCollectionFieldArgs,
   FileUploadMutations: FileUploadMutationsFieldArgs,
