@@ -72,7 +72,14 @@ export class ObjectLoader2 {
     return this.#root
   }
 
+  getObjectCount = 0;
+
   async getObject(params: { id: string }): Promise<Base> {
+    this.getObjectCount++
+    if (this.getObjectCount % 100 === 0) {
+      const p = new Promise((resolve) => setTimeout(resolve, 500))
+      await p // to avoid blocking the event loop too much
+    }
     return await this.#cacheReader.getObject({ id: params.id })
   }
 
