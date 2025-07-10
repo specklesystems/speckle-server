@@ -4,16 +4,21 @@ import {
   TokenResourceAccessRecord,
   TokenValidationResult
 } from '@/modules/core/helpers/types'
-import { Optional, ServerScope } from '@speckle/shared'
+import { Optional, Scopes, ServerScope } from '@speckle/shared'
 import {
+  CountProjectEmbedTokens,
   CreateAndStoreAppToken,
+  CreateAndStoreEmbedToken,
   CreateAndStorePersonalAccessToken,
   CreateAndStoreUserToken,
   GetApiTokenById,
+  GetPaginatedProjectEmbedTokens,
   GetTokenResourceAccessDefinitionsById,
   GetTokenScopesById,
+  ListProjectEmbedTokens,
   RevokeUserTokenById,
   StoreApiToken,
+  StoreEmbedApiToken,
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
@@ -24,6 +29,19 @@ import {
 import { GetTokenAppInfo } from '@/modules/auth/domain/operations'
 import { GetUserRole } from '@/modules/core/domain/users/operations'
 import { TokenCreateError } from '@/modules/core/errors/user'
+import cryptoRandomString from 'crypto-random-string'
+import {
+  EmbedApiToken,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
+import {
+  createGetParamFromResources,
+  parseUrlParameters
+} from '@speckle/shared/viewer/route'
+import {
+  decodeIsoDateCursor,
+  encodeIsoDateCursor
+} from '@/modules/shared/helpers/dbHelper'
 
 /*
   Tokens
@@ -122,6 +140,69 @@ export const createPersonalAccessTokenFactory =
     await deps.storePersonalApiToken({ userId, tokenId: id })
 
     return token
+  }
+
+export const createEmbedTokenFactory =
+  (deps: {
+    createToken: CreateAndStoreUserToken
+    storeEmbedToken: StoreEmbedApiToken
+  }): CreateAndStoreEmbedToken =>
+  async ({ projectId, userId, resourceIdString, lifespan }) => {
+    const validatedResourceIdString = createGetParamFromResources(
+      parseUrlParameters(resourceIdString)
+    )
+
+    const { id, token } = await deps.createToken({
+      userId,
+      name: cryptoRandomString({ length: 10 }),
+      scopes: [Scopes.Streams.Read],
+      limitResources: [
+        {
+          id: projectId,
+          type: TokenResourceIdentifierType.Project
+        }
+      ],
+      lifespan
+    })
+
+    const tokenMetadata: EmbedApiToken = {
+      projectId,
+      tokenId: id,
+      userId,
+      resourceIdString: validatedResourceIdString
+    }
+
+    await deps.storeEmbedToken(tokenMetadata)
+
+    return { token, tokenMetadata }
+  }
+
+export const getPaginatedProjectEmbedTokensFactory =
+  (deps: {
+    listEmbedTokens: ListProjectEmbedTokens
+    countEmbedTokens: CountProjectEmbedTokens
+  }): GetPaginatedProjectEmbedTokens =>
+  async ({ projectId, filter = {} }) => {
+    const cursor = filter.cursor ? decodeIsoDateCursor(filter.cursor) : null
+
+    const [items, totalCount] = await Promise.all([
+      deps.listEmbedTokens({
+        projectId,
+        filter: {
+          createdBefore: cursor,
+          limit: filter.limit
+        }
+      }),
+      deps.countEmbedTokens({ projectId })
+    ])
+
+    const lastItem = items.at(-1)
+
+    return {
+      items,
+      totalCount,
+      cursor: lastItem ? encodeIsoDateCursor(lastItem.createdAt) : null
+    }
   }
 
 export const validateTokenFactory =

@@ -30,6 +30,6 @@ describe('CacheReader testing', () => {
     const base = await objPromise
 
     expect(base).toMatchSnapshot()
-    await cacheReader.disposeAsync()
+    cacheReader.dispose()
   })
 })
