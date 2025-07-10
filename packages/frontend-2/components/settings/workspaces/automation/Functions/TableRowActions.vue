@@ -12,19 +12,29 @@
       :icon-right="isOpen ? XMarkIcon : EllipsisHorizontalIcon"
       @click.stop="isOpen = true"
     />
+    <SettingsWorkspacesAutomationFunctionsRegenerateTokenDialog
+      v-model:open="showRegenerateTokenDialog"
+      :workspace-function="workspaceFunction"
+    />
   </LayoutMenu>
 </template>
 
 <script setup lang="ts">
 import { HorizontalDirection, type LayoutMenuItem } from '@speckle/ui-components'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import type { AutomateFunctionPermissionChecks } from '~/lib/common/generated/gql/graphql'
+import type {
+  AutomateFunctionPermissionChecks,
+  SettingsWorkspacesAutomationRegenerateTokenDialog_AutomateFunctionFragment
+} from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
+  workspaceFunction: SettingsWorkspacesAutomationRegenerateTokenDialog_AutomateFunctionFragment
   permissions: AutomateFunctionPermissionChecks
 }>()
 
 const isOpen = defineModel<boolean>('open', { default: false })
+
+const showRegenerateTokenDialog = ref(false)
 
 enum ActionTypes {
   RegenerateToken = 'regenerate-token'
@@ -46,6 +56,7 @@ const actionItems = computed(() => {
 const handleAction = (actionItem: LayoutMenuItem) => {
   switch (actionItem.id) {
     case ActionTypes.RegenerateToken: {
+      showRegenerateTokenDialog.value = true
       break
     }
   }

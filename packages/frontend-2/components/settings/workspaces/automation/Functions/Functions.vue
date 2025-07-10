@@ -64,6 +64,7 @@
       </template>
       <template #actions="{ item }">
         <SettingsWorkspacesAutomationFunctionsTableRowActions
+          :workspace-function="item"
           :permissions="item.permissions"
         />
       </template>
@@ -98,6 +99,7 @@ graphql(`
             payload
           }
         }
+        ...SettingsWorkspacesAutomationRegenerateTokenDialog_AutomateFunction
       }
     }
   }
