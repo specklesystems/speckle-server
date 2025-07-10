@@ -22,6 +22,7 @@ import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
 import { ensureError } from '@speckle/shared'
 import { initializeQueue } from '@speckle/shared/queue'
 import { isRedisReady } from '@speckle/shared/redis'
+import { sendResult } from '@/results.js'
 
 const app = express()
 const host = HOST
@@ -119,10 +120,6 @@ const server = app.listen(port, host, async () => {
         jobId: job.jobId,
         serverUrl: job.url
       })
-      const resultsQueue = await initializeQueue<PreviewResultPayload>({
-        queueName: job.responseQueue,
-        redisUrl: REDIS_URL
-      })
 
       browser = await launchBrowser()
       const result = await jobProcessor({
@@ -134,9 +131,7 @@ const server = app.listen(port, host, async () => {
         getAppState: () => appState
       })
 
-      // with removeOnComplete, the job response potentially containing a large images,
-      // is cleared from the response queue
-      await resultsQueue.add(result, { removeOnComplete: true })
+      await sendResult({ ...job, result, logger: jobLogger })
     } catch (err) {
       if (appState === AppState.SHUTTINGDOWN) {
         // likely that the job was cancelled due to the service shutting down
