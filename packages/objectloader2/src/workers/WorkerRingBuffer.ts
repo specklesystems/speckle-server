@@ -123,7 +123,7 @@ export class WorkerRingBuffer {
   }
 
   // data is Uint8Array, so data.length is number of bytes (elements)
-  push(data: Uint8Array, timeoutMs: number = Infinity): boolean {
+  push(data: Uint8Array, timeoutMs: number): boolean {
     const dataLengthElements = data.length // For Uint8Array, length is number of elements
     if (dataLengthElements === 0) return true
     if (dataLengthElements > this.capacity) {
@@ -136,13 +136,11 @@ export class WorkerRingBuffer {
     }
 
     while (true) {
-
       const currentWriteIndex = Atomics.load(
         this.controlBuffer,
         RingBuffer.WRITE_IDX_POS
       )
       const currentReadIndex = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
-
 
       // Calculate actual contiguous and total available space more directly
       let availableSlots
@@ -197,7 +195,7 @@ export class WorkerRingBuffer {
   }
 
   // numElements is number of Uint8Array elements (bytes)
-  shift(numElements: number, timeoutMs: number = Infinity): Uint8Array | null {
+  shift(numElements: number, timeoutMs: number): Uint8Array | null {
     if (numElements === 0) return new this.typeConstructor(0)
     if (numElements > this.capacity) {
       console.error(
@@ -206,9 +204,7 @@ export class WorkerRingBuffer {
       return null
     }
 
-
     while (true) {
-
       const currentWriteIndex = Atomics.load(
         this.controlBuffer,
         RingBuffer.WRITE_IDX_POS
@@ -264,7 +260,7 @@ export class WorkerRingBuffer {
   // These synchronous wait methods are generally discouraged in main thread or async contexts
   // but can be useful in specific worker scenarios if blocking is acceptable.
   // Consider if these are truly needed or if async push/shift cover all uses.
- /* waitForData(timeoutMs: number = Infinity): boolean {
+  /* waitForData(timeoutMs: number = Infinity): boolean {
     const currentReadIndex = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
     const result = Atomics.wait(
       this.controlBuffer,

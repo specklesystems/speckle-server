@@ -46,7 +46,7 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
     return this.ringBuffer.getSharedArrayBuffer()
   }
 
-  enqueue(items: Uint8Array[], timeoutMs: number = Infinity): Promise<boolean> {
+  enqueue(items: Uint8Array[], timeoutMs: number): Promise<boolean> {
     if (items.length === 0) {
       return Promise.resolve(true)
     }
@@ -81,7 +81,7 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
     return Promise.resolve(true)
   }
 
-  dequeue(maxItems: number, timeoutMs: number = Infinity): Promise<Uint8Array[]> {
+  dequeue(maxItems: number, timeoutMs: number): Promise<Uint8Array[]> {
     const dequeuedByteArrays: Uint8Array[] = []
 
     for (let itemsRead = 0; itemsRead < maxItems; itemsRead++) {

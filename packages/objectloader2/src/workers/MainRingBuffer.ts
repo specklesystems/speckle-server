@@ -129,7 +129,7 @@ export class MainRingBuffer {
   }
 
   // data is Uint8Array, so data.length is number of bytes (elements)
-  async push(data: Uint8Array, timeoutMs: number = Infinity): Promise<boolean> {
+  async push(data: Uint8Array, timeoutMs: number): Promise<boolean> {
     const dataLengthElements = data.length // For Uint8Array, length is number of elements
     if (dataLengthElements === 0) return true
     if (dataLengthElements > this.capacity) {
@@ -211,7 +211,7 @@ export class MainRingBuffer {
   // numElements is number of Uint8Array elements (bytes)
   async shift(
     numElements: number,
-    timeoutMs: number = Infinity
+    timeoutMs: number
   ): Promise<Uint8Array | null> {
     if (numElements === 0) return new this.typeConstructor(0)
     if (numElements > this.capacity) {
