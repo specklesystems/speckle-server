@@ -1,6 +1,7 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
+  getApiTokenByIdFactory,
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storeTokenScopesFactory
@@ -66,6 +67,7 @@ const resolvers: Resolvers = {
           storeTokenResourceAccessDefinitions:
             storeTokenResourceAccessDefinitionsFactory({ db })
         }),
+        getToken: getApiTokenByIdFactory({ db }),
         storeEmbedToken: storeEmbedApiTokenFactory({ db })
       })({
         ...removeNullOrUndefinedKeys(args.token),
