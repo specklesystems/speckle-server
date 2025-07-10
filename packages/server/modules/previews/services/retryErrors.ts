@@ -78,7 +78,7 @@ export const retryFailedPreviewsFactory = (deps: {
         projectId: streamId,
         objectId
       },
-      'Found {totalErroredPreviewCount} object previews in error state. Attempting to retry one: ${projectId}.${objectId}'
+      'Found {totalErroredPreviewCount} object previews in error state. Attempting to retry one: {projectId}.{objectId}'
     )
 
     await updateObjectPreview({
