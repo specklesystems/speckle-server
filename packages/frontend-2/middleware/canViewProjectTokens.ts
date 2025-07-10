@@ -3,12 +3,12 @@ import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { projectRoute } from '~~/lib/common/helpers/route'
 
-const canViewProjectWebhooksQuery = graphql(`
-  query CanViewProjectWebhooks($projectId: String!) {
+const canViewProjectTokensQuery = graphql(`
+  query CanViewProjectTokens($projectId: String!) {
     project(id: $projectId) {
       id
       permissions {
-        canReadWebhooks {
+        canReadEmbedTokens {
           ...FullPermissionCheckResult
         }
       }
@@ -25,7 +25,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
   const { data } = await client
     .query({
-      query: canViewProjectWebhooksQuery,
+      query: canViewProjectTokensQuery,
       variables: { projectId }
     })
     .catch(convertThrowIntoFetchResult)
@@ -34,8 +34,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(projectRoute(projectId))
   }
 
-  const canReadWebhooks = data.project.permissions.canReadWebhooks.authorized
-  if (!canReadWebhooks) {
+  const canReadTokens = data.project.permissions.canReadEmbedTokens.authorized
+  if (!canReadTokens) {
     return navigateTo(projectRoute(projectId))
   }
 })
