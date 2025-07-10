@@ -2,7 +2,10 @@ import { mainDb } from '@/db/knex'
 import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { DataRegionsConfig } from '@/modules/multiregion/domain/types'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { setMultiRegionConfig } from '@/modules/multiregion/regionConfig'
+import {
+  getMultiRegionConfig,
+  setMultiRegionConfig
+} from '@/modules/multiregion/regionConfig'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   CreateNewRegionDocument,
@@ -21,8 +24,12 @@ import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 
 import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 import { Roles } from '@speckle/shared'
-import { getConnectionSettings } from '@speckle/shared/environment/db'
+import {
+  getConnectionSettings,
+  MultiRegionConfig
+} from '@speckle/shared/environment/db'
 import { expect } from 'chai'
+import { merge } from 'lodash-es'
 
 const isEnabled = isMultiRegionEnabled()
 
@@ -64,8 +71,12 @@ isEnabled
         }
       }
 
+      let originalConfig: MultiRegionConfig
+
       before(async () => {
-        // Faking multi region config
+        // Faking multi region config (but retain active config, in case were running multiregion tests)
+        originalConfig = await getMultiRegionConfig()
+
         const connectionUri = getConnectionSettings(mainDb).connectionString!
         const mainStorage = getMainObjectStorage()
 
@@ -83,12 +94,14 @@ isEnabled
             createBucketIfNotExists: false
           }
         }
-        setMultiRegionConfig({
+        const regionsConfig = {
           regions: {
             [fakeRegionKey1]: regionConfig,
             [fakeRegionKey2]: regionConfig
           }
-        })
+        }
+
+        setMultiRegionConfig(merge({}, originalConfig, regionsConfig))
 
         await beforeEachContext()
         testAdminUser = await createTestUser({ role: Roles.Server.Admin })
@@ -97,7 +110,7 @@ isEnabled
       })
 
       after(async () => {
-        setMultiRegionConfig(undefined)
+        setMultiRegionConfig(originalConfig)
         await truncateRegionsSafely()
       })
 

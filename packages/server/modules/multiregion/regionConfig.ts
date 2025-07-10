@@ -35,7 +35,7 @@ const emptyConfig = (): MultiRegionConfig => ({
   regions: {}
 })
 
-const getMultiRegionConfig = async (): Promise<MultiRegionConfig> => {
+export const getMultiRegionConfig = async (): Promise<MultiRegionConfig> => {
   // Only for non region enabled dev envs
   const emptyReturn = () => emptyConfig()
 
