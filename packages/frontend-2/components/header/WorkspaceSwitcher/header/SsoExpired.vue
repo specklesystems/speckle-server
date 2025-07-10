@@ -2,7 +2,7 @@
   <HeaderWorkspaceSwitcherHeader
     :name="workspace?.name"
     :logo="workspace?.logo"
-    :to="workspaceRoute(activeWorkspaceSlug || '')"
+    :to="workspaceRoute(workspace?.slug || '')"
   >
     <p class="text-body-2xs text-foreground-2 truncate">Requires SSO authentication</p>
     <template #actions>
@@ -21,7 +21,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { workspaceRoute } from '~/lib/common/helpers/route'
-import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 
 graphql(`
@@ -33,19 +32,18 @@ graphql(`
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   workspace: MaybeNullOrUndefined<HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspaceFragment>
 }>()
 
-const { activeWorkspaceSlug } = useNavigation()
 const { signInOrSignUpWithSso } = useAuthManager()
 const { challenge } = useLoginOrRegisterUtils()
 
 const handleSsoLogin = () => {
-  if (!activeWorkspaceSlug.value) return
+  if (!props.workspace) return
 
   signInOrSignUpWithSso({
-    workspaceSlug: activeWorkspaceSlug.value,
+    workspaceSlug: props.workspace.slug,
     challenge: challenge.value
   })
 }

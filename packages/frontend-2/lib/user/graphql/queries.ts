@@ -21,3 +21,13 @@ export const userEmailsQuery = graphql(`
     }
   }
 `)
+
+export const userActiveWorkspaceQuery = graphql(`
+  query UserActiveWorkspace {
+    activeUser {
+      activeWorkspace {
+        slug
+      }
+    }
+  }
+`)

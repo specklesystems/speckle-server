@@ -27,7 +27,6 @@ import { MenuItem } from '@headlessui/vue'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import { workspaceRoute, projectsRoute } from '~/lib/common/helpers/route'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 import type { HeaderWorkspaceSwitcherWorkspaceListItem_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { Roles, WorkspacePlans } from '@speckle/shared'
 
@@ -54,9 +53,6 @@ const props = defineProps<{
   isActive?: boolean
 }>()
 
-const { mutateActiveWorkspaceSlug, mutateIsProjectsActive, activeWorkspaceSlug } =
-  useNavigation()
-
 const formattedName = computed(() => props.name || props.workspace?.name || '')
 const tag = computed(() => {
   if (props.tag) return props.tag
@@ -64,16 +60,12 @@ const tag = computed(() => {
   if (props.workspace?.role === Roles.Workspace.Guest) return 'GUEST'
   return undefined
 })
-const itemIsActive = computed(
-  () => props.workspace?.slug === activeWorkspaceSlug.value || props.isActive
-)
+const itemIsActive = computed(() => props.isActive)
 
 const onClick = () => {
   if (props.workspace) {
     navigateTo(workspaceRoute(props.workspace.slug))
-    mutateActiveWorkspaceSlug(props.workspace.slug)
   } else {
-    mutateIsProjectsActive(true)
     navigateTo(projectsRoute)
   }
 }

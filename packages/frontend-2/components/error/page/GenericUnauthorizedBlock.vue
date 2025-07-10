@@ -17,7 +17,6 @@
 </template>
 <script setup lang="ts">
 import { useRememberRouteAndGoToLogin, homeRoute } from '~/lib/common/helpers/route'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 withDefaults(
   defineProps<{
@@ -30,15 +29,8 @@ withDefaults(
 
 const { isLoggedIn } = useActiveUser()
 const goToLogin = useRememberRouteAndGoToLogin()
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { mutateActiveWorkspaceSlug, mutateIsProjectsActive } = useNavigation()
 
 const goToHome = () => {
-  if (isWorkspacesEnabled.value) {
-    mutateActiveWorkspaceSlug(null)
-    mutateIsProjectsActive(false)
-  }
-
   navigateTo(homeRoute)
 }
 </script>
