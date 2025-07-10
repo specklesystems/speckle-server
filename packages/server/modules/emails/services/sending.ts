@@ -38,15 +38,15 @@ export const sendEmail: SendEmail = async ({
     })
 
     const transporter = getTransporter()
+    if (!transporter) {
+      logger.warn('No email transport present. Cannot send emails. Skipping send...')
+      return false
+    }
+
     const emailFrom = getEmailFromAddress()
     const options: Mail.Options = {
       ...baseOptions,
       from: from || `"Speckle" <${emailFrom}>`
-    }
-
-    if (!transporter) {
-      logger.warn('No email transport present. Cannot send emails. Skipping send...')
-      return false
     }
 
     await transporter.sendMail(options)

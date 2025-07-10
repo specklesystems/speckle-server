@@ -459,4 +459,4 @@ isMultiRegionTestMode()
         expect(resB.data?.project.blob).to.not.be.undefined
       })
     })
-  : describe.skip('Workspace project region changes @multiregion (Skipped)', () => ({}))
+  : void 0
