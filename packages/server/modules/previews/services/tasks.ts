@@ -64,7 +64,7 @@ export const retryFailedPreviewsFactory = (deps: {
     })
     if (items.length === 0) {
       //NOTE we rely on the items returned, as this accounts for the cursor position. More errored items might have been added since the last time we checked and changed the totalCount.
-      logger.info('No object previews in error state found. Resetting cursor.')
+      logger.info('No object previews in error state found.')
       return false
     }
 
