@@ -199,7 +199,7 @@ jobs:
     name: Preview service
     runs-on: blacksmith
     container:
-      image: zenika/alpine-chrome
+      image: zenika/alpine-chrome:with-node
     services:
       redis:
         image: redis:7.2.4
