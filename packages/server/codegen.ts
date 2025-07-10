@@ -207,8 +207,7 @@ const config: Omit<CodegenConfig, 'schema'> = {
       JSONObject: 'Record<string, unknown>',
       DateTime: 'Date'
     }
-  },
-  require: ['ts-node/register', 'tsconfig-paths/register']
+  }
 }
 
 export default config

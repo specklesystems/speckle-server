@@ -17,15 +17,15 @@ import { db } from '@/db/knex'
 import {
   createCustomerPortalUrlFactory,
   getRecurringPricesFactory,
+  getStripeClient,
   getStripeSubscriptionDataFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanPriceId,
-  getStripeClient,
   getWorkspacePlanProductId,
   getWorkspacePlanProductAndPriceIds
-} from '@/modules/gatekeeper/stripe'
+} from '@/modules/gatekeeper/helpers/prices'
 import {
   deleteCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
@@ -117,7 +117,7 @@ export default FF_GATEKEEPER_MODULE_ENABLED
               'This cannot be, if there is a sub, there is a workspace'
             )
           return await createCustomerPortalUrlFactory({
-            stripe: getStripeClient(),
+            getStripeClient,
             frontendOrigin: getFrontendOrigin()
           })({
             workspaceId: workspaceSubscription.workspaceId,
@@ -143,7 +143,7 @@ export default FF_GATEKEEPER_MODULE_ENABLED
         planPrices: async (parent) => {
           const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
             getRecurringPrices: getRecurringPricesFactory({
-              stripe: getStripeClient()
+              getStripeClient
             }),
             getWorkspacePlanProductAndPriceIds
           })
@@ -311,7 +311,7 @@ export default FF_GATEKEEPER_MODULE_ENABLED
         planPrices: async () => {
           const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
             getRecurringPrices: getRecurringPricesFactory({
-              stripe: getStripeClient()
+              getStripeClient
             }),
             getWorkspacePlanProductAndPriceIds
           })
@@ -410,7 +410,7 @@ export default FF_GATEKEEPER_MODULE_ENABLED
           )
 
           const createCheckoutSession = createCheckoutSessionFactory({
-            stripe: getStripeClient(),
+            getStripeClient,
             frontendOrigin: getFrontendOrigin(),
             getWorkspacePlanPrice: getWorkspacePlanPriceId
           })
@@ -454,13 +454,14 @@ export default FF_GATEKEEPER_MODULE_ENABLED
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
           )
-          const stripe = getStripeClient()
 
           const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
-              stripe,
-              getStripeSubscriptionData: getStripeSubscriptionDataFactory({ stripe })
+              getStripeClient,
+              getStripeSubscriptionData: getStripeSubscriptionDataFactory({
+                getStripeClient
+              })
             }),
             countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({
               db

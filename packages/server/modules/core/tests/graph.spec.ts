@@ -136,7 +136,7 @@ const changeUserRole = changeUserRoleFactory({
 })
 
 ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? describe.skip : describe)(
-  'GraphQL API Core @core-api (Legacy) TEST123',
+  'GraphQL API Core @core-api (Legacy)',
   () => {
     const userA = {
       id: '',
