@@ -9,6 +9,7 @@ import { JobPayload } from '@speckle/shared/workers/previews'
 import { randomUUID } from 'crypto'
 import supertest, { SuperTest, Test } from 'supertest'
 import { TIME_MS } from '@speckle/shared'
+import fs from 'fs'
 
 describe('preview-service', () => {
   let server: Server
@@ -18,7 +19,7 @@ describe('preview-service', () => {
     jobId: string
     status: string
     result: {
-      screenshots: string[]
+      screenshots: object
     }
   }>
 
@@ -91,5 +92,15 @@ describe('preview-service', () => {
     expect(job.data.status).to.equal('success')
     expect(job.data.result).to.be.an('object')
     expect(job.data.result.screenshots).toBeDefined()
+
+    // write the image to a file
+
+    // const image =
+    //   '0' in job.data.result.screenshots
+    //     ? (job.data.result.screenshots['0'] as string)
+    //     : null
+
+    // if (!image) expect.fail('No image found')
+    // fs.writeFileSync('test-image', image)
   })
 })
