@@ -197,9 +197,9 @@ jobs:
 
   test-preview-service:
     name: Preview service
-    runs-on: GPU-T4
+    runs-on: blacksmith
     container:
-      image: zenika/alpine-chrome:with-node
+      image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
     services:
       redis:
         image: redis:7.2.4
