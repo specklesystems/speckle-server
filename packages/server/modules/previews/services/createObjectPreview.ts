@@ -47,7 +47,7 @@ export const createObjectPreviewFactory =
       appId: DefaultAppIds.Web,
       name: `preview-${jobId}`,
       userId,
-      scopes: [Scopes.Streams.Read, Scopes.Streams.Write],
+      scopes: [Scopes.Streams.Read, Scopes.Automate.ReportResults],
       lifespan: 2 * TIME_MS.hour,
       limitResources: [
         {

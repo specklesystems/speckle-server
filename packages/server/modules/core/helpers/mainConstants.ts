@@ -16,8 +16,8 @@ const buildAllScopes = () => {
         !(
           [
             Scopes.AutomateFunctions.Read,
-            Scopes.AutomateFunctions.Write,
-            Scopes.Automate.ReportResults
+            Scopes.AutomateFunctions.Write
+            // Scopes.Automate.ReportResults // This scope is used by the preview service, so we keep it
           ] as string[]
         ).includes(s)
     )

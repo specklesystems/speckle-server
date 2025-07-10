@@ -7,7 +7,7 @@ import {
   getRedisUrl
 } from '@/modules/shared/helpers/envHelper'
 import type { Queue } from 'bull'
-import { ensureError } from '@speckle/shared'
+import { ensureError, Scopes } from '@speckle/shared'
 import { previewRouterFactory } from '@/modules/previews/rest/router'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { initializeMetrics } from '@/modules/previews/observability/metrics'
@@ -20,6 +20,9 @@ import {
 import type { BuildUpdateObjectPreview } from '@/modules/previews/domain/operations'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { updateObjectPreviewFactory } from '@/modules/previews/repository/previews'
+import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
+import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
+import { db } from '@/db/knex'
 
 const JobQueueName = 'preview-service-jobs'
 
@@ -30,11 +33,27 @@ const buildUpdateObjectPreviewFunction =
     return updateObjectPreviewFactory({ db: projectDb })
   }
 
+async function initScopes() {
+  const scopes: TokenScopeData[] = [
+    {
+      name: Scopes.Automate.ReportResults,
+      description: 'Report automation results to the server.',
+      public: true
+    }
+  ]
+
+  const registerFunc = registerOrUpdateScopeFactory({ db })
+  for (const scope of scopes) {
+    await registerFunc({ scope })
+  }
+}
+
 export const init: SpeckleModule['init'] = async ({
   app,
   isInitial,
   metricsRegister
 }) => {
+  await initScopes()
   if (!isInitial) return
 
   if (disablePreviews()) {

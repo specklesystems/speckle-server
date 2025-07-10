@@ -46,10 +46,14 @@ import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
 import type { Queue } from 'bull'
 import type { Knex } from 'knex'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
+import { streamReportResultsPipelineFactory } from '@/modules/shared/authz'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
-import { fromJobId, previewResultPayload } from '@speckle/shared/workers/previews'
+import {
+  fromJobId,
+  jobIdSchema,
+  previewResultPayload
+} from '@speckle/shared/workers/previews'
 import { observeMetricsFactory } from '@/modules/previews/observability/metrics'
 import { Summary } from 'prom-client'
 import { consumePreviewResultFactory } from '@/modules/previews/resultListener'
@@ -311,17 +315,19 @@ export const previewRouterFactory = ({
     )
   })
 
+  app.options('/api/projects/:streamId/previews/jobs/:jobId/results', cors())
   app.post(
     '/api/projects/:streamId/previews/jobs/:jobId/results',
+    cors(),
     authMiddlewareCreator(
-      streamWritePermissionsPipelineFactory({
+      streamReportResultsPipelineFactory({
         getStream: getStreamFactory({ db })
       })
     ),
     validateRequest({
       params: z.object({
         streamId: z.string(),
-        jobId: z.string()
+        jobId: jobIdSchema
       }),
       body: previewResultPayload
     }),
