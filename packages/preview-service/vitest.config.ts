@@ -1,3 +1,4 @@
+import { TIME_MS } from '@speckle/shared'
 import path from 'path'
 import { configDefaults, defineConfig } from 'vitest/config'
 
@@ -9,7 +10,7 @@ export default defineConfig({
       shuffle: true,
       concurrent: true
     },
-    testTimeout: 120 * 1000 // 2mins
+    testTimeout: 2 * TIME_MS.minute
   },
   resolve: {
     alias: {

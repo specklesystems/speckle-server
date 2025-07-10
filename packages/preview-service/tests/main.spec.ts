@@ -8,6 +8,7 @@ import Bull from 'bull'
 import { JobPayload } from '@speckle/shared/workers/previews'
 import { randomUUID } from 'crypto'
 import supertest, { SuperTest, Test } from 'supertest'
+import { TIME_MS } from '@speckle/shared'
 
 describe('preview-service', () => {
   let server: Server
@@ -47,7 +48,7 @@ describe('preview-service', () => {
 
     // TODO: remove this head start
     // we should await the server somehow
-    await sleep(5000)
+    await sleep(5 * TIME_MS.second)
   })
 
   afterAll(async () => {
@@ -81,7 +82,7 @@ describe('preview-service', () => {
       // can run until the test suite times out
       jobs = await responseQueue.getJobs(['waiting'])
 
-      await sleep(1 * 1000) // 1 sec pause
+      await sleep(1 * TIME_MS.second)
     }
 
     expect(jobs).to.have.lengthOf(1)
