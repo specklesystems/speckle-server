@@ -30,7 +30,10 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { SupportedProjectVisibility } from '~/lib/projects/helpers/visibility'
+import {
+  SupportedProjectVisibility,
+  castToSupportedVisibility
+} from '~/lib/projects/helpers/visibility'
 import { useDeleteAllEmbedTokens } from '~/lib/projects/composables/tokenManagement'
 
 const emit = defineEmits(['confirm', 'cancel'])
@@ -44,12 +47,14 @@ const props = defineProps<{
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteAllEmbedTokens = useDeleteAllEmbedTokens()
-const { logger } = useLogger()
+const logger = useLogger()
 
 const revokeEmbedTokens = ref(false)
 
 const newVisibilityLabel = computed(() => {
-  const visibility = props.newVisibility
+  if (!props.newVisibility) return ''
+
+  const visibility = castToSupportedVisibility(props.newVisibility)
   switch (visibility) {
     case SupportedProjectVisibility.Workspace:
       return 'Workspace'

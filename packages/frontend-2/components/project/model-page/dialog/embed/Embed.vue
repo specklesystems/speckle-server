@@ -5,17 +5,31 @@
     :buttons="buttons"
     title="Embed model"
   >
-    <CommonAlert v-if="multipleVersionedResources" class="mb-4 sm:-mt-4" color="info">
+    <CommonAlert v-if="multipleVersionedResources" class="mb-4" color="info" size="xs">
       <template #title>You are embedding a specific version</template>
       <template #description>
         <p>
-          This means that any changes you made after this version will not be included
-          in the embedded model.
+          Anyone with this embed link can view your model data. Be careful where you
+          share it!
         </p>
+      </template>
+    </CommonAlert>
+
+    <CommonAlert
+      v-if="!isPublicProject && canCreateEmbedTokens"
+      class="mb-4"
+      color="info"
+      size="2xs"
+    >
+      <template #title>
+        You are embedding a
+        <span class="lowercase">{{ projectVisibility }}</span>
+        project
+      </template>
+      <template #description>
         <p>
-          <strong>Tip:</strong>
-          If you want to share the latest version of your model, go back to the project
-          dashboard and start the embedding process from there.
+          Anyone with this embed link can view your model, be careful where you share
+          it.
         </p>
       </template>
     </CommonAlert>
@@ -132,10 +146,15 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useCreateEmbedToken } from '~~/lib/projects/composables/tokenManagement'
+import {
+  SupportedProjectVisibility,
+  castToSupportedVisibility
+} from '~/lib/projects/helpers/visibility'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
     id
+    visibility
     permissions {
       canCreateEmbedTokens {
         ...FullPermissionCheckResult
@@ -274,6 +293,12 @@ const canEditEmbedOptions = computed(() => {
 const canCreateEmbedTokens = computed(() => {
   return props.project.permissions?.canCreateEmbedTokens?.authorized
 })
+const projectVisibility = computed(() =>
+  castToSupportedVisibility(props.project.visibility)
+)
+const isPublicProject = computed(
+  () => projectVisibility.value === SupportedProjectVisibility.Public
+)
 const workspaceHideSpeckleBrandingEnabled = computed(() => {
   if (!isWorkspacesEnabled.value) return false
   return props.project.workspace?.embedOptions?.hideSpeckleBranding

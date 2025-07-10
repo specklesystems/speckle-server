@@ -313,6 +313,19 @@ export const createEmbedTokenMutation = graphql(`
     projectMutations {
       createEmbedToken(token: $token) {
         token
+        tokenMetadata {
+          createdAt
+          lastUsed
+          lifespan
+          projectId
+          resourceIdString
+          tokenId
+          user {
+            id
+            avatar
+            name
+          }
+        }
       }
     }
   }
