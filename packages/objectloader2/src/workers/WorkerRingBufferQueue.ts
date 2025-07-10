@@ -49,14 +49,8 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
     if (items.length === 0) {
       return Promise.resolve(true)
     }
-    const overallStartTime = Date.now()
 
     for (const dataBytes of items) {
-      const itemStartTime = Date.now()
-      const remainingOverallTimeout = timeoutMs - (itemStartTime - overallStartTime)
-      if (remainingOverallTimeout <= 0 && timeoutMs !== Infinity)
-        return Promise.resolve(false)
-
       const messageLength = dataBytes.length
 
       if (
@@ -71,22 +65,17 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
 
       this.lengthPrefixDataView.setUint32(0, messageLength, true) // true for littleEndian
 
-      const pushedLength = this.ringBuffer.push(
-        this.lengthPrefixArray,
-        remainingOverallTimeout
-      )
+      const pushedLength = this.ringBuffer.push(this.lengthPrefixArray, timeoutMs)
       if (!pushedLength) {
         return Promise.resolve(false)
       }
 
-      const dataPushTimeout = timeoutMs - (Date.now() - overallStartTime)
-      if (dataPushTimeout <= 0 && timeoutMs !== Infinity) return Promise.resolve(false)
-
-      const pushedData = this.ringBuffer.push(dataBytes, dataPushTimeout)
+      const pushedData = this.ringBuffer.push(dataBytes, timeoutMs)
       if (!pushedData) {
         return Promise.resolve(false)
       }
     }
+    console.log(`Enqueued ${items.length} items to ${this.name} queue.`)
     return Promise.resolve(true)
   }
 
@@ -94,7 +83,6 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
     const dequeuedByteArrays: Uint8Array[] = []
 
     for (let itemsRead = 0; itemsRead < maxItems; itemsRead++) {
-
       const lengthBytes = this.ringBuffer.shift(
         WorkerRingBufferQueue.LENGTH_PREFIX_BYTES,
         timeoutMs
@@ -125,7 +113,6 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
         break
       }
 
-
       const dataBytes = this.ringBuffer.shift(messageLength, timeoutMs)
       if (!dataBytes) {
         break
@@ -137,6 +124,11 @@ export class WorkerRingBufferQueue implements RingBufferQueue {
         break
       }
       dequeuedByteArrays.push(dataBytes)
+    }
+    if (dequeuedByteArrays.length > 0) {
+      console.log(
+        `Dequeued ${dequeuedByteArrays.length} items from ${this.name} queue.`
+      )
     }
     return Promise.resolve(dequeuedByteArrays)
   }

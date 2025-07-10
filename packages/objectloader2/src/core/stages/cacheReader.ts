@@ -8,7 +8,7 @@ import { StringQueue } from '../../workers/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
 import { CacheOptions } from '../options.js'
 
-const BUFFER_CAPACITY_BYTES = 1024 * 1024 * 200 // 200MB
+const BUFFER_CAPACITY_BYTES = 1024 * 5 // 5KB capacity for each queue
 
 export class CacheReader {
   #defermentManager: DefermentManager
@@ -47,7 +47,7 @@ export class CacheReader {
     this.logToMainUI('Initializing RingBufferQueues...')
     const rawMainToWorkerRbq = MainRingBufferQueue.create(
       BUFFER_CAPACITY_BYTES,
-      'MainToWorkerQueue'
+      'StringQueue MainToWorkerQueue'
     )
     this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
@@ -59,7 +59,7 @@ export class CacheReader {
 
     const rawWorkerToMainRbq = MainRingBufferQueue.create(
       BUFFER_CAPACITY_BYTES,
-      'WorkerToMainQueue'
+      'ItemQueue WorkerToMainQueue'
     )
     this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq)
     const workerToMainSab = rawWorkerToMainRbq.getSharedArrayBuffer()
@@ -99,6 +99,15 @@ export class CacheReader {
     }
 
     await this.mainToWorkerQueue?.enqueue(keys)
+    await this.#delay(5000)
+    /*for (let index = 0; index < keys.length; index++) {
+      const element = keys[index]
+      await this.mainToWorkerQueue?.enqueue([element])
+      await this.#delay(50)
+    }*/
+  }
+  #delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   #processBatch = async (): Promise<void> => {

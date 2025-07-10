@@ -71,6 +71,7 @@ export class MainRingBufferQueue implements RingBufferQueue {
         return false
       }
     }
+    console.log(`Enqueued ${items.length} items to ${this.name} queue.`)
     return true
   }
 
@@ -119,6 +120,9 @@ export class MainRingBufferQueue implements RingBufferQueue {
         break
       }
       dequeuedByteArrays.push(dataBytes)
+    }
+    if (dequeuedByteArrays.length > 0) {
+      console.log(`Dequeued ${dequeuedByteArrays.length} items from ${this.name} queue.`)
     }
     return dequeuedByteArrays
   }

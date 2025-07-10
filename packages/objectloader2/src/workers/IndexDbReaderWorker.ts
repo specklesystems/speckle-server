@@ -32,7 +32,7 @@ async function processMessages(): Promise<void> {
   log('Starting to listen for messages from main thread...')
   while (true) {
     try {
-      const receivedMessages = await mainToWorkerQueue.dequeue(1, 500) // receivedMessages will be string[]
+      const receivedMessages = await mainToWorkerQueue.dequeue(10000, 500) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
         const items = await db.getAll(receivedMessages)
         const processedItems: Item[] = []
@@ -82,14 +82,16 @@ self.onmessage = (event: MessageEvent): void => {
     try {
       const rawMainToWorkerRbq = WorkerRingBufferQueue.fromExisting(
         data.mainToWorkerSab,
-        data.mainToWorkerCapacityBytes, "MainToWorkerQueue"
+        data.mainToWorkerCapacityBytes,
+        'StringQueue MainToWorkerQueue'
       )
       mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq)
       log('StringQueue (main-to-worker) initialized successfully.')
 
       const rawWorkerToMainRbq = WorkerRingBufferQueue.fromExisting(
         data.workerToMainSab,
-        data.workerToMainCapacityBytes, "WorkerToMainQueue"
+        data.workerToMainCapacityBytes,
+        'ItemQueue WorkerToMainQueue'
       )
       workerToMainQueue = new ItemQueue(rawWorkerToMainRbq)
       log('ItemQueue (worker-to-main) initialized successfully.')
