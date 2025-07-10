@@ -85,6 +85,11 @@ export const updateUserAndNotifyFactory =
       const key = entry[0] as keyof typeof update
       let val = entry[1]
 
+      if (key === 'avatar' && val === '') {
+        filteredUpdate[key] = null // avatar removal
+        continue
+      }
+
       if (key === 'avatar') {
         val = sanitizeImageUrl(val)
       }
