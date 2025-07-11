@@ -140,11 +140,25 @@ export class MainRingBuffer {
     return writeIdx === readIdx
   }
 
+  get availableSpaces(): number {
+    const writeIdx = Atomics.load(this.controlBuffer, RingBuffer.WRITE_IDX_POS)
+    const readIdx = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
+
+    // Calculate actual contiguous and total available space more directly
+    if (writeIdx >= readIdx) {
+      return this.capacity - (writeIdx - readIdx) - 1
+    } else {
+      // read index is ahead of write index
+      return readIdx - writeIdx - 1
+    }
+  }
+
   // data is Uint8Array, so data.length is number of bytes (elements)
   async push(data: Uint8Array, timeoutMs: number): Promise<boolean> {
     const dataLengthElements = data.length // For Uint8Array, length is number of elements
     if (dataLengthElements === 0) return true
-    if (dataLengthElements > this.capacity) {
+    const capacity = this.capacity
+    if (dataLengthElements > capacity) {
       // Check against element capacity
       console.error(
         `Data to push (${dataLengthElements} elements) exceeds buffer capacity (${this.capacity} elements).`
@@ -154,23 +168,11 @@ export class MainRingBuffer {
     }
 
     while (true) {
-      const currentWriteIndex = Atomics.load(
-        this.controlBuffer,
-        RingBuffer.WRITE_IDX_POS
-      )
-      const currentReadIndex = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
+      const writeIdx = Atomics.load(this.controlBuffer, RingBuffer.WRITE_IDX_POS)
+      const availableSpaces = this.availableSpaces
 
-      // Calculate actual contiguous and total available space more directly
-      let availableSlots
-      if (currentWriteIndex >= currentReadIndex) {
-        availableSlots = this.capacity - (currentWriteIndex - currentReadIndex) - 1
-      } else {
-        // read index is ahead of write index
-        availableSlots = currentReadIndex - currentWriteIndex - 1
-      }
-
-      if (dataLengthElements <= availableSlots) {
-        let tempWriteIndex = currentWriteIndex
+      if (dataLengthElements <= availableSpaces) {
+        let tempWriteIndex = writeIdx
         // Copy data, handling wrap-around
         for (let i = 0; i < dataLengthElements; i++) {
           this.buffer[tempWriteIndex] = data[i]
@@ -200,7 +202,7 @@ export class MainRingBuffer {
         const outcome = Atomics.waitAsync(
           this.controlBuffer,
           RingBuffer.WRITE_IDX_POS,
-          currentWriteIndex,
+          writeIdx,
           timeoutMs
         )
         let val

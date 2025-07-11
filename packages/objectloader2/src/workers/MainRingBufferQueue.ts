@@ -41,8 +41,7 @@ export class MainRingBufferQueue {
   }
 
   async enqueue(item: Uint8Array, timeoutMs: number): Promise<boolean> {
-    const dataBytes = item
-    const messageLength = dataBytes.length
+    const messageLength = item.length
 
     if (
       messageLength + MainRingBufferQueue.LENGTH_PREFIX_BYTES >
@@ -55,12 +54,11 @@ export class MainRingBufferQueue {
     }
 
     this.lengthPrefixDataView.setUint32(0, messageLength, true) // true for littleEndian
-
-    const pushedLength = await this.ringBuffer.push(this.lengthPrefixArray, timeoutMs)
-    if (!pushedLength) {
-      console.error('Failed to push length prefix to the ring buffer.')
-      return false
-    }
+    const dataBytes = new Uint8Array(
+      item.length + MainRingBufferQueue.LENGTH_PREFIX_BYTES
+    )
+    dataBytes.set(this.lengthPrefixArray, 0) // Set the length prefix at the start
+    dataBytes.set(item, MainRingBufferQueue.LENGTH_PREFIX_BYTES) // Set the actual
 
     const pushedData = await this.ringBuffer.push(dataBytes, timeoutMs)
     if (!pushedData) {
