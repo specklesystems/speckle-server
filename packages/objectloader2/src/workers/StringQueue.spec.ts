@@ -42,7 +42,7 @@ describe('StringQueue', () => {
     const queue = new StringQueue(mockRingBufferQueue)
 
     const enqueueResult = await queue.enqueue([], 500)
-    expect(enqueueResult).toBe(true)
+    expect(enqueueResult).toBe(0)
     expect(mockRingBufferQueue.enqueue).not.toHaveBeenCalled()
   })
 

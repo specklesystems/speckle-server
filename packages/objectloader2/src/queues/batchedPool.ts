@@ -52,5 +52,4 @@ export default class BatchedPool<T> implements Queue<T> {
     )
     await Promise.all(workers)
   }
-
 }
