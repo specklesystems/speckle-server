@@ -58,7 +58,10 @@ export function isWhitespaceOnly(str: string): boolean {
   if (str.length === 0) {
     return true // An empty string contains no non-whitespace characters
   }
-  if (str === " \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000") {
+  if (
+    str ===
+    ' \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000'
+  ) {
     return true // Special case for the specific string you mentioned
   }
   return str.trim() === ''

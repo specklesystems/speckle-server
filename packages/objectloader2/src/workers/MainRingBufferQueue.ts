@@ -41,93 +41,117 @@ export class MainRingBufferQueue implements RingBufferQueue {
     return this.ringBuffer.getSharedArrayBuffer()
   }
 
-  async enqueue(items: Uint8Array[], timeoutMs: number): Promise<boolean> {
+  async enqueue(items: Uint8Array[], timeoutMs: number): Promise<number> {
     if (items.length === 0) {
-      return true
+      return 0
     }
 
-    for (const dataBytes of items) {
+    for (let i = 0; i < items.length; i++) {
+      const dataBytes = items[i]
       const messageLength = dataBytes.length
 
       if (
         messageLength + MainRingBufferQueue.LENGTH_PREFIX_BYTES >
-        this.ringBuffer.capacity
+        this.ringBuffer.availableSpace
       ) {
         console.error(
-          `Message data (${messageLength} bytes) + prefix (${MainRingBufferQueue.LENGTH_PREFIX_BYTES} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.capacity} bytes). Skipping item.`
+          `Message data (${messageLength} bytes) + prefix (${MainRingBufferQueue.LENGTH_PREFIX_BYTES} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.availableSpace} bytes). Skipping item.`
         )
-        return false
+        return i
       }
 
       this.lengthPrefixDataView.setUint32(0, messageLength, true) // true for littleEndian
 
       const pushedLength = await this.ringBuffer.push(this.lengthPrefixArray, timeoutMs)
       if (!pushedLength) {
-        return false
+        return i
       }
 
       const pushedData = await this.ringBuffer.push(dataBytes, timeoutMs)
       if (!pushedData) {
-        return false
+        return i
       }
     }
     console.log(`Enqueued ${items.length} items to ${this.name} queue.`)
-    return true
+    return items.length
   }
 
   async dequeue(maxItems: number, timeoutMs: number): Promise<Uint8Array[]> {
     const dequeuedByteArrays: Uint8Array[] = []
 
-    const start = Date.now();
+    const start = Date.now()
     for (let itemsRead = 0; itemsRead < maxItems; itemsRead++) {
-      if (Date.now() - start > timeoutMs) {
-        console.warn(`Dequeue operation timed out after ${timeoutMs}ms`)
-        break
-      }
-      const lengthBytes = await this.ringBuffer.shift(
-        MainRingBufferQueue.LENGTH_PREFIX_BYTES,
-        timeoutMs
-      )
-      if (!lengthBytes) {
+      const remainingTimeout = timeoutMs - (Date.now() - start)
+      if (remainingTimeout <= 0) {
+        if (itemsRead === 0 && maxItems > 0) {
+          // Only log timeout if we were expecting to read something and read nothing.
+          // console.warn(`Dequeue operation timed out after ${timeoutMs}ms`)
+        }
         break
       }
 
-      if (lengthBytes.length < MainRingBufferQueue.LENGTH_PREFIX_BYTES) {
-        console.warn(
-          'Dequeue: Received incomplete length prefix. Buffer might be corrupted or in inconsistent state.'
-        )
+      // 1. Peek for the length prefix to see if a message is waiting.
+      const lengthBytes = await this.ringBuffer.peek(
+        MainRingBufferQueue.LENGTH_PREFIX_BYTES,
+        remainingTimeout
+      )
+
+      if (!lengthBytes) {
+        // Timed out waiting for a message length to appear. This is normal if the queue is empty.
         break
       }
 
       this.lengthPrefixArray.set(lengthBytes)
       const messageLength = this.lengthPrefixDataView.getUint32(0, true)
+      const totalMessageBytes = MainRingBufferQueue.LENGTH_PREFIX_BYTES + messageLength
+
+      // 2. Check if the *entire* message (prefix + data) is available to be read.
+      if (this.ringBuffer.length < totalMessageBytes) {
+        // Not enough data for the full message yet. Wait for it to arrive.
+        const dataAppeared = await this.ringBuffer.waitForData(
+          totalMessageBytes,
+          remainingTimeout
+        )
+        if (!dataAppeared) {
+          // Timed out waiting for the full message data to appear.
+          console.warn('Dequeue: Timed out waiting for full message data.')
+          break
+        }
+      }
+
+      // 3. At this point, the full message should be in the buffer. Now we can safely shift it.
+
+      // Shift the length prefix (which we already have from peek).
+      // Timeout is 0 because we know the data is there.
+      await this.ringBuffer.shift(MainRingBufferQueue.LENGTH_PREFIX_BYTES, 0)
 
       if (messageLength === 0) {
         dequeuedByteArrays.push(new Uint8Array(0))
         continue
       }
 
-      if (messageLength > this.ringBuffer.capacity) {
+      if (messageLength > this.ringBuffer.availableSpace) {
         console.error(
-          `Dequeue: Declared message length (${messageLength} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.capacity}). Possible data corruption.`
+          `Dequeue: Declared message length (${messageLength} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.availableSpace}). Possible data corruption.`
         )
         break
       }
 
-      const dataBytes = await this.ringBuffer.shift(messageLength, timeoutMs)
-      if (!dataBytes) {
-        break
-      }
-      if (dataBytes.length < messageLength) {
+      const dataBytes = await this.ringBuffer.shift(messageLength, 0) // Timeout 0
+      if (!dataBytes || dataBytes.length < messageLength) {
         console.warn(
-          `Dequeue: Received incomplete message data (got ${dataBytes.length}, expected ${messageLength} bytes). Buffer likely corrupted or write was interrupted.`
+          `Dequeue: Received incomplete message data (got ${
+            dataBytes?.length || 0
+          }, expected ${messageLength} bytes). Buffer likely corrupted.`
         )
         break
       }
       dequeuedByteArrays.push(dataBytes)
     }
     if (dequeuedByteArrays.length > 0) {
-      console.log(`Dequeued ${dequeuedByteArrays.length} items from ${this.name} queue.`)
+      console.log(
+        `Dequeued ${dequeuedByteArrays.length} items from ${this.name} queue.`
+      )
     }
     return dequeuedByteArrays
   }

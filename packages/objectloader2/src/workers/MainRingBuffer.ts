@@ -23,7 +23,7 @@ export class MainRingBuffer {
   private static readonly CONTROL_BUFFER_BYTE_LENGTH =
     RingBuffer.CONTROL_BUFFER_SIZE_ELEMENTS * Int32Array.BYTES_PER_ELEMENT
 
-  public capacity: number // Number of elements (not bytes, unless elementSize is 1)
+  private capacity: number // Number of elements (not bytes, unless elementSize is 1)
   private elementSize: number
   private typeConstructor: Uint8ArrayConstructor
   private internalSharedBuffer: SharedArrayBuffer
