@@ -130,9 +130,9 @@ export class MainRingBufferQueue implements RingBufferQueue {
         continue
       }
 
-      if (messageLength > this.ringBuffer.availableSpace) {
+      if (messageLength > this.ringBuffer.totalSpace) {
         console.error(
-          `Dequeue: Declared message length (${messageLength} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.availableSpace}). Possible data corruption.`
+          `Dequeue: Declared message length (${messageLength} bytes) exceeds RingBuffer total space (${this.ringBuffer.totalSpace}). Possible data corruption.`
         )
         break
       }

@@ -109,11 +109,23 @@ export class MainRingBuffer {
     return this.capacity - (readIdx - writeIdx)
   }
 
+  get totalSpace(): number {
+    // Returns capacity in number of elements
+    return this.capacity
+  }
   // Returns available space in number of elements
   get availableSpace(): number {
-    // The buffer is full if the write pointer is one position behind the read pointer (circularly).
-    // So, available space is capacity - length - 1 (for the marker).
-    return this.capacity - this.length - 1
+    const writeIdx = Atomics.load(this.controlBuffer, RingBuffer.WRITE_IDX_POS)
+    const readIdx = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
+    let space
+    if (writeIdx >= readIdx) {
+      space = this.capacity - (writeIdx - readIdx)
+    } else {
+      // read index is ahead of write index
+      space = readIdx - writeIdx
+    }
+    // We subtract 1 because one slot is always kept empty to distinguish between full and empty states.
+    return space - 1
   }
 
   isFull(): boolean {

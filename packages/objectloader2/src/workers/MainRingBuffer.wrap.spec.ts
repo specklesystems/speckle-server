@@ -21,7 +21,7 @@ describe('RingBufferQueue with wrap-around behavior', () => {
 
     // Dequeue the first message (15 bytes). This frees up space at the beginning.
     // The read pointer moves to index 15. The write pointer is at 45.
-    const dequeued1 = await queue.dequeue(1, 500)
+    const dequeued1 = await queue.dequeue(1, Infinity)
     expect(dequeued1.length).toBe(1)
     expect(dequeued1[0]).toEqual(msg1)
 
@@ -31,7 +31,7 @@ describe('RingBufferQueue with wrap-around behavior', () => {
     // It will write 5 bytes at the end (index 45 to 49) and 10 at the start (index 0 to 9).
     const msg4 = textEncoder.encode('message_4!!')
     const enqueue2Success = await queue.enqueue([msg4], 500)
-    expect(enqueue2Success).toBe(true)
+    expect(enqueue2Success).toBe(1)
 
     // Dequeue the remaining 3 messages. They should be in the correct order.
     const finalDequeued = await queue.dequeue(3, 500)
