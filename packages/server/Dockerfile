@@ -73,6 +73,8 @@ COPY --link --from=dependency-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/server
 COPY --link --from=build-stage /speckle-server/packages/server/package.json ./package.json
+COPY --link --from=build-stage /speckle-server/packages/server/esmLoader.js ./esmLoader.js
+COPY --link --from=build-stage /speckle-server/packages/server/root.js ./root.js
 COPY --link --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --link --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --link --from=build-stage /speckle-server/packages/server/bin ./bin
