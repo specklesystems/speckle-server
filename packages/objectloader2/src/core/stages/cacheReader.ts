@@ -9,8 +9,8 @@ import { StringQueue } from '../../workers/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
 import { CacheOptions } from '../options.js'
 
-const ID_BUFFER_CAPACITY_BYTES = 1024 * 50 // 5KB capacity for each queue
-const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 // 1MB capacity for each queue
+const ID_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 500 // 5KB capacity for each queue
+const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 1024 // 1MB capacity for each queue
 
 export class CacheReader {
   #defermentManager: DefermentManager
@@ -18,6 +18,8 @@ export class CacheReader {
   #options: CacheOptions
   #foundQueue: Queue<Item> | undefined
   #notFoundQueue: Queue<string> | undefined
+
+  private disposed = false
 
   mainToWorkerQueue?: StringQueue
   workerToMainQueue?: ItemQueue
@@ -111,6 +113,10 @@ export class CacheReader {
           RingBuffer.DEFAULT_DEQUEUE_SIZE,
           RingBuffer.DEFAULT_DEQUEUE_TIMEOUT_MS
         )) || []
+      if (this.disposed) {
+        this.#logger('readBatch: disposed, exiting processing loop')
+        return
+      }
       if (items.length === 0) {
         this.#logger('readBatch: no items to process, waiting...')
         await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -130,5 +136,7 @@ export class CacheReader {
     }
   }
 
-  dispose(): void {}
+  dispose(): void {
+    this.disposed = true
+  }
 }
