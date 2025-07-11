@@ -23,6 +23,7 @@
     "build:clean": "rimraf ./dist && yarn build",
     "dev:clean": "yarn build:clean && yarn dev",
     "ts-mocha": "tsx ./bin/mocha",
+    "ts-gqlgen": "tsx ./bin/gqlgen",
     "test": "cross-env NODE_ENV=test LOG_FILTER=test LOG_PRETTY=true yarn ts-mocha",
     "test:all-ff": "cross-env ENABLE_ALL_FFS=true yarn test",
     "test:multiregion": "cross-env RUN_TESTS_IN_MULTIREGION_MODE=true FF_WORKSPACES_MODULE_ENABLED=true FF_WORKSPACES_MULTI_REGION_ENABLED=true yarn test --grep @multiregion",
@@ -39,8 +40,8 @@
     "cli:download:commit": "cross-env LOG_PRETTY=true LOG_LEVEL=debug yarn cli download commit",
     "migrate": "yarn cli db migrate",
     "migrate:test": "cross-env NODE_ENV=test tsx ./modules/cli/index.js db migrate",
-    "gqlgen": "yarn tsx ./modules/cli/bin/gqlgen.ts",
-    "gqlgen:watch": "yarn tsx ./modules/cli/bin/gqlgen.ts -- --watch",
+    "gqlgen": "yarn ts-gqlgen --config codegen.ts",
+    "gqlgen:watch": "yarn gqlgen --watch",
     "stripe:listen": "stripe listen --forward-to 127.0.0.1:3000/api/v1/billing/webhooks"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 import type { CodegenConfig } from '@graphql-codegen/cli'
 
-const config: Omit<CodegenConfig, 'schema'> = {
+const config: CodegenConfig = {
+  schema: ['modules/core/graph/schema.ts'],
   overwrite: true,
   documents: undefined,
   generates: {

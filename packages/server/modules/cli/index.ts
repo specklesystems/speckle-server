@@ -42,7 +42,7 @@ const main = async () => {
         console.log('\n', 'Specify --help for available options')
       }
 
-      process.exit(0)
+      process.exit(1)
     })
     .help()
     .parseAsync()
