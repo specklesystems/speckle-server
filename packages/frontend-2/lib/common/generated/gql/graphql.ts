@@ -22,6 +22,47 @@ export type Scalars = {
   JSONObject: { input: {}; output: {}; }
 };
 
+export type AccSyncItem = {
+  __typename?: 'AccSyncItem';
+  accFileLineageId: Scalars['String']['output'];
+  accHubId: Scalars['String']['output'];
+  accProjectId: Scalars['String']['output'];
+  accRootFolderUrn: Scalars['String']['output'];
+  accWebhookId?: Maybe<Scalars['String']['output']>;
+  author?: Maybe<LimitedUser>;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  modelId: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  status: AccSyncItemStatus;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type AccSyncItemCollection = {
+  __typename?: 'AccSyncItemCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccSyncItem>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AccSyncItemMutations = {
+  __typename?: 'AccSyncItemMutations';
+  create?: Maybe<AccSyncItem>;
+};
+
+
+export type AccSyncItemMutationsCreateArgs = {
+  input: CreateAccSyncItemInput;
+};
+
+export const AccSyncItemStatus = {
+  Failed: 'FAILED',
+  Paused: 'PAUSED',
+  Sync: 'SYNC',
+  Syncing: 'SYNCING'
+} as const;
+
+export type AccSyncItemStatus = typeof AccSyncItemStatus[keyof typeof AccSyncItemStatus];
 export type ActiveUserMutations = {
   __typename?: 'ActiveUserMutations';
   emailMutations: UserEmailMutations;
@@ -885,6 +926,15 @@ export type CountOnlyCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type CreateAccSyncItemInput = {
+  accFileLineageId: Scalars['String']['input'];
+  accHubId: Scalars['String']['input'];
+  accProjectId: Scalars['String']['input'];
+  accRootFolderUrn: Scalars['String']['input'];
+  modelId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type CreateAutomateFunctionInput = {
   description: Scalars['String']['input'];
   /** Base64 encoded image data string */
@@ -940,15 +990,6 @@ export type CreateServerRegionInput = {
   name: Scalars['String']['input'];
 };
 
-export type CreateSyncItemInput = {
-  accFileLineageId: Scalars['String']['input'];
-  accHubId: Scalars['String']['input'];
-  accProjectId: Scalars['String']['input'];
-  accRootFolderUrn: Scalars['String']['input'];
-  modelId: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
-};
-
 export type CreateUserEmailInput = {
   email: Scalars['String']['input'];
 };
@@ -975,13 +1016,13 @@ export type CurrencyBasedPrices = {
   usd: WorkspacePaidPlanPrices;
 };
 
-export type DeleteModelInput = {
-  id: Scalars['ID']['input'];
+export type DeleteAccSyncItemInput = {
+  accFileLineageId: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
 };
 
-export type DeleteSyncItemInput = {
-  accFileLineageId: Scalars['ID']['input'];
+export type DeleteModelInput = {
+  id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
 };
 
@@ -1494,6 +1535,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** The void stares back. */
   _?: Maybe<Scalars['String']['output']>;
+  accSyncItemMutations: AccSyncItemMutations;
   /** Various Active User oriented mutations */
   activeUserMutations: ActiveUserMutations;
   admin: AdminMutations;
@@ -1656,7 +1698,6 @@ export type Mutation = {
   streamUpdatePermission?: Maybe<Scalars['Boolean']['output']>;
   /** @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.batchDelete instead. */
   streamsDelete: Scalars['Boolean']['output'];
-  syncItemMutations: SyncItemMutations;
   /**
    * Used for broadcasting real time typing status in comment threads. Does not persist any info.
    * @deprecated Use broadcastViewerUserActivity
@@ -2127,6 +2168,8 @@ export type Price = {
 
 export type Project = {
   __typename?: 'Project';
+  accSyncItem: AccSyncItem;
+  accSyncItems: AccSyncItemCollection;
   allowPublicComments: Scalars['Boolean']['output'];
   /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
   automation: Automation;
@@ -2174,8 +2217,6 @@ export type Project = {
   role?: Maybe<Scalars['String']['output']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']['output']>;
-  syncItem: SyncItem;
-  syncItems: SyncItemCollection;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
@@ -2188,6 +2229,11 @@ export type Project = {
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type ProjectAccSyncItemArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -2289,11 +2335,6 @@ export type ProjectPendingImportedModelsArgs = {
 };
 
 
-export type ProjectSyncItemArgs = {
-  id: Scalars['String']['input'];
-};
-
-
 export type ProjectVersionArgs = {
   id: Scalars['String']['input'];
 };
@@ -2315,6 +2356,19 @@ export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ProjectAccSyncItemsUpdatedMessage = {
+  __typename?: 'ProjectAccSyncItemsUpdatedMessage';
+  accSyncItem?: Maybe<AccSyncItem>;
+  type?: Maybe<ProjectAccSyncItemsUpdatedMessageType>;
+};
+
+export const ProjectAccSyncItemsUpdatedMessageType = {
+  Created: 'CREATED',
+  Deleted: 'DELETED',
+  Updated: 'UPDATED'
+} as const;
+
+export type ProjectAccSyncItemsUpdatedMessageType = typeof ProjectAccSyncItemsUpdatedMessageType[keyof typeof ProjectAccSyncItemsUpdatedMessageType];
 /** Created when a user requests to become a contributor on a project */
 export type ProjectAccessRequest = {
   __typename?: 'ProjectAccessRequest';
@@ -3713,6 +3767,7 @@ export type Subscription = {
    * Note: Only works in test environment
    */
   ping: Scalars['String']['output'];
+  projectAccSyncItemsUpdated: ProjectAccSyncItemsUpdatedMessage;
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
@@ -3731,7 +3786,6 @@ export type Subscription = {
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
-  projectSyncItemsUpdated: Scalars['String']['output'];
   /** Subscribe to updates to any triggered automations statuses in the project */
   projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
@@ -3830,6 +3884,12 @@ export type SubscriptionCommitUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectAccSyncItemsUpdatedArgs = {
+  id: Scalars['String']['input'];
+  itemIds?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
 export type SubscriptionProjectAutomationsUpdatedArgs = {
   projectId: Scalars['String']['input'];
 };
@@ -3858,12 +3918,6 @@ export type SubscriptionProjectPendingModelsUpdatedArgs = {
 
 export type SubscriptionProjectPendingVersionsUpdatedArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type SubscriptionProjectSyncItemsUpdatedArgs = {
-  id: Scalars['String']['input'];
-  itemIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -3932,59 +3986,6 @@ export type SubscriptionWorkspaceUpdatedArgs = {
   workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type SyncItem = {
-  __typename?: 'SyncItem';
-  accFileLineageId: Scalars['String']['output'];
-  accHubId: Scalars['String']['output'];
-  accProjectId: Scalars['String']['output'];
-  accRootFolderUrn: Scalars['String']['output'];
-  accWebhookId: Scalars['String']['output'];
-  author?: Maybe<LimitedUser>;
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  modelId: Scalars['String']['output'];
-  projectId: Scalars['String']['output'];
-  status: SyncItemStatus;
-  updatedAt: Scalars['DateTime']['output'];
-};
-
-export type SyncItemCollection = {
-  __typename?: 'SyncItemCollection';
-  cursor?: Maybe<Scalars['String']['output']>;
-  items: Array<SyncItem>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type SyncItemMutations = {
-  __typename?: 'SyncItemMutations';
-  create: SyncItem;
-  delete: Scalars['Boolean']['output'];
-  update: SyncItem;
-};
-
-
-export type SyncItemMutationsCreateArgs = {
-  input: CreateSyncItemInput;
-};
-
-
-export type SyncItemMutationsDeleteArgs = {
-  input: DeleteSyncItemInput;
-};
-
-
-export type SyncItemMutationsUpdateArgs = {
-  input: UpdateSyncItemInput;
-};
-
-export const SyncItemStatus = {
-  Failed: 'FAILED',
-  Paused: 'PAUSED',
-  Sync: 'SYNC',
-  Syncing: 'SYNCING'
-} as const;
-
-export type SyncItemStatus = typeof SyncItemStatus[keyof typeof SyncItemStatus];
 export type TestAutomationRun = {
   __typename?: 'TestAutomationRun';
   automationRunId: Scalars['String']['output'];
@@ -4029,6 +4030,12 @@ export type TriggeredAutomationsStatus = {
   statusMessage?: Maybe<Scalars['String']['output']>;
 };
 
+export type UpdateAccSyncItemInput = {
+  accFileLineageId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+  status: AccSyncItemStatus;
+};
+
 /** Any null values will be ignored */
 export type UpdateAutomateFunctionInput = {
   description?: InputMaybe<Scalars['String']['input']>;
@@ -4052,12 +4059,6 @@ export type UpdateServerRegionInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   key: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type UpdateSyncItemInput = {
-  accFileLineageId: Scalars['ID']['input'];
-  projectId: Scalars['ID']['input'];
-  status: SyncItemStatus;
 };
 
 /** Only non-null values will be updated */
@@ -5774,6 +5775,23 @@ export type WorkspaceSidebar_WorkspaceFragment = { __typename?: 'Workspace', id:
 export type WorkspaceWizard_WorkspaceFragment = { __typename?: 'Workspace', name: string, slug: string, creationState?: { __typename?: 'WorkspaceCreationState', completed: boolean, state: {} } | null };
 
 export type WorkspaceWizardStepRegion_ServerInfoFragment = { __typename?: 'ServerInfo', multiRegion: { __typename?: 'ServerMultiRegionConfiguration', regions: Array<{ __typename?: 'ServerRegionItem', id: string, key: string, name: string, description?: string | null }> } };
+
+export type ProjectAccSyncItemFragment = { __typename?: 'AccSyncItem', id: string, projectId: string, modelId: string, accHubId: string, accProjectId: string, accRootFolderUrn: string, accFileLineageId: string, updatedAt: string, status: AccSyncItemStatus, author?: { __typename?: 'LimitedUser', name: string, avatar?: string | null } | null };
+
+export type ProjectAccSyncItemsQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type ProjectAccSyncItemsQuery = { __typename?: 'Query', project: { __typename?: 'Project', accSyncItems: { __typename?: 'AccSyncItemCollection', items: Array<{ __typename?: 'AccSyncItem', id: string, projectId: string, modelId: string, accHubId: string, accProjectId: string, accRootFolderUrn: string, accFileLineageId: string, updatedAt: string, status: AccSyncItemStatus, author?: { __typename?: 'LimitedUser', name: string, avatar?: string | null } | null }> } } };
+
+export type OnProjectAccSyncItemUpdatedSubscriptionVariables = Exact<{
+  id: Scalars['String']['input'];
+  itemIds?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+}>;
+
+
+export type OnProjectAccSyncItemUpdatedSubscription = { __typename?: 'Subscription', projectAccSyncItemsUpdated: { __typename?: 'ProjectAccSyncItemsUpdatedMessage', type?: ProjectAccSyncItemsUpdatedMessageType | null } };
 
 export type ActiveUserMainMetadataQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -7703,6 +7721,7 @@ export const WorkspaceSidebar_WorkspaceFragmentDoc = {"kind":"Document","definit
 export const WorkspaceWizard_WorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"WorkspaceWizard_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"creationState"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completed"}},{"kind":"Field","name":{"kind":"Name","value":"state"}}]}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}}]} as unknown as DocumentNode<WorkspaceWizard_WorkspaceFragment, unknown>;
 export const SettingsWorkspacesRegionsSelect_ServerRegionItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesRegionsSelect_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment, unknown>;
 export const WorkspaceWizardStepRegion_ServerInfoFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"WorkspaceWizardStepRegion_ServerInfo"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"multiRegion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"regions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsWorkspacesRegionsSelect_ServerRegionItem"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsWorkspacesRegionsSelect_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<WorkspaceWizardStepRegion_ServerInfoFragment, unknown>;
+export const ProjectAccSyncItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectAccSyncItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AccSyncItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"modelId"}},{"kind":"Field","name":{"kind":"Name","value":"accHubId"}},{"kind":"Field","name":{"kind":"Name","value":"accProjectId"}},{"kind":"Field","name":{"kind":"Name","value":"accRootFolderUrn"}},{"kind":"Field","name":{"kind":"Name","value":"accFileLineageId"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]} as unknown as DocumentNode<ProjectAccSyncItemFragment, unknown>;
 export const SearchAutomateFunctionReleaseItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SearchAutomateFunctionReleaseItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunctionRelease"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"versionTag"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}}]}}]} as unknown as DocumentNode<SearchAutomateFunctionReleaseItemFragment, unknown>;
 export const PricesPriceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PricesPrice"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Price"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"currencySymbol"}},{"kind":"Field","name":{"kind":"Name","value":"currency"}}]}}]} as unknown as DocumentNode<PricesPriceFragment, unknown>;
 export const PricesWorkspacePlanPriceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PricesWorkspacePlanPrice"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"WorkspacePlanPrice"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"monthly"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"PricesPrice"}}]}},{"kind":"Field","name":{"kind":"Name","value":"yearly"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"PricesPrice"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PricesPrice"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Price"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"currencySymbol"}},{"kind":"Field","name":{"kind":"Name","value":"currency"}}]}}]} as unknown as DocumentNode<PricesWorkspacePlanPriceFragment, unknown>;
@@ -7777,6 +7796,8 @@ export const InvitableCollaboratorsDocument = {"kind":"Document","definitions":[
 export const GetModelUploadsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetModelUploads"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"GetModelUploadsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"uploads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageModelsUploadsDialog_FileUpload"}}]}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"UseFailedFileImportJobUtils_FileUpload"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"FileUpload"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"modelId"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"convertedStatus"}},{"kind":"Field","name":{"kind":"Name","value":"convertedMessage"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageModelsUploadsDialog_FileUpload"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"FileUpload"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"convertedStatus"}},{"kind":"Field","name":{"kind":"Name","value":"convertedMessage"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"fileSize"}},{"kind":"Field","name":{"kind":"Name","value":"convertedLastUpdate"}},{"kind":"Field","name":{"kind":"Name","value":"uploadDate"}},{"kind":"Field","name":{"kind":"Name","value":"uploadComplete"}},{"kind":"Field","name":{"kind":"Name","value":"branchName"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"UseFailedFileImportJobUtils_FileUpload"}}]}}]} as unknown as DocumentNode<GetModelUploadsQuery, GetModelUploadsQueryVariables>;
 export const ProjectPageSettingsGeneralDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectPageSettingsGeneral"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockProjectInfo_Project"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockAccess_Project"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockDiscussions_Project"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockLeave_Project"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockDelete_Project"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageTeamInternals_Project"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedUserAvatar"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedUser"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsDeleteDialog_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canDelete"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockProjectInfo_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canUpdate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockAccess_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"workspaceId"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canUpdate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockDiscussions_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"allowPublicComments"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canUpdateAllowPublicComments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockLeave_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canLeave"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageSettingsGeneralBlockDelete_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsDeleteDialog_Project"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canUpdate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageTeamInternals_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"invitedTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"inviteId"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"seatType"}},{"kind":"Field","name":{"kind":"Name","value":"workspaceRole"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageSettingsGeneralQuery, ProjectPageSettingsGeneralQueryVariables>;
 export const WorkspaceAvailableEditorSeatsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"WorkspaceAvailableEditorSeats"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceBySlug"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"seats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"editors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"available"}}]}}]}}]}}]}}]} as unknown as DocumentNode<WorkspaceAvailableEditorSeatsQuery, WorkspaceAvailableEditorSeatsQueryVariables>;
+export const ProjectAccSyncItemsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectAccSyncItems"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"accSyncItems"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectAccSyncItem"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectAccSyncItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AccSyncItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"modelId"}},{"kind":"Field","name":{"kind":"Name","value":"accHubId"}},{"kind":"Field","name":{"kind":"Name","value":"accProjectId"}},{"kind":"Field","name":{"kind":"Name","value":"accRootFolderUrn"}},{"kind":"Field","name":{"kind":"Name","value":"accFileLineageId"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]} as unknown as DocumentNode<ProjectAccSyncItemsQuery, ProjectAccSyncItemsQueryVariables>;
+export const OnProjectAccSyncItemUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"OnProjectAccSyncItemUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"itemIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectAccSyncItemsUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"itemIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"itemIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}}]} as unknown as DocumentNode<OnProjectAccSyncItemUpdatedSubscription, OnProjectAccSyncItemUpdatedSubscriptionVariables>;
 export const ActiveUserMainMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActiveUserMainMetadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"emails"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"primary"}}]}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"bio"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"isOnboardingFinished"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"notificationPreferences"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsAdd_User"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"UseCanCreatePersonalProject_User"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"User"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canCreatePersonalProject"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsAdd_User"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"User"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canCreatePersonalProject"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"UseCanCreatePersonalProject_User"}}]}}]} as unknown as DocumentNode<ActiveUserMainMetadataQuery, ActiveUserMainMetadataQueryVariables>;
 export const ActiveUserProjectsToMoveDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActiveUserProjectsToMove"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"UserProjectsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]}}]} as unknown as DocumentNode<ActiveUserProjectsToMoveQuery, ActiveUserProjectsToMoveQueryVariables>;
 export const FinishOnboardingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"FinishOnboarding"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"OnboardingCompletionInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"finishOnboarding"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]} as unknown as DocumentNode<FinishOnboardingMutation, FinishOnboardingMutationVariables>;
@@ -8004,6 +8025,9 @@ export const AutomateFunctionPageDocument = {"kind":"Document","definitions":[{"
 export const AutomateFunctionPageWorkspaceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AutomateFunctionPageWorkspace"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspace"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionPageHeader_Workspace"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionPageHeader_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}}]} as unknown as DocumentNode<AutomateFunctionPageWorkspaceQuery, AutomateFunctionPageWorkspaceQueryVariables>;
 export const SettingsServerRegionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SettingsServerRegions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"multiRegion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"regions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"}}]}},{"kind":"Field","name":{"kind":"Name","value":"availableKeys"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<SettingsServerRegionsQuery, SettingsServerRegionsQueryVariables>;
 export type AllObjectTypes = {
+  AccSyncItem: AccSyncItem,
+  AccSyncItemCollection: AccSyncItemCollection,
+  AccSyncItemMutations: AccSyncItemMutations,
   ActiveUserMutations: ActiveUserMutations,
   Activity: Activity,
   ActivityCollection: ActivityCollection,
@@ -8082,6 +8106,7 @@ export type AllObjectTypes = {
   PermissionCheckResult: PermissionCheckResult,
   Price: Price,
   Project: Project,
+  ProjectAccSyncItemsUpdatedMessage: ProjectAccSyncItemsUpdatedMessage,
   ProjectAccessRequest: ProjectAccessRequest,
   ProjectAccessRequestMutations: ProjectAccessRequestMutations,
   ProjectAutomationMutations: ProjectAutomationMutations,
@@ -8130,9 +8155,6 @@ export type AllObjectTypes = {
   StreamCollaborator: StreamCollaborator,
   StreamCollection: StreamCollection,
   Subscription: Subscription,
-  SyncItem: SyncItem,
-  SyncItemCollection: SyncItemCollection,
-  SyncItemMutations: SyncItemMutations,
   TestAutomationRun: TestAutomationRun,
   TestAutomationRunTrigger: TestAutomationRunTrigger,
   TestAutomationRunTriggerPayload: TestAutomationRunTriggerPayload,
@@ -8193,6 +8215,28 @@ export type AllObjectTypes = {
   WorkspaceSubscriptionSeats: WorkspaceSubscriptionSeats,
   WorkspaceTeamByRole: WorkspaceTeamByRole,
   WorkspaceUpdatedMessage: WorkspaceUpdatedMessage,
+}
+export type AccSyncItemFieldArgs = {
+  accFileLineageId: {},
+  accHubId: {},
+  accProjectId: {},
+  accRootFolderUrn: {},
+  accWebhookId: {},
+  author: {},
+  createdAt: {},
+  id: {},
+  modelId: {},
+  projectId: {},
+  status: {},
+  updatedAt: {},
+}
+export type AccSyncItemCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
+}
+export type AccSyncItemMutationsFieldArgs = {
+  create: AccSyncItemMutationsCreateArgs,
 }
 export type ActiveUserMutationsFieldArgs = {
   emailMutations: {},
@@ -8691,6 +8735,7 @@ export type ModelsTreeItemCollectionFieldArgs = {
 }
 export type MutationFieldArgs = {
   _: {},
+  accSyncItemMutations: {},
   activeUserMutations: {},
   admin: {},
   adminDeleteUser: MutationAdminDeleteUserArgs,
@@ -8745,7 +8790,6 @@ export type MutationFieldArgs = {
   streamUpdate: MutationStreamUpdateArgs,
   streamUpdatePermission: MutationStreamUpdatePermissionArgs,
   streamsDelete: MutationStreamsDeleteArgs,
-  syncItemMutations: {},
   userCommentThreadActivityBroadcast: MutationUserCommentThreadActivityBroadcastArgs,
   userDelete: MutationUserDeleteArgs,
   userNotificationPreferencesUpdate: MutationUserNotificationPreferencesUpdateArgs,
@@ -8820,6 +8864,8 @@ export type PriceFieldArgs = {
   currencySymbol: {},
 }
 export type ProjectFieldArgs = {
+  accSyncItem: ProjectAccSyncItemArgs,
+  accSyncItems: {},
   allowPublicComments: {},
   automation: ProjectAutomationArgs,
   automations: ProjectAutomationsArgs,
@@ -8848,8 +8894,6 @@ export type ProjectFieldArgs = {
   permissions: {},
   role: {},
   sourceApps: {},
-  syncItem: ProjectSyncItemArgs,
-  syncItems: {},
   team: {},
   updatedAt: {},
   version: ProjectVersionArgs,
@@ -8859,6 +8903,10 @@ export type ProjectFieldArgs = {
   webhooks: ProjectWebhooksArgs,
   workspace: {},
   workspaceId: {},
+}
+export type ProjectAccSyncItemsUpdatedMessageFieldArgs = {
+  accSyncItem: {},
+  type: {},
 }
 export type ProjectAccessRequestFieldArgs = {
   createdAt: {},
@@ -9233,13 +9281,13 @@ export type SubscriptionFieldArgs = {
   commitDeleted: SubscriptionCommitDeletedArgs,
   commitUpdated: SubscriptionCommitUpdatedArgs,
   ping: {},
+  projectAccSyncItemsUpdated: SubscriptionProjectAccSyncItemsUpdatedArgs,
   projectAutomationsUpdated: SubscriptionProjectAutomationsUpdatedArgs,
   projectCommentsUpdated: SubscriptionProjectCommentsUpdatedArgs,
   projectFileImportUpdated: SubscriptionProjectFileImportUpdatedArgs,
   projectModelsUpdated: SubscriptionProjectModelsUpdatedArgs,
   projectPendingModelsUpdated: SubscriptionProjectPendingModelsUpdatedArgs,
   projectPendingVersionsUpdated: SubscriptionProjectPendingVersionsUpdatedArgs,
-  projectSyncItemsUpdated: SubscriptionProjectSyncItemsUpdatedArgs,
   projectTriggeredAutomationsStatusUpdated: SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs,
   projectUpdated: SubscriptionProjectUpdatedArgs,
   projectVersionGendoAIRenderCreated: SubscriptionProjectVersionGendoAiRenderCreatedArgs,
@@ -9255,30 +9303,6 @@ export type SubscriptionFieldArgs = {
   viewerUserActivityBroadcasted: SubscriptionViewerUserActivityBroadcastedArgs,
   workspaceProjectsUpdated: SubscriptionWorkspaceProjectsUpdatedArgs,
   workspaceUpdated: SubscriptionWorkspaceUpdatedArgs,
-}
-export type SyncItemFieldArgs = {
-  accFileLineageId: {},
-  accHubId: {},
-  accProjectId: {},
-  accRootFolderUrn: {},
-  accWebhookId: {},
-  author: {},
-  createdAt: {},
-  id: {},
-  modelId: {},
-  projectId: {},
-  status: {},
-  updatedAt: {},
-}
-export type SyncItemCollectionFieldArgs = {
-  cursor: {},
-  items: {},
-  totalCount: {},
-}
-export type SyncItemMutationsFieldArgs = {
-  create: SyncItemMutationsCreateArgs,
-  delete: SyncItemMutationsDeleteArgs,
-  update: SyncItemMutationsUpdateArgs,
 }
 export type TestAutomationRunFieldArgs = {
   automationRunId: {},
@@ -9691,6 +9715,9 @@ export type WorkspaceUpdatedMessageFieldArgs = {
   workspace: {},
 }
 export type AllObjectFieldArgTypes = {
+  AccSyncItem: AccSyncItemFieldArgs,
+  AccSyncItemCollection: AccSyncItemCollectionFieldArgs,
+  AccSyncItemMutations: AccSyncItemMutationsFieldArgs,
   ActiveUserMutations: ActiveUserMutationsFieldArgs,
   Activity: ActivityFieldArgs,
   ActivityCollection: ActivityCollectionFieldArgs,
@@ -9769,6 +9796,7 @@ export type AllObjectFieldArgTypes = {
   PermissionCheckResult: PermissionCheckResultFieldArgs,
   Price: PriceFieldArgs,
   Project: ProjectFieldArgs,
+  ProjectAccSyncItemsUpdatedMessage: ProjectAccSyncItemsUpdatedMessageFieldArgs,
   ProjectAccessRequest: ProjectAccessRequestFieldArgs,
   ProjectAccessRequestMutations: ProjectAccessRequestMutationsFieldArgs,
   ProjectAutomationMutations: ProjectAutomationMutationsFieldArgs,
@@ -9817,9 +9845,6 @@ export type AllObjectFieldArgTypes = {
   StreamCollaborator: StreamCollaboratorFieldArgs,
   StreamCollection: StreamCollectionFieldArgs,
   Subscription: SubscriptionFieldArgs,
-  SyncItem: SyncItemFieldArgs,
-  SyncItemCollection: SyncItemCollectionFieldArgs,
-  SyncItemMutations: SyncItemMutationsFieldArgs,
   TestAutomationRun: TestAutomationRunFieldArgs,
   TestAutomationRunTrigger: TestAutomationRunTriggerFieldArgs,
   TestAutomationRunTriggerPayload: TestAutomationRunTriggerPayloadFieldArgs,

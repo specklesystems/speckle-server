@@ -63,6 +63,20 @@ extend type Mutation {
     @hasScope(scope: "streams:write")
 }
 
+enum ProjectAccSyncItemsUpdatedMessageType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type ProjectAccSyncItemsUpdatedMessage {
+  type: ProjectAccSyncItemsUpdatedMessageType
+  accSyncItem: AccSyncItem
+}
+
 extend type Subscription {
-  projectAccSyncItemsUpdated(id: String!, itemIds: [String!]): String!
+  projectAccSyncItemsUpdated(
+    id: String!
+    itemIds: [String!]
+  ): ProjectAccSyncItemsUpdatedMessage!
 }

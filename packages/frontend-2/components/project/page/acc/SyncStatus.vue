@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AccSyncItemStatus } from '~/lib/acc/types'
+import type { AccSyncItemStatus } from '~/lib/common/generated/gql/graphql'
 
 defineProps<{
   status: AccSyncItemStatus
@@ -19,16 +19,16 @@ const runStatusClasses = (run: AccSyncItemStatus) => {
   const classParts = ['w-24 justify-center']
 
   switch (run) {
-    case 'syncing':
+    case 'SYNCING':
       classParts.push('bg-info-lighter')
       break
-    case 'paused':
+    case 'PAUSED':
       classParts.push('bg-warning-lighter')
       break
-    case 'failed':
+    case 'FAILED':
       classParts.push('bg-danger-lighter')
       break
-    case 'sync':
+    case 'SYNC':
       classParts.push('bg-success-lighter')
       break
   }

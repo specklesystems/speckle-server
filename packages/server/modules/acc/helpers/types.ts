@@ -38,7 +38,7 @@ export type AccSyncItem = {
   accFileLineageId: string
   accWebhookId?: string
   status: AccSyncItemStatus
-  author: UserRecord
+  author?: UserRecord
   createdAt: Date
   updatedAt: Date
 }

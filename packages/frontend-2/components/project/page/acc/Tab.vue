@@ -5,7 +5,7 @@
       :project-id="projectId"
       :is-logged-in="hasTokens"
       :tokens="tokens"
-      :syncs="[]"
+      :syncs="accSyncItems"
     ></ProjectPageAccSyncs>
 
     <div v-if="!hasTokens">
@@ -51,6 +51,9 @@
 </template>
 
 <script setup lang="ts">
+import { useQuery, useSubscription } from '@vue/apollo-composable'
+import { projectAccSyncItemsQuery } from '~/lib/acc/graphql/queries'
+import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subscriptions'
 import type { AccTokens, AccUserInfo } from '~/lib/acc/types'
 
 const props = defineProps<{ projectId: string }>()
@@ -61,6 +64,30 @@ const hasTokens = computed(() => !!tokens.value?.access_token)
 const loadingTokens = ref(true)
 const userInfo = ref<AccUserInfo>()
 const loadingUser = ref(false)
+
+const { result: accSyncItemsResult } = useQuery(projectAccSyncItemsQuery, () => ({
+  id: props.projectId
+}))
+
+const accSyncItems = computed(
+  () => accSyncItemsResult.value?.project.accSyncItems.items || []
+)
+
+const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
+  onProjectAccSyncItemUpdatedSubscription,
+  () => ({
+    id: unref(props.projectId)
+  })
+)
+
+onProjectAccSyncItemsUpdated((res) => {
+  // refetchAccSyncItems()
+  triggerNotification({
+    type: ToastNotificationType.Info,
+    title: 'Acc Sync Item updated',
+    description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageId
+  })
+})
 
 // const syncs = ref<AccSyncItem[]>([
 //   {

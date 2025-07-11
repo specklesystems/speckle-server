@@ -2360,6 +2360,19 @@ export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ProjectAccSyncItemsUpdatedMessage = {
+  __typename?: 'ProjectAccSyncItemsUpdatedMessage';
+  accSyncItem?: Maybe<AccSyncItem>;
+  type?: Maybe<ProjectAccSyncItemsUpdatedMessageType>;
+};
+
+export const ProjectAccSyncItemsUpdatedMessageType = {
+  Created: 'CREATED',
+  Deleted: 'DELETED',
+  Updated: 'UPDATED'
+} as const;
+
+export type ProjectAccSyncItemsUpdatedMessageType = typeof ProjectAccSyncItemsUpdatedMessageType[keyof typeof ProjectAccSyncItemsUpdatedMessageType];
 /** Created when a user requests to become a contributor on a project */
 export type ProjectAccessRequest = {
   __typename?: 'ProjectAccessRequest';
@@ -3758,7 +3771,7 @@ export type Subscription = {
    * Note: Only works in test environment
    */
   ping: Scalars['String']['output'];
-  projectAccSyncItemsUpdated: Scalars['String']['output'];
+  projectAccSyncItemsUpdated: ProjectAccSyncItemsUpdatedMessage;
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**

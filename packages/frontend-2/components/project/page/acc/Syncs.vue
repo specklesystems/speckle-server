@@ -15,13 +15,13 @@
         <ProjectPageAccSyncStatus :status="item.status" />
       </template>
       <template #accFileName="{ item }">
-        {{ item.accItem.attributes.name || item.accItem.attributes.displayName }}
+        {{ item.accFileLineageId }}
       </template>
       <template #modelName="{ item }">
-        {{ item.modelName }}
+        {{ item.modelId }}
       </template>
       <template #createdBy="{ item }">
-        {{ item.createdBy }}
+        {{ item.author?.name }}
       </template>
     </LayoutTable>
     <FormButton
@@ -108,15 +108,10 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  AccTokens,
-  AccHub,
-  AccProject,
-  AccItem,
-  AccSyncItem
-} from '~/lib/acc/types'
+import type { AccTokens, AccHub, AccProject, AccItem } from '~/lib/acc/types'
 import { ref, computed } from 'vue'
 import type {
+  ProjectAccSyncItemFragment,
   ProjectLatestModelsPaginationQueryVariables,
   ProjectPageLatestItemsModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
@@ -127,11 +122,11 @@ import { isArray } from 'lodash-es'
 const props = defineProps<{
   projectId: string
   tokens: AccTokens | undefined
-  syncs: AccSyncItem[]
+  syncs: ProjectAccSyncItemFragment[]
   isLoggedIn: boolean
 }>()
 
-const internalSyncs = computed(() => props.syncs)
+// const internalSyncs = computed(() => props.syncs)
 
 const step = ref(0)
 
@@ -169,12 +164,12 @@ const latestModelsQueryVariables = computed(
   }
 )
 
-const { result: baseResult } = useQuery(
+const { result: modelsResult } = useQuery(
   latestModelsQuery,
   () => latestModelsQueryVariables.value
 )
 
-const models = computed(() => baseResult.value?.project?.models?.items || [])
+const models = computed(() => modelsResult.value?.project?.models?.items || [])
 
 const fetchHubs = async () => {
   loadingHubs.value = true
@@ -369,25 +364,27 @@ const onFileSelected = (item: AccItem) => {
 // }
 
 const addSync = async () => {
-  const item = {
-    id: 'whatever',
-    accHub: selectedHub.value,
-    accHubId: selectedHubId.value,
-    accHubUrn: folderUrn.value,
-    modelId: selectedModel.value?.id,
-    projectId: props.projectId,
-    projectName: '',
-    modelName: selectedModel.value?.displayName,
-    createdBy: 'cat',
-    accItem: selectedFolderContent.value,
-    status: 'syncing'
-  } as AccSyncItem
-  internalSyncs.value.push(item)
-  await fetch('/acc/sync-item-created', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(item)
-  })
+  // const item = {
+  //   id: 'whatever',
+  //   accHub: selectedHub.value,
+  //   accHubId: selectedHubId.value,
+  //   accHubUrn: folderUrn.value,
+  //   modelId: selectedModel.value?.id,
+  //   projectId: props.projectId,
+  //   projectName: '',
+  //   modelName: selectedModel.value?.displayName,
+  //   createdBy: 'cat',
+  //   accItem: selectedFolderContent.value,
+  //   status: 'syncing'
+  // } as AccSyncItem
+  // internalSyncs.value.push(item)
+  // await fetch('/acc/sync-item-created', {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify(item)
+  // })
+
+  // TODO: mutation
   showNewSyncDialog.value = false
   step.value = 0
 }

@@ -2379,6 +2379,19 @@ export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ProjectAccSyncItemsUpdatedMessage = {
+  __typename?: 'ProjectAccSyncItemsUpdatedMessage';
+  accSyncItem?: Maybe<AccSyncItem>;
+  type?: Maybe<ProjectAccSyncItemsUpdatedMessageType>;
+};
+
+export const ProjectAccSyncItemsUpdatedMessageType = {
+  Created: 'CREATED',
+  Deleted: 'DELETED',
+  Updated: 'UPDATED'
+} as const;
+
+export type ProjectAccSyncItemsUpdatedMessageType = typeof ProjectAccSyncItemsUpdatedMessageType[keyof typeof ProjectAccSyncItemsUpdatedMessageType];
 /** Created when a user requests to become a contributor on a project */
 export type ProjectAccessRequest = {
   __typename?: 'ProjectAccessRequest';
@@ -3777,7 +3790,7 @@ export type Subscription = {
    * Note: Only works in test environment
    */
   ping: Scalars['String']['output'];
-  projectAccSyncItemsUpdated: Scalars['String']['output'];
+  projectAccSyncItemsUpdated: ProjectAccSyncItemsUpdatedMessage;
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
@@ -5637,6 +5650,8 @@ export type ResolversTypes = {
   PermissionCheckResult: ResolverTypeWrapper<PermissionCheckResult>;
   Price: ResolverTypeWrapper<PriceGraphQLReturn>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
+  ProjectAccSyncItemsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectAccSyncItemsUpdatedMessage, 'accSyncItem'> & { accSyncItem?: Maybe<ResolversTypes['AccSyncItem']> }>;
+  ProjectAccSyncItemsUpdatedMessageType: ProjectAccSyncItemsUpdatedMessageType;
   ProjectAccessRequest: ResolverTypeWrapper<ProjectAccessRequestGraphQLReturn>;
   ProjectAccessRequestMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectAutomationCreateInput: ProjectAutomationCreateInput;
@@ -5988,6 +6003,7 @@ export type ResolversParentTypes = {
   PermissionCheckResult: PermissionCheckResult;
   Price: PriceGraphQLReturn;
   Project: ProjectGraphQLReturn;
+  ProjectAccSyncItemsUpdatedMessage: Omit<ProjectAccSyncItemsUpdatedMessage, 'accSyncItem'> & { accSyncItem?: Maybe<ResolversParentTypes['AccSyncItem']> };
   ProjectAccessRequest: ProjectAccessRequestGraphQLReturn;
   ProjectAccessRequestMutations: MutationsObjectGraphQLReturn;
   ProjectAutomationCreateInput: ProjectAutomationCreateInput;
@@ -7063,6 +7079,12 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ProjectAccSyncItemsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAccSyncItemsUpdatedMessage'] = ResolversParentTypes['ProjectAccSyncItemsUpdatedMessage']> = {
+  accSyncItem?: Resolver<Maybe<ResolversTypes['AccSyncItem']>, ParentType, ContextType>;
+  type?: Resolver<Maybe<ResolversTypes['ProjectAccSyncItemsUpdatedMessageType']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProjectAccessRequestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAccessRequest'] = ResolversParentTypes['ProjectAccessRequest']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -7529,7 +7551,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   commitDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitDeleted", ParentType, ContextType, RequireFields<SubscriptionCommitDeletedArgs, 'streamId'>>;
   commitUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitUpdated", ParentType, ContextType, RequireFields<SubscriptionCommitUpdatedArgs, 'streamId'>>;
   ping?: SubscriptionResolver<ResolversTypes['String'], "ping", ParentType, ContextType>;
-  projectAccSyncItemsUpdated?: SubscriptionResolver<ResolversTypes['String'], "projectAccSyncItemsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectAccSyncItemsUpdatedArgs, 'id'>>;
+  projectAccSyncItemsUpdated?: SubscriptionResolver<ResolversTypes['ProjectAccSyncItemsUpdatedMessage'], "projectAccSyncItemsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectAccSyncItemsUpdatedArgs, 'id'>>;
   projectAutomationsUpdated?: SubscriptionResolver<ResolversTypes['ProjectAutomationsUpdatedMessage'], "projectAutomationsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectAutomationsUpdatedArgs, 'projectId'>>;
   projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'target'>>;
   projectFileImportUpdated?: SubscriptionResolver<ResolversTypes['ProjectFileImportUpdatedMessage'], "projectFileImportUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectFileImportUpdatedArgs, 'id'>>;
@@ -8170,6 +8192,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PermissionCheckResult?: PermissionCheckResultResolvers<ContextType>;
   Price?: PriceResolvers<ContextType>;
   Project?: ProjectResolvers<ContextType>;
+  ProjectAccSyncItemsUpdatedMessage?: ProjectAccSyncItemsUpdatedMessageResolvers<ContextType>;
   ProjectAccessRequest?: ProjectAccessRequestResolvers<ContextType>;
   ProjectAccessRequestMutations?: ProjectAccessRequestMutationsResolvers<ContextType>;
   ProjectAutomationMutations?: ProjectAutomationMutationsResolvers<ContextType>;
