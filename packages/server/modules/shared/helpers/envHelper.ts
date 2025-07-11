@@ -512,3 +512,7 @@ export const getFileUploadUrlExpiryMinutes = (): number => {
 export const getPreviewServiceTimeoutMilliseconds = (): number => {
   return getIntFromEnv('PREVIEW_SERVICE_TIMEOUT_MILLISECONDS', '3600000') // 1 hour
 }
+
+export const emailVerificationTimeoutMinutes = (): number => {
+  return getIntFromEnv('EMAIL_VERIFICATION_TIMEOUT_MINUTES', '5')
+}
