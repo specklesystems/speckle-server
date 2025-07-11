@@ -8,6 +8,7 @@ export async function up(knex: Knex): Promise<void> {
     table.text('jobType').notNullable().index()
     table.jsonb('payload').notNullable()
     table.text('status').notNullable().index()
+    table.text('originServerUrl').notNullable()
     table.integer('timeoutMs').notNullable()
     table.integer('attempt').notNullable()
     table.integer('maxAttempt').notNullable()
