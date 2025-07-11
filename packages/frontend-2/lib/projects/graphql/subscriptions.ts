@@ -68,6 +68,7 @@ export const onProjectPendingModelsUpdatedSubscription = graphql(`
       type
       model {
         ...PendingFileUpload
+        ...UseFailedFileImportJobUtils_FileUpload
         model {
           ...ProjectPageLatestItemsModelItem
         }
@@ -83,6 +84,7 @@ export const onProjectPendingVersionsUpdatedSubscription = graphql(`
       type
       version {
         ...PendingFileUpload
+        ...UseFailedFileImportJobUtils_FileUpload
         model {
           ...ProjectPageLatestItemsModelItem
         }

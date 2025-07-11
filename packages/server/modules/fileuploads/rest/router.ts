@@ -13,12 +13,18 @@ import { UnauthorizedError } from '@/modules/shared/errors'
 import { ensureError, Nullable } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
 
   const app = Router()
 
+  /**
+   * @deprecated use POST /graphql (mutation.fileUploadMutations.generateUploadUrl), then PUT (to the provided url), then POST /graphql (mutation.fileUploadMutations.startFileImport)
+   */
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
     authMiddlewareCreator(
@@ -89,6 +95,14 @@ export const fileuploadRouterFactory = (): Router => {
             logger.error(ensureError(err), 'File importer handling error @deprecated')
             res.status(500)
           }
+
+          if (FF_LARGE_FILE_IMPORTS_ENABLED) {
+            res.setHeader(
+              'Warning',
+              'Deprecated API; use POST /graphql (mutation.fileUploadMutations.generateUploadUrl), then PUT (to the provided url), then POST /graphql (mutation.fileUploadMutations.startFileImport)'
+            )
+          }
+
           res.status(201).send({ uploadResults })
         },
         onError: () => {

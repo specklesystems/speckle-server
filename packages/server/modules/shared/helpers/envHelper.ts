@@ -125,6 +125,10 @@ export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
   return getBooleanFromEnv('PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
 }
 
+export const fileImportServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
+  return getBooleanFromEnv('FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
+}
+
 export const getFileImportServiceRhinoParserRedisUrl = (): string | undefined => {
   return getStringFromEnv('FILEIMPORT_SERVICE_RHINO_REDIS_URL', { unsafe: true })
 }
@@ -390,6 +394,9 @@ export function isEmailEnabled() {
   return getBooleanFromEnv('EMAIL')
 }
 
+export const getFileImporterQueuePostgresUrl = () =>
+  process.env['FILEIMPORT_QUEUE_POSTGRES_URL'] ?? null
+
 export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '8')
 }
@@ -427,6 +434,10 @@ export function getS3SecretKey() {
 
 export function getS3Endpoint() {
   return getStringFromEnv('S3_ENDPOINT')
+}
+
+export function getS3PublicEndpoint() {
+  return getStringFromEnv('S3_PUBLIC_ENDPOINT', { unsafe: true })
 }
 
 export function getS3Region(aDefault: string = 'us-east-1') {
@@ -496,4 +507,8 @@ export const isRateLimiterEnabled = (): boolean => {
 
 export const getFileUploadUrlExpiryMinutes = (): number => {
   return getIntFromEnv('FILE_UPLOAD_URL_EXPIRY_MINUTES', '1440')
+}
+
+export const getPreviewServiceTimeoutMilliseconds = (): number => {
+  return getIntFromEnv('PREVIEW_SERVICE_TIMEOUT_MILLISECONDS', '3600000') // 1 hour
 }

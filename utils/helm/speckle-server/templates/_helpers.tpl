@@ -761,6 +761,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.preview_service.enabled }}
 - name: PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL
   value: "true"
+{{- if .Values.preview_service.puppeteer.timeoutMilliseconds }}
+- name: PREVIEW_SERVICE_TIMEOUT_MILLISECONDS
+  value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
+{{- end }}
 {{- end }}
 
 # *** Redis ***

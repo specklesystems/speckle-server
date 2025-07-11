@@ -12,7 +12,9 @@ import {
   requestProjectAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
+import { getActivitiesFactory } from '@/modules/activitystream/repositories/index'
 import {
+  Activity,
   ServerAccessRequests,
   StreamActivity,
   Streams,
@@ -24,6 +26,7 @@ import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   getStreamCollaboratorsFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
@@ -79,15 +82,17 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
-
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
+const getActivities = getActivitiesFactory({ db })
 
 const isNotCollaboratorError = (e: unknown) =>
   e instanceof StreamAccessUpdateError &&
@@ -406,7 +411,11 @@ describe('Project access requests', () => {
     let validReqId: string
 
     beforeEach(async () => {
-      await truncateTables([ServerAccessRequests.name, StreamActivity.name])
+      await truncateTables([
+        ServerAccessRequests.name,
+        StreamActivity.name,
+        Activity.name
+      ])
       await removeStreamCollaborator(
         myPrivateStream.id,
         otherGuy.id,
@@ -464,8 +473,8 @@ describe('Project access requests', () => {
 
         // activity stream item should be inserted
         if (accept) {
-          const streamActivity = await getStreamActivities(myPrivateStream.id, {
-            actionType: StreamActionTypes.Stream.PermissionsAdd,
+          const streamActivity = await getActivities({
+            projectId: myPrivateStream.id,
             userId: me.id
           })
           expect(streamActivity).to.have.lengthOf(1)

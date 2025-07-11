@@ -6,13 +6,13 @@ import {
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   updateProjectFactory,
-  getRolesByUserIdFactory,
   getStreamFactory,
   deleteStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
-  getStreamCollaboratorsFactory
+  getStreamCollaboratorsFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -107,7 +107,6 @@ import {
   getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
 import {
@@ -178,6 +177,7 @@ import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regio
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
+  getWorkspaceSubscriptionFactory,
   getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
@@ -193,7 +193,10 @@ import {
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
-import { getProjectFactory } from '@/modules/core/repositories/projects'
+import {
+  getProjectFactory,
+  getUserProjectRolesFactory
+} from '@/modules/core/repositories/projects'
 import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
@@ -227,6 +230,7 @@ import {
 } from '@/modules/serverinvites/services/coreFinalization'
 import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 import { copyWorkspaceFactory } from '@/modules/workspaces/repositories/projectRegions'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -330,6 +334,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -405,6 +410,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
@@ -590,6 +596,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspace: getWorkspaceFactory({ db }),
             upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
+            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
             emitEvent: getEventBus().emit
           })
 
@@ -767,7 +774,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
               deleteProject: deleteStreamFactory({ db }),
               deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              queryAllProjects: queryAllProjectsFactory({
                 getStreams: legacyGetStreamsFactory({ db })
               }),
               deleteSsoProvider: deleteSsoProviderFactory({ db }),
@@ -1847,7 +1854,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return parent.workspaceRoleCreatedAt
         },
         projectRoles: async (parent) => {
-          const projectRoles = await getRolesByUserIdFactory({ db })({
+          const projectRoles = await getUserProjectRolesFactory({ db })({
             userId: parent.id,
             workspaceId: parent.workspaceId
           })
