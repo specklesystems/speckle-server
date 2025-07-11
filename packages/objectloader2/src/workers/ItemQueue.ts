@@ -13,8 +13,8 @@ export class ItemQueue {
     this.textDecoder = new TextDecoder('utf-8', { fatal: false })
   }
 
-  async enqueue(items: Item[], timeoutMs: number): Promise<boolean> {
-    if (items.length === 0) return true
+  async enqueue(items: Item[], timeoutMs: number): Promise<number> {
+    if (items.length === 0) return 0
 
     const byteArrays: Uint8Array[] = []
     for (const item of items) {
@@ -30,7 +30,7 @@ export class ItemQueue {
             ' ' +
             JSON.stringify(item)
         )
-        return false
+        return 0
       }
     }
     return this.rbq.enqueue(byteArrays, timeoutMs)

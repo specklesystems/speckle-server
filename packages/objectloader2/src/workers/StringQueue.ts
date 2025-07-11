@@ -11,8 +11,8 @@ export class StringQueue {
     this.textDecoder = new TextDecoder('utf-8', { fatal: false })
   }
 
-  async enqueue(messages: string[], timeoutMs: number): Promise<boolean> {
-    if (messages.length === 0) return true
+  async enqueue(messages: string[], timeoutMs: number): Promise<number> {
+    if (messages.length === 0) return 0
 
     const byteArrays: Uint8Array[] = []
     for (const msg of messages) {
@@ -25,7 +25,7 @@ export class StringQueue {
         } else {
           console.error('Caught an unknown type of error:', e)
         }
-        return false
+        return 0
       }
     }
     return this.rbq.enqueue(byteArrays, timeoutMs)
