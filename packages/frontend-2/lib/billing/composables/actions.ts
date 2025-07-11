@@ -167,7 +167,13 @@ export const useBillingActions = () => {
         ...metaData,
         isExistingSubscription: false
       })
-      $intercom.updateCompany()
+      $intercom.updateCompany({
+        id: workspaceId,
+        /* eslint-disable camelcase */
+        plan_name: plan,
+        plan_status: WorkspacePlanStatuses.Valid
+        /* eslint-enable camelcase */
+      })
 
       triggerNotification({
         type: ToastNotificationType.Success,
@@ -229,7 +235,13 @@ export const useBillingActions = () => {
           ...metaData,
           isExistingSubscription: false
         })
-        $intercom.updateCompany()
+        $intercom.updateCompany({
+          id: workspace.id,
+          /* eslint-disable camelcase */
+          plan_name: workspace.plan?.name,
+          plan_status: workspace.plan?.status
+          /* eslint-enable camelcase */
+        })
       }
 
       const currentQueryParams = { ...route.query }

@@ -1,8 +1,8 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="group h-full">
-    <template v-if="showSidebar">
+    <template v-if="isLoggedIn">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
           <FormButton
@@ -30,9 +30,9 @@
           class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
         >
           <LayoutSidebarMenu>
-            <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" class="lg:hidden mb-4">
+            <!-- <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" class="lg:hidden mb-4">
               <HeaderWorkspaceSwitcher />
-            </LayoutSidebarMenuGroup>
+            </LayoutSidebarMenuGroup> -->
 
             <div class="flex flex-col gap-y-2 lg:gap-y-4">
               <LayoutSidebarMenuGroup>
@@ -61,13 +61,14 @@
                 </NuxtLink>
 
                 <div v-if="isWorkspacesEnabled">
-                  <div @click="openExplainerVideoDialog">
-                    <LayoutSidebarMenuGroupItem label="Getting started">
-                      <template #icon>
-                        <IconPlay class="size-4 text-foreground-2" />
-                      </template>
-                    </LayoutSidebarMenuGroupItem>
-                  </div>
+                  <LayoutSidebarMenuGroupItem
+                    label="Getting started"
+                    @click="openExplainerVideoDialog"
+                  >
+                    <template #icon>
+                      <IconPlay class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
                   <WorkspaceExplainerVideoDialog
                     v-model:open="showExplainerVideoDialog"
                   />
@@ -83,13 +84,15 @@
                   </LayoutSidebarMenuGroupItem>
                 </CalPopUp>
 
-                <div v-if="isWorkspacesEnabled" @click="openChat">
-                  <LayoutSidebarMenuGroupItem label="Give us feedback">
-                    <template #icon>
-                      <IconFeedback class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </div>
+                <LayoutSidebarMenuGroupItem
+                  v-if="isWorkspacesEnabled"
+                  label="Give us feedback"
+                  @click="openChat"
+                >
+                  <template #icon>
+                    <IconFeedback class="size-4 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
 
                 <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
                   <LayoutSidebarMenuGroupItem
@@ -140,9 +143,6 @@
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
-          <template v-if="showSpeckleConPromo" #promo>
-            <DashboardPromo />
-          </template>
         </LayoutSidebar>
       </div>
     </template>
@@ -165,18 +165,15 @@ import {
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import dayjs from 'dayjs'
-import { useActiveUserMeta } from '~/lib/user/composables/meta'
+import { useActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const { activeWorkspaceSlug } = useActiveWorkspace()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
-const { hasDismissedSpeckleConBanner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
@@ -187,17 +184,6 @@ const projectsLink = computed(() => {
       ? workspaceRoute(activeWorkspaceSlug.value)
       : projectsRoute
     : projectsRoute
-})
-
-const showSidebar = computed(() => {
-  return isWorkspacesEnabled.value
-    ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
-    : isLoggedIn.value
-})
-
-const showSpeckleConPromo = computed(() => {
-  if (hasDismissedSpeckleConBanner.value) return false
-  return dayjs('2025-11-08').isAfter(dayjs())
 })
 
 const openChat = () => {

@@ -1,7 +1,4 @@
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
-import { useIsWorkspacesEnabled } from '~/composables/globals'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
-import { watch, computed, ref } from 'vue'
 import Intercom, {
   shutdown,
   show,
@@ -9,17 +6,14 @@ import Intercom, {
   update,
   trackEvent
 } from '@intercom/messenger-js-sdk'
-import { useApolloClient } from '@vue/apollo-composable'
-import { intercomActiveWorkspaceQuery } from '~~/lib/intercom/graphql/queries'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const disabledRoutes = ['/auth', '/models/']
 
 export const useIntercom = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
-  const { activeWorkspaceSlug } = useNavigation()
   const route = useRoute()
   const { activeUser: user } = useActiveUser()
-  const apollo = useApolloClient().client
   const {
     public: { intercomAppId }
   } = useRuntimeConfig()
@@ -64,8 +58,6 @@ export const useIntercom = () => {
       name: user.value.name || '',
       email: user.value.email || ''
     })
-
-    updateCompany()
   }
 
   const showIntercom = () => {
@@ -89,35 +81,13 @@ export const useIntercom = () => {
     trackEvent(event, metadata)
   }
 
-  // Fetch active workspace and add to the user as a company
-  const updateCompany = async () => {
-    if (!activeWorkspaceSlug.value || !isInitialized.value) return
-
-    const workspace = await apollo.query({
-      query: intercomActiveWorkspaceQuery,
-      variables: {
-        slug: activeWorkspaceSlug.value
-      }
-    })
-
-    if (!workspace.data?.workspaceBySlug) return
-
+  // Update the 'company' (workspace) in Intercom with additional data
+  const updateCompany = async (
+    data: { id: string } & Record<string, MaybeNullOrUndefined<string>> = { id: '' }
+  ) => {
     update({
       company: {
-        id: workspace.data?.workspaceBySlug.id,
-        name: workspace.data?.workspaceBySlug.name,
-        /* eslint-disable camelcase */
-        project_count: workspace.data?.workspaceBySlug.projects?.totalCount,
-        team_count: workspace.data?.workspaceBySlug.team?.totalCount,
-        plan_name: workspace.data?.workspaceBySlug.plan?.name,
-        plan_status: workspace.data?.workspaceBySlug.plan?.status,
-        subscription_created_at:
-          workspace.data?.workspaceBySlug.subscription?.createdAt,
-        subscription_updated_at:
-          workspace.data?.workspaceBySlug.subscription?.updatedAt,
-        subscription_current_billing_cycle_end:
-          workspace.data?.workspaceBySlug.subscription?.currentBillingCycleEnd
-        /* eslint-enable camelcase */
+        ...data
       }
     })
   }
@@ -130,14 +100,6 @@ export const useIntercom = () => {
       bootIntercom()
     }
   })
-
-  watch(
-    () => activeWorkspaceSlug.value,
-    async () => {
-      if (!isInitialized.value) return
-      updateCompany()
-    }
-  )
 
   return {
     show: showIntercom,

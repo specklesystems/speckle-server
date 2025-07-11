@@ -128,7 +128,7 @@ import {
   settingsWorkspaceRoutes,
   workspaceRoute
 } from '~/lib/common/helpers/route'
-import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { useActiveWorkspace } from '~~/lib/user/composables/activeWorkspace'
 
 graphql(`
   fragment SettingsSidebar_Workspace on Workspace {
@@ -140,7 +140,7 @@ graphql(`
 `)
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { activeWorkspaceSlug } = useNavigation()
+const { activeWorkspaceSlug } = useActiveWorkspace()
 const settingsMenuState = useSettingsMenuState()
 const { isAdmin: isServerAdmin } = useActiveUser()
 const route = useRoute()

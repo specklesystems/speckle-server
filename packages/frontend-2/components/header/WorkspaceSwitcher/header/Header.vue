@@ -1,6 +1,6 @@
 <template>
   <div class="p-2 pb-3 flex flex-col gap-y-4">
-    <div class="flex gap-x-2 items-center">
+    <div class="flex gap-x-3 items-center">
       <MenuItem>
         <NuxtLink :to="to">
           <WorkspaceAvatar

@@ -10,7 +10,7 @@
       :style="logo ? { backgroundImage: `url('${logo}')` } : {}"
     >
       <span v-if="!logo" class="text-foreground-3 uppercase leading-none">
-        {{ name[0] }}
+        {{ name?.[0] }}
       </span>
     </div>
   </div>
@@ -24,7 +24,7 @@ const props = withDefaults(
   defineProps<{
     size?: UserAvatarSize
     logo: MaybeNullOrUndefined<string>
-    name: string
+    name: MaybeNullOrUndefined<string>
   }>(),
   {
     size: 'base'

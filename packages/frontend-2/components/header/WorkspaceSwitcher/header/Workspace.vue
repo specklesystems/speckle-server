@@ -3,7 +3,7 @@
     <HeaderWorkspaceSwitcherHeader
       :name="workspace?.name"
       :logo="workspace?.logo"
-      :to="workspaceRoute(activeWorkspaceSlug || '')"
+      :to="workspaceRoute(workspace?.slug || '')"
     >
       <p class="text-body-2xs text-foreground-2 capitalize truncate">
         {{ formatName(workspace?.plan?.name) }} ·
@@ -18,7 +18,7 @@
               color="outline"
               full-width
               size="sm"
-              :to="settingsWorkspaceRoutes.general.route(activeWorkspaceSlug || '')"
+              :to="settingsWorkspaceRoutes.general.route(workspace?.slug || '')"
             >
               Settings
             </FormButton>
@@ -48,7 +48,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { workspaceRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
@@ -57,6 +56,7 @@ graphql(`
     name
     logo
     role
+    slug
     permissions {
       canInvite {
         ...FullPermissionCheckResult
@@ -76,8 +76,6 @@ defineEmits(['show-invite-dialog'])
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment>
 }>()
-
-const { activeWorkspaceSlug } = useNavigation()
 
 const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
 const canInvite = computed(() => props.workspace?.permissions.canInvite.authorized)
