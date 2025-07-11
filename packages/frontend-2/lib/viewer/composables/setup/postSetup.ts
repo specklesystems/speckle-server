@@ -6,7 +6,11 @@ import {
   LoaderEvent,
   type PropertyInfo,
   type StringPropertyInfo,
-  type SunLightConfiguration
+  type SunLightConfiguration,
+  FilteringExtension,
+  SelectionExtension,
+  DiffExtension,
+  MeasurementsExtension
 } from '@speckle/viewer'
 import {
   ViewerEvent,
@@ -358,7 +362,7 @@ function useViewerSectionBoxIntegration() {
         visible.value = false
         edited.value = false
 
-        instance.sectionBoxOff()
+        sectionTool.enabled = false
         instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
@@ -367,8 +371,8 @@ function useViewerSectionBoxIntegration() {
         visible.value = true
         edited.value = false
 
-        instance.setSectionBox(newVal)
-        instance.sectionBoxOn()
+        sectionTool.setBox(newVal)
+        sectionTool.enabled = true
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
         instance.requestRender(UpdateFlags.RENDER_RESET)
@@ -394,7 +398,7 @@ function useViewerSectionBoxIntegration() {
   )
 
   onBeforeUnmount(() => {
-    instance.sectionBoxOff()
+    sectionTool.enabled = false
     sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
@@ -472,10 +476,11 @@ function useViewerCameraIntegration() {
       throw new Error('Attempting to set projection too early')
     }
 
+    const camController = instance.getExtension(CameraController)
     if (newVal) {
-      instance.setOrthoCameraOn()
+      camController.setOrthoCameraOn()
     } else {
-      instance.setPerspectiveCameraOn()
+      camController.setPerspectiveCameraOn()
     }
 
     // reset camera pos, cause we've switched cameras now and it might not have the new ones
@@ -498,10 +503,14 @@ function useViewerCameraIntegration() {
       if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
-      instance.setView({
-        position: newVal,
-        target: target.value
-      })
+      const camController = instance.getExtension(CameraController)
+      camController.setCameraView(
+        {
+          position: newVal,
+          target: target.value
+        },
+        true
+      )
     }
     // { immediate: true }
   )
@@ -513,10 +522,14 @@ function useViewerCameraIntegration() {
         return
       }
 
-      instance.setView({
-        position: position.value,
-        target: newVal
-      })
+      const camController = instance.getExtension(CameraController)
+      camController.setCameraView(
+        {
+          position: position.value,
+          target: newVal
+        },
+        true
+      )
     }
     // { immediate: true }
   )
@@ -551,7 +564,11 @@ function useViewerFiltersIntegration() {
     (newVal, oldVal) => {
       if (arraysEqual(newVal, oldVal || [])) return
 
-      instance.highlightObjects(newVal)
+      if (!newVal.length) {
+        instance.getExtension(SelectionExtension).clearSelection()
+      } else {
+        instance.getExtension(SelectionExtension).selectObjects(newVal)
+      }
     },
     { immediate: true, flush: 'sync' }
   )
@@ -567,14 +584,18 @@ function useViewerFiltersIntegration() {
 
       if (isolatable.length) {
         withWatchersDisabled(() => {
-          instance.isolateObjects(isolatable, stateKey, true)
+          instance
+            .getExtension(FilteringExtension)
+            .isolateObjects(isolatable, stateKey, true)
           filters.hiddenObjectIds.value = []
         })
       }
 
       if (unisolatable.length) {
         withWatchersDisabled(() => {
-          instance.unIsolateObjects(unisolatable, stateKey, true)
+          instance
+            .getExtension(FilteringExtension)
+            .unIsolateObjects(unisolatable, stateKey, true)
           filters.hiddenObjectIds.value = []
         })
       }
@@ -593,13 +614,15 @@ function useViewerFiltersIntegration() {
 
       if (hidable.length) {
         withWatchersDisabled(() => {
-          instance.hideObjects(hidable, stateKey, true)
+          instance.getExtension(FilteringExtension).hideObjects(hidable, stateKey, true)
           filters.isolatedObjectIds.value = []
         })
       }
       if (showable.length) {
         withWatchersDisabled(() => {
-          instance.showObjects(showable, stateKey, true)
+          instance
+            .getExtension(FilteringExtension)
+            .showObjects(showable, stateKey, true)
           filters.isolatedObjectIds.value = []
         })
       }
@@ -613,8 +636,9 @@ function useViewerFiltersIntegration() {
   ) => {
     const targetFilter = filter || speckleTypeFilter.value
 
-    if (isApplied && targetFilter) await instance.setColorFilter(targetFilter)
-    if (!isApplied) await instance.removeColorFilter()
+    const filteringExt = instance.getExtension(FilteringExtension)
+    if (isApplied && targetFilter) await filteringExt.setColorFilter(targetFilter)
+    if (!isApplied) await filteringExt.removeColorFilter()
   }
 
   watch(
@@ -652,11 +676,11 @@ function useViewerFiltersIntegration() {
       if (arraysEqual(newIds, oldIds)) return
 
       if (!newVal.length) {
-        instance.resetSelection()
+        instance.getExtension(SelectionExtension).clearSelection()
         return
       }
 
-      instance.selectObjects(newIds)
+      instance.getExtension(SelectionExtension).selectObjects(newIds)
     },
     { immediate: true, flush: 'sync' }
   )
@@ -723,15 +747,15 @@ function useExplodeFactorIntegration() {
   watch(
     explodeFactor,
     (newVal) => {
-      /** newVal turns out to be a string. It needs to be a */
-      instance.explode(newVal)
+      /** newVal comes in as a string, convert to number and apply */
+      instance.getExtension(ExplodeExtension).setExplode(Number(newVal))
     },
     { immediate: true }
   )
 
   useOnViewerLoadComplete(
     () => {
-      instance.explode(explodeFactor.value)
+      instance.getExtension(ExplodeExtension).setExplode(Number(explodeFactor.value))
     },
     { initialOnly: true }
   )
@@ -768,7 +792,7 @@ function useDiffingIntegration() {
         return
 
       if (!newCommand || oldVal) {
-        await state.viewer.instance.undiff()
+        await state.viewer.instance.getExtension(DiffExtension).undiff()
         if (!newCommand) return
       }
 
@@ -782,7 +806,8 @@ function useDiffingIntegration() {
         newVersion?.referencedObject as string
       )
 
-      state.ui.diff.result.value = await state.viewer.instance.diff(
+      const diffExt = state.viewer.instance.getExtension(DiffExtension)
+      state.ui.diff.result.value = await diffExt.diff(
         oldObjUrl,
         newObjUrl,
         state.ui.diff.mode.value,
@@ -816,7 +841,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setDiffTime(state.ui.diff.result.value, val)
+      state.viewer.instance.getExtension(DiffExtension).updateVisualDiff(val)
     }
   )
 
@@ -825,11 +850,9 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setVisualDiffMode(state.ui.diff.result.value, val)
-      state.viewer.instance.setDiffTime(
-        state.ui.diff.result.value,
-        state.ui.diff.time.value
-      ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
+      const diffExt = state.viewer.instance.getExtension(DiffExtension)
+      diffExt.updateVisualDiff(undefined, val)
+      diffExt.updateVisualDiff(state.ui.diff.time.value)
     })
 
   useOnViewerLoadComplete(({ isInitial }) => {
@@ -856,7 +879,7 @@ function useViewerMeasurementIntegration() {
     () => measurement.enabled.value,
     (newVal, oldVal) => {
       if (newVal !== oldVal) {
-        instance.enableMeasurements(newVal)
+        instance.getExtension(MeasurementsExtension).enabled = newVal
       }
     },
     { immediate: true }
@@ -866,7 +889,7 @@ function useViewerMeasurementIntegration() {
     () => ({ ...measurement.options.value }),
     (newMeasurementState) => {
       if (newMeasurementState) {
-        instance.setMeasurementOptions(newMeasurementState)
+        instance.getExtension(MeasurementsExtension).options = newMeasurementState
       }
     },
     { immediate: true, deep: true }
