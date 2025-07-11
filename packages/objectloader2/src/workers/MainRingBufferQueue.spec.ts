@@ -15,17 +15,17 @@ describe('MainRingBufferQueue', () => {
     enqueueResult = await queue.enqueue(itemsToEnqueue[1], 500)
     expect(enqueueResult).toBe(true)
 
-    const dequeuedItems = await queue.dequeue(2, 500)
-    expect(dequeuedItems).toHaveLength(2)
-    expect(dequeuedItems[0]).toEqual(itemsToEnqueue[0])
-    expect(dequeuedItems[1]).toEqual(itemsToEnqueue[1])
+    let dequeuedItem = await queue.dequeue(500)
+    expect(dequeuedItem).toEqual(itemsToEnqueue[0])
+    dequeuedItem = await queue.dequeue(500)
+    expect(dequeuedItem).toEqual(itemsToEnqueue[1])
   })
 
   it('should handle empty dequeue gracefully', async () => {
     const queue = MainRingBufferQueue.create(CAPACITY_BYTES, QUEUE_NAME)
 
-    const dequeuedItems = await queue.dequeue(5, 500)
-    expect(dequeuedItems).toHaveLength(0)
+    const dequeuedItems = await queue.dequeue(500)
+    expect(dequeuedItems).toBeUndefined()
   })
 
   it('should not enqueue items when full', async () => {
@@ -44,7 +44,7 @@ describe('MainRingBufferQueue', () => {
   it('should not dequeue items when empty', async () => {
     const queue = MainRingBufferQueue.create(CAPACITY_BYTES, QUEUE_NAME)
 
-    const dequeuedItems = await queue.dequeue(1, 500)
-    expect(dequeuedItems).toHaveLength(0)
+    const dequeuedItems = await queue.dequeue(500)
+    expect(dequeuedItems).toBeUndefined()
   })
 })

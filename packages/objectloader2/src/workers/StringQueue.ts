@@ -54,19 +54,22 @@ export class StringQueue {
   }
 
   async dequeue(maxItems: number, timeoutMs: number): Promise<string[]> {
-    const byteArrays = await this.rbq.dequeue(maxItems, timeoutMs)
     const messages: string[] = [] // Array of strings
 
-    for (const byteArray of byteArrays) {
+    while (messages.length < maxItems) {
+      const bytes = await this.rbq.dequeue(timeoutMs)
+      if (!bytes) {
+        break
+      }
       try {
-        const decodedString = this.textDecoder.decode(byteArray)
+        const decodedString = this.textDecoder.decode(bytes)
         messages.push(decodedString)
       } catch (e: unknown) {
         if (e instanceof Error) {
           console.error(
             '[StringQueue] Error decoding string from bytes:',
             e.message,
-            `Raw (hex): ${Array.from(byteArray)
+            `Raw (hex): ${Array.from(bytes)
               .map((b) => b.toString(16).padStart(2, '0'))
               .join('')}`
           )

@@ -36,9 +36,9 @@ describe('MainRingBufferQueue with concurrent access', () => {
     const readerPromise = (async (): Promise<void> => {
       try {
         while (receivedItems.length < totalItems) {
-          const items = await queue.dequeue(10, 2000) // Try to dequeue up to 10 items at a time
-          if (items.length > 0) {
-            receivedItems.push(...items)
+          const item = await queue.dequeue(2000) // Try to dequeue up to 10 items at a time
+          if (item) {
+            receivedItems.push(item)
           } else {
             // If the queue is empty, wait a moment before trying again
             await new Promise((res) => setTimeout(res, 10))

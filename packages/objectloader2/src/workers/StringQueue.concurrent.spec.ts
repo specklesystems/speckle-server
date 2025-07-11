@@ -71,7 +71,7 @@ describe('StringQueue with concurrent access', () => {
     for (let i = 0; i < totalItems; i++) {
       expect(receivedItems[i]).toEqual(sourceItems[i])
     }
-  }, 50000) // Increase timeout for this test as it involves delays
+  }, 10000) // Increase timeout for this test as it involves delays
 
   it('should handle simultaneous reads and writes without data corruption 2', async () => {
     const queueCapacity = 1_000 // 1KB capacity

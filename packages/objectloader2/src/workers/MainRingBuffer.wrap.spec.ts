@@ -25,9 +25,8 @@ describe('RingBufferQueue with wrap-around behavior', () => {
 
     // Dequeue the first message (15 bytes). This frees up space at the beginning.
     // The read pointer moves to index 15. The write pointer is at 45.
-    const dequeued1 = await queue.dequeue(1, Infinity)
-    expect(dequeued1.length).toBe(1)
-    expect(dequeued1[0]).toEqual(msg1)
+    const dequeued1 = await queue.dequeue(500)
+    expect(dequeued1).toEqual(msg1)
 
     // Enqueue a fourth message (11 bytes + 4 prefix = 15 bytes).
     // Available space is capacity - current length = 50 - (45 - 15) = 20 bytes. It fits.
@@ -38,15 +37,16 @@ describe('RingBufferQueue with wrap-around behavior', () => {
     expect(enqueue2Success).toBe(true)
 
     // Dequeue the remaining 3 messages. They should be in the correct order.
-    const finalDequeued = await queue.dequeue(3, 500)
-    expect(finalDequeued.length).toBe(3)
-    expect(finalDequeued[0]).toEqual(msg2)
-    expect(finalDequeued[1]).toEqual(msg3)
-    expect(finalDequeued[2]).toEqual(msg4)
+    let finalDequeued = await queue.dequeue(500)
+    expect(finalDequeued).toEqual(msg2)
+    finalDequeued = await queue.dequeue(500)
+    expect(finalDequeued).toEqual(msg3)
+    finalDequeued = await queue.dequeue(500)
+    expect(finalDequeued).toEqual(msg4)
 
     // The queue should now be empty.
-    const emptyDequeue = await queue.dequeue(1, 500)
-    expect(emptyDequeue.length).toBe(0)
+    const emptyDequeue = await queue.dequeue(500)
+    expect(emptyDequeue).toBeUndefined()
   })
 
   it('should handle multiple wrap-arounds correctly', async () => {
@@ -61,31 +61,31 @@ describe('RingBufferQueue with wrap-around behavior', () => {
     await queue.enqueue(m2, 500) // Write pointer at 20
 
     // Dequeue m1. Read pointer moves to 10.
-    let dequeued = await queue.dequeue(1, 500)
-    expect(dequeued[0]).toEqual(m1)
+    let dequeued = await queue.dequeue(500)
+    expect(dequeued).toEqual(m1)
 
     // Enqueue m3 (10 bytes). Writes to indices 20-29. Write pointer becomes 0 (wraps).
     const m3 = textEncoder.encode('ghijkl')
     await queue.enqueue(m3, 500)
 
     // Dequeue m2. Read pointer was at 10, now moves to 20.
-    dequeued = await queue.dequeue(1, 500)
-    expect(dequeued[0]).toEqual(m2)
+    dequeued = await queue.dequeue(500)
+    expect(dequeued).toEqual(m2)
 
     // Enqueue m4 (10 bytes). Writes to indices 0-9. Write pointer becomes 10.
     const m4 = textEncoder.encode('mnopqr')
     await queue.enqueue(m4, 500)
 
     // Dequeue m3. Read pointer was at 20, now moves to 0 (wraps).
-    dequeued = await queue.dequeue(1, 500)
-    expect(dequeued[0]).toEqual(m3)
+    dequeued = await queue.dequeue(500)
+    expect(dequeued).toEqual(m3)
 
     // Dequeue m4. Read pointer was at 0, now moves to 10.
-    dequeued = await queue.dequeue(1, 500)
-    expect(dequeued[0]).toEqual(m4)
+    dequeued = await queue.dequeue(500)
+    expect(dequeued).toEqual(m4)
 
     // Queue should be empty.
-    dequeued = await queue.dequeue(1, 500)
-    expect(dequeued.length).toBe(0)
+    dequeued = await queue.dequeue(500)
+    expect(dequeued).toBeUndefined()
   })
 })

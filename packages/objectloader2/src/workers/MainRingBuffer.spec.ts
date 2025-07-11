@@ -13,7 +13,7 @@ describe('MainRingBuffer', () => {
 
   it('should detect when the buffer is full', async () => {
     const ringBuffer = MainRingBuffer.create(capacityBytes)
-    const data = new Uint8Array(capacityBytes - 1) // Fill the buffer to capacity - 1
+    const data = new Uint8Array(capacityBytes) // Fill the buffer to capacity
 
     const pushResult = await ringBuffer.push(data, 500)
     expect(pushResult).toBeTruthy()
@@ -23,7 +23,11 @@ describe('MainRingBuffer', () => {
 
   it('should not allow pushing data when the buffer is full', async () => {
     const ringBuffer = MainRingBuffer.create(capacityBytes)
-    const data = new Uint8Array(capacityBytes - 1) // Fill the buffer to capacity - 1
+    expect(ringBuffer.isFull()).toBe(false)
+    expect(ringBuffer.isEmpty()).toBe(true)
+    expect(ringBuffer.availableSpaces).toBe(capacityBytes)
+    expect(ringBuffer.capacity).toBe(capacityBytes)
+    const data = new Uint8Array(capacityBytes) // Fill the buffer to capacity
 
     expect(await ringBuffer.push(data, 500)).toBeTruthy()
     const extraData = new Uint8Array(1) // Try to push one more element

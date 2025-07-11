@@ -43,7 +43,7 @@ export class MainRingBuffer {
     this.internalSharedBuffer = sharedBuffer
     this.typeConstructor = typeConstructor
     this.elementSize = this.typeConstructor.BYTES_PER_ELEMENT // Should always be 1 for Uint8Array
-    this.capacity = capacityElements
+    this.capacityPlusOne = capacityElements
 
     const dataBufferByteLength = capacityElements * this.elementSize
     const dataBufferByteOffset = RingBuffer.CONTROL_BUFFER_BYTE_LENGTH
@@ -79,7 +79,7 @@ export class MainRingBuffer {
   static create(capacityBytes: number): MainRingBuffer {
     const elementSize = Uint8Array.BYTES_PER_ELEMENT // This is 1
     // For Uint8Array, capacityBytes is the same as capacityElements
-    const capacityElements = capacityBytes
+    const capacityElements = capacityBytes + 1
     const totalByteLength =
       RingBuffer.CONTROL_BUFFER_BYTE_LENGTH + capacityElements * elementSize
     const sharedBuffer = new SharedArrayBuffer(totalByteLength)
@@ -92,11 +92,16 @@ export class MainRingBuffer {
     capacityBytes: number
   ): MainRingBuffer {
     // For Uint8Array, capacityBytes is the same as capacityElements
-    return new MainRingBuffer(sharedBuffer, Uint8Array, capacityBytes, false)
+    return new MainRingBuffer(sharedBuffer, Uint8Array, capacityBytes + 1, false)
   }
 
   public getSharedArrayBuffer(): SharedArrayBuffer {
     return this.internalSharedBuffer
+  }
+
+  get capacity(): number {
+    // Returns capacity in number of elements
+    return this.capacityPlusOne - 1 // -1 because we keep one slot empty to distinguish full/empty states
   }
 
   get length(): number {
@@ -106,32 +111,13 @@ export class MainRingBuffer {
     if (writeIdx >= readIdx) {
       return writeIdx - readIdx
     }
-    return this.capacity - (readIdx - writeIdx)
-  }
-
-  get totalSpace(): number {
-    // Returns capacity in number of elements
-    return this.capacity
-  }
-  // Returns available space in number of elements
-  get availableSpace(): number {
-    const writeIdx = Atomics.load(this.controlBuffer, RingBuffer.WRITE_IDX_POS)
-    const readIdx = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
-    let space
-    if (writeIdx >= readIdx) {
-      space = this.capacity - (writeIdx - readIdx)
-    } else {
-      // read index is ahead of write index
-      space = readIdx - writeIdx
-    }
-    // We subtract 1 because one slot is always kept empty to distinguish between full and empty states.
-    return space - 1
+    return this.capacityPlusOne - (readIdx - writeIdx)
   }
 
   isFull(): boolean {
     const writeIdx = Atomics.load(this.controlBuffer, RingBuffer.WRITE_IDX_POS)
     const readIdx = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
-    return (writeIdx + 1) % this.capacity === readIdx
+    return (writeIdx + 1) % this.capacityPlusOne === readIdx
   }
 
   isEmpty(): boolean {
@@ -176,7 +162,7 @@ export class MainRingBuffer {
         // Copy data, handling wrap-around
         for (let i = 0; i < dataLengthElements; i++) {
           this.buffer[tempWriteIndex] = data[i]
-          tempWriteIndex = (tempWriteIndex + 1) % this.capacity
+          tempWriteIndex = (tempWriteIndex + 1) % this.capacityPlusOne
         }
 
         Atomics.store(this.controlBuffer, RingBuffer.WRITE_IDX_POS, tempWriteIndex)
@@ -230,17 +216,14 @@ export class MainRingBuffer {
     }
 
     while (true) {
+      const readIdx = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
       if (this.length >= numElements) {
-        const currentReadIndex = Atomics.load(
-          this.controlBuffer,
-          RingBuffer.READ_IDX_POS
-        )
         const resultBuffer = new this.typeConstructor(numElements)
-        let tempReadIndex = currentReadIndex
+        let tempReadIndex = readIdx
 
         for (let i = 0; i < numElements; i++) {
           resultBuffer[i] = this.buffer[tempReadIndex]
-          tempReadIndex = (tempReadIndex + 1) % this.capacity
+          tempReadIndex = (tempReadIndex + 1) % this.capacityPlusOne
         }
         // Unlike shift, we DO NOT advance the read pointer here.
         return resultBuffer
@@ -252,7 +235,7 @@ export class MainRingBuffer {
         const outcome = Atomics.waitAsync(
           this.controlBuffer,
           RingBuffer.READ_IDX_POS,
-          Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS), // wait if read_idx is still the same
+          readIdx, // wait if read_idx is still the same
           timeoutMs
         )
         const res = outcome.async ? await outcome.value : outcome.value
@@ -298,23 +281,11 @@ export class MainRingBuffer {
     }
 
     while (true) {
-      const currentWriteIndex = Atomics.load(
-        this.controlBuffer,
-        RingBuffer.WRITE_IDX_POS
-      )
-      const currentReadIndex = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
+      const readIdx = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
 
-      let availableDataElements: number
-      if (currentWriteIndex >= currentReadIndex) {
-        availableDataElements = currentWriteIndex - currentReadIndex
-      } else {
-        // Write index has wrapped around
-        availableDataElements = this.capacity - (currentReadIndex - currentWriteIndex)
-      }
-
-      if (availableDataElements >= numElements) {
+      if (this.length >= numElements) {
         const resultBuffer = new this.typeConstructor(numElements)
-        let tempReadIndex = currentReadIndex
+        let tempReadIndex = readIdx
 
         // Copy data, handling wrap-around
         for (let i = 0; i < numElements; i++) {

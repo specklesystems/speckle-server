@@ -59,12 +59,15 @@ export class ItemQueue {
   }
 
   async dequeue(maxItems: number, timeoutMs: number): Promise<Item[]> {
-    const byteArrays = await this.rbq.dequeue(maxItems, timeoutMs)
     const items: Item[] = []
 
-    for (const byteArray of byteArrays) {
+    while (items.length < maxItems) {
+      const bytes = await this.rbq.dequeue(timeoutMs)
+      if (!bytes) {
+        break
+      }
       try {
-        const jsonString = this.textDecoder.decode(byteArray)
+        const jsonString = this.textDecoder.decode(bytes)
         const item = JSON.parse(jsonString) as Item
         // Basic validation
         if (
@@ -87,7 +90,7 @@ export class ItemQueue {
             '[ItemQueue] Error deserializing Item from bytes:' +
             err.message +
             ' ' +
-            `Raw (hex): ${Array.from(byteArray)
+            `Raw (hex): ${Array.from(bytes)
               .map((b) => b.toString(16).padStart(2, '0'))
               .join('')}`
         )
