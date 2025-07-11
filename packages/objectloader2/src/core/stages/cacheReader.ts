@@ -3,7 +3,7 @@ import Queue from '../../queues/queue.js'
 import { CustomLogger } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
 import { ItemQueue } from '../../workers/ItemQueue.js'
-import { MainRingBufferQueue } from '../../workers/MainRingBufferQueue.js'
+import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
 import { RingBuffer } from '../../workers/RingBuffer.js'
 import { StringQueue } from '../../workers/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
@@ -45,7 +45,7 @@ export class CacheReader {
 
   private initializeIndexedDbReader(): void {
     this.logToMainUI('Initializing RingBufferQueues...')
-    const rawMainToWorkerRbq = MainRingBufferQueue.create(
+    const rawMainToWorkerRbq = RingBufferQueue.create(
       ID_BUFFER_CAPACITY_BYTES,
       'StringQueue MainToWorkerQueue'
     )
@@ -57,7 +57,7 @@ export class CacheReader {
       }KB capacity.`
     )
 
-    const rawWorkerToMainRbq = MainRingBufferQueue.create(
+    const rawWorkerToMainRbq = RingBufferQueue.create(
       BASE_BUFFER_CAPACITY_BYTES,
       'ItemQueue WorkerToMainQueue'
     )
@@ -85,7 +85,7 @@ export class CacheReader {
     })
   }
 
-   getObject(params: { id: string }): Promise<Base> {
+  getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -94,18 +94,15 @@ export class CacheReader {
         RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
       )
     }
-    return  p
+    return p
   }
 
-   requestAll(keys: string[]): void {
+  requestAll(keys: string[]): void {
     for (const key of keys) {
       this.#defermentManager.trackDefermentRequest(key)
     }
-     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-     this.mainToWorkerQueue?.fullyEnqueue(
-      keys,
-      RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
-    )
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.mainToWorkerQueue?.fullyEnqueue(keys, RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS)
   }
 
   #processBatch = async (): Promise<void> => {
@@ -136,8 +133,9 @@ export class CacheReader {
       }
       this.logToMainUI(
         'readBatch: left, time ' +
-        items.length.toString() + ' ' +
-        (performance.now() - start)
+          items.length.toString() +
+          ' ' +
+          (performance.now() - start)
       )
     }
   }
