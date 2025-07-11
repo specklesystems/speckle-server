@@ -126,29 +126,29 @@ export const initializeMetrics = (params: {
     const { jobResult } = params
     fileImportJobsProcessedSummary.observe(
       {
-        parser: jobResult.result.parser,
+        parser: jobResult.parser,
         status: jobResult.status,
         step: FileImportJobDurationStep.TOTAL
       },
-      jobResult.result.durationSeconds * TIME.second
+      jobResult.durationSeconds * TIME.second
     )
 
     fileImportJobsProcessedSummary.observe(
       {
-        parser: jobResult.result.parser,
+        parser: jobResult.parser,
         status: jobResult.status,
         step: FileImportJobDurationStep.DOWNLOAD
       },
-      jobResult.result.downloadDurationSeconds * TIME.second
+      jobResult.downloadDurationSeconds * TIME.second
     )
 
     fileImportJobsProcessedSummary.observe(
       {
-        parser: jobResult.result.parser,
+        parser: jobResult.parser,
         status: jobResult.status,
         step: FileImportJobDurationStep.PARSE
       },
-      jobResult.result.parseDurationSeconds * TIME.second
+      jobResult.parseDurationSeconds * TIME.second
     )
   }
 

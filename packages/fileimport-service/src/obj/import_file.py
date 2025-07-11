@@ -48,7 +48,6 @@ DEFAULT_BRANCH = "uploads"
 
 
 def convert_material(obj_mat: Dict[str, Any]) -> RenderMaterial:
-
     if "diffuse" in obj_mat:
         argb = [
             1,
@@ -136,7 +135,6 @@ def import_obj(
     branch_name: str,
     commit_message: str,
 ) -> Version:
-
     # Parse input
     obj = ObjFile(file_path)
     LOG.info(

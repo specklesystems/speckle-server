@@ -88,12 +88,10 @@ export const main = async () => {
             result: {
               status: 'error',
               reason: err.message,
-              result: {
-                durationSeconds: 0,
-                downloadDurationSeconds: 0,
-                parseDurationSeconds: 0,
-                parser: 'none'
-              }
+              durationSeconds: 0,
+              downloadDurationSeconds: 0,
+              parseDurationSeconds: 0,
+              parser: 'none'
             }
           })
         } catch (sendErr) {

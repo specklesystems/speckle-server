@@ -22,19 +22,16 @@ repos:
     hooks:
       - id: ggshield-not-ci
 
-  - repo: https://github.com/psf/black
-    rev: '22.10.0'
-    hooks:
-      - id: black # python formatter
-        name: black (python formatter)
-
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.170
+    rev: v0.12.2
     hooks:
-      - id: ruff
-        name: ruff (python linter)
+      - id: ruff-check
+        name: ruff checker (python linter)
         args:
           - --ignore=E501 # ignoring error about lines that are too long
+            # Run the linter.
+      - id: ruff-format
+        name: ruff formatter (python formatter)
 
   # helmlint should occur after the json schema is updated
   - repo: https://github.com/gruntwork-io/pre-commit

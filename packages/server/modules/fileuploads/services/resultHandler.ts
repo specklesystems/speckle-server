@@ -54,18 +54,18 @@ export const onFileImportResultFactory =
       case 'error':
         boundLogger.warn(
           {
-            duration: jobResult.result.durationSeconds,
+            duration: jobResult.durationSeconds,
             err: { message: jobResult.reason }
           },
           'Processing error result for file upload'
         )
         break
       case 'success':
-        convertedCommitId = jobResult.result.versionId
+        convertedCommitId = jobResult.versionId
         boundLogger.info(
           {
-            duration: jobResult.result.durationSeconds,
-            versionId: jobResult.result.versionId
+            duration: jobResult.durationSeconds,
+            versionId: jobResult.versionId
           },
           'Processing success result for file upload'
         )

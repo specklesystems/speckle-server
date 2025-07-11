@@ -231,7 +231,7 @@ const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
         comments?.items.forEach(checkComment)
       })
 
-      it('followed when quering for project comment', async () => {
+      it('followed when querying for project comment', async () => {
         const test = async (comment: CommentRecord) => {
           const res = await apollo.execute(
             GetLimitedPersonalProjectCommentDocument,

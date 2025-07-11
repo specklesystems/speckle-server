@@ -45,9 +45,9 @@ print(f"✅ GraphQL operation succeeded. Server name: {server_info.name}")
 
 # Test if frontend is accessible
 frontend_response = requests.get(SPECKLE_SERVER, verify=VERIFY_CERTIFICATE)
-assert (
-    frontend_response.status_code == 200
-), f"❌ Frontend did not return a 200 status code, instead returned status code is {frontend_response.status_code}."
+assert frontend_response.status_code == 200, (
+    f"❌ Frontend did not return a 200 status code, instead returned status code is {frontend_response.status_code}."
+)
 print("✅ Frontend accessible")
 
 # Test that the deployed server version matches the expected version
@@ -58,9 +58,9 @@ if not SERVER_VERSION:
     SERVER_VERSION = os.getenv("SERVER_VERSION")
 if SERVER_VERSION:
     if not SERVER_VERSION == "latest":
-        assert server_info.version.startswith(
-            SERVER_VERSION
-        ), f"❌ The deployed version {server_info.version} should match, or be prefixed by, the expected {SERVER_VERSION}"
+        assert server_info.version.startswith(SERVER_VERSION), (
+            f"❌ The deployed version {server_info.version} should match, or be prefixed by, the expected {SERVER_VERSION}"
+        )
         print(f"✅ Server version {SERVER_VERSION} is deployed and available")
     else:
         print("🟡 Not testing server version, as it was set to 'latest'")
