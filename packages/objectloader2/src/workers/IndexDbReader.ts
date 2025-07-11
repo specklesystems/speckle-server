@@ -1,4 +1,4 @@
-import { WorkerRingBufferQueue } from './WorkerRingBufferQueue.js'
+import { MainRingBufferQueue } from './MainRingBufferQueue.js'
 import { StringQueue } from './StringQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import { handleError, WorkerMessageType } from './WorkerMessageType.js'
@@ -91,7 +91,7 @@ self.onmessage = (event: MessageEvent): void => {
   ) {
     log(`Received INIT_QUEUES message.`)
     try {
-      const rawMainToWorkerRbq = WorkerRingBufferQueue.fromExisting(
+      const rawMainToWorkerRbq = MainRingBufferQueue.fromExisting(
         data.mainToWorkerSab,
         data.mainToWorkerCapacityBytes,
         'StringQueue MainToWorkerQueue'
@@ -99,7 +99,7 @@ self.onmessage = (event: MessageEvent): void => {
       mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq)
       log('StringQueue (main-to-worker) initialized successfully.')
 
-      const rawWorkerToMainRbq = WorkerRingBufferQueue.fromExisting(
+      const rawWorkerToMainRbq = MainRingBufferQueue.fromExisting(
         data.workerToMainSab,
         data.workerToMainCapacityBytes,
         'ItemQueue WorkerToMainQueue'

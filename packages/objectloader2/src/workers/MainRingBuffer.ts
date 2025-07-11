@@ -141,14 +141,12 @@ export class MainRingBuffer {
       return false
     }
 
-
     while (true) {
       const currentWriteIndex = Atomics.load(
         this.controlBuffer,
         RingBuffer.WRITE_IDX_POS
       )
       const currentReadIndex = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
-
 
       // Calculate actual contiguous and total available space more directly
       let availableSlots
@@ -187,7 +185,7 @@ export class MainRingBuffer {
         // A reader is interested when write_idx changes making data.
         // So, writer should wait on read_idx. But we can't predict what read_idx will become.
         // Let's make writer wait on its own write_idx, hoping a reader will notify it on 0 (write_idx_pos).
-        const outcome = await Atomics.waitAsync(
+        const outcome = Atomics.waitAsync(
           this.controlBuffer,
           RingBuffer.WRITE_IDX_POS,
           currentWriteIndex,
@@ -208,11 +206,7 @@ export class MainRingBuffer {
     }
   }
 
-  // numElements is number of Uint8Array elements (bytes)
-  async shift(
-    numElements: number,
-    timeoutMs: number
-  ): Promise<Uint8Array | null> {
+  async peek(numElements: number, timeoutMs: number): Promise<Uint8Array | null> {
     if (numElements === 0) return new this.typeConstructor(0)
     if (numElements > this.capacity) {
       console.error(
@@ -221,9 +215,75 @@ export class MainRingBuffer {
       return null
     }
 
+    while (true) {
+      if (this.length >= numElements) {
+        const currentReadIndex = Atomics.load(
+          this.controlBuffer,
+          RingBuffer.READ_IDX_POS
+        )
+        const resultBuffer = new this.typeConstructor(numElements)
+        let tempReadIndex = currentReadIndex
+
+        for (let i = 0; i < numElements; i++) {
+          resultBuffer[i] = this.buffer[tempReadIndex]
+          tempReadIndex = (tempReadIndex + 1) % this.capacity
+        }
+        // Unlike shift, we DO NOT advance the read pointer here.
+        return resultBuffer
+      } else {
+        // Wait for enough data to be available.
+        // We wait on the read index, because we are a reader. A writer will notify us.
+        // But the value we are waiting on is the write index to change.
+        // Let's wait on the read index, and the writer will notify on the read index pos.
+        const outcome = Atomics.waitAsync(
+          this.controlBuffer,
+          RingBuffer.READ_IDX_POS,
+          Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS), // wait if read_idx is still the same
+          timeoutMs
+        )
+        const res = outcome.async ? await outcome.value : outcome.value
+        if (res === 'timed-out') {
+          return null
+        }
+      }
+    }
+  }
+
+  async waitForData(requiredLength: number, timeoutMs: number): Promise<boolean> {
+    const start = Date.now()
+    while (true) {
+      if (this.length >= requiredLength) {
+        return true
+      }
+      const remainingTimeout = timeoutMs - (Date.now() - start)
+      if (remainingTimeout <= 0) {
+        return false
+      }
+      // Wait for a writer to make a change. A writer notifies on READ_IDX_POS after it writes.
+      const outcome = Atomics.waitAsync(
+        this.controlBuffer,
+        RingBuffer.READ_IDX_POS,
+        Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS),
+        remainingTimeout
+      )
+      const res = outcome.async ? await outcome.value : outcome.value
+      if (res === 'timed-out') {
+        return false
+      }
+    }
+  }
+
+  // numElements is number of Uint8Array elements (bytes)
+  async shift(numElements: number, timeoutMs: number): Promise<Uint8Array | null> {
+    if (numElements === 0) return new this.typeConstructor(0)
+    if (numElements > this.capacity) {
+      console.error(
+        `Requested ${numElements} elements, but capacity is ${this.capacity}.`
+      )
+      return null
+    }
 
     while (true) {
-
       const currentWriteIndex = Atomics.load(
         this.controlBuffer,
         RingBuffer.WRITE_IDX_POS

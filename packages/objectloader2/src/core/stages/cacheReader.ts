@@ -123,6 +123,11 @@ export class CacheReader {
           RingBuffer.DEFAULT_DEQUEUE_SIZE,
           RingBuffer.DEFAULT_DEQUEUE_TIMEOUT_MS
         )) || []
+      if (items.length === 0) {
+        this.#logger('readBatch: no items to process, waiting...')
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        continue
+      }
       const start = performance.now()
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
