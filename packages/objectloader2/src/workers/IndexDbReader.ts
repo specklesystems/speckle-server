@@ -53,14 +53,10 @@ async function processMessages(): Promise<void> {
             processedItems.push({ baseId: receivedMessages[i] })
           }
         }
-        while (processedItems.length > 0) {
-          const s = processedItems.slice(0, RingBuffer.DEFAULT_ENQUEUE_SIZE)
-          while (
-            !(await workerToMainQueue.enqueue(s, RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS))
-          ) {
-            log('requestAll: retrying enqueue for items', s.length)
-          }
-        }
+        await workerToMainQueue.fullyEnqueue(
+          processedItems,
+          RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
+        )
       }
     } catch (e: unknown) {
       handleError(

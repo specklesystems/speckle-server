@@ -1,26 +1,48 @@
+import { CustomLogger, delay } from '../types/functions.js'
 import { Item } from '../types/types.js'
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { RingBuffer } from './RingBuffer.js'
+import { MainRingBufferQueue } from './MainRingBufferQueue.js'
 import { handleError } from './WorkerMessageType.js'
 
 export class ItemQueue {
-  private rbq: RingBufferQueue
+  private rbq: MainRingBufferQueue
+  private logger: CustomLogger
   private textEncoder: TextEncoder
   private textDecoder: TextDecoder
 
-  constructor(ringBufferQueue: RingBufferQueue) {
+  constructor(ringBufferQueue: MainRingBufferQueue, logger?: CustomLogger) {
     this.rbq = ringBufferQueue
     this.textEncoder = new TextEncoder()
     this.textDecoder = new TextDecoder('utf-8', { fatal: false })
+    this.logger = logger || ((): void => {})
+  }
+
+  async fullyEnqueue(messages: Item[], timeoutMs: number): Promise<void> {
+    while (messages.length > 0) {
+      let s = messages.slice(0, RingBuffer.DEFAULT_ENQUEUE_SIZE)
+      while (s.length > 0) {
+        const actuallyEnqueued = await this.enqueue(s, timeoutMs)
+        if (actuallyEnqueued === s.length) {
+          break
+        }
+        s = s.slice(actuallyEnqueued)
+        this.logger('requestAll: retrying enqueue for keys', s.length, 'remaining')
+        await delay(1000) // Wait before retrying
+      }
+    }
   }
 
   async enqueue(items: Item[], timeoutMs: number): Promise<number> {
     if (items.length === 0) return 0
 
-    const byteArrays: Uint8Array[] = []
-    for (const item of items) {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
       try {
         const jsonString = JSON.stringify(item)
-        byteArrays.push(this.textEncoder.encode(jsonString))
+        const bytes = this.textEncoder.encode(jsonString)
+        if (!(await this.rbq.enqueue(bytes, timeoutMs))) {
+          return i // Return the number of successfully
+        }
       } catch (e: unknown) {
         handleError(
           e,
@@ -33,7 +55,7 @@ export class ItemQueue {
         return 0
       }
     }
-    return this.rbq.enqueue(byteArrays, timeoutMs)
+    return items.length
   }
 
   async dequeue(maxItems: number, timeoutMs: number): Promise<Item[]> {

@@ -86,14 +86,10 @@ export class CacheReader {
   async getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      while (
-        !(await this.mainToWorkerQueue?.enqueue(
-          [params.id],
-          RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
-        ))
-      ) {
-        this.#logger('getObject: retrying enqueue for id', params.id)
-      }
+      await this.mainToWorkerQueue?.fullyEnqueue(
+        [params.id],
+        RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
+      )
     }
     return await p
   }
@@ -102,18 +98,10 @@ export class CacheReader {
     for (const key of keys) {
       this.#defermentManager.trackDefermentRequest(key)
     }
-
-    while (keys.length > 0) {
-      const s = keys.slice(0, RingBuffer.DEFAULT_ENQUEUE_SIZE)
-      while (
-        !(await this.mainToWorkerQueue?.enqueue(
-          s,
-          RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
-        ))
-      ) {
-        this.#logger('requestAll: retrying enqueue for items', s.length)
-      }
-    }
+    await this.mainToWorkerQueue?.fullyEnqueue(
+      keys,
+      RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
+    )
   }
 
   #processBatch = async (): Promise<void> => {

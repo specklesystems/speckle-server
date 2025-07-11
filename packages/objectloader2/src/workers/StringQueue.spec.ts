@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, test, expect, vi } from 'vitest'
 import { StringQueue } from './StringQueue.js'
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { MainRingBufferQueue } from './MainRingBufferQueue.js'
 
 describe('StringQueue', () => {
   test('should enqueue and dequeue strings successfully', async () => {
@@ -14,16 +14,20 @@ describe('StringQueue', () => {
           new TextEncoder().encode('world')
         ]),
       getSharedArrayBuffer: vi.fn()
-    } as unknown as RingBufferQueue
+    } as unknown as MainRingBufferQueue
 
     const queue = new StringQueue(mockRingBufferQueue)
 
     const messagesToEnqueue = ['hello', 'world']
 
     const enqueueResult = await queue.enqueue(messagesToEnqueue, 500)
-    expect(enqueueResult).toBe(true)
+    expect(enqueueResult).toBe(2)
     expect(mockRingBufferQueue.enqueue).toHaveBeenCalledWith(
-      [new TextEncoder().encode('hello'), new TextEncoder().encode('world')],
+      new TextEncoder().encode('hello'),
+      500
+    )
+    expect(mockRingBufferQueue.enqueue).toHaveBeenCalledWith(
+      new TextEncoder().encode('world'),
       500
     )
 
@@ -37,7 +41,7 @@ describe('StringQueue', () => {
       enqueue: vi.fn(),
       dequeue: vi.fn(),
       getSharedArrayBuffer: vi.fn()
-    } as unknown as RingBufferQueue
+    } as unknown as MainRingBufferQueue
 
     const queue = new StringQueue(mockRingBufferQueue)
 
@@ -51,7 +55,7 @@ describe('StringQueue', () => {
       enqueue: vi.fn(),
       dequeue: vi.fn().mockResolvedValue([]),
       getSharedArrayBuffer: vi.fn()
-    } as unknown as RingBufferQueue
+    } as unknown as MainRingBufferQueue
 
     const queue = new StringQueue(mockRingBufferQueue)
 
@@ -65,14 +69,14 @@ describe('StringQueue', () => {
       enqueue: vi.fn().mockResolvedValue(false),
       dequeue: vi.fn(),
       getSharedArrayBuffer: vi.fn()
-    } as unknown as RingBufferQueue
+    } as unknown as MainRingBufferQueue
 
     const queue = new StringQueue(mockRingBufferQueue)
 
     const enqueueResult = await queue.enqueue(['overflow'], 500)
-    expect(enqueueResult).toBe(false)
+    expect(enqueueResult).toBe(0)
     expect(mockRingBufferQueue.enqueue).toHaveBeenCalledWith(
-      [new TextEncoder().encode('overflow')],
+      new TextEncoder().encode('overflow'),
       500
     )
   })
@@ -82,7 +86,7 @@ describe('StringQueue', () => {
       enqueue: vi.fn(),
       dequeue: vi.fn().mockResolvedValue([]),
       getSharedArrayBuffer: vi.fn()
-    } as unknown as RingBufferQueue
+    } as unknown as MainRingBufferQueue
 
     const queue = new StringQueue(mockRingBufferQueue)
 

@@ -1,9 +1,8 @@
 import { MainRingBuffer } from './MainRingBuffer.js'
-import { RingBufferQueue } from './RingBufferQueue.js'
 // RingBufferState might be needed if queue logic directly manipulates or reads it.
 // For now, it seems RingBuffer internals handle state.
 
-export class MainRingBufferQueue implements RingBufferQueue {
+export class MainRingBufferQueue {
   private ringBuffer: MainRingBuffer
 
   private lengthPrefixArray: Uint8Array // Reusable Uint8Array for length prefix
@@ -41,39 +40,34 @@ export class MainRingBufferQueue implements RingBufferQueue {
     return this.ringBuffer.getSharedArrayBuffer()
   }
 
-  async enqueue(items: Uint8Array[], timeoutMs: number): Promise<number> {
-    if (items.length === 0) {
-      return 0
+  async enqueue(item: Uint8Array, timeoutMs: number): Promise<boolean> {
+    const dataBytes = item
+    const messageLength = dataBytes.length
+
+    if (
+      messageLength + MainRingBufferQueue.LENGTH_PREFIX_BYTES >
+      this.ringBuffer.availableSpace
+    ) {
+      console.warn(
+        `Message data (${messageLength} bytes) + prefix (${MainRingBufferQueue.LENGTH_PREFIX_BYTES} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.availableSpace} bytes). Skipping item.`
+      )
+      return false
     }
 
-    for (let i = 0; i < items.length; i++) {
-      const dataBytes = items[i]
-      const messageLength = dataBytes.length
+    this.lengthPrefixDataView.setUint32(0, messageLength, true) // true for littleEndian
 
-      if (
-        messageLength + MainRingBufferQueue.LENGTH_PREFIX_BYTES >
-        this.ringBuffer.availableSpace
-      ) {
-        console.error(
-          `Message data (${messageLength} bytes) + prefix (${MainRingBufferQueue.LENGTH_PREFIX_BYTES} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.availableSpace} bytes). Skipping item.`
-        )
-        return i
-      }
-
-      this.lengthPrefixDataView.setUint32(0, messageLength, true) // true for littleEndian
-
-      const pushedLength = await this.ringBuffer.push(this.lengthPrefixArray, timeoutMs)
-      if (!pushedLength) {
-        return i
-      }
-
-      const pushedData = await this.ringBuffer.push(dataBytes, timeoutMs)
-      if (!pushedData) {
-        return i
-      }
+    const pushedLength = await this.ringBuffer.push(this.lengthPrefixArray, timeoutMs)
+    if (!pushedLength) {
+      console.error('Failed to push length prefix to the ring buffer.')
+      return false
     }
-    console.log(`Enqueued ${items.length} items to ${this.name} queue.`)
-    return items.length
+
+    const pushedData = await this.ringBuffer.push(dataBytes, timeoutMs)
+    if (!pushedData) {
+      console.error('Failed to push length prefix to the ring buffer.')
+      return false
+    }
+    return true
   }
 
   async dequeue(maxItems: number, timeoutMs: number): Promise<Uint8Array[]> {

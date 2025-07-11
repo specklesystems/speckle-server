@@ -10,20 +10,15 @@ describe('MainRingBufferQueue', () => {
 
     const itemsToEnqueue = [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6, 7])]
 
-    const enqueueResult = await queue.enqueue(itemsToEnqueue, 500)
-    expect(enqueueResult).toBe(itemsToEnqueue.length)
+    let enqueueResult = await queue.enqueue(itemsToEnqueue[0], 500)
+    expect(enqueueResult).toBe(true)
+    enqueueResult = await queue.enqueue(itemsToEnqueue[1], 500)
+    expect(enqueueResult).toBe(true)
 
     const dequeuedItems = await queue.dequeue(2, 500)
     expect(dequeuedItems).toHaveLength(2)
     expect(dequeuedItems[0]).toEqual(itemsToEnqueue[0])
     expect(dequeuedItems[1]).toEqual(itemsToEnqueue[1])
-  })
-
-  it('should handle empty enqueue gracefully', async () => {
-    const queue = MainRingBufferQueue.create(CAPACITY_BYTES, QUEUE_NAME)
-
-    const enqueueResult = await queue.enqueue([], 500)
-    expect(enqueueResult).toBe(0)
   })
 
   it('should handle empty dequeue gracefully', async () => {
@@ -38,12 +33,12 @@ describe('MainRingBufferQueue', () => {
 
     // Fill the queue with maximum capacity
     const largeItem = new Uint8Array(CAPACITY_BYTES - 5) // Account for length prefix
-    const enqueueResult = await queue.enqueue([largeItem], 500)
-    expect(enqueueResult).toBe(1)
+    const enqueueResult = await queue.enqueue(largeItem, 500)
+    expect(enqueueResult).toBe(true)
 
     // Attempt to enqueue another item
-    const enqueueOverflowResult = await queue.enqueue([new Uint8Array([1, 2, 3])], 500)
-    expect(enqueueOverflowResult).toBe(0)
+    const enqueueOverflowResult = await queue.enqueue(new Uint8Array([1, 2, 3]), 500)
+    expect(enqueueOverflowResult).toBe(false)
   })
 
   it('should not dequeue items when empty', async () => {

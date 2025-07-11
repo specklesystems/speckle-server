@@ -19,7 +19,7 @@ describe('MainRingBufferQueue with concurrent access', () => {
     const writerPromise = (async (): Promise<void> => {
       try {
         for (let i = 0; i < sourceItems.length; i++) {
-          const success = await queue.enqueue([sourceItems[i]], 2000)
+          const success = await queue.enqueue(sourceItems[i], 2000)
           if (!success) {
             throw new Error(`Writer failed to enqueue item ${i}`)
           }

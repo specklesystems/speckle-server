@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ItemQueue } from './ItemQueue.js'
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { MainRingBufferQueue } from './MainRingBufferQueue.js'
 
 // Mock dependencies
 const mockRingBufferQueue = {
@@ -20,34 +20,31 @@ describe('ItemQueue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    itemQueue = new ItemQueue(mockRingBufferQueue as unknown as RingBufferQueue)
+    itemQueue = new ItemQueue(mockRingBufferQueue as unknown as MainRingBufferQueue)
   })
 
   it('should enqueue items when the queue is empty', async () => {
-    // eslint-disable-next-line camelcase
     const items = [{ baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }]
     mockRingBufferQueue.enqueue.mockResolvedValue(true)
 
     const result = await itemQueue.enqueue(items, 1000)
 
     expect(mockRingBufferQueue.enqueue).toHaveBeenCalled()
-    expect(result).toBe(true)
+    expect(result).toBe(1)
   })
 
   it('should return false when enqueue fails', async () => {
-    // eslint-disable-next-line camelcase
     const items = [{ baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }]
     mockRingBufferQueue.enqueue.mockResolvedValue(false)
 
     const result = await itemQueue.enqueue(items, 1000)
 
     expect(mockRingBufferQueue.enqueue).toHaveBeenCalled()
-    expect(result).toBe(false)
+    expect(result).toBe(0)
   })
 
   it('should dequeue items when the queue is not empty', async () => {
     const byteArray = new TextEncoder().encode(
-      // eslint-disable-next-line camelcase
       JSON.stringify({ baseId: '1', base: { id: 'base1', speckle_type: 'Base' } })
     )
     mockRingBufferQueue.dequeue.mockResolvedValue([byteArray])
@@ -55,7 +52,6 @@ describe('ItemQueue', () => {
     const result = await itemQueue.dequeue(1, 1000)
 
     expect(mockRingBufferQueue.dequeue).toHaveBeenCalled()
-    // eslint-disable-next-line camelcase
     expect(result).toEqual([
       { baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }
     ])
