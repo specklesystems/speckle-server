@@ -1,4 +1,4 @@
-import { MainRingBufferQueue } from './MainRingBufferQueue.js'
+import { RingBufferQueue } from './RingBufferQueue.js'
 import { StringQueue } from './StringQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import { handleError, WorkerMessageType } from './WorkerMessageType.js'
@@ -55,9 +55,7 @@ async function processMessages(): Promise<void> {
           }
         }
         log(
-          `Processed ${processedItems.length} items in ${
-            performance.now() - start
-          }ms`
+          `Processed ${processedItems.length} items in ${performance.now() - start}ms`
         )
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         workerToMainQueue.fullyEnqueue(
@@ -94,7 +92,7 @@ self.onmessage = (event: MessageEvent): void => {
   ) {
     log(`Received INIT_QUEUES message.`)
     try {
-      const rawMainToWorkerRbq = MainRingBufferQueue.fromExisting(
+      const rawMainToWorkerRbq = RingBufferQueue.fromExisting(
         data.mainToWorkerSab,
         data.mainToWorkerCapacityBytes,
         'StringQueue MainToWorkerQueue'
@@ -102,7 +100,7 @@ self.onmessage = (event: MessageEvent): void => {
       mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq)
       log('StringQueue (main-to-worker) initialized successfully.')
 
-      const rawWorkerToMainRbq = MainRingBufferQueue.fromExisting(
+      const rawWorkerToMainRbq = RingBufferQueue.fromExisting(
         data.workerToMainSab,
         data.workerToMainCapacityBytes,
         'ItemQueue WorkerToMainQueue'

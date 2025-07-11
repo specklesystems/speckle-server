@@ -1,10 +1,10 @@
 import { describe, test, expect } from 'vitest'
 import { StringQueue } from './StringQueue.js'
-import { MainRingBufferQueue } from './MainRingBufferQueue.js'
+import { RingBufferQueue } from './RingBufferQueue.js'
 
 describe('StringQueue', () => {
   test('should enqueue and dequeue strings successfully', async () => {
-    const rbq = MainRingBufferQueue.create(1000, 'test1')
+    const rbq = RingBufferQueue.create(1000, 'test1')
     const queue = new StringQueue(rbq)
 
     const messagesToEnqueue = ['hello', 'world']
@@ -17,7 +17,7 @@ describe('StringQueue', () => {
   })
 
   test('should handle empty enqueue gracefully', async () => {
-    const rbq = MainRingBufferQueue.create(100, 'test2')
+    const rbq = RingBufferQueue.create(100, 'test2')
     const queue = new StringQueue(rbq)
 
     const enqueueResult = await queue.enqueue([], 500)
@@ -25,7 +25,7 @@ describe('StringQueue', () => {
   })
 
   test('should handle empty dequeue gracefully', async () => {
-    const rbq = MainRingBufferQueue.create(100, 'test3')
+    const rbq = RingBufferQueue.create(100, 'test3')
     const queue = new StringQueue(rbq)
 
     const dequeuedMessages = await queue.dequeue(5, 500)
@@ -35,7 +35,7 @@ describe('StringQueue', () => {
   test('should not enqueue strings when underlying queue is full', async () => {
     // Capacity needs to account for item header (4 bytes)
     const smallCapacity = new TextEncoder().encode('small').length + 4
-    const rbq = MainRingBufferQueue.create(smallCapacity, 'test4')
+    const rbq = RingBufferQueue.create(smallCapacity, 'test4')
     const queue = new StringQueue(rbq)
 
     // This should fill the queue
@@ -48,7 +48,7 @@ describe('StringQueue', () => {
   })
 
   test('should not dequeue strings when underlying queue is empty', async () => {
-    const rbq = MainRingBufferQueue.create(100, 'test5')
+    const rbq = RingBufferQueue.create(100, 'test5')
     const queue = new StringQueue(rbq)
 
     const dequeuedMessages = await queue.dequeue(1, 500)

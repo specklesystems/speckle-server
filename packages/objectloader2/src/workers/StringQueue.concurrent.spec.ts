@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { MainRingBufferQueue } from './MainRingBufferQueue.js'
+import { RingBufferQueue } from './RingBufferQueue.js'
 import { StringQueue } from './StringQueue.js'
 
 describe('StringQueue with concurrent access', () => {
   it('should handle simultaneous reads and writes without data corruption', async () => {
     const queueCapacity = 1_000 // 1KB capacity
     const totalItems = 500 // Number of items to send
-    const rbq = MainRingBufferQueue.create(queueCapacity, 'concurrent-test-queue')
+    const rbq = RingBufferQueue.create(queueCapacity, 'concurrent-test-queue')
     const queue = new StringQueue(rbq)
 
     // Create a set of messages with varying sizes
@@ -81,7 +81,7 @@ describe('StringQueue with concurrent access', () => {
   it('should handle simultaneous reads and writes without data corruption 2', async () => {
     const queueCapacity = 1_000 // 1KB capacity
     const totalItems = 2000 // Number of items to send
-    const rbq = MainRingBufferQueue.create(queueCapacity, 'concurrent-test-queue-2')
+    const rbq = RingBufferQueue.create(queueCapacity, 'concurrent-test-queue-2')
     const queue = new StringQueue(rbq)
 
     // Create a set of messages with varying sizes

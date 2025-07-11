@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { ItemQueue } from './ItemQueue.js'
-import { MainRingBufferQueue } from './MainRingBufferQueue.js'
+import { RingBufferQueue } from './RingBufferQueue.js'
 import { Base, Item } from '../types/types.js'
 import { delay } from '../types/functions.js'
 
@@ -27,11 +27,11 @@ describe('ItemQueue (Integration)', () => {
     beforeEach(() => {
       // 16KB buffer, should be plenty for these tests
       const capacity = 16 * 1024
-      const rbq = MainRingBufferQueue.create(capacity, 'test-queue')
+      const rbq = RingBufferQueue.create(capacity, 'test-queue')
       sab = rbq.getSharedArrayBuffer() // Get the SAB from the created queue
       producerQueue = new ItemQueue(rbq)
       // Create a second queue instance for the consumer attached to the same buffer
-      const consumerRbq = MainRingBufferQueue.fromExisting(sab, capacity, 'test-queue')
+      const consumerRbq = RingBufferQueue.fromExisting(sab, capacity, 'test-queue')
       consumerQueue = new ItemQueue(consumerRbq)
     })
 
@@ -57,10 +57,10 @@ describe('ItemQueue (Integration)', () => {
       // Create a small buffer that can only fit ~2-3 items.
       // An item is ~100 bytes, so 512 bytes is a good small size.
       const capacity = 512
-      const rbq = MainRingBufferQueue.create(capacity, 'test-queue-limited')
+      const rbq = RingBufferQueue.create(capacity, 'test-queue-limited')
       sab = rbq.getSharedArrayBuffer()
       producerQueue = new ItemQueue(rbq)
-      const consumerRbq = MainRingBufferQueue.fromExisting(
+      const consumerRbq = RingBufferQueue.fromExisting(
         sab,
         capacity,
         'test-queue-limited'

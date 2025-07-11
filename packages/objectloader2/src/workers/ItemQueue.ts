@@ -1,16 +1,16 @@
 import { CustomLogger, delay } from '../types/functions.js'
 import { Item } from '../types/types.js'
 import { RingBuffer } from './RingBuffer.js'
-import { MainRingBufferQueue } from './MainRingBufferQueue.js'
+import { RingBufferQueue } from './RingBufferQueue.js'
 import { handleError } from './WorkerMessageType.js'
 
 export class ItemQueue {
-  private rbq: MainRingBufferQueue
+  private rbq: RingBufferQueue
   private logger: CustomLogger
   private textEncoder: TextEncoder
   private textDecoder: TextDecoder
 
-  constructor(ringBufferQueue: MainRingBufferQueue, logger?: CustomLogger) {
+  constructor(ringBufferQueue: RingBufferQueue, logger?: CustomLogger) {
     this.rbq = ringBufferQueue
     this.textEncoder = new TextEncoder()
     this.textDecoder = new TextDecoder('utf-8', { fatal: false })

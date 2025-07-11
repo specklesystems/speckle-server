@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { ItemQueue } from './ItemQueue.js'
-import { MainRingBufferQueue } from './MainRingBufferQueue.js'
+import { RingBufferQueue } from './RingBufferQueue.js'
 import { Item } from '../types/types.js'
 
 describe('ItemQueue', () => {
   let itemQueue: ItemQueue
-  let rbq: MainRingBufferQueue
+  let rbq: RingBufferQueue
 
   beforeEach(() => {
     // A new queue for each test to ensure isolation
     // The size is arbitrary, but should be large enough for most tests.
-    rbq = MainRingBufferQueue.create(2048, `item-queue-test-${Math.random()}`)
+    rbq = RingBufferQueue.create(2048, `item-queue-test-${Math.random()}`)
     itemQueue = new ItemQueue(rbq)
   })
 
@@ -31,7 +31,7 @@ describe('ItemQueue', () => {
     const item: Item = { baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }
     const itemString = JSON.stringify(item)
     const itemByteLength = new TextEncoder().encode(itemString).length
-    const smallRbq = MainRingBufferQueue.create(
+    const smallRbq = RingBufferQueue.create(
       itemByteLength + 4,
       `small-queue-${Math.random()}`
     ) // +4 for header
