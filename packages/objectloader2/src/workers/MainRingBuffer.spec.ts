@@ -45,4 +45,50 @@ describe('MainRingBuffer', () => {
     expect(shiftedData).toEqual(data)
     expect(ringBuffer.isEmpty()).toBe(true)
   })
+
+  it('should allow peeking data without removing it', async () => {
+    const ringBuffer = MainRingBuffer.create(capacityBytes)
+    const data = new Uint8Array([1, 2, 3])
+
+    await ringBuffer.push(data, 500)
+
+    const peekedData = await ringBuffer.peek(data.length, 500)
+    expect(peekedData).toEqual(data)
+    expect(ringBuffer.isEmpty()).toBe(false) // Still contains the data
+
+    // Shift the data to confirm it was still there
+    const shiftedData = await ringBuffer.shift(data.length, 500)
+    expect(shiftedData).toEqual(data)
+    expect(ringBuffer.isEmpty()).toBe(true)
+  })
+
+  it('should return null when peeking from an empty buffer and timeout occurs', async () => {
+    const ringBuffer = MainRingBuffer.create(capacityBytes)
+    const peekedData = await ringBuffer.peek(1, 100) // Short timeout
+    expect(peekedData).toBeNull()
+  })
+
+  it('should return null when peeking more data than available and timeout occurs', async () => {
+    const ringBuffer = MainRingBuffer.create(capacityBytes)
+    const data = new Uint8Array([1, 2, 3])
+    await ringBuffer.push(data, 500)
+
+    const peekedData = await ringBuffer.peek(data.length + 1, 100) // Request more than available
+    expect(peekedData).toBeNull()
+  })
+
+  it('should successfully peek data that is pushed after the peek call started', async () => {
+    const ringBuffer = MainRingBuffer.create(capacityBytes)
+    const data = new Uint8Array([1, 2, 3])
+
+    const peekPromise = ringBuffer.peek(data.length, 500)
+
+    // Push data after a short delay, while peek is waiting
+    await new Promise((res) => setTimeout(res, 50))
+    await ringBuffer.push(data, 500)
+
+    const peekedData = await peekPromise
+    expect(peekedData).toEqual(data)
+    expect(ringBuffer.isEmpty()).toBe(false)
+  })
 })
