@@ -55,7 +55,7 @@ async def job_processor():
 
             except TimeoutError:
                 # if it times out we allow re-queueing until it reaches max tries
-                if job.attempt == job.max_attempt:
+                if job.attempt >= job.max_attempt:
                     job_status = JobStatus.FAILED
                 else:
                     job_status = JobStatus.QUEUED
