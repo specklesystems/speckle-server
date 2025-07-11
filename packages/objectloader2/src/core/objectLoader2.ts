@@ -108,8 +108,6 @@ export class ObjectLoader2 {
     })
     //only for root
     this.#gathered.add(rootItem)
-    //don't wait to enqueue it all
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {

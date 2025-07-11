@@ -85,22 +85,24 @@ export class CacheReader {
     })
   }
 
-  async getObject(params: { id: string }): Promise<Base> {
+   getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      await this.mainToWorkerQueue?.fullyEnqueue(
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.mainToWorkerQueue?.fullyEnqueue(
         [params.id],
         RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
       )
     }
-    return await p
+    return  p
   }
 
-  async requestAll(keys: string[]): Promise<void> {
+   requestAll(keys: string[]): void {
     for (const key of keys) {
       this.#defermentManager.trackDefermentRequest(key)
     }
-    await this.mainToWorkerQueue?.fullyEnqueue(
+     // eslint-disable-next-line @typescript-eslint/no-floating-promises
+     this.mainToWorkerQueue?.fullyEnqueue(
       keys,
       RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
     )
@@ -132,7 +134,11 @@ export class CacheReader {
           this.#notFoundQueue?.add(item.baseId)
         }
       }
-      this.#logger('readBatch: left, time', items.length, performance.now() - start)
+      this.logToMainUI(
+        'readBatch: left, time ' +
+        items.length.toString() + ' ' +
+        (performance.now() - start)
+      )
     }
   }
 
