@@ -46,7 +46,7 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3 } from 'three'
+import { Box3, Matrix3, Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage, type Nullable } from '@speckle/shared'
 import {
@@ -57,6 +57,7 @@ import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
+import { OBB } from 'three/examples/jsm/math/OBB'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -370,8 +371,14 @@ function useViewerSectionBoxIntegration() {
       if (newVal && (!oldVal || !sectionBoxDataEquals(newVal, oldVal))) {
         visible.value = true
         edited.value = false
+        const aabb = new Box3(
+          new Vector3().fromArray(newVal.min),
+          new Vector3().fromArray(newVal.max)
+        )
+        const box = new OBB().fromBox3(aabb)
+        if (newVal.rotation) box.rotation = new Matrix3().fromArray(newVal.rotation)
 
-        sectionTool.setBox(newVal)
+        sectionTool.setBox(box)
         sectionTool.enabled = true
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
