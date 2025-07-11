@@ -12,8 +12,13 @@ import {
 import { expect } from 'chai'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 
+const originServerUrl = 'http://example.org'
+
 describe('Background Jobs repositories @backgroundjobs', () => {
-  const storeBackgroundJob = storeBackgroundJobFactory({ db })
+  const storeBackgroundJob = storeBackgroundJobFactory({
+    db,
+    originServerUrl
+  })
   const getBackgroundJob = getBackgroundJobFactory({ db })
 
   type TestJobPayload = BackgroundJobPayload & {
@@ -87,7 +92,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       const retrievedJob = await getBackgroundJob({ jobId: job.id })
 
       expect(retrievedJob).to.not.be.null
-      expect(retrievedJob).to.deep.equal(job)
+      expect(retrievedJob).to.deep.equal({ originServerUrl, ...job })
     })
 
     it('should return null for non-existent job ID', async () => {

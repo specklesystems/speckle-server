@@ -12,6 +12,7 @@ export const BackgroundJobs = buildTableHelper('background_jobs', [
   'jobType',
   'payload',
   'status',
+  'originServerUrl',
   'timeoutMs',
   'attempt',
   'maxAttempt',
@@ -19,15 +20,24 @@ export const BackgroundJobs = buildTableHelper('background_jobs', [
   'updatedAt'
 ])
 
+type StoredBackgroundJob = BackgroundJob<BackgroundJobPayload> & {
+  originServerUrl: string
+}
+
 const tables = {
-  backgroundJobs: (db: Knex) =>
-    db<BackgroundJob<BackgroundJobPayload>>(BackgroundJobs.name)
+  backgroundJobs: (db: Knex) => db<StoredBackgroundJob>(BackgroundJobs.name)
 }
 
 export const storeBackgroundJobFactory =
-  ({ db }: { db: Knex }): StoreBackgroundJob =>
+  ({
+    db,
+    originServerUrl
+  }: {
+    db: Knex
+    originServerUrl: string
+  }): StoreBackgroundJob =>
   async ({ job }) => {
-    await tables.backgroundJobs(db).insert(job)
+    await tables.backgroundJobs(db).insert({ ...job, originServerUrl })
   }
 
 export const getBackgroundJobFactory =
