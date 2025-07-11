@@ -1,7 +1,10 @@
+import { BadRequestError } from '@/modules/shared/errors'
 import { isGraphQLError } from '@/modules/shared/helpers/graphqlHelper'
 import { ApolloServerOptions, BaseContext } from '@apollo/server'
 import { omit } from 'lodash-es'
 import VError from 'verror'
+import { ZodError } from 'zod'
+import { fromZodError } from 'zod-validation-error'
 
 /**
  * Some VError implementation details that we want to remove from object representations
@@ -20,19 +23,29 @@ export function buildErrorFormatter(params: {
   // TODO: Add support for client-aware errors and obfuscate everything else
   return function (formattedError, error) {
     let realError = error || formattedError
+    const writableFormattedError = { ...formattedError }
 
     if (isGraphQLError(realError) && realError.originalError) {
       realError = realError.originalError
     }
 
+    // If error is a ZodError, convert its message to something more readable
+    if (realError instanceof ZodError) {
+      writableFormattedError.message = fromZodError(realError).message
+      writableFormattedError.extensions = {
+        ...(writableFormattedError.extensions || {}),
+        code: BadRequestError.code
+      }
+    }
+
     // If error isn't a VError child, don't do anything extra
     if (!(realError instanceof VError)) {
-      return formattedError
+      return writableFormattedError
     }
 
     // Converting VError based error to Apollo's format
     const extensions = {
-      ...(formattedError.extensions || {}),
+      ...(writableFormattedError.extensions || {}),
       ...(VError.info(realError) || {})
     }
 
@@ -51,9 +64,9 @@ export function buildErrorFormatter(params: {
     }
 
     return {
-      message: formattedError.message,
-      locations: formattedError.locations,
-      path: formattedError.path,
+      message: writableFormattedError.message,
+      locations: writableFormattedError.locations,
+      path: writableFormattedError.path,
       extensions
     }
   }
