@@ -45,7 +45,6 @@ export const consumePreviewResultFactory =
     getObjectCommitsWithStreamIds: GetObjectCommitsWithStreamIds
   }): ConsumePreviewResult =>
   async ({ projectId, objectId, previewResult }) => {
-    const lastUpdate = new Date()
     const priority = PreviewPriority.LOW
     const log = logger.child({
       jobId: previewResult.jobId,
@@ -66,7 +65,6 @@ export const consumePreviewResultFactory =
           objectPreview: {
             objectId,
             streamId: projectId,
-            lastUpdate,
             preview: { err: previewResult.reason },
             priority,
             previewStatus: PreviewStatus.ERROR
@@ -115,7 +113,6 @@ export const consumePreviewResultFactory =
           objectPreview: {
             objectId,
             streamId: projectId,
-            lastUpdate,
             preview,
             priority,
             previewStatus: PreviewStatus.DONE
