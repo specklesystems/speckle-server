@@ -14,6 +14,7 @@ import SpeckleTextMaterial from './SpeckleTextMaterial.js'
 import { SpeckleMaterial } from './SpeckleMaterial.js'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial.js'
 import { type Asset, AssetType, type MaterialOptions } from '../../IViewer.js'
+import SpeckleTextColoredMaterial from './SpeckleTextColoredMaterial.js'
 
 const defaultGradient: Asset = {
   id: 'defaultGradient',
@@ -83,6 +84,7 @@ export default class Materials {
 
   private textGhostMaterial: Material
   private textColoredMaterial: Material
+  private textGradientMaterial: Material
   private textHiddenMaterial: Material
 
   private defaultGradientTextureData!: ImageData
@@ -314,7 +316,12 @@ export default class Materials {
       renderView.geometryType.toString() +
       geometry +
       mat +
-      (renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '') +
+      (renderView.geometryType === GeometryType.TEXT &&
+      renderView.renderData.geometry.metaData?.screenOriented !== undefined
+        ? (
+            renderView.renderData.geometry.metaData?.screenOriented as boolean
+          ).toString()
+        : '') +
       (renderView.renderData.geometry.instanced ? 'instanced' : '')
     return Materials.hashCode(s)
   }
@@ -490,9 +497,9 @@ export default class Materials {
 
     this.textGhostMaterial = (
       this.textGhostMaterial as SpeckleTextMaterial
-    ).getDerivedMaterial()
+    ).getDerivedBatchedMaterial()
 
-    this.textColoredMaterial = new SpeckleTextMaterial({
+    this.textColoredMaterial = new SpeckleTextColoredMaterial({
       color: 0xffffff,
       opacity: 1,
       side: DoubleSide
@@ -503,11 +510,35 @@ export default class Materials {
       ? false
       : true
     this.textColoredMaterial.toneMapped = false
-    ;(this.textColoredMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+    ;(
+      this.textColoredMaterial as SpeckleTextColoredMaterial
+    ).color.convertSRGBToLinear()
 
     this.textColoredMaterial = (
-      this.textColoredMaterial as SpeckleTextMaterial
-    ).getDerivedMaterial()
+      this.textColoredMaterial as SpeckleTextColoredMaterial
+    ).getDerivedBatchedMaterial()
+
+    this.textGradientMaterial = new SpeckleTextColoredMaterial({
+      color: 0xffffff,
+      opacity: 1,
+      side: DoubleSide
+    })
+    this.textGradientMaterial.transparent =
+      this.textGradientMaterial.opacity < 1 ? true : false
+    this.textGradientMaterial.depthWrite = this.textGradientMaterial.transparent
+      ? false
+      : true
+    this.textGradientMaterial.toneMapped = false
+    ;(
+      this.textGradientMaterial as SpeckleTextColoredMaterial
+    ).color.convertSRGBToLinear()
+    ;(this.textGradientMaterial as SpeckleTextColoredMaterial).setGradientTexture(
+      await Assets.getTexture(defaultGradient)
+    )
+
+    this.textGradientMaterial = (
+      this.textGradientMaterial as SpeckleTextColoredMaterial
+    ).getDerivedBatchedMaterial()
 
     this.textHiddenMaterial = new SpeckleTextMaterial({
       color: 0xffffff,
@@ -520,7 +551,7 @@ export default class Materials {
 
     this.textHiddenMaterial = (
       this.textHiddenMaterial as SpeckleTextMaterial
-    ).getDerivedMaterial()
+    ).getDerivedBatchedMaterial()
   }
 
   private async createDefaultNullMaterials() {
@@ -796,7 +827,7 @@ export default class Materials {
     if (!this.materialMap[hash]) {
       this.materialMap[hash] = this.makeTextMaterial(material as DisplayStyle)
     }
-    return (this.materialMap[hash] as SpeckleTextMaterial).getDerivedMaterial()
+    return (this.materialMap[hash] as SpeckleTextMaterial).getDerivedBatchedMaterial()
   }
 
   public getGhostMaterial(
@@ -852,7 +883,12 @@ export default class Materials {
         return material
       }
       case GeometryType.TEXT:
-        return this.textColoredMaterial
+        const material = this.textGradientMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
     }
   }
 
@@ -890,7 +926,12 @@ export default class Materials {
         return material
       }
       case GeometryType.TEXT:
-        return this.textColoredMaterial
+        const material = this.textColoredMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
     }
   }
 

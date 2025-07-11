@@ -68,10 +68,10 @@ to get the correct values for Vectors, Rays, Boxes, etc
 export class AccelerationStructure {
   private static readonly MatBuff: Matrix4 = new Matrix4()
   private _bvh: MeshBVH
-  public inputTransform!: Matrix4
-  public outputTransform!: Matrix4
-  public inputOriginTransform!: Matrix4
-  public outputOriginTransfom!: Matrix4
+  public inputTransform: Matrix4
+  public outputTransform: Matrix4
+  public inputOriginTransform: Matrix4
+  public outputOriginTransfom: Matrix4
 
   public get geometry() {
     return this._bvh.geometry
