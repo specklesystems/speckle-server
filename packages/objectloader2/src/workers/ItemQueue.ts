@@ -18,17 +18,31 @@ export class ItemQueue {
   }
 
   async fullyEnqueue(messages: Item[], timeoutMs: number): Promise<void> {
-    while (messages.length > 0) {
-      let s = messages.slice(0, RingBuffer.DEFAULT_ENQUEUE_SIZE)
-      while (s.length > 0) {
-        const actuallyEnqueued = await this.enqueue(s, timeoutMs)
-        if (actuallyEnqueued === s.length) {
-          break
+    let remainingMessages = messages
+    while (remainingMessages.length > 0) {
+      const s = remainingMessages.slice(0, RingBuffer.DEFAULT_ENQUEUE_SIZE)
+      let enqueuedInChunk = 0
+      while (enqueuedInChunk < s.length) {
+        const actuallyEnqueued = await this.enqueue(s.slice(enqueuedInChunk), timeoutMs)
+        if (actuallyEnqueued === 0) {
+          // If no items were enqueued, wait before retrying to avoid a busy loop.
+          this.logger(
+            'fullyEnqueue: enqueue returned 0, waiting before retry for remaining items',
+            s.length - enqueuedInChunk
+          )
+          await delay(1000)
+          continue
         }
-        s = s.slice(actuallyEnqueued)
-        this.logger('requestAll: retrying enqueue for keys', s.length, 'remaining')
-        await delay(1000) // Wait before retrying
+        enqueuedInChunk += actuallyEnqueued
+        this.logger(
+          'fullyEnqueue: enqueued',
+          enqueuedInChunk,
+          'of',
+          s.length,
+          'in current chunk'
+        )
       }
+      remainingMessages = remainingMessages.slice(s.length)
     }
   }
 
