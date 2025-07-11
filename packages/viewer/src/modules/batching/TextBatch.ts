@@ -326,6 +326,8 @@ export default class TextBatch implements Batch {
           text.quaternion,
           text.scale
         )
+        text.updateMatrixWorld(true)
+
         if (textMeta) {
           text.text = textMeta.value
           text.fontSize = textMeta.height

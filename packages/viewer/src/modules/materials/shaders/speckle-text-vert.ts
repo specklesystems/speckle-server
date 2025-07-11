@@ -80,7 +80,7 @@ void main() {
             troikaBatchTexel(3.0)
         );
     #else
-        matrix =  modelMatrix;
+        matrix = modelMatrix;
     #endif
 
     #ifdef USE_RTE
@@ -114,7 +114,7 @@ void main() {
                 mvPosition = (viewMatrix * vec4(billboardPosition, 1.) + vec4(position.x, position.y, 0., 0.0));
             #endif
         #else
-             mvPosition = modelViewMatrix * vec4(transformed, 1.);
+             mvPosition = viewMatrix * matrix * vec4(transformed, 1.);
         #endif
     #endif
 
