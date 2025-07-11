@@ -8,7 +8,16 @@
       :options="radioOptions"
       size="sm"
       :disabled="!canUpdate.authorized"
-      @update:model-value="emitUpdate"
+      @update:model-value="handleVisibilityChange"
+    />
+
+    <ProjectPageSettingsGeneralBlockAccessDialog
+      v-model:open="showConfirmDialog"
+      :current-visibility="currentVisibility"
+      :new-visibility="pendingVisibility"
+      :project-id="project.id"
+      @confirm="confirmVisibilityChange"
+      @cancel="cancelVisibilityChange"
     />
   </ProjectPageSettingsBlock>
 </template>
@@ -48,10 +57,14 @@ const emit = defineEmits<{
   (e: 'update-visibility', v: SupportedProjectVisibility): void
 }>()
 
-const selectedOption = ref(
-  castToSupportedVisibility(props.project.visibility) ||
+const currentVisibility = computed(
+  () =>
+    castToSupportedVisibility(props.project.visibility) ||
     SupportedProjectVisibility.Private
 )
+const selectedOption = ref(currentVisibility.value)
+const showConfirmDialog = ref(false)
+const pendingVisibility = ref<SupportedProjectVisibility | null>(null)
 
 const radioOptions = computed(() => [
   {
@@ -77,7 +90,39 @@ const radioOptions = computed(() => [
     icon: LockClosedIcon
   }
 ])
+
 const canUpdate = computed(() => props.project.permissions.canUpdate)
+
+const handleVisibilityChange = (newVisibility: SupportedProjectVisibility) => {
+  const current = currentVisibility.value
+  const shouldShowConfirmDialog =
+    current === SupportedProjectVisibility.Public &&
+    (newVisibility === SupportedProjectVisibility.Workspace ||
+      newVisibility === SupportedProjectVisibility.Private)
+
+  if (shouldShowConfirmDialog) {
+    pendingVisibility.value = newVisibility
+    showConfirmDialog.value = true
+    selectedOption.value = current
+  } else {
+    emit('update-visibility', newVisibility)
+  }
+}
+
+const confirmVisibilityChange = () => {
+  if (pendingVisibility.value) {
+    selectedOption.value = pendingVisibility.value
+    emit('update-visibility', pendingVisibility.value)
+    pendingVisibility.value = null
+  }
+  showConfirmDialog.value = false
+}
+
+const cancelVisibilityChange = () => {
+  selectedOption.value = currentVisibility.value
+  pendingVisibility.value = null
+  showConfirmDialog.value = false
+}
 
 watch(
   () => props.project.visibility,
@@ -86,8 +131,4 @@ watch(
       castToSupportedVisibility(newVal) || SupportedProjectVisibility.Private
   }
 )
-
-const emitUpdate = (value: SupportedProjectVisibility) => {
-  emit('update-visibility', value)
-}
 </script>
