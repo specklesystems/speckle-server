@@ -39,6 +39,7 @@ async function processMessages(): Promise<void> {
         RingBuffer.DEFAULT_DEQUEUE_TIMEOUT_MS
       ) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
+        const start = performance.now()
         const items = await db.getAll(receivedMessages)
         const processedItems: Item[] = []
         for (let i = 0; i < items.length; i++) {
@@ -53,7 +54,13 @@ async function processMessages(): Promise<void> {
             processedItems.push({ baseId: receivedMessages[i] })
           }
         }
-        await workerToMainQueue.fullyEnqueue(
+        log(
+          `Processed ${processedItems.length} items in ${
+            performance.now() - start
+          }ms`
+        )
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        workerToMainQueue.fullyEnqueue(
           processedItems,
           RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
         )
