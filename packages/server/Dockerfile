@@ -61,7 +61,7 @@ ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
+FROM gcr.io/distroless/nodejs22-debian12@sha256:8d8b9363b0c9d1153f845824f9b754fdb050ada4fa190583eca2da13fdd3138c AS production-stage
 
 COPY --link --from=build-stage /usr/bin/tini /usr/bin/tini
 
