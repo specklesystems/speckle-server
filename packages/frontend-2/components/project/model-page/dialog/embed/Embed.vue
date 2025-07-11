@@ -150,6 +150,7 @@ import {
   SupportedProjectVisibility,
   castToSupportedVisibility
 } from '~/lib/projects/helpers/visibility'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
@@ -183,6 +184,7 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const { track } = useMixpanel()
 const route = useRoute()
 const { copy } = useClipboard()
 const {
@@ -369,14 +371,26 @@ watch(
 watch(
   isOpen,
   async (newValue) => {
-    if (newValue && canCreateEmbedTokens.value) {
-      const token = await createEmbedToken({
+    if (newValue) {
+      track('Embed Dialog Opened', {
         projectId: props.project.id,
-        resourceIdString: routeModelId.value
+        visibility: projectVisibility.value
       })
 
-      if (token) {
-        embedToken.value = token
+      if (canCreateEmbedTokens.value) {
+        track('Embed Token Created', {
+          projectId: props.project.id,
+          visibility: projectVisibility.value
+        })
+
+        const token = await createEmbedToken({
+          projectId: props.project.id,
+          resourceIdString: routeModelId.value
+        })
+
+        if (token) {
+          embedToken.value = token
+        }
       }
     }
   },
