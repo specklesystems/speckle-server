@@ -1,5 +1,5 @@
 // /* istanbul ignore file */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('stream_activity', (table) => {
     // No foreign keys because the referenced objects may be deleted, but we want to keep their ids here in this table for future analysis
     table.string('streamId', 10)
@@ -18,6 +18,8 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('stream_activity')
 }
+
+export { up, down }

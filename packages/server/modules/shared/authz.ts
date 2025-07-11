@@ -19,7 +19,7 @@ import {
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
-import {
+import type {
   AuthContext,
   AuthParams,
   AuthResult,

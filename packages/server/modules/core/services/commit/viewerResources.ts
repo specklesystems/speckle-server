@@ -26,7 +26,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { Optional, SpeckleViewer } from '@speckle/shared'
-import { flatten, keyBy, reduce, uniq, uniqWith } from 'lodash'
+import { flatten, keyBy, reduce, uniq, uniqWith } from 'lodash-es'
 
 function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem) {
   if (a.modelId !== b.modelId) return false

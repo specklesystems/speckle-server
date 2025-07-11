@@ -95,7 +95,7 @@ const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
   getUsers: legacyGetPaginatedUsersFactory({ db })
 })
 
-export = {
+export default {
   Query: {
     async activeUser(_parent, _args, context) {
       const activeUserId = context.userId

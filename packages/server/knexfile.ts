@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports */
 /* istanbul ignore file */
-import { packageRoot } from './bootstrap'
+import { packageRoot } from './bootstrap.js'
 import fs from 'fs'
 import path from 'path'
 import {

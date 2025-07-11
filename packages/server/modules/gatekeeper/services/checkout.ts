@@ -14,7 +14,7 @@ import {
 } from '@/modules/gatekeeper/errors/billing'
 import { throwUncoveredError } from '@speckle/shared'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { GetWorkspacePlan } from '@speckle/shared/dist/commonjs/authz/domain/workspaces/operations.js'
+import { GetWorkspacePlan } from '@speckle/shared/authz'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 export const completeCheckoutSessionFactory =

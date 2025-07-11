@@ -5,7 +5,7 @@ import {
 import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
 import { viewerResourcesToString } from '@/modules/core/services/commit/viewerResources'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
-import { has, get, intersection, isObjectLike } from 'lodash'
+import { has, get, intersection, isObjectLike } from 'lodash-es'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 

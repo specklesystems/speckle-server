@@ -7,7 +7,7 @@ import {
 } from '@/modules/multiregion/domain/operations'
 import { RegionRecord } from '@/modules/multiregion/helpers/types'
 import { Knex } from 'knex'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 
 export const Regions = buildTableHelper('regions', [
   'key',

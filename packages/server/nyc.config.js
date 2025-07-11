@@ -1,6 +1,6 @@
 const testFileExtensions = ['ts', 'js']
 
-module.exports = {
+export default {
   exclude: [
     `**/migrations/*.{${testFileExtensions}}`,
     `**/modules/cli/**/*.{${testFileExtensions}}`,

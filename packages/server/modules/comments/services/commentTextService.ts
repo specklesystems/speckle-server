@@ -8,7 +8,7 @@ import {
   isDocEmpty,
   documentToBasicString
 } from '@/modules/core/services/richTextEditorService'
-import { isString, uniq } from 'lodash'
+import { isString, uniq } from 'lodash-es'
 import { InvalidAttachmentsError } from '@/modules/comments/errors'
 import { JSONContent } from '@tiptap/core'
 import { ValidateInputAttachments } from '@/modules/comments/domain/operations'

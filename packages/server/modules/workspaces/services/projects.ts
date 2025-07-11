@@ -15,7 +15,7 @@ import {
   WorkspaceNotFoundError
 } from '@/modules/workspaces/errors/workspace'
 import { GetProject, UpdateProject } from '@/modules/core/domain/projects/operations'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import {
   GetStreamCollaborators,

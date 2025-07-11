@@ -18,7 +18,7 @@ import {
   UserEmailPrimaryAlreadyExistsError,
   UserEmailPrimaryUnverifiedError
 } from '@/modules/core/errors/userEmails'
-import { get, omit } from 'lodash'
+import { get, omit } from 'lodash-es'
 
 const whereEmailIs = (query: Knex.QueryBuilder, email: string) => {
   query.whereRaw('lower("email") = lower(?)', [email])

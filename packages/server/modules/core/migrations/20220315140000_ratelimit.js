@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('ratelimit_actions', (table) => {
     table.timestamp('timestamp').defaultTo(knex.fn.now())
     table.string('action').notNullable()
@@ -12,9 +12,11 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.alterTable('users', (table) => {
     table.dropColumn('ip')
   })
   await knex.schema.dropTableIfExists('ratelimit_actions')
 }
+
+export { up, down }

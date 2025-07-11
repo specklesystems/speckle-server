@@ -1,10 +1,10 @@
-const { ServerInvites } = require('@/modules/core/dbSchema')
+import { ServerInvites } from '@/modules/core/dbSchema'
 
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.up = async function (knex) {
+async function up(knex) {
   await knex.schema.alterTable(ServerInvites.name, (table) => {
     // Add token field
     table.string('token', 256).defaultTo('').notNullable()
@@ -23,9 +23,11 @@ exports.up = async function (knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = async function (knex) {
+async function down(knex) {
   await knex.schema.alterTable(ServerInvites.name, (table) => {
     // Drop token field
     table.dropColumn('token')
   })
 }
+
+export { up, down }

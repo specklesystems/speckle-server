@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 /* istanbul ignore file */
 // eslint-disable-next-line no-restricted-imports
-import './bootstrap'
+import './bootstrap.js'
 import http from 'http'
 import express, { Express } from 'express'
 
@@ -54,7 +54,7 @@ import {
 import * as ModulesSetup from '@/modules/index'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 
-import { get, has, isString } from 'lodash'
+import { get, has, isString } from 'lodash-es'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
@@ -103,17 +103,17 @@ const isWsServer = (server: http.Server | MockWsServer): server is MockWsServer 
  * is that graphql-ws uses an entirely different protocol, so the client-side has to change as well, and so old clients
  * will be unable to use any WebSocket/subscriptions functionality with the updated server
  */
-export function buildApolloSubscriptionServer(params: {
+export async function buildApolloSubscriptionServer(params: {
   server: http.Server | MockWsServer
   registers?: Registry[]
-}): SubscriptionServer {
+}): Promise<SubscriptionServer> {
   const { server, registers } = params
   const httpServer = isWsServer(server) ? undefined : server
   const mockServer = isWsServer(server) ? server : undefined
 
   // we have to break the type here, cause its a mock
   const wsServer = mockServer ? (mockServer as unknown as ws.Server) : undefined
-  const schema = ModulesSetup.graphSchema()
+  const schema = await ModulesSetup.graphSchema()
 
   const {
     metricConnectCounter,
@@ -250,7 +250,7 @@ export async function buildApolloServer(options?: {
 }): Promise<ApolloServer<GraphQLContext>> {
   const includeStacktraceInErrorResponses = isDevEnv() || isTestEnv()
   const subscriptionServer = options?.subscriptionServer
-  const schema = ModulesSetup.graphSchema(await buildMocksConfig())
+  const schema = await ModulesSetup.graphSchema(await buildMocksConfig())
 
   const server = new ApolloServer({
     schema,
@@ -356,7 +356,7 @@ export async function init() {
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
-  const subscriptionServer = buildApolloSubscriptionServer({
+  const subscriptionServer = await buildApolloSubscriptionServer({
     server,
     registers: [promRegister]
   })
@@ -398,8 +398,7 @@ const shouldUseFrontendProxy = () => isDevEnv()
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'
   const frontendPort = process.env.FRONTEND_PORT || 8081
-  const { createProxyMiddleware } =
-    require('http-proxy-middleware') as typeof import('http-proxy-middleware')
+  const { createProxyMiddleware } = await import('http-proxy-middleware')
 
   // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
   // slowing everything down

@@ -2,7 +2,7 @@
 'use strict'
 
 // Knex table migrations
-exports.up = async (knex) => {
+const up = async (knex) => {
   // Applications that integrate with this server.
   await knex.schema.createTable('server_apps', (table) => {
     table.string('id', 10).primary()
@@ -93,7 +93,7 @@ exports.up = async (knex) => {
   // await knex( 'scopes' ).insert( appTokenScopes )
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('server_apps_scopes')
   await knex.schema.dropTableIfExists('authorization_codes')
   await knex.schema.dropTableIfExists('refresh_tokens')
@@ -101,3 +101,5 @@ exports.down = async (knex) => {
 
   await knex.schema.dropTableIfExists('server_apps')
 }
+
+export { up, down }

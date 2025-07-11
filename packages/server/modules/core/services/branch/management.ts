@@ -13,7 +13,7 @@ import {
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 import {
   CreateBranchAndNotify,

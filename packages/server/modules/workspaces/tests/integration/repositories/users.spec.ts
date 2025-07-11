@@ -12,7 +12,7 @@ import {
 import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 
 describe('Workspace repositories', () => {
   describe('users repository', () => {

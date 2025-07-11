@@ -13,24 +13,24 @@ const configs = [
   ...baseConfigs,
   {
     languageOptions: {
-      sourceType: 'commonjs',
+      sourceType: 'module',
       globals: {
         ...globals.node
       }
     }
   },
   {
-    files: ['**/*.mjs'],
+    files: ['**/*.cjs', '**/*.cts'],
     languageOptions: {
-      sourceType: 'module'
+      sourceType: 'commonjs'
     }
   },
   ...tseslint.configs.recommendedTypeChecked.map((c) => ({
     ...c,
-    files: [...(c.files || []), '**/*.ts', '**/*.d.ts']
+    files: [...(c.files || []), '**/*.ts', '**/*.d.ts', '**/*.cts']
   })),
   {
-    files: ['**/*.ts', '**/*.d.ts'],
+    files: ['**/*.ts', '**/*.d.ts', '**/*.cts'],
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: getESMDirname(import.meta.url),

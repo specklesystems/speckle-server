@@ -110,7 +110,7 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
-import { assign, isBoolean, isString } from 'lodash'
+import { assign, isBoolean, isString } from 'lodash-es'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   finalizeInvitedServerRegistrationFactory,

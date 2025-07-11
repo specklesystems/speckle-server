@@ -1,5 +1,5 @@
 // /* istanbul ignore file */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('comments', (table) => {
     table.string('id', 10).primary()
     table
@@ -53,8 +53,10 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('comment_views')
   await knex.schema.dropTableIfExists('comment_links')
   await knex.schema.dropTableIfExists('comments')
 }
+
+export { up, down }

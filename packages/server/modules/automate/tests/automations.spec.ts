@@ -40,7 +40,7 @@ import {
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { Automate, Roles } from '@speckle/shared'
 import { expect } from 'chai'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import {

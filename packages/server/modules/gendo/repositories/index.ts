@@ -11,7 +11,7 @@ import {
 import { UserCredits } from '@/modules/gendo/domain/types'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
 import { Knex } from 'knex'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 
 const tables = {
   gendoAIRenders: (db: Knex) => db<GendoAIRenderRecord>(GendoAIRenders.name),

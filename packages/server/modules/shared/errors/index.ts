@@ -157,5 +157,11 @@ export class LoaderUnsupportedError extends BaseError {
   static statusCode = 500
 }
 
+export class TestOnlyLogicError extends BaseError {
+  static code = 'TEST_ONLY_LOGIC_ERROR'
+  static defaultMessage = 'This code should only be executed during tests'
+  static statusCode = 500
+}
+
 export { BaseError }
 export type { Info }

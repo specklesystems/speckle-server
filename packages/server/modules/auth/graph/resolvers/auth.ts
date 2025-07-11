@@ -1,7 +1,7 @@
 import { getAuthStrategies } from '@/modules/auth'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
-export = {
+export default {
   ServerInfo: {
     authStrategies() {
       return getAuthStrategies()

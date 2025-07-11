@@ -57,7 +57,7 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
-export = {
+export default {
   Project: {
     async version(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })

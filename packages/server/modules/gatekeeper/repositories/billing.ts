@@ -27,7 +27,7 @@ import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
 import { PaidWorkspacePlans, WorkspacePlan } from '@speckle/shared'
 import { Knex } from 'knex'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 const WorkspacePlans = buildTableHelper('workspace_plans', [
   'workspaceId',

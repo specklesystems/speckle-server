@@ -56,7 +56,7 @@ import {
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { waitForRegionProjectFactory } from '@/modules/core/services/projects'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()

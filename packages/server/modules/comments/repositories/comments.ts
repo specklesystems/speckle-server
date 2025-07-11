@@ -20,7 +20,7 @@ import {
   ResourceType
 } from '@/modules/core/graph/generated/graphql'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { clamp, keyBy, reduce } from 'lodash'
+import { clamp, keyBy, reduce } from 'lodash-es'
 import crs from 'crypto-random-string'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'

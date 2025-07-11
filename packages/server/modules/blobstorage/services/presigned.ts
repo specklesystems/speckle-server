@@ -16,7 +16,7 @@ import {
   AlreadyRegisteredBlobError,
   StoredBlobAccessError
 } from '@/modules/blobstorage/errors'
-import { isEmpty } from 'lodash'
+import { isEmpty } from 'lodash-es'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 // import { acceptedFileExtensions } from '@speckle/shared'
 

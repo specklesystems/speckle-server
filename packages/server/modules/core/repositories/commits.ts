@@ -15,7 +15,7 @@ import {
   StreamAclRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
-import { clamp, uniq, uniqBy, reduce, keyBy, mapValues } from 'lodash'
+import { clamp, uniq, uniqBy, reduce, keyBy, mapValues } from 'lodash-es'
 import crs from 'crypto-random-string'
 import {
   BatchedSelectOptions,

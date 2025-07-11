@@ -2,7 +2,7 @@ import { cliLogger } from '@/observability/logging'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { initializeConsumption } from '@/modules/notifications/index'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { get, noop } from 'lodash'
+import { get, noop } from 'lodash-es'
 import { CommandModule } from 'yargs'
 
 const command: CommandModule = {

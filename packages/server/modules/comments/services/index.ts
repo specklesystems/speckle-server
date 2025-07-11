@@ -62,7 +62,15 @@ export const createCommentFactory =
     emitEvent: EventBusEmit
     getViewerResourcesFromLegacyIdentifiers: GetViewerResourcesFromLegacyIdentifiers
   }) =>
-  async ({ userId, input }: { userId: string; input: CommentCreateInput }) => {
+  async (
+    { userId, input }: { userId: string; input: CommentCreateInput },
+    options?: Partial<{
+      /**
+       * Used in tests to skip text validation & formatting - text is saved in DB as is
+       */
+      skipTextValidation: boolean
+    }>
+  ) => {
     if (input.resources.length < 1)
       throw new UserInputError(
         'Must specify at least one resource as the comment target'
@@ -91,10 +99,12 @@ export const createCommentFactory =
     }
 
     await deps.validateInputAttachments(input.streamId, input.blobIds)
-    comment.text = buildCommentTextFromInput({
-      doc: input.text,
-      blobIds: input.blobIds
-    })
+    comment.text = options?.skipTextValidation
+      ? (input.text as SmartTextEditorValueSchema)
+      : buildCommentTextFromInput({
+          doc: input.text,
+          blobIds: input.blobIds
+        })
 
     const id = crs({ length: 10 })
     const [newComment] = await deps.insertComments([

@@ -52,7 +52,7 @@ import {
   ServerRoles,
   StreamRoles
 } from '@speckle/shared'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 

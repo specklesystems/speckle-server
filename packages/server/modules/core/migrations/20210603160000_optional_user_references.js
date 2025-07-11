@@ -1,5 +1,5 @@
 // /* istanbul ignore file */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.raw('ALTER TABLE commits ALTER COLUMN "author" DROP NOT NULL;')
   await knex.raw('ALTER TABLE commits DROP CONSTRAINT commits_author_foreign;')
   await knex.raw(`
@@ -20,7 +20,7 @@ exports.up = async (knex) => {
   `)
 }
 
-exports.down = async () => {
+const down = async () => {
   // NOTE:
   // This migration cannot run backwards: if a user deletes their account, the previous not null
   // constraint cannot be satisfied. Therefore, there's no going back (and there isn't really a need either).
@@ -40,3 +40,5 @@ exports.down = async () => {
   // ` )
   // await knex.raw( 'ALTER TABLE commits ALTER COLUMN "author" SET NOT NULL;' )
 }
+
+export { up, down }

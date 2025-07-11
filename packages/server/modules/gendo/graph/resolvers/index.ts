@@ -50,7 +50,7 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
-export = FF_GENDOAI_MODULE_ENABLED
+export default FF_GENDOAI_MODULE_ENABLED
   ? ({
       Version: {
         async gendoAIRenders(parent) {

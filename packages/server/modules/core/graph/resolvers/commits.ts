@@ -125,7 +125,7 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
-export = {
+export default {
   Query: {},
   Commit: {
     async stream(parent, _args, ctx) {

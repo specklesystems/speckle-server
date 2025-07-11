@@ -16,7 +16,7 @@ import {
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { Logger } from '@/observability/logging'
 import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
-import { cloneDeep, isEqual } from 'lodash'
+import { cloneDeep, isEqual } from 'lodash-es'
 
 type DownscaleWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription

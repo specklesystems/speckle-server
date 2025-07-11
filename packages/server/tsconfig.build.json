@@ -1,4 +1,11 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["**/*.spec.js", "**/*.spec.ts", "./modules/cli/**/*", "test/**/*"]
+  "exclude": [
+    "**/*.spec.js",
+    "**/*.spec.ts",
+    "modules/cli/**/*",
+    "**/tests/**/*",
+    "test/**/*",
+    "codegen.ts"
+  ]
 }

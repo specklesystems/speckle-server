@@ -65,7 +65,7 @@ const userTimelineQueryCore = async (
   return { items, cursor, totalCount }
 }
 
-export = {
+export default {
   LimitedUser: {
     async activity(parent, args) {
       return await userActivityQueryCore(parent, args)

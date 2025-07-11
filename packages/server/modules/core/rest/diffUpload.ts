@@ -1,6 +1,6 @@
 import zlib from 'zlib'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import type { Application } from 'express'
 import { hasObjectsFactory } from '@/modules/core/repositories/objects'
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'

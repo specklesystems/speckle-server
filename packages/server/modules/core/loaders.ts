@@ -4,7 +4,7 @@ import { graphDataloadersBuilders } from '@/modules/index'
 import { ModularizedDataLoadersConstraint } from '@/modules/shared/helpers/graphqlHelper'
 import { Knex } from 'knex'
 import { isNonNullable, Optional } from '@speckle/shared'
-import { flatten, noop, isFunction } from 'lodash'
+import { flatten, noop, isFunction } from 'lodash-es'
 import { db } from '@/db/knex'
 
 /**
@@ -73,7 +73,7 @@ export async function buildRequestLoaders(
   options?: Partial<{ cleanLoadersEarly: boolean }>
 ) {
   const createLoader = buildDataLoaderCreator(options?.cleanLoadersEarly || false)
-  const modulesLoaders = graphDataloadersBuilders()
+  const modulesLoaders = await graphDataloadersBuilders()
 
   const mainDb = db
 

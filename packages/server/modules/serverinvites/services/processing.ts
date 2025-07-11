@@ -32,7 +32,7 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
-import { noop } from 'lodash'
+import { noop } from 'lodash-es'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'

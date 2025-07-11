@@ -25,7 +25,7 @@ import {
   getProjectRegionKey,
   getRegisteredRegionConfigs
 } from '@/modules/multiregion/utils/regionSelector'
-import { get, mapValues } from 'lodash'
+import { get, mapValues } from 'lodash-es'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 let getter: GetProjectDb | undefined = undefined
@@ -166,27 +166,34 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     )
 
   const newRegionConfig = regionConfigs[regionKey]
+  const newRegionDbConfig = newRegionConfig.postgres
+
   const regionDb = configureClient(newRegionConfig)
-  await migrateDbToLatest({ db: regionDb.public, region: regionKey })
 
-  const mainDbConfig = await getMainRegionConfig()
-  const mainDb = configureClient(mainDbConfig)
+  if (!newRegionDbConfig.skipInitialization) {
+    await migrateDbToLatest({ db: regionDb.public, region: regionKey })
 
-  const sslmode = newRegionConfig.postgres.publicTlsCertificate ? 'require' : 'disable'
+    const mainDbConfig = await getMainRegionConfig()
+    const mainDb = configureClient(mainDbConfig)
 
-  await setUpUserReplication({
-    from: mainDb,
-    to: regionDb,
-    regionName: regionKey,
-    sslmode
-  })
+    const sslmode = newRegionConfig.postgres.publicTlsCertificate
+      ? 'require'
+      : 'disable'
 
-  await setUpProjectReplication({
-    from: regionDb,
-    to: mainDb,
-    regionName: regionKey,
-    sslmode
-  })
+    await setUpUserReplication({
+      from: mainDb,
+      to: regionDb,
+      regionName: regionKey,
+      sslmode
+    })
+
+    await setUpProjectReplication({
+      from: regionDb,
+      to: mainDb,
+      regionName: regionKey,
+      sslmode
+    })
+  }
 
   // pushing to the singleton object here, only if its not available
   // if this is being triggered from init, its gonna be set after anyway

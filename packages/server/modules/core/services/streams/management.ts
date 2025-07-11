@@ -12,7 +12,7 @@ import {
   StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/project'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
   TokenResourceIdentifier,

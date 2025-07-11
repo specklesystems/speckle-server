@@ -1,8 +1,10 @@
 import { BaseError } from '@/modules/shared/errors'
-import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
-import { ApolloError } from '@apollo/client/core/core.cjs'
+import {
+  isGraphQLError,
+  isUserGraphqlError
+} from '@/modules/shared/helpers/graphqlHelper'
+import { ApolloError } from '@apollo/client/core'
 import { ensureError } from '@speckle/shared'
-import { GraphQLError } from 'graphql'
 import type { Logger } from 'pino'
 interface LogFn {
   (logger: Logger, e: unknown, obj?: unknown, msg?: string, ...args: unknown[]): void
@@ -24,7 +26,7 @@ export const logWithErr: LogFn = (logger, e, obj, msg?, ...args) => {
 }
 
 export const shouldLogAsInfoLevel = (err: unknown): boolean => {
-  if (err instanceof GraphQLError) {
+  if (isGraphQLError(err)) {
     if (isUserGraphqlError(err)) return true
     if (err.message === 'Connection is closed.') return true
     if (!!err.cause && shouldLogAsInfoLevel(err.cause)) return true
@@ -43,7 +45,7 @@ export const shouldLogAsInfoLevel = (err: unknown): boolean => {
 }
 
 const shouldLogAsWarnLevel = (err: unknown): boolean => {
-  if (!(err instanceof GraphQLError)) return false
+  if (!isGraphQLError(err)) return false
 
   if (err.message.startsWith('Cannot return null for non-nullable field')) return true
   if (

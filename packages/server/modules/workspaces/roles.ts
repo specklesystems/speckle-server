@@ -1,6 +1,6 @@
 import { UserWorkspaceRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Roles, RoleInfo } from '@speckle/shared'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 
 const aclTableName = 'workspace_acl'
 const resourceTarget = 'workspaces'

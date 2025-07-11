@@ -1,4 +1,3 @@
-import { describe } from 'mocha'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import {
   scheduledCallbackWrapper,

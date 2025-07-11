@@ -34,7 +34,7 @@ import {
   AutomationRunStatuses,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
-import { keyBy, uniq } from 'lodash'
+import { keyBy, uniq } from 'lodash-es'
 import { resolveStatusFromFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
 import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
@@ -57,7 +57,7 @@ import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationEvents } from '@/modules/automate/domain/events'
-import { UnformattableTriggerDefinitionSchemaError } from '@speckle/shared/dist/commonjs/automate/index.js'
+import { UnformattableTriggerDefinitionSchemaError } from '@speckle/shared/automate'
 
 export type CreateAutomationDeps = {
   createAuthCode: CreateStoredAuthCode

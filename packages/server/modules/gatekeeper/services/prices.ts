@@ -17,7 +17,7 @@ import {
   TIME_MS,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
-import { set } from 'lodash'
+import { set } from 'lodash-es'
 
 export const getFreshWorkspacePlanProductPricesFactory =
   (deps: {

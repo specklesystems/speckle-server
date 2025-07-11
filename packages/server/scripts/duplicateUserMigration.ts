@@ -1,12 +1,12 @@
-const { knex } = require('@/db/knex')
-const { logger } = require('@/observability/logging')
-const roles = require('@/modules/core/roles.js')
-const { Roles } = require('@speckle/shared')
+import { knex } from '@/db/knex'
+import { logger } from '@/observability/logging'
+import roles from '@/modules/core/roles.js'
+import { Roles } from '@speckle/shared'
 
 const Users = () => knex('users')
 
 // tableName, columnName that need migration
-const migrationTargets = [
+const migrationTargets = <const>[
   ['api_tokens', 'owner'],
   ['authorization_codes', 'userId'],
   ['branches', 'authorId'],
@@ -21,7 +21,15 @@ const migrationTargets = [
   ['stream_activity', 'userId']
 ]
 
-const migrateColumnValue = async (tableName, columnName, oldUser, newUser) => {
+type User = { id: string }
+type StreamAcl = { userId: string; resourceId: string; role: string }
+
+const migrateColumnValue = async (
+  tableName: string,
+  columnName: string,
+  oldUser: User,
+  newUser: User
+) => {
   try {
     const query = knex(tableName)
       .where({ [columnName]: oldUser.id })
@@ -33,7 +41,13 @@ const migrateColumnValue = async (tableName, columnName, oldUser, newUser) => {
   }
 }
 
-const serverAclMigration = async ({ lowerUser, upperUser }) => {
+const serverAclMigration = async ({
+  lowerUser,
+  upperUser
+}: {
+  lowerUser: User
+  upperUser: User
+}) => {
   const oldAcl = await knex('server_acl').where({ userId: upperUser.id }).first()
   // if the old user was admin, make the target admin too
   if (oldAcl.role === Roles.Server.Admin)
@@ -42,7 +56,13 @@ const serverAclMigration = async ({ lowerUser, upperUser }) => {
       .update({ role: Roles.Server.Admin })
 }
 
-const _migrateSingleStreamAccess = async ({ lowerUser, upperStreamAcl }) => {
+const _migrateSingleStreamAccess = async ({
+  lowerUser,
+  upperStreamAcl
+}: {
+  lowerUser: User
+  upperStreamAcl: StreamAcl
+}) => {
   const upperRole = roles.filter((r) => r.name === upperStreamAcl.role)[0]
   const lowerAcl = await knex('stream_acl')
     .where({ userId: lowerUser.id, resourceId: upperStreamAcl.resourceId })
@@ -63,7 +83,13 @@ const _migrateSingleStreamAccess = async ({ lowerUser, upperStreamAcl }) => {
   }
 }
 
-const streamAclMigration = async ({ lowerUser, upperUser }) => {
+const streamAclMigration = async ({
+  lowerUser,
+  upperUser
+}: {
+  lowerUser: User
+  upperUser: User
+}) => {
   const upperAcl = await knex('stream_acl').where({ userId: upperUser.id })
 
   await Promise.all(
@@ -74,17 +100,24 @@ const streamAclMigration = async ({ lowerUser, upperUser }) => {
   )
 }
 
-const createMigrations = ({ lowerUser, upperUser }) =>
+const createMigrations = ({
+  lowerUser,
+  upperUser
+}: {
+  lowerUser: User
+  upperUser: User
+}) =>
   migrationTargets.map(([tableName, columnName]) => {
-    migrateColumnValue(tableName, columnName, upperUser, lowerUser)
+    void migrateColumnValue(tableName, columnName, upperUser, lowerUser)
   })
 
-const userByEmailQuery = (email) => Users().where({ email })
+const userByEmailQuery = (email: string) => Users().where({ email })
 
 const getDuplicateUsers = async () => {
-  const duplicates = await knex.raw(
+  const duplicates = (await knex.raw(
     'select lower(email) as lowered, count(id) as reg_count from users group by lowered having count(id) > 1'
-  )
+  )) as { rows: Array<{ lowered: string; reg_count: number }> }
+
   return await Promise.all(
     duplicates.rows.map(async (dup) => {
       const lowerEmail = dup.lowered
@@ -122,7 +155,7 @@ const runMigrations = async () => {
   )
 }
 
-;(async function () {
+void (async function () {
   try {
     // await createData()
     await runMigrations()

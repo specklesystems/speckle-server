@@ -12,7 +12,9 @@ export default {
   },
   Subscription: {
     ping: {
-      subscribe: filteredSubscribe(TestSubscriptions.Ping, () => true)
+      subscribe: filteredSubscribe(TestSubscriptions.Ping, () => {
+        return true // allow for all subs
+      })
     }
   }
 } as Resolvers

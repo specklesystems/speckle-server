@@ -19,20 +19,24 @@ import {
   GetSignedUrl
 } from '@/modules/blobstorage/domain/operations'
 
-export type ObjectStorage = {
-  client: S3Client
-  bucket: string
-}
-
 export type GetProjectObjectStorage = (args: {
   projectId: string
 }) => Promise<ObjectStorage>
 
 export type GetObjectStorageParams = {
-  credentials: S3ClientConfig['credentials']
-  endpoint: S3ClientConfig['endpoint']
-  region: S3ClientConfig['region']
+  credentials: {
+    accessKeyId: string
+    secretAccessKey: string
+  }
+  endpoint: string
+  region: string
   bucket: string
+}
+
+export type ObjectStorage = {
+  client: S3Client
+  bucket: string
+  params: GetObjectStorageParams
 }
 
 /**
@@ -48,7 +52,7 @@ export const getObjectStorage = (params: GetObjectStorageParams): ObjectStorage 
     forcePathStyle: true
   }
   const client = new S3Client(config)
-  return { client, bucket }
+  return { client, bucket, params }
 }
 
 let mainObjectStorage: Optional<ObjectStorage> = undefined

@@ -6,7 +6,7 @@ import { cacheLogger } from '@/observability/logging'
 import TTLCache from '@isaacs/ttlcache'
 import { MaybeAsync, TIME_MS } from '@speckle/shared'
 import Redis from 'ioredis'
-import { isNumber } from 'lodash'
+import { isNumber } from 'lodash-es'
 
 export interface CacheProvider<Data = unknown> {
   get: (key: string) => Promise<Data | undefined>

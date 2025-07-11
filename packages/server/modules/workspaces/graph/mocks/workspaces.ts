@@ -3,7 +3,7 @@ import { listMock, SpeckleModuleMocksConfig } from '@/modules/shared/helpers/moc
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Roles } from '@speckle/shared'
-import { omit, times } from 'lodash'
+import { omit, times } from 'lodash-es'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()

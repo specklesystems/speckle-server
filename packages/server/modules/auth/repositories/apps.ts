@@ -46,7 +46,7 @@ import {
 import { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
-import { difference, omit } from 'lodash'
+import { difference, omit } from 'lodash-es'
 import { AppCreateError } from '@/modules/auth/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 

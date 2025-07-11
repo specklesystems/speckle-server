@@ -9,7 +9,7 @@
   // Set streamId as notNullable in closures
   // delete composite index (streamId, id) and Create composite primary key on the same fields (unique index was used as a workaround bc we can't have composite PK with null values)
 */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.alterTable('commits', (table) => {
     table.dropForeign('referencedObject')
   })
@@ -110,7 +110,7 @@ exports.up = async (knex) => {
 /*
   Revert data and schema
 */
-exports.down = async (knex) => {
+const down = async (knex) => {
   const hasColumn = await knex.schema.hasColumn('objects', 'streamId')
   if (hasColumn) {
     await knex.schema.alterTable('objects', (table) => {
@@ -193,3 +193,5 @@ exports.down = async (knex) => {
     })
   }
 }
+
+export { up, down }

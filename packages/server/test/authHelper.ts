@@ -38,7 +38,7 @@ import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { assign, isArray, isNumber, omit, times } from 'lodash'
+import { assign, isArray, isNumber, omit, times } from 'lodash-es'
 
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })

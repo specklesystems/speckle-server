@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('webhooks_config', (table) => {
     table.string('id').primary()
     table.string('streamId', 10).references('id').inTable('streams').onDelete('cascade')
@@ -34,7 +34,9 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('webhooks_events')
   await knex.schema.dropTableIfExists('webhooks_config')
 }
+
+export { up, down }

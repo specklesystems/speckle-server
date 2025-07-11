@@ -2,7 +2,7 @@
 
 import { Nullable } from '@speckle/shared'
 import { SchemaConfig, MetaSchemaConfig } from '@/modules/core/dbSchema'
-import { camelCase, isString } from 'lodash'
+import { camelCase, isString } from 'lodash-es'
 import { Knex } from 'knex'
 
 /**

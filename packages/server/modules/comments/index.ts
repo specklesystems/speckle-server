@@ -60,4 +60,4 @@ const commentsModule: SpeckleModule = {
   }
 }
 
-export = commentsModule
+export default commentsModule

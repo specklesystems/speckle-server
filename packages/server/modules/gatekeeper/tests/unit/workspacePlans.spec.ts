@@ -13,7 +13,7 @@ import {
 } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 import {
   buildTestWorkspacePlan,
   buildTestWorkspaceSubscription
