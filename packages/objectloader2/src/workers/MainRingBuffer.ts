@@ -23,7 +23,7 @@ export class MainRingBuffer {
   private static readonly CONTROL_BUFFER_BYTE_LENGTH =
     RingBuffer.CONTROL_BUFFER_SIZE_ELEMENTS * Int32Array.BYTES_PER_ELEMENT
 
-  private capacity: number // Number of elements (not bytes, unless elementSize is 1)
+  private capacityPlusOne: number // Number of elements (not bytes, unless elementSize is 1)
   private elementSize: number
   private typeConstructor: Uint8ArrayConstructor
   private internalSharedBuffer: SharedArrayBuffer
@@ -127,16 +127,7 @@ export class MainRingBuffer {
   }
 
   get availableSpaces(): number {
-    const writeIdx = Atomics.load(this.controlBuffer, RingBuffer.WRITE_IDX_POS)
-    const readIdx = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
-
-    // Calculate actual contiguous and total available space more directly
-    if (writeIdx >= readIdx) {
-      return this.capacity - (writeIdx - readIdx) - 1
-    } else {
-      // read index is ahead of write index
-      return readIdx - writeIdx - 1
-    }
+    return this.capacity - this.length
   }
 
   // data is Uint8Array, so data.length is number of bytes (elements)
@@ -290,7 +281,7 @@ export class MainRingBuffer {
         // Copy data, handling wrap-around
         for (let i = 0; i < numElements; i++) {
           resultBuffer[i] = this.buffer[tempReadIndex]
-          tempReadIndex = (tempReadIndex + 1) % this.capacity
+          tempReadIndex = (tempReadIndex + 1) % this.capacityPlusOne
         }
 
         Atomics.store(this.controlBuffer, RingBuffer.READ_IDX_POS, tempReadIndex)
@@ -309,7 +300,7 @@ export class MainRingBuffer {
         const outcome = Atomics.waitAsync(
           this.controlBuffer,
           RingBuffer.READ_IDX_POS,
-          currentReadIndex,
+          readIdx,
           timeoutMs
         )
 
