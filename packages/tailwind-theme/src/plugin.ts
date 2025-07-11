@@ -264,7 +264,7 @@ const plugin = buildPlugin(({ addComponents, addBase }) => {
     },
     // Heading styles
     '.text-heading-2xl, .h1': {
-      '@apply font-medium [2rem] leading-8 tracking-[-0.044rem]': {}
+      '@apply font-medium text-[2rem] leading-8 tracking-[-0.044rem]': {}
     },
     '.text-heading-xl, .h2': {
       '@apply font-medium text-2xl leading-9 tracking-[-0.0285rem]': {}
