@@ -4,8 +4,8 @@ import { StringQueue } from './StringQueue.js'
 
 describe('StringQueue with concurrent access', () => {
   it('should handle simultaneous reads and writes without data corruption', async () => {
-    const queueCapacity = 100 // 1KB capacity
-    const totalItems = 200 // Number of items to send
+    const queueCapacity = 1_000 // 1KB capacity
+    const totalItems = 500 // Number of items to send
     const rbq = MainRingBufferQueue.create(queueCapacity, 'concurrent-test-queue')
     const queue = new StringQueue(rbq)
 
@@ -29,6 +29,7 @@ describe('StringQueue with concurrent access', () => {
             i--
             continue
           }
+          console.log(`Writer enqueued item ${i}`)
 
           if (i % 10 === 0) {
             console.log(`Enqueued 10 items from queue.`)
@@ -50,6 +51,10 @@ describe('StringQueue with concurrent access', () => {
           } else {
             // If the queue is empty, wait a moment before trying again
             await new Promise((res) => setTimeout(res, 10))
+          }
+
+          if (receivedItems.length % 10 === 0) {
+            console.log(`Dequeued 10 items from queue.`)
           }
         }
       } catch (e) {

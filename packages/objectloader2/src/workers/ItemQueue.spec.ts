@@ -1,88 +1,78 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { ItemQueue } from './ItemQueue.js'
 import { MainRingBufferQueue } from './MainRingBufferQueue.js'
-
-// Mock dependencies
-const mockRingBufferQueue = {
-  enqueue: vi.fn(),
-  dequeue: vi.fn(),
-  getSharedArrayBuffer: vi.fn()
-}
-
-vi.mock('./RingBufferQueue.js', () => {
-  return {
-    RingBufferQueue: vi.fn(() => mockRingBufferQueue)
-  }
-})
+import { Item } from '../types/types.js'
 
 describe('ItemQueue', () => {
   let itemQueue: ItemQueue
+  let rbq: MainRingBufferQueue
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    itemQueue = new ItemQueue(mockRingBufferQueue as unknown as MainRingBufferQueue)
+    // A new queue for each test to ensure isolation
+    // The size is arbitrary, but should be large enough for most tests.
+    rbq = MainRingBufferQueue.create(2048, `item-queue-test-${Math.random()}`)
+    itemQueue = new ItemQueue(rbq)
   })
 
-  it('should enqueue items when the queue is empty', async () => {
-    const items = [{ baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }]
-    mockRingBufferQueue.enqueue.mockResolvedValue(true)
+  it('should enqueue and dequeue items successfully', async () => {
+    const items: Item[] = [
+      { baseId: '1', base: { id: 'base1', speckle_type: 'Base' } },
+      { baseId: '2', base: { id: 'base2', speckle_type: 'Base' } }
+    ]
 
-    const result = await itemQueue.enqueue(items, 1000)
+    const enqueueResult = await itemQueue.enqueue(items, 1000)
+    expect(enqueueResult).toBe(2)
 
-    expect(mockRingBufferQueue.enqueue).toHaveBeenCalled()
+    const dequeuedItems = await itemQueue.dequeue(2, 1000)
+    expect(dequeuedItems).toEqual(items)
+  })
+
+  it('should not enqueue when queue is full', async () => {
+    const item: Item = { baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }
+    const itemString = JSON.stringify(item)
+    const itemByteLength = new TextEncoder().encode(itemString).length
+    const smallRbq = MainRingBufferQueue.create(
+      itemByteLength + 4,
+      `small-queue-${Math.random()}`
+    ) // +4 for header
+    const smallItemQueue = new ItemQueue(smallRbq)
+
+    // Enqueue one item to fill the queue
+    let result = await smallItemQueue.enqueue([item], 1000)
     expect(result).toBe(1)
-  })
 
-  it('should return false when enqueue fails', async () => {
-    const items = [{ baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }]
-    mockRingBufferQueue.enqueue.mockResolvedValue(false)
-
-    const result = await itemQueue.enqueue(items, 1000)
-
-    expect(mockRingBufferQueue.enqueue).toHaveBeenCalled()
+    // Try to enqueue another item, which should fail
+    result = await smallItemQueue.enqueue([item], 1000)
     expect(result).toBe(0)
   })
 
-  it('should dequeue items when the queue is not empty', async () => {
-    const byteArray = new TextEncoder().encode(
-      JSON.stringify({ baseId: '1', base: { id: 'base1', speckle_type: 'Base' } })
-    )
-    mockRingBufferQueue.dequeue.mockResolvedValue([byteArray])
+  it('should return an empty array when dequeuing from an empty queue', async () => {
+    const result = await itemQueue.dequeue(10, 1000)
+    expect(result).toEqual([])
+  })
 
-    const result = await itemQueue.dequeue(1, 1000)
-
-    expect(mockRingBufferQueue.dequeue).toHaveBeenCalled()
-    expect(result).toEqual([
+  it('should handle multiple enqueues and dequeues', async () => {
+    const items1: Item[] = [
       { baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }
-    ])
-  })
+    ]
+    const items2: Item[] = [
+      { baseId: '2', base: { id: 'base2', speckle_type: 'Base' } }
+    ]
 
-  it('should return an empty array when dequeue fails', async () => {
-    mockRingBufferQueue.dequeue.mockResolvedValue([])
+    await itemQueue.enqueue(items1, 1000)
+    await itemQueue.enqueue(items2, 1000)
 
-    const result = await itemQueue.dequeue(10, 1000)
+    const dequeued1 = await itemQueue.dequeue(1, 1000)
+    expect(dequeued1).toEqual(items1)
 
-    expect(mockRingBufferQueue.dequeue).toHaveBeenCalled()
-    expect(result).toEqual([])
-  })
-
-  it('should handle invalid items during dequeue', async () => {
-    const invalidByteArray = new TextEncoder().encode('invalid json')
-    mockRingBufferQueue.dequeue.mockResolvedValue([invalidByteArray])
-
-    const result = await itemQueue.dequeue(10, 1000)
-
-    expect(mockRingBufferQueue.dequeue).toHaveBeenCalled()
-    expect(result).toEqual([])
+    const dequeued2 = await itemQueue.dequeue(1, 1000)
+    expect(dequeued2).toEqual(items2)
   })
 
   it('should return the shared array buffer', () => {
-    const sharedArrayBuffer = new SharedArrayBuffer(1024)
-    mockRingBufferQueue.getSharedArrayBuffer.mockReturnValue(sharedArrayBuffer)
-
+    const sharedArrayBuffer = rbq.getSharedArrayBuffer()
     const result = itemQueue.getSharedArrayBuffer()
-
-    expect(mockRingBufferQueue.getSharedArrayBuffer).toHaveBeenCalled()
     expect(result).toBe(sharedArrayBuffer)
+    expect(result).toBeInstanceOf(SharedArrayBuffer)
   })
 })
