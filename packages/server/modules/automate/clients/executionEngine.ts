@@ -397,6 +397,21 @@ export const updateFunction = async (params: {
   })
 }
 
+export const regenerateFunctionToken = async (params: {
+  functionId: string
+  authCode: AuthCodePayload
+}): Promise<{ token: string }> => {
+  const { functionId, authCode } = params
+  const url = getApiUrl(`/api/v2/functions/${functionId}/tokens/regenerate`)
+  return await invokeJsonRequest<{ token: string }>({
+    url,
+    method: 'POST',
+    body: {
+      speckleServerAuthenticationPayload: addOrigin(authCode)
+    }
+  })
+}
+
 export type GetFunctionResponse = FunctionWithVersionsSchemaType & {
   versionCount: number
   versionCursor: Nullable<string>

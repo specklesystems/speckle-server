@@ -255,6 +255,13 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           }),
           releases: () => store.get('AutomateFunctionReleaseCollection') as any
         },
+        AutomateFunctionPermissionChecks: {
+          canRegenerateToken: () => ({
+            authorized: faker.datatype.boolean(),
+            code: faker.string.alphanumeric(10),
+            message: faker.lorem.words(10)
+          })
+        },
         AutomateFunctionRelease: {
           function: () => store.get('AutomateFunction') as any
         },

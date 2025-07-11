@@ -268,12 +268,13 @@ export type AutomateFunction = {
   isFeatured: Scalars['Boolean']['output'];
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  permissions: AutomateFunctionPermissionChecks;
   releases: AutomateFunctionReleaseCollection;
   repo: BasicGitRepositoryMetadata;
   /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
   supportedSourceApps: Array<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
-  workspaceIds?: Maybe<Array<Scalars['String']['output']>>;
+  workspaceIds: Array<Scalars['String']['output']>;
 };
 
 
@@ -288,6 +289,11 @@ export type AutomateFunctionCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<AutomateFunction>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type AutomateFunctionPermissionChecks = {
+  __typename?: 'AutomateFunctionPermissionChecks';
+  canRegenerateToken: PermissionCheckResult;
 };
 
 export type AutomateFunctionRelease = {
@@ -372,6 +378,7 @@ export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
   createFunctionWithoutVersion: AutomateFunctionToken;
+  regenerateFunctionToken: Scalars['String']['output'];
   updateFunction: AutomateFunction;
 };
 
@@ -383,6 +390,11 @@ export type AutomateMutationsCreateFunctionArgs = {
 
 export type AutomateMutationsCreateFunctionWithoutVersionArgs = {
   input: CreateAutomateFunctionWithoutVersionInput;
+};
+
+
+export type AutomateMutationsRegenerateFunctionTokenArgs = {
+  functionId: Scalars['String']['input'];
 };
 
 

@@ -147,7 +147,7 @@ type AutomateFunction {
   Only returned if user is a part of this speckle server
   """
   creator: LimitedUser
-  workspaceIds: [String!]
+  workspaceIds: [String!]!
 }
 
 type AutomateFunctionToken {
@@ -337,6 +337,8 @@ type AutomateMutations {
     @hasScope(scope: "automate-functions:write")
     @hasServerRole(role: SERVER_ADMIN)
   updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
+    @hasScope(scope: "automate-functions:write")
+  regenerateFunctionToken(functionId: String!): String!
     @hasScope(scope: "automate-functions:write")
 }
 

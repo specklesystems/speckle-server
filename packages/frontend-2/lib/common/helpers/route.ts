@@ -63,6 +63,10 @@ export const settingsWorkspaceRoutes = {
     name: 'settings-workspaces-slug-projects',
     route: (slug?: string) => `/settings/workspaces/${slug}/projects`
   },
+  automation: {
+    name: 'settings-workspaces-slug-automation',
+    route: (slug?: string) => `/settings/workspaces/${slug}/automation`
+  },
   security: {
     name: 'settings-workspaces-slug-security',
     route: (slug?: string) => `/settings/workspaces/${slug}/security`

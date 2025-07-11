@@ -2,6 +2,7 @@ import { defineModuleLoaders } from '@/modules/loaders'
 import { LoaderUnsupportedError } from '@/modules/shared/errors'
 
 export default defineModuleLoaders(() => ({
+  getAutomateFunction: async () => null,
   getWorkspace: async () => {
     throw new LoaderUnsupportedError()
   },

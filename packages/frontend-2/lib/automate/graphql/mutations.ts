@@ -22,3 +22,11 @@ export const updateAutomateFunctionMutation = graphql(`
     }
   }
 `)
+
+export const regenerateFunctionTokenMutation = graphql(`
+  mutation RegenerateFunctionToken($functionId: String!) {
+    automateMutations {
+      regenerateFunctionToken(functionId: $functionId)
+    }
+  }
+`)

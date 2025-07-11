@@ -24,6 +24,7 @@ import type {
 import { GetComment } from './comments/operations.js'
 import { GetModel } from './models/operations.js'
 import { GetVersion } from './versions/operations.js'
+import { GetAutomateFunction } from './automate/operations.js'
 
 // utility type that ensures all properties functions that return promises
 type PromiseAll<T> = {
@@ -55,6 +56,7 @@ type AuthContextLoaderMappingDefinition<
 /* v8 ignore start  */
 export const AuthCheckContextLoaderKeys = <const>{
   getEnv: 'getEnv',
+  getAutomateFunction: 'getAutomateFunction',
   getProject: 'getProject',
   getProjectRoleCounts: 'getProjectRoleCounts',
   getProjectRole: 'getProjectRole',
@@ -85,6 +87,7 @@ export type AuthCheckContextLoaderKeys =
 export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getEnv: GetEnv
   getAdminOverrideEnabled: GetAdminOverrideEnabled
+  getAutomateFunction: GetAutomateFunction
   getProject: GetProject
   getProjectRole: GetProjectRole
   getProjectRoleCounts: GetProjectRoleCounts

@@ -11,3 +11,11 @@ type AutomationPermissionChecks {
 extend type ProjectPermissionChecks {
   canCreateAutomation: PermissionCheckResult!
 }
+
+type AutomateFunctionPermissionChecks {
+  canRegenerateToken: PermissionCheckResult!
+}
+
+extend type AutomateFunction {
+  permissions: AutomateFunctionPermissionChecks!
+}
