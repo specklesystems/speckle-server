@@ -1,6 +1,7 @@
 import { BadRequestError } from '@/modules/shared/errors'
 import { isGraphQLError } from '@/modules/shared/helpers/graphqlHelper'
 import { ApolloServerOptions, BaseContext } from '@apollo/server'
+import { ensureError } from '@speckle/shared'
 import { omit } from 'lodash-es'
 import VError from 'verror'
 import { ZodError } from 'zod'
@@ -38,16 +39,17 @@ export function buildErrorFormatter(params: {
       }
     }
 
-    // If error isn't a VError child, don't do anything extra
-    if (!(realError instanceof VError)) {
-      return writableFormattedError
+    // If VError, handle info & stack trace
+    if (realError instanceof VError) {
+      writableFormattedError.extensions = {
+        ...(writableFormattedError.extensions || {}),
+        ...(VError.info(realError) || {})
+      }
     }
 
-    // Converting VError based error to Apollo's format
-    const extensions = {
-      ...(writableFormattedError.extensions || {}),
-      ...(VError.info(realError) || {})
-    }
+    // Clean up extensions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const extensions = writableFormattedError.extensions || ({} as Record<string, any>)
 
     // Getting rid of redundant info
     delete extensions.originalError
@@ -57,7 +59,10 @@ export function buildErrorFormatter(params: {
       extensions.exception = omit(extensions.exception, VERROR_TRASH_PROPS)
 
       if (includeStacktraceInErrorResponses) {
-        extensions.exception.stacktrace = VError.fullStack(realError)
+        extensions.exception.stacktrace =
+          realError instanceof VError
+            ? VError.fullStack(realError)
+            : ensureError(realError).stack
       } else {
         delete extensions.exception.stacktrace
       }
