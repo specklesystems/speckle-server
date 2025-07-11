@@ -81,6 +81,7 @@ const getEnabledModuleNames = () => {
     FF_GATEKEEPER_MODULE_ENABLED
   } = getFeatureFlags()
   const moduleNames = [
+    'acc',
     'accessrequests',
     'activitystream',
     'apiexplorer',
@@ -102,6 +103,7 @@ const getEnabledModuleNames = () => {
     'multiregion'
   ]
 
+  // TODO: add acc with feature flag?
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
   if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
   // the order of the event listeners matters

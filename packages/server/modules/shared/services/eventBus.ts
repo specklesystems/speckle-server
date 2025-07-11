@@ -53,6 +53,10 @@ import {
   fileuploadEventNamespace,
   FileuploadEventsPayloads
 } from '@/modules/fileuploads/domain/events'
+import {
+  accSyncItemEventsNamespace,
+  AccSyncItemEventsPayloads
+} from '@/modules/acc/domain/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -70,6 +74,7 @@ type TestEventsPayloads = {
 // we should only ever extend this type, other helper types will be derived from this
 type EventsByNamespace = {
   test: TestEventsPayloads
+  [accSyncItemEventsNamespace]: AccSyncItemEventsPayloads
   [workspaceEventNamespace]: WorkspaceEventsPayloads
   [gatekeeperEventNamespace]: GatekeeperEventPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads

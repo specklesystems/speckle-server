@@ -1,0 +1,168 @@
+<template>
+  <div class="flex flex-col text-xs space-y-2">
+    <!-- TODO: Get sync items from graphql -->
+    <ProjectPageAccSyncs
+      :project-id="projectId"
+      :is-logged-in="hasTokens"
+      :tokens="tokens"
+      :syncs="[]"
+    ></ProjectPageAccSyncs>
+
+    <div v-if="!hasTokens">
+      <CommonLoadingBar v-if="loadingTokens" :loading="true" class="my-2" />
+      <div v-else>
+        <hr class="mb-2" />
+        <FormButton size="sm" @click="authAcc()">Connect to ACC</FormButton>
+      </div>
+    </div>
+
+    <!-- USER INFO -->
+    <div v-if="userInfo" class="flex flex-col space-y-2">
+      <hr class="my-2" />
+      <div class="flex flex-col text ml-1 space-y-2 mb-2">
+        <span>
+          <strong>Name:</strong>
+          {{ userInfo.firstName }} {{ userInfo.lastName }}
+        </span>
+        <span>
+          <strong>Email:</strong>
+          {{ userInfo.emailId }}
+        </span>
+        <span>
+          <strong>User ID:</strong>
+          {{ userInfo.userId }}
+        </span>
+      </div>
+
+      <FormButton
+        v-if="hasTokens"
+        class="mt-4"
+        color="outline"
+        size="sm"
+        @click="tokens = undefined"
+      >
+        Log out
+      </FormButton>
+      <div>
+        {{ tokens?.access_token }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { AccTokens, AccUserInfo } from '~/lib/acc/types'
+
+const props = defineProps<{ projectId: string }>()
+const { triggerNotification } = useGlobalToast()
+
+const tokens = ref<AccTokens>()
+const hasTokens = computed(() => !!tokens.value?.access_token)
+const loadingTokens = ref(true)
+const userInfo = ref<AccUserInfo>()
+const loadingUser = ref(false)
+
+// const syncs = ref<AccSyncItem[]>([
+//   {
+//     id: '1',
+//     projectId: '',
+//     modelId: '',
+//     projectName: 'test',
+//     modelName: 'test',
+//     status: 'paused',
+//     createdBy: 'Oguzhan Koral',
+//     accItem: {
+//       id: 'yo',
+//       attributes: {
+//         name: 'whatever.rvt',
+//         displayName: 'whatever.rvt'
+//       }
+//     }
+//   }
+// ])
+
+// AUTH + TOKEN FLOW
+const fetchTokens = async () => {
+  try {
+    const res = await fetch('/auth/acc/status', { credentials: 'include' })
+    if (!res.ok) return
+    tokens.value = await res.json()
+  } finally {
+    loadingTokens.value = false
+  }
+}
+fetchTokens()
+
+const authAcc = async () => {
+  try {
+    const response = await fetch('/auth/acc/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: props.projectId })
+    })
+    if (!response.ok) throw new Error('Failed to initiate ACC login.')
+    const { authorizeUrl } = await response.json()
+    if (!authorizeUrl) throw new Error('No authorize URL returned by server.')
+    window.location.href = authorizeUrl
+  } catch (error) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Error starting ACC login',
+      description: error instanceof Error ? error.message : 'Unexpected error'
+    })
+  }
+}
+
+const scheduleRefresh = (expiresInSeconds: number) => {
+  const refreshTime = (expiresInSeconds - 60) * 1000
+  setTimeout(async () => {
+    loadingTokens.value = true
+    const res = await fetch('/auth/acc/refresh', {
+      method: 'POST',
+      credentials: 'include'
+    })
+    if (res.ok) {
+      const refreshed = await res.json()
+      await fetchTokens()
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'ACC tokens refreshed',
+        description: refreshed
+      })
+      scheduleRefresh(refreshed.expires_in)
+    }
+    loadingTokens.value = false
+  }, refreshTime)
+}
+
+watch(tokens, (newTokens) => {
+  if (newTokens?.expires_in) scheduleRefresh(newTokens.expires_in)
+})
+watch(tokens, (newTokens) => {
+  if (newTokens?.access_token) {
+    fetchUserInfo()
+  }
+})
+
+// USER INFO
+const fetchUserInfo = async () => {
+  loadingUser.value = true
+  try {
+    const res = await fetch(
+      'https://developer.api.autodesk.com/userprofile/v1/users/@me',
+      { headers: { Authorization: `Bearer ${tokens.value!.access_token}` } }
+    )
+    if (!res.ok) throw new Error('Failed to get user info directly from ACC')
+    userInfo.value = await res.json()
+  } catch (error) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Error fetching user info directly',
+      description: error instanceof Error ? error.message : 'Unexpected error'
+    })
+  } finally {
+    loadingUser.value = false
+  }
+}
+</script>

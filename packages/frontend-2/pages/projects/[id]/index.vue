@@ -255,6 +255,14 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     })
   }
 
+  if (isAccEnabled.value) {
+    //and the rest of checks
+    items.push({
+      title: 'ACC',
+      id: 'acc'
+    })
+  }
+
   if (canReadSettings.value?.authorized) {
     items.push({
       title: 'Collaborators',
@@ -269,6 +277,8 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
 
   return items
 })
+
+const isAccEnabled = ref(true) // TODO
 
 const findTabById = (id: string) =>
   pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
@@ -286,6 +296,7 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
+    if (/\/acc\/?.*$/i.test(path)) return findTabById('acc')
     if (/\/collaborators\/?/i.test(path) && canReadSettings.value?.authorized)
       return findTabById('collaborators')
     if (/\/settings\/?/i.test(path) && canReadSettings.value?.authorized)
@@ -300,6 +311,9 @@ const activePageTab = computed({
         break
       case 'discussions':
         router.push({ path: projectRoute(projectId.value, 'discussions') })
+        break
+      case 'acc':
+        router.push({ path: projectRoute(projectId.value, 'acc') })
         break
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })

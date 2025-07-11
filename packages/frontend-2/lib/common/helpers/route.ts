@@ -14,6 +14,8 @@ export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const verifyEmailRoute = '/verify-email'
 export const verifyEmailCountdownRoute = '/verify-email?source=registration'
 export const serverManagementRoute = '/server-management'
+export const accLoginRoute = '/authn/acc'
+export const accRoute = '/acc'
 export const connectorsRoute = '/connectors'
 export const tutorialsRoute = '/tutorials'
 export const docsPageUrl = 'https://docs.speckle.systems/'
@@ -79,7 +81,7 @@ export const settingsWorkspaceRoutes = {
 
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings'
+  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings' | 'acc'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {

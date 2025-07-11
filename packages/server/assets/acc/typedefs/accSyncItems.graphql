@@ -1,0 +1,68 @@
+extend type Project {
+  accSyncItems: AccSyncItemCollection!
+  accSyncItem(id: String!): AccSyncItem!
+}
+
+type AccSyncItemCollection {
+  totalCount: Int!
+  cursor: String
+  items: [AccSyncItem!]!
+}
+
+type AccSyncItem {
+  id: ID!
+  projectId: String!
+  modelId: String!
+  accHubId: String!
+  accProjectId: String!
+  accRootFolderUrn: String!
+  accFileLineageId: String!
+  accWebhookId: String
+  status: AccSyncItemStatus!
+  author: LimitedUser
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum AccSyncItemStatus {
+  SYNC
+  SYNCING
+  FAILED
+  PAUSED
+}
+
+input DeleteAccSyncItemInput {
+  projectId: ID!
+  accFileLineageId: ID!
+}
+
+input UpdateAccSyncItemInput {
+  projectId: ID!
+  accFileLineageId: ID!
+  status: AccSyncItemStatus!
+}
+
+input CreateAccSyncItemInput {
+  projectId: String!
+  modelId: String!
+  accHubId: String!
+  accProjectId: String!
+  accRootFolderUrn: String!
+  accFileLineageId: String!
+}
+
+type AccSyncItemMutations {
+  create(input: CreateAccSyncItemInput!): AccSyncItem
+  # delete(input: DeleteAccSyncItemInput!): Boolean!
+  # update(input: UpdateAccSyncItemInput!): AccSyncItem!
+}
+
+extend type Mutation {
+  accSyncItemMutations: AccSyncItemMutations!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:write")
+}
+
+extend type Subscription {
+  projectAccSyncItemsUpdated(id: String!, itemIds: [String!]): String!
+}

@@ -934,6 +934,15 @@ export type CreateServerRegionInput = {
   name: Scalars['String']['input'];
 };
 
+export type CreateSyncItemInput = {
+  accFileLineageId: Scalars['String']['input'];
+  accHubId: Scalars['String']['input'];
+  accProjectId: Scalars['String']['input'];
+  accRootFolderUrn: Scalars['String']['input'];
+  modelId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type CreateUserEmailInput = {
   email: Scalars['String']['input'];
 };
@@ -962,6 +971,11 @@ export type CurrencyBasedPrices = {
 
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type DeleteSyncItemInput = {
+  accFileLineageId: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
 };
 
@@ -1607,6 +1621,7 @@ export type Mutation = {
   streamUpdatePermission?: Maybe<Scalars['Boolean']['output']>;
   /** @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.batchDelete instead. */
   streamsDelete: Scalars['Boolean']['output'];
+  syncItemMutations: SyncItemMutations;
   /**
    * Used for broadcasting real time typing status in comment threads. Does not persist any info.
    * @deprecated Use broadcastViewerUserActivity
@@ -2123,6 +2138,8 @@ export type Project = {
   role?: Maybe<Scalars['String']['output']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']['output']>;
+  syncItem: SyncItem;
+  syncItems: SyncItemCollection;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
@@ -2227,6 +2244,11 @@ export type ProjectObjectArgs = {
 
 export type ProjectPendingImportedModelsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectSyncItemArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -3645,6 +3667,7 @@ export type Subscription = {
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  projectSyncItemsUpdated: Scalars['String']['output'];
   /** Subscribe to updates to any triggered automations statuses in the project */
   projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
@@ -3774,6 +3797,12 @@ export type SubscriptionProjectPendingVersionsUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectSyncItemsUpdatedArgs = {
+  id: Scalars['String']['input'];
+  itemIds?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
 export type SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs = {
   projectId: Scalars['String']['input'];
 };
@@ -3839,6 +3868,59 @@ export type SubscriptionWorkspaceUpdatedArgs = {
   workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type SyncItem = {
+  __typename?: 'SyncItem';
+  accFileLineageId: Scalars['String']['output'];
+  accHubId: Scalars['String']['output'];
+  accProjectId: Scalars['String']['output'];
+  accRootFolderUrn: Scalars['String']['output'];
+  accWebhookId: Scalars['String']['output'];
+  author?: Maybe<LimitedUser>;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  modelId: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  status: SyncItemStatus;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type SyncItemCollection = {
+  __typename?: 'SyncItemCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<SyncItem>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SyncItemMutations = {
+  __typename?: 'SyncItemMutations';
+  create: SyncItem;
+  delete: Scalars['Boolean']['output'];
+  update: SyncItem;
+};
+
+
+export type SyncItemMutationsCreateArgs = {
+  input: CreateSyncItemInput;
+};
+
+
+export type SyncItemMutationsDeleteArgs = {
+  input: DeleteSyncItemInput;
+};
+
+
+export type SyncItemMutationsUpdateArgs = {
+  input: UpdateSyncItemInput;
+};
+
+export const SyncItemStatus = {
+  Failed: 'FAILED',
+  Paused: 'PAUSED',
+  Sync: 'SYNC',
+  Syncing: 'SYNCING'
+} as const;
+
+export type SyncItemStatus = typeof SyncItemStatus[keyof typeof SyncItemStatus];
 export type TestAutomationRun = {
   __typename?: 'TestAutomationRun';
   automationRunId: Scalars['String']['output'];
@@ -3906,6 +3988,12 @@ export type UpdateServerRegionInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   key: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateSyncItemInput = {
+  accFileLineageId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+  status: SyncItemStatus;
 };
 
 /** Only non-null values will be updated */
@@ -7969,6 +8057,9 @@ export type AllObjectTypes = {
   StreamCollaborator: StreamCollaborator,
   StreamCollection: StreamCollection,
   Subscription: Subscription,
+  SyncItem: SyncItem,
+  SyncItemCollection: SyncItemCollection,
+  SyncItemMutations: SyncItemMutations,
   TestAutomationRun: TestAutomationRun,
   TestAutomationRunTrigger: TestAutomationRunTrigger,
   TestAutomationRunTriggerPayload: TestAutomationRunTriggerPayload,
@@ -8561,6 +8652,7 @@ export type MutationFieldArgs = {
   streamUpdate: MutationStreamUpdateArgs,
   streamUpdatePermission: MutationStreamUpdatePermissionArgs,
   streamsDelete: MutationStreamsDeleteArgs,
+  syncItemMutations: {},
   userCommentThreadActivityBroadcast: MutationUserCommentThreadActivityBroadcastArgs,
   userDelete: MutationUserDeleteArgs,
   userNotificationPreferencesUpdate: MutationUserNotificationPreferencesUpdateArgs,
@@ -8662,6 +8754,8 @@ export type ProjectFieldArgs = {
   permissions: {},
   role: {},
   sourceApps: {},
+  syncItem: ProjectSyncItemArgs,
+  syncItems: {},
   team: {},
   updatedAt: {},
   version: ProjectVersionArgs,
@@ -9045,6 +9139,7 @@ export type SubscriptionFieldArgs = {
   projectModelsUpdated: SubscriptionProjectModelsUpdatedArgs,
   projectPendingModelsUpdated: SubscriptionProjectPendingModelsUpdatedArgs,
   projectPendingVersionsUpdated: SubscriptionProjectPendingVersionsUpdatedArgs,
+  projectSyncItemsUpdated: SubscriptionProjectSyncItemsUpdatedArgs,
   projectTriggeredAutomationsStatusUpdated: SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs,
   projectUpdated: SubscriptionProjectUpdatedArgs,
   projectVersionGendoAIRenderCreated: SubscriptionProjectVersionGendoAiRenderCreatedArgs,
@@ -9060,6 +9155,30 @@ export type SubscriptionFieldArgs = {
   viewerUserActivityBroadcasted: SubscriptionViewerUserActivityBroadcastedArgs,
   workspaceProjectsUpdated: SubscriptionWorkspaceProjectsUpdatedArgs,
   workspaceUpdated: SubscriptionWorkspaceUpdatedArgs,
+}
+export type SyncItemFieldArgs = {
+  accFileLineageId: {},
+  accHubId: {},
+  accProjectId: {},
+  accRootFolderUrn: {},
+  accWebhookId: {},
+  author: {},
+  createdAt: {},
+  id: {},
+  modelId: {},
+  projectId: {},
+  status: {},
+  updatedAt: {},
+}
+export type SyncItemCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
+}
+export type SyncItemMutationsFieldArgs = {
+  create: SyncItemMutationsCreateArgs,
+  delete: SyncItemMutationsDeleteArgs,
+  update: SyncItemMutationsUpdateArgs,
 }
 export type TestAutomationRunFieldArgs = {
   automationRunId: {},
@@ -9595,6 +9714,9 @@ export type AllObjectFieldArgTypes = {
   StreamCollaborator: StreamCollaboratorFieldArgs,
   StreamCollection: StreamCollectionFieldArgs,
   Subscription: SubscriptionFieldArgs,
+  SyncItem: SyncItemFieldArgs,
+  SyncItemCollection: SyncItemCollectionFieldArgs,
+  SyncItemMutations: SyncItemMutationsFieldArgs,
   TestAutomationRun: TestAutomationRunFieldArgs,
   TestAutomationRunTrigger: TestAutomationRunTriggerFieldArgs,
   TestAutomationRunTriggerPayload: TestAutomationRunTriggerPayloadFieldArgs,

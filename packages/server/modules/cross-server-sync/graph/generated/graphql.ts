@@ -20,6 +20,47 @@ export type Scalars = {
   JSONObject: { input: Record<string, unknown>; output: Record<string, unknown>; }
 };
 
+export type AccSyncItem = {
+  __typename?: 'AccSyncItem';
+  accFileLineageId: Scalars['String']['output'];
+  accHubId: Scalars['String']['output'];
+  accProjectId: Scalars['String']['output'];
+  accRootFolderUrn: Scalars['String']['output'];
+  accWebhookId?: Maybe<Scalars['String']['output']>;
+  author?: Maybe<LimitedUser>;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  modelId: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  status: AccSyncItemStatus;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type AccSyncItemCollection = {
+  __typename?: 'AccSyncItemCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccSyncItem>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AccSyncItemMutations = {
+  __typename?: 'AccSyncItemMutations';
+  create?: Maybe<AccSyncItem>;
+};
+
+
+export type AccSyncItemMutationsCreateArgs = {
+  input: CreateAccSyncItemInput;
+};
+
+export const AccSyncItemStatus = {
+  Failed: 'FAILED',
+  Paused: 'PAUSED',
+  Sync: 'SYNC',
+  Syncing: 'SYNCING'
+} as const;
+
+export type AccSyncItemStatus = typeof AccSyncItemStatus[keyof typeof AccSyncItemStatus];
 export type ActiveUserMutations = {
   __typename?: 'ActiveUserMutations';
   emailMutations: UserEmailMutations;
@@ -888,6 +929,15 @@ export type CountOnlyCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type CreateAccSyncItemInput = {
+  accFileLineageId: Scalars['String']['input'];
+  accHubId: Scalars['String']['input'];
+  accProjectId: Scalars['String']['input'];
+  accRootFolderUrn: Scalars['String']['input'];
+  modelId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type CreateAutomateFunctionInput = {
   description: Scalars['String']['input'];
   /** Base64 encoded image data string */
@@ -961,6 +1011,11 @@ export type CurrencyBasedPrices = {
   __typename?: 'CurrencyBasedPrices';
   gbp: WorkspacePaidPlanPrices;
   usd: WorkspacePaidPlanPrices;
+};
+
+export type DeleteAccSyncItemInput = {
+  accFileLineageId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
 };
 
 export type DeleteModelInput = {
@@ -1448,6 +1503,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** The void stares back. */
   _?: Maybe<Scalars['String']['output']>;
+  accSyncItemMutations: AccSyncItemMutations;
   /** Various Active User oriented mutations */
   activeUserMutations: ActiveUserMutations;
   admin: AdminMutations;
@@ -2080,6 +2136,8 @@ export type Price = {
 
 export type Project = {
   __typename?: 'Project';
+  accSyncItem: AccSyncItem;
+  accSyncItems: AccSyncItemCollection;
   allowPublicComments: Scalars['Boolean']['output'];
   /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
   automation: Automation;
@@ -2138,6 +2196,11 @@ export type Project = {
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type ProjectAccSyncItemArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -3630,6 +3693,7 @@ export type Subscription = {
    * Note: Only works in test environment
    */
   ping: Scalars['String']['output'];
+  projectAccSyncItemsUpdated: Scalars['String']['output'];
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
@@ -3743,6 +3807,12 @@ export type SubscriptionCommitDeletedArgs = {
 export type SubscriptionCommitUpdatedArgs = {
   commitId?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
+};
+
+
+export type SubscriptionProjectAccSyncItemsUpdatedArgs = {
+  id: Scalars['String']['input'];
+  itemIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -3884,6 +3954,12 @@ export type TriggeredAutomationsStatus = {
   id: Scalars['ID']['output'];
   status: AutomateRunStatus;
   statusMessage?: Maybe<Scalars['String']['output']>;
+};
+
+export type UpdateAccSyncItemInput = {
+  accFileLineageId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+  status: AccSyncItemStatus;
 };
 
 /** Any null values will be ignored */
