@@ -8,6 +8,7 @@ import {
   insertCommentLinksFactory,
   insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
+import { StreamAcl } from '@/modules/core/dbSchema'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectRecordVisibility, StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
@@ -85,7 +86,7 @@ import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/m
 import { assignWorkspaceSeatFactory, ensureValidWorkspaceRoleSeatFactory, getWorkspaceDefaultSeatTypeFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { retry } from '@lifeomic/attempt'
 import { Roles, wait } from '@speckle/shared'
-import knex from 'knex'
+import knex, { Knex } from 'knex'
 import { omit } from 'lodash'
 
 // The workspace on the target server to migrate source server projects to
@@ -106,7 +107,7 @@ const getSourceServerConnection = async () => {
 // Note: target connection is configured with multiregion config file
 const getTargetServerConnection = async (targetWorkspaceId: string) => {
   const targetMainDbConfig = await getMainRegionConfig()
-  const targetMainDb = configureClient(targetMainDbConfig).public
+  const targetMainDb = configureClient(targetMainDbConfig).public as Knex
 
   const workspace = await getWorkspaceFactory({ db: targetMainDb })({
     workspaceId: targetWorkspaceId
@@ -562,7 +563,9 @@ const main = async () => {
             userId: targetServerUserId,
             resourceId: sourceProject.id,
             role: user.streamRole
-          })
+          }).onConflict([StreamAcl.col.userId, StreamAcl.col.resourceId]).merge([
+            'role'
+          ])
           await assignWorkspaceSeat({ userId: targetServerUserId, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
         }
 
