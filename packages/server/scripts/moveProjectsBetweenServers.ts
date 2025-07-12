@@ -563,7 +563,7 @@ const main = async () => {
             userId: targetServerUserId,
             resourceId: sourceProject.id,
             role: user.streamRole
-          }).onConflict([StreamAcl.col.userId, StreamAcl.col.resourceId]).merge([
+          }).onConflict([StreamAcl.withoutTablePrefix.col.userId, StreamAcl.withoutTablePrefix.col.resourceId]).merge([
             'role'
           ])
           await assignWorkspaceSeat({ userId: targetServerUserId, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
