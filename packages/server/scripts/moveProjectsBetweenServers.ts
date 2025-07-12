@@ -190,6 +190,8 @@ const main = async () => {
         }
 
         if (!!userEmail) {
+          // Do not re-provision devops or other speckle accounts
+          if (userEmail.email.includes('speckle.systems')) continue
           // User exists with verified email, add them to workspace
           await addOrUpdateWorkspaceRole({
             userId: userEmail.userId,
