@@ -46,11 +46,9 @@ import {
 import {
   countAdminUsersFactory,
   getUserFactory,
-  getUsersFactory,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
-import { addOrUpdateStreamCollaboratorFactory, validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -67,11 +65,9 @@ import {
 } from '@/modules/multiregion/regionConfig'
 import {
   deleteServerOnlyInvitesFactory,
-  queryAllResourceInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { getStringFromEnv } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -199,7 +195,8 @@ const main = async () => {
             userId: userEmail.userId,
             workspaceId: TARGET_WORKSPACE_ID,
             role: Roles.Workspace.Member,
-            updatedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
+            updatedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID,
+            preventRoleDowngrade: true
           })
           continue
         }
