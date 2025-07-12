@@ -554,6 +554,7 @@ const main = async () => {
           if (!workspaceAcls.find((acl) => acl.userId === targetServerUserId)) {
             // Project member user exists on server but not in workspace
             console.log(`User ${user.name} (${user.id}) not in workspace. Removing from project.`)
+            continue
           }
 
           // Will throw if user does not have valid seat for role
