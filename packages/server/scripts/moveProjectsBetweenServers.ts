@@ -294,9 +294,9 @@ const main = async () => {
     }
   }
 
-  // const workspaceAcls = await getWorkspaceRolesFactory({ db: targetMainDb })({
-  //   workspaceId: TARGET_WORKSPACE_ID
-  // })
+  const workspaceAcls = await getWorkspaceRolesFactory({ db: targetMainDb })({
+    workspaceId: TARGET_WORKSPACE_ID
+  })
 
   const sourceServerUserCount = Object.keys(userIdMapping).length
   const targetServerUserCount = Object.values(userIdMapping).filter((id) => !!id).length
@@ -324,7 +324,7 @@ const main = async () => {
         .toString()
         .padStart(4, '0')}/${sourceServerProjectCount
           .toString()
-          .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
+          .padStart(4, '0')}) ${sourceProject.id} `
 
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
@@ -550,6 +550,11 @@ const main = async () => {
         for (const user of existingStreamCollaborators) {
           const targetServerUserId = userIdMapping[user.id]
           if (!targetServerUserId) continue
+
+          if (!workspaceAcls.find((acl) => acl.userId === targetServerUserId)) {
+            // Project member user exists on server but not in workspace
+            console.log(`User ${user.name} (${user.id}) not in workspace. Removing from project.`)
+          }
 
           // Will throw if user does not have valid seat for role
           await mainTrx.table<StreamAclRecord>('stream_acl').insert({
