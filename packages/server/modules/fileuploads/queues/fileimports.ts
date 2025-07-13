@@ -5,6 +5,7 @@ import {
   getFileImportServiceRhinoQueueName,
   getFileImportTimeLimitMinutes,
   getRedisUrl,
+  getServerOrigin,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { Logger, fileUploadsLogger as logger } from '@/observability/logging'
@@ -21,6 +22,10 @@ import {
   NumberOfFileImportRetries,
   DelayBetweenFileImportRetriesMinutes
 } from '@/modules/fileuploads/domain/consts'
+import { Knex } from 'knex'
+import { migrateDbToLatest } from '@/db/migrations'
+import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
+import { storeBackgroundJobFactory } from '@/modules/backgroundjobs/repositories'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -39,12 +44,14 @@ const limiter = {
   duration: TIME_MS.second
 }
 
+const timeout =
+  NumberOfFileImportRetries *
+  (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
+  TIME_MS.minute
+
 const defaultJobOptions = {
   attempts: NumberOfFileImportRetries,
-  timeout:
-    NumberOfFileImportRetries *
-    (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
-    TIME_MS.minute,
+  timeout,
   backoff: {
     type: 'fixed',
     delay: DelayBetweenFileImportRetriesMinutes * TIME_MS.minute
@@ -109,6 +116,41 @@ export const initializeQueueFactory =
     fileImportQueues.push(fileImportQueue)
     return fileImportQueue
   }
+
+export const initializePostgresQueue = async ({
+  label,
+  supportedFileTypes,
+  db
+}: {
+  label: string
+  db: Knex
+  supportedFileTypes: string[]
+}): Promise<FileImportQueue> => {
+  // migrating the DB up, the queue DB might be added based on a config
+  await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
+
+  const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+    jobConfig: { maxAttempt: 3, timeoutMs: timeout },
+    storeBackgroundJob: storeBackgroundJobFactory({
+      db,
+      originServerUrl: getServerOrigin()
+    })
+  })
+  const fileImportQueue = {
+    label,
+    supportedFileTypes: supportedFileTypes.map(
+      (type) => type.toLocaleLowerCase() // Normalize file types to lowercase (this is a safeguard to prevent stupid typos in the future)
+    ),
+    shutdown: async () => {},
+    scheduleJob: async (jobData: JobPayload) => {
+      await scheduleBackgroundJob({
+        jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
+      })
+    }
+  }
+  fileImportQueues.push(fileImportQueue)
+  return fileImportQueue
+}
 
 export const initializeRhinoQueueFactory =
   (deps: { initializeQueue: ReturnType<typeof initializeQueueFactory> }) =>

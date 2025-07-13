@@ -1,4 +1,5 @@
 import {
+  Activity,
   ActivitySummary,
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput,
@@ -7,7 +8,6 @@ import {
   StreamActionType
 } from '@/modules/activitystream/domain/types'
 import {
-  Activity,
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
@@ -32,7 +32,7 @@ import {
 } from '@/modules/core/helpers/types'
 import { Nullable } from '@speckle/shared'
 
-export type GetActivity = (
+export type GetUserStreamActivity = (
   streamId: string,
   start: Date,
   end: Date,
@@ -281,3 +281,12 @@ export type SaveActivity = <
 >(
   args: Omit<Activity<T, R>, 'createdAt' | 'id'>
 ) => Promise<Activity<T, R>>
+
+type GetActivitiesArgs = Partial<{
+  workspaceId: string
+  projectId: string
+  eventType: string
+  userId: string
+}>
+
+export type GetActivities = (filters: GetActivitiesArgs) => Promise<Activity[]>

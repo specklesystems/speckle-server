@@ -1,18 +1,4 @@
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ResourceEventsToPayloadMap } from '@/modules/activitystream/domain/types'
-
-export interface Activity<
-  T extends keyof ResourceEventsToPayloadMap,
-  R extends keyof ResourceEventsToPayloadMap[T]
-> {
-  id: string
-  contextResourceId: string
-  contextResourceType: T
-  eventType: R
-  userId: string | null
-  payload: ResourceEventsToPayloadMap[T][R]
-  createdAt: Date
-}
 
 export type StreamActivityRecord = {
   streamId: Nullable<string>
