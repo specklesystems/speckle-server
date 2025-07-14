@@ -16,7 +16,7 @@ import { MaxBackfillIterationsReached } from '@/modules/activitystream/errors/ac
 import { Logger } from '@/observability/logging'
 import { Activity } from '@/modules/activitystream/domain/types'
 
-const getUntrackedWorkspaceSeatsFactory =
+export const getUntrackedWorkspaceSeatsFactory =
   ({ db }: { db: Knex }) =>
   async (limit: number) => {
     const workspaceSeats = await db<WorkspaceSeat>(WorkspaceSeats.name)
@@ -55,7 +55,7 @@ const mapUntrackedSeatToActivity = (
   createdAt: seat.createdAt
 })
 
-const getUntrackedWorkspacePlansFactory =
+export const getUntrackedWorkspacePlansFactory =
   ({ db }: { db: Knex }) =>
   async (limit: number) => {
     const workspacePlans = await db<WorkspacePlan>('workspace_plans')
@@ -103,7 +103,7 @@ type PlanSubscriptionPair = {
   createdAt: Date
 }
 
-const getUntrackedSubscriptionsFactory =
+export const getUntrackedSubscriptionsFactory =
   ({ db }: { db: Knex }) =>
   async (limit: number) => {
     const results = (await db<PlanSubscriptionPair>('workspace_subscriptions')
@@ -164,7 +164,7 @@ const mapUntrackedPlanSubscriptionPairToActivity = (
 
 type StreamAclWithCreatedAt = StreamAclRecord & { createdAt: Date }
 
-const getUntrackedProjectRolesFactory =
+export const getUntrackedProjectRolesFactory =
   ({ db }: { db: Knex }) =>
   async (limit: number) => {
     const results: StreamAclWithCreatedAt[] = await db<StreamAclWithCreatedAt>(
