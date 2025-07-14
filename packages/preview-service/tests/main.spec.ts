@@ -54,10 +54,14 @@ describe('preview-service', () => {
       redisUrl: REDIS_URL
     })
 
+    // delete existing images
+    fs.rmSync(TEST_RESULT, { recursive: false, force: true })
+    fs.rmSync(DIFF, { recursive: false, force: true })
+
     // TODO: remove this head start
     // only awaiting for the server to start does not work
     // we should await the start of the job processing
-    await sleep(5 * TIME_MS.second)
+    await sleep(6 * TIME_MS.second)
   })
 
   afterAll(async () => {
@@ -101,7 +105,7 @@ describe('preview-service', () => {
     expect(job.data.result).to.be.an('object')
     expect(job.data.result.screenshots).toBeDefined()
 
-    // write the image to a result file, for the next test
+    // write the image to a result file, for debugging
 
     const image =
       '0' in job.data.result.screenshots
@@ -113,9 +117,9 @@ describe('preview-service', () => {
     const clean = Buffer.from(image.replace(/^data:image\/png;base64,/, ''), 'base64')
 
     fs.writeFileSync(TEST_RESULT, clean)
-  })
 
-  it('expects resulted image to be within a predefined threshold of difference with base image', async () => {
+    // test max diff
+
     const base = PNG.sync.read(fs.readFileSync(BASE_IMAGE))
     const result = PNG.sync.read(fs.readFileSync(TEST_RESULT))
     const diff = new PNG({ width: base.width, height: base.height })
