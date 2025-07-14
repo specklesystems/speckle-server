@@ -30,9 +30,9 @@
           class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
         >
           <LayoutSidebarMenu>
-            <!-- <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" class="lg:hidden mb-4">
+            <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" class="lg:hidden mb-4">
               <HeaderWorkspaceSwitcher />
-            </LayoutSidebarMenuGroup> -->
+            </LayoutSidebarMenuGroup>
 
             <div class="flex flex-col gap-y-2 lg:gap-y-4">
               <LayoutSidebarMenuGroup>
