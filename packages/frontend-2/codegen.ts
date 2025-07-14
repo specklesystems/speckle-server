@@ -26,7 +26,7 @@ const config: CodegenConfig = {
         enumsAsConst: true,
         useTypeImports: true,
         fragmentMasking: false,
-        dedupeFragments: true,
+        dedupeFragments: false,
         scalars: {
           JSONObject: '{}',
           DateTime: 'string'
@@ -34,7 +34,7 @@ const config: CodegenConfig = {
       },
       presetConfig: {
         fragmentMasking: false,
-        dedupeFragments: true
+        dedupeFragments: false
       },
       plugins: ['./tools/gqlCacheHelpersCodegenPlugin.js']
     }

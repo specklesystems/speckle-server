@@ -20,16 +20,33 @@
 </template>
 
 <script setup lang="ts">
-import { HorizontalDirection, type LayoutMenuItem } from '@speckle/ui-components'
+import type { LayoutMenuItem } from '@speckle/ui-components'
+import { HorizontalDirection } from '@speckle/ui-components'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import type {
-  AutomateFunctionPermissionChecks,
-  SettingsWorkspacesAutomationRegenerateTokenDialog_AutomateFunctionFragment
-} from '~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesAutomationTableRowActions_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsWorkspacesAutomationTableRowActions_AutomateFunction on AutomateFunction {
+    id
+    permissions {
+      ...SettingsWorkspacesAutomationTableRowActions_AutomateFunctionPermissionChecks
+    }
+    ...SettingsWorkspacesAutomationRegenerateTokenDialog_AutomateFunction
+  }
+`)
+
+graphql(`
+  fragment SettingsWorkspacesAutomationTableRowActions_AutomateFunctionPermissionChecks on AutomateFunctionPermissionChecks {
+    canRegenerateToken {
+      authorized
+      message
+    }
+  }
+`)
 
 const props = defineProps<{
-  workspaceFunction: SettingsWorkspacesAutomationRegenerateTokenDialog_AutomateFunctionFragment
-  permissions: AutomateFunctionPermissionChecks
+  workspaceFunction: SettingsWorkspacesAutomationTableRowActions_AutomateFunctionFragment
 }>()
 
 const isOpen = defineModel<boolean>('open', { default: false })
@@ -40,17 +57,17 @@ enum ActionTypes {
   RegenerateToken = 'regenerate-token'
 }
 
-const actionItems = computed(() => {
+const actionItems = computed<LayoutMenuItem[][]>(() => {
   return [
     [
       {
         title: 'Regenerate token...',
         id: ActionTypes.RegenerateToken,
-        disabled: !props.permissions.canRegenerateToken.authorized,
-        disabledTooltip: props.permissions.canRegenerateToken.message
+        disabled: !props.workspaceFunction.permissions.canRegenerateToken.authorized,
+        disabledTooltip: props.workspaceFunction.permissions.canRegenerateToken.message
       }
     ]
-  ] satisfies LayoutMenuItem[][]
+  ]
 })
 
 const handleAction = (actionItem: LayoutMenuItem) => {

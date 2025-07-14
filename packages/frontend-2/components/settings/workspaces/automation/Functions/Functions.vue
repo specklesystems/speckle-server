@@ -3,17 +3,7 @@
     <SettingsSectionHeader
       subheading
       title="Functions"
-      :buttons="[
-        {
-          props: {
-            color: 'outline',
-            to: 'https://speckle.guide/automate/create-function.html',
-            target: '_blank',
-            external: true
-          },
-          label: 'Open docs'
-        }
-      ]"
+      :buttons="functionsSectionButtons"
     >
       <p class="text-body-xs text-foreground-2 mt-2">
         View and manage functions accessible only to projects in your workspace
@@ -74,42 +64,42 @@
 
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
-import type { SettingsWorkspacesAutomationFunctions_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesAutomationFunctions_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
 import { automateFunctionRoute } from '~/lib/common/helpers/route'
 import { ClipboardIcon } from '@heroicons/vue/24/outline'
+import type { LayoutHeaderButton } from '@speckle/ui-components'
 
 graphql(`
-  fragment SettingsWorkspacesAutomationFunctions_Workspace on Workspace {
+  fragment SettingsWorkspacesAutomationFunctions_AutomateFunction on AutomateFunction {
     id
-    automateFunctions(limit: 50, filter: { includeFeatured: false }) {
-      items {
-        id
-        name
-        logo
-        creator {
-          id
-          name
-          avatar
-        }
-        permissions {
-          canRegenerateToken {
-            authorized
-            message
-            code
-            payload
-          }
-        }
-        ...SettingsWorkspacesAutomationRegenerateTokenDialog_AutomateFunction
-      }
+    name
+    logo
+    creator {
+      id
+      name
+      avatar
     }
+    ...SettingsWorkspacesAutomationTableRowActions_AutomateFunction
   }
 `)
 
 defineProps<{
-  workspaceFunctions: SettingsWorkspacesAutomationFunctions_WorkspaceFragment['automateFunctions']['items']
+  workspaceFunctions: SettingsWorkspacesAutomationFunctions_AutomateFunctionFragment[]
 }>()
 
 const { copy } = useClipboard()
+
+const functionsSectionButtons = computed<LayoutHeaderButton[]>(() => [
+  {
+    props: {
+      color: 'outline',
+      to: 'https://speckle.guide/automate/create-function.html',
+      target: '_blank',
+      external: true
+    },
+    label: 'Open docs'
+  }
+])
 
 const handleCopyText = (text: string) => {
   copy(text)

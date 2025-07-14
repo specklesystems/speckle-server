@@ -19,9 +19,13 @@ import { settingsWorkspacesAutomationQuery } from '~/lib/settings/graphql/querie
 
 graphql(`
   fragment SettingsWorkspacesAutomation_Workspace on Workspace {
-    ...SettingsWorkspacesAutomationFunctions_Workspace
     id
     slug
+    automateFunctions(limit: 50, filter: { includeFeatured: false }) {
+      items {
+        ...SettingsWorkspacesAutomationFunctions_AutomateFunction
+      }
+    }
   }
 `)
 

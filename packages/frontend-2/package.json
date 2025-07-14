@@ -18,7 +18,7 @@
     "lint:css": "stylelint \"**/*.{css,vue}\"",
     "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier && yarn lint:css",
     "lint:ci": "yarn lint:tsc && yarn lint:css",
-    "gqlgen": "graphql-codegen",
+    "gqlgen": "graphql-codegen --verbose",
     "gqlgen:watch": "graphql-codegen --watch",
     "eslint:inspect": "eslint-config-inspector",
     "datadog:publish-sourcemaps:dev": "DATADOG_SITE=\"datadoghq.eu\" datadog-ci sourcemaps upload ./.output/public/_nuxt --service=\"fe2-dev/test\" --release-version=\"unknown\" --minified-path-prefix=/_nuxt"
