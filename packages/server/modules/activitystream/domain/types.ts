@@ -30,8 +30,8 @@ export type ResourceEventsToPayloadMap = {
 }
 
 export interface Activity<
-  T extends keyof ResourceEventsToPayloadMap,
-  R extends keyof ResourceEventsToPayloadMap[T]
+  T extends keyof ResourceEventsToPayloadMap = keyof ResourceEventsToPayloadMap,
+  R extends keyof ResourceEventsToPayloadMap[T] = keyof ResourceEventsToPayloadMap[T]
 > {
   id: string
   contextResourceId: string

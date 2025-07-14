@@ -9,10 +9,9 @@ import { db } from '@/db/knex'
 import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 import { initializeEventListenersFactory } from '@/modules/gatekeeper/events/eventListener'
 import {
-  getStripeClient,
   getWorkspacePlanProductAndPriceIds,
   getWorkspacePlanProductId
-} from '@/modules/gatekeeper/stripe'
+} from '@/modules/gatekeeper/helpers/prices'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -25,7 +24,8 @@ import {
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
-  getSubscriptionDataFactory,
+  getStripeClient,
+  getStripeSubscriptionDataFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
@@ -52,18 +52,23 @@ const scheduleWorkspaceSubscriptionDownscale = ({
 }: {
   scheduleExecution: ScheduleExecution
 }) => {
-  const stripe = getStripeClient()
+  const getStripeSubscriptionData = getStripeSubscriptionDataFactory({
+    getStripeClient
+  })
   const manageSubscriptionDownscale = manageSubscriptionDownscaleFactory({
     downscaleWorkspaceSubscription: downscaleWorkspaceSubscriptionFactory({
       countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
-      reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe }),
+      reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+        getStripeClient,
+        getStripeSubscriptionData
+      }),
       getWorkspacePlanProductId
     }),
     getWorkspaceSubscriptions: getWorkspaceSubscriptionsPastBillingCycleEndFactory({
       db
     }),
-    getSubscriptionData: getSubscriptionDataFactory({ stripe }),
+    getStripeSubscriptionData,
     updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
   })
 
@@ -113,7 +118,7 @@ const gatekeeperModule: SpeckleModule = {
 
         quitListeners = initializeEventListenersFactory({
           db,
-          stripe: getStripeClient()
+          getStripeClient
         })()
 
         const isLicenseValid = await validateModuleLicense({
@@ -148,4 +153,4 @@ async function isProjectReadOnly({ projectId }: { projectId: string }) {
   if (readOnly) throw new WorkspaceReadOnlyError()
 }
 
-export = gatekeeperModule
+export default gatekeeperModule

@@ -1,4 +1,9 @@
-import { Queue, type Job } from 'bull'
+import type {
+  ActiveEventCallback,
+  ErrorEventCallback,
+  FailedEventCallback,
+  Queue
+} from 'bull'
 import type { EventEmitter } from 'stream'
 import { initializeQueue } from '@speckle/shared/queue'
 import { JobPayload, PreviewResultPayload } from '@speckle/shared/workers/previews'
@@ -35,9 +40,9 @@ const defaultJobOptions = {
 
 export const addRequestQueueListeners = (params: {
   requestQueue: QueueEventEmitter
-  requestErrorHandler: (err: Error) => void
-  requestFailedHandler: (job: Job, err: Error) => void
-  requestActiveHandler: (job: Job) => void
+  requestErrorHandler: ErrorEventCallback
+  requestFailedHandler: FailedEventCallback
+  requestActiveHandler: ActiveEventCallback
 }) => {
   const {
     requestQueue,
@@ -63,9 +68,9 @@ export const createRequestAndResponseQueues = async (params: {
   redisUrl: string
   requestQueueName: string
   responseQueueName: string
-  requestErrorHandler: (err: Error) => void
-  requestFailedHandler: (job: Job, err: Error) => void
-  requestActiveHandler: (job: Job) => void
+  requestErrorHandler: ErrorEventCallback
+  requestFailedHandler: FailedEventCallback
+  requestActiveHandler: ActiveEventCallback
 }): Promise<{
   requestQueue: Queue<JobPayload>
   responseQueue: Queue<PreviewResultPayload>

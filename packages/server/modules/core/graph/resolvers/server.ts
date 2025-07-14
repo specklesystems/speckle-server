@@ -20,7 +20,7 @@ const updateServerInfo = updateServerInfoFactory({ db })
 const getPublicRoles = getPublicRolesFactory({ db })
 const getPublicScopes = getPublicScopesFactory({ db })
 
-export = {
+export default {
   Query: {
     async serverInfo() {
       return await getServerInfo()

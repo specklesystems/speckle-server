@@ -1,5 +1,5 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { has, trimEnd } from 'lodash'
+import { has, trimEnd } from 'lodash-es'
 import * as Environment from '@speckle/shared/environment'
 import { ensureError, Nullable } from '@speckle/shared'
 
@@ -123,6 +123,10 @@ export function getRedisUrl() {
 
 export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
   return getBooleanFromEnv('PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
+}
+
+export const fileImportServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
+  return getBooleanFromEnv('FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
 }
 
 export const getFileImportServiceRhinoParserRedisUrl = (): string | undefined => {
@@ -390,6 +394,9 @@ export function isEmailEnabled() {
   return getBooleanFromEnv('EMAIL')
 }
 
+export const getFileImporterQueuePostgresUrl = () =>
+  process.env['FILEIMPORT_QUEUE_POSTGRES_URL'] ?? null
+
 export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '8')
 }
@@ -427,6 +434,10 @@ export function getS3SecretKey() {
 
 export function getS3Endpoint() {
   return getStringFromEnv('S3_ENDPOINT')
+}
+
+export function getS3PublicEndpoint() {
+  return getStringFromEnv('S3_PUBLIC_ENDPOINT', { unsafe: true })
 }
 
 export function getS3Region(aDefault: string = 'us-east-1') {
@@ -500,4 +511,8 @@ export const getFileUploadUrlExpiryMinutes = (): number => {
 
 export const getPreviewServiceTimeoutMilliseconds = (): number => {
   return getIntFromEnv('PREVIEW_SERVICE_TIMEOUT_MILLISECONDS', '3600000') // 1 hour
+}
+
+export const emailVerificationTimeoutMinutes = (): number => {
+  return getIntFromEnv('EMAIL_VERIFICATION_TIMEOUT_MINUTES', '5')
 }

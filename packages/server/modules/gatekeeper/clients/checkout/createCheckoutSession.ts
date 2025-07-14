@@ -2,6 +2,7 @@
 import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
 import {
   CreateCheckoutSession,
+  GetStripeClient,
   GetWorkspacePlanPriceId
 } from '@/modules/gatekeeper/domain/billing'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
@@ -9,11 +10,11 @@ import { Stripe } from 'stripe'
 
 export const createCheckoutSessionFactory =
   ({
-    stripe,
+    getStripeClient,
     frontendOrigin,
     getWorkspacePlanPrice
   }: {
-    stripe: Stripe
+    getStripeClient: GetStripeClient
     frontendOrigin: string
     getWorkspacePlanPrice: GetWorkspacePlanPriceId
   }): CreateCheckoutSession =>
@@ -37,13 +38,16 @@ export const createCheckoutSessionFactory =
       ? `${frontendOrigin}/workspaces/actions/create?workspaceId=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
       : `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripeClient().checkout.sessions.create({
       mode: 'subscription',
 
       line_items: costLineItems,
 
       success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url
+      cancel_url,
+      tax_id_collection: {
+        enabled: true
+      }
     })
 
     if (!session.url)

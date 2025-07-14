@@ -2,7 +2,7 @@ import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   CreateProjectDocument,
   ProjectVisibility
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import { beforeEachContext } from '@/test/hooks'

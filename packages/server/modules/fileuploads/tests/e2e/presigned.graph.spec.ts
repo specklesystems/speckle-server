@@ -4,7 +4,7 @@ import { beforeEachContext } from '@/test/hooks'
 import { createProject, grantProjectPermissions } from '@/test/projectHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { Nullable, Optional, Roles, ServerRoles, StreamRoles } from '@speckle/shared'
-import { put } from 'axios'
+import axios from 'axios'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import gql from 'graphql-tag'
@@ -133,7 +133,7 @@ const startFileImport = async (params: TestContext) => {
 
     fileId = uploadDetails.data.fileUploadMutations.generateUploadUrl.fileId
 
-    const putResult = await put(
+    const putResult = await axios.put(
       uploadDetails.data.fileUploadMutations.generateUploadUrl.url,
       cryptoRandomString({ length: 100 }) //test content
     )

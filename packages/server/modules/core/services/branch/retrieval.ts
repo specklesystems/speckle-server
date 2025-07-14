@@ -4,7 +4,7 @@ import {
   ProjectModelsTreeArgs,
   StreamBranchesArgs
 } from '@/modules/core/graph/generated/graphql'
-import { last, sum } from 'lodash'
+import { last, sum } from 'lodash-es'
 import { Merge } from 'type-fest'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'

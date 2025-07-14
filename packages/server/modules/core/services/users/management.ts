@@ -36,7 +36,7 @@ import {
   Roles,
   ServerRoles
 } from '@speckle/shared'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
 import {
@@ -57,7 +57,7 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import { QueryAllUserProjects } from '@/modules/core/domain/projects/operations'
+import { QueryAllProjects } from '@/modules/core/domain/projects/operations'
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
@@ -84,6 +84,11 @@ export const updateUserAndNotifyFactory =
     for (const entry of Object.entries(update)) {
       const key = entry[0] as keyof typeof update
       let val = entry[1]
+
+      if (key === 'avatar' && val === '') {
+        filteredUpdate[key] = null // avatar removal
+        continue
+      }
 
       if (key === 'avatar') {
         val = sanitizeImageUrl(val)
@@ -295,7 +300,7 @@ export const deleteUserFactory =
     deleteAllUserInvites: DeleteAllUserInvites
     getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
     deleteUserRecord: DeleteUserRecord
-    queryAllUserProjects: QueryAllUserProjects
+    queryAllProjects: QueryAllProjects
     emitEvent: EventBusEmit
   }): DeleteUser =>
   async (id, invokerId) => {
@@ -339,10 +344,12 @@ export const deleteUserFactory =
       })
     }
 
-    for await (const projectsPage of deps.queryAllUserProjects({
+    for await (const projectsPage of deps.queryAllProjects({
       userId: id
     })) {
-      await Promise.all(projectsPage.map(emitRevokeEventIfUserHasRole))
+      for (const project of projectsPage) {
+        await emitRevokeEventIfUserHasRole(project)
+      }
     }
 
     const deleted = await deps.deleteUserRecord(id)

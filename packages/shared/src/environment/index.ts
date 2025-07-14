@@ -17,7 +17,7 @@ export const parseFeatureFlags = (
   input: Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>,
   options?: Partial<{
     /**
-     * Whether to prevent inputs from being overriden by disable/enable all
+     * Whether to prevent inputs from being overridden by disable/enable all
      * Default: true
      */
     forceInputs: boolean
@@ -104,10 +104,32 @@ export const parseFeatureFlags = (
         'Enables the new file importer. Requires FF_LARGE_FILE_IMPORTS_ENABLED to be true.',
       defaults: { _: false }
     },
+    FF_RHINO_FILE_IMPORTER_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the Rhino based file importer.',
+      defaults: { _: false }
+    },
+    FF_BACKGROUND_JOBS_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the postgres based background job mechanism',
+      defaults: { _: false }
+    },
     FF_LARGE_FILE_IMPORTS_ENABLED: {
       schema: z.boolean(),
       description:
         'Enables the new file importer to handle large files via pre-signed URLs.',
+      defaults: { _: false }
+    },
+    FF_LEGACY_IFC_IMPORTER_ENABLED: {
+      schema: z.boolean(),
+      description:
+        'Enables the legacy javascript based webIFC file importer (pre-2025). Even if disabled this importer can be accessed by appending `.legacyimporter.ifc` to the uploaded file name. This is deprecated and will be removed in the future.',
+      defaults: { _: false }
+    },
+    FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: {
+      schema: z.boolean(),
+      description:
+        'Enables the IFC file importer based on IFCOpenShell (as of July 2025). Even if enabled, the previous webIFC & .Net importer can be accessed by appending `.dotnetimporter.ifc` to the uploaded file name.',
       defaults: { _: false }
     }
   })
@@ -141,7 +163,11 @@ export type FeatureFlags = {
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
   FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
+  FF_RHINO_FILE_IMPORTER_ENABLED: boolean
+  FF_BACKGROUND_JOBS_ENABLED: boolean
   FF_LARGE_FILE_IMPORTS_ENABLED: boolean
+  FF_LEGACY_IFC_IMPORTER_ENABLED: boolean
+  FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

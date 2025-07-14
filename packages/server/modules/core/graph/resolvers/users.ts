@@ -53,7 +53,7 @@ import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/t
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllUserProjectsFactory } from '@/modules/core/services/projects'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -70,7 +70,7 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  queryAllUserProjects: queryAllUserProjectsFactory({
+  queryAllProjects: queryAllProjectsFactory({
     getStreams: legacyGetStreamsFactory({ db })
   }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
@@ -95,7 +95,7 @@ const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
   getUsers: legacyGetPaginatedUsersFactory({ db })
 })
 
-export = {
+export default {
   Query: {
     async activeUser(_parent, _args, context) {
       const activeUserId = context.userId

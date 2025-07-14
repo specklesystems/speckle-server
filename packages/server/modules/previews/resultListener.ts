@@ -85,7 +85,6 @@ export const consumePreviewResultFactory =
             'base64'
           )
 
-          // @ts-expect-error this is a mismatch with node 18 and 22 types. upgrading to new node will fix it
           const id = crypto.createHash('md5').update(data).digest('hex')
 
           if (i++ === 0) {
@@ -104,7 +103,6 @@ export const consumePreviewResultFactory =
         })
         const png = fullImg.png({ quality: 95 })
         const buff = await png.toBuffer()
-        // @ts-expect-error this is a mismatch with node 18 and 22 types. upgrading to new node will fix it
         const fullImgId = crypto.createHash('md5').update(buff).digest('hex')
 
         await storePreview({ preview: { id: fullImgId, data: buff } })

@@ -10,14 +10,12 @@ describe('DefermentManager disposal', () => {
     base: { id, speckle_type: 'test' }
   })
 
-  it('should throw on get/defer/undefer after dispose', async () => {
+  it('should throw on get/defer/undefer after dispose', () => {
     const manager = new DefermentManager(options)
     manager.dispose()
     expect(() => manager.get('a')).toThrow('DefermentManager is disposed')
     expect(() => manager.undefer(makeItem('a'))).toThrow('DefermentManager is disposed')
-    await expect(manager.defer({ id: 'a' })).rejects.toThrow(
-      'DefermentManager is disposed'
-    )
+    expect(() => manager.defer({ id: 'a' })).toThrow('DefermentManager is disposed')
   })
 
   it('dispose is idempotent', () => {

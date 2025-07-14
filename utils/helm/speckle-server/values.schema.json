@@ -109,6 +109,16 @@
           "type": "boolean",
           "description": "Enables the ability to upload large files to Speckle",
           "default": false
+        },
+        "experimentalIfcImporterEnabled": {
+          "type": "boolean",
+          "description": "Enables the ability to parse IFC files using the experimental IFC importer",
+          "default": false
+        },
+        "legacyIfcImporterEnabled": {
+          "type": "boolean",
+          "description": "Enables the ability to parse IFC files using the legacy IFC importer.",
+          "default": false
         }
       }
     },
@@ -1271,6 +1281,11 @@
               "type": "boolean",
               "description": "If enabled, Speckle can send email to users - for example, email verification for account registration.",
               "default": false
+            },
+            "verificationTimeoutMinutes": {
+              "type": "number",
+              "description": "The number of minutes after which an email verification link will expire. Defaults to 5 minutes.",
+              "default": 5
             },
             "host": {
               "type": "string",

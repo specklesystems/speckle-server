@@ -4,7 +4,7 @@ import {
   CreateProject,
   DeleteProject,
   GetProject,
-  QueryAllUserProjects,
+  QueryAllProjects,
   StoreModel,
   StoreProject,
   StoreProjectRole,
@@ -127,16 +127,19 @@ export const waitForRegionProjectFactory =
     }
   }
 
-export const queryAllUserProjectsFactory = ({
+export const queryAllProjectsFactory = ({
   getStreams
 }: {
   getStreams: LegacyGetStreams
-}): QueryAllUserProjects =>
+}): QueryAllProjects =>
   async function* queryAllWorkspaceProjects({
-    userId
+    userId,
+    workspaceId
   }): AsyncGenerator<StreamWithOptionalRole[], void, unknown> {
     let cursor: Date | null = null
     let iterationCount = 0
+
+    if (!userId && !workspaceId) throw new ProjectQueryError()
 
     do {
       if (iterationCount > 500) throw new ProjectQueryError()
@@ -148,7 +151,7 @@ export const queryAllUserProjectsFactory = ({
         visibility: null,
         searchQuery: null,
         streamIdWhitelist: null,
-        workspaceIdWhitelist: null,
+        workspaceIdWhitelist: workspaceId ? [workspaceId] : null,
         userId
       })
 

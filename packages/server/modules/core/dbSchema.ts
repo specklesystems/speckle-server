@@ -3,7 +3,7 @@ import { Optional } from '@speckle/shared'
 import knex from '@/db/knex'
 import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Knex } from 'knex'
-import { reduce } from 'lodash'
+import { reduce } from 'lodash-es'
 
 type BaseInnerSchemaConfig<T extends string, C extends string> = {
   /**
@@ -404,6 +404,13 @@ export const ApiTokens = buildTableHelper('api_tokens', [
 export const PersonalApiTokens = buildTableHelper('personal_api_tokens', [
   'tokenId',
   'userId'
+])
+
+export const EmbedApiTokens = buildTableHelper('embed_api_tokens', [
+  'tokenId',
+  'projectId',
+  'userId',
+  'resourceIdString'
 ])
 
 export const UserServerAppTokens = buildTableHelper('user_server_app_tokens', [

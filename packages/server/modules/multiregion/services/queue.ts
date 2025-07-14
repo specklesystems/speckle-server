@@ -56,7 +56,7 @@ import {
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { waitForRegionProjectFactory } from '@/modules/core/services/projects'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()
@@ -165,9 +165,11 @@ export const startQueue = async () => {
         const { projectId, regionKey } = job.data.payload
 
         const sourceDb = await getProjectDbClient({ projectId })
-        const sourceObjectStorage = await getProjectObjectStorage({ projectId })
+        const sourceObjectStorage = (await getProjectObjectStorage({ projectId }))
+          .private
         const targetDb = await getRegionDb({ regionKey })
-        const targetObjectStorage = await getRegionObjectStorage({ regionKey })
+        const targetObjectStorage = (await getRegionObjectStorage({ regionKey }))
+          .private
 
         // Move project to target region
         const project = await withTransaction(

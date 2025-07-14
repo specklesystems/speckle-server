@@ -65,6 +65,10 @@ featureFlags:
   nextGenFileImporterEnabled: false
   ## @param featureFlags.largeFileUploadsEnabled Enables the ability to upload large files to Speckle
   largeFileUploadsEnabled: false
+  ## @param featureFlags.experimentalIfcImporterEnabled Enables the ability to parse IFC files using the experimental IFC importer
+  experimentalIfcImporterEnabled: false
+  ## @param featureFlags.legacyIfcImporterEnabled Enables the ability to parse IFC files using the legacy IFC importer.
+  legacyIfcImporterEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -774,6 +778,9 @@ server:
     ## @param server.email.enabled If enabled, Speckle can send email to users - for example, email verification for account registration.
     ##
     enabled: false
+    ## @param server.email.verificationTimeoutMinutes The number of minutes after which an email verification link will expire. Defaults to 5 minutes.
+    ##
+    verificationTimeoutMinutes: 5
     ## @param server.email.host The domain name or IP address of the server hosting the email service.
     ##
     host: ''

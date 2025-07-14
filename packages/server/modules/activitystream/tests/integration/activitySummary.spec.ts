@@ -16,7 +16,7 @@ import {
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
 import {
-  getActivityFactory,
+  geUserStreamActivityFactory,
   saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
@@ -82,7 +82,7 @@ const getStream = getStreamFactory({ db })
 const saveActivity = saveStreamActivityFactory({ db })
 const createActivitySummary = createActivitySummaryFactory({
   getStream,
-  getActivity: getActivityFactory({ db }),
+  getActivity: geUserStreamActivityFactory({ db }),
   getUser
 })
 

@@ -3,17 +3,18 @@ import { StreamAclRecord } from '@/modules/core/helpers/types'
 import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
 import { WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceSeats } from '@/modules/workspacesCore/helpers/db'
-import { StreamRoles, WorkspacePlan } from '@speckle/shared'
+import {
+  StreamRoles,
+  WorkspacePlan,
+  WorkspacePlanBillingIntervals,
+  WorkspacePlans,
+  WorkspacePlanStatuses
+} from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { MaxBackfillIterationsReached } from '@/modules/activitystream/errors/activityStream'
 import { Logger } from '@/observability/logging'
 import { Activity } from '@/modules/activitystream/domain/types'
-import {
-  BillingInterval,
-  WorkspacePlans
-} from '@/modules/cross-server-sync/graph/generated/graphql'
-import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 
 const getUntrackedWorkspaceSeatsFactory =
   ({ db }: { db: Knex }) =>
@@ -97,7 +98,7 @@ type PlanSubscriptionPair = {
   workspaceId: string
   name: WorkspacePlans
   status: WorkspacePlanStatuses
-  billingInterval: BillingInterval
+  billingInterval: WorkspacePlanBillingIntervals
   subscriptionData: SubscriptionData
   createdAt: Date
 }

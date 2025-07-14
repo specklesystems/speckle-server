@@ -65,7 +65,7 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
-import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
+import type { SectionBoxData } from '@speckle/shared/viewer/state'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>

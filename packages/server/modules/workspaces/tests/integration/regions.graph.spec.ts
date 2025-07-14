@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { setMultiRegionConfig } from '@/modules/multiregion/regionConfig'
 import { storeRegionFactory } from '@/modules/multiregion/repositories'
 import { WorkspaceRegions } from '@/modules/workspaces/repositories/regions'
 import {
@@ -12,12 +13,12 @@ import {
   GetAvailableRegionsDocument,
   GetWorkspaceDefaultRegionDocument,
   SetWorkspaceDefaultRegionDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
-import { MultiRegionDbSelectorMock } from '@/test/mocks/global'
 import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 import { PaidWorkspacePlans, Roles } from '@speckle/shared'
+import { getConnectionSettings } from '@speckle/shared/environment/db'
 import { expect } from 'chai'
 
 const storeRegion = storeRegionFactory({ db })
@@ -41,9 +42,21 @@ isEnabled
       let apollo: TestApolloServer
 
       before(async () => {
-        MultiRegionDbSelectorMock.mockFunction('getDb', async () => db)
-        MultiRegionDbSelectorMock.mockFunction('getRegionDb', async () => db)
+        // Faking multi region config
+        const connectionUri = getConnectionSettings(db).connectionString!
+        const region = {
+          postgres: {
+            connectionUri,
+            skipInitialization: true
+          }
+        }
 
+        setMultiRegionConfig({
+          regions: {
+            [region1Key]: region,
+            [region2Key]: region
+          }
+        })
         await beforeEachContext()
 
         me = await createTestUser({ role: Roles.Server.Admin })
@@ -79,7 +92,7 @@ isEnabled
       })
 
       after(async () => {
-        MultiRegionDbSelectorMock.resetMockedFunctions()
+        setMultiRegionConfig(undefined)
         await truncateRegionsSafely()
       })
 
