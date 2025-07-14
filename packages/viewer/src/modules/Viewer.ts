@@ -310,7 +310,6 @@ export class Viewer extends EventEmitter implements IViewer {
     if (zoomToObject) {
       this.getExtension(CameraController)?.default()
     }
-    if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
 
     this.loaders[loader.resource] = loader
     const treeBuilt = await loader.load()
@@ -341,7 +340,6 @@ export class Viewer extends EventEmitter implements IViewer {
 
     if (this.loaders[loader.resource]) this.loaders[loader.resource].dispose()
     delete this.loaders[loader.resource]
-    if (--this.inProgressOperations === 0) this.emit(ViewerEvent.Busy, false)
   }
 
   public async cancelLoad(resource: string, unload = false) {
@@ -350,14 +348,11 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.cancelRenderTree(resource)
     if (unload) {
       await this.unloadObject(resource)
-    } else {
-      if (--this.inProgressOperations === 0) this.emit(ViewerEvent.Busy, false)
     }
   }
 
   public async unloadObject(resource: string) {
     try {
-      if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
       if (this.tree.findSubtree(resource)) {
         if (this.loaders[resource]) {
           await this.cancelLoad(resource, true)
@@ -370,17 +365,13 @@ export class Viewer extends EventEmitter implements IViewer {
         this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
       }
     } finally {
-      if (--this.inProgressOperations === 0) {
-        this.emit(ViewerEvent.Busy, false)
-        Logger.warn(`Removed subtree ${resource}`)
-        this.emit(ViewerEvent.UnloadComplete, resource)
-      }
+      Logger.warn(`Removed subtree ${resource}`)
+      this.emit(ViewerEvent.UnloadComplete, resource)
     }
   }
 
   public async unloadAll() {
     try {
-      if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
       for (const key of Object.keys(this.loaders)) {
         if (this.loaders[key]) await this.cancelLoad(key, false)
         delete this.loaders[key]
@@ -392,11 +383,8 @@ export class Viewer extends EventEmitter implements IViewer {
 
       this.tree.purge()
     } finally {
-      if (--this.inProgressOperations === 0) {
-        this.emit(ViewerEvent.Busy, false)
-        Logger.warn(`Removed all subtrees`)
-        this.emit(ViewerEvent.UnloadAllComplete)
-      }
+      Logger.warn(`Removed all subtrees`)
+      this.emit(ViewerEvent.UnloadAllComplete)
     }
   }
 
