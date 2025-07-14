@@ -1287,6 +1287,11 @@
               "description": "If enabled, Speckle can send email to users - for example, email verification for account registration.",
               "default": false
             },
+            "verificationTimeoutMinutes": {
+              "type": "number",
+              "description": "The number of minutes after which an email verification link will expire. Defaults to 5 minutes.",
+              "default": 5
+            },
             "host": {
               "type": "string",
               "description": "The domain name or IP address of the server hosting the email service.",

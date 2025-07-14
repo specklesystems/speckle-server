@@ -1,4 +1,4 @@
-import { noop } from 'lodash'
+import { noop } from 'lodash-es'
 import { CommandModule } from 'yargs'
 
 const command: CommandModule = {

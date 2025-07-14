@@ -121,7 +121,7 @@ import {
   removeNullOrUndefinedKeys,
   throwUncoveredError
 } from '@speckle/shared'
-import { chunk, omit } from 'lodash'
+import { chunk, omit } from 'lodash-es'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
@@ -425,7 +425,7 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
-export = FF_WORKSPACES_MODULE_ENABLED
+export default FF_WORKSPACES_MODULE_ENABLED
   ? ({
       Query: {
         workspace: async (_parent, args, ctx) => {

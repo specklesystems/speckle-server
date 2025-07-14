@@ -262,38 +262,38 @@ const plugin = buildPlugin(({ addComponents, addBase }) => {
       '@apply font-semibold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-transparent bg-clip-text':
         {}
     },
-    // New heading styles
+    // Heading styles
     '.text-heading-2xl, .h1': {
-      '@apply font-medium text-3xl leading-10 tracking-[-0.63px]': {}
+      '@apply font-medium text-[2rem] leading-8 tracking-[-0.044rem]': {}
     },
     '.text-heading-xl, .h2': {
-      '@apply font-medium text-2xl leading-8 tracking-[-0.456px]': {}
+      '@apply font-medium text-2xl leading-9 tracking-[-0.0285rem]': {}
     },
     '.text-heading-lg, .h3': {
-      '@apply font-medium text-lg leading-6 tracking-[-0.252px]': {}
+      '@apply font-medium text-lg leading-7 tracking-[-0.01575rem]': {}
     },
     '.text-heading, .h4': {
-      '@apply font-medium text-base leading-6 tracking-[-0.176px]': {}
+      '@apply font-medium text-base leading-6 tracking-[-0.011rem]': {}
     },
     '.text-heading-sm, .h5, .h6': {
-      '@apply font-medium text-sm leading-6 tracking-[-0.084px]': {}
+      '@apply font-medium text-sm leading-5 tracking-[-0.00244rem]': {}
     },
 
-    // New body styles
+    // Body styles
     '.text-body': {
-      '@apply text-base leading-6 tracking-[-0.176px]': {}
+      '@apply text-base leading-6 tracking-[-0.011rem]': {}
     },
     '.text-body-sm': {
-      '@apply text-sm leading-6 tracking-[-0.084px]': {}
+      '@apply text-sm leading-5 tracking-[-0.00244rem]': {}
     },
     '.text-body-xs': {
-      '@apply text-[13px] leading-6 tracking-[-0.032px]': {}
+      '@apply text-[0.8125rem] leading-5 tracking-[-0.00244rem]': {}
     },
     '.text-body-2xs': {
       '@apply text-xs leading-4': {}
     },
     '.text-body-3xs': {
-      '@apply text-[11px] leading-4 tracking-[0.055px]': {}
+      '@apply text-[0.6875rem] leading-4 tracking-[0.00344rem]': {}
     },
 
     '.label': {

@@ -22,7 +22,6 @@ def import_stl(
     branch_name: str,
     commit_message: str,
 ) -> Version:
-
     print(f"ImportSTL argv[1:]: {sys.argv[1:]}")
 
     # Parse input

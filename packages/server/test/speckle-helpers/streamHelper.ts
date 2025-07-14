@@ -59,10 +59,10 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
-import { ProjectVisibility } from '@/test/graphql/generated/graphql'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { faker } from '@faker-js/faker'
 import { ensureError, Roles, StreamRoles } from '@speckle/shared'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })

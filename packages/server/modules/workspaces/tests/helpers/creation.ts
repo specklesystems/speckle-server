@@ -46,7 +46,7 @@ import {
   generateValidSlugFactory
 } from '@/modules/workspaces/services/management'
 import { BasicTestUser } from '@/test/authHelper'
-import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
+import { CreateWorkspaceInviteMutationVariables } from '@/modules/core/graph/generated/graphql'
 import cryptoRandomString from 'crypto-random-string'
 import {
   MaybeNullOrUndefined,
@@ -110,7 +110,7 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
-import { assign, isBoolean, isString } from 'lodash'
+import { assign, isBoolean, isString } from 'lodash-es'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -135,7 +135,7 @@ import {
   WorkspaceSeat,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
-import { WorkspaceRole } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 

@@ -970,6 +970,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "email_password" .Values.server.email.password.secretKey }}
 - name: EMAIL_FROM
   value: "{{ .Values.server.email.from }}"
+- name: EMAIL_VERIFICATION_TIMEOUT_MINUTES
+  value: {{ .Values.server.email.verificationTimeoutMinutes | quote }}
 {{- end }}
 
 # *** Newsletter ***

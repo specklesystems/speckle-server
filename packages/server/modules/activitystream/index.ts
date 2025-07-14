@@ -154,6 +154,6 @@ const activityModule: SpeckleModule = {
   }
 }
 
-export = {
+export default {
   ...activityModule
 }

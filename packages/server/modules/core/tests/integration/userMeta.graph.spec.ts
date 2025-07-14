@@ -6,7 +6,7 @@ import {
   SetLegacyProjectsExplainerCollapsedDocument,
   SetNewWorkspaceExplainerDismissedDocument,
   SetSpeckleConBannerDismissedDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'

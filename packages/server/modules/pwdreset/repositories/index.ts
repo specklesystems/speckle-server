@@ -1,6 +1,5 @@
 import crs from 'crypto-random-string'
 import { PasswordResetTokens } from '@/modules/core/dbSchema'
-import { StringChain } from 'lodash'
 import dayjs from 'dayjs'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Knex } from 'knex'
@@ -14,7 +13,7 @@ import {
 export type PasswordResetTokenRecord = {
   id: string
   email: string
-  createdAt: StringChain
+  createdAt: string
 }
 
 const tables = {

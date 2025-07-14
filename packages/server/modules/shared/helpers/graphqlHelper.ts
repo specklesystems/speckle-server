@@ -63,3 +63,7 @@ export const isUserGraphqlError = (error: GraphQLError): boolean => {
   const code = error.extensions?.code as string
   return userCodes.includes(code)
 }
+
+export const isGraphQLError = (error: unknown): error is GraphQLError => {
+  return error instanceof GraphQLError
+}

@@ -10,7 +10,7 @@ import {
 } from '@/modules/activitystream/helpers/types'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
-import { groupBy } from 'lodash'
+import { groupBy } from 'lodash-es'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import * as ejs from 'ejs'
