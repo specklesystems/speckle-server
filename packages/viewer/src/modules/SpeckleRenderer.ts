@@ -23,7 +23,12 @@ import {
   PerspectiveCamera,
   OrthographicCamera
 } from 'three'
-import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch.js'
+import {
+  type Batch,
+  type BatchUpdateRange,
+  GeometryType,
+  isAcceleratedBatchType
+} from './batching/Batch.js'
 import Batcher from './batching/Batcher.js'
 import { Geometry } from './converter/Geometry.js'
 import Input, { InputEvent } from './input/Input.js'
@@ -1288,12 +1293,8 @@ export default class SpeckleRenderer {
   }
 
   public getObject(rv: NodeRenderView): BatchObject | null {
-    const batch = this.batcher.getBatch(rv) as MeshBatch
-    if (
-      !batch ||
-      (batch.geometryType !== GeometryType.MESH &&
-        batch.geometryType !== GeometryType.TEXT)
-    ) {
+    const batch = this.batcher.getBatch(rv)
+    if (!batch || !isAcceleratedBatchType(batch)) {
       // Logger.error('Render view is not of mesh type. No batch object found')
       return null
     }

@@ -286,25 +286,23 @@ export default class Batcher {
     /** Finally we're splitting again based on the batch's max object count */
     const geometryType = renderViews[0].geometryType
     const maxCount = this.getMaxObjectCount(geometryType)
-    if (maxCount) {
-      const oSplit = []
-      for (let i = 0; i < vSplit.length; i++) {
-        const objCount = vSplit[i].length
-        const div = Math.floor(objCount / maxCount)
-        const mod = objCount % maxCount
-        let index = 0
-        for (let k = 0; k < div; k++) {
-          oSplit.push(vSplit[i].slice(index, index + maxCount))
-          index += maxCount
-        }
-        if (mod > 0) {
-          oSplit.push(vSplit[i].slice(index, index + mod))
-        }
-      }
-      return oSplit
-    }
+    if (!maxCount) return vSplit
 
-    return vSplit
+    const oSplit = []
+    for (let i = 0; i < vSplit.length; i++) {
+      const objCount = vSplit[i].length
+      const div = Math.floor(objCount / maxCount)
+      const mod = objCount % maxCount
+      let index = 0
+      for (let k = 0; k < div; k++) {
+        oSplit.push(vSplit[i].slice(index, index + maxCount))
+        index += maxCount
+      }
+      if (mod > 0) {
+        oSplit.push(vSplit[i].slice(index, index + mod))
+      }
+    }
+    return oSplit
   }
 
   private getMaxObjectCount(geometryType: GeometryType) {
