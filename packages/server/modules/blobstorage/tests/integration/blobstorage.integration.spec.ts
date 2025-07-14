@@ -1,6 +1,6 @@
 import { beforeEachContext } from '@/test/hooks'
 import { NotFoundError, BadRequestError } from '@/modules/shared/errors'
-import { range } from 'lodash'
+import { range } from 'lodash-es'
 import { fakeIdGenerator, createBlobs } from '@/modules/blobstorage/tests/helpers'
 import {
   uploadFileStreamFactory,
@@ -23,7 +23,10 @@ import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/stream
 import cryptoRandomString from 'crypto-random-string'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs'
-import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import {
+  getMainObjectStorage,
+  getPublicMainObjectStorage
+} from '@/modules/blobstorage/clients/objectStorage'
 import { expect } from 'chai'
 import { UploadFileStream } from '@/modules/blobstorage/domain/operations'
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
@@ -43,8 +46,8 @@ const buildUploadFileStream = async (params: { streamId: string | null }) => {
 
   const storage = streamId
     ? await getProjectObjectStorage({ projectId: streamId })
-    : getMainObjectStorage()
-  const storeFileStream = storeFileStreamFactory({ storage })
+    : { private: getMainObjectStorage(), public: getPublicMainObjectStorage() }
+  const storeFileStream = storeFileStreamFactory({ storage: storage.public })
   const uploadFileStream = uploadFileStreamFactory({
     upsertBlob,
     updateBlob,

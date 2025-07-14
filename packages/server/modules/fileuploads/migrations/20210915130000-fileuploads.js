@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('file_uploads', (table) => {
     table.string('id').primary()
     table.string('streamId', 10).references('id').inTable('streams').onDelete('cascade')
@@ -22,6 +22,8 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('file_uploads')
 }
+
+export { up, down }

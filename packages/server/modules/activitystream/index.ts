@@ -44,45 +44,47 @@ const initializeEventListeners = ({
   eventBus: EventBus
   db: Knex
 }) => {
+  const saveActivity = saveActivityFactory({ db })
   const saveStreamActivity = saveStreamActivityFactory({ db })
   const reportUserActivity = reportUserActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportAccessRequestActivity = reportAccessRequestActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportBranchActivity = reportBranchActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportCommitActivity = reportCommitActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportCommentActivity = reportCommentActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportStreamInviteActivity = reportStreamInviteActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity,
+    saveStreamActivity,
     getProjectInviteProject: getProjectInviteProjectFactory({
       getStream: getStreamFactory({ db })
     })
   })
   const reportStreamActivity = reportStreamActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveActivity,
+    saveStreamActivity
   })
   const reportGatekeeperActivity = reportGatekeeperActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveActivityFactory({ db })
+    saveActivity
   })
   const reportWorkspaceActivity = reportWorkspaceActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveActivityFactory({ db })
+    saveActivity
   })
 
   const quitCbs = [
@@ -152,6 +154,6 @@ const activityModule: SpeckleModule = {
   }
 }
 
-export = {
+export default {
   ...activityModule
 }

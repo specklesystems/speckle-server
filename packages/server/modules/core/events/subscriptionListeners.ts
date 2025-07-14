@@ -24,7 +24,7 @@ import {
   UserSubscriptions,
   WorkspaceSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { chunk, flatten } from 'lodash'
+import { chunk, flatten } from 'lodash-es'
 
 const reportModelCreatedFactory =
   (deps: { publish: PublishSubscription }) =>

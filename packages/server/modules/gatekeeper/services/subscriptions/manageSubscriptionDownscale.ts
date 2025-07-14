@@ -16,7 +16,7 @@ import {
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { Logger } from '@/observability/logging'
 import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
-import { cloneDeep, isEqual } from 'lodash'
+import { cloneDeep, isEqual } from 'lodash-es'
 
 type DownscaleWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
@@ -65,6 +65,7 @@ export const downscaleWorkspaceSubscriptionFactory =
     })
 
     const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: editorsCount,
       workspacePlan: workspacePlan.name,
@@ -86,12 +87,12 @@ export const manageSubscriptionDownscaleFactory =
     getWorkspaceSubscriptions,
     downscaleWorkspaceSubscription,
     updateWorkspaceSubscription,
-    getSubscriptionData
+    getStripeSubscriptionData
   }: {
     getWorkspaceSubscriptions: GetWorkspaceSubscriptions
     downscaleWorkspaceSubscription: DownscaleWorkspaceSubscription
     updateWorkspaceSubscription: UpsertWorkspaceSubscription
-    getSubscriptionData: GetSubscriptionData
+    getStripeSubscriptionData: GetSubscriptionData
   }) =>
   async (context: { logger: Logger }) => {
     const { logger } = context
@@ -110,9 +111,15 @@ export const manageSubscriptionDownscaleFactory =
           log.info('Did not need to downscale the workspace subscription')
         }
       } catch (err) {
-        log.error({ err }, 'Failed to downscale workspace subscription')
+        log.error(
+          {
+            err,
+            workspaceId: workspaceSubscription.workspaceId
+          },
+          'Failed to downscale workspace subscription'
+        )
       }
-      const subscriptionData = await getSubscriptionData(
+      const subscriptionData = await getStripeSubscriptionData(
         workspaceSubscription.subscriptionData
       )
       const updatedWorkspaceSubscription = {

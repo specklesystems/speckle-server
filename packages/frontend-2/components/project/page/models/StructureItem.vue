@@ -14,8 +14,18 @@
               {{ name }}
             </span>
           </NuxtLink>
-          <span v-if="model">
+          <template v-if="model">
+            <NuxtLink
+              v-if="showLastUploadFailed"
+              v-tippy="'Last upload failed'"
+              v-keyboard-clickable
+              class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
+              @click.stop="actions?.showUploads()"
+            >
+              <ExclamationCircleIcon class="w-4 h-4" />
+            </NuxtLink>
             <ProjectPageModelsActions
+              ref="actions"
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
@@ -28,7 +38,7 @@
               @model-updated="$emit('model-updated')"
               @upload-version="triggerVersionUpload"
             />
-          </span>
+          </template>
         </div>
         <!-- Empty model action -->
         <div
@@ -142,6 +152,23 @@
       v-if="hasSubmodels"
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
+      <!-- So that we can trigger View Uploads from Last Upload Failed -->
+      <ProjectPageModelsActions
+        v-if="model"
+        ref="actions"
+        v-model:open="showActionsMenu"
+        :model="model"
+        :project="project"
+        :menu-position="
+          itemType === StructureItemType.EmptyModel
+            ? HorizontalDirection.Right
+            : HorizontalDirection.Left
+        "
+        class="hidden"
+        @click.stop.prevent
+        @model-updated="$emit('model-updated')"
+        @upload-version="triggerVersionUpload"
+      />
       <button
         class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
         href="/test"
@@ -157,9 +184,21 @@
         </div>
         <!-- Name -->
         <FolderIcon class="w-4 h-4 text-foreground" />
-        <div class="ml-2 text-heading text-foreground flex-grow text-left">
-          {{ name }}
+        <div class="ml-2 flex-grow text-left flex items-center gap-2">
+          <div class="text-heading text-foreground">
+            {{ name }}
+          </div>
+          <NuxtLink
+            v-if="showLastUploadFailed"
+            v-tippy="'Last upload failed'"
+            v-keyboard-clickable
+            class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
+            @click.stop="actions?.showUploads()"
+          >
+            <ExclamationCircleIcon class="w-4 h-4" />
+          </NuxtLink>
         </div>
+
         <!-- Preview -->
         <div class="flex flex-col items-end sm:flex-row sm:items-center gap-1 sm:gap-4">
           <!-- Commented out so that we need to load less data, can be added back -->
@@ -223,7 +262,7 @@
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { FolderIcon } from '@heroicons/vue/24/outline'
+import { ExclamationCircleIcon, FolderIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,
@@ -239,6 +278,8 @@ import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useCanCreateModel } from '~/lib/projects/composables/permissions'
 import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import dayjs from 'dayjs'
+import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -274,6 +315,7 @@ graphql(`
     model {
       ...ProjectPageLatestItemsModelItem
       ...ProjectCardImportFileArea_Model
+      ...ProjectPageModelsCard_Model
     }
     hasChildren
     updatedAt
@@ -300,6 +342,11 @@ const router = useRouter()
 const importArea = ref(
   null as Nullable<{
     triggerPicker: () => void
+  }>
+)
+const actions = ref(
+  null as Nullable<{
+    showUploads: () => void
   }>
 )
 const isVersionUploading = ref(false)
@@ -373,7 +420,36 @@ const model = computed(() =>
 const pendingModel = computed(() =>
   isPendingFileUpload(props.item) ? props.item : null
 )
-const pendingVersion = computed(() => model.value?.pendingImportedVersions[0])
+
+const pendingVersion = computed(() => {
+  if (!model.value) {
+    return null
+  }
+
+  const lastPendingVersion = model.value.pendingImportedVersions[0]
+  const lastVersion = model.value.lastVersion?.items[0]
+  if (!lastVersion || !lastPendingVersion) return lastPendingVersion
+
+  // If pending version is older than newest version, hide it (may be a stuck import)
+  if (dayjs(lastPendingVersion.updatedAt).isBefore(dayjs(lastVersion.createdAt))) {
+    return null
+  }
+
+  return lastPendingVersion
+})
+
+const showLastUploadFailed = computed(() => {
+  if (!model.value) return false
+  const lastUpload = model.value.lastUpload?.items[0]
+  const lastVersion = model.value.lastVersion?.items[0]
+
+  // Only show if last upload failed & there is no last version,
+  // or last version is older than last upload
+  if (lastUpload?.convertedStatus !== FileUploadConvertedStatus.Error) return false
+  if (!lastVersion) return true
+  return dayjs(lastUpload.updatedAt).isAfter(dayjs(lastVersion.createdAt))
+})
+
 const hasChildren = computed(() =>
   props.isSearchResult || isPendingFileUpload(props.item)
     ? false

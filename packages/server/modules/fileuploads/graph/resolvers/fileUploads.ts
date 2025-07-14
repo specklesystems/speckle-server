@@ -17,7 +17,6 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
   BadRequestError,
   ForbiddenError,
@@ -25,7 +24,9 @@ import {
 } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
+  fileImportServiceShouldUsePrivateObjectsServerUrl,
   getFileUploadUrlExpiryMinutes,
+  getPrivateObjectsServerOrigin,
   getServerOrigin,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
@@ -39,10 +40,6 @@ import {
   getBlobMetadataFromStorage,
   getSignedUrlFactory
 } from '@/modules/blobstorage/clients/objectStorage'
-import {
-  FileUploadMutationsGenerateUploadUrlArgs,
-  FileUploadMutationsStartFileImportArgs
-} from '@/test/graphql/generated/graphql'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
 import {
   generatePresignedUrlFactory,
@@ -68,6 +65,12 @@ import cryptoRandomString from 'crypto-random-string'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
+import {
+  FileUploadRecord,
+  FileUploadRecordV2
+} from '@/modules/fileuploads/helpers/types'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
@@ -97,11 +100,7 @@ const getFileUploadModel = async (params: {
 }
 
 const fileUploadMutations: Resolvers['FileUploadMutations'] = {
-  async generateUploadUrl(
-    _parent: unknown,
-    args: FileUploadMutationsGenerateUploadUrlArgs,
-    ctx: GraphQLContext
-  ) {
+  async generateUploadUrl(_parent, args, ctx) {
     if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
       throw new MisconfiguredEnvironmentError(
         'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
@@ -134,7 +133,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
     const generatePresignedUrl = generatePresignedUrlFactory({
       getSignedUrl: getSignedUrlFactory({
-        objectStorage: projectStorage
+        objectStorage: projectStorage.public
       }),
       upsertBlob: upsertBlobFactory({
         db: projectDb
@@ -152,11 +151,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
     return { url, fileId: blobId }
   },
-  async startFileImport(
-    _parent: unknown,
-    args: FileUploadMutationsStartFileImportArgs,
-    ctx: GraphQLContext
-  ) {
+  async startFileImport(_parent, args, ctx) {
     const { projectId } = args.input
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
@@ -189,7 +184,9 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     ])
 
     const pushJobToFileImporter = pushJobToFileImporterFactory({
-      getServerOrigin,
+      getServerOrigin: fileImportServiceShouldUsePrivateObjectsServerUrl()
+        ? getPrivateObjectsServerOrigin
+        : getServerOrigin,
       createAppToken: createAppTokenFactory({
         storeApiToken: storeApiTokenFactory({ db }),
         storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -221,7 +218,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
             db: projectDb
           }),
           getBlobMetadata: getBlobMetadataFromStorage({
-            objectStorage: projectStorage
+            objectStorage: projectStorage.private
           })
         }),
         insertNewUploadAndNotify: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
@@ -249,13 +246,8 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     }
   }
 }
-import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
-import {
-  FileUploadRecord,
-  FileUploadRecordV2
-} from '@/modules/fileuploads/helpers/types'
 
-export = {
+export default {
   Stream: {
     async fileUploads(parent) {
       const projectDb = await getProjectDbClient({ projectId: parent.id })

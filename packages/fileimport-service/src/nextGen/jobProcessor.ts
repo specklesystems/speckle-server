@@ -11,6 +11,9 @@ import { DOTNET_BINARY_PATH, RHINO_IMPORTER_PATH } from './config.js'
 import { getIfcDllPath } from '@/controller/helpers/env.js'
 import { z } from 'zod'
 import { TIME_MS } from '@speckle/shared'
+import { getFeatureFlags } from '@speckle/shared/environment'
+
+const { FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED } = getFeatureFlags()
 
 const jobSuccess = z.object({
   success: z.literal(true),
@@ -120,26 +123,55 @@ export const jobProcessor = async ({
     switch (fileType) {
       case 'ifc':
         parserUsed = 'ifc'
-        await runProcessWithTimeout(
-          taskLogger,
-          DOTNET_BINARY_PATH,
-          [
-            getIfcDllPath(),
-            sourceFilePath,
-            resultsPath,
-            job.projectId,
-            `File upload: ${job.fileName}`,
-            job.modelId,
-            'bogus',
-            'regionName'
-          ],
-          {
-            SPECKLE_SERVER_URL: job.serverUrl,
-            USER_TOKEN: job.token
-          },
-          Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
-          resultsPath
-        )
+        const useDotnetIfcImporter =
+          job.fileName.toLowerCase().endsWith('.dotnetimporter.ifc') ||
+          !FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
+
+        if (useDotnetIfcImporter) {
+          await runProcessWithTimeout(
+            taskLogger,
+            DOTNET_BINARY_PATH,
+            [
+              getIfcDllPath(),
+              sourceFilePath,
+              resultsPath,
+              job.projectId,
+              `File upload: ${job.fileName}`,
+              job.modelId,
+              'bogus',
+              'regionName'
+            ],
+            {
+              SPECKLE_SERVER_URL: job.serverUrl,
+              USER_TOKEN: job.token
+            },
+            Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
+            resultsPath
+          )
+        } else {
+          await runProcessWithTimeout(
+            taskLogger,
+            process.env['PYTHON_BINARY_PATH'] || 'python3',
+            [
+              '-m',
+              'speckleifc',
+              sourceFilePath,
+              resultsPath,
+              job.projectId,
+              `File upload: ${job.fileName}`,
+              job.modelId
+            ],
+            {
+              USER_TOKEN: job.token,
+              SPECKLE_SERVER_URL: job.serverUrl,
+              //speckleifc is not installed to sys (e.g. via pip), so we need to point it to the directory explicitly
+              PYTHONPATH: '/speckle-server/speckleifc/src/'
+            },
+            Math.min(timeout, job.timeOutSeconds * TIME_MS.second),
+            resultsPath
+          )
+        }
+
         break
       case 'stl':
       case 'obj':

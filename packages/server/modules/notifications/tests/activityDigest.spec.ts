@@ -27,7 +27,7 @@ import {
   prepareSummaryEmailFactory
 } from '@/modules/notifications/services/handlers/activityDigest'
 import { expect } from 'chai'
-import { range } from 'lodash'
+import { range } from 'lodash-es'
 
 const prepareSummaryEmail = prepareSummaryEmailFactory({
   renderEmail

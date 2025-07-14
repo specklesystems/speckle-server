@@ -9,7 +9,7 @@ import {
   inviteUsersToProjectFactory
 } from '@/modules/serverinvites/services/projectInviteManagement'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import {
   getStreamFactory,
   createStreamFactory,
@@ -25,7 +25,8 @@ import {
   canUserFavoriteStreamFactory,
   setStreamFavoritedFactory,
   getUserStreamsPageFactory,
-  getUserStreamsCountFactory
+  getUserStreamsCountFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
@@ -125,6 +126,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -203,6 +205,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
@@ -211,6 +214,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    getStreamRoles: getStreamRolesFactory({ db }),
     emitEvent: getEventBus().emit
   }),
   removeStreamCollaborator
@@ -234,7 +238,7 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
 /**
  * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
  */
-export = {
+export default {
   Query: {
     async stream(_, args, context) {
       throwIfResourceAccessNotAllowed({

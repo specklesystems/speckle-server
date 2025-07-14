@@ -5,7 +5,7 @@ import {
   HttpLink,
   gql,
   ApolloQueryResult
-} from '@apollo/client/core/core.cjs'
+} from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context/context.cjs'
 import { getServerVersion } from '@/modules/shared/helpers/envHelper'
 import { CrossSyncClientTestQuery } from '@/modules/cross-server-sync/graph/generated/graphql'

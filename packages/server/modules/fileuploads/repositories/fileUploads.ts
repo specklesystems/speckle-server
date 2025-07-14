@@ -1,4 +1,4 @@
-import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
+import { Branches, FileUploads } from '@/modules/core/dbSchema'
 import {
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
@@ -10,7 +10,8 @@ import {
   UpdateFileUpload,
   GetModelUploadsItems,
   GetModelUploadsBaseArgs,
-  GetModelUploadsTotalCount
+  GetModelUploadsTotalCount,
+  UpdateFileStatus
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
@@ -20,7 +21,7 @@ import {
 import { Knex } from 'knex'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
-import { clamp } from 'lodash'
+import { clamp } from 'lodash-es'
 
 const tables = {
   fileUploads: (db: Knex) => db<FileUploadRecord>(FileUploads.name)
@@ -74,7 +75,7 @@ export const getStreamFileUploadsFactory =
         ]).orWhere(
           FileUploads.col.uploadDate,
           '>=',
-          knex.raw(`now()-'1 day'::interval`)
+          deps.db.raw(`now()-'1 day'::interval`)
         )
       })
       .orderBy([
@@ -162,17 +163,19 @@ export const expireOldPendingUploadsFactory =
     const updatedRows = await deps
       .db(FileUploads.name)
       .whereIn(FileUploads.withoutTablePrefix.col.convertedStatus, [
-        FileUploadConvertedStatus.Converting,
-        FileUploadConvertedStatus.Queued
+        FileUploadConvertedStatus.Converting
       ])
       .andWhere(
-        FileUploads.withoutTablePrefix.col.uploadDate,
+        FileUploads.withoutTablePrefix.col.convertedLastUpdate,
         '<',
         deps.db.raw(`now() - interval '${params.timeoutThresholdSeconds} seconds'`)
       )
       .update({
         [FileUploads.withoutTablePrefix.col.convertedStatus]:
-          FileUploadConvertedStatus.Error
+          FileUploadConvertedStatus.Error,
+        [FileUploads.withoutTablePrefix.col.convertedMessage]:
+          'File import job timed out',
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: deps.db.fn.now()
       })
       .returning<FileUploadRecord[]>('*')
 
@@ -194,7 +197,11 @@ const getPendingUploadsBaseQueryFactory =
       .orderBy(FileUploads.col.uploadDate, 'desc')
 
     if (ignoreOld) {
-      q.andWhere(FileUploads.col.uploadDate, '>=', knex.raw(`now()-'1 day'::interval`))
+      q.andWhere(
+        FileUploads.col.uploadDate,
+        '>=',
+        deps.db.raw(`now()-'1 day'::interval`)
+      )
     }
 
     if (limit) {
@@ -219,7 +226,7 @@ export const getStreamPendingModelsFactory =
 
     if (options?.branchNamePattern) {
       q.whereRaw(
-        knex.raw(`?? ~* ?`, [FileUploads.col.branchName, options.branchNamePattern])
+        deps.db.raw(`?? ~* ?`, [FileUploads.col.branchName, options.branchNamePattern])
       )
     }
 
@@ -257,6 +264,30 @@ export const updateFileUploadFactory =
 
     if (updatedFile.length === 0) {
       throw new FileImportJobNotFoundError(`File with id ${id} not found`)
+    }
+    return updatedFile[0]
+  }
+
+export const updateFileStatusFactory =
+  (deps: { db: Knex }): UpdateFileStatus =>
+  async (params) => {
+    const updatedFile = await tables
+      .fileUploads(deps.db)
+      .update({
+        [FileUploads.withoutTablePrefix.col.convertedStatus]: params.status,
+        [FileUploads.withoutTablePrefix.col.convertedMessage]: params.convertedMessage,
+        [FileUploads.withoutTablePrefix.col.convertedCommitId]:
+          params.convertedCommitId,
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: deps.db.fn.now()
+      })
+      .where({
+        [FileUploads.withoutTablePrefix.col.id]: params.fileId,
+        [FileUploads.withoutTablePrefix.col.streamId]: params.projectId
+      })
+      .returning<FileUploadRecord[]>('*')
+
+    if (updatedFile.length === 0) {
+      throw new FileImportJobNotFoundError(`File with id ${params.fileId} not found`)
     }
     return updatedFile[0]
   }

@@ -7,7 +7,7 @@ import {
   assertValidGraphQLResult
 } from '@/modules/cross-server-sync/utils/graphqlClient'
 import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   DownloadCommit,

@@ -45,11 +45,15 @@ import {
 import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
 import type { Queue } from 'bull'
 import type { Knex } from 'knex'
+import { fileURLToPath } from 'url'
 
 const httpErrorImage = (httpErrorCode: number) =>
-  require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
+  fileURLToPath(
+    import.meta.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
+  )
 
-const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
+const noPreviewImage = () =>
+  fileURLToPath(import.meta.resolve('#/assets/previews/images/no_preview.png'))
 
 const buildCreateObjectPreviewFunction = ({
   projectDb,
@@ -103,7 +107,7 @@ export const previewRouterFactory = ({
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile(httpErrorImage(httpErrorCode))
+      return res.sendFile(await httpErrorImage(httpErrorCode))
     }
 
     const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
@@ -117,7 +121,7 @@ export const previewRouterFactory = ({
       cursor: undefined
     })
     if (!commits || commits.length === 0) {
-      return res.sendFile(noPreviewImage)
+      return res.sendFile(await noPreviewImage())
     }
     const lastCommit = commits[0]
     const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
@@ -162,7 +166,7 @@ export const previewRouterFactory = ({
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
-        return res.sendFile(httpErrorImage(httpErrorCode))
+        return res.sendFile(await httpErrorImage(httpErrorCode))
       }
 
       const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
@@ -186,7 +190,7 @@ export const previewRouterFactory = ({
       }
       const { commits } = commitsObj
       if (!commits || commits.length === 0) {
-        return res.sendFile(noPreviewImage)
+        return res.sendFile(await noPreviewImage())
       }
       const lastCommit = commits[0]
 
@@ -230,7 +234,7 @@ export const previewRouterFactory = ({
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile(httpErrorImage(httpErrorCode))
+      return res.sendFile(await httpErrorImage(httpErrorCode))
     }
 
     const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
@@ -239,7 +243,7 @@ export const previewRouterFactory = ({
     const commit = await getCommit(req.params.commitId, {
       streamId: req.params.streamId
     })
-    if (!commit) return res.sendFile(noPreviewImage)
+    if (!commit) return res.sendFile(await noPreviewImage())
 
     const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
       logger: req.log,

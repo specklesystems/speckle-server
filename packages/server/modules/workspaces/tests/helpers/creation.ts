@@ -59,6 +59,7 @@ import {
 } from '@speckle/shared'
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -109,7 +110,7 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
-import { assign, isBoolean, isString } from 'lodash'
+import { assign, isBoolean, isString } from 'lodash-es'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -594,6 +595,7 @@ export const createWorkspaceInviteDirectly = async (
             validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
             getUser: getUserFactory({ db }),
             grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+            getStreamRoles: getStreamRolesFactory({ db }),
             emitEvent: getEventBus().emit
           })
         })

@@ -20,7 +20,7 @@ import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorage
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import type { Logger } from '@/observability/logging'
 import type { Readable, Writable } from 'stream'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import type { UploadResult, ProcessingResult } from '@/modules/blobstorage/domain/types'
 import type { Busboy } from 'busboy'
 
@@ -45,7 +45,7 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
       getProjectObjectStorage({ projectId: streamId })
     ])
 
-    const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
+    const storeFileStream = storeFileStreamFactory({ storage: projectStorage.private })
     const updateBlob = updateBlobFactory({ db: projectDb })
     const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
 
@@ -66,9 +66,9 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
     })
 
     const getObjectAttributes = getObjectAttributesFactory({
-      storage: projectStorage
+      storage: projectStorage.private
     })
-    const deleteObject = deleteObjectFactory({ storage: projectStorage })
+    const deleteObject = deleteObjectFactory({ storage: projectStorage.private })
 
     busboy.on(
       'file',

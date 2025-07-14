@@ -212,4 +212,4 @@ const googleStrategyBuilderFactory =
     return strategy
   }
 
-export = googleStrategyBuilderFactory
+export default googleStrategyBuilderFactory

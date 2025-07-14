@@ -11,7 +11,7 @@ import {
   WorkspaceDomain,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
-import { keyBy } from 'lodash'
+import { keyBy } from 'lodash-es'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 

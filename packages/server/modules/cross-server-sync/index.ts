@@ -189,4 +189,4 @@ const crossServerSyncModule: SpeckleModule = {
   }
 }
 
-export = crossServerSyncModule
+export default crossServerSyncModule

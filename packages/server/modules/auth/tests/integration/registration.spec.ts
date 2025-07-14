@@ -25,7 +25,6 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { EmailSendingServiceMock } from '@/test/mocks/global'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   BasicTestStream,
@@ -87,10 +86,6 @@ describe('Server registration', () => {
     apollo = await testApolloServer({
       authUserId: basicAdminUser.id
     })
-  })
-
-  afterEach(() => {
-    EmailSendingServiceMock.resetMockedFunctions()
   })
 
   describe('with local strategy (email/pw)', () => {

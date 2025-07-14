@@ -1,11 +1,11 @@
-const { Users } = require('@/modules/core/dbSchema')
+const TABLE_NAME = 'users'
 
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.up = async function (knex) {
-  await knex.schema.alterTable(Users.name, (table) => {
+const up = async function (knex) {
+  await knex.schema.alterTable(TABLE_NAME, (table) => {
     table.string('email').notNullable().alter()
   })
 }
@@ -14,8 +14,10 @@ exports.up = async function (knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = async function (knex) {
-  await knex.schema.alterTable(Users.name, (table) => {
+const down = async function (knex) {
+  await knex.schema.alterTable(TABLE_NAME, (table) => {
     table.string('email').nullable().alter()
   })
 }
+
+export { up, down }

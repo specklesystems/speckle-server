@@ -20,7 +20,7 @@ import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/strea
 import { AllScopes, Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { difference } from 'lodash'
+import { difference } from 'lodash-es'
 import type { Express } from 'express'
 import request from 'supertest'
 import { createAppFactory } from '@/modules/auth/repositories/apps'

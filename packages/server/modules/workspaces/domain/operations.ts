@@ -22,7 +22,7 @@ import {
 } from '@speckle/shared'
 import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
-import { Stream, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
@@ -285,18 +285,6 @@ export type ValidateWorkspaceMemberProjectRole = (params: {
 }) => Promise<void>
 
 /** Workspace Projects */
-
-type QueryAllWorkspaceProjectsArgs = {
-  workspaceId: string
-  /**
-   * Optionally get project roles for a specific user
-   */
-  userId?: string
-}
-
-export type QueryAllWorkspaceProjects = (
-  args: QueryAllWorkspaceProjectsArgs
-) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
 
 export type GetWorkspacesProjectsCounts = (params: {
   workspaceIds: string[]

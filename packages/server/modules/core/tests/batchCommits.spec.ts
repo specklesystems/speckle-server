@@ -4,7 +4,10 @@ import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getCommitsFactory } from '@/modules/core/repositories/commits'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamRolesFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
@@ -23,8 +26,7 @@ import { truncateTables } from '@/test/hooks'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { times } from 'lodash'
-import { describe } from 'mocha'
+import { times } from 'lodash-es'
 
 enum BatchActionType {
   Move,
@@ -39,6 +41,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 

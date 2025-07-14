@@ -32,7 +32,7 @@ import { expect } from 'chai'
 import { MaybeAsync, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expectToThrow } from '@/test/assertionHelper'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { isBoolean } from 'lodash'
+import { isBoolean } from 'lodash-es'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 
 export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }) => {

@@ -1,4 +1,4 @@
-const { Users } = require('@/modules/core/dbSchema')
+import { Users } from '@/modules/core/dbSchema'
 
 const COMMENTS_TABLE = 'comments'
 const COMMENT_VIEWS_TABLE = 'comment_views'
@@ -7,7 +7,7 @@ const COMMENT_VIEWS_TABLE = 'comment_views'
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.up = async function (knex) {
+async function up(knex) {
   // Delete all orphaned comments, which can be there even though there was a FK there before for some reason
   await knex
     .table(COMMENTS_TABLE)
@@ -41,7 +41,7 @@ exports.up = async function (knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = async function (knex) {
+async function down(knex) {
   await knex.schema.alterTable(COMMENTS_TABLE, (table) => {
     table.dropForeign('authorId')
     table.foreign('authorId').references(Users.col.id).onDelete('NO ACTION')
@@ -58,3 +58,5 @@ exports.down = async function (knex) {
     table.foreign('userId').references(Users.col.id).onDelete('NO ACTION')
   })
 }
+
+export { up, down }

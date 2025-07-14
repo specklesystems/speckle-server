@@ -1,4 +1,7 @@
-import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
+import {
+  getStripeSubscriptionDataFactory,
+  reconcileWorkspaceSubscriptionFactory
+} from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
@@ -9,14 +12,14 @@ import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeepe
 import {
   getWorkspacePlanPriceId,
   getWorkspacePlanProductId
-} from '@/modules/gatekeeper/stripe'
+} from '@/modules/gatekeeper/helpers/prices'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
-import Stripe from 'stripe'
+import { GetStripeClient } from '@/modules/gatekeeper/domain/billing'
 
 export const initializeEventListenersFactory =
-  ({ db, stripe }: { db: Knex; stripe: Stripe }) =>
+  ({ db, getStripeClient }: { db: Knex; getStripeClient: GetStripeClient }) =>
   () => {
     const eventBus = getEventBus()
     const quitCbs = [
@@ -28,7 +31,10 @@ export const initializeEventListenersFactory =
             getWorkspacePlanPriceId,
             getWorkspacePlanProductId,
             reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
-              stripe
+              getStripeClient,
+              getStripeSubscriptionData: getStripeSubscriptionDataFactory({
+                getStripeClient
+              })
             }),
             upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
             countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db })

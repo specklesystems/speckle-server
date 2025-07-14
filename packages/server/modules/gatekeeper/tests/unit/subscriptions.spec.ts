@@ -26,10 +26,11 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { PaidWorkspacePlans, throwUncoveredError, WorkspacePlan } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { testLogger } from '@/observability/logging'
+import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 
 describe('subscriptions @gatekeeper', () => {
   describe('handleSubscriptionUpdateFactory creates a function, that', () => {
@@ -808,6 +809,93 @@ describe('subscriptions @gatekeeper', () => {
         workspaceId,
         seatType: WorkspaceSeatType.Editor
       })
+    })
+  })
+
+  describe('mutateSubscriptionDataWithNewValidSeats', () => {
+    it('can totally downscale the subscription', () => {
+      const desiredSeatCount = 0
+      const productId = cryptoRandomString({ length: 10 })
+      const priceId = cryptoRandomString({ length: 10 })
+      const subscriptionItemId = cryptoRandomString({ length: 10 })
+      const currentQuantity = 2
+      const subscriptionData = createTestSubscriptionData({
+        products: [
+          { priceId, productId, quantity: currentQuantity, subscriptionItemId }
+        ]
+      })
+
+      mutateSubscriptionDataWithNewValidSeatNumbers({
+        seatCount: desiredSeatCount,
+        workspacePlan: PaidWorkspacePlans.Team,
+        getWorkspacePlanProductId: () => productId,
+        subscriptionData
+      })
+
+      expect(subscriptionData.products).to.has.lengthOf(0)
+    })
+
+    it('mutates the quantity when the count is less than the one given', () => {
+      const desiredSeatCount = 5
+      const productId = cryptoRandomString({ length: 10 })
+      const priceId = cryptoRandomString({ length: 10 })
+      const subscriptionItemId = cryptoRandomString({ length: 10 })
+      const currentQuantity = 10
+      const subscriptionData = createTestSubscriptionData({
+        products: [
+          { priceId, productId, quantity: currentQuantity, subscriptionItemId }
+        ]
+      })
+
+      mutateSubscriptionDataWithNewValidSeatNumbers({
+        seatCount: desiredSeatCount,
+        workspacePlan: PaidWorkspacePlans.Team,
+        getWorkspacePlanProductId: () => productId,
+        subscriptionData
+      })
+
+      expect(subscriptionData.products[0].quantity).to.be.equal(desiredSeatCount)
+    })
+
+    it('throws an exception to notify that instead of downscale, a subscription is broken and an upscale is required', () => {
+      const desiredSeatCount = 10
+      const currentQuantity = 5
+      const productId = cryptoRandomString({ length: 10 })
+      const priceId = cryptoRandomString({ length: 10 })
+      const subscriptionItemId = cryptoRandomString({ length: 10 })
+      const subscriptionData = createTestSubscriptionData({
+        products: [
+          { priceId, productId, quantity: currentQuantity, subscriptionItemId }
+        ]
+      })
+
+      const mutation = () =>
+        mutateSubscriptionDataWithNewValidSeatNumbers({
+          seatCount: desiredSeatCount,
+          workspacePlan: PaidWorkspacePlans.Team,
+          getWorkspacePlanProductId: () => productId,
+          subscriptionData
+        })
+
+      expect(mutation).to.throw('Subscription missing an upscale')
+    })
+
+    it('throws an exception when the subscription is malformed', () => {
+      const desiredSeatCount = 10
+      const productId = cryptoRandomString({ length: 10 })
+      const subscriptionData = createTestSubscriptionData({
+        products: []
+      })
+
+      const mutation = () =>
+        mutateSubscriptionDataWithNewValidSeatNumbers({
+          seatCount: desiredSeatCount,
+          workspacePlan: PaidWorkspacePlans.Team,
+          getWorkspacePlanProductId: () => productId,
+          subscriptionData
+        })
+
+      expect(mutation).to.throw('Product not found at mutation')
     })
   })
 

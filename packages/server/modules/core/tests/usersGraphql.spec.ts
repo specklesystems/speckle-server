@@ -13,7 +13,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
-import { before } from 'mocha'
 import {
   createAuthedTestContext,
   createTestContext,

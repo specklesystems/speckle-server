@@ -1,11 +1,18 @@
-import sys, os
+import sys
+import os
 import json
-from specklepy.objects import Base
+from typing import Any, Dict, List, Optional
+from specklepy.objects.models.collections.collection import Collection
+from specklepy.objects.base import Base
 from specklepy.objects.other import RenderMaterial
 from specklepy.objects.geometry import Mesh
 from specklepy.transports.server import ServerTransport
 from specklepy.api.client import SpeckleClient
+from specklepy.objects.models.units import Units
+from specklepy.objects.data_objects import DataObject
 from specklepy.api import operations
+from specklepy.core.api.inputs import CreateModelInput, CreateVersionInput
+from specklepy.core.api.models import Version
 from obj_file import ObjFile
 
 import structlog
@@ -40,65 +47,46 @@ LOG = structlog.get_logger()
 DEFAULT_BRANCH = "uploads"
 
 
-def convert_material(obj_mat):
-    speckle_mat = RenderMaterial()
-    speckle_mat.name = obj_mat["name"]
+def convert_material(obj_mat: Dict[str, Any]) -> RenderMaterial:
     if "diffuse" in obj_mat:
         argb = [
             1,
         ] + obj_mat["diffuse"]
-        speckle_mat.diffuse = int.from_bytes(
+        diffuse = int.from_bytes(
             [int(val * 255) for val in argb], byteorder="big", signed=True
         )
-    if "dissolved" in obj_mat:
-        speckle_mat.opacity = obj_mat["dissolved"]
-    return speckle_mat
+    else:
+        diffuse = 0
 
+    opacity = obj_mat["dissolved"] if "dissolved" in obj_mat else 1
+    metallic = obj_mat["metallic"] if "metallic" in obj_mat else 0
+    roughness = obj_mat["roughness"] if "roughness" in obj_mat else 0
 
-def import_obj():
-    (
-        file_path,
-        tmp_results_path,
-        _,
-        stream_id,
-        branch_name,
-        commit_message,
-        _,
-        _,
-        _,
-    ) = sys.argv[1:]
-    LOG.info("ImportOBJ argv[1:]:%s", sys.argv[1:])
-
-    # Parse input
-    obj = ObjFile(file_path)
-    LOG.info(
-        "Parsed obj with %s faces (%s vertices)", len(obj.faces), len(obj.vertices) * 3
+    return RenderMaterial(
+        name=obj_mat["name"],
+        diffuse=diffuse,
+        opacity=opacity,
+        roughness=roughness,
+        metalness=metallic,
     )
 
-    speckle_root = Base()
-    speckle_root["@objects"] = []
 
-    for objname in obj.objects:
+def convert_objects(objects: Dict[str, List[Dict[str, Any]]]) -> Collection:
+    converted_objects: List[Base] = []
+
+    for objname in objects:
         objLogger = LOG.bind(object_name=objname)
         objLogger.info("Converting object")
 
-        speckle_obj = Base()
-        speckle_obj.name = objname
-        speckle_obj["@displayValue"] = []
-        speckle_root["@objects"].append(speckle_obj)
+        display_values: List[Base] = []
 
-        for obj_mesh in obj.objects[objname]:
+        for obj_mesh in objects[objname]:
             speckle_vertices = [
                 coord for point in obj_mesh["vertices"] for coord in point
             ]
             speckle_faces = []
             for obj_face in obj_mesh["faces"]:
-                if len(obj_face) == 3:
-                    speckle_faces.append(0)
-                elif len(obj_face) == 4:
-                    speckle_faces.append(1)
-                else:
-                    speckle_faces.append(len(obj_face))
+                speckle_faces.append(len(obj_face))
                 speckle_faces.extend(obj_face)
 
             has_vertex_colors = False
@@ -123,54 +111,95 @@ def import_obj():
                 faces=speckle_faces,
                 colors=colors,
                 textureCoordinates=[],
+                units=Units.none,
             )
 
             obj_material = obj_mesh["material"]
             if obj_material:
                 speckle_mesh["renderMaterial"] = convert_material(obj_material)
 
-            speckle_obj["@displayValue"].append(speckle_mesh)
+            display_values.append(speckle_mesh)
+
+        speckle_obj = DataObject(
+            name=objname, displayValue=display_values, properties={}
+        )
+        converted_objects.append(speckle_obj)
+
+    return Collection(name=os.path.basename(file_path), elements=converted_objects)
+
+
+def import_obj(
+    file_path: str,
+    project_id: str,
+    model_id: Optional[str],
+    branch_name: str,
+    commit_message: str,
+) -> Version:
+    # Parse input
+    obj = ObjFile(file_path)
+    LOG.info(
+        "Parsed obj with %s faces (%s vertices)", len(obj.faces), len(obj.vertices) * 3
+    )
+
+    speckle_root = convert_objects(obj.objects)
 
     # Commit
 
     client = SpeckleClient(
         host=os.getenv("SPECKLE_SERVER_URL", "127.0.0.1:3000"), use_ssl=False
     )
-    client.authenticate_with_token(os.environ["USER_TOKEN"])
+    token = os.environ["USER_TOKEN"]
+    if not token:
+        raise Exception('Expected an env var "USER_TOKEN"')
+    client.authenticate_with_token(token)
 
-    if not client.branch.get(stream_id, branch_name):
-        client.branch.create(
-            stream_id,
-            branch_name,
-            "File upload branch" if branch_name == "uploads" else "",
+    if model_id:
+        model = client.model.get(model_id, project_id)
+    else:
+        model_create_input = CreateModelInput(
+            name=branch_name,
+            description="File upload branch" if branch_name == "uploads" else "",
+            project_id=project_id,
         )
+        model = client.model.create(model_create_input)
 
-    transport = ServerTransport(client=client, stream_id=stream_id)
+    transport = ServerTransport(client=client, stream_id=project_id)
     id = operations.send(
         base=speckle_root, transports=[transport], use_default_cache=False
     )
 
-    commit_id = client.commit.create(
-        stream_id=stream_id,
+    create_commit = CreateVersionInput(
         object_id=id,
-        branch_name=(branch_name or DEFAULT_BRANCH),
+        model_id=model.id,
+        project_id=project_id,
         message=(commit_message or "OBJ file upload"),
         source_application="OBJ",
     )
+    version = client.version.create(create_commit)
 
-    return commit_id, tmp_results_path
+    return version
 
 
 if __name__ == "__main__":
     from pathlib import Path
 
+    (
+        file_path,
+        tmp_results_path,
+        _,
+        project_id,
+        branch_name,
+        commit_message,
+        _,
+        model_id,
+        _,
+    ) = sys.argv[1:]
     try:
-        commit_id, tmp_results_path = import_obj()
-        if not commit_id:
-            raise Exception("Can't create commit")
-        if isinstance(commit_id, Exception):
-            raise commit_id
-        results = {"success": True, "commitId": commit_id}
+        LOG.info("ImportOBJ argv[1:]:%s", sys.argv[1:])
+        version = import_obj(
+            file_path, project_id, model_id, branch_name, commit_message
+        )
+        results = {"success": True, "commitId": version.id}
     except Exception as ex:
         LOG.exception(ex)
         results = {"success": False, "error": str(ex)}

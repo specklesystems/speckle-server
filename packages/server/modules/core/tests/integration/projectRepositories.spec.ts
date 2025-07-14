@@ -7,13 +7,13 @@ import {
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { getRolesByUserIdFactory } from '@/modules/core/repositories/streams'
+import { getUserProjectRolesFactory } from '@/modules/core/repositories/projects'
 import { expectToThrow } from '@/test/assertionHelper'
 import { createTestUser } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { assign } from 'lodash'
+import { assign } from 'lodash-es'
 
 const createTestProject = (overrides?: Partial<Project>): Project => {
   const defaults: Project = {
@@ -105,7 +105,9 @@ describe('project repositories @core', () => {
         userId: testUser.id
       }
       await storeProjectRole(role)
-      const storedRoles = await getRolesByUserIdFactory({ db })({ userId: testUser.id })
+      const storedRoles = await getUserProjectRolesFactory({ db })({
+        userId: testUser.id
+      })
       expect(storedRoles).deep.equalInAnyOrder([
         { resourceId: project.id, role: role.role, userId: role.userId }
       ])
