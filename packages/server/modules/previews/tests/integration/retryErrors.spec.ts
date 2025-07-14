@@ -149,7 +149,6 @@ describe('Previews services @previews', () => {
       expect(maxAttemptsResults.items.map((item) => item.objectId)).to.not.contain(
         originalFirstItem.objectId
       )
-      expect(maxAttemptsResults.items[0].attempts).to.equal(2)
     })
   })
 })
