@@ -5,7 +5,6 @@ import {
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   GetWorkspaceSeatTypeToProjectRoleMapping,
   IntersectProjectCollaboratorsAndWorkspaceCollaborators,
-  QueryAllWorkspaceProjects,
   AddOrUpdateWorkspaceRole,
   ValidateWorkspaceMemberProjectRole,
   CopyWorkspace
@@ -13,19 +12,17 @@ import {
 import {
   WorkspaceInvalidProjectError,
   WorkspaceInvalidRoleError,
-  WorkspaceNotFoundError,
-  WorkspaceQueryError
+  WorkspaceNotFoundError
 } from '@/modules/workspaces/errors/workspace'
 import { GetProject, UpdateProject } from '@/modules/core/domain/projects/operations'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import {
   GetStreamCollaborators,
-  LegacyGetStreams,
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
-import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
+import { WorkspaceProjectCreateInput } from '@/modules/core/graph/generated/graphql'
 import {
   getDb,
   getValidDefaultProjectRegionKey
@@ -57,39 +54,6 @@ import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
 import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
-
-export const queryAllWorkspaceProjectsFactory = ({
-  getStreams
-}: {
-  getStreams: LegacyGetStreams
-}): QueryAllWorkspaceProjects =>
-  async function* queryAllWorkspaceProjects({
-    workspaceId,
-    userId
-  }): AsyncGenerator<StreamRecord[], void, unknown> {
-    let cursor: Date | null = null
-    let iterationCount = 0
-
-    do {
-      if (iterationCount > 500) throw new WorkspaceQueryError()
-
-      const { streams, cursorDate } = await getStreams({
-        cursor,
-        orderBy: null,
-        limit: 100,
-        visibility: null,
-        searchQuery: null,
-        streamIdWhitelist: null,
-        workspaceIdWhitelist: [workspaceId],
-        userId
-      })
-
-      yield streams
-
-      cursor = cursorDate
-      iterationCount++
-    } while (!!cursor)
-  }
 
 type MoveProjectToWorkspaceArgs = {
   projectId: string

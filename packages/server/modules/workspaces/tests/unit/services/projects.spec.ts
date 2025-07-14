@@ -1,19 +1,17 @@
 import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { StreamRecord } from '@/modules/core/helpers/types'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { WorkspaceInvalidProjectError } from '@/modules/workspaces/errors/workspace'
-import {
-  moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory
-} from '@/modules/workspaces/services/projects'
+import { moveProjectToWorkspaceFactory } from '@/modules/workspaces/services/projects'
 import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { ProjectUpdateRoleInput } from '@/test/graphql/generated/graphql'
+import { ProjectUpdateRoleInput } from '@/modules/core/graph/generated/graphql'
 import { Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -26,7 +24,7 @@ describe('Project retrieval services', () => {
       const foundProjects: StreamRecord[] = []
       const storedProjects: StreamRecord[] = [{ workspaceId } as StreamRecord]
 
-      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
+      const queryAllWorkspaceProjectsGenerator = queryAllProjectsFactory({
         getStreams: async () => {
           return {
             streams: storedProjects,
@@ -53,7 +51,7 @@ describe('Project retrieval services', () => {
         { workspaceId } as StreamRecord
       ]
 
-      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
+      const queryAllWorkspaceProjectsGenerator = queryAllProjectsFactory({
         getStreams: async ({ cursor }) => {
           return cursor
             ? { streams: [storedProjects[1]], totalCount: 1, cursorDate: null }
@@ -74,7 +72,7 @@ describe('Project retrieval services', () => {
 
       const foundProjects: StreamRecord[] = []
 
-      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
+      const queryAllWorkspaceProjectsGenerator = queryAllProjectsFactory({
         getStreams: async () => {
           return { streams: [], totalCount: 0, cursorDate: null }
         }

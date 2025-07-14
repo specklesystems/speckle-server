@@ -16,7 +16,7 @@ import {
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
 import {
-  getActivityFactory,
+  geUserStreamActivityFactory,
   saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
@@ -24,6 +24,7 @@ import {
   createStreamFactory,
   deleteStreamFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -81,7 +82,7 @@ const getStream = getStreamFactory({ db })
 const saveActivity = saveStreamActivityFactory({ db })
 const createActivitySummary = createActivitySummaryFactory({
   getStream,
-  getActivity: getActivityFactory({ db }),
+  getActivity: geUserStreamActivityFactory({ db }),
   getUser
 })
 
@@ -97,6 +98,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),

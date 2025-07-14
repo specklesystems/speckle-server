@@ -7,7 +7,7 @@ import {
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { generateCommitId } from '@/modules/core/repositories/commits'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import { generateBranchId } from '@/modules/core/repositories/branches'
 import { generateCommentId } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'

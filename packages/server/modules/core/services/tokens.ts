@@ -6,13 +6,16 @@ import {
 } from '@/modules/core/helpers/types'
 import { Optional, Scopes, ServerScope } from '@speckle/shared'
 import {
+  CountProjectEmbedTokens,
   CreateAndStoreAppToken,
   CreateAndStoreEmbedToken,
   CreateAndStorePersonalAccessToken,
   CreateAndStoreUserToken,
   GetApiTokenById,
+  GetPaginatedProjectEmbedTokens,
   GetTokenResourceAccessDefinitionsById,
   GetTokenScopesById,
+  ListProjectEmbedTokens,
   RevokeUserTokenById,
   StoreApiToken,
   StoreEmbedApiToken,
@@ -35,6 +38,12 @@ import {
   createGetParamFromResources,
   parseUrlParameters
 } from '@speckle/shared/viewer/route'
+import {
+  decodeIsoDateCursor,
+  encodeIsoDateCursor
+} from '@/modules/shared/helpers/dbHelper'
+import { pick } from 'lodash-es'
+import { LogicError } from '@/modules/shared/errors'
 
 /*
   Tokens
@@ -138,6 +147,7 @@ export const createPersonalAccessTokenFactory =
 export const createEmbedTokenFactory =
   (deps: {
     createToken: CreateAndStoreUserToken
+    getToken: GetApiTokenById
     storeEmbedToken: StoreEmbedApiToken
   }): CreateAndStoreEmbedToken =>
   async ({ projectId, userId, resourceIdString, lifespan }) => {
@@ -167,7 +177,47 @@ export const createEmbedTokenFactory =
 
     await deps.storeEmbedToken(tokenMetadata)
 
-    return { token, tokenMetadata }
+    const apiToken = await deps.getToken(id)
+
+    if (!apiToken) {
+      throw new LogicError('Failed to create api token for embed')
+    }
+
+    return {
+      token,
+      tokenMetadata: {
+        ...tokenMetadata,
+        ...pick(apiToken, 'createdAt', 'lastUsed', 'lifespan')
+      }
+    }
+  }
+
+export const getPaginatedProjectEmbedTokensFactory =
+  (deps: {
+    listEmbedTokens: ListProjectEmbedTokens
+    countEmbedTokens: CountProjectEmbedTokens
+  }): GetPaginatedProjectEmbedTokens =>
+  async ({ projectId, filter = {} }) => {
+    const cursor = filter.cursor ? decodeIsoDateCursor(filter.cursor) : null
+
+    const [items, totalCount] = await Promise.all([
+      deps.listEmbedTokens({
+        projectId,
+        filter: {
+          createdBefore: cursor,
+          limit: filter.limit
+        }
+      }),
+      deps.countEmbedTokens({ projectId })
+    ])
+
+    const lastItem = items.at(-1)
+
+    return {
+      items,
+      totalCount,
+      cursor: lastItem ? encodeIsoDateCursor(lastItem.createdAt) : null
+    }
   }
 
 export const validateTokenFactory =

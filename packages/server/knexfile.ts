@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports */
 /* istanbul ignore file */
-import { packageRoot } from './bootstrap'
+import { packageRoot } from './bootstrap.js'
 import fs from 'fs'
 import path from 'path'
 import {
@@ -110,7 +110,7 @@ const config: Record<string, Knex.Config> = {
   }
 }
 
-export const configureClient = (config: RegionServerConfig) => {
+export const configureClient = (config: Pick<RegionServerConfig, 'postgres'>) => {
   return configureKnexClient(config, configArgs)
 }
 

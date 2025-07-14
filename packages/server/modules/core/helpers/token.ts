@@ -14,7 +14,7 @@ import {
   Scopes,
   ServerScope
 } from '@speckle/shared'
-import { differenceBy } from 'lodash'
+import { differenceBy } from 'lodash-es'
 
 export enum RoleResourceTargets {
   Streams = 'streams',

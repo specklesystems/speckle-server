@@ -19,6 +19,8 @@ import cryptoRandomString from 'crypto-random-string'
 import { logger, notificationsLogger, Observability } from '@/observability/logging'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 import { TIME_MS } from '@speckle/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { NotificationsEvents } from '@/modules/notifications/domain/events'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -119,6 +121,8 @@ export function registerNotificationHandlers(
  */
 export async function consumeIncomingNotifications() {
   const queue = getQueue()
+  const eventBus = getEventBus()
+
   void queue.process(async (job): Promise<NotificationJobResult> => {
     let notificationType: Optional<NotificationType>
     try {
@@ -138,6 +142,13 @@ export async function consumeIncomingNotifications() {
       // Invoke correct handler
       const type = typedPayload.type as NotificationType
       notificationType = type
+
+      await eventBus.emit({
+        eventName: NotificationsEvents.Received,
+        payload: {
+          message: typedPayload
+        }
+      })
 
       const handler = handlers.get(type)
       if (!handler) {

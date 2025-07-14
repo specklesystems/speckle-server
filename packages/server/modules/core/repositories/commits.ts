@@ -15,7 +15,7 @@ import {
   StreamAclRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
-import { clamp, uniq, uniqBy, reduce, keyBy, mapValues } from 'lodash'
+import { clamp, uniq, uniqBy, reduce, keyBy, mapValues } from 'lodash-es'
 import crs from 'crypto-random-string'
 import {
   BatchedSelectOptions,
@@ -351,12 +351,14 @@ export const getPaginatedBranchCommitsItemsFactory =
     if (cursor) {
       q.andWhere(Commits.col.createdAt, '<', cursor)
     }
-    if (deps.limitsDate) {
-      q.andWhere(Commits.col.createdAt, '>', deps.limitsDate)
+
+    let rows = await q
+
+    const limitsDate = deps.limitsDate
+    if (limitsDate && rows.length > 0) {
+      // the length check above makes the ! ok
+      rows = [rows.shift()!, ...rows.filter((r) => r.createdAt > limitsDate)]
     }
-
-    const rows = await q
-
     return {
       commits: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
@@ -701,11 +703,17 @@ export const legacyGetPaginatedStreamCommitsPageFactory =
     if (ignoreGlobalsBranch) query.andWhere('branches.name', '!=', 'globals')
 
     if (cursor) query.andWhere('commits.createdAt', '<', cursor)
-    if (deps.limitsDate) query.andWhere('commits.createdAt', '>', deps.limitsDate)
+    // if (deps.limitsDate) query.andWhere('commits.createdAt', '>', deps.limitsDate)
 
     query.orderBy('commits.createdAt', 'desc').limit(limit)
 
-    const rows = (await query) as LegacyStreamCommit[]
+    let rows = (await query) as LegacyStreamCommit[]
+
+    const limitsDate = deps.limitsDate
+    if (limitsDate && rows.length > 0) {
+      // the length check above makes the ! ok
+      rows = [rows.shift()!, ...rows.filter((r) => r.createdAt > limitsDate)]
+    }
     return {
       commits: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null

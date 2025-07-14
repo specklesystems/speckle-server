@@ -15,15 +15,19 @@ import {
 import { CommentEvents, CommentEventsPayloads } from '@/modules/comments/domain/events'
 import { ReplyCreateInput } from '@/modules/core/graph/generated/graphql'
 import { EventBusListen } from '@/modules/shared/services/eventBus'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { OverrideProperties } from 'type-fest'
 
 const addThreadCreatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddThreadCreatedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddThreadCreatedActivity =>
   async (params) => {
     const { input, comment } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       resourceId: comment.id,
       streamId: comment.streamId,
       resourceType: StreamResourceTypes.Comment,
@@ -39,14 +43,18 @@ const isLegacyReplyCreateInput = (
 ): i is ReplyCreateInput => has(i, 'streamId')
 
 const addReplyAddedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveStreamActivity }): AddReplyAddedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddReplyAddedActivity =>
   async (params) => {
     const { input, reply } = params
 
     const parentCommentId = isLegacyReplyCreateInput(input)
       ? input.parentComment
       : input.threadId
-    await saveActivity({
+    await saveStreamActivity({
       streamId: reply.streamId,
       resourceType: StreamResourceTypes.Comment,
       resourceId: parentCommentId,
@@ -59,14 +67,14 @@ const addReplyAddedActivityFactory =
 
 const addCommentArchivedActivityFactory =
   ({
-    saveActivity
+    saveStreamActivity
   }: {
-    saveActivity: SaveStreamActivity
+    saveStreamActivity: SaveStreamActivity
   }): AddCommentArchivedActivity =>
   async (params) => {
     const { userId, input, comment } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId: comment.streamId,
       resourceType: StreamResourceTypes.Comment,
       resourceId: comment.id,
@@ -100,7 +108,8 @@ const isThreadCreatedPayload = (
 }
 
 export const reportCommentActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveStreamActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveStreamActivity: SaveStreamActivity }) =>
+  () => {
     const addThreadCreatedActivity = addThreadCreatedActivityFactory(deps)
     const addReplyAddedActivity = addReplyAddedActivityFactory(deps)
     const addCommentArchivedActivity = addCommentArchivedActivityFactory(deps)

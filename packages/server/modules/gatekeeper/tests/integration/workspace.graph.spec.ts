@@ -22,7 +22,7 @@ import {
   GetWorkspaceDocument,
   GetWorkspacePlanUsageDocument,
   GetWorkspaceWithSubscriptionDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   createTestContext,
   testApolloServer,

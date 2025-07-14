@@ -9,7 +9,7 @@ import {
   GetPendingEmailVerificationStatusQueryVariables,
   RequestVerificationMutation,
   RequestVerificationMutationVariables
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
 import gql from 'graphql-tag'
 
@@ -45,6 +45,19 @@ const getActiveUserQuery = gql`
   }
 
   ${baseUserFieldsFragment}
+`
+
+export const activeUserUpdateMutation = gql`
+  mutation activeUserUpdateMutation($user: UserUpdateInput!) {
+    activeUserMutations {
+      update(user: $user) {
+        name
+        bio
+        company
+        avatar
+      }
+    }
+  }
 `
 
 export const getActiveUserWithWorkspaceJoinRequestsQuery = gql`

@@ -45,7 +45,8 @@ import {
   grantStreamPermissionsFactory,
   getOnboardingBaseStreamFactory,
   getUserStreamsPageFactory,
-  getUserStreamsCountFactory
+  getUserStreamsCountFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
@@ -94,7 +95,7 @@ import {
   ProjectSubscriptions,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import {
@@ -136,6 +137,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -203,6 +205,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
@@ -211,6 +214,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    getStreamRoles: getStreamRolesFactory({ db }),
     emitEvent: getEventBus().emit
   }),
   removeStreamCollaborator

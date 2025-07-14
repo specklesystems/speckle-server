@@ -32,7 +32,7 @@ import {
   ensureCommentSchema,
   validateInputAttachmentsFactory
 } from '@/modules/comments/services/commentTextService'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import {
   documentToBasicString,
   SmartTextEditorValueSchema
@@ -143,7 +143,7 @@ const getAuthorizedStreamCommentFactory =
     return comment
   }
 
-export = {
+export default {
   Query: {
     async comment(_parent, args, context) {
       const projectId = args.streamId

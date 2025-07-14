@@ -1,11 +1,13 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
+  getApiTokenByIdFactory,
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
 import {
+  countProjectEmbedTokensFactory,
   listProjectEmbedTokensFactory,
   revokeEmbedTokenByIdFactory,
   revokeProjectEmbedTokensFactory,
@@ -13,7 +15,8 @@ import {
 } from '@/modules/core/repositories/embedTokens'
 import {
   createEmbedTokenFactory,
-  createTokenFactory
+  createTokenFactory,
+  getPaginatedProjectEmbedTokensFactory
 } from '@/modules/core/services/tokens'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
@@ -27,15 +30,19 @@ const resolvers: Resolvers = {
     }
   },
   Project: {
-    embedTokens: async (parent, _args, context) => {
+    embedTokens: async (parent, args, context) => {
       const canReadEmbedTokens = await context.authPolicies.project.canReadEmbedTokens({
         userId: context.userId,
         projectId: parent.id
       })
       throwIfAuthNotOk(canReadEmbedTokens)
 
-      return await listProjectEmbedTokensFactory({ db })({
-        projectId: parent.id
+      return await getPaginatedProjectEmbedTokensFactory({
+        listEmbedTokens: listProjectEmbedTokensFactory({ db }),
+        countEmbedTokens: countProjectEmbedTokensFactory({ db })
+      })({
+        projectId: parent.id,
+        filter: removeNullOrUndefinedKeys(args)
       })
     }
   },
@@ -60,6 +67,7 @@ const resolvers: Resolvers = {
           storeTokenResourceAccessDefinitions:
             storeTokenResourceAccessDefinitionsFactory({ db })
         }),
+        getToken: getApiTokenByIdFactory({ db }),
         storeEmbedToken: storeEmbedApiTokenFactory({ db })
       })({
         ...removeNullOrUndefinedKeys(args.token),
