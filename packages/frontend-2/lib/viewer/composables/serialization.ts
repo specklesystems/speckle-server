@@ -13,7 +13,7 @@ import {
 import { CameraController, ViewMode, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import type { PartialDeep } from 'type-fest'
-import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
+import type { SectionBoxData } from '@speckle/shared/viewer/state'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 

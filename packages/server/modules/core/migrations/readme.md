@@ -6,13 +6,13 @@ Next, write your migration! Here's an example below that adds a new column to a 
 
 ```js
 /* istanbul ignore file */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.alterTable('scopes', (table) => {
     table.boolean('public').defaultTo(true)
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   let hasColumn = await knex.schema.hasColumn('scopes', 'public')
   if (hasColumn) {
     await knex.schema.alterTable('scopes', (table) => {
@@ -20,6 +20,8 @@ exports.down = async (knex) => {
     })
   }
 }
+
+export { up, down }
 ```
 
 Notes:

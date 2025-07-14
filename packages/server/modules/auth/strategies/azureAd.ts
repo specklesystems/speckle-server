@@ -223,4 +223,4 @@ const azureAdStrategyBuilderFactory =
     }
   }
 
-export = azureAdStrategyBuilderFactory
+export default azureAdStrategyBuilderFactory

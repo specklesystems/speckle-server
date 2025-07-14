@@ -10,7 +10,7 @@ import {
 } from '@/modules/core/domain/tokens/operations'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { Knex } from 'knex'
-import { clamp } from 'lodash'
+import { clamp } from 'lodash-es'
 
 const tables = {
   apiTokens: (db: Knex) => db<ApiTokenRecord>(ApiTokens.name),

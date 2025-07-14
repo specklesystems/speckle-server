@@ -1,5 +1,5 @@
 // /* istanbul ignore file */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('server_invites', (table) => {
     table.string('id').defaultTo(knex.raw('gen_random_uuid()')).primary()
     table.string('email', 256).unique().notNullable()
@@ -13,6 +13,8 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('server_invites')
 }
+
+export { up, down }

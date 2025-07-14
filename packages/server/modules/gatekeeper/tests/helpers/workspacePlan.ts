@@ -1,6 +1,6 @@
 import { WorkspacePlan } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { assign } from 'lodash'
+import { assign } from 'lodash-es'
 import {
   SubscriptionData,
   SubscriptionProduct,

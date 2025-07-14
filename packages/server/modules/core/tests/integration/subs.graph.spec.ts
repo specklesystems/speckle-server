@@ -73,7 +73,7 @@ import {
   ProjectUpdatedMessageType,
   ProjectVersionsUpdatedMessageType,
   UserProjectsUpdatedMessageType
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   TestApolloSubscriptionClient,
   testApolloSubscriptionServer,

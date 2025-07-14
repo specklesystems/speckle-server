@@ -3,16 +3,8 @@ import {
   GetWorkspacePlanProductAndPriceIds,
   GetWorkspacePlanProductId
 } from '@/modules/gatekeeper/domain/billing'
-import { getStringFromEnv, getStripeApiKey } from '@/modules/shared/helpers/envHelper'
-import { Stripe } from 'stripe'
+import { getStringFromEnv } from '@/modules/shared/helpers/envHelper'
 import { NotImplementedError } from '@/modules/shared/errors'
-
-let stripeClient: Stripe | undefined = undefined
-
-export const getStripeClient = () => {
-  if (!stripeClient) stripeClient = new Stripe(getStripeApiKey(), { typescript: true })
-  return stripeClient
-}
 
 const loadProductAndPriceIds: GetWorkspacePlanProductAndPriceIds = () => ({
   team: {

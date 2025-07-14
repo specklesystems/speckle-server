@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('email_verifications', (table) => {
     table.string('id').primary()
     table.string('email')
@@ -11,6 +11,8 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('email_verifications')
 }
+
+export { up, down }

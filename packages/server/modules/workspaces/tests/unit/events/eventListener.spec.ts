@@ -37,7 +37,7 @@ import { WorkspacePlans, WorkspacePlanStatuses } from '@speckle/shared'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import cryptoRandomString from 'crypto-random-string'
-import { BillingInterval } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { BillingInterval } from '@/modules/core/graph/generated/graphql'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 

@@ -15,7 +15,6 @@ import {
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { Express } from 'express'
 import dayjs from 'dayjs'
-import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
   createAuthedTestContext,
   createTestContext,
@@ -29,8 +28,8 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
 
-const mailerMock = EmailSendingServiceMock
 const getUser = getUserFactory({ db })
 const getPendingToken = getPendingTokenFactory({ db })
 const deleteVerifications = deleteVerificationsFactory({ db })
@@ -61,25 +60,25 @@ describe('Email verifications @emails', () => {
     id: ''
   }
 
+  let emailListener: TestEmailListener
+
   before(async () => {
     await cleanup()
     await createTestUsers([userA, userB])
+    emailListener = await createEmailListener()
   })
 
   after(async () => {
     await cleanup()
+    await emailListener.destroy()
   })
 
   afterEach(async () => {
-    mailerMock.resetMockedFunctions()
+    emailListener.reset()
   })
 
   it('sends out 1 verification email immediately after new account creation', async () => {
-    const sendEmailInvocations = mailerMock.hijackFunction(
-      'sendEmail',
-      async () => true,
-      { times: 2 }
-    )
+    const { getSends } = emailListener.listen({ times: 2 })
 
     const newGuy: BasicTestUser = {
       name: 'happy to be here',
@@ -90,7 +89,8 @@ describe('Email verifications @emails', () => {
 
     await createTestUser(newGuy)
 
-    const emailParams = sendEmailInvocations.args[0][0]
+    const sentEmails = getSends()
+    const emailParams = sentEmails[0]
     expect(emailParams).to.be.ok
     expect(emailParams.subject).to.contain('Speckle account email verification')
 
@@ -98,7 +98,7 @@ describe('Email verifications @emails', () => {
     expect(verification).to.be.ok
 
     // There should be only 1 email!
-    expect(sendEmailInvocations.args.length).to.eq(1)
+    expect(sentEmails.length).to.eq(1)
   })
 
   describe('when authenticated', () => {
@@ -146,16 +146,16 @@ describe('Email verifications @emails', () => {
         // delete previous requests for userA, if any
         await deleteVerifications(userA.email)
 
-        const sendEmailInvocations = mailerMock.hijackFunction(
-          'sendEmail',
-          async () => false
-        )
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const result = await invokeRequestVerification(userA)
         expect(result).to.not.haveGraphQLErrors()
         expect(result.data?.requestVerification).to.be.true
 
-        const emailParams = sendEmailInvocations.args[0][0]
+        const sentEmails = getSends()
+        expect(sentEmails.length).to.eq(1)
+
+        const emailParams = sentEmails[0]
         expect(emailParams).to.be.ok
         expect(emailParams.subject).to.contain('Speckle account email verification')
         expect(emailParams.html).to.be.ok

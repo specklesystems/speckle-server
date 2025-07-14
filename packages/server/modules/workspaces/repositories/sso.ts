@@ -21,7 +21,7 @@ import { SsoProviderTypeNotSupportedError } from '@/modules/workspaces/errors/ss
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 type Crypt = (input: string) => Promise<string>
 

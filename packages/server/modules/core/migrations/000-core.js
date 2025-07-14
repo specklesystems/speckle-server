@@ -2,7 +2,7 @@
 'use strict'
 
 // Knex table migrations
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.raw('CREATE EXTENSION IF NOT EXISTS "pgcrypto"')
 
   // Base table holding up some configuration variables for the server. Not really used much.
@@ -260,7 +260,7 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('server_config')
 
   await knex.schema.dropTableIfExists('server_acl')
@@ -286,3 +286,5 @@ exports.down = async (knex) => {
   await knex.raw('DROP TYPE IF EXISTS speckle_reference_type ')
   await knex.raw('DROP TYPE IF EXISTS speckle_acl_role_type ')
 }
+
+export { up, down }

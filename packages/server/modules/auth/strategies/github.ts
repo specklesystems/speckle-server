@@ -17,7 +17,7 @@ import {
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import { ensureError, Optional } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
@@ -200,4 +200,4 @@ const githubStrategyBuilderFactory =
     return strategy
   }
 
-export = githubStrategyBuilderFactory
+export default githubStrategyBuilderFactory

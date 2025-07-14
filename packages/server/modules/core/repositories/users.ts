@@ -15,7 +15,7 @@ import {
   UserWithRole
 } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { clamp, isArray, omit } from 'lodash'
+import { clamp, isArray, omit } from 'lodash-es'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
 import { Knex } from 'knex'

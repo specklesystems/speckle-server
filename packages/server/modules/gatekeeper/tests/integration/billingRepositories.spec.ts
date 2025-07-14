@@ -24,7 +24,6 @@ import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/works
 import { PaidWorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { beforeEach } from 'mocha'
 
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({

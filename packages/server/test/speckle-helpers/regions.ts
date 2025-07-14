@@ -13,7 +13,7 @@ import {
   getMainTestRegionKey
 } from '@/test/hooks'
 import { wait } from '@speckle/shared'
-import { isString } from 'lodash'
+import { isString } from 'lodash-es'
 
 /**
  * Delete all regions entries that are not part of the main multi region mode

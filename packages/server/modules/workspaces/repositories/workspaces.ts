@@ -73,7 +73,7 @@ import {
 } from '@/modules/core/dbSchema'
 import { removePrivateFields, UserRecord } from '@/modules/core/helpers/userHelper'
 
-import { clamp, has, isObjectLike } from 'lodash'
+import { clamp, has, isObjectLike } from 'lodash-es'
 import {
   WorkspaceCreationState,
   WorkspaceTeamMember

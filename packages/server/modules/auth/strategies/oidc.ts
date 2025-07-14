@@ -16,7 +16,7 @@ import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import { ensureError, Optional } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
@@ -203,4 +203,4 @@ const oidcStrategyBuilderFactory =
     }
   }
 
-export = oidcStrategyBuilderFactory
+export default oidcStrategyBuilderFactory
