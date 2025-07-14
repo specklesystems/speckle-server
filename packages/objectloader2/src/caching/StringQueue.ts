@@ -1,6 +1,6 @@
 import { CustomLogger } from '../types/functions.js'
-import { ObjectQueue } from './ObjectQueue.js'
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { ObjectQueue } from '../workers/ObjectQueue.js'
+import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 
 export class StringQueue extends ObjectQueue<string> {
   private textEncoder: TextEncoder

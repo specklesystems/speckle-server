@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 import { StringQueue } from './StringQueue.js'
 
 describe('StringQueue with concurrent access', () => {

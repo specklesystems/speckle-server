@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import { StringQueue } from './StringQueue.js'
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 
 describe('StringQueue', () => {
   test('should enqueue and dequeue strings successfully', async () => {

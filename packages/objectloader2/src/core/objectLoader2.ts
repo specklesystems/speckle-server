@@ -107,6 +107,7 @@ export class ObjectLoader2 {
       total
     })
     //only for root
+    const start = performance.now()
     this.#gathered.add(rootItem)
     this.#cacheReader.requestAll(children)
     let count = 0
@@ -121,6 +122,9 @@ export class ObjectLoader2 {
       await this.#database.saveBatch({ batch: [rootItem] })
       this.#isRootStored = true
     }
+    this.#logger(
+      `getObjectIterator: processed ${count} items in ${performance.now() - start}ms`
+    )
   }
 
   static createFromObjects(objects: Base[]): ObjectLoader2 {

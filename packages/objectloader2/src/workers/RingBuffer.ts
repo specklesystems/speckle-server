@@ -15,17 +15,18 @@ type TypedArray = Uint8Array // Internal type, not exported
 export class RingBuffer {
   private buffer: TypedArray
   private controlBuffer: Int32Array // [writeIdx, readIdx, state]
-  public static readonly WRITE_IDX_POS = 0
-  public static readonly READ_IDX_POS = 1
-  public static readonly STATE_POS = 2
-  public static readonly CONTROL_BUFFER_SIZE_ELEMENTS = 3
-  public static readonly CONTROL_BUFFER_BYTE_LENGTH =
+  private static readonly WRITE_IDX_POS = 0
+  private static readonly READ_IDX_POS = 1
+  private static readonly STATE_POS = 2
+
+  private static readonly CONTROL_BUFFER_SIZE_ELEMENTS = 3
+  private static readonly CONTROL_BUFFER_BYTE_LENGTH =
     RingBuffer.CONTROL_BUFFER_SIZE_ELEMENTS * Int32Array.BYTES_PER_ELEMENT
 
-  public static readonly DEFAULT_DEQUEUE_SIZE = 10000
+  public static readonly DEFAULT_DEQUEUE_SIZE = 5000
   public static readonly DEFAULT_DEQUEUE_TIMEOUT_MS = 500
 
-  public static readonly DEFAULT_ENQUEUE_SIZE = 1000
+  public static readonly DEFAULT_ENQUEUE_SIZE = 5000
   public static readonly DEFAULT_ENQUEUE_TIMEOUT_MS = 500
 
   private capacityPlusOne: number // Number of elements (not bytes, unless elementSize is 1)

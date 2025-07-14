@@ -2,15 +2,15 @@ import { DefermentManager } from '../../deferment/defermentManager.js'
 import Queue from '../../queues/queue.js'
 import { CustomLogger } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
-import { ItemQueue } from '../../workers/ItemQueue.js'
+import { ItemQueue } from '../../caching/ItemQueue.js'
 import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
 import { RingBuffer } from '../../workers/RingBuffer.js'
-import { StringQueue } from '../../workers/StringQueue.js'
+import { StringQueue } from '../../caching/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
 import { CacheOptions } from '../options.js'
 
-const ID_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 500 // 5KB capacity for each queue
-const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 1024 // 1MB capacity for each queue
+const ID_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 200 // 5KB capacity for each queue
+const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 500 // 1MB capacity for each queue
 
 export class CacheReader {
   #defermentManager: DefermentManager
@@ -71,7 +71,7 @@ export class CacheReader {
 
     this.logToMainUI('Starting Web Worker...')
     this.indexedDbReader = new Worker(
-      new URL('../../workers/IndexDbReader.js', import.meta.url),
+      new URL('../../caching/IndexDbReader.js', import.meta.url),
       { type: 'module' }
     )
 

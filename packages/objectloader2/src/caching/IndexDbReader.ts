@@ -1,15 +1,18 @@
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 import { StringQueue } from './StringQueue.js'
 import { ItemQueue } from './ItemQueue.js'
-import { handleError, WorkerMessageType } from './WorkerMessageType.js'
-import { InitQueuesMessage } from './InitQueuesMessage.js'
+import { handleError, WorkerMessageType } from '../workers/WorkerMessageType.js'
+import { InitQueuesMessage } from '../workers/InitQueuesMessage.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { Item } from '../types/types.js'
 import { isWhitespaceOnly } from '../types/functions.js'
-import { RingBuffer } from './RingBuffer.js'
+import { RingBuffer } from '../workers/RingBuffer.js'
+import BatchingQueue from '../queues/batchingQueue.js';
 
 let workerToMainQueue: ItemQueue | null = null
 let mainToWorkerQueue: StringQueue | null = null
+let batchingQueue: BatchingQueue<string> | null = null
+let db: IndexedDatabase | null = null
 
 const consolePrefix = '[Worker]'
 
@@ -21,6 +24,31 @@ function postMessage(args: unknown): void {
   ;(self as unknown as Worker).postMessage(args)
 }
 
+ const processBatch =
+  async (batch: string[]): Promise<void> => {
+     const start = performance.now()
+     const items = await db?.getAll(batch) ?? []
+     const processedItems: Item[] = []
+     for (let i = 0; i < items.length; i++) {
+       const item = items[i]
+       if (item) {
+         processedItems.push(item)
+       } else {
+         if (isWhitespaceOnly(batch[i])) {
+           log('Received a whitespace-only message, skipping it.')
+           continue
+         }
+         processedItems.push({ baseId: batch[i] })
+       }
+     }
+     log(`Processed ${processedItems.length} items in ${performance.now() - start}ms`)
+     // eslint-disable-next-line @typescript-eslint/no-floating-promises
+     workerToMainQueue?.fullyEnqueue(
+       processedItems,
+       RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
+     )
+  }
+
 async function processMessages(): Promise<void> {
   if (!mainToWorkerQueue || !workerToMainQueue) {
     log('Error: Queues not initialized. Stopping message processing.')
@@ -30,38 +58,23 @@ async function processMessages(): Promise<void> {
     })
     return
   }
-  const db = new IndexedDatabase({})
+  db = new IndexedDatabase({})
+  batchingQueue = new BatchingQueue<string>(
+    {
+              batchSize: RingBuffer.DEFAULT_ENQUEUE_SIZE,
+        maxWaitTime:   RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS,
+        processFunction: processBatch
+
+    });
   log('Starting to listen for messages from main thread...')
   while (true) {
     try {
       const receivedMessages = await mainToWorkerQueue.dequeue(
-        RingBuffer.DEFAULT_DEQUEUE_SIZE,
-        RingBuffer.DEFAULT_DEQUEUE_TIMEOUT_MS
+        RingBuffer.DEFAULT_ENQUEUE_SIZE,
+        RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
       ) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
-        const start = performance.now()
-        const items = await db.getAll(receivedMessages)
-        const processedItems: Item[] = []
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i]
-          if (item) {
-            processedItems.push(item)
-          } else {
-            if (isWhitespaceOnly(receivedMessages[i])) {
-              log('Received a whitespace-only message, skipping it.')
-              continue
-            }
-            processedItems.push({ baseId: receivedMessages[i] })
-          }
-        }
-        log(
-          `Processed ${processedItems.length} items in ${performance.now() - start}ms`
-        )
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        workerToMainQueue.fullyEnqueue(
-          processedItems,
-          RingBuffer.DEFAULT_ENQUEUE_TIMEOUT_MS
-        )
+        batchingQueue.addAll(receivedMessages, receivedMessages)
       }
     } catch (e: unknown) {
       handleError(

@@ -1,7 +1,7 @@
 import { CustomLogger } from '../types/functions.js'
 import { Item } from '../types/types.js'
-import { ObjectQueue } from './ObjectQueue.js'
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { ObjectQueue } from '../workers/ObjectQueue.js'
+import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 
 export class ItemQueue extends ObjectQueue<Item> {
   private textEncoder: TextEncoder

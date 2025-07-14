@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { ItemQueue } from './ItemQueue.js'
-import { RingBufferQueue } from './RingBufferQueue.js'
+import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 import { Base, Item } from '../types/types.js'
 import { delay } from '../types/functions.js'
 
