@@ -5,23 +5,47 @@
       class="bg-foundation"
       :columns="[
         { id: 'status', header: 'Status', classes: 'col-span-2' },
-        { id: 'accFileName', header: 'File name', classes: 'col-span-3' },
-        { id: 'modelName', header: 'Model name', classes: 'col-span-3' },
-        { id: 'createdBy', header: 'Created by', classes: 'col-span-3' }
+        { id: 'accFileName', header: 'File name', classes: 'col-span-2' },
+        { id: 'modelId', header: 'Model id', classes: 'col-span-2' },
+        { id: 'createdBy', header: 'Created by', classes: 'col-span-2' },
+        { id: 'actions', header: 'Actions', classes: 'col-span-2' }
       ]"
-      :items="syncs"
+      :items="accSyncItems"
     >
       <template #status="{ item }">
         <ProjectPageAccSyncStatus :status="item.status" />
       </template>
       <template #accFileName="{ item }">
-        {{ item.accFileLineageId }}
+        {{ item.accFileName }}
       </template>
-      <template #modelName="{ item }">
-        {{ item.modelId }}
+      <template #modelId="{ item }">
+        <NuxtLink
+          class="text-foreground-1 hover:text-blue-500 underline"
+          :to="`/projects/${projectId}/models/${item.modelId}`"
+        >
+          {{ item.modelId }}
+        </NuxtLink>
       </template>
       <template #createdBy="{ item }">
         {{ item.author?.name }}
+      </template>
+      <template #actions="{ item }">
+        <div class="space-x-2">
+          <FormButton
+            hide-text
+            color="outline"
+            :icon-left="item.status === 'PAUSED' ? PlayIcon : PauseIcon"
+            @click="
+              handleStatusSyncItem(item.accFileLineageId, item.status === 'PAUSED')
+            "
+          />
+          <FormButton
+            hide-text
+            color="outline"
+            :icon-left="TrashIcon"
+            @click="handleDeleteSyncItem(item.accFileLineageId)"
+          />
+        </div>
       </template>
     </LayoutTable>
     <FormButton
@@ -55,6 +79,7 @@
           <ProjectPageAccFiles
             v-if="selectedProjectId"
             :folder-contents="folderContents"
+            :sync-items="accSyncItems || []"
             :selected-folder-content="selectedFolderContent"
             :loading="loadingFiles"
             @download="onDownloadClick"
@@ -111,18 +136,25 @@
 import type { AccTokens, AccHub, AccProject, AccItem } from '~/lib/acc/types'
 import { ref, computed } from 'vue'
 import type {
-  ProjectAccSyncItemFragment,
   ProjectLatestModelsPaginationQueryVariables,
   ProjectPageLatestItemsModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
-import { useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery, useSubscription } from '@vue/apollo-composable'
 import { latestModelsQuery } from '~/lib/projects/graphql/queries'
 import { isArray } from 'lodash-es'
+import {
+  accSyncItemCreateMutation,
+  accSyncItemDeleteMutation,
+  accSyncItemUpdateMutation
+} from '~/lib/acc/graphql/mutations'
+import { projectAccSyncItemsQuery } from '~/lib/acc/graphql/queries'
+import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subscriptions'
+import { PauseIcon } from '@heroicons/vue/24/solid'
+import { TrashIcon, PlayIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   projectId: string
   tokens: AccTokens | undefined
-  syncs: ProjectAccSyncItemFragment[]
   isLoggedIn: boolean
 }>()
 
@@ -138,7 +170,7 @@ const hubs = ref<AccHub[]>([])
 const loadingHubs = ref(false)
 const selectedHub = ref<AccHub | null>(null)
 const selectedHubId = ref<string | null>(null)
-const folderUrn = ref<string | null>(null)
+const rootProjectFolderId = ref<string | null>(null)
 const projects = ref<AccProject[]>([])
 const loadingProjects = ref(false)
 const selectedProjectId = ref<string | null>(null)
@@ -170,6 +202,34 @@ const { result: modelsResult } = useQuery(
 )
 
 const models = computed(() => modelsResult.value?.project?.models?.items || [])
+
+const { result: accSyncItemsResult, refetch: refetchAccSyncItems } = useQuery(
+  projectAccSyncItemsQuery,
+  () => ({
+    id: props.projectId
+  })
+)
+
+const accSyncItems = computed(
+  () => accSyncItemsResult.value?.project.accSyncItems.items || []
+)
+
+const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
+  onProjectAccSyncItemUpdatedSubscription,
+  () => ({
+    id: props.projectId,
+    itemIds: accSyncItems.value.map((s) => s.accFileLineageId)
+  })
+)
+
+onProjectAccSyncItemsUpdated((res) => {
+  refetchAccSyncItems()
+  triggerNotification({
+    type: ToastNotificationType.Info,
+    title: 'Acc Sync Item updated',
+    description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageId
+  })
+})
 
 const fetchHubs = async () => {
   loadingHubs.value = true
@@ -241,8 +301,8 @@ const getProjectRootFolderId = async (hubId: string, projectId: string) => {
     if (!res.ok) throw (new Error('Failed to get project details'), null)
     const r = await res.json()
     // console.log('root folder id', r)
-    folderUrn.value = r.data.relationships?.rootFolder?.data?.id || null
-    return folderUrn.value
+    rootProjectFolderId.value = r.data.relationships?.rootFolder?.data?.id || null
+    return rootProjectFolderId.value
   } catch (error) {
     triggerNotification({
       type: ToastNotificationType.Danger,
@@ -282,6 +342,7 @@ const fetchFolderContents = async (
               collectedItems.push({
                 ...item,
                 latestVersionId: version.id,
+                fileExtension: version.attributes.fileType,
                 storageUrn
               })
             } else {
@@ -359,34 +420,86 @@ const onFileSelected = (item: AccItem) => {
   selectedFolderContent.value = item
 }
 
-// const handleModelSelect = (model: ProjectPageLatestItemsModelItemFragment) => {
-//   selectedModel.value = model
-// }
+const { mutate: createAccSyncItem } = useMutation(accSyncItemCreateMutation)
 
 const addSync = async () => {
-  // const item = {
-  //   id: 'whatever',
-  //   accHub: selectedHub.value,
-  //   accHubId: selectedHubId.value,
-  //   accHubUrn: folderUrn.value,
-  //   modelId: selectedModel.value?.id,
-  //   projectId: props.projectId,
-  //   projectName: '',
-  //   modelName: selectedModel.value?.displayName,
-  //   createdBy: 'cat',
-  //   accItem: selectedFolderContent.value,
-  //   status: 'syncing'
-  // } as AccSyncItem
-  // internalSyncs.value.push(item)
-  // await fetch('/acc/sync-item-created', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(item)
-  // })
+  try {
+    await createAccSyncItem({
+      input: {
+        projectId: props.projectId,
+        modelId: selectedModel.value?.id as string,
+        accRegion: selectedHub.value?.attributes?.region as string,
+        accFileExtension: selectedFolderContent.value?.fileExtension as string, // TODO
+        accHubId: selectedHubId.value!,
+        accProjectId: selectedProjectId.value as string,
+        accRootProjectFolderId: rootProjectFolderId.value!,
+        accFileLineageId: selectedFolderContent.value?.id as string,
+        accFileName: (selectedFolderContent.value?.attributes.displayName ||
+          selectedFolderContent.value?.attributes.name) as string
+      }
+    })
+    // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
+    setTimeout(() => {
+      refetchAccSyncItems()
+    }, 1000)
+  } catch (error) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Add sync item failed',
+      description: error instanceof Error ? error.message : 'Unexpected error'
+    })
+  } finally {
+    selectedFolderContent.value = undefined
+    showNewSyncDialog.value = false
+    step.value = 0
+  }
+}
 
-  // TODO: mutation
-  showNewSyncDialog.value = false
-  step.value = 0
+const { mutate: deleteAccSyncItem } = useMutation(accSyncItemDeleteMutation)
+
+const handleDeleteSyncItem = async (fileLineageId: string) => {
+  try {
+    await deleteAccSyncItem({
+      input: {
+        projectId: props.projectId,
+        accFileLineageId: fileLineageId
+      }
+    })
+    // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
+    setTimeout(() => {
+      refetchAccSyncItems()
+    }, 1000)
+  } catch (error) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Delete sync item failed',
+      description: error instanceof Error ? error.message : 'Unexpected error'
+    })
+  }
+}
+
+const { mutate: updateAccSyncItem } = useMutation(accSyncItemUpdateMutation)
+
+const handleStatusSyncItem = async (fileLineageId: string, isPaused: boolean) => {
+  try {
+    await updateAccSyncItem({
+      input: {
+        projectId: props.projectId,
+        accFileLineageId: fileLineageId,
+        status: isPaused ? 'INITIALIZING' : 'PAUSED'
+      }
+    })
+    // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
+    setTimeout(() => {
+      refetchAccSyncItems()
+    }, 1000)
+  } catch (error) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Update sync item failed',
+      description: error instanceof Error ? error.message : 'Unexpected error'
+    })
+  }
 }
 
 watch(tokens, (newTokens) => {

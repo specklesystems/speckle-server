@@ -8,6 +8,9 @@
           :folder-content="item"
           :loading="loading"
           :selected="item.id === selectedFolderContent?.id"
+          :disabled="
+            syncItems.find((si) => si.accFileLineageId === item.id) !== undefined
+          "
           @download="(i) => $emit('download', i)"
           @select="(i) => $emit('select', i)"
         ></ProjectPageAccFileItem>
@@ -19,10 +22,12 @@
 
 <script setup lang="ts">
 import type { AccItem } from '~/lib/acc/types'
+import type { ProjectAccSyncItemFragment } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   selectedFolderContent: AccItem | undefined
   folderContents: AccItem[]
+  syncItems: ProjectAccSyncItemFragment[]
   loading: boolean
 }>()
 

@@ -7,19 +7,19 @@ export async function up(knex: Knex): Promise<void> {
     table.string('id', 10).primary()
     table.string('projectId').notNullable().references('id').inTable('streams')
     table.string('modelId').notNullable()
+    table.string('accRegion').notNullable()
     table.string('accHubId').notNullable()
     table.string('accProjectId').notNullable()
-    table.string('accRootFolderUrn').notNullable()
+    table.string('accRootProjectFolderId').notNullable()
+    table.string('accFileName').notNullable()
+    table.string('accFileExtension').notNullable()
     table.string('accFileLineageId').notNullable().unique()
     table.string('accWebhookId').nullable()
     table
-      .enu('status', ['SYNC', 'SYNCING', 'FAILED', 'PAUSED'])
+      .enu('status', ['SYNC', 'INITIALIZING', 'SYNCING', 'FAILED', 'PAUSED'])
       .notNullable()
       .defaultTo('SYNC')
-
-    // Foreign key to users table if needed
-    table.string('authorId').nullable()
-
+    table.string('authorId', 10).references('id').inTable('users')
     table
       .timestamp('createdAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())

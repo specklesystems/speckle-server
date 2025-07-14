@@ -6,6 +6,8 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
 import { Express } from 'express'
 
+import { db } from '@/db/knex'
+
 export default function accRestApi(app: Express) {
   const sessionMiddleware = sessionMiddlewareFactory()
   app.post('/auth/acc/login', sessionMiddleware, async (req, res) => {
@@ -106,8 +108,6 @@ export default function accRestApi(app: Express) {
 
   app.post('/acc/sync-item-created', sessionMiddleware, async (req, res) => {
     const { accHubUrn } = req.body
-    console.log(req.body)
-    console.log(accHubUrn)
 
     if (!req.session.accTokens) {
       throw new Error('whatever')
@@ -115,17 +115,48 @@ export default function accRestApi(app: Express) {
     const { access_token } = req.session.accTokens
     await registerAccWebhook({
       accessToken: access_token,
-      hubUrn: accHubUrn,
+      rootProjectId: accHubUrn,
       region: 'EMEA',
       event: ''
     })
     res.status(200)
   })
 
-  app.post('/acc/webhook/callback', sessionMiddleware, async (req, res) => {
-    console.log(req.body)
-    res.status(200)
-  })
+  // Registered ACC webhooks are handled here
+  app.post(
+    '/acc/webhook/callback/dm.version.added',
+    sessionMiddleware,
+    async (req, res) => {
+      const lineageUrn = req.body?.payload?.lineageUrn
+
+      if (!lineageUrn) {
+        console.warn('Webhook received without lineageUrn')
+        return res.status(400).send({ error: 'Missing lineageUrn' })
+      }
+
+      // TODO ACC: need to know when svf2 is generated, whether with timeout or a webhook that unknown for now
+
+      try {
+        const affectedRows = await db('acc_sync_items')
+          .where({ accFileLineageId: lineageUrn })
+          .update({ status: 'INITIALIZING' })
+
+        if (affectedRows > 0) {
+          console.log(
+            `✅ Updated ${affectedRows} item(s) with lineageUrn ${lineageUrn} to INITIALIZING`
+            // TODO ACC: trigger automation and update status of sync item (as in createAccSyncItemAndNotifyFactory)
+          )
+        } else {
+          console.log(`⚠️ No acc_sync_items matched lineageUrn ${lineageUrn}`)
+        }
+
+        res.status(200).send('OK')
+      } catch (err) {
+        console.error('❌ Failed to update acc_sync_items:', err)
+        res.status(500).send({ error: 'DB update failed' })
+      }
+    }
+  )
 }
 
 export const init: SpeckleModule['init'] = async ({ app }) => {

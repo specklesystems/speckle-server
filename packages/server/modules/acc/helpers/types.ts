@@ -1,4 +1,3 @@
-import { UserRecord } from '@/modules/core/helpers/types'
 import type { Session, SessionData } from 'express-session'
 
 declare module 'express-session' {
@@ -28,19 +27,28 @@ export type AccSessionData = {
   projectId?: string
 }
 
+// TODO ACC: might need to good to move into shared?
 export type AccSyncItem = {
   id: string
   projectId: string
   modelId: string
+  accRegion: string
   accHubId: string
   accProjectId: string
-  accRootFolderUrn: string
+  accRootProjectFolderId: string
   accFileLineageId: string
+  accFileName: string
+  accFileExtension: string
   accWebhookId?: string
   status: AccSyncItemStatus
-  author?: UserRecord
+  authorId: string
   createdAt: Date
   updatedAt: Date
 }
 
-export type AccSyncItemStatus = 'SYNC' | 'SYNCING' | 'PAUSED' | 'FAILED'
+export type AccSyncItemStatus =
+  | 'SYNC'
+  | 'SYNCING'
+  | 'PAUSED'
+  | 'FAILED'
+  | 'INITIALIZING'

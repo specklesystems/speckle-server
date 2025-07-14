@@ -22,10 +22,13 @@ export type Scalars = {
 
 export type AccSyncItem = {
   __typename?: 'AccSyncItem';
+  accFileExtension: Scalars['String']['output'];
   accFileLineageId: Scalars['String']['output'];
+  accFileName: Scalars['String']['output'];
   accHubId: Scalars['String']['output'];
   accProjectId: Scalars['String']['output'];
-  accRootFolderUrn: Scalars['String']['output'];
+  accRegion: Scalars['String']['output'];
+  accRootProjectFolderId: Scalars['String']['output'];
   accWebhookId?: Maybe<Scalars['String']['output']>;
   author?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime']['output'];
@@ -45,7 +48,9 @@ export type AccSyncItemCollection = {
 
 export type AccSyncItemMutations = {
   __typename?: 'AccSyncItemMutations';
-  create?: Maybe<AccSyncItem>;
+  create: AccSyncItem;
+  delete: Scalars['Boolean']['output'];
+  update: AccSyncItem;
 };
 
 
@@ -53,8 +58,19 @@ export type AccSyncItemMutationsCreateArgs = {
   input: CreateAccSyncItemInput;
 };
 
+
+export type AccSyncItemMutationsDeleteArgs = {
+  input: DeleteAccSyncItemInput;
+};
+
+
+export type AccSyncItemMutationsUpdateArgs = {
+  input: UpdateAccSyncItemInput;
+};
+
 export const AccSyncItemStatus = {
   Failed: 'FAILED',
+  Initializing: 'INITIALIZING',
   Paused: 'PAUSED',
   Sync: 'SYNC',
   Syncing: 'SYNCING'
@@ -930,10 +946,13 @@ export type CountOnlyCollection = {
 };
 
 export type CreateAccSyncItemInput = {
+  accFileExtension: Scalars['String']['input'];
   accFileLineageId: Scalars['String']['input'];
+  accFileName: Scalars['String']['input'];
   accHubId: Scalars['String']['input'];
   accProjectId: Scalars['String']['input'];
-  accRootFolderUrn: Scalars['String']['input'];
+  accRegion: Scalars['String']['input'];
+  accRootProjectFolderId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
 };

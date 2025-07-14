@@ -42,10 +42,13 @@ export type Scalars = {
 
 export type AccSyncItem = {
   __typename?: 'AccSyncItem';
+  accFileExtension: Scalars['String']['output'];
   accFileLineageId: Scalars['String']['output'];
+  accFileName: Scalars['String']['output'];
   accHubId: Scalars['String']['output'];
   accProjectId: Scalars['String']['output'];
-  accRootFolderUrn: Scalars['String']['output'];
+  accRegion: Scalars['String']['output'];
+  accRootProjectFolderId: Scalars['String']['output'];
   accWebhookId?: Maybe<Scalars['String']['output']>;
   author?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime']['output'];
@@ -65,7 +68,9 @@ export type AccSyncItemCollection = {
 
 export type AccSyncItemMutations = {
   __typename?: 'AccSyncItemMutations';
-  create?: Maybe<AccSyncItem>;
+  create: AccSyncItem;
+  delete: Scalars['Boolean']['output'];
+  update: AccSyncItem;
 };
 
 
@@ -73,8 +78,19 @@ export type AccSyncItemMutationsCreateArgs = {
   input: CreateAccSyncItemInput;
 };
 
+
+export type AccSyncItemMutationsDeleteArgs = {
+  input: DeleteAccSyncItemInput;
+};
+
+
+export type AccSyncItemMutationsUpdateArgs = {
+  input: UpdateAccSyncItemInput;
+};
+
 export const AccSyncItemStatus = {
   Failed: 'FAILED',
+  Initializing: 'INITIALIZING',
   Paused: 'PAUSED',
   Sync: 'SYNC',
   Syncing: 'SYNCING'
@@ -950,10 +966,13 @@ export type CountOnlyCollection = {
 };
 
 export type CreateAccSyncItemInput = {
+  accFileExtension: Scalars['String']['input'];
   accFileLineageId: Scalars['String']['input'];
+  accFileName: Scalars['String']['input'];
   accHubId: Scalars['String']['input'];
   accProjectId: Scalars['String']['input'];
-  accRootFolderUrn: Scalars['String']['input'];
+  accRegion: Scalars['String']['input'];
+  accRootProjectFolderId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
 };
@@ -5493,7 +5512,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 export type ResolversTypes = {
   AccSyncItem: ResolverTypeWrapper<Omit<AccSyncItem, 'author'> & { author?: Maybe<ResolversTypes['LimitedUser']> }>;
   AccSyncItemCollection: ResolverTypeWrapper<Omit<AccSyncItemCollection, 'items'> & { items: Array<ResolversTypes['AccSyncItem']> }>;
-  AccSyncItemMutations: ResolverTypeWrapper<Omit<AccSyncItemMutations, 'create'> & { create?: Maybe<ResolversTypes['AccSyncItem']> }>;
+  AccSyncItemMutations: ResolverTypeWrapper<Omit<AccSyncItemMutations, 'create' | 'update'> & { create: ResolversTypes['AccSyncItem'], update: ResolversTypes['AccSyncItem'] }>;
   AccSyncItemStatus: AccSyncItemStatus;
   ActiveUserMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   Activity: ResolverTypeWrapper<Activity>;
@@ -5854,7 +5873,7 @@ export type ResolversTypes = {
 export type ResolversParentTypes = {
   AccSyncItem: Omit<AccSyncItem, 'author'> & { author?: Maybe<ResolversParentTypes['LimitedUser']> };
   AccSyncItemCollection: Omit<AccSyncItemCollection, 'items'> & { items: Array<ResolversParentTypes['AccSyncItem']> };
-  AccSyncItemMutations: Omit<AccSyncItemMutations, 'create'> & { create?: Maybe<ResolversParentTypes['AccSyncItem']> };
+  AccSyncItemMutations: Omit<AccSyncItemMutations, 'create' | 'update'> & { create: ResolversParentTypes['AccSyncItem'], update: ResolversParentTypes['AccSyncItem'] };
   ActiveUserMutations: MutationsObjectGraphQLReturn;
   Activity: Activity;
   ActivityCollection: ActivityCollectionGraphQLReturn;
@@ -6211,10 +6230,13 @@ export type IsOwnerDirectiveArgs = { };
 export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type AccSyncItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccSyncItem'] = ResolversParentTypes['AccSyncItem']> = {
+  accFileExtension?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accFileLineageId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  accFileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accHubId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accProjectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  accRootFolderUrn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  accRegion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  accRootProjectFolderId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accWebhookId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   author?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -6234,7 +6256,9 @@ export type AccSyncItemCollectionResolvers<ContextType = GraphQLContext, ParentT
 };
 
 export type AccSyncItemMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccSyncItemMutations'] = ResolversParentTypes['AccSyncItemMutations']> = {
-  create?: Resolver<Maybe<ResolversTypes['AccSyncItem']>, ParentType, ContextType, RequireFields<AccSyncItemMutationsCreateArgs, 'input'>>;
+  create?: Resolver<ResolversTypes['AccSyncItem'], ParentType, ContextType, RequireFields<AccSyncItemMutationsCreateArgs, 'input'>>;
+  delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AccSyncItemMutationsDeleteArgs, 'input'>>;
+  update?: Resolver<ResolversTypes['AccSyncItem'], ParentType, ContextType, RequireFields<AccSyncItemMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

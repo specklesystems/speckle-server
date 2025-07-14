@@ -16,7 +16,7 @@ export type AccUserInfo = {
 
 export type AccHub = {
   id: string
-  attributes: { name: string; extension: Record<string, unknown> }
+  attributes: { name: string; region: string; extension: Record<string, unknown> }
 }
 
 export type AccProject = {
@@ -29,6 +29,7 @@ export type AccItem = {
   id: string
   type?: string
   latestVersionId?: string // we mutate on the way
+  fileExtension: string
   storageUrn?: string // we mutate on the way
   attributes: {
     name: string
@@ -37,6 +38,8 @@ export type AccItem = {
     extension?: Record<string, unknown>
   }
 }
+
+// TODO: looks stale, we can consider to move this types into @shared
 
 export type AccSyncItem = {
   id: string

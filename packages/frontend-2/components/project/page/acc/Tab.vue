@@ -1,20 +1,20 @@
 <template>
   <div class="flex flex-col text-xs space-y-2">
-    <!-- TODO: Get sync items from graphql -->
     <ProjectPageAccSyncs
       :project-id="projectId"
       :is-logged-in="hasTokens"
       :tokens="tokens"
-      :syncs="accSyncItems"
-    ></ProjectPageAccSyncs>
+    />
 
-    <div v-if="!hasTokens">
-      <CommonLoadingBar v-if="loadingTokens" :loading="true" class="my-2" />
-      <div v-else>
-        <hr class="mb-2" />
-        <FormButton size="sm" @click="authAcc()">Connect to ACC</FormButton>
+    <ClientOnly>
+      <div v-if="!hasTokens">
+        <CommonLoadingBar v-if="loadingTokens" :loading="true" class="my-2" />
+        <div v-else>
+          <hr class="mb-2" />
+          <FormButton size="sm" @click="authAcc()">Connect to ACC</FormButton>
+        </div>
       </div>
-    </div>
+    </ClientOnly>
 
     <!-- USER INFO -->
     <div v-if="userInfo" class="flex flex-col space-y-2">
@@ -51,9 +51,9 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery, useSubscription } from '@vue/apollo-composable'
-import { projectAccSyncItemsQuery } from '~/lib/acc/graphql/queries'
-import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subscriptions'
+// import { useQuery, useSubscription } from '@vue/apollo-composable'
+// import { projectAccSyncItemsQuery } from '~/lib/acc/graphql/queries'
+// import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subscriptions'
 import type { AccTokens, AccUserInfo } from '~/lib/acc/types'
 
 const props = defineProps<{ projectId: string }>()
@@ -65,29 +65,33 @@ const loadingTokens = ref(true)
 const userInfo = ref<AccUserInfo>()
 const loadingUser = ref(false)
 
-const { result: accSyncItemsResult } = useQuery(projectAccSyncItemsQuery, () => ({
-  id: props.projectId
-}))
+// const { result: accSyncItemsResult, refetch: refetchAccSyncItems } = useQuery(
+//   projectAccSyncItemsQuery,
+//   () => ({
+//     id: props.projectId
+//   })
+// )
 
-const accSyncItems = computed(
-  () => accSyncItemsResult.value?.project.accSyncItems.items || []
-)
+// const accSyncItems = computed(
+//   () => accSyncItemsResult.value?.project.accSyncItems.items || []
+// )
 
-const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
-  onProjectAccSyncItemUpdatedSubscription,
-  () => ({
-    id: unref(props.projectId)
-  })
-)
+// const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
+//   onProjectAccSyncItemUpdatedSubscription,
+//   () => ({
+//     id: props.projectId,
+//     itemIds: accSyncItems.value.map((s) => s.accFileLineageId)
+//   })
+// )
 
-onProjectAccSyncItemsUpdated((res) => {
-  // refetchAccSyncItems()
-  triggerNotification({
-    type: ToastNotificationType.Info,
-    title: 'Acc Sync Item updated',
-    description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageId
-  })
-})
+// onProjectAccSyncItemsUpdated((res) => {
+//   refetchAccSyncItems()
+//   triggerNotification({
+//     type: ToastNotificationType.Info,
+//     title: 'Acc Sync Item updated',
+//     description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageId
+//   })
+// })
 
 // const syncs = ref<AccSyncItem[]>([
 //   {
@@ -165,8 +169,6 @@ const scheduleRefresh = (expiresInSeconds: number) => {
 
 watch(tokens, (newTokens) => {
   if (newTokens?.expires_in) scheduleRefresh(newTokens.expires_in)
-})
-watch(tokens, (newTokens) => {
   if (newTokens?.access_token) {
     fetchUserInfo()
   }

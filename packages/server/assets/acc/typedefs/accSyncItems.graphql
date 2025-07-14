@@ -13,10 +13,13 @@ type AccSyncItem {
   id: ID!
   projectId: String!
   modelId: String!
+  accRegion: String!
   accHubId: String!
   accProjectId: String!
-  accRootFolderUrn: String!
+  accRootProjectFolderId: String!
   accFileLineageId: String!
+  accFileName: String!
+  accFileExtension: String!
   accWebhookId: String
   status: AccSyncItemStatus!
   author: LimitedUser
@@ -29,6 +32,7 @@ enum AccSyncItemStatus {
   SYNCING
   FAILED
   PAUSED
+  INITIALIZING
 }
 
 input DeleteAccSyncItemInput {
@@ -45,16 +49,19 @@ input UpdateAccSyncItemInput {
 input CreateAccSyncItemInput {
   projectId: String!
   modelId: String!
+  accRegion: String!
   accHubId: String!
   accProjectId: String!
-  accRootFolderUrn: String!
+  accRootProjectFolderId: String!
   accFileLineageId: String!
+  accFileName: String!
+  accFileExtension: String!
 }
 
 type AccSyncItemMutations {
-  create(input: CreateAccSyncItemInput!): AccSyncItem
-  # delete(input: DeleteAccSyncItemInput!): Boolean!
-  # update(input: UpdateAccSyncItemInput!): AccSyncItem!
+  create(input: CreateAccSyncItemInput!): AccSyncItem!
+  delete(input: DeleteAccSyncItemInput!): Boolean!
+  update(input: UpdateAccSyncItemInput!): AccSyncItem!
 }
 
 extend type Mutation {
@@ -79,4 +86,6 @@ extend type Subscription {
     id: String!
     itemIds: [String!]
   ): ProjectAccSyncItemsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
 }

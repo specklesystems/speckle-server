@@ -4,7 +4,9 @@ export const onProjectAccSyncItemUpdatedSubscription = graphql(`
   subscription OnProjectAccSyncItemUpdated($id: String!, $itemIds: [String!]) {
     projectAccSyncItemsUpdated(id: $id, itemIds: $itemIds) {
       type
-      accSyncItem
+      accSyncItem {
+        ...ProjectAccSyncItem
+      }
     }
   }
 `)

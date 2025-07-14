@@ -22,6 +22,9 @@ const runStatusClasses = (run: AccSyncItemStatus) => {
     case 'SYNCING':
       classParts.push('bg-info-lighter')
       break
+    case 'INITIALIZING':
+      classParts.push('bg-warning-lighter')
+      break
     case 'PAUSED':
       classParts.push('bg-warning-lighter')
       break

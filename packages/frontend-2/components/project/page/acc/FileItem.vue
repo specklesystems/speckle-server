@@ -6,6 +6,8 @@
     <div class="flex flex-col justify-between">
       <button
         class="flex flex-row justify-between items-center"
+        :disabled="disabled"
+        :class="{ 'opacity-50 cursor-not-allowed': disabled }"
         @click="$emit('select', folderContent)"
       >
         <div class="text-body-xs text-foreground">
@@ -65,6 +67,7 @@ defineProps<{
   folderContent: AccItem
   loading: boolean
   selected: boolean
+  disabled: boolean
 }>()
 
 defineEmits<{

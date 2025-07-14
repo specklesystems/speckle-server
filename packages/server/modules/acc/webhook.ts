@@ -1,14 +1,19 @@
-const accWebhookCallbackUrl =
-  'https://oguzhans-macbook-pro.mermaid-emperor.ts.net//acc/webhook/callback'
+import { isDevEnv } from '@/modules/shared/helpers/envHelper'
+
+const tailscaleUrl = 'https://oguzhans-macbook-pro.mermaid-emperor.ts.net' // TODO ACC for dev: Get your local url from tailscale and then we will got rid of
+
+const accWebhookCallbackUrl = `${
+  isDevEnv() ? tailscaleUrl : process.env.FRONTEND_HOST
+}/acc/webhook/callback`
 
 export async function registerAccWebhook({
   accessToken,
-  hubUrn,
+  rootProjectId: hubUrn,
   region,
-  event = 'dm.lineage.updated'
+  event
 }: {
   accessToken: string
-  hubUrn: string
+  rootProjectId: string
   region: string
   event: string
 }) {
@@ -22,7 +27,7 @@ export async function registerAccWebhook({
         'x-ads-region': `${region}`
       },
       body: JSON.stringify({
-        callbackUrl: accWebhookCallbackUrl,
+        callbackUrl: `${accWebhookCallbackUrl}/${event}`,
         scope: {
           folder: {
             hubUrn

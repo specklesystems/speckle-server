@@ -1,5 +1,6 @@
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
 import { AccSyncItem } from '@/modules/acc/helpers/types'
+// import { registerAccWebhook } from '@/modules/acc/webhook'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Knex } from 'knex'
 
@@ -10,7 +11,7 @@ const tables = {
 }
 
 export type CreateAccSyncItemAndNotify = (
-  input: Omit<AccSyncItem, 'author' | 'createdAt' | 'updatedAt'>
+  input: Omit<AccSyncItem, 'createdAt' | 'updatedAt'>
 ) => Promise<AccSyncItem>
 
 export const createAccSyncItemAndNotifyFactory = (deps: {
@@ -18,6 +19,16 @@ export const createAccSyncItemAndNotifyFactory = (deps: {
   eventEmit: EventBusEmit
 }): CreateAccSyncItemAndNotify => {
   return async (input) => {
+    // TODO ACC: register webhook if it is not yet
+    // const accWebhook = await registerAccWebhook({
+    //   accessToken: '', // TODO ACC: get the token from 2legged server-to-server auth
+    //   rootProjectId: input.accRootProjectFolderId,
+    //   region: input.accRegion,
+    //   event: 'dm.version.added' // NOTE ACC: you can register an event only once
+    // })
+    // TODO ACC: get webhook id and store it in item -> not sure it is make sense to have many webhooks per file as `/acc/webhook/callback/:filelineageUrn`
+
+    // TODO ACC: trigger automation and update status of sync item
     const now = new Date()
 
     const [item] = await tables
@@ -29,6 +40,8 @@ export const createAccSyncItemAndNotifyFactory = (deps: {
       })
       .returning('*')
 
+    // TODO ACC: somehow i could not managed to get subsriptions work, doing stupid timeout refetch in FE after create/delete/update
+    // Once we have it properly TODO ogu: fix it on FE
     await deps.eventEmit({
       eventName: AccSyncItemEvents.Created,
       payload: {

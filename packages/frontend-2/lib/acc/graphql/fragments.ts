@@ -5,10 +5,13 @@ export const projectAccSyncItemFragment = graphql(`
     id
     projectId
     modelId
+    accRegion
     accHubId
     accProjectId
-    accRootFolderUrn
+    accRootProjectFolderId
     accFileLineageId
+    accFileName
+    accFileExtension
     updatedAt
     status
     author {
