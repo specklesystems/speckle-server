@@ -42,6 +42,12 @@ export interface Activity<
   createdAt: Date
 }
 
+export interface AnyActivity
+  extends Activity<
+    keyof ResourceEventsToPayloadMap,
+    keyof ResourceEventsToPayloadMap[keyof ResourceEventsToPayloadMap]
+  > {}
+
 const workspacePlan = z.object({
   name: z.union([
     z.literal('teamUnlimitedInvoiced'),
