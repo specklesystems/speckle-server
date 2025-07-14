@@ -44,7 +44,10 @@ export const createCheckoutSessionFactory =
       line_items: costLineItems,
 
       success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url
+      cancel_url,
+      tax_id_collection: {
+        enabled: true
+      }
     })
 
     if (!session.url)
