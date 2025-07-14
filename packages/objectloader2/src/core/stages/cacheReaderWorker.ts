@@ -85,7 +85,7 @@ export class CacheReaderWorker implements Reader {
 
     this.logToMainUI('Starting Web Worker...')
     this.indexedDbReader = new Worker(
-      new URL('../../caching/IndexDbReader.js', import.meta.url),
+      new URL('../../caching/ReaderWorker.js', import.meta.url),
       { type: 'module' }
     )
 

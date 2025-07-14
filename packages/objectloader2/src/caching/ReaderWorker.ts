@@ -25,15 +25,16 @@ async function processMessages(): Promise<void> {
     return
   }
   log('Starting to listen for messages from main thread...')
-    try {
-     await indexReader.processMessages()
-    } catch (e: unknown) {
-      handleError(
-        e,
-        (err) => `Error during message dequeue or processing: ${err.message}`
-      )
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-    }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    indexReader.processMessages()
+  } catch (e: unknown) {
+    handleError(
+      e,
+      (err) => `Error during message dequeue or processing: ${err.message}`
+    )
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
 }
 
 self.onmessage = (event: MessageEvent): void => {

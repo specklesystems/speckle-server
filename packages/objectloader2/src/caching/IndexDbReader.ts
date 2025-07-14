@@ -3,7 +3,7 @@ import { StringQueue } from './StringQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { Item } from '../types/types.js'
-import { isWhitespaceOnly } from '../types/functions.js'
+import { delay, isWhitespaceOnly } from '../types/functions.js'
 import BatchingQueue from '../queues/batchingQueue.js'
 import { WorkerCachingConstants } from './WorkerCachingConstants.js'
 
@@ -70,12 +70,16 @@ export class IndexDbReader {
   }
 
   public async processMessages(): Promise<void> {
-    const receivedMessages = await this.mainToWorkerQueue.dequeue(
-      WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
-      WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
-    ) // receivedMessages will be string[]
-    if (receivedMessages && receivedMessages.length > 0) {
-      this.batchingQueue.addAll(receivedMessages, receivedMessages)
+    while (true) {
+      const receivedMessages = await this.mainToWorkerQueue.dequeue(
+        WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
+        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+      ) // receivedMessages will be string[]
+      if (receivedMessages && receivedMessages.length > 0) {
+        this.batchingQueue.addAll(receivedMessages, receivedMessages)
+      } else {
+        await delay(1000) // Wait for 1 second before checking again
+      }
     }
   }
 }
