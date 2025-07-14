@@ -101,7 +101,7 @@ It's suggested to just run tests from the VSCode test explorer, however.
 
 The best way to do integration tests is to actually invoke queries against an `ApolloServer` instance. To make this process even better you can rely on GraphQL Code Generator to properly generate types for the queries you write in your tests.
 
-Put your test-specific queries/mutations in `@/test/graphql` and then run `yarn gqlgen`. This will generate a typings file at `@/test/graphql/generated/graphql.ts` which will contain query & variable types for the operations you've created.
+Put your test-specific queries/mutations in `@/test/graphql` and then run `yarn gqlgen`. This will generate typings which will contain query & variable types for the operations you've created.
 
 You can then specify these types when running operations through `executeOperation` from `@/test/graphqlHelper.ts` (through the generic arguments), and then inside your TS test file you'll get properly typed response structures. Awesome!
 

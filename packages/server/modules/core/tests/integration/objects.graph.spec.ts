@@ -15,7 +15,7 @@ import {
   CreateObjectDocument,
   CreateWorkspaceDocument,
   CreateWorkspaceProjectDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {

@@ -21,7 +21,7 @@ import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   AutomateValidateAuthCodeDocument,
   GetProjectAutomationDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   TestApolloServer,
   createTestContext,

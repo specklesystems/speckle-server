@@ -14,7 +14,7 @@ import {
   GetActiveUserDocument,
   GetProjectDocument,
   GetWorkspaceDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   createTestContext,
   testApolloServer,

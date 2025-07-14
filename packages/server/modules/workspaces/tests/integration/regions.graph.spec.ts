@@ -13,7 +13,7 @@ import {
   GetAvailableRegionsDocument,
   GetWorkspaceDefaultRegionDocument,
   SetWorkspaceDefaultRegionDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'

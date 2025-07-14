@@ -38,7 +38,7 @@ import {
   ServerInviteCreateInput,
   StreamInviteCreateInput,
   UseStreamInviteDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { reduce } from 'lodash-es'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'

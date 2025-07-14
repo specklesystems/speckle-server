@@ -35,7 +35,7 @@ import {
   UpdateEmbedOptionsDocument,
   WorkspaceEmbedOptionsDocument,
   ProjectEmbedOptionsDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {

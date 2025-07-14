@@ -1,7 +1,6 @@
 import fetch from 'cross-fetch'
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { CreateCommentInput } from '@/test/graphql/generated/graphql'
 import { Roles, TIME_MS, timeoutAt } from '@speckle/shared'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash-es'
@@ -18,8 +17,9 @@ import {
   CrossSyncCommitBranchMetadataQuery,
   CrossSyncCommitDownloadMetadataQuery,
   CrossSyncDownloadableCommitViewerThreadsQuery,
-  CrossSyncProjectViewerResourcesQuery
-} from '@/modules/cross-server-sync/graph/generated/graphql'
+  CrossSyncProjectViewerResourcesQuery,
+  CreateCommentInput
+} from '@/modules/core/graph/generated/graphql'
 import { DownloadCommit } from '@/modules/cross-server-sync/domain/operations'
 import {
   CreateCommentReplyAndNotify,

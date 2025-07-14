@@ -39,7 +39,7 @@ import {
   UpdateProjectDocument,
   UpdateProjectRoleDocument,
   UpdateWorkspaceProjectRoleDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   ExecuteOperationResponse,
   testApolloServer,

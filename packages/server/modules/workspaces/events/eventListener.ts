@@ -140,7 +140,7 @@ import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/wor
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 import { buildWorkspaceTrackingPropertiesFactory } from '@/modules/workspaces/services/tracking'
 import { assign } from 'lodash-es'
-import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { WorkspacePlans } from '@/modules/core/graph/generated/graphql'

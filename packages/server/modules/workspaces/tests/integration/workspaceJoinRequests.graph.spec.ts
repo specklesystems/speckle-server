@@ -7,7 +7,7 @@ import {
   GetActiveUserWithWorkspaceJoinRequestsDocument,
   GetWorkspaceWithJoinRequestsDocument,
   RequestToJoinWorkspaceDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'

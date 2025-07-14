@@ -6,7 +6,19 @@ const config: CodegenConfig = {
   documents: undefined,
   generates: {
     'modules/core/graph/generated/graphql.ts': {
-      plugins: ['typescript', 'typescript-resolvers'],
+      documents: [
+        'modules/cross-server-sync/**/*.{js,ts}',
+        'test/graphql/*.{js,ts}',
+        'modules/**/tests/helpers/graphql.ts',
+        'modules/**/tests/helpers/*Graphql.ts',
+        'modules/**/tests/helpers/graphql/*.ts'
+      ],
+      plugins: [
+        'typescript',
+        'typescript-resolvers',
+        'typescript-operations',
+        'typed-document-node'
+      ],
       config: {
         enumsAsConst: true,
         contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext',
@@ -171,33 +183,6 @@ const config: CodegenConfig = {
             '@/modules/core/helpers/graphTypes#RootPermissionChecksGraphQLReturn',
           WorkspacePermissionChecks:
             '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn'
-        }
-      }
-    },
-    'modules/cross-server-sync/graph/generated/graphql.ts': {
-      plugins: ['typescript', 'typescript-operations'],
-      documents: ['modules/cross-server-sync/**/*.{js,ts}'],
-      config: {
-        enumsAsConst: true,
-        scalars: {
-          JSONObject: 'Record<string, unknown>',
-          DateTime: 'string'
-        }
-      }
-    },
-    'test/graphql/generated/graphql.ts': {
-      plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
-      documents: [
-        'test/graphql/*.{js,ts}',
-        'modules/**/tests/helpers/graphql.ts',
-        'modules/**/tests/helpers/*Graphql.ts',
-        'modules/**/tests/helpers/graphql/*.ts'
-      ],
-      config: {
-        enumsAsConst: true,
-        scalars: {
-          JSONObject: 'Record<string, unknown>',
-          DateTime: 'string'
         }
       }
     }

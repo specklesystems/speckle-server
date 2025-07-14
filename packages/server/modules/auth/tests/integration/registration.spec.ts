@@ -18,7 +18,7 @@ import {
   CreateServerInviteDocument,
   CreateServerInviteMutationVariables,
   UseStreamInviteDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   createTestContext,
   testApolloServer,
