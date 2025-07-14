@@ -29,10 +29,10 @@ describe('ItemQueue (Integration)', () => {
       const capacity = 16 * 1024
       const rbq = RingBufferQueue.create(capacity, 'test-queue')
       sab = rbq.getSharedArrayBuffer() // Get the SAB from the created queue
-      producerQueue = new ItemQueue(rbq)
+      producerQueue = new ItemQueue(rbq, 100)
       // Create a second queue instance for the consumer attached to the same buffer
       const consumerRbq = RingBufferQueue.fromExisting(sab, capacity, 'test-queue')
-      consumerQueue = new ItemQueue(consumerRbq)
+      consumerQueue = new ItemQueue(consumerRbq, 100)
     })
 
     it('should do nothing if the initial message array is empty', async () => {
@@ -59,13 +59,13 @@ describe('ItemQueue (Integration)', () => {
       const capacity = 512
       const rbq = RingBufferQueue.create(capacity, 'test-queue-limited')
       sab = rbq.getSharedArrayBuffer()
-      producerQueue = new ItemQueue(rbq)
+      producerQueue = new ItemQueue(rbq, 100)
       const consumerRbq = RingBufferQueue.fromExisting(
         sab,
         capacity,
         'test-queue-limited'
       )
-      consumerQueue = new ItemQueue(consumerRbq)
+      consumerQueue = new ItemQueue(consumerRbq, 100)
 
       const itemsToEnqueue = createDummyItems(10) // More items than fit in the buffer
 

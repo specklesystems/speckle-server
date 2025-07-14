@@ -1,14 +1,19 @@
 import { CustomLogger, delay } from '../types/functions.js'
-import { RingBuffer } from './RingBuffer.js'
 import { RingBufferQueue } from './RingBufferQueue.js'
 import { handleError } from './WorkerMessageType.js'
 
 export abstract class ObjectQueue<T> {
   private rbq: RingBufferQueue
   private logger: CustomLogger
+  private enqueueSize: number
 
-  constructor(ringBufferQueue: RingBufferQueue, logger?: CustomLogger) {
+  constructor(
+    ringBufferQueue: RingBufferQueue,
+    enqueueSize: number,
+    logger?: CustomLogger
+  ) {
     this.rbq = ringBufferQueue
+    this.enqueueSize = enqueueSize
     this.logger = logger || ((): void => {})
   }
 
@@ -18,7 +23,7 @@ export abstract class ObjectQueue<T> {
   async fullyEnqueue(messages: T[], timeoutMs: number): Promise<void> {
     let remainingMessages = messages
     while (remainingMessages.length > 0) {
-      const s = remainingMessages.slice(0, RingBuffer.DEFAULT_ENQUEUE_SIZE)
+      const s = remainingMessages.slice(0, this.enqueueSize)
       let enqueuedInChunk = 0
       while (enqueuedInChunk < s.length) {
         const actuallyEnqueued = await this.enqueue(s.slice(enqueuedInChunk), timeoutMs)

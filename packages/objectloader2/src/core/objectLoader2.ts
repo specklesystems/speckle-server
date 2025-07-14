@@ -7,7 +7,9 @@ import { Database, Downloader } from './interfaces.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
 import { ObjectLoader2Options, CacheOptions } from './options.js'
 import { CacheReader } from './stages/cacheReader.js'
+import { CacheReaderWorker } from './stages/cacheReaderWorker.js'
 import { CacheWriter } from './stages/cacheWriter.js'
+import { Reader } from './stages/interfaces.js'
 
 export class ObjectLoader2 {
   #rootId: string
@@ -16,7 +18,7 @@ export class ObjectLoader2 {
 
   #database: Database
   #downloader: Downloader
-  #cacheReader: CacheReader
+  #reader: Reader
   #cacheWriter: CacheWriter
 
   #deferments: DefermentManager
@@ -48,8 +50,12 @@ export class ObjectLoader2 {
       logger: this.#logger
     })
     this.#downloader = options.downloader
-    this.#cacheReader = new CacheReader(this.#deferments, cacheOptions)
-    this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
+    if (options.useReadWorker) {
+      this.#reader = new CacheReaderWorker(this.#deferments, cacheOptions)
+    } else {
+      this.#reader = new CacheReader(this.#database, this.#deferments, cacheOptions)
+    }
+    this.#reader.initializeQueue(this.#gathered, this.#downloader)
     this.#cacheWriter = new CacheWriter(this.#database, this.#deferments, cacheOptions)
   }
 
@@ -60,7 +66,7 @@ export class ObjectLoader2 {
       this.#cacheWriter.disposeAsync()
     ])
     this.#deferments.dispose()
-    this.#cacheReader.dispose()
+    this.#reader.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {
@@ -76,7 +82,7 @@ export class ObjectLoader2 {
   }
 
   async getObject(params: { id: string }): Promise<Base> {
-    return await this.#cacheReader.getObject({ id: params.id })
+    return await this.#reader.getObject({ id: params.id })
   }
 
   async getTotalObjectCount(): Promise<number> {
@@ -109,7 +115,7 @@ export class ObjectLoader2 {
     //only for root
     const start = performance.now()
     this.#gathered.add(rootItem)
-    this.#cacheReader.requestAll(children)
+    this.#reader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
       yield item.base! //always defined, as we add it to the queue

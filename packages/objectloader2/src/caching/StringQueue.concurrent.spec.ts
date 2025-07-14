@@ -7,7 +7,7 @@ describe('StringQueue with concurrent access', () => {
     const queueCapacity = 1_000 // 1KB capacity
     const totalItems = 500 // Number of items to send
     const rbq = RingBufferQueue.create(queueCapacity, 'concurrent-test-queue')
-    const queue = new StringQueue(rbq)
+    const queue = new StringQueue(rbq, 100)
 
     // Create a set of messages with varying sizes
     const sourceItems = Array.from({ length: totalItems }, (_, i) => {
@@ -82,7 +82,7 @@ describe('StringQueue with concurrent access', () => {
     const queueCapacity = 1_000 // 1KB capacity
     const totalItems = 2000 // Number of items to send
     const rbq = RingBufferQueue.create(queueCapacity, 'concurrent-test-queue-2')
-    const queue = new StringQueue(rbq)
+    const queue = new StringQueue(rbq, 100)
 
     // Create a set of messages with varying sizes
     const sourceItems = Array.from({ length: totalItems }, (_, i) => {

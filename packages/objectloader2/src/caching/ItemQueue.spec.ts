@@ -11,7 +11,7 @@ describe('ItemQueue', () => {
     // A new queue for each test to ensure isolation
     // The size is arbitrary, but should be large enough for most tests.
     rbq = RingBufferQueue.create(2048, `item-queue-test-${Math.random()}`)
-    itemQueue = new ItemQueue(rbq)
+    itemQueue = new ItemQueue(rbq, 100)
   })
 
   it('should enqueue and dequeue items successfully', async () => {
@@ -35,7 +35,7 @@ describe('ItemQueue', () => {
       itemByteLength + 4,
       `small-queue-${Math.random()}`
     ) // +4 for header
-    const smallItemQueue = new ItemQueue(smallRbq)
+    const smallItemQueue = new ItemQueue(smallRbq, 100)
 
     // Enqueue one item to fill the queue
     let result = await smallItemQueue.enqueue([item], 1000)
