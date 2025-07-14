@@ -23,7 +23,7 @@ import {
   throwUncoveredError,
   WorkspacePlans
 } from '@speckle/shared'
-import { cloneDeep, isEqual, omit } from 'lodash'
+import { cloneDeep, isEqual, omit } from 'lodash-es'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'

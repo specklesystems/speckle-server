@@ -7,7 +7,7 @@ import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelpe
 import dayjs, { Dayjs } from 'dayjs'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { SchemaConfig } from '@/modules/core/dbSchema'
-import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash'
+import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash-es'
 
 export type Collection<T> = {
   cursor: string | null

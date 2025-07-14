@@ -46,7 +46,7 @@ import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import type { Logger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
-import { noop } from 'lodash'
+import { noop } from 'lodash-es'
 import { UnknownFunctionTemplateError } from '@/modules/automate/errors/functions'
 import { UserInputError } from '@/modules/core/errors/userinput'
 

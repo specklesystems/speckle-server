@@ -23,7 +23,7 @@ import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commi
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import dayjs from 'dayjs'
-import { flatten } from 'lodash'
+import { flatten } from 'lodash-es'
 
 const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 

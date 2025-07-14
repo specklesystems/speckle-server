@@ -1,5 +1,5 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { has, trimEnd } from 'lodash'
+import { has, trimEnd } from 'lodash-es'
 import * as Environment from '@speckle/shared/environment'
 import { ensureError, Nullable } from '@speckle/shared'
 

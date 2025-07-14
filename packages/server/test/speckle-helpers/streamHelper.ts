@@ -62,7 +62,7 @@ import { BasicTestUser } from '@/test/authHelper'
 import { ProjectVisibility } from '@/test/graphql/generated/graphql'
 import { faker } from '@faker-js/faker'
 import { ensureError, Roles, StreamRoles } from '@speckle/shared'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
