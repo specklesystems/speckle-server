@@ -1,8 +1,9 @@
-import { db } from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import {
   storeBackgroundJobFactory,
   getBackgroundJobFactory,
-  BackgroundJobs
+  BackgroundJobs,
+  getBackgroundJobCountFactory
 } from '@/modules/backgroundjobs/repositories'
 import {
   BackgroundJob,
@@ -20,9 +21,10 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     originServerUrl
   })
   const getBackgroundJob = getBackgroundJobFactory({ db })
+  const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
 
   type TestJobPayload = BackgroundJobPayload & {
-    jobType: 'test-job'
+    jobType: 'test-job' | 'test-job-2'
     payloadVersion: 1
     testData: string
   }
@@ -101,6 +103,59 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       const retrievedJob = await getBackgroundJob({ jobId: nonExistentId })
 
       expect(retrievedJob).to.be.null
+    })
+  })
+
+  describe('getBackgroundJobCount', () => {
+    it('counts all background jobs given a status and a jobType', async () => {
+      const queuedJob = createTestJob({
+        jobType: 'test-job',
+        status: BackgroundJobStatus.Queued
+      })
+      const anotherQueuedJob = createTestJob({
+        jobType: 'test-job-2',
+        status: BackgroundJobStatus.Queued
+      })
+      const failedJob = createTestJob({
+        jobType: 'test-job',
+        status: BackgroundJobStatus.Failed
+      })
+      await storeBackgroundJob({ job: queuedJob })
+      await storeBackgroundJob({ job: failedJob })
+      await storeBackgroundJob({ job: anotherQueuedJob })
+
+      const count = await getBackgroundJobCount({
+        status: BackgroundJobStatus.Queued,
+        jobType: 'test-job'
+      })
+
+      expect(count).to.equal(1)
+    })
+
+    it('is able to count locked jobs', async () => {
+      const job = createTestJob({
+        jobType: 'test-job',
+        status: BackgroundJobStatus.Queued
+      })
+
+      const trx = await knex.transaction()
+      await trx().from(BackgroundJobs.name).where({ id: job.id }).forKeyShare().first()
+
+      await storeBackgroundJob({ job })
+
+      const [processingCount, queuedCount] = await Promise.all([
+        getBackgroundJobCount({ status: 'processing', jobType: 'test-job' }),
+        getBackgroundJobCount({ status: 'queued', jobType: 'test-job' })
+      ])
+      console.log({
+        processingCount,
+        queuedCount
+      })
+
+      expect(processingCount).to.equal(1)
+      expect(queuedCount).to.equal(0)
+
+      await trx.commit()
     })
   })
 })

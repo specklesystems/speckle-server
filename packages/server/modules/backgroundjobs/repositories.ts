@@ -2,6 +2,7 @@ import { Knex } from 'knex'
 import {
   BackgroundJob,
   BackgroundJobPayload,
+  BackgroundJobStatus,
   GetBackgroundJob,
   StoreBackgroundJob
 } from '@/modules/backgroundjobs/domain'
@@ -45,4 +46,33 @@ export const getBackgroundJobFactory =
   async ({ jobId }) => {
     const job = await tables.backgroundJobs(db).select('*').where({ id: jobId }).first()
     return job ?? null
+  }
+
+export const getBackgroundJobCountFactory =
+  ({ db }: { db: Knex }) =>
+  async ({
+    status,
+    jobType
+  }: {
+    status: BackgroundJobStatus | 'processing'
+    jobType: string
+  }) => {
+    const q = tables.backgroundJobs(db)
+
+    if (status === 'processing') {
+      q.whereNotExists(function () {
+        this.from(BackgroundJobs.name)
+          .select(BackgroundJobs.col.id)
+          .whereRaw('id = background_jobs.id')
+          .where({ jobType })
+          .forUpdate()
+          .skipLocked()
+      })
+    } else {
+      q.where({ status })
+    }
+
+    const [res] = await q.andWhere({ jobType }).count()
+
+    return parseInt(res.count.toString())
   }

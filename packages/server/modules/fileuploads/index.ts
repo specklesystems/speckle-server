@@ -228,6 +228,7 @@ export const init: SpeckleModule['init'] = async ({
       const projectDb = await getProjectDbClient({
         projectId: parsedMessage.streamId
       })
+
       await onFileImportProcessedFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
