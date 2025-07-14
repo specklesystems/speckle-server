@@ -17,7 +17,7 @@ import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 const ObjectPreview = buildTableHelper('object_preview', [
   'streamId',
