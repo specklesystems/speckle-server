@@ -137,7 +137,10 @@ export const updateObjectPreviewFactory =
         streamId: objectPreview.streamId,
         objectId: objectPreview.objectId
       })
-      .increment('attempts', objectPreview.incrementAttempts ? 1 : 0) // false by default
+      .increment(
+        ObjectPreview.withoutTablePrefix.col.attempts,
+        objectPreview.incrementAttempts ? 1 : 0
+      ) // false by default
       .update({
         ...omit(objectPreview, 'incrementAttempts'),
         lastUpdate: new Date() // always update the lastUpdate field
