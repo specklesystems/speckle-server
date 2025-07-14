@@ -142,10 +142,6 @@ export const updateObjectPreviewFactory =
         lastUpdate: db.fn.now(), // always update the lastUpdate field
         ...(objectPreview.incrementAttempts ? { attempts: db.raw('attempts + 1') } : {})
       })
-      .increment(
-        ObjectPreview.withoutTablePrefix.col.attempts,
-        objectPreview.incrementAttempts ? 1 : 0
-      ) // false by default
       .returning<ObjectPreviewRecord[]>('*')
 
     return await q
