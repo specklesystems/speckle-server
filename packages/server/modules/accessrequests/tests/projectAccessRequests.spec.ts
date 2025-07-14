@@ -48,7 +48,7 @@ import {
   GetPendingProjectAccessRequestsDocument,
   StreamRole,
   UseProjectAccessRequestDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
 import {

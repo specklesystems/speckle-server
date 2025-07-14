@@ -26,7 +26,7 @@ import {
   UseWorkspaceInviteMutationVariables,
   UseWorkspaceProjectInviteDocument,
   UseWorkspaceProjectInviteMutationVariables
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { expect } from 'chai'
 
 import { MaybeAsync, StreamRoles, WorkspaceRoles } from '@speckle/shared'

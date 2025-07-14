@@ -9,7 +9,7 @@ import {
   GetProjectObjectDocument,
   ProjectCreateInput,
   ProjectVisibility
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { times } from 'lodash-es'
 import { Roles } from '@speckle/shared'

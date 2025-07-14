@@ -144,7 +144,7 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
 import { buildTestProject } from '@/modules/core/tests/helpers/creation'
-import { GetCommentsQueryVariables } from '@/test/graphql/generated/graphql'
+import { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })

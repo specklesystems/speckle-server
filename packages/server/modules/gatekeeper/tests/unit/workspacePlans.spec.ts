@@ -18,7 +18,7 @@ import {
   buildTestWorkspacePlan,
   buildTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
-import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 
 describe('workspacePlan services @gatekeeper', () => {
   describe('updateWorkspacePlanFactory creates a function, that', () => {

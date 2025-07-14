@@ -9,7 +9,7 @@ import {
   ReadStreamsDocument,
   RevokeTokenDocument,
   TokenAppInfoDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   TestApolloServer,
   createTestContext,
