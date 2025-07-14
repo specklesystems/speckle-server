@@ -35,7 +35,7 @@ import {
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { merge, omit } from 'lodash'
+import { merge, omit } from 'lodash-es'
 import {
   GetWorkspaceWithDomains,
   UpsertWorkspaceArgs

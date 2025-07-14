@@ -15,9 +15,8 @@ import { Roles, Scopes } from '@speckle/shared'
 import type { Logger } from 'pino'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { fileURLToPath } from 'url'
 
-const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
-const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
 const defaultAngle = '0'
 
 export const getObjectPreviewBufferOrFilepathFactory =
@@ -29,6 +28,11 @@ export const getObjectPreviewBufferOrFilepathFactory =
     logger: Logger
   }): GetObjectPreviewBufferOrFilepath =>
   async ({ streamId, objectId, angle }) => {
+    const [noPreviewImage, previewErrorImage] = await Promise.all([
+      fileURLToPath(import.meta.resolve('#/assets/previews/images/no_preview.png')),
+      fileURLToPath(import.meta.resolve('#/assets/previews/images/preview_error.png'))
+    ])
+
     angle = angle || defaultAngle
     const boundLogger = deps.logger.child({ streamId, objectId, angle })
 
@@ -44,7 +48,9 @@ export const getObjectPreviewBufferOrFilepathFactory =
     if (!dbObj) {
       return {
         type: 'file',
-        file: require.resolve('#/assets/previews/images/preview_404.png'),
+        file: fileURLToPath(
+          import.meta.resolve('#/assets/previews/images/preview_404.png')
+        ),
         error: true,
         errorCode: 'OBJECT_NOT_FOUND'
       }

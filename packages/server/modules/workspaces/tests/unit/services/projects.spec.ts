@@ -11,7 +11,7 @@ import {
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { ProjectUpdateRoleInput } from '@/test/graphql/generated/graphql'
+import { ProjectUpdateRoleInput } from '@/modules/core/graph/generated/graphql'
 import { Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'

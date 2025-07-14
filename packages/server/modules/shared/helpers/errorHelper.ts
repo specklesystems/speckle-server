@@ -9,7 +9,7 @@ import {
 } from '@/modules/shared/errors'
 import { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 import { Authz, ensureError, throwUncoveredError } from '@speckle/shared'
-import { VError } from 'verror'
+import VError from 'verror'
 
 /**
  * Resolve cause correctly depending on whether its a VError or basic Error

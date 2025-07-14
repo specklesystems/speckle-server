@@ -15,7 +15,7 @@ import {
   getStreamsCollaboratorsFactory,
   getStreamsCollaboratorCountsFactory
 } from '@/modules/core/repositories/streams'
-import { keyBy } from 'lodash'
+import { keyBy } from 'lodash-es'
 import {
   BranchRecord,
   CommitRecord,

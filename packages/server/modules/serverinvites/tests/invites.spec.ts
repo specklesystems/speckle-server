@@ -13,7 +13,6 @@ import {
   createStreamInviteDirectly,
   validateInviteExistanceFromEmail
 } from '@/test/speckle-helpers/inviteHelper'
-import { EmailSendingServiceMock } from '@/test/mocks/global'
 import db from '@/db/knex'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
@@ -39,11 +38,12 @@ import {
   ServerInviteCreateInput,
   StreamInviteCreateInput,
   UseStreamInviteDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import { reduce } from 'lodash'
+import { reduce } from 'lodash-es'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
 
 const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
@@ -54,8 +54,6 @@ async function cleanup() {
 const findInvite = findInviteFactory({ db })
 const createInviteDirectly = createStreamInviteDirectly
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
-
-const mailerMock = EmailSendingServiceMock
 
 describe('[Stream & Server Invites]', () => {
   const me: BasicTestUser = {
@@ -86,6 +84,8 @@ describe('[Stream & Server Invites]', () => {
     ownerId: ''
   }
 
+  let emailListener: TestEmailListener
+
   before(async () => {
     await cleanup()
 
@@ -96,14 +96,16 @@ describe('[Stream & Server Invites]', () => {
       [myPrivateStream, me],
       [otherGuysStream, otherGuy]
     ])
+    emailListener = await createEmailListener()
   })
 
   after(async () => {
     await cleanup()
+    await emailListener.destroy()
   })
 
   afterEach(() => {
-    mailerMock.resetMockedFunctions()
+    emailListener.reset()
   })
 
   describe('When user authenticated', () => {
@@ -138,10 +140,7 @@ describe('[Stream & Server Invites]', () => {
         const messagePart2 = 'yepppppp'
         const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
 
-        const sendEmailInvocations = mailerMock.hijackFunction(
-          'sendEmail',
-          async () => true
-        )
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const result = await createInvite({
           email: targetEmail,
@@ -153,8 +152,8 @@ describe('[Stream & Server Invites]', () => {
         expect(result.data?.serverInviteCreate).to.be.ok
 
         // Check that email was sent out
-        expect(sendEmailInvocations.args).to.have.lengthOf(1)
-        const emailParams = sendEmailInvocations.args[0][0]
+        expect(getSends()).to.have.lengthOf(1)
+        const emailParams = getSends()[0]
         expect(emailParams).to.be.ok
         expect(emailParams.to).to.eq(targetEmail)
         expect(emailParams.subject).to.be.ok
@@ -295,10 +294,7 @@ describe('[Stream & Server Invites]', () => {
               const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
               const targetEmail = email || user?.email
 
-              const sendEmailInvocations = mailerMock.hijackFunction(
-                'sendEmail',
-                async () => true
-              )
+              const { getSends } = emailListener.listen({ times: 2 })
 
               if (projectInvite) {
                 const result = await createProjectInvite({
@@ -328,7 +324,10 @@ describe('[Stream & Server Invites]', () => {
               }
 
               // Check that email was sent out
-              const emailParams = sendEmailInvocations.args[0][0]
+              const emailSends = getSends()
+              expect(emailSends).to.have.lengthOf(1)
+
+              const emailParams = emailSends[0]
               expect(emailParams).to.be.ok
               expect(emailParams.to).to.eq(targetEmail)
               expect(emailParams.subject).to.be.ok
@@ -504,11 +503,7 @@ describe('[Stream & Server Invites]', () => {
       })
 
       it('they can resend pre-existing invites irregardless of type', async () => {
-        const sendEmailInvocations = mailerMock.hijackFunction(
-          'sendEmail',
-          async () => true,
-          { times: invites.length }
-        )
+        const { getSends } = emailListener.listen({ times: invites.length })
 
         const inviteIds = invites.map((i) => i.inviteId)
         const inviteLastRemindedDates = reduce(
@@ -534,7 +529,7 @@ describe('[Stream & Server Invites]', () => {
           expect(result.errors).to.not.be.ok
         }
 
-        expect(sendEmailInvocations.length()).to.eq(inviteIds.length)
+        expect(getSends().length).to.eq(inviteIds.length)
 
         const newInviteLastRemindedDates = reduce(
           await ServerInvites.knex<ServerInviteRecord[]>().whereIn(
@@ -598,11 +593,7 @@ describe('[Stream & Server Invites]', () => {
         const emails = ['abababa1@mail.com', 'abababa2@mail.com', 'abababa3@mail.com']
         const message = 'ayyoyoyoyoy'
 
-        const sendEmailInvocations = mailerMock.hijackFunction(
-          'sendEmail',
-          async () => true,
-          { times: emails.length }
-        )
+        const { getSends } = emailListener.listen({ times: emails.length })
 
         const result = await apollo.execute(BatchCreateServerInviteDocument, {
           input: emails.map((email) => ({
@@ -614,11 +605,10 @@ describe('[Stream & Server Invites]', () => {
         expect(result.errors).to.not.be.ok
         expect(result.data?.serverInviteBatchCreate).to.be.ok
 
-        expect(sendEmailInvocations.length()).to.eq(emails.length)
+        const emailSends = getSends()
+        expect(emailSends.length).to.eq(emails.length)
         for (const email of emails) {
-          const emailParams = sendEmailInvocations.args.find(
-            ([p]) => p.to === email
-          )?.[0]
+          const emailParams = emailSends.find((p) => p.to === email)
 
           expect(emailParams).to.be.ok
           expect(emailParams!.html).to.contain(message)
@@ -652,11 +642,7 @@ describe('[Stream & Server Invites]', () => {
           }
         ]
 
-        const sendEmailInvocations = mailerMock.hijackFunction(
-          'sendEmail',
-          async () => false,
-          { times: inputs.length }
-        )
+        const { getSends } = emailListener.listen({ times: inputs.length })
 
         const result = await apollo.execute(BatchCreateStreamInviteDocument, {
           input: inputs
@@ -665,11 +651,12 @@ describe('[Stream & Server Invites]', () => {
         expect(result.data?.streamInviteBatchCreate).to.be.ok
         expect(result.errors).to.not.be.ok
 
-        expect(sendEmailInvocations.length()).to.eq(inputs.length)
+        const emailSends = getSends()
+        expect(emailSends.length).to.eq(inputs.length)
         for (const inputData of inputs) {
-          const emailParams = sendEmailInvocations.args.find(([p]) =>
+          const emailParams = emailSends.find((p) =>
             inputData.email ? p.to === inputData.email : p.to === otherGuy.email
-          )?.[0]
+          )
           expect(emailParams).to.be.ok
           expect(emailParams!.html).to.contain(inputData.message)
           expect(emailParams!.text).to.contain(inputData.message)

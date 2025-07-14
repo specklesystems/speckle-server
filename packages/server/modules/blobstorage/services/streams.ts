@@ -20,7 +20,7 @@ import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorage
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import type { Logger } from '@/observability/logging'
 import type { Readable, Writable } from 'stream'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import type { UploadResult, ProcessingResult } from '@/modules/blobstorage/domain/types'
 import type { Busboy } from 'busboy'
 

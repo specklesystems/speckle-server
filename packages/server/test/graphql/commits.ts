@@ -9,7 +9,7 @@ import {
   ReadOwnCommitsQueryVariables,
   ReadStreamBranchCommitsQuery,
   ReadStreamBranchCommitsQueryVariables
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
 import gql from 'graphql-tag'
 

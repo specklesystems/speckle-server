@@ -52,7 +52,7 @@ import {
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
+import type { SectionBoxData } from '@speckle/shared/viewer/state'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()

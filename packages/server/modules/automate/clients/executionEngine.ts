@@ -30,7 +30,7 @@ import {
 } from '@speckle/shared'
 import { randomUUID } from 'crypto'
 import { automateLogger, type Logger } from '@/observability/logging'
-import { has, isObjectLike, isEmpty } from 'lodash'
+import { has, isObjectLike, isEmpty } from 'lodash-es'
 import { getRequestLogger } from '@/observability/utils/requestContext'
 
 export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }

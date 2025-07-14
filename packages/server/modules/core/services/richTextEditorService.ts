@@ -1,5 +1,5 @@
 import { JSONContent } from '@tiptap/core'
-import { isString, isObjectLike, get, has } from 'lodash'
+import { isString, isObjectLike, get, has } from 'lodash-es'
 import { MaybeNullOrUndefined, RichTextEditor } from '@speckle/shared'
 
 const { isDocEmpty, documentToBasicString, convertBasicStringToDocument } =
