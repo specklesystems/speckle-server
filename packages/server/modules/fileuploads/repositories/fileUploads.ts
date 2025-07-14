@@ -21,7 +21,7 @@ import {
 import { Knex } from 'knex'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
-import { clamp } from 'lodash'
+import { clamp } from 'lodash-es'
 
 const tables = {
   fileUploads: (db: Knex) => db<FileUploadRecord>(FileUploads.name)

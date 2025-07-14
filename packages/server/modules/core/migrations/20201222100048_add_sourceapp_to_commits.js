@@ -1,12 +1,14 @@
 /* istanbul ignore file */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.alterTable('commits', (table) => {
     table.string('sourceApplication', 1024)
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.alterTable('commits', (table) => {
     table.dropColumn('sourceApplication')
   })
 }
+
+export { up, down }

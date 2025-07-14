@@ -9,7 +9,7 @@ import {
   getProjectTopLevelModelsTreeFactory
 } from '@/modules/core/services/branch/retrieval'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { last } from 'lodash'
+import { last } from 'lodash-es'
 
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
@@ -61,7 +61,7 @@ import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
-export = {
+export default {
   User: {
     async versions(parent, args, ctx) {
       const authoredOnly = args.authoredOnly

@@ -7,7 +7,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 export type BasicTestBranch = {
   name: string

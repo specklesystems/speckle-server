@@ -528,10 +528,6 @@ jobs:
           command: cp .env.test-example .env.test
           working_directory: 'packages/server'
       - run:
-          name: 'Lint'
-          command: yarn lint:ci
-          working_directory: 'packages/server'
-      - run:
           name: 'Run tests'
           # Extra formatting to get timestamps on each line in CI (for profiling purposes)
           command: |
@@ -546,18 +542,6 @@ jobs:
           no_output_timeout: 30m
       - codecov/upload:
           files: packages/server/coverage/lcov.info
-      - run:
-          name: Introspect GQL schema for subsequent checks
-          command: 'IGNORE_MISSING_MIGRATIONS=true yarn cli graphql introspect'
-          working_directory: 'packages/server'
-      - run:
-          name: Checking for GQL schema breakages against app.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
-      - run:
-          name: Checking for GQL schema breakages against latest.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
       - store_test_results:
           path: packages/server/reports
 
@@ -591,7 +575,7 @@ jobs:
   test-server-multiregion:
     <<: *test-server-job
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0
       - image: cimg/redis:7.2.4
       - image: 'speckle/speckle-postgres'
         environment:

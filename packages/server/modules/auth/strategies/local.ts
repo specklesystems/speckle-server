@@ -162,4 +162,4 @@ const localStrategyBuilderFactory =
     return strategy
   }
 
-export = localStrategyBuilderFactory
+export default localStrategyBuilderFactory

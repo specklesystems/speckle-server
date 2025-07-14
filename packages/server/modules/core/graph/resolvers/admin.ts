@@ -30,7 +30,7 @@ const adminProjectList = adminProjectListFactory({
   getStreams: legacyGetStreamsFactory({ db })
 })
 
-export = {
+export default {
   Query: {
     admin: () => ({})
   },

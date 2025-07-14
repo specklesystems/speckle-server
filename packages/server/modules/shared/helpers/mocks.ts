@@ -4,7 +4,7 @@ import { db } from '@/db/knex'
 import { ResolverFn, Resolvers } from '@/modules/core/graph/generated/graphql'
 import { IMockStore, IMocks, isRef, Ref } from '@graphql-tools/mock'
 import { GraphQLResolveInfo } from 'graphql'
-import { get, has, isArray, isObjectLike, random } from 'lodash'
+import { get, has, isArray, isObjectLike, random } from 'lodash-es'
 
 export type SpeckleModuleMocksConfig = {
   resolvers?: (params: {

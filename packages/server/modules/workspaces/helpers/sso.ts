@@ -10,7 +10,7 @@ import {
 } from '@/modules/workspaces/errors/sso'
 import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { Request } from 'express'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 declare module 'express-session' {
   interface SessionData {

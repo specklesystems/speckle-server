@@ -44,7 +44,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
   sendEmail
 })
 
-export = {
+export default {
   ActiveUserMutations: {
     emailMutations: () => ({})
   },

@@ -61,7 +61,7 @@ const streamWebhooksResolver = async (
   return { items, totalCount: items.length }
 }
 
-export = {
+export default {
   Webhook: {
     projectId: (parent) => parent.streamId,
     hasSecret: (parent) => !!parent.secret?.length,

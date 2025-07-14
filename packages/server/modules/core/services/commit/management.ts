@@ -40,7 +40,7 @@ import {
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ensureError, Roles } from '@speckle/shared'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 export const markCommitReceivedAndNotifyFactory =

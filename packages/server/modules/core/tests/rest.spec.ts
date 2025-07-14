@@ -8,7 +8,7 @@ import crypto from 'crypto'
 import { beforeEachContext } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
-import { Scopes } from '@speckle/shared'
+import { Scopes, wait } from '@speckle/shared'
 import {
   getStreamFactory,
   createStreamFactory,
@@ -478,104 +478,112 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(res).to.have.status(201)
   })
 
-  it('Should properly download an object, with all its children, into a application/json response', (done) => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    new Promise((resolve) => setTimeout(resolve, 1500)) // avoids race condition
-      .then(() => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        request(app)
-          .get(`/objects/${testStream.id}/${parentId}`)
-          .set('Authorization', userA.token)
-          .buffer()
-          .parse((res, cb) => {
-            const resTyped = res as typeof res & { data: string }
-            resTyped.data = ''
-            resTyped.on('data', (chunk) => {
-              resTyped.data += chunk.toString()
-            })
-            resTyped.on('end', () => {
-              cb(null, resTyped.data)
-            })
+  it('Should properly download an object, with all its children, into a application/json response', async () => {
+    await wait(1500) // avoids race condition
+
+    await new Promise<void>((resolve, reject) => {
+      void request(app)
+        .get(`/objects/${testStream.id}/${parentId}`)
+        .set('Authorization', userA.token)
+        .buffer()
+        .parse((res, cb) => {
+          const resTyped = res as typeof res & { data: string }
+          resTyped.data = ''
+          resTyped.on('data', (chunk) => {
+            resTyped.data += chunk.toString()
           })
-          .end((err, res) => {
-            if (err) done(err)
-            try {
-              const o = JSON.parse(res.body)
-              expect(o.length).to.equal(numObjs + 1)
-              expect(res).to.be.json
-              done()
-            } catch (err) {
-              done(err)
-            }
+          resTyped.on('end', () => {
+            cb(null, resTyped.data)
           })
-      })
+        })
+        .end((err, res) => {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+          if (err) return reject(err)
+          try {
+            const o = JSON.parse(res.body)
+            expect(o.length).to.equal(numObjs + 1)
+            expect(res).to.be.json
+            return resolve()
+          } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+            reject(err)
+          }
+        })
+    })
   })
 
-  it('Should properly download an object, with all its children, into a text/plain response', (done) => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    request(app)
-      .get(`/objects/${testStream.id}/${parentId}`)
-      .set('Authorization', userA.token)
-      .set('Accept', 'text/plain')
-      .buffer()
-      .parse((res, cb) => {
-        const resTyped = res as typeof res & { data: string }
+  it('Should properly download an object, with all its children, into a text/plain response', async () => {
+    await new Promise<void>((resolve, reject) => {
+      void request(app)
+        .get(`/objects/${testStream.id}/${parentId}`)
+        .set('Authorization', userA.token)
+        .set('Accept', 'text/plain')
+        .buffer()
+        .parse((res, cb) => {
+          const resTyped = res as typeof res & { data: string }
 
-        resTyped.data = ''
-        resTyped.on('data', (chunk) => {
-          resTyped.data += chunk.toString()
+          resTyped.data = ''
+          resTyped.on('data', (chunk) => {
+            resTyped.data += chunk.toString()
+          })
+          resTyped.on('end', () => {
+            cb(null, resTyped.data)
+          })
         })
-        resTyped.on('end', () => {
-          cb(null, resTyped.data)
+        .end((err, res) => {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+          if (err) return reject(err)
+          try {
+            const o = res.body.split('\n').filter((l: string) => l !== '')
+            expect(o.length).to.equal(numObjs + 1)
+            expect(res).to.be.text
+            return resolve()
+          } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+            reject(err)
+          }
         })
-      })
-      .end((err, res) => {
-        if (err) done(err)
-        try {
-          const o = res.body.split('\n').filter((l: string) => l !== '')
-          expect(o.length).to.equal(numObjs + 1)
-          expect(res).to.be.text
-          done()
-        } catch (err) {
-          done(err)
-        }
-      })
+    })
   })
 
-  it('Should properly download a list of objects', (done) => {
-    const objectIds = []
+  it('Should properly download a list of objects', async () => {
+    const objectIds: string[] = []
     for (let i = 0; i < objBatches[0].length; i++) {
       objectIds.push(objBatches[0][i].id)
     }
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    request(app)
-      .post(`/api/getobjects/${testStream.id}`)
-      .set('Authorization', userA.token)
-      .set('Accept', 'text/plain')
-      .send({ objects: JSON.stringify(objectIds) })
-      .buffer()
-      .parse((res, cb) => {
-        const resTyped = res as typeof res & { data: string }
 
-        resTyped.data = ''
-        resTyped.on('data', (chunk) => {
-          resTyped.data += chunk.toString()
+    await new Promise<void>((resolve, reject) => {
+      void request(app)
+        .post(`/api/getobjects/${testStream.id}`)
+        .set('Authorization', userA.token)
+        .set('Accept', 'text/plain')
+        .send({ objects: JSON.stringify(objectIds) })
+        .buffer()
+        .parse((res, cb) => {
+          const resTyped = res as typeof res & { data: string }
+
+          resTyped.data = ''
+          resTyped.on('data', (chunk) => {
+            resTyped.data += chunk.toString()
+          })
+          resTyped.on('end', () => {
+            cb(null, resTyped.data)
+          })
         })
-        resTyped.on('end', () => {
-          cb(null, resTyped.data)
+        .end((err, res) => {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+          if (err) return reject(err)
+          try {
+            const o = res.body.split('\n').filter((l: string) => l !== '')
+            expect(o.length).to.equal(objectIds.length)
+            expect(res).to.be.text
+            return resolve()
+          } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+            reject(err)
+          }
         })
-      })
-      .end((err, res) => {
-        if (err) done(err)
-        try {
-          const o = res.body.split('\n').filter((l: string) => l !== '')
-          expect(o.length).to.equal(objectIds.length)
-          expect(res).to.be.text
-          done()
-        } catch (err) {
-          done(err)
-        }
-      })
+    })
   })
 
   it('Should return nothing if the object is not found', async () => {
@@ -601,8 +609,8 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(response).to.have.status(400)
   })
 
-  it('Should properly check if the server has a list of objects', (done) => {
-    const objectIds = []
+  it('Should properly check if the server has a list of objects', async () => {
+    const objectIds: string[] = []
     for (let i = 0; i < objBatches[0].length; i++) {
       objectIds.push(objBatches[0][i].id)
     }
@@ -616,46 +624,49 @@ describe('Upload/Download Routes @api-rest', () => {
       objectIds.push(fakeId)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    request(app)
-      .post(`/api/diff/${testStream.id}`)
-      .set('Authorization', userA.token)
-      .send({ objects: JSON.stringify(objectIds) })
-      .buffer()
-      .parse((res, cb) => {
-        const resTyped = res as typeof res & { data: string }
+    await new Promise<void>((resolve, reject) => {
+      void request(app)
+        .post(`/api/diff/${testStream.id}`)
+        .set('Authorization', userA.token)
+        .send({ objects: JSON.stringify(objectIds) })
+        .buffer()
+        .parse((res, cb) => {
+          const resTyped = res as typeof res & { data: string }
 
-        resTyped.data = ''
-        resTyped.on('data', (chunk) => {
-          resTyped.data += chunk.toString()
+          resTyped.data = ''
+          resTyped.on('data', (chunk) => {
+            resTyped.data += chunk.toString()
+          })
+          resTyped.on('end', () => {
+            cb(null, resTyped.data)
+          })
         })
-        resTyped.on('end', () => {
-          cb(null, resTyped.data)
+        .end((err, res) => {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+          if (err) return reject(err)
+          try {
+            const o = JSON.parse(res.body)
+            expect(Object.keys(o).length).to.equal(objectIds.length)
+            // console.log(JSON.stringify(Object.keys(o), undefined, 4))
+            for (let i = 0; i < objBatches[0].length; i++) {
+              assert(
+                o[objBatches[0][i].id] === true,
+                `Server is missing an object: ${objBatches[0][i].id}`
+              )
+            }
+            for (let i = 0; i < fakeIds.length; i++) {
+              assert(
+                o[fakeIds[i]] === false,
+                'Server wrongly reports it has an extra object'
+              )
+            }
+            return resolve()
+          } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+            reject(err)
+          }
         })
-      })
-      .end((err, res) => {
-        if (err) done(err)
-        try {
-          const o = JSON.parse(res.body)
-          expect(Object.keys(o).length).to.equal(objectIds.length)
-          // console.log(JSON.stringify(Object.keys(o), undefined, 4))
-          for (let i = 0; i < objBatches[0].length; i++) {
-            assert(
-              o[objBatches[0][i].id] === true,
-              `Server is missing an object: ${objBatches[0][i].id}`
-            )
-          }
-          for (let i = 0; i < fakeIds.length; i++) {
-            assert(
-              o[fakeIds[i]] === false,
-              'Server wrongly reports it has an extra object'
-            )
-          }
-          done()
-        } catch (err) {
-          done(err)
-        }
-      })
+    })
   })
 
   it('Should return status code 400 if the list of objects is not parseable', async () => {
