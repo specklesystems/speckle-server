@@ -116,13 +116,13 @@ describe('Previews services @previews', () => {
       ).to.have.lengthOf(3)
       expect(nextResults.totalCount).to.equal(3)
       expect(nextResults.items[0].objectId).to.not.equal(originalFirstItem.objectId)
-      expect(nextResults.items[0].attempts).to.equal(1)
 
       // the last item, because it is still errored, should be the one we just updated and have a new lastUpdate date
       expect(nextResults.items[2].objectId).to.equal(originalFirstItem.objectId)
       expect(nextResults.items[2].lastUpdate).to.be.greaterThan(
         originalFirstItem.lastUpdate
       )
+      expect(nextResults.items[2].attempts).to.equal(1)
 
       // We're going to again update that original first item
       await updateObjectPreview({
