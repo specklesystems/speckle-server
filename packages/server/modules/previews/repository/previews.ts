@@ -13,7 +13,7 @@ import {
   ObjectPreview as ObjectPreviewRecord,
   Preview
 } from '@/modules/previews/domain/types'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
@@ -131,21 +131,24 @@ export const storePreviewFactory =
 export const updateObjectPreviewFactory =
   ({ db }: { db: Knex }): UpdateObjectPreview =>
   async ({ objectPreview }) => {
-    return await tables
+    const q = tables
       .objectPreview(db)
       .where({
         streamId: objectPreview.streamId,
         objectId: objectPreview.objectId
       })
+      .update({
+        ...omit(objectPreview, 'streamId', 'objectId', 'incrementAttempts'),
+        lastUpdate: db.fn.now(), // always update the lastUpdate field
+        ...(objectPreview.incrementAttempts ? { attempts: db.raw('attempts + 1') } : {})
+      })
       .increment(
         ObjectPreview.withoutTablePrefix.col.attempts,
         objectPreview.incrementAttempts ? 1 : 0
       ) // false by default
-      .update({
-        ...omit(objectPreview, 'incrementAttempts'),
-        lastUpdate: new Date() // always update the lastUpdate field
-      })
       .returning<ObjectPreviewRecord[]>('*')
+
+    return await q
   }
 
 export const getPreviewImageFactory =
