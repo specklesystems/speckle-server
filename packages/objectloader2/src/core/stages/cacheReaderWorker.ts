@@ -6,17 +6,15 @@ import { ItemQueue } from '../../caching/ItemQueue.js'
 import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
 import { StringQueue } from '../../caching/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
-import { CacheOptions } from '../options.js'
 import { Reader } from './interfaces.js'
 import { WorkerCachingConstants } from '../../caching/WorkerCachingConstants.js'
 
-const ID_BUFFER_CAPACITY_BYTES = 1024 * 1024 // 5KB capacity for each queue
+const ID_BUFFER_CAPACITY_BYTES = 1024 * 1024 // 1MB capacity for each queue
 const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 500 // 1MB capacity for each queue
 
 export class CacheReaderWorker implements Reader {
   #defermentManager: DefermentManager
   #logger: CustomLogger
-  #options: CacheOptions
   #foundQueue: Queue<Item> | undefined
   #notFoundQueue: Queue<string> | undefined
 
@@ -25,11 +23,12 @@ export class CacheReaderWorker implements Reader {
   mainToWorkerQueue?: StringQueue
   workerToMainQueue?: ItemQueue
   indexedDbReader?: Worker
+  private name: string
 
-  constructor(defermentManager: DefermentManager, options: CacheOptions) {
+  constructor(defermentManager: DefermentManager, count: number, logger: CustomLogger) {
     this.#defermentManager = defermentManager
-    this.#options = options
-    this.#logger = options.logger || ((): void => {})
+    this.name = `[Speckle Cache Reader ${count}]`
+    this.#logger = logger
   }
 
   private logToMainUI(message: string): void {
@@ -73,11 +72,12 @@ export class CacheReaderWorker implements Reader {
     this.logToMainUI('Starting Web Worker...')
     this.indexedDbReader = new Worker(
       new URL('../../caching/ReaderWorker.js', import.meta.url),
-      { type: 'module' }
+      { type: 'module', name: this.name }
     )
 
     this.logToMainUI('Sending SharedArrayBuffers and capacities to worker...')
     this.indexedDbReader.postMessage({
+      name: this.name,
       type: WorkerMessageType.INIT_QUEUES,
       mainToWorkerSab,
       mainToWorkerCapacityBytes: ID_BUFFER_CAPACITY_BYTES,
@@ -90,7 +90,7 @@ export class CacheReaderWorker implements Reader {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.mainToWorkerQueue?.fullyEnqueue(
+      this.mainToWorkerQueue?.enqueue(
         [params.id],
         WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
       )
@@ -107,6 +107,10 @@ export class CacheReaderWorker implements Reader {
       keys,
       WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
     )
+  }
+
+  async enqueue(items: string[], timeoutMs: number): Promise<number> {
+    return this.mainToWorkerQueue!.enqueue(items, timeoutMs)
   }
 
   #processBatch = async (): Promise<void> => {

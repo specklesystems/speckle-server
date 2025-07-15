@@ -10,11 +10,14 @@ export class IndexDbReader {
   private workerToMainQueue: ItemQueue
   private mainToWorkerQueue: StringQueue
   private db: IndexedDatabase
+  private name: string
 
   constructor(
+    name: string,
     rawMainToWorkerRbq: RingBufferQueue,
     rawWorkerToMainRbq: RingBufferQueue
   ) {
+    this.name = name
     this.db = new IndexedDatabase({})
     this.mainToWorkerQueue = new StringQueue(
       rawMainToWorkerRbq,
@@ -52,10 +55,8 @@ export class IndexDbReader {
     )
   }
 
-  private consolePrefix = '[Reader Worker]'
-
   public log(message: string, ...args: unknown[]): void {
-    console.log(`${this.consolePrefix} ${message}`, ...args)
+    console.log(`${this.name} ${message}`, ...args)
   }
 
   public static postMessage(args: unknown): void {
