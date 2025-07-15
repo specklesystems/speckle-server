@@ -140,7 +140,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       await storeBackgroundJob({ job })
 
       const trx = await knex.transaction()
-      await trx().from(BackgroundJobs.name).where({ id: job.id }).forKeyShare().first() // acquire lock
+      await trx().from(BackgroundJobs.name).where({ id: job.id }).forUpdate().first() // acquire lock
 
       const [processingCount, queuedCount] = await Promise.all([
         getBackgroundJobCount({ status: 'processing', jobType: 'test-job' }),

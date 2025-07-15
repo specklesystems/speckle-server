@@ -53,17 +53,18 @@ export const getBackgroundJobCountFactory =
   async ({ status, jobType }) => {
     const q = tables.backgroundJobs(db).select(BackgroundJobs.col.id)
 
+    // using less restrictive lock to check locked jobs
     if (status === 'processing') {
       q.whereNotExists(function () {
         this.from(BackgroundJobs.name)
           .select(BackgroundJobs.col.id)
           .whereRaw('id = background_jobs.id')
           .where({ jobType })
-          .forUpdate()
+          .forKeyShare()
           .skipLocked()
       })
     } else {
-      q.where({ status }).forUpdate().skipLocked()
+      q.where({ status }).forKeyShare().skipLocked()
     }
 
     const res = (await q.andWhere({ jobType })) as { id: string }[]

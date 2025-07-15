@@ -10,7 +10,7 @@ export type BackgroundJobStatus =
   (typeof BackgroundJobStatus)[keyof typeof BackgroundJobStatus]
 
 export const BackgroundJobPayload = z.object({
-  jobType: z.literal('fileImport'),
+  jobType: z.string(),
   payloadVersion: z.number()
 })
 
