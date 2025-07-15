@@ -31,12 +31,13 @@ spec:
             containerPort: 9093
             protocol: TCP
 
-        livenessProbe:
-          initialDelaySeconds: 60
-          periodSeconds: 60
-          httpGet:
-            path: /healthz
-            port: 9080
+        # TODO: Enable health checks
+        # livenessProbe:
+        #   initialDelaySeconds: 60
+        #   periodSeconds: 60
+        #   httpGet:
+        #     path: /healthz
+        #     port: 9080
 
         resources:
           {{- with .Values.ifc_import_service.requests }}

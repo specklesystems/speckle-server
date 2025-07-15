@@ -19,7 +19,7 @@ server:
   email:
     enabled: false
 
-  speckleAutomateUrl: http://automate.speckle.internal # value is overridden when deployed with by ./scripts/local_deployment.sh
+  speckleAutomateUrl: http://automate.speckle.internal
   monitoring:
     mp:
       enabled: false

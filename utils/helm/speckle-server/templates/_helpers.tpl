@@ -786,7 +786,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
 {{- end }}
 
-{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+{{- if (and .Values.featureFlags.nextGenFileImporterEnabled (not .Values.featureFlags.backgroundJobsEnabled)) }}
 - name: FILEIMPORT_SERVICE_RHINO_REDIS_URL
   valueFrom:
     secretKeyRef:
@@ -1135,6 +1135,13 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
 - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
   value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
+{{- end }}
+{{- if .Values.featureFlags.backgroundJobsEnabled }}
+- name: FILEIMPORT_QUEUE_POSTGRES_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.ifc_import_service.db.connectionString.secretName }}
+      key: {{ default "fileimport_queue_postgres_url" .Values.ifc_import_service.db.connectionString.secretKey }}
 {{- end }}
 {{- if .Values.featureFlags.largeFileUploadsEnabled }}
 - name: FF_LARGE_FILE_IMPORTS_ENABLED
