@@ -10,7 +10,7 @@ export type BackgroundJobStatus =
   (typeof BackgroundJobStatus)[keyof typeof BackgroundJobStatus]
 
 export const BackgroundJobPayload = z.object({
-  jobType: z.string(),
+  jobType: z.literal('fileImport'),
   payloadVersion: z.number()
 })
 
@@ -37,3 +37,10 @@ export type StoreBackgroundJob = (args: {
 
 export type GetBackgroundJob<T extends BackgroundJobPayload = BackgroundJobPayload> =
   (args: { jobId: string }) => Promise<BackgroundJob<T> | null>
+
+export type GetBackgroundJobCount<
+  T extends BackgroundJobPayload = BackgroundJobPayload
+> = (args: {
+  status: BackgroundJobStatus | 'processing'
+  jobType: T['jobType']
+}) => Promise<number>

@@ -3,6 +3,8 @@ import Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
+import { GetBackgroundJobCount } from '@/modules/backgroundjobs/domain'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 export const FileImportJobDurationStep = {
   TOTAL: 'total',
@@ -10,11 +12,17 @@ export const FileImportJobDurationStep = {
   PARSE: 'parse' // time taken by the parser to process the file, including sending the objects
 } as const
 
+const { FF_BACKGROUND_JOBS_ENABLED } = getFeatureFlags()
+
 export type ObserveResult = (params: { jobResult: FileImportResultPayload }) => void
 
 export const initializeMetrics = (params: {
   registers: Registry[]
-  requestQueues: (FileImportQueue & { queue: Bull.Queue })[]
+  requestQueues: // bull or postgres
+  (
+    | (FileImportQueue & { queue: Bull.Queue })
+    | (FileImportQueue & { getBackgroundJobCount: GetBackgroundJobCount })
+  )[]
 }) => {
   const { registers, requestQueues } = params
 
@@ -29,7 +37,15 @@ export const initializeMetrics = (params: {
     registers,
     async collect() {
       requestQueues.forEach(async (requestQueue) => {
-        this.set({ parser: requestQueue.label }, await requestQueue.queue.count())
+        this.set(
+          { parser: requestQueue.label },
+          'queue' in requestQueue
+            ? await requestQueue.queue.count()
+            : await requestQueue.getBackgroundJobCount({
+                status: 'queued',
+                jobType: 'fileImport'
+              })
+        )
       })
     }
   })
@@ -46,7 +62,12 @@ export const initializeMetrics = (params: {
       requestQueues.forEach(async (requestQueue) => {
         this.set(
           { parser: requestQueue.label },
-          await requestQueue.queue.getWaitingCount()
+          'queue' in requestQueue
+            ? await requestQueue.queue.getWaitingCount()
+            : await requestQueue.getBackgroundJobCount({
+                status: 'queued',
+                jobType: 'fileImport'
+              })
         )
       })
     }
@@ -64,7 +85,12 @@ export const initializeMetrics = (params: {
       requestQueues.forEach(async (requestQueue) => {
         this.set(
           { parser: requestQueue.label },
-          await requestQueue.queue.getActiveCount()
+          'queue' in requestQueue
+            ? await requestQueue.queue.getActiveCount()
+            : await requestQueue.getBackgroundJobCount({
+                status: 'processing',
+                jobType: 'fileImport'
+              })
         )
       })
     }
@@ -99,6 +125,8 @@ export const initializeMetrics = (params: {
   }
 
   requestQueues.forEach((requestQueue) => {
+    if (!('queue' in requestQueue)) return
+
     const completedHandler = completedHandlerFactory(requestQueue.label)
     const failedHandler = failedHandlerFactory(requestQueue.label)
 
@@ -124,6 +152,16 @@ export const initializeMetrics = (params: {
 
   const observeResult: ObserveResult = (params) => {
     const { jobResult } = params
+
+    if (FF_BACKGROUND_JOBS_ENABLED) {
+      // already logging this with queue listeners for bull
+
+      ;(jobResult.status === 'error'
+        ? fileImportJobsRequestFailedCounter
+        : fileImportJobsRequestCompletedCounter
+      ).inc({ parser: jobResult.result.parser })
+    }
+
     fileImportJobsProcessedSummary.observe(
       {
         parser: jobResult.result.parser,

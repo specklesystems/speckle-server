@@ -2,8 +2,8 @@ import { Knex } from 'knex'
 import {
   BackgroundJob,
   BackgroundJobPayload,
-  BackgroundJobStatus,
   GetBackgroundJob,
+  GetBackgroundJobCount,
   StoreBackgroundJob
 } from '@/modules/backgroundjobs/domain'
 import { buildTableHelper } from '@/modules/core/dbSchema'
@@ -49,14 +49,8 @@ export const getBackgroundJobFactory =
   }
 
 export const getBackgroundJobCountFactory =
-  ({ db }: { db: Knex }) =>
-  async ({
-    status,
-    jobType
-  }: {
-    status: BackgroundJobStatus | 'processing'
-    jobType: string
-  }) => {
+  ({ db }: { db: Knex }): GetBackgroundJobCount =>
+  async ({ status, jobType }) => {
     const q = tables.backgroundJobs(db).select(BackgroundJobs.col.id)
 
     if (status === 'processing') {

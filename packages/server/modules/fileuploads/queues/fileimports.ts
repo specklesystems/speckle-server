@@ -25,7 +25,11 @@ import {
 import { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
 import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
-import { storeBackgroundJobFactory } from '@/modules/backgroundjobs/repositories'
+import {
+  getBackgroundJobCountFactory,
+  storeBackgroundJobFactory
+} from '@/modules/backgroundjobs/repositories'
+import { GetBackgroundJobCount } from '@/modules/backgroundjobs/domain'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -125,7 +129,7 @@ export const initializePostgresQueue = async ({
   label: string
   db: Knex
   supportedFileTypes: string[]
-}): Promise<FileImportQueue> => {
+}): Promise<FileImportQueue & { getBackgroundJobCount: GetBackgroundJobCount }> => {
   // migrating the DB up, the queue DB might be added based on a config
   await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
 
@@ -138,6 +142,7 @@ export const initializePostgresQueue = async ({
   })
   const fileImportQueue = {
     label,
+    getBackgroundJobCount: getBackgroundJobCountFactory({ db }),
     supportedFileTypes: supportedFileTypes.map(
       (type) => type.toLocaleLowerCase() // Normalize file types to lowercase (this is a safeguard to prevent stupid typos in the future)
     ),

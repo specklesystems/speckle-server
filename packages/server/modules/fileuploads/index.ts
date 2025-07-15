@@ -171,8 +171,12 @@ export const init: SpeckleModule['init'] = async ({
           )
         }
         // no need to store the queue refs here for now
-        await Promise.all(queueInits)
+        const requestQueues = await Promise.all(queueInits)
         //stick to the bull queue based mechanism by default
+        ;({ observeResult } = initializeMetrics({
+          registers: [metricsRegister],
+          requestQueues
+        }))
       } else {
         const queueInits = [
           initializeIfcQueueFactory({
