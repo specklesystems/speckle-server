@@ -12,6 +12,7 @@ else:
 speckle_image = symbols['speckle_image']
 speckle_image('fileimport-service')
 speckle_image('frontend-2')
+speckle_image('ifc-import-service')
 speckle_image('docker-compose-ingress')
 # speckle_image('monitor-deployment')
 speckle_image('preview-service')
@@ -34,6 +35,7 @@ dc_resource('speckle-frontend-2', resource_deps=[], labels=['speckle'])
 dc_resource('speckle-ingress', resource_deps=[], labels=['speckle'])
 dc_resource('preview-service', resource_deps=['postgres'], labels=['speckle'])
 dc_resource('fileimport-service', resource_deps=[], labels=['speckle'])
+dc_resource('ifc-import-service', resource_deps=[], labels=['speckle'])
 dc_resource('webhook-service', resource_deps=['postgres'], labels=['speckle'])
 
 # Test the Speckle resources

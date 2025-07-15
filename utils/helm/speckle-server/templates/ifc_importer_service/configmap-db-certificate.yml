@@ -1,0 +1,14 @@
+{{ if ( and .Values.featureFlags.backgroundJobsEnabled .Values.ifc_importer.db.certificate.enabled .Values.ifc_importer.db.certificate.data ) }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.ifc_importer_service.db.certificate.configMapName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
+data:
+  {{ .Values.ifc_importer_service.db.certificate.configMapKey }}: |
+{{ .Values.ifc_importer.db.certificate.data | indent 4 }}
+
+{{ end }}
