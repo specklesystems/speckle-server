@@ -1,7 +1,12 @@
 import { z } from 'zod'
+
+export const BackgroundJobType = {
+  FileImport: 'fileImport'
+} as const
+
 export const BackgroundJobStatus = {
   Queued: 'queued',
-  // Processing: 'processing',
+  Processing: 'processing', // this status does not exist in db
   Succeeded: 'succeeded',
   Failed: 'failed'
 } as const
@@ -9,8 +14,11 @@ export const BackgroundJobStatus = {
 export type BackgroundJobStatus =
   (typeof BackgroundJobStatus)[keyof typeof BackgroundJobStatus]
 
+export type BackgroundJobType =
+  (typeof BackgroundJobType)[keyof typeof BackgroundJobType]
+
 export const BackgroundJobPayload = z.object({
-  jobType: z.string(),
+  jobType: z.nativeEnum(BackgroundJobType),
   payloadVersion: z.number()
 })
 
@@ -40,7 +48,4 @@ export type GetBackgroundJob<T extends BackgroundJobPayload = BackgroundJobPaylo
 
 export type GetBackgroundJobCount<
   T extends BackgroundJobPayload = BackgroundJobPayload
-> = (args: {
-  status: BackgroundJobStatus | 'processing'
-  jobType: T['jobType']
-}) => Promise<number>
+> = (args: { status: BackgroundJobStatus; jobType: T['jobType'] }) => Promise<number>

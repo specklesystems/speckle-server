@@ -3,7 +3,11 @@ import Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
-import { GetBackgroundJobCount } from '@/modules/backgroundjobs/domain'
+import {
+  BackgroundJobStatus,
+  BackgroundJobType,
+  GetBackgroundJobCount
+} from '@/modules/backgroundjobs/domain'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 export const FileImportJobDurationStep = {
@@ -42,8 +46,8 @@ export const initializeMetrics = (params: {
           'queue' in requestQueue
             ? await requestQueue.queue.count()
             : await requestQueue.getBackgroundJobCount({
-                status: 'queued',
-                jobType: 'fileImport'
+                status: BackgroundJobStatus.Queued,
+                jobType: BackgroundJobType.FileImport
               })
         )
       })
@@ -65,8 +69,8 @@ export const initializeMetrics = (params: {
           'queue' in requestQueue
             ? await requestQueue.queue.getWaitingCount()
             : await requestQueue.getBackgroundJobCount({
-                status: 'queued',
-                jobType: 'fileImport'
+                status: BackgroundJobStatus.Queued,
+                jobType: BackgroundJobType.FileImport
               })
         )
       })
@@ -88,8 +92,8 @@ export const initializeMetrics = (params: {
           'queue' in requestQueue
             ? await requestQueue.queue.getActiveCount()
             : await requestQueue.getBackgroundJobCount({
-                status: 'processing',
-                jobType: 'fileImport'
+                status: BackgroundJobStatus.Processing,
+                jobType: BackgroundJobType.FileImport
               })
         )
       })

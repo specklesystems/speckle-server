@@ -2,6 +2,7 @@ import { Knex } from 'knex'
 import {
   BackgroundJob,
   BackgroundJobPayload,
+  BackgroundJobStatus,
   GetBackgroundJob,
   GetBackgroundJobCount,
   StoreBackgroundJob
@@ -54,7 +55,7 @@ export const getBackgroundJobCountFactory =
     const q = tables.backgroundJobs(db).select(BackgroundJobs.col.id)
 
     // using less restrictive lock to check locked jobs
-    if (status === 'processing') {
+    if (status === BackgroundJobStatus.Processing) {
       q.whereNotExists(function () {
         this.from(BackgroundJobs.name)
           .select(BackgroundJobs.col.id)
@@ -67,7 +68,7 @@ export const getBackgroundJobCountFactory =
       q.where({ status }).forKeyShare().skipLocked()
     }
 
-    const res = (await q.andWhere({ jobType })) as { id: string }[]
+    const res = await q.andWhere({ jobType })
 
     return res.length
   }

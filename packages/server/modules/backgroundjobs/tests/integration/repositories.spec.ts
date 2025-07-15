@@ -24,7 +24,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
   const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
 
   type TestJobPayload = BackgroundJobPayload & {
-    jobType: 'test-job' | 'test-job-2'
+    jobType: 'fileImport'
     payloadVersion: 1
     testData: string
   }
@@ -33,9 +33,9 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     overrides: Partial<BackgroundJob<TestJobPayload>> = {}
   ): BackgroundJob<TestJobPayload> => ({
     id: createRandomString(10),
-    jobType: 'test-job',
+    jobType: 'fileImport',
     payload: {
-      jobType: 'test-job',
+      jobType: 'fileImport',
       payloadVersion: 1,
       testData: 'test-data-value'
     },
@@ -57,7 +57,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     it('should store a background job in the database', async () => {
       const job = createTestJob({
         payload: {
-          jobType: 'test-job',
+          jobType: 'fileImport',
           payloadVersion: 1,
           testData: 'complex-test-data'
         }
@@ -109,15 +109,15 @@ describe('Background Jobs repositories @backgroundjobs', () => {
   describe('getBackgroundJobCount', () => {
     it('counts all background jobs given a status and a jobType', async () => {
       const queuedJob = createTestJob({
-        jobType: 'test-job',
+        jobType: 'fileImport',
         status: BackgroundJobStatus.Queued
       })
       const anotherQueuedJob = createTestJob({
-        jobType: 'test-job-2',
+        jobType: 'fileImport-2' as unknown as 'fileImport',
         status: BackgroundJobStatus.Queued
       })
       const failedJob = createTestJob({
-        jobType: 'test-job',
+        jobType: 'fileImport',
         status: BackgroundJobStatus.Failed
       })
       await storeBackgroundJob({ job: queuedJob })
@@ -126,7 +126,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
 
       const count = await getBackgroundJobCount({
         status: BackgroundJobStatus.Queued,
-        jobType: 'test-job'
+        jobType: 'fileImport'
       })
 
       expect(count).to.equal(1)
@@ -134,7 +134,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
 
     it('is able to count locked jobs', async () => {
       const job = createTestJob({
-        jobType: 'test-job',
+        jobType: 'fileImport',
         status: BackgroundJobStatus.Queued
       })
       await storeBackgroundJob({ job })
@@ -143,8 +143,8 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       await trx().from(BackgroundJobs.name).where({ id: job.id }).forUpdate().first() // acquire lock
 
       const [processingCount, queuedCount] = await Promise.all([
-        getBackgroundJobCount({ status: 'processing', jobType: 'test-job' }),
-        getBackgroundJobCount({ status: 'queued', jobType: 'test-job' })
+        getBackgroundJobCount({ status: 'processing', jobType: 'fileImport' }),
+        getBackgroundJobCount({ status: 'queued', jobType: 'fileImport' })
       ])
 
       expect(processingCount).to.equal(1)
