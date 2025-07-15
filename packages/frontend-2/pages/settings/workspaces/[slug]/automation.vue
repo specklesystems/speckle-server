@@ -8,26 +8,15 @@
       <SettingsWorkspacesAutomationFunctions
         :workspace-functions="workspaceFunctions"
       />
+      <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
-import { graphql } from '~/lib/common/generated/gql'
+import type { Nullable } from '@speckle/shared'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { settingsWorkspacesAutomationQuery } from '~/lib/settings/graphql/queries'
-
-graphql(`
-  fragment SettingsWorkspacesAutomation_Workspace on Workspace {
-    id
-    slug
-    automateFunctions(limit: 50, filter: { includeFeatured: false }) {
-      items {
-        ...SettingsWorkspacesAutomationFunctions_AutomateFunction
-      }
-    }
-  }
-`)
 
 definePageMeta({
   layout: 'settings'
@@ -39,9 +28,25 @@ useHead({
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
+const isAutomateEnabled = useIsAutomateModuleEnabled()
 
-const { result } = useQuery(settingsWorkspacesAutomationQuery, {
-  slug: slug.value
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result }
+} = usePaginatedQuery({
+  query: settingsWorkspacesAutomationQuery,
+  baseVariables: computed(() => ({
+    slug: slug.value,
+    cursor: null as Nullable<string>
+  })),
+  options: () => ({
+    enabled: isAutomateEnabled.value
+  }),
+  resolveCurrentResult: (res) => res?.workspaceBySlug?.automateFunctions,
+  resolveNextPageVariables: (baseVars, cursor) => ({ ...baseVars, cursor }),
+  resolveKey: (vars) => [vars.slug],
+  resolveCursorFromVariables: (vars) => vars.cursor
 })
 
 const workspaceFunctions = computed(

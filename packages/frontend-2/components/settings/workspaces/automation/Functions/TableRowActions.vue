@@ -39,8 +39,7 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesAutomationTableRowActions_AutomateFunctionPermissionChecks on AutomateFunctionPermissionChecks {
     canRegenerateToken {
-      authorized
-      message
+      ...FullPermissionCheckResult
     }
   }
 `)
