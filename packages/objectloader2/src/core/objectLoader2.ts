@@ -9,7 +9,8 @@ import { ObjectLoader2Options, CacheOptions } from './options.js'
 import { CacheReader } from './stages/cacheReader.js'
 import { CacheReaderWorker } from './stages/cacheReaderWorker.js'
 import { CacheWriter } from './stages/cacheWriter.js'
-import { Reader } from './stages/interfaces.js'
+import { CacheWriterWorker } from './stages/cacheWriterWorker.js'
+import { Reader, Writer } from './stages/interfaces.js'
 
 export class ObjectLoader2 {
   #rootId: string
@@ -19,7 +20,7 @@ export class ObjectLoader2 {
   #database: Database
   #downloader: Downloader
   #reader: Reader
-  #cacheWriter: CacheWriter
+  #writer: Writer
 
   #deferments: DefermentManager
 
@@ -56,14 +57,19 @@ export class ObjectLoader2 {
       this.#reader = new CacheReader(this.#database, this.#deferments, cacheOptions)
     }
     this.#reader.initializeQueue(this.#gathered, this.#downloader)
-    this.#cacheWriter = new CacheWriter(this.#database, this.#deferments, cacheOptions)
+    if (options.useWriteWorker) {
+      const worker = new CacheWriterWorker(this.#deferments, cacheOptions)
+      this.#writer = worker
+    } else {
+      this.#writer = new CacheWriter(this.#database, this.#deferments, cacheOptions)
+    }
   }
 
   async disposeAsync(): Promise<void> {
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
-      this.#cacheWriter.disposeAsync()
+      this.#writer.disposeAsync()
     ])
     this.#deferments.dispose()
     this.#reader.dispose()
@@ -109,7 +115,7 @@ export class ObjectLoader2 {
     const children = sortedClosures.map((x) => x[0])
     const total = children.length + 1 // +1 for the root object
     this.#downloader.initializePool({
-      results: new AggregateQueue(this.#gathered, this.#cacheWriter),
+      results: new AggregateQueue(this.#gathered, this.#writer),
       total
     })
     //only for root

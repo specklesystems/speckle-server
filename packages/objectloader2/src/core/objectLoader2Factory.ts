@@ -75,6 +75,7 @@ export class ObjectLoader2Factory {
         }),
         logger: params.options?.logger,
         useReadWorker: true,
+        useWriteWorker: true
       })
     }
     return loader

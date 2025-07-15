@@ -1,11 +1,11 @@
 import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 import { handleError, WorkerMessageType } from '../workers/WorkerMessageType.js'
 import { InitQueuesMessage } from '../workers/InitQueuesMessage.js'
-import { IndexDbReader } from './IndexDbReader.js'
+import { IndexDbWriter } from './IndexDbWriter.js'
 
-let indexReader: IndexDbReader | null = null
+let indexWriter: IndexDbWriter | null = null
 
-const consolePrefix = '[Reader Worker]'
+const consolePrefix = '[Writer Worker]'
 
 function log(message: string, ...args: unknown[]): void {
   console.log(`${consolePrefix} ${message}`, ...args)
@@ -16,7 +16,7 @@ function postMessage(args: unknown): void {
 }
 
 async function processMessages(): Promise<void> {
-  if (!indexReader) {
+  if (!indexWriter) {
     log('Error: Queues not initialized. Stopping message processing.')
     ;(self as unknown as Worker).postMessage({
       type: 'WORKER_PROCESSING_ERROR',
@@ -26,8 +26,7 @@ async function processMessages(): Promise<void> {
   }
   log('Starting to listen for messages from main thread...')
   try {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    indexReader.processMessages()
+    await indexWriter.processMessages()
   } catch (e: unknown) {
     handleError(
       e,
@@ -50,9 +49,7 @@ self.onmessage = (event: MessageEvent): void => {
     data &&
     data.type === WorkerMessageType.INIT_QUEUES &&
     data.mainToWorkerSab instanceof SharedArrayBuffer &&
-    typeof data.mainToWorkerCapacityBytes === 'number' &&
-    data.workerToMainSab instanceof SharedArrayBuffer &&
-    typeof data.workerToMainCapacityBytes === 'number'
+    typeof data.mainToWorkerCapacityBytes === 'number'
   ) {
     log(`Received INIT_QUEUES message.`)
     try {
@@ -62,15 +59,8 @@ self.onmessage = (event: MessageEvent): void => {
         'StringQueue MainToWorkerQueue'
       )
 
-      log('StringQueue (main-to-worker) initialized successfully.')
-
-      const rawWorkerToMainRbq = RingBufferQueue.fromExisting(
-        data.workerToMainSab,
-        data.workerToMainCapacityBytes,
-        'ItemQueue WorkerToMainQueue'
-      )
-      log('ItemQueue (worker-to-main) initialized successfully.')
-      indexReader = new IndexDbReader(rawMainToWorkerRbq, rawWorkerToMainRbq)
+      log('ItemQueue (main-to-worker) initialized successfully.')
+      indexWriter = new IndexDbWriter(rawMainToWorkerRbq)
 
       postMessage({ type: 'WORKER_READY' })
 

@@ -8,6 +8,7 @@ export interface ObjectLoader2Options {
   database: Database
   logger?: CustomLogger
   useReadWorker?: boolean
+  useWriteWorker?: boolean
 }
 
 export interface CacheOptions {

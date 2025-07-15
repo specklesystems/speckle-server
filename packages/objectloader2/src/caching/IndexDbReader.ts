@@ -59,7 +59,7 @@ export class IndexDbReader {
     )
   }
 
-  private consolePrefix = '[Worker]'
+  private consolePrefix = '[Reader Worker]'
 
   public log(message: string, ...args: unknown[]): void {
     console.log(`${this.consolePrefix} ${message}`, ...args)
