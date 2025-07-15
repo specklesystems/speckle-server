@@ -52,7 +52,6 @@ export class ArcticViewPipeline extends ProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT,
       ObjectLayers.PROPS
     ])
     viewportPass.setVisibility(ObjectVisibility.OPAQUE)

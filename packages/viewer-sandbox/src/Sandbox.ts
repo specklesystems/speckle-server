@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
@@ -53,7 +51,7 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
+import { Euler, Vector3, Box3, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import { ObjectLoader2Factory } from '@speckle/objectloader2'
@@ -635,38 +633,6 @@ export default class Sandbox {
         this.viewer.requestRender(UpdateFlags.RENDER_RESET)
       })
     this.tabs.pages[0].addSeparator()
-
-    const colors = this.tabs.pages[0].addButton({
-      title: `PM's Colors`
-    })
-    colors.on('click', async () => {
-      const colorNodes = this.viewer.getWorldTree().findAll(
-        (node: TreeNode) =>
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          node.model.renderView &&
-          node.model.renderView.renderData.colorMaterial &&
-          node.model.renderView.geometryType === GeometryType.MESH
-      )
-      const colorMap: { [color: number]: Array<string> } = {}
-      for (let k = 0; k < colorNodes.length; k++) {
-        const node = colorNodes[k]
-
-        const color: number = node.model.renderView.renderData.colorMaterial.color
-        if (!colorMap[color]) colorMap[color] = []
-
-        colorMap[color].push(node.model.id)
-      }
-      const colorGroups = []
-
-      for (const color in colorMap) {
-        colorGroups.push({
-          objectIds: colorMap[color],
-          color: '#' + new Color(Number.parseInt(color)).getHexString()
-        })
-      }
-      console.log(colorGroups)
-      this.viewer.getExtension(FilteringExtension).setUserObjectColors(colorGroups)
-    })
 
     this.tabs.pages[0]
       .addInput({ dampening: 30 }, 'dampening', {
