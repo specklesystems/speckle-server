@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import { expect } from 'chai'
 import request from 'supertest'
-import { beforeEachContext } from '@/test/hooks'
+import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { Scopes } from '@speckle/shared'
 import { db } from '@/db/knex'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
@@ -16,8 +16,7 @@ import type Express from 'express'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-// import { storeObjectPreviewFactory } from '@/modules/previews/repository/previews'
-// import { PreviewPriority } from '@/modules/previews/domain/consts'
+import { Server } from 'http'
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -27,8 +26,6 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   }),
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
-
-// const storePreview = storeObjectPreviewFactory({ db })
 
 describe('Previews REST API @previews', () => {
   const userA: BasicTestUser = {
@@ -53,10 +50,29 @@ describe('Previews REST API @previews', () => {
     ownerId: ''
   }
 
+  let server: Server
   let app: Express.Express
-  before(async () => {
-    ;({ app } = await beforeEachContext())
+  let existingCanonicalUrl: string
+  let existingPort: string
+  let serverAddress: string
+  let serverPort: string
 
+  before(async () => {
+    const ctx = await beforeEachContext()
+    app = ctx.app
+    server = ctx.server
+    ;({ serverAddress, serverPort } = await initializeTestServer(ctx))
+
+    // TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
+    existingCanonicalUrl = process.env['CANONICAL_URL'] || ''
+    existingPort = process.env['PORT'] || ''
+    process.env['CANONICAL_URL'] = serverAddress
+    process.env['PORT'] = serverPort
+  })
+
+  beforeEach(async () => {
+    userA.email = createRandomEmail()
+    userB.email = createRandomEmail()
     await createTestUsers([userA, userB])
 
     userAToken = `Bearer ${await createPersonalAccessToken(
@@ -72,6 +88,22 @@ describe('Previews REST API @previews', () => {
     )}`
 
     await createTestStream(testStream, userA)
+  })
+
+  afterEach(async () => {
+    userA.id = ''
+    userA.email = ''
+    userB.id = ''
+    userB.email = ''
+    userAToken = ''
+    userBToken = ''
+    testStream.id = ''
+  })
+
+  after(async () => {
+    process.env['CANONICAL_URL'] = existingCanonicalUrl
+    process.env['PORT'] = existingPort
+    await server?.close()
   })
 
   describe('POST /api/projects/:streamId/previews/jobs/:jobId/results', () => {
@@ -92,6 +124,8 @@ describe('Previews REST API @previews', () => {
       const res = await request(app)
         .post(`/api/projects/${testStream.id}/previews/jobs/${jobId}/results`)
         .set('Authorization', cryptoRandomString({ length: 10 }))
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
         .send(JSON.stringify(validObjectToPost))
       expect(res, JSON.stringify(res)).to.have.status(403)
     })
@@ -100,6 +134,8 @@ describe('Previews REST API @previews', () => {
       const res = await request(app)
         .post(`/api/projects/${testStream.id}/previews/jobs/${jobId}/results`)
         .set('Authorization', '')
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
         .send(JSON.stringify(validObjectToPost))
       expect(res, JSON.stringify(res)).to.have.status(403)
     })
@@ -114,6 +150,8 @@ describe('Previews REST API @previews', () => {
       const res = await request(app)
         .post(`/api/projects/${testStream.id}/previews/jobs/${jobId}/results`)
         .set('Authorization', badToken)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
         .send(JSON.stringify(validObjectToPost))
 
       expect(res, JSON.stringify(res)).to.have.status(403)
@@ -123,6 +161,8 @@ describe('Previews REST API @previews', () => {
       const res = await request(app)
         .post(`/api/projects/thisdoesnotexist/previews/jobs/${jobId}/results`)
         .set('Authorization', userAToken)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
         .send(JSON.stringify(validObjectToPost))
       expect(res, JSON.stringify(res)).to.have.status(404)
     })
@@ -132,6 +172,8 @@ describe('Previews REST API @previews', () => {
       const res = await request(app)
         .post(`/api/projects/${testStream.id}/previews/jobs/${jobId}/results`)
         .set('Authorization', userBToken)
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
         .send(JSON.stringify(validObjectToPost))
       expect(res, JSON.stringify(res)).to.have.status(401)
     })
@@ -146,6 +188,7 @@ describe('Previews REST API @previews', () => {
         .post(`/api/projects/${testStream.id}/previews/jobs/${jobId}/results`)
         .set('Authorization', userAToken)
         .set('Content-type', 'application/json')
+        .set('Accept', 'application/json')
         .send(JSON.stringify(invalidObjectToPost))
 
       expect(res, JSON.stringify(res)).to.have.status(400)
@@ -156,6 +199,7 @@ describe('Previews REST API @previews', () => {
         .post(`/api/projects/${testStream.id}/previews/jobs/${jobId}/results`)
         .set('Authorization', userAToken)
         .set('Content-type', 'application/json')
+        .set('Accept', 'application/json')
         .send(JSON.stringify('this is not json'))
 
       expect(res, JSON.stringify(res)).to.have.status(400)
@@ -166,6 +210,7 @@ describe('Previews REST API @previews', () => {
         .post(`/api/projects/${testStream.id}/previews/jobs/${jobId}/results`)
         .set('Authorization', userAToken)
         .set('Content-type', 'application/json')
+        .set('Accept', 'application/json')
         .send(JSON.stringify(validObjectToPost))
 
       expect(res, JSON.stringify(res)).to.have.status(200)
