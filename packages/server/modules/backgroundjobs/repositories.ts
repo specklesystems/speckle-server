@@ -57,7 +57,7 @@ export const getBackgroundJobCountFactory =
     status: BackgroundJobStatus | 'processing'
     jobType: string
   }) => {
-    const q = tables.backgroundJobs(db)
+    const q = tables.backgroundJobs(db).select(BackgroundJobs.col.id)
 
     if (status === 'processing') {
       q.whereNotExists(function () {
@@ -69,10 +69,10 @@ export const getBackgroundJobCountFactory =
           .skipLocked()
       })
     } else {
-      q.where({ status })
+      q.where({ status }).forUpdate().skipLocked()
     }
 
-    const [res] = await q.andWhere({ jobType }).count()
+    const res = (await q.andWhere({ jobType })) as { id: string }[]
 
-    return parseInt(res.count.toString())
+    return res.length
   }
