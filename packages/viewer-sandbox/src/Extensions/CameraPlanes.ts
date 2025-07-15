@@ -51,7 +51,7 @@ export class CameraPlanes extends Extension {
 
     const batches = this.viewer
       .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH)
+      .batcher.getBatches(undefined, [GeometryType.MESH, GeometryType.TEXT])
     let minDist = Number.POSITIVE_INFINITY
     const minPoint = new Vector3()
     for (let b = 0; b < batches.length; b++) {

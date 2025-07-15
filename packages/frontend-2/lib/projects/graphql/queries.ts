@@ -347,6 +347,15 @@ export const projectWebhooksQuery = graphql(`
   }
 `)
 
+export const projectEmbedTokensQuery = graphql(`
+  query ProjectEmbedTokens($projectId: String!, $cursor: String = null) {
+    project(id: $projectId) {
+      id
+      ...ProjectPageSettingsTokens_Project
+    }
+  }
+`)
+
 export const projectBlobInfoQuery = graphql(`
   query ProjectBlobInfo($blobId: String!, $projectId: String!) {
     project(id: $projectId) {
