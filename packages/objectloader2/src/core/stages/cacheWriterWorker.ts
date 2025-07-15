@@ -4,26 +4,24 @@ import { CustomLogger } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
-import { CacheOptions } from '../options.js'
 import { Writer } from './interfaces.js'
 
-const DEFAULT_ENQUEUE_SIZE = 5000
 const DEFAULT_ENQUEUE_TIMEOUT_MS = 500
-const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 500 // 1MB capacity for each queue
+const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 200 // 1MB capacity for each queue
 
 export class CacheWriterWorker implements Writer {
   #defermentManager: DefermentManager
   #logger: CustomLogger
-  #options: CacheOptions
   #disposed = false
+  private name: string = 'Speckle Cache Writer'
 
   mainToWorkerQueue?: ItemQueue
   indexedDbWriter?: Worker
 
-  constructor(defermentManager: DefermentManager, options: CacheOptions) {
+  constructor(defermentManager: DefermentManager, logger: CustomLogger) {
     this.#defermentManager = defermentManager
-    this.#options = options
-    this.#logger = options.logger || ((): void => {})
+    this.#logger = logger
+    this.name = `[Speckle Cache Writer]`
     this.initializeIndexedDbWriter()
   }
   private logToMainUI(message: string): void {
@@ -35,11 +33,7 @@ export class CacheWriterWorker implements Writer {
       BASE_BUFFER_CAPACITY_BYTES,
       'ItemQueue MainToWorkerQueue'
     )
-    this.mainToWorkerQueue = new ItemQueue(
-      rawMainToWorkerRbq,
-      DEFAULT_ENQUEUE_SIZE,
-      this.#logger
-    )
+    this.mainToWorkerQueue = new ItemQueue(rawMainToWorkerRbq, this.#logger)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
     this.logToMainUI(
       `Worker-to-Main ItemQueue created with ${
@@ -50,11 +44,12 @@ export class CacheWriterWorker implements Writer {
     this.logToMainUI('Starting Web Worker...')
     this.indexedDbWriter = new Worker(
       new URL('../../caching/WriterWorker.js', import.meta.url),
-      { type: 'module' }
+      { type: 'module', name: this.name }
     )
 
     this.logToMainUI('Sending SharedArrayBuffers and capacities to worker...')
     this.indexedDbWriter.postMessage({
+      name: this.name,
       type: WorkerMessageType.INIT_QUEUES,
       mainToWorkerSab,
       mainToWorkerCapacityBytes: BASE_BUFFER_CAPACITY_BYTES

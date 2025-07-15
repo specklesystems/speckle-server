@@ -58,8 +58,7 @@ export class ObjectLoader2 {
     }
     this.#reader.initializeQueue(this.#gathered, this.#downloader)
     if (options.useWriteWorker) {
-      const worker = new CacheWriterWorker(this.#deferments, cacheOptions)
-      this.#writer = worker
+      this.#writer = new CacheWriterWorker(this.#deferments, this.#logger)
     } else {
       this.#writer = new CacheWriter(this.#database, this.#deferments, cacheOptions)
     }

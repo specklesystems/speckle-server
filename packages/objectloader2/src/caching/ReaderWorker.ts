@@ -7,7 +7,7 @@ let indexReader: IndexDbReader | null = null
 
 let consolePrefix = '[Reader Worker]'
 
-function log(message: string, ...args: unknown[]): void {
+function log(message?: string, ...args: unknown[]): void {
   console.log(`${consolePrefix} ${message}`, ...args)
 }
 
@@ -71,7 +71,7 @@ self.onmessage = (event: MessageEvent): void => {
         'ItemQueue WorkerToMainQueue'
       )
       log('ItemQueue (worker-to-main) initialized successfully.')
-      indexReader = new IndexDbReader(data.name, rawMainToWorkerRbq, rawWorkerToMainRbq)
+      indexReader = new IndexDbReader( rawMainToWorkerRbq, rawWorkerToMainRbq, log)
 
       postMessage({ type: 'WORKER_READY' })
 

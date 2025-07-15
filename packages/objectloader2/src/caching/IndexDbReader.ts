@@ -3,30 +3,24 @@ import { StringQueue } from './StringQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { Item } from '../types/types.js'
-import { delay, isWhitespaceOnly } from '../types/functions.js'
+import { CustomLogger, delay, isWhitespaceOnly } from '../types/functions.js'
 import { WorkerCachingConstants } from './WorkerCachingConstants.js'
 
 export class IndexDbReader {
   private workerToMainQueue: ItemQueue
   private mainToWorkerQueue: StringQueue
   private db: IndexedDatabase
-  private name: string
+  private logger: CustomLogger
 
   constructor(
-    name: string,
     rawMainToWorkerRbq: RingBufferQueue,
-    rawWorkerToMainRbq: RingBufferQueue
+    rawWorkerToMainRbq: RingBufferQueue,
+    logger: CustomLogger
   ) {
-    this.name = name
     this.db = new IndexedDatabase({})
-    this.mainToWorkerQueue = new StringQueue(
-      rawMainToWorkerRbq,
-      (m?: string, ...p: unknown[]) => this.log(m ?? '', ...p)
-    )
-    this.workerToMainQueue = new ItemQueue(
-      rawWorkerToMainRbq,
-      (m?: string, ...p: unknown[]) => this.log(m ?? '', ...p)
-    )
+    this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq, logger)
+    this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq, logger)
+    this.logger = logger
   }
 
   private async processBatch(batch: string[]): Promise<void> {
@@ -39,13 +33,13 @@ export class IndexDbReader {
         processedItems.push(item)
       } else {
         if (isWhitespaceOnly(batch[i])) {
-          this.log('Received a whitespace-only message, skipping it.')
+          this.logger('Received a whitespace-only message, skipping it.')
           continue
         }
         processedItems.push({ baseId: batch[i] })
       }
     }
-    this.log(
+    this.logger(
       `Processed ${processedItems.length} items in ${performance.now() - start}ms`
     )
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -53,14 +47,6 @@ export class IndexDbReader {
       processedItems,
       WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
     )
-  }
-
-  public log(message: string, ...args: unknown[]): void {
-    console.log(`${this.name} ${message}`, ...args)
-  }
-
-  public static postMessage(args: unknown): void {
-    ;(self as unknown as Worker).postMessage(args)
   }
 
   public async processMessages(): Promise<void> {

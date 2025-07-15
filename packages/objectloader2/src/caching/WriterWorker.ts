@@ -5,9 +5,9 @@ import { IndexDbWriter } from './IndexDbWriter.js'
 
 let indexWriter: IndexDbWriter | null = null
 
-const consolePrefix = '[Writer Worker]'
+let consolePrefix = '[Writer Worker]'
 
-function log(message: string, ...args: unknown[]): void {
+function log(message?: string, ...args: unknown[]): void {
   console.log(`${consolePrefix} ${message}`, ...args)
 }
 
@@ -51,6 +51,7 @@ self.onmessage = (event: MessageEvent): void => {
     data.mainToWorkerSab instanceof SharedArrayBuffer &&
     typeof data.mainToWorkerCapacityBytes === 'number'
   ) {
+    consolePrefix = data.name
     log(`Received INIT_QUEUES message.`)
     try {
       const rawMainToWorkerRbq = RingBufferQueue.fromExisting(
@@ -60,7 +61,7 @@ self.onmessage = (event: MessageEvent): void => {
       )
 
       log('ItemQueue (main-to-worker) initialized successfully.')
-      indexWriter = new IndexDbWriter(rawMainToWorkerRbq)
+      indexWriter = new IndexDbWriter(rawMainToWorkerRbq, log)
 
       postMessage({ type: 'WORKER_READY' })
 
