@@ -1,7 +1,7 @@
 import express from 'express'
 import { isTestEnvironment } from '@/config.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
-import { buildServer, initServer } from './server'
+import { buildServer, initServer } from '@/server.js'
 
 const app = express()
 
