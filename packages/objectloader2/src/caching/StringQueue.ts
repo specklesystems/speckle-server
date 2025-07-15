@@ -6,10 +6,7 @@ export class StringQueue extends ObjectQueue<string> {
   private textEncoder: TextEncoder
   private textDecoder: TextDecoder
 
-  constructor(
-    ringBufferQueue: RingBufferQueue,
-    logger?: CustomLogger
-  ) {
+  constructor(ringBufferQueue: RingBufferQueue, logger?: CustomLogger) {
     super(ringBufferQueue, logger)
     this.textEncoder = new TextEncoder()
     this.textDecoder = new TextDecoder('utf-8', { fatal: false })
