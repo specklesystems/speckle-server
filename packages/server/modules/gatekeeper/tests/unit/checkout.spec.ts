@@ -12,7 +12,7 @@ import {
   SubscriptionData,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 import {
   PaidWorkspacePlan,
   PaidWorkspacePlans,

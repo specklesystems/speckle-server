@@ -11,7 +11,7 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
-import { flatten } from 'lodash'
+import { flatten } from 'lodash-es'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 
 const collectAndValidateServerTargetFactory =

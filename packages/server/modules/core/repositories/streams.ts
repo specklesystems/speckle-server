@@ -1,4 +1,4 @@
-import _, {
+import {
   clamp,
   groupBy,
   has,
@@ -10,8 +10,9 @@ import _, {
   omit,
   omitBy,
   reduce,
-  toNumber
-} from 'lodash'
+  toNumber,
+  keyBy
+} from 'lodash-es'
 import {
   Streams,
   StreamAcl,
@@ -270,7 +271,7 @@ export const getFavoritedStreamsPageFactory =
   (deps: { db: Knex }): GetFavoritedStreamsPage =>
   async (params) => {
     const { userId, cursor, limit, streamIdWhitelist } = params
-    const finalLimit = _.clamp(limit || 25, 1, 25)
+    const finalLimit = clamp(limit || 25, 1, 25)
     const query = getFavoritedStreamsQueryBaseFactory(deps)(userId, streamIdWhitelist)
     query
       .select<
@@ -366,7 +367,7 @@ export const getBatchUserFavoriteDataFactory =
       .whereIn(StreamFavorites.col.streamId, streamIds)
 
     const rows = await query
-    return _.keyBy(rows, 'streamId')
+    return keyBy(rows, 'streamId')
   }
 
 /**
@@ -385,7 +386,7 @@ export const getBatchStreamFavoritesCountsFactory =
       .groupBy(StreamFavorites.col.streamId)
 
     const rows = await query
-    return _.mapValues(_.keyBy(rows, 'streamId'), (r) => parseInt(r?.count || '0'))
+    return mapValues(keyBy(rows, 'streamId'), (r) => parseInt(r?.count || '0'))
   }
 
 /**
@@ -443,7 +444,7 @@ export const getOwnedFavoritesCountByUserIdsFactory =
       .groupBy(StreamAcl.col.userId)
 
     const results = await query
-    return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r?.count || '0'))
+    return mapValues(keyBy(results, 'userId'), (r) => parseInt(r?.count || '0'))
   }
 
 /**
@@ -466,8 +467,8 @@ export const getStreamRolesFactory =
       .whereIn(Streams.col.id, streamIds)
 
     const results = await q
-    return _.mapValues(
-      _.keyBy(results, (r) => r.id),
+    return mapValues(
+      keyBy(results, (r) => r.id),
       (v) => v.role
     )
   }
@@ -967,7 +968,7 @@ export const getUserStreamCountsFactory =
     }
 
     const results = await q
-    return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
+    return mapValues(keyBy(results, 'userId'), (r) => parseInt(r.count))
   }
 
 export const deleteStreamFactory =

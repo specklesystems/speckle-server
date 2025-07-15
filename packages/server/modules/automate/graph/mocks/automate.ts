@@ -17,7 +17,7 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Automate, isNullOrUndefined, SourceAppNames } from '@speckle/shared'
 import dayjs from 'dayjs'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 

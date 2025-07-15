@@ -2,7 +2,7 @@
 import { StreamAccessRequestRecord } from '@/modules/accessrequests/repositories'
 import { MaybeAsync, Optional } from '@/modules/shared/helpers/typeHelper'
 import { Job } from 'bull'
-import { isObject, has } from 'lodash'
+import { isObject, has } from 'lodash-es'
 import { Logger } from 'pino'
 
 export enum NotificationType {

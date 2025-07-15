@@ -15,7 +15,7 @@ import {
 import { CommentEvents, CommentEventsPayloads } from '@/modules/comments/domain/events'
 import { ReplyCreateInput } from '@/modules/core/graph/generated/graphql'
 import { EventBusListen } from '@/modules/shared/services/eventBus'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { OverrideProperties } from 'type-fest'
 
 const addThreadCreatedActivityFactory =

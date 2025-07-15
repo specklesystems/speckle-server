@@ -1,5 +1,4 @@
 import { expect } from 'chai'
-import { describe, it } from 'mocha'
 import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
 
 /* eslint-disable camelcase */
