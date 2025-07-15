@@ -150,3 +150,14 @@ Box3.prototype.intersectOBB = function (obb: OBB): OBB | null {
   // Step 9: Return the resulting OBB
   return new OBB(worldCentroid, halfSize, obb.rotation.clone())
 }
+
+Box3.prototype.isInfiniteBox = function (): boolean {
+  return (
+    this.min.x === -Infinity ||
+    this.min.y === -Infinity ||
+    this.min.z === -Infinity ||
+    this.max.x === Infinity ||
+    this.max.y === Infinity ||
+    this.max.z === Infinity
+  )
+}

@@ -11,19 +11,24 @@ import {
   Scene,
   Camera,
   BufferGeometry,
-  Object3D
+  Object3D,
+  Vector4
 } from 'three'
 import { Matrix4 } from 'three'
 
 import { ExtendedMeshBasicMaterial, type Uniforms } from './SpeckleMaterial.js'
 import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
-class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
-  protected static readonly matBuff: Matrix4 = new Matrix4()
-  protected static readonly vecBuff: Vector2 = new Vector2()
+const matBuff: Matrix4 = new Matrix4()
+const vec2Buff0: Vector2 = new Vector2()
+const vec2Buff1: Vector2 = new Vector2()
+const vec2Buff2: Vector2 = new Vector2()
 
-  private _billboardPixelHeight: number
-  private _billboardOffset: Vector2 = new Vector2()
+export type BillboardingType = 'world' | 'screen'
+
+class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
+  protected _billboardPixelSize: Vector2 = new Vector2()
+  protected _billboardPixelOffset: Vector2 = new Vector2()
 
   protected get vertexProgram(): string {
     return speckleBasicVert
@@ -43,20 +48,26 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       uViewer_low: new Vector3(),
       uTransforms: [new Matrix4()],
       tTransforms: null,
-      billboardPos: new Vector3(),
-      billboardSize: new Vector2(),
-      billboardOffset: new Vector2(),
+      objCount: 1,
       invProjection: new Matrix4(),
-      objCount: 1
+      billboardPixelOffsetSize: new Vector4()
     }
   }
 
-  public set billboardPixelHeight(value: number) {
-    this._billboardPixelHeight = value
+  public get billboardPixelSize(): Vector2 {
+    return this._billboardPixelSize
   }
 
-  public set billboardOffset(value: Vector2) {
-    this._billboardOffset.copy(value)
+  public set billboardPixelSize(value: Vector2) {
+    this._billboardPixelSize.copy(value)
+  }
+
+  public get billboardPixeOffset(): Vector2 {
+    return this._billboardPixelOffset
+  }
+
+  public set billboardPixelOffset(value: Vector2) {
+    this._billboardPixelOffset.copy(value)
   }
 
   constructor(parameters: MeshBasicMaterialParameters, defines: string[] = []) {
@@ -80,8 +91,22 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
     const toStandard = to as SpeckleBasicMaterial
     const fromStandard = from as SpeckleBasicMaterial
     toStandard.color.copy(fromStandard.color)
-    toStandard.refractionRatio = fromStandard.refractionRatio
-    to.userData.billboardPos.value.copy(from.userData.billboardPos.value)
+    to.userData.billboardPixelOffsetSize.value.copy(
+      from.userData.billboardPixelOffsetSize.value
+    )
+  }
+
+  public setBillboarding(type: BillboardingType | null) {
+    /** Create the define object if not there */
+    if (!this.defines) this.defines = {}
+    /** Clear all billboarding defines */
+    delete this.defines['BILLBOARD_SCREEN']
+    delete this.defines['BILLBOARD']
+
+    if (!type) return
+
+    if (type === 'world') this.defines['BILLBOARD'] = ' '
+    if (type === 'screen') this.defines['BILLBOARD_SCREEN'] = ' '
   }
 
   /** Called by three.js render loop */
@@ -92,18 +117,33 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
     _geometry: BufferGeometry,
     object: Object3D
   ) {
-    if (this.defines && this.defines['BILLBOARD_FIXED']) {
-      const resolution = _this.getDrawingBufferSize(SpeckleBasicMaterial.vecBuff)
-      SpeckleBasicMaterial.vecBuff.set(
-        (this._billboardPixelHeight / resolution.x) * 2,
-        (this._billboardPixelHeight / resolution.y) * 2
+    if (
+      this.defines &&
+      (this.defines['BILLBOARD'] || this.defines['BILLBOARD_SCREEN'])
+    ) {
+      matBuff.copy(camera.projectionMatrix).invert()
+      this.userData.invProjection.value.copy(matBuff)
+      this.needsUpdate = true
+    }
+
+    if (this.defines && this.defines['BILLBOARD_SCREEN']) {
+      _this.getDrawingBufferSize(vec2Buff0)
+      const billboardPixelOffsetNDC = vec2Buff1.set(
+        this._billboardPixelOffset.x,
+        this._billboardPixelOffset.y
       )
-      this.userData.billboardSize.value.copy(SpeckleBasicMaterial.vecBuff)
-      this.userData.billboardOffset.value.copy(this._billboardOffset)
-      SpeckleBasicMaterial.matBuff.copy(camera.projectionMatrix).invert()
-      this.userData.invProjection.value.copy(SpeckleBasicMaterial.matBuff)
-      /** TO DO: Revisit and Enable this */
-      // this.userData.billboardPos.value.copy(object.position)
+      const billboardPixelSizeNDC = vec2Buff2.set(
+        this._billboardPixelSize.x,
+        this._billboardPixelSize.y
+      )
+      billboardPixelOffsetNDC.divide(vec2Buff0)
+      billboardPixelSizeNDC.divide(vec2Buff0)
+      this.userData.billboardPixelOffsetSize.value.set(
+        billboardPixelOffsetNDC.x,
+        billboardPixelOffsetNDC.y,
+        billboardPixelSizeNDC.x,
+        billboardPixelSizeNDC.y
+      )
       this.needsUpdate = true
     }
 

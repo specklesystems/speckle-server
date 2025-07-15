@@ -16502,7 +16502,7 @@ __metadata:
     three: "npm:^0.140.0"
     three-mesh-bvh: "npm:0.5.17"
     tree-model: "npm:1.0.7"
-    troika-three-text: "npm:0.47.2"
+    troika-three-text: "npm:0.52.4"
     type-fest: "npm:^4.15.0"
     typescript: "npm:^4.5.4"
     vitest: "npm:^1.4.0"
@@ -47218,6 +47218,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"troika-three-text@npm:0.52.4":
+  version: 0.52.4
+  resolution: "troika-three-text@npm:0.52.4"
+  dependencies:
+    bidi-js: "npm:^1.0.2"
+    troika-three-utils: "npm:^0.52.4"
+    troika-worker-utils: "npm:^0.52.0"
+    webgl-sdf-generator: "npm:1.1.1"
+  peerDependencies:
+    three: ">=0.125.0"
+  checksum: 10/bbc0aaaed657b30240b69034543ac71451590e0b7403ae9eadc6b0891b791434185e687c6db545c23433fea0bfe93d67def3e1d120ba73dae74fe08aea95e8ca
+  languageName: node
+  linkType: hard
+
 "troika-three-utils@npm:^0.47.2":
   version: 0.47.2
   resolution: "troika-three-utils@npm:0.47.2"
@@ -47227,10 +47241,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"troika-three-utils@npm:^0.52.4":
+  version: 0.52.4
+  resolution: "troika-three-utils@npm:0.52.4"
+  peerDependencies:
+    three: ">=0.125.0"
+  checksum: 10/cd2382b50584fdbec86c6ab9ac771c777cc937b9f23f40cb3f2fa3f401ba438ffea822171f84fddc7d6537798e4fc1cc8c2f5fe81b04b3e1e6e7bb6c2f228f5c
+  languageName: node
+  linkType: hard
+
 "troika-worker-utils@npm:^0.47.2":
   version: 0.47.2
   resolution: "troika-worker-utils@npm:0.47.2"
   checksum: 10/c640b051906ea5988758a9ba367b66dcf767e6d71c7523c9c19175618b141c29618474ba14057b3332f4598bfb31126c7f40c59135f534df02e1e5c766144b5a
+  languageName: node
+  linkType: hard
+
+"troika-worker-utils@npm:^0.52.0":
+  version: 0.52.0
+  resolution: "troika-worker-utils@npm:0.52.0"
+  checksum: 10/7b58418a201611f0e350534c6ab6c4fcc0121d6ed3fdaf74b04b8d873e87341122e4f344d48c144d37cce73263d9948db9a7ab61141d90eed3652ebada4b56e4
   languageName: node
   linkType: hard
 
