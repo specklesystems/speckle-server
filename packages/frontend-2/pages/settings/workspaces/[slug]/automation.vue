@@ -44,6 +44,10 @@ const {
     enabled: isAutomateEnabled.value
   }),
   resolveCurrentResult: (res) => res?.workspaceBySlug?.automateFunctions,
+  resolveInitialResult: () => ({
+    items: [],
+    cursor: undefined
+  }),
   resolveNextPageVariables: (baseVars, cursor) => ({ ...baseVars, cursor }),
   resolveKey: (vars) => [vars.slug],
   resolveCursorFromVariables: (vars) => vars.cursor
