@@ -31,7 +31,7 @@ export class CacheWriterWorker implements Writer {
     this.logToMainUI('Initializing RingBufferQueues...')
     const rawMainToWorkerRbq = RingBufferQueue.create(
       BASE_BUFFER_CAPACITY_BYTES,
-      'ItemQueue MainToWorkerQueue'
+      this.name + ' ItemQueue MainToWorkerQueue'
     )
     this.mainToWorkerQueue = new ItemQueue(rawMainToWorkerRbq, this.#logger)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()

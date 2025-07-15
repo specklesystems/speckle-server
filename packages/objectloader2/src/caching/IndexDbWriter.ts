@@ -2,7 +2,7 @@ import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { WorkerCachingConstants } from './WorkerCachingConstants.js'
-import { CustomLogger } from '../types/functions.js'
+import { CustomLogger, delay } from '../types/functions.js'
 
 export class IndexDbWriter {
   private mainToWorkerQueue: ItemQueue
@@ -16,16 +16,20 @@ export class IndexDbWriter {
   }
 
   public async processMessages(): Promise<void> {
-    const receivedMessages = await this.mainToWorkerQueue.dequeue(
-      WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
-      WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
-    ) // receivedMessages will be string[]
-    if (receivedMessages && receivedMessages.length > 0) {
-      const start = performance.now()
-      await this.db.saveBatch({ batch: receivedMessages })
-      this.logger(
-        `Saved ${receivedMessages.length} items in ${performance.now() - start}ms`
-      )
+    while (true) {
+      const receivedMessages = await this.mainToWorkerQueue.dequeue(
+        WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
+        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+      ) // receivedMessages will be string[]
+      if (receivedMessages && receivedMessages.length > 0) {
+        const start = performance.now()
+        await this.db.saveBatch({ batch: receivedMessages })
+        this.logger(
+          `Saved ${receivedMessages.length} items in ${performance.now() - start}ms`
+        )
+      } else {
+        await delay(200) // Wait for 200ms before checking again
+      }
     }
   }
 }

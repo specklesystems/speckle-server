@@ -26,7 +26,8 @@ async function processMessages(): Promise<void> {
   }
   log('Starting to listen for messages from main thread...')
   try {
-    await indexWriter.processMessages()
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    indexWriter.processMessages()
   } catch (e: unknown) {
     handleError(
       e,

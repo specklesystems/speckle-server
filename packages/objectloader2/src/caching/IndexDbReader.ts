@@ -23,6 +23,20 @@ export class IndexDbReader {
     this.logger = logger
   }
 
+  public async processMessages(): Promise<void> {
+    while (true) {
+      const receivedMessages = await this.mainToWorkerQueue.dequeue(
+        WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
+        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+      ) // receivedMessages will be string[]
+      if (receivedMessages && receivedMessages.length > 0) {
+        await this.processBatch(receivedMessages)
+      } else {
+        await delay(200) // Wait for 200ms before checking again
+      }
+    }
+  }
+
   private async processBatch(batch: string[]): Promise<void> {
     const start = performance.now()
     const items = await this.db.getAll(batch)
@@ -47,19 +61,5 @@ export class IndexDbReader {
       processedItems,
       WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
     )
-  }
-
-  public async processMessages(): Promise<void> {
-    while (true) {
-      const receivedMessages = await this.mainToWorkerQueue.dequeue(
-        WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
-        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
-      ) // receivedMessages will be string[]
-      if (receivedMessages && receivedMessages.length > 0) {
-        await this.processBatch(receivedMessages)
-      } else {
-        await delay(1000) // Wait for 1 second before checking again
-      }
-    }
   }
 }

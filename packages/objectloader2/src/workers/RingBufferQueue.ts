@@ -47,9 +47,6 @@ export class RingBufferQueue {
       messageLength + RingBufferQueue.LENGTH_PREFIX_BYTES >
       this.ringBuffer.availableSpaces
     ) {
-      console.warn(
-        `Message data (${messageLength} bytes) + prefix (${RingBufferQueue.LENGTH_PREFIX_BYTES} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.availableSpaces} bytes). Skipping item.`
-      )
       return false
     }
 
