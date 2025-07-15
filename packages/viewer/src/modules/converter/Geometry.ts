@@ -17,7 +17,6 @@ import earcut from 'earcut'
 
 const vecBuff0: Vector3 = new Vector3()
 const floatArrayBuff: Float32Array = new Float32Array(16)
-Vector3
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -202,6 +201,7 @@ export class Geometry {
     if (!geometryData.attributes) return
     if (!geometryData.attributes.POSITION) return
     if (!m) return
+    if (Geometry.isMatrix4Identity(m)) return
 
     const e = m.elements
 
@@ -217,6 +217,35 @@ export class Geometry {
       geometryData.attributes.POSITION[k + 2] =
         (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
     }
+  }
+
+  public static isMatrix4Identity(matrix: Matrix4) {
+    const e = matrix.elements
+
+    // Check all off-diagonal elements first
+    if (
+      e[1] !== 0 ||
+      e[2] !== 0 ||
+      e[3] !== 0 ||
+      e[4] !== 0 ||
+      e[6] !== 0 ||
+      e[7] !== 0 ||
+      e[8] !== 0 ||
+      e[9] !== 0 ||
+      e[11] !== 0 ||
+      e[12] !== 0 ||
+      e[13] !== 0 ||
+      e[14] !== 0
+    ) {
+      return false
+    }
+
+    // Now check diagonals
+    if (e[0] !== 1 || e[5] !== 1 || e[10] !== 1 || e[15] !== 1) {
+      return false
+    }
+
+    return true
   }
 
   public static unpackColors(int32Colors: number[]): number[] {
