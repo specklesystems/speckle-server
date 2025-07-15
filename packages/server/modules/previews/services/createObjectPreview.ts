@@ -47,7 +47,7 @@ export const createObjectPreviewFactory =
       appId: DefaultAppIds.Web,
       name: `preview-${jobId}`,
       userId,
-      scopes: [Scopes.Streams.Read],
+      scopes: [Scopes.Streams.Read, Scopes.Automate.ReportResults],
       lifespan: 2 * TIME_MS.hour,
       limitResources: [
         {
@@ -61,10 +61,16 @@ export const createObjectPreviewFactory =
       serverOrigin
     ).toString()
 
+    const responseUrl = new URL(
+      `/api/projects/${streamId}/previews/jobs/${jobId}/results`,
+      serverOrigin
+    ).toString()
+
     await requestObjectPreview({
       jobId,
       token,
-      url
+      url,
+      responseUrl
     })
     return true
   }

@@ -405,6 +405,22 @@ export const streamReadPermissionsPipelineFactory = (deps: {
   })
 ]
 
+export const streamReportResultsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
+  validateScope({ requiredScope: Scopes.Automate.ReportResults }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
+  validateStreamPolicyAccessFactory({
+    ...deps,
+    policyInvoker: async ({ authData, policies }) =>
+      policies.project.canRead({
+        userId: authData.context.userId,
+        projectId: authData.params!.streamId!
+      })
+  })
+]
+
 export const throwForNotHavingServerRoleFactory =
   (deps: { validateServerRole: ValidateServerRoleBuilder }): ValidateUserServerRole =>
   async (context: AuthContext, requiredRole: ServerRoles) => {

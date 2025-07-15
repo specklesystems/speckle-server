@@ -1,10 +1,7 @@
 import { Router } from 'express'
 import cors from 'cors'
-
 import { validateScopes, authorizeResolver } from '@/modules/shared'
-
 import { makeOgImage } from '@/modules/previews/ogImage'
-
 import { db } from '@/db/knex'
 import {
   getObjectPreviewBufferOrFilepathFactory,
@@ -14,10 +11,13 @@ import {
 import {
   getObjectPreviewInfoFactory,
   getPreviewImageFactory,
-  storeObjectPreviewFactory
+  storeObjectPreviewFactory,
+  storePreviewFactory,
+  updateObjectPreviewFactory
 } from '@/modules/previews/repository/previews'
 import {
   getCommitFactory,
+  getObjectCommitsWithStreamIdsFactory,
   getPaginatedBranchCommitsItemsFactory,
   legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
@@ -45,6 +45,18 @@ import {
 import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
 import type { Queue } from 'bull'
 import type { Knex } from 'knex'
+import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { streamReportResultsPipelineFactory } from '@/modules/shared/authz'
+import { validateRequest } from 'zod-express'
+import { z } from 'zod'
+import {
+  fromJobId,
+  jobIdSchema,
+  previewResultPayload
+} from '@speckle/shared/workers/previews'
+import { observeMetricsFactory } from '@/modules/previews/observability/metrics'
+import { Summary } from 'prom-client'
+import { consumePreviewResultFactory } from '@/modules/previews/resultListener'
 import { fileURLToPath } from 'url'
 
 const httpErrorImage = (httpErrorCode: number) =>
@@ -57,17 +69,14 @@ const noPreviewImage = () =>
 
 const buildCreateObjectPreviewFunction = ({
   projectDb,
-  previewRequestQueue,
-  responseQueueName
+  previewRequestQueue
 }: {
   projectDb: Knex
   previewRequestQueue: Queue
-  responseQueueName: string
 }) => {
   return createObjectPreviewFactory({
     requestObjectPreview: requestObjectPreviewFactory({
-      queue: previewRequestQueue,
-      responseQueue: responseQueueName
+      queue: previewRequestQueue
     }),
     // use the private server origin if defined, otherwise use the public server origin
     serverOrigin: previewServiceShouldUsePrivateObjectsServerUrl()
@@ -88,10 +97,10 @@ const buildCreateObjectPreviewFunction = ({
 
 export const previewRouterFactory = ({
   previewRequestQueue,
-  responseQueueName
+  previewJobsProcessedSummary
 }: {
   previewRequestQueue: Queue
-  responseQueueName: string
+  previewJobsProcessedSummary: Summary<'status' | 'step'>
 }): Router => {
   const app = Router()
 
@@ -130,8 +139,7 @@ export const previewRouterFactory = ({
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: buildCreateObjectPreviewFunction({
         projectDb,
-        previewRequestQueue,
-        responseQueueName
+        previewRequestQueue
       }),
       getPreviewImage: getPreviewImageFactory({ db: projectDb })
     })
@@ -200,8 +208,7 @@ export const previewRouterFactory = ({
         getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
         createObjectPreview: buildCreateObjectPreviewFunction({
           projectDb,
-          previewRequestQueue,
-          responseQueueName
+          previewRequestQueue
         }),
         getPreviewImage: getPreviewImageFactory({ db: projectDb })
       })
@@ -251,8 +258,7 @@ export const previewRouterFactory = ({
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: buildCreateObjectPreviewFunction({
         projectDb,
-        previewRequestQueue,
-        responseQueueName
+        previewRequestQueue
       }),
       getPreviewImage: getPreviewImageFactory({ db: projectDb })
     })
@@ -292,8 +298,7 @@ export const previewRouterFactory = ({
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: buildCreateObjectPreviewFunction({
         projectDb,
-        previewRequestQueue,
-        responseQueueName
+        previewRequestQueue
       }),
       getPreviewImage: getPreviewImageFactory({ db: projectDb })
     })
@@ -313,5 +318,73 @@ export const previewRouterFactory = ({
       req.params.angle
     )
   })
+
+  app.options('/api/projects/:streamId/previews/jobs/:jobId/results', cors())
+  app.post(
+    '/api/projects/:streamId/previews/jobs/:jobId/results',
+    cors(),
+    authMiddlewareCreator(
+      streamReportResultsPipelineFactory({
+        getStream: getStreamFactory({ db })
+      })
+    ),
+    validateRequest({
+      params: z.object({
+        streamId: z.string(),
+        jobId: jobIdSchema
+      }),
+      body: previewResultPayload
+    }),
+    async (req, res) => {
+      const userId = req.context.userId
+      const projectId = req.params.streamId
+      const jobId = req.params.jobId
+      const logger = req.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        userId,
+        jobId
+      })
+
+      const jobResult = req.body
+
+      const { objectId, projectId: projectIdFromJobId } = fromJobId(jobId)
+      if (projectIdFromJobId !== projectId) {
+        logger.error(
+          `Project ID from job ID (${projectIdFromJobId}) does not match request project ID (${projectId})`
+        )
+        return res.status(400).send({
+          message: 'Invalid project ID in job ID'
+        })
+      }
+
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const observeMetrics = observeMetricsFactory({
+        summary: previewJobsProcessedSummary
+      })
+      const consumePreviewResult = consumePreviewResultFactory({
+        logger,
+        storePreview: storePreviewFactory({ db: projectDb }),
+        updateObjectPreview: updateObjectPreviewFactory({ db: projectDb }),
+        getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({
+          db: projectDb
+        })
+      })
+
+      observeMetrics({ payload: jobResult })
+
+      await consumePreviewResult({
+        projectId,
+        objectId,
+        previewResult: jobResult
+      })
+
+      res.status(200).send({
+        message: 'Job result processed successfully'
+      })
+      return
+    }
+  )
   return app
 }

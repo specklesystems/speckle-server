@@ -6,7 +6,7 @@ import type {
 } from 'bull'
 import type { EventEmitter } from 'stream'
 import { initializeQueue } from '@speckle/shared/queue'
-import { JobPayload, PreviewResultPayload } from '@speckle/shared/workers/previews'
+import { JobPayload } from '@speckle/shared/workers/previews'
 import {
   DelayBetweenPreviewRetriesMinutes,
   NumberOfPreviewRetries
@@ -64,21 +64,16 @@ export const addRequestQueueListeners = (params: {
   requestQueue.on('active', requestActiveHandler)
 }
 
-export const createRequestAndResponseQueues = async (params: {
+export const createRequestQueue = async (params: {
   redisUrl: string
   requestQueueName: string
-  responseQueueName: string
   requestErrorHandler: ErrorEventCallback
   requestFailedHandler: FailedEventCallback
   requestActiveHandler: ActiveEventCallback
-}): Promise<{
-  requestQueue: Queue<JobPayload>
-  responseQueue: Queue<PreviewResultPayload>
-}> => {
+}): Promise<Queue<JobPayload>> => {
   const {
     redisUrl,
     requestQueueName,
-    responseQueueName,
     requestErrorHandler,
     requestActiveHandler,
     requestFailedHandler
@@ -99,10 +94,5 @@ export const createRequestAndResponseQueues = async (params: {
     requestActiveHandler
   })
 
-  const previewResponseQueue = await initializeQueue<PreviewResultPayload>({
-    queueName: responseQueueName,
-    redisUrl
-  })
-
-  return { requestQueue: previewRequestQueue, responseQueue: previewResponseQueue }
+  return previewRequestQueue
 }
