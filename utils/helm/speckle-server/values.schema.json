@@ -2434,7 +2434,7 @@
         }
       }
     },
-    "ifc_importer_service": {
+    "ifc_import_service": {
       "type": "object",
       "properties": {
         "enabled": {

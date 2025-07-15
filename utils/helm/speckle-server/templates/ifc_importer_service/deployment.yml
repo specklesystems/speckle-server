@@ -1,29 +1,29 @@
-{{- if (and .Values.ifc_importer_service.enabled .Values.featureFlags.backgroundJobsEnabled) }}
+{{- if (and .Values.ifc_import_service.enabled .Values.featureFlags.backgroundJobsEnabled) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "ifc_importer_service.name" $ }}
+  name: {{ include "ifc_import_service.name" $ }}
   namespace: {{ .Values.namespace }}
   labels:
-{{ include "ifc_importer_service.labels" . | indent 4 }}
+{{ include "ifc_import_service.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.ifc_importer_service.replicas }}
+  replicas: {{ .Values.ifc_import_service.replicas }}
   selector:
     matchLabels:
-      app: {{ include "ifc_importer_service.name" $ }}
+      app: {{ include "ifc_import_service.name" $ }}
       project: speckle-server
-  {{- with .Values.ifc_importer_service.deploymentStrategy }}
+  {{- with .Values.ifc_import_service.deploymentStrategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   template:
     metadata:
       labels:
-{{ include "ifc_importer_service.labels" . | indent 8 }}
+{{ include "ifc_import_service.labels" . | indent 8 }}
     spec:
       containers:
       - name: main
-        image: {{ default (printf "speckle/speckle-ifc-importer-service:%s" .Values.docker_image_tag) .Values.ifc_importer_service.image }}
+        image: {{ default (printf "speckle/speckle-ifc-import-service:%s" .Values.docker_image_tag) .Values.ifc_import_service.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
@@ -39,11 +39,11 @@ spec:
             port: 9080
 
         resources:
-          {{- with .Values.ifc_importer_service.requests }}
+          {{- with .Values.ifc_import_service.requests }}
           requests:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.ifc_importer_service.limits }}
+          {{- with .Values.ifc_import_service.limits }}
           limits:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -70,18 +70,18 @@ spec:
           - name: FILEIMPORT_QUEUE_POSTGRES_URL
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName .Values.ifc_importer_service.db.connectionString.secretName }}
-                key: {{ default "postgres_url" .Values.ifc_importer_service.db.connectionString.secretKey }}
+                name: {{ default .Values.secretName .Values.ifc_import_service.db.connectionString.secretName }}
+                key: {{ default "postgres_url" .Values.ifc_import_service.db.connectionString.secretKey }}
 
           - name: LOG_LEVEL
-            value: {{ .Values.ifc_importer_service.logLevel | quote }}
+            value: {{ .Values.ifc_import_service.logLevel | quote }}
 
           - name: LOG_PRETTY
-            value: {{ .Values.ifc_importer_service.logPretty | quote }}
+            value: {{ .Values.ifc_import_service.logPretty | quote }}
 
-          {{- if .Values.ifc_importer_service.db.useCertificate }}
+          {{- if .Values.ifc_import_service.db.useCertificate }}
           - name: EXTRA_CA_CERTS #FIXME is this required in python?
-            value: {{ printf "/%s/%s" .Values.ifc_importer_service.db.certificate.configMapName .Values.ifc_importer_service.db.certificate.configMapKey }}
+            value: {{ printf "/%s/%s" .Values.ifc_import_service.db.certificate.configMapName .Values.ifc_import_service.db.certificate.configMapKey }}
           {{- end }}
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
@@ -90,20 +90,20 @@ spec:
           - name: FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
             value: {{ .Values.featureFlags.experimentalIfcImporterEnabled | quote }}
           {{- end }}
-          {{- with .Values.ifc_importer_service.additionalEnvVars }}
+          {{- with .Values.ifc_import_service.additionalEnvVars }}
           {{- toYaml . | nindent 10}}
           {{- end }}
-      {{- if .Values.ifc_importer_service.affinity }}
-      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.ifc_importer_service.affinity "context" $) | nindent 8 }}
+      {{- if .Values.ifc_import_service.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.ifc_import_service.affinity "context" $) | nindent 8 }}
       {{- end }}
-      {{- if .Values.ifc_importer_service.nodeSelector }}
-      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.ifc_importer_service.nodeSelector "context" $) | nindent 8 }}
+      {{- if .Values.ifc_import_service.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.ifc_import_service.nodeSelector "context" $) | nindent 8 }}
       {{- end }}
-      {{- if .Values.ifc_importer_service.tolerations }}
-      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.ifc_importer_service.tolerations "context" $) | nindent 8 }}
+      {{- if .Values.ifc_import_service.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.ifc_import_service.tolerations "context" $) | nindent 8 }}
       {{- end }}
-      {{- if .Values.ifc_importer_service.topologySpreadConstraints }}
-      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.ifc_importer_service.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- if .Values.ifc_import_service.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.ifc_import_service.topologySpreadConstraints "context" $) | nindent 8 }}
       {{- end }}
 
       securityContext:
@@ -115,8 +115,8 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       priorityClassName: low-priority
-      {{- if .Values.ifc_importer_service.serviceAccount.create }}
-      serviceAccountName: {{ include "ifc_importer_service.name" $ }}
+      {{- if .Values.ifc_import_service.serviceAccount.create }}
+      serviceAccountName: {{ include "ifc_import_service.name" $ }}
       {{- else }}
       {{- /* NOTE: If there is a service account, Kubernetes adds the imagePullSecrets to Pods automatically. */}}
       {{- with .Values.imagePullSecrets }}
@@ -129,9 +129,9 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
-      {{- if .Values.ifc_importer_service.db.certificate.enabled }}
+      {{- if .Values.ifc_import_service.db.certificate.enabled }}
         - name: postgres-certificate
           configMap:
-            name: {{ .Values.ifc_importer_service.db.certificate.configMapName }}
+            name: {{ .Values.ifc_import_service.db.certificate.configMapName }}
       {{- end }}
 {{- end }}

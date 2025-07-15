@@ -61,7 +61,7 @@ fileimport_service:
   logPretty: true
 
 ifc_import_service:
-  enabled: true
+  enabled: false
   replicas: 1
   logPretty: true
 
