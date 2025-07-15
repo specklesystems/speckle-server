@@ -1,3 +1,4 @@
+import { WorkerCachingConstants } from '../caching/WorkerCachingConstants.js'
 import { CustomLogger, delay } from '../types/functions.js'
 import { RingBufferQueue } from './RingBufferQueue.js'
 import { handleError } from './WorkerMessageType.js'
@@ -5,15 +6,9 @@ import { handleError } from './WorkerMessageType.js'
 export abstract class ObjectQueue<T> {
   private rbq: RingBufferQueue
   private logger: CustomLogger
-  private enqueueSize: number
 
-  constructor(
-    ringBufferQueue: RingBufferQueue,
-    enqueueSize: number,
-    logger?: CustomLogger
-  ) {
+  constructor(ringBufferQueue: RingBufferQueue, logger?: CustomLogger) {
     this.rbq = ringBufferQueue
-    this.enqueueSize = enqueueSize
     this.logger = logger || ((): void => {})
   }
 
@@ -23,7 +18,7 @@ export abstract class ObjectQueue<T> {
   async fullyEnqueue(messages: T[], timeoutMs: number): Promise<void> {
     let remainingMessages = messages
     while (remainingMessages.length > 0) {
-      const s = remainingMessages.slice(0, this.enqueueSize)
+      const s = remainingMessages.slice(0, WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE)
       let enqueuedInChunk = 0
       while (enqueuedInChunk < s.length) {
         const actuallyEnqueued = await this.enqueue(s.slice(enqueuedInChunk), timeoutMs)

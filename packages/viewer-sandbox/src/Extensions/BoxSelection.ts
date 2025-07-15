@@ -127,7 +127,10 @@ export class BoxSelection extends Extension {
     /** Get the renderer */
     const renderer = this.viewer.getRenderer()
     /** Get the mesh batches */
-    const batches = renderer.batcher.getBatches(undefined, GeometryType.MESH)
+    const batches = renderer.batcher.getBatches(undefined, [
+      GeometryType.MESH,
+      GeometryType.TEXT
+    ])
     /** Compute the clip matrix */
     const clipMatrix = new Matrix4()
     if (renderer.renderingCamera) {

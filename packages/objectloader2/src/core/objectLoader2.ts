@@ -7,7 +7,7 @@ import { Database, Downloader } from './interfaces.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
 import { ObjectLoader2Options, CacheOptions } from './options.js'
 import { CacheReader } from './stages/cacheReader.js'
-import { CacheReaderWorker } from './stages/cacheReaderWorker.js'
+import { AggregateCacheReaderWorker } from './stages/AggregateCacheReaderWorker.js'
 import { CacheWriter } from './stages/cacheWriter.js'
 import { CacheWriterWorker } from './stages/cacheWriterWorker.js'
 import { Reader, Writer } from './stages/interfaces.js'
@@ -52,7 +52,7 @@ export class ObjectLoader2 {
     })
     this.#downloader = options.downloader
     if (options.useReadWorker) {
-      this.#reader = new CacheReaderWorker(this.#deferments, cacheOptions)
+      this.#reader = new AggregateCacheReaderWorker(this.#deferments, 3, this.#logger)
     } else {
       this.#reader = new CacheReader(this.#database, this.#deferments, cacheOptions)
     }

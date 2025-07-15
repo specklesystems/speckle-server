@@ -198,7 +198,20 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith
-    if: false # disabled as there is nothing to run
+    container:
+      image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
+    services:
+      redis:
+        image: redis:7.2.4
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    env:
+      REDIS_URL: redis://redis:6379
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -206,9 +219,19 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 yarn --immutable
       - name: Build public packages
         run: yarn build:public
+      - run: dbus-daemon --system &> /dev/null
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/preview-service'
+      - run: yarn build:frontend
+        working-directory: 'packages/preview-service'
+      - run: yarn link:frontend
+        working-directory: 'packages/preview-service'
+      - name: Run tests
+        run: yarn test:ci
+        working-directory: 'packages/preview-service'
 
   docker-build-postgres-container:
     runs-on: blacksmith

@@ -7,12 +7,8 @@ export class ItemQueue extends ObjectQueue<Item> {
   private textEncoder: TextEncoder
   private textDecoder: TextDecoder
 
-  constructor(
-    ringBufferQueue: RingBufferQueue,
-    enqueueSize: number,
-    logger?: CustomLogger
-  ) {
-    super(ringBufferQueue, enqueueSize, logger)
+  constructor(ringBufferQueue: RingBufferQueue, logger?: CustomLogger) {
+    super(ringBufferQueue, logger)
     this.textEncoder = new TextEncoder()
     this.textDecoder = new TextDecoder('utf-8', { fatal: false })
   }

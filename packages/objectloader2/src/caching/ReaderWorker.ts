@@ -5,7 +5,7 @@ import { IndexDbReader } from './IndexDbReader.js'
 
 let indexReader: IndexDbReader | null = null
 
-const consolePrefix = '[Reader Worker]'
+let consolePrefix = '[Reader Worker]'
 
 function log(message: string, ...args: unknown[]): void {
   console.log(`${consolePrefix} ${message}`, ...args)
@@ -54,6 +54,7 @@ self.onmessage = (event: MessageEvent): void => {
     data.workerToMainSab instanceof SharedArrayBuffer &&
     typeof data.workerToMainCapacityBytes === 'number'
   ) {
+    consolePrefix = data.name
     log(`Received INIT_QUEUES message.`)
     try {
       const rawMainToWorkerRbq = RingBufferQueue.fromExisting(
@@ -70,7 +71,7 @@ self.onmessage = (event: MessageEvent): void => {
         'ItemQueue WorkerToMainQueue'
       )
       log('ItemQueue (worker-to-main) initialized successfully.')
-      indexReader = new IndexDbReader(rawMainToWorkerRbq, rawWorkerToMainRbq)
+      indexReader = new IndexDbReader(data.name, rawMainToWorkerRbq, rawWorkerToMainRbq)
 
       postMessage({ type: 'WORKER_READY' })
 
