@@ -258,7 +258,7 @@ export function getEditorExtensions(
       // Open on click would be too annoying during editing
       openOnClick: false,
       // Autolink off cause otherwise it's impossible to end the link
-      autolink: false
+      autolink: true
     }),
     EditorInstanceStateStorage.configure({ projectId, test: new Date().toISOString() }),
     getMentionExtension(),
