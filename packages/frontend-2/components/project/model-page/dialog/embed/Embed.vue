@@ -184,7 +184,7 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const { track } = useMixpanel()
+const mixpanel = useMixpanel()
 const route = useRoute()
 const { copy } = useClipboard()
 const {
@@ -372,13 +372,13 @@ watch(
   isOpen,
   async (newValue) => {
     if (newValue) {
-      track('Embed Dialog Opened', {
+      mixpanel.track('Embed Dialog Opened', {
         projectId: props.project.id,
         visibility: projectVisibility.value
       })
 
       if (canCreateEmbedTokens.value) {
-        track('Embed Token Created', {
+        mixpanel.track('Embed Token Created', {
           projectId: props.project.id,
           visibility: projectVisibility.value
         })
