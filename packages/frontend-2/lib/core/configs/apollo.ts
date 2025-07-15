@@ -9,7 +9,7 @@ import { Kind } from 'graphql'
 import type { GraphQLError, OperationDefinitionNode } from 'graphql'
 import type { CookieRef, NuxtApp } from '#app'
 import type { Optional } from '@speckle/shared'
-import { useAuthCookie, useAuthManager } from '~~/lib/auth/composables/auth'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
@@ -192,6 +192,10 @@ function createCache(): InMemoryCache {
           automations: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('AutomationCollection')
+          },
+          embedTokens: {
+            keyArgs: ['limit'],
+            merge: buildAbstractCollectionMergeFunction('EmbedTokenCollection')
           },
           viewerResources: {
             merge: (_existing, incoming) => [...incoming]
@@ -540,8 +544,7 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const apiOrigin = useApiOrigin()
   const nuxtApp = useNuxtApp()
   const reqId = useRequestId()
-  const authToken = useAuthCookie()
-  const { logout } = useAuthManager({
+  const { effectiveAuthToken, logout } = useAuthManager({
     deferredApollo: () => nuxtApp.$apollo?.default
   })
 
@@ -549,9 +552,16 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
   const wsClient = import.meta.client
-    ? createWsClient({ wsEndpoint, authToken, reqId })
+    ? createWsClient({ wsEndpoint, authToken: effectiveAuthToken, reqId })
     : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout })
+  const link = createLink({
+    httpEndpoint,
+    wsClient,
+    authToken: effectiveAuthToken,
+    nuxtApp,
+    reqId,
+    logout
+  })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially
