@@ -4,13 +4,11 @@ import { ItemQueue } from './ItemQueue.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { Item } from '../types/types.js'
 import { delay, isWhitespaceOnly } from '../types/functions.js'
-import BatchingQueue from '../queues/batchingQueue.js'
 import { WorkerCachingConstants } from './WorkerCachingConstants.js'
 
 export class IndexDbReader {
   private workerToMainQueue: ItemQueue
   private mainToWorkerQueue: StringQueue
-  private batchingQueue: BatchingQueue<string>
   private db: IndexedDatabase
 
   constructor(
@@ -20,17 +18,12 @@ export class IndexDbReader {
     this.db = new IndexedDatabase({})
     this.mainToWorkerQueue = new StringQueue(
       rawMainToWorkerRbq,
-      WorkerCachingConstants.DEFAULT_DEQUEUE_SIZE
+      (m?: string, ...p: unknown[]) => this.log(m ?? '', ...p)
     )
     this.workerToMainQueue = new ItemQueue(
       rawWorkerToMainRbq,
-      WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE
+      (m?: string, ...p: unknown[]) => this.log(m ?? '', ...p)
     )
-    this.batchingQueue = new BatchingQueue<string>({
-      batchSize: WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
-      maxWaitTime: WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS,
-      processFunction: (b): Promise<void> => this.processBatch(b)
-    })
   }
 
   private async processBatch(batch: string[]): Promise<void> {
@@ -59,7 +52,7 @@ export class IndexDbReader {
     )
   }
 
-  private consolePrefix = '[Worker]'
+  private consolePrefix = '[Reader Worker]'
 
   public log(message: string, ...args: unknown[]): void {
     console.log(`${this.consolePrefix} ${message}`, ...args)
@@ -76,7 +69,7 @@ export class IndexDbReader {
         WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
       ) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
-        this.batchingQueue.addAll(receivedMessages, receivedMessages)
+        await this.processBatch(receivedMessages)
       } else {
         await delay(1000) // Wait for 1 second before checking again
       }

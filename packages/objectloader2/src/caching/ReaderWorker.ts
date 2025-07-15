@@ -5,7 +5,7 @@ import { IndexDbReader } from './IndexDbReader.js'
 
 let indexReader: IndexDbReader | null = null
 
-const consolePrefix = '[Worker]'
+const consolePrefix = '[Reader Worker]'
 
 function log(message: string, ...args: unknown[]): void {
   console.log(`${consolePrefix} ${message}`, ...args)

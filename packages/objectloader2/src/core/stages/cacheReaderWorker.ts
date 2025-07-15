@@ -8,15 +8,10 @@ import { StringQueue } from '../../caching/StringQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
 import { CacheOptions } from '../options.js'
 import { Reader } from './interfaces.js'
+import { WorkerCachingConstants } from '../../caching/WorkerCachingConstants.js'
 
-const ID_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 200 // 5KB capacity for each queue
+const ID_BUFFER_CAPACITY_BYTES = 1024 * 1024 // 5KB capacity for each queue
 const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 500 // 1MB capacity for each queue
-
-const DEFAULT_DEQUEUE_SIZE = 5000
-const DEFAULT_DEQUEUE_TIMEOUT_MS = 500
-
-const DEFAULT_ENQUEUE_SIZE = 5000
-const DEFAULT_ENQUEUE_TIMEOUT_MS = 500
 
 export class CacheReaderWorker implements Reader {
   #defermentManager: DefermentManager
@@ -38,7 +33,7 @@ export class CacheReaderWorker implements Reader {
   }
 
   private logToMainUI(message: string): void {
-    console.log(`[Main] ${message}`)
+    this.#logger(`[Main] ${message}`)
   }
 
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
@@ -55,11 +50,7 @@ export class CacheReaderWorker implements Reader {
       ID_BUFFER_CAPACITY_BYTES,
       'StringQueue MainToWorkerQueue'
     )
-    this.mainToWorkerQueue = new StringQueue(
-      rawMainToWorkerRbq,
-      DEFAULT_ENQUEUE_SIZE,
-      this.#logger
-    )
+    this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq, this.#logger)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
     this.logToMainUI(
       `Main-to-Worker StringQueue created with ${
@@ -71,11 +62,7 @@ export class CacheReaderWorker implements Reader {
       BASE_BUFFER_CAPACITY_BYTES,
       'ItemQueue WorkerToMainQueue'
     )
-    this.workerToMainQueue = new ItemQueue(
-      rawWorkerToMainRbq,
-      DEFAULT_DEQUEUE_SIZE,
-      this.#logger
-    )
+    this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq, this.#logger)
     const workerToMainSab = rawWorkerToMainRbq.getSharedArrayBuffer()
     this.logToMainUI(
       `Worker-to-Main ItemQueue created with ${
@@ -103,7 +90,10 @@ export class CacheReaderWorker implements Reader {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.mainToWorkerQueue?.fullyEnqueue([params.id], DEFAULT_ENQUEUE_TIMEOUT_MS)
+      this.mainToWorkerQueue?.fullyEnqueue(
+        [params.id],
+        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+      )
     }
     return p
   }
@@ -113,15 +103,18 @@ export class CacheReaderWorker implements Reader {
       this.#defermentManager.trackDefermentRequest(key)
     }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.mainToWorkerQueue?.fullyEnqueue(keys, DEFAULT_ENQUEUE_TIMEOUT_MS)
+    this.mainToWorkerQueue?.fullyEnqueue(
+      keys,
+      WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+    )
   }
 
   #processBatch = async (): Promise<void> => {
     while (true) {
       const items =
         (await this.workerToMainQueue?.dequeue(
-          DEFAULT_DEQUEUE_SIZE,
-          DEFAULT_DEQUEUE_TIMEOUT_MS
+          10000,
+          WorkerCachingConstants.DEFAULT_DEQUEUE_TIMEOUT_MS
         )) || []
       if (this.disposed) {
         this.#logger('readBatch: disposed, exiting processing loop')
