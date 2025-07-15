@@ -26,16 +26,14 @@ import { Roles, WorkspacePlanStatuses } from '@speckle/shared'
 import { workspaceDashboardQuery } from '~~/lib/workspaces/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
-import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
-import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 graphql(`
   fragment WorkspaceDashboard_Workspace on Workspace {
     ...WorkspaceSidebarMembers_Workspace
     ...WorkspaceDashboardHeader_Workspace
     ...WorkspaceDashboardProjectList_Workspace
-    ...BillingActions_Workspace
     id
     name
     role
@@ -50,9 +48,10 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
-const { validateCheckoutSession } = useBillingActions()
-const { finalizeWizard } = useWorkspacesWizard()
+const { cancelCheckoutSession } = useBillingActions()
+const route = useRoute()
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
+const { triggerNotification } = useGlobalToast()
 const { result: workspaceResult, onResult } = useQuery(
   workspaceDashboardQuery,
   () => ({
@@ -62,8 +61,6 @@ const { result: workspaceResult, onResult } = useQuery(
     fetchPolicy: pageFetchPolicy.value
   })
 )
-
-const hasFinalized = ref(false)
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const showBillingAlert = computed(
@@ -75,24 +72,23 @@ const showBillingAlert = computed(
 )
 
 onResult((queryResult) => {
-  if (
-    queryResult.data?.workspaceBySlug.creationState?.completed === false &&
-    queryResult.data.workspaceBySlug.creationState.state &&
-    !hasFinalized.value &&
-    import.meta.client
-  ) {
-    hasFinalized.value = true
-    finalizeWizard(
-      queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
-      queryResult.data.workspaceBySlug.id
-    )
-  }
-
   if (queryResult.data?.workspaceBySlug) {
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
-    validateCheckoutSession(queryResult.data.workspaceBySlug)
+
+    const sessionIdQuery = route.query?.session_id
+    const paymentStatusQuery = route.query?.payment_status
+
+    if (sessionIdQuery && paymentStatusQuery) {
+      if (paymentStatusQuery === WorkspacePlanStatuses.Canceled) {
+        cancelCheckoutSession(`${sessionIdQuery}`, queryResult.data.workspaceBySlug.id)
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'Your payment was canceled'
+        })
+      }
+    }
   }
 })
 </script>

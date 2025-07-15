@@ -75,13 +75,13 @@
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
-                <CalPopUp v-if="isWorkspacesEnabled">
+                <!-- <CalPopUp v-if="isWorkspacesEnabled">
                   <LayoutSidebarMenuGroupItem label="Book an intro call">
                     <template #icon>
                       <IconCalendar class="size-4 text-foreground-2" />
                     </template>
                   </LayoutSidebarMenuGroupItem>
-                </CalPopUp>
+                </CalPopUp> -->
 
                 <div v-if="isWorkspacesEnabled" @click="openChat">
                   <LayoutSidebarMenuGroupItem label="Give us feedback">
