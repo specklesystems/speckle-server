@@ -257,7 +257,6 @@ export function getEditorExtensions(
       validate: (href) => VALID_HTTP_URL.test(href),
       // Open on click would be too annoying during editing
       openOnClick: false,
-      // Autolink off cause otherwise it's impossible to end the link
       autolink: true
     }),
     EditorInstanceStateStorage.configure({ projectId, test: new Date().toISOString() }),
