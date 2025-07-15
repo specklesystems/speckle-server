@@ -102,7 +102,7 @@ const externalLinkDialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Continue',
     props: { color: 'danger' },
     onClick: () => {
-      window.open(externalLinkDialogUrl.value, '_blank')
+      window.open(externalLinkDialogUrl.value, '_blank', 'noopener,noreferrer')
       externalLinkDialogOpen.value = false
     }
   }
@@ -171,6 +171,8 @@ const onRootClick = (e: MouseEvent) => {
   if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
 
   e.preventDefault()
+  const url = new URL(anchor.href, window.location.href)
+  if (url.origin === window.location.origin) return // treat as internal
   externalLinkDialogUrl.value = anchor.href
   externalLinkDialogOpen.value = true
 }
