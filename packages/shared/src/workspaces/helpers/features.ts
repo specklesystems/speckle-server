@@ -21,7 +21,8 @@ export const WorkspacePlanFeatures = <const>{
   SSO: 'oidcSso',
   CustomDataRegion: 'workspaceDataRegionSpecificity',
   HideSpeckleBranding: 'hideSpeckleBranding',
-  ExclusiveMembership: 'exclusiveMembership'
+  ExclusiveMembership: 'exclusiveMembership',
+  EmbedPrivateProjects: 'embedPrivateProjects'
 }
 
 export type WorkspacePlanFeatures =
@@ -57,6 +58,10 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
     displayName: 'Exclusive workspace membership',
     description:
       'Members of exclusive workspaces cannot join or create other workspaces'
+  },
+  [WorkspacePlanFeatures.EmbedPrivateProjects]: {
+    displayName: 'Embed private projects',
+    description: 'Embed projects with visibility set to private or workspace'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -91,7 +96,8 @@ export type WorkspacePlanConfig<Plan extends WorkspacePlans = WorkspacePlans> = 
 
 const baseFeatures = [
   WorkspacePlanFeatures.AutomateBeta,
-  WorkspacePlanFeatures.DomainDiscoverability
+  WorkspacePlanFeatures.DomainDiscoverability,
+  WorkspacePlanFeatures.EmbedPrivateProjects
 ] as const
 
 export const WorkspacePaidPlanConfigs: {
