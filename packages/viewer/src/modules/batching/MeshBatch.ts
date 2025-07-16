@@ -209,6 +209,7 @@ export class MeshBatch extends PrimitiveBatch {
       attributeCount += ervee.renderData.geometry.attributes.POSITION.length
       bounds.union(ervee.aabb)
     }
+    const needsRTE = Geometry.needsRTE(bounds)
 
     const hasVertexColors =
       this.renderViews[0].renderData.geometry.attributes?.COLOR !== undefined
@@ -216,7 +217,9 @@ export class MeshBatch extends PrimitiveBatch {
       attributeCount >= 65535 || indicesCount >= 65535
         ? new Uint32Array(indicesCount)
         : new Uint16Array(indicesCount)
-    const position = new Float64Array(attributeCount)
+    const position = needsRTE
+      ? new Float64Array(attributeCount)
+      : new Float32Array(attributeCount)
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
     const batchIndices = new Float32Array(attributeCount / 3)
@@ -283,7 +286,7 @@ export class MeshBatch extends PrimitiveBatch {
       batchIndices,
       hasVertexColors ? color : undefined
     )
-    const needsRTE = Geometry.needsRTE(bounds)
+
     if (needsRTE) Geometry.updateRTEGeometry(geometry, position)
 
     this.primitive = new SpeckleMesh(geometry, needsRTE)
@@ -308,7 +311,7 @@ export class MeshBatch extends PrimitiveBatch {
 
   protected makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
-    position: Float64Array,
+    position: Float64Array | Float32Array,
     normals: Float32Array,
     batchIndices: Float32Array,
     color?: Float32Array
