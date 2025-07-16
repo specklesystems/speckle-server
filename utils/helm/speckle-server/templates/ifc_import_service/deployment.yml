@@ -81,8 +81,8 @@ spec:
             value: {{ .Values.ifc_import_service.logPretty | quote }}
 
           {{- if .Values.ifc_import_service.db.certificate.enabled }}
-          - name: EXTRA_CA_CERTS #FIXME is this required in python?
-            value: {{ printf "/%s/%s" .Values.ifc_import_service.db.certificate.configMapName .Values.ifc_import_service.db.certificate.configMapKey }}
+          - name: EXTRA_CA_CERTS
+            value: {{ printf "/postgres-certificate/%s" .Values.ifc_import_service.db.certificate.configMapKey }}
           {{- end }}
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
