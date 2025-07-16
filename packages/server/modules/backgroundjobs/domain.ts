@@ -48,4 +48,8 @@ export type GetBackgroundJob<T extends BackgroundJobPayload = BackgroundJobPaylo
 
 export type GetBackgroundJobCount<
   T extends BackgroundJobPayload = BackgroundJobPayload
-> = (args: { status: BackgroundJobStatus; jobType: T['jobType'] }) => Promise<number>
+> = (args: {
+  status: BackgroundJobStatus
+  jobType: T['jobType']
+  minAttempts?: number
+}) => Promise<number>

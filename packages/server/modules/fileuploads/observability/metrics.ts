@@ -70,7 +70,8 @@ export const initializeMetrics = (params: {
             ? await requestQueue.queue.getWaitingCount()
             : await requestQueue.getBackgroundJobCount({
                 status: BackgroundJobStatus.Queued,
-                jobType: BackgroundJobType.FileImport
+                jobType: BackgroundJobType.FileImport,
+                minAttempts: 1
               })
         )
       })

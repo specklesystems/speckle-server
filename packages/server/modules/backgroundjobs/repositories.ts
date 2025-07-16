@@ -51,21 +51,29 @@ export const getBackgroundJobFactory =
 
 export const getBackgroundJobCountFactory =
   ({ db }: { db: Knex }): GetBackgroundJobCount =>
-  async ({ status, jobType }) => {
+  async ({ status, jobType, minAttempts }) => {
     const q = tables.backgroundJobs(db).select(BackgroundJobs.col.id)
 
     // using less restrictive lock to check locked jobs
     if (status === BackgroundJobStatus.Processing) {
       q.whereNotExists(function () {
-        this.from(BackgroundJobs.name)
+        const subquery = this.from(BackgroundJobs.name)
           .select(BackgroundJobs.col.id)
           .whereRaw('id = background_jobs.id')
           .where({ jobType })
-          .forKeyShare()
-          .skipLocked()
+
+        if (minAttempts) {
+          q.andWhere(BackgroundJobs.col.attempt, '>=', minAttempts)
+        }
+
+        subquery.forKeyShare().skipLocked()
       })
     } else {
       q.where({ status }).forKeyShare().skipLocked()
+    }
+
+    if (minAttempts) {
+      q.andWhere(BackgroundJobs.col.attempt, '>=', minAttempts)
     }
 
     const res = await q.andWhere({ jobType })

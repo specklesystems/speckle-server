@@ -152,5 +152,28 @@ describe('Background Jobs repositories @backgroundjobs', () => {
 
       await trx.commit()
     })
+
+    it('filters by min attempts', async () => {
+      const pendingJob = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Queued,
+        attempt: 0
+      })
+      const waitingJob = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Queued,
+        attempt: 1
+      })
+      await storeBackgroundJob({ job: pendingJob })
+      await storeBackgroundJob({ job: waitingJob })
+
+      const count = await getBackgroundJobCount({
+        status: BackgroundJobStatus.Queued,
+        jobType: 'fileImport',
+        minAttempts: 1
+      })
+
+      expect(count).to.equal(1)
+    })
   })
 })
