@@ -13,7 +13,7 @@
             class="pointer-events-auto"
             @click="() => copyReference()"
           >
-            <ChatBubbleBottomCenterTextIcon class="w-4 h-4" />
+            <WrenchIcon class="w-4 h-4" />
           </FormButton>
         </div>
       </div>
@@ -24,11 +24,7 @@
   </main>
 </template>
 <script setup lang="ts">
-import {
-  SunIcon,
-  MoonIcon,
-  ChatBubbleBottomCenterTextIcon
-} from '@heroicons/vue/24/solid'
+import { SunIcon, MoonIcon, WrenchIcon } from '@heroicons/vue/24/solid'
 import LogoBlock from '~/components/header/LogoBlock.vue'
 import { useGenerateErrorReference } from '~/lib/core/composables/error'
 import { useTheme } from '~~/lib/core/composables/theme'
