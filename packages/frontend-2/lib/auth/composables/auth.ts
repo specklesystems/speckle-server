@@ -332,9 +332,9 @@ export const useAuthManager = (
    */
   const watchEmbedToken = () => {
     watch(
-      () => route.query['embedToken'] as Optional<string>,
+      () => embedToken,
       async (newVal, oldVal) => {
-        if (newVal && newVal !== oldVal && newVal !== embedToken.value) {
+        if (newVal && newVal !== oldVal) {
           await resetAuthState()
         }
       },
