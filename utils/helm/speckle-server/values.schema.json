@@ -421,6 +421,11 @@
           "description": "The URL at which the s3 compatible storage is hosted. If `s3.configMap.enabled` is true, this value is ignored.",
           "default": ""
         },
+        "publicEndpoint": {
+          "type": "string",
+          "description": "The URL at which the s3 compatible storage is accessible from a user's browser.",
+          "default": ""
+        },
         "bucket": {
           "type": "string",
           "description": "The s3 compatible bucket in which Speckle data will be stored.  If `s3.configMap.enabled` is true, this value is ignored.",
