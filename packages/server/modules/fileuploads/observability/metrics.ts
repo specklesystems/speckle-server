@@ -8,15 +8,12 @@ import {
   BackgroundJobType,
   GetBackgroundJobCount
 } from '@/modules/backgroundjobs/domain'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 export const FileImportJobDurationStep = {
   TOTAL: 'total',
   DOWNLOAD: 'download', // time take to download the file from the blob storage
   PARSE: 'parse' // time taken by the parser to process the file, including sending the objects
 } as const
-
-const { FF_BACKGROUND_JOBS_ENABLED } = getFeatureFlags()
 
 export type ObserveResult = (params: { jobResult: FileImportResultPayload }) => void
 
@@ -158,14 +155,10 @@ export const initializeMetrics = (params: {
   const observeResult: ObserveResult = (params) => {
     const { jobResult } = params
 
-    if (FF_BACKGROUND_JOBS_ENABLED) {
-      // already logging this with queue listeners for bull
-
-      ;(jobResult.status === 'error'
-        ? fileImportJobsRequestFailedCounter
-        : fileImportJobsRequestCompletedCounter
-      ).inc({ parser: jobResult.result.parser })
-    }
+    ;(jobResult.status === 'error'
+      ? fileImportJobsRequestFailedCounter
+      : fileImportJobsRequestCompletedCounter
+    ).inc({ parser: jobResult.result.parser })
 
     fileImportJobsProcessedSummary.observe(
       {
