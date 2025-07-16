@@ -1,7 +1,40 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="['text-editor flex flex-col', !!readonly ? 'text-editor--read-only' : '']"
+    :class="[
+      'text-editor flex flex-col relative',
+      !!readonly ? 'text-editor--read-only' : ''
+    ]"
+    @click.capture="onRootClick"
   >
+    <FormButton
+      v-if="unlinkVisible"
+      size="sm"
+      class="absolute top-1 right-1 z-10"
+      color="outline"
+      @click="onUnlink"
+    >
+      Remove link
+    </FormButton>
+
+    <LayoutDialog
+      v-model:open="externalLinkDialogOpen"
+      max-width="xs"
+      :buttons="externalLinkDialogButtons"
+    >
+      <template #header>Leaving Speckle</template>
+      <p class="mb-2">You're about to open the link below in a new tab:</p>
+      <div class="p-3 bg-highlight-2 rounded-md font-mono break-all">
+        {{ externalLinkDialogUrl }}
+      </div>
+      <p class="mt-2 mb-4">
+        This is an external website. Speckle is not responsible for its content or
+        security.
+      </p>
+      <p class="font-medium">Do you want to continue?</p>
+    </LayoutDialog>
+
     <EditorContent
       ref="editorContentRef"
       class="simple-scrollbar flex flex-1"
@@ -27,6 +60,11 @@ import type { Nullable } from '@speckle/shared'
 // import { userProfileRoute } from '~~/lib/common/helpers/route'
 import { onKeyDown } from '@vueuse/core'
 import { noop } from 'lodash-es'
+import {
+  FormButton,
+  LayoutDialog,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: JSONContent): void
@@ -50,6 +88,25 @@ const props = defineProps<{
 }>()
 
 const editorContentRef = ref(null as Nullable<HTMLElement>)
+const unlinkVisible = ref(false)
+const externalLinkDialogOpen = ref(false)
+const externalLinkDialogUrl = ref('')
+
+const externalLinkDialogButtons = computed((): LayoutDialogButton[] => [
+  {
+    text: 'Cancel',
+    props: { color: 'outline' },
+    onClick: () => (externalLinkDialogOpen.value = false)
+  },
+  {
+    text: 'Continue',
+    props: { color: 'danger' },
+    onClick: () => {
+      window.open(externalLinkDialogUrl.value, '_blank', 'noopener,noreferrer')
+      externalLinkDialogOpen.value = false
+    }
+  }
+])
 
 const isMultiLine = computed(() => !!props.schemaOptions?.multiLine)
 const isEditable = computed(() => !props.disabled && !props.readonly)
@@ -81,6 +138,19 @@ const onEnter = () => {
   emit('submit', { data: getData() })
 }
 const onKeyDownHandler = (e: KeyboardEvent) => emit('keydown', e)
+
+const updateUnlinkVisible = () => {
+  unlinkVisible.value = !props.readonly && editor.isActive('link')
+}
+
+const onUnlink = () => {
+  editor.chain().extendMarkRange('link').unsetLink().focus().run()
+  updateUnlinkVisible()
+}
+
+editor.on('selectionUpdate', updateUnlinkVisible)
+editor.on('transaction', updateUnlinkVisible)
+
 const onEditorContentClick = (e: MouseEvent) => {
   const closestSelectorTarget = (e.target as HTMLElement).closest(
     '.editor-mention'
@@ -89,6 +159,22 @@ const onEditorContentClick = (e: MouseEvent) => {
 
   onMentionClick(closestSelectorTarget.dataset.id as string, e)
   e.stopPropagation()
+}
+
+const onRootClick = (e: MouseEvent) => {
+  if (!props.readonly) return
+
+  const anchor = (e.target as HTMLElement).closest('a') as Nullable<HTMLAnchorElement>
+  if (!anchor) return
+
+  // Only react to left-clicks without modifier keys
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+
+  e.preventDefault()
+  const url = new URL(anchor.href, window.location.href)
+  if (url.origin === window.location.origin) return // treat as internal
+  externalLinkDialogUrl.value = anchor.href
+  externalLinkDialogOpen.value = true
 }
 
 // TODO: No profile page to link to in FE2 yet
@@ -173,6 +259,10 @@ onBeforeUnmount(() => {
   & .editor-mention {
     box-decoration-break: clone;
     @apply text-foreground text-body-2xs font-semibold;
+  }
+
+  & a {
+    @apply border-b border-outline-3 hover:border-outline-5;
   }
 }
 

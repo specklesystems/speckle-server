@@ -12,7 +12,7 @@
         <ArrowLongLeftIcon class="h-4 w-4" />
       </button>
     </div>
-    <div class="absolute left-0 z-10 w-full h-[1px] mt-px bg-outline-3 top-8"></div>
+    <div class="absolute left-0 z-10 w-full h-[1px] mt-px bg-outline-3 top-7"></div>
     <div
       ref="scrollContainer"
       class="relative overflow-x-auto hide-scrollbar w-full"
