@@ -84,9 +84,11 @@ export const onFileImportResultFactory =
           convertedLastUpdate: new Date(),
           convertedMessage,
           convertedCommitId,
-          durationSeconds: jobResult.result.durationSeconds,
-          downloadDurationSeconds: jobResult.result.downloadDurationSeconds,
-          parseDurationSeconds: jobResult.result.parseDurationSeconds
+          performanceData: {
+            durationSeconds: jobResult.result.durationSeconds,
+            downloadDurationSeconds: jobResult.result.downloadDurationSeconds,
+            parseDurationSeconds: jobResult.result.parseDurationSeconds
+          }
         }
       })
     } catch (e) {

@@ -67,9 +67,7 @@ export const insertNewUploadAndNotifyFactoryV2 =
       payload: {
         upload: {
           ...file,
-          durationSeconds: null,
-          downloadDurationSeconds: null,
-          parseDurationSeconds: null,
+          performanceData: {},
           streamId: upload.projectId,
           projectId: upload.projectId,
           branchName: upload.modelName

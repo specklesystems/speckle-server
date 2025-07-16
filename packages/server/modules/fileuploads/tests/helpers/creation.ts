@@ -66,9 +66,7 @@ export const buildFileUploadRecord = (
     fileSize: randomInt(1, 1e6),
     userId: cryptoRandomString({ length: 10 }),
     modelId: cryptoRandomString({ length: 10 }),
-    durationSeconds: null,
-    downloadDurationSeconds: null,
-    parseDurationSeconds: null
+    performanceData: {}
   }
 
   return assign(defaults, overrides)
