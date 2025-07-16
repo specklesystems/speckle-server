@@ -62,7 +62,7 @@ spec:
         volumeMounts:
           - mountPath: /tmp
             name: tmp
-        {{- if .Values.db.useCertificate }}
+        {{- if .Values.ifc_import_service.db.certificate.enabled }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
@@ -80,7 +80,7 @@ spec:
           - name: LOG_PRETTY
             value: {{ .Values.ifc_import_service.logPretty | quote }}
 
-          {{- if .Values.ifc_import_service.db.useCertificate }}
+          {{- if .Values.ifc_import_service.db.certificate.enabled }}
           - name: EXTRA_CA_CERTS #FIXME is this required in python?
             value: {{ printf "/%s/%s" .Values.ifc_import_service.db.certificate.configMapName .Values.ifc_import_service.db.certificate.configMapKey }}
           {{- end }}
