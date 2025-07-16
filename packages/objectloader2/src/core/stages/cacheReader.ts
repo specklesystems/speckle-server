@@ -5,8 +5,9 @@ import { CustomLogger } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
 import { Database } from '../interfaces.js'
 import { CacheOptions } from '../options.js'
+import { Reader } from './interfaces.js'
 
-export class CacheReader {
+export class CacheReader implements Reader {
   #database: Database
   #defermentManager: DefermentManager
   #logger: CustomLogger
