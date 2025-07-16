@@ -144,7 +144,11 @@
     </template>
     <template v-else>
       <CommonAlert color="info" size="xs">
-        <template #title>Cannot embed {{ project.visibility }} project</template>
+        <template #title>
+          Cannot embed
+          <span class="lowercase">'{{ project.visibility }}'</span>
+          project
+        </template>
         <template #description>
           <p>
             {{ cantGenerateDialogDescription }}
@@ -158,7 +162,7 @@
 <script setup lang="ts">
 import type { ProjectsModelPageEmbed_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
-import { SpeckleViewer, Roles } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
@@ -181,7 +185,6 @@ graphql(`
     workspace {
       id
       slug
-      role
       embedOptions {
         hideSpeckleBranding
       }
@@ -341,11 +344,9 @@ const cantGenerateDialogDescription = computed(() => {
   if (
     props.project.permissions?.canCreateEmbedTokens?.code === 'WorkspaceNoFeatureAccess'
   ) {
-    return props.project.workspace?.role === Roles.Workspace.Admin
-      ? `Embedding ${props.project.visibility} projects is not available on your plan. Upgrade your workspace to get access to this feature.`
-      : `Embedding ${props.project.visibility} projects is not available on your plan. Ask your workspace admin to upgrade your workspace to get access to this feature.`
+    return `Embedding ${props.project.visibility.toLowerCase()} projects is not available on your plan. Upgrade your workspace to get access to this feature.`
   }
-  return `The visibility of this project is set to '${props.project.visibility}'. Please contact the project owner to change the visibility or generate an embed link.`
+  return `The visibility of this project is set to '${props.project.visibility.toLowerCase()}'. Please contact the project owner to change the visibility or generate an embed link.`
 })
 
 const handleEmbedCodeCopy = async (value: string) => {
