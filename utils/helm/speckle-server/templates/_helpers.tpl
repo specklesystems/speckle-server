@@ -866,6 +866,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- $s3values := ((include "server.s3Values" .) | fromJson ) }}
 - name: S3_ENDPOINT
   value: {{ $s3values.endpoint }}
+# {{- if $s3values.publicEndpoint }}
+- name: S3_PUBLIC_ENDPOINT
+  value: {{ $s3values.publicEndpoint }}
+# {{- end }}
 - name: S3_ACCESS_KEY
   value: {{ $s3values.access_key }}
 - name: S3_BUCKET

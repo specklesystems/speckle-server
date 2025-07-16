@@ -70,6 +70,7 @@ monitoring:
   logPretty: true
 
 s3:
+  publicEndpoint: 'http://speckle.internal:9002'
   endpoint: 'http://minio.minio.svc.cluster.local:9000'
   bucket: 'speckle-server'
   access_key: minioadmin
