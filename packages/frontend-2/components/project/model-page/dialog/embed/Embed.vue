@@ -263,7 +263,7 @@ const updatedUrl = computed(() => {
 
   // Add token parameter if embed token exists
   if (embedToken.value) {
-    url.searchParams.set('token', embedToken.value)
+    url.searchParams.set('embedToken', embedToken.value)
   }
 
   // Construct the embed options as a hash fragment
