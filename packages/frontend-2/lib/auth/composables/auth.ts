@@ -167,11 +167,6 @@ export const useAuthCookie = () =>
     maxAge: 60 * 60 * 24 * 30 // 30 days
   })
 
-export const useEmbedTokenCookie = () =>
-  useSynchronizedCookie<Optional<string>>('embedToken', {
-    maxAge: 60 * 60 * 24 * 30 // 30 days
-  })
-
 export const useAuthManager = (
   options?: Partial<{
     /**
@@ -207,9 +202,9 @@ export const useAuthManager = (
   const authToken = useAuthCookie()
 
   /**
-   * Observable embed token cookie
+   * Token used for embedding
    */
-  const embedToken = useEmbedTokenCookie()
+  const embedToken = computed(() => route.query.embedToken)
 
   /**
    * Get the effective auth token (embed token takes precedence)
@@ -340,8 +335,6 @@ export const useAuthManager = (
       () => route.query['embedToken'] as Optional<string>,
       async (newVal, oldVal) => {
         if (newVal && newVal !== oldVal && newVal !== embedToken.value) {
-          embedToken.value = newVal
-          // Reset auth state to reload user data with new token
           await resetAuthState()
         }
       },
