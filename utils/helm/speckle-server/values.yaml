@@ -1487,7 +1487,7 @@ fileimport_service:
 
 ## @section IFC Importer Service
 ## @descriptionStart
-## Defines parameters related to the File Import Service component of Speckle. This is intended to eventually replace the File Import Service.
+## Defines parameters related to the IFC Import Service component of Speckle. The IFC Import Service is intended to eventually replace the File Import Service.
 ## @descriptionEnd
 ##
 ifc_import_service:
