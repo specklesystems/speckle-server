@@ -343,7 +343,7 @@ const cantGenerateDialogDescription = computed(() => {
   ) {
     return props.project.workspace?.role === Roles.Workspace.Admin
       ? `Embedding ${props.project.visibility} projects is not available on your plan. Upgrade your workspace to get access to this feature.`
-      : `Embedding ${props.project.visibility} projects is not available on your plan. Upgrade your workspace to get access to this feature.`
+      : `Embedding ${props.project.visibility} projects is not available on your plan. Ask your workspace admin to upgrade your workspace to get access to this feature.`
   }
   return `The visibility of this project is set to '${props.project.visibility}'. Please contact the project owner to change the visibility or generate an embed link.`
 })
