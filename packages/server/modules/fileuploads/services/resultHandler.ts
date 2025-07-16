@@ -104,9 +104,6 @@ export const onFileImportResultFactory =
       payload: {
         upload: {
           ...updatedFile,
-          durationSeconds: jobResult.result.durationSeconds,
-          downloadDurationSeconds: jobResult.result.downloadDurationSeconds,
-          parseDurationSeconds: jobResult.result.parseDurationSeconds,
           projectId: updatedFile.streamId
         },
         isNewModel: false // next gen file uploads don't support this
