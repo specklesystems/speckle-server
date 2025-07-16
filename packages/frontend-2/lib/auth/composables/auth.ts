@@ -26,6 +26,7 @@ import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import type { ActiveUserMainMetadataQuery } from '~~/lib/common/generated/gql/graphql'
 import { useScopedState } from '~/lib/common/composables/scopedState'
 import type { ApolloClient } from '@apollo/client/core'
+import { AuthFailedError } from '~/lib/auth/errors/errors'
 
 type UseOnAuthStateChangeCallback = (
   user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']>,
@@ -190,6 +191,7 @@ export const useAuthManager = (
   const getMixpanel = useDeferredMixpanel()
   const postAuthRedirect = usePostAuthRedirect()
   const { markLoggedOut } = useJustLoggedOutTracking()
+  const logger = useLogger()
 
   /**
    * Invite token, if any
@@ -238,10 +240,17 @@ export const useAuthManager = (
     options?: Partial<{ skipRedirect: boolean }>
   ) => {
     const accessCode = route.query['access_code'] as Optional<string>
-    const challenge = SafeLocalStorage.get(LocalStorageKeys.AuthAppChallenge) || ''
-    if (!accessCode) return
 
     try {
+      const challenge = SafeLocalStorage.get(LocalStorageKeys.AuthAppChallenge) || ''
+      if (!challenge.length) {
+        throw new AuthFailedError(
+          'Empty challenge, cannot finalize login. Please reload the page and try again or contact support.'
+        )
+      }
+
+      if (!accessCode) return
+
       const newToken = await getTokenFromAccessCode({
         accessCode,
         challenge,
@@ -315,11 +324,13 @@ export const useAuthManager = (
 
             postAuthRedirect.popAndFollowRedirect()
           } catch (e) {
+            const err = ensureError(e)
             triggerNotification({
               type: ToastNotificationType.Danger,
               title: 'Authentication failed',
-              description: `${ensureError(e).message}`
+              description: err.message
             })
+            logger.error({ err }, 'Failed to finalize login with access code')
           }
         }
       },
