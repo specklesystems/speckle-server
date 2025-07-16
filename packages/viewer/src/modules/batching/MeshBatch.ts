@@ -212,7 +212,10 @@ export class MeshBatch extends PrimitiveBatch {
 
     const hasVertexColors =
       this.renderViews[0].renderData.geometry.attributes?.COLOR !== undefined
-    const indices = new Uint32Array(indicesCount)
+    const indices =
+      attributeCount >= 65535 || indicesCount >= 65535
+        ? new Uint32Array(indicesCount)
+        : new Uint16Array(indicesCount)
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
@@ -313,10 +316,10 @@ export class MeshBatch extends PrimitiveBatch {
     const geometry = new BufferGeometry()
     if (position.length >= 65535 || indices.length >= 65535) {
       this.indexBuffer0 = new Uint32BufferAttribute(indices, 1)
-      this.indexBuffer1 = new Uint32BufferAttribute(new Uint32Array(indices.length), 1)
+      this.indexBuffer1 = new Uint32BufferAttribute(indices, 1)
     } else {
       this.indexBuffer0 = new Uint16BufferAttribute(indices, 1)
-      this.indexBuffer1 = new Uint16BufferAttribute(new Uint16Array(indices.length), 1)
+      this.indexBuffer1 = new Uint16BufferAttribute(indices, 1)
     }
     geometry.setIndex(this.indexBuffer0)
 
