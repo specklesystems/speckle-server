@@ -427,13 +427,6 @@ export const useAuthManager = (
   }
 
   /**
-   * Clear embed token
-   */
-  const clearEmbedToken = () => {
-    embedToken.value = undefined
-  }
-
-  /**
    * Log out
    */
   const logout = async (
@@ -448,7 +441,6 @@ export const useAuthManager = (
     }>
   ) => {
     await saveNewToken(undefined, { skipRedirect: true })
-    clearEmbedToken()
 
     if (!options?.skipToast) {
       triggerNotification({
@@ -477,7 +469,6 @@ export const useAuthManager = (
     authToken,
     embedToken,
     effectiveAuthToken,
-    clearEmbedToken,
     loginWithEmail,
     signUpWithEmail,
     signInOrSignUpWithSso,
