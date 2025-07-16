@@ -127,7 +127,7 @@ export class DefermentManager {
         //we do not clean it up to allow the requests to resolve
         const requestCount = this.totalDefermentRequests.get(deferredBase.getId())
         if (requestCount && requestCount > 1) {
-          break
+          continue
         }
         this.currentSize -= deferredBase.getSize() || 0
         this.deferments.delete(deferredBase.getId())
