@@ -320,7 +320,7 @@ s3:
   ##
   endpoint: ''
   ## @param s3.publicEndpoint  The URL at which the s3 compatible storage is accessible from a user's browser.
-  ## This is only required if the `endpoint`` is not accessible from a user's browser (e.g. the endpoint is in a private network), as it will default to the `endpoint` value if not provided.
+  ## This is only required if the `endpoint` is not accessible from a user's browser (e.g. the endpoint is in a private network), as it will default to the `endpoint` value if not provided.
   ## If `s3.configMap.enabled` is true, this value is ignored.
   ## The url should be prefixed by the protocol (e.g. `https://`)
   ## The url may need to include the port if it is not the default (e.g. `https://example.org:9000`)
