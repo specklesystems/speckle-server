@@ -13,6 +13,7 @@
         <HeaderWorkspaceSwitcherListItem
           v-for="workspace in workspaces"
           :key="`menu-item-${workspace.id}`"
+          :is-active="activeWorkspaceSlug === workspace.slug"
           :workspace="workspace"
         />
         <HeaderWorkspaceSwitcherListItem
@@ -31,11 +32,13 @@ import { projectsRoute, workspaceCreateRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { navigationWorkspaceListQuery } from '~/lib/navigation/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
+import { useActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 
 const route = useRoute()
 const mixpanel = useMixpanel()
 const { isGuest } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { activeWorkspaceSlug } = useActiveWorkspace()
 
 const { result, loading: isLoading } = useQuery(
   navigationWorkspaceListQuery,
