@@ -6,7 +6,6 @@
         <div class="flex items-center gap-2 p-0.5 pr-1.5 hover:bg-highlight-2 rounded">
           <div class="relative">
             <WorkspaceAvatar
-              size="base"
               :name="activeWorkspace?.name"
               :logo="activeWorkspace?.logo"
             />
@@ -83,7 +82,7 @@ import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 
 graphql(`
-  fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on Workspace {
+  fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on LimitedWorkspace {
     id
     name
     logo
