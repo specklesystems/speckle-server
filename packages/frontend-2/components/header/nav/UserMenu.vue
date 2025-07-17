@@ -66,19 +66,6 @@
             </MenuItem>
           </div>
           <div class="border-t border-outline-3 py-1 mt-1">
-            <MenuItem v-slot="{ active }">
-              <NuxtLink
-                :class="[
-                  active ? 'bg-highlight-1' : '',
-                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-                ]"
-                @click="copySupportReference"
-              >
-                Copy support reference
-              </NuxtLink>
-            </MenuItem>
-          </div>
-          <div class="border-t border-outline-3 py-1 mt-1">
             <MenuItem v-if="activeUser" v-slot="{ active }">
               <NuxtLink
                 :class="[
@@ -102,11 +89,20 @@
               </NuxtLink>
             </MenuItem>
 
-            <div v-if="version" class="border-t border-outline-3 py-1 mt-1">
+            <div
+              class="border-t border-outline-3 py-1 mt-1 text-xs text-foreground-2 px-3 gap-1 flex flex-col"
+            >
+              <MenuItem v-if="version">
+                <div>Version {{ version }}</div>
+              </MenuItem>
               <MenuItem>
-                <div class="px-3 pt-1 text-tiny text-foreground-2">
-                  Version {{ version }}
-                </div>
+                <NuxtLink
+                  class="cursor-pointer text-foreground-2 hover:text-foreground flex items-center justify-between"
+                  @click="copySupportReference"
+                >
+                  <span>Support reference ID</span>
+                  <ClipboardIcon class="w-3 h-3 shrink-0" />
+                </NuxtLink>
               </MenuItem>
             </div>
           </div>
@@ -118,7 +114,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, ClipboardIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
