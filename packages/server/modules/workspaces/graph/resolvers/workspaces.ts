@@ -2135,11 +2135,16 @@ export default FF_WORKSPACES_MODULE_ENABLED
 
           await setUserActiveWorkspaceFactory({ db })({
             userId,
-            workspaceSlug: args.slug ?? null,
-            isProjectsActive: !!args.isProjectsActive
+            workspaceSlug: args.slug ?? null
           })
 
-          return true
+          if (args.slug) {
+            ctx.loaders.workspaces!.getWorkspaceBySlug.clear(args.slug)
+          }
+
+          return args.slug
+            ? await ctx.loaders.workspaces!.getWorkspaceBySlug.load(args.slug)
+            : null
         }
       },
       Subscription: {
