@@ -43,7 +43,7 @@ export class DeferredBase {
     this.expiresAt = now + this.ttl
   }
 
-  found(value: Base, size?: number): void {
+  found(value: Base, size: number): void {
     this.base = value
     this.size = size
     this.resolve(value)
