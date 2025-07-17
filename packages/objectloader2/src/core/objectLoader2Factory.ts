@@ -88,6 +88,6 @@ export class ObjectLoader2Factory {
   }
 
   static logger: CustomLogger = (m?: string, ...optionalParams: unknown[]) => {
-    console.log("[debug] " + m, ...optionalParams)
+    console.log(`[debug] ${m}`, ...optionalParams)
   }
 }
