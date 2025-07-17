@@ -12,8 +12,7 @@ export class DefermentManager {
   constructor(cache: BaseCache, logger: CustomLogger) {
     this.cache = cache
     this.logger = logger
-    }
-
+  }
 
   defer(params: { id: string }): [Promise<Base>, boolean] {
     if (this.disposed) throw new Error('DefermentManager is disposed')
@@ -25,9 +24,7 @@ export class DefermentManager {
     if (deferredBase) {
       return [deferredBase.getPromise(), true]
     }
-    const notYetFound = new DeferredBase(
-      params.id
-    )
+    const notYetFound = new DeferredBase(params.id)
     this.outstanding.set(params.id, notYetFound)
     return [notYetFound.getPromise(), false]
   }

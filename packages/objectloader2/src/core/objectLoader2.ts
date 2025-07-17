@@ -44,15 +44,18 @@ export class ObjectLoader2 {
     this.#gathered = new AsyncGeneratorQueue()
 
     this.#database = options.database
-    this.#cache = new BaseCache({
-      maxSizeInMb: 500, // 2 GBs
-      ttlms: 5_000 // 15 seconds
-    }, this.#logger)
+    this.#cache = new BaseCache(
+      {
+        maxSizeInMb: 500, // 2 GBs
+        ttlms: 5_000 // 15 seconds
+      },
+      this.#logger
+    )
     this.#deferments = new DefermentManager(this.#cache, this.#logger)
     this.#downloader = options.downloader
     this.#cacheReader = new CacheReader(this.#database, this.#deferments, cacheOptions)
     this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
-    this.#cacheWriter = new CacheWriter(this.#database,  cacheOptions)
+    this.#cacheWriter = new CacheWriter(this.#database, cacheOptions)
   }
 
   async disposeAsync(): Promise<void> {
