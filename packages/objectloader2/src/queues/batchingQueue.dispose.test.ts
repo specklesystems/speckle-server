@@ -47,7 +47,7 @@ describe('BatchingQueue disposal', () => {
 
     const disposePromise = queue.disposeAsync()
 
-    // Queue should be disposed yet
+    // Queue should be disposed now, but processing is still ongoing
     expect(queue.isDisposed()).toBe(true)
 
     // @ts-expect-error - resolveProcess is assigned
