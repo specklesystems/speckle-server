@@ -2,6 +2,7 @@ import { userActiveWorkspaceQuery } from '~/lib/user/graphql/queries'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { setActiveWorkspaceMutation } from '~/lib/user/graphql/mutations'
 import { modifyObjectField, getCacheId } from '~/lib/common/helpers/graphql'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export const useActiveWorkspace = () => {
   const { result } = useQuery(userActiveWorkspaceQuery)
@@ -19,29 +20,28 @@ export const useSetActiveWorkspace = () => {
   const { activeUser } = useActiveUser()
   const { mutate } = useMutation(setActiveWorkspaceMutation, {
     update: (cache, { data }) => {
-      if (!data?.activeUserMutations?.setActiveWorkspace || !activeUser.value) return
+      if (!activeUser.value) return
 
-      const newWorkspace = data.activeUserMutations.setActiveWorkspace
+      const newWorkspace = data?.activeUserMutations?.setActiveWorkspace
 
       modifyObjectField(
         cache,
         getCacheId('User', activeUser.value.id),
         'activeWorkspace',
         ({ helpers: { ref } }) => {
-          return ref('LimitedWorkspace', newWorkspace.id)
+          // Handle case where workspace is set to null (personal projects)
+          return newWorkspace ? ref('LimitedWorkspace', newWorkspace.id) : null
         }
       )
     }
   })
 
-  const setActiveWorkspace = async (options: { slug?: string; id?: string }) => {
+  const setActiveWorkspace = async (options: {
+    slug?: MaybeNullOrUndefined<string>
+    id?: MaybeNullOrUndefined<string>
+  }) => {
     const { slug, id } = options
-
-    if (slug) {
-      return await mutate({ slug })
-    } else if (id) {
-      return await mutate({ id })
-    }
+    return await mutate(slug ? { slug } : { id: id || null })
   }
 
   return {

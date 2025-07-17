@@ -6,7 +6,7 @@
         <div class="flex items-center gap-2 p-0.5 pr-1.5 hover:bg-highlight-2 rounded">
           <div class="relative">
             <WorkspaceAvatar
-              :name="activeWorkspace?.name"
+              :name="activeWorkspace?.name || 'Personal projects'"
               :logo="activeWorkspace?.logo"
             />
             <div
@@ -15,7 +15,7 @@
             />
           </div>
           <p class="text-body-xs text-foreground truncate max-w-40">
-            {{ activeWorkspace?.name }}
+            {{ activeWorkspace?.name || 'Personal projects' }}
           </p>
           <ChevronDownIcon
             :class="userOpen ? 'rotate-180' : ''"

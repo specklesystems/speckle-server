@@ -28,7 +28,7 @@ import { MenuItem } from '@headlessui/vue'
 
 defineProps<{
   name: MaybeNullOrUndefined<string>
-  logo: MaybeNullOrUndefined<string>
+  logo?: MaybeNullOrUndefined<string>
   to: MaybeNullOrUndefined<string>
 }>()
 </script>

@@ -26,6 +26,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const client = useApolloClientFromNuxt()
   const { setActiveWorkspace } = useSetActiveWorkspace()
   const { isLoggedIn } = useActiveUser()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   const { data, errors } = await client
     .query({
@@ -78,7 +79,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  if (data?.project.workspaceId && isLoggedIn.value) {
-    await setActiveWorkspace({ id: data.project.workspaceId })
+  if (isLoggedIn.value && isWorkspacesEnabled.value) {
+    await setActiveWorkspace({ id: data?.project.workspaceId })
   }
 })

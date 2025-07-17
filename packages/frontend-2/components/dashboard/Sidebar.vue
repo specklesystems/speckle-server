@@ -195,9 +195,12 @@ const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
 
+const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
 const showSidebar = computed(() => {
   return isWorkspacesEnabled.value
-    ? !!result.value?.activeUser?.activeWorkspace?.role
+    ? activeWorkspace.value
+      ? !!activeWorkspace.value?.role
+      : true
     : isLoggedIn.value
 })
 
