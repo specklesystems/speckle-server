@@ -9,10 +9,7 @@ export const projectAccessCheckQuery = graphql(`
           ...FullPermissionCheckResult
         }
       }
-      workspace {
-        id
-        slug
-      }
+      workspaceId
     }
   }
 `)

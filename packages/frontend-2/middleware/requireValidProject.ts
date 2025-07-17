@@ -78,7 +78,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  if (data?.project.workspace && isLoggedIn.value) {
-    await setActiveWorkspace(data.project.workspace.slug)
+  if (data?.project.workspaceId && isLoggedIn.value) {
+    await setActiveWorkspace({ id: data.project.workspaceId })
   }
 })

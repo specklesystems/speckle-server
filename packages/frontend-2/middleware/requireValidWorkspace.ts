@@ -28,7 +28,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     .catch(convertThrowIntoFetchResult)
 
   if (data?.workspaceBySlug.id && isLoggedIn.value) {
-    await setActiveWorkspace(workspaceSlug)
+    await setActiveWorkspace({ slug: workspaceSlug })
   }
 
   const isForbidden = (errors || []).find((e) => e.extensions?.['code'] === 'FORBIDDEN')

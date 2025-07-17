@@ -34,8 +34,14 @@ export const useSetActiveWorkspace = () => {
     }
   })
 
-  const setActiveWorkspace = async (workspaceSlug: string) => {
-    return await mutate({ slug: workspaceSlug })
+  const setActiveWorkspace = async (options: { slug?: string; id?: string }) => {
+    const { slug, id } = options
+
+    if (slug) {
+      return await mutate({ slug })
+    } else if (id) {
+      return await mutate({ id })
+    }
   }
 
   return {
