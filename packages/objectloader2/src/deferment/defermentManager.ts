@@ -4,7 +4,7 @@ import { Item, Base } from '../types/types.js'
 import { BaseCache } from './BaseCache.js'
 
 export class DefermentManager {
-  private deferments: Map<string, DeferredBase> = new Map()
+  private outstanding: Map<string, DeferredBase> = new Map()
   private logger: CustomLogger
   private disposed = false
   private cache: BaseCache
@@ -14,14 +14,6 @@ export class DefermentManager {
     this.logger = logger
     }
 
-    private now(): number {
-      return Date.now()
-    }
-
-  get(id: string): DeferredBase | undefined {
-    if (this.disposed) throw new Error('DefermentManager is disposed')
-    return this.deferments.get(id)
-  }
 
   defer(params: { id: string }): [Promise<Base>, boolean] {
     if (this.disposed) throw new Error('DefermentManager is disposed')
@@ -29,14 +21,14 @@ export class DefermentManager {
     if (item) {
       return [Promise.resolve(item.base!), true]
     }
-    const deferredBase = this.deferments.get(params.id)
+    const deferredBase = this.outstanding.get(params.id)
     if (deferredBase) {
       return [deferredBase.getPromise(), true]
     }
     const notYetFound = new DeferredBase(
       params.id
     )
-    this.deferments.set(params.id, notYetFound)
+    this.outstanding.set(params.id, notYetFound)
     return [notYetFound.getPromise(), false]
   }
 
@@ -48,34 +40,23 @@ export class DefermentManager {
       return
     }
     this.cache.add(item, (id) => {
-      if (!this.deferments.has(id)) {
+      if (!this.outstanding.has(id)) {
         requestItem(id)
       }
     })
 
     //order matters here with found before undefer
-    const deferredBase = this.deferments.get(item.baseId)
+    const deferredBase = this.outstanding.get(item.baseId)
     if (deferredBase) {
-      deferredBase.found(base, item.size || 0)
-      this.deferments.delete(item.baseId)
+      deferredBase.found(base)
+      this.outstanding.delete(item.baseId)
     }
   }
 
   dispose(): void {
     if (this.disposed) return
     this.disposed = true
-    this.clearDeferments()
-  }
-
-  private clearDeferments(): void {
-    let waiting = 0
-    for (const deferredBase of this.deferments.values()) {
-
-      if (deferredBase.getBase() === undefined) {
-        waiting++
-      }
-    }
-    this.deferments.clear()
-    this.logger('cleared deferments, left', waiting)
+    this.logger('cleared deferments, left', this.outstanding.size)
+    this.outstanding.clear()
   }
 }

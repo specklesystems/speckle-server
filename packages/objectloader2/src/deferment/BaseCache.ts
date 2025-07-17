@@ -59,7 +59,7 @@ export class BaseCache {
       new BaseCacheItem(item, Date.now() + this.options.ttlms)
     )
 
-    if (!this.isGathered.get(item.baseId)) {
+    if (!this.isGathered.has(item.baseId)) {
       this.isGathered.set(item.baseId, true)
       this.scanForReferences(item.base!, requestItem)
     }
@@ -98,8 +98,10 @@ export class BaseCache {
             const value = (item as { referencedId: unknown }).referencedId
             // Ensure the value is a string before adding it
             if (typeof value === 'string') {
-              requestItem(value)
               this.references.set(value, (this.references.get(value) || 0) + 1)
+              if (!this.cache.has(value)) {
+                requestItem(value)
+              }
             }
           }
 
