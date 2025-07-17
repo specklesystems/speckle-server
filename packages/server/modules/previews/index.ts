@@ -101,7 +101,7 @@ export const init: SpeckleModule['init'] = async ({
             scheduleExecution,
             previewRequestQueue,
             responseQueueName,
-            cronExpression: '*/1 * * * *' // every minute we will check for errored previews and backpressure in the queue, scheduling retries if there is capacity
+            cronExpression: `*/${getPreviewServiceRetryPeriodMinutes()} * * * *`
           })
         ]
       : [])
