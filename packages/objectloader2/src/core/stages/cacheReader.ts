@@ -73,7 +73,7 @@ export class CacheReader {
       const item = items[i]
       if (item) {
         this.#foundQueue?.add(item)
-        this.#defermentManager.undefer(item, id => this.requestItem(id))
+        this.#defermentManager.undefer(item, (id) => this.requestItem(id))
       } else {
         this.#notFoundQueue?.add(batch[i])
       }

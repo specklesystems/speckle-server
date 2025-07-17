@@ -1290,7 +1290,7 @@ export default class Sandbox {
         authToken,
         true,
         undefined,
-        (m?: string, ...args: unknown[]) => console.log(m, ...args),
+        (m?: string, ...args: unknown[]) => console.log(m, ...args)
       )
       let dataProgress = 0
       let renderedCount = 0
