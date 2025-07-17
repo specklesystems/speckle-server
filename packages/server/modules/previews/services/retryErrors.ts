@@ -13,6 +13,7 @@ import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
 import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import { getPreviewServiceMaxQueueBackpressure } from '@/modules/shared/helpers/envHelper'
 
 export const getPaginatedObjectPreviewInErrorStateFactory =
   (deps: {
@@ -73,7 +74,7 @@ export const retryFailedPreviewsFactory = (deps: {
 
     // do not retry if we have backpressure in the queue
     const queueLength = await getNumberOfJobsInQueue()
-    if (queueLength > 1) {
+    if (queueLength > getPreviewServiceMaxQueueBackpressure()) {
       logger.info(
         { queueLength, totalErroredPreviewCount: totalCount },
         'Backpressure detected in the preview request queue, queue length is {queueLength} jobs. Found {totalErroredPreviewCount} object previews in error state, but are not retrying any on this iteration.'

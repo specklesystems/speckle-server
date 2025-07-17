@@ -768,6 +768,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: PREVIEW_SERVICE_TIMEOUT_MILLISECONDS
   value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
 {{- end }}
+- name: PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE
+  value: {{ .Values.preview_service.maxQueueBackpressure | quote }}
 {{- end }}
 
 # *** Redis ***

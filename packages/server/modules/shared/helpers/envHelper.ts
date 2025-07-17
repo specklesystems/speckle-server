@@ -513,6 +513,10 @@ export const getPreviewServiceTimeoutMilliseconds = (): number => {
   return getIntFromEnv('PREVIEW_SERVICE_TIMEOUT_MILLISECONDS', '3600000') // 1 hour
 }
 
+export const getPreviewServiceMaxQueueBackpressure = () => {
+  return getIntFromEnv('PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE', '1')
+}
+
 export const emailVerificationTimeoutMinutes = (): number => {
   return getIntFromEnv('EMAIL_VERIFICATION_TIMEOUT_MINUTES', '5')
 }
