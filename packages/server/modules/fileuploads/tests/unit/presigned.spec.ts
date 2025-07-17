@@ -44,7 +44,7 @@ describe('Presigned @blobstorage', async () => {
       convertedMessage: null,
       convertedCommitId: null,
       metadata: null,
-      performanceData: {}
+      performanceData: null
     })
     const fakeGetFileInfo = async () => ({
       id: blobId,
@@ -62,7 +62,7 @@ describe('Presigned @blobstorage', async () => {
       convertedMessage: null,
       convertedCommitId: null,
       metadata: null,
-      performanceData: {}
+      performanceData: null
     })
     // const fakeGetModelsByIds = async () => [
     //   {

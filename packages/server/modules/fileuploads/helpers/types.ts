@@ -12,9 +12,9 @@ export type FileUploadRecordMetadata = {
 }
 
 type FileUploadPerformanceData = {
-  durationSeconds?: number
-  downloadDurationSeconds?: number
-  parseDurationSeconds?: number
+  durationSeconds: number
+  downloadDurationSeconds: number
+  parseDurationSeconds: number
 }
 
 export type FileUploadRecord = {
@@ -33,7 +33,7 @@ export type FileUploadRecord = {
   convertedMessage: Nullable<string>
   convertedCommitId: Nullable<string>
   metadata: Nullable<FileUploadRecordMetadata>
-  performanceData: FileUploadPerformanceData
+  performanceData: Nullable<FileUploadPerformanceData>
 }
 
 export type FileUploadRecordV2 = {
@@ -51,7 +51,7 @@ export type FileUploadRecordV2 = {
   convertedMessage: Nullable<string>
   convertedCommitId: Nullable<string>
   metadata: Nullable<FileUploadRecordMetadata>
-  performanceData: FileUploadPerformanceData
+  performanceData: Nullable<FileUploadPerformanceData>
 }
 
 export type FileUploadGraphQLReturn = FileUploadRecord | FileUploadRecordV2
