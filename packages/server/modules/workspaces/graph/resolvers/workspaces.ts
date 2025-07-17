@@ -2009,17 +2009,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
 
           if (!metaVal?.value) return null
 
-          return await getWorkspaceBySlugFactory({ db })({
-            workspaceSlug: metaVal.value
-          })
-        },
-        async isProjectsActive(parent, _args, ctx) {
-          const metaVal = await ctx.loaders.users.getUserMeta.load({
-            userId: parent.id,
-            key: UsersMeta.metaKey.isProjectsActive
-          })
-
-          return !!metaVal?.value
+          return await ctx.loaders.workspaces!.getWorkspaceBySlug.load(metaVal.value)
         }
       },
       Project: {

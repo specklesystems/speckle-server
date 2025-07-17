@@ -550,11 +550,7 @@ extend type User {
   """
   The last-visited workspace for the given user
   """
-  activeWorkspace: Workspace
-  """
-  Returns `true` if last visited project was "legacy" "personal project" outside of a workspace
-  """
-  isProjectsActive: Boolean
+  activeWorkspace: LimitedWorkspace @isOwner
 }
 
 extend type Project {
@@ -689,5 +685,5 @@ type AdminMutations {
 }
 
 extend type ActiveUserMutations {
-  setActiveWorkspace(slug: String): Workspace
+  setActiveWorkspace(slug: String): LimitedWorkspace
 }

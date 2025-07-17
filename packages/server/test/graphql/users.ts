@@ -144,7 +144,6 @@ export const getUserActiveResources = gql`
         id
         name
       }
-      isProjectsActive
     }
   }
 `

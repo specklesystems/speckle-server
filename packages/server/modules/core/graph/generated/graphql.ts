@@ -47,7 +47,7 @@ export type ActiveUserMutations = {
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
   meta: UserMetaMutations;
-  setActiveWorkspace?: Maybe<Workspace>;
+  setActiveWorkspace?: Maybe<LimitedWorkspace>;
   /** Edit a user's profile */
   update: User;
 };
@@ -4015,7 +4015,7 @@ export type UpgradePlanInput = {
 export type User = {
   __typename?: 'User';
   /** The last-visited workspace for the given user */
-  activeWorkspace?: Maybe<Workspace>;
+  activeWorkspace?: Maybe<LimitedWorkspace>;
   /**
    * All the recent activity from this user in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -4063,8 +4063,6 @@ export type User = {
   id: Scalars['ID']['output'];
   /** Whether post-sign up onboarding has been finished or skipped entirely */
   isOnboardingFinished?: Maybe<Scalars['Boolean']['output']>;
-  /** Returns `true` if last visited project was "legacy" "personal project" outside of a workspace */
-  isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
   meta: UserMeta;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
@@ -6109,7 +6107,7 @@ export type ActiveUserMutationsResolvers<ContextType = GraphQLContext, ParentTyp
   emailMutations?: Resolver<ResolversTypes['UserEmailMutations'], ParentType, ContextType>;
   finishOnboarding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<ActiveUserMutationsFinishOnboardingArgs>>;
   meta?: Resolver<ResolversTypes['UserMetaMutations'], ParentType, ContextType>;
-  setActiveWorkspace?: Resolver<Maybe<ResolversTypes['Workspace']>, ParentType, ContextType, Partial<ActiveUserMutationsSetActiveWorkspaceArgs>>;
+  setActiveWorkspace?: Resolver<Maybe<ResolversTypes['LimitedWorkspace']>, ParentType, ContextType, Partial<ActiveUserMutationsSetActiveWorkspaceArgs>>;
   update?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<ActiveUserMutationsUpdateArgs, 'user'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -7466,7 +7464,7 @@ export type TriggeredAutomationsStatusResolvers<ContextType = GraphQLContext, Pa
 };
 
 export type UserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
-  activeWorkspace?: Resolver<Maybe<ResolversTypes['Workspace']>, ParentType, ContextType>;
+  activeWorkspace?: Resolver<Maybe<ResolversTypes['LimitedWorkspace']>, ParentType, ContextType>;
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<UserActivityArgs, 'limit'>>;
   apiTokens?: Resolver<Array<ResolversTypes['ApiToken']>, ParentType, ContextType>;
   authorizedApps?: Resolver<Maybe<Array<ResolversTypes['ServerAppListItem']>>, ParentType, ContextType>;
@@ -7487,7 +7485,6 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isOnboardingFinished?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  isProjectsActive?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   meta?: Resolver<ResolversTypes['UserMeta'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
@@ -9325,14 +9322,14 @@ export type RequestVerificationMutation = { __typename?: 'Mutation', requestVeri
 export type UserActiveResourcesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type UserActiveResourcesQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', isProjectsActive?: boolean | null, activeWorkspace?: { __typename?: 'Workspace', id: string, name: string } | null } | null };
+export type UserActiveResourcesQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', activeWorkspace?: { __typename?: 'LimitedWorkspace', id: string, name: string } | null } | null };
 
 export type SetUserActiveWorkspaceMutationVariables = Exact<{
   slug?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type SetUserActiveWorkspaceMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', setActiveWorkspace?: { __typename?: 'Workspace', id: string } | null } };
+export type SetUserActiveWorkspaceMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', setActiveWorkspace?: { __typename?: 'LimitedWorkspace', id: string } | null } };
 
 export type CreateProjectVersionMutationVariables = Exact<{
   input: CreateVersionInput;
@@ -9672,7 +9669,7 @@ export const GetOtherUserDocument = {"kind":"Document","definitions":[{"kind":"O
 export const GetAdminUsersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAdminUsers"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"25"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},"defaultValue":{"kind":"IntValue","value":"0"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"query"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}},"defaultValue":{"kind":"NullValue"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminUsers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}},{"kind":"Argument","name":{"kind":"Name","value":"query"},"value":{"kind":"Variable","name":{"kind":"Name","value":"query"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"registeredUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"invitedUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"invitedBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetAdminUsersQuery, GetAdminUsersQueryVariables>;
 export const GetPendingEmailVerificationStatusDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetPendingEmailVerificationStatus"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hasPendingVerification"}}]}}]}}]} as unknown as DocumentNode<GetPendingEmailVerificationStatusQuery, GetPendingEmailVerificationStatusQueryVariables>;
 export const RequestVerificationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RequestVerification"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"requestVerification"}}]}}]} as unknown as DocumentNode<RequestVerificationMutation, RequestVerificationMutationVariables>;
-export const UserActiveResourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserActiveResources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeWorkspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"isProjectsActive"}}]}}]}}]} as unknown as DocumentNode<UserActiveResourcesQuery, UserActiveResourcesQueryVariables>;
+export const UserActiveResourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserActiveResources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeWorkspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<UserActiveResourcesQuery, UserActiveResourcesQueryVariables>;
 export const SetUserActiveWorkspaceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetUserActiveWorkspace"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setActiveWorkspace"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<SetUserActiveWorkspaceMutation, SetUserActiveWorkspaceMutationVariables>;
 export const CreateProjectVersionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateProjectVersion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateVersionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versionMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}}]}}]}}]}}]} as unknown as DocumentNode<CreateProjectVersionMutation, CreateProjectVersionMutationVariables>;
 export const MarkProjectVersionReceivedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"MarkProjectVersionReceived"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"MarkReceivedVersionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versionMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"markReceived"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]} as unknown as DocumentNode<MarkProjectVersionReceivedMutation, MarkProjectVersionReceivedMutationVariables>;
