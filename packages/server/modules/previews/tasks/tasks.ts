@@ -4,7 +4,10 @@ import {
   previewServiceShouldUsePrivateObjectsServerUrl
 } from '@/modules/shared/helpers/envHelper'
 import type { Queue } from 'bull'
-import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
+import {
+  getNumberOfJobsInQueueFactory,
+  requestObjectPreviewFactory
+} from '@/modules/previews/queues/previews'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -72,6 +75,9 @@ export const scheduleRetryFailedPreviews = async ({
               db
             }),
           storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+        }),
+        getNumberOfJobsInQueue: getNumberOfJobsInQueueFactory({
+          queue: previewRequestQueue
         })
       })
     )
