@@ -5,7 +5,7 @@ import KeyedQueue from './keyedQueue.js'
  * Default wait time in milliseconds for processing ongoing tasks during disposal.
  * This value was chosen to balance responsiveness and CPU usage in typical scenarios.
  */
-const DEFAULT_PROCESSING_WAIT_TIME_MS = 100
+const PROCESSING_WAIT_TIME_MS = 100
 
 export default class BatchingQueue<T> {
   #queue: KeyedQueue<string, T> = new KeyedQueue<string, T>()
