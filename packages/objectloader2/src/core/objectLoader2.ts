@@ -46,7 +46,7 @@ export class ObjectLoader2 {
     this.#database = options.database
     this.#cache = new BaseCache(
       {
-        maxSizeInMb: 500, // 2 GBs
+        maxSizeInMb: 500, // 500 MB
         ttlms: 5_000 // 15 seconds
       },
       this.#logger
