@@ -1,7 +1,7 @@
 import { DefermentManager } from '../deferment/defermentManager.js'
 import AggregateQueue from '../queues/aggregateQueue.js'
 import AsyncGeneratorQueue from '../queues/asyncGeneratorQueue.js'
-import { CustomLogger } from '../types/functions.js'
+import { CustomLogger, take } from '../types/functions.js'
 import { Item, Base } from '../types/types.js'
 import { Database, Downloader } from './interfaces.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
@@ -99,6 +99,11 @@ export class ObjectLoader2 {
     //sort the closures by their values descending
     const sortedClosures = Object.entries(rootItem.base.__closure ?? []).sort(
       (a, b) => b[1] - a[1]
+    )
+    this.#logger(
+      'calculated closures: ',
+      !take(sortedClosures.values(), 100)
+        .every((x) => x[1] === 100)
     )
     const children = sortedClosures.map((x) => x[0])
     const total = children.length + 1 // +1 for the root object
