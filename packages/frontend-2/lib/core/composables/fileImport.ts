@@ -6,7 +6,7 @@ import type {
   UploadableFileItem,
   UploadFileItem
 } from '~~/lib/form/composables/fileUpload'
-import { importFileLegacy, type ImportFile } from '~~/lib/core/api/fileImport'
+import type { ImportFile } from '~~/lib/core/api/fileImport'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { BlobUploadStatus, type BlobPostResultItem } from '~~/lib/core/api/blobStorage'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -203,9 +203,6 @@ const startFileImportMutation = graphql(`
 `)
 
 export const useFileImportApi = () => {
-  const {
-    public: { FF_LARGE_FILE_IMPORTS_ENABLED }
-  } = useRuntimeConfig()
   const apollo = useApolloClient().client
   const { registerActiveUpload, unregisterActiveUpload } = useGlobalFileImportManager()
 
@@ -321,9 +318,7 @@ export const useFileImportApi = () => {
     const uploadId = resolveUploadId()
     try {
       registerActiveUpload(uploadId)
-      return await (FF_LARGE_FILE_IMPORTS_ENABLED ? importFileV2 : importFileLegacy)(
-        ...args
-      )
+      return await importFileV2(...args)
     } finally {
       unregisterActiveUpload(uploadId)
     }
