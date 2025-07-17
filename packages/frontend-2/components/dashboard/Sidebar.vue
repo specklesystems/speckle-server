@@ -2,7 +2,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="group h-full">
-    <template v-if="isLoggedIn">
+    <template v-if="showSidebar">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
           <FormButton
@@ -167,6 +167,20 @@ import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
+import { graphql } from '~/lib/common/generated/gql'
+import { useQuery } from '@vue/apollo-composable'
+
+const dashboardSidebarQuery = graphql(`
+  query DashboardSidebar {
+    activeUser {
+      id
+      activeWorkspace {
+        id
+        role
+      }
+    }
+  }
+`)
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -174,9 +188,18 @@ const route = useRoute()
 const { activeWorkspaceSlug } = useActiveWorkspace()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
+const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
+  enabled: isWorkspacesEnabled.value
+})
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
+
+const showSidebar = computed(() => {
+  return isWorkspacesEnabled.value
+    ? !!result.value?.activeUser?.activeWorkspace?.role
+    : isLoggedIn.value
+})
 
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value
