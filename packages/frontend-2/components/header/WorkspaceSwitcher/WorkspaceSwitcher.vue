@@ -90,7 +90,7 @@ import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 const { $intercom } = useNuxtApp()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const menuButtonId = useId()
-const { result } = useQuery(
+const { result, onResult: onActiveWorkspaceResult } = useQuery(
   navigationWorkspaceSwitcherQuery,
   () => ({
     filter: {
@@ -124,10 +124,10 @@ const hasDiscoverableWorkspacesOrJoinRequests = computed(
 )
 
 onActiveWorkspaceResult(({ data }) => {
-  if (data?.workspaceBySlug) {
+  if (data?.activeUser?.activeWorkspace) {
     $intercom.updateCompany({
-      id: data.workspaceBySlug.id,
-      name: data.workspaceBySlug.name
+      id: data.activeUser.activeWorkspace.id,
+      name: data.activeUser.activeWorkspace.name
     })
   }
 })
