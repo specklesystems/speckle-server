@@ -343,7 +343,7 @@ export const useAuthManager = (
    */
   const watchEmbedToken = () => {
     watch(
-      () => embedToken,
+      () => embedToken.value,
       async (newVal, oldVal) => {
         if (newVal && newVal !== oldVal) {
           await resetAuthState()
