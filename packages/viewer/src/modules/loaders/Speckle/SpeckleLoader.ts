@@ -90,6 +90,7 @@ export class SpeckleLoader extends Loader {
     const total = await this.loader.getTotalObjectCount()
     let traversals = 0
     let firstObjectPromise = null
+    this.progressListen()
 
     Logger.warn('Downloading object ', this.resource)
 
@@ -177,6 +178,31 @@ export class SpeckleLoader extends Loader {
     return p
   }
 
+  private progressListen(): void {
+    if (getQueryParameter('debug', 'false') !== 'true') {
+      return
+    }
+
+    let dataProgress = 0
+    this.on(LoaderEvent.LoadProgress, (data) => {
+      const p = Math.floor(data.progress * 100)
+      if (p > dataProgress) {
+        console.log(`[debug] Loading ${p}%`)
+        dataProgress = p
+      }
+    })
+    this.on(LoaderEvent.Traversed, (data) => {
+      if (data.count % 500 === 0) {
+        console.log(`[debug] Traversed ${data.count}`)
+      }
+    })
+    this.on(LoaderEvent.Converted, (data) => {
+      if (data.count % 500 === 0) {
+        console.log(`[debug] Converted ${data.count}`)
+      }
+    })
+  }
+
   cancel() {
     this.isCancelled = true
     this.isFinished = false
@@ -186,4 +212,23 @@ export class SpeckleLoader extends Loader {
     super.dispose()
     void this.loader.disposeAsync()
   }
+}
+
+function getQueryParameter(paramName: string, defaultValue: string): string {
+  // Check if the code is running in a browser environment 🌐
+  const isBrowser =
+    typeof window !== 'undefined' && typeof window.document !== 'undefined'
+
+  if (!isBrowser) {
+    // If in Node.js or another server environment, return the default
+    return defaultValue
+  }
+
+  // In a browser, parse the query string
+  const params = new URLSearchParams(window.location.search)
+
+  // .get() returns the value, or null if it's not found.
+  // The nullish coalescing operator (??) provides the default value
+  // if the left-hand side is null or undefined.
+  return params.get(paramName) ?? defaultValue
 }
