@@ -12,6 +12,7 @@ export class SpeckleLoader extends Loader {
   protected tree: WorldTree
   protected isCancelled = false
   protected isFinished = false
+  protected log: (message?: string, ...args: unknown[]) => void
 
   public get resource(): string {
     return this._resource
@@ -26,10 +27,12 @@ export class SpeckleLoader extends Loader {
     resource: string,
     authToken?: string,
     enableCaching?: boolean,
-    resourceData?: unknown
+    resourceData?: unknown,
+    logger?: (message?: string, ...args: unknown[]) => void
   ) {
     super(resource, resourceData)
     this.tree = targetTree
+    this.log = logger || Logger.log
     try {
       this.loader = this.initObjectLoader(
         resource,
@@ -80,7 +83,7 @@ export class SpeckleLoader extends Loader {
     const streamId = segments[2]
     const objectId = segments[4]
 
-    return ObjectLoader2Factory.createFromUrl({ serverUrl, streamId, objectId, token })
+    return ObjectLoader2Factory.createFromUrl({ serverUrl, streamId, objectId, token, options: {logger: this.log} })
   }
 
   public async load(): Promise<boolean> {
