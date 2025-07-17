@@ -83,7 +83,7 @@ import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 
 graphql(`
-  fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on Workspace {
+  fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on LimitedWorkspace {
     id
     name
     logo

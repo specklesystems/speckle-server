@@ -96,7 +96,6 @@ export const activeUserActiveWorkspaceCheckQuery = graphql(`
   query ActiveUserActiveWorkspaceCheck {
     activeUser {
       id
-      isProjectsActive
       activeWorkspace {
         id
         slug
