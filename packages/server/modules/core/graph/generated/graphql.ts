@@ -47,6 +47,7 @@ export type ActiveUserMutations = {
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
   meta: UserMetaMutations;
+  /** Either workspace slug or id is accepted. If neither are provided, the active workspace will be unset. */
   setActiveWorkspace?: Maybe<LimitedWorkspace>;
   /** Edit a user's profile */
   update: User;
@@ -59,6 +60,7 @@ export type ActiveUserMutationsFinishOnboardingArgs = {
 
 
 export type ActiveUserMutationsSetActiveWorkspaceArgs = {
+  id?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
 };
 

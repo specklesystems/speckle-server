@@ -689,5 +689,8 @@ type AdminMutations {
 }
 
 extend type ActiveUserMutations {
-  setActiveWorkspace(slug: String): LimitedWorkspace
+  """
+  Either workspace slug or id is accepted. If neither are provided, the active workspace will be unset.
+  """
+  setActiveWorkspace(slug: String, id: String): LimitedWorkspace
 }

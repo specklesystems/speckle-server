@@ -32,7 +32,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
     return {
       workspaces: {
         /**
-         * Get workspace, with the active user's role attached
+         * Get workspace by id, with the active user's role attached
          */
         getWorkspace: createLoader<string, WorkspaceWithOptionalRole | null>(
           async (ids) => {

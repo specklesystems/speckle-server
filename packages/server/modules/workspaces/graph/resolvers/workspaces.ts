@@ -2119,6 +2119,18 @@ export default FF_WORKSPACES_MODULE_ENABLED
           const userId = ctx.userId
           if (!userId) return false
 
+          let slug = args.slug
+          if (!slug && args.id) {
+            const workspace = await ctx.loaders.workspaces!.getWorkspace.load(args.id)
+            slug = workspace?.slug || null
+          }
+
+          await setUserActiveWorkspaceFactory({ db })({
+            userId,
+            workspaceSlug: slug || null
+          })
+
+          // Clear loader caches for up to date response data
           await Promise.all([
             ctx.loaders.users.getUserMeta.clear({
               userId,
@@ -2130,17 +2142,8 @@ export default FF_WORKSPACES_MODULE_ENABLED
             })
           ])
 
-          await setUserActiveWorkspaceFactory({ db })({
-            userId,
-            workspaceSlug: args.slug ?? null
-          })
-
-          if (args.slug) {
-            ctx.loaders.workspaces!.getWorkspaceBySlug.clear(args.slug)
-          }
-
-          return args.slug
-            ? await ctx.loaders.workspaces!.getWorkspaceBySlug.load(args.slug)
+          return slug
+            ? await ctx.loaders.workspaces!.getWorkspaceBySlug.load(slug)
             : null
         }
       },
