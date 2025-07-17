@@ -1,13 +1,11 @@
 import { TIME } from '@speckle/shared'
-import Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
-import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import {
-  BackgroundJobStatus,
-  BackgroundJobType,
-  GetBackgroundJobCount
-} from '@/modules/backgroundjobs/domain'
+  FileImportResultPayload,
+  JobResultStatus
+} from '@speckle/shared/workers/fileimport'
+import Bull from 'bull'
 
 export const FileImportJobDurationStep = {
   TOTAL: 'total',
@@ -15,15 +13,17 @@ export const FileImportJobDurationStep = {
   PARSE: 'parse' // time taken by the parser to process the file, including sending the objects
 } as const
 
+export type QueueMetrics = {
+  getPendingJobCount: () => Promise<number>
+  getWaitingJobCount: () => Promise<number>
+  getActiveJobCount: () => Promise<number>
+}
+
 export type ObserveResult = (params: { jobResult: FileImportResultPayload }) => void
 
 export const initializeMetrics = (params: {
   registers: Registry[]
-  requestQueues: // bull or postgres
-  (
-    | (FileImportQueue & { queue: Bull.Queue })
-    | (FileImportQueue & { getBackgroundJobCount: GetBackgroundJobCount })
-  )[]
+  requestQueues: (FileImportQueue & { queue?: Bull.Queue })[]
 }) => {
   const { registers, requestQueues } = params
 
@@ -40,12 +40,7 @@ export const initializeMetrics = (params: {
       requestQueues.forEach(async (requestQueue) => {
         this.set(
           { parser: requestQueue.label },
-          'queue' in requestQueue
-            ? await requestQueue.queue.count()
-            : await requestQueue.getBackgroundJobCount({
-                status: BackgroundJobStatus.Queued,
-                jobType: BackgroundJobType.FileImport
-              })
+          await requestQueue.metrics.getPendingJobCount()
         )
       })
     }
@@ -63,13 +58,7 @@ export const initializeMetrics = (params: {
       requestQueues.forEach(async (requestQueue) => {
         this.set(
           { parser: requestQueue.label },
-          'queue' in requestQueue
-            ? await requestQueue.queue.getWaitingCount()
-            : await requestQueue.getBackgroundJobCount({
-                status: BackgroundJobStatus.Queued,
-                jobType: BackgroundJobType.FileImport,
-                minAttempts: 1
-              })
+          await requestQueue.metrics.getWaitingJobCount()
         )
       })
     }
@@ -87,12 +76,7 @@ export const initializeMetrics = (params: {
       requestQueues.forEach(async (requestQueue) => {
         this.set(
           { parser: requestQueue.label },
-          'queue' in requestQueue
-            ? await requestQueue.queue.getActiveCount()
-            : await requestQueue.getBackgroundJobCount({
-                status: BackgroundJobStatus.Processing,
-                jobType: BackgroundJobType.FileImport
-              })
+          await requestQueue.metrics.getActiveJobCount()
         )
       })
     }
@@ -127,7 +111,7 @@ export const initializeMetrics = (params: {
   }
 
   requestQueues.forEach((requestQueue) => {
-    if (!('queue' in requestQueue)) return
+    if (!requestQueue.queue) return
 
     const completedHandler = completedHandlerFactory(requestQueue.label)
     const failedHandler = failedHandlerFactory(requestQueue.label)
@@ -155,7 +139,7 @@ export const initializeMetrics = (params: {
   const observeResult: ObserveResult = (params) => {
     const { jobResult } = params
 
-    ;(jobResult.status === 'error'
+    ;(jobResult.status === JobResultStatus.Error
       ? fileImportJobsRequestFailedCounter
       : fileImportJobsRequestCompletedCounter
     ).inc({ parser: jobResult.result.parser })

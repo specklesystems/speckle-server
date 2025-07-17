@@ -29,7 +29,7 @@ import {
   getBackgroundJobCountFactory,
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
-import { GetBackgroundJobCount } from '@/modules/backgroundjobs/domain'
+import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -115,6 +115,11 @@ export const initializeQueueFactory =
       shutdown: async () => await queue.close(),
       scheduleJob: async (jobData: JobPayload): Promise<void> => {
         await queue.add(jobData, defaultJobOptions)
+      },
+      metrics: {
+        getPendingJobCount: () => queue.count(),
+        getWaitingJobCount: () => queue.getWaitingCount(),
+        getActiveJobCount: () => queue.getActiveCount()
       }
     }
     fileImportQueues.push(fileImportQueue)
@@ -129,7 +134,7 @@ export const initializePostgresQueue = async ({
   label: string
   db: Knex
   supportedFileTypes: string[]
-}): Promise<FileImportQueue & { getBackgroundJobCount: GetBackgroundJobCount }> => {
+}): Promise<FileImportQueue> => {
   // migrating the DB up, the queue DB might be added based on a config
   await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
 
@@ -140,9 +145,10 @@ export const initializePostgresQueue = async ({
       originServerUrl: getServerOrigin()
     })
   })
+  const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
+
   const fileImportQueue = {
     label,
-    getBackgroundJobCount: getBackgroundJobCountFactory({ db }),
     supportedFileTypes: supportedFileTypes.map(
       (type) => type.toLocaleLowerCase() // Normalize file types to lowercase (this is a safeguard to prevent stupid typos in the future)
     ),
@@ -151,6 +157,24 @@ export const initializePostgresQueue = async ({
       await scheduleBackgroundJob({
         jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
       })
+    },
+    metrics: {
+      getPendingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport
+        }),
+      getWaitingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport,
+          minAttempts: 1
+        }),
+      getActiveJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Processing,
+          jobType: BackgroundJobType.FileImport
+        })
     }
   }
   fileImportQueues.push(fileImportQueue)

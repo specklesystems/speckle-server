@@ -525,9 +525,7 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedLastUpdate',
   'convertedMessage',
   'convertedCommitId',
-  'durationSeconds',
-  'downloadDurationSeconds',
-  'parseDurationSeconds'
+  'performanceData'
 ])
 
 export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
