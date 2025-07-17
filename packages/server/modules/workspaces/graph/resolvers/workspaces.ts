@@ -2085,6 +2085,13 @@ export default FF_WORKSPACES_MODULE_ENABLED
         workspacesEnabled: () => true
       },
       LimitedWorkspace: {
+        role: async (parent, _args, ctx) => {
+          const acl = await ctx.loaders.workspaces!.getWorkspaceRole.load({
+            userId: ctx.userId!,
+            workspaceId: parent.id
+          })
+          return acl?.role || null
+        },
         team: async (parent, args) => {
           const team = await getPaginatedItemsFactory({
             getItems: getWorkspaceCollaboratorsFactory({ db }),

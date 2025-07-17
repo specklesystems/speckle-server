@@ -1318,6 +1318,8 @@ export type LimitedWorkspace = {
   logo?: Maybe<Scalars['String']['output']>;
   /** Workspace name */
   name: Scalars['String']['output'];
+  /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
+  role?: Maybe<Scalars['String']['output']>;
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
   /** Workspace members visible to people with verified email domain */
@@ -6662,6 +6664,7 @@ export type LimitedWorkspaceResolvers<ContextType = GraphQLContext, ParentType e
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   team?: Resolver<Maybe<ResolversTypes['LimitedWorkspaceCollaboratorCollection']>, ParentType, ContextType, RequireFields<LimitedWorkspaceTeamArgs, 'limit'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
