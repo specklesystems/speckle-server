@@ -1,5 +1,4 @@
 /* eslint-disable camelcase */
-import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
 import {
   CreateCheckoutSession,
   GetStripeClient,
@@ -28,7 +27,6 @@ export const createCheckoutSessionFactory =
     isCreateFlow,
     currency
   }) => {
-    const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
     const price = getWorkspacePlanPrice({ billingInterval, workspacePlan, currency })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price, quantity: editorsCount }
@@ -36,14 +34,14 @@ export const createCheckoutSessionFactory =
 
     const cancel_url = isCreateFlow
       ? `${frontendOrigin}/workspaces/actions/create?workspaceId=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
-      : `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
+      : `${frontendOrigin}/workspaces/${workspaceSlug}?workspace=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
 
+    const success_url = `${frontendOrigin}/workspaces/${workspaceSlug}/book-a-onboarding-call?workspace=${workspaceId}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`
     const session = await getStripeClient().checkout.sessions.create({
       mode: 'subscription',
 
       line_items: costLineItems,
-
-      success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
+      success_url,
       cancel_url,
       tax_id_collection: {
         enabled: true
