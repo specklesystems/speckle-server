@@ -1,9 +1,13 @@
 <template>
   <div>
+    <div v-if="isLoading" class="px-4 flex justify-center h-[6.25rem] items-center">
+      <CommonLoadingIcon />
+    </div>
     <HeaderWorkspaceSwitcherHeader
+      v-else
       :name="workspace?.name"
       :logo="workspace?.logo"
-      :to="workspaceRoute(workspace?.slug || '')"
+      :to="workspaceRoute(activeWorkspaceSlug)"
     >
       <p class="text-body-2xs text-foreground-2 capitalize truncate">
         {{ formatName(workspace?.plan?.name) }} ·
@@ -18,7 +22,7 @@
               color="outline"
               full-width
               size="sm"
-              :to="settingsWorkspaceRoutes.general.route(workspace?.slug || '')"
+              :to="settingsWorkspaceRoutes.general.route(activeWorkspaceSlug)"
             >
               Settings
             </FormButton>
@@ -30,7 +34,7 @@
                 color="outline"
                 size="sm"
                 :disabled="!canInvite"
-                @click="$emit('show-invite-dialog')"
+                @click="isInviteDialogOpen = true"
               >
                 Invite members
               </FormButton>
@@ -39,24 +43,27 @@
         </div>
       </template>
     </HeaderWorkspaceSwitcherHeader>
+
+    <InviteDialogWorkspace v-model:open="isInviteDialogOpen" :workspace="workspace" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { MenuItem } from '@headlessui/vue'
 import { graphql } from '~/lib/common/generated/gql'
-import type { HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { workspaceRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { formatName } from '~/lib/billing/helpers/plan'
+import { workspaceSwitcherHeaderWorkspaceQuery } from '~/lib/navigation/graphql/queries'
+import { useQuery } from '@vue/apollo-composable'
 
 graphql(`
   fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {
+    ...InviteDialogWorkspace_Workspace
     id
-    name
     logo
+    name
     role
-    slug
     permissions {
       canInvite {
         ...FullPermissionCheckResult
@@ -71,15 +78,26 @@ graphql(`
   }
 `)
 
-defineEmits(['show-invite-dialog'])
-
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment>
+  activeWorkspaceSlug: MaybeNullOrUndefined<string>
 }>()
 
-const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
-const canInvite = computed(() => props.workspace?.permissions.canInvite.authorized)
+const { result, loading: isLoading } = useQuery(
+  workspaceSwitcherHeaderWorkspaceQuery,
+  () => ({
+    slug: props.activeWorkspaceSlug || ''
+  }),
+  {
+    enabled: !!props.activeWorkspaceSlug
+  }
+)
+
+const isInviteDialogOpen = ref(false)
+
+const workspace = computed(() => result.value?.workspaceBySlug)
+const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
+const canInvite = computed(() => workspace.value?.permissions.canInvite.authorized)
 const inviteTooltipText = computed(() =>
-  canInvite.value ? undefined : props.workspace?.permissions.canInvite.message
+  canInvite.value ? undefined : workspace.value?.permissions.canInvite.message
 )
 </script>
