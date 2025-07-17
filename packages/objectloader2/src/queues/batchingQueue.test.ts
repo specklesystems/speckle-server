@@ -14,8 +14,8 @@ describe('BatchingQueue', () => {
     })
   })
 
-  afterEach(() => {
-    queue.dispose()
+  afterEach(async () => {
+    await queue.disposeAsync()
   })
 
   test('should add items and process them in batches', async () => {
@@ -70,7 +70,7 @@ describe('BatchingQueue', () => {
     })
 
     queue.add('key1', 'item1')
-    queue.dispose()
+    await queue.disposeAsync()
 
     await new Promise((resolve) => setTimeout(resolve, 200))
 

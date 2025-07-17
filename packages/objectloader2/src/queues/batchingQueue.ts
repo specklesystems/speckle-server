@@ -43,24 +43,39 @@ export default class BatchingQueue<T> {
     this.#logger = params.logger || ((): void => {})
   }
 
-  dispose(): void {
+  async disposeAsync(): Promise<void> {
     this.#disposed = true
     if (this.#timeoutId) {
       this.#getClearTimeoutFn()(this.#timeoutId)
+      this.#timeoutId = null
+    }
+
+    // Wait for any ongoing processing to finish
+    while (this.#isProcessing) {
+      await new Promise((resolve) => this.#getSetTimeoutFn()(resolve, 50))
+    }
+
+    // After any ongoing flush is completed, there might be items in the queue.
+    // We should flush them.
+    if (this.#queue.size > 0) {
+      await this.#flush()
     }
   }
 
   add(key: string, item: T): void {
+    if (this.#disposed) return
     this.#queue.enqueue(key, item)
     this.#addCheck()
   }
 
   addAll(keys: string[], items: T[]): void {
+    if (this.#disposed) return
     this.#queue.enqueueAll(keys, items)
     this.#addCheck()
   }
 
   #addCheck(): void {
+    if (this.#disposed) return
     if (this.#queue.size >= this.#batchSize) {
       // Fire and forget, no need to await
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
