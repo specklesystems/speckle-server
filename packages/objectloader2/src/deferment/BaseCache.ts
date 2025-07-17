@@ -51,12 +51,12 @@ export class BaseCache {
     this.resetGlobalTimer()
   }
 
-  add(item: Item, requestItem: (id: string) => void): void {
+  add(item: Item, requestItem: (id: string) => void, testNow?: number): void {
     if (this.disposed) throw new Error('BaseCache is disposed')
     this.currentSize += item.size || 0
     this.cache.set(
       item.baseId,
-      new BaseCacheItem(item, Date.now() + this.options.ttlms)
+      new BaseCacheItem(item, (testNow || Date.now()) + this.options.ttlms)
     )
 
     if (!this.isGathered.has(item.baseId)) {
@@ -126,7 +126,7 @@ export class BaseCache {
     return Date.now()
   }
 
-  private cleanDeferments(): void {
+  cleanDeferments(testNow?: number): void {
     const maxSizeBytes = this.options.maxSizeInMb * 1024 * 1024
     if (this.currentSize < maxSizeBytes) {
       this.logger(
@@ -136,7 +136,7 @@ export class BaseCache {
       )
       return
     }
-    const now = this.now()
+    const now = testNow || this.now()
     let cleaned = 0
     const start = performance.now()
     for (const deferredBase of Array.from(this.cache.values())
