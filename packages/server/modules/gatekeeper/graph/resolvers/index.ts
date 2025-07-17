@@ -40,7 +40,7 @@ import {
   CreateCheckoutSession,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
+import { WorkspacePaymentMethod } from '@/modules/core/graph/generated/graphql'
 import { LogicError, UnauthorizedError } from '@/modules/shared/errors'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'

@@ -601,6 +601,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_FORCE_ONBOARDING
   value: {{ .Values.featureFlags.forceOnboarding | quote }}
 
+- name: FF_RETRY_ERRORED_PREVIEWS_ENABLED
+  value: {{ .Values.featureFlags.retryErroredPreviewsEnabled | quote }}
+
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
@@ -967,6 +970,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "email_password" .Values.server.email.password.secretKey }}
 - name: EMAIL_FROM
   value: "{{ .Values.server.email.from }}"
+- name: EMAIL_VERIFICATION_TIMEOUT_MINUTES
+  value: {{ .Values.server.email.verificationTimeoutMinutes | quote }}
 {{- end }}
 
 # *** Newsletter ***

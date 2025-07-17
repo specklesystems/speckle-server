@@ -1,7 +1,10 @@
 import type { Optional } from '@speckle/shared'
 
 import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
-import { errorsToAuthResult } from '~/lib/common/helpers/graphql'
+import {
+  convertThrowIntoFetchResult,
+  errorsToAuthResult
+} from '~/lib/common/helpers/graphql'
 import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
 import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
 import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
@@ -11,6 +14,15 @@ import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
+
+  // Check if embed token is present in URL
+  const embedToken = to.query.embedToken as Optional<string>
+
+  // Skip middleware validation for embed tokens - let the auth system handle them
+  if (embedToken) {
+    return
+  }
+
   const client = useApolloClientFromNuxt()
   const { setActiveWorkspace } = useSetActiveWorkspace()
   const { isLoggedIn } = useActiveUser()

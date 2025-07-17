@@ -19,7 +19,7 @@ import {
   ServerAndContext,
   testApolloServer
 } from '@/test/graphqlHelper'
-import { GetActiveUserEmailsDocument } from '@/test/graphql/generated/graphql'
+import { GetActiveUserEmailsDocument } from '@/modules/core/graph/generated/graphql'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {

@@ -2,8 +2,6 @@ import generateAliasesResolver from 'esm-module-alias'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'url'
-import dotenv from 'dotenv'
-dotenv.config()
 
 /**
  * Singleton module for src root and package root directory resolution

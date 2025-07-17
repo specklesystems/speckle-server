@@ -5,18 +5,7 @@ export const activeUserMetaQuery = graphql(`
   query ActiveUserMeta {
     activeUser {
       meta {
-        newWorkspaceExplainerDismissed
         legacyProjectsExplainerCollapsed
-      }
-    }
-  }
-`)
-
-export const updateWorkspaceExplainerMutation = graphql(`
-  mutation UpdateWorkspaceExplainer($value: Boolean!) {
-    activeUserMutations {
-      meta {
-        setNewWorkspaceExplainerDismissed(value: $value)
       }
     }
   }
@@ -34,13 +23,9 @@ export const updateLegacyProjectsExplainerMutation = graphql(`
 
 export function useActiveUserMeta() {
   const { result } = useQuery(activeUserMetaQuery)
-  const { mutate: updateWorkspaceExplainer } = useMutation(
-    updateWorkspaceExplainerMutation
-  )
   const { mutate: updateLegacyProjectsExplainer } = useMutation(
     updateLegacyProjectsExplainerMutation
   )
-
   const apollo = useApolloClient().client
   const cache = apollo.cache
   const { activeUser } = useActiveUser()
@@ -48,27 +33,9 @@ export function useActiveUserMeta() {
   const activeUserId = computed(() => activeUser.value?.id ?? '')
   const meta = computed(() => result.value?.activeUser?.meta)
 
-  const hasDismissedNewWorkspaceExplainer = computed(
-    () => meta.value?.newWorkspaceExplainerDismissed ?? true
-  )
-
   const hasCollapsedLegacyProjectsExplainer = computed(
     () => meta.value?.legacyProjectsExplainerCollapsed
   )
-
-  const updateNewWorkspaceExplainerDismissed = async (value: boolean) => {
-    await updateWorkspaceExplainer({ value })
-
-    modifyObjectField(
-      cache,
-      getCacheId('User', activeUserId.value),
-      'meta',
-      ({ helpers: { createUpdatedValue } }) =>
-        createUpdatedValue(({ update }) => {
-          update('newWorkspaceExplainerDismissed', () => value)
-        })
-    )
-  }
 
   const updateLegacyProjectsExplainerCollapsed = async (value: boolean) => {
     await updateLegacyProjectsExplainer({ value })
@@ -85,9 +52,7 @@ export function useActiveUserMeta() {
   }
 
   return {
-    hasDismissedNewWorkspaceExplainer,
     hasCollapsedLegacyProjectsExplainer,
-    updateNewWorkspaceExplainerDismissed,
     updateLegacyProjectsExplainerCollapsed
   }
 }

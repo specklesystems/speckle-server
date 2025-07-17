@@ -12,7 +12,7 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { WorkspaceRole } from '@/test/graphql/generated/graphql'
+import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
 import { expect } from 'chai'
 import {
   captureCreatedInvite,

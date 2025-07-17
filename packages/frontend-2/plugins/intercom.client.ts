@@ -11,12 +11,24 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 const disabledRoutes = ['/auth', '/models/']
 
 export const useIntercom = () => {
-  const isWorkspacesEnabled = useIsWorkspacesEnabled()
-  const route = useRoute()
-  const { activeUser: user } = useActiveUser()
   const {
     public: { intercomAppId }
   } = useRuntimeConfig()
+
+  if (!intercomAppId) {
+    // Return empty functions if Intercom is not configured
+    return {
+      show: () => {},
+      hide: () => {},
+      shutdown: () => {},
+      track: () => {},
+      updateCompany: () => {}
+    }
+  }
+
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
+  const route = useRoute()
+  const { activeUser: user } = useActiveUser()
 
   const isInitialized = ref(false)
 

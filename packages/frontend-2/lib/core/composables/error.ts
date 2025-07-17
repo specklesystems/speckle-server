@@ -91,7 +91,7 @@ type CreateErrorReferenceParams = {
   /**
    * Specify date to use in the error reference.
    */
-  date: Date | dayjs.Dayjs
+  date?: Date | dayjs.Dayjs
   /**
    * Optionally add extra payload to the logger.error() call
    */
@@ -103,9 +103,10 @@ export const useGenerateErrorReference = () => {
   const reqId = useRequestId({ forceFrontendValue: true })
   const serverReqId = useServerRequestId()
   const { copy } = useClipboard()
+  const { userId } = useActiveUser()
 
-  const createErrorReference = (params: CreateErrorReferenceParams) => {
-    const date = params.date
+  const createErrorReference = (params?: CreateErrorReferenceParams) => {
+    const date = params?.date || new Date()
 
     let base = `Reference: #${reqId}`
     if (serverReqId.value) base += ` | #${serverReqId.value}`
@@ -118,11 +119,13 @@ export const useGenerateErrorReference = () => {
     // New ID that will be unique to this copy of the reference and that will cause an error to be logged
     // that we can then easily find by this ID
     const newId = 'fe-error-' + nanoid()
-    base += ` | ID: ${newId}`
+    base += ` | Ref ID: ${newId}`
+    base += ` | User ID: ${userId.value || 'anonymous'}`
+
     logger.error(
       {
         errorId: newId,
-        extraPayload: params.extraPayload
+        extraPayload: params?.extraPayload
       },
       `Error reference logged: ${base}`
     )
@@ -130,7 +133,7 @@ export const useGenerateErrorReference = () => {
     return base
   }
 
-  const copyReference = async (params: CreateErrorReferenceParams) => {
+  const copyReference = async (params?: CreateErrorReferenceParams) => {
     await copy(createErrorReference(params), {
       successMessage: 'Reference copied. Please include this when contacting support.'
     })

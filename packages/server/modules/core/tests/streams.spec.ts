@@ -34,7 +34,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import {
   GetLimitedUserStreamsQuery,
   GetUserStreamsQuery
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { Get } from 'type-fest'
 import {
   createAuthedTestContext,

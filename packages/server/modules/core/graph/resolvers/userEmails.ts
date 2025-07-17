@@ -31,6 +31,7 @@ import {
 } from '@/modules/core/services/users/emailVerification'
 import { commandFactory } from '@/modules/shared/command'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { emailVerificationTimeoutMinutes } from '@/modules/shared/helpers/envHelper'
 
 const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -144,7 +145,10 @@ export default {
         db,
         operationFactory: ({ db }) =>
           verifyUserEmailFactory({
-            getPendingVerificationByEmail: getPendingVerificationByEmailFactory({ db }),
+            getPendingVerificationByEmail: getPendingVerificationByEmailFactory({
+              db,
+              verificationTimeoutMinutes: emailVerificationTimeoutMinutes()
+            }),
             markUserEmailAsVerified: markUserEmailAsVerifiedFactory({
               updateUserEmail: updateUserEmailFactory({ db })
             }),

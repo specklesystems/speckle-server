@@ -49,7 +49,7 @@ import {
   getStreamAccessRequest,
   useStreamAccessRequest
 } from '@/test/graphql/accessRequests'
-import { StreamRole } from '@/test/graphql/generated/graphql'
+import { StreamRole } from '@/modules/core/graph/generated/graphql'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
 import {

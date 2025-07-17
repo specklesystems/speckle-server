@@ -14,7 +14,7 @@ import {
   GetRegionsDocument,
   UpdateRegionDocument,
   UpdateServerRegionInput
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   ExecuteOperationOptions,
   testApolloServer,

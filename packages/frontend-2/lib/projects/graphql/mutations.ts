@@ -307,3 +307,34 @@ export const useMoveProjectToWorkspaceMutation = graphql(`
     }
   }
 `)
+
+export const createEmbedTokenMutation = graphql(`
+  mutation CreateEmbedToken($token: EmbedTokenCreateInput!) {
+    projectMutations {
+      createEmbedToken(token: $token) {
+        token
+        tokenMetadata {
+          projectId
+          tokenId
+          ...ProjectPageSettingsTokens_EmbedToken
+        }
+      }
+    }
+  }
+`)
+
+export const deleteEmbedTokenMutation = graphql(`
+  mutation DeleteEmbedToken($projectId: String!, $token: String!) {
+    projectMutations {
+      revokeEmbedToken(projectId: $projectId, token: $token)
+    }
+  }
+`)
+
+export const deleteAllProjectEmbedTokensMutation = graphql(`
+  mutation RevokeEmbedTokens($projectId: String!) {
+    projectMutations {
+      revokeEmbedTokens(projectId: $projectId)
+    }
+  }
+`)

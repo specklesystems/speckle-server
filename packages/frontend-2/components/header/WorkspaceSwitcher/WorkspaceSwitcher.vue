@@ -87,6 +87,7 @@ import { navigationWorkspaceSwitcherQuery } from '~/lib/navigation/graphql/queri
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
+const { $intercom } = useNuxtApp()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const menuButtonId = useId()
 const { result } = useQuery(
@@ -121,4 +122,13 @@ const discoverableWorkspacesAndJoinRequestsCount = computed(
 const hasDiscoverableWorkspacesOrJoinRequests = computed(
   () => discoverableWorkspacesAndJoinRequestsCount.value > 0
 )
+
+onActiveWorkspaceResult(({ data }) => {
+  if (data?.workspaceBySlug) {
+    $intercom.updateCompany({
+      id: data.workspaceBySlug.id,
+      name: data.workspaceBySlug.name
+    })
+  }
+})
 </script>

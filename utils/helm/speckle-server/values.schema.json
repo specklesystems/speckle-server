@@ -100,6 +100,11 @@
           "description": "Enables the ability to move a project region (manually or automatically)",
           "default": false
         },
+        "retryErroredPreviewsEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the system periodically retries preview requests which have previously errored.",
+          "default": false
+        },
         "nextGenFileImporterEnabled": {
           "type": "boolean",
           "description": "Enables the next generation file importer",
@@ -1281,6 +1286,11 @@
               "type": "boolean",
               "description": "If enabled, Speckle can send email to users - for example, email verification for account registration.",
               "default": false
+            },
+            "verificationTimeoutMinutes": {
+              "type": "number",
+              "description": "The number of minutes after which an email verification link will expire. Defaults to 5 minutes.",
+              "default": 5
             },
             "host": {
               "type": "string",
