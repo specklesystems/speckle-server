@@ -1,6 +1,8 @@
 import { CustomLogger } from '../types/functions.js'
 import KeyedQueue from './keyedQueue.js'
 
+const PROCESSING_WAIT_TIME_MS = 100
+
 export default class BatchingQueue<T> {
   #queue: KeyedQueue<string, T> = new KeyedQueue<string, T>()
   #batchSize: number
@@ -52,7 +54,9 @@ export default class BatchingQueue<T> {
 
     // Wait for any ongoing processing to finish
     while (this.#isProcessing) {
-      await new Promise((resolve) => this.#getSetTimeoutFn()(resolve, PROCESSING_WAIT_TIME_MS))
+      await new Promise((resolve) =>
+        this.#getSetTimeoutFn()(resolve, PROCESSING_WAIT_TIME_MS)
+      )
     }
 
     // After any ongoing flush is completed, there might be items in the queue.
