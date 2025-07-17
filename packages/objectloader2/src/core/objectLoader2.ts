@@ -10,6 +10,9 @@ import { ObjectLoader2Options, CacheOptions } from './options.js'
 import { CacheReader } from './stages/cacheReader.js'
 import { CacheWriter } from './stages/cacheWriter.js'
 
+const MAX_CLOSURES_TO_TAKE = 100
+const EXPECTED_CLOSURE_VALUE = 100
+
 export class ObjectLoader2 {
   #rootId: string
 
@@ -108,7 +111,9 @@ export class ObjectLoader2 {
     )
     this.#logger(
       'calculated closures: ',
-      !take(sortedClosures.values(), MAX_CLOSURES_TO_TAKE).every((x) => x[1] === EXPECTED_CLOSURE_VALUE)
+      !take(sortedClosures.values(), MAX_CLOSURES_TO_TAKE).every(
+        (x) => x[1] === EXPECTED_CLOSURE_VALUE
+      )
     )
     const children = sortedClosures.map((x) => x[0])
     const total = children.length + 1 // +1 for the root object
@@ -121,7 +126,7 @@ export class ObjectLoader2 {
     this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
-      this.#deferments.undefer(item, (id) => this.#cacheReader.requestItem(id))
+      this.#deferments.undefer(item, (id: string) => this.#cacheReader.requestItem(id))
       yield item.base! //always defined, as we add it to the queue
       count++
       if (count >= total) {

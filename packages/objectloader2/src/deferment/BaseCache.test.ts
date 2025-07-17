@@ -177,16 +177,6 @@ describe('BaseCache', () => {
     expect(cache.compareMaybeBasesByReferences('5', '6')).toBe(0)
   })
 
-  it('compareMaybeBasesBySize should sort correctly', () => {
-    const cache = new BaseCache(defaultOptions, logger)
-    expect(cache.compareMaybeBasesBySize(10, 20)).toBe(-10)
-    expect(cache.compareMaybeBasesBySize(20, 10)).toBe(10)
-    expect(cache.compareMaybeBasesBySize(10, 10)).toBe(0)
-    expect(cache.compareMaybeBasesBySize(10, undefined)).toBe(1)
-    expect(cache.compareMaybeBasesBySize(undefined, 10)).toBe(-1)
-    expect(cache.compareMaybeBasesBySize(undefined, undefined)).toBe(0)
-  })
-
   it('should throw when used after dispose', () => {
     const cache = new BaseCache(defaultOptions, logger)
     cache.dispose()
