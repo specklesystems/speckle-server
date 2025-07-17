@@ -70,6 +70,10 @@ export const settingsWorkspaceRoutes = {
     route: (slug: MaybeNullOrUndefined<string>) =>
       slug ? `/settings/workspaces/${slug}/projects` : '/'
   },
+  automation: {
+    name: 'settings-workspaces-slug-automation',
+    route: (slug?: string) => `/settings/workspaces/${slug}/automation`
+  },
   security: {
     name: 'settings-workspaces-slug-security',
     route: (slug: MaybeNullOrUndefined<string>) =>
