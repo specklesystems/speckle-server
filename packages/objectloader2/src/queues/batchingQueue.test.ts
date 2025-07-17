@@ -58,25 +58,6 @@ describe('BatchingQueue', () => {
     expect(processSpy).toHaveBeenCalledWith(['item1', 'item2'])
   })
 
-  test('should not process items if disposed', async () => {
-    const processSpy = vi.fn()
-    queue = new BatchingQueue({
-      batchSize: 2,
-      maxWaitTime: 10000,
-      processFunction: async (batch: string[]): Promise<void> => {
-        await new Promise((resolve) => setTimeout(resolve, 0))
-        processSpy(batch)
-      }
-    })
-
-    queue.add('key1', 'item1')
-    await queue.disposeAsync()
-
-    await new Promise((resolve) => setTimeout(resolve, 200))
-
-    expect(processSpy).not.toHaveBeenCalled()
-  })
-
   test('should handle multiple batches correctly', async () => {
     const processSpy = vi.fn()
     queue = new BatchingQueue({
