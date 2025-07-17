@@ -52,7 +52,7 @@ export default class BatchingQueue<T> {
 
     // Wait for any ongoing processing to finish
     while (this.#isProcessing) {
-      await new Promise((resolve) => this.#getSetTimeoutFn()(resolve, 50))
+      await new Promise((resolve) => this.#getSetTimeoutFn()(resolve, PROCESSING_WAIT_TIME_MS))
     }
 
     // After any ongoing flush is completed, there might be items in the queue.
