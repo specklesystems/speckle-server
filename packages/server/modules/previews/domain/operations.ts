@@ -132,3 +132,5 @@ export type BuildUpdateObjectPreview = (params: {
 }) => Promise<UpdateObjectPreview>
 
 export type ObserveMetrics = (params: { payload: PreviewResultPayload }) => void
+
+export type GetNumberOfJobsInRequestQueue = () => Promise<number>

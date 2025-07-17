@@ -30,6 +30,19 @@ export default {
       return Authz.toGraphqlResult(canDeleteAutomation)
     }
   },
+  AutomateFunction: {
+    permissions: (parent) => ({ functionId: parent.id })
+  },
+  AutomateFunctionPermissionChecks: {
+    canRegenerateToken: async (parent, _args, context) => {
+      const authResult =
+        await context.authPolicies.automate.function.canRegenerateToken({
+          functionId: parent.functionId,
+          userId: context.userId
+        })
+      return Authz.toGraphqlResult(authResult)
+    }
+  },
   ProjectPermissionChecks: {
     canCreateAutomation: async (parent, _args, context) => {
       const canCreateAutomation =

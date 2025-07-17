@@ -60,6 +60,8 @@ const config: CodegenConfig = {
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           CommentMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
+          AutomateFunctionPermissionChecks:
+            '@/modules/automate/helpers/graphTypes#AutomateFunctionPermissionChecksGraphQLReturn',
           AutomateMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           AdminMutations:

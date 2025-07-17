@@ -33,6 +33,7 @@ graphql(`
 `)
 
 export const useSettingsMenu = () => {
+  const isAutomateEnabled = useIsAutomateModuleEnabled()
   const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
   const isMultiRegionEnabled = useIsMultiregionEnabled()
 
@@ -55,6 +56,16 @@ export const useSettingsMenu = () => {
       route: (slug?: string) => settingsWorkspaceRoutes.projects.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
+    ...(isAutomateEnabled.value
+      ? [
+          {
+            title: 'Automation',
+            name: settingsWorkspaceRoutes.automation.name,
+            route: (slug?: string) => settingsWorkspaceRoutes.automation.route(slug),
+            permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+          }
+        ]
+      : []),
     {
       title: 'Security',
       name: settingsWorkspaceRoutes.security.name,
