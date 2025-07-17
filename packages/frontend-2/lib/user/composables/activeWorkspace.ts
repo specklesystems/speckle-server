@@ -18,8 +18,7 @@ export const useSetActiveWorkspace = () => {
   const { mutate } = useMutation(setActiveWorkspaceMutation)
 
   const setActiveWorkspace = async (workspaceSlug: string) => {
-    const result = await mutate({ slug: workspaceSlug })
-    return result
+    return await mutate({ slug: workspaceSlug })
   }
 
   return {
