@@ -2,6 +2,7 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
 import {
   getWorkspaceDomainsFactory,
+  getWorkspacesBySlugFactory,
   getWorkspacesFactory,
   getWorkspacesProjectsCountsFactory,
   getWorkspacesRolesForUsersFactory
@@ -23,6 +24,7 @@ declare module '@/modules/core/loaders' {
 const dataLoadersDefinition = defineRequestDataloaders(
   ({ ctx, createLoader, deps: { db } }) => {
     const getWorkspaces = getWorkspacesFactory({ db })
+    const getWorkspacesBySlug = getWorkspacesBySlugFactory({ db })
     const getWorkspaceDomains = getWorkspaceDomainsFactory({ db })
     const getWorkspacesProjectsCounts = getWorkspacesProjectsCountsFactory({ db })
     const getWorkspacesRolesForUsers = getWorkspacesRolesForUsersFactory({ db })
@@ -39,6 +41,21 @@ const dataLoadersDefinition = defineRequestDataloaders(
               (w) => w.id
             )
             return ids.map((id) => results[id] || null)
+          }
+        ),
+        /**
+         * Get workspace by slug, with the active user's role attached
+         */
+        getWorkspaceBySlug: createLoader<string, WorkspaceWithOptionalRole | null>(
+          async (slugs) => {
+            const results = keyBy(
+              await getWorkspacesBySlug({
+                workspaceSlugs: slugs.slice(),
+                userId: ctx.userId
+              }),
+              (w) => w.slug
+            )
+            return slugs.map((id) => results[id] || null)
           }
         ),
         /**

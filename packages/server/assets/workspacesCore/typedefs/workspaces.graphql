@@ -689,5 +689,5 @@ type AdminMutations {
 }
 
 extend type ActiveUserMutations {
-  setActiveWorkspace(slug: String, isProjectsActive: Boolean): Boolean!
+  setActiveWorkspace(slug: String): Workspace
 }
