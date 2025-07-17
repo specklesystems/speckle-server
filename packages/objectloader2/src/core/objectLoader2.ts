@@ -108,7 +108,7 @@ export class ObjectLoader2 {
     )
     this.#logger(
       'calculated closures: ',
-      !take(sortedClosures.values(), 100).every((x) => x[1] === 100)
+      !take(sortedClosures.values(), MAX_CLOSURES_TO_TAKE).every((x) => x[1] === EXPECTED_CLOSURE_VALUE)
     )
     const children = sortedClosures.map((x) => x[0])
     const total = children.length + 1 // +1 for the root object
