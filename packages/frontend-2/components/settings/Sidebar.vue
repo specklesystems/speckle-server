@@ -193,6 +193,6 @@ const exitSettingsRoute = computed(() => {
 
 const showWorkspaceSettings = computed(() => {
   if (!isWorkspacesEnabled.value) return false
-  return !!activeWorkspaceSlug.value
+  return !!activeWorkspaceSlug.value && filteredWorkspaceMenuItems.value.length > 0
 })
 </script>
