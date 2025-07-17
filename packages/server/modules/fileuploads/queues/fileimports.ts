@@ -111,10 +111,6 @@ export const initializeQueueFactory =
       shutdown: async () => await queue.close(),
       scheduleJob: async (jobData: JobPayload): Promise<void> => {
         await queue.add(jobData, defaultJobOptions)
-      },
-      currentJobCount: async (): Promise<number> => {
-        const jobCounts = await queue.getJobCounts()
-        return jobCounts.waiting + jobCounts.active + jobCounts.delayed
       }
     }
     fileImportQueues.push(fileImportQueue)
