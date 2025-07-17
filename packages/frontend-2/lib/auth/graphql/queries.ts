@@ -98,7 +98,14 @@ export const activeUserActiveWorkspaceCheckQuery = graphql(`
       id
       activeWorkspace {
         id
+        role
         slug
+      }
+      workspaces(limit: 1) {
+        items {
+          id
+          slug
+        }
       }
     }
   }
