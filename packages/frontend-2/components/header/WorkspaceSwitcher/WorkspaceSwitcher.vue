@@ -34,16 +34,21 @@
         <MenuItems
           class="absolute left-2 lg:left-3 top-[3.2rem] lg:top-14 w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <HeaderWorkspaceSwitcherHeaderProjects v-if="!activeWorkspace" />
+          <HeaderWorkspaceSwitcherHeaderProjects
+            v-if="!activeWorkspace"
+            class="border-b border-outline-2"
+          />
           <HeaderWorkspaceSwitcherHeaderSsoExpired
             v-else-if="ssoExpiredWorkspace"
+            class="border-b border-outline-2"
             :workspace="ssoExpiredWorkspace"
           />
           <HeaderWorkspaceSwitcherHeaderWorkspace
             v-else-if="activeWorkspace.role"
+            class="border-b border-outline-2"
             :active-workspace-slug="activeWorkspace?.slug"
           />
-          <HeaderWorkspaceSwitcherList class="border-t border-outline-2" />
+          <HeaderWorkspaceSwitcherList />
           <MenuItem v-if="hasDiscoverableWorkspacesOrJoinRequests">
             <div class="p-2 border-t border-outline-2">
               <NuxtLink
