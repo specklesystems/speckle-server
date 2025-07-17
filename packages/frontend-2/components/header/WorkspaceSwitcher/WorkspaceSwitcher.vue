@@ -41,9 +41,8 @@
             :workspace="ssoExpiredWorkspace"
           />
           <HeaderWorkspaceSwitcherHeaderWorkspace
-            v-else
-            :workspace="activeWorkspace"
-            @show-invite-dialog="showInviteDialog = true"
+            v-else-if="activeWorkspace.role"
+            :active-workspace-slug="activeWorkspace?.slug"
           />
           <HeaderWorkspaceSwitcherList class="border-t border-outline-2" />
           <MenuItem v-if="hasDiscoverableWorkspacesOrJoinRequests">
@@ -72,11 +71,6 @@
     <WorkspaceDiscoverableWorkspacesModal
       v-model:open="showDiscoverableWorkspacesModal"
     />
-
-    <InviteDialogWorkspace
-      v-model:open="showInviteDialog"
-      :workspace="activeWorkspace"
-    />
   </div>
 </template>
 
@@ -86,14 +80,44 @@ import { useQuery } from '@vue/apollo-composable'
 import { navigationWorkspaceSwitcherQuery } from '~/lib/navigation/graphql/queries'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on Workspace {
+    id
+    name
+    logo
+    slug
+    role
+  }
+`)
+
+graphql(`
+  fragment WorkspaceSwitcherActiveWorkspace_User on User {
+    id
+    activeWorkspace {
+      ...WorkspaceSwitcherActiveWorkspace_LimitedWorkspace
+    }
+    expiredSsoSessions {
+      id
+      ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace
+    }
+    discoverableWorkspaces {
+      id
+    }
+    workspaceJoinRequests(filter: $joinRequestFilter) {
+      totalCount
+    }
+  }
+`)
 
 const { $intercom } = useNuxtApp()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const menuButtonId = useId()
-const { result } = useQuery(
+const { result, onResult: onActiveWorkspaceResult } = useQuery(
   navigationWorkspaceSwitcherQuery,
   () => ({
-    filter: {
+    joinRequestFilter: {
       status: WorkspaceJoinRequestStatus.Pending
     }
   }),
@@ -103,7 +127,6 @@ const { result } = useQuery(
 )
 
 const showDiscoverableWorkspacesModal = ref(false)
-const showInviteDialog = ref(false)
 
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
 const ssoExpiredWorkspace = computed(() =>
@@ -124,10 +147,10 @@ const hasDiscoverableWorkspacesOrJoinRequests = computed(
 )
 
 onActiveWorkspaceResult(({ data }) => {
-  if (data?.workspaceBySlug) {
+  if (data?.activeUser?.activeWorkspace) {
     $intercom.updateCompany({
-      id: data.workspaceBySlug.id,
-      name: data.workspaceBySlug.name
+      id: data.activeUser.activeWorkspace.id,
+      name: data.activeUser.activeWorkspace.name
     })
   }
 })

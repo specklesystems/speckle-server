@@ -5,9 +5,6 @@ import {
 } from '~/lib/auth/graphql/queries'
 import { usePreloadApolloQueries } from '~/lib/common/composables/graphql'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
-import { userActiveWorkspaceQuery } from '~/lib/user/graphql/queries'
-import { navigationWorkspaceSwitcherQuery } from '~/lib/navigation/graphql/queries'
-import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 /**
  * Prefetches data for specific routes to avoid the problem of serial API requests
@@ -29,23 +26,7 @@ export default defineNuxtPlugin(async (ctx) => {
   // Standard/global
   promises.push(
     preload({
-      queries: [
-        { query: activeUserQuery },
-        { query: mainServerInfoDataQuery },
-        ...(isWorkspacesEnabled.value
-          ? [
-              { query: userActiveWorkspaceQuery },
-              {
-                query: navigationWorkspaceSwitcherQuery,
-                variables: {
-                  filter: {
-                    status: WorkspaceJoinRequestStatus.Pending
-                  }
-                }
-              }
-            ]
-          : [])
-      ]
+      queries: [{ query: activeUserQuery }, { query: mainServerInfoDataQuery }]
     })
   )
 
