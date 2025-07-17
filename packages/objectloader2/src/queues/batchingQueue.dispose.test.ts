@@ -23,7 +23,7 @@ describe('BatchingQueue disposal', () => {
   })
 
   test('should wait for processing to finish before disposing', async () => {
-    let resolveProcess: (value: void | PromiseLike<void>) => void
+    let resolveProcess: (value: void | PromiseLike<void>) => void = () => {}
     const processPromise = new Promise<void>((resolve) => {
       resolveProcess = resolve
     })
@@ -49,8 +49,6 @@ describe('BatchingQueue disposal', () => {
 
     // Queue should be disposed now, but processing is still ongoing
     expect(queue.isDisposed()).toBe(true)
-
-    // @ts-expect-error - resolveProcess is assigned
     resolveProcess()
     await disposePromise
 
