@@ -523,7 +523,12 @@ export const getPreviewServiceRetryPeriodMinutes = (): number => {
 }
 
 export const getPreviewServiceMaxQueueBackpressure = (): number => {
-  return getIntFromEnv('PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE', '1')
+  const value = getIntFromEnv('PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE', '1')
+  if (value < 1)
+    throw new MisconfiguredEnvironmentError(
+      `PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE must be an integer greater than 0, got ${value}`
+    )
+  return value
 }
 
 export const emailVerificationTimeoutMinutes = (): number => {
