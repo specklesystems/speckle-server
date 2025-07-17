@@ -8,12 +8,8 @@ export class DeferredBase {
   private size?: number
 
   private readonly id: string
-  private expiresAt: number // Timestamp in ms
-  private ttl: number // ttl in ms
 
-  constructor(ttl: number, id: string, expiresAt: number) {
-    this.expiresAt = expiresAt
-    this.ttl = ttl
+  constructor(id: string) {
     this.id = id
     this.promise = new Promise<Base>((resolve, reject) => {
       this.resolve = resolve
@@ -36,25 +32,10 @@ export class DeferredBase {
     return this.promise
   }
 
-  isExpired(now: number): boolean {
-    return this.base !== undefined && now > this.expiresAt
-  }
-  setAccess(now: number): void {
-    this.expiresAt = now + this.ttl
-  }
 
   found(value: Base, size: number): void {
     this.base = value
     this.size = size
     this.resolve(value)
-  }
-  done(now: number): boolean {
-    if (this.base) {
-      this.resolve(this.base)
-    }
-    if (this.isExpired(now)) {
-      return true
-    }
-    return false
   }
 }
