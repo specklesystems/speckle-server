@@ -47,8 +47,7 @@ export const requestFailedHandlerFactory =
       objectPreview: {
         streamId: projectId,
         objectId,
-        previewStatus: PreviewStatus.ERROR,
-        lastUpdate: new Date()
+        previewStatus: PreviewStatus.ERROR
       }
     })
     if (updatedRecords.length < 1) {

@@ -8,7 +8,8 @@ import {
   getFunctionReleasesFactory,
   getUserGithubAuthState,
   getUserGithubOrganizations,
-  getUserFunctionsFactory
+  getUserFunctionsFactory,
+  regenerateFunctionToken
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -49,6 +50,7 @@ import {
   convertFunctionReleaseToGraphQLReturn,
   convertFunctionToGraphQLReturn,
   createFunctionFromTemplateFactory,
+  regenerateFunctionTokenFactory,
   updateFunctionFactory
 } from '@/modules/automate/services/functionManagement'
 import {
@@ -630,6 +632,31 @@ export default (FF_AUTOMATE_MODULE_ENABLED
               operationDescription: 'Update an Automate function'
             }
           )
+        },
+        regenerateFunctionToken: async (_parent, args, context) => {
+          const { functionId } = args
+
+          const authResult =
+            await context.authPolicies.automate.function.canRegenerateToken({
+              functionId,
+              userId: context.userId
+            })
+          throwIfAuthNotOk(authResult)
+
+          const logger = context.log.child({
+            functionId
+          })
+
+          return await regenerateFunctionTokenFactory({
+            regenerateFunctionToken,
+            getFunction: getFunctionFactory({ logger }),
+            createStoredAuthCode: createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })
+          })({
+            functionId,
+            userId: context.userId!
+          })
         }
       },
       ProjectAutomationMutations: {
