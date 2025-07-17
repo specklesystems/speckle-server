@@ -111,6 +111,7 @@ export class ObjectLoader2 {
     this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
+      this.#deferments.undefer(item, (id) => this.#cacheReader.requestItem(id))
       yield item.base! //always defined, as we add it to the queue
       count++
       if (count >= total) {

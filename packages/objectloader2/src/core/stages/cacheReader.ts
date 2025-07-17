@@ -34,7 +34,7 @@ export class CacheReader {
   getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      this.#requestItem(params.id)
+      this.requestItem(params.id)
     }
     return p
   }
@@ -49,9 +49,10 @@ export class CacheReader {
     }
   }
 
-  #requestItem(id: string): void {
+  requestItem(id: string): void {
     this.#createReadQueue()
     if (!this.#readQueue?.get(id)) {
+      this.#defermentManager.trackDefermentRequest(id)
       this.#readQueue?.add(id, id)
     }
   }
@@ -72,7 +73,7 @@ export class CacheReader {
       const item = items[i]
       if (item) {
         this.#foundQueue?.add(item)
-        this.#defermentManager.undefer(item)
+        this.#defermentManager.undefer(item, id => this.requestItem(id))
       } else {
         this.#notFoundQueue?.add(batch[i])
       }

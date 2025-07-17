@@ -12,6 +12,8 @@ export class DefermentManager {
   //tracks total deferment requests for each id
   //this is used to prevent cleaning up deferments that are still being requested
   private totalDefermentRequests: Map<string, number> = new Map()
+  private isGathered: Map<string, boolean> = new Map()
+  private references: Map<string, number> = new Map()
 
   constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()
@@ -45,6 +47,45 @@ export class DefermentManager {
     return [notYetFound.getPromise(), false]
   }
 
+  scanForReferences(data: unknown, requestItem: (id: string) => void): void {
+    const scan = (item: unknown): void => {
+      // Stop if the item is null or not an object (i.e., primitive)
+      if (item === null || typeof item !== 'object') {
+        return
+      }
+
+      // If it's an array, scan each element
+      if (Array.isArray(item)) {
+        for (const element of item) {
+          scan(element)
+        }
+        return
+      }
+
+      // If it's an object, scan its properties
+      for (const key in item) {
+        if (Object.prototype.hasOwnProperty.call(item, key)) {
+          // We found the target property!
+          if (key === 'referencedId') {
+            const value = (item as { referencedId: unknown }).referencedId
+            // Ensure the value is a string before adding it
+            if (typeof value === 'string') {
+              if (!this.deferments.has(value)) {
+                requestItem(value)
+              }
+              this.references.set(value, (this.references.get(value) || 0) + 1)
+            }
+          }
+
+          // Continue scanning deeper into the object's properties
+          scan((item as Record<string, unknown>)[key])
+        }
+      }
+    }
+
+    scan(data)
+  }
+
   trackDefermentRequest(id: string): void {
     const request = this.totalDefermentRequests.get(id)
     if (request) {
@@ -54,7 +95,7 @@ export class DefermentManager {
     }
   }
 
-  undefer(item: Item): void {
+  undefer(item: Item, requestItem: (id: string) => void): void {
     if (this.disposed) throw new Error('DefermentManager is disposed')
     const base = item.base
     if (!base) {
@@ -63,6 +104,11 @@ export class DefermentManager {
     }
     const now = this.now()
     this.currentSize += item.size || 0
+    if (!this.isGathered.get(item.baseId)) {
+      this.isGathered.set(item.baseId, true)
+      this.scanForReferences(base, requestItem)
+    }
+
     //order matters here with found before undefer
     const deferredBase = this.deferments.get(item.baseId)
     if (deferredBase) {
@@ -121,8 +167,18 @@ export class DefermentManager {
     const start = performance.now()
     for (const deferredBase of Array.from(this.deferments.values())
       .filter((x) => x.isExpired(now))
-      .sort((a, b) => this.compareMaybeBasesBySize(a.getSize(), b.getSize()))) {
+      .sort((a, b) => this.compareMaybeBasesByReferences(a.getId(), b.getId()))) {
       if (deferredBase.done(now)) {
+        const referenceCount = this.references.get(deferredBase.getId()) || 0
+        if (referenceCount > 0) {
+          //if the deferment is done but has references, we do not clean it up
+          this.logger(
+            'not cleaning up deferment with references',
+            deferredBase.getId(),
+            referenceCount
+          )
+          continue
+        }
         //if the deferment is done but has been requested multiple times,
         //we do not clean it up to allow the requests to resolve
         const requestCount = this.totalDefermentRequests.get(deferredBase.getId())
@@ -144,6 +200,15 @@ export class DefermentManager {
       performance.now() - start
     )
     return
+  }
+
+  compareMaybeBasesByReferences(id1: string, id2: string): number {
+    const a = this.references.get(id1)
+    const b = this.references.get(id2)
+    if (a === undefined && b === undefined) return 0
+    if (a === undefined) return -1
+    if (b === undefined) return 1
+    return a - b
   }
 
   compareMaybeBasesBySize(a: number | undefined, b: number | undefined): number {

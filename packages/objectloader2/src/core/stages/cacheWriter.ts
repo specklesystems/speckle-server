@@ -35,7 +35,6 @@ export class CacheWriter implements Queue<Item> {
         }
       })
     }
-    this.#defermentManager.undefer(item)
     this.#writeQueue.add(item.baseId, item)
   }
 
