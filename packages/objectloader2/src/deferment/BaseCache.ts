@@ -148,7 +148,8 @@ export class BaseCache {
         const id = deferredBase.getItem().baseId
         const referenceCount = this.references.get(id) || 0
         if (referenceCount > 0) {
-          //if the deferment is done but has
+          // Skip eviction for items with reference counts greater than 0,
+          // as they are still in use and should not be removed from the cache.
           continue
         }
         this.currentSize -= deferredBase.getItem().size || 0
