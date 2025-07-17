@@ -97,11 +97,10 @@
               </MenuItem>
               <MenuItem>
                 <NuxtLink
-                  class="cursor-pointer text-foreground-2 hover:text-foreground flex items-center justify-between"
+                  class="cursor-pointer text-foreground-2 hover:text-foreground"
                   @click="copySupportReference"
                 >
-                  <span>Support reference ID</span>
-                  <ClipboardIcon class="w-3 h-3 shrink-0" />
+                  Copy support reference
                 </NuxtLink>
               </MenuItem>
             </div>
@@ -114,7 +113,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { ChevronDownIcon, ClipboardIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
