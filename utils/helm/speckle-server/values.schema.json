@@ -2058,6 +2058,16 @@
           "description": "The maximum number of connections that the Preview Service postgres client will make to the Postgres database.",
           "default": 2
         },
+        "maxQueueBackpressure": {
+          "type": "number",
+          "description": "The maximum number of items that can be queued in the Preview Service job queue before we stop retrying previously errored preview jobs. This is used to prevent the Preview Service from being overwhelmed with too many jobs.",
+          "default": 1
+        },
+        "retryPeriodMinutes": {
+          "type": "number",
+          "description": "The period, in minutes, between retries of previously errored jobs. Must be an integer between 1 and 60.",
+          "default": 1
+        },
         "puppeteer": {
           "type": "object",
           "properties": {
