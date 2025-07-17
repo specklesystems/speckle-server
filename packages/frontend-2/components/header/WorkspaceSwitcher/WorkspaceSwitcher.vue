@@ -34,21 +34,22 @@
         <MenuItems
           class="absolute left-2 lg:left-3 top-[3.2rem] lg:top-14 w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <HeaderWorkspaceSwitcherHeaderProjects
-            v-if="!activeWorkspace"
-            class="border-b border-outline-2"
-          />
+          <HeaderWorkspaceSwitcherHeaderProjects v-if="!activeWorkspace" />
           <HeaderWorkspaceSwitcherHeaderSsoExpired
             v-else-if="ssoExpiredWorkspace"
-            class="border-b border-outline-2"
             :workspace="ssoExpiredWorkspace"
           />
           <HeaderWorkspaceSwitcherHeaderWorkspace
             v-else-if="activeWorkspace.role"
-            class="border-b border-outline-2"
             :active-workspace-slug="activeWorkspace?.slug"
           />
-          <HeaderWorkspaceSwitcherList />
+          <HeaderWorkspaceSwitcherHeader
+            v-else
+            :name="activeWorkspace?.name"
+            :logo="activeWorkspace?.logo"
+            :to="workspaceRoute(activeWorkspace?.slug)"
+          />
+          <HeaderWorkspaceSwitcherList class="border-t border-outline-2" />
           <MenuItem v-if="hasDiscoverableWorkspacesOrJoinRequests">
             <div class="p-2 border-t border-outline-2">
               <NuxtLink
@@ -85,6 +86,7 @@ import { navigationWorkspaceSwitcherQuery } from '~/lib/navigation/graphql/queri
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on LimitedWorkspace {
