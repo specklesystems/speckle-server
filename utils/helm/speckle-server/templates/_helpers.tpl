@@ -523,7 +523,7 @@ Retrieve the s3 parameters from ConfigMap if enabled, or default to retrieving t
   {{- $configMap := (lookup "v1" "ConfigMap" .Values.namespace .Values.s3.configMap.name ) -}}
   {{- printf "%s" ( $configMap.data | toJson ) }}
 {{- else }}
-  {{- $result := dict "endpoint" .Values.s3.endpoint "bucket" .Values.s3.bucket "access_key" .Values.s3.access_key }}
+  {{- $result := dict "endpoint" .Values.s3.endpoint "bucket" .Values.s3.bucket "access_key" .Values.s3.access_key "publicEndpoint" .Values.s3.publicEndpoint }}
   {{- $result | toJson  }}
 {{- end }}
 {{- end }}
@@ -577,6 +577,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: FF_MOVE_PROJECT_REGION_ENABLED
   value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
+
+- name: FF_BACKGROUND_JOBS_ENABLED
+  value: {{ .Values.featureFlags.backgroundJobsEnabled | quote }}
 
 {{- if .Values.featureFlags.gatekeeperModuleEnabled }}
 - name: LICENSE_TOKEN
@@ -786,7 +789,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
 {{- end }}
 
-{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+{{- if (and .Values.featureFlags.nextGenFileImporterEnabled (not .Values.featureFlags.backgroundJobsEnabled)) }}
 - name: FILEIMPORT_SERVICE_RHINO_REDIS_URL
   valueFrom:
     secretKeyRef:
@@ -861,11 +864,15 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: NODE_TLS_REJECT_UNAUTHORIZED
   value: {{ .Values.tlsRejectUnauthorized | quote }}
 
-# *** S3 Object Storage ***
 {{- if (or .Values.s3.configMap.enabled .Values.s3.endpoint) }}
+# *** S3 Object Storage ***
 {{- $s3values := ((include "server.s3Values" .) | fromJson ) }}
 - name: S3_ENDPOINT
   value: {{ $s3values.endpoint }}
+{{- if $s3values.publicEndpoint }}
+- name: S3_PUBLIC_ENDPOINT
+  value: {{ $s3values.publicEndpoint }}
+{{- end }}
 - name: S3_ACCESS_KEY
   value: {{ $s3values.access_key }}
 - name: S3_BUCKET
@@ -888,8 +895,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: STRATEGY_LOCAL
   value: "{{ .Values.server.auth.local.enabled }}"
 
-# Google Auth
 {{- if .Values.server.auth.google.enabled }}
+# Google Auth
 - name: STRATEGY_GOOGLE
   value: "true"
 - name: GOOGLE_CLIENT_ID
@@ -901,8 +908,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "google_client_secret" .Values.server.auth.google.clientSecret.secretKey }}
 {{- end }}
 
-# Github Auth
 {{- if .Values.server.auth.github.enabled }}
+# Github Auth
 - name: STRATEGY_GITHUB
   value: "true"
 - name: GITHUB_CLIENT_ID
@@ -914,8 +921,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "github_client_secret" .Values.server.auth.github.clientSecret.secretKey }}
 {{- end }}
 
-# AzureAD Auth
 {{- if .Values.server.auth.azure_ad.enabled }}
+# AzureAD Auth
 - name: STRATEGY_AZURE_AD
   value: "true"
 - name: AZURE_AD_ORG_NAME
@@ -934,8 +941,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- end }}
 
 
-# OpenID Connect Auth
 {{- if .Values.server.auth.oidc.enabled }}
+# OpenID Connect Auth
 - name: STRATEGY_OIDC
   value: "true"
 - name: OIDC_NAME
@@ -952,9 +959,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- end }}
 
 
-# *** Email ***
 
 {{- if .Values.server.email.enabled }}
+# *** Email ***
 - name: EMAIL
   value: "true"
 - name: EMAIL_HOST
@@ -974,8 +981,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.email.verificationTimeoutMinutes | quote }}
 {{- end }}
 
-# *** Newsletter ***
 {{- if .Values.server.mailchimp.enabled }}
+# *** Newsletter ***
 - name: MAILCHIMP_ENABLED
   value: "true"
 - name: MAILCHIMP_API_KEY
@@ -993,8 +1000,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: "{{ .Values.server.mailchimp.onboardingListId}}"
 {{- end }}
 
-# Monitoring - Apollo
 {{- if .Values.server.monitoring.apollo.enabled }}
+# Monitoring - Apollo
 - name: APOLLO_GRAPH_ID
   value: {{ .Values.server.monitoring.apollo.graph_id }}
 - name: APOLLO_SCHEMA_REPORTING
@@ -1017,7 +1024,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- end }}
 
 # Rate Limiting
-
 - name: RATELIMITER_ENABLED
   value: "{{ .Values.server.ratelimiting.enabled }}"
 
@@ -1110,9 +1116,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
 {{- end }}
 
-# OpenTelemetry
 
 {{- if .Values.openTelemetry.tracing.url }}
+# OpenTelemetry
 - name: OTEL_TRACE_URL
   value: {{ .Values.openTelemetry.tracing.url | quote }}
 {{- end }}
@@ -1125,9 +1131,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.openTelemetry.tracing.value | quote }}
 {{- end }}
 
-# Multi-region
 
 {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+# Multi-region
 - name: MULTI_REGION_CONFIG_PATH
   value: "/multi-region-config/multi-region-config.json"
 {{- end }}
@@ -1135,6 +1141,13 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
 - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
   value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
+{{- end }}
+{{- if .Values.featureFlags.backgroundJobsEnabled }}
+- name: FILEIMPORT_QUEUE_POSTGRES_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.ifc_import_service.db.connectionString.secretName }}
+      key: {{ default "fileimport_queue_postgres_url" .Values.ifc_import_service.db.connectionString.secretKey }}
 {{- end }}
 {{- if .Values.featureFlags.largeFileUploadsEnabled }}
 - name: FF_LARGE_FILE_IMPORTS_ENABLED
