@@ -66,11 +66,11 @@ export class DefermentManager {
     //order matters here with found before undefer
     const deferredBase = this.deferments.get(item.baseId)
     if (deferredBase) {
-      deferredBase.found(base)
+      deferredBase.found(base, item.size || 0)
       deferredBase.setAccess(now)
     } else {
       const existing = new DeferredBase(this.options.ttlms, item.baseId, now)
-      existing.found(base)
+      existing.found(base, item.size || 0)
       this.deferments.set(item.baseId, existing)
     }
   }
