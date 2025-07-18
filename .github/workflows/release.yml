@@ -22,6 +22,7 @@ jobs:
   tests:
     needs: [get-version]
     uses: ./.github/workflows/tests.yml
+    if: ${{ !contains(github.ref, 'testing*') }}
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       DOCKERHUB_USERNAME: 'speckledevops'
