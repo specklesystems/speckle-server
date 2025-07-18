@@ -7,7 +7,7 @@ applyTo: 'packages/objectloader2/**/*.ts'
 
 ## Coding standards
 
-- Use JavaScript with ES2022 features and Node.js (20+) ESM modules
+- Use TypeScript with ES2022 features and Node.js (20+) ESM modules
 - Use Node.js built-in modules and avoid external dependencies where possible
 - Ask the user if you require any additional dependencies before adding them
 - Always use async/await for asynchronous code, and use 'node:util' promisify function to avoid callbacks
