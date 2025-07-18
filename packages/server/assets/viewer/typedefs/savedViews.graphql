@@ -24,6 +24,10 @@ type SavedView {
   Encoded screenshot of the view
   """
   screenshot: String!
+  """
+  For figuring out position in the group
+  """
+  position: Float!
 }
 
 type SavedViewCollection {
@@ -175,10 +179,21 @@ input DeleteViewGroupInput {
   groupId: ID!
 }
 
+"""
+One or both of the position values must be specified
+"""
+input ChangeViewOrderInput {
+  id: ID!
+  projectId: ID!
+  previousViewPosition: Float
+  nextViewPosition: Float
+}
+
 type SavedViewMutations {
   createView(input: CreateSavedViewInput!): SavedView!
   updateView(input: UpdateViewInput!): SavedView!
   deleteView(input: DeleteViewInput!): Boolean!
+  changeViewOrder(input: ChangeViewOrderInput!): SavedView!
   renameViewGroup(input: RenameGroupInput!): SavedViewGroup!
   deleteViewGroup(input: DeleteViewGroupInput!): Boolean!
 }
