@@ -12,7 +12,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ contains(github.ref, 'testing*')}} # deployments on testing* will cancel each other, prod and tags no
+  cancel-in-progress: ${{ startsWith(github.ref, 'testing') }} # deployments on testing* will cancel each other, prod and tags no
 
 jobs:
   get-version:
@@ -22,7 +22,7 @@ jobs:
   tests:
     needs: [get-version]
     uses: ./.github/workflows/tests.yml
-    if: ${{ !contains(github.ref, 'testing*') }}
+    if: ${{ !startsWith(github.ref, 'testing') }}
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       DOCKERHUB_USERNAME: 'speckledevops'
