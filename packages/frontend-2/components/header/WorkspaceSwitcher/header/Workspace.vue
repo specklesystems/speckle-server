@@ -1,10 +1,6 @@
 <template>
   <div>
-    <div v-if="isLoading" class="px-4 flex justify-center h-[6.25rem] items-center">
-      <CommonLoadingIcon />
-    </div>
     <HeaderWorkspaceSwitcherHeader
-      v-else
       :name="workspace?.name"
       :logo="workspace?.logo"
       :to="workspaceRoute(workspace?.slug)"
