@@ -41,7 +41,8 @@
           />
           <HeaderWorkspaceSwitcherHeaderWorkspace
             v-else-if="activeWorkspace.role"
-            :active-workspace-slug="activeWorkspace?.slug"
+            :workspace="fullActiveWorkspace"
+            @open-invite-dialog="isInviteDialogOpen = true"
           />
           <HeaderWorkspaceSwitcherHeader
             v-else
@@ -73,6 +74,11 @@
       </Transition>
     </Menu>
 
+    <InviteDialogWorkspace
+      v-model:open="isInviteDialogOpen"
+      :workspace="fullActiveWorkspace"
+    />
+
     <WorkspaceDiscoverableWorkspacesModal
       v-model:open="showDiscoverableWorkspacesModal"
     />
@@ -82,7 +88,10 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { useQuery } from '@vue/apollo-composable'
-import { navigationWorkspaceSwitcherQuery } from '~/lib/navigation/graphql/queries'
+import {
+  navigationWorkspaceSwitcherQuery,
+  workspaceSwitcherHeaderWorkspaceQuery
+} from '~/lib/navigation/graphql/queries'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
@@ -131,10 +140,25 @@ const { result, onResult: onActiveWorkspaceResult } = useQuery(
     enabled: isWorkspacesEnabled.value
   })
 )
+// Seperate query to get the full workspace, because it's not always needed
+const { result: fullWorkspaceResult } = useQuery(
+  workspaceSwitcherHeaderWorkspaceQuery,
+  () => ({
+    slug: result.value?.activeUser?.activeWorkspace?.slug || ''
+  }),
+  {
+    enabled:
+      !!result.value?.activeUser?.activeWorkspace?.slug &&
+      isWorkspacesEnabled.value &&
+      !!result.value?.activeUser?.activeWorkspace?.role
+  }
+)
 
 const showDiscoverableWorkspacesModal = ref(false)
+const isInviteDialogOpen = ref(false)
 
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
+const fullActiveWorkspace = computed(() => fullWorkspaceResult.value?.workspaceBySlug)
 const ssoExpiredWorkspace = computed(() =>
   result.value?.activeUser?.expiredSsoSessions?.find(
     (session) => session.slug === activeWorkspace.value?.slug
