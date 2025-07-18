@@ -1,5 +1,5 @@
 <template>
-  <div>You shouldnt be here but we will fix it soon 😉</div>
+  <div />
 </template>
 
 <script setup lang="ts">

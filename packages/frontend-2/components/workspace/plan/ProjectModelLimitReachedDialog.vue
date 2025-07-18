@@ -24,7 +24,6 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { formatName } from '~/lib/billing/helpers/plan'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 const props = defineProps<{
   workspaceSlug: string
@@ -35,13 +34,11 @@ const props = defineProps<{
   location: string
 }>()
 
-const mixpanel = useMixpanel()
-
-const { mutateActiveWorkspaceSlug } = useNavigation()
-
 const dialogOpen = defineModel<boolean>('open', {
   required: true
 })
+
+const mixpanel = useMixpanel()
 
 const planConfig = computed(() => {
   if (!props.plan) return null
@@ -59,7 +56,7 @@ const explorePlansButton: LayoutDialogButton = {
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceSlug
     })
-    mutateActiveWorkspaceSlug(props.workspaceSlug)
+
     return navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug))
   }
 }

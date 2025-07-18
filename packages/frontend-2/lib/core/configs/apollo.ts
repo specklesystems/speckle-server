@@ -335,6 +335,9 @@ function createCache(): InMemoryCache {
           plan: {
             merge: incomingOverwritesExistingMergeFunction
           },
+          planPrices: {
+            merge: incomingOverwritesExistingMergeFunction
+          },
           projects: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')

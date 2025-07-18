@@ -7,6 +7,7 @@ import {
 } from '~/lib/common/helpers/graphql'
 import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
 import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
+import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
@@ -23,6 +24,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   const client = useApolloClientFromNuxt()
+  const { setActiveWorkspace } = useSetActiveWorkspace()
+  const { isLoggedIn } = useActiveUser()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   const { data, errors } = await client
     .query({
@@ -73,5 +77,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
           })
         )
     }
+  }
+
+  if (isLoggedIn.value && isWorkspacesEnabled.value) {
+    await setActiveWorkspace({ id: data?.project.workspaceId })
   }
 })

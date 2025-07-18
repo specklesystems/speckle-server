@@ -1,15 +1,15 @@
 <template>
   <div class="p-2 pb-3 flex flex-col gap-y-4">
-    <div class="flex gap-x-2 items-center">
+    <div class="flex gap-x-3 items-center">
       <MenuItem>
-        <NuxtLink :to="to">
+        <component :is="to ? NuxtLink : 'div'" :to="to">
           <WorkspaceAvatar
             :name="name || ''"
             :logo="logo"
             size="lg"
             class="flex-shrink-0"
           />
-        </NuxtLink>
+        </component>
       </MenuItem>
       <div class="flex flex-col space-between min-w-0">
         <p class="text-body-xs text-foreground truncate">
@@ -29,6 +29,8 @@ import { MenuItem } from '@headlessui/vue'
 defineProps<{
   name: MaybeNullOrUndefined<string>
   logo?: MaybeNullOrUndefined<string>
-  to: string
+  to: MaybeNullOrUndefined<string>
 }>()
+
+const NuxtLink = resolveComponent('NuxtLink')
 </script>

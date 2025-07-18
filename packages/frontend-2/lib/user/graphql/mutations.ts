@@ -35,3 +35,13 @@ export const verifyEmailMutation = graphql(`
     }
   }
 `)
+
+export const setActiveWorkspaceMutation = graphql(`
+  mutation SetActiveWorkspace($slug: String, $id: String) {
+    activeUserMutations {
+      setActiveWorkspace(slug: $slug, id: $id) {
+        ...WorkspaceSwitcherActiveWorkspace_LimitedWorkspace
+      }
+    }
+  }
+`)
