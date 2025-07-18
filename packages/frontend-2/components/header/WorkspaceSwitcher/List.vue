@@ -32,13 +32,13 @@ import { projectsRoute, workspaceCreateRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { navigationWorkspaceListQuery } from '~/lib/navigation/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { useActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
+import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
 
 const route = useRoute()
 const mixpanel = useMixpanel()
 const { isGuest } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { activeWorkspaceSlug } = useActiveWorkspace()
+const activeWorkspaceSlug = useActiveWorkspaceSlug()
 
 const { result, loading: isLoading } = useQuery(
   navigationWorkspaceListQuery,

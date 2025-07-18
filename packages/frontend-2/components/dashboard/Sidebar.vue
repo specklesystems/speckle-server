@@ -173,7 +173,7 @@ import {
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
+import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 
@@ -192,7 +192,7 @@ const dashboardSidebarQuery = graphql(`
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug } = useActiveWorkspace()
+const activeWorkspaceSlug = useActiveWorkspaceSlug()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
 const { result } = useQuery(dashboardSidebarQuery, () => ({}), {

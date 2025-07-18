@@ -1,18 +1,16 @@
-import { userActiveWorkspaceQuery } from '~/lib/user/graphql/queries'
+import { userActiveWorkspaceSlugQuery } from '~/lib/user/graphql/queries'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { setActiveWorkspaceMutation } from '~/lib/user/graphql/mutations'
 import { modifyObjectField, getCacheId } from '~/lib/common/helpers/graphql'
 
-export const useActiveWorkspace = () => {
-  const { result } = useQuery(userActiveWorkspaceQuery)
+export const useActiveWorkspaceSlug = () => {
+  const { result } = useQuery(userActiveWorkspaceSlugQuery)
 
   const activeWorkspaceSlug = computed(
     () => result.value?.activeUser?.activeWorkspace?.slug
   )
 
-  return {
-    activeWorkspaceSlug
-  }
+  return activeWorkspaceSlug
 }
 
 export const useSetActiveWorkspace = () => {
