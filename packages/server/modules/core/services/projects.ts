@@ -24,6 +24,7 @@ import { retry } from '@lifeomic/attempt'
 import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { LegacyGetStreams } from '@/modules/core/domain/streams/operations'
+import { logger } from '@/observability/logging'
 
 export const createNewProjectFactory =
   ({
@@ -159,6 +160,11 @@ export const queryAllProjectsFactory = ({
       yield streams
 
       cursor = cursorDate
+      logger.info(
+        //TODO remove after debugging in production
+        { iterationCount, cursor, streamIds: streams.map((s) => s.id) },
+        "queryAllWorkspaceProjects: Iteration {iterationCount}, Cursor:, '{cursor}'"
+      )
       iterationCount++
     } while (!!cursor)
   }
