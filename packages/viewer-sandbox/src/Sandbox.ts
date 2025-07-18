@@ -730,7 +730,7 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
 
-    /** Disabled color grading for now 
+    /** Disabled color grading for now
     postFolder
       .addInput(this.sceneParams, 'contrast', {
         min: 0,
@@ -1289,7 +1289,8 @@ export default class Sandbox {
         objUrl,
         authToken,
         true,
-        undefined
+        undefined,
+        (m?: string, ...args: unknown[]) => console.log(m, ...args)
       )
       let dataProgress = 0
       let renderedCount = 0
