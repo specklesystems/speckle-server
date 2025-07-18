@@ -389,7 +389,7 @@ type Documents = {
     "\n  mutation SetActiveWorkspace($slug: String, $id: String) {\n    activeUserMutations {\n      setActiveWorkspace(slug: $slug, id: $id) {\n        ...WorkspaceSwitcherActiveWorkspace_LimitedWorkspace\n      }\n    }\n  }\n": typeof types.SetActiveWorkspaceDocument,
     "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n    userId\n  }\n": typeof types.EmailFieldsFragmentDoc,
     "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n      hasPendingVerification\n    }\n  }\n": typeof types.UserEmailsDocument,
-    "\n  query UserActiveWorkspace {\n    activeUser {\n      activeWorkspace {\n        slug\n      }\n    }\n  }\n": typeof types.UserActiveWorkspaceDocument,
+    "\n  query UserActiveWorkspace {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": typeof types.UserActiveWorkspaceDocument,
     "\n  fragment UseViewerUserActivityBroadcasting_Project on Project {\n    id\n    permissions {\n      canBroadcastActivity {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.UseViewerUserActivityBroadcasting_ProjectFragmentDoc,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    viewerState\n  }\n": typeof types.ViewerCommentBubblesDataFragmentDoc,
     "\n  fragment UseCheckViewerCommentingAccess_Project on Project {\n    id\n    permissions {\n      canCreateComment {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.UseCheckViewerCommentingAccess_ProjectFragmentDoc,
@@ -865,7 +865,7 @@ const documents: Documents = {
     "\n  mutation SetActiveWorkspace($slug: String, $id: String) {\n    activeUserMutations {\n      setActiveWorkspace(slug: $slug, id: $id) {\n        ...WorkspaceSwitcherActiveWorkspace_LimitedWorkspace\n      }\n    }\n  }\n": types.SetActiveWorkspaceDocument,
     "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n    userId\n  }\n": types.EmailFieldsFragmentDoc,
     "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n      hasPendingVerification\n    }\n  }\n": types.UserEmailsDocument,
-    "\n  query UserActiveWorkspace {\n    activeUser {\n      activeWorkspace {\n        slug\n      }\n    }\n  }\n": types.UserActiveWorkspaceDocument,
+    "\n  query UserActiveWorkspace {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": types.UserActiveWorkspaceDocument,
     "\n  fragment UseViewerUserActivityBroadcasting_Project on Project {\n    id\n    permissions {\n      canBroadcastActivity {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.UseViewerUserActivityBroadcasting_ProjectFragmentDoc,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    viewerState\n  }\n": types.ViewerCommentBubblesDataFragmentDoc,
     "\n  fragment UseCheckViewerCommentingAccess_Project on Project {\n    id\n    permissions {\n      canCreateComment {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.UseCheckViewerCommentingAccess_ProjectFragmentDoc,
@@ -2483,7 +2483,7 @@ export function graphql(source: "\n  query UserEmails {\n    activeUser {\n     
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query UserActiveWorkspace {\n    activeUser {\n      activeWorkspace {\n        slug\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserActiveWorkspace {\n    activeUser {\n      activeWorkspace {\n        slug\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query UserActiveWorkspace {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserActiveWorkspace {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
