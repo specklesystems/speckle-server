@@ -55,7 +55,7 @@ import {
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
@@ -208,7 +208,7 @@ export default FF_GATEKEEPER_MODULE_ENABLED
 
           return await getWorkspaceModelCountFactory({
             queryAllProjects: queryAllProjectsFactory({
-              getStreams: legacyGetStreamsFactory({ db })
+              getExplicitProjects: getExplicitProjects({ db })
             }),
             getPaginatedProjectModelsTotalCount: async (projectId, params) => {
               const regionDb = await getProjectDbClient({ projectId })
