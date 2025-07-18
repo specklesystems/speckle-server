@@ -105,10 +105,6 @@ function createCache(): InMemoryCache {
           automateFunctions: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('AutomateFunctionCollection')
-          },
-          workspaceBySlug: {
-            keyArgs: ['slug'],
-            merge: mergeAsObjectsFunction
           }
         }
       },

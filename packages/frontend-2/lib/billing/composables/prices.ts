@@ -65,6 +65,7 @@ const workspacePlanPricesQuery = graphql(`
 const activeWorkspacePlanPricesQuery = graphql(`
   query UseActiveWorkspacePlanPrices($slug: String!) {
     workspaceBySlug(slug: $slug) {
+      id
       planPrices {
         ...PricesWorkspacePaidPlanPrices
       }

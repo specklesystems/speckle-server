@@ -2,7 +2,7 @@
   <div class="p-2 pb-3 flex flex-col gap-y-4">
     <div class="flex gap-x-3 items-center">
       <MenuItem>
-        <component :is="to ? 'NuxtLink' : 'div'" :to="to">
+        <component :is="to ? NuxtLink : 'div'" :to="to">
           <WorkspaceAvatar
             :name="name || ''"
             :logo="logo"
@@ -31,4 +31,6 @@ defineProps<{
   logo?: MaybeNullOrUndefined<string>
   to: MaybeNullOrUndefined<string>
 }>()
+
+const NuxtLink = resolveComponent('NuxtLink')
 </script>
