@@ -23,8 +23,7 @@ import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { LegacyGetStreams } from '@/modules/core/domain/streams/operations'
-import { logger } from '@/observability/logging'
+import { GetExplicitProjects } from '@/modules/core/domain/streams/operations'
 
 export const createNewProjectFactory =
   ({
@@ -129,15 +128,15 @@ export const waitForRegionProjectFactory =
   }
 
 export const queryAllProjectsFactory = ({
-  getStreams
+  getExplicitProjects
 }: {
-  getStreams: LegacyGetStreams
+  getExplicitProjects: GetExplicitProjects
 }): QueryAllProjects =>
   async function* queryAllWorkspaceProjects({
     userId,
     workspaceId
   }): AsyncGenerator<StreamWithOptionalRole[], void, unknown> {
-    let cursor: Date | null = null
+    let currentCursor: string | null = null
     let iterationCount = 0
 
     if (!userId && !workspaceId)
@@ -146,25 +145,16 @@ export const queryAllProjectsFactory = ({
     do {
       if (iterationCount > 500) throw new ProjectQueryError('Too many iterations')
 
-      const { streams, cursorDate } = await getStreams({
-        cursor,
-        orderBy: null,
+      const { items, cursor } = await getExplicitProjects({
+        cursor: currentCursor,
         limit: 100,
-        visibility: null,
-        searchQuery: null,
-        streamIdWhitelist: null,
-        workspaceIdWhitelist: workspaceId ? [workspaceId] : null,
+        workspaceId,
         userId
       })
 
-      yield streams
+      yield items
 
-      cursor = cursorDate
-      logger.info(
-        //TODO remove after debugging in production
-        { iterationCount, cursor, streamIds: streams.map((s) => s.id) },
-        "queryAllWorkspaceProjects: Iteration {iterationCount}, Cursor:, '{cursor}'"
-      )
+      currentCursor = cursor
       iterationCount++
-    } while (!!cursor)
+    } while (!!currentCursor)
   }

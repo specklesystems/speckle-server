@@ -33,8 +33,8 @@ import {
 } from '@/modules/core/services/users/management'
 import {
   deleteStreamFactory,
-  getUserDeletableStreamsFactory,
-  legacyGetStreamsFactory
+  getExplicitProjects,
+  getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { dbLogger } from '@/observability/logging'
 import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
@@ -71,7 +71,7 @@ const deleteUser = deleteUserFactory({
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
   queryAllProjects: queryAllProjectsFactory({
-    getStreams: legacyGetStreamsFactory({ db })
+    getExplicitProjects: getExplicitProjects({ db })
   }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),

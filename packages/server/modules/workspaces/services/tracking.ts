@@ -34,7 +34,7 @@ import {
 import { db } from '@/db/knex'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 export type WorkspaceTrackingProperties = {
@@ -216,7 +216,7 @@ export const scheduleUpdateAllWorkspacesTracking = ({
       getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
       getWorkspaceModelCount: getWorkspaceModelCountFactory({
         queryAllProjects: queryAllProjectsFactory({
-          getStreams: legacyGetStreamsFactory({ db })
+          getExplicitProjects: getExplicitProjects({ db })
         }),
         getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory(
           {
