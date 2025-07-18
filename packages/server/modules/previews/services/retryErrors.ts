@@ -96,7 +96,8 @@ export const retryFailedPreviewsFactory = (deps: {
         streamId, //legacy
         projectId: streamId,
         objectId,
-        attempts: objPreview.attempts
+        attempts: objPreview.attempts,
+        region
       },
       "Found {totalErroredPreviewCount} object previews in an error state within database region '{region}'. Attempting to retry one: {projectId}.{objectId}. Previous attempts: {attempts}"
     )
