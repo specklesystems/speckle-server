@@ -9,6 +9,10 @@ on:
       DOCKERHUB_USERNAME:
         required: true
         type: string
+      CONTINUE_ON_ERROR:
+        required: false
+        default: false
+        type: boolean
     secrets:
       LICENSE_TOKEN:
         required: true
@@ -29,6 +33,7 @@ jobs:
   lint-and-prettier:
     name: Lint and prettier
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -51,6 +56,7 @@ jobs:
   pre-commit:
     name: Precommit check
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: speckle/pre-commit-runner:latest
     steps:
@@ -69,6 +75,7 @@ jobs:
   test-frontend-2:
     name: Frontend
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     if: false # disabled as there is nothing to run
     steps:
       - uses: actions/checkout@v4.2.2
@@ -84,6 +91,7 @@ jobs:
   test-viewer:
     name: Viewer
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -106,6 +114,7 @@ jobs:
       CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     name: UI components chromatic
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -125,6 +134,7 @@ jobs:
   test-shared:
     name: Shared
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -158,6 +168,7 @@ jobs:
   test-objectsender:
     name: Object Sender
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -181,6 +192,7 @@ jobs:
   test-ui-components:
     name: UI Components
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -198,6 +210,7 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
     services:
@@ -260,6 +273,7 @@ jobs:
     name: Server
     needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
         image: redis:7.2.4
@@ -351,6 +365,7 @@ jobs:
     name: Server no ff
     needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
         image: redis:7.2.4
@@ -434,6 +449,7 @@ jobs:
   test-server-multiregion:
     name: Server multiregion
     needs: [docker-build-postgres-container]
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     if: false # disabled
     runs-on: blacksmith
     services:
