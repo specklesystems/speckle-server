@@ -2,7 +2,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="group h-full">
-    <template v-if="showSidebar">
+    <template v-if="isLoggedIn">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
           <FormButton
@@ -36,7 +36,11 @@
 
             <div class="flex flex-col gap-y-2 lg:gap-y-4">
               <LayoutSidebarMenuGroup>
-                <NuxtLink :to="projectsLink" @click="isOpenMobile = false">
+                <NuxtLink
+                  v-if="showProjectsLink"
+                  :to="projectsLink"
+                  @click="isOpenMobile = false"
+                >
                   <LayoutSidebarMenuGroupItem
                     label="Projects"
                     :active="
@@ -196,7 +200,7 @@ const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
 
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
-const showSidebar = computed(() => {
+const showProjectsLink = computed(() => {
   return isWorkspacesEnabled.value
     ? activeWorkspace.value
       ? !!activeWorkspace.value?.role
