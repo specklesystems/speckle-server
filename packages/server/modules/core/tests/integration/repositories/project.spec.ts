@@ -13,6 +13,9 @@ import {
   buildBasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
 describe('projects repository', () => {
   const workspace = buildBasicTestWorkspace()
@@ -48,16 +51,18 @@ describe('projects repository', () => {
 
     expect(first.value).to.be.an('array').that.has.lengthOf(2)
   })
+  ;(FF_WORKSPACES_MODULE_ENABLED ? it : it.skip)(
+    'is able to query by workspaceId',
+    async () => {
+      const asyncQueryGenerator = queryAllProjects({
+        workspaceId: workspace.id
+      })
 
-  it('is able to query by workspaceId', async () => {
-    const asyncQueryGenerator = queryAllProjects({
-      workspaceId: workspace.id
-    })
+      const first = await asyncQueryGenerator.next()
 
-    const first = await asyncQueryGenerator.next()
-
-    expect(first.value).to.be.an('array').that.has.lengthOf(1)
-  })
+      expect(first.value).to.be.an('array').that.has.lengthOf(1)
+    }
+  )
 
   it('yield projects in groups of 100', async () => {
     const asyncQueryGenerator = queryAllProjects({
