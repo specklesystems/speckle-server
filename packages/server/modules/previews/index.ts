@@ -6,6 +6,7 @@ import {
   disablePreviews,
   getFeatureFlags,
   getPreviewServiceRedisUrl,
+  getPreviewServiceRetryPeriodMinutes,
   getRedisUrl,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
@@ -101,7 +102,7 @@ export const init: SpeckleModule['init'] = async ({
             scheduleExecution,
             previewRequestQueue,
             responseQueueName,
-            cronExpression: '*/23 * * * *' // every 23 minutes (kind of random prime number to reduce syncing with other possibly heavy tasks)
+            cronExpression: `*/${getPreviewServiceRetryPeriodMinutes()} * * * *`
           })
         ]
       : [])

@@ -139,10 +139,11 @@ export const queryAllProjectsFactory = ({
     let cursor: Date | null = null
     let iterationCount = 0
 
-    if (!userId && !workspaceId) throw new ProjectQueryError()
+    if (!userId && !workspaceId)
+      throw new ProjectQueryError('No user or workspace ID provided')
 
     do {
-      if (iterationCount > 500) throw new ProjectQueryError()
+      if (iterationCount > 500) throw new ProjectQueryError('Too many iterations')
 
       const { streams, cursorDate } = await getStreams({
         cursor,
