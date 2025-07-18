@@ -2,6 +2,7 @@ import { userActiveWorkspaceSlugQuery } from '~/lib/user/graphql/queries'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { setActiveWorkspaceMutation } from '~/lib/user/graphql/mutations'
 import { modifyObjectField, getCacheId } from '~/lib/common/helpers/graphql'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export const useActiveWorkspaceSlug = () => {
   const { result } = useQuery(userActiveWorkspaceSlugQuery)
@@ -33,7 +34,11 @@ export const useSetActiveWorkspace = () => {
     }
   })
 
-  const setActiveWorkspace = async (options: { id: string } | { slug: string }) => {
+  const setActiveWorkspace = async (
+    options:
+      | { id: MaybeNullOrUndefined<string> }
+      | { slug: MaybeNullOrUndefined<string> }
+  ) => {
     return await mutate('slug' in options ? { slug: options.slug } : { id: options.id })
   }
 
