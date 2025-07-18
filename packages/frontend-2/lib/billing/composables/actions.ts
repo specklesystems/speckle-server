@@ -7,43 +7,16 @@ import {
 import {
   type PaidWorkspacePlans,
   BillingInterval,
-  type BillingActions_WorkspaceFragment,
   WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
 import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/graphql/mutations'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { graphql } from '~~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { formatName } from '~/lib/billing/helpers/plan'
 
-graphql(`
-  fragment BillingActions_Workspace on Workspace {
-    id
-    name
-    invitedTeam(filter: $invitesFilter) {
-      id
-    }
-    plan {
-      name
-      status
-    }
-    subscription {
-      billingInterval
-    }
-    team {
-      totalCount
-    }
-    defaultRegion {
-      name
-    }
-  }
-`)
-
 export const useBillingActions = () => {
   const mixpanel = useMixpanel()
-  const route = useRoute()
-  const router = useRouter()
   const { triggerNotification } = useGlobalToast()
   const { client: apollo } = useApolloClient()
   const { mutate: cancelCheckoutSessionMutation } = useMutation(
@@ -202,60 +175,10 @@ export const useBillingActions = () => {
     })
   }
 
-  const validateCheckoutSession = (workspace: BillingActions_WorkspaceFragment) => {
-    const sessionIdQuery = route.query?.session_id
-    const paymentStatusQuery = route.query?.payment_status
-
-    if (sessionIdQuery && paymentStatusQuery) {
-      if (paymentStatusQuery === WorkspacePlanStatuses.Canceled) {
-        cancelCheckoutSession(String(sessionIdQuery), workspace.id)
-        triggerNotification({
-          type: ToastNotificationType.Danger,
-          title: 'Your payment was canceled'
-        })
-
-        mixpanel.track('Workspace Upgrade Cancelled', {
-          // eslint-disable-next-line camelcase
-          workspace_id: workspace.id
-        })
-      } else {
-        triggerNotification({
-          type: ToastNotificationType.Success,
-          title: 'Your workspace plan was successfully updated'
-        })
-
-        const metaData = {
-          plan: workspace.plan?.name,
-          cycle: workspace.subscription?.billingInterval,
-          // eslint-disable-next-line camelcase
-          workspace_id: workspace.id
-        }
-
-        $intercom.track('Workspace Upgraded', {
-          ...metaData,
-          isExistingSubscription: false
-        })
-        $intercom.updateCompany({
-          id: workspace.id,
-          /* eslint-disable camelcase */
-          plan_name: workspace.plan?.name,
-          plan_status: workspace.plan?.status
-          /* eslint-enable camelcase */
-        })
-      }
-
-      const currentQueryParams = { ...route.query }
-      delete currentQueryParams.session_id
-      delete currentQueryParams.payment_status
-      router.push({ query: currentQueryParams })
-    }
-  }
-
   return {
     billingPortalRedirect,
     redirectToCheckout,
     cancelCheckoutSession,
-    validateCheckoutSession,
     upgradePlan
   }
 }

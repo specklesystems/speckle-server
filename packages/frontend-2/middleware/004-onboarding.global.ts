@@ -13,8 +13,7 @@ import {
   workspaceCreateRoute,
   workspaceJoinRoute,
   projectsRoute,
-  workspaceRoute,
-  bookDemoRoute
+  workspaceRoute
 } from '~/lib/common/helpers/route'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
@@ -30,8 +29,7 @@ import { useNavigation } from '~/lib/navigation/composables/navigation'
 export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
   const isSSOPath = to.path.includes('/sso/')
-  const isBookDemoPage = to.path === bookDemoRoute
-  if (isAuthPage || isSSOPath || isBookDemoPage) return
+  if (isAuthPage || isSSOPath) return
 
   const client = useApolloClientFromNuxt()
   const {
