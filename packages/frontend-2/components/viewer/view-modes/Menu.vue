@@ -1,8 +1,8 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <ViewerMenu v-model:open="open" tooltip="View modes">
+  <ViewerMenu v-model:open="open" tooltip="View modes" align="top">
     <template #trigger-icon>
-      <IconViewModes class="h-5 w-5" />
+      <IconViewerViewModes class="h-5 w-5" />
     </template>
     <template #title>View modes</template>
     <div

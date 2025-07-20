@@ -55,6 +55,8 @@
           <!-- <ViewerControls v-if="showControls" class="relative z-20" /> -->
           <template v-if="showControls">
             <ViewerControlsLeft />
+            <ViewerControlsBottom />
+            <ViewerControlsRight />
           </template>
 
           <ViewerLimitsDialog

@@ -3,9 +3,10 @@
     v-model:open="open"
     v-tippy="isSmallerOrEqualSm ? undefined : 'Explode'"
     tooltip="Explode model"
+    align="top"
   >
     <template #trigger-icon>
-      <IconExplode
+      <IconViewerExplode
         class="h-4 w-4 sm:h-5 sm:w-5"
         :class="{ 'text-foreground': !isActive }"
       />

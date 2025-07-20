@@ -2,11 +2,15 @@
   <ViewerMenu
     v-model:open="open"
     tooltip="Light controls"
+    align="top"
     :disabled="!isLightingSupported"
     :disabled-tooltip="'Light controls are only available in Default and Default with Edges view modes'"
   >
     <template #trigger-icon>
-      <SunIcon class="w-5 h-5" :class="{ 'text-foreground-3': !isLightingSupported }" />
+      <IconViewerLightControls
+        class="w-5 h-5"
+        :class="{ 'text-foreground-3': !isLightingSupported }"
+      />
     </template>
     <template #title>Light controls</template>
     <div class="flex flex-col gap-1.5">
@@ -90,7 +94,6 @@
 
 <script setup lang="ts">
 import { ViewMode, type SunLightConfiguration } from '@speckle/viewer'
-import { SunIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { debounce } from 'lodash-es'

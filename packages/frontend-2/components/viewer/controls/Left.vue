@@ -150,6 +150,7 @@ const {
   diff: { enabled }
 } = useInjectedViewerInterfaceState()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
 
 const activePanel = ref<ActivePanel>('none')
@@ -180,4 +181,13 @@ registerShortcuts({
 const toggleActivePanel = (panel: ActivePanel) => {
   activePanel.value = activePanel.value === panel ? 'none' : panel
 }
+
+onMounted(() => {
+  activePanel.value =
+    isSmallerOrEqualSm.value || isEmbedEnabled.value ? 'none' : 'models'
+})
+
+watch(isSmallerOrEqualSm, (newVal) => {
+  activePanel.value = newVal ? 'none' : 'models'
+})
 </script>
