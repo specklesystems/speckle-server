@@ -18,7 +18,7 @@
         class="flex flex-col w-full h-full relative z-20 overflow-hidden border-l border-outline-2"
       >
         <div
-          class="h-[6.5rem] absolute z-10 top-0 w-full left-0 bg-foundation border-b border-outline-2 sm:rounded-t-md"
+          class="h-[6.5rem] absolute z-10 top-0 w-full left-0 bg-foundation border-b border-outline-2"
         >
           <div
             class="flex items-center justify-between py-1.5 pl-3 pr-1 border-b border-outline-2"
