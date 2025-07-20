@@ -10,23 +10,13 @@
       <!-- Resize Handle -->
       <div
         ref="resizeHandle"
-        class="hidden sm:flex group relative z-30 hover:z-50 w-6 h-full items-center overflow-hidden -mr-1"
-      >
-        <div
-          class="w-7 h-8 mr-1 bg-primary group-hover:primary-focus rounded-l translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition cursor-ew-resize flex items-center justify-center"
-          @mousedown="startResizing"
-        >
-          <ArrowsRightLeftIcon class="h-3 w-3 transition text-foundation" />
-        </div>
-        <div
-          class="relative z-30 w-1 h-full pt-[2.5rem] -ml-1 bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-l"
-          @mousedown="startResizing"
-        ></div>
-      </div>
+        class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l hover:border-l-[2px] border-outline-2 hover:border-primary hidden sm:flex items-center cursor-ew-resize z-30"
+        @mousedown="startResizing"
+      />
+
       <div
         class="flex flex-col w-full h-full relative z-20 overflow-hidden border-l border-outline-2"
       >
-        <!-- Header -->
         <div
           class="h-[6.5rem] absolute z-10 top-0 w-full left-0 bg-foundation border-b border-outline-2 sm:rounded-t-md"
         >
@@ -60,9 +50,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { XMarkIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 defineProps<{
@@ -71,6 +61,7 @@ defineProps<{
 
 const emit = defineEmits<{
   (event: 'close'): void
+  (event: 'width-change', width: number): void
 }>()
 
 const resizableElement = ref(null)
@@ -95,10 +86,12 @@ if (import.meta.client) {
   useEventListener(document, 'mousemove', (event) => {
     if (isResizing.value) {
       const diffX = startX - event.clientX
-      width.value = Math.max(
-        300,
+      const newWidth = Math.max(
+        280,
         Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
       )
+      width.value = newWidth
+      emit('width-change', newWidth)
     }
   })
 
@@ -109,8 +102,13 @@ if (import.meta.client) {
   })
 }
 
+onMounted(() => {
+  emit('width-change', width.value)
+})
+
 const minimize = () => {
-  width.value = 300
+  width.value = 280
+  emit('width-change', 280)
 }
 
 const onClose = () => {

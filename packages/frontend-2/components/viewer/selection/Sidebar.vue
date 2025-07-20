@@ -1,6 +1,16 @@
 <template>
-  <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
-    <ViewerSidebar :open="sidebarOpen" @close="onClose">
+  <ViewerCommentsPortalOrDiv class="relative" to="bottomPanel">
+    <ViewerControlsRight
+      v-if="isGreaterThanSm"
+      :sidebar-open="sidebarOpen && shouldRenderSidebar"
+      :sidebar-width="sidebarWidth"
+    />
+    <ViewerSidebar
+      v-if="shouldRenderSidebar"
+      :open="sidebarOpen"
+      @close="onClose"
+      @width-change="sidebarWidth = $event"
+    >
       <template #title>Selection info</template>
       <template #actions>
         <div class="flex flex-col divide-y divide-outline-3">
@@ -58,7 +68,6 @@
       </div>
     </ViewerSidebar>
   </ViewerCommentsPortalOrDiv>
-  <div v-else />
 </template>
 <script setup lang="ts">
 import {
@@ -69,7 +78,7 @@ import {
 } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
@@ -78,6 +87,7 @@ import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { modelRoute } from '~/lib/common/helpers/route'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const {
   projectId,
@@ -92,9 +102,12 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isGreaterThanSm = breakpoints.greater('sm')
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
+const sidebarWidth = ref(280)
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value

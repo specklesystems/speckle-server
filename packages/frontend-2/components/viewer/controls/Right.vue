@@ -1,5 +1,5 @@
 <template>
-  <aside class="absolute right-4 top-[4.125rem] z-20">
+  <aside class="absolute top-[4.125rem] z-20" :style="dynamicStyles">
     <ViewerControlsButtonGroup direction="vertical">
       <!-- Zoom extents -->
       <ViewerControlsButtonToggle
@@ -41,6 +41,16 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 
 type ActivePanel = 'none' | 'views'
 
+interface Props {
+  sidebarOpen?: boolean
+  sidebarWidth?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  sidebarOpen: false,
+  sidebarWidth: 280
+})
+
 const {
   zoomExtentsOrSelection,
   toggleProjection,
@@ -54,6 +64,18 @@ const activePanel = ref<ActivePanel>('none')
 const toggleActivePanel = (panel: ActivePanel) => {
   activePanel.value = activePanel.value === panel ? 'none' : panel
 }
+
+const dynamicStyles = computed(() => {
+  if (props.sidebarOpen) {
+    return {
+      right: `${props.sidebarWidth / 16 + 1.125}rem`
+    }
+  } else {
+    return {
+      right: '1.125rem'
+    }
+  }
+})
 
 const trackAndzoomExtentsOrSelection = () => {
   zoomExtentsOrSelection()

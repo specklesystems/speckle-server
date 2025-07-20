@@ -50,10 +50,7 @@
     <div
       v-if="activePanel !== 'none'"
       ref="resizeHandle"
-      :class="[
-        'absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l border-outline-2 hover:border-primary hidden sm:flex group overflow-hidden items-center cursor-ew-resize z-30',
-        isEmbedEnabled ? 'mt-[0.7rem]' : 'mt-0'
-      ]"
+      class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l hover:border-l-[2px] border-outline-2 hover:border-primary hidden sm:flex items-center cursor-ew-resize z-30"
       :style="`left:${width + 52}px;`"
       @mousedown="startResizing"
     />

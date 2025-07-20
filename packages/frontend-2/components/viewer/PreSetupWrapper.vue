@@ -56,7 +56,7 @@
           <template v-if="showControls">
             <ViewerControlsLeft />
             <ViewerControlsBottom />
-            <ViewerControlsRight />
+            <ViewerControlsRight v-if="!isMobile" />
           </template>
 
           <ViewerLimitsDialog
@@ -131,6 +131,8 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
 import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/route'
 import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -159,6 +161,8 @@ const emit = defineEmits<{
 const router = useRouter()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const resourceIdString = computed(() => route.params.modelId as string)
 const projectId = writableAsyncComputed({
