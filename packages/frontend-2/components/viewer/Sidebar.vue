@@ -2,19 +2,11 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
+    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen top-[3rem] sm:h-[calc(100dvh-3rem)]"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
-    :class="[
-      open ? '' : 'pointer-events-none',
-      isEmbedEnabled === true
-        ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
-        : 'sm:top-[3.7rem] sm:h-[calc(100dvh-3.8rem)]'
-    ]"
+    :class="[open ? '' : 'pointer-events-none']"
   >
-    <div
-      class="flex transition-all h-full"
-      :class="open ? '' : 'sm:translate-x-[100%]'"
-    >
+    <div class="flex h-full" :class="open ? '' : 'sm:translate-x-[100%]'">
       <!-- Resize Handle -->
       <div
         ref="resizeHandle"
@@ -32,7 +24,7 @@
         ></div>
       </div>
       <div
-        class="flex flex-col w-full h-full relative z-20 overflow-hidden border border-outline-2 rounded-lg shadow"
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden border-l border-outline-2"
       >
         <!-- Header -->
         <div
@@ -72,7 +64,6 @@ import { ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { XMarkIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 defineProps<{
   open: boolean
@@ -85,12 +76,11 @@ const emit = defineEmits<{
 const resizableElement = ref(null)
 const resizeHandle = ref(null)
 const isResizing = ref(false)
-const width = ref(300)
+const width = ref(280)
 let startWidth = 0
 let startX = 0
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()

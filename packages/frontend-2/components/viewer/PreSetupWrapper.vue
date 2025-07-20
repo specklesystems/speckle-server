@@ -51,8 +51,11 @@
             :class="isEmbedEnabled ? 'top-0' : ' -top-2'"
           />
 
-          <!-- Sidebar controls -->
-          <ViewerControls v-if="showControls" class="relative z-20" />
+          <!-- Controls -->
+          <!-- <ViewerControls v-if="showControls" class="relative z-20" /> -->
+          <template v-if="showControls">
+            <ViewerControlsLeft />
+          </template>
 
           <ViewerLimitsDialog
             v-if="project"

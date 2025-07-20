@@ -1,5 +1,8 @@
 <template>
-  <ViewerLayoutPanel class="mt-2" hide-close>
+  <ViewerLayoutPanel
+    class="mt-2 border-l-0 border-r-0 border-t rounded-none shadow-none"
+    hide-close
+  >
     <template #title>Filtering</template>
     <template #actions>
       <div class="flex justify-between items-center w-full">

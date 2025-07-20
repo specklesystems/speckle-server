@@ -1,5 +1,5 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
+  <ViewerLayoutSidePanel @close="$emit('close')">
     <template #title>Models</template>
     <template #actions>
       <div class="flex gap-x-1.5">
@@ -49,7 +49,7 @@
       </template>
     </div>
     <ViewerResourcesAddModelDialog v-model:open="open" />
-  </ViewerLayoutPanel>
+  </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import {

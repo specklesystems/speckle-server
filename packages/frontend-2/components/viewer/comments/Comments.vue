@@ -1,5 +1,5 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
+  <ViewerLayoutSidePanel @close="$emit('close')">
     <template #title>Discussions</template>
     <template #actions>
       <FormButton
@@ -66,12 +66,8 @@
           />
         </div>
       </div>
-      <!-- TODO: new thread on click in centre of screen, I can't figure out how -->
-      <!-- <div class="py-2 text-center">
-        <FormButton>New Discussion</FormButton>
-      </div> -->
     </div>
-  </ViewerLayoutPanel>
+  </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'

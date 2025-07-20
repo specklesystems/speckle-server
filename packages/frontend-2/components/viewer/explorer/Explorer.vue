@@ -1,62 +1,61 @@
 <template>
-  <div>
-    <ViewerLayoutPanel @close="$emit('close')">
-      <template #title>Scene explorer</template>
+  <ViewerLayoutSidePanel @close="$emit('close')">
+    <template #title>Scene explorer</template>
 
-      <template #actions>
-        <div class="flex items-center justify-between w-full">
-          <div v-if="!showRaw" class="flex items-center gap-1">
-            <FormButton
-              size="sm"
-              color="outline"
-              :icon-left="BarsArrowDownIcon"
-              @click="expandLevel++"
-            >
-              Unfold
-            </FormButton>
-            <FormButton
-              size="sm"
-              color="outline"
-              :icon-left="BarsArrowUpIcon"
-              :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
-              @click="collapse()"
-            >
-              Collapse
-            </FormButton>
-          </div>
-          <div v-else>
-            <h4 class="font-semibold text-body-2xs">Dev mode</h4>
-          </div>
-
+    <template #actions>
+      <div class="flex items-center justify-between w-full">
+        <div v-if="!showRaw" class="flex items-center gap-1">
           <FormButton
-            v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
             size="sm"
-            :icon-left="CodeBracketIcon"
-            color="subtle"
-            hide-text
-            @click="showRaw = !showRaw"
-          />
+            color="outline"
+            :icon-left="BarsArrowDownIcon"
+            @click="expandLevel++"
+          >
+            Unfold
+          </FormButton>
+          <FormButton
+            size="sm"
+            color="outline"
+            :icon-left="BarsArrowUpIcon"
+            :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
+            @click="collapse()"
+          >
+            Collapse
+          </FormButton>
         </div>
-      </template>
-      <div
-        v-if="!showRaw && rootNodes.length !== 0"
-        class="relative flex flex-col gap-y-2 py-2"
-      >
-        <div v-for="(rootNode, idx) in rootNodes" :key="idx" class="rounded-xl">
-          <ViewerExplorerTreeItem
-            :tree-item="rootNode"
-            :sub-header="'Model version'"
-            :debug="false"
-            :expand-level="expandLevel"
-            :manual-expand-level="manualExpandLevel"
-            @expanded="(e) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
-          />
+        <div v-else>
+          <h4 class="font-semibold text-body-2xs">Dev mode</h4>
         </div>
+
+        <FormButton
+          v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
+          size="sm"
+          :icon-left="CodeBracketIcon"
+          color="subtle"
+          hide-text
+          @click="showRaw = !showRaw"
+        />
       </div>
-      <ViewerDataviewerPanel v-if="showRaw" class="pointer-events-auto" />
-    </ViewerLayoutPanel>
+    </template>
+    <div
+      v-if="!showRaw && rootNodes.length !== 0"
+      class="relative flex flex-col gap-y-2 py-2"
+    >
+      <div v-for="(rootNode, idx) in rootNodes" :key="idx" class="rounded-xl">
+        <ViewerExplorerTreeItem
+          :tree-item="rootNode"
+          :sub-header="'Model version'"
+          :debug="false"
+          :expand-level="expandLevel"
+          :manual-expand-level="manualExpandLevel"
+          @expanded="(e) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
+        />
+      </div>
+    </div>
+    <ViewerDataviewerPanel v-if="showRaw" class="pointer-events-auto" />
+
     <ViewerExplorerFilters :filters="allFilters || []" />
-  </div>
+  </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import {
