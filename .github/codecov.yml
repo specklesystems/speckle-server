@@ -27,6 +27,9 @@ coverage:
         target: 100%
         flags:
           - shared
+comment:
+  layout: 'condensed_header, condensed_files, condensed_footer'
+  hide_project_coverage: true
 
 flags:
   server:

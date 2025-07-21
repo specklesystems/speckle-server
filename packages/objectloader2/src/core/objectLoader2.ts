@@ -75,6 +75,7 @@ export class ObjectLoader2 {
       this.#reader.disposeAsync()
     ])
     this.#deferments.dispose()
+    this.#cache.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {
