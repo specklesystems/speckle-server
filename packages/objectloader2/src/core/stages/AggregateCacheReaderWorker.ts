@@ -47,7 +47,7 @@ export class AggregateCacheReaderWorker implements Reader {
       while (enqueuedInChunk < s.length) {
         const actuallyEnqueued = await this.#getRandomWorker().enqueue(
           s.slice(enqueuedInChunk),
-          WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE
+          WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
         )
         if (actuallyEnqueued === 0) {
           await delay(1000)

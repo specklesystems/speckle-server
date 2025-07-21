@@ -7,7 +7,7 @@ export class RingBufferQueue {
 
   private lengthPrefixArray: Uint8Array // Reusable Uint8Array for length prefix
   private lengthPrefixDataView: DataView // Reusable DataView for length prefix
-  private static readonly LENGTH_PREFIX_BYTES = 4 // Using 4 bytes for message length (Uint32)
+  private static readonly LENGTH_PREFIX_BYTES = 4 // Using 4 bytes for message length (Uint32) encoded in little-endian format
   public readonly capacityBytes: number
   private name: string
 
