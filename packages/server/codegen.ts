@@ -184,7 +184,10 @@ const config: CodegenConfig = {
           RootPermissionChecks:
             '@/modules/core/helpers/graphTypes#RootPermissionChecksGraphQLReturn',
           WorkspacePermissionChecks:
-            '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn'
+            '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn',
+          SavedViewMutations:
+            '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
+          SavedView: '@/modules/viewer/helpers/graphTypes#SavedViewGraphQLReturn'
         }
       }
     }

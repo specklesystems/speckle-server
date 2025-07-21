@@ -1,5 +1,5 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
-import { StoreView } from '@/modules/viewer/domain/operations/savedViews'
+import { StoreSavedView } from '@/modules/viewer/domain/operations/savedViews'
 import { SavedView } from '@/modules/viewer/domain/types/savedViews'
 import { Knex } from 'knex'
 
@@ -25,7 +25,7 @@ const tables = {
 }
 
 export const storeViewFactory =
-  (deps: { db: Knex }): StoreView =>
+  (deps: { db: Knex }): StoreSavedView =>
   async ({ view }) => {
     const [insertedItem] = await tables.savedViews(deps.db).insert(view, '*')
     return insertedItem
