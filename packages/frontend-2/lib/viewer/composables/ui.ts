@@ -1,19 +1,20 @@
 import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
 import {
-  type TreeNode,
   type MeasurementOptions,
   type PropertyInfo,
   ViewMode,
   MeasurementsExtension,
   ViewModes,
   CameraController,
+  SelectionExtension,
+  ViewerEvent,
   type InlineView,
   type CanonicalView,
   type SpeckleView
 } from '@speckle/viewer'
 import type { Box3 } from 'three'
 import { until } from '@vueuse/shared'
-import { difference, isString, uniq } from 'lodash-es'
+import { difference, uniq } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
@@ -39,18 +40,19 @@ export function useSectionBoxUtilities() {
   const {
     sectionBox,
     sectionBoxContext: { visible, edited },
-    filters: { selectedObjects },
     threads: {
       openThread: { thread }
     }
   } = useInjectedViewerInterfaceState()
+
+  const { objectIds: selectedIds } = useSelectionUtilities()
 
   const isSectionBoxEnabled = computed(() => !!sectionBox.value)
   const isSectionBoxVisible = computed(() => visible.value)
   const isSectionBoxEdited = computed(() => edited.value)
 
   const resolveSectionBoxFromSelection = () => {
-    const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
+    const objectIds = selectedIds.value.filter(isNonNullable)
     const box = instance.getRenderer().boxFromObjects(objectIds)
     /** When generating a section box from selection we don't apply any rotation */
     sectionBox.value = {
@@ -101,9 +103,11 @@ export function useCameraUtilities() {
 
   const { instance } = useInjectedViewer()
   const {
-    filters: { selectedObjects, isolatedObjectIds },
+    filters: { isolatedObjectIds },
     camera
   } = useInjectedViewerInterfaceState()
+
+  const { objectIds: selectedIds } = useSelectionUtilities()
 
   const cam = instance.getExtension(CameraController)
 
@@ -116,7 +120,7 @@ export function useCameraUtilities() {
   }
 
   const zoomExtentsOrSelection = () => {
-    const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
+    const ids = selectedIds.value
 
     if (ids.length > 0) {
       return zoom(ids)
@@ -233,7 +237,6 @@ export function useFilterUtilities(
     filters.propertyFilter.filter.value = null
     filters.propertyFilter.isApplied.value = false
     explodeFactor.value = 0
-    // filters.selectedObjects.value = []
   }
 
   const waitForAvailableFilter = async (
@@ -269,59 +272,28 @@ export function useFilterUtilities(
 }
 
 export function useSelectionUtilities() {
-  const {
-    filters: { selectedObjects, selectedObjectIds }
-  } = useInjectedViewerInterfaceState()
-  const { metadata } = useInjectedViewer()
+  const { instance } = useInjectedViewer()
+  const selExt = instance.getExtension(SelectionExtension)
 
-  const setSelectionFromObjectIds = (objectIds: string[]) => {
-    const objs: Array<SpeckleObject> = []
-    objectIds.forEach((value: string) => {
-      objs.push(
-        ...(
-          (metadata?.worldTree.value?.findId(value) || []) as unknown as TreeNode[]
-        ).map(
-          (node: TreeNode) =>
-            (node.model as Record<string, unknown>).raw as SpeckleObject
-        )
-      )
-    })
-    selectedObjects.value = objs
+  const objects = shallowRef<SpeckleObject[]>(
+    selExt.getSelectedObjects() as SpeckleObject[]
+  )
+  const objectIds = computed(() => objects.value.map((o) => o.id as string))
+
+  // keep in sync with viewer events
+  const sync = () => {
+    objects.value = selExt.getSelectedObjects() as SpeckleObject[]
   }
+  instance.on(ViewerEvent.ObjectClicked, sync)
+  instance.on(ViewerEvent.ObjectDoubleClicked, sync)
 
-  const addToSelectionFromObjectIds = (objectIds: string[]) => {
-    const originalObjects = selectedObjects.value.slice()
-    setSelectionFromObjectIds(objectIds)
-    selectedObjects.value = [...originalObjects, ...selectedObjects.value]
-  }
-
-  const removeFromSelectionObjectIds = (objectIds: string[]) => {
-    const finalObjects = selectedObjects.value.filter(
-      (o) => !objectIds.includes(o.id || '')
-    )
-    selectedObjects.value = finalObjects
-  }
-
-  const addToSelection = (object: SpeckleObject) => {
-    const idx = selectedObjects.value.findIndex((o) => o.id === object.id)
-    if (idx !== -1) return
-
-    selectedObjects.value = [...selectedObjects.value, object]
-  }
-
-  const removeFromSelection = (objectOrId: SpeckleObject | string) => {
-    const oid = isString(objectOrId) ? objectOrId : objectOrId.id
-    const idx = selectedObjects.value.findIndex((o) => o.id === oid)
-    if (idx === -1) return
-
-    const newObjects = selectedObjects.value.slice()
-    newObjects.splice(idx, 1)
-    selectedObjects.value = newObjects
-  }
-
-  const clearSelection = () => {
-    selectedObjects.value = []
-  }
+  const clearSelection = () => selExt.clearSelection()
+  const setSelectionFromObjectIds = (ids: string[]) => selExt.selectObjects(ids, false)
+  const addToSelectionFromObjectIds = (ids: string[]) => selExt.selectObjects(ids, true)
+  const removeFromSelectionObjectIds = (ids: string[]) => selExt.unselectObjects(ids)
+  const addToSelection = (o: SpeckleObject) => selExt.selectObjects([o.id], true)
+  const removeFromSelection = (o: SpeckleObject | string) =>
+    selExt.unselectObjects([typeof o === 'string' ? o : o.id])
 
   return {
     addToSelection,
@@ -330,8 +302,8 @@ export function useSelectionUtilities() {
     setSelectionFromObjectIds,
     addToSelectionFromObjectIds,
     removeFromSelectionObjectIds,
-    objects: selectedObjects,
-    objectIds: selectedObjectIds
+    objects,
+    objectIds
   }
 }
 

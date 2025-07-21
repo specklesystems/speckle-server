@@ -1,4 +1,4 @@
-import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { difference, isEqual, uniq } from 'lodash-es'
 import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
   ExplodeEvent,
@@ -44,8 +44,7 @@ import {
   useViewerThreadTracking
 } from '~~/lib/viewer/composables/commentBubbles'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
-import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+import { arraysEqual } from '~~/lib/common/helpers/utils'
 import { Box3, Matrix3, Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage, type Nullable } from '@speckle/shared'
@@ -669,27 +668,6 @@ function useViewerFiltersIntegration() {
       await syncColorFilterToViewer(targetFilter, isApplied)
     },
     { initialOnly: true }
-  )
-
-  watch(
-    filters.selectedObjects,
-    (newVal, oldVal) => {
-      const newIds = flatten(newVal.map((v) => getTargetObjectIds({ ...v }))).filter(
-        isNonNullable
-      )
-      const oldIds = flatten(
-        (oldVal || []).map((v) => getTargetObjectIds({ ...v }))
-      ).filter(isNonNullable)
-      if (arraysEqual(newIds, oldIds)) return
-
-      if (!newVal.length) {
-        instance.getExtension(SelectionExtension).clearSelection()
-        return
-      }
-
-      instance.getExtension(SelectionExtension).selectObjects(newIds)
-    },
-    { immediate: true, flush: 'sync' }
   )
 }
 

@@ -24,7 +24,7 @@ function useCollectSelection() {
 
 function useSelectOrZoomOnSelection() {
   const state = useInjectedViewerState()
-  const { clearSelection, addToSelection } = useSelectionUtilities()
+  const { clearSelection, addToSelection, objectIds } = useSelectionUtilities()
   const { zoom } = useCameraUtilities()
   const mp = useMixpanel()
   const logger = useLogger()
@@ -99,10 +99,9 @@ function useSelectOrZoomOnSelection() {
         const firstVisHit = firstVisibleSelectionHit
         if (!firstVisHit) return clearSelection()
 
-        if (state.ui.filters.selectedObjects.value.length !== 0) {
-          const ids = state.ui.filters.selectedObjects.value.map((o) => o.id as string)
-          zoom(ids)
-        } // else somethingn is weird.
+        if (objectIds.value.length !== 0) {
+          zoom(objectIds.value)
+        } // else something is weird.
         else {
           logger.warn(
             "Got a double click event but there's no selected object in the state - this should be impossible :)"

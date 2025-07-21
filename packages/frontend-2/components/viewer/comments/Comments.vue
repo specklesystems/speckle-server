@@ -171,7 +171,7 @@ watch(includeArchived, (newVal) =>
 
 const { objectIds: selectedObjectIds } = useSelectionUtilities()
 
-const hasSelectedObjects = computed(() => selectedObjectIds.value.size > 0)
+const hasSelectedObjects = computed(() => selectedObjectIds.value.length > 0)
 
 const onNewDiscussion = () => {
   if (!hasSelectedObjects.value) return

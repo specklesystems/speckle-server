@@ -26,10 +26,10 @@ import {
   ViewMode
 } from '@speckle/viewer'
 import { inject, ref, provide } from 'vue'
-import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
+import type { ComputedRef, WritableComputedRef, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { SpeckleViewer, isNonNullable } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
@@ -56,7 +56,6 @@ import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
@@ -249,11 +248,6 @@ export type InjectableViewerState = Readonly<{
     filters: {
       isolatedObjectIds: Ref<string[]>
       hiddenObjectIds: Ref<string[]>
-      selectedObjects: Ref<Raw<SpeckleObject>[]>
-      /**
-       * For quick object ID lookups
-       */
-      selectedObjectIds: ComputedRef<Set<string>>
       propertyFilter: {
         filter: Ref<Nullable<PropertyInfo>>
         isApplied: Ref<boolean>
@@ -940,7 +934,6 @@ function setupInterfaceState(
 
   const isolatedObjectIds = ref([] as string[])
   const hiddenObjectIds = ref([] as string[])
-  const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
   const propertyFilter = ref(null as Nullable<PropertyInfo>)
   const isPropertyFilterApplied = ref(false)
   const hasAnyFiltersApplied = computed(() => {
@@ -958,15 +951,6 @@ function setupInterfaceState(
   const lightConfig = ref(DefaultLightConfiguration)
   const explodeFactor = ref(0)
   const selection = ref(null as Nullable<Vector3>)
-
-  const selectedObjectIds = computed(
-    () =>
-      new Set(
-        selectedObjects.value
-          .map((o) => o.id as MaybeNullOrUndefined<string>)
-          .filter(isNonNullable)
-      )
-  )
 
   /**
    * THREADS
@@ -1023,8 +1007,6 @@ function setupInterfaceState(
       filters: {
         isolatedObjectIds,
         hiddenObjectIds,
-        selectedObjects,
-        selectedObjectIds,
         propertyFilter: {
           filter: propertyFilter,
           isApplied: isPropertyFilterApplied
