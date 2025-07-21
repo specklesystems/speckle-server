@@ -77,7 +77,7 @@ export class CacheReader {
     this.#logger('readBatch: left, time', items.length, performance.now() - start)
   }
 
-  dispose(): void {
-    this.#readQueue?.dispose()
+  disposeAsync(): Promise<void> {
+    return this.#readQueue?.disposeAsync() || Promise.resolve()
   }
 }

@@ -3,7 +3,11 @@ import { Loader, LoaderEvent } from '../Loader.js'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
-import { ObjectLoader2, ObjectLoader2Factory } from '@speckle/objectloader2'
+import {
+  getQueryParameter,
+  ObjectLoader2,
+  ObjectLoader2Factory
+} from '@speckle/objectloader2'
 import { TIME_MS } from '@speckle/shared'
 
 export class SpeckleLoader extends Loader {
@@ -99,6 +103,7 @@ export class SpeckleLoader extends Loader {
     const total = await this.loader.getTotalObjectCount()
     let traversals = 0
     let firstObjectPromise = null
+    this.progressListen()
 
     Logger.warn('Downloading object ', this.resource)
 
@@ -184,6 +189,31 @@ export class SpeckleLoader extends Loader {
     })
 
     return p
+  }
+
+  private progressListen(): void {
+    if (getQueryParameter('debug', 'false') !== 'true') {
+      return
+    }
+
+    let dataProgress = 0
+    this.on(LoaderEvent.LoadProgress, (data) => {
+      const p = Math.floor(data.progress * 100)
+      if (p > dataProgress) {
+        Logger.log(`[debug] Loading ${p}%`)
+        dataProgress = p
+      }
+    })
+    this.on(LoaderEvent.Traversed, (data) => {
+      if (data.count % 500 === 0) {
+        Logger.log(`[debug] Traversed ${data.count}`)
+      }
+    })
+    this.on(LoaderEvent.Converted, (data) => {
+      if (data.count % 500 === 0) {
+        Logger.log(`[debug] Converted ${data.count}`)
+      }
+    })
   }
 
   cancel() {

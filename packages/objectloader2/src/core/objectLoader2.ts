@@ -65,11 +65,10 @@ export class ObjectLoader2 {
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
-      this.#cacheWriter.disposeAsync()
+      this.#cacheWriter.disposeAsync(),
+      this.#cacheReader.disposeAsync()
     ])
     this.#deferments.dispose()
-    this.#cacheReader.dispose()
-    this.#cache.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {
