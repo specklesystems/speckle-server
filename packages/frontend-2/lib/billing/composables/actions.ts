@@ -165,7 +165,7 @@ export const useBillingActions = () => {
       }
       $intercom.track('Workspace Upgraded', {
         ...metaData,
-        isExistingSubscription: false
+        isExistingSubscription: true
       })
       $intercom.updateCompany({
         id: workspaceId,
