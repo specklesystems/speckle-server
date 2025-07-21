@@ -33,21 +33,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormButton } from '@speckle/ui-components'
-
-type FormButtonProps = InstanceType<typeof FormButton>['$props']
-
-interface Button {
-  label: string
-  props: Record<string, unknown> & FormButtonProps
-  onClick?: (e: MouseEvent) => void
-}
+import type { LayoutHeaderButton } from '@speckle/ui-components'
 
 withDefaults(
   defineProps<{
     title: string
     text?: string
-    buttons?: Button[]
+    buttons?: LayoutHeaderButton[]
     subheading?: boolean
     hideDivider?: boolean
   }>(),
