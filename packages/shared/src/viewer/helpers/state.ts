@@ -105,6 +105,11 @@ export type SerializedViewerState = {
   }
 }
 
+export type VersionedSerializedViewerState = {
+  version: number
+  state: SerializedViewerState
+}
+
 type UnformattedState = PartialDeep<
   SerializedViewerState & {
     // Properties removed from earlier viewer state versions

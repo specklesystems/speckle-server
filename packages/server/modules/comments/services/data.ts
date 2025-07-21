@@ -4,30 +4,31 @@ import {
 } from '@/modules/comments/domain/operations'
 import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
 import { viewerResourcesToString } from '@/modules/core/services/commit/viewerResources'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
+import { Nullable } from '@speckle/shared'
+import {
+  VersionedSerializedViewerState,
+  SerializedViewerState,
+  isSerializedViewerState,
+  SERIALIZED_VIEWER_STATE_VERSION,
+  formatSerializedViewerState
+} from '@speckle/shared/viewer/state'
 import { has, get, intersection, isObjectLike } from 'lodash-es'
 
-type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
-
 export type LegacyData = Partial<LegacyCommentViewerData>
+export type DataStruct = VersionedSerializedViewerState
 
-export type DataStruct = {
-  version: number
-  state: SerializedViewerState
-}
+export { formatSerializedViewerState }
 
 export function inputToDataStruct(
   inputSerializedViewerState: unknown
 ): Nullable<DataStruct> {
-  const state = SpeckleViewer.ViewerState.isSerializedViewerState(
-    inputSerializedViewerState
-  )
+  const state = isSerializedViewerState(inputSerializedViewerState)
     ? inputSerializedViewerState
     : null
   if (!state) return null
 
   return {
-    version: SpeckleViewer.ViewerState.SERIALIZED_VIEWER_STATE_VERSION,
+    version: SERIALIZED_VIEWER_STATE_VERSION,
     state
   }
 }
@@ -36,11 +37,8 @@ export function isDataStruct(data: unknown): data is DataStruct {
   if (!data) return false
   if (!has(data, 'version')) return false
   const stateRaw = get(data, 'state')
-  return SpeckleViewer.ViewerState.isSerializedViewerState(stateRaw)
+  return isSerializedViewerState(stateRaw)
 }
-
-export const formatSerializedViewerState =
-  SpeckleViewer.ViewerState.formatSerializedViewerState
 
 export function isLegacyData(data: unknown): data is LegacyData {
   if (!data) return false
