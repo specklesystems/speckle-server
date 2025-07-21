@@ -2,36 +2,40 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="lg"
-    :buttons="isPrivate ? nonDiscoverableButtons : discoverableButtons"
+    :buttons="buttons"
+    title="Embed model"
   >
-    <template v-if="isPrivate" #header>Change access permissions</template>
-    <template v-else #header>Embed model</template>
-
-    <div v-if="isPrivate">
-      <CommonAlert color="info">
-        <template #title>
-          Model embedding does not work when the project visibility is set to
-          "Private"{{ project.workspaceId ? ' or "Workspace"' : '' }}.
-        </template>
-      </CommonAlert>
-
-      <ProjectPageTeamDialogManagePermissions
-        :project="project"
-        @changed-visibility="handleChangeVisibility"
-      />
-    </div>
-    <div v-else>
-      <CommonAlert v-if="multipleVersionedResources" class="mb-4 sm:-mt-4" color="info">
+    <template v-if="canGenerateEmbed">
+      <CommonAlert
+        v-if="multipleVersionedResources"
+        class="mb-4"
+        color="info"
+        size="xs"
+      >
         <template #title>You are embedding a specific version</template>
         <template #description>
           <p>
-            This means that any changes you made after this version will not be included
-            in the embedded model.
+            Anyone with this embed link can view your model data. Be careful where you
+            share it!
           </p>
+        </template>
+      </CommonAlert>
+
+      <CommonAlert
+        v-if="!isPublicProject && canCreateEmbedTokens"
+        class="mb-4"
+        color="info"
+        size="2xs"
+      >
+        <template #title>
+          You are embedding a
+          <span class="lowercase">{{ projectVisibility }}</span>
+          project
+        </template>
+        <template #description>
           <p>
-            <strong>Tip:</strong>
-            If you want to share the latest version of your model, go back to the
-            project dashboard and start the embedding process from there.
+            Anyone with this embed link can view your model, be careful where you share
+            it.
           </p>
         </template>
       </CommonAlert>
@@ -137,7 +141,21 @@
           </LayoutDialogSection>
         </div>
       </div>
-    </div>
+    </template>
+    <template v-else>
+      <CommonAlert color="info" size="xs">
+        <template #title>
+          Cannot embed
+          <span class="lowercase">'{{ project.visibility }}'</span>
+          project
+        </template>
+        <template #description>
+          <p>
+            {{ cantGenerateDialogDescription }}
+          </p>
+        </template>
+      </CommonAlert>
+    </template>
   </LayoutDialog>
 </template>
 
@@ -147,18 +165,23 @@ import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { useUpdateProject } from '~/lib/projects/composables/projectManagement'
-import { useMixpanel } from '~/lib/core/composables/mp'
-import {
-  castToSupportedVisibility,
-  SupportedProjectVisibility
-} from '~/lib/projects/helpers/visibility'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { useCreateEmbedToken } from '~~/lib/projects/composables/tokenManagement'
+import {
+  SupportedProjectVisibility,
+  castToSupportedVisibility
+} from '~/lib/projects/helpers/visibility'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
     id
-    ...ProjectsPageTeamDialogManagePermissions_Project
+    visibility
+    permissions {
+      canCreateEmbedTokens {
+        ...FullPermissionCheckResult
+      }
+    }
     workspace {
       id
       slug
@@ -182,17 +205,16 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const mixpanel = useMixpanel()
 const route = useRoute()
-const logger = useLogger()
 const { copy } = useClipboard()
 const {
   public: { baseUrl }
 } = useRuntimeConfig()
+const createEmbedToken = useCreateEmbedToken()
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-const updateProject = useUpdateProject()
-const mp = useMixpanel()
 
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
@@ -200,8 +222,8 @@ const hideSelectionInfo = ref(false)
 const disableModelLink = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
-const projectVisibility = ref(props.project.visibility)
 const hideSpeckleBranding = ref(false)
+const embedToken = ref<string | null>(null)
 
 const routeModelId = computed(() => route.params.modelId as string)
 
@@ -236,6 +258,11 @@ const updatedUrl = computed(() => {
     url.pathname += routeModelId.value
   }
 
+  // Add token parameter if embed token exists
+  if (embedToken.value) {
+    url.searchParams.set('embedToken', embedToken.value)
+  }
+
   // Construct the embed options as a hash fragment
   const embedOptions: Record<string, boolean> = { isEnabled: true }
   embedDialogOptions.forEach((option) => {
@@ -263,14 +290,7 @@ const iframeCode = computed(() => {
   return `<iframe title="Speckle" src="${updatedUrl.value}" width="600" height="400" frameborder="0"></iframe>`
 })
 
-const isPrivate = computed(() => {
-  return (
-    castToSupportedVisibility(props.project.visibility) !==
-    SupportedProjectVisibility.Public
-  )
-})
-
-const discoverableButtons = computed((): LayoutDialogButton[] => [
+const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
     props: { color: 'outline' },
@@ -278,30 +298,17 @@ const discoverableButtons = computed((): LayoutDialogButton[] => [
       isOpen.value = false
     }
   },
-  {
-    text: 'Copy embed code',
-    props: {},
-    onClick: () => {
-      handleEmbedCodeCopy(iframeCode.value)
-    }
-  }
-])
-
-const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
-  {
-    text: 'Close',
-    props: { color: 'outline' },
-    onClick: () => {
-      isOpen.value = false
-    }
-  },
-  {
-    text: 'Save',
-    props: {
-      disabled: projectVisibility.value === props.project.visibility
-    },
-    onClick: saveProjectVisibility
-  }
+  ...(isPublicProject.value || (!isPublicProject.value && canCreateEmbedTokens.value)
+    ? [
+        {
+          text: 'Copy embed code',
+          props: {},
+          onClick: () => {
+            handleEmbedCodeCopy(iframeCode.value)
+          }
+        }
+      ]
+    : [])
 ])
 
 const workspaceSlug = computed(() => {
@@ -310,17 +317,36 @@ const workspaceSlug = computed(() => {
 const canEditEmbedOptions = computed(() => {
   return props.project.workspace?.permissions?.canEditEmbedOptions
 })
+const canCreateEmbedTokens = computed(() => {
+  return props.project.permissions?.canCreateEmbedTokens?.authorized
+})
+const projectVisibility = computed(() =>
+  castToSupportedVisibility(props.project.visibility)
+)
+const isPublicProject = computed(
+  () => projectVisibility.value === SupportedProjectVisibility.Public
+)
 const workspaceHideSpeckleBrandingEnabled = computed(() => {
   if (!isWorkspacesEnabled.value) return false
   return props.project.workspace?.embedOptions?.hideSpeckleBranding
 })
-
 const hideSpeckleBrandingTooltip = computed(() => {
   if (!isWorkspacesEnabled.value) return ''
   if (workspaceHideSpeckleBrandingEnabled.value) {
     return 'Speckle branding is disabled for all embeds in this workspace'
   }
   return ''
+})
+const canGenerateEmbed = computed(() => {
+  return isPublicProject.value || (!isPublicProject.value && canCreateEmbedTokens.value)
+})
+const cantGenerateDialogDescription = computed(() => {
+  if (
+    props.project.permissions?.canCreateEmbedTokens?.code === 'WorkspaceNoFeatureAccess'
+  ) {
+    return `Embedding ${props.project.visibility.toLowerCase()} projects is not available on your plan. Upgrade your workspace to get access to this feature.`
+  }
+  return `The visibility of this project is set to '${props.project.visibility.toLowerCase()}'. Please contact the project owner to change the visibility or generate an embed link.`
 })
 
 const handleEmbedCodeCopy = async (value: string) => {
@@ -332,27 +358,6 @@ const handleEmbedCodeCopy = async (value: string) => {
 
 const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
   optionRef.value = newValue === undefined ? false : !!newValue
-}
-
-const handleChangeVisibility = (newVisibility: SupportedProjectVisibility) => {
-  projectVisibility.value = newVisibility
-}
-
-const saveProjectVisibility = async () => {
-  try {
-    await updateProject({
-      visibility: projectVisibility.value,
-      id: props.project.id
-    })
-    mp.track('Stream Action', {
-      type: 'action',
-      name: 'update',
-      action: 'project-access',
-      to: projectVisibility.value
-    })
-  } catch (e) {
-    logger.error(e)
-  }
 }
 
 const embedDialogOptions = [
@@ -394,6 +399,35 @@ watch(
     if (isWorkspacesEnabled.value) {
       hideSpeckleBranding.value =
         props.project.workspace?.embedOptions?.hideSpeckleBranding ?? false
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  isOpen,
+  async (newValue) => {
+    if (newValue) {
+      mixpanel.track('Embed Dialog Opened', {
+        projectId: props.project.id,
+        visibility: projectVisibility.value
+      })
+
+      if (canCreateEmbedTokens.value) {
+        mixpanel.track('Embed Token Created', {
+          projectId: props.project.id,
+          visibility: projectVisibility.value
+        })
+
+        const token = await createEmbedToken({
+          projectId: props.project.id,
+          resourceIdString: routeModelId.value
+        })
+
+        if (token) {
+          embedToken.value = token
+        }
+      }
     }
   },
   { immediate: true }

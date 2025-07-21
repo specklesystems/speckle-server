@@ -88,6 +88,7 @@
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
       "./environment/db": "./src/environment/db.ts",
+      "./environment/node": "./src/environment/node.ts",
       "./environment/multiRegionConfig": "./src/environment/db.ts",
       "./observability": "./src/observability/index.ts",
       "./observability/mixpanel": "./src/observability/mixpanel.ts",
@@ -101,6 +102,8 @@
       "./workers/fileimport": "./src/workers/fileimport/index.ts",
       "./viewer": "./src/viewer/index.ts",
       "./viewer/route": "./src/viewer/helpers/route.ts",
+      "./viewer/state": "./src/viewer/helpers/state.ts",
+      "./automate": "./src/automate/index.ts",
       "./dist/*": "./dist/*"
     },
     "exclude": [
@@ -145,6 +148,16 @@
       "require": {
         "types": "./dist/commonjs/environment/db.d.ts",
         "default": "./dist/commonjs/environment/db.js"
+      }
+    },
+    "./environment/node": {
+      "import": {
+        "types": "./dist/esm/environment/node.d.ts",
+        "default": "./dist/esm/environment/node.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/node.d.ts",
+        "default": "./dist/commonjs/environment/node.js"
       }
     },
     "./environment/multiRegionConfig": {
@@ -275,6 +288,26 @@
       "require": {
         "types": "./dist/commonjs/viewer/helpers/route.d.ts",
         "default": "./dist/commonjs/viewer/helpers/route.js"
+      }
+    },
+    "./viewer/state": {
+      "import": {
+        "types": "./dist/esm/viewer/helpers/state.d.ts",
+        "default": "./dist/esm/viewer/helpers/state.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/viewer/helpers/state.d.ts",
+        "default": "./dist/commonjs/viewer/helpers/state.js"
+      }
+    },
+    "./automate": {
+      "import": {
+        "types": "./dist/esm/automate/index.d.ts",
+        "default": "./dist/esm/automate/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/automate/index.d.ts",
+        "default": "./dist/commonjs/automate/index.js"
       }
     },
     "./dist/*": "./dist/*"

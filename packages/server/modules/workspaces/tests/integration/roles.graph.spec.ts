@@ -30,7 +30,7 @@ import {
   GetWorkspaceDocument,
   UpdateWorkspaceRoleDocument,
   UpdateWorkspaceSeatTypeDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   createTestContext,
   testApolloServer,

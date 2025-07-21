@@ -2,10 +2,11 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
 import { readFile } from 'fs/promises'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { fileURLToPath } from 'url'
 
 async function getExplorerHtml() {
   const fileBaseContents = await readFile(
-    require.resolve('#/assets/apiexplorer/templates/explorer.html'),
+    fileURLToPath(import.meta.resolve('#/assets/apiexplorer/templates/explorer.html')),
     { encoding: 'utf-8' }
   )
   return fileBaseContents.replace(

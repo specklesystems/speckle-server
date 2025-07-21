@@ -28,7 +28,7 @@ import {
   OnWorkspaceProjectsUpdatedDocument,
   OnWorkspaceUpdatedDocument,
   WorkspaceProjectsUpdatedMessageType
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   testApolloServer,
   TestApolloServer,

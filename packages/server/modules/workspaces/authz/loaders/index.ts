@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { defineModuleLoaders } from '@/modules/loaders'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -59,7 +59,7 @@ export default defineModuleLoaders(async () => {
       // TODO: Dataloader that has to dynamically pick regional dbs?
       return await getWorkspaceModelCountFactory({
         queryAllProjects: queryAllProjectsFactory({
-          getStreams: legacyGetStreamsFactory({ db })
+          getExplicitProjects: getExplicitProjects({ db })
         }),
         getPaginatedProjectModelsTotalCount: async (projectId, params) => {
           const regionDb = await getProjectDbClient({ projectId })

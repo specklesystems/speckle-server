@@ -12,7 +12,7 @@
         <ArrowLongLeftIcon class="h-4 w-4" />
       </button>
     </div>
-    <div class="absolute left-0 z-10 w-full h-[1px] mt-px bg-outline-3 top-8"></div>
+    <div class="absolute left-0 z-10 w-full h-[1px] mt-px bg-outline-3 top-7"></div>
     <div
       ref="scrollContainer"
       class="relative overflow-x-auto hide-scrollbar w-full"
@@ -98,7 +98,7 @@ import { isClient } from '@vueuse/core'
 import { ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
 import { throttle } from '#lodash'
-import { useElementSize } from '@vueuse/core'
+import { useResizeObserver } from '@vueuse/core'
 import CommonBadge from '~~/src/components/common/Badge.vue'
 
 const props = defineProps<{
@@ -113,7 +113,8 @@ const showLeftArrow = ref(false)
 const showRightArrow = ref(false)
 const isInitialSetup = ref(true)
 
-const { width } = useElementSize(buttonContainer)
+const underlineLeft = ref('0px')
+const underlineWidth = ref('0px')
 
 const buttonClass = computed(() => {
   return (item: LayoutPageTabItem) => {
@@ -152,18 +153,18 @@ const activeItemRef = computed(() => {
   return btns.find((b) => b.dataset['tabId'] === id) || null
 })
 
-const borderStyle = computed<CSSProperties>(() => {
-  // Using width in calculation to force dependency
-  return width.value
-    ? {
-        left: `${activeItemRef.value?.offsetLeft || 0}px`,
-        width: `${activeItemRef.value?.clientWidth || 0}px`
-      }
-    : {
-        left: '0px',
-        width: '0px'
-      }
-})
+const borderStyle = computed<CSSProperties>(() => ({
+  left: underlineLeft.value,
+  width: underlineWidth.value
+}))
+
+const updateUnderline = () => {
+  const el = activeItemRef.value
+  if (!el) return
+
+  underlineLeft.value = `${el.offsetLeft}px`
+  underlineWidth.value = `${el.clientWidth}px`
+}
 
 const setActiveItem = (item: LayoutPageTabItem) => {
   activeItem.value = item
@@ -232,8 +233,13 @@ watch(
   }
 )
 
+const { stop: stopResizeObserver } = useResizeObserver(activeItemRef, () =>
+  updateUnderline()
+)
+
 onBeforeUnmount(() => {
   handleScroll.cancel()
+  stopResizeObserver()
 })
 </script>
 <style>

@@ -8,7 +8,7 @@ import {
   getFrontendOrigin,
   getSessionSecret
 } from '@/modules/shared/helpers/envHelper'
-import { isString, noop } from 'lodash'
+import { isString, noop } from 'lodash-es'
 import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
 import { ensureError, TIME_MS } from '@speckle/shared'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'

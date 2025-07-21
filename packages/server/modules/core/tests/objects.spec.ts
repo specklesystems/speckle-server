@@ -2,7 +2,7 @@
 /* eslint-disable camelcase */
 import { expect } from 'chai'
 import assert from 'assert'
-import { cloneDeep, times, random, padStart } from 'lodash'
+import { cloneDeep, times, random, padStart } from 'lodash-es'
 
 import { beforeEachContext } from '@/test/hooks'
 import { getAnIdForThisOnePlease } from '@/test/helpers'
@@ -404,7 +404,7 @@ describe('Objects @core-objects', () => {
     expect(objects.length).to.equal(100)
 
     parentObjectId = ids[0]
-  }).timeout(30000)
+  }).timeout(3000)
 
   it('should query object children, ascending order', async () => {
     // we're assuming the prev test objects exist
@@ -727,22 +727,23 @@ describe('Objects @core-objects', () => {
     expect(commitChildren.objects.length).to.equal(2)
   })
 
-  it('should stream objects back', (done) => {
+  it('should stream objects back', async () => {
     let tcount = 0
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    getObjectChildrenStream({ streamId: stream.id, objectId: commitId }).then(
-      (stream) => {
-        stream.on('data', () => tcount++)
-        stream.on('end', () => {
-          expect(tcount).to.equal(3333)
-          done()
-        })
-      }
-    )
+
+    const childrenStream = await getObjectChildrenStream({
+      streamId: stream.id,
+      objectId: commitId
+    })
+    await new Promise<void>((resolve) => {
+      childrenStream.on('data', () => tcount++)
+      childrenStream.on('end', () => {
+        expect(tcount).to.equal(3333)
+        resolve()
+      })
+    })
   })
 
   it('should not deadlock when batch inserting in random order', async function () {
-    this.timeout(5000)
     const objs = createManyObjects(5000, 'perlin merlin magic')
 
     function shuffleArray(array: Array<unknown>) {
@@ -773,7 +774,7 @@ describe('Objects @core-objects', () => {
       await promisses[i]
     }
   })
-})
+}).timeout(5000)
 
 function createManyObjects(num: number, noise: string | number) {
   num = num || 10000

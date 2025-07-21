@@ -21,7 +21,7 @@ import { getWorkspacesNonCompleteFactory } from '@/modules/workspaces/repositori
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
 import {
   deleteStreamFactory,
-  legacyGetStreamsFactory
+  getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -63,7 +63,7 @@ const scheduleDeleteWorkspacesNonComplete = ({
       deleteProject: deleteStreamFactory({ db }),
       deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
       queryAllProjects: queryAllProjectsFactory({
-        getStreams: legacyGetStreamsFactory({ db })
+        getExplicitProjects: getExplicitProjects({ db })
       }),
       deleteSsoProvider: deleteSsoProviderFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit
@@ -121,4 +121,4 @@ const workspacesModule: SpeckleModule = {
   }
 }
 
-export = workspacesModule
+export default workspacesModule

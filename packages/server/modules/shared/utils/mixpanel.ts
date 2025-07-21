@@ -9,7 +9,7 @@ import Mixpanel from 'mixpanel'
 import type express from 'express'
 import type http from 'http'
 import { mixpanelLogger } from '@/observability/logging'
-import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 
 let client: Optional<MixpanelClient> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined

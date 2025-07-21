@@ -35,7 +35,7 @@ import {
   UpdateEmbedOptionsDocument,
   WorkspaceEmbedOptionsDocument,
   ProjectEmbedOptionsDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
@@ -47,7 +47,7 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { shuffle } from 'lodash'
+import { shuffle } from 'lodash-es'
 import knex, { db } from '@/db/knex'
 import {
   createRandomPassword,

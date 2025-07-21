@@ -19,7 +19,7 @@ import { expect } from 'chai'
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
-import { get, pick, set } from 'lodash'
+import { get, pick, set } from 'lodash-es'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { publish, TestSubscriptions } from '@/modules/shared/utils/subscriptions'
 import cryptoRandomString from 'crypto-random-string'
@@ -28,11 +28,12 @@ import type ws from 'ws'
 import { createAuthTokenForUser } from '@/test/authHelper'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { WebSocketLink } from '@apollo/client/link/ws/ws.cjs'
-import { execute } from '@apollo/client/core/core.cjs'
-import { PingPongDocument } from '@/test/graphql/generated/graphql'
+import { execute } from '@apollo/client/core'
+import { PingPongDocument } from '@/modules/core/graph/generated/graphql'
 import { BaseError } from '@/modules/shared/errors'
 import EventEmitter from 'eventemitter2'
 import { expectToThrow } from '@/test/assertionHelper'
+import { testLogger } from '@/observability/logging'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse<R>
 
@@ -295,7 +296,7 @@ export const testApolloSubscriptionServer = async () => {
   set(mockWsServer, 'removeListener', mockWsServer.off.bind(mockWsServer)) // backwards compat w/ subscriptions-transport-ws
 
   const mockWs = MockSocket.WebSocket as unknown as ws.WebSocket
-  const apolloSubServer = buildApolloSubscriptionServer({ server: mockWsServer })
+  const apolloSubServer = await buildApolloSubscriptionServer({ server: mockWsServer })
 
   // weakRef to ensure we dont prevent garbage collection
   const clients: WeakRef<SubscriptionClient>[] = []
@@ -357,26 +358,32 @@ export const testApolloSubscriptionServer = async () => {
         query,
         variables
       })
-      const sub = observable.subscribe(async (eventData) => {
-        const res = eventData as FormattedExecutionResult<R>
-        const asyncHandler = async () => handler(res)
+      const sub = observable.subscribe(
+        async (eventData) => {
+          const res = eventData as FormattedExecutionResult<R>
+          const asyncHandler = async () => handler(res)
 
-        // Invoke handler
-        try {
-          await asyncHandler()
-        } catch (e) {
-          // If we throw here, this will be an unhandled rejection, lets throw in waitForMsg instead
-          eventBus.emit('error', e)
-        }
+          // Invoke handler
+          try {
+            await asyncHandler()
+          } catch (e) {
+            // If we throw here, this will be an unhandled rejection, lets throw in waitForMsg instead
+            eventBus.emit('error', e)
+          }
 
-        // Mark msg received
-        try {
-          messages.push(res)
-          await eventBus.emitAsync('message', res)
-        } catch (e) {
-          eventBus.emit('error', e)
+          // Mark msg received
+          try {
+            messages.push(res)
+            await eventBus.emitAsync('message', res)
+          } catch (e) {
+            eventBus.emit('error', e)
+          }
+        },
+        (e) => {
+          errHandler(e)
+          testLogger.error(e, 'Test subscription subscribe error handler hit')
         }
-      })
+      )
 
       /**
        * Unsubscribe from the subscription

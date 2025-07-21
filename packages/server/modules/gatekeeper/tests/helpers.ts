@@ -3,7 +3,7 @@ import {
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import cryptoRandomString from 'crypto-random-string'
-import { assign } from 'lodash'
+import { assign } from 'lodash-es'
 
 export const createTestSubscriptionData = (
   overrides: Partial<SubscriptionData> = {}

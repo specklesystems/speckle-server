@@ -13,7 +13,7 @@ import {
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { encodeDiscoverableStreamsCursor } from '@/modules/core/repositories/streams'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
-import { clamp } from 'lodash'
+import { clamp } from 'lodash-es'
 
 type StreamCollection = {
   cursor: Nullable<string>

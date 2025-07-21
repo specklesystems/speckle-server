@@ -17,7 +17,7 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Automate, isNullOrUndefined, SourceAppNames } from '@speckle/shared'
 import dayjs from 'dayjs'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -254,6 +254,13 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
             return {}
           }),
           releases: () => store.get('AutomateFunctionReleaseCollection') as any
+        },
+        AutomateFunctionPermissionChecks: {
+          canRegenerateToken: () => ({
+            authorized: faker.datatype.boolean(),
+            code: faker.string.alphanumeric(10),
+            message: faker.lorem.words(10)
+          })
         },
         AutomateFunctionRelease: {
           function: () => store.get('AutomateFunction') as any

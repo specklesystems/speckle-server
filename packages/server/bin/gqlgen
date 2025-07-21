@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+import path from 'path'
+
+/**
+ * Find gqlgen and run it (we don't want to hardcode a specific node_modules path).
+ * We use this so that we can pass in specific flags to node before it even begins to run
+ */
+const relativeBinPath = './bin.js'
+
+const mochaPath = import.meta.resolve('@graphql-codegen/cli')
+const mochaPathDir = path.dirname(mochaPath)
+const mochaBinPath = path.join(mochaPathDir, relativeBinPath)
+await import(mochaBinPath)

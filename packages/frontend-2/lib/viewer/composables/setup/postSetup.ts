@@ -22,7 +22,7 @@ import {
   SectionTool,
   SpeckleLoader
 } from '@speckle/viewer'
-import { useAuthCookie } from '~~/lib/auth/composables/auth'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
@@ -56,8 +56,8 @@ import {
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
 import { OBB } from 'three/examples/jsm/math/OBB'
+import type { SectionBoxData } from '@speckle/shared/viewer/state'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -82,7 +82,7 @@ function useViewerObjectAutoLoading() {
 
   const disableViewerCache =
     SafeLocalStorage.get('FE2_FORCE_DISABLE_VIEWER_CACHE') === 'true'
-  const authToken = useAuthCookie()
+  const { effectiveAuthToken } = useAuthManager()
   const getObjectUrl = useGetObjectUrl()
   const {
     projectId,
@@ -131,7 +131,7 @@ function useViewerObjectAutoLoading() {
       const loader = new SpeckleLoader(
         viewer.getWorldTree(),
         objectUrl,
-        authToken.value || undefined,
+        effectiveAuthToken.value || undefined,
         disableViewerCache ? false : undefined,
         undefined
       )
@@ -770,7 +770,7 @@ function useExplodeFactorIntegration() {
 
 function useDiffingIntegration() {
   const state = useInjectedViewerState()
-  const authCookie = useAuthCookie()
+  const { effectiveAuthToken } = useAuthManager()
   const getObjectUrl = useGetObjectUrl()
 
   const hasInitialLoadFired = ref(false)
@@ -818,7 +818,7 @@ function useDiffingIntegration() {
         oldObjUrl,
         newObjUrl,
         state.ui.diff.mode.value,
-        authCookie.value
+        effectiveAuthToken.value
       )
     },
     { immediate: true }

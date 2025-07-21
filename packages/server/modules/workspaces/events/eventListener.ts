@@ -1,9 +1,9 @@
 import {
+  getExplicitProjects,
   getStreamFactory,
   getStreamRolesFactory,
   getStreamsCollaboratorCountsFactory,
   grantStreamPermissionsFactory,
-  legacyGetStreamsFactory,
   revokeStreamPermissionsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
@@ -139,8 +139,8 @@ import { getProjectWorkspaceFactory } from '@/modules/workspaces/repositories/pr
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 import { buildWorkspaceTrackingPropertiesFactory } from '@/modules/workspaces/services/tracking'
-import { assign } from 'lodash'
-import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { assign } from 'lodash-es'
+import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { WorkspacePlans } from '@/modules/core/graph/generated/graphql'
@@ -861,7 +861,6 @@ export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
-    const getStreams = legacyGetStreamsFactory({ db })
     const getWorkspace = getWorkspaceFactory({ db })
     const emitWorkspaceGraphqlSubscriptions = emitWorkspaceGraphqlSubscriptionsFactory({
       getWorkspace,
@@ -929,7 +928,9 @@ export const initializeEventListenersFactory =
           getWorkspacePlan,
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
           getWorkspaceModelCount: getWorkspaceModelCountFactory({
-            queryAllProjects: queryAllProjectsFactory({ getStreams }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db })
+            }),
             getPaginatedProjectModelsTotalCount:
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
@@ -947,7 +948,9 @@ export const initializeEventListenersFactory =
           getWorkspacePlan,
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
           getWorkspaceModelCount: getWorkspaceModelCountFactory({
-            queryAllProjects: queryAllProjectsFactory({ getStreams }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db })
+            }),
             getPaginatedProjectModelsTotalCount:
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
@@ -986,7 +989,9 @@ export const initializeEventListenersFactory =
         await withTransaction(
           async ({ db: trx }) => {
             const onWorkspaceRoleDeleted = onWorkspaceRoleDeletedFactory({
-              queryAllProjects: queryAllProjectsFactory({ getStreams }),
+              queryAllProjects: queryAllProjectsFactory({
+                getExplicitProjects: getExplicitProjects({ db })
+              }),
               deleteWorkspaceSeat: deleteWorkspaceSeatFactory({ db: trx }),
               getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
               getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
@@ -1020,7 +1025,9 @@ export const initializeEventListenersFactory =
         await withTransaction(
           async ({ db: trx }) => {
             const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
-              queryAllProjects: queryAllProjectsFactory({ getStreams }),
+              queryAllProjects: queryAllProjectsFactory({
+                getExplicitProjects: getExplicitProjects({ db })
+              }),
               setStreamCollaborator: setStreamCollaboratorFactory({
                 getUser: getUserFactory({ db }),
                 validateStreamAccess: validateStreamAccessFactory({
@@ -1065,7 +1072,9 @@ export const initializeEventListenersFactory =
                 revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
                 getStreamRoles: getStreamRolesFactory({ db: trx })
               }),
-              queryAllProjects: queryAllProjectsFactory({ getStreams }),
+              queryAllProjects: queryAllProjectsFactory({
+                getExplicitProjects: getExplicitProjects({ db })
+              }),
               getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
               getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
               getWorkspaceSeatTypeToProjectRoleMapping:

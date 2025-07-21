@@ -1,12 +1,13 @@
 import type {
   BuildUpdateObjectPreview,
+  GetNumberOfJobsInRequestQueue,
   RequestObjectPreview
 } from '@/modules/previews/domain/operations'
 import type { Logger } from '@/observability/logging'
 import type { Queue, Job } from 'bull'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
 import type { JobPayload } from '@speckle/shared/workers/previews'
-import { fromJobId, jobIdSchema } from '@speckle/shared/workers/previews'
+import { fromJobId } from '@speckle/shared/workers/previews'
 
 export const requestObjectPreviewFactory =
   ({
@@ -47,8 +48,7 @@ export const requestFailedHandlerFactory =
       objectPreview: {
         streamId: projectId,
         objectId,
-        previewStatus: PreviewStatus.ERROR,
-        lastUpdate: new Date()
+        previewStatus: PreviewStatus.ERROR
       }
     })
     if (updatedRecords.length < 1) {
@@ -63,4 +63,11 @@ export const requestFailedHandlerFactory =
         'Multiple object previews were updated for {projectId}.{objectId} after a failed preview job. This may indicate a data integrity issue.'
       )
     }
+  }
+
+export const getNumberOfJobsInQueueFactory =
+  (deps: { queue: Queue<JobPayload> }): GetNumberOfJobsInRequestQueue =>
+  async () => {
+    const counts = await deps.queue.getJobCounts()
+    return counts.waiting + counts.active + counts.delayed
   }
