@@ -122,15 +122,17 @@ export class CacheReaderWorker implements Reader {
           WorkerCachingConstants.DEFAULT_DEQUEUE_TIMEOUT_MS
         )) || []
       if (this.disposed) {
-        this.#logger('readBatch: disposed, exiting processing loop')
+        // this.#logger('readBatch: disposed, exiting processing loop')
         return
       }
       if (items.length === 0) {
-        this.#logger('readBatch: no items to process, waiting...')
+        // this.#logger('readBatch: no items to process, waiting...')
         await new Promise((resolve) => setTimeout(resolve, 1000))
         continue
       }
-      const start = performance.now()
+      // const start = performance.now()
+      let foundCount = 0
+      let notFoundCount = 0
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
         if (item.base) {
@@ -138,14 +140,10 @@ export class CacheReaderWorker implements Reader {
           this.#defermentManager.undefer(item, (id) => this.requestItem(id))
         } else {
           this.#notFoundQueue?.add(item.baseId)
+          notFoundCount++
         }
       }
-      this.logToMainUI(
-        'readBatch: left, time ' +
-          items.length.toString() +
-          ' ' +
-          (performance.now() - start)
-      )
+      this.logToMainUI(`Processed ${items.length} items: ${foundCount} found, ${notFoundCount} not found.`)
     }
   }
 

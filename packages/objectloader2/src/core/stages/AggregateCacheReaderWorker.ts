@@ -10,7 +10,7 @@ export class AggregateCacheReaderWorker implements Reader {
   private workers: CacheReaderWorker[] = []
 
   constructor(defermentManager: DefermentManager, count: number, logger: CustomLogger) {
-    for (let i = 0; i < count; i++) {
+    for (let i = 1; i <= count; i++) {
       const worker = new CacheReaderWorker(defermentManager, i, logger)
       this.workers.push(worker)
     }

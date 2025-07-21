@@ -14,20 +14,28 @@ export class IndexDbReader {
   private disposed: boolean = false
 
   constructor(
-    name: string,
     rawMainToWorkerRbq: RingBufferQueue,
-    rawWorkerToMainRbq: RingBufferQueue
+    rawWorkerToMainRbq: RingBufferQueue,
+    logger: CustomLogger
   ) {
-    this.name = name
     this.db = new IndexedDatabase({})
-    this.mainToWorkerQueue = new StringQueue(
-      rawMainToWorkerRbq,
-      (m?: string, ...p: unknown[]) => this.log(m ?? '', ...p)
-    )
-    this.workerToMainQueue = new ItemQueue(
-      rawWorkerToMainRbq,
-      (m?: string, ...p: unknown[]) => this.log(m ?? '', ...p)
-    )
+    this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq, logger)
+    this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq, logger)
+    this.logger = logger
+  }
+
+  public async processMessages(): Promise<void> {
+    while (true) {
+      const receivedMessages = await this.mainToWorkerQueue.dequeue(
+        WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
+        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+      ) // receivedMessages will be string[]
+      if (receivedMessages && receivedMessages.length > 0) {
+        await this.processBatch(receivedMessages)
+      } else {
+        await delay(200) // Wait for 200ms before checking again
+      }
+    }
   }
 
   private async processBatch(batch: string[]): Promise<void> {
@@ -42,7 +50,7 @@ export class IndexDbReader {
         processedItems.push({ baseId: batch[i] })
       }
     }
-    this.log(
+    this.logger(
       `Processed ${processedItems.length} items in ${performance.now() - start}ms`
     )
     // eslint-disable-next-line @typescript-eslint/no-floating-promises

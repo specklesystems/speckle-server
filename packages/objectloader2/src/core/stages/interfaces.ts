@@ -8,3 +8,7 @@ export interface Reader {
   requestAll(keys: string[]): void
   disposeAsync(): Promise<void>
 }
+
+export interface Writer extends Queue<Item> {
+  disposeAsync(): Promise<void>
+}
