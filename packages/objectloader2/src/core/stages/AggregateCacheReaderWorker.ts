@@ -39,7 +39,7 @@ export class AggregateCacheReaderWorker implements Reader {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.requestAllInternal(keys)
   }
-  async requestAllInternal(keys: string[]): Promise<void> {
+  private async requestAllInternal(keys: string[]): Promise<void> {
     let remainingKeys = keys
     while (remainingKeys.length > 0) {
       const s = remainingKeys.slice(0, WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE)

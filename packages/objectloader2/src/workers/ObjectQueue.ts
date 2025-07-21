@@ -32,13 +32,14 @@ export abstract class ObjectQueue<T> {
           continue
         }
         enqueuedInChunk += actuallyEnqueued
+        /*
         this.logger(
           'fullyEnqueue: enqueued',
           enqueuedInChunk,
           'of',
           s.length,
           'in current chunk'
-        )
+        )*/
       }
       remainingMessages = remainingMessages.slice(s.length)
     }

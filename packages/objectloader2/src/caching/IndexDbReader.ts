@@ -6,6 +6,8 @@ import { Item } from '../types/types.js'
 import { delay } from '../types/functions.js'
 import { WorkerCachingConstants } from './WorkerCachingConstants.js'
 
+const READER_BATCH_SIZE = 5000 // Number of items to read in a single batch
+
 export class IndexDbReader {
   private workerToMainQueue: ItemQueue
   private mainToWorkerQueue: StringQueue
@@ -45,8 +47,8 @@ export class IndexDbReader {
     this.log(
       `Processed ${processedItems.length} items in ${performance.now() - start}ms`
     )
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.workerToMainQueue?.fullyEnqueue(
+    //await here to fully enqueue before reading more items
+    await this.workerToMainQueue?.fullyEnqueue(
       processedItems,
       WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
     )
@@ -63,7 +65,7 @@ export class IndexDbReader {
   public async processMessages(): Promise<void> {
     while (!this.disposed) {
       const receivedMessages = await this.mainToWorkerQueue.dequeue(
-        WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
+        READER_BATCH_SIZE,
         WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
       ) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
