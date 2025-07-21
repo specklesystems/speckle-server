@@ -230,7 +230,7 @@ export const useBillingActions = () => {
           // eslint-disable-next-line camelcase
           workspace_id: workspace.id
         }
-
+        $intercom.track('Workspace Subscription Created')
         $intercom.track('Workspace Upgraded', {
           ...metaData,
           isExistingSubscription: false
