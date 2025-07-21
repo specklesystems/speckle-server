@@ -185,5 +185,8 @@ export class MemoryCache {
       clearTimeout(this.timer)
       this.timer = undefined
     }
+    this.cache.clear()
+    this.isGathered.clear()
+    this.references.clear()
   }
 }
