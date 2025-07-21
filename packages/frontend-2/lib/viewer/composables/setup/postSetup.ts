@@ -489,7 +489,30 @@ function useViewerCameraIntegration() {
     forceViewToViewerSync()
   }
 
-  // state -> viewer
+  // state -> viewer: update camera once when either position or target meaningfully changes
+  watch(
+    () => ({ pos: position.value.clone(), tgt: target.value.clone() }),
+    (newVal, oldVal) => {
+      if (
+        oldVal &&
+        areVectorsLooselyEqual(newVal.pos, oldVal.pos) &&
+        areVectorsLooselyEqual(newVal.tgt, oldVal.tgt)
+      )
+        return
+
+      const camController = instance.getExtension(CameraController)
+      camController.setCameraView(
+        {
+          position: newVal.pos,
+          target: newVal.tgt
+        },
+        true
+      )
+    },
+    { immediate: true, deep: false }
+  )
+
+  // react to projection mode changes
   watch(
     isOrthoProjection,
     (newVal, oldVal) => {
@@ -497,43 +520,6 @@ function useViewerCameraIntegration() {
       orthoProjectionUpdate(newVal)
     },
     { immediate: true }
-  )
-
-  watch(
-    position,
-    (newVal, oldVal) => {
-      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-        return
-      }
-      const camController = instance.getExtension(CameraController)
-      camController.setCameraView(
-        {
-          position: newVal,
-          target: target.value
-        },
-        true
-      )
-    }
-    // { immediate: true }
-  )
-
-  watch(
-    target,
-    (newVal, oldVal) => {
-      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-        return
-      }
-
-      const camController = instance.getExtension(CameraController)
-      camController.setCameraView(
-        {
-          position: position.value,
-          target: newVal
-        },
-        true
-      )
-    }
-    // { immediate: true }
   )
 }
 
