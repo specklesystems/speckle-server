@@ -48,7 +48,7 @@ export class RingBufferQueue {
       this.ringBuffer.availableSpaces
     ) {
       console.warn(
-        `Message data (${messageLength} bytes) + prefix (${RingBufferQueue.LENGTH_PREFIX_BYTES} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.availableSpaces} bytes). Skipping item.`
+        `[${this.name}] Message data (${messageLength} bytes) + prefix (${RingBufferQueue.LENGTH_PREFIX_BYTES} bytes) exceeds RingBuffer data capacity (${this.ringBuffer.availableSpaces} bytes). Skipping item.`
       )
       return false
     }
@@ -60,7 +60,7 @@ export class RingBufferQueue {
 
     const pushedData = await this.ringBuffer.push(dataBytes, timeoutMs)
     if (!pushedData) {
-      console.error('Failed to push length prefix to the ring buffer.')
+      console.error(`[${this.name}] Failed to push length prefix to the ring buffer.`)
       return false
     }
     return true
@@ -87,7 +87,7 @@ export class RingBufferQueue {
       const dataAppeared = await this.ringBuffer.waitForData(messageLength, timeoutMs)
       if (!dataAppeared) {
         // Timed out waiting for the full message data to appear.
-        console.warn('Dequeue: Timed out waiting for full message data.')
+        console.warn(`[${this.name}] Dequeue: Timed out waiting for full message data.`)
         return undefined
       }
     }
@@ -104,7 +104,7 @@ export class RingBufferQueue {
 
     if (messageLength > this.ringBuffer.length) {
       console.error(
-        `Dequeue: Declared message length (${messageLength} bytes) exceeds RingBuffer total space (${this.ringBuffer.length}). Possible data corruption.`
+        `[${this.name}] Dequeue: Declared message length (${messageLength} bytes) exceeds RingBuffer total space (${this.ringBuffer.length}). Possible data corruption.`
       )
       return undefined
     }
@@ -112,7 +112,7 @@ export class RingBufferQueue {
     const dataBytes = await this.ringBuffer.shift(messageLength, 0) // Timeout 0
     if (!dataBytes || dataBytes.length < messageLength) {
       console.warn(
-        `Dequeue: Received incomplete message data (got ${
+        `[${this.name}] Dequeue: Received incomplete message data (got ${
           dataBytes?.length || 0
         }, expected ${messageLength} bytes). Buffer likely corrupted.`
       )

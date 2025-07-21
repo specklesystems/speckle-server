@@ -61,8 +61,7 @@ export class IndexDbReader {
   }
 
   public async processMessages(): Promise<void> {
-    while (!this.disposed)
-    {
+    while (!this.disposed) {
       const receivedMessages = await this.mainToWorkerQueue.dequeue(
         WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
         WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS

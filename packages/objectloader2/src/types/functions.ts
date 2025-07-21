@@ -54,7 +54,6 @@ export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-
 export function getQueryParameter(paramName: string, defaultValue: string): string {
   // Check if the code is running in a browser environment 🌐
   const isBrowser =

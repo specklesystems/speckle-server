@@ -1292,8 +1292,6 @@ export default class Sandbox {
         undefined
       )
       let dataProgress = 0
-      let renderedCount = 0
-      let traversedCount = 0
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)
@@ -1307,24 +1305,6 @@ export default class Sandbox {
           }
         }
       })
-      if (getQueryParameter('debug', 'false') !== 'true') {
-        loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
-          if (arg.count > traversedCount) {
-            traversedCount = arg.count
-            if (traversedCount % 500 === 0) {
-              console.log(`Traversed ${traversedCount}`)
-            }
-          }
-        })
-        loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
-          if (arg.count > renderedCount) {
-            renderedCount = arg.count
-            if (renderedCount % 500 === 0) {
-              console.log(`Converting Data ${renderedCount}`)
-            }
-          }
-        })
-      }
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })

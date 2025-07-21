@@ -149,7 +149,7 @@ export class CacheReaderWorker implements Reader {
     }
   }
 
-   disposeAsync(): Promise<void> {
+  disposeAsync(): Promise<void> {
     this.disposed = true
     this.indexedDbReader?.postMessage({
       type: WorkerMessageType.DISPOSE
