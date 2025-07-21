@@ -23,6 +23,7 @@ IMAGE_PREFIX = os.getenv('IMAGE_PREFIX', 'speckle')
 speckle_image = symbols['speckle_image']
 speckle_image('fileimport-service', None, IMAGE_PREFIX)
 speckle_image('frontend-2', None, IMAGE_PREFIX)
+speckle_image('ifc-import-service', None, IMAGE_PREFIX)
 speckle_image('monitor-deployment', None, IMAGE_PREFIX)
 speckle_image('preview-service', None, IMAGE_PREFIX)
 speckle_image('server', None, IMAGE_PREFIX)
@@ -126,6 +127,7 @@ helm_resource('speckle-server',
               image_deps=[
                           'speckle/speckle-fileimport-service',
                           'speckle/speckle-frontend-2',
+                          'speckle/speckle-ifc-import-service',
                           'speckle/speckle-monitor-deployment',
                           'speckle/speckle-preview-service',
                           'speckle/speckle-server',
@@ -136,6 +138,7 @@ helm_resource('speckle-server',
               image_keys=[
                           'fileimport_service.image',
                           'frontend_2.image',
+                          'ifc_import_service.image',
                           'monitor.image',
                           'preview_service.image',
                           'server.image',

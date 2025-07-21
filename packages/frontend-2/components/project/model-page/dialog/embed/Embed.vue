@@ -146,15 +146,12 @@
       <CommonAlert color="info" size="xs">
         <template #title>
           Cannot embed
-          <span class="lowercase">{{ projectVisibility }}</span>
+          <span class="lowercase">'{{ project.visibility }}'</span>
           project
         </template>
         <template #description>
           <p>
-            The visibility of this project is set to
-            <span class="lowercase">'{{ projectVisibility }}'</span>
-            . Please contact the project owner to change the visibility or generate an
-            embed link.
+            {{ cantGenerateDialogDescription }}
           </p>
         </template>
       </CommonAlert>
@@ -263,7 +260,7 @@ const updatedUrl = computed(() => {
 
   // Add token parameter if embed token exists
   if (embedToken.value) {
-    url.searchParams.set('token', embedToken.value)
+    url.searchParams.set('embedToken', embedToken.value)
   }
 
   // Construct the embed options as a hash fragment
@@ -342,6 +339,14 @@ const hideSpeckleBrandingTooltip = computed(() => {
 })
 const canGenerateEmbed = computed(() => {
   return isPublicProject.value || (!isPublicProject.value && canCreateEmbedTokens.value)
+})
+const cantGenerateDialogDescription = computed(() => {
+  if (
+    props.project.permissions?.canCreateEmbedTokens?.code === 'WorkspaceNoFeatureAccess'
+  ) {
+    return `Embedding ${props.project.visibility.toLowerCase()} projects is not available on your plan. Upgrade your workspace to get access to this feature.`
+  }
+  return `The visibility of this project is set to '${props.project.visibility.toLowerCase()}'. Please contact the project owner to change the visibility or generate an embed link.`
 })
 
 const handleEmbedCodeCopy = async (value: string) => {

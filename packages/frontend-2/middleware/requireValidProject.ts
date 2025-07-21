@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
 
   // Check if embed token is present in URL
-  const embedToken = to.query.token as Optional<string>
+  const embedToken = to.query.embedToken as Optional<string>
 
   // Skip middleware validation for embed tokens - let the auth system handle them
   if (embedToken) {
