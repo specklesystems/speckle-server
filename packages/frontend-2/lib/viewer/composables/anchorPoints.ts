@@ -37,15 +37,17 @@ export function useViewerAnchoredPointCalculator(params: {
         point: target,
         operation: 'Project'
       })
-      inFrustum ||= targetProjectionResult.inFrustum
-      /** If not in camera's frustum, don't bother projecting */
-      if (inFrustum)
-        targetLoc = viewer.Utils.NDCToScreen(
-          targetProjectionResult.x,
-          targetProjectionResult.y,
-          parentEl.value.clientWidth,
-          parentEl.value.clientHeight
-        )
+      if (targetProjectionResult) {
+        inFrustum ||= targetProjectionResult.inFrustum
+        /** If not in camera's frustum, don't bother projecting */
+        if (inFrustum)
+          targetLoc = viewer.Utils.NDCToScreen(
+            targetProjectionResult.x,
+            targetProjectionResult.y,
+            parentEl.value.clientWidth,
+            parentEl.value.clientHeight
+          )
+      }
 
       // round it out
       if (targetLoc) {
@@ -63,7 +65,7 @@ export function useViewerAnchoredPointCalculator(params: {
         tolerance: 0.001,
         operation: 'Occlusion'
       })
-      isOccluded = !!targetOcclusionRes.objects?.length
+      isOccluded = !!targetOcclusionRes?.objects?.length
     }
 
     return {
