@@ -8,7 +8,9 @@ import { Database, Downloader } from './interfaces.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
 import { ObjectLoader2Options, CacheOptions } from './options.js'
 import { CacheReader } from './stages/cacheReader.js'
+import { AggregateCacheReaderWorker } from './stages/AggregateCacheReaderWorker.js'
 import { CacheWriter } from './stages/cacheWriter.js'
+import { Reader } from './stages/interfaces.js'
 
 const MAX_CLOSURES_TO_TAKE = 100
 const EXPECTED_CLOSURE_VALUE = 100
@@ -20,7 +22,7 @@ export class ObjectLoader2 {
 
   #database: Database
   #downloader: Downloader
-  #cacheReader: CacheReader
+  #reader: Reader
   #cacheWriter: CacheWriter
 
   #deferments: DefermentManager
@@ -56,9 +58,17 @@ export class ObjectLoader2 {
     )
     this.#deferments = new DefermentManager(this.#cache, this.#logger)
     this.#downloader = options.downloader
-    this.#cacheReader = new CacheReader(this.#database, this.#deferments, cacheOptions)
-    this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
+    if (options.useReadWorker) {
+      this.#reader = new AggregateCacheReaderWorker(this.#deferments, 3, this.#logger)
+    } else {
+      this.#reader = new CacheReader(this.#database, this.#deferments, cacheOptions)
+    }
+    this.#reader.initializeQueue(this.#gathered, this.#downloader)
     this.#cacheWriter = new CacheWriter(this.#database, cacheOptions)
+  }
+
+  log(message: string, ...args: unknown[]): void {
+    this.#logger(`[ObjectLoader2] ${message}`, ...args)
   }
 
   async disposeAsync(): Promise<void> {
@@ -66,7 +76,7 @@ export class ObjectLoader2 {
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
       this.#cacheWriter.disposeAsync(),
-      this.#cacheReader.disposeAsync()
+      this.#reader.disposeAsync()
     ])
     this.#deferments.dispose()
     this.#cache.dispose()
@@ -85,7 +95,7 @@ export class ObjectLoader2 {
   }
 
   async getObject(params: { id: string }): Promise<Base> {
-    return await this.#cacheReader.getObject({ id: params.id })
+    return await this.#reader.getObject({ id: params.id })
   }
 
   async getTotalObjectCount(): Promise<number> {
@@ -97,7 +107,7 @@ export class ObjectLoader2 {
   async *getObjectIterator(): AsyncGenerator<Base> {
     const rootItem = await this.getRootObject()
     if (rootItem?.base === undefined) {
-      this.#logger('No root object found!')
+      this.log('No root object found!')
       return
     }
     if (!rootItem.base.__closure) {
@@ -109,7 +119,7 @@ export class ObjectLoader2 {
     const sortedClosures = Object.entries(rootItem.base.__closure ?? []).sort(
       (a, b) => b[1] - a[1]
     )
-    this.#logger(
+    this.log(
       'calculated closures: ',
       !take(sortedClosures.values(), MAX_CLOSURES_TO_TAKE).every(
         (x) => x[1] === EXPECTED_CLOSURE_VALUE
@@ -122,11 +132,12 @@ export class ObjectLoader2 {
       total
     })
     //only for root
+    const start = performance.now()
     this.#gathered.add(rootItem)
-    this.#cacheReader.requestAll(children)
+    this.#reader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
-      this.#deferments.undefer(item, (id: string) => this.#cacheReader.requestItem(id))
+      this.#deferments.undefer(item, (id: string) => this.#reader.requestItem(id))
       yield item.base! //always defined, as we add it to the queue
       count++
       if (count >= total) {
@@ -137,6 +148,9 @@ export class ObjectLoader2 {
       await this.#database.saveBatch({ batch: [rootItem] })
       this.#isRootStored = true
     }
+    this.log(
+      `getObjectIterator: processed ${count} items in ${performance.now() - start}ms`
+    )
   }
 
   static createFromObjects(objects: Base[]): ObjectLoader2 {

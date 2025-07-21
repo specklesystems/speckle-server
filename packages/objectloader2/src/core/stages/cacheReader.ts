@@ -5,8 +5,9 @@ import { CustomLogger } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
 import { Database } from '../interfaces.js'
 import { CacheOptions } from '../options.js'
+import { Reader } from './interfaces.js'
 
-export class CacheReader {
+export class CacheReader implements Reader {
   #database: Database
   #defermentManager: DefermentManager
   #logger: CustomLogger
@@ -74,7 +75,7 @@ export class CacheReader {
         this.#notFoundQueue?.add(batch[i])
       }
     }
-    this.#logger('readBatch: left, time', items.length, performance.now() - start)
+    this.#logger(`[CacheReader] got batch: left ${items.length}, time`, performance.now() - start)
   }
 
   disposeAsync(): Promise<void> {
