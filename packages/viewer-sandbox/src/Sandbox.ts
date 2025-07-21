@@ -1307,24 +1307,24 @@ export default class Sandbox {
           }
         }
       })
-          if (getQueryParameter('debug', 'false') !== 'true') {
-      loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
-        if (arg.count > traversedCount) {
-          traversedCount = arg.count
-          if (traversedCount % 500 === 0) {
-            console.log(`Traversed ${traversedCount}`)
+      if (getQueryParameter('debug', 'false') !== 'true') {
+        loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
+          if (arg.count > traversedCount) {
+            traversedCount = arg.count
+            if (traversedCount % 500 === 0) {
+              console.log(`Traversed ${traversedCount}`)
+            }
           }
-        }
-      })
-      loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
-        if (arg.count > renderedCount) {
-          renderedCount = arg.count
-          if (renderedCount % 500 === 0) {
-            console.log(`Converting Data ${renderedCount}`)
+        })
+        loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
+          if (arg.count > renderedCount) {
+            renderedCount = arg.count
+            if (renderedCount % 500 === 0) {
+              console.log(`Converting Data ${renderedCount}`)
+            }
           }
-        }
-      })
-    }
+        })
+      }
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })
