@@ -17,6 +17,7 @@ export class CacheReaderWorker implements Reader {
   #logger: CustomLogger
   #foundQueue: Queue<Item> | undefined
   #notFoundQueue: Queue<string> | undefined
+  #requestedItems: Set<string> = new Set()
 
   private disposed = false
 
@@ -44,6 +45,10 @@ export class CacheReaderWorker implements Reader {
   }
 
   requestItem(id: string): void {
+    if (this.#requestedItems.has(id)) {
+      return
+    }
+    this.#requestedItems.add(id)
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.mainToWorkerQueue?.enqueue(
       [id],
@@ -97,12 +102,19 @@ export class CacheReaderWorker implements Reader {
   getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      this.requestItem(params.id)
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.mainToWorkerQueue?.enqueue(
+        [params.id],
+        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+      )
     }
     return p
   }
 
   requestAll(keys: string[]): void {
+    keys.forEach((key) => {
+      this.#requestedItems.add(key)
+    })
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.mainToWorkerQueue?.fullyEnqueue(
       keys,
@@ -156,6 +168,7 @@ export class CacheReaderWorker implements Reader {
       type: WorkerMessageType.DISPOSE
     })
     this.indexedDbReader?.terminate()
+    this.#requestedItems.clear()
     return Promise.resolve()
   }
 }
