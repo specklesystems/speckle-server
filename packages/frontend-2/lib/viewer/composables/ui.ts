@@ -3,9 +3,15 @@ import {
   type TreeNode,
   type MeasurementOptions,
   type PropertyInfo,
-  ViewMode
+  ViewMode,
+  MeasurementsExtension,
+  ViewModes,
+  CameraController,
+  type InlineView,
+  type CanonicalView,
+  type SpeckleView
 } from '@speckle/viewer'
-import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
+import type { Box3 } from 'three'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
@@ -97,24 +103,30 @@ export function useCameraUtilities() {
     camera
   } = useInjectedViewerInterfaceState()
 
-  const zoom = (...args: Parameters<typeof instance.zoom>) => instance.zoom(...args)
+  const cam = instance.getExtension(CameraController)
 
-  const setView = (...args: Parameters<typeof instance.setView>) => {
-    instance.setView(...args)
+  type ViewArg = string[] | CanonicalView | SpeckleView | InlineView | Box3 | undefined
+
+  const setView = (view: ViewArg, transition = true, fit = 1.2) => {
+    cam.setCameraView(view as Parameters<typeof cam.setCameraView>[0], transition, fit)
+  }
+
+  const zoom = (objectIds?: string[], fit = 1.2, transition = true) => {
+    cam.setCameraView(objectIds, transition, fit)
   }
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
     if (ids.length > 0) {
-      return instance.zoom(ids)
+      return zoom(ids)
     }
 
     if (isolatedObjectIds.value.length) {
-      return instance.zoom(isolatedObjectIds.value)
+      return zoom(isolatedObjectIds.value)
     }
 
-    instance.zoom()
+    zoom()
   }
 
   const toggleProjection = () => {
@@ -404,9 +416,8 @@ export function useMeasurementUtilities() {
   }
 
   const removeMeasurement = () => {
-    if (state.viewer.instance?.removeMeasurement) {
-      state.viewer.instance.removeMeasurement()
-    }
+    const measExt = state.viewer.instance.getExtension(MeasurementsExtension)
+    if (measExt?.removeMeasurement) measExt.removeMeasurement()
   }
 
   const clearMeasurements = () => {

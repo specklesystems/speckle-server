@@ -54,7 +54,6 @@ export function useStateSerialization() {
     const { concreteResourceIdString } = options || {}
 
     const camControls = state.viewer.instance.getExtension(CameraController).controls
-    const box = state.viewer.instance.getCurrentSectionBox()
 
     const ret: SerializedViewerState = {
       projectId: state.projectId.value,
@@ -112,7 +111,7 @@ export function useStateSerialization() {
           zoom: (get(camControls, '_zoom') as number) || 1 // kinda hacky, _zoom is a protected prop
         },
         viewMode: state.ui.viewMode.value,
-        sectionBox: state.ui.sectionBox.value ? box : null,
+        sectionBox: state.ui.sectionBox.value,
         lightConfig: { ...state.ui.lightConfig.value },
         explodeFactor: state.ui.explodeFactor.value,
         selection: state.ui.selection.value?.toArray() || null,

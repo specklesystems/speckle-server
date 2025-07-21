@@ -2,9 +2,17 @@ import {
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
-  LegacyViewer,
+  Viewer,
+  CameraController,
+  SectionTool,
+  SectionOutlines,
+  ExplodeExtension,
+  FilteringExtension,
+  DiffExtension,
+  MeasurementsExtension,
+  SelectionExtension,
   MeasurementType,
-  FilteringExtension
+  ViewModes
 } from '@speckle/viewer'
 import {
   type FilteringState,
@@ -13,7 +21,6 @@ import {
   type SpeckleView,
   type MeasurementOptions,
   type DiffResult,
-  type Viewer,
   type WorldTree,
   type VisualDiffMode,
   ViewMode
@@ -64,7 +71,6 @@ import {
 } from '~/lib/viewer/composables/setup/core'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
-import { PassReader } from '../extensions/PassReader'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
 
 export type LoadedModel = NonNullable<
@@ -95,7 +101,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * The actual viewer instance
      */
-    instance: LegacyViewer
+    instance: Viewer
     /**
      * Container onto which the Viewer instance is attached
      */
@@ -335,11 +341,22 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
     container.style.width = '100%'
     container.style.height = '100%'
 
-    const viewer = new LegacyViewer(container, {
+    const viewer = new Viewer(container, {
       ...DefaultViewerParams,
       verbose: !!(import.meta.client && params.viewerDebug)
     })
-    viewer.createExtension(PassReader)
+
+    // Register essential extensions (mirrors LegacyViewer default set)
+    viewer.createExtension(CameraController)
+    viewer.createExtension(SectionTool)
+    viewer.createExtension(SectionOutlines)
+    viewer.createExtension(FilteringExtension)
+    viewer.createExtension(ExplodeExtension)
+    viewer.createExtension(DiffExtension)
+    viewer.createExtension(MeasurementsExtension)
+    viewer.createExtension(SelectionExtension)
+    viewer.createExtension(ViewModes)
+
     const initPromise = viewer.init()
 
     return {
