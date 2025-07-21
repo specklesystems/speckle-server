@@ -56,7 +56,7 @@ export class MemoryCache {
     this.currentSize += item.size || 0
     this.cache.set(
       item.baseId,
-      new MemoryCacheItem(item, (testNow || Date.now()) + this.options.ttlms)
+      new MemoryCacheItem(item, (testNow || this.now()) + this.options.ttlms)
     )
 
     if (!this.isGathered.has(item.baseId)) {
@@ -69,7 +69,7 @@ export class MemoryCache {
     if (this.disposed) throw new Error('MemoryCache is disposed')
     const item = this.cache.get(id)
     if (item) {
-      item.setAccess(Date.now(), this.options.ttlms)
+      item.setAccess(this.now(), this.options.ttlms)
       return item.getItem()
     }
     return undefined
