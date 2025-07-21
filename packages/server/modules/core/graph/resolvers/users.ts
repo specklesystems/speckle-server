@@ -33,6 +33,7 @@ import {
 } from '@/modules/core/services/users/management'
 import {
   deleteStreamFactory,
+  getExplicitProjects,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { dbLogger } from '@/observability/logging'
@@ -51,6 +52,8 @@ import { asOperation } from '@/modules/shared/command'
 import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -67,6 +70,10 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  queryAllProjects: queryAllProjectsFactory({
+    getExplicitProjects: getExplicitProjects({ db })
+  }),
+  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db }),
   emitEvent: getEventBus().emit
@@ -88,7 +95,7 @@ const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
   getUsers: legacyGetPaginatedUsersFactory({ db })
 })
 
-export = {
+export default {
   Query: {
     async activeUser(_parent, _args, context) {
       const activeUserId = context.userId

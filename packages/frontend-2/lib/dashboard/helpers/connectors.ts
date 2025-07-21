@@ -24,7 +24,7 @@ export const connectorItems: ConnectorItem[] = [
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
   {
-    title: 'Rhino + Grasshopper (beta)',
+    title: 'Rhino + Grasshopper',
     slug: 'rhino',
     description:
       'Publish and load Rhino and Grasshopper models for high-quality design coordination and business intelligence workflows.',

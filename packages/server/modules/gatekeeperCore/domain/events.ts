@@ -1,4 +1,4 @@
-import { BillingInterval } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { BillingInterval } from '@/modules/core/graph/generated/graphql'
 import { WorkspacePlan } from '@speckle/shared'
 
 export const gatekeeperEventNamespace = 'gatekeeper' as const

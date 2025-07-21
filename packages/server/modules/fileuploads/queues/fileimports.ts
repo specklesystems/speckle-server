@@ -5,11 +5,12 @@ import {
   getFileImportServiceRhinoQueueName,
   getFileImportTimeLimitMinutes,
   getRedisUrl,
+  getServerOrigin,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { Logger, fileUploadsLogger as logger } from '@/observability/logging'
 import { TIME, TIME_MS } from '@speckle/shared'
-import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
+import { initializeQueue as setupQueue } from '@speckle/shared/queue'
 import { JobPayload } from '@speckle/shared/workers/fileimport'
 import { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import Bull, {
@@ -21,6 +22,14 @@ import {
   NumberOfFileImportRetries,
   DelayBetweenFileImportRetriesMinutes
 } from '@/modules/fileuploads/domain/consts'
+import { Knex } from 'knex'
+import { migrateDbToLatest } from '@/db/migrations'
+import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
+import {
+  getBackgroundJobCountFactory,
+  storeBackgroundJobFactory
+} from '@/modules/backgroundjobs/repositories'
+import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -39,12 +48,14 @@ const limiter = {
   duration: TIME_MS.second
 }
 
+const timeout =
+  NumberOfFileImportRetries *
+  (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
+  TIME_MS.minute
+
 const defaultJobOptions = {
   attempts: NumberOfFileImportRetries,
-  timeout:
-    NumberOfFileImportRetries *
-    (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
-    TIME_MS.minute,
+  timeout,
   backoff: {
     type: 'fixed',
     delay: DelayBetweenFileImportRetriesMinutes * TIME_MS.minute
@@ -104,11 +115,71 @@ export const initializeQueueFactory =
       shutdown: async () => await queue.close(),
       scheduleJob: async (jobData: JobPayload): Promise<void> => {
         await queue.add(jobData, defaultJobOptions)
+      },
+      metrics: {
+        getPendingJobCount: () => queue.count(),
+        getWaitingJobCount: () => queue.getWaitingCount(),
+        getActiveJobCount: () => queue.getActiveCount()
       }
     }
     fileImportQueues.push(fileImportQueue)
     return fileImportQueue
   }
+
+export const initializePostgresQueue = async ({
+  label,
+  supportedFileTypes,
+  db
+}: {
+  label: string
+  db: Knex
+  supportedFileTypes: string[]
+}): Promise<FileImportQueue> => {
+  // migrating the DB up, the queue DB might be added based on a config
+  await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
+
+  const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+    jobConfig: { maxAttempt: 3, timeoutMs: timeout },
+    storeBackgroundJob: storeBackgroundJobFactory({
+      db,
+      originServerUrl: getServerOrigin()
+    })
+  })
+  const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
+
+  const fileImportQueue = {
+    label,
+    supportedFileTypes: supportedFileTypes.map(
+      (type) => type.toLocaleLowerCase() // Normalize file types to lowercase (this is a safeguard to prevent stupid typos in the future)
+    ),
+    shutdown: async () => {},
+    scheduleJob: async (jobData: JobPayload) => {
+      await scheduleBackgroundJob({
+        jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
+      })
+    },
+    metrics: {
+      getPendingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport
+        }),
+      getWaitingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport,
+          minAttempts: 1
+        }),
+      getActiveJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Processing,
+          jobType: BackgroundJobType.FileImport
+        })
+    }
+  }
+  fileImportQueues.push(fileImportQueue)
+  return fileImportQueue
+}
 
 export const initializeRhinoQueueFactory =
   (deps: { initializeQueue: ReturnType<typeof initializeQueueFactory> }) =>

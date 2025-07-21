@@ -50,7 +50,7 @@ import {
   grantStreamPermissionsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 import { insertInviteAndDeleteOldFactory } from '@/modules/serverinvites/repositories/serverInvites'

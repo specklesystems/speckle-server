@@ -14,7 +14,7 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { merge } from 'lodash'
+import { merge } from 'lodash-es'
 
 const createTestEmail = (
   emailInput?: Partial<UserEmail & { domain: string }>

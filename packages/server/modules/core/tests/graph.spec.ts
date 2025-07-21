@@ -18,7 +18,8 @@ import { authorizeResolver } from '@/modules/shared'
 import {
   getStreamFactory,
   revokeStreamPermissionsFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import {
   getUserFactory,
@@ -59,7 +60,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { Express } from 'express'
 import { Server } from 'http'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
@@ -76,6 +77,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -83,6 +85,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const getUsers = legacyGetPaginatedUsersFactory({ db })

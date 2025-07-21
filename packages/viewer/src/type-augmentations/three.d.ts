@@ -31,6 +31,7 @@ declare module 'three' {
   interface Box3 {
     intersectOBB(obb: OBB): OBB | null
     fromOBB(obb: OBB): Box3
+    isInfiniteBox(): boolean
   }
 }
 

@@ -9,7 +9,7 @@ import {
 import { ModelNotFoundError } from '@/modules/core/errors/model'
 import { ensureError } from '@speckle/shared'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 
 export const registerUploadCompleteAndStartFileImportFactory = (deps: {
   registerCompletedUpload: RegisterCompletedUpload

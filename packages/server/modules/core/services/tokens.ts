@@ -42,6 +42,8 @@ import {
   decodeIsoDateCursor,
   encodeIsoDateCursor
 } from '@/modules/shared/helpers/dbHelper'
+import { pick } from 'lodash-es'
+import { LogicError } from '@/modules/shared/errors'
 
 /*
   Tokens
@@ -145,6 +147,7 @@ export const createPersonalAccessTokenFactory =
 export const createEmbedTokenFactory =
   (deps: {
     createToken: CreateAndStoreUserToken
+    getToken: GetApiTokenById
     storeEmbedToken: StoreEmbedApiToken
   }): CreateAndStoreEmbedToken =>
   async ({ projectId, userId, resourceIdString, lifespan }) => {
@@ -174,7 +177,19 @@ export const createEmbedTokenFactory =
 
     await deps.storeEmbedToken(tokenMetadata)
 
-    return { token, tokenMetadata }
+    const apiToken = await deps.getToken(id)
+
+    if (!apiToken) {
+      throw new LogicError('Failed to create api token for embed')
+    }
+
+    return {
+      token,
+      tokenMetadata: {
+        ...tokenMetadata,
+        ...pick(apiToken, 'createdAt', 'lastUsed', 'lifespan')
+      }
+    }
   }
 
 export const getPaginatedProjectEmbedTokensFactory =
@@ -190,7 +205,7 @@ export const getPaginatedProjectEmbedTokensFactory =
         projectId,
         filter: {
           createdBefore: cursor,
-          limit: 10
+          limit: filter.limit
         }
       }),
       deps.countEmbedTokens({ projectId })

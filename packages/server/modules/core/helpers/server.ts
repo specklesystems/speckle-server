@@ -1,7 +1,7 @@
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
 import type { IncomingMessage } from 'http'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import { parse } from 'url'
 
 export const getRequestPath = (req: IncomingMessage | Request) => {

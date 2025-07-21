@@ -8,6 +8,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { noErrors } from '@/test/helpers'
 import { TIME_MS } from '@speckle/shared'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
+import { fileURLToPath } from 'url'
 
 const { createStream, createUser, createToken } = initUploadTestEnvironment()
 const gqlQueryToListFileUploads = `query ($streamId: String!) {
@@ -76,11 +77,12 @@ describe('FileUploads @fileuploads integration', () => {
 
   describe('Uploads files', () => {
     it('Should upload a single file', async () => {
+      const readmePath = fileURLToPath(import.meta.resolve('@/readme.md'))
       const response = await request(app)
         .post(`/api/file/autodetect/${createdStreamId}/main`)
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
-        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+        .attach('test.ifc', readmePath, 'test.ifc')
 
       expect(response.statusCode).to.equal(201)
       expect(response.headers['content-type']).to.contain('application/json;')
@@ -104,8 +106,12 @@ describe('FileUploads @fileuploads integration', () => {
       const response = await request(app)
         .post(`/api/file/autodetect/${createdStreamId}/main`)
         .set('Authorization', `Bearer ${userOneToken}`)
-        .attach('blob1', require.resolve('@/readme.md'), 'test1.ifc')
-        .attach('blob2', require.resolve('@/package.json'), 'test2.ifc')
+        .attach('blob1', fileURLToPath(import.meta.resolve('@/readme.md')), 'test1.ifc')
+        .attach(
+          'blob2',
+          fileURLToPath(import.meta.resolve('@/package.json')),
+          'test2.ifc'
+        )
       expect(response.status).to.equal(201)
       expect(response.headers['content-type']).to.contain('application/json;')
       expect(response.body.uploadResults).to.have.lengthOf(2)
@@ -213,7 +219,11 @@ describe('FileUploads @fileuploads integration', () => {
         .post(`/api/file/autodetect/${createdStreamId}/main`)
         .set('Authorization', `Bearer ${badToken}`)
         .set('Accept', 'application/json')
-        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+        .attach(
+          'test.ifc',
+          fileURLToPath(import.meta.resolve('@/readme.md')),
+          'test.ifc'
+        )
       expect(response.statusCode).to.equal(403)
       const gqlResponse = await sendRequest(userOneToken, {
         query: gqlQueryToListFileUploads,
@@ -233,7 +243,11 @@ describe('FileUploads @fileuploads integration', () => {
         .post(`/api/file/autodetect/${badStreamId}/main`)
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
-        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+        .attach(
+          'test.ifc',
+          fileURLToPath(import.meta.resolve('@/readme.md')),
+          'test.ifc'
+        )
       expect(response.statusCode).to.equal(404) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
       const gqlResponse = await sendRequest(userOneToken, {
         query: gqlQueryToListFileUploads,
@@ -260,7 +274,11 @@ describe('FileUploads @fileuploads integration', () => {
         .post(`/api/file/autodetect/${streamTwoId}/main`)
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
-        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+        .attach(
+          'test.ifc',
+          fileURLToPath(import.meta.resolve('@/readme.md')),
+          'test.ifc'
+        )
 
       expect(response.statusCode).to.equal(403)
       expect(response.body).to.deep.equal({

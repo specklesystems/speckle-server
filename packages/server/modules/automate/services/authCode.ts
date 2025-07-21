@@ -4,7 +4,7 @@ import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/manage
 import { EventBus } from '@/modules/shared/services/eventBus'
 import cryptoRandomString from 'crypto-random-string'
 import Redis from 'ioredis'
-import { get, has, isObjectLike } from 'lodash'
+import { get, has, isObjectLike } from 'lodash-es'
 import { Logger } from 'pino'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
@@ -15,6 +15,7 @@ export enum AuthCodePayloadAction {
   ListUserFunctions = 'listUserFunctions',
   BecomeFunctionAuthor = 'becomeFunctionAuthor',
   GetAvailableGithubOrganizations = 'getAvailableGithubOrganizations',
+  GenerateFunctionToken = 'generateFunctionToken',
   UpdateFunction = 'updateFunction'
 }
 

@@ -1,41 +1,123 @@
+import { CustomLogger } from '../types/functions.js'
 import KeyedQueue from './keyedQueue.js'
+
+/**
+ * Default wait time in milliseconds for processing ongoing tasks during disposal.
+ * This value was chosen to balance responsiveness and CPU usage in typical scenarios.
+ */
+const PROCESSING_WAIT_TIME_MS = 100
 
 export default class BatchingQueue<T> {
   #queue: KeyedQueue<string, T> = new KeyedQueue<string, T>()
   #batchSize: number
   #processFunction: (batch: T[]) => Promise<void>
+  #timeoutId: ReturnType<typeof setTimeout> | null = null
+  #isProcessing = false
+  #logger: CustomLogger
 
-  #baseInterval: number
-  #minInterval: number
-  #maxInterval: number
-
-  #processingLoop: Promise<void>
   #disposed = false
+  #batchTimeout: number
+
+  // Helper methods for cross-environment timeout handling
+  #getSetTimeoutFn(): typeof setTimeout {
+    // First check for window object (browser), then fallback to global (node), then just use setTimeout
+    return typeof window !== 'undefined'
+      ? window.setTimeout.bind(window)
+      : typeof global !== 'undefined'
+      ? global.setTimeout
+      : setTimeout
+  }
+
+  #getClearTimeoutFn(): typeof clearTimeout {
+    // First check for window object (browser), then fallback to global (node), then just use clearTimeout
+    return typeof window !== 'undefined'
+      ? window.clearTimeout.bind(window)
+      : typeof global !== 'undefined'
+      ? global.clearTimeout
+      : clearTimeout
+  }
 
   constructor(params: {
     batchSize: number
-    maxWaitTime?: number
+    maxWaitTime: number
     processFunction: (batch: T[]) => Promise<void>
+    logger?: CustomLogger
   }) {
     this.#batchSize = params.batchSize
-    this.#baseInterval = Math.min(params.maxWaitTime ?? 200, 200) // Initial batch time (ms)
-    this.#minInterval = Math.min(params.maxWaitTime ?? 100, 100) // Minimum batch time
-    this.#maxInterval = Math.min(params.maxWaitTime ?? 3000, 3000) // Maximum batch time
     this.#processFunction = params.processFunction
-    this.#processingLoop = this.#loop()
+    this.#batchTimeout = params.maxWaitTime
+    this.#logger = params.logger || ((): void => {})
   }
 
   async disposeAsync(): Promise<void> {
     this.#disposed = true
-    await this.#processingLoop
+    if (this.#timeoutId) {
+      this.#getClearTimeoutFn()(this.#timeoutId)
+      this.#timeoutId = null
+    }
+
+    // Wait for any ongoing processing to finish
+    while (this.#isProcessing) {
+      await new Promise((resolve) =>
+        this.#getSetTimeoutFn()(resolve, PROCESSING_WAIT_TIME_MS)
+      )
+    }
+
+    // After any ongoing flush is completed, there might be items in the queue.
+    // We should flush them.
+    if (this.#queue.size > 0) {
+      await this.#flush()
+    }
   }
 
   add(key: string, item: T): void {
+    if (this.#disposed) return
     this.#queue.enqueue(key, item)
+    this.#addCheck()
   }
 
   addAll(keys: string[], items: T[]): void {
+    if (this.#disposed) return
     this.#queue.enqueueAll(keys, items)
+    this.#addCheck()
+  }
+
+  #addCheck(): void {
+    if (this.#disposed) return
+    if (this.#queue.size >= this.#batchSize) {
+      // Fire and forget, no need to await
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.#flush()
+    } else {
+      if (this.#timeoutId) {
+        this.#getClearTimeoutFn()(this.#timeoutId)
+      }
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      this.#timeoutId = this.#getSetTimeoutFn()(() => this.#flush(), this.#batchTimeout)
+    }
+  }
+
+  async #flush(): Promise<void> {
+    if (this.#timeoutId) {
+      this.#getClearTimeoutFn()(this.#timeoutId)
+      this.#timeoutId = null
+    }
+
+    if (this.#isProcessing || this.#queue.size === 0) {
+      return
+    }
+    this.#isProcessing = true
+
+    const batchToProcess = this.#getBatch(this.#batchSize)
+
+    try {
+      await this.#processFunction(batchToProcess)
+    } catch (error) {
+      this.#logger('Batch processing failed:', error)
+    } finally {
+      this.#isProcessing = false
+    }
+    this.#addCheck()
   }
 
   get(id: string): T | undefined {
@@ -52,38 +134,5 @@ export default class BatchingQueue<T> {
 
   #getBatch(batchSize: number): T[] {
     return this.#queue.spliceValues(0, Math.min(batchSize, this.#queue.size))
-  }
-
-  async #loop(): Promise<void> {
-    let interval = this.#baseInterval
-    while (!this.#disposed || this.#queue.size > 0) {
-      const startTime = performance.now()
-      if (this.#queue.size > 0) {
-        const batch = this.#getBatch(this.#batchSize)
-        //console.log('running with queue size of ' + this.#queue.length)
-        await this.#processFunction(batch)
-      }
-      if (this.#queue.size < this.#batchSize / 2) {
-        //refigure interval
-        const endTime = performance.now()
-        const duration = endTime - startTime
-        if (duration > interval) {
-          interval = Math.min(interval * 1.5, this.#maxInterval) // Increase if slow or empty
-        } else {
-          interval = Math.max(interval * 0.8, this.#minInterval) // Decrease if fast
-        }
-        /*console.log(
-          'queue is waiting ' +
-            interval / 1000 +
-            ' with queue size of ' +
-            this.#queue.length
-        )*/
-        await this.#delay(interval)
-      }
-    }
-  }
-
-  #delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

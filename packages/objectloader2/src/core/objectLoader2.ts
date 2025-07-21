@@ -1,13 +1,17 @@
+import { MemoryCache } from '../deferment/MemoryCache.js'
 import { DefermentManager } from '../deferment/defermentManager.js'
 import AggregateQueue from '../queues/aggregateQueue.js'
 import AsyncGeneratorQueue from '../queues/asyncGeneratorQueue.js'
-import { CustomLogger } from '../types/functions.js'
+import { CustomLogger, take } from '../types/functions.js'
 import { Item, Base } from '../types/types.js'
 import { Database, Downloader } from './interfaces.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
 import { ObjectLoader2Options, CacheOptions } from './options.js'
 import { CacheReader } from './stages/cacheReader.js'
 import { CacheWriter } from './stages/cacheWriter.js'
+
+const MAX_CLOSURES_TO_TAKE = 100
+const EXPECTED_CLOSURE_VALUE = 100
 
 export class ObjectLoader2 {
   #rootId: string
@@ -20,10 +24,12 @@ export class ObjectLoader2 {
   #cacheWriter: CacheWriter
 
   #deferments: DefermentManager
+  #cache: MemoryCache
 
   #gathered: AsyncGeneratorQueue<Item>
 
   #root?: Item = undefined
+  #isRootStored = false
 
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
@@ -34,32 +40,36 @@ export class ObjectLoader2 {
       maxCacheReadSize: 10_000,
       maxCacheWriteSize: 10_000,
       maxWriteQueueSize: 40_000,
-      maxCacheBatchWriteWait: 3_000,
-      maxCacheBatchReadWait: 3_000
+      maxCacheBatchWriteWait: 100, //100 ms, next to nothing!
+      maxCacheBatchReadWait: 100 //100 ms, next to nothing!
     }
 
     this.#gathered = new AsyncGeneratorQueue()
 
     this.#database = options.database
-    this.#deferments = new DefermentManager({
-      maxSizeInMb: 2_000, // 2 GBs
-      ttlms: 15_000, // 15 seconds
-      logger: this.#logger
-    })
+    this.#cache = new MemoryCache(
+      {
+        maxSizeInMb: 500, // 500 MB
+        ttlms: 5_000 // 5 seconds
+      },
+      this.#logger
+    )
+    this.#deferments = new DefermentManager(this.#cache, this.#logger)
     this.#downloader = options.downloader
     this.#cacheReader = new CacheReader(this.#database, this.#deferments, cacheOptions)
     this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
-    this.#cacheWriter = new CacheWriter(this.#database, this.#deferments, cacheOptions)
+    this.#cacheWriter = new CacheWriter(this.#database, cacheOptions)
   }
 
   async disposeAsync(): Promise<void> {
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
-      this.#cacheReader.disposeAsync(),
-      this.#cacheWriter.disposeAsync()
+      this.#cacheWriter.disposeAsync(),
+      this.#cacheReader.disposeAsync()
     ])
     this.#deferments.dispose()
+    this.#cache.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {
@@ -67,6 +77,8 @@ export class ObjectLoader2 {
       this.#root = (await this.#database.getAll([this.#rootId]))[0]
       if (!this.#root) {
         this.#root = await this.#downloader.downloadSingle()
+      } else {
+        this.#isRootStored = true
       }
     }
     return this.#root
@@ -97,6 +109,12 @@ export class ObjectLoader2 {
     const sortedClosures = Object.entries(rootItem.base.__closure ?? []).sort(
       (a, b) => b[1] - a[1]
     )
+    this.#logger(
+      'calculated closures: ',
+      !take(sortedClosures.values(), MAX_CLOSURES_TO_TAKE).every(
+        (x) => x[1] === EXPECTED_CLOSURE_VALUE
+      )
+    )
     const children = sortedClosures.map((x) => x[0])
     const total = children.length + 1 // +1 for the root object
     this.#downloader.initializePool({
@@ -108,11 +126,16 @@ export class ObjectLoader2 {
     this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
+      this.#deferments.undefer(item, (id: string) => this.#cacheReader.requestItem(id))
       yield item.base! //always defined, as we add it to the queue
       count++
       if (count >= total) {
         break
       }
+    }
+    if (!this.#isRootStored) {
+      await this.#database.saveBatch({ batch: [rootItem] })
+      this.#isRootStored = true
     }
   }
 

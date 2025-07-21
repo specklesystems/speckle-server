@@ -2,7 +2,6 @@ import {
   Camera,
   CircleGeometry,
   Color,
-  DoubleSide,
   DynamicDrawUsage,
   Group,
   InterleavedBufferAttribute,
@@ -22,11 +21,9 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
 import { Geometry } from '../../converter/Geometry.js'
 import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
-import { SpeckleText } from '../../objects/SpeckleText.js'
-import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial.js'
+import { TextLabel, TextLabelParams } from '../../objects/TextLabel.js'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 import { ObjectLayers } from '../../../IViewer.js'
-import Logger from '../../utils/Logger.js'
 
 export interface MeasurementPointGizmoStyle {
   dashedLine?: boolean
@@ -55,19 +52,21 @@ const DefaultMeasurementPointGizmoStyle = {
   pointOpacity: 1,
   textColor: 0xffffff,
   textOpacity: 1,
-  textPixelHeight: 17,
+  textPixelHeight: 11,
   pointPixelHeight: 5
 }
 
 export class MeasurementPointGizmo extends Group {
-  private normalIndicator: LineSegments2
+  public normalIndicator: LineSegments2
   private normalIndicatorBuffer: Float64Array = new Float64Array(24)
   private normalIndicatorNormal: Vector3 = new Vector3()
   private normalIndicatorTangent: Vector3 = new Vector3()
   private normalIndicatorBitangent: Vector3 = new Vector3()
-  private line: LineSegments2
-  private point: Mesh
-  private text: SpeckleText
+
+  public line: LineSegments2
+  public point: Mesh<CircleGeometry, SpeckleBasicMaterial>
+  public text: TextLabel
+
   private _style: MeasurementPointGizmoStyle = Object.assign(
     {},
     DefaultMeasurementPointGizmoStyle
@@ -80,14 +79,10 @@ export class MeasurementPointGizmo extends Group {
 
   public set highlight(value: boolean) {
     if (value) {
-      ;(this.normalIndicator.material as SpeckleLineMaterial).color = new Color(
-        0xff0000
-      )
-      ;(this.line.material as SpeckleLineMaterial).color = new Color(0xff0000)
-      ;(this.point.material as SpeckleBasicMaterial).color = new Color(0xff0000)
-      ;(this.text.textMesh.material as SpeckleTextMaterial).color.copy(
-        new Color(0xff0000)
-      )
+      this.normalIndicator.material.color = new Color(0xff0000)
+      this.line.material.color = new Color(0xff0000)
+      this.point.material.color = new Color(0xff0000)
+      this.text.material.color.copy(new Color(0xff0000))
     } else this.updateStyle()
   }
 
@@ -153,7 +148,7 @@ export class MeasurementPointGizmo extends Group {
   private getPointMaterial(color?: number) {
     const material = new SpeckleBasicMaterial(
       { color: color ? color : this._style.pointColor },
-      ['BILLBOARD_FIXED']
+      ['BILLBOARD_SCREEN']
     )
     material.opacity =
       this._style.pointOpacity !== undefined
@@ -163,38 +158,13 @@ export class MeasurementPointGizmo extends Group {
     material.color.convertSRGBToLinear()
     material.toneMapped = false
     material.depthTest = false
-    material.billboardPixelHeight =
+    const billboardSize =
       (this._style.pointPixelHeight !== undefined
         ? this._style.pointPixelHeight
         : DefaultMeasurementPointGizmoStyle.pointPixelHeight) * window.devicePixelRatio
-    material.userData.billboardPos.value.copy(this.point.position)
+    material.billboardPixelSize = new Vector2(billboardSize, billboardSize)
+
     return material
-  }
-
-  private getTextMaterial() {
-    const material = new SpeckleTextMaterial(
-      {
-        color: this._style.textColor,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['BILLBOARD_FIXED']
-    )
-    material.toneMapped = false
-    material.color.convertSRGBToLinear()
-    material.opacity =
-      this._style.textOpacity !== undefined
-        ? this._style.textOpacity
-        : DefaultMeasurementPointGizmoStyle.textOpacity
-    material.transparent = material.opacity < 1
-    material.depthTest = false
-    material.billboardPixelHeight =
-      (this._style.textPixelHeight !== undefined
-        ? this._style.textPixelHeight
-        : DefaultMeasurementPointGizmoStyle.textPixelHeight) * window.devicePixelRatio
-    material.userData.billboardPos.value.copy(this.text.position)
-
-    return material.getDerivedMaterial()
   }
 
   public constructor(style?: MeasurementPointGizmoStyle) {
@@ -235,24 +205,43 @@ export class MeasurementPointGizmo extends Group {
 
     const sphereGeometry = new CircleGeometry(1, 16)
 
-    this.point = new Mesh(sphereGeometry, undefined)
+    this.point = new Mesh(sphereGeometry)
     this.point.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.visible = false
     this.point.renderOrder = 1
 
     const point2 = new Mesh(sphereGeometry, this.getPointMaterial(0xffffff))
     point2.renderOrder = 2
-    point2.material.billboardPixelHeight =
+    const pixelSize =
       (this._style.pointPixelHeight !== undefined
         ? this._style.pointPixelHeight
         : DefaultMeasurementPointGizmoStyle.pointPixelHeight) *
         window.devicePixelRatio -
       2 * window.devicePixelRatio
+    point2.material.billboardPixelSize = new Vector2(pixelSize, pixelSize)
     point2.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.add(point2)
 
-    this.text = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
-    this.text.textMesh.material = null
+    this.text = new TextLabel({
+      textColor: new Color(this._style.textColor),
+      fontSize:
+        this._style.textPixelHeight !== undefined
+          ? this._style.textPixelHeight
+          : DefaultMeasurementPointGizmoStyle.textPixelHeight,
+      textOpacity:
+        this._style.textOpacity !== undefined
+          ? this._style.textOpacity
+          : DefaultMeasurementPointGizmoStyle.textOpacity,
+      billboard: 'screen',
+      anchorX: 'center',
+      anchorY: 'middle',
+      backgroundColor: new Color(0x047efb),
+      backgroundCornerRadius: 0.3,
+      backgroundMargins: new Vector2(30, 10),
+      objectLayer: ObjectLayers.MEASUREMENTS
+    })
+    this.text.material.depthTest = false
+    this.text.depthOffset = -0.1
 
     this.add(this.point)
     this.add(this.normalIndicator)
@@ -380,12 +369,6 @@ export class MeasurementPointGizmo extends Group {
 
   public updatePoint(position: Vector3) {
     this.point.position.copy(position)
-    ;(this.point.material as SpeckleBasicMaterial).userData.billboardPos.value.copy(
-      this.point.position
-    )
-    ;(
-      (this.point.children[0] as Mesh).material as SpeckleBasicMaterial
-    ).userData.billboardPos.value.copy(this.point.position)
   }
 
   public updateLine(points: Vector3[]) {
@@ -425,33 +408,23 @@ export class MeasurementPointGizmo extends Group {
     quaternion?: Quaternion,
     scale?: Vector3
   ): Promise<void> {
-    return this.text
-      .update({
-        textValue: value,
-        height: 1,
-        anchorX: '50%',
-        anchorY: '50%'
-      })
-      .then(() => {
-        this.text.style = {
-          backgroundColor: new Color(0x047efb),
-          billboard: true,
-          backgroundPixelHeight: 20
-        }
-        this.text.setTransform(position, quaternion, scale)
-        if (this.text.backgroundMesh) this.text.backgroundMesh.renderOrder = 3
-        this.text.textMesh.renderOrder = 4
-      })
-      .catch((reason) => {
-        Logger.log(`Could not update text: ${reason}`)
-      })
+    const params = {
+      text: value
+    } as TextLabelParams
+
+    if (position) this.text.position.copy(position)
+    if (quaternion) this.text.quaternion.copy(quaternion)
+    if (scale) this.text.scale.copy(scale)
+    this.text.updateMatrixWorld(true)
+
+    return this.text.updateParams(params)
   }
 
   public updateStyle() {
     this.normalIndicator.material = this.getNormalIndicatorMaterial()
     this.line.material = this.getLineMaterial()
     this.point.material = this.getPointMaterial()
-    this.text.textMesh.material = this.getTextMaterial()
+    void this.text.updateParams({ textColor: new Color(this._style.textColor) })
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {

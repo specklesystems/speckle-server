@@ -18,6 +18,7 @@ import {
   createStreamFactory,
   deleteStreamFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   getStreamsCollaboratorsFactory,
   grantStreamPermissionsFactory,
   markBranchStreamUpdatedFactory,
@@ -25,7 +26,7 @@ import {
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
-import { has, times } from 'lodash'
+import { has, times } from 'lodash-es'
 import { Streams } from '@/modules/core/dbSchema'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { sleep } from '@/test/helpers'
@@ -33,7 +34,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import {
   GetLimitedUserStreamsQuery,
   GetUserStreamsQuery
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { Get } from 'type-fest'
 import {
   createAuthedTestContext,
@@ -163,6 +164,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -245,6 +247,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const isStreamCollaborator = isStreamCollaboratorFactory({

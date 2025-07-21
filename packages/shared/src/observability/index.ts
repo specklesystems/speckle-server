@@ -12,6 +12,9 @@ type LogFormatter = (logObject: Record<string, unknown>) => Record<string, unkno
 const allowPrettyDebugger = ['1', 'true'].includes(
   process.env.ALLOW_PRETTY_DEBUGGER || 'false'
 )
+const debugNamespaces = (process.env.LOG_FILTER || '')
+  .split(',')
+  .filter((s) => !!s?.length)
 
 const defaultLevelFormatterFactory =
   (pretty: boolean): LogLevelFormatter =>
@@ -42,7 +45,23 @@ export function getLogger(
     messageKey: pretty ? 'msg' : '@mt',
     level: minimumLoggedLevel,
     // when not pretty, we need the time in the clef appropriate field, not from pino
-    timestamp: pretty ? pino.stdTimeFunctions.isoTime : false
+    timestamp: pretty ? pino.stdTimeFunctions.isoTime : false,
+    hooks: {
+      logMethod(args, method) {
+        // Invoke as is
+        if (!debugNamespaces.length) {
+          return method.apply(this, args)
+        }
+
+        // Filter out if component not in allowed debug namespaces
+        const component = (this.bindings() as { component: string }).component
+        if (debugNamespaces.includes(component)) {
+          return method.apply(this, args)
+        }
+
+        // Otherwise, skip actually logging
+      }
+    }
   }
 
   // pino-pretty hangs in debugger mode in node 22 for some (Ubuntu/WSL2?), dunno why
@@ -52,7 +71,7 @@ export function getLogger(
       options: {
         colorize: true,
         destination: 2, //stderr
-        ignore: 'time',
+        // ignore: 'time',
         levelFirst: true,
         singleLine: true
       }
@@ -60,6 +79,7 @@ export function getLogger(
   }
 
   logger = pino(pinoOptions)
+
   return logger
 }
 

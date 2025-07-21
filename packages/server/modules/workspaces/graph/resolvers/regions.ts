@@ -20,10 +20,10 @@ import {
 import { Roles } from '@speckle/shared'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -76,10 +76,10 @@ export default {
 
       // Move existing workspace projects to new target region
       if (FF_MOVE_PROJECT_REGION_ENABLED) {
-        const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
-          getStreams: legacyGetStreamsFactory({ db })
+        const queryAllProjects = queryAllProjectsFactory({
+          getExplicitProjects: getExplicitProjects({ db })
         })
-        for await (const projects of queryAllWorkspaceProjects({
+        for await (const projects of queryAllProjects({
           workspaceId
         })) {
           await Promise.all(

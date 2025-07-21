@@ -1,12 +1,12 @@
 // /* istanbul ignore file */
+import roles from '@/modules/core/roles'
+
 /*
 This migration is fixing the duplicate user problem reported 
 https://speckle.community/t/error-in-grasshopper-while-receiving-data-you-dont-have-access-to-stream-xxxxx-on-server-https-speckle-xyz-or-the-stream-does-not-exist/2003
 */
 
-exports.up = async (knex) => {
-  const roles = require('@/modules/core/roles')
-
+const up = async (knex) => {
   const Users = () => knex('users')
 
   // tableName, columnName that need migration
@@ -120,4 +120,6 @@ exports.up = async (knex) => {
   await runMigrations()
 }
 
-exports.down = async () => {}
+const down = async () => {}
+
+export { up, down }

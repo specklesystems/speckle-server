@@ -18,7 +18,7 @@ import { Roles } from '@speckle/shared'
  */
 const addStreamInviteSentOutActivityFactory =
   (deps: {
-    saveActivity: SaveStreamActivity
+    saveStreamActivity: SaveStreamActivity
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   async (payload: EventPayload<typeof ServerInvitesEvents.Created>) => {
@@ -29,7 +29,7 @@ const addStreamInviteSentOutActivityFactory =
     const userTarget = resolveTarget(invite.target)
     const targetDisplay = userTarget.userId || userTarget.userEmail
 
-    await deps.saveActivity({
+    await deps.saveStreamActivity({
       streamId: project.id,
       resourceType: StreamResourceTypes.Stream,
       resourceId: project.id,
@@ -48,7 +48,7 @@ const addStreamInviteSentOutActivityFactory =
  */
 const addStreamInviteAcceptedActivityFactory =
   (deps: {
-    saveActivity: SaveStreamActivity
+    saveStreamActivity: SaveStreamActivity
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   async (payload: EventPayload<typeof ServerInvitesEvents.Finalized>) => {
@@ -63,7 +63,7 @@ const addStreamInviteAcceptedActivityFactory =
 
     const differentFinalizer = trueFinalizerUserId !== userTarget.userId
 
-    await deps.saveActivity({
+    await deps.saveStreamActivity({
       streamId: project.id,
       resourceType: StreamResourceTypes.Stream,
       resourceId: project.id,
@@ -81,7 +81,7 @@ const addStreamInviteAcceptedActivityFactory =
  */
 const addStreamInviteDeclinedActivityFactory =
   (deps: {
-    saveActivity: SaveStreamActivity
+    saveStreamActivity: SaveStreamActivity
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   async (payload: EventPayload<typeof ServerInvitesEvents.Finalized>) => {
@@ -90,7 +90,7 @@ const addStreamInviteDeclinedActivityFactory =
     if (!project) return
 
     const userTarget = resolveTarget(invite.target)
-    await deps.saveActivity({
+    await deps.saveStreamActivity({
       streamId: project.id,
       resourceType: StreamResourceTypes.Stream,
       resourceId: project.id,
@@ -104,7 +104,7 @@ const addStreamInviteDeclinedActivityFactory =
 export const reportStreamInviteActivityFactory =
   (deps: {
     eventListen: EventBusListen
-    saveActivity: SaveStreamActivity
+    saveStreamActivity: SaveStreamActivity
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   () => {

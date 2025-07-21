@@ -36,7 +36,7 @@ import {
   Roles,
   ServerRoles
 } from '@speckle/shared'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
 import {
@@ -54,6 +54,11 @@ import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import { QueryAllProjects } from '@/modules/core/domain/projects/operations'
+import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -79,6 +84,11 @@ export const updateUserAndNotifyFactory =
     for (const entry of Object.entries(update)) {
       const key = entry[0] as keyof typeof update
       let val = entry[1]
+
+      if (key === 'avatar' && val === '') {
+        filteredUpdate[key] = null // avatar removal
+        continue
+      }
 
       if (key === 'avatar') {
         val = sanitizeImageUrl(val)
@@ -288,7 +298,9 @@ export const deleteUserFactory =
     isLastAdminUser: IsLastAdminUser
     getUserDeletableStreams: GetUserDeletableStreams
     deleteAllUserInvites: DeleteAllUserInvites
+    getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
     deleteUserRecord: DeleteUserRecord
+    queryAllProjects: QueryAllProjects
     emitEvent: EventBusEmit
   }): DeleteUser =>
   async (id, invokerId) => {
@@ -306,6 +318,39 @@ export const deleteUserFactory =
     // Delete all invites (they don't have a FK, so we need to do this manually)
     // THIS REALLY SHOULD BE A REACTION TO THE USER DELETED EVENT EMITTED HER
     await deps.deleteAllUserInvites(id)
+
+    const workspaceSeats = await deps.getUserWorkspaceSeats({ userId: id })
+    for (const seat of workspaceSeats) {
+      await deps.emitEvent({
+        eventName: WorkspaceEvents.SeatDeleted,
+        payload: {
+          updatedByUserId: id,
+          previousSeat: seat
+        }
+      })
+    }
+
+    const emitRevokeEventIfUserHasRole = async (project: StreamWithOptionalRole) => {
+      if (!project.role) return
+
+      await deps.emitEvent({
+        eventName: ProjectEvents.PermissionsRevoked,
+        payload: {
+          activityUserId: id,
+          removedUserId: id,
+          role: project.role,
+          project
+        }
+      })
+    }
+
+    for await (const projectsPage of deps.queryAllProjects({
+      userId: id
+    })) {
+      for (const project of projectsPage) {
+        await emitRevokeEventIfUserHasRole(project)
+      }
+    }
 
     const deleted = await deps.deleteUserRecord(id)
     if (deleted) {

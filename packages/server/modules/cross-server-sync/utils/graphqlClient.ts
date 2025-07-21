@@ -5,10 +5,10 @@ import {
   HttpLink,
   gql,
   ApolloQueryResult
-} from '@apollo/client/core/core.cjs'
+} from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context/context.cjs'
 import { getServerVersion } from '@/modules/shared/helpers/envHelper'
-import { CrossSyncClientTestQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { CrossSyncClientTestQuery } from '@/modules/core/graph/generated/graphql'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 export type GraphQLClient = ApolloClient<NormalizedCacheObject>

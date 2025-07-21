@@ -29,3 +29,5 @@ export type UserServerAppToken = UserServerAppTokenRecord
 export type PersonalApiToken = PersonalApiTokenRecord
 
 export type EmbedApiToken = EmbedApiTokenRecord
+export type EmbedApiTokenWithMetadata = EmbedApiToken &
+  Pick<ApiToken, 'createdAt' | 'lastUsed' | 'lifespan'>

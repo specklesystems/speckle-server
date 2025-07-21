@@ -1,5 +1,5 @@
 import { Optional } from '@speckle/shared'
-import { isUndefined } from 'lodash'
+import { isUndefined } from 'lodash-es'
 import {
   GetPaginatedBranchCommentsFactory,
   GetPaginatedBranchCommentsPage,

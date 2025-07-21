@@ -17,15 +17,15 @@ import { db } from '@/db/knex'
 import {
   createCustomerPortalUrlFactory,
   getRecurringPricesFactory,
+  getStripeClient,
   getStripeSubscriptionDataFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanPriceId,
-  getStripeClient,
   getWorkspacePlanProductId,
   getWorkspacePlanProductAndPriceIds
-} from '@/modules/gatekeeper/stripe'
+} from '@/modules/gatekeeper/helpers/prices'
 import {
   deleteCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
@@ -40,7 +40,7 @@ import {
   CreateCheckoutSession,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
+import { WorkspacePaymentMethod } from '@/modules/core/graph/generated/graphql'
 import { LogicError, UnauthorizedError } from '@/modules/shared/errors'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'
@@ -55,19 +55,19 @@ import {
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
 
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
-export = FF_GATEKEEPER_MODULE_ENABLED
+export default FF_GATEKEEPER_MODULE_ENABLED
   ? ({
       Workspace: {
         plan: async (parent) => {
@@ -117,7 +117,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               'This cannot be, if there is a sub, there is a workspace'
             )
           return await createCustomerPortalUrlFactory({
-            stripe: getStripeClient(),
+            getStripeClient,
             frontendOrigin: getFrontendOrigin()
           })({
             workspaceId: workspaceSubscription.workspaceId,
@@ -143,7 +143,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         planPrices: async (parent) => {
           const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
             getRecurringPrices: getRecurringPricesFactory({
-              stripe: getStripeClient()
+              getStripeClient
             }),
             getWorkspacePlanProductAndPriceIds
           })
@@ -207,8 +207,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const { workspaceId } = parent
 
           return await getWorkspaceModelCountFactory({
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-              getStreams: legacyGetStreamsFactory({ db })
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db })
             }),
             getPaginatedProjectModelsTotalCount: async (projectId, params) => {
               const regionDb = await getProjectDbClient({ projectId })
@@ -311,7 +311,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         planPrices: async () => {
           const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
             getRecurringPrices: getRecurringPricesFactory({
-              stripe: getStripeClient()
+              getStripeClient
             }),
             getWorkspacePlanProductAndPriceIds
           })
@@ -410,7 +410,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           )
 
           const createCheckoutSession = createCheckoutSessionFactory({
-            stripe: getStripeClient(),
+            getStripeClient,
             frontendOrigin: getFrontendOrigin(),
             getWorkspacePlanPrice: getWorkspacePlanPriceId
           })
@@ -454,13 +454,14 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
           )
-          const stripe = getStripeClient()
 
           const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
-              stripe,
-              getStripeSubscriptionData: getStripeSubscriptionDataFactory({ stripe })
+              getStripeClient,
+              getStripeSubscriptionData: getStripeSubscriptionDataFactory({
+                getStripeClient
+              })
             }),
             countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({
               db

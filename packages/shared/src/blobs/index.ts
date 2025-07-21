@@ -28,7 +28,8 @@ export const acceptedFileExtensions = [
   'svg',
   'eps',
   'gwb',
-  'skp'
+  'skp',
+  'pbix'
 ]
 
 export const BlobUploadStatus = <const>{

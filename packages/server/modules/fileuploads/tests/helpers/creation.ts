@@ -3,7 +3,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { FileImportMessage } from '@/modules/fileuploads/domain/operations'
-import { assign } from 'lodash'
+import { assign } from 'lodash-es'
 import {
   FileUploadRecord,
   FileUploadRecordV2
@@ -65,7 +65,8 @@ export const buildFileUploadRecord = (
     fileType: cryptoRandomString({ length: 10 }),
     fileSize: randomInt(1, 1e6),
     userId: cryptoRandomString({ length: 10 }),
-    modelId: cryptoRandomString({ length: 10 })
+    modelId: cryptoRandomString({ length: 10 }),
+    performanceData: null
   }
 
   return assign(defaults, overrides)

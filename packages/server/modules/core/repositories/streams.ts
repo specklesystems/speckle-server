@@ -1,4 +1,4 @@
-import _, {
+import {
   clamp,
   groupBy,
   has,
@@ -10,8 +10,9 @@ import _, {
   omit,
   omitBy,
   reduce,
-  toNumber
-} from 'lodash'
+  toNumber,
+  keyBy
+} from 'lodash-es'
 import {
   Streams,
   StreamAcl,
@@ -63,7 +64,6 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   DeleteProjectRole,
   UpdateProject,
-  GetRolesByUserId,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 import {
@@ -108,7 +108,8 @@ import {
   GetStreamsCollaborators,
   GetStreamsCollaboratorCounts,
   GetImplicitUserProjectsCountFactory,
-  GrantProjectPermissions
+  GrantProjectPermissions,
+  GetExplicitProjects
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
@@ -271,7 +272,7 @@ export const getFavoritedStreamsPageFactory =
   (deps: { db: Knex }): GetFavoritedStreamsPage =>
   async (params) => {
     const { userId, cursor, limit, streamIdWhitelist } = params
-    const finalLimit = _.clamp(limit || 25, 1, 25)
+    const finalLimit = clamp(limit || 25, 1, 25)
     const query = getFavoritedStreamsQueryBaseFactory(deps)(userId, streamIdWhitelist)
     query
       .select<
@@ -367,7 +368,7 @@ export const getBatchUserFavoriteDataFactory =
       .whereIn(StreamFavorites.col.streamId, streamIds)
 
     const rows = await query
-    return _.keyBy(rows, 'streamId')
+    return keyBy(rows, 'streamId')
   }
 
 /**
@@ -386,7 +387,7 @@ export const getBatchStreamFavoritesCountsFactory =
       .groupBy(StreamFavorites.col.streamId)
 
     const rows = await query
-    return _.mapValues(_.keyBy(rows, 'streamId'), (r) => parseInt(r?.count || '0'))
+    return mapValues(keyBy(rows, 'streamId'), (r) => parseInt(r?.count || '0'))
   }
 
 /**
@@ -444,7 +445,7 @@ export const getOwnedFavoritesCountByUserIdsFactory =
       .groupBy(StreamAcl.col.userId)
 
     const results = await query
-    return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r?.count || '0'))
+    return mapValues(keyBy(results, 'userId'), (r) => parseInt(r?.count || '0'))
   }
 
 /**
@@ -455,7 +456,7 @@ export const getStreamRolesFactory =
   async (userId: string, streamIds: string[]) => {
     const q = tables
       .streams(deps.db)
-      .select<{ id: string; role: Nullable<string> }[]>([
+      .select<{ id: string; role: Nullable<StreamRoles> }[]>([
         Streams.col.id,
         StreamAcl.col.role
       ])
@@ -467,8 +468,8 @@ export const getStreamRolesFactory =
       .whereIn(Streams.col.id, streamIds)
 
     const results = await q
-    return _.mapValues(
-      _.keyBy(results, (r) => r.id),
+    return mapValues(
+      keyBy(results, (r) => r.id),
       (v) => v.role
     )
   }
@@ -968,7 +969,7 @@ export const getUserStreamCountsFactory =
     }
 
     const results = await q
-    return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
+    return mapValues(keyBy(results, 'userId'), (r) => parseInt(r.count))
   }
 
 export const deleteStreamFactory =
@@ -1330,20 +1331,6 @@ export const getOnboardingBaseStreamFactory =
     return await q
   }
 
-export const getRolesByUserIdFactory =
-  ({ db }: { db: Knex }): GetRolesByUserId =>
-  async ({ userId, workspaceId }) => {
-    const query = db<Pick<StreamAclRecord, 'role' | 'resourceId' | 'userId'>>(
-      StreamAcl.name
-    ).where({ userId })
-    if (workspaceId) {
-      query
-        .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
-        .where({ workspaceId })
-    }
-    return await query
-  }
-
 /**
  * @deprecated Use getStreams() from the repository directly
  */
@@ -1502,4 +1489,47 @@ export const getImplicitUserProjectsCountFactory =
 
     const [{ count }] = await q
     return parseInt(count)
+  }
+
+/**
+ * Batch the explicit projects givent by the workspace, the user or both
+ */
+export const getExplicitProjects =
+  (deps: { db: Knex }): GetExplicitProjects =>
+  async ({ limit, cursor, filter: { userId, workspaceId } }) => {
+    if (!userId && !workspaceId) throw new LogicError('A filter must be provided')
+
+    const cursorTarget = Streams.col.id
+    const q = tables
+      .streams(deps.db)
+      .select<StreamWithOptionalRole[]>([
+        ...Object.values(Streams.col),
+        ...(userId ? [StreamAcl.col.role] : [])
+      ])
+      .limit(limit)
+      .orderBy(cursorTarget, 'desc')
+
+    if (userId) {
+      q.join(StreamAcl.name, (j) => {
+        j.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      })
+    }
+
+    if (cursor) {
+      q.where(cursorTarget, '<', decodeCursor(cursor))
+    }
+
+    if (workspaceId) {
+      q.where(Streams.col.workspaceId, workspaceId)
+    }
+
+    const rows = await q
+
+    return {
+      items: rows,
+      cursor: rows.length ? encodeCursor(rows[rows.length - 1].id) : null
+    }
   }

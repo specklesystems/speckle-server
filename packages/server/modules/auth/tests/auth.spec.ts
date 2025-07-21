@@ -22,7 +22,8 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import {
   getStreamFactory,
   createStreamFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -61,7 +62,7 @@ import { RateLimiterMemory } from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
 import type { Application } from 'express'
 import { passportAuthenticationCallbackFactory } from '@/modules/auth/services/passportService'
-import { testLogger as logger } from '@/observability/logging'
+import { extendLoggerComponent, logger as baseLogger } from '@/observability/logging'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
@@ -95,6 +96,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -186,6 +188,7 @@ const createUser = createUserFactory({
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })
+const logger = extendLoggerComponent(baseLogger, 'auth-tests')
 
 const expect = chai.expect
 

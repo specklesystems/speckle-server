@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker'
 import { RelativeURL } from '@speckle/shared'
 import { expect } from 'chai'
 import type { Express } from 'express'
-import { has, isString } from 'lodash'
+import { has, isString } from 'lodash-es'
 import request from 'supertest'
 
 export const appId = 'spklwebapp' // same values as on FE

@@ -259,6 +259,8 @@ import {
 } from '@vueuse/core'
 import type { LabelPosition } from '~~/src/composables/form/input'
 import { directive as vTippy } from 'vue-tippy'
+import { useBodyMountedMenuPositioning } from '~~/src/composables/layout/menu'
+import { HorizontalDirection } from '~~/src/lib'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
@@ -536,6 +538,16 @@ useIntersectionObserver(
   }
 )
 
+const { menuStyle } = useBodyMountedMenuPositioning({
+  menuOpenDirection: computed(() =>
+    props.menuOpenDirection === 'left'
+      ? HorizontalDirection.Left
+      : HorizontalDirection.Right
+  ),
+  menuWidth: computed(() => props.menuMaxWidth),
+  buttonBoundingBox: listboxButtonBounding
+})
+
 const title = computed(() => unref(props.label) || unref(props.name))
 const errorMessage = computed(() => {
   const base = error.value
@@ -762,60 +774,12 @@ const listboxOptionsClasses = computed(() => {
 })
 
 const listboxOptionsStyle = computed(() => {
-  const style: CSSProperties = {}
-  if (!isClient) return style
+  let style: CSSProperties = {}
+  if (!isClient || !props.mountMenuOnBody) return style
 
-  if (props.mountMenuOnBody) {
-    /**
-     * If menu width overridden (w/ menuMaxWidth) && mountMenuOnBody is true:
-     * 1.a. If menuMaxWidth is bigger than screen width, use screen width
-     * 1.b. If menumaxWidth is smaller than screen width, use menuMaxWidth
-     * 2. If 1.b. but menu is leaving screen bounds, make it open to the left, instead of right
-     */
-
-    const openToLeft = props.menuOpenDirection === 'left'
-
-    const top = listboxButtonBounding.top.value
-    const left = listboxButtonBounding.left.value
-    const width = listboxButtonBounding.width.value
-    const height = listboxButtonBounding.height.value
-
-    let finalWidth = width
-    let finalLeft = left
-
-    if (props.menuMaxWidth) {
-      const viewportWidth = window.innerWidth
-      const xMargin = 10 // how much space to leave in full-screen mode
-      const viewportWithoutMargins = viewportWidth - xMargin * 2
-
-      if (props.menuMaxWidth > viewportWithoutMargins) {
-        finalWidth = viewportWithoutMargins
-        finalLeft = xMargin
-      } else {
-        finalWidth = props.menuMaxWidth
-
-        if (openToLeft) {
-          finalLeft = left + width - props.menuMaxWidth
-          if (finalLeft < xMargin) {
-            finalLeft = xMargin
-          }
-        } else {
-          if (left + props.menuMaxWidth > viewportWithoutMargins) {
-            finalLeft = Math.max(left + width - props.menuMaxWidth, xMargin)
-          }
-        }
-      }
-    }
-
-    // if (props.menuOpenDirection === 'right') {
-    //   style.left = `${finalLeft}px`
-    // } else {
-    //   style.left = `${finalLeft}px`
-    // }
-
-    style.left = `${finalLeft}px`
-    style.width = `${finalWidth}px`
-    style.top = `${top + height}px`
+  style = {
+    ...style,
+    ...menuStyle.value
   }
 
   return style

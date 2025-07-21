@@ -1,16 +1,20 @@
 /* eslint-disable no-restricted-imports */
+import '../../bootstrap.js'
 import path from 'path'
 import yargs from 'yargs'
-import '../../bootstrap'
+import { hideBin } from 'yargs/helpers'
 import { cliLogger as logger } from '@/observability/logging'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { mochaHooks } from '@/test/hooks'
+import { beforeEntireTestRun } from '@/test/hooks'
+import { getModuleDirectory } from '@speckle/shared/environment/node'
 
 const main = async () => {
-  const execution = yargs
+  await yargs(hideBin(process.argv))
     .scriptName('yarn cli')
     .usage('$0 <cmd> [args]')
-    .commandDir(path.resolve(__dirname, './commands'), { extensions: ['js', 'ts'] })
+    .commandDir(path.resolve(getModuleDirectory(import.meta), './commands'), {
+      extensions: ['js', 'ts']
+    })
     .option('beforeAll', {
       type: 'boolean',
       default: false,
@@ -24,7 +28,7 @@ const main = async () => {
       // In test env, run beforeAll hooks to properly initialize everything first
       if (isBeforeAllSet && isTestEnv()) {
         logger.info('Running test beforeAll hooks...')
-        await (mochaHooks.beforeAll as () => Promise<void>)()
+        await beforeEntireTestRun()
       }
     })
     .fail((msg, err, yargs) => {
@@ -40,12 +44,10 @@ const main = async () => {
 
       process.exit(1)
     })
-    .help().argv
+    .help()
+    .parseAsync()
 
-  return execution
+  process.exit(0)
 }
 
-void main().then(() => {
-  // weird TS typing issue
-  yargs.exit(0, undefined as unknown as Error)
-})
+await main()

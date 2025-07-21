@@ -23,7 +23,12 @@ import {
   PerspectiveCamera,
   OrthographicCamera
 } from 'three'
-import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch.js'
+import {
+  type Batch,
+  type BatchUpdateRange,
+  GeometryType,
+  isAcceleratedBatchType
+} from './batching/Batch.js'
 import Batcher from './batching/Batcher.js'
 import { Geometry } from './converter/Geometry.js'
 import Input, { InputEvent } from './input/Input.js'
@@ -67,6 +72,8 @@ import Logger from './utils/Logger.js'
 
 /* TO DO: Not sure where to best import these */
 import '../type-augmentations/three-extensions.js'
+import { TextBatch } from '../index.js'
+import { SpeckleBatchedText } from './objects/SpeckleBatchedText.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -518,13 +525,16 @@ export default class SpeckleRenderer {
   }
 
   private updateTransforms() {
-    const meshBatches: MeshBatch[] = this.batcher.getBatches(
-      undefined,
-      GeometryType.MESH
-    )
+    const meshBatches: (MeshBatch | TextBatch)[] = this.batcher.getBatches(undefined, [
+      GeometryType.MESH,
+      GeometryType.TEXT
+    ])
     for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k].mesh
+      const meshBatch: SpeckleMesh | SpeckleInstancedMesh | SpeckleBatchedText =
+        meshBatches[k].mesh
       meshBatch.updateTransformsUniform()
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       meshBatch.traverse((obj: Object3D) => {
         const depthMaterial: SpeckleDepthMaterial =
           obj.customDepthMaterial as SpeckleDepthMaterial
@@ -630,9 +640,16 @@ export default class SpeckleRenderer {
     let useRTE = false
     if (
       batchRenderable instanceof SpeckleMesh ||
-      batchRenderable instanceof SpeckleInstancedMesh
+      batchRenderable instanceof SpeckleInstancedMesh ||
+      batchRenderable instanceof SpeckleBatchedText
     ) {
       if (batchRenderable.TAS.bvhHelper) parent.add(batchRenderable.TAS.bvhHelper)
+    }
+
+    if (
+      batchRenderable instanceof SpeckleMesh ||
+      batchRenderable instanceof SpeckleInstancedMesh
+    ) {
       useRTE = batchRenderable.needsRTE
     }
     if (batch.geometryType === GeometryType.MESH) {
@@ -651,6 +668,7 @@ export default class SpeckleRenderer {
         }
       })
     }
+
     this.viewer.World.expandWorld(batch.bounds)
   }
 
@@ -1265,15 +1283,18 @@ export default class SpeckleRenderer {
   }
 
   public getObjects(): BatchObject[] {
-    const batches = this.batcher.getBatches(undefined, GeometryType.MESH)
-    const meshes = batches.map((batch: MeshBatch) => batch.mesh)
+    const batches = this.batcher.getBatches(undefined, [
+      GeometryType.MESH,
+      GeometryType.TEXT
+    ])
+    const meshes = batches.map((batch: MeshBatch | TextBatch) => batch.mesh)
     const objects = meshes.flatMap((mesh) => mesh.batchObjects)
     return objects
   }
 
   public getObject(rv: NodeRenderView): BatchObject | null {
-    const batch = this.batcher.getBatch(rv) as MeshBatch
-    if (!batch || batch.geometryType !== GeometryType.MESH) {
+    const batch = this.batcher.getBatch(rv)
+    if (!batch || !isAcceleratedBatchType(batch)) {
       // Logger.error('Render view is not of mesh type. No batch object found')
       return null
     }

@@ -11,7 +11,11 @@
 </template>
 <script setup lang="ts">
 import { LayoutTabsVertical, type LayoutPageTabItem } from '@speckle/ui-components'
-import { projectSettingsRoute, projectWebhooksRoute } from '~~/lib/common/helpers/route'
+import {
+  projectSettingsRoute,
+  projectWebhooksRoute,
+  projectTokensRoute
+} from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsTab_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -56,6 +60,12 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
     id: 'webhooks',
     disabled: !canReadWebhooks.value.authorized,
     disabledMessage: canReadWebhooks.value.message
+  },
+  {
+    title: 'Tokens',
+    id: 'tokens',
+    disabled: !canReadWebhooks.value.authorized,
+    disabledMessage: canReadWebhooks.value.message
   }
 ])
 
@@ -65,12 +75,16 @@ const activeSettingsPageTab = computed({
   get: () => {
     const path = route.path
     if (path.includes('/settings/webhooks')) return settingsTabItems.value[1]
+    if (path.includes('/settings/tokens')) return settingsTabItems.value[2]
     return settingsTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
     switch (val.id) {
       case 'webhooks':
         router.push(projectWebhooksRoute(projectId.value))
+        break
+      case 'tokens':
+        router.push(projectTokensRoute(projectId.value))
         break
       case 'general':
       default:

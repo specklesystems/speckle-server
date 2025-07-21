@@ -1,16 +1,14 @@
 import { db } from '@/db/knex'
 import { StreamAcl } from '@/modules/core/dbSchema'
-import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
@@ -35,7 +33,6 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   deleteInvitesByTargetFactory,
   deleteServerOnlyInvitesFactory,
@@ -57,17 +54,15 @@ import {
 } from '@/modules/serverinvites/services/processing'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver } from '@/modules/shared'
-import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
-import { ProjectVisibility } from '@/test/graphql/generated/graphql'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { faker } from '@faker-js/faker'
-import { retry } from '@lifeomic/attempt'
-import { ensureError, Roles, StreamRoles, TIME_MS } from '@speckle/shared'
-import { omit } from 'lodash'
+import { ensureError, Roles, StreamRoles } from '@speckle/shared'
+import { omit } from 'lodash-es'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -86,6 +81,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -156,6 +152,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -163,6 +160,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -221,45 +219,11 @@ export async function createTestStream(
     })
     id = newProject.id
   } else {
-    // Create personal project
-    if (streamObj.regionKey) {
-      const regionDb = await getRegionDb({ regionKey: streamObj.regionKey })
-      const project = await createStreamFactory({ db: regionDb })({
-        ...omit(streamObj, ['id', 'ownerId', 'visibility']),
-        isPublic: visibility === ProjectVisibility.Public
-      })
-      try {
-        await retry(
-          async () => {
-            const replicatedProject = await getProjectFactory({
-              db
-            })({ projectId: project.id })
-            if (!replicatedProject) throw new StreamNotFoundError()
-          },
-          { maxAttempts: 10, delay: isTestEnv() ? TIME_MS.second : undefined }
-        )
-      } catch (err) {
-        if (err instanceof StreamNotFoundError) {
-          throw new RegionalProjectCreationError(undefined, {
-            info: { projectId: project.id, regionKey: streamObj.regionKey }
-          })
-        }
-        // else throw as is
-        throw err
-      }
-      await grantStreamPermissionsFactory({ db })({
-        streamId: project.id,
-        userId: owner.id,
-        role: Roles.Stream.Owner
-      })
-      id = project.id
-    } else {
-      id = await createStream({
-        ...omit(streamObj, ['id', 'ownerId', 'visibility']),
-        isPublic: visibility === ProjectVisibility.Public,
-        ownerId: owner.id
-      })
-    }
+    id = await createStream({
+      ...omit(streamObj, ['id', 'ownerId', 'visibility']),
+      isPublic: visibility === ProjectVisibility.Public,
+      ownerId: owner.id
+    })
   }
 
   streamObj.id = id

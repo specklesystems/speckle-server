@@ -12,7 +12,7 @@ import {
   StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/project'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
   TokenResourceIdentifier,
@@ -89,6 +89,17 @@ export const createStreamReturnRecordFactory =
         project: stream,
         ownerId,
         input: params
+      }
+    })
+
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project: stream,
+        activityUserId: ownerId,
+        targetUserId: ownerId,
+        role: Roles.Stream.Owner,
+        previousRole: null
       }
     })
 

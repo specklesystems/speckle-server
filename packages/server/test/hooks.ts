@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// eslint-disable-next-line no-restricted-imports
-import '../bootstrap'
+/* eslint-disable no-restricted-imports */
+import '../bootstrap.js'
 
 // Register global mocks as early as possible
 import '@/test/mocks/global'
 
-import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
-import { knex as mainDb } from '@/db/knex'
-import { init, startHttp, shutdown } from '@/app'
 import graphqlChaiPlugin from '@/test/plugins/graphql'
+import { knex as mainDb } from '@/db/knex'
+import chai from 'chai'
+import { init, startHttp, shutdown } from '@/app'
 import { testLogger as logger } from '@/observability/logging'
 import { once } from 'events'
 import type http from 'http'
@@ -22,12 +22,10 @@ import {
   MaybeAsync,
   MaybeNullOrUndefined,
   Nullable,
-  Optional,
   retry,
   TIME_MS,
   wait
 } from '@speckle/shared'
-import * as mocha from 'mocha'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -50,21 +48,22 @@ import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { ApolloServer } from '@apollo/server'
 import { ReadinessHandler } from '@/healthchecks/types'
-import { set } from 'lodash'
+import { set } from 'lodash-es'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-
-// why is server config only created once!????
-// because its done in a migration, to not override existing configs
-// similarly wiping regions will break multi region setup
-const protectedTables = ['server_config', 'regions']
-let regionClients: Record<string, Knex> = {}
+import * as mocha from 'mocha'
 
 // Register chai plugins
 chai.use(chaiAsPromised)
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
+
+// why is server config only created once!????
+// because its done in a migration, to not override existing configs
+// similarly wiping regions will break multi region setup
+const protectedTables = ['server_config', 'regions']
+let regionClients: Record<string, Knex> = {}
 
 // Please forgive me god for what I'm about to do, but Mocha's ancient API sucks ass
 // and there's NO OTHER WAY to format errors across all reporters
@@ -350,36 +349,55 @@ export const initializeTestServer = async (params: {
   }
 }
 
-let graphqlServer: Optional<ApolloServer<GraphQLContext>> = undefined
-
-export const mochaHooks: mocha.RootHookObject = {
-  beforeAll: async () => {
-    if (isMultiRegionTestMode()) {
-      logger.info('Running tests in multi-region mode...')
-    }
-
-    logger.info('running before all')
-
-    // Init (or cleanup) test databases
-    await setupDatabases()
-
-    // Init app
-    ;({ graphqlServer } = await init())
-  },
-  afterAll: async () => {
-    logger.info('running after all')
-    await inEachDb(async (db) => {
-      await unlockFactory({ db })()
-    })
-    await shutdown({ graphqlServer })
-  }
-}
+let builtApps: Array<Awaited<ReturnType<typeof init>>> = []
 
 export const buildApp = async () => {
-  return await init()
+  const ret = await init()
+  builtApps.push(ret)
+  return ret
 }
 
 export const beforeEachContext = async () => {
   await truncateTables(undefined, { resetPubSub: true })
   return await buildApp()
+}
+
+export const shutdownAll = async () => {
+  await Promise.all(
+    builtApps.map(async ({ graphqlServer, server, subscriptionServer }) => {
+      await graphqlServer.stop()
+      server.closeAllConnections()
+      subscriptionServer.close()
+    })
+  )
+  builtApps = []
+  await shutdown({ graphqlServer: undefined })
+}
+
+export const beforeEntireTestRun = async () => {
+  if (isMultiRegionTestMode()) {
+    logger.info('Running tests in multi-region mode...')
+  }
+
+  logger.info('🔧 Global setup: runs once before all tests')
+
+  // Init (or cleanup) test databases
+  await setupDatabases()
+
+  // Init app
+  await buildApp()
+}
+
+export const afterEntireTestRun = async () => {
+  logger.info('🧹 Global teardown: runs once after all tests')
+
+  await inEachDb(async (db) => {
+    await unlockFactory({ db })()
+  })
+  await shutdownAll()
+}
+
+export const mochaHooks: mocha.RootHookObject = {
+  beforeAll: beforeEntireTestRun,
+  afterAll: afterEntireTestRun
 }

@@ -24,7 +24,7 @@ import {
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { difference, groupBy, has, keyBy } from 'lodash'
+import { difference, groupBy, has, keyBy } from 'lodash-es'
 
 type OldBatchInput = CommitsMoveInput | CommitsDeleteInput
 type CommitBatchInput = OldBatchInput | MoveVersionsInput | DeleteVersionsInput

@@ -14,16 +14,16 @@ import { expect } from 'chai'
 import dayjs from 'dayjs'
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
 import { logger } from '@/observability/logging'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import {
   deleteStreamFactory,
-  legacyGetStreamsFactory
+  getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const updateAWorkspaceCreatedAt = async (
   workspaceId: string,
@@ -44,8 +44,8 @@ describe('WorkspaceCreationState services', () => {
       deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
       deleteProject: deleteStreamFactory({ db }),
       deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-      queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-        getStreams: legacyGetStreamsFactory({ db })
+      queryAllProjects: queryAllProjectsFactory({
+        getExplicitProjects: getExplicitProjects({ db })
       }),
       deleteSsoProvider: deleteSsoProviderFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit

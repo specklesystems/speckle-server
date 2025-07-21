@@ -69,7 +69,7 @@ const localStrategyBuilderFactory =
 
           return next()
         } catch (err) {
-          const e = ensureError(err, 'Unexpected issue occured while logging in')
+          const e = ensureError(err, 'Unexpected issue occurred while logging in')
           switch (e.constructor) {
             case UserInputError:
             case UserValidationError:
@@ -152,7 +152,7 @@ const localStrategyBuilderFactory =
 
           return next()
         } catch (err) {
-          const e = ensureError(err, 'Unexpected issue occured while registering')
+          const e = ensureError(err, 'Unexpected issue occurred while registering')
           return res.status(resolveStatusCode(e)).json({ error: resolveErrorInfo(e) })
         }
       },
@@ -162,4 +162,4 @@ const localStrategyBuilderFactory =
     return strategy
   }
 
-export = localStrategyBuilderFactory
+export default localStrategyBuilderFactory

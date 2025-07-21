@@ -1,4 +1,3 @@
-import { before, describe } from 'mocha'
 import { expect } from 'chai'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
@@ -10,9 +9,9 @@ import {
   GetProjectObjectDocument,
   ProjectCreateInput,
   ProjectVisibility
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 import { Roles } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 

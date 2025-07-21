@@ -1,6 +1,5 @@
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
-import { describe, it } from 'mocha'
 import {
   createRandomEmail,
   createRandomPassword,
@@ -20,7 +19,7 @@ import {
   GetProjectVersionsDocument,
   GetProjectWithModelVersionsDocument,
   GetProjectWithVersionsDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {

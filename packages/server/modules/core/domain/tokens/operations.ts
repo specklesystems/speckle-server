@@ -1,6 +1,7 @@
 import {
   ApiToken,
   EmbedApiToken,
+  EmbedApiTokenWithMetadata,
   PersonalApiToken,
   TokenResourceAccessDefinition,
   TokenResourceIdentifierType,
@@ -52,13 +53,7 @@ export type ListProjectEmbedTokens = (args: {
     limit?: number
     createdBefore?: string | null
   }
-}) => Promise<
-  (EmbedApiToken & {
-    createdAt: Date
-    lastUsed: Date
-    lifespan: number | bigint
-  })[]
->
+}) => Promise<EmbedApiTokenWithMetadata[]>
 
 export type CountProjectEmbedTokens = (args: { projectId: string }) => Promise<number>
 
@@ -123,7 +118,7 @@ export type CreateAndStoreEmbedToken = (args: {
   lifespan?: number | bigint
 }) => Promise<{
   token: string
-  tokenMetadata: EmbedApiToken
+  tokenMetadata: EmbedApiTokenWithMetadata
 }>
 
 export type GetPaginatedProjectEmbedTokens = (args: {
@@ -133,7 +128,7 @@ export type GetPaginatedProjectEmbedTokens = (args: {
     cursor?: string
   }
 }) => Promise<{
-  items: EmbedApiToken[]
+  items: EmbedApiTokenWithMetadata[]
   totalCount: number
   cursor: string | null
 }>

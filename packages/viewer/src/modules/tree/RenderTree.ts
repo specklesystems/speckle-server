@@ -69,6 +69,7 @@ export class RenderTree {
         node.model.renderView.computeAABB()
       } else if (node.model.renderView.hasMetadata) {
         node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
+        node.model.renderView.computeAABB()
       }
     }
   }

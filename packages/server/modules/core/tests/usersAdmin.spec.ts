@@ -38,12 +38,15 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import {
   deleteStreamFactory,
+  getExplicitProjects,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { dbLogger } from '@/observability/logging'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
+import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -81,6 +84,10 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  queryAllProjects: queryAllProjectsFactory({
+    getExplicitProjects: getExplicitProjects({ db })
+  }),
+  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db }),
   emitEvent: getEventBus().emit

@@ -4,13 +4,17 @@ import {
   CreateProject,
   DeleteProject,
   GetProject,
+  QueryAllProjects,
   StoreModel,
   StoreProject,
   StoreProjectRole,
   WaitForRegionProject
 } from '@/modules/core/domain/projects/operations'
-import { Project } from '@/modules/core/domain/streams/types'
-import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
+import { Project, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import {
+  ProjectQueryError,
+  RegionalProjectCreationError
+} from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { mapGqlToDbProjectVisibility } from '@/modules/core/helpers/project'
@@ -19,6 +23,7 @@ import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
+import { GetExplicitProjects } from '@/modules/core/domain/streams/operations'
 
 export const createNewProjectFactory =
   ({
@@ -68,6 +73,7 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
+
     await emitEvent({
       eventName: ProjectEvents.Created,
       payload: {
@@ -78,6 +84,17 @@ export const createNewProjectFactory =
           name: project.name,
           visibility
         }
+      }
+    })
+
+    await emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project,
+        activityUserId: ownerId,
+        targetUserId: ownerId,
+        role: Roles.Stream.Owner,
+        previousRole: null
       }
     })
     return project
@@ -108,4 +125,38 @@ export const waitForRegionProjectFactory =
       // else throw as is
       throw err
     }
+  }
+
+export const queryAllProjectsFactory = ({
+  getExplicitProjects
+}: {
+  getExplicitProjects: GetExplicitProjects
+}): QueryAllProjects =>
+  async function* queryAllWorkspaceProjects({
+    userId,
+    workspaceId
+  }): AsyncGenerator<StreamWithOptionalRole[], void, unknown> {
+    let currentCursor: string | null = null
+    let iterationCount = 0
+
+    if (!userId && !workspaceId)
+      throw new ProjectQueryError('No user or workspace ID provided')
+
+    do {
+      if (iterationCount > 500) throw new ProjectQueryError('Too many iterations')
+
+      const { items, cursor } = await getExplicitProjects({
+        cursor: currentCursor,
+        limit: 100,
+        filter: {
+          workspaceId,
+          userId
+        }
+      })
+
+      yield items
+
+      currentCursor = cursor
+      iterationCount++
+    } while (!!currentCursor)
   }

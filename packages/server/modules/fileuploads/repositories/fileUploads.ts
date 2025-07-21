@@ -1,4 +1,4 @@
-import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
+import { Branches, FileUploads } from '@/modules/core/dbSchema'
 import {
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
@@ -21,7 +21,7 @@ import {
 import { Knex } from 'knex'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
-import { clamp } from 'lodash'
+import { clamp } from 'lodash-es'
 
 const tables = {
   fileUploads: (db: Knex) => db<FileUploadRecord>(FileUploads.name)
@@ -75,7 +75,7 @@ export const getStreamFileUploadsFactory =
         ]).orWhere(
           FileUploads.col.uploadDate,
           '>=',
-          knex.raw(`now()-'1 day'::interval`)
+          deps.db.raw(`now()-'1 day'::interval`)
         )
       })
       .orderBy([
@@ -175,7 +175,7 @@ export const expireOldPendingUploadsFactory =
           FileUploadConvertedStatus.Error,
         [FileUploads.withoutTablePrefix.col.convertedMessage]:
           'File import job timed out',
-        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: knex.fn.now()
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: deps.db.fn.now()
       })
       .returning<FileUploadRecord[]>('*')
 
@@ -197,7 +197,11 @@ const getPendingUploadsBaseQueryFactory =
       .orderBy(FileUploads.col.uploadDate, 'desc')
 
     if (ignoreOld) {
-      q.andWhere(FileUploads.col.uploadDate, '>=', knex.raw(`now()-'1 day'::interval`))
+      q.andWhere(
+        FileUploads.col.uploadDate,
+        '>=',
+        deps.db.raw(`now()-'1 day'::interval`)
+      )
     }
 
     if (limit) {
@@ -222,7 +226,7 @@ export const getStreamPendingModelsFactory =
 
     if (options?.branchNamePattern) {
       q.whereRaw(
-        knex.raw(`?? ~* ?`, [FileUploads.col.branchName, options.branchNamePattern])
+        deps.db.raw(`?? ~* ?`, [FileUploads.col.branchName, options.branchNamePattern])
       )
     }
 
@@ -274,7 +278,7 @@ export const updateFileStatusFactory =
         [FileUploads.withoutTablePrefix.col.convertedMessage]: params.convertedMessage,
         [FileUploads.withoutTablePrefix.col.convertedCommitId]:
           params.convertedCommitId,
-        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: knex.fn.now()
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: deps.db.fn.now()
       })
       .where({
         [FileUploads.withoutTablePrefix.col.id]: params.fileId,

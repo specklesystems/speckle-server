@@ -2,8 +2,11 @@ import { notificationsLogger as logger } from '@/observability/logging'
 import { getQueue, NotificationJobResult } from '@/modules/notifications/services/queue'
 import { EventEmitter } from 'events'
 import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 import { Nullable } from '@speckle/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { NotificationsEvents } from '@/modules/notifications/domain/events'
+import { NotificationMessage } from '@/modules/notifications/helpers/types'
 
 type AckEvent = {
   result?: NotificationJobResult
@@ -15,6 +18,7 @@ const NEW_ACK_EVENT = 'new-ack'
 
 export function buildNotificationsStateTracker() {
   const queue = getQueue()
+  const eventBus = getEventBus()
   const localEvents = new EventEmitter()
 
   const ackHandler = (e: AckEvent) => {
@@ -35,6 +39,15 @@ export function buildNotificationsStateTracker() {
   queue.on('failed', failedHandler)
 
   const collectedAcks = new Map<JobId, AckEvent>()
+  const collectedMessages: NotificationMessage[] = []
+
+  // Listen for incoming messages
+  const quitEventBusListen = eventBus.listen(
+    NotificationsEvents.Received,
+    async ({ payload }) => {
+      collectedMessages.push(payload.message)
+    }
+  )
 
   return {
     /**
@@ -44,6 +57,7 @@ export function buildNotificationsStateTracker() {
       queue.removeListener('completed', completedHandler)
       queue.removeListener('failed', failedHandler)
       localEvents.removeAllListeners()
+      quitEventBusListen()
     },
 
     /**
@@ -51,6 +65,7 @@ export function buildNotificationsStateTracker() {
      */
     reset: () => {
       collectedAcks.clear()
+      collectedMessages.length = 0
     },
 
     /**
@@ -128,7 +143,9 @@ export function buildNotificationsStateTracker() {
         localEvents.off(NEW_ACK_EVENT, ackTracker)
         localEvents.off(NEW_ACK_EVENT, promiseAckTracker)
       })
-    }
+    },
+
+    collectedMessages: () => collectedMessages.slice()
   }
 }
 

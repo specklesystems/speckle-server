@@ -17,7 +17,7 @@ import {
   getServerInviteForTokenFactory
 } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import {
   Resolvers,
   TokenResourceIdentifierType
@@ -71,6 +71,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -91,6 +92,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const getServerInfo = getServerInfoFactory({ db })
@@ -156,7 +158,7 @@ const buildCreateAndSendServerOrProjectInvite = () =>
     finalizeInvite: buildFinalizeProjectInvite()
   })
 
-export = {
+export default {
   Query: {
     async streamInvite(_parent, args, context) {
       const { streamId, token } = args

@@ -19,7 +19,7 @@ server:
   email:
     enabled: false
 
-  speckleAutomateUrl: http://automate.speckle.internal # value is overridden when deployed with by ./scripts/local_deployment.sh
+  speckleAutomateUrl: http://automate.speckle.internal
   monitoring:
     mp:
       enabled: false
@@ -60,11 +60,17 @@ fileimport_service:
   replicas: 0
   logPretty: true
 
+ifc_import_service:
+  enabled: false
+  replicas: 1
+  logPretty: true
+
 monitoring:
   replicas: 0
   logPretty: true
 
 s3:
+  publicEndpoint: 'http://speckle.internal:9002'
   endpoint: 'http://minio.minio.svc.cluster.local:9000'
   bucket: 'speckle-server'
   access_key: minioadmin

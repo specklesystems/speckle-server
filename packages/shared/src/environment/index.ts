@@ -17,7 +17,7 @@ export const parseFeatureFlags = (
   input: Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>,
   options?: Partial<{
     /**
-     * Whether to prevent inputs from being overriden by disable/enable all
+     * Whether to prevent inputs from being overridden by disable/enable all
      * Default: true
      */
     forceInputs: boolean
@@ -94,14 +94,28 @@ export const parseFeatureFlags = (
     },
     FF_PERSONAL_PROJECTS_LIMITS_ENABLED: {
       schema: z.boolean(),
-      description:
-        'Enables limits on personal projects. Requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
+      defaults: { _: false }
+    },
+    // Enables retrying errored previews
+    FF_RETRY_ERRORED_PREVIEWS_ENABLED: {
+      schema: z.boolean(),
+      description: 'Allows the retrying of previews which have previously failed.',
       defaults: { _: false }
     },
     FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
       schema: z.boolean(),
       description:
         'Enables the new file importer. Requires FF_LARGE_FILE_IMPORTS_ENABLED to be true.',
+      defaults: { _: false }
+    },
+    FF_RHINO_FILE_IMPORTER_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the Rhino based file importer.',
+      defaults: { _: false }
+    },
+    FF_BACKGROUND_JOBS_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the postgres based background job mechanism',
       defaults: { _: false }
     },
     FF_LARGE_FILE_IMPORTS_ENABLED: {
@@ -151,8 +165,11 @@ export type FeatureFlags = {
   FF_FORCE_ONBOARDING: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
+  FF_RETRY_ERRORED_PREVIEWS_ENABLED: boolean
   FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
+  FF_RHINO_FILE_IMPORTER_ENABLED: boolean
+  FF_BACKGROUND_JOBS_ENABLED: boolean
   FF_LARGE_FILE_IMPORTS_ENABLED: boolean
   FF_LEGACY_IFC_IMPORTER_ENABLED: boolean
   FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean

@@ -41,34 +41,20 @@ export async function downloadBlobWithUrl(params: {
   token?: string
   apiOrigin: string
 }) {
-  const { blobId, fileName, principal, token, apiOrigin } = params
-  const res = await fetch(
-    new URL(`/api/stream/${principal.streamId}/blob/${blobId}`, apiOrigin),
-    {
-      headers: token
-        ? {
-            Authorization: token
-          }
-        : undefined
-    }
-  )
+  const { blobId, principal, apiOrigin } = params
 
-  if (res.status !== 200) {
-    throw new BlobRetrievalError()
-  }
+  // Create anchor w/ target _blank and trigger click to download the file
+  // Not using fetch() here cause that would download the entire file into memory before even showing the browser download dialog
+  const dlUrl = new URL(`/api/stream/${principal.streamId}/blob/${blobId}`, apiOrigin)
+  const dlAnchor = document.createElement('a')
+  dlAnchor.href = dlUrl.toString()
+  dlAnchor.target = '_blank'
+  dlAnchor.rel = 'noopener noreferrer'
+  dlAnchor.style.display = 'none'
+  document.body.appendChild(dlAnchor)
 
-  const blob = await res.blob()
-  const fileUrl = window.URL.createObjectURL(blob)
-
-  const a = document.createElement('a')
-  a.setAttribute('style', 'display: none;')
-  a.setAttribute('href', fileUrl)
-  a.setAttribute('download', fileName)
-  document.body.appendChild(a)
-
-  a.click()
-  a.remove()
-  window.URL.revokeObjectURL(fileUrl)
+  dlAnchor.click()
+  dlAnchor.remove()
 }
 
 /**
@@ -83,25 +69,10 @@ export async function getBlobUrl(params: {
   token?: string
   apiOrigin: string
 }) {
-  const { blobId, principal, token, apiOrigin } = params
-  const res = await fetch(
-    new URL(`/api/stream/${principal.streamId}/blob/${blobId}`, apiOrigin),
-    {
-      headers: token
-        ? {
-            Authorization: token
-          }
-        : undefined
-    }
-  )
+  const { blobId, principal, apiOrigin } = params
 
-  if (res.status !== 200) {
-    throw new BlobRetrievalError()
-  }
-
-  const blob = await res.blob()
-  const fileUrl = window.URL.createObjectURL(blob)
-  return fileUrl
+  const url = new URL(`/api/stream/${principal.streamId}/blob/${blobId}`, apiOrigin)
+  return url.toString()
 }
 
 /**

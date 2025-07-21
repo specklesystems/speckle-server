@@ -19,13 +19,13 @@ import {
  */
 const addStreamAccessRequestedActivityFactory =
   ({
-    saveActivity
+    saveStreamActivity
   }: {
-    saveActivity: SaveStreamActivity
+    saveStreamActivity: SaveStreamActivity
   }): AddStreamAccessRequestedActivity =>
   async (params: { streamId: string; requesterId: string }) => {
     const { streamId, requesterId } = params
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
       resourceType: StreamResourceTypes.Stream,
       resourceId: streamId,
@@ -41,13 +41,13 @@ const addStreamAccessRequestedActivityFactory =
  */
 const addStreamAccessRequestDeclinedActivityFactory =
   ({
-    saveActivity
+    saveStreamActivity
   }: {
-    saveActivity: SaveStreamActivity
+    saveStreamActivity: SaveStreamActivity
   }): AddStreamAccessRequestDeclinedActivity =>
   async (params: { streamId: string; requesterId: string; declinerId: string }) => {
     const { streamId, requesterId, declinerId } = params
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
       resourceType: StreamResourceTypes.Stream,
       resourceId: streamId,
@@ -104,7 +104,8 @@ const onServerAccessRequestFinalizedFactory =
   }
 
 export const reportAccessRequestActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveStreamActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveStreamActivity: SaveStreamActivity }) =>
+  () => {
     const addStreamAccessRequestedActivity =
       addStreamAccessRequestedActivityFactory(deps)
     const addStreamAccessRequestDeclinedActivity =

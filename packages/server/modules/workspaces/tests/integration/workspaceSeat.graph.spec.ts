@@ -1,8 +1,10 @@
+/* eslint-disable camelcase */
 import { db } from '@/db/knex'
 import {
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
+import { setStripeClient } from '@/modules/gatekeeper/clients/stripe'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import {
@@ -15,10 +17,9 @@ import {
   GetProjectCollaboratorsDocument,
   UpdateWorkspaceSeatTypeDocument,
   WorkspaceUpdateSeatTypeInput
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { StripeClientMock } from '@/test/mocks/global'
 import {
   addToStream,
   BasicTestStream,
@@ -26,6 +27,9 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+import dayjs from 'dayjs'
+import type { Stripe } from 'stripe'
+import { Mock, It, Times } from 'moq.ts'
 
 const getWorkspaceUserSeat = getWorkspaceUserSeatFactory({ db })
 
@@ -47,6 +51,12 @@ describe('Workspace Seats @graphql', () => {
 
   let apollo: TestApolloServer
 
+  let mockedStripe: Mock<Stripe>
+  let mockedStripeSubscriptions: Mock<Stripe.SubscriptionsResource>
+  let capturedStripeUpdateArgs: Array<
+    Parameters<Stripe.SubscriptionsResource['update']>
+  > = []
+
   before(async () => {
     await beforeEachContext()
     await createTestUsers([workspaceAdmin, workspaceMember])
@@ -56,14 +66,38 @@ describe('Workspace Seats @graphql', () => {
 
   beforeEach(() => {
     // cause we have a fake subscription
-    StripeClientMock.mockFunction(
-      'reconcileWorkspaceSubscriptionFactory',
-      () => async () => {}
-    )
+    capturedStripeUpdateArgs = []
+    mockedStripe = new Mock<Stripe>()
+
+    const fakeStripeSubscription = {
+      customer: createRandomString(),
+      id: createRandomString(),
+      status: 'active',
+      cancel_at: null,
+      current_period_end: dayjs().add(1, 'month').unix(),
+      items: { data: [] }
+    } as unknown as Stripe.Response<Stripe.Subscription>
+
+    mockedStripeSubscriptions = new Mock<Stripe.SubscriptionsResource>()
+    mockedStripeSubscriptions
+      .setup((s) => s.retrieve(It.IsAny()))
+      .returnsAsync(fakeStripeSubscription)
+      .setup((s) => s.update(It.IsAny(), It.IsAny()))
+      .callback((args) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        capturedStripeUpdateArgs.push(args.args as any)
+        return Promise.resolve({} as unknown as Stripe.Response<Stripe.Subscription>)
+      })
+
+    mockedStripe
+      .setup((s) => s.subscriptions)
+      .returns(mockedStripeSubscriptions.object())
+
+    setStripeClient(mockedStripe.object())
   })
 
   after(async () => {
-    StripeClientMock.resetMockedFunctions()
+    setStripeClient(undefined)
   })
 
   describe('when being changed', () => {
@@ -125,7 +159,7 @@ describe('Workspace Seats @graphql', () => {
       expect(res.data?.workspaceMutations.updateSeatType).to.not.be.ok
     })
 
-    it.skip('should upgrade a workspace seat and reconcile subscription', async () => {
+    it('should upgrade a workspace seat and reconcile subscription', async () => {
       const user: BasicTestUser = {
         id: createRandomString(),
         name: createRandomString(),
@@ -141,11 +175,6 @@ describe('Workspace Seats @graphql', () => {
       })
       expect(oldSeat?.type).to.eq(WorkspaceSeatType.Viewer)
 
-      const { args, length: reconciledTimes } = StripeClientMock.hijackFactoryFunction(
-        'reconcileWorkspaceSubscriptionFactory',
-        async () => {}
-      )
-
       const res = await updateSeatType({
         workspaceId: testWorkspace1.id,
         userId: user.id,
@@ -158,11 +187,16 @@ describe('Workspace Seats @graphql', () => {
           (i) => i.id === user.id
         )?.seatType
       ).to.eq(WorkspaceSeatType.Editor)
-      expect(reconciledTimes() > 0).to.be.true
 
-      const reconcileArgs = args[0][0]
-      expect(reconcileArgs.prorationBehavior).to.eq('always_invoice') // new plan
-      expect(reconcileArgs.subscriptionData.products.length).to.be.ok
+      // ensure update was called at least once
+      mockedStripeSubscriptions.verify(
+        (s) => s.update(It.IsAny(), It.IsAny()),
+        Times.AtLeastOnce()
+      )
+
+      expect(capturedStripeUpdateArgs).to.have.length.greaterThan(0)
+      const reconcileArgs = capturedStripeUpdateArgs.at(-1)!
+      expect(reconcileArgs[1]!.proration_behavior).to.eq('always_invoice')
     })
 
     it('should downgrade a workspace seat', async () => {

@@ -27,7 +27,7 @@ import {
   GetRegionalProjectCommentDocument,
   GetRegionalProjectWebhookDocument,
   GetRegionalProjectBlobDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
 import {
   createTestAutomation,

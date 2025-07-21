@@ -4,7 +4,7 @@ import {
   DeleteModelInput,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 
 export const isBranchUpdateInput = (
   i: BranchUpdateInput | UpdateModelInput

@@ -39,10 +39,15 @@ const baseFileImportResult = z.object({
   parser: z.string().describe('The parser used for the import')
 })
 
+export const JobResultStatus = {
+  Error: 'error',
+  Success: 'success'
+} as const
+
 export type FileImportResult = z.infer<typeof baseFileImportResult>
 
 const fileImportSuccessPayload = z.object({
-  status: z.literal('success'),
+  status: z.literal(JobResultStatus.Success),
   warnings: z.array(z.string()), //ok to be empty
   result: baseFileImportResult.merge(z.object({ versionId: z.string() }))
 })
@@ -50,7 +55,7 @@ const fileImportSuccessPayload = z.object({
 export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
 
 const fileImportErrorPayload = z.object({
-  status: z.literal('error'),
+  status: z.literal(JobResultStatus.Error),
   reason: z.string(),
   result: baseFileImportResult
 })

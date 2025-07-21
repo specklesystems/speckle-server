@@ -1,6 +1,6 @@
 import { MaybeAsync, Optional, md5, wait } from '@speckle/shared'
 import { dbNotificationLogger } from '@/observability/logging'
-import { Client, Notification } from 'pg'
+import pg from 'pg'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import {
   getRedisUrl,
@@ -11,16 +11,15 @@ import Redis from 'ioredis'
 import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { mainDb } from '@/db/knex'
 import { PartialDeep } from 'type-fest'
-import { merge } from 'lodash'
+import { merge } from 'lodash-es'
 import {
   getConnectionSettings,
   obfuscateConnectionString
 } from '@speckle/shared/environment/db'
 import { getMainRegionConfig } from '@/modules/multiregion/regionConfig'
-import type pg from 'pg'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
-export type MessageType = Notification
+export type MessageType = pg.Notification
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
 type ConnectionStateItem = {
   setupListeners: {
@@ -29,16 +28,16 @@ type ConnectionStateItem = {
 }
 
 let shuttingDown = false
-let connection: Optional<Client> = undefined
+let connection: Optional<pg.Client> = undefined
 let redisClient: Optional<Redis> = undefined
 let activeReconnect: Optional<Promise<void>> = undefined
 
-const connectionState = new WeakMap<Client, ConnectionStateItem>()
+const connectionState = new WeakMap<pg.Client, ConnectionStateItem>()
 const listeners: Record<string, { listener: ListenerType }> = {}
 const lockName = 'server_postgres_listener_lock'
 
 const updateConnectionState = (
-  connection: Client,
+  connection: pg.Client,
   update: PartialDeep<ConnectionStateItem>
 ) => {
   const state = connectionState.get(connection) || {
@@ -101,7 +100,7 @@ async function messageProcessor(msg: MessageType) {
   }
 }
 
-const setupListeners = async (connection: Client) => {
+const setupListeners = async (connection: pg.Client) => {
   for (const [key] of Object.entries(listeners)) {
     const isSetupAlready = !!connectionState.get(connection)?.setupListeners?.[key]
     dbNotificationLogger.info(
@@ -122,7 +121,7 @@ const setupListeners = async (connection: Client) => {
   }
 }
 
-const setupConnection = async (connection: Client) => {
+const setupConnection = async (connection: pg.Client) => {
   connection.on('notification', (msg) => {
     dbNotificationLogger.info({ msg }, 'Message incoming...')
     void messageProcessor(msg).catch((err) => {
@@ -187,7 +186,7 @@ const reconnect = async () => {
     )
 
     // creating externally managed PG connection from knex mainDB connection settings
-    const newConnection = new Client({
+    const newConnection = new pg.Client({
       ...connectionSettings,
       connectionTimeoutMillis: postgresConnectionCreateTimeoutMillis()
     })

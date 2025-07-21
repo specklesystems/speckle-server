@@ -14,17 +14,19 @@ import {
   login
 } from '@/test/authHelper'
 import {
+  ActiveUserUpdateMutationDocument,
+  GetActiveUserDocument,
   GetProjectInvitableCollaboratorsDocument,
   SetUserActiveWorkspaceDocument,
   UserActiveResourcesDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
-describe('ActiveUserMutations.setActiveWorkspace', () => {
+describe('ActiveUserMutations', () => {
   let apollo: TestApolloServer
 
   const user: BasicTestUser = {
@@ -56,55 +58,139 @@ describe('ActiveUserMutations.setActiveWorkspace', () => {
     apollo = await testApolloServer({ authUserId: user.id })
   })
 
-  it('should accurately report active workspace', async () => {
-    const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
-      slug: workspace.slug
+  describe('setActiveWorkspace', () => {
+    it('should accurately report active workspace', async () => {
+      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
+        slug: workspace.slug
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+
+      const resB = await apollo.execute(UserActiveResourcesDocument, {})
+      expect(resB).to.not.haveGraphQLErrors()
+
+      expect(resB?.data?.activeUser?.activeWorkspace?.id).to.equal(workspace.id)
     })
-    expect(resA).to.not.haveGraphQLErrors()
 
-    const resB = await apollo.execute(UserActiveResourcesDocument, {})
-    expect(resB).to.not.haveGraphQLErrors()
+    it('should accurately report if last visited project is not a workspace project', async () => {
+      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
+        slug: null,
+        isProjectsActive: true
+      })
+      expect(resA).to.not.haveGraphQLErrors()
 
-    expect(resB?.data?.activeUser?.activeWorkspace?.id).to.equal(workspace.id)
+      const resB = await apollo.execute(UserActiveResourcesDocument, {})
+      expect(resB).to.not.haveGraphQLErrors()
+
+      expect(resB?.data?.activeUser?.isProjectsActive).to.be.true
+    })
+
+    it('should allow values to be cleared with null input', async () => {
+      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
+        slug: workspace.slug
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+      const resB = await apollo.execute(SetUserActiveWorkspaceDocument, { slug: null })
+      expect(resB).to.not.haveGraphQLErrors()
+
+      const resC = await apollo.execute(UserActiveResourcesDocument, {})
+      expect(resC).to.not.haveGraphQLErrors()
+
+      expect(resC.data?.activeUser?.activeWorkspace).to.be.null
+    })
+
+    it('should return null if workspace is not found or was deleted', async () => {
+      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
+        slug: cryptoRandomString({ length: 9 })
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+
+      const resB = await apollo.execute(UserActiveResourcesDocument, {})
+      expect(resB).to.not.haveGraphQLErrors()
+
+      expect(resB?.data?.activeUser?.activeWorkspace).to.be.null
+    })
   })
 
-  it('should accurately report if last visited project is not a workspace project', async () => {
-    const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
-      slug: null,
-      isProjectsActive: true
+  describe('update', () => {
+    it('writes the desired field to the active user', async () => {
+      const name = cryptoRandomString({ length: 10 })
+      const bio = cryptoRandomString({ length: 10 })
+      const avatar = 'data:image/jpeg;base64,/////Z'
+      const company = cryptoRandomString({ length: 10 })
+
+      const resA = await apollo.execute(ActiveUserUpdateMutationDocument, {
+        user: { name, bio, avatar, company }
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+
+      const resB = await apollo.execute(GetActiveUserDocument, {})
+      expect(resB).to.not.haveGraphQLErrors()
+
+      expect(resB?.data?.activeUser).to.deep.include({
+        name,
+        bio,
+        avatar,
+        company
+      })
     })
-    expect(resA).to.not.haveGraphQLErrors()
 
-    const resB = await apollo.execute(UserActiveResourcesDocument, {})
-    expect(resB).to.not.haveGraphQLErrors()
+    it('does not unset the avatar on updates', async () => {
+      const name = cryptoRandomString({ length: 10 })
+      const avatar = 'data:image/jpeg;base64,/////Z'
 
-    expect(resB?.data?.activeUser?.isProjectsActive).to.be.true
+      const resA = await apollo.execute(ActiveUserUpdateMutationDocument, {
+        user: {
+          name,
+          avatar
+        }
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+
+      const updatedName = name + '-updated'
+      const resB = await apollo.execute(ActiveUserUpdateMutationDocument, {
+        user: {
+          name: updatedName,
+          avatar: null
+        }
+      })
+      expect(resB).to.not.haveGraphQLErrors()
+
+      const resC = await apollo.execute(GetActiveUserDocument, {})
+      expect(resC).to.not.haveGraphQLErrors()
+
+      expect(resC?.data?.activeUser).to.deep.include({
+        name: updatedName,
+        avatar
+      })
+    })
   })
 
-  it('should allow values to be cleared with null input', async () => {
-    const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
-      slug: workspace.slug
+  it('is able to clear the avatar', async () => {
+    const name = cryptoRandomString({ length: 10 })
+    const avatar = 'data:image/jpeg;base64,/////Z'
+
+    const resA = await apollo.execute(ActiveUserUpdateMutationDocument, {
+      user: {
+        name,
+        avatar
+      }
     })
     expect(resA).to.not.haveGraphQLErrors()
-    const resB = await apollo.execute(SetUserActiveWorkspaceDocument, { slug: null })
+
+    const resB = await apollo.execute(ActiveUserUpdateMutationDocument, {
+      user: {
+        avatar: ''
+      }
+    })
     expect(resB).to.not.haveGraphQLErrors()
 
-    const resC = await apollo.execute(UserActiveResourcesDocument, {})
+    const resC = await apollo.execute(GetActiveUserDocument, {})
     expect(resC).to.not.haveGraphQLErrors()
 
-    expect(resC.data?.activeUser?.activeWorkspace).to.be.null
-  })
-
-  it('should return null if workspace is not found or was deleted', async () => {
-    const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
-      slug: cryptoRandomString({ length: 9 })
+    expect(resC?.data?.activeUser).to.deep.include({
+      name,
+      avatar: null
     })
-    expect(resA).to.not.haveGraphQLErrors()
-
-    const resB = await apollo.execute(UserActiveResourcesDocument, {})
-    expect(resB).to.not.haveGraphQLErrors()
-
-    expect(resB?.data?.activeUser?.activeWorkspace).to.be.null
   })
 })
 

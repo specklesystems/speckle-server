@@ -13,14 +13,13 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
-import { before } from 'mocha'
 import {
   createAuthedTestContext,
   createTestContext,
   ServerAndContext,
   testApolloServer
 } from '@/test/graphqlHelper'
-import { GetActiveUserEmailsDocument } from '@/test/graphql/generated/graphql'
+import { GetActiveUserEmailsDocument } from '@/modules/core/graph/generated/graphql'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {

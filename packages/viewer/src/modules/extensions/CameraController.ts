@@ -478,7 +478,7 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     const batches = this.viewer
       .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH)
+      .batcher.getBatches(undefined, [GeometryType.MESH, GeometryType.TEXT])
     let minDist = Number.POSITIVE_INFINITY
     for (let b = 0; b < batches.length; b++) {
       const result = batches[b].mesh.TAS.closestPointToPointHalfplane(
@@ -529,11 +529,11 @@ export class CameraController extends Extension implements SpeckleCamera {
     targetSphere.radius = this.fitToRadius(targetSphere.radius) * fit
     this._activeControls.fitToSphere(targetSphere)
 
-    this.updateCameraPlanes(box, fit)
-
     if (!transition) {
       this._activeControls.jumpToGoal()
     }
+
+    this.updateCameraPlanes(box, fit)
   }
 
   protected fitToRadius(radius: number) {

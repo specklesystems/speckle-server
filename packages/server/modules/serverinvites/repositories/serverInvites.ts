@@ -5,7 +5,7 @@ import {
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
 import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
-import { isObjectLike, uniq } from 'lodash'
+import { isObjectLike, uniq } from 'lodash-es'
 import {
   ExtendedInvite,
   InviteResourceTarget,

@@ -17,7 +17,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
-import { clamp, isUndefined, last, trim } from 'lodash'
+import { clamp, isUndefined, last, trim } from 'lodash-es'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 import {
   DeleteBranchById,

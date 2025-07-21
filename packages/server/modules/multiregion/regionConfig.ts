@@ -4,7 +4,8 @@ import path from 'node:path'
 
 import {
   getMultiRegionConfigPath,
-  isDevOrTestEnv
+  isDevOrTestEnv,
+  isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { type Optional } from '@speckle/shared'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
@@ -13,25 +14,30 @@ import {
   MultiRegionConfig,
   loadMultiRegionsConfig
 } from '@speckle/shared/environment/db'
+import { TestOnlyLogicError } from '@/modules/shared/errors'
+import { PartialDeep } from 'type-fest'
+import { merge } from 'lodash-es'
 
 let multiRegionConfig: Optional<MultiRegionConfig> = undefined
 
-const getMultiRegionConfig = async (): Promise<MultiRegionConfig> => {
+const emptyConfig = (): MultiRegionConfig => ({
+  main: {
+    postgres: { connectionUri: '' },
+    blobStorage: {
+      accessKey: '',
+      secretKey: '',
+      endpoint: '',
+      s3Region: '',
+      bucket: '',
+      createBucketIfNotExists: true
+    }
+  },
+  regions: {}
+})
+
+export const getMultiRegionConfig = async (): Promise<MultiRegionConfig> => {
   // Only for non region enabled dev envs
-  const emptyReturn = (): MultiRegionConfig => ({
-    main: {
-      postgres: { connectionUri: '' },
-      blobStorage: {
-        accessKey: '',
-        secretKey: '',
-        endpoint: '',
-        s3Region: '',
-        bucket: '',
-        createBucketIfNotExists: true
-      }
-    },
-    regions: {}
-  })
+  const emptyReturn = () => emptyConfig()
 
   if (!multiRegionConfig) {
     const relativePath = getMultiRegionConfigPath({ unsafe: isDevOrTestEnv() })
@@ -67,4 +73,14 @@ export const getDefaultProjectRegionKey = async (): Promise<string | null> => {
   if (!isMultiRegionEnabled()) return null
   const defaultRegionKey = (await getMultiRegionConfig()).defaultProjectRegionKey
   return defaultRegionKey ?? null
+}
+
+export const setMultiRegionConfig = (
+  config: Optional<PartialDeep<MultiRegionConfig>>
+) => {
+  if (!isTestEnv()) {
+    throw new TestOnlyLogicError()
+  }
+
+  multiRegionConfig = config ? merge({}, emptyConfig(), config) : undefined
 }

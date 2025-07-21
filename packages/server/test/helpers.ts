@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 
 /**
  * Generates an object containing the base object and an array of objects with an id. The base object will have a closure property which references all the other objects.

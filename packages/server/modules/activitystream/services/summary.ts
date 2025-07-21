@@ -5,7 +5,7 @@ import {
 import {
   CreateActivitySummary,
   GetActiveUserStreams,
-  GetActivity
+  GetUserStreamActivity
 } from '@/modules/activitystream/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
@@ -17,7 +17,7 @@ export const createActivitySummaryFactory =
     getUser
   }: {
     getStream: GetStream
-    getActivity: GetActivity
+    getActivity: GetUserStreamActivity
     getUser: GetUser
   }): CreateActivitySummary =>
   async ({

@@ -28,7 +28,7 @@ import {
   WorkspacePlanBillingIntervals,
   WorkspacePlans
 } from '@speckle/shared'
-import { cloneDeep } from 'lodash'
+import { cloneDeep } from 'lodash-es'
 
 export const upgradeWorkspaceSubscriptionFactory =
   ({

@@ -96,6 +96,7 @@ import {
   navigationActiveWorkspaceQuery
 } from '~~/lib/navigation/graphql/queries'
 
+const { $intercom } = useNuxtApp()
 const menuButtonId = useId()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
@@ -115,7 +116,7 @@ const { result } = useQuery(
     enabled: isWorkspacesEnabled.value
   }
 )
-const { result: activeWorkspaceResult } = useQuery(
+const { result: activeWorkspaceResult, onResult: onActiveWorkspaceResult } = useQuery(
   navigationActiveWorkspaceQuery,
   () => ({
     slug: activeWorkspaceSlug.value || ''
@@ -160,4 +161,13 @@ const displayName = computed(() =>
 const displayLogo = computed(() =>
   isProjectsActive.value ? null : selectedWorkspaceMeta.value?.logo
 )
+
+onActiveWorkspaceResult(({ data }) => {
+  if (data?.workspaceBySlug) {
+    $intercom.updateCompany({
+      id: data.workspaceBySlug.id,
+      name: data.workspaceBySlug.name
+    })
+  }
+})
 </script>

@@ -37,7 +37,9 @@ import {
   grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory,
   deleteStreamFactory,
-  getUserDeletableStreamsFactory
+  getUserDeletableStreamsFactory,
+  getStreamRolesFactory,
+  getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
@@ -128,6 +130,8 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -167,6 +171,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -279,6 +284,10 @@ const deleteUser = deleteUserFactory({
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  queryAllProjects: queryAllProjectsFactory({
+    getExplicitProjects: getExplicitProjects({ db })
+  }),
+  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db }),
   emitEvent: getEventBus().emit

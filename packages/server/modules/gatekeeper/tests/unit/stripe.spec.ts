@@ -24,7 +24,7 @@ describe('Stripe integration', () => {
         ]
       })
       const reconcileWorkspaceSubscription = reconcileWorkspaceSubscriptionFactory({
-        stripe: fakeStripe,
+        getStripeClient: () => fakeStripe,
         getStripeSubscriptionData: async () => subscriptionData
       })
 
@@ -59,7 +59,7 @@ describe('Stripe integration', () => {
         ]
       })
       const reconcileWorkspaceSubscription = reconcileWorkspaceSubscriptionFactory({
-        stripe: fakeStripe,
+        getStripeClient: () => fakeStripe,
         getStripeSubscriptionData: async () =>
           buildTestSubscriptionData({
             subscriptionId,
@@ -107,7 +107,7 @@ describe('Stripe integration', () => {
         ]
       })
       const reconcileWorkspaceSubscription = reconcileWorkspaceSubscriptionFactory({
-        stripe: fakeStripe,
+        getStripeClient: () => fakeStripe,
         getStripeSubscriptionData: async () =>
           buildTestSubscriptionData({
             subscriptionId,

@@ -1,3 +1,4 @@
+import cron from 'node-cron'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { moduleLogger } from '@/observability/logging'
@@ -29,8 +30,9 @@ import { reportStreamActivityFactory } from '@/modules/activitystream/events/str
 import { TIME_MS } from '@speckle/shared'
 import { reportGatekeeperActivityFactory } from '@/modules/activitystream/events/gatekeeperListeners'
 import { reportWorkspaceActivityFactory } from '@/modules/activitystream/events/workspaceListeners'
+import { backfillMissingActivityFactory } from '@/modules/activitystream/services/backfillActivity'
 
-let scheduledTask: ReturnType<ScheduleExecution> | null = null
+const scheduledTask: cron.ScheduledTask[] = []
 let quitEventListeners: Optional<() => void> = undefined
 
 /**
@@ -44,45 +46,47 @@ const initializeEventListeners = ({
   eventBus: EventBus
   db: Knex
 }) => {
+  const saveActivity = saveActivityFactory({ db })
   const saveStreamActivity = saveStreamActivityFactory({ db })
   const reportUserActivity = reportUserActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportAccessRequestActivity = reportAccessRequestActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportBranchActivity = reportBranchActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportCommitActivity = reportCommitActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportCommentActivity = reportCommentActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveStreamActivity
   })
   const reportStreamInviteActivity = reportStreamInviteActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity,
+    saveStreamActivity,
     getProjectInviteProject: getProjectInviteProjectFactory({
       getStream: getStreamFactory({ db })
     })
   })
   const reportStreamActivity = reportStreamActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveStreamActivity
+    saveActivity,
+    saveStreamActivity
   })
   const reportGatekeeperActivity = reportGatekeeperActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveActivityFactory({ db })
+    saveActivity
   })
   const reportWorkspaceActivity = reportWorkspaceActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity: saveActivityFactory({ db })
+    saveActivity
   })
 
   const quitCbs = [
@@ -100,12 +104,7 @@ const initializeEventListeners = ({
   return () => quitCbs.forEach((quit) => quit())
 }
 
-const scheduleWeeklyActivityNotifications = () => {
-  const scheduleExecution = scheduleExecutionFactory({
-    acquireTaskLock: acquireTaskLockFactory({ db }),
-    releaseTaskLock: releaseTaskLockFactory({ db })
-  })
-
+const scheduleWeeklyActivityNotifications = (scheduleExecution: ScheduleExecution) => {
   // just to test stuff
   // every 1000 seconds
   // const cronExpression = '*/1000 * * * * *'
@@ -133,6 +132,18 @@ const scheduleWeeklyActivityNotifications = () => {
   )
 }
 
+const scheduleDailyAcitivty = (scheduleExecution: ScheduleExecution) => {
+  const dailyAtMidnight = '0 0 * * *'
+
+  const backfillMissingActivity = backfillMissingActivityFactory({ db })
+
+  return scheduleExecution(
+    dailyAtMidnight,
+    'BackfillMissingActivities',
+    async (_scheduledTime, { logger }) => await backfillMissingActivity({ logger })
+  )
+}
+
 const activityModule: SpeckleModule = {
   init: async ({ isInitial }) => {
     moduleLogger.info('🤺 Init activity module')
@@ -142,16 +153,24 @@ const activityModule: SpeckleModule = {
         eventBus: getEventBus()
       })
 
+      const scheduleExecution = scheduleExecutionFactory({
+        acquireTaskLock: acquireTaskLockFactory({ db }),
+        releaseTaskLock: releaseTaskLockFactory({ db })
+      })
+
+      scheduledTask.push(scheduleDailyAcitivty(scheduleExecution))
       if (weeklyEmailDigestEnabled())
-        scheduledTask = scheduleWeeklyActivityNotifications()
+        scheduledTask.push(scheduleWeeklyActivityNotifications(scheduleExecution))
     }
   },
   shutdown: () => {
-    scheduledTask?.stop()
     quitEventListeners?.()
+    scheduledTask.forEach((task) => {
+      task.stop()
+    })
   }
 }
 
-export = {
+export default {
   ...activityModule
 }

@@ -7,17 +7,20 @@ if IS_LOAD_DOCKER:
 else:
   symbols = load_dynamic('./../build-images.tiltfile')
 
+IMAGE_PREFIX = os.getenv('IMAGE_PREFIX', 'speckle')
+
 # Prepare the Speckle images
 # (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
 speckle_image = symbols['speckle_image']
-speckle_image('fileimport-service')
-speckle_image('frontend-2')
-speckle_image('docker-compose-ingress')
-# speckle_image('monitor-deployment')
-speckle_image('preview-service')
-speckle_image('server')
-speckle_image('test-deployment')
-speckle_image('webhook-service')
+speckle_image('fileimport-service', None, IMAGE_PREFIX)
+speckle_image('frontend-2', None, IMAGE_PREFIX)
+speckle_image('ifc-import-service', None, IMAGE_PREFIX)
+speckle_image('docker-compose-ingress', None, IMAGE_PREFIX)
+# speckle_image('monitor-deployment', None, IMAGE_PREFIX)
+speckle_image('preview-service', None, IMAGE_PREFIX)
+speckle_image('server', None, IMAGE_PREFIX)
+speckle_image('test-deployment', None, IMAGE_PREFIX)
+speckle_image('webhook-service', None, IMAGE_PREFIX)
 
 # Prepare the dependencies
 docker_compose('../../docker-compose-deps.yml')
@@ -34,6 +37,7 @@ dc_resource('speckle-frontend-2', resource_deps=[], labels=['speckle'])
 dc_resource('speckle-ingress', resource_deps=[], labels=['speckle'])
 dc_resource('preview-service', resource_deps=['postgres'], labels=['speckle'])
 dc_resource('fileimport-service', resource_deps=[], labels=['speckle'])
+dc_resource('ifc-import-service', resource_deps=[], labels=['speckle'])
 dc_resource('webhook-service', resource_deps=['postgres'], labels=['speckle'])
 
 # Test the Speckle resources

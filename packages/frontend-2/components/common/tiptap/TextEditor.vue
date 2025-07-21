@@ -1,7 +1,22 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="['text-editor flex flex-col', !!readonly ? 'text-editor--read-only' : '']"
+    :class="[
+      'text-editor flex flex-col relative',
+      !!readonly ? 'text-editor--read-only' : ''
+    ]"
   >
+    <FormButton
+      v-if="unlinkVisible"
+      size="sm"
+      class="absolute top-1 right-1 z-10"
+      color="outline"
+      @click="onUnlink"
+    >
+      Remove link
+    </FormButton>
+
     <EditorContent
       ref="editorContentRef"
       class="simple-scrollbar flex flex-1"
@@ -27,6 +42,7 @@ import type { Nullable } from '@speckle/shared'
 // import { userProfileRoute } from '~~/lib/common/helpers/route'
 import { onKeyDown } from '@vueuse/core'
 import { noop } from 'lodash-es'
+import { FormButton } from '@speckle/ui-components'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: JSONContent): void
@@ -50,6 +66,7 @@ const props = defineProps<{
 }>()
 
 const editorContentRef = ref(null as Nullable<HTMLElement>)
+const unlinkVisible = ref(false)
 
 const isMultiLine = computed(() => !!props.schemaOptions?.multiLine)
 const isEditable = computed(() => !props.disabled && !props.readonly)
@@ -81,6 +98,19 @@ const onEnter = () => {
   emit('submit', { data: getData() })
 }
 const onKeyDownHandler = (e: KeyboardEvent) => emit('keydown', e)
+
+const updateUnlinkVisible = () => {
+  unlinkVisible.value = !props.readonly && editor.isActive('link')
+}
+
+const onUnlink = () => {
+  editor.chain().extendMarkRange('link').unsetLink().focus().run()
+  updateUnlinkVisible()
+}
+
+editor.on('selectionUpdate', updateUnlinkVisible)
+editor.on('transaction', updateUnlinkVisible)
+
 const onEditorContentClick = (e: MouseEvent) => {
   const closestSelectorTarget = (e.target as HTMLElement).closest(
     '.editor-mention'
@@ -173,6 +203,10 @@ onBeforeUnmount(() => {
   & .editor-mention {
     box-decoration-break: clone;
     @apply text-foreground text-body-2xs font-semibold;
+  }
+
+  & a {
+    @apply border-b border-outline-3 hover:border-outline-5;
   }
 }
 

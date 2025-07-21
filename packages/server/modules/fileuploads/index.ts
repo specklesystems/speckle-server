@@ -14,6 +14,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   getFeatureFlags,
+  getFileImporterQueuePostgresUrl,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -48,6 +49,7 @@ import {
   initializeIfcQueueFactory,
   shutdownQueues,
   fileImportQueues,
+  initializePostgresQueue,
   initializeQueueFactory
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
@@ -56,14 +58,20 @@ import {
   ObserveResult
 } from '@/modules/fileuploads/observability/metrics'
 import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/subscriptionListeners'
+import { configureClient } from '@/knexfile'
 import {
   requestActiveHandlerFactory,
   requestErrorHandlerFactory,
   requestFailedHandlerFactory
 } from '@/modules/fileuploads/services/requestHandler'
 import { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 
-const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
+const {
+  FF_NEXT_GEN_FILE_IMPORTER_ENABLED,
+  FF_BACKGROUND_JOBS_ENABLED,
+  FF_RHINO_FILE_IMPORTER_ENABLED
+} = getFeatureFlags()
 
 let scheduledTasks: cron.ScheduledTask[] = []
 
@@ -130,38 +138,85 @@ export const init: SpeckleModule['init'] = async ({
   let observeResult: ObserveResult | undefined = undefined
 
   if (isInitial) {
+    // this feature flag is going away soon
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-      const rhinoQueue = await initializeRhinoQueueFactory({
-        initializeQueue: initializeQueueFactory({
-          jobActiveHandler: requestActiveHandlerFactory({
-            logger: moduleLogger,
-            updateFileStatusBuilder
-          }),
-          jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
-          jobFailedHandler: requestFailedHandlerFactory({
-            logger: moduleLogger,
-            updateFileStatusForProjectFactory: updateFileStatusBuilder
+      // this freature flag is going away soon, it will be on by default
+      // once we switch stabilize the background jobs mechanism
+      if (FF_BACKGROUND_JOBS_ENABLED) {
+        const connectionUri = getFileImporterQueuePostgresUrl()
+        const queueDb = connectionUri
+          ? configureClient({ postgres: { connectionUri } }).public
+          : db
+        const queueInits = [
+          initializePostgresQueue({
+            label: 'ifc',
+            supportedFileTypes: ['ifc'],
+            db: queueDb
           })
-        })
-      })()
-      const ifcQueue = await initializeIfcQueueFactory({
-        initializeQueue: initializeQueueFactory({
-          jobActiveHandler: requestActiveHandlerFactory({
-            logger: moduleLogger,
-            updateFileStatusBuilder
-          }),
-          jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
-          jobFailedHandler: requestFailedHandlerFactory({
-            logger: moduleLogger,
-            updateFileStatusForProjectFactory: updateFileStatusBuilder
-          })
-        })
-      })()
+        ]
+        if (FF_RHINO_FILE_IMPORTER_ENABLED) {
+          const connectionUri = getFileImporterQueuePostgresUrl()
+          if (!connectionUri)
+            throw new MisconfiguredEnvironmentError(
+              'Need a dedicated queue for Rhino based fileimports'
+            )
+          const rhinoQueueDb = configureClient({ postgres: { connectionUri } })
+          queueInits.push(
+            initializePostgresQueue({
+              label: 'rhino',
+              supportedFileTypes: ['obj', 'stl', 'skp'],
+              // using public here, as the private uri is not applicable here
+              db: rhinoQueueDb.public
+            })
+          )
+        }
+        // no need to store the queue refs here for now
+        const requestQueues = await Promise.all(queueInits)
+        //stick to the bull queue based mechanism by default
+        ;({ observeResult } = initializeMetrics({
+          registers: [metricsRegister],
+          requestQueues
+        }))
+      } else {
+        const queueInits = [
+          initializeIfcQueueFactory({
+            initializeQueue: initializeQueueFactory({
+              jobActiveHandler: requestActiveHandlerFactory({
+                logger: moduleLogger,
+                updateFileStatusBuilder
+              }),
+              jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
+              jobFailedHandler: requestFailedHandlerFactory({
+                logger: moduleLogger,
+                updateFileStatusForProjectFactory: updateFileStatusBuilder
+              })
+            })
+          })()
+        ]
+        if (FF_RHINO_FILE_IMPORTER_ENABLED) {
+          queueInits.push(
+            initializeRhinoQueueFactory({
+              initializeQueue: initializeQueueFactory({
+                jobActiveHandler: requestActiveHandlerFactory({
+                  logger: moduleLogger,
+                  updateFileStatusBuilder
+                }),
+                jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
+                jobFailedHandler: requestFailedHandlerFactory({
+                  logger: moduleLogger,
+                  updateFileStatusForProjectFactory: updateFileStatusBuilder
+                })
+              })
+            })()
+          )
+        }
+        const requestQueues = await Promise.all(queueInits)
 
-      ;({ observeResult } = initializeMetrics({
-        registers: [metricsRegister],
-        requestQueues: [rhinoQueue, ifcQueue]
-      }))
+        ;({ observeResult } = initializeMetrics({
+          registers: [metricsRegister],
+          requestQueues
+        }))
+      }
     }
 
     const scheduleExecution = scheduleExecutionFactory({
@@ -177,6 +232,7 @@ export const init: SpeckleModule['init'] = async ({
       const projectDb = await getProjectDbClient({
         projectId: parsedMessage.streamId
       })
+
       await onFileImportProcessedFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),

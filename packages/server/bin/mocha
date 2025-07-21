@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-'use strict'
-const path = require('path')
+import path from 'path'
 
 /**
  * Find mocha and run it (we don't want to hardcode a specific node_modules path).
@@ -8,7 +7,7 @@ const path = require('path')
  */
 const relativeBinPath = './bin/mocha.js'
 
-const mochaPath = require.resolve('mocha')
+const mochaPath = import.meta.resolve('mocha')
 const mochaPathDir = path.dirname(mochaPath)
 const mochaBinPath = path.join(mochaPathDir, relativeBinPath)
-require(mochaBinPath)
+await import(mochaBinPath)

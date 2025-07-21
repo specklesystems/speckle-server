@@ -1,5 +1,5 @@
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
-import { keyBy } from 'lodash'
+import { keyBy } from 'lodash-es'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import {

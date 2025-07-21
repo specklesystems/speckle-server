@@ -63,6 +63,10 @@ export const settingsWorkspaceRoutes = {
     name: 'settings-workspaces-slug-projects',
     route: (slug?: string) => `/settings/workspaces/${slug}/projects`
   },
+  automation: {
+    name: 'settings-workspaces-slug-automation',
+    route: (slug?: string) => `/settings/workspaces/${slug}/automation`
+  },
   security: {
     name: 'settings-workspaces-slug-security',
     route: (slug?: string) => `/settings/workspaces/${slug}/security`
@@ -114,6 +118,9 @@ export const projectSettingsRoute = (projectId: string) =>
 
 export const projectWebhooksRoute = (projectId: string) =>
   `/projects/${projectId}/settings/webhooks`
+
+export const projectTokensRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/tokens`
 
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`

@@ -1,5 +1,5 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { has, trimEnd } from 'lodash'
+import { has, trimEnd } from 'lodash-es'
 import * as Environment from '@speckle/shared/environment'
 import { ensureError, Nullable } from '@speckle/shared'
 
@@ -394,6 +394,9 @@ export function isEmailEnabled() {
   return getBooleanFromEnv('EMAIL')
 }
 
+export const getFileImporterQueuePostgresUrl = () =>
+  process.env['FILEIMPORT_QUEUE_POSTGRES_URL'] ?? null
+
 export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '8')
 }
@@ -508,4 +511,26 @@ export const getFileUploadUrlExpiryMinutes = (): number => {
 
 export const getPreviewServiceTimeoutMilliseconds = (): number => {
   return getIntFromEnv('PREVIEW_SERVICE_TIMEOUT_MILLISECONDS', '3600000') // 1 hour
+}
+
+export const getPreviewServiceRetryPeriodMinutes = (): number => {
+  const value = getIntFromEnv('PREVIEW_SERVICE_RETRY_PERIOD_MINUTES', '1')
+  if (value < 1 || value > 60)
+    throw new MisconfiguredEnvironmentError(
+      `PREVIEW_SERVICE_RETRY_PERIOD_MINUTES must be an integer between 1 and 60, got ${value}`
+    )
+  return value
+}
+
+export const getPreviewServiceMaxQueueBackpressure = (): number => {
+  const value = getIntFromEnv('PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE', '1')
+  if (value < 1)
+    throw new MisconfiguredEnvironmentError(
+      `PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE must be an integer greater than 0, got ${value}`
+    )
+  return value
+}
+
+export const emailVerificationTimeoutMinutes = (): number => {
+  return getIntFromEnv('EMAIL_VERIFICATION_TIMEOUT_MINUTES', '5')
 }
