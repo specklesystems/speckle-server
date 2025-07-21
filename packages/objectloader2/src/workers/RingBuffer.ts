@@ -317,29 +317,4 @@ export class RingBuffer {
       }
     }
   }
-
-  // These synchronous wait methods are generally discouraged in main thread or async contexts
-  // but can be useful in specific worker scenarios if blocking is acceptable.
-  // Consider if these are truly needed or if async push/shift cover all uses.
-  /*waitForData(timeoutMs: number = Infinity): boolean {
-    const currentReadIndex = Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS)
-    const result = Atomics.wait(
-      this.controlBuffer,
-      RingBuffer.READ_IDX_POS,
-      currentReadIndex,
-      timeoutMs
-    )
-    return result === 'ok' || result === 'not-equal' // 'not-equal' means value changed before timeout
-  }
-
-  waitForSpace(timeoutMs: number = Infinity): boolean {
-    const currentWriteIndex = Atomics.load(this.controlBuffer, RingBuffer.WRITE_IDX_POS)
-    const result = Atomics.wait(
-      this.controlBuffer,
-      RingBuffer.WRITE_IDX_POS,
-      currentWriteIndex,
-      timeoutMs
-    )
-    return result === 'ok' || result === 'not-equal'
-  }*/
 }

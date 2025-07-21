@@ -52,7 +52,7 @@ export abstract class ObjectQueue<T> {
       try {
         const bytes = this.getBytes(item)
         if (!(await this.rbq.enqueue(bytes, timeoutMs))) {
-          return i // Return the number of successfully
+          return i // Return the number of successfully enqueued items
         }
       } catch (e: unknown) {
         handleError(

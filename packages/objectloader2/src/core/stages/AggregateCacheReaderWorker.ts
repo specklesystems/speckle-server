@@ -30,6 +30,11 @@ export class AggregateCacheReaderWorker implements Reader {
     return this.workers[0].getObject(params)
   }
 
+  requestItem(id: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.requestAllInternal([id])
+  }
+
   requestAll(keys: string[]): void {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.requestAllInternal(keys)
@@ -42,7 +47,7 @@ export class AggregateCacheReaderWorker implements Reader {
       while (enqueuedInChunk < s.length) {
         const actuallyEnqueued = await this.#getRandomWorker().enqueue(
           s.slice(enqueuedInChunk),
-          WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE
+          WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
         )
         if (actuallyEnqueued === 0) {
           await delay(1000)
@@ -53,7 +58,9 @@ export class AggregateCacheReaderWorker implements Reader {
       remainingKeys = remainingKeys.slice(s.length)
     }
   }
-  dispose(): void {
-    this.workers.forEach((worker) => worker.dispose())
+  disposeAsync(): Promise<void> {
+    return Promise.all(this.workers.map((worker) => worker.disposeAsync())).then(() => {
+      this.workers = []
+    })
   }
 }

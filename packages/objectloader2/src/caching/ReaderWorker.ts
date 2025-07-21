@@ -89,6 +89,9 @@ self.onmessage = (event: MessageEvent): void => {
         return errorMsg
       })
     }
+  } else if (data && data.type === WorkerMessageType.DISPOSE) {
+    indexReader?.dispose()
+    indexReader = null
   } else {
     let errorDetail =
       'Received an unknown message type or invalid data for INIT_QUEUES.'

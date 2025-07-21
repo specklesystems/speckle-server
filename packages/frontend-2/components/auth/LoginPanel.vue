@@ -5,7 +5,7 @@
     no-shadow
     class="mx-auto w-full"
   >
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4" data-no-external-confirm>
       <div v-if="!workspaceInvite" class="flex flex-col items-center gap-y-2 pb-4">
         <h1 class="text-heading-xl text-center inline-block">
           {{ title }}
