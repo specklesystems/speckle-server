@@ -30,6 +30,11 @@ export class AggregateCacheReaderWorker implements Reader {
     return this.workers[0].getObject(params)
   }
 
+  requestItem(id: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.requestAllInternal([id])
+  }
+
   requestAll(keys: string[]): void {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.requestAllInternal(keys)
@@ -53,7 +58,9 @@ export class AggregateCacheReaderWorker implements Reader {
       remainingKeys = remainingKeys.slice(s.length)
     }
   }
-  dispose(): void {
-    this.workers.forEach((worker) => worker.dispose())
+  disposeAsync(): Promise<void> {
+    return Promise.all(this.workers.map((worker) => worker.disposeAsync())).then(() => {
+      this.workers = []
+    })
   }
 }

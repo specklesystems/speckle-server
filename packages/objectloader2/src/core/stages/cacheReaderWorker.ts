@@ -43,6 +43,14 @@ export class CacheReaderWorker implements Reader {
     this.#processBatch()
   }
 
+  requestItem(id: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.mainToWorkerQueue?.enqueue(
+      [id],
+      WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+    )
+  }
+
   private initializeIndexedDbReader(): void {
     this.logToMainUI('Initializing RingBufferQueues...')
     const rawMainToWorkerRbq = RingBufferQueue.create(
@@ -89,19 +97,12 @@ export class CacheReaderWorker implements Reader {
   getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.mainToWorkerQueue?.enqueue(
-        [params.id],
-        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
-      )
+      this.requestItem(params.id)
     }
     return p
   }
 
   requestAll(keys: string[]): void {
-    for (const key of keys) {
-      this.#defermentManager.trackDefermentRequest(key)
-    }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.mainToWorkerQueue?.fullyEnqueue(
       keys,
@@ -134,7 +135,7 @@ export class CacheReaderWorker implements Reader {
         const item = items[i]
         if (item.base) {
           this.#foundQueue?.add(item)
-          this.#defermentManager.undefer(item)
+          this.#defermentManager.undefer(item, (id) => this.requestItem(id))
         } else {
           this.#notFoundQueue?.add(item.baseId)
         }
@@ -148,7 +149,11 @@ export class CacheReaderWorker implements Reader {
     }
   }
 
-  dispose(): void {
+   disposeAsync(): Promise<void> {
     this.disposed = true
+    this.indexedDbReader?.postMessage({
+      type: WorkerMessageType.DISPOSE
+    })
+    return Promise.resolve()
   }
 }

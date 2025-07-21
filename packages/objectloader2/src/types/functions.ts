@@ -54,17 +54,7 @@ export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export function isWhitespaceOnly(str: string): boolean {
-  if (str.length === 0) {
-    return true // An empty string contains no non-whitespace characters
-  }
-  if (
-    str ===
-    ' \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000'
-  ) {
-    return true // Special case for the specific string you mentioned
-  }
-  return str.trim() === ''
+
 export function getQueryParameter(paramName: string, defaultValue: string): string {
   // Check if the code is running in a browser environment 🌐
   const isBrowser =

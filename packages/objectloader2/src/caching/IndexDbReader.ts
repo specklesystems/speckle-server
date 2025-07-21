@@ -3,7 +3,7 @@ import { StringQueue } from './StringQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { Item } from '../types/types.js'
-import { delay, isWhitespaceOnly } from '../types/functions.js'
+import { delay } from '../types/functions.js'
 import { WorkerCachingConstants } from './WorkerCachingConstants.js'
 
 export class IndexDbReader {
@@ -38,10 +38,6 @@ export class IndexDbReader {
       if (item) {
         processedItems.push(item)
       } else {
-        if (isWhitespaceOnly(batch[i])) {
-          this.log('Received a whitespace-only message, skipping it.')
-          continue
-        }
         processedItems.push({ baseId: batch[i] })
       }
     }

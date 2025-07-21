@@ -74,8 +74,8 @@ export class ObjectLoader2Factory {
           indexedDB: params.options?.indexedDB,
           keyRange: params.options?.keyRange
         }),
-        logger: params.options?.logger,
-        useReadWorker: true
+        logger: log,
+        useReadWorker: false
       })
     }
     return loader

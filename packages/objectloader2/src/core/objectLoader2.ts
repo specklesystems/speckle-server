@@ -64,7 +64,7 @@ export class ObjectLoader2 {
       this.#reader = new CacheReader(this.#database, this.#deferments, cacheOptions)
     }
     this.#reader.initializeQueue(this.#gathered, this.#downloader)
-    this.#cacheWriter = new CacheWriter(this.#database, this.#deferments, cacheOptions)
+    this.#cacheWriter = new CacheWriter(this.#database, cacheOptions)
   }
 
   async disposeAsync(): Promise<void> {
@@ -72,7 +72,7 @@ export class ObjectLoader2 {
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
       this.#cacheWriter.disposeAsync(),
-      this.#cacheReader.disposeAsync()
+      this.#reader.disposeAsync()
     ])
     this.#deferments.dispose()
   }
@@ -132,7 +132,7 @@ export class ObjectLoader2 {
     this.#reader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
-      this.#deferments.undefer(item, (id: string) => this.#cacheReader.requestItem(id))
+      this.#deferments.undefer(item, (id: string) => this.#reader.requestItem(id))
       yield item.base! //always defined, as we add it to the queue
       count++
       if (count >= total) {
