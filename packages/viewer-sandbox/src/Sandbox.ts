@@ -54,7 +54,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import { ObjectLoader2Factory } from '@speckle/objectloader2'
+import { getQueryParameter, ObjectLoader2Factory } from '@speckle/objectloader2'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -730,7 +730,7 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
 
-    /** Disabled color grading for now 
+    /** Disabled color grading for now
     postFolder
       .addInput(this.sceneParams, 'contrast', {
         min: 0,
@@ -1301,9 +1301,13 @@ export default class Sandbox {
           if (colorImage)
             colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
           dataProgress = p
-          console.log(`Loading ${p}%`)
+
+          if (getQueryParameter('debug', 'false') !== 'true') {
+            console.log(`Loading ${p}%`)
+          }
         }
       })
+          if (getQueryParameter('debug', 'false') !== 'true') {
       loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
         if (arg.count > traversedCount) {
           traversedCount = arg.count
@@ -1320,6 +1324,7 @@ export default class Sandbox {
           }
         }
       })
+    }
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })
