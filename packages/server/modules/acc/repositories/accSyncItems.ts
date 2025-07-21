@@ -1,5 +1,9 @@
+import { PendingAccSyncItems } from '@/modules/acc/dbSchema'
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
+import { DeletePendingAccSyncItem, QueryAllPendingAccSyncItems, UpsertPendingAccSyncItem } from '@/modules/acc/domain/operations'
+import { PendingAccSyncItem } from '@/modules/acc/domain/types'
 import { AccSyncItem } from '@/modules/acc/helpers/types'
+import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 // import { registerAccWebhook } from '@/modules/acc/webhook'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Knex } from 'knex'
@@ -7,7 +11,8 @@ import { Knex } from 'knex'
 const ACC_SYNC_ITEMS = 'acc_sync_items'
 
 const tables = {
-  accSyncItems: (db: Knex) => db<AccSyncItem>(ACC_SYNC_ITEMS)
+  accSyncItems: (db: Knex) => db<AccSyncItem>(ACC_SYNC_ITEMS),
+  pendingAccSyncItems: (db: Knex) => db<PendingAccSyncItem>(PendingAccSyncItems.name)
 }
 
 export type CreateAccSyncItemAndNotify = (
@@ -53,3 +58,25 @@ export const createAccSyncItemAndNotifyFactory = (deps: {
     return item
   }
 }
+
+export const upsertPendingAccSyncItemFactory = (deps: { db: Knex }): UpsertPendingAccSyncItem =>
+  async (item) => {
+    await tables.pendingAccSyncItems(deps.db).insert(item)
+      .onConflict(PendingAccSyncItems.col.syncItemId)
+      .merge([
+        PendingAccSyncItems.col.accFileUrn,
+        PendingAccSyncItems.col.fileUploadId,
+        PendingAccSyncItems.col.createdAt
+      ] as (keyof PendingAccSyncItem)[])
+  }
+
+export const deletePendingAccSyncItemFactory = (deps: { db: Knex }): DeletePendingAccSyncItem =>
+  async ({ id }) => {
+    await tables.pendingAccSyncItems(deps.db).where({ syncItemId: id }).delete()
+  }
+
+export const queryAllPendingAccSyncItemsFactory = (deps: { db: Knex }): QueryAllPendingAccSyncItems =>
+  () => {
+    const selectItems = tables.pendingAccSyncItems(deps.db).select<PendingAccSyncItem[]>('*').orderBy(PendingAccSyncItems.col.createdAt)
+    return executeBatchedSelect(selectItems, { batchSize: 10 })
+  }

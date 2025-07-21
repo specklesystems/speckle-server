@@ -123,46 +123,45 @@ type SchemaConfigParams = {
 
 const createBaseInnerSchemaConfigBuilder =
   <T extends string, C extends string>(tableName: T, columns: C[]) =>
-  (params: SchemaConfigParams = {}): BaseInnerSchemaConfig<T, C> => {
-    const quoted = params.quoted || false
-    const aliasedTableName = params.withCustomTablePrefix
-      ? `${tableName} as ${params.withCustomTablePrefix}`
-      : tableName
+    (params: SchemaConfigParams = {}): BaseInnerSchemaConfig<T, C> => {
+      const quoted = params.quoted || false
+      const aliasedTableName = params.withCustomTablePrefix
+        ? `${tableName} as ${params.withCustomTablePrefix}`
+        : tableName
 
-    const prefix = params.withoutTablePrefix
-      ? null
-      : params.withCustomTablePrefix || tableName
+      const prefix = params.withoutTablePrefix
+        ? null
+        : params.withCustomTablePrefix || tableName
 
-    const colName = (col: string, options?: Partial<{ addQuotes: boolean }>) => {
-      const { addQuotes } = options || {}
+      const colName = (col: string, options?: Partial<{ addQuotes: boolean }>) => {
+        const { addQuotes } = options || {}
 
-      return addQuotes
-        ? (prefix?.length ? `"${prefix}".` : '') + `"${col}"`
-        : (prefix?.length ? `${prefix}.` : '') + `${col}`
-    }
+        return addQuotes
+          ? (prefix?.length ? `"${prefix}".` : '') + `"${col}"`
+          : (prefix?.length ? `${prefix}.` : '') + `${col}`
+      }
 
-    return {
-      name: aliasedTableName as T,
-      knex: (db?: Knex) => (db || knex)(aliasedTableName),
-      col: reduce(
-        columns,
-        (prev, curr) => {
-          prev[curr] = colName(curr, { addQuotes: quoted })
-          return prev
-        },
-        {} as Record<C, string>
-      ),
-      colAs: (col, alias) =>
-        knex.raw(`${colName(col, { addQuotes: true })} AS "${alias}"`),
-      groupArray: (name) =>
-        knex.raw(
-          `array_agg(row_to_json(${
-            (prefix?.length ? prefix + '.' : '') + '*'
-          })) as "${name}"`
+      return {
+        name: aliasedTableName as T,
+        knex: (db?: Knex) => (db || knex)(aliasedTableName),
+        col: reduce(
+          columns,
+          (prev, curr) => {
+            prev[curr] = colName(curr, { addQuotes: quoted })
+            return prev
+          },
+          {} as Record<C, string>
         ),
-      cols: columns.map((c) => colName(c, { addQuotes: quoted }))
+        colAs: (col, alias) =>
+          knex.raw(`${colName(col, { addQuotes: true })} AS "${alias}"`),
+        groupArray: (name) =>
+          knex.raw(
+            `array_agg(row_to_json(${(prefix?.length ? prefix + '.' : '') + '*'
+            })) as "${name}"`
+          ),
+        cols: columns.map((c) => colName(c, { addQuotes: quoted }))
+      }
     }
-  }
 
 /**
  * Create table schema helper

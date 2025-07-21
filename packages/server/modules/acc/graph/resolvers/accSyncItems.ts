@@ -76,7 +76,7 @@ const resolvers: Resolvers = {
     }
   },
   Mutation: {
-    accSyncItemMutations: () => ({})
+    accSyncItemMutations: () => ({} as unknown as any)
   },
   AccSyncItemMutations: {
     async create(parent, args, ctx) {
@@ -114,6 +114,8 @@ const resolvers: Resolvers = {
         authorId: ctx.userId as string,
         ...input
       })
+
+      // TODO: Service function where we also create automation. (Include automation id in sync item record?)
 
       return newItem
     },
