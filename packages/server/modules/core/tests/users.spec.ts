@@ -39,7 +39,7 @@ import {
   deleteStreamFactory,
   getUserDeletableStreamsFactory,
   getStreamRolesFactory,
-  legacyGetStreamsFactory
+  getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
@@ -285,7 +285,7 @@ const deleteUser = deleteUserFactory({
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
   queryAllProjects: queryAllProjectsFactory({
-    getStreams: legacyGetStreamsFactory({ db })
+    getExplicitProjects: getExplicitProjects({ db })
   }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),

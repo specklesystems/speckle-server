@@ -108,7 +108,8 @@ import {
   GetStreamsCollaborators,
   GetStreamsCollaboratorCounts,
   GetImplicitUserProjectsCountFactory,
-  GrantProjectPermissions
+  GrantProjectPermissions,
+  GetExplicitProjects
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
@@ -1488,4 +1489,47 @@ export const getImplicitUserProjectsCountFactory =
 
     const [{ count }] = await q
     return parseInt(count)
+  }
+
+/**
+ * Batch the explicit projects givent by the workspace, the user or both
+ */
+export const getExplicitProjects =
+  (deps: { db: Knex }): GetExplicitProjects =>
+  async ({ limit, cursor, filter: { userId, workspaceId } }) => {
+    if (!userId && !workspaceId) throw new LogicError('A filter must be provided')
+
+    const cursorTarget = Streams.col.id
+    const q = tables
+      .streams(deps.db)
+      .select<StreamWithOptionalRole[]>([
+        ...Object.values(Streams.col),
+        ...(userId ? [StreamAcl.col.role] : [])
+      ])
+      .limit(limit)
+      .orderBy(cursorTarget, 'desc')
+
+    if (userId) {
+      q.join(StreamAcl.name, (j) => {
+        j.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      })
+    }
+
+    if (cursor) {
+      q.where(cursorTarget, '<', decodeCursor(cursor))
+    }
+
+    if (workspaceId) {
+      q.where(Streams.col.workspaceId, workspaceId)
+    }
+
+    const rows = await q
+
+    return {
+      items: rows,
+      cursor: rows.length ? encodeCursor(rows[rows.length - 1].id) : null
+    }
   }
