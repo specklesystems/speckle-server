@@ -89,10 +89,15 @@ self.onmessage = (event: MessageEvent): void => {
         return errorMsg
       })
     }
-  } else {
-    let errorDetail =
-      'Received an unknown message type or invalid data for INIT_QUEUES.'
-    if (!data) errorDetail = 'Received null or undefined data.'
+  } else if (
+    data &&
+    data.type === WorkerMessageType.DISPOSE) {
+  indexReader?.dispose()
+  indexReader = null
+} else {
+  let errorDetail =
+    'Received an unknown message type or invalid data for INIT_QUEUES.'
+  if (!data) errorDetail = 'Received null or undefined data.'
     log(errorDetail, data)
     postMessage({ type: 'WORKER_INIT_FAILED', error: errorDetail })
   }

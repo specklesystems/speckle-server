@@ -75,7 +75,7 @@ export class ObjectLoader2Factory {
           keyRange: params.options?.keyRange
         }),
         logger: log,
-        useReadWorker: false
+        useReadWorker: getQueryParameter('workers', 'false') === 'true'
       })
     }
     return loader

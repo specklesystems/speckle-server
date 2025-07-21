@@ -1,5 +1,6 @@
 export enum WorkerMessageType {
-  INIT_QUEUES = 'INIT_QUEUES'
+  INIT_QUEUES = 'INIT_QUEUES',
+  DISPOSE = 'DISPOSE'
 }
 export function handleError(
   e: unknown,

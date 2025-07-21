@@ -11,6 +11,7 @@ export class IndexDbReader {
   private mainToWorkerQueue: StringQueue
   private db: IndexedDatabase
   private name: string
+  private disposed: boolean = false
 
   constructor(
     name: string,
@@ -60,7 +61,8 @@ export class IndexDbReader {
   }
 
   public async processMessages(): Promise<void> {
-    while (true) {
+    while (!this.disposed)
+    {
       const receivedMessages = await this.mainToWorkerQueue.dequeue(
         WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
         WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
@@ -71,5 +73,10 @@ export class IndexDbReader {
         await delay(1000) // Wait for 1 second before checking again
       }
     }
+  }
+
+  dispose(): void {
+    this.log('Disposing IndexDbReader...')
+    this.disposed = true
   }
 }

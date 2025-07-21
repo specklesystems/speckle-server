@@ -154,6 +154,7 @@ export class CacheReaderWorker implements Reader {
     this.indexedDbReader?.postMessage({
       type: WorkerMessageType.DISPOSE
     })
+    this.indexedDbReader?.terminate()
     return Promise.resolve()
   }
 }
