@@ -1,12 +1,12 @@
 import { CustomLogger } from '../types/functions.js'
 import { Item } from '../types/types.js'
 
-export interface BaseCacheOptions {
+export interface MemoryCacheOptions {
   maxSizeInMb: number
   ttlms: number
 }
 
-export class BaseCacheItem {
+export class MemoryCacheItem {
   private item: Item
   private expiresAt: number // Timestamp in ms
 
@@ -34,29 +34,29 @@ export class BaseCacheItem {
   }
 }
 
-export class BaseCache {
+export class MemoryCache {
   private isGathered: Map<string, boolean> = new Map()
   private references: Map<string, number> = new Map()
-  private cache: Map<string, BaseCacheItem> = new Map()
+  private cache: Map<string, MemoryCacheItem> = new Map()
 
-  private options: BaseCacheOptions
+  private options: MemoryCacheOptions
   private logger: CustomLogger
   private disposed = false
   private currentSize = 0
   private timer?: ReturnType<typeof setTimeout>
 
-  constructor(options: BaseCacheOptions, logger: CustomLogger) {
+  constructor(options: MemoryCacheOptions, logger: CustomLogger) {
     this.options = options
     this.logger = logger
     this.resetGlobalTimer()
   }
 
   add(item: Item, requestItem: (id: string) => void, testNow?: number): void {
-    if (this.disposed) throw new Error('BaseCache is disposed')
+    if (this.disposed) throw new Error('MemoryCache is disposed')
     this.currentSize += item.size || 0
     this.cache.set(
       item.baseId,
-      new BaseCacheItem(item, (testNow || Date.now()) + this.options.ttlms)
+      new MemoryCacheItem(item, (testNow || Date.now()) + this.options.ttlms)
     )
 
     if (!this.isGathered.has(item.baseId)) {
@@ -66,7 +66,7 @@ export class BaseCache {
   }
 
   get(id: string): Item | undefined {
-    if (this.disposed) throw new Error('BaseCache is disposed')
+    if (this.disposed) throw new Error('MemoryCache is disposed')
     const item = this.cache.get(id)
     if (item) {
       item.setAccess(Date.now(), this.options.ttlms)

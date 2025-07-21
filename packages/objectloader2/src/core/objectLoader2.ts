@@ -1,4 +1,4 @@
-import { BaseCache } from '../deferment/BaseCache.js'
+import { MemoryCache } from '../deferment/MemoryCache.js'
 import { DefermentManager } from '../deferment/defermentManager.js'
 import AggregateQueue from '../queues/aggregateQueue.js'
 import AsyncGeneratorQueue from '../queues/asyncGeneratorQueue.js'
@@ -24,7 +24,7 @@ export class ObjectLoader2 {
   #cacheWriter: CacheWriter
 
   #deferments: DefermentManager
-  #cache: BaseCache
+  #cache: MemoryCache
 
   #gathered: AsyncGeneratorQueue<Item>
 
@@ -47,7 +47,7 @@ export class ObjectLoader2 {
     this.#gathered = new AsyncGeneratorQueue()
 
     this.#database = options.database
-    this.#cache = new BaseCache(
+    this.#cache = new MemoryCache(
       {
         maxSizeInMb: 500, // 500 MB
         ttlms: 5_000 // 5 seconds

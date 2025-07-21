@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { BaseCache, BaseCacheItem, BaseCacheOptions } from './BaseCache.js'
+import { MemoryCache, MemoryCacheItem, MemoryCacheOptions } from './MemoryCache.js'
 import { Item, Base } from '../types/types.js'
 import { CustomLogger } from '../types/functions.js'
 
@@ -7,7 +7,7 @@ const logger: CustomLogger = () => {
   // console.log(message, ...optionalParams)
 }
 
-const defaultOptions: BaseCacheOptions = {
+const defaultOptions: MemoryCacheOptions = {
   maxSizeInMb: 10,
   ttlms: 1000
 }
@@ -34,11 +34,11 @@ const createItem = (id: string, size: number, referencedIds: string[] = []): Ite
   }
 }
 
-describe('BaseCacheItem', () => {
+describe('MemoryCacheItem', () => {
   it('should correctly determine if it is expired', () => {
     const item = createItem('1', 100)
     const now = Date.now()
-    const cacheItem = new BaseCacheItem(item, now + 1000)
+    const cacheItem = new MemoryCacheItem(item, now + 1000)
     expect(cacheItem.isExpired(now + 500)).toBe(false)
     expect(cacheItem.isExpired(now + 1500)).toBe(true)
   })
@@ -46,7 +46,7 @@ describe('BaseCacheItem', () => {
   it('should update its access time', () => {
     const item = createItem('1', 100)
     const now = Date.now()
-    const cacheItem = new BaseCacheItem(item, now + 1000)
+    const cacheItem = new MemoryCacheItem(item, now + 1000)
     cacheItem.setAccess(now + 500, 1000)
     expect(cacheItem.isExpired(now + 1000)).toBe(false)
     expect(cacheItem.isExpired(now + 1600)).toBe(true)
@@ -54,20 +54,20 @@ describe('BaseCacheItem', () => {
 
   it('should return the correct item', () => {
     const item = createItem('1', 100)
-    const cacheItem = new BaseCacheItem(item, Date.now() + 1000)
+    const cacheItem = new MemoryCacheItem(item, Date.now() + 1000)
     expect(cacheItem.getItem()).toEqual(item)
   })
 
   it('should be done if expired', () => {
     const item = createItem('1', 100)
     const now = Date.now()
-    const cacheItem = new BaseCacheItem(item, now + 1000)
+    const cacheItem = new MemoryCacheItem(item, now + 1000)
     expect(cacheItem.done(now + 1500)).toBe(true)
     expect(cacheItem.done(now + 500)).toBe(false)
   })
 })
 
-describe('BaseCache', () => {
+describe('MemoryCache', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
@@ -77,7 +77,7 @@ describe('BaseCache', () => {
   })
 
   it('should add and get an item', () => {
-    const cache = new BaseCache(defaultOptions, logger)
+    const cache = new MemoryCache(defaultOptions, logger)
     const item = createItem('1', 100)
     const requestItem = vi.fn()
 
@@ -89,7 +89,7 @@ describe('BaseCache', () => {
   })
 
   it('should update expiry on get', () => {
-    const cache = new BaseCache({ ...defaultOptions, ttlms: 100 }, logger)
+    const cache = new MemoryCache({ ...defaultOptions, ttlms: 100 }, logger)
     const item = createItem('1', 100)
     cache.add(item, vi.fn())
 
@@ -103,12 +103,12 @@ describe('BaseCache', () => {
   })
 
   it('should return undefined for non-existent item', () => {
-    const cache = new BaseCache(defaultOptions, logger)
+    const cache = new MemoryCache(defaultOptions, logger)
     expect(cache.get('non-existent')).toBeUndefined()
   })
 
   it('should scan for references and request missing ones', () => {
-    const cache = new BaseCache(defaultOptions, logger)
+    const cache = new MemoryCache(defaultOptions, logger)
     const requestItem = vi.fn()
     const item = createItem('1', 100, ['2', '3'])
 
@@ -122,7 +122,7 @@ describe('BaseCache', () => {
 
   it('should clean up expired items when size exceeds max', () => {
     const options = { maxSizeInMb: 0, ttlms: 100 } // 100 bytes
-    const cache = new BaseCache(options, logger)
+    const cache = new MemoryCache(options, logger)
     const requestItem = vi.fn()
 
     const item1 = createItem('1', 60)
@@ -139,7 +139,7 @@ describe('BaseCache', () => {
 
   it('should not clean up expired items if they have references', () => {
     const options = { maxSizeInMb: 0.0001, ttlms: 100 } // 100 bytes
-    const cache = new BaseCache(options, logger)
+    const cache = new MemoryCache(options, logger)
     const requestItem = vi.fn()
 
     const item1 = createItem('1', 60)
@@ -156,7 +156,7 @@ describe('BaseCache', () => {
   })
 
   it('compareMaybeBasesByReferences should sort correctly', () => {
-    const cache = new BaseCache(defaultOptions, logger)
+    const cache = new MemoryCache(defaultOptions, logger)
     const requestItem = vi.fn()
 
     const item1 = createItem('1', 10)
@@ -178,10 +178,10 @@ describe('BaseCache', () => {
   })
 
   it('should throw when used after dispose', () => {
-    const cache = new BaseCache(defaultOptions, logger)
+    const cache = new MemoryCache(defaultOptions, logger)
     cache.dispose()
     const item = createItem('1', 100)
-    expect(() => cache.add(item, vi.fn())).toThrow('BaseCache is disposed')
-    expect(() => cache.get('1')).toThrow('BaseCache is disposed')
+    expect(() => cache.add(item, vi.fn())).toThrow('MemoryCache is disposed')
+    expect(() => cache.get('1')).toThrow('MemoryCache is disposed')
   })
 })

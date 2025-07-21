@@ -1,6 +1,6 @@
 import { vi, describe, it, expect } from 'vitest'
 import { DefermentManager } from './defermentManager.js'
-import { BaseCache } from './BaseCache.js'
+import { MemoryCache } from './MemoryCache.js'
 import { CustomLogger } from '../types/functions.js'
 import { Item } from '../types/types.js'
 
@@ -10,7 +10,7 @@ describe('DefermentManager', () => {
     const mockCache = {
       get: vi.fn(),
       add: vi.fn()
-    } as unknown as BaseCache
+    } as unknown as MemoryCache
     const defermentManager = new DefermentManager(mockCache, mockLogger)
     expect(defermentManager).toBeDefined()
   })
@@ -23,7 +23,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
 
       const item: Item = {
@@ -48,7 +48,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
 
       const [promise1, wasInCache1] = defermentManager.defer({ id: 'testId' })
@@ -66,7 +66,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
 
       const [promise, wasInCache] = defermentManager.defer({ id: 'testId' })
@@ -82,7 +82,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
 
       defermentManager.dispose()
@@ -100,7 +100,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
       const requestItem = vi.fn()
 
@@ -124,7 +124,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
       const requestItem = vi.fn()
 
@@ -140,7 +140,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
       const requestItem = vi.fn()
 
@@ -166,7 +166,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
       const requestItem = vi.fn()
 
@@ -190,7 +190,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
 
       void defermentManager.defer({ id: 'testId' })
@@ -206,7 +206,7 @@ describe('DefermentManager', () => {
       const mockCache = {
         get,
         add
-      } as unknown as BaseCache
+      } as unknown as MemoryCache
       const defermentManager = new DefermentManager(mockCache, mockLogger)
 
       defermentManager.dispose()

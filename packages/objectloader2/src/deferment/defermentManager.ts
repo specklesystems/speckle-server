@@ -1,15 +1,15 @@
 import { DeferredBase } from './deferredBase.js'
 import { CustomLogger } from '../types/functions.js'
 import { Item, Base } from '../types/types.js'
-import { BaseCache } from './BaseCache.js'
+import { MemoryCache } from './MemoryCache.js'
 
 export class DefermentManager {
   private outstanding: Map<string, DeferredBase> = new Map()
   private logger: CustomLogger
   private disposed = false
-  private cache: BaseCache
+  private cache: MemoryCache
 
-  constructor(cache: BaseCache, logger: CustomLogger) {
+  constructor(cache: MemoryCache, logger: CustomLogger) {
     this.cache = cache
     this.logger = logger
   }
