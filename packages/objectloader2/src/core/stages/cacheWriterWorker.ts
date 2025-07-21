@@ -1,5 +1,4 @@
 import { ItemQueue } from '../../caching/ItemQueue.js'
-import { DefermentManager } from '../../deferment/defermentManager.js'
 import { CustomLogger } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
@@ -10,7 +9,6 @@ const DEFAULT_ENQUEUE_TIMEOUT_MS = 500
 const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 200 // 1MB capacity for each queue
 
 export class CacheWriterWorker implements Writer {
-  #defermentManager: DefermentManager
   #logger: CustomLogger
   #disposed = false
   private name: string = 'Speckle Cache Writer'
@@ -18,8 +16,7 @@ export class CacheWriterWorker implements Writer {
   mainToWorkerQueue?: ItemQueue
   indexedDbWriter?: Worker
 
-  constructor(defermentManager: DefermentManager, logger: CustomLogger) {
-    this.#defermentManager = defermentManager
+  constructor(logger: CustomLogger) {
     this.#logger = logger
     this.name = `[Speckle Cache Writer]`
     this.initializeIndexedDbWriter()
@@ -57,7 +54,6 @@ export class CacheWriterWorker implements Writer {
   }
 
   add(item: Item): void {
-    this.#defermentManager.undefer(item)
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.mainToWorkerQueue?.enqueue([item], DEFAULT_ENQUEUE_TIMEOUT_MS)
   }

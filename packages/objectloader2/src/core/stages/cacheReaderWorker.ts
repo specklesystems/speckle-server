@@ -130,9 +130,6 @@ export class CacheReaderWorker implements Reader {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         continue
       }
-      // const start = performance.now()
-      let foundCount = 0
-      let notFoundCount = 0
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
         if (item.base) {
@@ -140,10 +137,9 @@ export class CacheReaderWorker implements Reader {
           this.#defermentManager.undefer(item, (id) => this.requestItem(id))
         } else {
           this.#notFoundQueue?.add(item.baseId)
-          notFoundCount++
         }
       }
-      this.logToMainUI(`Processed ${items.length} items: ${foundCount} found, ${notFoundCount} not found.`)
+      this.logToMainUI(`Processed ${items.length} items.`)
     }
   }
 

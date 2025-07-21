@@ -66,9 +66,9 @@ export class ObjectLoader2 {
     }
     this.#reader.initializeQueue(this.#gathered, this.#downloader)
     if (options.useWriteWorker) {
-      this.#writer = new CacheWriterWorker(this.#deferments, this.#logger)
+      this.#writer = new CacheWriterWorker(this.#logger)
     } else {
-      this.#writer = new CacheWriter(this.#database, this.#deferments, cacheOptions)
+      this.#writer = new CacheWriter(this.#database, cacheOptions)
     }
   }
 
@@ -76,7 +76,7 @@ export class ObjectLoader2 {
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
-      this.#cacheWriter.disposeAsync(),
+      this.#writer.disposeAsync(),
       this.#reader.disposeAsync()
     ])
     this.#deferments.dispose()

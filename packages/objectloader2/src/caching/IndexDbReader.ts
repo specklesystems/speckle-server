@@ -3,14 +3,14 @@ import { StringQueue } from './StringQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
 import { Item } from '../types/types.js'
-import { delay } from '../types/functions.js'
+import { CustomLogger, delay } from '../types/functions.js'
 import { WorkerCachingConstants } from './WorkerCachingConstants.js'
 
 export class IndexDbReader {
   private workerToMainQueue: ItemQueue
   private mainToWorkerQueue: StringQueue
   private db: IndexedDatabase
-  private name: string
+  private logger: CustomLogger
   private disposed: boolean = false
 
   constructor(
@@ -22,20 +22,6 @@ export class IndexDbReader {
     this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq, logger)
     this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq, logger)
     this.logger = logger
-  }
-
-  public async processMessages(): Promise<void> {
-    while (true) {
-      const receivedMessages = await this.mainToWorkerQueue.dequeue(
-        WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
-        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
-      ) // receivedMessages will be string[]
-      if (receivedMessages && receivedMessages.length > 0) {
-        await this.processBatch(receivedMessages)
-      } else {
-        await delay(200) // Wait for 200ms before checking again
-      }
-    }
   }
 
   private async processBatch(batch: string[]): Promise<void> {
@@ -60,10 +46,6 @@ export class IndexDbReader {
     )
   }
 
-  public log(message: string, ...args: unknown[]): void {
-    console.log(`${this.name} ${message}`, ...args)
-  }
-
   public static postMessage(args: unknown): void {
     ;(self as unknown as Worker).postMessage(args)
   }
@@ -83,7 +65,6 @@ export class IndexDbReader {
   }
 
   dispose(): void {
-    this.log('Disposing IndexDbReader...')
     this.disposed = true
   }
 }
