@@ -53,6 +53,8 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res).to.not.haveGraphQLErrors()
       expect(res.data?.projectMutations.savedViewMutations.createView).to.be.ok
     })
+
+    it.skip('TODO: auth policy failure')
   })
 
   describe('reading', () => {

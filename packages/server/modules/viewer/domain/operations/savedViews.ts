@@ -5,17 +5,15 @@ import {
 import { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shared'
 import { SerializedViewerState } from '@speckle/shared/viewer/state'
 
-/**
- * REPO-LAYER OPERATIONS
- */
+// REPO OPERATIONS:
 
 export type StoreSavedView = (params: {
   view: NullableKeysToOptional<SavedView>
 }) => Promise<SavedView>
 
-/**
- * SERVICE OPERATIONS
- */
+export type GetStoredViewCount = (params: { projectId: string }) => Promise<number>
+
+// SERVICE OPERATIONS:
 
 export type CreateSavedViewParams = {
   input: {

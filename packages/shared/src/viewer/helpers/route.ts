@@ -120,7 +120,7 @@ export const isModelFolderResource = (
   r: ViewerResource
 ): r is ViewerModelFolderResource => r.type === ViewerResourceType.ModelFolder
 
-class ViewerResourceBuilder {
+class ViewerResourceBuilder implements Iterable<ViewerResource> {
   #resources: ViewerResource[] = []
 
   addAllModels() {
@@ -139,6 +139,15 @@ class ViewerResourceBuilder {
     this.#resources.push(new ViewerObjectResource(objectId))
     return this
   }
+  addFromString(resourceIdString: string) {
+    const resources = parseUrlParameters(resourceIdString)
+    this.#resources.push(...resources)
+    return this
+  }
+  addResources(resources: ViewerResource[]) {
+    this.#resources.push(...resources)
+    return this
+  }
   toString() {
     return createGetParamFromResources(this.#resources)
   }
@@ -148,6 +157,12 @@ class ViewerResourceBuilder {
   clear() {
     this.#resources = []
     return this
+  }
+  length() {
+    return this.#resources.length
+  }
+  [Symbol.iterator](): Iterator<ViewerResource> {
+    return this.#resources[Symbol.iterator]()
   }
 }
 

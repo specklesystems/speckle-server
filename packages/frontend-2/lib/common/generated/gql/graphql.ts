@@ -946,6 +946,27 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateSavedViewInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Group name, if grouping necessary */
+  groupName?: InputMaybe<Scalars['String']['input']>;
+  /** Optionally also set this as the home/default view for the target model */
+  isHomeView?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Auto-generated name, if not specified */
+  name?: InputMaybe<Scalars['String']['input']>;
+  projectId: Scalars['ID']['input'];
+  resourceIdString: Scalars['String']['input'];
+  /** Encoded screenshot of the view */
+  screenshot: Scalars['String']['input'];
+  /**
+   * SerializedViewerState. If omitted, comment won't render (correctly) inside the
+   * viewer, but will still be retrievable through the API
+   */
+  viewerState: Scalars['JSONObject']['input'];
+  /** Set visibility of the view. Default: public */
+  visibility?: InputMaybe<SavedViewVisibility>;
+};
+
 export type CreateServerRegionInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   key: Scalars['String']['input'];
@@ -2169,6 +2190,7 @@ export type Project = {
   permissions: ProjectPermissionChecks;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
+  savedViewGroups: SavedViewGroupCollection;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']['output']>;
   team: Array<ProjectCollaborator>;
@@ -2281,6 +2303,11 @@ export type ProjectObjectArgs = {
 
 export type ProjectPendingImportedModelsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectSavedViewGroupsArgs = {
+  input: SavedViewGroupsInput;
 };
 
 
@@ -2641,6 +2668,7 @@ export type ProjectMutations = {
   leave: Scalars['Boolean']['output'];
   revokeEmbedToken: Scalars['Boolean']['output'];
   revokeEmbedTokens: Scalars['Boolean']['output'];
+  savedViewMutations: SavedViewMutations;
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
@@ -3180,6 +3208,101 @@ export type RootPermissionChecks = {
   canCreateWorkspace: PermissionCheckResult;
 };
 
+export type SavedView = {
+  __typename?: 'SavedView';
+  author: LimitedUser;
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  groupName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  isHomeView: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  /** For figuring out position in the group */
+  position: Scalars['Float']['output'];
+  /** Original resource ID string that this view is associated with. */
+  resourceIdString: Scalars['String']['output'];
+  /** Same as resourceIdString, but split into an array of resource IDs. */
+  resourceIds: Array<Scalars['String']['output']>;
+  /** Encoded screenshot of the view */
+  screenshot: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  /** Viewer state, the actual view configuration */
+  viewerState: Scalars['JSONObject']['output'];
+  visibility: SavedViewVisibility;
+};
+
+export type SavedViewCollection = {
+  __typename?: 'SavedViewCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<SavedView>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SavedViewGroup = {
+  __typename?: 'SavedViewGroup';
+  id: Scalars['ID']['output'];
+  isUngroupedViewsGroup: Scalars['Boolean']['output'];
+  modelIds: Array<Scalars['ID']['output']>;
+  projectId: Scalars['ID']['output'];
+  title: Scalars['String']['output'];
+  views: SavedViewCollection;
+};
+
+
+export type SavedViewGroupViewsArgs = {
+  input: SavedViewGroupViewsInput;
+};
+
+export type SavedViewGroupCollection = {
+  __typename?: 'SavedViewGroupCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<SavedViewGroup>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SavedViewGroupViewsInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  /** Whether to only views authored by the current user */
+  onlyAuthored?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether to only include views matching this search term */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Optionally specify sort by field. Default: updatedAt
+   * Options: updatedAt, createdAt, name
+   */
+  sortBy?: InputMaybe<Scalars['String']['input']>;
+  /** Optionally specify sort direction. Default: descending */
+  sortDirection?: InputMaybe<SortDirection>;
+};
+
+export type SavedViewGroupsInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  /** Whether to only include groups w/ views authored by the current user */
+  onlyAuthored?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Viewer resource ID string that identifies which resources should be loaded */
+  resourceIdString: Scalars['String']['input'];
+  /** Whether to only include groups that have views matching this search term */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SavedViewMutations = {
+  __typename?: 'SavedViewMutations';
+  createView: SavedView;
+};
+
+
+export type SavedViewMutationsCreateViewArgs = {
+  input: CreateSavedViewInput;
+};
+
+export const SavedViewVisibility = {
+  AuthorOnly: 'authorOnly',
+  Public: 'public'
+} as const;
+
+export type SavedViewVisibility = typeof SavedViewVisibility[keyof typeof SavedViewVisibility];
 /** Available scopes. */
 export type Scope = {
   __typename?: 'Scope';
@@ -8094,6 +8217,11 @@ export type AllObjectTypes = {
   ResourceIdentifier: ResourceIdentifier,
   Role: Role,
   RootPermissionChecks: RootPermissionChecks,
+  SavedView: SavedView,
+  SavedViewCollection: SavedViewCollection,
+  SavedViewGroup: SavedViewGroup,
+  SavedViewGroupCollection: SavedViewGroupCollection,
+  SavedViewMutations: SavedViewMutations,
   Scope: Scope,
   ServerApp: ServerApp,
   ServerAppListItem: ServerAppListItem,
@@ -8834,6 +8962,7 @@ export type ProjectFieldArgs = {
   pendingImportedModels: ProjectPendingImportedModelsArgs,
   permissions: {},
   role: {},
+  savedViewGroups: ProjectSavedViewGroupsArgs,
   sourceApps: {},
   team: {},
   updatedAt: {},
@@ -8931,6 +9060,7 @@ export type ProjectMutationsFieldArgs = {
   leave: ProjectMutationsLeaveArgs,
   revokeEmbedToken: ProjectMutationsRevokeEmbedTokenArgs,
   revokeEmbedTokens: ProjectMutationsRevokeEmbedTokensArgs,
+  savedViewMutations: {},
   update: ProjectMutationsUpdateArgs,
   updateRole: ProjectMutationsUpdateRoleArgs,
 }
@@ -9041,6 +9171,43 @@ export type RoleFieldArgs = {
 export type RootPermissionChecksFieldArgs = {
   canCreatePersonalProject: {},
   canCreateWorkspace: {},
+}
+export type SavedViewFieldArgs = {
+  author: {},
+  createdAt: {},
+  description: {},
+  groupName: {},
+  id: {},
+  isHomeView: {},
+  name: {},
+  position: {},
+  resourceIdString: {},
+  resourceIds: {},
+  screenshot: {},
+  updatedAt: {},
+  viewerState: {},
+  visibility: {},
+}
+export type SavedViewCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
+}
+export type SavedViewGroupFieldArgs = {
+  id: {},
+  isUngroupedViewsGroup: {},
+  modelIds: {},
+  projectId: {},
+  title: {},
+  views: SavedViewGroupViewsArgs,
+}
+export type SavedViewGroupCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
+}
+export type SavedViewMutationsFieldArgs = {
+  createView: SavedViewMutationsCreateViewArgs,
 }
 export type ScopeFieldArgs = {
   description: {},
@@ -9756,6 +9923,11 @@ export type AllObjectFieldArgTypes = {
   ResourceIdentifier: ResourceIdentifierFieldArgs,
   Role: RoleFieldArgs,
   RootPermissionChecks: RootPermissionChecksFieldArgs,
+  SavedView: SavedViewFieldArgs,
+  SavedViewCollection: SavedViewCollectionFieldArgs,
+  SavedViewGroup: SavedViewGroupFieldArgs,
+  SavedViewGroupCollection: SavedViewGroupCollectionFieldArgs,
+  SavedViewMutations: SavedViewMutationsFieldArgs,
   Scope: ScopeFieldArgs,
   ServerApp: ServerAppFieldArgs,
   ServerAppListItem: ServerAppListItemFieldArgs,

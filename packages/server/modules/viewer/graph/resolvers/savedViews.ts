@@ -1,6 +1,18 @@
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
+import {
+  getBranchLatestCommitsFactory,
+  getStreamBranchesByNameFactory
+} from '@/modules/core/repositories/branches'
+import {
+  getAllBranchCommitsFactory,
+  getSpecificBranchCommitsFactory
+} from '@/modules/core/repositories/commits'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { createSavedViewFactory } from '@/modules/viewer/services/savedViewsManagement'
 
 const resolvers: Resolvers = {
@@ -16,9 +28,23 @@ const resolvers: Resolvers = {
         resourceAccessRules: ctx.resourceAccessRules
       })
 
-      // TODO: Auth policy
+      const canCreate = await ctx.authPolicies.project.savedViews.canCreate({
+        userId: ctx.userId,
+        projectId
+      })
+      throwIfAuthNotOk(canCreate)
 
-      const createSavedView = createSavedViewFactory()
+      const projectDb = await getProjectDbClient({ projectId })
+      const createSavedView = createSavedViewFactory({
+        getViewerResourceGroups: getViewerResourceGroupsFactory({
+          // TODO: Dataloaders?
+          getStreamObjects: getStreamObjectsFactory({ db: projectDb }),
+          getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
+          getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
+          getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
+          getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+        })
+      })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     }
   }

@@ -1,5 +1,8 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
-import { StoreSavedView } from '@/modules/viewer/domain/operations/savedViews'
+import {
+  GetStoredViewCount,
+  StoreSavedView
+} from '@/modules/viewer/domain/operations/savedViews'
 import { SavedView } from '@/modules/viewer/domain/types/savedViews'
 import { Knex } from 'knex'
 
@@ -29,4 +32,11 @@ export const storeViewFactory =
   async ({ view }) => {
     const [insertedItem] = await tables.savedViews(deps.db).insert(view, '*')
     return insertedItem
+  }
+
+export const getStoredViewCount =
+  (deps: { db: Knex }): GetStoredViewCount =>
+  async ({ projectId }) => {
+    const [count] = await tables.savedViews(deps.db).where({ projectId }).count()
+    return parseInt(count.count + '')
   }
