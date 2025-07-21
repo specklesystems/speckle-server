@@ -35,7 +35,7 @@ export class CacheReader implements Reader {
   getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      this.#requestItem(params.id)
+      this.requestItem(params.id)
     }
     return p
   }
@@ -50,7 +50,7 @@ export class CacheReader implements Reader {
     }
   }
 
-  #requestItem(id: string): void {
+  requestItem(id: string): void {
     this.#createReadQueue()
     if (!this.#readQueue?.get(id)) {
       this.#readQueue?.add(id, id)
@@ -59,9 +59,6 @@ export class CacheReader implements Reader {
 
   requestAll(keys: string[]): void {
     this.#createReadQueue()
-    for (const key of keys) {
-      this.#defermentManager.trackDefermentRequest(key)
-    }
 
     this.#readQueue?.addAll(keys, keys)
   }
@@ -73,7 +70,7 @@ export class CacheReader implements Reader {
       const item = items[i]
       if (item) {
         this.#foundQueue?.add(item)
-        this.#defermentManager.undefer(item)
+        this.#defermentManager.undefer(item, (id) => this.requestItem(id))
       } else {
         this.#notFoundQueue?.add(batch[i])
       }
@@ -81,7 +78,7 @@ export class CacheReader implements Reader {
     this.#logger('readBatch: left, time', items.length, performance.now() - start)
   }
 
-  dispose(): void {
-    this.#readQueue?.dispose()
+  disposeAsync(): Promise<void> {
+    return this.#readQueue?.disposeAsync() || Promise.resolve()
   }
 }
