@@ -10,9 +10,9 @@ import {
   deleteStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
-  legacyGetStreamsFactory,
   getStreamCollaboratorsFactory,
-  getStreamRolesFactory
+  getStreamRolesFactory,
+  getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -775,7 +775,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
               deleteProject: deleteStreamFactory({ db }),
               deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
               queryAllProjects: queryAllProjectsFactory({
-                getStreams: legacyGetStreamsFactory({ db })
+                getExplicitProjects: getExplicitProjects({ db })
               }),
               deleteSsoProvider: deleteSsoProviderFactory({ db }),
               emitWorkspaceEvent: getEventBus().emit

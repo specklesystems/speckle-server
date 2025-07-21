@@ -14,12 +14,12 @@ ENV UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/app
 
 
-COPY pyproject.toml uv.lock /
+COPY ./packages/ifc-import-service/pyproject.toml ./packages/ifc-import-service/uv.lock /
 
 # Install dependencies using uv
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY . /src
+COPY ./packages/ifc-import-service /src
 WORKDIR /src
 
 RUN --mount=type=cache,target=/root/.cache \
@@ -43,7 +43,7 @@ EOT
 STOPSIGNAL SIGINT
 
 COPY --from=build --chown=app:app /app /app
-COPY --chown=app:app main.py /app
+COPY --chown=app:app ./packages/ifc-import-service/main.py /app
 # COPY --chown=appuser:appuser . .
 #
 # Switch to non-root user
