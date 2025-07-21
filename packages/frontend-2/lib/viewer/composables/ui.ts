@@ -97,6 +97,8 @@ export function useSectionBoxUtilities() {
 }
 
 export function useCameraUtilities() {
+  type ViewArg = string[] | CanonicalView | SpeckleView | InlineView | Box3 | undefined
+
   const { instance } = useInjectedViewer()
   const {
     filters: { selectedObjects, isolatedObjectIds },
@@ -104,8 +106,6 @@ export function useCameraUtilities() {
   } = useInjectedViewerInterfaceState()
 
   const cam = instance.getExtension(CameraController)
-
-  type ViewArg = string[] | CanonicalView | SpeckleView | InlineView | Box3 | undefined
 
   const setView = (view: ViewArg, transition = true, fit = 1.2) => {
     cam.setCameraView(view as Parameters<typeof cam.setCameraView>[0], transition, fit)
