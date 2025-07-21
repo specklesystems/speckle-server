@@ -346,7 +346,6 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
       verbose: !!(import.meta.client && params.viewerDebug)
     })
 
-    // Register essential extensions (mirrors LegacyViewer default set)
     viewer.createExtension(CameraController)
     viewer.createExtension(SectionTool)
     viewer.createExtension(SectionOutlines)

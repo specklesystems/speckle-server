@@ -22,8 +22,8 @@ const legacyBranchMetadataQuery = graphql(`
   }
 `)
 
-const legacyViewerCommitMetadataQuery = graphql(`
-  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {
+const viewerCommitMetadataQuery = graphql(`
+  query ViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {
     project(id: $streamId) {
       version(id: $commitId) {
         id
@@ -94,7 +94,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     } else {
       const { data, errors } = await apollo
         .query({
-          query: legacyViewerCommitMetadataQuery,
+          query: viewerCommitMetadataQuery,
           variables: { streamId: viewerStreamId, commitId: viewerId }
         })
         .catch(convertThrowIntoFetchResult)
@@ -156,7 +156,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     } else if (commitId?.length) {
       const { data, errors } = await apollo
         .query({
-          query: legacyViewerCommitMetadataQuery,
+          query: viewerCommitMetadataQuery,
           variables: { streamId, commitId }
         })
         .catch(convertThrowIntoFetchResult)
