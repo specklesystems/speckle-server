@@ -15,6 +15,7 @@ import { SpeckleMaterial } from './SpeckleMaterial.js'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial.js'
 import { type Asset, AssetType, type MaterialOptions } from '../../IViewer.js'
 import SpeckleTextColoredMaterial from './SpeckleTextColoredMaterial.js'
+import { ChunkArray } from '../converter/VirtualArray.js'
 
 const defaultGradient: Asset = {
   id: 'defaultGradient',
@@ -124,6 +125,7 @@ export default class Materials {
     if (!materialNode) return null
     let renderMaterial: RenderMaterial | null = null
     if (materialNode.model.raw.renderMaterial) {
+      const colorsChunkArray = new ChunkArray(geometryNode?.model.raw.colors)
       renderMaterial = {
         id: materialNode.model.raw.renderMaterial.id,
         color: materialNode.model.raw.renderMaterial.diffuse,
@@ -134,10 +136,7 @@ export default class Materials {
             : 1,
         roughness: materialNode.model.raw.renderMaterial.roughness,
         metalness: materialNode.model.raw.renderMaterial.metalness,
-        vertexColors:
-          geometryNode &&
-          geometryNode.model.raw.colors &&
-          geometryNode.model.raw.colors.length > 0
+        vertexColors: (geometryNode && colorsChunkArray.length > 0) ?? false
       }
     }
     return renderMaterial

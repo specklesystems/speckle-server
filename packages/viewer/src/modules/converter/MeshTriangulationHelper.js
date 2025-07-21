@@ -12,7 +12,7 @@ export default class MeshTriangulationHelper {
    * @return {Number[]} flat list of triangle faces (without cardinality indicators)
    */
   static triangulateFace(faceIndex, faces, vertices) {
-    let n = faces[faceIndex]
+    let n = faces.get(faceIndex)
     if (n < 3) n += 3 // 0 -> 3, 1 -> 4
 
     //Converts from relative to absolute index (returns index in mesh.vertices list)
@@ -22,10 +22,13 @@ export default class MeshTriangulationHelper {
 
     //Gets vertex from a relative vert index
     function V(v) {
-      const index = faces[asIndex(v)] * 3
-      return new Vector3(vertices[index], vertices[index + 1], vertices[index + 2])
+      const index = faces.get(asIndex(v)) * 3
+      return new Vector3(
+        vertices.get(index),
+        vertices.get(index + 1),
+        vertices.get(index + 2)
+      )
     }
-
     const triangleFaces = Array((n - 2) * 3)
 
     //Calculate face normal using the Newell Method
@@ -78,9 +81,9 @@ export default class MeshTriangulationHelper {
       }
 
       if (isEar) {
-        const a = faces[asIndex(i)]
-        const b = faces[asIndex(next[i])]
-        const c = faces[asIndex(prev[i])]
+        const a = faces.get(asIndex(i))
+        const b = faces.get(asIndex(next[i]))
+        const c = faces.get(asIndex(prev[i]))
         triangleFaces.push(a, b, c)
 
         next[prev[i]] = next[i]

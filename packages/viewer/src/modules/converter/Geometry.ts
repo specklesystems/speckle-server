@@ -6,14 +6,16 @@ import {
   Float32BufferAttribute,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
+  MathUtils,
   Matrix4,
   Vector2,
   Vector3,
   Vector4
 } from 'three'
-import { type SpeckleObject } from '../../IViewer.js'
+import { DataChunk, type SpeckleObject } from '../../IViewer.js'
 import { getRelativeOffset, makePerspectiveProjection } from '../Helpers.js'
 import earcut from 'earcut'
+import { ChunkArray } from './VirtualArray.js'
 
 const vecBuff0: Vector3 = new Vector3()
 const floatArrayBuff: Float32Array = new Float32Array(16)
@@ -27,14 +29,23 @@ export enum GeometryAttributes {
   INDEX = 'INDEX'
 }
 
+type AttributeValue = ChunkArray
+
+// Required keys
+type RequiredKeys = GeometryAttributes.POSITION | GeometryAttributes.INDEX
+
+// Optional keys
+type OptionalKeys = Exclude<GeometryAttributes, RequiredKeys>
+
+// Final shape: required + optional keys
+type GeometryAttributesShape = {
+  [K in RequiredKeys]: AttributeValue
+} & {
+  [K in OptionalKeys]?: AttributeValue
+}
+
 export interface GeometryData {
-  attributes:
-    | ({
-        [GeometryAttributes.POSITION]: number[]
-      } & Partial<
-        Record<Exclude<GeometryAttributes, GeometryAttributes.POSITION>, number[]>
-      >)
-    | null
+  attributes: GeometryAttributesShape | null
   bakeTransform: Matrix4 | null
   transform: Matrix4 | null
   metaData?: SpeckleObject
@@ -86,7 +97,7 @@ export class Geometry {
   }
 
   static mergeGeometryAttribute(
-    attributes: (number[] | undefined)[],
+    attributes: AttributeValue[],
     target: Float32Array | Float64Array
   ): ArrayLike<number> {
     let offset = 0
@@ -95,15 +106,15 @@ export class Geometry {
       if (!attribute || !target) {
         throw new Error('Cannot merge geometries. Indices or positions are undefined')
       }
-      target.set(attribute, offset)
+      attribute.copyToBuffer(target, offset)
       offset += attribute.length
     }
     return target
   }
 
   static mergeIndexAttribute(
-    indexAttributes: (number[] | undefined)[],
-    positionAttributes: (number[] | undefined)[]
+    indexAttributes: AttributeValue[],
+    positionAttributes: AttributeValue[]
   ): number[] {
     let indexOffset = 0
     const mergedIndex = []
@@ -116,7 +127,7 @@ export class Geometry {
       }
 
       for (let j = 0; j < index.length; ++j) {
-        mergedIndex.push(index[j] + indexOffset / 3)
+        mergedIndex.push(index.get(j) + indexOffset / 3)
       }
 
       indexOffset += positions.length
@@ -138,53 +149,59 @@ export class Geometry {
         Geometry.transformGeometryData(geometries[i], geometries[i].bakeTransform)
     }
 
-    if (sampleAttributes && sampleAttributes[GeometryAttributes.INDEX]) {
-      const indexAttributes: (number[] | undefined)[] = geometries.map(
-        (item: GeometryData) => {
-          /** Catering to typescript */
-          if (!item.attributes) return
-          return item.attributes[GeometryAttributes.INDEX]
-        }
-      )
-      const positionAttributes: (number[] | undefined)[] = geometries.map((item) => {
+    if (sampleAttributes && sampleAttributes.INDEX) {
+      const indexAttributes = geometries.map((item: GeometryData) => {
         /** Catering to typescript */
         if (!item.attributes) return
-        return item.attributes[GeometryAttributes.POSITION]
-      })
+        return item.attributes.INDEX
+      }) as ChunkArray[]
+      const positionAttributes = geometries.map((item) => {
+        /** Catering to typescript */
+        if (!item.attributes) return
+        return item.attributes.POSITION
+      }) as ChunkArray[]
       /** o_0 Catering to typescript*/
       if (mergedGeometry.attributes)
-        mergedGeometry.attributes[GeometryAttributes.INDEX] =
-          Geometry.mergeIndexAttribute(indexAttributes, positionAttributes)
+        mergedGeometry.attributes.INDEX = new ChunkArray([
+          {
+            data: Geometry.mergeIndexAttribute(indexAttributes, positionAttributes),
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ])
     }
 
     for (const k in sampleAttributes) {
       if (k !== GeometryAttributes.INDEX) {
-        const attributes: (number[] | undefined)[] = geometries.map((item) => {
+        const attributes: ChunkArray[] = geometries.map((item) => {
           /** Catering to typescript */
           if (!item.attributes) return
-          return item.attributes[k as GeometryAttributes] as number[]
-        })
+          return item.attributes[k as GeometryAttributes]
+        }) as ChunkArray[]
         /** Catering to typescript */
-        if (mergedGeometry.attributes)
-          mergedGeometry.attributes[k as GeometryAttributes] =
-            Geometry.mergeGeometryAttribute(
-              attributes,
-              k === GeometryAttributes.POSITION
-                ? new Float64Array(
-                    attributes.reduce((prev, cur) => {
-                      /** Catering to typescript */
-                      if (!cur) return 0
-                      return prev + cur.length
-                    }, 0)
-                  )
-                : new Float32Array(
-                    attributes.reduce((prev, cur) => {
-                      /** Catering to typescript */
-                      if (!cur) return 0
-                      return prev + cur.length
-                    }, 0)
-                  )
-            ) as number[]
+        if (mergedGeometry.attributes) {
+          const mergedData = Geometry.mergeGeometryAttribute(
+            attributes,
+            k === GeometryAttributes.POSITION
+              ? new Float64Array(
+                  attributes.reduce((prev, cur) => {
+                    /** Catering to typescript */
+                    if (!cur) return 0
+                    return prev + cur.length
+                  }, 0)
+                )
+              : new Float32Array(
+                  attributes.reduce((prev, cur) => {
+                    /** Catering to typescript */
+                    if (!cur) return 0
+                    return prev + cur.length
+                  }, 0)
+                )
+          ) as number[]
+          mergedGeometry.attributes[k as GeometryAttributes] = new ChunkArray([
+            { data: mergedData, id: MathUtils.generateUUID(), references: 1 }
+          ])
+        }
       }
     }
 
@@ -204,19 +221,18 @@ export class Geometry {
     if (Geometry.isMatrix4Identity(m)) return
 
     const e = m.elements
+    geometryData.attributes.POSITION.chunkArray.forEach((chunk: DataChunk) => {
+      for (let k = 0; k < chunk.data.length; k += 3) {
+        const x = chunk.data[k],
+          y = chunk.data[k + 1],
+          z = chunk.data[k + 2]
+        const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15])
 
-    for (let k = 0; k < geometryData.attributes.POSITION.length; k += 3) {
-      const x = geometryData.attributes.POSITION[k],
-        y = geometryData.attributes.POSITION[k + 1],
-        z = geometryData.attributes.POSITION[k + 2]
-      const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15])
-
-      geometryData.attributes.POSITION[k] = (e[0] * x + e[4] * y + e[8] * z + e[12]) * w
-      geometryData.attributes.POSITION[k + 1] =
-        (e[1] * x + e[5] * y + e[9] * z + e[13]) * w
-      geometryData.attributes.POSITION[k + 2] =
-        (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
-    }
+        chunk.data[k] = (e[0] * x + e[4] * y + e[8] * z + e[12]) * w
+        chunk.data[k + 1] = (e[1] * x + e[5] * y + e[9] * z + e[13]) * w
+        chunk.data[k + 2] = (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
+      }
+    })
   }
 
   public static isMatrix4Identity(matrix: Matrix4) {
@@ -460,9 +476,58 @@ export class Geometry {
     }
   }
 
+  public static computeVertexNormalsBufferVirtual(
+    buffer: number[],
+    position: ChunkArray,
+    index: ChunkArray
+  ) {
+    const pA = new Vector3(),
+      pB = new Vector3(),
+      pC = new Vector3()
+    const nA = new Vector3(),
+      nB = new Vector3(),
+      nC = new Vector3()
+    const cb = new Vector3(),
+      ab = new Vector3()
+
+    // indexed elements
+    for (let i = 0, il = index.length; i < il; i += 3) {
+      const vA = index.get(i + 0)
+      const vB = index.get(i + 1)
+      const vC = index.get(i + 2)
+      pA.set(position.get(vA * 3), position.get(vA * 3 + 1), position.get(vA * 3 + 2))
+      pB.set(position.get(vB * 3), position.get(vB * 3 + 1), position.get(vB * 3 + 2))
+      pC.set(position.get(vC * 3), position.get(vC * 3 + 1), position.get(vC * 3 + 2))
+
+      cb.subVectors(pC, pB)
+      ab.subVectors(pA, pB)
+      cb.cross(ab)
+
+      nA.fromArray(buffer, vA * 3)
+      nB.fromArray(buffer, vB * 3)
+      nC.fromArray(buffer, vC * 3)
+
+      nA.add(cb).normalize()
+      nB.add(cb).normalize()
+      nC.add(cb).normalize()
+
+      buffer[vA * 3] = nA.x
+      buffer[vA * 3 + 1] = nA.y
+      buffer[vA * 3 + 2] = nA.z
+
+      buffer[vB * 3] = nB.x
+      buffer[vB * 3 + 1] = nB.y
+      buffer[vB * 3 + 2] = nB.z
+
+      buffer[vC * 3] = nC.x
+      buffer[vC * 3 + 1] = nC.y
+      buffer[vC * 3 + 2] = nC.z
+    }
+  }
+
   public static computeVertexNormals(
     buffer: BufferGeometry,
-    doublePositions: Float64Array
+    positions: Float64Array | Float32Array
   ) {
     const index = buffer.index
     const positionAttribute = buffer.getAttribute('position')
@@ -499,9 +564,9 @@ export class Geometry {
           const vB = index.getX(i + 1)
           const vC = index.getX(i + 2)
 
-          pA.fromArray(doublePositions, vA * 3)
-          pB.fromArray(doublePositions, vB * 3)
-          pC.fromArray(doublePositions, vC * 3)
+          pA.fromArray(positions, vA * 3)
+          pB.fromArray(positions, vB * 3)
+          pC.fromArray(positions, vC * 3)
 
           cb.subVectors(pC, pB)
           ab.subVectors(pA, pB)
@@ -524,9 +589,9 @@ export class Geometry {
 
         for (let i = 0, il = positionAttribute.count; i < il; i += 3) {
           /** This is done blind. Don't think speckle supports non-indexed geometry */
-          pA.fromArray(doublePositions, i * 3)
-          pB.fromArray(doublePositions, i * 3 + 1)
-          pC.fromArray(doublePositions, i * 3 + 2)
+          pA.fromArray(positions, i * 3)
+          pB.fromArray(positions, i * 3 + 1)
+          pC.fromArray(positions, i * 3 + 2)
 
           cb.subVectors(pC, pB)
           ab.subVectors(pA, pB)

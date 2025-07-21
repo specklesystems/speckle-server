@@ -16,7 +16,7 @@ import { NodeRenderView } from '../tree/NodeRenderView.js'
 import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch.js'
 import { BatchObject } from './BatchObject.js'
 import { Geometry } from '../converter/Geometry.js'
-import { ObjectLayers } from '../../IViewer.js'
+import { DataChunk, ObjectLayers } from '../../IViewer.js'
 import Logger from '../utils/Logger.js'
 
 export class MeshBatch extends PrimitiveBatch {
@@ -205,8 +205,8 @@ export class MeshBatch extends PrimitiveBatch {
       ) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
       }
-      indicesCount += ervee.renderData.geometry.attributes.INDEX.length
-      attributeCount += ervee.renderData.geometry.attributes.POSITION.length
+      indicesCount += ervee.indexCount
+      attributeCount += ervee.vertArrayCount
       bounds.union(ervee.aabb)
     }
     const needsRTE = Geometry.needsRTE(bounds)
@@ -234,41 +234,46 @@ export class MeshBatch extends PrimitiveBatch {
       /** Catering to typescript
        *  There is no unniverse where indices or positions are undefined at this point
        */
-      if (!geometry.attributes || !geometry.attributes.INDEX) {
+      if (!geometry.attributes || !geometry.attributes?.INDEX) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
       }
-      indices.set(
-        geometry.attributes.INDEX.map((val) => val + offset / 3),
-        arrayOffset
-      )
-      position.set(geometry.attributes.POSITION, offset)
-      if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+      geometry.attributes?.INDEX.chunkArray.forEach((c: DataChunk) => {
+        let chunkOffset = 0
+        indices.set(
+          /** We need to make a new array so we don't alter shared chunks. But we'll do it more smart soon */
+          c.data.map((val) => val + offset / 3),
+          arrayOffset + chunkOffset
+        )
+        chunkOffset += c.data.length
+      })
+
+      geometry.attributes?.POSITION.copyToBuffer(position, offset)
+
+      if (geometry.attributes.COLOR) {
+        geometry.attributes?.COLOR.copyToBuffer(color, offset)
+      }
 
       /** We either copy over the provided vertex normals */
       if (geometry.attributes.NORMAL) {
-        normals.set(geometry.attributes.NORMAL, offset)
+        geometry.attributes?.NORMAL.copyToBuffer(normals, offset)
       } else {
         /** Either we compute them ourselves */
-        Geometry.computeVertexNormalsBuffer(
+        Geometry.computeVertexNormalsBufferVirtual(
           normals.subarray(
             offset,
-            offset + geometry.attributes.POSITION.length
+            offset + this.renderViews[k].vertArrayCount
           ) as unknown as number[],
           geometry.attributes.POSITION,
           geometry.attributes.INDEX
         )
       }
-      batchIndices.fill(
-        k,
-        offset / 3,
-        offset / 3 + geometry.attributes.POSITION.length / 3
-      )
+      batchIndices.fill(k, offset / 3, offset / 3 + geometry.attributes.POSITION.length)
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
         geometry.attributes.INDEX.length,
         offset / 3,
-        offset / 3 + geometry.attributes.POSITION.length / 3
+        offset / 3 + geometry.attributes.POSITION.length
       )
 
       const batchObject = new BatchObject(this.renderViews[k], k)

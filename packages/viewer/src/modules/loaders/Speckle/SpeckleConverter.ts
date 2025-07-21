@@ -6,6 +6,7 @@ import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import { ObjectLoader2 } from '@speckle/objectloader2'
 import { SpeckleTypeAllRenderables } from '../GeometryConverter.js'
+import { DataChunk } from '../../../IViewer.js'
 
 export type ConverterResultDelegate = (count: number) => void
 export type SpeckleConverterNodeDelegate =
@@ -288,23 +289,43 @@ export default class SpeckleConverter {
    * @return {[type]}     [description]
    */
   private async dechunk(arr: Array<{ referencedId: string }>) {
-    if (!arr || arr.length === 0) return arr
+    if (!arr || arr.length === 0) {
+      return arr
+    }
+
+    if (Array.isArray(arr[0]) && !arr[0].referencedId) {
+      return arr
+    }
     // Handles pre-chunking objects, or arrs that have not been chunked
-    if (!arr[0].referencedId) return arr
+    if (!arr[0].referencedId) {
+      if (!(arr[0] instanceof Object))
+        return [
+          {
+            data: arr,
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ]
+      else return arr
+    }
 
     const chunked: unknown[] = []
     for (const ref of arr) {
-      const real: Record<string, unknown> = (await this.objectLoader.getObject({
+      const real: DataChunk = (await this.objectLoader.getObject({
         id: ref.referencedId
-      })) as unknown as Record<string, number>
-      chunked.push(real.data)
+      })) as unknown as DataChunk
+      if (real.references === undefined) {
+        real.references = 1
+      } else {
+        real.references++
+      }
+      chunked.push(real)
       // await this.asyncPause()
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dechunked = [].concat(...(chunked as any))
+    // const dechunked = [].concat(...(chunked as any))
 
-    return dechunked
+    return chunked
   }
 
   /**

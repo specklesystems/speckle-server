@@ -28,6 +28,12 @@ export type SpeckleObject = {
   applicationId?: string
 }
 
+export type DataChunk = {
+  id: string
+  data: number[]
+  references: number
+}
+
 export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset

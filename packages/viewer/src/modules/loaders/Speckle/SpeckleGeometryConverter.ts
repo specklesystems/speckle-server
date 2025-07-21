@@ -2,9 +2,11 @@ import { Geometry, type GeometryData } from '../../converter/Geometry.js'
 import MeshTriangulationHelper from '../../converter/MeshTriangulationHelper.js'
 import { getConversionFactor } from '../../converter/Units.js'
 import { type NodeData } from '../../tree/WorldTree.js'
-import { Box3, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
+import { Box3, EllipseCurve, MathUtils, Matrix4, Vector2, Vector3 } from 'three'
 import { GeometryConverter, SpeckleType } from '../GeometryConverter.js'
 import Logger from '../../utils/Logger.js'
+import { DataChunk } from '../../../IViewer.js'
+import { ChunkArray } from '../../converter/VirtualArray.js'
 
 export class SpeckleGeometryConverter extends GeometryConverter {
   public typeLookupTable: { [type: string]: SpeckleType } = {}
@@ -93,9 +95,30 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         node.raw.colors = []
         break
       case SpeckleType.Mesh:
-        node.raw.vertices = []
-        node.raw.faces = []
-        node.raw.colors = []
+        // node.raw.vertices = []
+        // node.raw.faces = []
+        // node.raw.colors = []
+        node.raw.faces.forEach((c: DataChunk) => {
+          c.references--
+
+          if (!c.references) {
+            Logger.warn(`Deleting chunk data ${c.id}`)
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            delete c.data
+          }
+        })
+
+        node.raw.colors.forEach((c: DataChunk) => {
+          c.references--
+
+          if (!c.references) {
+            Logger.warn(`Deleting chunk data ${c.id}`)
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            delete c.data
+          }
+        })
         break
       case SpeckleType.Point:
         if (node.raw.value) node.raw.value = []
@@ -197,8 +220,10 @@ export class SpeckleGeometryConverter extends GeometryConverter {
   protected PointcloudToGeometryData(node: NodeData): GeometryData | null {
     const conversionFactor = getConversionFactor(node.raw.units)
 
-    const vertices = node.instanced ? node.raw.points.slice() : node.raw.points
-    const colorsRaw = node.raw.colors
+    const vertices = new ChunkArray(
+      node.instanced ? node.raw.points.slice() : node.raw.points
+    )
+    const colorsRaw = new ChunkArray(node.raw.colors)
     let colors = null
 
     if (colorsRaw && colorsRaw.length !== 0) {
@@ -215,6 +240,10 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       attributes: {
         POSITION: vertices,
         COLOR: colors
+          ? new ChunkArray([
+              { data: colors, id: MathUtils.generateUUID(), references: 1 }
+            ])
+          : undefined
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,
@@ -260,26 +289,33 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     if (!node.raw.faces) return null
 
     const start = performance.now()
-    const vertices = node.raw.vertices
-    const faces = node.raw.faces
-    const colorsRaw = node.raw.colors
+
+    const vertices = new ChunkArray(node.raw.vertices)
+    const faces = new ChunkArray(node.raw.faces)
+    const colorsRaw = this.chunkArrayHasData(node.raw.colors)
+      ? new ChunkArray(node.raw.colors)
+      : undefined
     let normals = node.raw.vertexNormals
+      ? new ChunkArray(node.raw.vertexNormals)
+      : undefined
     let colors = undefined
     let k = 0
     while (k < faces.length) {
-      let n = faces[k]
+      let n = faces.get(k)
       if (n < 3) n += 3 // 0 -> 3, 1 -> 4
 
       if (n === 3) {
         const startP = performance.now()
         // Triangle face
-        indices.push(faces[k + 1], faces[k + 2], faces[k + 3])
+        indices.push(faces.get(k + 1), faces.get(k + 2), faces.get(k + 3))
         this.pushTime += performance.now() - startP
       } else {
         // Quad or N-gon face
         const start1 = performance.now()
         const triangulation = MeshTriangulationHelper.triangulateFace(
           k,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //@ts-ignore
           faces,
           vertices
         )
@@ -293,6 +329,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
 
       k += n + 1
     }
+
     this.meshTriangulationTime += performance.now() - start
 
     if (colorsRaw && colorsRaw.length !== 0) {
@@ -302,7 +339,13 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         )
       } else
       /** We want the colors in linear space */
-        colors = this.unpackColors(colorsRaw, true)
+        colors = new ChunkArray([
+          {
+            id: MathUtils.generateUUID(),
+            references: 1,
+            data: this.unpackColors(colorsRaw, true)
+          }
+        ])
     }
 
     if (normals && normals.length !== 0) {
@@ -317,7 +360,9 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     return {
       attributes: {
         POSITION: vertices,
-        INDEX: indices,
+        INDEX: new ChunkArray([
+          { id: MathUtils.generateUUID(), references: 1, data: indices }
+        ]),
         ...(colors && { COLOR: colors }),
         ...(normals && { NORMAL: normals })
       },
@@ -368,15 +413,18 @@ export class SpeckleGeometryConverter extends GeometryConverter {
    */
   protected PointToGeometryData(node: NodeData): GeometryData | null {
     const conversionFactor = getConversionFactor(node.raw.units)
+    const points = this.PointToFloatArray(
+      node.raw as { value: Array<number>; units: string } & {
+        x: number
+        y: number
+        z: number
+      }
+    )
     return {
       attributes: {
-        POSITION: this.PointToFloatArray(
-          node.raw as { value: Array<number>; units: string } & {
-            x: number
-            y: number
-            z: number
-          }
-        )
+        POSITION: new ChunkArray([
+          { data: points, id: MathUtils.generateUUID(), references: 1 }
+        ])
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,
@@ -394,9 +442,15 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     const conversionFactor = getConversionFactor(node.raw.units)
     return {
       attributes: {
-        POSITION: this.PointToFloatArray(node.raw.start).concat(
-          this.PointToFloatArray(node.raw.end)
-        )
+        POSITION: new ChunkArray([
+          {
+            data: this.PointToFloatArray(node.raw.start).concat(
+              this.PointToFloatArray(node.raw.end)
+            ),
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ])
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,
@@ -412,12 +466,26 @@ export class SpeckleGeometryConverter extends GeometryConverter {
    */
   protected PolylineToGeometryData(node: NodeData): GeometryData | null {
     const conversionFactor = getConversionFactor(node.raw.units)
+    const chunkArray = new ChunkArray(node.raw.value)
 
-    if (node.raw.closed)
-      node.raw.value.push(node.raw.value[0], node.raw.value[1], node.raw.value[2])
+    let outChunk = chunkArray
+    if (node.raw.closed) {
+      const complete = new Float32Array(chunkArray.length + 3)
+      chunkArray.copyToBuffer(complete, 0)
+      complete[chunkArray.length] = complete[0]
+      complete[chunkArray.length + 1] = complete[1]
+      complete[chunkArray.length + 2] = complete[2]
+      outChunk = new ChunkArray([
+        {
+          data: complete as unknown as number[],
+          id: MathUtils.generateUUID(),
+          references: 1
+        }
+      ])
+    }
     return {
       attributes: {
-        POSITION: node.raw.value.slice(0)
+        POSITION: outChunk
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,
@@ -504,7 +572,9 @@ export class SpeckleGeometryConverter extends GeometryConverter {
 
     return {
       attributes: {
-        POSITION: edges
+        POSITION: new ChunkArray([
+          { data: edges, id: MathUtils.generateUUID(), references: 1 }
+        ])
       },
       bakeTransform: new Matrix4().copy(T).multiply(R),
       transform: null
@@ -562,7 +632,13 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     )
     return {
       attributes: {
-        POSITION: this.FlattenVector3Array(points)
+        POSITION: new ChunkArray([
+          {
+            data: this.FlattenVector3Array(points),
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ])
       },
       bakeTransform: null,
       transform: null
@@ -664,7 +740,13 @@ export class SpeckleGeometryConverter extends GeometryConverter {
 
     return {
       attributes: {
-        POSITION: this.FlattenVector3Array(points)
+        POSITION: new ChunkArray([
+          {
+            data: this.FlattenVector3Array(points),
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ])
       },
       bakeTransform: matrix,
       transform: null
@@ -710,7 +792,13 @@ export class SpeckleGeometryConverter extends GeometryConverter {
 
     return {
       attributes: {
-        POSITION: this.FlattenVector3Array(points)
+        POSITION: new ChunkArray([
+          {
+            data: this.FlattenVector3Array(points),
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ])
       },
       bakeTransform: null,
       transform: null
@@ -818,10 +906,10 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     return output
   }
 
-  protected unpackColors(int32Colors: number[], tolinear = false): number[] {
+  protected unpackColors(int32Colors: ChunkArray, tolinear = false): number[] {
     const colors = new Array<number>(int32Colors.length * 3)
     for (let i = 0; i < int32Colors.length; i++) {
-      const color = int32Colors[i]
+      const color = int32Colors.get(i)
       const r = (color >> 16) & 0xff
       const g = (color >> 8) & 0xff
       const b = color & 0xff
@@ -842,5 +930,10 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     else if (x >= 1) return 1
     else if (x < 0.04045) return x / 12.92
     else return Math.pow((x + 0.055) / 1.055, 2.4)
+  }
+
+  /** Connectors send empty chunks ಠ_ಠ */
+  protected chunkArrayHasData(chunks: Array<DataChunk>): boolean {
+    return chunks && chunks.filter((c: DataChunk) => c.data && c.data.length).length > 0
   }
 }

@@ -7,6 +7,9 @@ import Materials, {
   type RenderMaterial
 } from '../materials/Materials.js'
 import { SpeckleType } from '../loaders/GeometryConverter.js'
+import { DataChunk } from '../../IViewer.js'
+import { ChunkArray } from '../converter/VirtualArray.js'
+const _box3: Box3 = new Box3()
 
 export interface NodeRenderData {
   id: string
@@ -100,6 +103,14 @@ export class NodeRenderView {
     return this._batchVertexEnd
   }
 
+  public get vertArrayCount(): number {
+    return this.renderData.geometry.attributes?.POSITION.length ?? 0
+  }
+
+  public get indexCount(): number {
+    return this.renderData.geometry.attributes?.INDEX.length ?? 0
+  }
+
   public get needsSegmentConversion(): boolean {
     return (
       this._renderData.speckleType === SpeckleType.Curve ||
@@ -157,7 +168,12 @@ export class NodeRenderView {
       this._renderData.geometry.attributes &&
       this._renderData.geometry.attributes.POSITION.length
     ) {
-      this._aabb.setFromArray(this._renderData.geometry.attributes.POSITION)
+      this._renderData.geometry.attributes.POSITION.chunkArray.forEach(
+        (c: DataChunk) => {
+          _box3.setFromArray(c.data)
+          this._aabb.union(_box3)
+        }
+      )
     }
   }
 
@@ -181,7 +197,9 @@ export class NodeRenderView {
 
   public disposeGeometry() {
     for (const attr in this._renderData.geometry.attributes) {
-      this._renderData.geometry.attributes[attr as GeometryAttributes] = []
+      this._renderData.geometry.attributes[attr as GeometryAttributes] = new ChunkArray(
+        []
+      )
     }
   }
 }
