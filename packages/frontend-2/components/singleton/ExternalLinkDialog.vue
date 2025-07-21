@@ -14,16 +14,15 @@
 </template>
 
 <script setup lang="ts">
-import { useGlobalExternalLinkDialog } from '~/lib/common/composables/externalLinkDialog'
+import { useExternalLinkDialogState } from '~/lib/common/composables/externalLinkDialog'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 
-const { state } = useGlobalExternalLinkDialog()
+const { state, close } = useExternalLinkDialogState()
 const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     onClick: () => {
-      state.value.open = false
-      state.value._resolver?.(false)
+      close(false)
     }
   },
   {
@@ -31,8 +30,7 @@ const buttons = computed((): LayoutDialogButton[] => [
     props: { color: 'danger' },
     onClick: () => {
       window.open(state.value.url, '_blank', 'noopener,noreferrer')
-      state.value.open = false
-      state.value._resolver?.(true)
+      close(true)
     }
   }
 ])

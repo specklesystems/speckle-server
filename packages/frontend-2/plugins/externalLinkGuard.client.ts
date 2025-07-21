@@ -1,7 +1,7 @@
-import { useGlobalExternalLinkDialog } from '~/lib/common/composables/externalLinkDialog'
+import { useExternalLinkDialogController } from '~/lib/common/composables/externalLinkDialog'
 
 export default defineNuxtPlugin(() => {
-  const { confirm } = useGlobalExternalLinkDialog()
+  const { confirm } = useExternalLinkDialogController()
 
   const handler = (e: MouseEvent) => {
     // Ignore modified / non-left clicks
@@ -9,17 +9,12 @@ export default defineNuxtPlugin(() => {
 
     const a = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null
     if (!a) return
-    if (a.hasAttribute('data-no-external-confirm') || a.hasAttribute('download')) return
+
+    if (a.hasAttribute('download') || a.closest('[data-no-external-confirm]')) return
 
     const url = new URL(a.href, window.location.href)
 
-    if (url.origin === window.location.origin) {
-      e.preventDefault()
-
-      const path = url.pathname + url.search + url.hash
-      navigateTo(path)
-      return
-    }
+    if (url.origin === window.location.origin) return
 
     e.preventDefault()
     void confirm(a.href)
