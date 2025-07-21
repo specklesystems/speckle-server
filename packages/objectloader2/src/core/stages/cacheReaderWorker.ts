@@ -10,7 +10,7 @@ import { Reader } from './interfaces.js'
 import { WorkerCachingConstants } from '../../caching/WorkerCachingConstants.js'
 
 const ID_BUFFER_CAPACITY_BYTES = 1024 * 1024 // 1MB capacity for each queue
-const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 500 // 1MB capacity for each queue
+const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 500 // 500MB capacity for each queue
 
 export class CacheReaderWorker implements Reader {
   #defermentManager: DefermentManager
@@ -32,7 +32,7 @@ export class CacheReaderWorker implements Reader {
   }
 
   private logToMainUI(message: string): void {
-    this.#logger(`[Main] ${message}`)
+    this.#logger(`[ObjectLoader2] ${message}`)
   }
 
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
@@ -55,7 +55,7 @@ export class CacheReaderWorker implements Reader {
     this.logToMainUI('Initializing RingBufferQueues...')
     const rawMainToWorkerRbq = RingBufferQueue.create(
       ID_BUFFER_CAPACITY_BYTES,
-      'StringQueue MainToWorkerQueue'
+      this.name + ' MainToWorkerQueue'
     )
     this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq, this.#logger)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
@@ -67,7 +67,7 @@ export class CacheReaderWorker implements Reader {
 
     const rawWorkerToMainRbq = RingBufferQueue.create(
       BASE_BUFFER_CAPACITY_BYTES,
-      'ItemQueue WorkerToMainQueue'
+      this.name + ' WorkerToMainQueue'
     )
     this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq, this.#logger)
     const workerToMainSab = rawWorkerToMainRbq.getSharedArrayBuffer()
@@ -122,11 +122,15 @@ export class CacheReaderWorker implements Reader {
           WorkerCachingConstants.DEFAULT_DEQUEUE_TIMEOUT_MS
         )) || []
       if (this.disposed) {
-        this.#logger('readBatch: disposed, exiting processing loop')
+        this.logToMainUI(
+          `processBatch: disposed, exiting processing loop`
+        )
         return
       }
       if (items.length === 0) {
-        this.#logger('readBatch: no items to process, waiting...')
+        this.logToMainUI(
+          `processBatch: no items to process, waiting...`
+        )
         await new Promise((resolve) => setTimeout(resolve, 1000))
         continue
       }
@@ -141,10 +145,7 @@ export class CacheReaderWorker implements Reader {
         }
       }
       this.logToMainUI(
-        'readBatch: left, time ' +
-          items.length.toString() +
-          ' ' +
-          (performance.now() - start)
+        `processBatch: items processed ${items.length.toString()}, time ${performance.now() - start}`
       )
     }
   }

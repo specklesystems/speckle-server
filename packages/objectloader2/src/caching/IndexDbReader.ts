@@ -53,7 +53,7 @@ export class IndexDbReader {
   }
 
   public log(message: string, ...args: unknown[]): void {
-    console.log(`${this.name} ${message}`, ...args)
+    console.log(`[debug] ${this.name} ${message}`, ...args)
   }
 
   public static postMessage(args: unknown): void {

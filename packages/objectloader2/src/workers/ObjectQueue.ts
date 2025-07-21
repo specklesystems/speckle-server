@@ -24,10 +24,10 @@ export abstract class ObjectQueue<T> {
         const actuallyEnqueued = await this.enqueue(s.slice(enqueuedInChunk), timeoutMs)
         if (actuallyEnqueued === 0) {
           // If no items were enqueued, wait before retrying to avoid a busy loop.
-          this.logger(
+          /*this.logger(
             'fullyEnqueue: enqueue returned 0, waiting before retry for remaining items',
             s.length - enqueuedInChunk
-          )
+          )*/
           await delay(1000)
           continue
         }
