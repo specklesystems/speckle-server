@@ -34,7 +34,7 @@ import {
   useGetObjectUrl,
   useOnViewerLoadComplete,
   useViewerCameraControlStartTracker,
-  useViewerCameraTracker,
+  useViewerCameraRestTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
@@ -440,14 +440,10 @@ function useViewerCameraIntegration() {
     return cameraManuallyChanged
   }
 
-  // viewer -> state
-  // debouncing pos/target updates to avoid jitteriness + spotlight mode unnecessarily disabling
-  useViewerCameraTracker(
-    () => {
-      loadCameraDataFromViewer()
-    }
-    // { debounceWait: 100 }
-  )
+  // viewer -> state (update once camera interaction ends)
+  useViewerCameraRestTracker(() => {
+    loadCameraDataFromViewer()
+  })
 
   useOnViewerLoadComplete(({ isInitial }) => {
     if (isInitial) {
