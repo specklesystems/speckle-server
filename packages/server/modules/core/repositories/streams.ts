@@ -1496,7 +1496,7 @@ export const getImplicitUserProjectsCountFactory =
  */
 export const getExplicitProjects =
   (deps: { db: Knex }): GetExplicitProjects =>
-  async ({ userId, limit, cursor, workspaceId }) => {
+  async ({ limit, cursor, filter: { userId, workspaceId } }) => {
     if (!userId && !workspaceId) throw new LogicError('A filter must be provided')
 
     const cursorTarget = Streams.col.id

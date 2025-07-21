@@ -106,8 +106,10 @@ export type GetImplicitUserProjectsCountFactory = (params: {
 export type GetExplicitProjects = (params: {
   cursor: string | null
   limit: number
-  workspaceId?: string
-  userId?: string
+  filter: {
+    workspaceId?: string
+    userId?: string
+  }
 }) => Promise<{
   items: StreamWithOptionalRole[]
   cursor: string | null

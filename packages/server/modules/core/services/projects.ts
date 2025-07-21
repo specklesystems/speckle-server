@@ -148,8 +148,10 @@ export const queryAllProjectsFactory = ({
       const { items, cursor } = await getExplicitProjects({
         cursor: currentCursor,
         limit: 100,
-        workspaceId,
-        userId
+        filter: {
+          workspaceId,
+          userId
+        }
       })
 
       yield items
