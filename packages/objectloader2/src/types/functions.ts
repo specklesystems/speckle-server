@@ -49,3 +49,22 @@ export function take<T>(it: Iterator<T>, count: number): T[] {
   }
   return result
 }
+
+export function getQueryParameter(paramName: string, defaultValue: string): string {
+  // Check if the code is running in a browser environment 🌐
+  const isBrowser =
+    typeof window !== 'undefined' && typeof window.document !== 'undefined'
+
+  if (!isBrowser) {
+    // If in Node.js or another server environment, return the default
+    return defaultValue
+  }
+
+  // In a browser, parse the query string
+  const params = new URLSearchParams(window.location.search)
+
+  // .get() returns the value, or null if it's not found.
+  // The nullish coalescing operator (??) provides the default value
+  // if the left-hand side is null or undefined.
+  return params.get(paramName) ?? defaultValue
+}
