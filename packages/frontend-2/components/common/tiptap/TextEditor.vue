@@ -187,6 +187,7 @@ onBeforeUnmount(() => {
 
 .ProseMirror {
   flex: 1;
+  width: 100%;
 
   & p:last-of-type {
     margin-bottom: 0;
