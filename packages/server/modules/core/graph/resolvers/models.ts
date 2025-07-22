@@ -10,8 +10,6 @@ import {
 } from '@/modules/core/services/branch/retrieval'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash-es'
-
-import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
   getPaginatedBranchCommitsFactory,
   legacyGetPaginatedStreamCommitsFactory
@@ -60,6 +58,7 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
 
 export default {
   User: {

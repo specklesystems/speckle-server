@@ -10,7 +10,6 @@ import {
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
-import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
@@ -18,6 +17,7 @@ import {
   storeSavedViewFactory
 } from '@/modules/viewer/repositories/savedViews'
 import { createSavedViewFactory } from '@/modules/viewer/services/savedViewsManagement'
+import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
 
 const resolvers: Resolvers = {
   ProjectMutations: {

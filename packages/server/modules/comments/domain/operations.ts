@@ -1,9 +1,4 @@
-import {
-  ExtendedComment,
-  ResourceIdentifier,
-  ViewerResourceGroup,
-  ViewerResourceItem
-} from '@/modules/comments/domain/types'
+import { ExtendedComment, ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
   CommentLinkRecord,
   CommentRecord,
@@ -14,12 +9,12 @@ import {
   CreateCommentInput,
   CreateCommentReplyInput,
   EditCommentInput,
-  LegacyCommentViewerData,
-  ViewerUpdateTrackingTarget
+  LegacyCommentViewerData
 } from '@/modules/core/graph/generated/graphql'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
 import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
+import { ViewerResourceItem } from '@/modules/viewer/domain/types/resources'
 import { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Merge } from 'type-fest'
@@ -224,14 +219,6 @@ export type GetViewerResourcesForComment = (
 export type GetViewerResourcesFromLegacyIdentifiers = (
   projectId: string,
   resources: Array<ResourceIdentifier>
-) => Promise<ViewerResourceItem[]>
-
-export type GetViewerResourceGroups = (
-  target: ViewerUpdateTrackingTarget & { allowEmptyModels?: boolean }
-) => Promise<ViewerResourceGroup[]>
-
-export type GetViewerResourceItemsUngrouped = (
-  target: ViewerUpdateTrackingTarget
 ) => Promise<ViewerResourceItem[]>
 
 export type ConvertLegacyDataToState = (

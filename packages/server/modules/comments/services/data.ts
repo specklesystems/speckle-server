@@ -3,7 +3,7 @@ import {
   GetViewerResourcesForComments
 } from '@/modules/comments/domain/operations'
 import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
-import { viewerResourcesToString } from '@/modules/core/services/commit/viewerResources'
+import { viewerResourcesToString } from '@/modules/viewer/services/viewerResources'
 import {
   VersionedSerializedViewerState,
   SerializedViewerState,

@@ -35,8 +35,6 @@ import {
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
-  getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
@@ -70,6 +68,10 @@ import {
 } from '@/modules/core/repositories/projects'
 import { storeModelFactory } from '@/modules/core/repositories/models'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
 
 const command: CommandModule<
   unknown,

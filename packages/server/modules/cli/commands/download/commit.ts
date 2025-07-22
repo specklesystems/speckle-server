@@ -23,8 +23,6 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
-  getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
@@ -53,6 +51,10 @@ import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { db } from '@/db/knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
 
 const command: CommandModule<
   unknown,

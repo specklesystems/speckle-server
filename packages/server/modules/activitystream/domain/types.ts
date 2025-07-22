@@ -3,7 +3,6 @@ import {
   StreamResourceTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { ViewerResourceItem } from '@/modules/comments/domain/types'
 import {
   CommentCreateInput,
   CreateCommentInput,
@@ -11,6 +10,7 @@ import {
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
+import { ViewerResourceItem } from '@/modules/viewer/domain/types/resources'
 import z from 'zod'
 
 // Activity

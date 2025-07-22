@@ -50,12 +50,9 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
-  doViewerResourcesFit,
   getViewerResourcesForCommentFactory,
   getViewerResourcesFromLegacyIdentifiersFactory,
-  getViewerResourcesForCommentsFactory,
-  getViewerResourceItemsUngroupedFactory,
-  getViewerResourceGroupsFactory
+  getViewerResourcesForCommentsFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
   createCommentThreadAndNotifyFactory,
@@ -94,6 +91,11 @@ import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { isCreatedBeyondHistoryLimitCutoffFactory } from '@/modules/gatekeeperCore/utils/limits'
+import {
+  doViewerResourcesFit,
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })

@@ -16,11 +16,11 @@ import {
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
-} from '@/modules/core/services/commit/viewerResources'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+} from '@/modules/viewer/services/viewerResources'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
 
