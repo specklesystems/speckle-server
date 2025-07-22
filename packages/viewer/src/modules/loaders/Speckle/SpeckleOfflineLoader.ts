@@ -1,7 +1,11 @@
 import { SpeckleLoader } from './SpeckleLoader.js'
 import { WorldTree } from '../../tree/WorldTree.js'
 import Logger from '../../utils/Logger.js'
-import { ObjectLoader2, ObjectLoader2Factory, PropertyInfo } from '@speckle/objectloader2'
+import {
+  ObjectLoader2,
+  ObjectLoader2Factory,
+  PropertyInfo
+} from '@speckle/objectloader2'
 
 export class SpeckleOfflineLoader extends SpeckleLoader {
   constructor(targetTree: WorldTree, resourceData: unknown, resourceId?: string) {

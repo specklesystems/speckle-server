@@ -1,5 +1,4 @@
-
-import { PropertyInfo } from '@speckle/objectloader2';
+import { PropertyInfo } from '@speckle/objectloader2'
 import EventEmitter from '../EventEmitter.js'
 
 export enum LoaderEvent {

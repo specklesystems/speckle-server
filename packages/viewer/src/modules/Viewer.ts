@@ -254,10 +254,10 @@ export class Viewer extends EventEmitter implements IViewer {
     }
     const ol2Props = this.properties[resourceURL]
     if (!ol2Props) {
-      const propManager = new PropertyManager();
+      const propManager = new PropertyManager()
       return propManager.getProperties(this.tree, resourceURL, bypassCache)
     } else {
-      return Promise.resolve(ol2Props as unknown as PropertyInfo[]);
+      return Promise.resolve(ol2Props as unknown as PropertyInfo[])
     }
   }
 
@@ -323,7 +323,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.loaders[loader.resource] = loader
     const properties = await loader.load()
     if (properties) {
-      this.properties[loader.resource] = properties as OL2PropertyInfo[]
+      this.properties[loader.resource] = properties
       const renderTree: RenderTree | null = this.tree.getRenderTree(loader.resource)
       /** Catering to typescript
        *  The render tree can't be null, we've just built it

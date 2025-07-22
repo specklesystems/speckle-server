@@ -2,4 +2,9 @@ export { ObjectLoader2 } from './core/objectLoader2.js'
 export { ObjectLoader2Factory } from './core/objectLoader2Factory.js'
 export { getQueryParameter } from './types/functions.js'
 
-export { PropertyManager, PropertyInfo, NumericPropertyInfo, StringPropertyInfo } from './properties/PropertyManager.js'
+export {
+  PropertyManager,
+  PropertyInfo,
+  NumericPropertyInfo,
+  StringPropertyInfo
+} from './properties/PropertyManager.js'
