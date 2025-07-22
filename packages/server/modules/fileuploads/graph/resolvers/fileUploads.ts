@@ -252,7 +252,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     }
   },
 
-  async completeFileImport(_parent, args, ctx) {
+  async finishFileImport(_parent, args, ctx) {
     const { projectId, jobId, status, warnings, reason, result } = args.input
     const userId = ctx.userId
     if (!userId) {

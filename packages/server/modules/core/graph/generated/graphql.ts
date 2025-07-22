@@ -912,15 +912,6 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String']['input'];
 };
 
-export type CompleteFileImportInput = {
-  jobId: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
-  reason?: InputMaybe<Scalars['String']['input']>;
-  result: FileImportResultInput;
-  status: JobResultStatus;
-  warnings?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
 /**
  * Can be used instead of a full item collection, when the implementation doesn't call for it yet. Because
  * of the structure, it can be swapped out to a full item collection in the future
@@ -1136,7 +1127,7 @@ export type FileUploadMutations = {
    * recording the provided status, and emitting the needed subscriptions.
    * Mostly for internal service usage.
    */
-  completeFileImport?: Maybe<Scalars['Boolean']['output']>;
+  finishFileImport?: Maybe<Scalars['Boolean']['output']>;
   /**
    * Generate a pre-signed url to which a file can be uploaded.
    * After uploading the file, call mutation startFileImport to register the completed upload.
@@ -1152,8 +1143,8 @@ export type FileUploadMutations = {
 };
 
 
-export type FileUploadMutationsCompleteFileImportArgs = {
-  input: CompleteFileImportInput;
+export type FileUploadMutationsFinishFileImportArgs = {
+  input: FinishFileImportInput;
 };
 
 
@@ -1164,6 +1155,15 @@ export type FileUploadMutationsGenerateUploadUrlArgs = {
 
 export type FileUploadMutationsStartFileImportArgs = {
   input: StartFileImportInput;
+};
+
+export type FinishFileImportInput = {
+  jobId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+  result: FileImportResultInput;
+  status: JobResultStatus;
+  warnings?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type GendoAiRender = {
@@ -5538,7 +5538,6 @@ export type ResolversTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
-  CompleteFileImportInput: CompleteFileImportInput;
   CountOnlyCollection: ResolverTypeWrapper<CountOnlyCollection>;
   CreateAutomateFunctionInput: CreateAutomateFunctionInput;
   CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
@@ -5567,6 +5566,7 @@ export type ResolversTypes = {
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   FileUploadCollection: ResolverTypeWrapper<Omit<FileUploadCollection, 'items'> & { items: Array<ResolversTypes['FileUpload']> }>;
   FileUploadMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  FinishFileImportInput: FinishFileImportInput;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   GendoAIRender: ResolverTypeWrapper<GendoAIRenderGraphQLReturn>;
   GendoAIRenderCollection: ResolverTypeWrapper<Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversTypes['GendoAIRender']>> }>;
@@ -5890,7 +5890,6 @@ export type ResolversParentTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
-  CompleteFileImportInput: CompleteFileImportInput;
   CountOnlyCollection: CountOnlyCollection;
   CreateAutomateFunctionInput: CreateAutomateFunctionInput;
   CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
@@ -5917,6 +5916,7 @@ export type ResolversParentTypes = {
   FileUpload: FileUploadGraphQLReturn;
   FileUploadCollection: Omit<FileUploadCollection, 'items'> & { items: Array<ResolversParentTypes['FileUpload']> };
   FileUploadMutations: MutationsObjectGraphQLReturn;
+  FinishFileImportInput: FinishFileImportInput;
   Float: Scalars['Float']['output'];
   GendoAIRender: GendoAIRenderGraphQLReturn;
   GendoAIRenderCollection: Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversParentTypes['GendoAIRender']>> };
@@ -6658,7 +6658,7 @@ export type FileUploadCollectionResolvers<ContextType = GraphQLContext, ParentTy
 };
 
 export type FileUploadMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUploadMutations'] = ResolversParentTypes['FileUploadMutations']> = {
-  completeFileImport?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<FileUploadMutationsCompleteFileImportArgs, 'input'>>;
+  finishFileImport?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<FileUploadMutationsFinishFileImportArgs, 'input'>>;
   generateUploadUrl?: Resolver<ResolversTypes['GenerateFileUploadUrlOutput'], ParentType, ContextType, RequireFields<FileUploadMutationsGenerateUploadUrlArgs, 'input'>>;
   startFileImport?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType, RequireFields<FileUploadMutationsStartFileImportArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

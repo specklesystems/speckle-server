@@ -152,7 +152,7 @@ enum JobResultStatus {
   error
 }
 
-input CompleteFileImportInput {
+input FinishFileImportInput {
   projectId: String!
   jobId: String!
   status: JobResultStatus!
@@ -181,7 +181,7 @@ type FileUploadMutations {
   recording the provided status, and emitting the needed subscriptions.
   Mostly for internal service usage.
   """
-  completeFileImport(input: CompleteFileImportInput!): Boolean
+  finishFileImport(input: FinishFileImportInput!): Boolean
 }
 
 extend type Mutation {
