@@ -31,6 +31,15 @@ function useSelectionStateSync() {
     state.ui.selectedObjects.value = objs
   }
 
+  watch(state.ui.selectedObjects, (newVal) => {
+    const newIds = newVal.map((obj) => obj.id as string)
+    if (!newVal.length) {
+      selExt.clearSelection()
+    } else {
+      selExt.selectObjects(newIds)
+    }
+  })
+
   onMounted(() => {
     if (state.viewer.init.ref.value) {
       update()
