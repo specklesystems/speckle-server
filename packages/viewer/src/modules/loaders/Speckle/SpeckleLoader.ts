@@ -136,12 +136,6 @@ export class SpeckleLoader extends Loader {
       await firstObjectPromise
     }
 
-    Logger.warn(
-      `Finished converting object ${this.resource} in ${
-        (performance.now() - start) / TIME_MS.second
-      } seconds. Node count: ${this.tree.nodeCount}`
-    )
-
     if (traversals === 0) {
       Logger.warn(`Viewer: no 3d objects found in object ${this.resource}`)
       this.emit(LoaderEvent.LoadWarning, {
@@ -169,7 +163,9 @@ export class SpeckleLoader extends Loader {
     })
 
     Logger.warn(
-      `Finished rendering object . Node count: ${this.tree.nodeCount} Total: ${total}`
+      `Finished converting objects ${this.resource} in ${
+        (performance.now() - start) / TIME_MS.second
+      } seconds. Node count: ${this.tree.nodeCount} Total: ${total}`
     )
 
     void p.then(() => {

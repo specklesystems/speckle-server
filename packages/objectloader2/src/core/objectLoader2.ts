@@ -1,5 +1,6 @@
 import { MemoryCache } from '../deferment/MemoryCache.js'
 import { DefermentManager } from '../deferment/defermentManager.js'
+import { PropertyManager } from '../properties/PropertyManager.js'
 import AggregateQueue from '../queues/aggregateQueue.js'
 import AsyncGeneratorQueue from '../queues/asyncGeneratorQueue.js'
 import { CustomLogger, take } from '../types/functions.js'
@@ -30,6 +31,8 @@ export class ObjectLoader2 {
 
   #root?: Item = undefined
   #isRootStored = false
+
+  propertyManager: PropertyManager = new PropertyManager()
 
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
@@ -133,12 +136,14 @@ export class ObjectLoader2 {
     this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
+      this.propertyManager.addBase(item.base!)
       yield item.base! //always defined, as we add it to the queue
       count++
       if (count >= total) {
         break
       }
     }
+    this.propertyManager.finalize()
     if (!this.#isRootStored) {
       await this.#database.saveBatch({ batch: [rootItem] })
       this.#isRootStored = true
