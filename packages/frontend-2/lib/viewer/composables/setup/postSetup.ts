@@ -19,7 +19,8 @@ import {
   SectionOutlines,
   SectionToolEvent,
   SectionTool,
-  SpeckleLoader
+  SpeckleLoader,
+  SelectionExtension
 } from '@speckle/viewer'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
@@ -529,6 +530,30 @@ function useViewerFiltersIntegration() {
     ui: { filters, highlightedObjectIds }
   } = useInjectedViewerState()
 
+  const selectionExt = instance.getExtension(SelectionExtension)
+  const highlightExt = instance.getExtension(HighlightExtension)
+
+  const preserveSelectionHighlightFilter = (filterFn: () => void) => {
+    const selectedObjects = selectionExt
+      .getSelectedObjects()
+      .map((obj) => obj.id as string)
+    const highlightedObjects = highlightedObjectIds.value.slice()
+
+    if (!selectedObjects.length && !highlightedObjects.length) {
+      filterFn()
+      return
+    }
+
+    // Clear, apply, restore
+    if (selectedObjects.length) selectionExt.clearSelection()
+    if (highlightedObjects.length) highlightExt.clearSelection()
+
+    filterFn()
+
+    // Only restore selection (highlights should be cleared by filtering)
+    if (selectedObjects.length) selectionExt.selectObjects(selectedObjects)
+  }
+
   const {
     metadata: { availableFilters: allFilters }
   } = useInjectedViewer()
@@ -572,19 +597,23 @@ function useViewerFiltersIntegration() {
 
       if (isolatable.length) {
         withWatchersDisabled(() => {
-          instance
-            .getExtension(FilteringExtension)
-            .isolateObjects(isolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
+          preserveSelectionHighlightFilter(() => {
+            instance
+              .getExtension(FilteringExtension)
+              .isolateObjects(isolatable, stateKey, true)
+            filters.hiddenObjectIds.value = []
+          })
         })
       }
 
       if (unisolatable.length) {
         withWatchersDisabled(() => {
-          instance
-            .getExtension(FilteringExtension)
-            .unIsolateObjects(unisolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
+          preserveSelectionHighlightFilter(() => {
+            instance
+              .getExtension(FilteringExtension)
+              .unIsolateObjects(unisolatable, stateKey, true)
+            filters.hiddenObjectIds.value = []
+          })
         })
       }
     },
@@ -602,16 +631,22 @@ function useViewerFiltersIntegration() {
 
       if (hidable.length) {
         withWatchersDisabled(() => {
-          instance.getExtension(FilteringExtension).hideObjects(hidable, stateKey, true)
-          filters.isolatedObjectIds.value = []
+          preserveSelectionHighlightFilter(() => {
+            instance
+              .getExtension(FilteringExtension)
+              .hideObjects(hidable, stateKey, true)
+            filters.isolatedObjectIds.value = []
+          })
         })
       }
       if (showable.length) {
         withWatchersDisabled(() => {
-          instance
-            .getExtension(FilteringExtension)
-            .showObjects(showable, stateKey, true)
-          filters.isolatedObjectIds.value = []
+          preserveSelectionHighlightFilter(() => {
+            instance
+              .getExtension(FilteringExtension)
+              .showObjects(showable, stateKey, true)
+            filters.isolatedObjectIds.value = []
+          })
         })
       }
     },
@@ -624,9 +659,11 @@ function useViewerFiltersIntegration() {
   ) => {
     const targetFilter = filter || speckleTypeFilter.value
 
-    const filteringExt = instance.getExtension(FilteringExtension)
-    if (isApplied && targetFilter) await filteringExt.setColorFilter(targetFilter)
-    if (!isApplied) await filteringExt.removeColorFilter()
+    preserveSelectionHighlightFilter(() => {
+      const filteringExt = instance.getExtension(FilteringExtension)
+      if (isApplied && targetFilter) filteringExt.setColorFilter(targetFilter)
+      if (!isApplied) filteringExt.removeColorFilter()
+    })
   }
 
   watch(
