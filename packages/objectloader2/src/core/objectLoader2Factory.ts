@@ -10,7 +10,7 @@ export interface ObjectLoader2FactoryOptions {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
   indexedDB?: IDBFactory
-  logger2?: CustomLogger
+  logger?: CustomLogger
 }
 
 export class ObjectLoader2Factory {
@@ -41,7 +41,7 @@ export class ObjectLoader2Factory {
     headers?: Headers
     options?: ObjectLoader2FactoryOptions
   }): ObjectLoader2 {
-    const log = ObjectLoader2Factory.getLogger(params.options?.logger2)
+    const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
      if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')

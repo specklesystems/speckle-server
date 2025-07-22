@@ -17,13 +17,14 @@ export class CacheWriter implements Queue<Item> {
 
   constructor(
     database: Database,
-    options: CacheOptions,
+    logger: CustomLogger,
     defermentManager: DefermentManager,
+    options: CacheOptions,
     requestItem: (id: string) => void
   ) {
     this.#database = database
     this.#options = options
-    this.#logger = options.logger || ((): void => {})
+    this.#logger = logger
     this.#defermentManager = defermentManager
     this.#requestItem = requestItem
   }
@@ -42,7 +43,7 @@ export class CacheWriter implements Queue<Item> {
     this.#defermentManager.undefer(item, this.#requestItem)
   }
   addAll(): void {
-   throw new Error('Method not implemented. Use add instead.')
+    throw new Error('Method not implemented. Use add instead.')
   }
 
   async writeAll(items: Item[]): Promise<void> {

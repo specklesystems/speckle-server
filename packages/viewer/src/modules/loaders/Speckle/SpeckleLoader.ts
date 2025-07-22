@@ -91,8 +91,7 @@ export class SpeckleLoader extends Loader {
       serverUrl,
       streamId,
       objectId,
-      token,
-      options: { logger2: this.log }
+      token
     })
   }
 
