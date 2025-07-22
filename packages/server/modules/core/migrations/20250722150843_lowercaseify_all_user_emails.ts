@@ -12,6 +12,7 @@ export async function up(knex: Knex): Promise<void> {
         email: trx.raw('LOWER(email)')
       })
       .whereNotNull('email')
+      .andWhereRaw('"email" != LOWER("email")')
 
     // Update user_emails table
     await trx(userEmailsTable)
@@ -19,6 +20,7 @@ export async function up(knex: Knex): Promise<void> {
         email: trx.raw('LOWER(email)')
       })
       .whereNotNull('email')
+      .andWhereRaw('"email" != LOWER("email")')
   })
 }
 
