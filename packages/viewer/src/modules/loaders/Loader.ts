@@ -1,3 +1,5 @@
+
+import { PropertyInfo } from '@speckle/objectloader2';
 import EventEmitter from '../EventEmitter.js'
 
 export enum LoaderEvent {
@@ -36,7 +38,7 @@ export abstract class Loader extends EventEmitter {
     super.on(eventType, listener)
   }
 
-  public abstract load(): Promise<boolean>
+  public abstract load(): Promise<PropertyInfo[] | undefined>
   public abstract cancel(): void
   public dispose(): void {
     super.dispose()

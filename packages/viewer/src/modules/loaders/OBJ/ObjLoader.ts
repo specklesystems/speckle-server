@@ -5,6 +5,7 @@ import { ObjConverter } from './ObjConverter.js'
 import { ObjGeometryConverter } from './ObjGeometryConverter.js'
 import { WorldTree } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
+import { PropertyInfo } from '@speckle/objectloader2'
 
 export class ObjLoader extends Loader {
   protected baseLoader: OBJLoader
@@ -27,8 +28,8 @@ export class ObjLoader extends Loader {
     this.converter = new ObjConverter(this.tree)
   }
 
-  public load(): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
+  public load(): Promise<PropertyInfo[] | undefined> {
+    return new Promise<PropertyInfo[] | undefined>((resolve, reject) => {
       new Promise<void>((loadResolve, loadReject) => {
         if (!this._resourceData) {
           this.baseLoader.load(
@@ -75,7 +76,7 @@ export class ObjLoader extends Loader {
             const res = await renderTree.buildRenderTree(new ObjGeometryConverter())
             Logger.log('Tree build time -> ', performance.now() - t0)
             this.isFinished = true
-            resolve(res)
+            resolve(res ? [] : undefined)
           } else {
             Logger.error(`Could not get render tree for ${this._resource}`)
             reject(new Error())

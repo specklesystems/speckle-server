@@ -6,7 +6,8 @@ import Logger from '../../utils/Logger.js'
 import {
   getQueryParameter,
   ObjectLoader2,
-  ObjectLoader2Factory
+  ObjectLoader2Factory,
+  PropertyInfo
 } from '@speckle/objectloader2'
 import { TIME_MS } from '@speckle/shared'
 
@@ -96,7 +97,7 @@ export class SpeckleLoader extends Loader {
     })
   }
 
-  public async load(): Promise<boolean> {
+  public async load(): Promise<PropertyInfo[] | undefined> {
     const start = performance.now()
     let first = true
     let dataloading = 0
@@ -110,7 +111,7 @@ export class SpeckleLoader extends Loader {
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this.resource)
-        return Promise.resolve(false)
+        return undefined
       }
       if (first) {
         firstObjectPromise = this.converter.traverse(
@@ -143,7 +144,7 @@ export class SpeckleLoader extends Loader {
       })
     }
     if (this.isCancelled) {
-      return Promise.resolve(false)
+      return undefined
     }
 
     await this.converter.convertInstances()
@@ -155,7 +156,7 @@ export class SpeckleLoader extends Loader {
     const geometryConverter = new SpeckleGeometryConverter()
 
     const renderTree = this.tree.getRenderTree(this.resource)
-    if (!renderTree) return Promise.resolve(false)
+    if (!renderTree) return undefined
     const p = renderTree.buildRenderTree(geometryConverter, (count: number) => {
       this.emit(LoaderEvent.Converted, {
         count
@@ -184,7 +185,7 @@ export class SpeckleLoader extends Loader {
       this.isFinished = true
     })
 
-    return p
+    return this.loader.propertyManager.getProperties()
   }
 
   private progressListen(): void {

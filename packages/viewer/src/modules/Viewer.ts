@@ -16,7 +16,6 @@ import {
 import { World } from './World.js'
 import { type TreeNode, WorldTree } from './tree/WorldTree.js'
 import SpeckleRenderer from './SpeckleRenderer.js'
-import { type PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
 import type { Query, QueryArgsResultMap } from './queries/Query.js'
 import { Queries } from './queries/Queries.js'
 import { type Utils } from './Utils.js'
@@ -30,6 +29,8 @@ import { RenderTree } from './tree/RenderTree.js'
 import Logger from './utils/Logger.js'
 import Stats from './three/stats.js'
 import { TIME_MS } from '@speckle/shared'
+import { PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
+import { PropertyInfo as OL2PropertyInfo } from '@speckle/objectloader2'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -44,12 +45,12 @@ export class Viewer extends EventEmitter implements IViewer {
   protected world: World = new World()
   public static readonly theAssets: Assets = new Assets()
   public speckleRenderer: SpeckleRenderer
-  protected propertyManager: PropertyManager
 
   /** Misc members */
   protected inProgressOperations: number
   protected clock: Clock
   protected loaders: { [id: string]: Loader } = {}
+  private properties: Record<string, OL2PropertyInfo[]> = {}
 
   protected extensions: {
     [id: string]: Extension
@@ -158,8 +159,6 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
 
-    this.propertyManager = new PropertyManager()
-
     this.frame()
     this.resize()
   }
@@ -250,7 +249,16 @@ export class Viewer extends EventEmitter implements IViewer {
     resourceURL: string | null = null,
     bypassCache = true
   ): Promise<PropertyInfo[]> {
-    return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
+    if (!resourceURL) {
+      return Promise.resolve([])
+    }
+    const ol2Props = this.properties[resourceURL]
+    if (!ol2Props) {
+      const propManager = new PropertyManager();
+      return propManager.getProperties(this.tree, resourceURL, bypassCache)
+    } else {
+      return Promise.resolve(ol2Props as unknown as PropertyInfo[]);
+    }
   }
 
   public getDataTree(): void {
@@ -313,8 +321,9 @@ export class Viewer extends EventEmitter implements IViewer {
     if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
 
     this.loaders[loader.resource] = loader
-    const treeBuilt = await loader.load()
-    if (treeBuilt) {
+    const properties = await loader.load()
+    if (properties) {
+      this.properties[loader.resource] = properties as OL2PropertyInfo[]
       const renderTree: RenderTree | null = this.tree.getRenderTree(loader.resource)
       /** Catering to typescript
        *  The render tree can't be null, we've just built it

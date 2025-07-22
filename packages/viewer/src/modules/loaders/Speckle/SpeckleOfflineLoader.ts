@@ -1,7 +1,7 @@
 import { SpeckleLoader } from './SpeckleLoader.js'
 import { WorldTree } from '../../tree/WorldTree.js'
 import Logger from '../../utils/Logger.js'
-import { ObjectLoader2, ObjectLoader2Factory } from '@speckle/objectloader2'
+import { ObjectLoader2, ObjectLoader2Factory, PropertyInfo } from '@speckle/objectloader2'
 
 export class SpeckleOfflineLoader extends SpeckleLoader {
   constructor(targetTree: WorldTree, resourceData: unknown, resourceId?: string) {
@@ -22,11 +22,11 @@ export class SpeckleOfflineLoader extends SpeckleLoader {
     return ObjectLoader2Factory.createFromObjects([])
   }
 
-  public async load(): Promise<boolean> {
+  public async load(): Promise<PropertyInfo[] | undefined> {
     const rootObject = await this.loader.getRootObject()
     if (!rootObject && this._resource) {
       Logger.error('No root id set!')
-      return false
+      return undefined
     }
     /** If not id is provided, we make one up based on the root object id */
     this._resource =
