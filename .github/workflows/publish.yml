@@ -84,6 +84,9 @@ jobs:
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
+      - name: Lint viewer-sandbox
+        run: yarn lint:ci
+        working-directory: 'packages/viewer-sandbox'
       - name: Build viewer-sandbox
         run: yarn build
         working-directory: 'packages/viewer-sandbox'
