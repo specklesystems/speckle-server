@@ -16,9 +16,10 @@ export class AggregateCacheReaderWorker implements Reader {
     }
   }
 
-  #getRandomWorker(): CacheReaderWorker {
-    const index = Math.floor(Math.random() * this.workers.length)
-    return this.workers[index]
+  #getLowestCount(): CacheReaderWorker {
+    return this.workers.reduce((shortest, current) =>
+      current.readQueueSize < shortest.readQueueSize ? current : shortest
+    )
   }
 
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {

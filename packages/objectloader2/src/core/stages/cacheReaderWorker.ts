@@ -1,6 +1,6 @@
 import { DefermentManager } from '../../deferment/defermentManager.js'
 import Queue from '../../queues/queue.js'
-import { CustomLogger } from '../../types/functions.js'
+import { CustomLogger, delay } from '../../types/functions.js'
 import { Item, Base } from '../../types/types.js'
 import { ItemQueue } from '../../caching/ItemQueue.js'
 import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
@@ -64,31 +64,21 @@ export class CacheReaderWorker implements Reader {
     )
     this.mainToWorkerQueue = new StringQueue(rawMainToWorkerRbq, this.#logger)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
-    this.logToMainUI(
-      `Main-to-Worker StringQueue created with ${
-        ID_BUFFER_CAPACITY_BYTES / 1024
-      }KB capacity.`
-    )
-
     const rawWorkerToMainRbq = RingBufferQueue.create(
       BASE_BUFFER_CAPACITY_BYTES,
       this.name + ' WorkerToMainQueue'
     )
     this.workerToMainQueue = new ItemQueue(rawWorkerToMainRbq, this.#logger)
     const workerToMainSab = rawWorkerToMainRbq.getSharedArrayBuffer()
-    this.logToMainUI(
-      `Worker-to-Main ItemQueue created with ${
-        BASE_BUFFER_CAPACITY_BYTES / 1024
-      }KB capacity.`
-    )
 
-    this.logToMainUI('Starting Web Worker...')
     this.indexedDbReader = new Worker(
       new URL('../../caching/ReaderWorker.js', import.meta.url),
       { type: 'module', name: this.name }
     )
 
-    this.logToMainUI('Sending SharedArrayBuffers and capacities to worker...')
+    this.logToMainUI(
+      'Worker started, sending SharedArrayBuffers and capacities to worker...'
+    )
     this.indexedDbReader.postMessage({
       name: this.name,
       type: WorkerMessageType.INIT_QUEUES,
@@ -139,7 +129,7 @@ export class CacheReaderWorker implements Reader {
       }
       if (items.length === 0) {
         this.logToMainUI(`processBatch: no items to process, waiting...`)
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await delay(1000)
         continue
       }
       const start = performance.now()
@@ -168,5 +158,9 @@ export class CacheReaderWorker implements Reader {
     this.indexedDbReader?.terminate()
     this.#requestedItems.clear()
     return Promise.resolve()
+  }
+
+  get readQueueSize(): number {
+    return this.mainToWorkerQueue?.count || 0
   }
 }

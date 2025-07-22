@@ -100,4 +100,8 @@ export abstract class ObjectQueue<T> {
   public getSharedArrayBuffer(): SharedArrayBuffer {
     return this.rbq.getSharedArrayBuffer()
   }
+
+  get count(): number {
+    return this.rbq.enqueued
+  }
 }

@@ -11,6 +11,8 @@ export class RingBufferQueue {
   public readonly capacityBytes: number
   private name: string
 
+  private count: number = 0 // Count of items currently in the queue
+
   static create(capacityBytes: number, name: string): RingBufferQueue {
     // RingBuffer.create expects capacity in terms of elements.
     // Since we use Uint8Array, 1 byte = 1 element.
@@ -60,6 +62,7 @@ export class RingBufferQueue {
       console.error(`${this.name} Failed to push length prefix to the ring buffer.`)
       return false
     }
+    this.count++ // Increment the count of items in the queue
     return true
   }
 
@@ -115,6 +118,11 @@ export class RingBufferQueue {
       )
       return undefined
     }
+    this.count--; // Decrement the count of items in the queue
     return dataBytes
+  }
+
+  get enqueued(): number {
+    return this.count
   }
 }
