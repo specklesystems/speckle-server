@@ -206,7 +206,7 @@ export const useAuthManager = (
   /**
    * Token used for embedding
    */
-  const embedToken = computed(() => route.query.embedToke as Optional<string>)
+  const embedToken = computed(() => route.query.embedToken as Optional<string>)
 
   /**
    * Get the effective auth token (embed token takes precedence)
