@@ -135,7 +135,7 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
 
     //large tower
     //'https://app.speckle.systems/projects/e2a7b596f2/models/ddaf8349f5'
@@ -605,7 +605,7 @@ const getStream = () => {
     // MEPS
     // 'https://app.speckle.systems/projects/f3cee517d4/models/21f128a3ea'
     // Tower
-    // 'https://app.speckle.systems/projects/e2a7b596f2/models/ddaf8349f5'
+    'https://app.speckle.systems/projects/e2a7b596f2/models/ddaf8349f5'
   )
 }
 

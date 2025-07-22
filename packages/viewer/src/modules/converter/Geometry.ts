@@ -507,9 +507,9 @@ export class Geometry {
       nB.fromArray(buffer, vB * 3)
       nC.fromArray(buffer, vC * 3)
 
-      nA.add(cb).normalize()
-      nB.add(cb).normalize()
-      nC.add(cb).normalize()
+      nA.add(cb)
+      nB.add(cb)
+      nC.add(cb)
 
       buffer[vA * 3] = nA.x
       buffer[vA * 3 + 1] = nA.y
