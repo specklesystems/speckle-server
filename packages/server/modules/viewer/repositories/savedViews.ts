@@ -4,6 +4,8 @@ import {
   StoreSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
 import { SavedView } from '@/modules/viewer/domain/types/savedViews'
+import { DuplicateSavedViewError } from '@/modules/viewer/errors/savedViews'
+import { ensureError } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 
@@ -31,14 +33,26 @@ const tables = {
 export const storeSavedViewFactory =
   (deps: { db: Knex }): StoreSavedView =>
   async ({ view }) => {
-    const [insertedItem] = await tables.savedViews(deps.db).insert(
-      {
-        id: cryptoRandomString({ length: 10 }),
-        ...view
-      },
-      '*'
-    )
-    return insertedItem
+    try {
+      const [insertedItem] = await tables.savedViews(deps.db).insert(
+        {
+          id: cryptoRandomString({ length: 10 }),
+          ...view
+        },
+        '*'
+      )
+      return insertedItem
+    } catch (e) {
+      if (
+        ensureError(e).message.includes(
+          'duplicate key value violates unique constraint'
+        )
+      ) {
+        throw new DuplicateSavedViewError()
+      }
+
+      throw e
+    }
   }
 
 export const getStoredViewCountFactory =

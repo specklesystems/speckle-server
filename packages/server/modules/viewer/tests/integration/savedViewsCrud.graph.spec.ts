@@ -8,7 +8,10 @@ import {
 } from '@/modules/core/tests/helpers/creation'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
-import { SavedViewCreationValidationError } from '@/modules/viewer/errors/savedViews'
+import {
+  DuplicateSavedViewError,
+  SavedViewCreationValidationError
+} from '@/modules/viewer/errors/savedViews'
 import { BasicTestUser, buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   ExecuteOperationOptions,
@@ -84,6 +87,8 @@ describe('Saved Views GraphQL CRUD', () => {
     options?: ExecuteOperationOptions
   ) => apollo.execute(CreateSavedViewDocument, input, options)
 
+  const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
+
   before(async () => {
     me = await createTestUser(buildBasicTestUser({ name: 'me' }))
     guest = await createTestUser(buildBasicTestUser({ name: 'guest' }))
@@ -99,7 +104,7 @@ describe('Saved Views GraphQL CRUD', () => {
 
   describe('creation', () => {
     it('should successfully create a saved view', async () => {
-      const resourceIds = ViewerRoute.resourceBuilder().addModel(myModel1.id)
+      const resourceIds = model1ResourceIds()
       const resourceIdString = resourceIds.toString()
       const viewerState = fakeViewerState({
         projectId: myProject.id,
@@ -143,7 +148,7 @@ describe('Saved Views GraphQL CRUD', () => {
       const isHomeView = true
       const visibility = SavedViewVisibility.authorOnly
 
-      const resourceIds = ViewerRoute.resourceBuilder().addModel(myModel1.id)
+      const resourceIds = model1ResourceIds()
       const resourceIdString = resourceIds.toString()
       const viewerState = fakeViewerState({
         projectId: myProject.id,
@@ -181,9 +186,7 @@ describe('Saved Views GraphQL CRUD', () => {
     })
 
     it('should fail if no access', async () => {
-      const resourceIdString = ViewerRoute.resourceBuilder()
-        .addModel(myModel1.id)
-        .toString()
+      const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(buildCreateInput({ resourceIdString }), {
         authUserId: guest.id
       })
@@ -204,9 +207,7 @@ describe('Saved Views GraphQL CRUD', () => {
     })
 
     it('should fail w/ invalid screenshot', async () => {
-      const resourceIdString = ViewerRoute.resourceBuilder()
-        .addModel(myModel1.id)
-        .toString()
+      const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(
         buildCreateInput({
           resourceIdString,
@@ -222,9 +223,7 @@ describe('Saved Views GraphQL CRUD', () => {
     })
 
     it('should fail w/ invalid viewerState resourceIdString', async () => {
-      const resourceIdString = ViewerRoute.resourceBuilder()
-        .addModel(myModel1.id)
-        .toString()
+      const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(
         buildCreateInput({
           resourceIdString,
@@ -249,9 +248,7 @@ describe('Saved Views GraphQL CRUD', () => {
     })
 
     it('should fail w/ invalid viewerState projectId', async () => {
-      const resourceIdString = ViewerRoute.resourceBuilder()
-        .addModel(myModel1.id)
-        .toString()
+      const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(
         buildCreateInput({
           resourceIdString,
@@ -276,9 +273,7 @@ describe('Saved Views GraphQL CRUD', () => {
     })
 
     it('should fail w/ invalid viewerState', async () => {
-      const resourceIdString = ViewerRoute.resourceBuilder()
-        .addModel(myModel1.id)
-        .toString()
+      const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(
         buildCreateInput({
           resourceIdString,
@@ -291,6 +286,37 @@ describe('Saved Views GraphQL CRUD', () => {
 
       expect(res).to.haveGraphQLErrors({ code: SavedViewCreationValidationError.code })
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+    })
+
+    it('should fail w/ duplicate name', async () => {
+      const resourceIdString = model1ResourceIds().toString()
+      const name = 'test1'
+      const groupName = null
+
+      await createSavedView(
+        buildCreateInput({
+          resourceIdString,
+          overrides: {
+            name,
+            groupName
+          }
+        }),
+        {
+          assertNoErrors: true
+        }
+      )
+
+      const res2 = await createSavedView(
+        buildCreateInput({
+          resourceIdString,
+          overrides: {
+            name,
+            groupName
+          }
+        })
+      )
+      expect(res2).to.haveGraphQLErrors({ code: DuplicateSavedViewError.code })
+      expect(res2.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
   })
 

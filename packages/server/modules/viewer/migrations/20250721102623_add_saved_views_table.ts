@@ -37,6 +37,13 @@ export async function up(knex: Knex): Promise<void> {
       .defaultTo(knex.fn.now())
       .notNullable()
   })
+
+  // Add unique idx on projectId, name, groupName
+  // (+ coalesce NULL to empty string, cause NULL !== NULL IN PGSQL)
+  await knex.raw(`
+  CREATE UNIQUE INDEX saved_views_projectid_name_groupname_unique_idx
+  ON "${tableName}" ("projectId", "name", COALESCE("groupName", ''))
+`)
 }
 
 export async function down(knex: Knex): Promise<void> {
