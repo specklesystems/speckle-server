@@ -77,3 +77,14 @@ When items are returned to the generator loop, `undefer` is called which caches 
 A cleanup process is ran to be a singleton process. This process sorts by the total number of requests and the size. If anything falls outside the size window, then it is removed from the manager's memory cache.
 
 The aim is to speed up random access while still getting items from the cache in batches. Items that are accessed randomly tend to be references in the model.
+
+## Loader options
+
+These can be use via a query string parameter.  For example: `https://app.speckle.systems/projects/57bbfabd80/models/81b8d76ef1` can have debug logging enabled with: `https://app.speckle.systems/projects/57bbfabd80/models/81b8d76ef1?debug=true`
+
+Current parameters:
+
+| Parameter | Default | Type    |
+|-----------|---------|---------|
+| `debug`   | `false` | boolean |
+| `useCache`| `true`  | boolean |
