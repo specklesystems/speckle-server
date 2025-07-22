@@ -50,13 +50,6 @@ export const useIsOnboardingForced = () => {
   return ref(FF_FORCE_ONBOARDING)
 }
 
-export const useIsGendoModuleEnabled = () => {
-  const {
-    public: { FF_GENDOAI_MODULE_ENABLED }
-  } = useRuntimeConfig()
-  return ref(FF_GENDOAI_MODULE_ENABLED)
-}
-
 export const useWorkspaceNewPlansEnabled = () => {
   return ref(true)
 }

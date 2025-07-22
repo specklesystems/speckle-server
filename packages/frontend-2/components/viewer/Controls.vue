@@ -141,19 +141,6 @@
             <!-- Settings -->
             <ViewerSettingsMenu />
           </ViewerControlsButtonGroup>
-
-          <!-- Gendo -->
-          <ViewerControlsButtonToggle
-            v-show="isGendoEnabled"
-            v-tippy="'AI Render by Gendo'"
-            :active="activePanel === 'gendo'"
-            @click="toggleActivePanel('gendo')"
-          >
-            <IconGendo
-              class="h-6 w-6 md:h-7 md:w-7 -ml-1 -mt-1"
-              :class="activePanel === 'gendo' ? 'text-white' : 'text-foreground-2'"
-            />
-          </ViewerControlsButtonToggle>
         </div>
         <!-- Standard viewer controls -->
       </div>
@@ -225,11 +212,6 @@
           @close="activePanel = 'none'"
         />
       </div>
-      <div
-        v-if="resourceItems.length !== 0 && activePanel === 'gendo' && isGendoEnabled"
-      >
-        <ViewerGendoPanel @close="activePanel = 'none'" />
-      </div>
 
       <!-- Empty state -->
       <div v-if="resourceItems.length === 0">
@@ -295,7 +277,6 @@ type ActivePanel =
   | 'discussions'
   | 'automate'
   | 'measurements'
-  | 'gendo'
   | 'mobileOverflow'
 
 type ActiveControl =
@@ -308,7 +289,6 @@ type ActiveControl =
   | 'explode'
   | 'settings'
 
-const isGendoEnabled = useIsGendoModuleEnabled()
 const { width: windowWidth } = useWindowSize()
 
 const width = ref(360)
