@@ -28,7 +28,6 @@ const buttons = computed((): LayoutDialogButton[] => [
   },
   {
     text: 'Continue',
-    props: { color: 'danger' },
     onClick: () => {
       window.open(state.value.url, '_blank', 'noopener,noreferrer')
       close(true)
