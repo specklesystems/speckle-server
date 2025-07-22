@@ -279,7 +279,6 @@ export function useSelectionUtilities() {
   const selExt = instance.getExtension(SelectionExtension)
 
   const objects = selectedObjects
-  const objectIds = computed(() => selectedObjectIds.value)
 
   const clearSelection = () => selExt.clearSelection()
   const setSelectionFromObjectIds = (ids: string[]) => selExt.selectObjects(ids, false)
@@ -297,7 +296,7 @@ export function useSelectionUtilities() {
     addToSelectionFromObjectIds,
     removeFromSelectionObjectIds,
     objects,
-    objectIds
+    objectIds: selectedObjectIds
   }
 }
 
