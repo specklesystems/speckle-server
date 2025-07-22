@@ -4,7 +4,7 @@ import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import {
-  getQueryParameter,
+  getFeatureFlag, ObjectLoader2Flags,
   ObjectLoader2,
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
@@ -192,7 +192,7 @@ export class SpeckleLoader extends Loader {
   }
 
   private progressListen(): void {
-    if (getQueryParameter('debug', 'false') !== 'true') {
+    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) !== 'true') {
       return
     }
 

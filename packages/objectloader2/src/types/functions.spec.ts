@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { isBase, isReference, isScalar, take, getQueryParameter } from './functions.js'
+import {
+  isBase,
+  isReference,
+  isScalar,
+  take,
+  getQueryParameter,
+  getFeatureFlag,
+  ObjectLoader2Flags
+} from './functions.js'
 
 describe('isBase', () => {
   it('should return true for valid Base objects', () => {
@@ -94,11 +102,9 @@ describe('take', () => {
 })
 
 describe('getQueryParameter', () => {
-  const defaultValue = 'default'
-
   describe('in a non-browser environment', () => {
     it('should return the default value', () => {
-      expect(getQueryParameter('param', defaultValue)).toBe(defaultValue)
+      expect(getFeatureFlag(ObjectLoader2Flags.USE_CACHE)).toBe('true')
     })
   })
 
@@ -119,18 +125,18 @@ describe('getQueryParameter', () => {
     })
 
     it('should return the parameter value from the URL', () => {
-      mockWindow.location.search = '?param=value'
-      expect(getQueryParameter('param', defaultValue)).toBe('value')
+      mockWindow.location.search = '?debug=value'
+      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG)).toBe('value')
     })
 
     it('should return the default value if the parameter is not in the URL', () => {
       mockWindow.location.search = '?otherparam=value'
-      expect(getQueryParameter('param', defaultValue)).toBe(defaultValue)
+      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG)).toBe('false')
     })
 
     it('should return the default value if the URL has no query string', () => {
       mockWindow.location.search = ''
-      expect(getQueryParameter('param', defaultValue)).toBe(defaultValue)
+      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG)).toBe('false')
     })
   })
 })

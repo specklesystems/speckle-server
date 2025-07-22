@@ -1,4 +1,4 @@
-import { CustomLogger, getQueryParameter } from '../types/functions.js'
+import { CustomLogger, getFeatureFlag, ObjectLoader2Flags } from '../types/functions.js'
 import { Base } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import IndexedDatabase from './stages/indexedDatabase.js'
@@ -43,7 +43,10 @@ export class ObjectLoader2Factory {
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger2)
     let database
-    if (getQueryParameter('useCache', 'true') === 'true') {
+     if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+      this.logger('Using DEBUG mode for ObjectLoader2Factory')
+     }
+    if (getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true') {
       database = new IndexedDatabase({
         logger: log,
         indexedDB: params.options?.indexedDB,
@@ -53,7 +56,9 @@ export class ObjectLoader2Factory {
       database = new MemoryDatabase({
         items: new Map<string, Base>()
       })
-      this.logger('Using MemoryDatabase for ObjectLoader2')
+      this.logger(
+        'Disabled persistent caching for ObjectLoader2.  Using MemoryDatabase'
+      )
     }
     const loader = new ObjectLoader2({
       rootId: params.objectId,
@@ -71,7 +76,7 @@ export class ObjectLoader2Factory {
   }
 
   static getLogger(providedLogger?: CustomLogger): CustomLogger | undefined {
-    if (getQueryParameter('debug', 'false') === 'true') {
+    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
       return providedLogger || this.logger
     }
     return providedLogger
