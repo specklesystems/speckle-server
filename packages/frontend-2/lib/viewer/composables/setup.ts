@@ -14,6 +14,7 @@ import {
   MeasurementType,
   ViewModes
 } from '@speckle/viewer'
+import { HighlightExtension } from '~~/lib/viewer/extensions/HighlightExtension'
 import {
   type FilteringState,
   type PropertyInfo,
@@ -352,6 +353,7 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
     viewer.createExtension(MeasurementsExtension)
     viewer.createExtension(SelectionExtension)
     viewer.createExtension(ViewModes)
+    viewer.createExtension(HighlightExtension)
 
     const initPromise = viewer.init()
 

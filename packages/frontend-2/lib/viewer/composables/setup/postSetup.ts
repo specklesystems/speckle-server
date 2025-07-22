@@ -8,7 +8,6 @@ import {
   type StringPropertyInfo,
   type SunLightConfiguration,
   FilteringExtension,
-  SelectionExtension,
   DiffExtension,
   MeasurementsExtension
 } from '@speckle/viewer'
@@ -57,6 +56,7 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { OBB } from 'three/examples/jsm/math/OBB'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import { HighlightExtension } from '~/lib/viewer/extensions/HighlightExtension'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -553,9 +553,9 @@ function useViewerFiltersIntegration() {
       if (arraysEqual(newVal, oldVal || [])) return
 
       if (!newVal.length) {
-        instance.getExtension(SelectionExtension).clearSelection()
+        instance.getExtension(HighlightExtension).clearSelection()
       } else {
-        instance.getExtension(SelectionExtension).selectObjects(newVal)
+        instance.getExtension(HighlightExtension).selectObjects(newVal)
       }
     },
     { immediate: true, flush: 'sync' }
