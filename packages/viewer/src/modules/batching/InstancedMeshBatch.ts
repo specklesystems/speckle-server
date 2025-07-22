@@ -533,8 +533,8 @@ export class InstancedMeshBatch implements Batch {
       this.renderViews[0].renderData.geometry.attributes?.POSITION.length ?? 0
     const indices =
       indicesLength < 65535 && positionsLength < 65535
-        ? this.renderViews[0].renderData.geometry.attributes?.INDEX.getInt16Array()
-        : this.renderViews[0].renderData.geometry.attributes?.INDEX.getInt32Array()
+        ? this.renderViews[0].renderData.geometry.attributes?.INDEX.getUint16Array()
+        : this.renderViews[0].renderData.geometry.attributes?.INDEX.getUint32Array()
     const colors =
       this.renderViews[0].renderData.geometry.attributes?.COLOR?.getFloat32Array()
     const normals =
@@ -572,8 +572,8 @@ export class InstancedMeshBatch implements Batch {
         transform.invert()
 
         instanceBVH = AccelerationStructure.buildBVH(
-          indices as unknown as number[],
-          positions as unknown as number[],
+          indices,
+          positions,
           DefaultBVHOptions,
           transform
         )

@@ -16,7 +16,7 @@ import { NodeRenderView } from '../tree/NodeRenderView.js'
 import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch.js'
 import { BatchObject } from './BatchObject.js'
 import { Geometry } from '../converter/Geometry.js'
-import { DataChunk, ObjectLayers } from '../../IViewer.js'
+import { ObjectLayers } from '../../IViewer.js'
 import Logger from '../utils/Logger.js'
 
 export class MeshBatch extends PrimitiveBatch {
@@ -237,22 +237,24 @@ export class MeshBatch extends PrimitiveBatch {
       if (!geometry.attributes || !geometry.attributes?.INDEX) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
       }
-      geometry.attributes?.INDEX.chunkArray.forEach((c: DataChunk) => {
-        let chunkOffset = 0
-        indices.set(
-          /** We need to make a new array so we don't alter shared chunks. But we'll do it more smart soon */
-          c.data.map((val) => val + offset / 3),
-          arrayOffset + chunkOffset
-        )
-        chunkOffset += c.data.length
-      })
+
+      geometry.attributes?.INDEX.copyToBuffer(indices, arrayOffset)
+      const indicesSubArray = indices.subarray(
+        arrayOffset,
+        arrayOffset + geometry.attributes?.INDEX.length
+      )
 
       geometry.attributes?.POSITION.copyToBuffer(position, offset)
+      const positionSubarray = position.subarray(
+        offset,
+        offset +
+          (this.renderViews[k].renderData.geometry.attributes?.POSITION.length ?? 0)
+      )
       /** We transform the copied geometry so that we do not alter original chunk data which might be shared */
       Geometry.transformArray(
-        position,
+        positionSubarray,
         geometry.transform,
-        offset,
+        0,
         geometry.attributes?.POSITION.length
       )
 
@@ -285,11 +287,18 @@ export class MeshBatch extends PrimitiveBatch {
       )
 
       const batchObject = new BatchObject(this.renderViews[k], k)
-      batchObject.buildAccelerationStructure()
+      batchObject.buildAccelerationStructure(positionSubarray, indicesSubArray)
       batchObjects.push(batchObject)
+
+      /** Re-index the indices inside the batch */
+      for (let i = 0; i < indicesSubArray.length; i++) {
+        indicesSubArray[i] = indicesSubArray[i] + offset / 3
+      }
 
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
+
+      this.renderViews[k].disposeGeometry()
     }
 
     const geometry = this.makeMeshGeometry(
@@ -315,9 +324,9 @@ export class MeshBatch extends PrimitiveBatch {
     this.primitive.frustumCulled = false
     this.primitive.geometry.addGroup(0, this.getCount(), 0)
 
-    batchObjects.forEach((element: BatchObject) => {
-      element.renderView.disposeGeometry()
-    })
+    // batchObjects.forEach((element: BatchObject) => {
+    //   element.renderView.disposeGeometry()
+    // })
 
     return Promise.resolve()
   }

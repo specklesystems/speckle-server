@@ -349,21 +349,20 @@ export default class TextBatch implements Batch {
           /** We're using visibleBounds for a better fit */
           const bounds = textRenderInfo.visibleBounds
           // console.log('bounds -> ', bounds)
-          const vertices = []
-          vertices.push(
-            bounds[0],
-            bounds[3],
-            0,
-            bounds[2],
-            bounds[3],
-            0,
-            bounds[0],
-            bounds[1],
-            0,
-            bounds[2],
-            bounds[1],
-            0
-          )
+          const vertices = new Float32Array(12)
+          vertices[0] = bounds[0]
+          vertices[1] = bounds[3]
+          vertices[2] = 0
+          vertices[3] = bounds[2]
+          vertices[4] = bounds[3]
+          vertices[5] = 0
+          vertices[6] = bounds[0]
+          vertices[7] = bounds[1]
+          vertices[8] = 0
+          vertices[9] = bounds[2]
+          vertices[10] = bounds[1]
+          vertices[11] = 0
+
           box.setFromArray(vertices)
           box.applyMatrix4(
             this.renderViews[k].renderData.geometry.transform || new Matrix4()
@@ -374,7 +373,7 @@ export default class TextBatch implements Batch {
           const geometry = text.geometry
           geometry.computeBoundingBox()
           const textBvh = AccelerationStructure.buildBVH(
-            geometry.index?.array as number[],
+            geometry.index?.array as unknown as Uint16Array | Uint32Array,
             vertices,
             DefaultBVHOptions
           )

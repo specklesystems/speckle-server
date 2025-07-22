@@ -96,4 +96,12 @@ export class ChunkArray extends VirtualArray {
   public getInt32Array(): Int32Array {
     return this.getFlatArray(Int32Array)
   }
+
+  public getUint16Array(): Uint16Array {
+    return this.getFlatArray(Uint16Array)
+  }
+
+  public getUint32Array(): Uint32Array {
+    return this.getFlatArray(Uint32Array)
+  }
 }
