@@ -47,7 +47,6 @@ export class Viewer extends EventEmitter implements IViewer {
   protected propertyManager: PropertyManager
 
   /** Misc members */
-  protected inProgressOperations: number
   protected clock: Clock
   protected loaders: { [id: string]: Loader } = {}
 
@@ -152,7 +151,6 @@ export class Viewer extends EventEmitter implements IViewer {
     this.loaders = {}
     this.startupParams = params
     this.clock = new Clock()
-    this.inProgressOperations = 0
 
     this.speckleRenderer = new SpeckleRenderer(this.tree, this)
     this.speckleRenderer.create(this.container)
