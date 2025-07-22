@@ -36,6 +36,7 @@ export type AccItem = {
     displayName: string
     createTime?: string
     extension?: Record<string, unknown>
+    versionNumber: number
   }
 }
 

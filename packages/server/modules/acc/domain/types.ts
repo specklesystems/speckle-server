@@ -10,8 +10,8 @@ export type AccSyncItem = {
   accFileLineageId: string
   accFileName: string
   accFileExtension: string
-  accFileVersionIndex?: number
-  accFileVersionUrn?: string
+  accFileVersionIndex: number
+  accFileVersionUrn: string
   accWebhookId?: string
   status: AccSyncItemStatus
   authorId: string

@@ -45,6 +45,8 @@ export type AccSyncItem = {
   accFileExtension: Scalars['String']['output'];
   accFileLineageId: Scalars['String']['output'];
   accFileName: Scalars['String']['output'];
+  accFileVersionIndex: Scalars['Int']['output'];
+  accFileVersionUrn: Scalars['String']['output'];
   accHubId: Scalars['String']['output'];
   accProjectId: Scalars['String']['output'];
   accRegion: Scalars['String']['output'];
@@ -969,6 +971,8 @@ export type CreateAccSyncItemInput = {
   accFileExtension: Scalars['String']['input'];
   accFileLineageId: Scalars['String']['input'];
   accFileName: Scalars['String']['input'];
+  accFileVersionIndex: Scalars['Int']['input'];
+  accFileVersionUrn: Scalars['String']['input'];
   accHubId: Scalars['String']['input'];
   accProjectId: Scalars['String']['input'];
   accRegion: Scalars['String']['input'];
@@ -6233,6 +6237,8 @@ export type AccSyncItemResolvers<ContextType = GraphQLContext, ParentType extend
   accFileExtension?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accFileLineageId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accFileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  accFileVersionIndex?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  accFileVersionUrn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accHubId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accProjectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accRegion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

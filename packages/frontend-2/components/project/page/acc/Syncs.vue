@@ -435,7 +435,9 @@ const addSync = async () => {
         accRootProjectFolderId: rootProjectFolderId.value!,
         accFileLineageId: selectedFolderContent.value?.id as string,
         accFileName: (selectedFolderContent.value?.attributes.displayName ||
-          selectedFolderContent.value?.attributes.name) as string
+          selectedFolderContent.value?.attributes.name) as string,
+        accFileVersionIndex: 1, // TODO ACC
+        accFileVersionUrn: selectedFolderContent.value?.id as string // TODO ACC
       }
     })
     // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
@@ -486,7 +488,7 @@ const handleStatusSyncItem = async (fileLineageId: string, isPaused: boolean) =>
       input: {
         projectId: props.projectId,
         accFileLineageId: fileLineageId,
-        status: isPaused ? 'INITIALIZING' : 'PAUSED'
+        status: isPaused ? 'PENDING' : 'PAUSED'
       }
     })
     // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS

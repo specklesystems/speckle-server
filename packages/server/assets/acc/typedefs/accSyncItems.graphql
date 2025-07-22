@@ -20,6 +20,8 @@ type AccSyncItem {
   accFileLineageId: String!
   accFileName: String!
   accFileExtension: String!
+  accFileVersionIndex: Int!
+  accFileVersionUrn: String!
   accWebhookId: String
   status: AccSyncItemStatus!
   author: LimitedUser
@@ -56,6 +58,8 @@ input CreateAccSyncItemInput {
   accFileLineageId: String!
   accFileName: String!
   accFileExtension: String!
+  accFileVersionIndex: Int!
+  accFileVersionUrn: String!
 }
 
 type AccSyncItemMutations {

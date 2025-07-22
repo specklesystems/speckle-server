@@ -26,7 +26,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('accFileExtension').notNullable()
     table.string('accFileLineageId').notNullable().unique()
     table.integer('accFileVersionIndex').defaultTo(0)
-    table.integer('accFileVersionUrn')
+    table.string('accFileVersionUrn').notNullable()
     table.string('accWebhookId').nullable()
     table
       .enum('status', ['PENDING', 'SYNCING', 'FAILED', 'PAUSED', 'SUCCEEDED'])
