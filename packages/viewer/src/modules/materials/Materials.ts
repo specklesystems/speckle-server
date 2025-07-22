@@ -136,7 +136,8 @@ export default class Materials {
             : 1,
         roughness: materialNode.model.raw.renderMaterial.roughness,
         metalness: materialNode.model.raw.renderMaterial.metalness,
-        vertexColors: (geometryNode && colorsChunkArray.length > 0) ?? false
+        vertexColors:
+          (geometryNode && colorsChunkArray && colorsChunkArray.length > 0) ?? false
       }
     }
     return renderMaterial

@@ -95,9 +95,13 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         node.raw.colors = []
         break
       case SpeckleType.Mesh:
-        // node.raw.vertices = []
-        // node.raw.faces = []
-        // node.raw.colors = []
+        /** Raw objects will no longer hold references to chunks */
+        node.raw.vertices = []
+        node.raw.faces = []
+        node.raw.colors = []
+        node.raw.normals = []
+
+        /** We can already delete these because we don't need them after triangulation */
         node.raw.faces.forEach((c: DataChunk) => {
           c.references--
 
@@ -109,6 +113,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
           }
         })
 
+        /** We can already delete this because we've changes the colors to floats in linear space */
         node.raw.colors.forEach((c: DataChunk) => {
           c.references--
 

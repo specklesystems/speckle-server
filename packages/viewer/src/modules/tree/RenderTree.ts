@@ -3,7 +3,6 @@ import { type TreeNode, WorldTree } from './WorldTree.js'
 import Materials from '../materials/Materials.js'
 import { type NodeRenderData, NodeRenderView } from './NodeRenderView.js'
 import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter.js'
-import { Geometry } from '../converter/Geometry.js'
 import Logger from '../utils/Logger.js'
 
 export class RenderTree {
@@ -51,25 +50,29 @@ export class RenderTree {
   private applyTransforms(node: TreeNode) {
     if (node.model.renderView) {
       const transform = this.computeTransform(node)
-      if (node.model.renderView.hasGeometry) {
+      if (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) {
         if (node.model.renderView.renderData.geometry.bakeTransform) {
           transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
         }
-        if (
-          node.model.instanced &&
-          node.model.renderView.speckleType === SpeckleType.Mesh
-        )
-          node.model.renderView.renderData.geometry.transform = transform
-        else {
-          Geometry.transformGeometryData(
-            node.model.renderView.renderData.geometry,
-            transform
-          )
-        }
-        node.model.renderView.computeAABB()
-      } else if (node.model.renderView.hasMetadata) {
-        node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
-        node.model.renderView.computeAABB()
+        node.model.renderView.renderData.geometry.transform = transform
+        node.model.renderView.computeAABB(transform)
+        /** I like that this is gone now! */
+        //   if (
+        //     node.model.instanced &&
+        //     node.model.renderView.speckleType === SpeckleType.Mesh
+        //   )
+        //     node.model.renderView.renderData.geometry.transform = transform
+        //   else {
+        //     Geometry.transformGeometryData(
+        //       node.model.renderView.renderData.geometry,
+        //       transform
+        //     )
+        //   }
+        //   node.model.renderView.computeAABB()
+        // } else if (node.model.renderView.hasMetadata) {
+        //   node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
+        //   node.model.renderView.computeAABB()
+        // }
       }
     }
   }

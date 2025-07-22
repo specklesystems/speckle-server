@@ -1,4 +1,4 @@
-import { Box3 } from 'three'
+import { Box3, Matrix4 } from 'three'
 import { GeometryType } from '../batching/Batch.js'
 import { GeometryAttributes, type GeometryData } from '../converter/Geometry.js'
 import Materials, {
@@ -103,14 +103,6 @@ export class NodeRenderView {
     return this._batchVertexEnd
   }
 
-  public get vertArrayCount(): number {
-    return this.renderData.geometry.attributes?.POSITION.length ?? 0
-  }
-
-  public get indexCount(): number {
-    return this.renderData.geometry.attributes?.INDEX.length ?? 0
-  }
-
   public get needsSegmentConversion(): boolean {
     return (
       this._renderData.speckleType === SpeckleType.Curve ||
@@ -161,7 +153,7 @@ export class NodeRenderView {
     if (vertEnd !== undefined) this._batchVertexEnd = vertEnd
   }
 
-  public computeAABB() {
+  public computeAABB(transform?: Matrix4) {
     if (!this._aabb) this._aabb = new Box3()
 
     if (
@@ -171,6 +163,7 @@ export class NodeRenderView {
       this._renderData.geometry.attributes.POSITION.chunkArray.forEach(
         (c: DataChunk) => {
           _box3.setFromArray(c.data)
+          if (transform) _box3.applyMatrix4(transform)
           this._aabb.union(_box3)
         }
       )

@@ -144,8 +144,8 @@ export default class TextBatch implements Batch {
    * - Even if, the **text batch does not use the materials in it's draw groups**, it emulates the behavior as if it would
    */
   public setBatchBuffers(ranges: BatchUpdateRange[]): void {
-    console.warn(' Groups -> ', this.mesh.groups)
-    console.warn(' Ranges -> ', ranges)
+    // console.warn(' Groups -> ', this.mesh.groups)
+    // console.warn(' Ranges -> ', ranges)
     const splitRanges: BatchUpdateRange[] = []
     ranges.forEach((range: BatchUpdateRange) => {
       for (let k = 0; k < range.count; k++) {
@@ -321,7 +321,7 @@ export default class TextBatch implements Batch {
           screenOriented: boolean
         }
         const text = new Text()
-        this.renderViews[k].renderData.geometry.bakeTransform?.decompose(
+        this.renderViews[k].renderData.geometry.transform?.decompose(
           text.position,
           text.quaternion,
           text.scale
@@ -366,7 +366,7 @@ export default class TextBatch implements Batch {
           )
           box.setFromArray(vertices)
           box.applyMatrix4(
-            this.renderViews[k].renderData.geometry.bakeTransform || new Matrix4()
+            this.renderViews[k].renderData.geometry.transform || new Matrix4()
           )
 
           needsRTE ||= Geometry.needsRTE(box)

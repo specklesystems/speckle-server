@@ -6,7 +6,7 @@ export class VirtualArray {
   constructor(public chunks: Array<Array<number>>) {}
 
   get length() {
-    return this.chunks.reduce((sum, c) => sum + c.length, 0)
+    return this.chunks && this.chunks.reduce((sum, c) => sum + c.length, 0)
   }
 
   get(index: number): number {

@@ -7,8 +7,8 @@ export class TextBatchObject extends BatchObject {
 
   public constructor(renderView: NodeRenderView, batchIndex: number) {
     super(renderView, batchIndex)
-    if (renderView.renderData.geometry.bakeTransform)
-      this.textTransform.copy(renderView.renderData.geometry.bakeTransform)
+    if (renderView.renderData.geometry.transform)
+      this.textTransform.copy(renderView.renderData.geometry.transform)
     /** TO DO: Not sure we should do this */
     this.transform.copy(this.textTransform)
     this.transformInv.copy(new Matrix4().copy(this.textTransform).invert())

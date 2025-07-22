@@ -272,9 +272,16 @@ export default class LineBatch implements Batch {
           points[2 * i + 5] = geometry.attributes.POSITION.get(i + 5)
         }
         position.set(points, offset)
+        Geometry.transformArray(position, geometry.transform, offset, points.length)
       } else {
         points = geometry.attributes.POSITION
         geometry.attributes.POSITION.copyToBuffer(position, offset)
+        Geometry.transformArray(
+          position,
+          geometry.transform,
+          offset,
+          offset + geometry.attributes.POSITION.length
+        )
       }
 
       this.renderViews[k].setBatchData(this.id, offset / 6, points.length / 6)

@@ -205,8 +205,8 @@ export class MeshBatch extends PrimitiveBatch {
       ) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
       }
-      indicesCount += ervee.indexCount
-      attributeCount += ervee.vertArrayCount
+      indicesCount += ervee.renderData.geometry.attributes.INDEX.length
+      attributeCount += ervee.renderData.geometry.attributes.POSITION.length
       bounds.union(ervee.aabb)
     }
     const needsRTE = Geometry.needsRTE(bounds)
@@ -248,6 +248,13 @@ export class MeshBatch extends PrimitiveBatch {
       })
 
       geometry.attributes?.POSITION.copyToBuffer(position, offset)
+      /** We transform the copied geometry so that we do not alter original chunk data which might be shared */
+      Geometry.transformArray(
+        position,
+        geometry.transform,
+        offset,
+        geometry.attributes?.POSITION.length
+      )
 
       if (geometry.attributes.COLOR) {
         geometry.attributes?.COLOR.copyToBuffer(color, offset)
@@ -261,7 +268,8 @@ export class MeshBatch extends PrimitiveBatch {
         Geometry.computeVertexNormalsBufferVirtual(
           normals.subarray(
             offset,
-            offset + this.renderViews[k].vertArrayCount
+            offset +
+              (this.renderViews[k].renderData.geometry.attributes?.POSITION.length ?? 0)
           ) as unknown as number[],
           geometry.attributes.POSITION,
           geometry.attributes.INDEX

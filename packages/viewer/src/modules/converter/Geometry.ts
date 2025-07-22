@@ -235,6 +235,30 @@ export class Geometry {
     })
   }
 
+  public static transformArray(
+    array: number[] | Float32Array | Float64Array,
+    m: Matrix4 | null,
+    offset?: number,
+    count?: number
+  ) {
+    if (!m) return
+    if (Geometry.isMatrix4Identity(m)) return
+
+    const e = m.elements
+    offset = offset || 0
+    count = count || array.length
+    for (let k = offset; k < offset + count; k += 3) {
+      const x = array[k],
+        y = array[k + 1],
+        z = array[k + 2]
+      const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15])
+
+      array[k] = (e[0] * x + e[4] * y + e[8] * z + e[12]) * w
+      array[k + 1] = (e[1] * x + e[5] * y + e[9] * z + e[13]) * w
+      array[k + 2] = (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
+    }
+  }
+
   public static isMatrix4Identity(matrix: Matrix4) {
     const e = matrix.elements
 

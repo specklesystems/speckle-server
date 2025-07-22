@@ -190,6 +190,12 @@ export class PointBatch extends PrimitiveBatch {
       }
 
       geometry.attributes?.POSITION.copyToBuffer(position, offset)
+      Geometry.transformArray(
+        position,
+        geometry.transform,
+        offset,
+        geometry.attributes?.POSITION.length
+      )
       if (geometry.attributes.COLOR) {
         geometry.attributes?.COLOR.copyToBuffer(color, offset)
       }
