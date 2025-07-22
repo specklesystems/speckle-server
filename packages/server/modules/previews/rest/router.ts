@@ -46,7 +46,7 @@ import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
 import type { Queue } from 'bull'
 import type { Knex } from 'knex'
 import { fileURLToPath } from 'url'
-import { crossOriginResourcePolicyMiddleware } from '@/modules/shared/middleware/security'
+import { allowCrossOriginResourceAccessMiddelware } from '@/modules/shared/middleware/security'
 
 const httpErrorImage = (httpErrorCode: number) =>
   fileURLToPath(
@@ -99,12 +99,12 @@ export const previewRouterFactory = ({
   app.options(
     '/preview/:streamId/:angle?',
     cors(),
-    crossOriginResourcePolicyMiddleware('cross-origin')
+    allowCrossOriginResourceAccessMiddelware()
   )
   app.get(
     '/preview/:streamId/:angle?',
     cors(),
-    crossOriginResourcePolicyMiddleware('cross-origin'),
+    allowCrossOriginResourceAccessMiddelware(),
     async (req, res) => {
       const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       const checkStreamPermissions = checkStreamPermissionsFactory({
@@ -165,12 +165,12 @@ export const previewRouterFactory = ({
   app.options(
     '/preview/:streamId/branches/:branchName/:angle?',
     cors(),
-    crossOriginResourcePolicyMiddleware('cross-origin')
+    allowCrossOriginResourceAccessMiddelware()
   )
   app.get(
     '/preview/:streamId/branches/:branchName/:angle?',
     cors(),
-    crossOriginResourcePolicyMiddleware('cross-origin'),
+    allowCrossOriginResourceAccessMiddelware(),
     async (req, res) => {
       const checkStreamPermissions = checkStreamPermissionsFactory({
         validateScopes,
@@ -241,12 +241,12 @@ export const previewRouterFactory = ({
   app.options(
     '/preview/:streamId/commits/:commitId/:angle?',
     cors(),
-    crossOriginResourcePolicyMiddleware('cross-origin')
+    allowCrossOriginResourceAccessMiddelware()
   )
   app.get(
     '/preview/:streamId/commits/:commitId/:angle?',
     cors(),
-    crossOriginResourcePolicyMiddleware('cross-origin'),
+    allowCrossOriginResourceAccessMiddelware(),
     async (req, res) => {
       const checkStreamPermissions = checkStreamPermissionsFactory({
         validateScopes,
@@ -299,12 +299,12 @@ export const previewRouterFactory = ({
   app.options(
     '/preview/:streamId/objects/:objectId/:angle?',
     cors(),
-    crossOriginResourcePolicyMiddleware('cross-origin')
+    allowCrossOriginResourceAccessMiddelware()
   )
   app.get(
     '/preview/:streamId/objects/:objectId/:angle?',
     cors(),
-    crossOriginResourcePolicyMiddleware('cross-origin'),
+    allowCrossOriginResourceAccessMiddelware(),
     async (req, res) => {
       const checkStreamPermissions = checkStreamPermissionsFactory({
         validateScopes,

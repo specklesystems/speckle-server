@@ -6,3 +6,6 @@ export const crossOriginResourcePolicyMiddleware =
     res.setHeader('Cross-Origin-Resource-Policy', value)
     next()
   }
+
+export const allowCrossOriginResourceAccessMiddelware = () =>
+  crossOriginResourcePolicyMiddleware('cross-origin')
