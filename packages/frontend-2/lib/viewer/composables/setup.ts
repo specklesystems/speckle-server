@@ -25,7 +25,7 @@ import {
   type VisualDiffMode,
   ViewMode
 } from '@speckle/viewer'
-import { inject, ref, provide } from 'vue'
+import { inject, ref, provide, shallowRef } from 'vue'
 import type { ComputedRef, WritableComputedRef, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import type { Nullable, Optional } from '@speckle/shared'
@@ -71,6 +71,7 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -274,6 +275,8 @@ export type InjectableViewerState = Readonly<{
       edited: Ref<boolean>
     }
     highlightedObjectIds: Ref<string[]>
+    selectedObjectIds: Ref<string[]>
+    selectedObjects: ShallowRef<SpeckleObject[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
@@ -933,6 +936,14 @@ function setupInterfaceState(
   const loadProgress = ref(0)
 
   const isolatedObjectIds = ref([] as string[])
+  /**
+   * Currently selected objects in the viewer.
+   * Stored in viewer state so that every composable/component can access the
+   * same reactive reference without spawning duplicate refs or event
+   * listeners.  Populated & kept in sync inside useSelectionUtilities().
+   */
+  const selectedObjectIds = ref([] as string[])
+  const selectedObjects = shallowRef<SpeckleObject[]>([])
   const hiddenObjectIds = ref([] as string[])
   const propertyFilter = ref(null as Nullable<PropertyInfo>)
   const isPropertyFilterApplied = ref(false)
@@ -1013,6 +1024,8 @@ function setupInterfaceState(
         },
         hasAnyFiltersApplied
       },
+      selectedObjectIds,
+      selectedObjects,
       highlightedObjectIds,
       measurement: {
         enabled: ref(false),

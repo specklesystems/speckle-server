@@ -1,4 +1,4 @@
-import { MeasurementType } from '@speckle/viewer'
+import { MeasurementType, SelectionExtension, ViewerEvent } from '@speckle/viewer'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -19,6 +19,27 @@ function useCollectSelection() {
   useSelectionEvents({
     singleClickCallback: selectionCallback,
     doubleClickCallback: selectionCallback
+  })
+}
+
+function useSelectionStateSync() {
+  const state = useInjectedViewerState()
+  const selExt = state.viewer.instance.getExtension(SelectionExtension)
+
+  const update = () => {
+    const objs = selExt.getSelectedObjects() as SpeckleObject[]
+    state.ui.selectedObjects.value = objs
+    state.ui.selectedObjectIds.value = objs.map((o) => o.id as string)
+  }
+
+  update()
+
+  state.viewer.instance.on(ViewerEvent.ObjectClicked, update)
+  state.viewer.instance.on(ViewerEvent.ObjectDoubleClicked, update)
+
+  onBeforeUnmount(() => {
+    state.viewer.instance.removeListener(ViewerEvent.ObjectClicked, update)
+    state.viewer.instance.removeListener(ViewerEvent.ObjectDoubleClicked, update)
   })
 }
 
@@ -121,4 +142,5 @@ function useSelectOrZoomOnSelection() {
 export function useViewerSelectionEventHandler() {
   useCollectSelection()
   useSelectOrZoomOnSelection()
+  useSelectionStateSync()
 }

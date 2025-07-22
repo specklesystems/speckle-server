@@ -7,7 +7,6 @@ import {
   ViewModes,
   CameraController,
   SelectionExtension,
-  ViewerEvent,
   type InlineView,
   type CanonicalView,
   type SpeckleView
@@ -273,19 +272,14 @@ export function useFilterUtilities(
 
 export function useSelectionUtilities() {
   const { instance } = useInjectedViewer()
+  const {
+    ui: { selectedObjects, selectedObjectIds }
+  } = useInjectedViewerState()
+
   const selExt = instance.getExtension(SelectionExtension)
 
-  const objects = shallowRef<SpeckleObject[]>(
-    selExt.getSelectedObjects() as SpeckleObject[]
-  )
-  const objectIds = computed(() => objects.value.map((o) => o.id as string))
-
-  // keep in sync with viewer events
-  const sync = () => {
-    objects.value = selExt.getSelectedObjects() as SpeckleObject[]
-  }
-  instance.on(ViewerEvent.ObjectClicked, sync)
-  instance.on(ViewerEvent.ObjectDoubleClicked, sync)
+  const objects = selectedObjects
+  const objectIds = computed(() => selectedObjectIds.value)
 
   const clearSelection = () => selExt.clearSelection()
   const setSelectionFromObjectIds = (ids: string[]) => selExt.selectObjects(ids, false)
