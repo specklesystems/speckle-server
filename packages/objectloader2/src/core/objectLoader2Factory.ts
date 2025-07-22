@@ -7,7 +7,6 @@ import { MemoryDownloader } from './stages/memory/memoryDownloader.js'
 import ServerDownloader from './stages/serverDownloader.js'
 
 export interface ObjectLoader2FactoryOptions {
-  useMemoryCache?: boolean
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
   indexedDB?: IDBFactory
@@ -43,40 +42,31 @@ export class ObjectLoader2Factory {
     options?: ObjectLoader2FactoryOptions
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger2)
-    let loader: ObjectLoader2
-    if (params.options?.useMemoryCache) {
-      loader = new ObjectLoader2({
-        rootId: params.objectId,
-        downloader: new ServerDownloader({
-          serverUrl: params.serverUrl,
-          streamId: params.streamId,
-          objectId: params.objectId,
-          token: params.token,
-          headers: params.headers
-        }),
-        database: new MemoryDatabase({
-          items: new Map<string, Base>()
-        }),
-        logger: log
+    let database
+    if (getQueryParameter('useCache', 'true') === 'true') {
+      database = new IndexedDatabase({
+        logger: log,
+        indexedDB: params.options?.indexedDB,
+        keyRange: params.options?.keyRange
       })
     } else {
-      loader = new ObjectLoader2({
-        rootId: params.objectId,
-        downloader: new ServerDownloader({
-          serverUrl: params.serverUrl,
-          streamId: params.streamId,
-          objectId: params.objectId,
-          token: params.token,
-          headers: params.headers
-        }),
-        database: new IndexedDatabase({
-          logger: log,
-          indexedDB: params.options?.indexedDB,
-          keyRange: params.options?.keyRange
-        }),
-        logger: log
+      database = new MemoryDatabase({
+        items: new Map<string, Base>()
       })
+      this.logger('Using MemoryDatabase for ObjectLoader2')
     }
+    const loader = new ObjectLoader2({
+      rootId: params.objectId,
+      downloader: new ServerDownloader({
+        serverUrl: params.serverUrl,
+        streamId: params.streamId,
+        objectId: params.objectId,
+        token: params.token,
+        headers: params.headers
+      }),
+      database,
+      logger: log
+    })
     return loader
   }
 

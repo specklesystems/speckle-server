@@ -34,6 +34,7 @@ export class ObjectLoader2 {
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
     this.#logger = options.logger || ((): void => {})
+    this.#logger('ObjectLoader2 initialized with rootId:', this.#rootId)
 
     const cacheOptions: CacheOptions = {
       logger: this.#logger,
