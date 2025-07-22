@@ -2,14 +2,9 @@
   <div>
     <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
       <div class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3">
-        <div class="hidden lg:block">
+        <div class="hidden lg:block lg:w-52">
           <HeaderWorkspaceSwitcher v-if="showWorkspaceSwitcher" />
-          <HeaderLogoBlock
-            v-else
-            :active="false"
-            to="/"
-            class="hidden lg:flex lg:min-w-40"
-          />
+          <HeaderLogoBlock v-else :active="false" to="/" class="hidden lg:flex" />
         </div>
         <div class="flex items-center truncate">
           <ClientOnly>
@@ -19,7 +14,7 @@
             <PortalTarget name="navigation"></PortalTarget>
           </ClientOnly>
         </div>
-        <div class="flex items-center justify-end gap-2.5 sm:gap-2 lg:min-w-40">
+        <div class="flex items-center justify-end gap-2.5 sm:gap-2 lg:w-52">
           <ClientOnly>
             <PortalTarget name="secondary-actions"></PortalTarget>
             <PortalTarget name="primary-actions"></PortalTarget>
