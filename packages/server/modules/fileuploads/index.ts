@@ -43,7 +43,6 @@ import {
   NumberOfFileImportRetries
 } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
-import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
 import {
   initializeRhinoQueueFactory,
   initializeIfcQueueFactory,
@@ -134,6 +133,9 @@ export const init: SpeckleModule['init'] = async ({
   }
   moduleLogger.info('📄 Init FileUploads module')
 
+  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
+    moduleLogger.info('📄 Next Gen File Importer is ENABLED')
+
   let observeResult: ObserveResult | undefined = undefined
 
   if (isInitial) {
@@ -142,6 +144,7 @@ export const init: SpeckleModule['init'] = async ({
       // this freature flag is going away soon, it will be on by default
       // once we switch stabilize the background jobs mechanism
       if (FF_BACKGROUND_JOBS_ENABLED) {
+        moduleLogger.info('🗳️ Background Jobs are ENABLED')
         const connectionUri = getFileImporterQueuePostgresUrl()
         const queueDb = connectionUri
           ? configureClient({ postgres: { connectionUri } }).public
@@ -264,11 +267,6 @@ export const init: SpeckleModule['init'] = async ({
         return getProjectModelByIdFactory({ db: projectDb })(params)
       }
     })()
-  }
-
-  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-    moduleLogger.info('📄 Next Gen File Importer is ENABLED')
-    app.use(nextGenFileImporterRouterFactory())
   }
 
   // the two routers can be used independently and can both be enabled
