@@ -13,6 +13,10 @@ import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import {
+  getStoredViewCountFactory,
+  storeSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 import { createSavedViewFactory } from '@/modules/viewer/services/savedViewsManagement'
 
 const resolvers: Resolvers = {
@@ -43,7 +47,9 @@ const resolvers: Resolvers = {
           getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
           getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
           getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
-        })
+        }),
+        getStoredViewCount: getStoredViewCountFactory({ db: projectDb }),
+        storeSavedView: storeSavedViewFactory({ db: projectDb })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     }

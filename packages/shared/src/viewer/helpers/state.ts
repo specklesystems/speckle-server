@@ -1,4 +1,4 @@
-import { intersection, isObjectLike } from '#lodash'
+import { has, intersection, isObjectLike } from '#lodash'
 import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes.js'
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors/index.js'
@@ -268,4 +268,27 @@ export const formatSerializedViewerState = (
 ): SerializedViewerState => {
   const finalState = initializeMissingData(state)
   return finalState
+}
+
+export const inputToVersionedState = (
+  inputSerializedViewerState: unknown
+): Nullable<VersionedSerializedViewerState> => {
+  const state = isSerializedViewerState(inputSerializedViewerState)
+    ? formatSerializedViewerState(inputSerializedViewerState)
+    : null
+  if (!state) return null
+
+  return {
+    version: SERIALIZED_VIEWER_STATE_VERSION,
+    state
+  }
+}
+
+export const isVersionedSerializedViewerState = (
+  data: unknown
+): data is VersionedSerializedViewerState => {
+  if (!data || !isObjectLike(data)) return false
+  if (!has(data, 'version')) return false
+  const stateRaw = (data as Record<string, unknown>).state
+  return isSerializedViewerState(stateRaw)
 }

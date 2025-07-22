@@ -1,5 +1,5 @@
 {
-  "mochaExplorer.env": { "NODE_ENV": "test" },
+  "mochaExplorer.env": { "NODE_ENV": "test", "TSX": "true" },
   "mochaExplorer.nodeArgv": ["--import", "tsx"],
   "javascript.suggest.autoImports": true,
   "typescript.suggest.autoImports": true,

@@ -170,12 +170,13 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
     params: {
       modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
       folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
+      allowEmptyModels?: boolean
     }
   ) => {
     // by default we pull all versions of all relevant branches, but if loadedVersionsOnly is set, we only pull
     // specifically requested versions (if version isn't set in identifier, then latest version)
 
-    const { modelResources = [], folderResources = [] } = params
+    const { modelResources = [], folderResources = [], allowEmptyModels } = params
     const results: ViewerResourceGroup[] = []
 
     const foldersModels = await deps.getStreamBranchesByName(
@@ -240,7 +241,16 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
         item = modelLatestVersions[modelResource.modelId]
       }
 
-      if (!item) continue
+      if (!item) {
+        if (allowEmptyModels) {
+          results.push({
+            identifier: modelResource.toString(),
+            items: []
+          })
+        }
+        continue
+      }
+
       results.push({
         identifier: modelResource.toString(),
         items: [
@@ -296,14 +306,15 @@ const getVersionResourceGroupsFactory =
       modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
       folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
       allModelsResource?: SpeckleViewer.ViewerRoute.ViewerAllModelsResource
-    },
-    loadedVersionsOnly?: boolean
+      loadedVersionsOnly?: boolean
+      allowEmptyModels?: boolean
+    }
   ) => {
     const allModelsGroup = params.allModelsResource
       ? await getAllModelsResourceGroupFactory(deps)(projectId)
       : null
 
-    const groups = loadedVersionsOnly
+    const groups = params.loadedVersionsOnly
       ? await getVersionResourceGroupsLoadedVersionsOnlyFactory(deps)(projectId, params)
       : await getVersionResourceGroupsIncludingAllVersionsFactory(deps)(
           projectId,
@@ -321,8 +332,16 @@ export const getViewerResourceGroupsFactory =
   (
     deps: GetObjectResourceGroupsDeps & GetVersionResourceGroupsDeps
   ): GetViewerResourceGroups =>
-  async (target: ViewerUpdateTrackingTarget): Promise<ViewerResourceGroup[]> => {
-    const { resourceIdString, projectId, loadedVersionsOnly } = target
+  async (
+    target: ViewerUpdateTrackingTarget & {
+      /**
+       * By default this only returns groups w/ resources in them. W/ this flag set, it will also
+       * return valid model groups that have no resources in them
+       */
+      allowEmptyModels?: boolean
+    }
+  ): Promise<ViewerResourceGroup[]> => {
+    const { resourceIdString, projectId, loadedVersionsOnly, allowEmptyModels } = target
     if (!resourceIdString?.trim().length) return []
     const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
 
@@ -338,11 +357,13 @@ export const getViewerResourceGroupsFactory =
     const results: ViewerResourceGroup[] = flatten(
       await Promise.all([
         getObjectResourceGroupsFactory(deps)(projectId, objectResources),
-        getVersionResourceGroupsFactory(deps)(
-          projectId,
-          { modelResources, folderResources, allModelsResource },
-          loadedVersionsOnly || false
-        )
+        getVersionResourceGroupsFactory(deps)(projectId, {
+          modelResources,
+          folderResources,
+          allModelsResource,
+          loadedVersionsOnly: loadedVersionsOnly || false,
+          allowEmptyModels
+        })
       ])
     )
 

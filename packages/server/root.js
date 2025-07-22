@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 const isTsNode =
   !!process[Symbol.for('ts-node.register.instance')] ||
   process.env.VITEST === 'true' ||
+  process.env.TSX === 'true' ||
   (process._preload_modules || []).some((m) => m.match(/node_modules\/tsx\//)) // tsx running
 
 const __filename = fileURLToPath(import.meta.url)

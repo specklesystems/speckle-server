@@ -13,6 +13,31 @@ import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/stream
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
+import { merge } from 'lodash-es'
+import { PartialDeep } from 'type-fest'
+
+const fakeScreenshot =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='
+
+const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerState>) =>
+  merge(
+    {},
+    ViewerState.formatSerializedViewerState({
+      projectId: 'fake-project-id',
+      resources: {
+        request: {
+          resourceIdString: 'a,b,c'
+        }
+      },
+      ui: {
+        camera: {
+          position: [0, 0, 0],
+          target: [0, 0, 0]
+        }
+      }
+    }),
+    overrides || {}
+  )
 
 describe('Saved Views GraphQL CRUD', () => {
   let apollo: TestApolloServer
@@ -37,16 +62,24 @@ describe('Saved Views GraphQL CRUD', () => {
 
   describe('creation', () => {
     it('should successfully create a saved view', async () => {
+      const resourceIdString = ViewerRoute.resourceBuilder()
+        .addModel(myModel1.id)
+        .toString()
       const res = await createSavedView({
         input: {
           name: 'Test Saved View',
           description: 'This is a test saved view',
           projectId: myProject.id,
-          resourceIdString: ViewerRoute.resourceBuilder()
-            .addModel(myModel1.id)
-            .toString(),
-          screenshot: 'data:image/png;base64,foobar',
-          viewerState: ViewerState.formatSerializedViewerState({})
+          resourceIdString,
+          screenshot: fakeScreenshot,
+          viewerState: fakeViewerState({
+            projectId: myProject.id,
+            resources: {
+              request: {
+                resourceIdString
+              }
+            }
+          })
         }
       })
 

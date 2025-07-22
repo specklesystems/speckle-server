@@ -4,6 +4,7 @@ import {
   StoreSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
 import { SavedView } from '@/modules/viewer/domain/types/savedViews'
+import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 
 const SavedViews = buildTableHelper('saved_views', [
@@ -27,14 +28,20 @@ const tables = {
   savedViews: (db: Knex) => db<SavedView>(SavedViews.name)
 }
 
-export const storeViewFactory =
+export const storeSavedViewFactory =
   (deps: { db: Knex }): StoreSavedView =>
   async ({ view }) => {
-    const [insertedItem] = await tables.savedViews(deps.db).insert(view, '*')
+    const [insertedItem] = await tables.savedViews(deps.db).insert(
+      {
+        id: cryptoRandomString({ length: 10 }),
+        ...view
+      },
+      '*'
+    )
     return insertedItem
   }
 
-export const getStoredViewCount =
+export const getStoredViewCountFactory =
   (deps: { db: Knex }): GetStoredViewCount =>
   async ({ projectId }) => {
     const [count] = await tables.savedViews(deps.db).where({ projectId }).count()

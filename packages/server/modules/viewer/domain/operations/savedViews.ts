@@ -4,11 +4,12 @@ import {
 } from '@/modules/viewer/domain/types/savedViews'
 import { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shared'
 import { SerializedViewerState } from '@speckle/shared/viewer/state'
+import { SetOptional } from 'type-fest'
 
 // REPO OPERATIONS:
 
 export type StoreSavedView = (params: {
-  view: NullableKeysToOptional<SavedView>
+  view: SetOptional<NullableKeysToOptional<SavedView>, 'id' | 'createdAt' | 'updatedAt'>
 }) => Promise<SavedView>
 
 export type GetStoredViewCount = (params: { projectId: string }) => Promise<number>

@@ -227,7 +227,7 @@ export type GetViewerResourcesFromLegacyIdentifiers = (
 ) => Promise<ViewerResourceItem[]>
 
 export type GetViewerResourceGroups = (
-  target: ViewerUpdateTrackingTarget
+  target: ViewerUpdateTrackingTarget & { allowEmptyModels?: boolean }
 ) => Promise<ViewerResourceGroup[]>
 
 export type GetViewerResourceItemsUngrouped = (

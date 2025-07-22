@@ -104,7 +104,8 @@
       "./viewer/route": "./src/viewer/helpers/route.ts",
       "./viewer/state": "./src/viewer/helpers/state.ts",
       "./automate": "./src/automate/index.ts",
-      "./dist/*": "./dist/*"
+      "./dist/*": "./dist/*",
+      "./images/base64": "./src/images/base64.ts"
     },
     "exclude": [
       "**/*.spec.ts",
@@ -310,6 +311,16 @@
         "default": "./dist/commonjs/automate/index.js"
       }
     },
-    "./dist/*": "./dist/*"
+    "./dist/*": "./dist/*",
+    "./images/base64": {
+      "import": {
+        "types": "./dist/esm/images/base64.d.ts",
+        "default": "./dist/esm/images/base64.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/images/base64.d.ts",
+        "default": "./dist/commonjs/images/base64.js"
+      }
+    }
   }
 }

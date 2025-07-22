@@ -4,41 +4,21 @@ import {
 } from '@/modules/comments/domain/operations'
 import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
 import { viewerResourcesToString } from '@/modules/core/services/commit/viewerResources'
-import { Nullable } from '@speckle/shared'
 import {
   VersionedSerializedViewerState,
   SerializedViewerState,
-  isSerializedViewerState,
-  SERIALIZED_VIEWER_STATE_VERSION,
-  formatSerializedViewerState
+  formatSerializedViewerState,
+  isVersionedSerializedViewerState,
+  inputToVersionedState
 } from '@speckle/shared/viewer/state'
-import { has, get, intersection, isObjectLike } from 'lodash-es'
+import { intersection, isObjectLike } from 'lodash-es'
 
 export type LegacyData = Partial<LegacyCommentViewerData>
 export type DataStruct = VersionedSerializedViewerState
 
 export { formatSerializedViewerState }
-
-export function inputToDataStruct(
-  inputSerializedViewerState: unknown
-): Nullable<DataStruct> {
-  const state = isSerializedViewerState(inputSerializedViewerState)
-    ? inputSerializedViewerState
-    : null
-  if (!state) return null
-
-  return {
-    version: SERIALIZED_VIEWER_STATE_VERSION,
-    state
-  }
-}
-
-export function isDataStruct(data: unknown): data is DataStruct {
-  if (!data) return false
-  if (!has(data, 'version')) return false
-  const stateRaw = get(data, 'state')
-  return isSerializedViewerState(stateRaw)
-}
+export const inputToDataStruct = inputToVersionedState
+export const isDataStruct = isVersionedSerializedViewerState
 
 export function isLegacyData(data: unknown): data is LegacyData {
   if (!data) return false
