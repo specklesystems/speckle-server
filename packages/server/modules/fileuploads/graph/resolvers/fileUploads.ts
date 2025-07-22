@@ -276,7 +276,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
       jobResult = {
         status: JobResultStatus.Success,
-        warnings,
+        warnings: warnings || [],
         result: {
           ...result,
           versionId: result.versionId
