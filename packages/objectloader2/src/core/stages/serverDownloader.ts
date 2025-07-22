@@ -91,9 +91,6 @@ export default class ServerDownloader implements Downloader {
   add(id: string): void {
     this.#getPool().add(id)
   }
-  addAll(items: string[]): void {
-    this.#getPool().addAll(items)
-  }
 
   /*
   This is the most frequently reported and confirmed reason for this error in Safari. There's a known bug in WebKit (Safari's rendering engine) where TextDecoder can fail or throw a RangeError after decoding around 2GB of data. Chrome and other browsers handle much larger amounts of data without this specific limitation.

@@ -36,8 +36,4 @@ export class MemoryDownloader implements Downloader {
     }
     throw new Error('Method not implemented.')
   }
-
-  addAll(items: string[]): void {
-    items.forEach((id) => this.add(id))
-  }
 }

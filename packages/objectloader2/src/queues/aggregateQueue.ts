@@ -17,10 +17,6 @@ export default class AggregateQueue<T> implements Queue<T> {
     this.#queue1.add(value)
     this.#queue2.add(value)
   }
-  addAll(items: T[]): void {
-    this.#queue1.addAll(items)
-    this.#queue2.addAll(items)
-  }
 
   values(): never {
     throw new Error('Not implemented')
