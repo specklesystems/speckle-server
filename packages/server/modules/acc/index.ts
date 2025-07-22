@@ -13,9 +13,28 @@ import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
-import { TIME_MS } from '@speckle/shared'
+import { Scopes, TIME_MS } from '@speckle/shared'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { AccSyncItems } from '@/modules/acc/dbSchema'
+import { AccSyncItem } from '@/modules/acc/domain/types'
+import {
+  getAutomationTokenFactory,
+  getLatestAutomationRevisionFactory,
+  InsertableAutomationRun,
+  upsertAutomationRunFactory
+} from '@/modules/automate/repositories/automations'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import cryptoRandomString from 'crypto-random-string'
+import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
+import { DefaultAppIds } from '@/modules/auth/defaultApps'
+import { TokenResourceIdentifierType } from '@/test/graphql/generated/graphql'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 export default function accRestApi(app: Express) {
   const sessionMiddleware = sessionMiddlewareFactory()
@@ -143,7 +162,7 @@ export default function accRestApi(app: Express) {
     try {
       // TODO: Multiple references to same item?
 
-      const affectedRows = await db('acc_sync_items')
+      const affectedRows = await db<AccSyncItem>('acc_sync_items')
         .where({ accFileLineageId: lineageUrn })
         .andWhere(AccSyncItems.col.accFileVersionIndex, '<', accFileVersionIndex)
         .update({
@@ -152,6 +171,114 @@ export default function accRestApi(app: Express) {
           accFileVersionUrn
         })
         .returning('*')
+
+      for (const syncItem of affectedRows) {
+        console.log(`${syncItem.accFileVersionUrn} : ${syncItem.accFileName}`)
+
+        const projectDb = await getProjectDbClient({ projectId: syncItem.projectId })
+
+        const automationRevision = await getLatestAutomationRevisionFactory({
+          db: projectDb
+        })({ automationId: syncItem.automationId })
+
+        if (!automationRevision) continue
+
+        const runId = cryptoRandomString({ length: 15 })
+
+        const runData: InsertableAutomationRun = {
+          id: runId,
+          automationRevisionId: automationRevision.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: 'pending',
+          executionEngineRunId: null,
+          triggers: [
+            {
+              // TODO ACC: This is not meaningful until we integrate with fileUpload
+              triggeringId: '',
+              triggerType: 'versionCreation'
+            }
+          ],
+          functionRuns: [
+            {
+              functionId: '2909d29a9d',
+              id: cryptoRandomString({ length: 15 }),
+              status: 'pending' as const,
+              elapsed: 0,
+              results: null,
+              contextView: null,
+              statusMessage: null,
+              functionReleaseId: 'd6947185f3',
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
+          ]
+        }
+
+        await upsertAutomationRunFactory({ db: projectDb })(runData)
+
+        const projectScopedToken = await createAppTokenFactory({
+          storeApiToken: storeApiTokenFactory({ db }),
+          storeTokenScopes: storeTokenScopesFactory({ db }),
+          storeTokenResourceAccessDefinitions:
+            storeTokenResourceAccessDefinitionsFactory({
+              db
+            }),
+          storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+        })({
+          appId: DefaultAppIds.Automate,
+          name: `acct-${syncItem.id}`,
+          userId: syncItem.authorId,
+          // for now this is a baked in constant
+          // should rely on the function definitions requesting the needed scopes
+          scopes: [
+            Scopes.Profile.Read,
+            Scopes.Streams.Read,
+            Scopes.Streams.Write,
+            Scopes.Automate.ReportResults
+          ],
+          limitResources: [
+            {
+              id: syncItem.projectId,
+              type: TokenResourceIdentifierType.Project
+            }
+          ]
+        })
+
+        const automationToken = await getAutomationTokenFactory({ db: projectDb })(
+          syncItem.automationId
+        )
+
+        if (!automationToken) continue
+
+        await triggerAutomationRun({
+          projectId: syncItem.projectId,
+          automationId: syncItem.automationId,
+          functionRuns: runData.functionRuns.map((r) => ({
+            ...r,
+            runId: cryptoRandomString({ length: 15 }),
+            resultVersions: [],
+            functionInputs: {
+              projectId: syncItem.projectId,
+              modelId: syncItem.modelId,
+              autodeskUrn: btoa(syncItem.accFileVersionUrn)
+                .replaceAll('/', '_')
+                .replaceAll('==', ''),
+              autodeskRegion: 1,
+              autodeskClientId: '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y',
+              autodeskClientSecret:
+                'qHyGqaP4zCWLyS2lp04qBDOC1giIupPzJPmLFKGFHKZrPYYpan27zF8vlhQr1RYL'
+            }
+          })),
+          manifests: [
+            {
+              triggerType: 'versionCreation'
+            }
+          ],
+          speckleToken: projectScopedToken,
+          automationToken: automationToken.automateToken
+        })
+      }
 
       if (affectedRows.length > 0) {
         console.log(

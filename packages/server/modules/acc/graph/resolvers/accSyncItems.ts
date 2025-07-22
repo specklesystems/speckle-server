@@ -1,14 +1,38 @@
 import { AccSyncItem } from '@/modules/acc/domain/types'
 import { createAccSyncItemAndNotifyFactory } from '@/modules/acc/repositories/accSyncItems'
-import { storeAutomationFactory } from '@/modules/automate/repositories/automations'
+import {
+  createAutomation,
+  getFunctionReleaseFactory,
+  getFunctionReleasesFactory
+} from '@/modules/automate/clients/executionEngine'
+import {
+  getAutomationFactory,
+  storeAutomationFactory,
+  storeAutomationRevisionFactory,
+  storeAutomationTokenFactory
+} from '@/modules/automate/repositories/automations'
+import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
+import {
+  createAutomationFactory,
+  createAutomationRevisionFactory
+} from '@/modules/automate/services/automationManagement'
+import {
+  getEncryptionKeyPair,
+  getFunctionInputDecryptorFactory
+} from '@/modules/automate/services/encryption'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { LimitedUserGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
+import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getUsersFactory } from '@/modules/core/repositories/users'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { authorizeResolver } from '@/modules/shared'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import {
   filteredSubscribe,
   ProjectSubscriptions
@@ -110,26 +134,75 @@ const resolvers: Resolvers = {
       })
 
       // TODO ACC: Create automation at this step
-      const automationId = cryptoRandomString({ length: 9 })
+      // const automationId = cryptoRandomString({ length: 9 })
 
-      await storeAutomationFactory({ db: projectDb })({
-        id: automationId,
-        name: 'converter',
-        userId: ctx.userId!,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        enabled: true,
-        projectId: input.projectId,
-        executionEngineAutomationId: null,
-        isTestAutomation: true,
-        isDeleted: false
+      // await storeAutomationFactory({ db: projectDb })({
+      //   id: automationId,
+      //   name: 'converter',
+      //   userId: ctx.userId!,
+      //   createdAt: new Date(),
+      //   updatedAt: new Date(),
+      //   enabled: false,
+      //   projectId: input.projectId,
+      //   executionEngineAutomationId: null,
+      //   isTestAutomation: true,
+      //   isDeleted: false
+      // })
+
+      const { automation } = await createAutomationFactory({
+        createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
+        automateCreateAutomation: createAutomation,
+        storeAutomation: storeAutomationFactory({ db: projectDb }),
+        storeAutomationToken: storeAutomationTokenFactory({ db: projectDb }),
+        eventEmit: getEventBus().emit
+      })({
+        input: {
+          name: 'converter',
+          enabled: false
+        },
+        projectId: args.input.projectId,
+        userId: ctx.userId!
+      })
+
+      await createAutomationRevisionFactory({
+        getAutomation: getAutomationFactory({ db: projectDb }),
+        storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+        getFunctionRelease: getFunctionReleaseFactory({ logger: ctx.log }),
+        getEncryptionKeyPair,
+        getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+          buildDecryptor
+        }),
+        getFunctionReleases: getFunctionReleasesFactory({ logger: ctx.log }),
+        eventEmit: getEventBus().emit,
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver })
+      })({
+        input: {
+          automationId: automation.id,
+          functions: [
+            {
+              functionId: '2909d29a9d',
+              functionReleaseId: 'd6947185f3'
+            }
+          ],
+          triggerDefinitions: {
+            version: 1,
+            definitions: [
+              {
+                type: 'VERSION_CREATED',
+                modelId: input.modelId
+              }
+            ]
+          }
+        },
+        userId: ctx.userId!
       })
 
       const newItem = await createSyncItem({
         id: cryptoRandomString({ length: 10 }),
         status: 'PENDING',
         authorId: ctx.userId as string,
-        automationId,
+        automationId: automation.id,
         ...input
       })
 
