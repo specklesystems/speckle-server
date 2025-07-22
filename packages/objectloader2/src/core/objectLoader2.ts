@@ -58,9 +58,14 @@ export class ObjectLoader2 {
     this.#downloader = options.downloader
     this.#cacheReader = new CacheReader(this.#database, this.#deferments, cacheOptions)
     this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
-    this.#cacheWriter = new CacheWriter(this.#database, cacheOptions, this.#deferments, (id: string) => {
-      this.#cacheReader.requestItem(id)
-    })
+    this.#cacheWriter = new CacheWriter(
+      this.#database,
+      cacheOptions,
+      this.#deferments,
+      (id: string) => {
+        this.#cacheReader.requestItem(id)
+      }
+    )
   }
 
   async disposeAsync(): Promise<void> {

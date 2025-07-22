@@ -159,7 +159,9 @@ export class MemoryCache {
       }
     }
     this.logger(
-      `cleaned cache: cleaned ${cleaned}, cached ${this.cache.size}, time ${performance.now() - start}`,
+      `cleaned cache: cleaned ${cleaned}, cached ${this.cache.size}, time ${
+        performance.now() - start
+      }`
     )
     return
   }
