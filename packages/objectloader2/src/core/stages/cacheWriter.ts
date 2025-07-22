@@ -41,6 +41,9 @@ export class CacheWriter implements Queue<Item> {
     this.#writeQueue.add(item.baseId, item)
     this.#defermentManager.undefer(item, this.#requestItem)
   }
+  addAll(): void {
+   throw new Error('Method not implemented. Use add instead.')
+  }
 
   async writeAll(items: Item[]): Promise<void> {
     const start = performance.now()

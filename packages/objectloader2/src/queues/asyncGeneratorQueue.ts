@@ -15,6 +15,14 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
       this.#buffer.push(value)
     }
   }
+  addAll(items: T[]): void {
+     if (this.#resolveQueue.length > 0) {
+       // If there's a pending consumer, resolve immediately
+       const resolve = this.#resolveQueue.shift()!
+       resolve(items.shift()!)
+     }
+    this.#buffer.push(...items)
+  }
 
   async *consume(): AsyncGenerator<T> {
     while (

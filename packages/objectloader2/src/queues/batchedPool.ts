@@ -25,6 +25,10 @@ export default class BatchedPool<T> implements Queue<T> {
     this.#queue.push(item)
   }
 
+  addAll(items: T[]): void {
+    this.#queue.push(...items)
+  }
+
   getBatch(batchSize: number): T[] {
     return this.#queue.splice(0, Math.min(batchSize, this.#queue.length))
   }
