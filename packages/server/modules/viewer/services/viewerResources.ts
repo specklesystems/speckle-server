@@ -1,4 +1,5 @@
 import {
+  GetBranchesByIds,
   GetBranchLatestCommits,
   GetStreamBranchesByName
 } from '@/modules/core/domain/branches/operations'
@@ -18,6 +19,7 @@ import {
   GetViewerResourceItemsUngrouped
 } from '@/modules/viewer/domain/operations/resources'
 import { Optional, SpeckleViewer } from '@speckle/shared'
+import { ViewerModelResource } from '@speckle/shared/viewer/route'
 import { flatten, keyBy, uniq, uniqWith } from 'lodash-es'
 
 export function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem) {
@@ -142,6 +144,7 @@ const getVersionResourceGroupsIncludingAllVersionsFactory =
 
 type GetVersionResourceGroupsLoadedVersionsOnlyDeps = {
   getStreamBranchesByName: GetStreamBranchesByName
+  getBranchesByIds: GetBranchesByIds
   getSpecificBranchCommits: GetSpecificBranchCommits
   getBranchLatestCommits: GetBranchLatestCommits
 }
@@ -213,6 +216,7 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
       })
     }
 
+    const emptyModels: ViewerModelResource[] = []
     for (const modelResource of modelResources) {
       let item: Optional<CommitRecord & { branchId: string }> = undefined
       if (modelResource.versionId) {
@@ -225,11 +229,8 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
       }
 
       if (!item) {
-        if (allowEmptyModels) {
-          results.push({
-            identifier: modelResource.toString(),
-            items: []
-          })
+        if (allowEmptyModels && !modelResource.versionId) {
+          emptyModels.push(modelResource)
         }
         continue
       }
@@ -244,6 +245,21 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
           }
         ]
       })
+    }
+
+    // Validate that empty model resources are actually real models
+    if (emptyModels.length && allowEmptyModels) {
+      const emptyModelRecords = await deps.getBranchesByIds(
+        emptyModels.map((r) => r.modelId),
+        { streamId: projectId }
+      )
+      const emptyModelIds = new Set(emptyModelRecords.map((m) => m.id))
+      for (const emptyModelId of emptyModelIds) {
+        results.push({
+          identifier: emptyModelId,
+          items: []
+        })
+      }
     }
 
     return results

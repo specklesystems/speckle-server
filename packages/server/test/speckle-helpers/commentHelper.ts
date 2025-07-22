@@ -8,6 +8,7 @@ import {
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { createCommentThreadAndNotifyFactory } from '@/modules/comments/services/management'
 import {
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -42,7 +43,8 @@ export const createTestComment = async (
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
       })
     }),
     validateInputAttachments: validateInputAttachmentsFactory({

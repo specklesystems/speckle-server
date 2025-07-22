@@ -10,6 +10,7 @@ import {
 import {
   createBranchFactory,
   getBranchByIdFactory,
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory,
@@ -144,7 +145,8 @@ const command: CommandModule<
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =

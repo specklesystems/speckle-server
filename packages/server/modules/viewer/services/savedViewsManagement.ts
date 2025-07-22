@@ -125,6 +125,7 @@ export const createSavedViewFactory =
       name = `Scene - ${String(viewCount + 1).padStart(3, '0')}`
     }
 
+    // TODO: Uniq idx on projectId, name, groupName
     const ret = await deps.storeSavedView({
       view: {
         projectId,

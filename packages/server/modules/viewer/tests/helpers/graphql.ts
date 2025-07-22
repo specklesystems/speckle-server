@@ -4,6 +4,20 @@ const basicSavedViewFragment = gql`
   fragment BasicSavedView on SavedView {
     id
     name
+    description
+    author {
+      id
+    }
+    groupName
+    createdAt
+    updatedAt
+    resourceIdString
+    resourceIds
+    isHomeView
+    visibility
+    viewerState
+    screenshot
+    position
   }
 `
 

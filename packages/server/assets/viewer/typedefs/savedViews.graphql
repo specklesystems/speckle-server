@@ -8,7 +8,7 @@ type SavedView {
   name: String!
   description: String
   groupName: String
-  author: LimitedUser!
+  author: LimitedUser
   createdAt: DateTime!
   updatedAt: DateTime!
   """

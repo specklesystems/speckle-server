@@ -22,6 +22,7 @@ import {
   createBranchFactory,
   deleteBranchByIdFactory,
   getBranchByIdFactory,
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getModelTreeItemsFactory,
   getModelTreeItemsFilteredFactory,
@@ -171,7 +172,8 @@ export default {
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDB }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDB }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDB })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDB }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDB })
       })
       return await getViewerResourceGroups({
         projectId: parent.id,

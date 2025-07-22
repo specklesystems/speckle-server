@@ -2,6 +2,7 @@ import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import {
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -18,6 +19,8 @@ import {
 } from '@/modules/viewer/repositories/savedViews'
 import { createSavedViewFactory } from '@/modules/viewer/services/savedViewsManagement'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
+import { formatSerializedViewerState } from '@speckle/shared/viewer/state'
 
 const resolvers: Resolvers = {
   ProjectMutations: {
@@ -46,12 +49,27 @@ const resolvers: Resolvers = {
           getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
           getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
           getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-          getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+          getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+          getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
         }),
         getStoredViewCount: getStoredViewCountFactory({ db: projectDb }),
         storeSavedView: storeSavedViewFactory({ db: projectDb })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
+    }
+  },
+  SavedView: {
+    async author(parent, _args, ctx) {
+      return parent.authorId
+        ? await ctx.loaders.users.getUser.load(parent.authorId)
+        : null
+    },
+    resourceIdString(parent) {
+      const resourceIds = parent.resourceIds
+      return resourceBuilder().addFromString(resourceIds.join(',')).toString()
+    },
+    viewerState(parent) {
+      return formatSerializedViewerState(parent.viewerState.state)
     }
   }
 }

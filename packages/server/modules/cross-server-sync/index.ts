@@ -17,6 +17,7 @@ import {
 import {
   createBranchFactory,
   getBranchByIdFactory,
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory,
@@ -98,7 +99,8 @@ const crossServerSyncModule: SpeckleModule = {
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db }),
+        getBranchesByIds: getBranchesByIdsFactory({ db })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =

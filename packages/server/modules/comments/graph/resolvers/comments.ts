@@ -79,6 +79,7 @@ import {
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -121,7 +122,8 @@ const buildGetViewerResourceItemsUngrouped = (deps: { db: Knex }) =>
       getBranchLatestCommits: getBranchLatestCommitsFactory(deps),
       getStreamBranchesByName: getStreamBranchesByNameFactory(deps),
       getSpecificBranchCommits: getSpecificBranchCommitsFactory(deps),
-      getAllBranchCommits: getAllBranchCommitsFactory(deps)
+      getAllBranchCommits: getAllBranchCommitsFactory(deps),
+      getBranchesByIds: getBranchesByIdsFactory(deps)
     })
   })
 
