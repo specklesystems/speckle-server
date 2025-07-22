@@ -100,6 +100,11 @@
           "description": "Enables the ability to move a project region (manually or automatically)",
           "default": false
         },
+        "retryErroredPreviewsEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the system periodically retries preview requests which have previously errored.",
+          "default": false
+        },
         "nextGenFileImporterEnabled": {
           "type": "boolean",
           "description": "Enables the next generation file importer",
@@ -118,6 +123,11 @@
         "legacyIfcImporterEnabled": {
           "type": "boolean",
           "description": "Enables the ability to parse IFC files using the legacy IFC importer.",
+          "default": false
+        },
+        "backgroundJobsEnabled": {
+          "type": "boolean",
+          "description": "Enables the ability to run background jobs (such as the IFC importer) in Speckle",
           "default": false
         }
       }
@@ -414,6 +424,11 @@
         "endpoint": {
           "type": "string",
           "description": "The URL at which the s3 compatible storage is hosted. If `s3.configMap.enabled` is true, this value is ignored.",
+          "default": ""
+        },
+        "publicEndpoint": {
+          "type": "string",
+          "description": "The URL at which the s3 compatible storage is accessible from a user's browser.",
           "default": ""
         },
         "bucket": {
@@ -1282,6 +1297,11 @@
               "description": "If enabled, Speckle can send email to users - for example, email verification for account registration.",
               "default": false
             },
+            "verificationTimeoutMinutes": {
+              "type": "number",
+              "description": "The number of minutes after which an email verification link will expire. Defaults to 5 minutes.",
+              "default": 5
+            },
             "host": {
               "type": "string",
               "description": "The domain name or IP address of the server hosting the email service.",
@@ -2038,6 +2058,16 @@
           "description": "The maximum number of connections that the Preview Service postgres client will make to the Postgres database.",
           "default": 2
         },
+        "maxQueueBackpressure": {
+          "type": "number",
+          "description": "The maximum number of items that can be queued in the Preview Service job queue before we stop retrying previously errored preview jobs. This is used to prevent the Preview Service from being overwhelmed with too many jobs.",
+          "default": 1
+        },
+        "retryPeriodMinutes": {
+          "type": "number",
+          "description": "The period, in minutes, between retries of previously errored jobs. Must be an integer between 1 and 60.",
+          "default": 1
+        },
         "puppeteer": {
           "type": "object",
           "properties": {
@@ -2421,6 +2451,164 @@
           "type": "number",
           "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
           "default": 30
+        }
+      }
+    },
+    "ifc_import_service": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the File Import Service will be deployed within the cluster.",
+          "default": false
+        },
+        "replicas": {
+          "type": "number",
+          "description": "The number of instances of the FileImport Service pod to be deployed within the cluster.",
+          "default": 1
+        },
+        "deploymentStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The deployment strategy type to be used for the FileImport Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as file import service does not require 100% availability.",
+              "default": "Recreate"
+            }
+          }
+        },
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
+        },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
+        },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle FileImport Service component. If blank, defaults to speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
+        },
+        "db": {
+          "type": "object",
+          "properties": {
+            "postgresMaxConnections": {
+              "type": "number",
+              "description": "The maximum number of connections that the File Import Service postgres client will make to the Postgres database.",
+              "default": 1
+            },
+            "connectionString": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret which contains the connection string to the Postgres database. Defaults to value of .Values.secretName if this value is not provided.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The name of the key within the Kubernetes Secret which contains the connection string to the Postgres database.",
+                  "default": "fileimport_queue_postgres_url"
+                }
+              }
+            },
+            "certificate": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "If true, the certificate in the configmap will be mounted as a file in to the pod.",
+                  "default": false
+                },
+                "configMapName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes ConfigMap in which the certificate can be found.",
+                  "default": "ifc-importer-postgres-certificate"
+                },
+                "configMapKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes ConfigMap in which the certificate can be found.",
+                  "default": "ca-certificate.crt"
+                },
+                "data": {
+                  "type": "string",
+                  "description": "If not empty and the certificate is enabled, this Helm Chart will populate a Kubernetes ConfigMap of the given name & key with this data. This is intended to be contents of a PEM file, and will be mounted as a file in the pod.",
+                  "default": ""
+                }
+              }
+            }
+          }
+        },
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "The CPU that should be available on a node when scheduling this pod.",
+              "default": "100m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "The Memory that should be available on a node when scheduling this pod.",
+              "default": "512Mi"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "The maximum CPU that will be made available to the FileImport Service Pod in a given period.",
+              "default": "1000m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "The maximum Memory that will be made available to the FileImport Service Pod.",
+              "default": "2Gi"
+            }
+          }
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Affinity for Speckle FileImport Service pod scheduling",
+          "default": {}
+        },
+        "nodeSelector": {
+          "type": "object",
+          "description": "Node labels for Speckle FileImport Service pods scheduling",
+          "default": {}
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Tolerations for Speckle FileImport Service pods scheduling",
+          "default": [],
+          "items": {}
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "description": "Spread Constraints for Speckle FileImport Service pod scheduling",
+          "default": [],
+          "items": {}
+        },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "description": "If enabled, a Kubernetes Service Account will be created for this pod.",
+              "default": true
+            }
+          }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the FileImport service pod",
+          "default": [],
+          "items": {}
         }
       }
     },

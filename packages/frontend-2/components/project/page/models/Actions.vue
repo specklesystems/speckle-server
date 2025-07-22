@@ -6,6 +6,7 @@
       :menu-id="menuId"
       :items="actionsItems"
       :menu-position="menuPosition ? menuPosition : HorizontalDirection.Left"
+      :mount-menu-on-body="mountMenuOnBody"
       @click.stop.prevent
       @chosen="onActionChosen"
     >
@@ -109,6 +110,7 @@ const props = defineProps<{
   model: ProjectPageModelsActionsFragment
   project: ProjectPageModelsActions_ProjectFragment
   menuPosition?: HorizontalDirection
+  mountMenuOnBody?: boolean
 }>()
 
 const copyModelLink = useCopyModelLink()

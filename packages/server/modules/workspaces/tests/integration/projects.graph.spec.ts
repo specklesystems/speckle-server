@@ -39,7 +39,7 @@ import {
   UpdateProjectDocument,
   UpdateProjectRoleDocument,
   UpdateWorkspaceProjectRoleDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   ExecuteOperationResponse,
   testApolloServer,
@@ -66,7 +66,7 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
 import { Knex } from 'knex'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const adminOverrideMock = mockAdminOverride()
@@ -463,7 +463,7 @@ describe('Workspace project GQL CRUD', () => {
 
         // validate sorting
         const projects = collection?.items || []
-        let lastUpdatedAt: Optional<string> = undefined
+        let lastUpdatedAt: Optional<Date> = undefined
         for (const project of projects) {
           const date = project.updatedAt
           if (!lastUpdatedAt) {

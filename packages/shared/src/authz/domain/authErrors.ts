@@ -181,6 +181,21 @@ export const VersionNotFoundError = defineAuthError({
   message: 'Version not found'
 })
 
+export const AutomateNotEnabledError = defineAuthError({
+  code: 'AutomateNotEnabled',
+  message: 'Automate is not enabled on this server'
+})
+
+export const AutomateFunctionNotFoundError = defineAuthError({
+  code: 'AutomateFunctionNotFound',
+  message: 'Function not found'
+})
+
+export const AutomateFunctionNotCreatorError = defineAuthError({
+  code: 'AutomateFunctionNotCreator',
+  message: 'You are not the function creator and cannot make changes to it.'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (

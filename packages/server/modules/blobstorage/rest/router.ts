@@ -6,7 +6,7 @@ import {
   streamReadPermissionsPipelineFactory
 } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { isArray } from 'lodash'
+import { isArray } from 'lodash-es'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import {
   getAllStreamBlobIdsFactory,
@@ -31,6 +31,8 @@ import { processNewFileStreamFactory } from '@/modules/blobstorage/services/stre
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import contentDisposition from 'content-disposition'
+import { allowCrossOriginResourceAccessMiddelware } from '@/modules/shared/middleware/security'
+import cors from 'cors'
 
 export const blobStorageRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -105,6 +107,8 @@ export const blobStorageRouterFactory = (): Router => {
 
   app.get(
     '/api/stream/:streamId/blob/:blobId',
+    cors(),
+    allowCrossOriginResourceAccessMiddelware(),
     async (req, res, next) => {
       await authMiddlewareCreator([
         ...streamReadPermissionsPipelineFactory({

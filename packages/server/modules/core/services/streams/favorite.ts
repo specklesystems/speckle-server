@@ -10,7 +10,7 @@ import {
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import { clamp } from 'lodash'
+import { clamp } from 'lodash-es'
 
 /**
  * Get user favorited streams & metadata

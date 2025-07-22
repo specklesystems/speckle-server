@@ -9,7 +9,7 @@ import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelpe
 import {
   UsersRetrievalDocument,
   UsersRetrievalInput
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import {
   ExecuteOperationOptions,
   testApolloServer,

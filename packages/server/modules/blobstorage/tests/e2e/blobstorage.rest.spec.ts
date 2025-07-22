@@ -42,6 +42,7 @@ import { BasicTestUser } from '@/test/authHelper'
 import cryptoRandomString from 'crypto-random-string'
 import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { fileURLToPath } from 'url'
 
 const getServerInfo = getServerInfoFactory({ db })
 
@@ -134,8 +135,8 @@ describe('Blobs integration @blobstorage', () => {
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
-      .attach('blob1', require.resolve('@/readme.md'))
-      .attach('blob2', require.resolve('@/package.json'))
+      .attach('blob1', fileURLToPath(import.meta.resolve('@/readme.md')))
+      .attach('blob2', fileURLToPath(import.meta.resolve('@/package.json')))
     expect(response.status).to.equal(201)
     expect(response.body.uploadResults).to.exist
     const uploadResults = response.body.uploadResults

@@ -336,20 +336,23 @@ export class SpeckleGeometryConverter extends GeometryConverter {
    */
   protected TextToGeometryData(node: NodeData): GeometryData | null {
     const conversionFactor = getConversionFactor(node.raw.units)
-    /** TEMPORARY UNTIL PROPER IMPLEMENTATION FOR TEXT V3 */
     const plane = node.raw.plane || {
       origin: node.raw.origin,
       xdir: new Vector3(1, 0, 0),
       ydir: new Vector3(0, 1, 0),
       normal: new Vector3(0, 0, 1)
     }
+    const billboard = node.raw.screenOriented || false
     const position = new Vector3(plane.origin.x, plane.origin.y, plane.origin.z)
     const scale = new Matrix4().makeScale(
       conversionFactor,
       conversionFactor,
       conversionFactor
     )
-    const mat = new Matrix4().makeBasis(plane.xdir, plane.ydir, plane.normal)
+    /** We ignore rotation if screen oriented */
+    const mat = billboard
+      ? new Matrix4()
+      : new Matrix4().makeBasis(plane.xdir, plane.ydir, plane.normal)
     mat.setPosition(position)
     mat.premultiply(scale)
     return {

@@ -15,13 +15,13 @@ describe('scheduleBackgroundJobFactory', () => {
   }
 
   interface TestJobPayload extends BackgroundJobPayload {
-    jobType: 'test-job'
+    jobType: 'fileImport'
     payloadVersion: 1
     testData: string
   }
 
   const mockJobPayload: TestJobPayload = {
-    jobType: 'test-job',
+    jobType: 'fileImport',
     payloadVersion: 1,
     testData: 'test-data-value'
   }

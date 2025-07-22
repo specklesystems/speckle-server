@@ -34,7 +34,7 @@ import {
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
-export = {
+export default {
   Query: {},
   Stream: {
     async branches(parent, args) {

@@ -10,9 +10,9 @@ import {
   deleteStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
-  legacyGetStreamsFactory,
   getStreamCollaboratorsFactory,
-  getStreamRolesFactory
+  getStreamRolesFactory,
+  getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -121,7 +121,7 @@ import {
   removeNullOrUndefinedKeys,
   throwUncoveredError
 } from '@speckle/shared'
-import { chunk, omit } from 'lodash'
+import { chunk, omit } from 'lodash-es'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
@@ -425,7 +425,7 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
-export = FF_WORKSPACES_MODULE_ENABLED
+export default FF_WORKSPACES_MODULE_ENABLED
   ? ({
       Query: {
         workspace: async (_parent, args, ctx) => {
@@ -775,7 +775,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               deleteProject: deleteStreamFactory({ db }),
               deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
               queryAllProjects: queryAllProjectsFactory({
-                getStreams: legacyGetStreamsFactory({ db })
+                getExplicitProjects: getExplicitProjects({ db })
               }),
               deleteSsoProvider: deleteSsoProviderFactory({ db }),
               emitWorkspaceEvent: getEventBus().emit

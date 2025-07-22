@@ -1,5 +1,6 @@
 import { Merge } from 'type-fest'
-import { VError, Options, Info } from 'verror'
+import type { Options, Info } from 'verror'
+import VError from 'verror'
 
 export type ExtendedOptions<I extends Info = Info> = Merge<
   Options,

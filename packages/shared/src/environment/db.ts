@@ -7,7 +7,7 @@ import { isUndefined, get } from '#lodash'
 // cause of knex's ESM/CJS interop issues
 const knex = get(Knex, 'knex') || get(Knex, 'default')
 
-const regionConfigSchema = z.object({
+export const regionConfigSchema = z.object({
   postgres: z.object({
     connectionUri: z
       .string()
@@ -29,7 +29,16 @@ const regionConfigSchema = z.object({
     publicTlsCertificate: z
       .string()
       .describe('Public TLS ("CA") certificate for the Postgres server')
+      .optional(),
+    skipInitialization: z
+      .boolean()
       .optional()
+      .describe(
+        'Skip database initialization (migration run & replication setup). Only used in tests.'
+      )
+      .refine((val) => val !== true || process.env.NODE_ENV === 'test', {
+        message: 'skipInitialization can only be set when NODE_ENV is "test"'
+      })
   }),
   blobStorage: z.object({
     endpoint: z

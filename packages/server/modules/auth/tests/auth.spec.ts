@@ -62,7 +62,7 @@ import { RateLimiterMemory } from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
 import type { Application } from 'express'
 import { passportAuthenticationCallbackFactory } from '@/modules/auth/services/passportService'
-import { testLogger as logger } from '@/observability/logging'
+import { extendLoggerComponent, logger as baseLogger } from '@/observability/logging'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
@@ -188,6 +188,7 @@ const createUser = createUserFactory({
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })
+const logger = extendLoggerComponent(baseLogger, 'auth-tests')
 
 const expect = chai.expect
 

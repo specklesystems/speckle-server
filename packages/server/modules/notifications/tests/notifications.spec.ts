@@ -1,7 +1,5 @@
-import { mockRequireModule } from '@/test/mockHelper'
 import {
   MentionedInCommentData,
-  MentionedInCommentMessage,
   NotificationType
 } from '@/modules/notifications/helpers/types'
 import { publishNotification } from '@/modules/notifications/services/publication'
@@ -10,7 +8,6 @@ import {
   NotificationsStateManager,
   purgeNotifications
 } from '@/test/notificationsHelper'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { expect } from 'chai'
 import {
   InvalidNotificationError,
@@ -18,10 +15,8 @@ import {
   UnhandledNotificationError
 } from '@/modules/notifications/errors'
 import { NotificationJobResultsStatus } from '@/modules/notifications/services/queue'
-
-const mentionsHandlerMock = mockRequireModule<
-  typeof import('@/modules/notifications/services/handlers/mentionedInComment')
->(['@/modules/notifications/services/handlers/mentionedInComment'])
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { NotificationsEvents } from '@/modules/notifications/domain/events'
 
 describe('Notifications', () => {
   let notificationsState: NotificationsStateManager
@@ -36,8 +31,7 @@ describe('Notifications', () => {
   })
 
   afterEach(() => {
-    mentionsHandlerMock.resetMockedFunctions()
-    mentionsHandlerMock.disable()
+    notificationsState.reset()
   })
 
   it('can be emitted and routed to proper handler on consumption', async () => {
@@ -49,13 +43,6 @@ describe('Notifications', () => {
       streamId: 'ddd'
     }
 
-    let enqueuedMessage: Optional<MentionedInCommentMessage>
-
-    mentionsHandlerMock.enable()
-    mentionsHandlerMock.mockFunction('default', async (msg) => {
-      enqueuedMessage = msg
-    })
-
     // Enqueue notification
     const msgId = await publishNotification(NotificationType.MentionedInComment, {
       targetUserId,
@@ -65,6 +52,7 @@ describe('Notifications', () => {
     // Wait for ack
     await notificationsState.waitForMsgAck(msgId)
 
+    const enqueuedMessage = notificationsState.collectedMessages().at(-1)!
     expect(enqueuedMessage).to.be.ok
     expect(enqueuedMessage?.targetUserId).to.eq(targetUserId)
     expect(enqueuedMessage?.type).to.eq(NotificationType.MentionedInComment)
@@ -118,8 +106,7 @@ describe('Notifications', () => {
         streamId: 'ddd'
       }
 
-      mentionsHandlerMock.enable()
-      mentionsHandlerMock.mockFunction('default', async () => {
+      getEventBus().listenOnce(NotificationsEvents.Received, () => {
         throw error
       })
 

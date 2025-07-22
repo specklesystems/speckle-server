@@ -5,7 +5,7 @@ import {
   CreateVersionInput,
   MarkProjectVersionReceivedDocument,
   MarkReceivedVersionInput
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
@@ -16,8 +16,7 @@ import {
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { omit } from 'lodash'
-import { before, describe } from 'mocha'
+import { omit } from 'lodash-es'
 
 describe('Versions', () => {
   const me: BasicTestUser = {

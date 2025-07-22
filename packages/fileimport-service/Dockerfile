@@ -12,7 +12,7 @@ WORKDIR /speckle-server
 
 # configure tini
 ARG TINI_VERSION=v0.19.0
-ARG SPECKLE_IFC_VERSION=0.2.0
+ARG SPECKLE_IFC_VERSION=0.2.2
 
 # hadolint ignore=DL3008
 RUN apt-get update -y \

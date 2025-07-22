@@ -9,7 +9,7 @@ import {
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { MaybeAsync } from '@speckle/shared'
 import { Knex } from 'knex'
-import { isBoolean } from 'lodash'
+import { isBoolean } from 'lodash-es'
 import { Logger } from 'pino'
 
 /**

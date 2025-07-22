@@ -15,14 +15,14 @@ import {
   WorkspaceNotFoundError
 } from '@/modules/workspaces/errors/workspace'
 import { GetProject, UpdateProject } from '@/modules/core/domain/projects/operations'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import {
   GetStreamCollaborators,
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
-import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
+import { WorkspaceProjectCreateInput } from '@/modules/core/graph/generated/graphql'
 import {
   getDb,
   getValidDefaultProjectRegionKey

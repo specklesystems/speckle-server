@@ -7,13 +7,12 @@ import {
   CreateModelInput,
   CreateProjectModelDocument,
   FindProjectModelByNameDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { omit } from 'lodash'
-import { before, describe } from 'mocha'
+import { omit } from 'lodash-es'
 
 describe('Models', () => {
   const me: BasicTestUser = {

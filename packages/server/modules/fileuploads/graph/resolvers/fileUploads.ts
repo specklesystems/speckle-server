@@ -247,7 +247,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   }
 }
 
-export = {
+export default {
   Stream: {
     async fileUploads(parent) {
       const projectDb = await getProjectDbClient({ projectId: parent.id })

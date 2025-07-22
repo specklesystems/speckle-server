@@ -23,7 +23,7 @@ import {
 } from '@/modules/core/domain/objects/operations'
 import { SpeckleObject } from '@/modules/core/domain/objects/types'
 import { SetOptional } from 'type-fest'
-import { get, set, toNumber } from 'lodash'
+import { get, set, toNumber } from 'lodash-es'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
 const tables = {

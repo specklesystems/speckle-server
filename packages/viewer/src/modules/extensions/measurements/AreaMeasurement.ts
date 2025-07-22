@@ -1,17 +1,21 @@
 import {
+  AlwaysStencilFunc,
   Box3,
   BufferAttribute,
   BufferGeometry,
   Camera,
   DoubleSide,
   DynamicDrawUsage,
+  KeepStencilOp,
   Material,
   Mesh,
+  NotEqualStencilFunc,
   OrthographicCamera,
   PerspectiveCamera,
   Plane,
   Quaternion,
   Raycaster,
+  ReplaceStencilOp,
   Vector2,
   Vector3,
   type Intersection
@@ -72,8 +76,16 @@ export class AreaMeasurement extends Measurement {
     super()
 
     this.type = 'AreaMeasurement'
-    /** We create the initial gizmo */
+    /** We create the initial gizmo which will always display the area value text label*/
     const gizmo = new MeasurementPointGizmo()
+    /** The gizmo's TextLabel will write `1` to the stencil buffer */
+    gizmo.text.backgroundMaterial.stencilWrite = true
+    gizmo.text.backgroundMaterial.depthWrite = false
+    gizmo.text.backgroundMaterial.depthTest = false
+    gizmo.text.backgroundMaterial.stencilFunc = AlwaysStencilFunc
+    gizmo.text.backgroundMaterial.stencilRef = 1
+    gizmo.text.backgroundMaterial.stencilZPass = ReplaceStencilOp
+
     gizmo.enable(false, true, true, false)
     this.pointGizmos.push(gizmo)
     this.add(this.pointGizmos[0])
@@ -136,6 +148,7 @@ export class AreaMeasurement extends Measurement {
 
     /** Add a new gizmo */
     const gizmo = new MeasurementPointGizmo()
+
     gizmo.enable(false, true, true, false)
     this.pointGizmos.push(gizmo)
     this.add(gizmo)
@@ -310,8 +323,16 @@ export class AreaMeasurement extends Measurement {
         toneMapped: false
       })
       material.color.convertSRGBToLinear()
-      this.fillPolygon = new Mesh(new BufferGeometry(), material)
+      /** The transparent area plane will only draw were the stencil buffer is **NOT** `1`, effectively not overdrawing the text label */
+      material.depthWrite = false
+      material.depthTest = false
+      material.stencilWrite = true
+      material.stencilFunc = NotEqualStencilFunc
+      material.stencilRef = 1
+      material.stencilZPass = KeepStencilOp
 
+      this.fillPolygon = new Mesh(new BufferGeometry(), material)
+      this.fillPolygon.renderOrder = 100
       this.fillPolygon.frustumCulled = false
       this.fillPolygon.layers.set(ObjectLayers.MEASUREMENTS)
       this.add(this.fillPolygon)

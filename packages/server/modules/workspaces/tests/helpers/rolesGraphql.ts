@@ -1,5 +1,5 @@
 import { basicWorkspaceFragment } from '@/modules/workspaces/tests/helpers/graphql'
-import { ProjectImplicitRoleCheckFragment } from '@/test/graphql/generated/graphql'
+import { ProjectImplicitRoleCheckFragment } from '@/modules/core/graph/generated/graphql'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import { gql } from 'graphql-tag'
 

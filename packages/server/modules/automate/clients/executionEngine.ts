@@ -30,7 +30,7 @@ import {
 } from '@speckle/shared'
 import { randomUUID } from 'crypto'
 import { automateLogger, type Logger } from '@/observability/logging'
-import { has, isObjectLike, isEmpty } from 'lodash'
+import { has, isObjectLike, isEmpty } from 'lodash-es'
 import { getRequestLogger } from '@/observability/utils/requestContext'
 
 export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
@@ -394,6 +394,21 @@ export const updateFunction = async (params: {
     method: 'PATCH',
     body: formattedBody,
     retry: false
+  })
+}
+
+export const regenerateFunctionToken = async (params: {
+  functionId: string
+  authCode: AuthCodePayload
+}): Promise<{ token: string }> => {
+  const { functionId, authCode } = params
+  const url = getApiUrl(`/api/v2/functions/${functionId}/tokens/regenerate`)
+  return await invokeJsonRequest<{ token: string }>({
+    url,
+    method: 'POST',
+    body: {
+      speckleServerAuthenticationPayload: addOrigin(authCode)
+    }
   })
 }
 

@@ -8,7 +8,7 @@ import {
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
-import { groupBy, mapValues } from 'lodash'
+import { groupBy, mapValues } from 'lodash-es'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Knex } from 'knex'
 import {

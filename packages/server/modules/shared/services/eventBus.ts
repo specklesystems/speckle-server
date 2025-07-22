@@ -57,6 +57,14 @@ import {
   accSyncItemEventsNamespace,
   AccSyncItemEventsPayloads
 } from '@/modules/acc/domain/events'
+import {
+  emailsEventNamespace,
+  EmailsEventsPayloads
+} from '@/modules/emails/domain/events'
+import {
+  notificationsEventNamespace,
+  NotificationsEventsPayloads
+} from '@/modules/notifications/domain/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -88,6 +96,8 @@ type EventsByNamespace = {
   [automationRunEventsNamespace]: AutomationRunEventsPayloads
   [multiregionEventNamespace]: MultiregionEventsPayloads
   [fileuploadEventNamespace]: FileuploadEventsPayloads
+  [emailsEventNamespace]: EmailsEventsPayloads
+  [notificationsEventNamespace]: NotificationsEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>

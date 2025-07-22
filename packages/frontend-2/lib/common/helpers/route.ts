@@ -20,10 +20,7 @@ export const connectorsRoute = '/connectors'
 export const tutorialsRoute = '/tutorials'
 export const docsPageUrl = 'https://docs.speckle.systems/'
 export const forumPageUrl = 'https://speckle.community/'
-export const defaultZapierWebhookUrl =
-  'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://docs.speckle.systems/workspaces/billing'
-export const bookDemoRoute = '/book-a-demo'
 export const onboardingRoute = '/onboarding'
 
 export const settingsUserRoutes = {
@@ -64,6 +61,10 @@ export const settingsWorkspaceRoutes = {
   projects: {
     name: 'settings-workspaces-slug-projects',
     route: (slug?: string) => `/settings/workspaces/${slug}/projects`
+  },
+  automation: {
+    name: 'settings-workspaces-slug-automation',
+    route: (slug?: string) => `/settings/workspaces/${slug}/automation`
   },
   security: {
     name: 'settings-workspaces-slug-security',
@@ -116,6 +117,9 @@ export const projectSettingsRoute = (projectId: string) =>
 
 export const projectWebhooksRoute = (projectId: string) =>
   `/projects/${projectId}/settings/webhooks`
+
+export const projectTokensRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/tokens`
 
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`

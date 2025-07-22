@@ -8,7 +8,7 @@ import type { GenReqId } from 'pino-http'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { ensureError, type Optional } from '@speckle/shared'
 import { getRequestParameters, getRequestPath } from '@/modules/core/helpers/server'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 
 export const REQUEST_ID_HEADER = 'x-request-id'
 

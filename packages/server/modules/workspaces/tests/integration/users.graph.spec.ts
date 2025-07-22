@@ -19,7 +19,7 @@ import {
   GetProjectInvitableCollaboratorsDocument,
   SetUserActiveWorkspaceDocument,
   UserActiveResourcesDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'

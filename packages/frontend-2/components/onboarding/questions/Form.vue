@@ -28,17 +28,10 @@
 import { useForm } from 'vee-validate'
 import type { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
-import { homeRoute, bookDemoRoute } from '~/lib/common/helpers/route'
-import { useBreakpoints } from '@vueuse/core'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { homeRoute } from '~/lib/common/helpers/route'
 
 const isOnboardingForced = useIsOnboardingForced()
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smaller('sm')
-
 const { setUserOnboardingComplete, setMixpanelSegments } = useProcessOnboarding()
-
 const { handleSubmit, meta, isSubmitting, values } = useForm({
   initialValues: {
     role: undefined as OnboardingRole | undefined,
@@ -57,11 +50,11 @@ const onSubmit = handleSubmit(async () => {
     source: values.source
   })
 
-  navigateTo(!isMobile.value && isWorkspacesEnabled.value ? bookDemoRoute : homeRoute)
+  navigateTo(homeRoute)
 })
 
 const onSkip = () => {
   setUserOnboardingComplete()
-  navigateTo(!isMobile.value && isWorkspacesEnabled.value ? bookDemoRoute : homeRoute)
+  navigateTo(homeRoute)
 }
 </script>

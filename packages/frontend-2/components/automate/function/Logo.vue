@@ -8,7 +8,7 @@
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { cleanFunctionLogo } from '~/lib/automate/helpers/functions'
 
-type Size = 'base' | 'xs'
+type Size = 'base' | 'md' | 'xs'
 
 const props = withDefaults(
   defineProps<{
@@ -29,6 +29,9 @@ const classes = computed(() => {
   switch (props.size) {
     case 'xs':
       classParts.push('h-4 w-4')
+      break
+    case 'md':
+      classParts.push('h-8 w-8')
       break
     case 'base':
     default:

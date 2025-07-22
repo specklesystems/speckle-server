@@ -1,6 +1,6 @@
 import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { AvailableRoles } from '@speckle/shared'
-import { isUndefined } from 'lodash'
+import { isUndefined } from 'lodash-es'
 
 /**
  * Order roles by weight in descending order (meaning - highest permission roles come first)

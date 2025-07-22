@@ -29,14 +29,9 @@ import { getUsersFactory } from '@/modules/core/repositories/users'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { authorizeResolver } from '@/modules/shared'
-import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
-import {
-  filteredSubscribe,
-  ProjectSubscriptions
-} from '@/modules/shared/utils/subscriptions'
 import cryptoRandomString from 'crypto-random-string'
 import { GraphQLError } from 'graphql/error'
 import { Knex } from 'knex'
@@ -101,7 +96,7 @@ const resolvers: Resolvers = {
     }
   },
   Mutation: {
-    accSyncItemMutations: () => ({} as unknown as any)
+    accSyncItemMutations: () => ({})
   },
   AccSyncItemMutations: {
     async create(parent, args, ctx) {
@@ -268,39 +263,39 @@ const resolvers: Resolvers = {
 
       return true
     }
-  },
-  // TODO ACC: not working yet
-  Subscription: {
-    projectAccSyncItemsUpdated: {
-      subscribe: filteredSubscribe(
-        ProjectSubscriptions.ProjectAccSyncItemUpdated,
-        async (payload, args, ctx) => {
-          const { id: projectId, itemIds } = args
-
-          if (payload.projectId !== projectId) return false
-
-          throwIfResourceAccessNotAllowed({
-            resourceAccessRules: ctx.resourceAccessRules,
-            resourceId: projectId,
-            resourceType: TokenResourceIdentifierType.Project
-          })
-
-          const canReadProject = await ctx.authPolicies.project.canRead({
-            userId: ctx.userId,
-            projectId
-          })
-          throwIfAuthNotOk(canReadProject)
-
-          const accSyncItem = payload.projectAccSyncItemsUpdated.accSyncItem
-
-          return (
-            accSyncItem?.projectId === projectId &&
-            (!itemIds || itemIds.includes(accSyncItem.accFileLineageId))
-          )
-        }
-      )
-    }
   }
+  // TODO ACC: not working yet
+  // Subscription: {
+  //   projectAccSyncItemsUpdated: {
+  //     subscribe: filteredSubscribe(
+  //       ProjectSubscriptions.ProjectAccSyncItemUpdated,
+  //       async (payload, args, ctx) => {
+  //         const { id: projectId, itemIds } = args
+
+  //         if (payload.projectId !== projectId) return false
+
+  //         throwIfResourceAccessNotAllowed({
+  //           resourceAccessRules: ctx.resourceAccessRules,
+  //           resourceId: projectId,
+  //           resourceType: TokenResourceIdentifierType.Project
+  //         })
+
+  //         const canReadProject = await ctx.authPolicies.project.canRead({
+  //           userId: ctx.userId,
+  //           projectId
+  //         })
+  //         throwIfAuthNotOk(canReadProject)
+
+  //         const accSyncItem = payload.projectAccSyncItemsUpdated.accSyncItem
+
+  //         return (
+  //           accSyncItem?.projectId === projectId &&
+  //           (!itemIds || itemIds.includes(accSyncItem.accFileLineageId))
+  //         )
+  //       }
+  //     )
+  //   }
+  // }
 }
 
 export default resolvers

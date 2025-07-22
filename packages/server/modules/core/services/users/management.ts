@@ -36,7 +36,7 @@ import {
   Roles,
   ServerRoles
 } from '@speckle/shared'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
 import {

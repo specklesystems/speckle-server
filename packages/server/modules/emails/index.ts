@@ -36,7 +36,7 @@ async function sendEmail({
   return SendingService.sendEmail({ from, to, subject, text, html })
 }
 
-export = {
+export default {
   ...emailsModule,
   sendEmail
 }

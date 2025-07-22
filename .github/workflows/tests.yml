@@ -9,6 +9,10 @@ on:
       DOCKERHUB_USERNAME:
         required: true
         type: string
+      CONTINUE_ON_ERROR:
+        required: false
+        default: false
+        type: boolean
     secrets:
       LICENSE_TOKEN:
         required: true
@@ -29,6 +33,7 @@ jobs:
   lint-and-prettier:
     name: Lint and prettier
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -51,6 +56,7 @@ jobs:
   pre-commit:
     name: Precommit check
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: speckle/pre-commit-runner:latest
     steps:
@@ -69,7 +75,7 @@ jobs:
   test-frontend-2:
     name: Frontend
     runs-on: blacksmith
-    if: false # disabled as there is nothing to run
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -80,10 +86,14 @@ jobs:
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/frontend-2'
 
   test-viewer:
     name: Viewer
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -94,9 +104,15 @@ jobs:
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
+      - name: Lint viewer
+        run: yarn lint:ci
+        working-directory: 'packages/viewer'
       - name: Run tests
         run: yarn test
         working-directory: 'packages/viewer'
+      - name: Lint viewer-sandbox
+        run: yarn lint:ci
+        working-directory: 'packages/viewer-sandbox'
       - name: Build viewer-sandbox
         run: yarn build
         working-directory: 'packages/viewer-sandbox'
@@ -106,6 +122,7 @@ jobs:
       CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     name: UI components chromatic
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -125,6 +142,7 @@ jobs:
   test-shared:
     name: Shared
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -133,6 +151,9 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Lint
+        run: yarn lint:ci
+        working-directory: 'packages/shared'
       - name: Run tests (all FFs)
         run: ENABLE_ALL_FFS=1 yarn test:ci
         working-directory: 'packages/shared'
@@ -158,6 +179,7 @@ jobs:
   test-objectsender:
     name: Object Sender
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -168,7 +190,7 @@ jobs:
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
         run: yarn build:public
-      - name: Test object sender
+      - name: Lint everything
         run: yarn test:ci
         working-directory: 'packages/objectsender'
       - uses: codecov/codecov-action@v5
@@ -181,6 +203,7 @@ jobs:
   test-ui-components:
     name: UI Components
     runs-on: blacksmith
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -191,6 +214,15 @@ jobs:
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable # we need PLAYWRIGHT
       - name: Build public packages
         run: yarn build:public
+      - name: Lint tailwind theme
+        run: yarn lint:ci
+        working-directory: 'packages/tailwind-theme'
+      - name: Lint ui components
+        run: yarn lint:ci
+        working-directory: 'packages/ui-components'
+      - name: Lint component nuxt package
+        run: yarn lint:ci
+        working-directory: 'packages/ui-components-nuxt'
       - name: Test via Storybook
         run: yarn storybook:test:ci
         working-directory: 'packages/ui-components'
@@ -198,7 +230,21 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith
-    if: false # disabled as there is nothing to run
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    container:
+      image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
+    services:
+      redis:
+        image: redis:7.2.4
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    env:
+      REDIS_URL: redis://redis:6379
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -206,9 +252,29 @@ jobs:
           node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 yarn --immutable
       - name: Build public packages
         run: yarn build:public
+      - run: dbus-daemon --system &> /dev/null
+      - run: cp .env.test-example .env.test
+        working-directory: 'packages/preview-service'
+      - run: yarn build:frontend
+        working-directory: 'packages/preview-service'
+      - run: yarn link:frontend
+        working-directory: 'packages/preview-service'
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/preview-service'
+      - name: Run tests
+        run: yarn test:ci
+        working-directory: 'packages/preview-service'
+      - name: 'Upload Artifact on failure'
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-service-logs-on-failure
+          path: /tmp/**/*.log
+          retention-days: 5
 
   docker-build-postgres-container:
     runs-on: blacksmith
@@ -230,6 +296,7 @@ jobs:
     name: Server
     needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
         image: redis:7.2.4
@@ -297,6 +364,9 @@ jobs:
         run: yarn build:public
       - run: cp .env.test-example .env.test
         working-directory: 'packages/server'
+      - name: 'Lint'
+        run: yarn lint:ci
+        working-directory: 'packages/server'
       - name: 'Run test'
         run: yarn test:report
         working-directory: 'packages/server'
@@ -321,6 +391,7 @@ jobs:
     name: Server no ff
     needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
         image: redis:7.2.4
@@ -404,6 +475,7 @@ jobs:
   test-server-multiregion:
     name: Server multiregion
     needs: [docker-build-postgres-container]
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     if: false # disabled
     runs-on: blacksmith
     services:

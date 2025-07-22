@@ -27,7 +27,6 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import cryptoRandomString from 'crypto-random-string'
 import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
-import { TokenResourceIdentifierType } from '@/test/graphql/generated/graphql'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -35,6 +34,7 @@ import {
   storeTokenResourceAccessDefinitionsFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 
 export default function accRestApi(app: Express) {
   const sessionMiddleware = sessionMiddlewareFactory()

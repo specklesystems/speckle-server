@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
-    "@speckle/viewer": "2.24.2"
+    "@speckle/viewer": "2.25.7"
   },
   "devDependencies": {
     "eslint": "^9.4.0",

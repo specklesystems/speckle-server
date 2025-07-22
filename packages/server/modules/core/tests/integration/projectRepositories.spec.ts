@@ -13,7 +13,7 @@ import { createTestUser } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { assign } from 'lodash'
+import { assign } from 'lodash-es'
 
 const createTestProject = (overrides?: Partial<Project>): Project => {
   const defaults: Project = {

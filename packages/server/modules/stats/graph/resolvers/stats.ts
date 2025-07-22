@@ -19,7 +19,7 @@ const dummyHistory = [
   { '11': 0 }
 ]
 
-export = {
+export default {
   Query: {
     /**
      * @deprecated('Use admin.serverStatistics')

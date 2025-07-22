@@ -1,5 +1,5 @@
 import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 
 /**
  * Fields from the entity that users can see about other users

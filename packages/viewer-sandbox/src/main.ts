@@ -84,6 +84,29 @@ const createViewer = async (containerName: string, _stream: string) => {
     }
   })
 
+  // const label = new TextLabel({
+  //   text: 'y: 1.00m',
+  //   textColor: new Color(0xffffff),
+  //   fontSize: 1,
+  //   billboard: 'world',
+  //   anchorX: 'left',
+  //   anchorY: 'middle',
+  //   backgroundColor: new Color(0xfb0404),
+  //   backgroundMargins: new Vector2(0.75, 0.1),
+  //   backgroundCornerRadius: 0.5,
+  //   objectLayer: ObjectLayers.OVERLAY
+  // }) as unknown as Mesh
+  // label.rotateX(Math.PI * 0.5)
+  // label.position.set(2.5, 0, 0)
+  // viewer.getRenderer().scene.add(label)
+
+  // const raycaster = new Raycaster()
+  // raycaster.layers.set(ObjectLayers.OVERLAY)
+  // viewer.getRenderer().input.on(InputEvent.Click, (arg) => {
+  //   raycaster.setFromCamera(arg, viewer.getRenderer().renderingCamera)
+  //   console.log(raycaster.intersectObject(label))
+  // })
+
   viewer.on(ViewerEvent.UnloadComplete, () => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
@@ -119,8 +142,8 @@ const getStream = () => {
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
 
-    //bad commit! not all items uploaded to server
-    //'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
+    // bad commit! not all items uploaded to server
+    // 'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
 
     // 'Super' heavy revit shit
     //'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
@@ -191,7 +214,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/85bc4f61c6/commits/8575fe2978'
     // Alex cubes
     // 'https://latest.speckle.systems/streams/4658eb53b9/commits/d8ec9cccf7'
-    // Alex more cubes
+    // // Alex more cubes
     // 'https://latest.speckle.systems/streams/4658eb53b9/commits/31a8d5ff2b'
     // Tekla
     // 'https://latest.speckle.systems/streams/caec6d6676/commits/588c731104'
@@ -558,9 +581,24 @@ const getStream = () => {
     // Small (microscopic) building
     // 'https://app.speckle.systems/projects/26e4c4aab5/models/7d5ff72f5b'
 
+    // Text grid
+    // 'https://app.speckle.systems/projects/dcab71b3de/models/5ff99aa4e1'
+    // Text grid with a LOT of text
+    // 'https://app.speckle.systems/projects/dcab71b3de/models/5f02df011d'
+
     // Instances with far away transform
     // 'https://app.speckle.systems/projects/9d0ce16ba8/models/3c079572ea'
 
+    // Far away text screen
+    // 'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04@c6622b474a'
+    // Far away text, world
+    // 'https://latest.speckle.systems/projects/d46f6cdc80/models/3a67170b04@fac9360249'
+
+    // Text test stream
+    // 'https://latest.speckle.systems/projects/109e01c8c0/models/1eee4edbe6'
+
+    // Single billboaded text
+    // 'https://latest.speckle.systems/projects/f28ad5b38a/models/b63ebcd807'
     // Duplicate display values
     // 'https://app.speckle.systems/projects/1466fe31c6/models/2eaf0f0571'
   )

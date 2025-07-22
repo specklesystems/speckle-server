@@ -24,7 +24,7 @@ import { Knex } from 'knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { testLogger } from '@/observability/logging'
-import { put } from 'axios'
+import axios from 'axios'
 import { expectToThrow } from '@/test/assertionHelper'
 import {
   AlreadyRegisteredBlobError,
@@ -177,7 +177,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
           urlExpiryDurationSeconds: expiryDuration
         })
 
-        const response = await put(url, cryptoRandomString({ length: fileSize }))
+        const response = await axios.put(url, cryptoRandomString({ length: fileSize }))
         expect(
           response.status,
           JSON.stringify({ statusText: response.statusText, body: response.data })
@@ -238,7 +238,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
           urlExpiryDurationSeconds: expiryDuration
         })
 
-        const response = await put(url, 'test content') // more than 1 byte long
+        const response = await axios.put(url, 'test content') // more than 1 byte long
         expect(
           response.status,
           JSON.stringify({ statusText: response.statusText, body: response.data })
@@ -281,7 +281,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
           urlExpiryDurationSeconds: expiryDuration
         })
 
-        const response = await put(url, cryptoRandomString({ length: fileSize }))
+        const response = await axios.put(url, cryptoRandomString({ length: fileSize }))
         expect(
           response.status,
           JSON.stringify({ statusText: response.statusText, body: response.data })
@@ -330,7 +330,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
           urlExpiryDurationSeconds: expiryDuration
         })
 
-        const response = await put(url, cryptoRandomString({ length: fileSize }))
+        const response = await axios.put(url, cryptoRandomString({ length: fileSize }))
         expect(
           response.status,
           JSON.stringify({ statusText: response.statusText, body: response.data })
@@ -379,7 +379,7 @@ const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
           urlExpiryDurationSeconds: expiryDuration
         })
 
-        const response = await put(url, cryptoRandomString({ length: fileSize }))
+        const response = await axios.put(url, cryptoRandomString({ length: fileSize }))
         expect(
           response.status,
           JSON.stringify({ statusText: response.statusText, body: response.data })

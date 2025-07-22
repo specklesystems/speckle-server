@@ -97,3 +97,4 @@ export type ProjectAutomationsUpdatedMessageGraphQLReturn = Merge<
 export type UserAutomateInfoGraphQLReturn = { userId: string }
 
 export type AutomationPermissionChecksGraphQLReturn = { projectId: string }
+export type AutomateFunctionPermissionChecksGraphQLReturn = { functionId: string }

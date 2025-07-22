@@ -7,4 +7,4 @@ const backgroundJobsModule: SpeckleModule = {
   }
 }
 
-export = backgroundJobsModule
+export default backgroundJobsModule

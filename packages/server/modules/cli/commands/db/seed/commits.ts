@@ -7,7 +7,7 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import dayjs from 'dayjs'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 import { CommandModule } from 'yargs'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 

@@ -26,8 +26,7 @@ import { truncateTables } from '@/test/hooks'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { times } from 'lodash'
-import { describe } from 'mocha'
+import { times } from 'lodash-es'
 
 enum BatchActionType {
   Move,

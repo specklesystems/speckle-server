@@ -3,6 +3,7 @@ import {
   ExecutionEngineFunctionTemplateId,
   createFunction,
   getFunctionFactory,
+  regenerateFunctionToken,
   updateFunction as updateExecEngineFunction
 } from '@/modules/automate/clients/executionEngine'
 import {
@@ -46,7 +47,7 @@ import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import type { Logger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
-import { noop } from 'lodash'
+import { noop } from 'lodash-es'
 import { UnknownFunctionTemplateError } from '@/modules/automate/errors/functions'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
@@ -107,7 +108,7 @@ export const convertFunctionToGraphQLReturn = (
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
     functionCreator,
-    workspaceIds: fn.workspaceIds
+    workspaceIds: fn.workspaceIds ?? []
   }
 
   return ret
@@ -185,7 +186,8 @@ export const createFunctionFromTemplateFactory =
       functionCreator: {
         speckleServerOrigin: getServerOrigin(),
         speckleUserId: user.id
-      }
+      },
+      workspaceIds: []
     }
 
     return {
@@ -289,4 +291,31 @@ export const handleAutomateFunctionCreatorAuthCallbackFactory =
     req.session?.destroy?.(noop)
 
     return res.redirect(redirectUrl.toString())
+  }
+
+export const regenerateFunctionTokenFactory =
+  (deps: {
+    regenerateFunctionToken: typeof regenerateFunctionToken
+    getFunction: ReturnType<typeof getFunctionFactory>
+    createStoredAuthCode: CreateStoredAuthCode
+  }) =>
+  async (params: { functionId: string; userId: string }) => {
+    const { functionId, userId } = params
+
+    const existingFunction = await deps.getFunction({ functionId })
+    if (!existingFunction) {
+      throw new AutomateFunctionUpdateError('Function not found')
+    }
+
+    const authCode = await deps.createStoredAuthCode({
+      userId,
+      action: AuthCodePayloadAction.GenerateFunctionToken
+    })
+
+    const res = await deps.regenerateFunctionToken({
+      functionId,
+      authCode
+    })
+
+    return res.token
   }

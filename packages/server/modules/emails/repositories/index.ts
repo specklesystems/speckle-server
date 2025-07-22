@@ -90,7 +90,13 @@ export const deleteOldAndInsertNewVerificationFactory =
   }
 
 export const getPendingVerificationByEmailFactory =
-  ({ db }: { db: Knex }): GetPendingVerificationByEmail =>
+  ({
+    db,
+    verificationTimeoutMinutes
+  }: {
+    db: Knex
+    verificationTimeoutMinutes: number
+  }): GetPendingVerificationByEmail =>
   async ({ email }) => {
     return await tables
       .emailVerifications(db)
@@ -98,7 +104,7 @@ export const getPendingVerificationByEmailFactory =
       .where(
         EmailVerifications.col.createdAt,
         '>',
-        dayjs().subtract(5, 'minutes').toISOString()
+        dayjs().subtract(verificationTimeoutMinutes, 'minutes').toISOString()
       )
       .orderBy(EmailVerifications.col.createdAt, 'desc')
       .first()

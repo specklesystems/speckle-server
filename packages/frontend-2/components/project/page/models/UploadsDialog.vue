@@ -1,10 +1,12 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <LayoutDialog v-model:open="open" title="Model upload history" :buttons="buttons">
     <LayoutTable
       :columns="[
         { id: 'job', header: 'Job #', classes: 'col-span-1' },
-        { id: 'file', header: 'File', classes: 'col-span-5' },
-        { id: 'status', header: 'Status', classes: 'col-span-1' },
+        { id: 'file', header: 'File', classes: 'col-span-4' },
+        { id: 'status', header: 'Status', classes: 'col-span-2' },
         { id: 'size', header: 'Size', classes: 'col-span-2' },
         { id: 'date', header: 'Date', classes: 'col-span-2' },
         {
@@ -37,12 +39,25 @@
         <span class="text-foreground-2">{{ prettyFileSize(item.fileSize) }}</span>
       </template>
       <template #status="{ item }">
-        <CommonBadge
-          v-tippy="getStatusOptions(item).tooltip"
-          :color-classes="getStatusOptions(item).colorClasses"
+        <div
+          v-keyboard-clickable
+          :class="[
+            'flex items-center gap-2',
+            getStatusOptions(item).isErrorStatus ? 'group hover:cursor-pointer' : ''
+          ]"
+          @click="onErrorBadgeClick(item)"
         >
-          {{ getStatusOptions(item).label }}
-        </CommonBadge>
+          <CommonBadge
+            v-tippy="getStatusOptions(item).tooltip"
+            :color-classes="getStatusOptions(item).colorClasses"
+          >
+            {{ getStatusOptions(item).label }}
+          </CommonBadge>
+          <CommonCopyButton
+            v-if="getStatusOptions(item).isErrorStatus"
+            class="group-hover:text-foreground"
+          />
+        </div>
       </template>
       <template #date="{ item }">
         <span
@@ -130,6 +145,7 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
+const { copy } = useClipboard()
 
 const { getErrorMessage, convertUploadToFailedJob } = useFailedFileImportJobUtils()
 const {
@@ -200,10 +216,14 @@ const getStatusOptions = (item: ProjectPageModelsUploadsDialog_FileUploadFragmen
       ],
     tooltip:
       item.convertedStatus === FileUploadConvertedStatus.Error
-        ? getErrorMessage(convertUploadToFailedJob(item)) +
-          ` Error: ${item.convertedMessage}`
+        ? {
+            content:
+              getErrorMessage(convertUploadToFailedJob(item)) +
+              ` Error: ${item.convertedMessage}`
+          }
         : undefined,
-    colorClasses
+    colorClasses,
+    isErrorStatus: item.convertedStatus === FileUploadConvertedStatus.Error
   }
 }
 
@@ -213,5 +233,15 @@ const onDownload = async (item: ProjectPageModelsUploadsDialog_FileUploadFragmen
     fileName: item.fileName,
     projectId: props.projectId
   })
+}
+
+const onErrorBadgeClick = async (
+  item: ProjectPageModelsUploadsDialog_FileUploadFragment
+) => {
+  if (getStatusOptions(item).isErrorStatus) {
+    await copy(getStatusOptions(item).tooltip?.content || '', {
+      successMessage: 'Error message copied'
+    })
+  }
 }
 </script>

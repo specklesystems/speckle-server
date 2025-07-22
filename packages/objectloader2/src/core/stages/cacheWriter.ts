@@ -10,19 +10,22 @@ export class CacheWriter implements Queue<Item> {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: Database
   #defermentManager: DefermentManager
+  #requestItem: (id: string) => void
   #logger: CustomLogger
   #options: CacheOptions
   #disposed = false
 
   constructor(
     database: Database,
+    options: CacheOptions,
     defermentManager: DefermentManager,
-    options: CacheOptions
+    requestItem: (id: string) => void
   ) {
     this.#database = database
-    this.#defermentManager = defermentManager
     this.#options = options
     this.#logger = options.logger || ((): void => {})
+    this.#defermentManager = defermentManager
+    this.#requestItem = requestItem
   }
 
   add(item: Item): void {
@@ -35,8 +38,8 @@ export class CacheWriter implements Queue<Item> {
         }
       })
     }
-    this.#defermentManager.undefer(item)
     this.#writeQueue.add(item.baseId, item)
+    this.#defermentManager.undefer(item, this.#requestItem)
   }
 
   async writeAll(items: Item[]): Promise<void> {
@@ -46,9 +49,8 @@ export class CacheWriter implements Queue<Item> {
   }
 
   async disposeAsync(): Promise<void> {
-    this.#writeQueue?.dispose()
     this.#disposed = true
-    return Promise.resolve()
+    await this.#writeQueue?.disposeAsync()
   }
 
   get isDisposed(): boolean {

@@ -6,7 +6,7 @@ const TABLE_NAME = 'blob_storage'
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable(TABLE_NAME, (table) => {
     table.string('id', 10)
     // dont cascade on delete, cause it doesn't clean the object storage for the objs
@@ -26,6 +26,8 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists(TABLE_NAME)
 }
+
+export { up, down }

@@ -13,12 +13,12 @@ import {
 } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 import {
   buildTestWorkspacePlan,
   buildTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
-import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 
 describe('workspacePlan services @gatekeeper', () => {
   describe('updateWorkspacePlanFactory creates a function, that', () => {

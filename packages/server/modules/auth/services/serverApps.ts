@@ -91,7 +91,7 @@ export const createAppTokenFromAccessCodeFactory =
 
     if (code.challenge !== challenge)
       throw new AppTokenCreateError(
-        'Code challenge mismatch. Ensure the same challenge is used for authentication and token exchange.`'
+        'Code challenge mismatch. Ensure the same challenge is used for authentication and token exchange.'
       )
 
     const app = await deps.getApp({ id: appId })

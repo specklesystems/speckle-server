@@ -55,7 +55,8 @@ import {
   WorkspaceProjectsUpdatedMessage,
   SubscriptionWorkspaceUpdatedArgs,
   WorkspaceUpdatedMessage,
-  ProjectAccSyncItemsUpdatedMessage
+  ProjectAccSyncItemsUpdatedMessage,
+  SubscriptionProjectAccSyncItemsUpdatedArgs
 } from '@/modules/core/graph/generated/graphql'
 import { Merge, OverrideProperties } from 'type-fest'
 import {
@@ -73,7 +74,6 @@ import { CommentRecord } from '@/modules/comments/helpers/types'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
-import { SubscriptionProjectAccSyncItemsUpdatedArgs } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { AccSyncItemGraphQLReturn } from '@/modules/acc/graphTypes'
 
 /**

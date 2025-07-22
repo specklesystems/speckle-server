@@ -1,7 +1,7 @@
 import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Scopes, TIME, TIME_MS } from '@speckle/shared'
-import { TokenResourceIdentifierType } from '@/test/graphql/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { PushJobToFileImporter } from '@/modules/fileuploads/domain/operations'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
 import {

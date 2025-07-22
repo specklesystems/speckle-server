@@ -42,7 +42,7 @@ import {
   decodeIsoDateCursor,
   encodeIsoDateCursor
 } from '@/modules/shared/helpers/dbHelper'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 import { LogicError } from '@/modules/shared/errors'
 
 /*

@@ -85,7 +85,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })

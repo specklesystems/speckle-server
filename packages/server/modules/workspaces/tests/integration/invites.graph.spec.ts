@@ -12,9 +12,7 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { describe } from 'mocha'
-import { EmailSendingServiceMock } from '@/test/mocks/global'
-import { WorkspaceRole } from '@/test/graphql/generated/graphql'
+import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
 import { expect } from 'chai'
 import {
   captureCreatedInvite,
@@ -24,7 +22,7 @@ import { Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { itEach } from '@/test/assertionHelper'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { db } from '@/db/knex'
 import {
@@ -72,6 +70,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
 
 enum InviteByTarget {
   Email = 'email',
@@ -137,6 +136,8 @@ describe('Workspaces Invites GQL', () => {
 
   const workspaceDomain = 'example.org'
 
+  let emailListener: TestEmailListener
+
   before(async () => {
     const ctx = await beforeEachContext()
     app = ctx.app
@@ -164,10 +165,15 @@ describe('Workspaces Invites GQL', () => {
       [otherGuysWorkspace, me, Roles.Workspace.Member],
       [myFirstWorkspace, myWorkspaceFriend, Roles.Workspace.Member]
     ])
+    emailListener = await createEmailListener()
+  })
+
+  after(async () => {
+    await emailListener.destroy()
   })
 
   afterEach(() => {
-    EmailSendingServiceMock.resetMockedFunctions()
+    emailListener.reset()
   })
 
   describe('when authenticated', () => {
@@ -317,11 +323,7 @@ describe('Workspaces Invites GQL', () => {
       it('batch inviting works', async () => {
         const count = 10
 
-        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-          'sendEmail',
-          async () => true,
-          { times: count }
-        )
+        const { getSends } = emailListener.listen({ times: count })
 
         const res = await gqlHelpers.batchCreateInvites({
           workspaceId: myFirstWorkspace.id,
@@ -337,14 +339,11 @@ describe('Workspaces Invites GQL', () => {
           res.data?.workspaceMutations?.invites?.batchCreate?.invitedTeam
         ).to.have.length(count)
 
-        expect(sendEmailInvocations.args).to.have.lengthOf(count)
+        expect(getSends()).to.have.lengthOf(count)
       })
 
       it('works when inviting user by id', async () => {
-        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-          'sendEmail',
-          async () => true
-        )
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const randomUnregisteredEmail = `${createRandomPassword()}@example.org`
         await createUserEmailFactory({ db })({
@@ -377,8 +376,9 @@ describe('Workspaces Invites GQL', () => {
 
         expect(workspace.invitedTeam![0].user?.id).to.equal(otherGuy.id)
 
-        expect(sendEmailInvocations.args).to.have.lengthOf(1)
-        const emailParams = sendEmailInvocations.args[0][0]
+        const emailSends = getSends()
+        expect(emailSends).to.have.lengthOf(1)
+        const emailParams = emailSends[0]
         expect(emailParams).to.be.ok
         expect(emailParams.to).to.eq(otherGuy.email)
         expect(emailParams.subject).to.be.ok
@@ -387,10 +387,7 @@ describe('Workspaces Invites GQL', () => {
         await validateInviteExistanceFromEmail(emailParams)
       })
       it('works when inviting user by email', async () => {
-        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-          'sendEmail',
-          async () => true
-        )
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const randomUnregisteredEmail = `${createRandomPassword()}@example.org`
 
@@ -413,8 +410,9 @@ describe('Workspaces Invites GQL', () => {
         expect(workspace.invitedTeam![0].user).to.be.not.ok
         expect(workspace.invitedTeam![0].title).to.equal(randomUnregisteredEmail)
 
-        expect(sendEmailInvocations.args).to.have.lengthOf(1)
-        const emailParams = sendEmailInvocations.args[0][0]
+        const emailSends = getSends()
+        expect(emailSends).to.have.lengthOf(1)
+        const emailParams = emailSends[0]
         expect(emailParams).to.be.ok
         expect(emailParams.to).to.eq(randomUnregisteredEmail)
         expect(emailParams.subject).to.be.ok
@@ -664,10 +662,7 @@ describe('Workspaces Invites GQL', () => {
       })
 
       it('can invite to workspace project as admin, even if target doesnt belong to workspace', async () => {
-        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-          'sendEmail',
-          async () => true
-        )
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const res = await gqlHelpers.createWorkspaceProjectInvite({
           projectId: myProjectInviteTargetWorkspaceProject.id,
@@ -683,8 +678,9 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
 
         // no auto-accept, since target is not a workspace member
-        expect(sendEmailInvocations.args).to.have.lengthOf(1)
-        const emailParams = sendEmailInvocations.args[0][0]
+        const emailSends = getSends()
+        expect(emailSends).to.have.lengthOf(1)
+        const emailParams = emailSends[0]
         await validateInviteExistanceFromEmail(emailParams)
 
         await gqlHelpers.validateResourceAccess({
@@ -718,10 +714,7 @@ describe('Workspaces Invites GQL', () => {
       })
 
       it('invite auto-accepted if both users already belong to the workspace', async () => {
-        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-          'sendEmail',
-          async () => true
-        )
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const res = await gqlHelpers.createWorkspaceProjectInvite({
           projectId: myProjectInviteTargetWorkspaceProject.id,
@@ -737,7 +730,7 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
 
         // No invite email should be sent out, due to auto-accept
-        expect(sendEmailInvocations.length()).to.eq(0)
+        expect(getSends().length).to.eq(0)
 
         // Should have project role
         await gqlHelpers.validateResourceAccess({
@@ -1291,10 +1284,7 @@ describe('Workspaces Invites GQL', () => {
       })
 
       it('can resend the invite email', async () => {
-        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-          'sendEmail',
-          async () => true
-        )
+        const { getSends } = emailListener.listen({ times: 2 })
 
         const res = await gqlHelpers.resendWorkspaceInvite({
           input: {
@@ -1306,8 +1296,9 @@ describe('Workspaces Invites GQL', () => {
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspaceMutations.invites.resend).to.be.ok
 
-        expect(sendEmailInvocations.args).to.have.lengthOf(1)
-        const emailParams = sendEmailInvocations.args[0][0]
+        const emailSends = getSends()
+        expect(emailSends).to.have.lengthOf(1)
+        const emailParams = emailSends[0]
         expect(emailParams).to.be.ok
         expect(emailParams.to).to.eq(otherGuy.email)
       })

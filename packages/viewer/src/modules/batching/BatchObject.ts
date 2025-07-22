@@ -23,8 +23,8 @@ export class BatchObject {
   public transform: Matrix4
   public transformInv: Matrix4
 
-  public tasVertIndexStart!: number
-  public tasVertIndexEnd!: number
+  public tasVertIndexStart: number
+  public tasVertIndexEnd: number
 
   public quaternion: Quaternion = new Quaternion()
   public eulerValue: Euler = new Euler()

@@ -1,6 +1,6 @@
 import { beforeEachContext } from '@/test/hooks'
 import { NotFoundError, BadRequestError } from '@/modules/shared/errors'
-import { range } from 'lodash'
+import { range } from 'lodash-es'
 import { fakeIdGenerator, createBlobs } from '@/modules/blobstorage/tests/helpers'
 import {
   uploadFileStreamFactory,
