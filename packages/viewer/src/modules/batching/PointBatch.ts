@@ -201,8 +201,8 @@ export class PointBatch extends PrimitiveBatch {
       }
       index.set(
         (needsInt32Indices
-          ? new Int32Array(geometry.attributes.POSITION.length / 3)
-          : new Int16Array(geometry.attributes.POSITION.length / 3)
+          ? new Uint32Array(geometry.attributes.POSITION.length / 3)
+          : new Uint16Array(geometry.attributes.POSITION.length / 3)
         ).map((_value, index) => index + indexOffset),
         indexOffset
       )

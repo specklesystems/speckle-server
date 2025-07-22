@@ -80,11 +80,7 @@ export class Geometry {
 
       Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
 
-      const instanceBufferLow = new InstancedInterleavedBuffer(
-        new Float32Array(position_low),
-        6,
-        1
-      ) // xyz, xyz
+      const instanceBufferLow = new InstancedInterleavedBuffer(position_low, 6, 1) // xyz, xyz
       geometry.setAttribute(
         'instanceStartLow',
         new InterleavedBufferAttribute(instanceBufferLow, 3, 0)

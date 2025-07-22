@@ -590,14 +590,7 @@ export class InstancedMeshBatch implements Batch {
     if (!indices || !positions) {
       throw new Error(`Cannot build batch ${this.id}. Undefined indices or positions`)
     }
-    this.geometry = this.makeInstancedMeshGeometry(
-      positions.length >= 65535 || indices.length >= 65535
-        ? new Uint32Array(indices)
-        : new Uint16Array(indices),
-      positions,
-      normals,
-      colors
-    )
+    this.geometry = this.makeInstancedMeshGeometry(indices, positions, normals, colors)
 
     this.mesh = new SpeckleInstancedMesh(this.geometry)
     this.mesh.setBatchObjects(batchObjects)

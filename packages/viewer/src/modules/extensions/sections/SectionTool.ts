@@ -20,7 +20,9 @@ import {
   DynamicDrawUsage,
   Color,
   MeshBasicMaterial,
-  PlaneGeometry
+  PlaneGeometry,
+  Float32BufferAttribute,
+  Uint16BufferAttribute
 } from 'three'
 import { intersectObjectWithRay, TransformControls } from '../TransformControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
@@ -57,7 +59,7 @@ const _matrix4 = new Matrix4()
 const _quaternion = new Quaternion()
 const _vector3 = new Vector3()
 
-const unitCube = [
+const unitCube = new Float32Array([
   -1 * 0.5,
   -1 * 0.5,
   -1 * 0.5,
@@ -89,12 +91,12 @@ const unitCube = [
   -1 * 0.5,
   1 * 0.5,
   1 * 0.5
-]
+])
 
-const unitCubeIndices: number[] = [
+const unitCubeIndices: Uint16Array = new Uint16Array([
   0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7, 7, 2,
   6, 4, 5, 0, 0, 5, 1
-]
+])
 
 const unitCubeEdges: number[] = [
   // Bottom Face
@@ -811,11 +813,11 @@ export class SectionTool extends Extension {
   /** Creates the geometry for the visible outline of the section tool */
   protected createOutline() {
     /** We start from the unit cube's edges */
-    const buffer = new Float32Array(unitCubeEdges.slice())
+    const buffer = unitCubeEdges.slice() as unknown as Float32Array
 
     /** Create the line segments geometry */
     const lineGeometry = new LineSegmentsGeometry()
-    lineGeometry.setPositions(new Float32Array(buffer))
+    lineGeometry.setPositions(buffer)
     ;(
       lineGeometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data.setUsage(DynamicDrawUsage)
@@ -894,8 +896,8 @@ export class SectionTool extends Extension {
     const indexes = unitCubeIndices.slice()
 
     const g = new BufferGeometry()
-    g.setAttribute('position', new BufferAttribute(new Float32Array(vertices), 3))
-    g.setIndex(indexes)
+    g.setAttribute('position', new Float32BufferAttribute(vertices, 3))
+    g.setIndex(new Uint16BufferAttribute(indexes, 1))
     g.computeBoundingBox()
     g.computeVertexNormals()
     return g
