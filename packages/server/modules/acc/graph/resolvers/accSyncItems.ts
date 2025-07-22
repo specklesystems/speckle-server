@@ -1,5 +1,6 @@
 import { AccSyncItem } from '@/modules/acc/domain/types'
 import { createAccSyncItemAndNotifyFactory } from '@/modules/acc/repositories/accSyncItems'
+import { storeAutomationFactory } from '@/modules/automate/repositories/automations'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { LimitedUserGraphQLReturn } from '@/modules/core/helpers/graphTypes'
@@ -12,6 +13,7 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { createTestAutomation } from '@/test/speckle-helpers/automationHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { GraphQLError } from 'graphql/error'
 import { Knex } from 'knex'
@@ -87,10 +89,10 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const projectDB = await getProjectDbClient({ projectId: input.projectId })
+      const projectDb = await getProjectDbClient({ projectId: input.projectId })
 
       const existing = await tables
-        .accSyncItems(projectDB)
+        .accSyncItems(projectDb)
         .where({ accFileLineageId: input.accFileLineageId })
         .first()
 
@@ -109,12 +111,26 @@ const resolvers: Resolvers = {
       })
 
       // TODO ACC: Create automation at this step
+      const automationId = cryptoRandomString({ length: 9 })
+
+      await storeAutomationFactory({ db: projectDb })({
+        id: automationId,
+        name: "converter",
+        userId: ctx.userId!,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        enabled: true,
+        projectId: input.projectId,
+        executionEngineAutomationId: null,
+        isTestAutomation: true,
+        isDeleted: false
+      })
 
       const newItem = await createSyncItem({
         id: cryptoRandomString({ length: 10 }),
         status: 'PENDING',
         authorId: ctx.userId as string,
-        automationId: '',
+        automationId,
         ...input
       })
 
