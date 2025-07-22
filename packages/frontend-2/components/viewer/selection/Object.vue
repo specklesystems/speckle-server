@@ -58,12 +58,29 @@
           >
             <div class="flex gap-1 items-center w-full">
               <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
-              <span
-                class="truncate"
-                :class="kvp.value === null ? '' : 'group-hover:max-w-[calc(100%-1rem)]'"
-              >
-                {{ kvp.value === null ? 'null' : kvp.value }}
-              </span>
+              <template v-if="isUrlString(kvp.value)">
+                <a
+                  :href="kvp.value as string"
+                  target="_blank"
+                  rel="noopener"
+                  class="truncate border-b border-outline-3 hover:border-outline-5"
+                  :class="
+                    kvp.value === null ? '' : 'group-hover:max-w-[calc(100%-1rem)]'
+                  "
+                >
+                  {{ kvp.value }}
+                </a>
+              </template>
+              <template v-else>
+                <span
+                  class="truncate"
+                  :class="
+                    kvp.value === null ? '' : 'group-hover:max-w-[calc(100%-1rem)]'
+                  "
+                >
+                  {{ kvp.value === null ? 'null' : kvp.value }}
+                </span>
+              </template>
               <span v-if="kvp.units" class="truncate opacity-70">
                 {{ kvp.units }}
               </span>
@@ -138,6 +155,8 @@ import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
+import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
+
 const {
   ui: {
     diff: { result, enabled: diffEnabled }
@@ -227,6 +246,8 @@ const headerClasses = computed(() => {
 const headerAndSubheader = computed(() => {
   return getHeaderAndSubheaderForSpeckleObject(props.object)
 })
+
+const isUrlString = (v: unknown) => typeof v === 'string' && VALID_HTTP_URL.test(v)
 
 const isCopyable = (kvp: Record<string, unknown>) => {
   return kvp.value !== null && kvp.value !== undefined && typeof kvp.value !== 'object'

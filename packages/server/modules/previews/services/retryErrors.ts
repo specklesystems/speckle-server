@@ -1,5 +1,6 @@
 import type { Logger } from '@/observability/logging'
 import {
+  GetNumberOfJobsInRequestQueue,
   GetPaginatedObjectPreviewsInErrorState,
   GetPaginatedObjectPreviewsPage,
   GetPaginatedObjectPreviewsTotalCount,
@@ -12,6 +13,7 @@ import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
 import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import { getPreviewServiceMaxQueueBackpressure } from '@/modules/shared/helpers/envHelper'
 
 export const getPaginatedObjectPreviewInErrorStateFactory =
   (deps: {
@@ -47,6 +49,8 @@ export const retryFailedPreviewsFactory = (deps: {
   serverOrigin: string
   createAppToken: CreateAndStoreAppToken
   requestObjectPreview: RequestObjectPreview
+  getNumberOfJobsInQueue: GetNumberOfJobsInRequestQueue
+  region: string
 }) => {
   const {
     getPaginatedObjectPreviewsInErrorState,
@@ -54,7 +58,9 @@ export const retryFailedPreviewsFactory = (deps: {
     getStreamCollaborators,
     serverOrigin,
     createAppToken,
-    requestObjectPreview
+    requestObjectPreview,
+    getNumberOfJobsInQueue,
+    region
   } = deps
   return async (params: { logger: Logger }): Promise<boolean> => {
     const { logger } = params
@@ -64,7 +70,20 @@ export const retryFailedPreviewsFactory = (deps: {
     })
     if (items.length === 0) {
       //NOTE we rely on the items returned, as this accounts for the cursor position. More errored items might have been added since the last time we checked and changed the totalCount.
-      logger.info('No object previews in error state found.')
+      logger.info(
+        { region },
+        "No object previews in an error state were found within database region '{region}'"
+      )
+      return false
+    }
+
+    // do not retry if we have backpressure in the queue
+    const queueLength = await getNumberOfJobsInQueue()
+    if (queueLength > getPreviewServiceMaxQueueBackpressure()) {
+      logger.info(
+        { region, queueLength, totalErroredPreviewCount: totalCount },
+        "Backpressure detected in the preview request queue, as the queue length is already {queueLength} jobs. Found {totalErroredPreviewCount} object previews in an error state within database region '{region}', but are not retrying any on this iteration."
+      )
       return false
     }
 
@@ -77,9 +96,10 @@ export const retryFailedPreviewsFactory = (deps: {
         streamId, //legacy
         projectId: streamId,
         objectId,
-        attempts: objPreview.attempts
+        attempts: objPreview.attempts,
+        region
       },
-      'Found {totalErroredPreviewCount} object previews in error state. Attempting to retry one: {projectId}.{objectId}. Previous attempts: {attempts}'
+      "Found {totalErroredPreviewCount} object previews in an error state within database region '{region}'. Attempting to retry one: {projectId}.{objectId}. Previous attempts: {attempts}"
     )
 
     await updateObjectPreview({

@@ -1,0 +1,21 @@
+{
+  "reporter": ["lcov", "text-summary"],
+  "cache": false,
+  "all": true,
+  "exclude": [
+    "**/migrations/*.{ts,js}",
+    "**/modules/cli/**/*.{ts,js}",
+    "**/*.spec.{js,ts}",
+    "coverage/**",
+    "**/test{,s}/**",
+    "**/*.d.ts",
+    "test{,s}/**",
+    "test{,-*}.{ts,js}",
+    "**/*{.,-}test.{ts,js}",
+    "**/__tests__/**",
+    "**/{ava,babel,nyc}.config.{js,cjs,mjs}",
+    "**/jest.config.{js,cjs,mjs,ts}",
+    "**/{karma,rollup,webpack}.config.js",
+    "**/.{eslint,mocha}rc.{js,cjs}"
+  ]
+}

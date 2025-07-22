@@ -104,33 +104,36 @@ export const useGenerateErrorReference = () => {
   const serverReqId = useServerRequestId()
   const { copy } = useClipboard()
   const { userId } = useActiveUser()
+  const route = useRoute()
 
   const createErrorReference = (params?: CreateErrorReferenceParams) => {
     const date = params?.date || new Date()
 
-    let base = `Reference: #${reqId}`
-    if (serverReqId.value) base += ` | #${serverReqId.value}`
-    base += ` | ${date.toISOString()}`
-
-    if (import.meta.client) {
-      base += ` | URL: ${window.location.href}`
+    const newId = 'fe-error-' + nanoid()
+    const ref = {
+      ReqId: reqId,
+      SsrReqId: serverReqId.value,
+      Date: date.toISOString(),
+      URL: import.meta.client ? window.location.href : route.fullPath,
+      RefId: newId,
+      UserId: userId.value || 'anonymous'
     }
 
-    // New ID that will be unique to this copy of the reference and that will cause an error to be logged
-    // that we can then easily find by this ID
-    const newId = 'fe-error-' + nanoid()
-    base += ` | Ref ID: ${newId}`
-    base += ` | User ID: ${userId.value || 'anonymous'}`
+    const refString = `///// Speckle Support Reference /////\n${Object.entries(ref)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n')}\n/////////////////////////////////////`
 
     logger.error(
       {
         errorId: newId,
-        extraPayload: params?.extraPayload
+        extraPayload: params?.extraPayload,
+        errorReference: ref,
+        errorReferenceString: refString
       },
-      `Error reference logged: ${base}`
+      `Error reference logged`
     )
 
-    return base
+    return refString
   }
 
   const copyReference = async (params?: CreateErrorReferenceParams) => {

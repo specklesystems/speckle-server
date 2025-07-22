@@ -1227,6 +1227,14 @@ preview_service:
   ##
   postgresMaxConnections: 2
 
+  ## @param preview_service.maxQueueBackpressure The maximum number of items that can be queued in the Preview Service job queue before we stop retrying previously errored preview jobs. This is used to prevent the Preview Service from being overwhelmed with too many jobs.
+  ## If the queue exceeds this number, the Preview Service will stop retrying previously errored jobs until the queue size is below this number.
+  maxQueueBackpressure: 1
+
+  ## @param preview_service.retryPeriodMinutes The period, in minutes, between retries of previously errored jobs. Must be an integer between 1 and 60.
+  ##
+  retryPeriodMinutes: 1
+
   puppeteer:
     ## @param preview_service.puppeteer.userDataDirectory The path to the user data directory. If not set, defaults to '/tmp/puppeteer'. This is mounted in the deployment as a volume with read-write access.
     userDataDirectory: ''

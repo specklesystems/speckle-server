@@ -4,9 +4,12 @@ import {
   previewServiceShouldUsePrivateObjectsServerUrl
 } from '@/modules/shared/helpers/envHelper'
 import type { Queue } from 'bull'
-import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
+import {
+  getNumberOfJobsInQueueFactory,
+  requestObjectPreviewFactory
+} from '@/modules/previews/queues/previews'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
-import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import {
   getPaginatedObjectPreviewInErrorStateFactory,
   retryFailedPreviewsFactory
@@ -39,8 +42,9 @@ export const scheduleRetryFailedPreviews = async ({
 }) => {
   const previewResurrectionHandlers: ReturnType<typeof retryFailedPreviewsFactory>[] =
     []
-  const regionClients = await getRegisteredDbClients()
-  for (const projectDb of [db, ...regionClients]) {
+  const regionClients = await getAllRegisteredDbClients()
+  for (const config of regionClients) {
+    const projectDb = config.client
     previewResurrectionHandlers.push(
       retryFailedPreviewsFactory({
         getPaginatedObjectPreviewsInErrorState:
@@ -72,7 +76,11 @@ export const scheduleRetryFailedPreviews = async ({
               db
             }),
           storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
-        })
+        }),
+        getNumberOfJobsInQueue: getNumberOfJobsInQueueFactory({
+          queue: previewRequestQueue
+        }),
+        region: config.regionKey
       })
     )
   }

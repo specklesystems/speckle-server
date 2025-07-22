@@ -16,7 +16,7 @@ import {
   getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { db } from '@/db/knex'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 import { updateAllWorkspacesTackingPropertiesFactory } from '@/modules/workspaces/services/tracking'
@@ -42,7 +42,7 @@ describe('Tracking Workspaces', () => {
       getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
       getWorkspaceModelCount: getWorkspaceModelCountFactory({
         queryAllProjects: queryAllProjectsFactory({
-          getStreams: legacyGetStreamsFactory({ db })
+          getExplicitProjects: getExplicitProjects({ db })
         }),
         getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory(
           {

@@ -25,7 +25,11 @@ import {
 import { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
 import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
-import { storeBackgroundJobFactory } from '@/modules/backgroundjobs/repositories'
+import {
+  getBackgroundJobCountFactory,
+  storeBackgroundJobFactory
+} from '@/modules/backgroundjobs/repositories'
+import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -111,6 +115,11 @@ export const initializeQueueFactory =
       shutdown: async () => await queue.close(),
       scheduleJob: async (jobData: JobPayload): Promise<void> => {
         await queue.add(jobData, defaultJobOptions)
+      },
+      metrics: {
+        getPendingJobCount: () => queue.count(),
+        getWaitingJobCount: () => queue.getWaitingCount(),
+        getActiveJobCount: () => queue.getActiveCount()
       }
     }
     fileImportQueues.push(fileImportQueue)
@@ -136,6 +145,8 @@ export const initializePostgresQueue = async ({
       originServerUrl: getServerOrigin()
     })
   })
+  const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
+
   const fileImportQueue = {
     label,
     supportedFileTypes: supportedFileTypes.map(
@@ -146,6 +157,24 @@ export const initializePostgresQueue = async ({
       await scheduleBackgroundJob({
         jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
       })
+    },
+    metrics: {
+      getPendingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport
+        }),
+      getWaitingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport,
+          minAttempts: 1
+        }),
+      getActiveJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Processing,
+          jobType: BackgroundJobType.FileImport
+        })
     }
   }
   fileImportQueues.push(fileImportQueue)
