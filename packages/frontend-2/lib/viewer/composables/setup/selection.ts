@@ -29,7 +29,6 @@ function useSelectionStateSync() {
   const update = () => {
     const objs = selExt.getSelectedObjects() as SpeckleObject[]
     state.ui.selectedObjects.value = objs
-    state.ui.selectedObjectIds.value = objs.map((o) => o.id as string)
   }
 
   update()

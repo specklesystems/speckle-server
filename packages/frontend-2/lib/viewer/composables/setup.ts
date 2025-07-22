@@ -944,7 +944,6 @@ function setupInterfaceState(
    * same reactive reference without spawning duplicate refs or event
    * listeners.  Populated & kept in sync inside useSelectionUtilities().
    */
-  const selectedObjectIds = ref([] as string[])
   const selectedObjects = shallowRef<SpeckleObject[]>([])
   const hiddenObjectIds = ref([] as string[])
   const propertyFilter = ref(null as Nullable<PropertyInfo>)
@@ -1026,7 +1025,9 @@ function setupInterfaceState(
         },
         hasAnyFiltersApplied
       },
-      selectedObjectIds,
+      selectedObjectIds: computed(() =>
+        selectedObjects.value.map((obj) => obj.id as string)
+      ),
       selectedObjects,
       highlightedObjectIds,
       measurement: {
