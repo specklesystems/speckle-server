@@ -31,7 +31,21 @@ function useSelectionStateSync() {
     state.ui.selectedObjects.value = objs
   }
 
-  update()
+  onMounted(() => {
+    if (state.viewer.init.ref.value) {
+      update()
+    }
+  })
+
+  watch(
+    state.viewer.init.ref,
+    (isReady) => {
+      if (isReady) {
+        update()
+      }
+    },
+    { immediate: true }
+  )
 
   state.viewer.instance.on(ViewerEvent.ObjectClicked, update)
   state.viewer.instance.on(ViewerEvent.ObjectDoubleClicked, update)
