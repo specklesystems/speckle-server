@@ -8,10 +8,16 @@ export class DefermentManager {
   private logger: CustomLogger
   private disposed = false
   private cache: MemoryCache
+  private requestItem: (id: string) => void
 
-  constructor(cache: MemoryCache, logger: CustomLogger) {
+  constructor(
+    cache: MemoryCache,
+    logger: CustomLogger,
+    requestItem: (id: string) => void
+  ) {
     this.cache = cache
     this.logger = logger
+    this.requestItem = requestItem
   }
 
   defer(params: { id: string }): [Promise<Base>, boolean] {
@@ -29,7 +35,7 @@ export class DefermentManager {
     return [notYetFound.getPromise(), false]
   }
 
-  undefer(item: Item, requestItem: (id: string) => void): void {
+  undefer(item: Item): void {
     if (this.disposed) throw new Error('DefermentManager is disposed')
     const base = item.base
     if (!base) {
@@ -38,7 +44,7 @@ export class DefermentManager {
     }
     this.cache.add(item, (id) => {
       if (!this.outstanding.has(id)) {
-        requestItem(id)
+        this.requestItem(id)
       }
     })
 
