@@ -13,13 +13,8 @@ import {
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
-import type { ObserveResult } from '@/modules/fileuploads/observability/metrics'
 
-export const nextGenFileImporterRouterFactory = (params: {
-  queues: FileImportQueue[]
-  observeResult: ObserveResult | undefined
-}): Router => {
+export const nextGenFileImporterRouterFactory = (): Router => {
   const app = Router()
 
   app.post(
@@ -54,7 +49,6 @@ export const nextGenFileImporterRouterFactory = (params: {
         logger: logger.child({ fileUploadStatus: jobResult.status }),
         updateFileUpload: updateFileUploadFactory({ db: projectDb }),
         getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
-        observeResult: params.observeResult,
         eventEmit: getEventBus().emit
       })
 

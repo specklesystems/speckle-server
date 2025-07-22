@@ -48,7 +48,6 @@ import {
   initializeRhinoQueueFactory,
   initializeIfcQueueFactory,
   shutdownQueues,
-  fileImportQueues,
   initializePostgresQueue,
   initializeQueueFactory
 } from '@/modules/fileuploads/queues/fileimports'
@@ -155,6 +154,7 @@ export const init: SpeckleModule['init'] = async ({
           })
         ]
         if (FF_RHINO_FILE_IMPORTER_ENABLED) {
+          moduleLogger.info('🦏 Rhino File Importer is ENABLED')
           const connectionUri = getFileImporterQueuePostgresUrl()
           if (!connectionUri)
             throw new MisconfiguredEnvironmentError(
@@ -253,7 +253,7 @@ export const init: SpeckleModule['init'] = async ({
       })(parsedMessage)
     })
 
-    initializeEventListenersFactory({ db })()
+    initializeEventListenersFactory({ db, observeResult })()
     reportSubscriptionEventsFactory({
       publish,
       eventListen: getEventBus().listen,
@@ -268,12 +268,7 @@ export const init: SpeckleModule['init'] = async ({
 
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
     moduleLogger.info('📄 Next Gen File Importer is ENABLED')
-    app.use(
-      nextGenFileImporterRouterFactory({
-        queues: fileImportQueues,
-        observeResult: observeResult ?? undefined
-      })
-    )
+    app.use(nextGenFileImporterRouterFactory())
   }
 
   // the two routers can be used independently and can both be enabled

@@ -10,7 +10,8 @@ import {
   getStreamFileUploadsFactory,
   getStreamPendingModelsFactory,
   saveUploadFileFactory,
-  saveUploadFileFactoryV2
+  saveUploadFileFactoryV2,
+  updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
@@ -71,6 +72,11 @@ import {
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
+import {
+  FileImportResultPayload,
+  JobResultStatus
+} from '@speckle/shared/workers/fileimport'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
@@ -244,6 +250,61 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       streamId: uploadedFileData.projectId,
       branchName: uploadedFileData.modelName
     }
+  },
+
+  async completeFileImport(_parent, args, ctx) {
+    const { projectId, jobId, status, warnings, reason, result } = args.input
+    const userId = ctx.userId
+    if (!userId) {
+      throw new ForbiddenError('No userId provided')
+    }
+
+    if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
+      throw new ForbiddenError('File import next gen is not enabled')
+
+    let jobResult: FileImportResultPayload
+    if (status === JobResultStatus.Error) {
+      if (!reason) throw new BadRequestError('No error reason provided')
+
+      jobResult = {
+        status: JobResultStatus.Error,
+        reason,
+        result
+      }
+    } else {
+      if (!result.versionId) throw new BadRequestError('VersionId not provided')
+
+      jobResult = {
+        status: JobResultStatus.Success,
+        warnings,
+        result: {
+          ...result,
+          versionId: result.versionId
+        }
+      }
+    }
+
+    const logger = ctx.log.child({
+      projectId,
+      streamId: projectId, //legacy
+      userId,
+      jobId
+    })
+
+    const projectDb = await getProjectDbClient({ projectId })
+    const onFileImportResult = onFileImportResultFactory({
+      logger: logger.child({ fileUploadStatus: status }),
+      updateFileUpload: updateFileUploadFactory({ db: projectDb }),
+      getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+      eventEmit: getEventBus().emit
+    })
+
+    await onFileImportResult({
+      jobId,
+      jobResult
+    })
+
+    return true
   }
 }
 

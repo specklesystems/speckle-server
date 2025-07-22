@@ -912,6 +912,15 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String']['input'];
 };
 
+export type CompleteFileImportInput = {
+  jobId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+  result: FileImportResultInput;
+  status: JobResultStatus;
+  warnings?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
 /**
  * Can be used instead of a full item collection, when the implementation doesn't call for it yet. Because
  * of the structure, it can be swapped out to a full item collection in the future
@@ -1068,6 +1077,19 @@ export type EmbedTokenCreateInput = {
   resourceIdString: Scalars['String']['input'];
 };
 
+export type FileImportResultInput = {
+  /** Duration of the file download before parsing started in seconds */
+  downloadDurationSeconds: Scalars['Int']['input'];
+  /** Total processing time in seconds, since job was picked up until it completed */
+  durationSeconds: Scalars['Int']['input'];
+  /** Duration of the transformation in seconds */
+  parseDurationSeconds: Scalars['Int']['input'];
+  /** Parser used for import */
+  parser: Scalars['String']['input'];
+  /** Version asssociated if applicable */
+  versionId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName: Scalars['String']['output'];
@@ -1110,6 +1132,12 @@ export type FileUploadCollection = {
 export type FileUploadMutations = {
   __typename?: 'FileUploadMutations';
   /**
+   * Marks the file import flow as completed for that specific job
+   * recording the provided status, and emitting the needed subscriptions.
+   * Mostly for internal service usage.
+   */
+  completeFileImport?: Maybe<Scalars['Boolean']['output']>;
+  /**
    * Generate a pre-signed url to which a file can be uploaded.
    * After uploading the file, call mutation startFileImport to register the completed upload.
    */
@@ -1121,6 +1149,11 @@ export type FileUploadMutations = {
    * called to register the completed upload and create the blob metadata.
    */
   startFileImport: FileUpload;
+};
+
+
+export type FileUploadMutationsCompleteFileImportArgs = {
+  input: CompleteFileImportInput;
 };
 
 
@@ -1190,6 +1223,12 @@ export type InvitableCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export const JobResultStatus = {
+  Error: 'error',
+  Success: 'success'
+} as const;
+
+export type JobResultStatus = typeof JobResultStatus[keyof typeof JobResultStatus];
 export type JoinWorkspaceInput = {
   workspaceId: Scalars['ID']['input'];
 };
@@ -5499,6 +5538,7 @@ export type ResolversTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
+  CompleteFileImportInput: CompleteFileImportInput;
   CountOnlyCollection: ResolverTypeWrapper<CountOnlyCollection>;
   CreateAutomateFunctionInput: CreateAutomateFunctionInput;
   CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
@@ -5523,6 +5563,7 @@ export type ResolversTypes = {
   EmbedToken: ResolverTypeWrapper<EmbedTokenGraphQLReturn>;
   EmbedTokenCollection: ResolverTypeWrapper<Omit<EmbedTokenCollection, 'items'> & { items: Array<ResolversTypes['EmbedToken']> }>;
   EmbedTokenCreateInput: EmbedTokenCreateInput;
+  FileImportResultInput: FileImportResultInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   FileUploadCollection: ResolverTypeWrapper<Omit<FileUploadCollection, 'items'> & { items: Array<ResolversTypes['FileUpload']> }>;
   FileUploadMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -5537,6 +5578,7 @@ export type ResolversTypes = {
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   InvitableCollaboratorsFilter: InvitableCollaboratorsFilter;
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']['output']>;
+  JobResultStatus: JobResultStatus;
   JoinWorkspaceInput: JoinWorkspaceInput;
   LegacyCommentViewerData: ResolverTypeWrapper<LegacyCommentViewerData>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
@@ -5848,6 +5890,7 @@ export type ResolversParentTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
+  CompleteFileImportInput: CompleteFileImportInput;
   CountOnlyCollection: CountOnlyCollection;
   CreateAutomateFunctionInput: CreateAutomateFunctionInput;
   CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
@@ -5870,6 +5913,7 @@ export type ResolversParentTypes = {
   EmbedToken: EmbedTokenGraphQLReturn;
   EmbedTokenCollection: Omit<EmbedTokenCollection, 'items'> & { items: Array<ResolversParentTypes['EmbedToken']> };
   EmbedTokenCreateInput: EmbedTokenCreateInput;
+  FileImportResultInput: FileImportResultInput;
   FileUpload: FileUploadGraphQLReturn;
   FileUploadCollection: Omit<FileUploadCollection, 'items'> & { items: Array<ResolversParentTypes['FileUpload']> };
   FileUploadMutations: MutationsObjectGraphQLReturn;
@@ -6614,6 +6658,7 @@ export type FileUploadCollectionResolvers<ContextType = GraphQLContext, ParentTy
 };
 
 export type FileUploadMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUploadMutations'] = ResolversParentTypes['FileUploadMutations']> = {
+  completeFileImport?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<FileUploadMutationsCompleteFileImportArgs, 'input'>>;
   generateUploadUrl?: Resolver<ResolversTypes['GenerateFileUploadUrlOutput'], ParentType, ContextType, RequireFields<FileUploadMutationsGenerateUploadUrlArgs, 'input'>>;
   startFileImport?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType, RequireFields<FileUploadMutationsStartFileImportArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
