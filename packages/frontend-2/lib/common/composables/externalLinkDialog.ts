@@ -4,7 +4,6 @@ type ExternalLinkState = {
   _resolver?: (accepted: boolean) => void
 }
 
-// helper so useState is called lazily in a valid context
 const useSharedExternalLinkState = () =>
   useState<ExternalLinkState>('global_external_link', () => ({
     open: false,
