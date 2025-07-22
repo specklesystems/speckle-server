@@ -36,9 +36,12 @@ export class CacheReaderWorker implements Reader {
     this.#logger(`[ObjectLoader2] ${message}`)
   }
 
-  initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
+  initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>, requestedItems?: Set<string>): void {
     this.#foundQueue = foundQueue
     this.#notFoundQueue = notFoundQueue
+    if (requestedItems) {
+      this.#requestedItems = requestedItems
+    }
     this.initializeIndexedDbReader()
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.#processBatch()
