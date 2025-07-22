@@ -28,27 +28,3 @@ export type AccSessionData = {
 }
 
 // TODO ACC: might need to good to move into shared?
-export type AccSyncItem = {
-  id: string
-  projectId: string
-  modelId: string
-  accRegion: string
-  accHubId: string
-  accProjectId: string
-  accRootProjectFolderId: string
-  accFileLineageId: string
-  accFileName: string
-  accFileExtension: string
-  accWebhookId?: string
-  status: AccSyncItemStatus
-  authorId: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-export type AccSyncItemStatus =
-  | 'SYNC'
-  | 'SYNCING'
-  | 'PAUSED'
-  | 'FAILED'
-  | 'INITIALIZING'

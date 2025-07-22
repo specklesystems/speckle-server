@@ -1,8 +1,21 @@
-import { buildTableHelper } from "@/modules/core/dbSchema";
+import { buildTableHelper } from '@/modules/core/dbSchema'
 
-export const PendingAccSyncItems = buildTableHelper('acc_pending_sync_items', [
-  'syncItemId',
-  'fileUploadId',
-  'accFileUrn',
-  'createdAt'
+export const AccSyncItems = buildTableHelper('acc_sync_items', [
+  'id',
+  'projectId',
+  'modelId',
+  'automationId',
+  'authorId',
+  'accRegion',
+  'accHubId',
+  'accProjectId',
+  'accRootProjectFolderId',
+  'accFileName',
+  'accFileLineageId',
+  'accFileVersionIndex',
+  'accFileVersionUrn',
+  'accWebhookId',
+  'status',
+  'createdAt',
+  'updatedAt'
 ])

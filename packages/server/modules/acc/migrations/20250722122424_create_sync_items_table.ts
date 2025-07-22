@@ -5,8 +5,19 @@ const TABLE_NAME = 'acc_sync_items'
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable(TABLE_NAME, (table) => {
     table.string('id', 10).primary()
-    table.string('projectId').notNullable().references('id').inTable('streams')
+    table
+      .string('projectId')
+      .notNullable()
+      .references('id')
+      .inTable('streams')
+      .onDelete('cascade')
     table.string('modelId').notNullable()
+    table
+      .string('automationId')
+      .notNullable()
+      .references('id')
+      .inTable('automations')
+      .onDelete('cascade')
     table.string('accRegion').notNullable()
     table.string('accHubId').notNullable()
     table.string('accProjectId').notNullable()
@@ -14,12 +25,14 @@ export async function up(knex: Knex): Promise<void> {
     table.string('accFileName').notNullable()
     table.string('accFileExtension').notNullable()
     table.string('accFileLineageId').notNullable().unique()
+    table.integer('accFileVersionIndex').defaultTo(0)
+    table.integer('accFileVersionUrn')
     table.string('accWebhookId').nullable()
     table
-      .enu('status', ['SYNC', 'INITIALIZING', 'SYNCING', 'FAILED', 'PAUSED'])
+      .enum('status', ['PENDING', 'SYNCING', 'FAILED', 'PAUSED', 'SUCCEEDED'])
       .notNullable()
-      .defaultTo('SYNC')
-    table.string('authorId', 10).references('id').inTable('users')
+      .defaultTo('PENDING')
+    table.string('authorId', 10).references('id').inTable('users').onDelete('set null')
     table
       .timestamp('createdAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())

@@ -1,4 +1,4 @@
-import { AccSyncItem } from '@/modules/acc/helpers/types'
+import { AccSyncItem } from '@/modules/acc/domain/types'
 import { createAccSyncItemAndNotifyFactory } from '@/modules/acc/repositories/accSyncItems'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
@@ -108,10 +108,13 @@ const resolvers: Resolvers = {
         eventEmit: getEventBus().emit
       })
 
+      // TODO ACC: Create automation at this step
+
       const newItem = await createSyncItem({
         id: cryptoRandomString({ length: 10 }),
-        status: 'INITIALIZING',
+        status: 'PENDING',
         authorId: ctx.userId as string,
+        automationId: '',
         ...input
       })
 

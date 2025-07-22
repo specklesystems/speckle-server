@@ -70,9 +70,9 @@ export type AccSyncItemMutationsUpdateArgs = {
 
 export const AccSyncItemStatus = {
   Failed: 'FAILED',
-  Initializing: 'INITIALIZING',
   Paused: 'PAUSED',
-  Sync: 'SYNC',
+  Pending: 'PENDING',
+  Succeeded: 'SUCCEEDED',
   Syncing: 'SYNCING'
 } as const;
 

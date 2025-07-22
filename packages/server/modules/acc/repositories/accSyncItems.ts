@@ -1,18 +1,18 @@
-import { PendingAccSyncItems } from '@/modules/acc/dbSchema'
+import { AccSyncItems } from '@/modules/acc/dbSchema'
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
-import { DeletePendingAccSyncItem, QueryAllPendingAccSyncItems, UpsertPendingAccSyncItem } from '@/modules/acc/domain/operations'
-import { PendingAccSyncItem } from '@/modules/acc/domain/types'
-import { AccSyncItem } from '@/modules/acc/helpers/types'
+import {
+  DeleteAccSyncItem,
+  QueryAllAccSyncItems,
+  UpsertAccSyncItem
+} from '@/modules/acc/domain/operations'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
-// import { registerAccWebhook } from '@/modules/acc/webhook'
+import { AccSyncItem } from '@/modules/acc/domain/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Knex } from 'knex'
-
-const ACC_SYNC_ITEMS = 'acc_sync_items'
+import { omit } from 'lodash'
 
 const tables = {
-  accSyncItems: (db: Knex) => db<AccSyncItem>(ACC_SYNC_ITEMS),
-  pendingAccSyncItems: (db: Knex) => db<PendingAccSyncItem>(PendingAccSyncItems.name)
+  accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
 }
 
 export type CreateAccSyncItemAndNotify = (
@@ -59,24 +59,27 @@ export const createAccSyncItemAndNotifyFactory = (deps: {
   }
 }
 
-export const upsertPendingAccSyncItemFactory = (deps: { db: Knex }): UpsertPendingAccSyncItem =>
+export const upsertAccSyncItemFactory =
+  (deps: { db: Knex }): UpsertAccSyncItem =>
   async (item) => {
-    await tables.pendingAccSyncItems(deps.db).insert(item)
-      .onConflict(PendingAccSyncItems.col.syncItemId)
+    await tables
+      .accSyncItems(deps.db)
+      .insert(item)
+      .onConflict(AccSyncItems.col.id)
       .merge([
-        PendingAccSyncItems.col.accFileUrn,
-        PendingAccSyncItems.col.fileUploadId,
-        PendingAccSyncItems.col.createdAt
-      ] as (keyof PendingAccSyncItem)[])
+        AccSyncItems.col.status,
+        AccSyncItems.col.accFileVersionIndex,
+        AccSyncItems.col.accFileVersionUrn
+      ] as (keyof AccSyncItem)[])
   }
 
-export const deletePendingAccSyncItemFactory = (deps: { db: Knex }): DeletePendingAccSyncItem =>
-  async ({ id }) => {
-    await tables.pendingAccSyncItems(deps.db).where({ syncItemId: id }).delete()
-  }
-
-export const queryAllPendingAccSyncItemsFactory = (deps: { db: Knex }): QueryAllPendingAccSyncItems =>
+export const queryAllPendingAccSyncItemsFactory =
+  (deps: { db: Knex }): QueryAllAccSyncItems =>
   () => {
-    const selectItems = tables.pendingAccSyncItems(deps.db).select<PendingAccSyncItem[]>('*').orderBy(PendingAccSyncItems.col.createdAt)
+    const selectItems = tables
+      .accSyncItems(deps.db)
+      .select<AccSyncItem[]>('*')
+      .where(AccSyncItems.col.status, 'PENDING')
+      .orderBy(AccSyncItems.col.createdAt)
     return executeBatchedSelect(selectItems, { batchSize: 10 })
   }

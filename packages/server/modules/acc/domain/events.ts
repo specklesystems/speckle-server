@@ -1,4 +1,4 @@
-import { AccSyncItem } from '@/modules/acc/helpers/types'
+import { AccSyncItem } from '@/modules/acc/domain/types'
 import {
   DeleteAccSyncItemInput,
   UpdateAccSyncItemInput

@@ -7,15 +7,15 @@ import { moduleLogger } from '@/observability/logging'
 import { Express } from 'express'
 
 import { db } from '@/db/knex'
-import { queryAllPendingAccSyncItemsFactory, upsertPendingAccSyncItemFactory } from '@/modules/acc/repositories/accSyncItems'
-import { buildFileUploadRecord } from '@/modules/fileuploads/tests/helpers/creation'
-import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
-import cryptoRandomString from 'crypto-random-string'
+import { queryAllPendingAccSyncItemsFactory } from '@/modules/acc/repositories/accSyncItems'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
-import { acquireTaskLockFactory, releaseTaskLockFactory } from '@/modules/core/repositories/scheduledTasks'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
 import { TIME_MS } from '@speckle/shared'
-import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import { AccSyncItems } from '@/modules/acc/dbSchema'
 
 export default function accRestApi(app: Express) {
   const sessionMiddleware = sessionMiddlewareFactory()
@@ -133,62 +133,47 @@ export default function accRestApi(app: Express) {
 
   // Registered ACC webhooks are handled here
   // https://aps.autodesk.com/en/docs/webhooks/v1/reference/events/data_management_events/dm.version.added/
-  app.post(
-    '/acc/webhook/callback/dm.version.added',
-    sessionMiddleware,
-    async (req, res) => {
-      const lineageUrn = req.body?.payload?.lineageUrn
+  app.post('/acc/webhook/callback', sessionMiddleware, async (req, res) => {
+    const lineageUrn = req.body?.payload?.lineageUrn
 
-      if (!lineageUrn) {
-        console.warn('Webhook received without lineageUrn')
-        return res.status(400).send({ error: 'Missing lineageUrn' })
-      }
-
-      const sourceFileUrn = req.body?.payload?.source
-
-      // TODO ACC: need to know when svf2 is generated, whether with timeout or a webhook that unknown for now
-
-      try {
-        // TODO: Status on pending sync item and/or file upload?
-        const affectedRows = await db('acc_sync_items')
-          .where({ accFileLineageId: lineageUrn })
-          .update({ status: 'INITIALIZING' })
-          .returning('*')
-
-        for (const row of affectedRows) {
-          // TODO: Multiple references to same item?
-          const fileId = cryptoRandomString({ length: 9 })
-          await saveUploadFileFactory({ db })({
-            fileId,
-            ...buildFileUploadRecord({
-              projectId: row.projectId,
-              modelId: row.modelId
-            })
-          })
-          await upsertPendingAccSyncItemFactory({ db })({
-            syncItemId: row.id,
-            accFileUrn: sourceFileUrn,
-            fileUploadId: fileId,
-            createdAt: new Date()
-          })
-        }
-
-        if (affectedRows.length > 0) {
-          console.log(
-            `✅ Updated ${affectedRows.length} item(s) with lineageUrn ${lineageUrn} to INITIALIZING`
-            // TODO ACC: trigger automation and update status of sync item (as in createAccSyncItemAndNotifyFactory)
-          )
-        } else {
-          console.log(`⚠️ No acc_sync_items matched lineageUrn ${lineageUrn}`)
-        }
-
-        res.status(200).send('OK')
-      } catch (err) {
-        console.error('❌ Failed to update acc_sync_items:', err)
-        res.status(500).send({ error: 'DB update failed' })
-      }
+    if (!lineageUrn) {
+      console.warn('Webhook received without lineageUrn')
+      return res.status(400).send({ error: 'Missing lineageUrn' })
     }
-  )
+
+    const sourceFileVersionIndex = Number.parseInt(req.body?.payload?.version ?? '0')
+    const sourceFileVersionUrn = req.body?.payload?.source
+
+    // TODO ACC: need to know when svf2 is generated, whether with timeout or a webhook that unknown for now
+
+    try {
+      // TODO: Multiple references to same item?
+
+      const affectedRows = await db('acc_sync_items')
+        .where({ accFileLineageId: lineageUrn })
+        .andWhere(AccSyncItems.col.accFileVersionIndex, '<', sourceFileVersionIndex)
+        .update({
+          status: 'PENDING',
+          sourceFileVersionIndex,
+          sourceFileVersionUrn
+        })
+        .returning('*')
+
+      if (affectedRows.length > 0) {
+        console.log(
+          `✅ Updated ${affectedRows.length} item(s) with lineageUrn ${lineageUrn} to INITIALIZING`
+          // TODO ACC: trigger automation and update status of sync item (as in createAccSyncItemAndNotifyFactory)
+        )
+      } else {
+        console.log(`⚠️ No acc_sync_items matched lineageUrn ${lineageUrn}`)
+      }
+
+      res.status(200).send('OK')
+    } catch (err) {
+      console.error('❌ Failed to update acc_sync_items:', err)
+      res.status(500).send({ error: 'DB update failed' })
+    }
+  })
 }
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
@@ -206,12 +191,9 @@ const schedulePendingAccSyncItemsPoll = () => {
       logger.info('Checking for pending ACC Sync items')
       for await (const items of queryAllPendingAccSyncItemsFactory({ db })()) {
         for (const item of items) {
-          console.log(`${item.syncItemId} : ${item.accFileUrn}`)
+          console.log(`${item.id} : ${item.accFileVersionUrn}`)
 
-          // TODO: Is a separate table a good idea?
-          const syncItem = await db.table('acc_sync_items').select('*').where({ id: item.syncItemId }).first()
-
-          if (!syncItem) continue
+          // await
 
           // TODO: Invoke with new trigger type
           // await triggerAutomationRun({
@@ -224,8 +206,7 @@ const schedulePendingAccSyncItemsPoll = () => {
           //       functionId: ADAM_FUNCTION_ID,
           //       functionReleaseId: ADAM_FUNCTION_RELEASE_ID,
           //       functionInputs: {
-          //         svf2Urn: ''
-          //         // What inputs does the function want
+          //         fileUrn: ''
           //       },
           //       status: 'pending' as const,
           //       elapsed: 0,
@@ -267,4 +248,4 @@ export const shutdown: SpeckleModule['shutdown'] = async () => {
   scheduledTask?.stop()
 }
 
-export const finalize: SpeckleModule['finalize'] = async () => { }
+export const finalize: SpeckleModule['finalize'] = async () => {}

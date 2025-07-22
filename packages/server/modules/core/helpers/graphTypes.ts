@@ -1,4 +1,3 @@
-import { AccSyncItem } from '@/modules/acc/helpers/types'
 import {
   CommitWithStreamBranchId,
   LegacyStreamCommit,
@@ -52,8 +51,6 @@ export type ProjectGraphQLReturn = StreamGraphQLReturn
 export type ModelGraphQLReturn = BranchRecord
 
 export type VersionGraphQLReturn = CommitWithStreamBranchId
-
-export type AccSyncItemGraphQLReturn = AccSyncItem
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,

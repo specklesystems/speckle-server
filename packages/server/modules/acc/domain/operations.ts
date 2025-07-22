@@ -1,7 +1,7 @@
-import { PendingAccSyncItem } from "@/modules/acc/domain/types";
+import { AccSyncItem } from '@/modules/acc/domain/types'
 
-export type UpsertPendingAccSyncItem = (item: PendingAccSyncItem) => Promise<void>
+export type UpsertAccSyncItem = (item: AccSyncItem) => Promise<void>
 
-export type DeletePendingAccSyncItem = (args: { id: string }) => Promise<void>
+export type DeleteAccSyncItem = (args: { id: string }) => Promise<void>
 
-export type QueryAllPendingAccSyncItems = () => AsyncGenerator<PendingAccSyncItem[], void, unknown>
+export type QueryAllAccSyncItems = () => AsyncGenerator<AccSyncItem[], void, unknown>
