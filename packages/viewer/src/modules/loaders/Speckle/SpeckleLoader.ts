@@ -4,7 +4,8 @@ import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import {
-  getFeatureFlag, ObjectLoader2Flags,
+  getFeatureFlag,
+  ObjectLoader2Flags,
   ObjectLoader2,
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
