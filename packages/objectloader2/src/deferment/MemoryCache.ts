@@ -116,7 +116,7 @@ export class MemoryCache {
 
   private resetGlobalTimer(): void {
     const run = (): void => {
-      this.cleanDeferments()
+      this.cleanCache()
       this.timer = setTimeout(run, this.options.ttlms)
     }
     this.timer = setTimeout(run, this.options.ttlms)
@@ -126,13 +126,11 @@ export class MemoryCache {
     return Date.now()
   }
 
-  cleanDeferments(testNow?: number): void {
+  cleanCache(testNow?: number): void {
     const maxSizeBytes = this.options.maxSizeInMb * 1024 * 1024
     if (this.currentSize < maxSizeBytes) {
       this.logger(
-        'deferments size is ok, no need to clean',
-        this.currentSize,
-        maxSizeBytes
+        `cache size (${this.currentSize} < ${maxSizeBytes}) is ok, no need to clean`
       )
       return
     }
@@ -161,10 +159,7 @@ export class MemoryCache {
       }
     }
     this.logger(
-      'cleaned deferments: cleaned, cached, time',
-      cleaned,
-      this.cache.size,
-      performance.now() - start
+      `cleaned cache: cleaned ${cleaned}, cached ${this.cache.size}, time ${performance.now() - start}`,
     )
     return
   }

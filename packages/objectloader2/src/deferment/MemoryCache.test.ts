@@ -130,7 +130,7 @@ describe('MemoryCache', () => {
 
     const now = 1
     cache.add(item1, requestItem, now - 200)
-    cache.cleanDeferments(now)
+    cache.cleanCache(now)
     cache.add(item2, requestItem, now + 100)
 
     expect(cache.get('1')).toBeUndefined()
