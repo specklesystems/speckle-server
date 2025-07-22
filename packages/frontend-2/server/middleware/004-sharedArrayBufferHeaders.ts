@@ -8,13 +8,12 @@ export default defineEventHandler((event) => {
     return
   }
 
-  // Only set if query set `sharedArrayBufferHeaders=true`
+  // Only set if query set `sharedArrayBufferHeaders=1`
   const query = getQuery(event)
-  if (!query.sharedArrayBufferHeaders) {
+  if (query.sharedArrayBufferHeaders !== '1') {
     return
   }
 
-  // SharedArrayBuffer headers are required for performance optimizations in some browsers
   setHeaders(event, {
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Cross-Origin-Embedder-Policy': 'require-corp'
