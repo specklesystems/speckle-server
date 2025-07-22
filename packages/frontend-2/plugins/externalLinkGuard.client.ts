@@ -18,7 +18,11 @@ export default defineNuxtPlugin(() => {
       url.hostname === 'speckle.systems' ||
       url.hostname.endsWith('.speckle.systems') ||
       url.hostname === 'speckle.community' ||
-      url.hostname.endsWith('.speckle.community')
+      url.hostname.endsWith('.speckle.community') ||
+      url.hostname === 'speckle.xyz' ||
+      url.hostname.endsWith('.speckle.xyz') ||
+      url.hostname === 'speckle.dev' ||
+      url.hostname.endsWith('.speckle.dev')
 
     if (isWhitelisted(url) || url.origin === window.location.origin) return
 
