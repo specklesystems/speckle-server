@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 // modules/accIntegration/oidcHelper.ts
-import axios from 'axios'
 import crypto from 'crypto'
 
 interface BuildAuthorizeUrlOptions {
@@ -63,16 +62,19 @@ export function createAccOidcFlow() {
         code_verifier: codeVerifier
       })
 
-      const response = await axios.post(
+      const response = await fetch(
         'https://developer.api.autodesk.com/authentication/v2/token',
-        params.toString(),
         {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+          method: 'POST',
+          body: params.toString(),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
         }
       )
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return response.data // includes access_token, refresh_token, expires_in, token_type, etc.
+      return await response.json() // includes access_token, refresh_token, expires_in, token_type, etc.
     }
   }
 }
