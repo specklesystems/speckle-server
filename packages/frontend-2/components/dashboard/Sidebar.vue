@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div class="group h-full">
+  <div class="group h-full" data-no-external-confirm>
     <template v-if="showSidebar">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">

@@ -48,7 +48,6 @@ export const nextGenFileImporterRouterFactory = (params: {
       })
 
       const jobResult = req.body
-
       const projectDb = await getProjectDbClient({ projectId })
 
       const onFileImportResult = onFileImportResultFactory({
