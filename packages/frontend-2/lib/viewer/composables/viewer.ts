@@ -6,7 +6,7 @@ import type {
 import { CameraEvent, ViewerEvent } from '@speckle/viewer'
 import { isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
-import { TIME_MS, TimeoutError } from '@speckle/shared'
+import { TIME_MS, timeoutAt, TimeoutError } from '@speckle/shared'
 import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
@@ -325,7 +325,10 @@ export function useOnViewerLoadComplete(
 
     try {
       await (waitForLoadingOver
-        ? until(isLoading).toBe(false, { timeout: TIME_MS.second })
+        ? Promise.race([
+            until(isLoading).toBe(false),
+            timeoutAt(TIME_MS.second, 'Waiting for loading to complete timed out')
+          ])
         : Promise.resolve())
     } catch (e) {
       if (!(e instanceof TimeoutError)) throw e
