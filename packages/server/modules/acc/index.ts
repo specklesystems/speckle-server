@@ -31,13 +31,7 @@ export default function accRestApi(app: Express) {
       clientId: process.env.ACC_CLIENT_ID ?? '',
       redirectUri: process.env.ACC_REDIRECT_URL ?? '',
       codeChallenge,
-      scopes: [
-        'user-profile:read',
-        'data:read',
-        'data:create',
-        'viewables:read',
-        'openid'
-      ]
+      scopes: ['user-profile:read', 'data:read', 'viewables:read', 'openid']
     })
 
     return res.json({ authorizeUrl })
