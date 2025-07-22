@@ -46,6 +46,7 @@ import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
 import type { Queue } from 'bull'
 import type { Knex } from 'knex'
 import { fileURLToPath } from 'url'
+import { crossOriginResourcePolicyMiddleware } from '@/modules/shared/middleware/security'
 
 const httpErrorImage = (httpErrorCode: number) =>
   fileURLToPath(
@@ -95,67 +96,81 @@ export const previewRouterFactory = ({
 }): Router => {
   const app = Router()
 
-  app.options('/preview/:streamId/:angle?', cors())
-  app.get('/preview/:streamId/:angle?', cors(), async (req, res) => {
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-    const checkStreamPermissions = checkStreamPermissionsFactory({
-      validateScopes,
-      authorizeResolver,
-      // getting the stream from the main DB, cause it needs to join on roles
-      getStream: getStreamFactory({ db })
-    })
-    const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
-    if (!hasPermissions) {
-      // return res.status( httpErrorCode ).end()
-      return res.sendFile(await httpErrorImage(httpErrorCode))
+  app.options(
+    '/preview/:streamId/:angle?',
+    cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin')
+  )
+  app.get(
+    '/preview/:streamId/:angle?',
+    cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin'),
+    async (req, res) => {
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+      const checkStreamPermissions = checkStreamPermissionsFactory({
+        validateScopes,
+        authorizeResolver,
+        // getting the stream from the main DB, cause it needs to join on roles
+        getStream: getStreamFactory({ db })
+      })
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      if (!hasPermissions) {
+        // return res.status( httpErrorCode ).end()
+        return res.sendFile(await httpErrorImage(httpErrorCode))
+      }
+
+      const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
+        db: projectDb
+      })
+
+      const { commits } = await getCommitsByStreamId({
+        streamId: req.params.streamId,
+        limit: 1,
+        ignoreGlobalsBranch: true,
+        cursor: undefined
+      })
+      if (!commits || commits.length === 0) {
+        return res.sendFile(await noPreviewImage())
+      }
+      const lastCommit = commits[0]
+      const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+        logger: req.log,
+        getObject: getFormattedObjectFactory({ db: projectDb }),
+        getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+        createObjectPreview: buildCreateObjectPreviewFunction({
+          projectDb,
+          previewRequestQueue,
+          responseQueueName
+        }),
+        getPreviewImage: getPreviewImageFactory({ db: projectDb })
+      })
+
+      const sendObjectPreview = sendObjectPreviewFactory({
+        // getting the stream from the projectDb here, to handle preview data properly
+        getStream: getStreamFactory({ db: projectDb }),
+        getObjectPreviewBufferOrFilepath,
+        makeOgImage
+      })
+
+      return sendObjectPreview(
+        req,
+        res,
+        req.params.streamId,
+        lastCommit.referencedObject,
+        req.params.angle
+      )
     }
+  )
 
-    const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
-      db: projectDb
-    })
-
-    const { commits } = await getCommitsByStreamId({
-      streamId: req.params.streamId,
-      limit: 1,
-      ignoreGlobalsBranch: true,
-      cursor: undefined
-    })
-    if (!commits || commits.length === 0) {
-      return res.sendFile(await noPreviewImage())
-    }
-    const lastCommit = commits[0]
-    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-      logger: req.log,
-      getObject: getFormattedObjectFactory({ db: projectDb }),
-      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
-      createObjectPreview: buildCreateObjectPreviewFunction({
-        projectDb,
-        previewRequestQueue,
-        responseQueueName
-      }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
-    })
-
-    const sendObjectPreview = sendObjectPreviewFactory({
-      // getting the stream from the projectDb here, to handle preview data properly
-      getStream: getStreamFactory({ db: projectDb }),
-      getObjectPreviewBufferOrFilepath,
-      makeOgImage
-    })
-
-    return sendObjectPreview(
-      req,
-      res,
-      req.params.streamId,
-      lastCommit.referencedObject,
-      req.params.angle
-    )
-  })
-
-  app.options('/preview/:streamId/branches/:branchName/:angle?', cors())
+  app.options(
+    '/preview/:streamId/branches/:branchName/:angle?',
+    cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin')
+  )
   app.get(
     '/preview/:streamId/branches/:branchName/:angle?',
     cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin'),
     async (req, res) => {
       const checkStreamPermissions = checkStreamPermissionsFactory({
         validateScopes,
@@ -223,95 +238,113 @@ export const previewRouterFactory = ({
     }
   )
 
-  app.options('/preview/:streamId/commits/:commitId/:angle?', cors())
-  app.get('/preview/:streamId/commits/:commitId/:angle?', cors(), async (req, res) => {
-    const checkStreamPermissions = checkStreamPermissionsFactory({
-      validateScopes,
-      authorizeResolver,
-      // getting the stream from the main DB, cause it needs to join on roles
-      getStream: getStreamFactory({ db })
-    })
-    const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
-    if (!hasPermissions) {
-      // return res.status( httpErrorCode ).end()
-      return res.sendFile(await httpErrorImage(httpErrorCode))
+  app.options(
+    '/preview/:streamId/commits/:commitId/:angle?',
+    cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin')
+  )
+  app.get(
+    '/preview/:streamId/commits/:commitId/:angle?',
+    cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin'),
+    async (req, res) => {
+      const checkStreamPermissions = checkStreamPermissionsFactory({
+        validateScopes,
+        authorizeResolver,
+        // getting the stream from the main DB, cause it needs to join on roles
+        getStream: getStreamFactory({ db })
+      })
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      if (!hasPermissions) {
+        // return res.status( httpErrorCode ).end()
+        return res.sendFile(await httpErrorImage(httpErrorCode))
+      }
+
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+
+      const getCommit = getCommitFactory({ db: projectDb })
+      const commit = await getCommit(req.params.commitId, {
+        streamId: req.params.streamId
+      })
+      if (!commit) return res.sendFile(await noPreviewImage())
+
+      const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+        logger: req.log,
+        getObject: getFormattedObjectFactory({ db: projectDb }),
+        getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+        createObjectPreview: buildCreateObjectPreviewFunction({
+          projectDb,
+          previewRequestQueue,
+          responseQueueName
+        }),
+        getPreviewImage: getPreviewImageFactory({ db: projectDb })
+      })
+
+      const sendObjectPreview = sendObjectPreviewFactory({
+        // getting the stream from the projectDb here, to handle preview data properly
+        getStream: getStreamFactory({ db: projectDb }),
+        getObjectPreviewBufferOrFilepath,
+        makeOgImage
+      })
+      return sendObjectPreview(
+        req,
+        res,
+        req.params.streamId,
+        commit.referencedObject,
+        req.params.angle
+      )
     }
+  )
 
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+  app.options(
+    '/preview/:streamId/objects/:objectId/:angle?',
+    cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin')
+  )
+  app.get(
+    '/preview/:streamId/objects/:objectId/:angle?',
+    cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin'),
+    async (req, res) => {
+      const checkStreamPermissions = checkStreamPermissionsFactory({
+        validateScopes,
+        authorizeResolver,
+        // getting the stream from the main DB, cause it needs to join on roles
+        getStream: getStreamFactory({ db })
+      })
+      const { hasPermissions } = await checkStreamPermissions(req)
+      if (!hasPermissions) {
+        return res.status(403).end()
+      }
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
 
-    const getCommit = getCommitFactory({ db: projectDb })
-    const commit = await getCommit(req.params.commitId, {
-      streamId: req.params.streamId
-    })
-    if (!commit) return res.sendFile(await noPreviewImage())
+      const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+        logger: req.log,
+        getObject: getFormattedObjectFactory({ db: projectDb }),
+        getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+        createObjectPreview: buildCreateObjectPreviewFunction({
+          projectDb,
+          previewRequestQueue,
+          responseQueueName
+        }),
+        getPreviewImage: getPreviewImageFactory({ db: projectDb })
+      })
 
-    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-      logger: req.log,
-      getObject: getFormattedObjectFactory({ db: projectDb }),
-      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
-      createObjectPreview: buildCreateObjectPreviewFunction({
-        projectDb,
-        previewRequestQueue,
-        responseQueueName
-      }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
-    })
+      const sendObjectPreview = sendObjectPreviewFactory({
+        // getting the stream from the projectDb here, to handle preview data properly
+        getStream: getStreamFactory({ db: projectDb }),
+        getObjectPreviewBufferOrFilepath,
+        makeOgImage
+      })
 
-    const sendObjectPreview = sendObjectPreviewFactory({
-      // getting the stream from the projectDb here, to handle preview data properly
-      getStream: getStreamFactory({ db: projectDb }),
-      getObjectPreviewBufferOrFilepath,
-      makeOgImage
-    })
-    return sendObjectPreview(
-      req,
-      res,
-      req.params.streamId,
-      commit.referencedObject,
-      req.params.angle
-    )
-  })
-
-  app.options('/preview/:streamId/objects/:objectId/:angle?', cors())
-  app.get('/preview/:streamId/objects/:objectId/:angle?', cors(), async (req, res) => {
-    const checkStreamPermissions = checkStreamPermissionsFactory({
-      validateScopes,
-      authorizeResolver,
-      // getting the stream from the main DB, cause it needs to join on roles
-      getStream: getStreamFactory({ db })
-    })
-    const { hasPermissions } = await checkStreamPermissions(req)
-    if (!hasPermissions) {
-      return res.status(403).end()
+      return sendObjectPreview(
+        req,
+        res,
+        req.params.streamId,
+        req.params.objectId,
+        req.params.angle
+      )
     }
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-
-    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-      logger: req.log,
-      getObject: getFormattedObjectFactory({ db: projectDb }),
-      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
-      createObjectPreview: buildCreateObjectPreviewFunction({
-        projectDb,
-        previewRequestQueue,
-        responseQueueName
-      }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
-    })
-
-    const sendObjectPreview = sendObjectPreviewFactory({
-      // getting the stream from the projectDb here, to handle preview data properly
-      getStream: getStreamFactory({ db: projectDb }),
-      getObjectPreviewBufferOrFilepath,
-      makeOgImage
-    })
-
-    return sendObjectPreview(
-      req,
-      res,
-      req.params.streamId,
-      req.params.objectId,
-      req.params.angle
-    )
-  })
+  )
   return app
 }

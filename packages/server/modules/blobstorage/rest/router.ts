@@ -31,6 +31,8 @@ import { processNewFileStreamFactory } from '@/modules/blobstorage/services/stre
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import contentDisposition from 'content-disposition'
+import { crossOriginResourcePolicyMiddleware } from '@/modules/shared/middleware/security'
+import cors from 'cors'
 
 export const blobStorageRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -39,6 +41,7 @@ export const blobStorageRouterFactory = (): Router => {
 
   app.post(
     '/api/stream/:streamId/blob',
+
     async (req, res, next) => {
       await authMiddlewareCreator(
         streamCommentsWritePermissionsPipelineFactory({
@@ -105,6 +108,8 @@ export const blobStorageRouterFactory = (): Router => {
 
   app.get(
     '/api/stream/:streamId/blob/:blobId',
+    cors(),
+    crossOriginResourcePolicyMiddleware('cross-origin'),
     async (req, res, next) => {
       await authMiddlewareCreator([
         ...streamReadPermissionsPipelineFactory({
