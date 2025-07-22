@@ -43,8 +43,17 @@
       >
         Log out
       </FormButton>
-      <div>
-        {{ tokens?.access_token }}
+      <div v-if="tokens?.access_token" class="flex flex-row items-center space-x-2">
+        <FormButton
+          class="mr-2"
+          hide-text
+          :icon-left="DocumentDuplicateIcon"
+          color="outline"
+          @click="copy(tokens?.access_token)"
+        >
+          Copy to clipboard
+        </FormButton>
+        {{ tokens?.access_token.slice(0, 32) }}...
       </div>
     </div>
   </div>
@@ -55,9 +64,11 @@
 // import { projectAccSyncItemsQuery } from '~/lib/acc/graphql/queries'
 // import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subscriptions'
 import type { AccTokens, AccUserInfo } from '~/lib/acc/types'
+import { DocumentDuplicateIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{ projectId: string }>()
 const { triggerNotification } = useGlobalToast()
+const { copy } = useClipboard()
 
 const tokens = ref<AccTokens>()
 const hasTokens = computed(() => !!tokens.value?.access_token)

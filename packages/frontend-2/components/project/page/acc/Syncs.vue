@@ -109,6 +109,7 @@
             :name="'accModelSelector'"
             show-label
             :items="models"
+            :disabled-item-predicate="disabledItemPredicate"
             mount-menu-on-body
           >
             <template #something-selected="{ value }">
@@ -221,6 +222,10 @@ const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
     itemIds: accSyncItems.value.map((s) => s.accFileLineageId)
   })
 )
+
+const disabledItemPredicate = (item: ProjectPageLatestItemsModelItemFragment) => {
+  return accSyncItems.value.find((i) => i.modelId === item.id)
+}
 
 onProjectAccSyncItemsUpdated((res) => {
   refetchAccSyncItems()
