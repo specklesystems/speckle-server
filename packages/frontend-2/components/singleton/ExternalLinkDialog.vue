@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="state.open" max-width="xs" :buttons="buttons">
+  <LayoutDialog v-model:open="open" max-width="xs" :buttons="buttons">
     <template #header>Leaving Speckle</template>
     <p class="mb-2">You're about to open the link below in a new tab:</p>
     <div class="p-3 bg-highlight-2 rounded-md font-mono break-all">
@@ -21,17 +21,24 @@ const { state, close } = useExternalLinkDialogState()
 const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
+    props: { color: 'subtle' },
     onClick: () => {
       close(false)
     }
   },
   {
     text: 'Continue',
-    props: { color: 'danger' },
     onClick: () => {
       window.open(state.value.url, '_blank', 'noopener,noreferrer')
       close(true)
     }
   }
 ])
+
+const open = computed({
+  get: () => state.value.open,
+  set: (v) => {
+    if (!v) close(false)
+  }
+})
 </script>
