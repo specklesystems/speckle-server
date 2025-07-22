@@ -2,6 +2,7 @@ import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 import { handleError, WorkerMessageType } from '../workers/WorkerMessageType.js'
 import { InitQueuesMessage } from '../workers/InitQueuesMessage.js'
 import { IndexDbReader } from './IndexDbReader.js'
+import { canUseWorkers } from '../types/functions.js'
 
 let indexReader: IndexDbReader | null = null
 
@@ -39,7 +40,7 @@ async function processMessages(): Promise<void> {
 
 self.onmessage = (event: MessageEvent): void => {
   const data = event.data as InitQueuesMessage // Type assertion
-  if (typeof SharedArrayBuffer === 'undefined' || typeof Atomics === 'undefined') {
+  if (!canUseWorkers()) {
     const errorMsg = 'SharedArrayBuffer or Atomics not available in the worker scope.'
     log(`Error: ${errorMsg}`)
     postMessage({ type: 'WORKER_INIT_FAILED', error: errorMsg })

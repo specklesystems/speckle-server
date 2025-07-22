@@ -134,15 +134,11 @@ export class CacheReaderWorker implements Reader {
           WorkerCachingConstants.DEFAULT_DEQUEUE_TIMEOUT_MS
         )) || []
       if (this.disposed) {
-        this.logToMainUI(
-          `processBatch: disposed, exiting processing loop`
-        )
+        this.logToMainUI(`processBatch: disposed, exiting processing loop`)
         return
       }
       if (items.length === 0) {
-        this.logToMainUI(
-          `processBatch: no items to process, waiting...`
-        )
+        this.logToMainUI(`processBatch: no items to process, waiting...`)
         await new Promise((resolve) => setTimeout(resolve, 1000))
         continue
       }
@@ -157,7 +153,9 @@ export class CacheReaderWorker implements Reader {
         }
       }
       this.logToMainUI(
-        `processBatch: items processed ${items.length.toString()}, time ${performance.now() - start}`
+        `processBatch: items processed ${items.length.toString()}, time ${
+          performance.now() - start
+        }`
       )
     }
   }
