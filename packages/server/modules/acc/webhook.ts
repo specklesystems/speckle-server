@@ -24,8 +24,6 @@ export async function tryRegisterAccWebhook({
       folder: rootProjectId
     }
   }
-  logger.info(body)
-  logger.info(accessToken)
   const response = await fetch(
     `https://developer.api.autodesk.com/webhooks/v1/systems/data/events/${event}/hooks`,
     {
