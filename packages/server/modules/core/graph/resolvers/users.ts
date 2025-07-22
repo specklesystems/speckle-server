@@ -316,7 +316,7 @@ export default {
         userIdToOperateOn: context.userId
       })
 
-      if (args.userConfirmation.email !== user.email) {
+      if (args.userConfirmation.email.toLowerCase() !== user.email.toLowerCase()) {
         throw new BadRequestError('Malformed input: emails do not match.')
       }
 
