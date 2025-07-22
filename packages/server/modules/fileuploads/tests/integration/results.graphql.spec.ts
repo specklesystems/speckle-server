@@ -167,13 +167,12 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
         expect(haveErrors(gqlResponse))
         expect(gqlResponse.body).to.nested.include({
-          'errors[0].extensions.code': 'FORBIDDEN',
-          'errors[0].extensions.statusCode': 403
+          error: 'Your token is not valid.'
         })
       })
 
       it('should 403 if the token does not have the correct scopes', async () => {
-        const { token } = await createToken({
+        const { token: readOnlyToken } = await createToken({
           userId: userOneId,
           name: createRandomString(),
           scopes: [Scopes.Streams.Read]
@@ -191,7 +190,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
           }
         }
 
-        const gqlResponse = await finishFileUpload(token, sucessPayload)
+        const gqlResponse = await finishFileUpload(readOnlyToken, sucessPayload)
 
         expect(haveErrors(gqlResponse))
         expect(gqlResponse.body).to.nested.include({
@@ -239,9 +238,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         })
 
         expect(haveErrors(gqlResponse))
-        expect(gqlResponse.body).to.nested.include({
-          'errors[0].extensions.statusCode': 400
-        })
+        expect(gqlResponse.status).to.eq(400)
       })
 
       it('should 404 if the job id cannot be found', async () => {

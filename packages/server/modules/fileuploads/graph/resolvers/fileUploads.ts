@@ -253,14 +253,26 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   },
 
   async finishFileImport(_parent, args, ctx) {
+    if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
+      throw new MisconfiguredEnvironmentError('File import next gen is not enabled')
+
     const { projectId, jobId, status, warnings, reason, result } = args.input
     const userId = ctx.userId
     if (!userId) {
       throw new ForbiddenError('No userId provided')
     }
 
-    if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
-      throw new ForbiddenError('File import next gen is not enabled')
+    throwIfResourceAccessNotAllowed({
+      resourceId: projectId,
+      resourceType: TokenResourceIdentifierType.Project,
+      resourceAccessRules: ctx.resourceAccessRules
+    })
+
+    const canPublish = await ctx.authPolicies.project.canPublish({
+      userId: ctx.userId,
+      projectId
+    })
+    throwIfAuthNotOk(canPublish)
 
     let jobResult: FileImportResultPayload
     if (status === JobResultStatus.Error) {
