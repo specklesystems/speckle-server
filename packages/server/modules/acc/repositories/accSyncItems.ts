@@ -1,7 +1,6 @@
 import { AccSyncItems } from '@/modules/acc/dbSchema'
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
 import {
-  DeleteAccSyncItem,
   QueryAllAccSyncItems,
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
@@ -9,7 +8,7 @@ import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { AccSyncItem } from '@/modules/acc/domain/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Knex } from 'knex'
-import { omit } from 'lodash'
+import { tryRegisterAccWebhook } from '@/modules/acc/webhook'
 
 const tables = {
   accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
@@ -19,18 +18,59 @@ export type CreateAccSyncItemAndNotify = (
   input: Omit<AccSyncItem, 'createdAt' | 'updatedAt'>
 ) => Promise<AccSyncItem>
 
+export const getAutodeskAccessToken = async (): Promise<string> => {
+  try {
+    const clientId = process.env.ACC_CLIENT_ID
+    const clientSecret = process.env.ACC_CLIENT_SECRET
+
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+
+    const response = await fetch(
+      'https://developer.api.autodesk.com/authentication/v2/token',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${basicAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json'
+        },
+        body: new URLSearchParams({
+          grant_type: 'client_credentials',
+          scope: 'data:read account:read viewables:read'
+        }).toString()
+      }
+    )
+
+    if (!response.ok) {
+      const errText = await response.text()
+      throw new Error(`Failed to get access token: ${response.status} ${errText}`)
+    }
+
+    const json = await response.json()
+    if (!json.access_token) {
+      throw new Error('access token is not found')
+    }
+    return json.access_token as string
+  } catch (error) {
+    console.log(error)
+    throw error
+  }
+}
+
 export const createAccSyncItemAndNotifyFactory = (deps: {
   db: Knex
   eventEmit: EventBusEmit
 }): CreateAccSyncItemAndNotify => {
   return async (input) => {
-    // TODO ACC: register webhook if it is not yet
-    // const accWebhook = await registerAccWebhook({
-    //   accessToken: '', // TODO ACC: get the token from 2legged server-to-server auth
-    //   rootProjectId: input.accRootProjectFolderId,
-    //   region: input.accRegion,
-    //   event: 'dm.version.added' // NOTE ACC: you can register an event only once
-    // })
+    // TODO ACC: we might need to cache the retrieved token to prevent rate limiting etc.
+
+    const token = await getAutodeskAccessToken()
+    await tryRegisterAccWebhook({
+      accessToken: token, // TODO ACC: get the token from 2legged server-to-server auth
+      rootProjectId: input.accRootProjectFolderId,
+      region: input.accRegion,
+      event: 'dm.version.added' // NOTE ACC: you can register an event only once
+    })
     // TODO ACC: get webhook id and store it in item -> not sure it is make sense to have many webhooks per file as `/acc/webhook/callback/:filelineageUrn`
 
     // TODO ACC: trigger automation and update status of sync item

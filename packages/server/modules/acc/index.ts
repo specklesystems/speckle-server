@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import { createAccOidcFlow } from '@/modules/acc/oidcHelper'
-import { registerAccWebhook } from '@/modules/acc/webhook'
+import { tryRegisterAccWebhook } from '@/modules/acc/webhook'
 import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
@@ -122,7 +122,7 @@ export default function accRestApi(app: Express) {
       throw new Error('whatever')
     }
     const { access_token } = req.session.accTokens
-    await registerAccWebhook({
+    await tryRegisterAccWebhook({
       accessToken: access_token,
       rootProjectId: accHubUrn,
       region: 'EMEA',
@@ -141,8 +141,8 @@ export default function accRestApi(app: Express) {
       return res.status(400).send({ error: 'Missing lineageUrn' })
     }
 
-    const sourceFileVersionIndex = Number.parseInt(req.body?.payload?.version ?? '0')
-    const sourceFileVersionUrn = req.body?.payload?.source
+    const accFileVersionIndex = Number.parseInt(req.body?.payload?.version ?? '0')
+    const accFileVersionUrn = req.body?.payload?.source
 
     // TODO ACC: need to know when svf2 is generated, whether with timeout or a webhook that unknown for now
 
@@ -151,11 +151,11 @@ export default function accRestApi(app: Express) {
 
       const affectedRows = await db('acc_sync_items')
         .where({ accFileLineageId: lineageUrn })
-        .andWhere(AccSyncItems.col.accFileVersionIndex, '<', sourceFileVersionIndex)
+        .andWhere(AccSyncItems.col.accFileVersionIndex, '<', accFileVersionIndex)
         .update({
           status: 'PENDING',
-          sourceFileVersionIndex,
-          sourceFileVersionUrn
+          accFileVersionIndex,
+          accFileVersionUrn
         })
         .returning('*')
 

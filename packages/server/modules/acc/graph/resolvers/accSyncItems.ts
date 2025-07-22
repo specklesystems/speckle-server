@@ -13,7 +13,6 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { createTestAutomation } from '@/test/speckle-helpers/automationHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { GraphQLError } from 'graphql/error'
 import { Knex } from 'knex'
@@ -115,7 +114,7 @@ const resolvers: Resolvers = {
 
       await storeAutomationFactory({ db: projectDb })({
         id: automationId,
-        name: "converter",
+        name: 'converter',
         userId: ctx.userId!,
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -22,7 +22,7 @@ const runStatusClasses = (run: AccSyncItemStatus) => {
     case 'SYNCING':
       classParts.push('bg-info-lighter')
       break
-    case 'INITIALIZING':
+    case 'PENDING':
       classParts.push('bg-warning-lighter')
       break
     case 'PAUSED':
@@ -31,7 +31,7 @@ const runStatusClasses = (run: AccSyncItemStatus) => {
     case 'FAILED':
       classParts.push('bg-danger-lighter')
       break
-    case 'SYNC':
+    case 'SUCCEEDED':
       classParts.push('bg-success-lighter')
       break
   }

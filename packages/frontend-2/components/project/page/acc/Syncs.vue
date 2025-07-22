@@ -158,7 +158,7 @@ const props = defineProps<{
   isLoggedIn: boolean
 }>()
 
-// const internalSyncs = computed(() => props.syncs)
+// TODO ACC: Need to think about data residency from "ACC > Speckle" and warn users accordingly
 
 const step = ref(0)
 
@@ -424,20 +424,27 @@ const { mutate: createAccSyncItem } = useMutation(accSyncItemCreateMutation)
 
 const addSync = async () => {
   try {
+    // annoying but looks like ACC does not give the exact version number directly
+    const fileVersion = Number(
+      new URLSearchParams(
+        selectedFolderContent.value?.latestVersionId?.split('?')[1]
+      ).get('version')
+    )
+
     await createAccSyncItem({
       input: {
         projectId: props.projectId,
         modelId: selectedModel.value?.id as string,
         accRegion: selectedHub.value?.attributes?.region as string,
-        accFileExtension: selectedFolderContent.value?.fileExtension as string, // TODO
+        accFileExtension: selectedFolderContent.value?.fileExtension as string,
         accHubId: selectedHubId.value!,
         accProjectId: selectedProjectId.value as string,
         accRootProjectFolderId: rootProjectFolderId.value!,
         accFileLineageId: selectedFolderContent.value?.id as string,
         accFileName: (selectedFolderContent.value?.attributes.displayName ||
           selectedFolderContent.value?.attributes.name) as string,
-        accFileVersionIndex: 1, // TODO ACC
-        accFileVersionUrn: selectedFolderContent.value?.id as string // TODO ACC
+        accFileVersionIndex: fileVersion,
+        accFileVersionUrn: selectedFolderContent.value?.latestVersionId as string
       }
     })
     // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
