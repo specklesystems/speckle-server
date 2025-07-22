@@ -224,7 +224,7 @@ const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
 )
 
 const disabledItemPredicate = (item: ProjectPageLatestItemsModelItemFragment) => {
-  return accSyncItems.value.find((i) => i.modelId === item.id)
+  return !!accSyncItems.value.find((i) => i.modelId === item.id)
 }
 
 onProjectAccSyncItemsUpdated((res) => {

@@ -35,6 +35,7 @@ export const getAutodeskAccessToken = async (): Promise<string> => {
           Accept: 'application/json'
         },
         body: new URLSearchParams({
+          /* eslint-disable-next-line */
           grant_type: 'client_credentials',
           scope: 'data:read account:read viewables:read'
         }).toString()
