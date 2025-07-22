@@ -50,7 +50,7 @@
             :logo="activeWorkspace?.logo"
             :to="workspaceRoute(activeWorkspace?.slug)"
           >
-            <p class="text-body-xs text-foreground">
+            <p class="text-body-xs text-foreground-2">
               You are not part of this workspace.
             </p>
           </HeaderWorkspaceSwitcherHeader>
