@@ -49,7 +49,11 @@
             :name="activeWorkspace?.name"
             :logo="activeWorkspace?.logo"
             :to="workspaceRoute(activeWorkspace?.slug)"
-          />
+          >
+            <p class="text-body-xs text-foreground">
+              You are not part of this workspace.
+            </p>
+          </HeaderWorkspaceSwitcherHeader>
           <HeaderWorkspaceSwitcherList class="border-t border-outline-2" />
           <MenuItem v-if="hasDiscoverableWorkspacesOrJoinRequests">
             <div class="p-2 border-t border-outline-2">
