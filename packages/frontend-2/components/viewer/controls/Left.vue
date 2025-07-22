@@ -23,6 +23,15 @@
         <IconViewerExplorer class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
+      <!-- Filters -->
+      <ViewerControlsButtonToggle
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleExplorer)"
+        :active="activePanel === 'filters'"
+        @click="toggleActivePanel('filters')"
+      >
+        <IconViewerExplorer class="h-4 w-4 md:h-5 md:w-5" />
+      </ViewerControlsButtonToggle>
+
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
         v-tippy="getShortcutDisplayText(shortcuts.ToggleDiscussions)"
@@ -78,6 +87,11 @@
         <ViewerExplorer class="pointer-events-auto" @close="activePanel = 'none'" />
       </KeepAlive>
 
+      <!-- Filter panel -->
+      <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
+        <ViewerFilters class="pointer-events-auto" @close="activePanel = 'none'" />
+      </KeepAlive>
+
       <!-- Comment threads panel -->
       <ViewerComments
         v-if="resourceItems.length !== 0 && activePanel === 'discussions'"
@@ -99,7 +113,13 @@ import {
   useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
-type ActivePanel = 'none' | 'models' | 'discussions' | 'explorer' | 'automate'
+type ActivePanel =
+  | 'none'
+  | 'models'
+  | 'discussions'
+  | 'explorer'
+  | 'automate'
+  | 'filters'
 
 const width = ref(264)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)

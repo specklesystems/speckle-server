@@ -1,8 +1,5 @@
 <template>
-  <ViewerLayoutPanel
-    class="mt-2 border-l-0 border-r-0 border-t rounded-none shadow-none"
-    hide-close
-  >
+  <ViewerLayoutSidePanel @close="$emit('close')">
     <template #title>Filtering</template>
     <template #actions>
       <div class="flex justify-between items-center w-full">
@@ -89,16 +86,16 @@
       </div>
     </div>
     <div v-if="activeFilter">
-      <ViewerExplorerStringFilter
+      <ViewerFiltersStringFilter
         v-if="stringActiveFilter"
         :filter="stringActiveFilter"
       />
-      <ViewerExplorerNumericFilter
+      <ViewerFiltersNumericFilter
         v-if="numericActiveFilter"
         :filter="numericActiveFilter"
       />
     </div>
-  </ViewerLayoutPanel>
+  </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
@@ -109,6 +106,9 @@ import {
   isNumericPropertyInfo,
   isStringPropertyInfo
 } from '~/lib/viewer/helpers/sceneExplorer'
+import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+
+defineEmits(['close'])
 
 const {
   setPropertyFilter,
@@ -117,6 +117,10 @@ const {
   unApplyPropertyFilter,
   filters: { propertyFilter }
 } = useFilterUtilities()
+
+const {
+  metadata: { availableFilters: allFilters }
+} = useInjectedViewer()
 
 const revitPropertyRegex = /^parameters\./
 // Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
@@ -127,10 +131,6 @@ const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is p
 
 const showAllFilters = ref(false)
 
-const props = defineProps<{
-  filters: PropertyInfo[]
-}>()
-
 const isRevitProperty = (key: string): boolean => {
   return (
     revitPropertyRegex.test(key) ||
@@ -140,7 +140,7 @@ const isRevitProperty = (key: string): boolean => {
 }
 
 const relevantFilters = computed(() => {
-  return props.filters.filter((f) => {
+  return (allFilters.value || []).filter((f: PropertyInfo) => {
     if (
       f.key.endsWith('.units') ||
       f.key.endsWith('.speckle_type') ||
@@ -176,7 +176,7 @@ const relevantFilters = computed(() => {
 })
 
 const speckleTypeFilter = computed(() =>
-  relevantFilters.value.find((f) => f.key === 'speckle_type')
+  relevantFilters.value.find((f: PropertyInfo) => f.key === 'speckle_type')
 )
 const activeFilter = computed(
   () => propertyFilter.filter.value || speckleTypeFilter.value
@@ -206,7 +206,7 @@ const relevantFiltersSearched = computed(() => {
   const searchLower = searchString.value.toLowerCase()
   // eslint-disable-next-line vue/no-side-effects-in-computed-properties
   itemCount.value = 30 // nasty, but yolo - reset max limit on search change
-  return relevantFilters.value.filter((f) => {
+  return relevantFilters.value.filter((f: PropertyInfo) => {
     const userFriendlyName = getPropertyName(f.key).toLowerCase()
     return (
       f.key.toLowerCase().includes(searchLower) ||
@@ -219,7 +219,7 @@ const itemCount = ref(30)
 const relevantFiltersLimited = computed(() => {
   return relevantFiltersSearched.value
     .slice(0, itemCount.value)
-    .sort((a, b) => a.key.length - b.key.length)
+    .sort((a: PropertyInfo, b: PropertyInfo) => a.key.length - b.key.length)
 })
 
 const title = computed(() => getPropertyName(activeFilter.value?.key ?? ''))
@@ -265,8 +265,8 @@ const getPropertyName = (key: string): string => {
   if (key === 'speckle_type') return 'Object Type'
 
   if (isRevitProperty(key) && key.endsWith('.value')) {
-    const correspondingProperty = props.filters.find(
-      (f) => f.key === key.replace('.value', '.name')
+    const correspondingProperty = (allFilters.value || []).find(
+      (f: PropertyInfo) => f.key === key.replace('.value', '.name')
     )
     if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
       return correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key

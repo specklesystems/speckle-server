@@ -11,7 +11,7 @@
         class="!text-body-2xs"
       />
     </div>
-    <ViewerExplorerStringFilterItem
+    <ViewerFiltersStringFilterItem
       v-for="(vg, index) in filteredGroup"
       :key="index"
       :item="vg"

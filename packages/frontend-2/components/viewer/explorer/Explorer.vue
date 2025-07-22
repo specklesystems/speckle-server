@@ -53,8 +53,6 @@
       </div>
     </div>
     <ViewerDataviewerPanel v-if="showRaw" class="pointer-events-auto" />
-
-    <ViewerExplorerFilters :filters="allFilters || []" />
   </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
@@ -85,7 +83,7 @@ const {
   }
 } = useInjectedViewerState()
 const {
-  metadata: { worldTree, availableFilters: allFilters }
+  metadata: { worldTree }
 } = useInjectedViewer()
 
 const expandLevel = ref(-1)
