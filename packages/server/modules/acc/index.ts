@@ -47,8 +47,8 @@ export default function accRestApi(app: Express) {
     req.session.codeVerifier = codeVerifier
 
     const authorizeUrl = accFlow.buildAuthorizeUrl({
-      clientId: process.env.ACC_CLIENT_ID ?? '',
-      redirectUri: process.env.ACC_REDIRECT_URL ?? '',
+      clientId: '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y',
+      redirectUri: `${process.env.CANONICAL_URL}/auth/acc/callback`,
       codeChallenge,
       scopes: ['user-profile:read', 'data:read', 'viewables:read', 'openid']
     })
@@ -69,9 +69,10 @@ export default function accRestApi(app: Express) {
       const tokens = await accFlow.exchangeCodeForTokens({
         code: String(code),
         codeVerifier,
-        clientId: process.env.ACC_CLIENT_ID ?? '',
-        clientSecret: process.env.ACC_CLIENT_SECRET ?? '',
-        redirectUri: process.env.ACC_REDIRECT_URL ?? ''
+        clientId: '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y',
+        clientSecret:
+          'qHyGqaP4zCWLyS2lp04qBDOC1giIupPzJPmLFKGFHKZrPYYpan27zF8vlhQr1RYL',
+        redirectUri: `${process.env.CANONICAL_URL}/auth/acc/callback`
       })
 
       req.session.accTokens = tokens
@@ -99,8 +100,9 @@ export default function accRestApi(app: Express) {
     try {
       const params = new URLSearchParams({
         grant_type: 'refresh_token',
-        client_id: process.env.ACC_CLIENT_ID ?? '',
-        client_secret: process.env.ACC_CLIENT_SECRET ?? '',
+        client_id: '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y',
+        client_secret:
+          'qHyGqaP4zCWLyS2lp04qBDOC1giIupPzJPmLFKGFHKZrPYYpan27zF8vlhQr1RYL',
         refresh_token
       })
 
