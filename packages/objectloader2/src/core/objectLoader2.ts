@@ -57,7 +57,12 @@ export class ObjectLoader2 {
     )
     this.#deferments = new DefermentManager(this.#cache, this.#logger)
     this.#downloader = options.downloader
-    this.#cacheReader = new CacheReader(this.#database, this.#deferments, this.#logger, cacheOptions)
+    this.#cacheReader = new CacheReader(
+      this.#database,
+      this.#deferments,
+      this.#logger,
+      cacheOptions
+    )
     this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
     this.#cacheWriter = new CacheWriter(
       this.#database,

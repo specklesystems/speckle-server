@@ -80,11 +80,11 @@ The aim is to speed up random access while still getting items from the cache in
 
 ## Loader options
 
-These can be use via a query string parameter.  For example: `https://app.speckle.systems/projects/57bbfabd80/models/81b8d76ef1` can have debug logging enabled with: `https://app.speckle.systems/projects/57bbfabd80/models/81b8d76ef1?debug=true`
+These can be use via a query string parameter. For example: `https://app.speckle.systems/projects/57bbfabd80/models/81b8d76ef1` can have debug logging enabled with: `https://app.speckle.systems/projects/57bbfabd80/models/81b8d76ef1?debug=true`
 
 Current parameters:
 
-| Parameter | Default | Type    |
-|-----------|---------|---------|
-| `debug`   | `false` | boolean |
-| `useCache`| `true`  | boolean |
+| Parameter  | Default | Type    |
+| ---------- | ------- | ------- |
+| `debug`    | `false` | boolean |
+| `useCache` | `true`  | boolean |

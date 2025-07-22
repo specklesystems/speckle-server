@@ -4,7 +4,6 @@ import {
   isReference,
   isScalar,
   take,
-  getQueryParameter,
   getFeatureFlag,
   ObjectLoader2Flags
 } from './functions.js'

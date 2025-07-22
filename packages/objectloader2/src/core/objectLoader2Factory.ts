@@ -43,9 +43,9 @@ export class ObjectLoader2Factory {
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
-     if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')
-     }
+    }
     if (getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true') {
       database = new IndexedDatabase({
         logger: log,
