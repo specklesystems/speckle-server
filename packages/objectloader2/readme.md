@@ -16,12 +16,15 @@ To achieve increased concurrency, the different phases of the objectloader are d
 ```mermaid
 sequenceDiagram
     ObjectLoader2->>CacheReader: Root+Children
-    CacheReader-->>Database: Item exists?
-    CacheReader->>ObjectLoader2: Item exists in Cache
-    CacheReader->>Downloader: Item does not exist in Cache
-    Downloader->>CacheWriter: Save Item to Cache
+    CacheReader-->>Memory: Item exists?
+    Memory->>ObjectLoader2: Item exists in Memory
+    CacheReader-->>Database: Item not found in IndexedDb
+    CacheReader->>ObjectLoader2: Item exists in IndexedDb
+    CacheReader->>Downloader: Item not found
+    Downloader->>CacheWriter: Save Item to IndexedDb
     CacheWriter->>Database: Write Item
-    Downloader->>ObjectLoader2: Item exists in Cache
+    CacheWriter->>Memory: Save Item to Memory
+    Downloader->>ObjectLoader2: Item now exists
 ```
 
 The queues between stages are illustrated below with the concurrency
