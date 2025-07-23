@@ -182,6 +182,7 @@ type FileUploadMutations {
   Mostly for internal service usage.
   """
   finishFileImport(input: FinishFileImportInput!): Boolean
+    @hasScope(scope: "streams:write")
 }
 
 extend type Mutation {
