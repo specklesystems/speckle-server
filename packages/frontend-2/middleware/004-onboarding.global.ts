@@ -10,8 +10,7 @@ import {
   verifyEmailRoute,
   onboardingRoute,
   workspaceCreateRoute,
-  workspaceJoinRoute,
-  bookDemoRoute
+  workspaceJoinRoute
 } from '~/lib/common/helpers/route'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
@@ -22,8 +21,7 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
   const isSSOPath = to.path.includes('/sso/')
-  const isBookDemoPage = to.path === bookDemoRoute
-  if (isAuthPage || isSSOPath || isBookDemoPage) return
+  if (isAuthPage || isSSOPath) return
 
   const client = useApolloClientFromNuxt()
 

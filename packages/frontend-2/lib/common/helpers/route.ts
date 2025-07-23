@@ -20,7 +20,6 @@ export const tutorialsRoute = '/tutorials'
 export const docsPageUrl = 'https://docs.speckle.systems/'
 export const forumPageUrl = 'https://speckle.community/'
 export const guideBillingUrl = 'https://docs.speckle.systems/workspaces/billing'
-export const bookDemoRoute = '/book-a-demo'
 export const onboardingRoute = '/onboarding'
 
 export const settingsUserRoutes = {

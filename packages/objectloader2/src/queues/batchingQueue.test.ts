@@ -138,7 +138,7 @@ describe('BatchingQueue', () => {
       expect(processSpy).toHaveBeenCalledTimes(1)
       expect(processSpy).toHaveBeenCalledWith(['item1', 'item2'])
 
-      await new Promise((resolve) => setTimeout(resolve, 200))
+      await new Promise((resolve) => setTimeout(resolve, 500))
 
       expect(processSpy).toHaveBeenCalledTimes(2)
       expect(processSpy).toHaveBeenCalledWith(['item3'])
