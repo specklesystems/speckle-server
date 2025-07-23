@@ -21,7 +21,17 @@ const aliases = {
 /**
  * EXTENSIONS TO EVALUATE FOR EXTENSIONLESS IMPORTS
  */
-const extensions = ['.js', '.mjs', '.cjs', '.json']
+const extensions = ['.ts', '.js', '.mjs', '.cjs', '.json']
+
+/**
+ * Some type-only packages come without an actual JS file, this trips up Node, so we mock these out
+ */
+const typeOnlyPackages = [
+  // {
+  //   specifier: 'type-fest',
+  //   mockPaths: ['node_modules/type-fest/index.js']
+  // }
+]
 
 // Register the module hooks
 register('./esmLoader.js', {
@@ -43,6 +53,13 @@ function resolveAlias(specifier) {
  * Adjust global ESM resolution logic to allow for path/package aliases, dir imports and extensionless imports
  */
 export async function resolve(specifier, _context, nextResolve) {
+  if (typeOnlyPackages.some((pkg) => specifier.includes(pkg.specifier))) {
+    return {
+      url: `fake://${specifier}`,
+      shortCircuit: true
+    }
+  }
+
   // Resolve alias
   const aliasResolved = resolveAlias(specifier)
   specifier = aliasResolved || specifier
@@ -81,4 +98,28 @@ export async function resolve(specifier, _context, nextResolve) {
   }
 
   throw throwableError
+}
+
+/**
+ * Load hook that makes loads of modules of specific paths (e.g. node_modules/type-fest/index.js) actually
+ * be loaded as an empty export ESM module like: `export default {}`.
+ */
+export async function load(url, context, nextLoad) {
+  // If the URL is a file URL and it matches a specific path, return an empty module
+  if (
+    url.startsWith('fake://') &&
+    typeOnlyPackages
+      .map((pkg) => pkg.specifier)
+      .flat()
+      .includes(url.replace('fake://', ''))
+  ) {
+    return {
+      format: 'module',
+      shortCircuit: true,
+      source: 'export default {}'
+    }
+  }
+
+  // Otherwise, use the default loader
+  return nextLoad(url, context)
 }
