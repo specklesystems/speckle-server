@@ -23,7 +23,8 @@ import { testApolloServer } from '@/test/graphqlHelper'
 import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
-import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { Roles } from '@speckle/shared'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
@@ -331,8 +332,14 @@ describe('Saved Views GraphQL CRUD', () => {
     const PAGE_COUNT = 3
     const PAGE_SIZE = Math.ceil(GROUP_COUNT / PAGE_COUNT)
 
+    const SEARCH_STRING = 'bababooey'
+    const SEARCH_STRING_ITEM_COUNT = GROUP_COUNT / 2
+
+    const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
+
     const modelIds: string[] = []
     let readTestProject: BasicTestStream
+    let otherReader: BasicTestUser
 
     const getAllReadModelResourceIds = () =>
       ViewerRoute.resourceBuilder().addResources(
@@ -345,15 +352,24 @@ describe('Saved Views GraphQL CRUD', () => {
     ) => apollo.execute(GetProjectSavedViewGroupsDocument, input, options)
 
     before(async () => {
+      otherReader = await createTestUser(buildBasicTestUser({ name: 'other-reader' }))
       readTestProject = await createTestStream(
         buildBasicTestProject({ name: 'read-test-project' }),
         me
       )
+      await addToStream(readTestProject, otherReader, Roles.Stream.Contributor, {
+        owner: me
+      })
 
       // Create a bunch of groups (views w/ groupNames), each w/ a different model
-      const createGroupView = async (groupName: string | null) => {
+      const createGroupView = async (groupName: string | null, idx: number) => {
+        const includeSearchString = idx % 2 === 0
+        const useDifferentAuthor = idx % 4 === 0
+
         const model = await createTestBranch({
-          branch: buildBasicTestModel({ name: `model-${groupName || 'ungrouped'}` }),
+          branch: buildBasicTestModel({
+            name: `model-${groupName || 'ungrouped'}`
+          }),
           stream: readTestProject,
           owner: me
         })
@@ -366,14 +382,20 @@ describe('Saved Views GraphQL CRUD', () => {
           resourceIdString,
           projectId: readTestProject.id,
           overrides: {
-            groupName
+            groupName,
+            name: `View ${idx} ${includeSearchString ? SEARCH_STRING : ''}`
           }
         })
-        return await createSavedView(input, { assertNoErrors: true })
+        return await createSavedView(input, {
+          assertNoErrors: true,
+          authUserId: useDifferentAuthor ? otherReader.id : me.id
+        })
       }
 
       const groupNames = [...times(NAMED_GROUP_COUNT, (i) => `group-${i + 1}`), null]
-      await Promise.all(groupNames.map((groupName) => createGroupView(groupName)))
+      await Promise.all(
+        groupNames.map((groupName, idx) => createGroupView(groupName, idx))
+      )
     })
 
     it('should successfully read a projects view groups w/ pagination', async () => {
@@ -434,6 +456,56 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(groupsFound).to.equal(GROUP_COUNT)
     })
 
-    // TODO: Test search/filtering logic / MIGRATIONS JS BUT RUNNING TS?
+    it('should return different groups in same project, if resource string differs', async () => {
+      const res = await getProjectViewGroups({
+        projectId: readTestProject.id,
+        input: {
+          limit: GROUP_COUNT, // all in 1 page
+          resourceIdString: 'ayy'
+        }
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      const data = res.data?.project.savedViewGroups
+      expect(data).to.be.ok
+      expect(data!.totalCount).to.equal(0)
+      expect(data!.items.length).to.equal(0)
+      expect(data!.cursor).to.be.null
+    })
+
+    it('should respect search filter and filter out groups w/ views that dont have the search string in their name', async () => {
+      const res = await getProjectViewGroups({
+        projectId: readTestProject.id,
+        input: {
+          limit: GROUP_COUNT, // all in 1 page
+          resourceIdString: getAllReadModelResourceIds().toString(),
+          search: SEARCH_STRING
+        }
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      const data = res.data?.project.savedViewGroups
+      expect(data).to.be.ok
+      expect(data!.totalCount).to.equal(SEARCH_STRING_ITEM_COUNT)
+      expect(data!.items.length).to.equal(SEARCH_STRING_ITEM_COUNT)
+    })
+
+    it('should respect onlyAuthored flag', async () => {
+      const res = await getProjectViewGroups({
+        projectId: readTestProject.id,
+        input: {
+          limit: GROUP_COUNT, // all in 1 page
+          resourceIdString: getAllReadModelResourceIds().toString(),
+          onlyAuthored: true
+        }
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+
+      const data = res.data?.project.savedViewGroups
+      expect(data).to.be.ok
+      expect(data!.totalCount).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
+      expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
+    })
   })
 })
