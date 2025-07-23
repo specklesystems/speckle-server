@@ -110,9 +110,9 @@
           "description": "Enables the next generation file importer",
           "default": false
         },
-        "largeFileUploadsEnabled": {
+        "legacyFileImportsEnabled": {
           "type": "boolean",
-          "description": "Enables the ability to upload large files to Speckle",
+          "description": "Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server",
           "default": false
         },
         "experimentalIfcImporterEnabled": {

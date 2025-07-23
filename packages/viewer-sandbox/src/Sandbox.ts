@@ -54,7 +54,11 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import { getQueryParameter, ObjectLoader2Factory } from '@speckle/objectloader2'
+import {
+  getFeatureFlag,
+  ObjectLoader2Flags,
+  ObjectLoader2Factory
+} from '@speckle/objectloader2'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -1294,6 +1298,7 @@ export default class Sandbox {
       let dataProgress = 0
       let renderedCount = 0
       let traversedCount = 0
+      const shouldLog = getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true' // means we're not already logging
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)
@@ -1302,12 +1307,12 @@ export default class Sandbox {
             colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
           dataProgress = p
 
-          if (getQueryParameter('debug', 'false') !== 'true') {
+          if (!shouldLog) {
             console.log(`Loading ${p}%`)
           }
         }
       })
-      if (getQueryParameter('debug', 'false') !== 'true') {
+      if (!shouldLog) {
         loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
           if (arg.count > traversedCount) {
             traversedCount = arg.count

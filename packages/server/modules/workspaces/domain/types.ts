@@ -1,4 +1,4 @@
-export { WorkspaceInviteResourceTarget } from '@/modules/workspacesCore/domain/types'
+export type { WorkspaceInviteResourceTarget } from '@/modules/workspacesCore/domain/types'
 import type { LimitedUserRecord, UserWithRole } from '@/modules/core/helpers/types'
 import type { WorkspaceRoles } from '@speckle/shared'
 

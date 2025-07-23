@@ -34,7 +34,8 @@ import type { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations
 import type { ValidateUserServerRole } from '@/modules/shared/domain/operations'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { moduleAuthLoaders } from '@/modules/index'
-export { AuthContext, AuthParams }
+
+export type { AuthContext, AuthParams }
 
 export interface AuthFailedResult extends AuthResult {
   authorized: false

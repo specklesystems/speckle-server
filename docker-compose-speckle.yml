@@ -32,7 +32,6 @@ services:
       NUXT_PUBLIC_BACKEND_API_ORIGIN: 'http://speckle-server:3000'
       NUXT_PUBLIC_LOG_LEVEL: 'warn'
       NUXT_REDIS_URL: 'redis://redis'
-      NUXT_PUBLIC_FF_LARGE_FILE_IMPORTS_ENABLED: 'true'
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
     depends_on:
@@ -95,8 +94,6 @@ services:
 
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
-
-      FF_LARGE_FILE_IMPORTS_ENABLED: 'true'
     depends_on:
       []
       # - minio
