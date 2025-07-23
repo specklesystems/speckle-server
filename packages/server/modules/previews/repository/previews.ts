@@ -73,7 +73,7 @@ export const getPaginatedObjectPreviewsPageFactory =
 
     const query = getPaginatedObjectsPreviewsBaseQueryFactory(deps)(params)
 
-    applyCursorSortAndFilter({ query, cursor, sort: 'desc' })
+    applyCursorSortAndFilter({ query, cursor, sort: 'asc' })
 
     query.limit(limit)
 
