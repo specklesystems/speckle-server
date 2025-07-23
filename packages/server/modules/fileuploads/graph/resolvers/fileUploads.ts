@@ -18,7 +18,11 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
+import {
+  BadRequestError,
+  ForbiddenError,
+  MisconfiguredEnvironmentError
+} from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   fileImportServiceShouldUsePrivateObjectsServerUrl,
