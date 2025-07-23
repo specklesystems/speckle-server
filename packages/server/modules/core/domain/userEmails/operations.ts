@@ -1,6 +1,6 @@
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { Optional } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { Optional } from '@speckle/shared'
+import type { Knex } from 'knex'
 
 /**
  * Validate and insert new user email

@@ -6,12 +6,12 @@ import {
   knex
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
 import { groupBy, mapValues } from 'lodash-es'
-import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
-import { Knex } from 'knex'
-import {
+import type { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { Knex } from 'knex'
+import type {
   DeleteExistingUserAuthTokens,
   GetAppScopes
 } from '@/modules/auth/domain/operations'

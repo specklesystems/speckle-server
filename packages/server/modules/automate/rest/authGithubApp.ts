@@ -10,7 +10,7 @@ import { validateScope, validateServerRoleBuilderFactory } from '@/modules/share
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
-import { Application } from 'express'
+import type { Application } from 'express'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
 import { sessionMiddlewareFactory } from '@/modules/auth/middleware'

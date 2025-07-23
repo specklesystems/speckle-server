@@ -1,6 +1,6 @@
-import { InviteResourceTarget } from '@/modules/serverinvites/domain/types'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { WorkspaceRoles } from '@speckle/shared'
+import type { InviteResourceTarget } from '@/modules/serverinvites/domain/types'
+import type { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+import type { WorkspaceRoles } from '@speckle/shared'
 
 declare module '@/modules/serverinvites/domain/types' {
   interface InviteResourceTargetTypeMap {

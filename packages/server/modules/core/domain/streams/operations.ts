@@ -1,4 +1,4 @@
-import {
+import type {
   StreamWithCommitId,
   StreamWithOptionalRole,
   LimitedUserWithStreamRole,
@@ -6,8 +6,8 @@ import {
   Project,
   StreamFavoriteMetadata
 } from '@/modules/core/domain/streams/types'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import {
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type {
   DiscoverableStreamsSortingInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
@@ -17,14 +17,19 @@ import {
   StreamUpdateInput,
   StreamUpdatePermissionInput
 } from '@/modules/core/graph/generated/graphql'
-import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
-import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import type {
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  StreamRoles
+} from '@speckle/shared'
+import type { Knex } from 'knex'
 import type express from 'express'
-import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import type { Logger } from 'pino'
-import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined

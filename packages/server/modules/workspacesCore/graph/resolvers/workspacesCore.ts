@@ -1,5 +1,5 @@
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   filteredSubscribe,

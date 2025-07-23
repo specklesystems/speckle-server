@@ -1,11 +1,12 @@
-import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
-import {
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, wait } from '@speckle/shared'
+import type {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   StreamRevokePermissionInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 import {
   StreamInvalidAccessError,
   StreamNotFoundError,
@@ -14,13 +15,11 @@ import {
 import { isProjectCreateInput } from '@/modules/core/helpers/project'
 import { has } from 'lodash-es'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
-import {
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
-} from '@/modules/core/domain/tokens/types'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import type { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
-import {
+import type {
   AddOrUpdateStreamCollaborator,
   CreateStream,
   DeleteStream,
@@ -36,9 +35,9 @@ import {
   UpdateStreamRecord,
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
-import { StoreBranch } from '@/modules/core/domain/branches/operations'
-import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { StoreBranch } from '@/modules/core/domain/branches/operations'
+import type { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 
 export const createStreamReturnRecordFactory =

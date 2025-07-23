@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { cliLogger as logger } from '@/observability/logging'
 import {
   getWorkspaceBySlugOrIdFactory,
@@ -11,7 +11,8 @@ import {
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { WorkspacePlans, WorkspacePlanStatuses } from '@speckle/shared'
+import type { WorkspacePlanStatuses } from '@speckle/shared'
+import { WorkspacePlans } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
 

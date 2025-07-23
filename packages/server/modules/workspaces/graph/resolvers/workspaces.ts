@@ -1,8 +1,6 @@
 import { db } from '@/db/knex'
-import {
-  Resolvers,
-  TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   updateProjectFactory,
@@ -113,11 +111,11 @@ import {
   getDiscoverableWorkspacesForUserFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
+import type { WorkspaceRoles } from '@speckle/shared'
 import {
   Roles,
   WorkspacePlanFeatures,
   WorkspacePlans,
-  WorkspaceRoles,
   removeNullOrUndefinedKeys,
   throwUncoveredError
 } from '@speckle/shared'
@@ -181,7 +179,7 @@ import {
   getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { BadRequestError, UnauthorizedError } from '@/modules/shared/errors'
 import {

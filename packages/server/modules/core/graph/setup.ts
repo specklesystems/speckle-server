@@ -1,6 +1,6 @@
 import { BadRequestError } from '@/modules/shared/errors'
 import { isGraphQLError } from '@/modules/shared/helpers/graphqlHelper'
-import { ApolloServerOptions, BaseContext } from '@apollo/server'
+import type { ApolloServerOptions, BaseContext } from '@apollo/server'
 import { ensureError } from '@speckle/shared'
 import { omit } from 'lodash-es'
 import VError from 'verror'

@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { isRedisAlive } from '@/healthchecks/redis'
 import { getInmemoryRedisClient } from '@/test/redisHelper'
-import Redis from 'ioredis'
+import type Redis from 'ioredis'
 
 describe('Healthchecks @healthchecks', () => {
   describe('Redis health check @redis', () => {

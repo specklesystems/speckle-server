@@ -1,17 +1,17 @@
-import {
+import type {
   CommitWithStreamBranchId,
   LegacyStreamCommit,
   LegacyUserCommit
 } from '@/modules/core/domain/commits/types'
-import { EmbedApiTokenWithMetadata } from '@/modules/core/domain/tokens/types'
-import {
+import type { EmbedApiTokenWithMetadata } from '@/modules/core/domain/tokens/types'
+import type {
   LimitedUser,
-  StreamRole,
-  ServerRole,
   ModelsTreeItem
 } from '@/modules/core/graph/generated/graphql'
-import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import {
+import { StreamRole, ServerRole } from '@/modules/core/graph/generated/graphql'
+import type { ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import type {
   BranchRecord,
   CommitRecord,
   LimitedUserRecord,
@@ -20,7 +20,7 @@ import {
   StreamRecord,
   UserRecord
 } from '@/modules/core/helpers/types'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.

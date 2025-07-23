@@ -5,7 +5,8 @@ import {
   getLicenseToken,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
-import { LicenseTokenClaims, EnabledModules } from '@/modules/gatekeeper/domain/types'
+import type { EnabledModules } from '@/modules/gatekeeper/domain/types'
+import { LicenseTokenClaims } from '@/modules/gatekeeper/domain/types'
 
 type LicensedModuleNames = (keyof EnabledModules)[]
 

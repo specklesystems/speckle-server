@@ -1,20 +1,20 @@
-import {
+import type {
   GetSubscriptionData,
   GetWorkspacePlan,
   GetWorkspacePlanProductId,
   GetWorkspaceSubscriptions,
   ReconcileSubscriptionData,
   UpsertWorkspaceSubscription,
-  WorkspaceSeatType,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import type { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import {
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
-import { Logger } from '@/observability/logging'
+import type { Logger } from '@/observability/logging'
 import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
 import { cloneDeep, isEqual } from 'lodash-es'
 

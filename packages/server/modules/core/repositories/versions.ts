@@ -1,6 +1,6 @@
 import { BranchCommits, knex, Branches, Commits } from '@/modules/core/dbSchema'
-import { Version } from '@/modules/core/domain/commits/types'
-import { Knex } from 'knex'
+import type { Version } from '@/modules/core/domain/commits/types'
+import type { Knex } from 'knex'
 import { groupBy } from 'lodash-es'
 
 export const getLastVersionsByProjectIdFactory =

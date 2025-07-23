@@ -1,12 +1,12 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
-import { RegionRecord } from '@/modules/multiregion/helpers/types'
+import type { RegionRecord } from '@/modules/multiregion/helpers/types'
 import { Regions } from '@/modules/multiregion/repositories'
-import {
+import type {
   GetDefaultRegion,
   UpsertRegionAssignment
 } from '@/modules/workspaces/domain/operations'
-import { WorkspaceRegionAssignment } from '@/modules/workspacesCore/domain/types'
-import { Knex } from 'knex'
+import type { WorkspaceRegionAssignment } from '@/modules/workspacesCore/domain/types'
+import type { Knex } from 'knex'
 
 export const WorkspaceRegions = buildTableHelper('workspace_regions', [
   'workspaceId',

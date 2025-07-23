@@ -1,4 +1,4 @@
-import { SaveStreamActivity } from '@/modules/activitystream/domain/operations'
+import type { SaveStreamActivity } from '@/modules/activitystream/domain/operations'
 import {
   StreamActionTypes,
   StreamResourceTypes
@@ -9,8 +9,8 @@ import {
   getResourceTypeRole,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import { GetProjectInviteProject } from '@/modules/serverinvites/services/operations'
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { GetProjectInviteProject } from '@/modules/serverinvites/services/operations'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 import { Roles } from '@speckle/shared'
 
 /**

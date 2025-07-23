@@ -1,26 +1,26 @@
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { GetUser, GetUsers } from '@/modules/core/domain/users/operations'
-import {
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { GetUser, GetUsers } from '@/modules/core/domain/users/operations'
+import type {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
   StreamInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
-import { LimitedUserRecord } from '@/modules/core/helpers/types'
+import type { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import type { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import {
+import type {
   CreateInviteParams,
   FindInvite,
   QueryAllResourceInvites,
   QueryAllUserResourceInvites
 } from '@/modules/serverinvites/domain/operations'
-import {
+import type {
   PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget,
   ServerInviteRecord
@@ -29,29 +29,29 @@ import {
   InviteCreateValidationError,
   InviteNotFoundError
 } from '@/modules/serverinvites/errors'
+import type { ResourceTargetTypeRoleTypeMap } from '@/modules/serverinvites/helpers/core'
 import {
   buildUserTarget,
   isProjectResourceTarget,
   resolveInviteTargetTitle,
-  resolveTarget,
-  ResourceTargetTypeRoleTypeMap
+  resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes'
-import {
+import type { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes'
+import type {
   CreateAndSendInvite,
   FinalizeInvite,
   GetInvitationTargetUsers,
   GetProjectInviteProject
 } from '@/modules/serverinvites/services/operations'
-import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
-import {
+import type { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import type {
   MaybeNullOrUndefined,
   Nullable,
   Optional,
-  Roles,
   ServerRoles,
   StreamRoles
 } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { has } from 'lodash-es'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }

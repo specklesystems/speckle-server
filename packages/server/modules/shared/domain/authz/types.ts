@@ -1,7 +1,7 @@
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { BaseError } from '@/modules/shared/errors'
-import { Nullable, ServerRoles } from '@speckle/shared'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import type { BaseError } from '@/modules/shared/errors'
+import type { Nullable, ServerRoles } from '@speckle/shared'
 
 export interface AuthContext {
   auth: boolean

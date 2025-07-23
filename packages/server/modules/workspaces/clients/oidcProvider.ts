@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import { BaseError } from '@/modules/shared/errors'
-import {
+import type {
   OidcProvider,
   OidcProviderAttributes
 } from '@/modules/workspaces/domain/sso/types'

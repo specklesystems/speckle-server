@@ -1,16 +1,14 @@
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspaces,
-  BasicTestWorkspace,
   createTestWorkspaces,
   createWorkspaceInviteDirectly,
   unassignFromWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
 import { expect } from 'chai'
@@ -18,23 +16,21 @@ import {
   captureCreatedInvite,
   validateInviteExistanceFromEmail
 } from '@/test/speckle-helpers/inviteHelper'
-import { Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import type { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { itEach } from '@/test/assertionHelper'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { times } from 'lodash-es'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { db } from '@/db/knex'
-import {
-  BasicTestStream,
-  createTestStreams,
-  leaveStream
-} from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams, leaveStream } from '@/test/speckle-helpers/streamHelper'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
+import type { LocalAuthRestApiHelpers } from '@/modules/auth/tests/helpers/registration'
 import {
   generateRegistrationParams,
-  localAuthRestApi,
-  LocalAuthRestApiHelpers
+  localAuthRestApi
 } from '@/modules/auth/tests/helpers/registration'
 import type { Express } from 'express'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -62,15 +58,14 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import {
-  TestInvitesGraphQLOperations,
-  buildInvitesGraphqlOperations
-} from '@/modules/workspaces/tests/helpers/invites'
+import type { TestInvitesGraphQLOperations } from '@/modules/workspaces/tests/helpers/invites'
+import { buildInvitesGraphqlOperations } from '@/modules/workspaces/tests/helpers/invites'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
+import type { TestEmailListener } from '@/test/speckle-helpers/email'
+import { createEmailListener } from '@/test/speckle-helpers/email'
 
 enum InviteByTarget {
   Email = 'email',

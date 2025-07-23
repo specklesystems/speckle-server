@@ -1,5 +1,6 @@
 import { redisLogger } from '@/observability/logging'
-import Redis, { RedisOptions } from 'ioredis'
+import type { RedisOptions } from 'ioredis'
+import Redis from 'ioredis'
 import {
   EnvironmentResourceError,
   MisconfiguredEnvironmentError

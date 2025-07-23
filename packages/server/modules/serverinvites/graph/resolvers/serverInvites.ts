@@ -18,12 +18,10 @@ import {
 } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { chunk } from 'lodash-es'
-import {
-  Resolvers,
-  TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import db from '@/db/knex'
-import { ServerRoles } from '@speckle/shared'
+import type { ServerRoles } from '@speckle/shared'
 import {
   deleteInvitesByTargetFactory,
   findInviteFactory,
@@ -47,7 +45,7 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
+import type {
   PrimaryInviteResourceTarget,
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'

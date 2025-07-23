@@ -2,7 +2,7 @@ import {
   defineRequestDataloaders,
   simpleTupleCacheKey
 } from '@/modules/shared/helpers/graphqlHelper'
-import DataLoader from 'dataloader'
+import type DataLoader from 'dataloader'
 import {
   getStreamsFactory,
   getCommitStreamsFactory,
@@ -16,15 +16,15 @@ import {
   getStreamsCollaboratorCountsFactory
 } from '@/modules/core/repositories/streams'
 import { keyBy } from 'lodash-es'
-import {
+import type {
   BranchRecord,
   CommitRecord,
   StreamFavoriteRecord,
   StreamRecord,
   UsersMetaRecord
 } from '@/modules/core/helpers/types'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   getCommitBranchesFactory,
   getCommitsFactory,
@@ -33,7 +33,7 @@ import {
   getUserAuthoredCommitCountsFactory,
   getUserStreamCommitCountsFactory
 } from '@/modules/core/repositories/commits'
-import { Scope } from '@/modules/core/graph/generated/graphql'
+import type { Scope } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchCommentCountsFactory,
   getCommitCommentCountsFactory,
@@ -49,8 +49,8 @@ import {
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
-import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import {
+import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import type {
   AutomationRevisionFunctionRecord,
   AutomationRecord,
   AutomationRevisionRecord,
@@ -69,7 +69,7 @@ import {
   getFunctionFactory,
   getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
-import {
+import type {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
@@ -79,21 +79,19 @@ import {
 } from '@/modules/automate/errors/executionEngine'
 import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { getAppScopesFactory } from '@/modules/auth/repositories'
-import {
+import type {
   LimitedUserWithStreamRole,
   StreamWithCommitId
 } from '@/modules/core/domain/streams/types'
-import {
-  getUsersFactory,
-  UserWithOptionalRole
-} from '@/modules/core/repositories/users'
-import {
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { getUsersFactory } from '@/modules/core/repositories/users'
+import type {
   CommitWithStreamBranchId,
   CommitWithStreamBranchMetadata
 } from '@/modules/core/domain/commits/types'
 import { logger } from '@/observability/logging'
 import { getLastVersionsByProjectIdFactory } from '@/modules/core/repositories/versions'
-import { StreamRoles } from '@speckle/shared'
+import type { StreamRoles } from '@speckle/shared'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}

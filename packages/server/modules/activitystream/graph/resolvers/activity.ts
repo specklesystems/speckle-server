@@ -10,9 +10,9 @@ import {
   getUserActivityFactory,
   getUserTimelineFactory
 } from '@/modules/activitystream/repositories'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { InvalidActionTypeError } from '@/modules/activitystream/errors/activityStream'
-import { StreamActionType } from '@/modules/activitystream/domain/types'
+import type { StreamActionType } from '@/modules/activitystream/domain/types'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 
 type ActivityPaginatedArgs = {

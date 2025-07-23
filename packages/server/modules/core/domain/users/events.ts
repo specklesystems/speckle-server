@@ -1,6 +1,6 @@
-import { User, UserSignUpContext } from '@/modules/core/domain/users/types'
-import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { Optional } from '@speckle/shared'
+import type { User, UserSignUpContext } from '@/modules/core/domain/users/types'
+import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import type { Optional } from '@speckle/shared'
 
 export const userEventsNamespace = 'users' as const
 

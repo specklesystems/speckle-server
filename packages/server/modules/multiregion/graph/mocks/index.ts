@@ -1,4 +1,4 @@
-import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { faker } from '@faker-js/faker'
 
 export default {

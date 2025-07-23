@@ -1,13 +1,13 @@
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
-import {
-  BasicTestCommit,
-  createTestCommit,
-  createTestObject
-} from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestCommit, createTestObject } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { db } from '@/db/knex'
 import { expect } from 'chai'

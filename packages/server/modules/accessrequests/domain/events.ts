@@ -1,5 +1,5 @@
-import { ServerAccessRequestRecord } from '@/modules/accessrequests/repositories'
-import { StreamRoles } from '@speckle/shared'
+import type { ServerAccessRequestRecord } from '@/modules/accessrequests/repositories'
+import type { StreamRoles } from '@speckle/shared'
 
 export const accessRequestEventsNamespace = 'accessrequests' as const
 

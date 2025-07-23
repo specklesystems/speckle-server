@@ -1,7 +1,7 @@
 import { StreamAcl, Streams } from '@/modules/core/dbSchema'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
-import {
+import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import type { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
+import type {
   CountSeatsByTypeInWorkspace,
   CreateWorkspaceSeat,
   DeleteWorkspaceSeat,
@@ -10,9 +10,9 @@ import {
   GetWorkspaceUserSeat,
   GetWorkspaceUserSeats
 } from '@/modules/gatekeeper/domain/operations'
-import { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceAcl, WorkspaceSeats } from '@/modules/workspacesCore/helpers/db'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 export {
   getWorkspaceRoleAndSeatFactory,
   getWorkspaceRolesAndSeatsFactory

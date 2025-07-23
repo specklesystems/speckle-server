@@ -7,10 +7,10 @@ import {
   getMailchimpOnboardingIds,
   getMailchimpStatus
 } from '@/modules/shared/helpers/envHelper'
-import { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
+import type { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
 import { getClient, MixpanelEvents } from '@/modules/shared/utils/mixpanel'
-import { UpdateUserMixpanelProfile } from '@/modules/core/domain/users/operations'
-import { DependenciesOf } from '@/modules/shared/helpers/factory'
+import type { UpdateUserMixpanelProfile } from '@/modules/core/domain/users/operations'
+import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 
 const onUserCreatedFactory =
   (deps: { updateUserMixpanelProfileFactory: UpdateUserMixpanelProfile }) =>

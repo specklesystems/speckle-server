@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 /**
  * This is a fake migration, only used to test TS support
