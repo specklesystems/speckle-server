@@ -16,6 +16,7 @@ export type ExecutionEngineErrorRequest = {
   method: string
   url: string
   body?: Record<string, unknown>
+  token?: string
 }
 
 export class ExecutionEngineFailedResponseError extends BaseError {

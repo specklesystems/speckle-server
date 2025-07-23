@@ -287,6 +287,8 @@ const schedulePendingAccSyncItemsPoll = () => {
             syncItem.automationId
           )
 
+          console.log({ automationToken })
+
           if (!automationToken) continue
 
           await triggerAutomationRun({
