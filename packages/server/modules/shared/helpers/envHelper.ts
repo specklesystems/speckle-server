@@ -1,7 +1,8 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { has, trimEnd } from 'lodash-es'
 import * as Environment from '@speckle/shared/environment'
-import { ensureError, Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 
 export function getStringFromEnv(
   envVarKey: string,

@@ -1,10 +1,10 @@
-import {
+import type {
   AddThreadCreatedActivity,
   AddReplyAddedActivity,
   SaveStreamActivity,
   AddCommentArchivedActivity
 } from '@/modules/activitystream/domain/operations'
-import {
+import type {
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput
 } from '@/modules/activitystream/domain/types'
@@ -12,11 +12,12 @@ import {
   StreamActionTypes,
   StreamResourceTypes
 } from '@/modules/activitystream/helpers/types'
-import { CommentEvents, CommentEventsPayloads } from '@/modules/comments/domain/events'
-import { ReplyCreateInput } from '@/modules/core/graph/generated/graphql'
-import { EventBusListen } from '@/modules/shared/services/eventBus'
+import type { CommentEventsPayloads } from '@/modules/comments/domain/events'
+import { CommentEvents } from '@/modules/comments/domain/events'
+import type { ReplyCreateInput } from '@/modules/core/graph/generated/graphql'
+import type { EventBusListen } from '@/modules/shared/services/eventBus'
 import { has } from 'lodash-es'
-import { OverrideProperties } from 'type-fest'
+import type { OverrideProperties } from 'type-fest'
 
 const addThreadCreatedActivityFactory =
   ({

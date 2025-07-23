@@ -1,5 +1,5 @@
 import { automateLogger, moduleLogger } from '@/observability/logging'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
   onModelVersionCreateFactory,
   triggerAutomationRevisionRunFactory
@@ -29,7 +29,7 @@ import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { getUserEmailFromAutomationRunFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { db } from '@/db/knex'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'

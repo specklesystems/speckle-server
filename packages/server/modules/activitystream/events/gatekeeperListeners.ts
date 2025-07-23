@@ -1,6 +1,6 @@
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import { SaveActivity } from '@/modules/activitystream/domain/operations'
+import type { SaveActivity } from '@/modules/activitystream/domain/operations'
 
 const addWorkspacePlanCreatedActivityFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>

@@ -1,5 +1,5 @@
 import { StreamAcl, Streams } from '@/modules/core/dbSchema'
-import {
+import type {
   DeleteProject,
   GetProject,
   GetUserProjectRoles,
@@ -7,9 +7,9 @@ import {
   StoreProjectRole,
   StoreProjectRoles
 } from '@/modules/core/domain/projects/operations'
-import { Project } from '@/modules/core/domain/streams/types'
-import { StreamAclRecord } from '@/modules/core/helpers/types'
-import { Knex } from 'knex'
+import type { Project } from '@/modules/core/domain/streams/types'
+import type { StreamAclRecord } from '@/modules/core/helpers/types'
+import type { Knex } from 'knex'
 
 const tables = {
   projects: (db: Knex) => db<Project>(Streams.name),

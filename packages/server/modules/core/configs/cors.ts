@@ -1,5 +1,6 @@
-import cors, { CorsOptions } from 'cors'
-import { RequestHandler } from 'express'
+import type { CorsOptions } from 'cors'
+import cors from 'cors'
+import type { RequestHandler } from 'express'
 
 /**
  * Main CORS config to use everywhere

@@ -1,5 +1,5 @@
 import { GendoAIRenders } from '@/modules/core/dbSchema'
-import {
+import type {
   GetLatestVersionRenderRequests,
   GetRenderByGenerationId,
   GetUserCredits,
@@ -8,9 +8,9 @@ import {
   UpdateRenderRecord,
   UpsertUserCredits
 } from '@/modules/gendo/domain/operations'
-import { UserCredits } from '@/modules/gendo/domain/types'
-import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
-import { Knex } from 'knex'
+import type { UserCredits } from '@/modules/gendo/domain/types'
+import type { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
+import type { Knex } from 'knex'
 import { pick } from 'lodash-es'
 
 const tables = {

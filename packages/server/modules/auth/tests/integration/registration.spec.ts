@@ -1,9 +1,11 @@
 import { db } from '@/db/knex'
-import {
-  generateRegistrationParams,
-  localAuthRestApi,
+import type {
   LocalAuthRestApiHelpers,
   LoginParams
+} from '@/modules/auth/tests/helpers/registration'
+import {
+  generateRegistrationParams,
+  localAuthRestApi
 } from '@/modules/auth/tests/helpers/registration'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { updateServerInfoFactory } from '@/modules/core/repositories/server'
@@ -11,23 +13,23 @@ import { findInviteFactory } from '@/modules/serverinvites/repositories/serverIn
 import { LogicError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import {
-  CreateProjectInviteDocument,
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type {
   CreateProjectInviteMutationVariables,
-  CreateServerInviteDocument,
-  CreateServerInviteMutationVariables,
-  UseStreamInviteDocument
+  CreateServerInviteMutationVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+  CreateProjectInviteDocument,
+  CreateServerInviteDocument,
+  UseStreamInviteDocument
+} from '@/modules/core/graph/generated/graphql'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
-  BasicTestStream,
   createTestStreams,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'

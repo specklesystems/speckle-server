@@ -4,10 +4,10 @@ import {
   getProjectRegionKeyFactory
 } from '@/modules/multiregion/services/projectRegion'
 import { expectToThrow } from '@/test/assertionHelper'
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 describe('projectRegions @multiregion', () => {
   describe('getProjectRegionKeyFactory creates a function, that', () => {

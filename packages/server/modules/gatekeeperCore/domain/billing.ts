@@ -1,4 +1,4 @@
-import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
+import type { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 
 export type WorkspacePricingProducts = PaidWorkspacePlans
 

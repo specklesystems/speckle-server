@@ -46,7 +46,8 @@ import {
   getWorkspaceRolesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { retry } from '@lifeomic/attempt'
-import { Roles, StreamRoles } from '@speckle/shared'
+import type { StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import knex from 'knex'
 import { omit } from 'lodash-es'
 

@@ -1,5 +1,5 @@
 import { ForbiddenError } from '@/modules/shared/errors'
-import {
+import type {
   CountWebhooksByStreamId,
   CreateWebhookConfig,
   CreateWebhookEvent,
@@ -8,15 +8,15 @@ import {
   GetWebhookById,
   UpdateWebhookConfig
 } from '@/modules/webhooks/domain/operations'
-import { Webhook } from '@/modules/webhooks/domain/types'
-import { SetValuesNullable } from '@speckle/shared'
+import type { Webhook } from '@/modules/webhooks/domain/types'
+import type { SetValuesNullable } from '@speckle/shared'
 import crs from 'crypto-random-string'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { ServerInfo } from '@/modules/core/helpers/types'
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
-import { GetUser } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import type { ServerInfo } from '@/modules/core/helpers/types'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import type { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { WebhookCreationError } from '@/modules/webhooks/errors/webhooks'
 

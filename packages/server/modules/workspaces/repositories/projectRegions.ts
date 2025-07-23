@@ -20,10 +20,10 @@ import {
   Streams,
   StreamsMeta
 } from '@/modules/core/dbSchema'
-import { Branch } from '@/modules/core/domain/branches/types'
-import { Commit } from '@/modules/core/domain/commits/types'
-import { Stream } from '@/modules/core/domain/streams/types'
-import {
+import type { Branch } from '@/modules/core/domain/branches/types'
+import type { Commit } from '@/modules/core/domain/commits/types'
+import type { Stream } from '@/modules/core/domain/streams/types'
+import type {
   BranchCommitRecord,
   ObjectRecord,
   CommitRecord,
@@ -32,7 +32,7 @@ import {
   StreamRecord
 } from '@/modules/core/helpers/types'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
-import {
+import type {
   CopyProjectAutomations,
   CopyProjectBlobs,
   CopyProjectComments,
@@ -50,11 +50,11 @@ import {
   CountProjectWebhooks
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { Knex } from 'knex'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { Knex } from 'knex'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
-import { ObjectPreview } from '@/modules/previews/domain/types'
-import {
+import type { ObjectPreview } from '@/modules/previews/domain/types'
+import type {
   AutomationFunctionRunRecord,
   AutomationRecord,
   AutomationRevisionFunctionRecord,
@@ -64,17 +64,17 @@ import {
   AutomationTokenRecord,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
-import {
+import type {
   CommentLinkRecord,
   CommentRecord,
   CommentViewRecord
 } from '@/modules/comments/helpers/types'
-import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
-import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import type { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
+import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { BlobStorage } from '@/modules/blobstorage/repositories'
-import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
-import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 
 const tables = {

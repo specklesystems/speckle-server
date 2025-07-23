@@ -1,5 +1,5 @@
-import { UpsertWorkspace } from '@/modules/workspaces/domain/operations'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { UpsertWorkspace } from '@/modules/workspaces/domain/operations'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 import cryptoRandomString from 'crypto-random-string'
 
 export const createAndStoreTestWorkspaceFactory =

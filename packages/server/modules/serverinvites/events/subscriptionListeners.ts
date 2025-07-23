@@ -4,13 +4,13 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { resolveTarget } from '@/modules/serverinvites/helpers/core'
-import { GetProjectInviteProject } from '@/modules/serverinvites/services/operations'
+import type { GetProjectInviteProject } from '@/modules/serverinvites/services/operations'
 import { StreamPubsubEvents } from '@/modules/shared'
-import { DependenciesOf } from '@/modules/shared/helpers/factory'
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { DependenciesOf } from '@/modules/shared/helpers/factory'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { PublishSubscription } from '@/modules/shared/utils/subscriptions'
 import {
   ProjectSubscriptions,
-  PublishSubscription,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 

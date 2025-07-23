@@ -1,4 +1,4 @@
-import {
+import type {
   SubscriptionData,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'

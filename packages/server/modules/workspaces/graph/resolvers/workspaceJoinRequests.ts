@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   findEmailsByUserIdFactory,
@@ -16,7 +16,7 @@ import { commandFactory } from '@/modules/shared/command'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import {
+import type {
   ApproveWorkspaceJoinRequest,
   DenyWorkspaceJoinRequest
 } from '@/modules/workspaces/domain/operations'
@@ -47,8 +47,8 @@ import {
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
-import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
-import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
+import type { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const eventBus = getEventBus()

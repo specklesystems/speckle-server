@@ -1,10 +1,10 @@
-import { UserRecord } from '@/modules/core/helpers/types'
+import type { UserRecord } from '@/modules/core/helpers/types'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import mjml2html from 'mjml'
 import * as ejs from 'ejs'
 import sanitizeHtml from 'sanitize-html'
-import {
+import type {
   EmailContent,
   EmailTemplateParams,
   EmailTemplateServerInfo

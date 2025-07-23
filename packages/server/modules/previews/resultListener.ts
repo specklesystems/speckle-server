@@ -4,14 +4,14 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { throwUncoveredError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import crypto from 'crypto'
-import {
+import type {
   BuildConsumePreviewResult,
   ConsumePreviewResult,
   StorePreview,
   UpdateObjectPreview
 } from '@/modules/previews/domain/operations'
 import { joinImages } from 'join-images'
-import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
+import type { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import {
   storePreviewFactory,

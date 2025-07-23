@@ -5,7 +5,8 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { getLastVersionsByProjectIdFactory } from '@/modules/core/repositories/versions'
 import { createTestUser } from '@/test/authHelper'
-import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 

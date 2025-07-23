@@ -2,8 +2,8 @@ import crs from 'crypto-random-string'
 import { PasswordResetTokens } from '@/modules/core/dbSchema'
 import dayjs from 'dayjs'
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { Knex } from 'knex'
-import {
+import type { Knex } from 'knex'
+import type {
   CreateToken,
   DeleteTokens,
   EmailOrTokenId,

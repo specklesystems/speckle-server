@@ -1,10 +1,10 @@
-import { MaybeAsync, Nullable } from '@speckle/shared'
+import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { RedisPubSub } from 'graphql-redis-subscriptions'
 import Redis from 'ioredis'
 import { withFilter } from 'graphql-subscriptions'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import {
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type {
   ProjectCommentsUpdatedMessage,
   ProjectFileImportUpdatedMessage,
   ProjectModelsUpdatedMessage,
@@ -56,22 +56,22 @@ import {
   SubscriptionWorkspaceUpdatedArgs,
   WorkspaceUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
-import { Merge, OverrideProperties } from 'type-fest'
-import {
+import type { Merge, OverrideProperties } from 'type-fest'
+import type {
   ModelGraphQLReturn,
   ProjectGraphQLReturn,
   VersionGraphQLReturn
 } from '@/modules/core/helpers/graphTypes'
-import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
-import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
-import {
+import type { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
+import type { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
+import type {
   ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn,
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { CommitRecord } from '@/modules/core/helpers/types'
-import { BranchRecord } from '@/modules/core/helpers/types'
-import { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommitRecord } from '@/modules/core/helpers/types'
+import type { BranchRecord } from '@/modules/core/helpers/types'
+import type { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance

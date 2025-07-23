@@ -1,9 +1,9 @@
-import {
+import type {
   OidcProfile,
   SpeckleOidcProfile,
   UserSsoSessionRecord
 } from '@/modules/workspaces/domain/sso/types'
-import { UnknownObject, UserinfoResponse } from 'openid-client'
+import type { UnknownObject, UserinfoResponse } from 'openid-client'
 
 /**
  * Get the default expiration time for an SSO session based on the current time.

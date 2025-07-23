@@ -1,5 +1,5 @@
-import { Collection } from '@/modules/shared/helpers/dbHelper'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import type { Collection } from '@/modules/shared/helpers/dbHelper'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 type GetPaginatedItemsArgs = {
   limit: number

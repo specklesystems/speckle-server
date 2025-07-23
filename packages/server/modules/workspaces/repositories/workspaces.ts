@@ -1,4 +1,4 @@
-import {
+import type {
   LimitedWorkspace,
   Workspace,
   WorkspaceAcl,
@@ -6,7 +6,7 @@ import {
   WorkspaceJoinRequest,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
-import {
+import type {
   CountDomainsByWorkspaceId,
   CountWorkspaceRoleWithOptionalProjectRole,
   CountWorkspaces,
@@ -45,15 +45,15 @@ import {
   UpsertWorkspaceCreationState,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { isNullOrUndefined, Roles } from '@speckle/shared'
-import {
+import type {
   ServerAclRecord,
   BranchRecord,
   StreamAclRecord,
-  StreamRecord,
-  ProjectRecordVisibility
+  StreamRecord
 } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
@@ -71,10 +71,11 @@ import {
   UserEmails,
   Users
 } from '@/modules/core/dbSchema'
-import { removePrivateFields, UserRecord } from '@/modules/core/helpers/userHelper'
+import type { UserRecord } from '@/modules/core/helpers/userHelper'
+import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 
 import { clamp, has, isObjectLike } from 'lodash-es'
-import {
+import type {
   WorkspaceCreationState,
   WorkspaceTeamMember
 } from '@/modules/workspaces/domain/types'

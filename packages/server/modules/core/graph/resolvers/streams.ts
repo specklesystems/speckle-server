@@ -34,7 +34,8 @@ import {
   updateStreamAndNotifyFactory,
   updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { Nullable, Roles, Scopes } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
+import { Roles, Scopes } from '@speckle/shared'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 
@@ -44,10 +45,8 @@ import {
   throwIfResourceAccessNotAllowed,
   throwIfNewResourceNotAllowed
 } from '@/modules/core/helpers/token'
-import {
-  Resolvers,
-  TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import {
   deleteAllResourceInvitesFactory,
   deleteInvitesByTargetFactory,

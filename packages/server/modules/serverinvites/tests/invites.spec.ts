@@ -3,8 +3,8 @@ import { Streams, Users, ServerInvites } from '@/modules/core/dbSchema'
 import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
 import { truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
-  BasicTestStream,
   createTestStream,
   createTestStreams,
   getUserStreamRole
@@ -15,18 +15,20 @@ import {
 } from '@/test/speckle-helpers/inviteHelper'
 import db from '@/db/knex'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
-import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
+import type {
+  CreateProjectInviteMutationVariables,
+  ServerInviteCreateInput,
+  StreamInviteCreateInput
+} from '@/modules/core/graph/generated/graphql'
 import {
   BatchCreateServerInviteDocument,
   BatchCreateStreamInviteDocument,
   CancelStreamInviteDocument,
   CreateProjectInviteDocument,
-  CreateProjectInviteMutationVariables,
   CreateServerInviteDocument,
   CreateStreamInviteDocument,
   DeleteInviteDocument,
@@ -35,15 +37,14 @@ import {
   GetStreamInvitesDocument,
   GetStreamPendingCollaboratorsDocument,
   ResendInviteDocument,
-  ServerInviteCreateInput,
-  StreamInviteCreateInput,
   UseStreamInviteDocument
 } from '@/modules/core/graph/generated/graphql'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { reduce } from 'lodash-es'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
+import type { TestEmailListener } from '@/test/speckle-helpers/email'
+import { createEmailListener } from '@/test/speckle-helpers/email'
 
 const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 

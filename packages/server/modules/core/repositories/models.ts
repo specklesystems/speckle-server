@@ -1,6 +1,6 @@
-import { StoreModel } from '@/modules/core/domain/projects/operations'
+import type { StoreModel } from '@/modules/core/domain/projects/operations'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 export const storeModelFactory =
   ({ db }: { db: Knex }): StoreModel =>

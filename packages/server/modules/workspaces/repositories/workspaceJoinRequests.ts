@@ -1,11 +1,11 @@
 import { UserEmails } from '@/modules/core/dbSchema'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
-import {
+import type {
   CreateWorkspaceJoinRequest,
   GetWorkspaceJoinRequest,
   UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
-import {
+import type {
   WorkspaceJoinRequest,
   WorkspaceJoinRequestStatus
 } from '@/modules/workspacesCore/domain/types'
@@ -14,8 +14,8 @@ import {
   WorkspaceJoinRequests
 } from '@/modules/workspacesCore/helpers/db'
 import { Roles } from '@speckle/shared'
-import { Knex } from 'knex'
-import { SetRequired } from 'type-fest'
+import type { Knex } from 'knex'
+import type { SetRequired } from 'type-fest'
 
 const tables = {
   workspaceJoinRequests: (db: Knex) =>

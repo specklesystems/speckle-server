@@ -1,14 +1,14 @@
-import {
+import type {
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
   GetWorkspaceSubscription,
   ReconcileSubscriptionData,
   SubscriptionDataInput,
-  UpsertWorkspaceSubscription,
-  WorkspaceSeatType
+  UpsertWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import type { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import {
   InvalidWorkspacePlanUpgradeError,
   UnsupportedWorkspacePlanError,
@@ -22,12 +22,8 @@ import { isPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { calculateNewBillingCycleEnd } from '@/modules/gatekeeper/services/subscriptions/calculateNewBillingCycleEnd'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgrades'
-import {
-  PaidWorkspacePlans,
-  throwUncoveredError,
-  WorkspacePlanBillingIntervals,
-  WorkspacePlans
-} from '@speckle/shared'
+import type { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
 import { cloneDeep } from 'lodash-es'
 
 export const upgradeWorkspaceSubscriptionFactory =
