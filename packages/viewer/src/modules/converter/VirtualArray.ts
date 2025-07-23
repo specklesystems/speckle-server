@@ -3,33 +3,58 @@ import { DataChunk } from '../../IViewer.js'
 import { MathUtils } from 'three'
 
 export class VirtualArray {
-  constructor(public chunks: Array<Array<number>>) {}
+  private offsets: number[]
+
+  constructor(public chunks: Array<Array<number>>) {
+    this.updateOffsets()
+  }
 
   get length() {
-    return this.chunks && this.chunks.reduce((sum, c) => sum + c.length, 0)
+    if (this.chunks.length === 0) return 0
+    const lastChunk = this.chunks[this.chunks.length - 1]
+    return this.offsets[this.offsets.length - 1] + lastChunk.length
   }
 
   get(index: number): number {
-    let offset = 0
-    for (const chunk of this.chunks) {
-      if (index < offset + chunk.length) {
-        return chunk[index - offset]
-      }
-      offset += chunk.length
-    }
-    throw new RangeError('Index out of bounds')
+    if (this.chunks.length === 1) return this.chunks[0][index]
+    const chunkIndex = this.findChunkIndex(index)
+    const localIndex = index - this.offsets[chunkIndex]
+    return this.chunks[chunkIndex][localIndex]
   }
 
   set(index: number, value: number) {
-    let offset = 0
-    for (const chunk of this.chunks) {
-      if (index < offset + chunk.length) {
-        chunk[index - offset] = value
-        return
-      }
-      offset += chunk.length
+    if (this.chunks.length === 1) {
+      this.chunks[0][index] = value
+      return
     }
+    const chunkIndex = this.findChunkIndex(index)
+    const localIndex = index - this.offsets[chunkIndex]
+    this.chunks[chunkIndex][localIndex] = value
+  }
+
+  public findChunkIndex(index: number): number {
+    let low = 0
+    let high = this.offsets.length - 1
+
+    while (low <= high) {
+      const mid = (low + high) >> 1
+      const start = this.offsets[mid]
+      const end = mid + 1 < this.offsets.length ? this.offsets[mid + 1] : this.length
+      if (index >= start && index < end) return mid
+      if (index < start) high = mid - 1
+      else low = mid + 1
+    }
+
     throw new RangeError('Index out of bounds')
+  }
+
+  public updateOffsets() {
+    this.offsets = []
+    let sum = 0
+    for (const chunk of this.chunks) {
+      this.offsets.push(sum)
+      sum += chunk.length
+    }
   }
 }
 

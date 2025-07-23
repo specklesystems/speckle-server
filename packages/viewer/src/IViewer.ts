@@ -32,6 +32,7 @@ export type DataChunk = {
   id: string
   data: number[]
   references: number
+  processed?: boolean
 }
 
 export interface ViewerParams {

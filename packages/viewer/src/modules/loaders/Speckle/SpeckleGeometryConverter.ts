@@ -101,17 +101,17 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         node.raw.colors = []
         node.raw.normals = []
 
-        /** We can already delete these because we don't need them after triangulation */
-        node.raw.faces.forEach((c: DataChunk) => {
-          c.references--
+        // /** We can already delete these because we don't need them after triangulation */
+        // node.raw.faces.forEach((c: DataChunk) => {
+        //   c.references--
 
-          if (!c.references) {
-            Logger.warn(`Deleting chunk data ${c.id}`)
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            delete c.data
-          }
-        })
+        //   if (!c.references) {
+        //     Logger.warn(`Deleting chunk data ${c.id}`)
+        //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //     //@ts-ignore
+        //     delete c.data
+        //   }
+        // })
 
         /** We can already delete this because we've changes the colors to floats in linear space */
         node.raw.colors.forEach((c: DataChunk) => {
@@ -305,34 +305,61 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       : undefined
     let colors = undefined
     let k = 0
-    while (k < faces.length) {
-      let n = faces.get(k)
-      if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+    let triangulated = true
+    let processed = false
+    faces.chunkArray.forEach((c: DataChunk) => {
+      processed ||= c.processed || false
+    })
 
-      if (n === 3) {
-        const startP = performance.now()
-        // Triangle face
-        indices.push(faces.get(k + 1), faces.get(k + 2), faces.get(k + 3))
-        this.pushTime += performance.now() - startP
-      } else {
-        // Quad or N-gon face
-        const start1 = performance.now()
-        const triangulation = MeshTriangulationHelper.triangulateFace(
-          k,
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          //@ts-ignore
-          faces,
-          vertices
-        )
-        this.actualTriangulateTime += performance.now() - start1
-        indices.push(
-          ...triangulation.filter((el) => {
-            return el !== undefined
-          })
-        )
+    if (!processed) {
+      while (k < faces.length) {
+        let n = faces.get(k)
+        if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+
+        if (n === 3) {
+          k += n + 1
+          continue
+        }
+        triangulated = false
+        break
       }
 
-      k += n + 1
+      if (triangulated) {
+        faces.chunkArray.forEach((chunk: DataChunk) => {
+          if (chunk.processed) return
+
+          let write = 0
+          for (let read = 0; read < chunk.data.length; read++) {
+            if (read % 4 !== 0) {
+              chunk.data[write++] = chunk.data[read]
+            }
+          }
+          chunk.data.length = write
+          chunk.processed = true
+        })
+        faces.updateOffsets()
+      } else {
+        while (k < faces.length) {
+          let n = faces.get(k)
+          if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+          const start1 = performance.now()
+          const triangulation = MeshTriangulationHelper.triangulateFace(
+            k,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            faces,
+            vertices
+          )
+          this.actualTriangulateTime += performance.now() - start1
+          indices.push(
+            ...triangulation.filter((el) => {
+              return el !== undefined
+            })
+          )
+
+          k += n + 1
+        }
+      }
     }
 
     this.meshTriangulationTime += performance.now() - start
@@ -365,9 +392,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     return {
       attributes: {
         POSITION: vertices,
-        INDEX: new ChunkArray([
-          { id: MathUtils.generateUUID(), references: 1, data: indices }
-        ]),
+        INDEX: faces,
         ...(colors && { COLOR: colors }),
         ...(normals && { NORMAL: normals })
       },

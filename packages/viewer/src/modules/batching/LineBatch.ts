@@ -280,7 +280,7 @@ export default class LineBatch implements Batch {
           position,
           geometry.transform,
           offset,
-          offset + geometry.attributes.POSITION.length
+          geometry.attributes.POSITION.length
         )
       }
 

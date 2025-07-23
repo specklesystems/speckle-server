@@ -7,6 +7,8 @@ import Logger from '../../utils/Logger.js'
 import { ObjectLoader2 } from '@speckle/objectloader2'
 import { SpeckleTypeAllRenderables } from '../GeometryConverter.js'
 import { DataChunk } from '../../../IViewer.js'
+import MeshTriangulationHelper from '../../converter/MeshTriangulationHelper.js'
+import { ChunkArray } from '../../converter/VirtualArray.js'
 
 export type ConverterResultDelegate = (count: number) => void
 export type SpeckleConverterNodeDelegate =
@@ -288,13 +290,13 @@ export default class SpeckleConverter {
    * @param  {[type]} arr [description]
    * @return {[type]}     [description]
    */
-  private async dechunk(arr: Array<{ referencedId: string }>) {
+  private async dechunk(arr: Array<{ referencedId: string }>): Promise<DataChunk[]> {
     if (!arr || arr.length === 0) {
-      return arr
+      return arr as unknown as DataChunk[]
     }
 
     if (Array.isArray(arr[0]) && !arr[0].referencedId) {
-      return arr
+      return arr as unknown as DataChunk[]
     }
     // Handles pre-chunking objects, or arrs that have not been chunked
     if (!arr[0].referencedId) {
@@ -305,11 +307,11 @@ export default class SpeckleConverter {
             id: MathUtils.generateUUID(),
             references: 1
           }
-        ]
-      else return arr
+        ] as unknown as DataChunk[]
+      else return arr as unknown as DataChunk[]
     }
 
-    const chunked: unknown[] = []
+    const chunked: DataChunk[] = []
     for (const ref of arr) {
       const real: DataChunk = (await this.objectLoader.getObject({
         id: ref.referencedId
@@ -947,10 +949,71 @@ export default class SpeckleConverter {
     }
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
-    node.model.raw.vertices = await this.dechunk(obj.vertices)
+    const vertices = new ChunkArray(await this.dechunk(obj.vertices))
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
-    node.model.raw.faces = await this.dechunk(obj.faces)
+    const faces = new ChunkArray(await this.dechunk(obj.faces))
+    let k = 0
+    let triangulated = true
+    let processed = false
+    const indices = []
+    faces.chunkArray.forEach((c: DataChunk) => {
+      processed ||= c.processed || false
+    })
+
+    if (!processed) {
+      while (k < faces.length) {
+        let n = faces.get(k)
+        if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+
+        if (n === 3) {
+          k += n + 1
+          continue
+        }
+        triangulated = false
+        break
+      }
+
+      if (triangulated) {
+        faces.chunkArray.forEach((chunk: DataChunk) => {
+          if (chunk.processed) return
+
+          let write = 0
+          for (let read = 0; read < chunk.data.length; read++) {
+            if (read % 4 !== 0) {
+              chunk.data[write++] = chunk.data[read]
+            }
+          }
+          chunk.data.length = write
+          chunk.processed = true
+        })
+        faces.updateOffsets()
+      } else {
+        while (k < faces.length) {
+          let n = faces.get(k)
+          if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+          const triangulation = MeshTriangulationHelper.triangulateFace(
+            k,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            faces,
+            vertices
+          )
+          indices.push(
+            ...triangulation.filter((el) => {
+              return el !== undefined
+            })
+          )
+
+          k += n + 1
+        }
+      }
+    }
+    node.model.raw.vertices = vertices.chunkArray
+    node.model.raw.faces = triangulated
+      ? faces.chunkArray
+      : { data: indices, id: MathUtils.generateUUID(), references: 1, processed: true }
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     node.model.raw.colors = await this.dechunk(obj.colors)
