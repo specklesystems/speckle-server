@@ -5,7 +5,7 @@ import type {
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import type { BlobUploadStatus } from '@speckle/shared/blobs'
 import type { Readable } from 'stream'
-import { StoreFileStream } from '@/modules/blobstorage/domain/storageOperations'
+import type { StoreFileStream } from '@/modules/blobstorage/domain/storageOperations'
 
 export type GetBlob = (params: {
   streamId: string
@@ -60,7 +60,7 @@ export type UploadFileStream = (
   }
 ) => Promise<{ blobId: string; fileName: string; fileHash: string }>
 
-export { StoreFileStream }
+export type { StoreFileStream }
 
 export type GeneratePresignedUrl = (params: {
   projectId: string
