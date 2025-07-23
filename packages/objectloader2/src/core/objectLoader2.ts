@@ -37,6 +37,7 @@ export class ObjectLoader2 {
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
     this.#logger = options.logger || ((): void => {})
+    this.#logger('ObjectLoader2 initialized with rootId:', this.#rootId)
 
     const cacheOptions: CacheOptions = {
       logger: this.#logger,
@@ -59,12 +60,18 @@ export class ObjectLoader2 {
     )
     this.#deferments = new DefermentManager(this.#cache, this.#logger)
     this.#downloader = options.downloader
-    this.#cacheReader = new CacheReader(this.#database, this.#deferments, cacheOptions)
+    this.#cacheReader = new CacheReader(
+      this.#database,
+      this.#deferments,
+      this.#logger,
+      cacheOptions
+    )
     this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
     this.#cacheWriter = new CacheWriter(
       this.#database,
-      cacheOptions,
+      this.#logger,
       this.#deferments,
+      cacheOptions,
       (id: string) => {
         this.#cacheReader.requestItem(id)
       }
