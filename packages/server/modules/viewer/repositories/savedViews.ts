@@ -1,5 +1,9 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 import type {
+  GetGroupSavedViewsBaseParams,
+  GetGroupSavedViewsPageItems,
+  GetGroupSavedViewsTotalCount,
   GetProjectSavedViewGroupsBaseParams,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
@@ -79,7 +83,25 @@ export const getStoredViewCountFactory =
     return parseInt(count.count + '')
   }
 
-const getProjectSavedViewGroupsBaseQuery =
+const cleanLookupResourceIdString = (resourceIdString: string) => {
+  // resourceIdString looks like: modelId, modelId@versionId, objectId etc.
+  // We want to find all saved views that reference any of these resources
+  return resourceBuilder()
+    .addFromString(resourceIdString)
+    .forEach((r) => {
+      if (isModelResource(r)) {
+        // not interested in the specific version ids originally used
+        r.versionId = undefined
+      }
+    })
+    .filter((r) => {
+      // filter out any resources that are not ViewerModelResource or ViewerObjectResource
+      return isModelResource(r) || isObjectResource(r)
+    })
+    .map((r) => r.toString())
+}
+
+const getProjectSavedViewGroupsBaseQueryFactory =
   (deps: { db: Knex }) => (params: GetProjectSavedViewGroupsBaseParams) => {
     const { projectId, resourceIdString, onlyAuthored, search, userId } = params
 
@@ -95,22 +117,7 @@ const getProjectSavedViewGroupsBaseQuery =
       ])
       .where({ [SavedViews.col.projectId]: projectId })
 
-    // resourceIdString looks like: modelId, modelId@versionId, objectId etc.
-    // We want to find all saved views that reference any of these resources
-    const resourceIds = resourceBuilder()
-      .addFromString(resourceIdString)
-      .forEach((r) => {
-        if (isModelResource(r)) {
-          // not interested in the specific version ids originally used
-          r.versionId = undefined
-        }
-      })
-      .filter((r) => {
-        // filter out any resources that are not ViewerModelResource or ViewerObjectResource
-        return isModelResource(r) || isObjectResource(r)
-      })
-      .map((r) => r.toString())
-
+    const resourceIds = cleanLookupResourceIdString(resourceIdString)
     if (resourceIds.length) {
       // Col contains at least one of the resources
       q.whereRaw('?? && ?', [SavedViews.col.resourceIds, resourceIds])
@@ -136,7 +143,7 @@ const getProjectSavedViewGroupsBaseQuery =
 export const getProjectSavedViewGroupsTotalCountFactory =
   (deps: { db: Knex }): GetProjectSavedViewGroupsTotalCount =>
   async (params) => {
-    const { q } = getProjectSavedViewGroupsBaseQuery(deps)(params)
+    const { q } = getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
     const countQ = deps.db.count<{ count: string }[]>().from(q.as('sq1'))
     const [count] = await countQ
     return parseInt(count.count + '')
@@ -146,7 +153,7 @@ export const getProjectSavedViewGroupsPageItemsFactory =
   (deps: { db: Knex }): GetProjectSavedViewGroupsPageItems =>
   async (params) => {
     const { projectId } = params
-    const { q, resourceIds } = getProjectSavedViewGroupsBaseQuery(deps)(params)
+    const { q, resourceIds } = getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
     const { encode, decode } = savedGroupCursorUtils()
 
     const limit = clamp(params.limit ?? 10, 0, 100)
@@ -180,6 +187,72 @@ export const getProjectSavedViewGroupsPageItemsFactory =
 
     return {
       items: groups,
+      cursor: newCursor
+    }
+  }
+
+const getGroupSavedViewsBaseQueryFactory =
+  (deps: { db: Knex }) => (params: GetGroupSavedViewsBaseParams) => {
+    const { projectId, resourceIdString, groupName, onlyAuthored, search, userId } =
+      params
+
+    const q = tables
+      .savedViews(deps.db)
+      .where({ [SavedViews.col.projectId]: projectId })
+      .where({ [SavedViews.col.groupName]: groupName })
+
+    const resourceIds = cleanLookupResourceIdString(resourceIdString)
+    if (resourceIds.length) {
+      // Col contains at least one of the resources
+      q.whereRaw('?? && ?', [SavedViews.col.resourceIds, resourceIds])
+    } else {
+      // Make query exit early - no resources
+      q.whereRaw('false')
+    }
+
+    if (onlyAuthored && userId) {
+      q.where({ [SavedViews.col.authorId]: userId })
+    }
+
+    if (search) {
+      q.where(SavedViews.col.name, 'ilike', `%${search}%`)
+    }
+
+    return q
+  }
+
+export const getGroupSavedViewsTotalCountFactory =
+  (deps: { db: Knex }): GetGroupSavedViewsTotalCount =>
+  async (params) => {
+    const q = getGroupSavedViewsBaseQueryFactory(deps)(params)
+    const countQ = deps.db.count<{ count: string }[]>().from(q.as('sq1'))
+    const [count] = await countQ
+    return parseInt(count.count + '')
+  }
+
+export const getGroupSavedViewsPageItemsFactory =
+  (deps: { db: Knex }): GetGroupSavedViewsPageItems =>
+  async (params) => {
+    const sortByCol = params.sortBy || 'name'
+    const sortDir = params.sortDirection || 'asc'
+
+    const q = getGroupSavedViewsBaseQueryFactory(deps)(params)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: SavedViews,
+      cols: [sortByCol, 'id']
+    })
+
+    const limit = clamp(params.limit ?? 10, 0, 100)
+    q.limit(limit)
+
+    // Apply cursor filter and sort
+    applyCursorSortAndFilter({ query: q, cursor: params.cursor, sort: sortDir })
+
+    const items = await q
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
       cursor: newCursor
     }
   }

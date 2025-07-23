@@ -1,6 +1,7 @@
 import { db } from '@/db/knex'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { mapGqlToDbSortDirection } from '@/modules/core/helpers/project'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import {
   getBranchesByIdsFactory,
@@ -15,6 +16,8 @@ import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
+  getGroupSavedViewsPageItemsFactory,
+  getGroupSavedViewsTotalCountFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
   getStoredViewCountFactory,
@@ -22,10 +25,11 @@ import {
 } from '@/modules/viewer/repositories/savedViews'
 import {
   createSavedViewFactory,
+  getGroupSavedViewsFactory,
   getProjectSavedViewGroupsFactory
 } from '@/modules/viewer/services/savedViewsManagement'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
-import { resourceBuilder } from '@speckle/shared/viewer/route'
+import { parseResourceFromString, resourceBuilder } from '@speckle/shared/viewer/route'
 import { formatSerializedViewerState } from '@speckle/shared/viewer/state'
 
 const resolvers: Resolvers = {
@@ -69,7 +73,36 @@ const resolvers: Resolvers = {
   },
   SavedViewGroup: {
     title: (parent) => parent.name || 'Ungrouped scenes',
-    isUngroupedViewsGroup: (parent) => parent.name === null
+    isUngroupedViewsGroup: (parent) => parent.name === null,
+    async views(parent, args, ctx) {
+      const { input } = args
+      const getGroupSavedViews = getGroupSavedViewsFactory({
+        getGroupSavedViewsPageItems: getGroupSavedViewsPageItemsFactory({ db }),
+        getGroupSavedViewsTotalCount: getGroupSavedViewsTotalCountFactory({ db })
+      })
+
+      const allowedSortBy = <const>['createdAt', 'name', 'updatedAt']
+      const sortBy = input.sortBy
+        ? allowedSortBy.find((s) => s === input.sortBy)
+        : undefined
+
+      return await getGroupSavedViews({
+        projectId: parent.projectId,
+        resourceIdString: resourceBuilder()
+          .addResources(parent.resourceIds.map(parseResourceFromString))
+          .toString(),
+        userId: ctx.userId,
+        groupName: parent.name,
+        onlyAuthored: input.onlyAuthored,
+        search: input.search,
+        limit: input.limit,
+        cursor: input.cursor,
+        sortDirection: input.sortDirection
+          ? mapGqlToDbSortDirection(input.sortDirection)
+          : undefined,
+        sortBy
+      })
+    }
   },
   ProjectMutations: {
     savedViewMutations: () => ({})

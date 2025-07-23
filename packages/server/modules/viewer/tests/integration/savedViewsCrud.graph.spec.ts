@@ -507,5 +507,7 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(data!.totalCount).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
       expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
     })
+
+    // TODO: Should not show private views
   })
 })

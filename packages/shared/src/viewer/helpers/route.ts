@@ -79,22 +79,29 @@ export class ViewerModelFolderResource implements ViewerResource {
   }
 }
 
+export const parseResourceFromString = (resourceId: string): ViewerResource => {
+  if (resourceId === 'all') {
+    return new ViewerAllModelsResource()
+  } else if (resourceId.includes('@')) {
+    const [modelId, versionId] = resourceId.split('@')
+    return new ViewerModelResource(modelId, versionId)
+  } else if (resourceId.startsWith('$')) {
+    return new ViewerModelFolderResource(resourceId.substring(1))
+  } else if (resourceId.length === 32) {
+    return new ViewerObjectResource(resourceId)
+  } else {
+    return new ViewerModelResource(resourceId)
+  }
+}
+
 export function parseUrlParameters(resourceGetParam: string) {
   if (!resourceGetParam?.length) return []
   const parts = resourceGetParam.toLowerCase().split(',').sort()
   const resources: ViewerResource[] = []
   for (const part of parts) {
-    if (part === 'all') {
-      resources.push(new ViewerAllModelsResource())
-    } else if (part.includes('@')) {
-      const [modelId, versionId] = part.split('@')
-      resources.push(new ViewerModelResource(modelId, versionId))
-    } else if (part.startsWith('$')) {
-      resources.push(new ViewerModelFolderResource(part.substring(1)))
-    } else if (part.length === 32) {
-      resources.push(new ViewerObjectResource(part))
-    } else {
-      resources.push(new ViewerModelResource(part))
+    const resource = parseResourceFromString(part)
+    if (resource) {
+      resources.push(resource)
     }
   }
 

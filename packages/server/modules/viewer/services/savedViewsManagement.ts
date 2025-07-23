@@ -1,5 +1,8 @@
 import type {
   CreateSavedView,
+  GetGroupSavedViews,
+  GetGroupSavedViewsPageItems,
+  GetGroupSavedViewsTotalCount,
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
@@ -170,6 +173,26 @@ export const getProjectSavedViewGroupsFactory =
       noItemsNeeded
         ? Promise.resolve({ items: [], cursor: null })
         : deps.getProjectSavedViewGroupsPageItems(params)
+    ])
+
+    return {
+      totalCount,
+      ...pageItems
+    }
+  }
+
+export const getGroupSavedViewsFactory =
+  (deps: {
+    getGroupSavedViewsPageItems: GetGroupSavedViewsPageItems
+    getGroupSavedViewsTotalCount: GetGroupSavedViewsTotalCount
+  }): GetGroupSavedViews =>
+  async (params) => {
+    const noItemsNeeded = params.limit === 0
+    const [totalCount, pageItems] = await Promise.all([
+      deps.getGroupSavedViewsTotalCount(params),
+      noItemsNeeded
+        ? Promise.resolve({ items: [], cursor: null })
+        : deps.getGroupSavedViewsPageItems(params)
     ])
 
     return {
