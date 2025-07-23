@@ -1,5 +1,5 @@
 import { getAuthStrategies } from '@/modules/auth'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 export default {
   ServerInfo: {

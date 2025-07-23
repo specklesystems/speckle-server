@@ -4,11 +4,9 @@ import {
   registerNotificationHandlers,
   shutdownQueue
 } from '@/modules/notifications/services/queue'
-import {
-  NotificationType,
-  NotificationTypeHandlers
-} from '@/modules/notifications/helpers/types'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { NotificationTypeHandlers } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@/modules/notifications/helpers/types'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { shouldDisableNotificationsConsumption } from '@/modules/shared/helpers/envHelper'
 import { moduleLogger } from '@/observability/logging'
 import MentionedInCommentHandler from '@/modules/notifications/services/handlers/mentionedInComment'

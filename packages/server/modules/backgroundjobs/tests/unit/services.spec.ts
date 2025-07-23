@@ -1,12 +1,12 @@
 import { expect } from 'chai'
 import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
-import {
+import type {
   BackgroundJob,
   BackgroundJobConfig,
   BackgroundJobPayload,
-  BackgroundJobStatus,
   StoreBackgroundJob
 } from '@/modules/backgroundjobs/domain'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
 
 describe('scheduleBackgroundJobFactory', () => {
   const mockJobConfig: BackgroundJobConfig = {

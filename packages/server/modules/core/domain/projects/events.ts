@@ -1,12 +1,12 @@
-import { Project } from '@/modules/core/domain/streams/types'
-import {
+import type { Project } from '@/modules/core/domain/streams/types'
+import type {
   ProjectCreateInput,
   ProjectUpdateInput,
   StreamCreateInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import { Nullable, StreamRoles } from '@speckle/shared'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { Nullable, StreamRoles } from '@speckle/shared'
 
 export const projectEventsNamespace = 'projects' as const
 

@@ -1,4 +1,4 @@
-import {
+import type {
   GetWorkspacePlan,
   GetWorkspaceSubscription,
   UpsertWorkspacePlan
@@ -8,10 +8,11 @@ import {
   WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { GetWorkspace } from '@/modules/workspaces/domain/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { throwUncoveredError, WorkspacePlan, WorkspacePlans } from '@speckle/shared'
+import type { WorkspacePlan } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
 
 export const updateWorkspacePlanFactory =
   ({

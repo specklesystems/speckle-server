@@ -1,9 +1,12 @@
 import { ServerAcl } from '@/modules/core/dbSchema'
-import { ServerAclRecord, StreamAclRecord } from '@/modules/core/helpers/types'
-import { GetUserAclRole, GetUserServerRole } from '@/modules/shared/domain/operations'
-import { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
-import { AvailableRoles, Optional, ServerRoles } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { ServerAclRecord, StreamAclRecord } from '@/modules/core/helpers/types'
+import type {
+  GetUserAclRole,
+  GetUserServerRole
+} from '@/modules/shared/domain/operations'
+import type { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
+import type { AvailableRoles, Optional, ServerRoles } from '@speckle/shared'
+import type { Knex } from 'knex'
 
 const tables = {
   serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name)

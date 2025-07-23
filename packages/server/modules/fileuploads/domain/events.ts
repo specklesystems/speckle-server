@@ -1,4 +1,4 @@
-import {
+import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'

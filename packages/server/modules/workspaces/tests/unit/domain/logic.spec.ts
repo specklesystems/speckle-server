@@ -1,4 +1,4 @@
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
 import {
   anyEmailCompliantWithWorkspaceDomains,
   isWorkspaceRole,
@@ -9,7 +9,7 @@ import {
   isValidSsoSession
 } from '@/modules/workspaces/domain/sso/logic'
 import { WorkspaceDomainsInvalidState } from '@/modules/workspaces/errors/workspace'
-import { WorkspaceDomain } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceDomain } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'

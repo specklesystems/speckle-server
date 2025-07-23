@@ -1,9 +1,9 @@
-import cron from 'node-cron'
+import type cron from 'node-cron'
 import { moduleLogger } from '@/observability/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { workspaceRoles } from '@/modules/workspaces/roles'
 import { workspaceScopes } from '@/modules/workspaces/scopes'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
@@ -11,7 +11,7 @@ import { initializeEventListenersFactory } from '@/modules/workspaces/events/eve
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getSsoRouter } from '@/modules/workspaces/rest/sso'
 import { InvalidLicenseError } from '@/modules/gatekeeper/errors/license'
-import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,

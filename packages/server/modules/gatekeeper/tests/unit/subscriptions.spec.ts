@@ -1,10 +1,10 @@
-import {
+import type {
   SubscriptionData,
   SubscriptionDataInput,
   SubscriptionUpdateIntent,
-  WorkspaceSeatType,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspaceNotPaidPlanError,
   WorkspacePlanMismatchError,
@@ -23,12 +23,13 @@ import {
   createTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers'
 import { expectToThrow } from '@/test/assertionHelper'
-import { PaidWorkspacePlans, throwUncoveredError, WorkspacePlan } from '@speckle/shared'
+import type { WorkspacePlan } from '@speckle/shared'
+import { PaidWorkspacePlans, throwUncoveredError } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash-es'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { testLogger } from '@/observability/logging'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 

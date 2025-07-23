@@ -2,7 +2,7 @@ import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scop
 import { moduleLogger } from '@/observability/logging'
 import db from '@/db/knex'
 import { Scopes } from '@speckle/shared'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getStreamFactory } from '@/modules/core/repositories/streams'

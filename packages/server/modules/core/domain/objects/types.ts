@@ -1,6 +1,6 @@
-import { ObjectRecord } from '@/modules/core/helpers/types'
-import { Nullable, NullableKeysToOptional } from '@speckle/shared'
-import { OverrideProperties, SetOptional } from 'type-fest'
+import type { ObjectRecord } from '@/modules/core/helpers/types'
+import type { Nullable, NullableKeysToOptional } from '@speckle/shared'
+import type { OverrideProperties, SetOptional } from 'type-fest'
 
 export type SpeckleObject = ObjectRecord
 

@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const TABLE_NAME = 'workspace_checkout_sessions'
 const COLUMN_NAME = 'userId'

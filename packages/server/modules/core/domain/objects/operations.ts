@@ -1,12 +1,12 @@
 import type { Logger } from '@/observability/logging'
-import {
+import type {
   InsertableSpeckleObject,
   RawSpeckleObject,
   SpeckleObject
 } from '@/modules/core/domain/objects/types'
-import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
-import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import type { Knex } from 'knex'
 import type stream from 'node:stream'
 
 export type GetStreamObjects = (

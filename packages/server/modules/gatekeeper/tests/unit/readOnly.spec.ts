@@ -1,5 +1,5 @@
-import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
-import { GetWorkspacePlanByProjectId } from '@/modules/gatekeeper/domain/operations'
+import type { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import type { GetWorkspacePlanByProjectId } from '@/modules/gatekeeper/domain/operations'
 import {
   isProjectReadOnlyFactory,
   isWorkspaceReadOnlyFactory

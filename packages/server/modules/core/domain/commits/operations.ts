@@ -1,5 +1,5 @@
-import { Branch } from '@/modules/core/domain/branches/types'
-import {
+import type { Branch } from '@/modules/core/domain/branches/types'
+import type {
   CommitWithStreamBranchMetadata,
   Commit,
   CommitBranch,
@@ -8,7 +8,7 @@ import {
   LegacyStreamCommit,
   CommitWithStreamBranchId
 } from '@/modules/core/domain/commits/types'
-import {
+import type {
   CommitsDeleteInput,
   CommitsMoveInput,
   CommitUpdateInput,
@@ -18,15 +18,18 @@ import {
   StreamCommitsArgs,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
-import { BranchCommitRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
-import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
-import {
+import type {
+  BranchCommitRecord,
+  StreamCommitRecord
+} from '@/modules/core/helpers/types'
+import type { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+import type {
   MaybeNullOrUndefined,
   Nullable,
   NullableKeysToOptional,
   Optional
 } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 export type GetCommits = (
   commitIds: string[],

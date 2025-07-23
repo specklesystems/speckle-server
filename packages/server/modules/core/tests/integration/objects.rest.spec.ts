@@ -28,9 +28,10 @@ import {
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import { beforeEachContext } from '@/test/hooks'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import request from 'supertest'
-import { Express } from 'express'
+import type { Express } from 'express'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,

@@ -1,10 +1,10 @@
 import cryptoRandomString from 'crypto-random-string'
-import { Project } from '@/modules/core/domain/streams/types'
+import type { Project } from '@/modules/core/domain/streams/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { assign } from 'lodash-es'
-import { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
-import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 
 export const buildTestProject = (overrides?: Partial<Project>): Project =>
   assign(

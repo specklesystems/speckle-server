@@ -1,10 +1,10 @@
-import { Version } from '@/modules/core/domain/commits/types'
-import {
+import type { Version } from '@/modules/core/domain/commits/types'
+import type {
   CommitCreateInput,
   CommitUpdateInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export const versionEventsNamespace = 'versions' as const
 

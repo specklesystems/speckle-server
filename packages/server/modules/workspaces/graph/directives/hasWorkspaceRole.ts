@@ -1,4 +1,4 @@
-import { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
+import type { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
 import { authorizeResolver } from '@/modules/shared'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'

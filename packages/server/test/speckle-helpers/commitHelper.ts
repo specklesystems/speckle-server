@@ -20,8 +20,8 @@ import {
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
-import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import cryptoRandomString from 'crypto-random-string'
 
 export type BasicTestCommit = {

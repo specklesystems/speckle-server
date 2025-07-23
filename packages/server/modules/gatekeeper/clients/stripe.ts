@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
 import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
-import {
+import type {
   GetRecurringPrices,
   GetStripeClient,
   GetSubscriptionData,
-  ReconcileSubscriptionData,
-  SubscriptionData
+  ReconcileSubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
+import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
 import { LogicError, TestOnlyLogicError } from '@/modules/shared/errors'
 import { getStripeApiKey, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { TIME_MS } from '@speckle/shared'

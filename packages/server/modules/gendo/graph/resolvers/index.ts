@@ -1,5 +1,5 @@
 import { authorizeResolver } from '@/modules/shared'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@speckle/shared'
 import { createRenderRequestFactory } from '@/modules/gendo/services'
 import {

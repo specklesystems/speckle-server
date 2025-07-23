@@ -1,20 +1,20 @@
-import {
+import type {
   GetCheckoutSession,
   UpdateCheckoutSessionStatus,
   UpsertWorkspaceSubscription,
   UpsertPaidWorkspacePlan,
   GetSubscriptionData,
-  getSubscriptionState,
   GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
+import { getSubscriptionState } from '@/modules/gatekeeper/domain/billing'
 import {
   CheckoutSessionNotFoundError,
   WorkspaceAlreadyPaidError,
   WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
 import { throwUncoveredError } from '@speckle/shared'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { GetWorkspacePlan } from '@speckle/shared/authz'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetWorkspacePlan } from '@speckle/shared/authz'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 export const completeCheckoutSessionFactory =

@@ -6,7 +6,7 @@ import type {
 } from 'bull'
 import type { EventEmitter } from 'stream'
 import { initializeQueue } from '@speckle/shared/queue'
-import { JobPayload, PreviewResultPayload } from '@speckle/shared/workers/previews'
+import type { JobPayload, PreviewResultPayload } from '@speckle/shared/workers/previews'
 import {
   DelayBetweenPreviewRetriesMinutes,
   NumberOfPreviewRetries

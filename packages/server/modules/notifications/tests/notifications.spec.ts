@@ -1,11 +1,9 @@
-import {
-  MentionedInCommentData,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
+import type { MentionedInCommentData } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@/modules/notifications/helpers/types'
 import { publishNotification } from '@/modules/notifications/services/publication'
+import type { NotificationsStateManager } from '@/test/notificationsHelper'
 import {
   buildNotificationsStateTracker,
-  NotificationsStateManager,
   purgeNotifications
 } from '@/test/notificationsHelper'
 import { expect } from 'chai'

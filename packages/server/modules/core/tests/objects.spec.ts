@@ -78,7 +78,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { ObjectRecord } from '@/modules/core/helpers/types'
+import type { ObjectRecord } from '@/modules/core/helpers/types'
 
 const sampleCommit = JSON.parse(`{
   "Objects": [

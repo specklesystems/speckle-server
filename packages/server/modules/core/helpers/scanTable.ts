@@ -1,5 +1,5 @@
 import { LogicError } from '@/modules/shared/errors'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 export const scanTableFactory = <TRecord extends object>({
   db

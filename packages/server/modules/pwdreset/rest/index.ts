@@ -19,7 +19,7 @@ import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/requ
 import { BadRequestError } from '@/modules/shared/errors'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { ensureError } from '@speckle/shared'
-import { Express } from 'express'
+import type { Express } from 'express'
 
 export default function (app: Express) {
   const getUserByEmail = getUserByEmailFactory({ db })

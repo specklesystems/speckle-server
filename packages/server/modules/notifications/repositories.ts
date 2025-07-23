@@ -1,13 +1,13 @@
 import { UserNotificationPreferences } from '@/modules/core/dbSchema'
-import {
+import type {
   GetSavedUserNotificationPreferences,
   SaveUserNotificationPreferences
 } from '@/modules/notifications/domain/operations'
-import {
+import type {
   NotificationPreferences,
   UserNotificationPreferencesRecord
 } from '@/modules/notifications/helpers/types'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const tables = {
   userNotificationPreferences: (db: Knex) =>

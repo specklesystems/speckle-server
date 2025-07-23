@@ -2,20 +2,17 @@ import crs from 'crypto-random-string'
 import emailsModule from '@/modules/emails'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import sanitizeHtml from 'sanitize-html'
-import {
-  resolveTarget,
-  buildUserTarget,
-  ResolvedTargetData
-} from '@/modules/serverinvites/helpers/core'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import {
+import type { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
+import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import type {
   FindInvite,
   FindUserByTarget,
   InsertInviteAndDeleteOld,
   MarkInviteUpdated,
   ServerInviteRecordInsertModel
 } from '@/modules/serverinvites/domain/operations'
-import {
+import type {
   BuildInviteEmailContents,
   CollectAndValidateResourceTargets,
   CreateAndSendInvite,
@@ -24,15 +21,15 @@ import {
 } from '@/modules/serverinvites/services/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
-import { MaybeNullOrUndefined } from '@speckle/shared'
-import {
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type {
   PrimaryInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
-import { ServerInfo } from '@/modules/core/helpers/types'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { GetUser } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { ServerInfo } from '@/modules/core/helpers/types'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const getFinalTargetData = (
   target: string,

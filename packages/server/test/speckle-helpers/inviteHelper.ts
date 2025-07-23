@@ -1,4 +1,5 @@
-import { MaybeAsync, Roles, StreamRoles } from '@speckle/shared'
+import type { MaybeAsync, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 
 import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import {
@@ -11,8 +12,8 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import { BasicTestUser } from '@/test/authHelper'
-import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -20,10 +21,11 @@ import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
+import type { SendEmailParams } from '@/modules/emails/services/sending'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { db } from '@/db/knex'
 import { expect } from 'chai'
-import {
+import type {
   PrimaryInviteResourceTarget,
   ServerInviteRecord,
   ServerInviteResourceTarget

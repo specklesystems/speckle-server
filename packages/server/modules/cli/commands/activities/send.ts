@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { initializeQueue } from '@/modules/notifications/services/queue'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { cliLogger } from '@/observability/logging'

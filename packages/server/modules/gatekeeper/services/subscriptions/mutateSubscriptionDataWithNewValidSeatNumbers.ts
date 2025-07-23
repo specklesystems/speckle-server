@@ -1,8 +1,8 @@
-import {
+import type {
   GetWorkspacePlanProductId,
   SubscriptionDataInput
 } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
+import type { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
 import { LogicError } from '@/modules/shared/errors'
 import { SubscriptionStateError } from '@/modules/gatekeeper/errors/billing'
 

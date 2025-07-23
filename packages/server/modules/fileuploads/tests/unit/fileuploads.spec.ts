@@ -20,10 +20,10 @@ import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/cre
 import { assign, get } from 'lodash-es'
 import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/creation'
 import { getFeatureFlags } from '@speckle/shared/environment'
-import { JobPayload } from '@speckle/shared/workers/fileimport'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { JobPayload } from '@speckle/shared/workers/fileimport'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
-import { BranchRecord } from '@/modules/core/helpers/types'
+import type { BranchRecord } from '@/modules/core/helpers/types'
 
 const { createStream, createBranch, createUser, garbageCollector } =
   initUploadTestEnvironment()
