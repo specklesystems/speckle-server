@@ -1,6 +1,11 @@
 {
   "mochaExplorer.env": { "NODE_ENV": "test", "TSX": "true" },
-  "mochaExplorer.nodeArgv": ["--import", "tsx"],
+  "mochaExplorer.nodeArgv": [
+    "--experimental-strip-types",
+    "--experimental-transform-types",
+    "--import",
+    "./esmLoader.js"
+  ],
   "javascript.suggest.autoImports": true,
   "typescript.suggest.autoImports": true,
   "typescript.preferences.importModuleSpecifier": "non-relative",

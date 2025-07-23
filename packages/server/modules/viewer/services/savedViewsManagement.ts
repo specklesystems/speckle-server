@@ -1,5 +1,8 @@
 import type {
   CreateSavedView,
+  GetProjectSavedViewGroups,
+  GetProjectSavedViewGroupsPageItems,
+  GetProjectSavedViewGroupsTotalCount,
   GetStoredViewCount,
   StoreSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
@@ -9,6 +12,7 @@ import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
+import { NULL_GROUP_NAME_VALUE } from '@/modules/viewer/helpers/savedViews'
 
 export const createSavedViewFactory =
   (deps: {
@@ -21,7 +25,7 @@ export const createSavedViewFactory =
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
     const resourceIds = resourceBuilder().addFromString(resourceIdString)
-    if (!resourceIds.length()) {
+    if (!resourceIds.length) {
       throw new SavedViewCreationValidationError(
         "No valid resources referenced in 'resourceIdString'",
         {
@@ -40,7 +44,7 @@ export const createSavedViewFactory =
     })
 
     // Check if any of the resources could not be found
-    const failingResources = resourceIds.toResources().filter((rId) => {
+    const failingResources = resourceIds.clone().filter((rId) => {
       const resourceGroup = resourceGroups.find(
         (rg) => rg.identifier === rId.toString()
       )
@@ -54,9 +58,7 @@ export const createSavedViewFactory =
           info: {
             input,
             authorId,
-            resourceIdString: resourceBuilder()
-              .addResources(failingResources)
-              .toString()
+            resourceIdString: failingResources.toString()
           }
         }
       )
@@ -125,7 +127,18 @@ export const createSavedViewFactory =
       name = `Scene - ${String(viewCount + 1).padStart(3, '0')}`
     }
 
-    // TODO: Uniq idx on projectId, name, groupName
+    if (name === NULL_GROUP_NAME_VALUE) {
+      throw new SavedViewCreationValidationError(
+        'This name is reserved and cannot be used.',
+        {
+          info: {
+            input,
+            authorId
+          }
+        }
+      )
+    }
+
     const ret = await deps.storeSavedView({
       view: {
         projectId,
@@ -143,4 +156,24 @@ export const createSavedViewFactory =
     })
 
     return ret
+  }
+
+export const getProjectSavedViewGroupsFactory =
+  (deps: {
+    getProjectSavedViewGroupsPageItems: GetProjectSavedViewGroupsPageItems
+    getProjectSavedViewGroupsTotalCount: GetProjectSavedViewGroupsTotalCount
+  }): GetProjectSavedViewGroups =>
+  async (params) => {
+    const noItemsNeeded = params.limit === 0
+    const [totalCount, pageItems] = await Promise.all([
+      deps.getProjectSavedViewGroupsTotalCount(params),
+      noItemsNeeded
+        ? Promise.resolve({ items: [], cursor: null })
+        : deps.getProjectSavedViewGroupsPageItems(params)
+    ])
+
+    return {
+      totalCount,
+      ...pageItems
+    }
   }

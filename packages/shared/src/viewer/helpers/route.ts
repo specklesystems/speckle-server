@@ -158,8 +158,25 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
     this.#resources = []
     return this
   }
-  length() {
+  clone() {
+    const clone = new ViewerResourceBuilder()
+    const resources = this.toString()
+    clone.addFromString(resources)
+    return clone
+  }
+  get length() {
     return this.#resources.length
+  }
+  forEach(callback: (resource: ViewerResource) => void) {
+    this.#resources.forEach(callback)
+    return this
+  }
+  filter(callback: (resource: ViewerResource) => boolean) {
+    this.#resources = this.#resources.filter(callback)
+    return this
+  }
+  map<T>(callback: (resource: ViewerResource) => T): T[] {
+    return this.#resources.map(callback)
   }
   [Symbol.iterator](): Iterator<ViewerResource> {
     return this.#resources[Symbol.iterator]()

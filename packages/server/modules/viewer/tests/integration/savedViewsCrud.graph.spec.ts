@@ -1,5 +1,11 @@
-import type { CreateSavedViewMutationVariables } from '@/modules/core/graph/generated/graphql'
-import { CreateSavedViewDocument } from '@/modules/core/graph/generated/graphql'
+import type {
+  CreateSavedViewMutationVariables,
+  GetProjectSavedViewGroupsQueryVariables
+} from '@/modules/core/graph/generated/graphql'
+import {
+  CreateSavedViewDocument,
+  GetProjectSavedViewGroupsDocument
+} from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
   buildBasicTestProject
@@ -21,7 +27,7 @@ import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
-import { merge } from 'lodash-es'
+import { merge, times } from 'lodash-es'
 import type { PartialDeep } from 'type-fest'
 
 const fakeScreenshot =
@@ -56,19 +62,20 @@ describe('Saved Views GraphQL CRUD', () => {
 
   const buildCreateInput = (params: {
     resourceIdString: string
+    projectId?: string
     viewerState?: ViewerState.SerializedViewerState
     overrides?: PartialDeep<CreateSavedViewMutationVariables['input']>
   }): CreateSavedViewMutationVariables => ({
     input: merge(
       {},
       {
-        projectId: myProject.id,
+        projectId: params.projectId || myProject.id,
         resourceIdString: params.resourceIdString,
         screenshot: fakeScreenshot,
         viewerState:
           params.viewerState ||
           fakeViewerState({
-            projectId: myProject.id,
+            projectId: params.projectId || myProject.id,
             resources: {
               request: {
                 resourceIdString: params.resourceIdString
@@ -319,8 +326,114 @@ describe('Saved Views GraphQL CRUD', () => {
   })
 
   describe('reading', () => {
-    it.skip('should successfully read a saved view', () => {
-      // TODO:
+    const NAMED_GROUP_COUNT = 15
+    const GROUP_COUNT = NAMED_GROUP_COUNT + 1 // + ungrouped group
+    const PAGE_COUNT = 3
+    const PAGE_SIZE = Math.ceil(GROUP_COUNT / PAGE_COUNT)
+
+    const modelIds: string[] = []
+    let readTestProject: BasicTestStream
+
+    const getAllReadModelResourceIds = () =>
+      ViewerRoute.resourceBuilder().addResources(
+        modelIds.map((id) => new ViewerRoute.ViewerModelResource(id))
+      )
+
+    const getProjectViewGroups = (
+      input: GetProjectSavedViewGroupsQueryVariables,
+      options?: ExecuteOperationOptions
+    ) => apollo.execute(GetProjectSavedViewGroupsDocument, input, options)
+
+    before(async () => {
+      readTestProject = await createTestStream(
+        buildBasicTestProject({ name: 'read-test-project' }),
+        me
+      )
+
+      // Create a bunch of groups (views w/ groupNames), each w/ a different model
+      const createGroupView = async (groupName: string | null) => {
+        const model = await createTestBranch({
+          branch: buildBasicTestModel({ name: `model-${groupName || 'ungrouped'}` }),
+          stream: readTestProject,
+          owner: me
+        })
+        modelIds.push(model.id)
+
+        const resourceIdString = ViewerRoute.resourceBuilder()
+          .addModel(model.id)
+          .toString()
+        const input = buildCreateInput({
+          resourceIdString,
+          projectId: readTestProject.id,
+          overrides: {
+            groupName
+          }
+        })
+        return await createSavedView(input, { assertNoErrors: true })
+      }
+
+      const groupNames = [...times(NAMED_GROUP_COUNT, (i) => `group-${i + 1}`), null]
+      await Promise.all(groupNames.map((groupName) => createGroupView(groupName)))
     })
+
+    it('should successfully read a projects view groups w/ pagination', async () => {
+      let cursor: string | null = null
+      let pagesLoaded = 0
+      let groupsFound = 0
+      const allReadModelResourceIds = getAllReadModelResourceIds()
+
+      const loadPage = async () => {
+        const res = await getProjectViewGroups({
+          projectId: readTestProject.id,
+          input: {
+            limit: PAGE_SIZE,
+            cursor,
+            resourceIdString: allReadModelResourceIds.toString()
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const data = res.data?.project.savedViewGroups
+        expect(data).to.be.ok
+        expect(data!.totalCount).to.equal(GROUP_COUNT)
+
+        if (data?.cursor) {
+          expect(data!.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+        } else {
+          expect(data!.items.length).to.eq(0)
+        }
+
+        for (const group of data!.items) {
+          expect(group.projectId).to.equal(readTestProject.id)
+          expect(group.resourceIds).to.deep.equalInAnyOrder(
+            allReadModelResourceIds.toResources().map((r) => r.toString())
+          )
+          groupsFound++
+        }
+
+        if (!data?.cursor) {
+          expect(data?.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+        }
+
+        cursor = data?.cursor || null
+        pagesLoaded++
+      }
+
+      do {
+        if (pagesLoaded > PAGE_COUNT) {
+          throw new Error(
+            'Too many pages loaded, something is wrong with pagination logic'
+          )
+        }
+
+        await loadPage()
+      } while (cursor)
+
+      expect(pagesLoaded).to.equal(PAGE_COUNT + 1) // +1 for last,empty page
+      expect(groupsFound).to.equal(GROUP_COUNT)
+    })
+
+    // TODO: Test search/filtering logic / MIGRATIONS JS BUT RUNNING TS?
   })
 })

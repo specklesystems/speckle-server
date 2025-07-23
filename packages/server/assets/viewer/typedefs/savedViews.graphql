@@ -66,7 +66,10 @@ input SavedViewGroupViewsInput {
 type SavedViewGroup {
   id: ID!
   projectId: ID!
-  modelIds: [ID!]!
+  """
+  Resources that were used to find this group
+  """
+  resourceIds: [String!]!
   title: String!
   isUngroupedViewsGroup: Boolean!
   views(input: SavedViewGroupViewsInput!): SavedViewCollection!

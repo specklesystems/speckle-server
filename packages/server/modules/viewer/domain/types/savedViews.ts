@@ -24,3 +24,25 @@ export type SavedView = {
   createdAt: Date
   updatedAt: Date
 }
+
+/**
+ * Doesn't actually exist as a record in the DB, its dynamic and dependant on how it was retrieved
+ */
+export type SavedViewGroup = {
+  /**
+   * Composed out of groupName, projectId and resourceIdString, so it should be globally unique
+   */
+  id: string
+  /**
+   * Project that the group belongs to
+   */
+  projectId: string
+  /**
+   * Resource ids that were used to find the group
+   */
+  resourceIds: string[]
+  /**
+   * Null means default/unsorted group
+   */
+  name: Nullable<string>
+}

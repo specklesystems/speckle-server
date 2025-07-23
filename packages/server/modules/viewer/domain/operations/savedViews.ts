@@ -1,5 +1,7 @@
+import type { Collection } from '@/modules/shared/helpers/dbHelper'
 import type {
   SavedView,
+  SavedViewGroup,
   SavedViewVisibility
 } from '@/modules/viewer/domain/types/savedViews'
 import type { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shared'
@@ -13,6 +15,31 @@ export type StoreSavedView = (params: {
 }) => Promise<SavedView>
 
 export type GetStoredViewCount = (params: { projectId: string }) => Promise<number>
+
+export type GetProjectSavedViewGroupsBaseParams = {
+  /**
+   * Falsy means - anonymous user (so no onlyAuthored filtering)
+   */
+  userId?: MaybeNullOrUndefined<string>
+  projectId: string
+  resourceIdString: string
+  onlyAuthored?: MaybeNullOrUndefined<boolean>
+  search?: MaybeNullOrUndefined<string>
+}
+
+export type GetProjectSavedViewGroupsPageParams =
+  GetProjectSavedViewGroupsBaseParams & {
+    limit?: MaybeNullOrUndefined<number>
+    cursor?: MaybeNullOrUndefined<string>
+  }
+
+export type GetProjectSavedViewGroupsPageItems = (
+  params: GetProjectSavedViewGroupsPageParams
+) => Promise<Omit<Collection<SavedViewGroup>, 'totalCount'>>
+
+export type GetProjectSavedViewGroupsTotalCount = (
+  params: GetProjectSavedViewGroupsBaseParams
+) => Promise<number>
 
 // SERVICE OPERATIONS:
 
@@ -39,3 +66,7 @@ export type CreateSavedViewParams = {
 }
 
 export type CreateSavedView = (params: CreateSavedViewParams) => Promise<SavedView>
+
+export type GetProjectSavedViewGroups = (
+  params: GetProjectSavedViewGroupsPageParams
+) => Promise<Collection<SavedViewGroup>>

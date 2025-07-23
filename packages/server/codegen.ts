@@ -188,7 +188,9 @@ const config: CodegenConfig = {
             '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn',
           SavedViewMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
-          SavedView: '@/modules/viewer/helpers/graphTypes#SavedViewGraphQLReturn'
+          SavedView: '@/modules/viewer/helpers/graphTypes#SavedViewGraphQLReturn',
+          SavedViewGroup:
+            '@/modules/viewer/helpers/graphTypes#SavedViewGroupGraphQLReturn'
         }
       }
     }

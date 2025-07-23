@@ -21,6 +21,16 @@ const basicSavedViewFragment = gql`
   }
 `
 
+const basicSavedViewGroupFragment = gql`
+  fragment BasicSavedViewGroup on SavedViewGroup {
+    id
+    projectId
+    resourceIds
+    title
+    isUngroupedViewsGroup
+  }
+`
+
 export const createSavedViewMutation = gql`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
     projectMutations {
@@ -33,4 +43,20 @@ export const createSavedViewMutation = gql`
   }
 
   ${basicSavedViewFragment}
+`
+
+export const getProjectSavedViewGroupsQuery = gql`
+  query GetProjectSavedViewGroups($projectId: String!, $input: SavedViewGroupsInput!) {
+    project(id: $projectId) {
+      savedViewGroups(input: $input) {
+        totalCount
+        cursor
+        items {
+          ...BasicSavedViewGroup
+        }
+      }
+    }
+  }
+
+  ${basicSavedViewGroupFragment}
 `
