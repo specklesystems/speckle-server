@@ -7,7 +7,10 @@ import { moduleLogger } from '@/observability/logging'
 import { Express } from 'express'
 
 import { db } from '@/db/knex'
-import { queryAllPendingAccSyncItemsFactory } from '@/modules/acc/repositories/accSyncItems'
+import {
+  queryAllPendingAccSyncItemsFactory,
+  upsertAccSyncItemFactory
+} from '@/modules/acc/repositories/accSyncItems'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -18,6 +21,7 @@ import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operatio
 import { AccSyncItems } from '@/modules/acc/dbSchema'
 import { AccSyncItem } from '@/modules/acc/domain/types'
 import {
+  getAutomationFactory,
   getAutomationTokenFactory,
   getLatestAutomationRevisionFactory,
   InsertableAutomationRun,
@@ -215,6 +219,17 @@ const schedulePendingAccSyncItemsPoll = () => {
 
           const projectDb = await getProjectDbClient({ projectId: syncItem.projectId })
 
+          await upsertAccSyncItemFactory({ db: projectDb })({
+            ...syncItem,
+            status: 'SYNCING'
+          })
+
+          const automation = await getAutomationFactory({ db: projectDb })({
+            automationId: syncItem.automationId
+          })
+
+          if (!automation || !automation.executionEngineAutomationId) continue
+
           const automationRevision = await getLatestAutomationRevisionFactory({
             db: projectDb
           })({ automationId: syncItem.automationId })
@@ -293,7 +308,7 @@ const schedulePendingAccSyncItemsPoll = () => {
 
           await triggerAutomationRun({
             projectId: syncItem.projectId,
-            automationId: syncItem.automationId,
+            automationId: automation.executionEngineAutomationId,
             functionRuns: runData.functionRuns.map((r) => ({
               ...r,
               runId: cryptoRandomString({ length: 15 }),
