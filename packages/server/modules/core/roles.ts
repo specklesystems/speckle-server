@@ -1,4 +1,4 @@
-import {
+import type {
   UserServerRole,
   UserStreamRole
 } from '@/modules/shared/domain/rolesAndScopes/types'

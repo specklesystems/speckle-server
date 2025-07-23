@@ -1,9 +1,9 @@
 import { Activity as ActivityModel, StreamAcl } from '@/modules/core/dbSchema'
-import { StreamAclRecord } from '@/modules/core/helpers/types'
-import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
-import { WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
+import type { StreamAclRecord } from '@/modules/core/helpers/types'
+import type { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
+import type { WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceSeats } from '@/modules/workspacesCore/helpers/db'
-import {
+import type {
   StreamRoles,
   WorkspacePlan,
   WorkspacePlanBillingIntervals,
@@ -11,10 +11,10 @@ import {
   WorkspacePlanStatuses
 } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { MaxBackfillIterationsReached } from '@/modules/activitystream/errors/activityStream'
-import { Logger } from '@/observability/logging'
-import { Activity } from '@/modules/activitystream/domain/types'
+import type { Logger } from '@/observability/logging'
+import type { Activity } from '@/modules/activitystream/domain/types'
 
 export const getUntrackedWorkspaceSeatsFactory =
   ({ db }: { db: Knex }) =>

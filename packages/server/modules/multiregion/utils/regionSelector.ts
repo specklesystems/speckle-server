@@ -8,14 +8,12 @@ import {
   inMemoryRegionKeyStoreFactory,
   writeRegionKeyToCacheFactory
 } from '@/modules/multiregion/repositories/projectRegion'
-import {
-  GetProjectRegionKey,
-  getProjectRegionKeyFactory
-} from '@/modules/multiregion/services/projectRegion'
+import type { GetProjectRegionKey } from '@/modules/multiregion/services/projectRegion'
+import { getProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
-import { Optional } from '@speckle/shared'
-import { DataRegionsConfig } from '@speckle/shared/environment/db'
+import type { Optional } from '@speckle/shared'
+import type { DataRegionsConfig } from '@speckle/shared/environment/db'
 
 export const getRegisteredRegionConfigs = async () => {
   const registeredKeys = (await getRegionsFactory({ db: mainDb })()).map((r) => r.key)

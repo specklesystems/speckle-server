@@ -2,7 +2,7 @@ import cron from 'node-cron'
 import crs from 'crypto-random-string'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { type Logger, taskSchedulerLogger as logger } from '@/observability/logging'
-import {
+import type {
   AcquireTaskLock,
   ReleaseTaskLock,
   ScheduleExecution

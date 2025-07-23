@@ -1,12 +1,13 @@
 import { getRedisUrl, getIntFromEnv } from '@/modules/shared/helpers/envHelper'
+import type { RateLimiterAbstract } from 'rate-limiter-flexible'
 import {
   BurstyRateLimiter,
-  RateLimiterAbstract,
   RateLimiterMemory,
   RateLimiterRedis,
   RateLimiterRes
 } from 'rate-limiter-flexible'
-import { Nullable, TIME } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
+import { TIME } from '@speckle/shared'
 import { rateLimiterLogger } from '@/observability/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'

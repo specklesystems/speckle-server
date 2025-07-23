@@ -1,5 +1,5 @@
 import { getDefaultApps } from '@/modules/auth/defaultApps'
-import {
+import type {
   CreateAppTokenFromAccessCode,
   CreateRefreshToken,
   DeleteAuthorizationCode,
@@ -12,10 +12,10 @@ import {
   RevokeRefreshToken,
   UpdateDefaultApp
 } from '@/modules/auth/domain/operations'
-import { ScopeRecord } from '@/modules/auth/helpers/types'
-import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
-import { createBareToken } from '@/modules/core/services/tokens'
-import { ServerScope } from '@speckle/shared'
+import type { ScopeRecord } from '@/modules/auth/helpers/types'
+import type { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import type { createBareToken } from '@/modules/core/services/tokens'
+import type { ServerScope } from '@speckle/shared'
 import bcrypt from 'bcrypt'
 import {
   AccessCodeNotFoundError,

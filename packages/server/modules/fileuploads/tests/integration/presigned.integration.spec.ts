@@ -4,10 +4,10 @@ import {
 } from '@/modules/blobstorage/services/presigned'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobMetadataFromStorage,
-  getSignedUrlFactory,
-  ObjectStorage
+  getSignedUrlFactory
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobFactory,
@@ -20,7 +20,7 @@ import { BlobUploadStatus } from '@speckle/shared/blobs'
 import { createProject } from '@/test/projectHelper'
 import { createTestUser } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { testLogger } from '@/observability/logging'
@@ -52,8 +52,9 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 

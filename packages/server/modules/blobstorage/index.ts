@@ -1,11 +1,11 @@
-import cron from 'node-cron'
+import type cron from 'node-cron'
 import { db } from '@/db/knex'
 import { moduleLogger } from '@/observability/logging'
 import {
   createS3Bucket,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { ensureStorageAccessFactory } from '@/modules/blobstorage/repositories/blobs'
 import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { blobStorageRouterFactory } from '@/modules/blobstorage/rest/router'

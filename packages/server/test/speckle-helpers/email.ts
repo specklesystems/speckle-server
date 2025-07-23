@@ -1,6 +1,6 @@
 import { EmailsEvents } from '@/modules/emails/domain/events'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { MaybeAsync } from '@speckle/shared'
+import type { MaybeAsync } from '@speckle/shared'
 import type Mail from 'nodemailer/lib/mailer'
 
 type ListenOptions = {

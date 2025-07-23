@@ -1,5 +1,6 @@
 import { truncateTables } from '@/test/hooks'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import { StreamActivity, Users } from '@/modules/core/dbSchema'
 import {
   createActivitySummaryFactory,
@@ -10,7 +11,7 @@ import {
   StreamActionTypes,
   StreamResourceTypes
 } from '@/modules/activitystream/helpers/types'
-import {
+import type {
   ActivityDigestMessage,
   NotificationType,
   NotificationTypeMessageMap

@@ -1,5 +1,5 @@
 import { Branches, FileUploads } from '@/modules/core/dbSchema'
-import {
+import type {
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
   SaveUploadFile,
@@ -13,12 +13,12 @@ import {
   GetModelUploadsTotalCount,
   UpdateFileStatus
 } from '@/modules/fileuploads/domain/operations'
-import {
-  FileUploadConvertedStatus,
+import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
-import { Knex } from 'knex'
+import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
+import type { Knex } from 'knex'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 import { clamp } from 'lodash-es'

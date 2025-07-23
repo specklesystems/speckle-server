@@ -1,4 +1,4 @@
-import { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
+import type { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { getDirective } from '@graphql-tools/utils'
 import { mapSchema } from '@graphql-tools/utils'

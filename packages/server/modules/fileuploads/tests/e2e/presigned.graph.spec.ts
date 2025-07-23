@@ -1,14 +1,17 @@
 import { createTestUser } from '@/test/authHelper'
-import { ExecuteOperationResponse, testApolloServer } from '@/test/graphqlHelper'
+import type { ExecuteOperationResponse } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { createProject, grantProjectPermissions } from '@/test/projectHelper'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
-import { Nullable, Optional, Roles, ServerRoles, StreamRoles } from '@speckle/shared'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { Nullable, Optional, ServerRoles, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import axios from 'axios'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import gql from 'graphql-tag'
-import { SetNonNullable } from 'type-fest'
+import type { SetNonNullable } from 'type-fest'
 
 const testForbiddenResponse = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

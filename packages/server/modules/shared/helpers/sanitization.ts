@@ -1,4 +1,4 @@
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { BaseError } from '@/modules/shared/errors'
 
 const base64ImagePattern = /^data:image\/[a-zA-Z+.-]+;base64,[a-zA-Z0-9+/]+=*$/

@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const GENDO_TABLE_NAME = 'gendo_ai_renders'
 

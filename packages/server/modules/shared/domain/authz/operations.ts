@@ -1,5 +1,5 @@
-import { AuthPipelineFunction } from '@/modules/shared/domain/authz/types'
-import { ServerRoles, StreamRoles } from '@speckle/shared'
+import type { AuthPipelineFunction } from '@/modules/shared/domain/authz/types'
+import type { ServerRoles, StreamRoles } from '@speckle/shared'
 
 export type ValidateServerRoleBuilder = (params: {
   requiredRole: ServerRoles

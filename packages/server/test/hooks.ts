@@ -17,15 +17,8 @@ import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import {
-  ensureError,
-  MaybeAsync,
-  MaybeNullOrUndefined,
-  Nullable,
-  retry,
-  TIME_MS,
-  wait
-} from '@speckle/shared'
+import type { MaybeAsync, MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { ensureError, retry, TIME_MS, wait } from '@speckle/shared'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -42,12 +35,12 @@ import {
   getRegisteredRegionClients,
   initializeRegion
 } from '@/modules/multiregion/utils/dbSelector'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { ApolloServer } from '@apollo/server'
-import { ReadinessHandler } from '@/healthchecks/types'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { ApolloServer } from '@apollo/server'
+import type { ReadinessHandler } from '@/healthchecks/types'
 import { set } from 'lodash-es'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'

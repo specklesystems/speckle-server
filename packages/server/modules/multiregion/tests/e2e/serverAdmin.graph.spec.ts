@@ -1,33 +1,31 @@
 import { mainDb } from '@/db/knex'
 import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
-import { DataRegionsConfig } from '@/modules/multiregion/domain/types'
+import type { DataRegionsConfig } from '@/modules/multiregion/domain/types'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import {
   getMultiRegionConfig,
   setMultiRegionConfig
 } from '@/modules/multiregion/regionConfig'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
-import {
-  CreateNewRegionDocument,
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import type {
   CreateServerRegionInput,
-  GetAvailableRegionKeysDocument,
-  GetRegionsDocument,
-  UpdateRegionDocument,
   UpdateServerRegionInput
 } from '@/modules/core/graph/generated/graphql'
 import {
-  ExecuteOperationOptions,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+  CreateNewRegionDocument,
+  GetAvailableRegionKeysDocument,
+  GetRegionsDocument,
+  UpdateRegionDocument
+} from '@/modules/core/graph/generated/graphql'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 
 import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 import { Roles } from '@speckle/shared'
-import {
-  getConnectionSettings,
-  MultiRegionConfig
-} from '@speckle/shared/environment/db'
+import type { MultiRegionConfig } from '@speckle/shared/environment/db'
+import { getConnectionSettings } from '@speckle/shared/environment/db'
 import { expect } from 'chai'
 import { merge } from 'lodash-es'
 

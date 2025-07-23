@@ -16,8 +16,9 @@ import {
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
-import {
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import type {
   AddOrUpdateWorkspaceRole,
   CreateWorkspaceJoinRequest,
   SendWorkspaceJoinRequestApprovedEmail,
@@ -31,18 +32,17 @@ import {
   dismissWorkspaceJoinRequestFactory,
   requestToJoinWorkspaceFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
-import {
-  BasicTestWorkspace,
-  createTestWorkspace
-} from '@/modules/workspaces/tests/helpers/creation'
-import {
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import type {
   Workspace,
   WorkspaceJoinRequest,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -50,7 +50,7 @@ import {
   createWorkspaceJoinRequestFactory,
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory

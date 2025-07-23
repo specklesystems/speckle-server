@@ -1,7 +1,8 @@
 import { db } from '@/db/knex'
-import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
+import type { ServerRoles } from '@/modules/core/helpers/mainConstants'
+import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
-import { UserRecord } from '@/modules/core/helpers/types'
+import type { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   storeApiTokenFactory,
@@ -14,12 +15,12 @@ import {
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   countAdminUsersFactory,
   getUserFactory,
   storeUserAclFactory,
-  storeUserFactory,
-  UserWithOptionalRole
+  storeUserFactory
 } from '@/modules/core/repositories/users'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
@@ -36,7 +37,8 @@ import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvite
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
-import { ServerScope, wait } from '@speckle/shared'
+import type { ServerScope } from '@speckle/shared'
+import { wait } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { assign, isArray, isNumber, omit, times } from 'lodash-es'
 

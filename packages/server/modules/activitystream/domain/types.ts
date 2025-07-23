@@ -1,16 +1,16 @@
-import {
+import type {
   StreamActionTypes,
   StreamResourceTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { ViewerResourceItem } from '@/modules/comments/domain/types'
-import {
+import type { ViewerResourceItem } from '@/modules/comments/domain/types'
+import type {
   CommentCreateInput,
   CreateCommentInput,
   CreateCommentReplyInput,
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import z from 'zod'
 
 // Activity

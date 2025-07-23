@@ -1,15 +1,15 @@
-import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
-import {
-  calculateSubscriptionSeats,
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import type {
   GetWorkspacePlan,
   GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
+import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
+import type { MixpanelClient } from '@/modules/shared/utils/mixpanel'
 import {
   getBaseTrackingProperties,
-  MixpanelClient,
   WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/shared/utils/mixpanel'
-import {
+import type {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetWorkspaceModelCount,
@@ -17,9 +17,10 @@ import {
   GetWorkspaceSeatCount,
   GetAllWorkspaces
 } from '@/modules/workspaces/domain/operations'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
-import { Logger } from '@/observability/logging'
-import { Nullable, Roles, SeatTypes } from '@speckle/shared'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { Logger } from '@/observability/logging'
+import type { Nullable } from '@speckle/shared'
+import { Roles, SeatTypes } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getAllWorkspacesFactory,

@@ -1,4 +1,5 @@
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   createRandomEmail,

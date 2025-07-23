@@ -1,11 +1,9 @@
 import { cliLogger } from '@/observability/logging'
-import {
-  MentionedInCommentData,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
+import type { MentionedInCommentData } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@/modules/notifications/helpers/types'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { initializeQueue } from '@/modules/notifications/services/queue'
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 
 const command: CommandModule = {
   command: 'test-push [message] [error]',

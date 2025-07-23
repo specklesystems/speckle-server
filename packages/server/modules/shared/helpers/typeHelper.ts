@@ -12,7 +12,7 @@ import type { ConditionalKeys, SetRequired } from 'type-fest'
 import type { Logger } from 'pino'
 import type { BaseContext } from '@apollo/server'
 import type { Registry } from 'prom-client'
-import { AuthPolicies } from '@speckle/shared/authz'
+import type { AuthPolicies } from '@speckle/shared/authz'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,

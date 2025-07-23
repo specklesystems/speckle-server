@@ -1,4 +1,4 @@
-import { WorkspacePlans } from '@speckle/shared'
+import type { WorkspacePlans } from '@speckle/shared'
 
 const WorkspacePlansUpgradeMapping: Record<WorkspacePlans, WorkspacePlans[]> = {
   academia: [],

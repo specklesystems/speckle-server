@@ -1,12 +1,12 @@
-import { Knex } from 'knex'
-import {
+import type { Knex } from 'knex'
+import type {
   BackgroundJob,
   BackgroundJobPayload,
-  BackgroundJobStatus,
   GetBackgroundJob,
   GetBackgroundJobCount,
   StoreBackgroundJob
 } from '@/modules/backgroundjobs/domain'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
 import { buildTableHelper } from '@/modules/core/dbSchema'
 
 export const BackgroundJobs = buildTableHelper('background_jobs', [

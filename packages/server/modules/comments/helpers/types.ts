@@ -1,6 +1,6 @@
-import { DataStruct, LegacyData } from '@/modules/comments/services/data'
-import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { DataStruct, LegacyData } from '@/modules/comments/services/data'
+import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
 
 export type CommentLinkResourceType = 'stream' | 'commit' | 'object' | 'comment'
 

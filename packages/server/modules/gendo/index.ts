@@ -1,4 +1,4 @@
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import restApi from '@/modules/gendo/rest/index'

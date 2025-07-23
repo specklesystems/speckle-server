@@ -1,7 +1,7 @@
-import { Stream } from '@/modules/core/domain/streams/types'
+import type { Stream } from '@/modules/core/domain/streams/types'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import {
+import type {
   AsyncRegionKeyStore,
   CachedRegionKeyDelete,
   CachedRegionKeyLookup,
@@ -11,8 +11,8 @@ import {
   SyncRegionKeyLookup,
   SyncRegionKeyStore
 } from '@/modules/multiregion/domain/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { Knex } from 'knex'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { Knex } from 'knex'
 
 export type GetProjectRegionKey = (args: {
   projectId: string

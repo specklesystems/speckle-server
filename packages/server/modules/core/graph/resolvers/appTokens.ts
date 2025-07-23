@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { canCreateAppToken, isValidScope } from '@/modules/core/helpers/token'
 import {
   storeApiTokenFactory,

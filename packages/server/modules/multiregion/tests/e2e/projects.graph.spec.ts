@@ -1,22 +1,24 @@
 import { db } from '@/db/knex'
-import { AutomationRecord, AutomationRunRecord } from '@/modules/automate/helpers/types'
+import type {
+  AutomationRecord,
+  AutomationRunRecord
+} from '@/modules/automate/helpers/types'
 import { markAutomationDeletedFactory } from '@/modules/automate/repositories/automations'
 import { deleteAutomationFactory } from '@/modules/automate/services/automationManagement'
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 import { updateCommentFactory } from '@/modules/comments/repositories/comments'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   createWebhookConfigFactory,
   createWebhookEventFactory
 } from '@/modules/webhooks/repositories/webhooks'
-import {
-  BasicTestWorkspace,
-  createTestWorkspace
-} from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import {
   UpdateProjectRegionDocument,
   GetProjectDocument,
@@ -28,33 +30,32 @@ import {
   GetRegionalProjectWebhookDocument,
   GetRegionalProjectBlobDocument
 } from '@/modules/core/graph/generated/graphql'
-import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import {
   createTestAutomation,
   createTestAutomationRun
 } from '@/test/speckle-helpers/automationHelper'
 import { createTestBlob } from '@/test/speckle-helpers/blobHelper'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestComment } from '@/test/speckle-helpers/commentHelper'
-import {
-  BasicTestCommit,
-  createTestObject,
-  createTestCommit
-} from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestObject, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   isMultiRegionTestMode,
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
-  BasicTestStream,
   createTestStream,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
 import { retry, Roles, wait } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
-import { SetOptional } from 'type-fest'
+import type { Knex } from 'knex'
+import type { SetOptional } from 'type-fest'
 
 const tables = {
   projects: (db: Knex) => db.table<StreamRecord>('streams')
