@@ -1,17 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <ViewerMenu v-model:open="open" tooltip="View modes" align="top">
-    <template #trigger-icon>
-      <IconViewerViewModes class="h-5 w-5" />
-    </template>
-    <template #title>View modes</template>
-    <div
-      class="w-56 p-1.5"
-      @mouseenter="cancelCloseTimer"
-      @mouseleave="isManuallyOpened ? undefined : startCloseTimer"
-      @focusin="cancelCloseTimer"
-      @focusout="isManuallyOpened ? undefined : startCloseTimer"
-    >
+  <ViewerLayoutPanel>
+    <div class="w-full p-1.5">
       <div v-for="shortcut in viewModeShortcuts" :key="shortcut.name">
         <ViewerMenuItem
           :label="shortcut.name"
@@ -85,11 +75,10 @@
         </div>
       </div>
     </div>
-  </ViewerMenu>
+  </ViewerLayoutPanel>
 </template>
 
 <script setup lang="ts">
-import { useTimeoutFn } from '@vueuse/core'
 import { ViewMode } from '@speckle/viewer'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
@@ -111,19 +100,9 @@ const {
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const { isLightTheme } = useTheme()
 
-const isManuallyOpened = ref(false)
-
 const handleEdgesWeightChange = () => {
   setEdgesWeight(Number(edgesWeight.value))
 }
-
-const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
-  () => {
-    open.value = false
-  },
-  3000,
-  { immediate: false }
-)
 
 registerShortcuts({
   SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT, true),
@@ -152,18 +131,12 @@ const edgesColorOptions = computed(() => [
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
   setViewMode(mode)
-  cancelCloseTimer()
 
   if (isShortcut) {
-    startCloseTimer()
     if (!open.value) {
       emit('force-close-others')
     }
     open.value = true
   }
 }
-
-onUnmounted(() => {
-  cancelCloseTimer()
-})
 </script>

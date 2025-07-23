@@ -7,6 +7,7 @@
         : 'bg-foundation text-foreground hover:bg-primary-muted focus-visible:border-foundation'
     "
   >
+    <component :is="icon" v-if="icon" class="h-4 w-4 md:h-5 md:w-5" />
     <slot />
   </button>
 </template>
@@ -14,5 +15,6 @@
 <script setup lang="ts">
 defineProps<{
   active?: boolean
+  icon?: string
 }>()
 </script>
