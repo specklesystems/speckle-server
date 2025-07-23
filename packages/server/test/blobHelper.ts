@@ -1,5 +1,5 @@
 import request from 'supertest'
-import { Express } from 'express'
+import type { Express } from 'express'
 
 /**
  * Upload a blob from a test runner

@@ -1,9 +1,9 @@
 import { db } from '@/db/knex'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import type { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { intersectProjectCollaboratorsAndWorkspaceCollaboratorsFactory } from '@/modules/workspaces/repositories/projects'
 import {

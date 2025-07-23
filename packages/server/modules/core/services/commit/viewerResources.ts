@@ -1,18 +1,18 @@
-import {
+import type {
   GetCommentsResources,
   GetViewerResourcesForComment,
   GetViewerResourcesForComments,
   GetViewerResourcesFromLegacyIdentifiers
 } from '@/modules/comments/domain/operations'
-import { GetCommitsAndTheirBranchIds } from '@/modules/core/domain/commits/operations'
-import {
+import type { GetCommitsAndTheirBranchIds } from '@/modules/core/domain/commits/operations'
+import type {
   ResourceIdentifier,
   ResourceIdentifierInput,
-  ResourceType,
   ViewerResourceItem
 } from '@/modules/core/graph/generated/graphql'
+import { ResourceType } from '@/modules/core/graph/generated/graphql'
+import type { GetObjectResourceGroupsDeps } from '@/modules/viewer/services/viewerResources'
 import {
-  GetObjectResourceGroupsDeps,
   getObjectResourceGroupsFactory,
   isResourceItemEqual
 } from '@/modules/viewer/services/viewerResources'

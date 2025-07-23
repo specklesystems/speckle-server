@@ -9,7 +9,7 @@ import {
   getUserPersonalAccessTokensFactory,
   revokeUserTokenByIdFactory
 } from '@/modules/core/repositories/tokens'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 

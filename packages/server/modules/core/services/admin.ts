@@ -1,21 +1,21 @@
-import {
+import type {
   AdminGetProjectList,
   LegacyGetStreams
 } from '@/modules/core/domain/streams/operations'
-import {
+import type {
   AdminGetInviteList,
   AdminUserList,
   CountUsers,
   ListPaginatedUsersPage
 } from '@/modules/core/domain/users/operations'
-import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import {
+import type { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type {
   CountServerInvites,
   QueryServerInvites
 } from '@/modules/serverinvites/domain/operations'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { BaseError } from '@/modules/shared/errors/base'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 
 class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'

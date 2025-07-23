@@ -1,13 +1,16 @@
 import { expect } from 'chai'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
+import type { ProjectCreateInput } from '@/modules/core/graph/generated/graphql'
 import {
   BatchDeleteProjectsDocument,
   CreateProjectDocument,
   GetProjectObjectDocument,
-  ProjectCreateInput,
   ProjectVisibility
 } from '@/modules/core/graph/generated/graphql'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'

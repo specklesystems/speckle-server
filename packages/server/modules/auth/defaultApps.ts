@@ -4,8 +4,8 @@ import {
   getServerOrigin,
   getFeatureFlags
 } from '@/modules/shared/helpers/envHelper'
-import { ServerScope } from '@speckle/shared'
-import { Merge } from 'type-fest'
+import type { ServerScope } from '@speckle/shared'
+import type { Merge } from 'type-fest'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 

@@ -2,9 +2,9 @@
 import mailchimp from '@mailchimp/mailchimp_marketing'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
-import { UserRecord } from '@/modules/core/helpers/types'
+import type { UserRecord } from '@/modules/core/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { OnboardingCompletionInput } from '@/modules/core/graph/generated/graphql'
+import type { OnboardingCompletionInput } from '@/modules/core/graph/generated/graphql'
 
 let mailchimpInitialized = false
 

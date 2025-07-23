@@ -3,7 +3,7 @@ import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import type { ExecutionParams } from 'subscriptions-transport-ws'
 import { logWithErr } from '@/observability/utils/logLevels'
 import { BaseError } from '@/modules/shared/errors'
-import { GraphQLError } from 'graphql'
+import type { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/observability/utils/redact'
 import type { Counter } from 'prom-client'
 import {

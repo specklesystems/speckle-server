@@ -1,6 +1,6 @@
 export { WorkspaceInviteResourceTarget } from '@/modules/workspacesCore/domain/types'
-import { LimitedUserRecord, UserWithRole } from '@/modules/core/helpers/types'
-import { WorkspaceRoles } from '@speckle/shared'
+import type { LimitedUserRecord, UserWithRole } from '@/modules/core/helpers/types'
+import type { WorkspaceRoles } from '@speckle/shared'
 
 export type WorkspaceTeamMember = UserWithRole<LimitedUserRecord> & {
   email: string | null

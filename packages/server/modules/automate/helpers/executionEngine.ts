@@ -3,7 +3,7 @@ import {
   AutomateFunctionTemplateLanguage,
   AutomateRunTriggerType
 } from '@/modules/core/graph/generated/graphql'
-import { Nullable, SourceAppName } from '@speckle/shared'
+import type { Nullable, SourceAppName } from '@speckle/shared'
 
 // TODO: These should be managed in a shared package maybe?
 export type FunctionSchemaType = {

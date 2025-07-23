@@ -1,10 +1,10 @@
-import {
+import type {
   GetBranchById,
   GetStreamBranchByName,
   MarkCommitBranchUpdated
 } from '@/modules/core/domain/branches/operations'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
-import {
+import type {
   CreateCommitByBranchId,
   CreateCommitByBranchName,
   DeleteCommit,
@@ -18,8 +18,8 @@ import {
   UpdateCommit,
   UpdateCommitAndNotify
 } from '@/modules/core/domain/commits/operations'
-import { GetObject } from '@/modules/core/domain/objects/operations'
-import {
+import type { GetObject } from '@/modules/core/domain/objects/operations'
+import type {
   GetCommitStream,
   GetStream,
   MarkCommitStreamUpdated
@@ -31,14 +31,14 @@ import {
   CommitReceiveError,
   CommitUpdateError
 } from '@/modules/core/errors/commit'
-import {
+import type {
   CommitReceivedInput,
   CommitUpdateInput,
   MarkReceivedVersionInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash-es'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'

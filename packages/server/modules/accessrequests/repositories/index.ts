@@ -1,4 +1,4 @@
-import {
+import type {
   AccessRecordInput,
   CreateNewRequest,
   DeleteRequestById,
@@ -8,9 +8,9 @@ import {
 } from '@/modules/accessrequests/domain/operations'
 import { ServerAccessRequests, Streams } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const tables = {
   serverAccessRequests: (db: Knex) => db(ServerAccessRequests.name)

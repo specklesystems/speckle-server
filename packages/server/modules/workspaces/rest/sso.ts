@@ -2,7 +2,8 @@
 
 import { db } from '@/db/knex'
 import { validateRequest } from 'zod-express'
-import { Request, RequestHandler, Router } from 'express'
+import type { Request, RequestHandler } from 'express'
+import { Router } from 'express'
 import { z } from 'zod'
 import {
   createWorkspaceUserFromSsoProfileFactory,
@@ -25,9 +26,10 @@ import {
   getWorkspaceSsoProviderFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
-import { generators, UserinfoResponse } from 'openid-client'
+import type { UserinfoResponse } from 'openid-client'
+import { generators } from 'openid-client'
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
-import {
+import type {
   OidcProfile,
   OidcProvider,
   SsoSessionState,
@@ -56,13 +58,13 @@ import {
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   countAdminUsersFactory,
   getUserFactory,
   legacyGetUserFactory,
   storeUserAclFactory,
-  storeUserFactory,
-  UserWithOptionalRole
+  storeUserFactory
 } from '@/modules/core/repositories/users'
 import {
   finalizeAuthMiddlewareFactory,
@@ -89,16 +91,16 @@ import {
   isValidOidcProfile,
   getEmailFromOidcProfile
 } from '@/modules/workspaces/domain/sso/logic'
-import {
+import type {
   GetWorkspaceBySlug,
   GetWorkspaceRoles
 } from '@/modules/workspaces/domain/operations'
-import {
+import type {
   GetWorkspaceSsoProvider,
   UpsertUserSsoSession
 } from '@/modules/workspaces/domain/sso/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
-import {
+import type { GetUser } from '@/modules/core/domain/users/operations'
+import type {
   FindEmail,
   FindEmailsByUserId
 } from '@/modules/core/domain/userEmails/operations'

@@ -1,6 +1,9 @@
-import { Project, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { MaybeNullOrUndefined, StreamRoles } from '@speckle/shared'
+import type {
+  Project,
+  StreamWithOptionalRole
+} from '@/modules/core/domain/streams/types'
+import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import type { MaybeNullOrUndefined, StreamRoles } from '@speckle/shared'
 
 export type GetProject = (args: { projectId: string }) => Promise<Project | null>
 

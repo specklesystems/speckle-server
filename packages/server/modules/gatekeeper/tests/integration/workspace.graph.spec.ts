@@ -11,8 +11,8 @@ import {
   assignToWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import type { BasicTestUser } from '@/test/authHelper'
 import {
-  BasicTestUser,
   createAuthTokenForUser,
   createTestUser,
   createTestUsers,
@@ -23,18 +23,14 @@ import {
   GetWorkspacePlanUsageDocument,
   GetWorkspaceWithSubscriptionDocument
 } from '@/modules/core/graph/generated/graphql'
-import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import {
-  BasicTestBranch,
-  createTestBranches
-} from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranches } from '@/test/speckle-helpers/branchHelper'
 import { createTestCommit, createTestObject } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { PaidWorkspacePlans, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'

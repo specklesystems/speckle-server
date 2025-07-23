@@ -1,4 +1,5 @@
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import {
   CreateProjectDocument,
   ProjectVisibility
@@ -6,7 +7,8 @@ import {
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import { beforeEachContext } from '@/test/hooks'
-import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()

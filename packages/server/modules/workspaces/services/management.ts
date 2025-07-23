@@ -1,5 +1,5 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import {
+import type {
   DeleteWorkspace,
   EmitWorkspaceEvent,
   GetWorkspace,
@@ -14,20 +14,16 @@ import {
   EnsureValidWorkspaceRoleSeat,
   AssignWorkspaceSeat
 } from '@/modules/workspaces/domain/operations'
-import {
+import type {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
-import {
-  generateSlugFromName,
-  MaybeNullOrUndefined,
-  Roles,
-  validateWorkspaceSlug
-} from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { generateSlugFromName, Roles, validateWorkspaceSlug } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import {
+import type {
   DeleteWorkspaceRole,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles
@@ -44,32 +40,30 @@ import {
   WorkspaceInvalidUpdateError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
-import { EventBus } from '@/modules/shared/services/eventBus'
+import type { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
-import {
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
-} from '@/modules/core/domain/tokens/types'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
-import {
+import type {
   FindEmailsByUserId,
   FindVerifiedEmailsByUserId
 } from '@/modules/core/domain/userEmails/operations'
-import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import type { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { chunk, isEmpty, omit } from 'lodash-es'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
 import { blockedDomains } from '@speckle/shared'
-import { DeleteStreamRecord } from '@/modules/core/domain/streams/operations'
-import {
+import type { DeleteStreamRecord } from '@/modules/core/domain/streams/operations'
+import type {
   DeleteSsoProvider,
   GetWorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/operations'
-import { QueryAllProjects } from '@/modules/core/domain/projects/operations'
+import type { QueryAllProjects } from '@/modules/core/domain/projects/operations'
 
 type WorkspaceCreateArgs = {
   userId: string

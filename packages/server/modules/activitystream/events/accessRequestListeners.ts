@@ -1,5 +1,5 @@
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
-import {
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type {
   AddStreamAccessRequestDeclinedActivity,
   AddStreamAccessRequestedActivity,
   SaveStreamActivity

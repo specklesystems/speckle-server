@@ -41,7 +41,8 @@ import {
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import {
   createStreamAccessRequest,
   getFullStreamAccessRequest,
@@ -50,15 +51,16 @@ import {
   useStreamAccessRequest
 } from '@/test/graphql/accessRequests'
 import { StreamRole } from '@/modules/core/graph/generated/graphql'
-import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
-import {
-  buildNotificationsStateTracker,
-  NotificationsStateManager
-} from '@/test/notificationsHelper'
+import type { NotificationsStateManager } from '@/test/notificationsHelper'
+import { buildNotificationsStateTracker } from '@/test/notificationsHelper'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
-import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { TestEmailListener } from '@/test/speckle-helpers/email'
+import { createEmailListener } from '@/test/speckle-helpers/email'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import { noop } from 'lodash-es'
 

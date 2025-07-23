@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { cliLogger as logger } from '@/observability/logging'
 import {

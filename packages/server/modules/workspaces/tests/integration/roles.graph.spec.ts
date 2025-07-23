@@ -1,27 +1,22 @@
 import { Streams } from '@/modules/core/dbSchema'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   createTestWorkspace,
   unassignFromWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import {
-  ProjectImplicitRoleCheck,
-  projectImplicitRoleCheck
-} from '@/modules/workspaces/tests/helpers/rolesGraphql'
+import type { ProjectImplicitRoleCheck } from '@/modules/workspaces/tests/helpers/rolesGraphql'
+import { projectImplicitRoleCheck } from '@/modules/workspaces/tests/helpers/rolesGraphql'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import {
   WorkspaceAcl,
   Workspaces,
   WorkspaceSeats
 } from '@/modules/workspacesCore/helpers/db'
-import {
-  BasicTestUser,
-  createAuthTokenForUser,
-  createTestUsers
-} from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createAuthTokenForUser, createTestUsers } from '@/test/authHelper'
 import {
   ActiveUserLeaveWorkspaceDocument,
   GetUserProjectsWithAccessChecksDocument,
@@ -31,17 +26,11 @@ import {
   UpdateWorkspaceRoleDocument,
   UpdateWorkspaceSeatTypeDocument
 } from '@/modules/core/graph/generated/graphql'
-import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import {
-  addToStream,
-  BasicTestStream,
-  createTestStream
-} from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'

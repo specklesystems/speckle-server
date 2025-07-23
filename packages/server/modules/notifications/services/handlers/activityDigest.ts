@@ -1,15 +1,16 @@
-import {
+import type {
   ActivityDigestMessage,
   NotificationHandler
 } from '@/modules/notifications/helpers/types'
-import {
-  StreamActionTypes,
+import type {
   StreamActivityRecord,
   AllStreamActivityTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
+import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
+import type { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import type { SendEmailParams } from '@/modules/emails/services/sending'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { groupBy } from 'lodash-es'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
@@ -18,9 +19,9 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { getUserNotificationPreferencesFactory } from '@/modules/notifications/services/notificationPreferences'
 import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
 import { db } from '@/db/knex'
-import { GetUserNotificationPreferences } from '@/modules/notifications/domain/operations'
-import { CreateActivitySummary } from '@/modules/activitystream/domain/operations'
-import {
+import type { GetUserNotificationPreferences } from '@/modules/notifications/domain/operations'
+import type { CreateActivitySummary } from '@/modules/activitystream/domain/operations'
+import type {
   ActivitySummary,
   StreamActivitySummary
 } from '@/modules/activitystream/domain/types'
@@ -28,9 +29,9 @@ import { createActivitySummaryFactory } from '@/modules/activitystream/services/
 import { geUserStreamActivityFactory } from '@/modules/activitystream/repositories'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
+import type { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
 
 const digestNotificationEmailHandlerFactory =
   (

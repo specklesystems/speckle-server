@@ -1,8 +1,14 @@
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type {
+  LimitedPersonalProjectCommentFragment,
+  LimitedPersonalProjectVersionFragment,
+  LimitedPersonalStreamCommitFragment
+} from '@/modules/core/graph/generated/graphql'
 import {
   CreateProjectDocument,
   CreateProjectInviteDocument,
@@ -11,16 +17,16 @@ import {
   GetLimitedPersonalProjectCommentsDocument,
   GetLimitedPersonalProjectVersionDocument,
   GetLimitedPersonalProjectVersionsDocument,
-  GetLimitedPersonalStreamCommitsDocument,
-  LimitedPersonalProjectCommentFragment,
-  LimitedPersonalProjectVersionFragment,
-  LimitedPersonalStreamCommitFragment
+  GetLimitedPersonalStreamCommitsDocument
 } from '@/modules/core/graph/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { createTestComment } from '@/test/speckle-helpers/commentHelper'
-import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestCommits } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import dayjs from 'dayjs'
 import { flatten } from 'lodash-es'

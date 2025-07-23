@@ -3,18 +3,20 @@ import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { setMultiRegionConfig } from '@/modules/multiregion/regionConfig'
 import { storeRegionFactory } from '@/modules/multiregion/repositories'
 import { WorkspaceRegions } from '@/modules/workspaces/repositories/regions'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import {
   GetAvailableRegionsDocument,
   GetWorkspaceDefaultRegionDocument,
   SetWorkspaceDefaultRegionDocument
 } from '@/modules/core/graph/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 import { PaidWorkspacePlans, Roles } from '@speckle/shared'

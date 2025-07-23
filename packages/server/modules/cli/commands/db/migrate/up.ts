@@ -1,6 +1,7 @@
 import { cliLogger as logger } from '@/observability/logging'
-import { CommonDbArgs, getTargettedDbClients } from '@/modules/cli/commands/db/helpers'
-import { CommandModule } from 'yargs'
+import type { CommonDbArgs } from '@/modules/cli/commands/db/helpers'
+import { getTargettedDbClients } from '@/modules/cli/commands/db/helpers'
+import type { CommandModule } from 'yargs'
 
 const command: CommandModule<unknown, CommonDbArgs> = {
   command: 'up',

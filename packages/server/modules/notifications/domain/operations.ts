@@ -1,4 +1,4 @@
-import { NotificationPreferences } from '@/modules/notifications/helpers/types'
+import type { NotificationPreferences } from '@/modules/notifications/helpers/types'
 
 export type GetSavedUserNotificationPreferences = (
   userId: string

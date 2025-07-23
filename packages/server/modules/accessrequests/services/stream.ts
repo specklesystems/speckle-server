@@ -2,23 +2,23 @@ import {
   AccessRequestCreationError,
   AccessRequestProcessingError
 } from '@/modules/accessrequests/errors'
-import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
-import {
-  AccessRequestType,
-  generateId,
+import type { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
+import type {
   ServerAccessRequestRecord,
   StreamAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
+import { AccessRequestType, generateId } from '@/modules/accessrequests/repositories'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { Roles } from '@/modules/core/helpers/mainConstants'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import {
+import type {
   MaybeNullOrUndefined,
   Nullable,
   Optional
 } from '@/modules/shared/helpers/typeHelper'
-import {
+import type {
   CreateNewRequest,
   DeleteRequestById,
   GetPendingAccessRequest,
@@ -29,12 +29,12 @@ import {
   GetUserStreamAccessRequest,
   RequestProjectAccess
 } from '@/modules/accessrequests/domain/operations'
-import {
+import type {
   AddOrUpdateStreamCollaborator,
   GetStream,
   ValidateStreamAccess
 } from '@/modules/core/domain/streams/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 
 function buildStreamAccessRequestGraphQLReturn(

@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 /**
  * The full stripe+db migration should've already executed, this is a fallback for dev/test envs to migrate broken plans

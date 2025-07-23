@@ -19,17 +19,18 @@ import { makeExecutableSchema } from '@graphql-tools/schema'
 import { moduleLogger } from '@/observability/logging'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { isNonNullable, Optional, TIME_MS } from '@speckle/shared'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { Optional } from '@speckle/shared'
+import { isNonNullable, TIME_MS } from '@speckle/shared'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import type { Express } from 'express'
-import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
-import { ApolloServerOptions } from '@apollo/server'
-import {
+import type { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
+import type { ApolloServerOptions } from '@apollo/server'
+import type {
   GraphqlDirectiveBuilder,
   SchemaTransformer
 } from '@/modules/core/graph/helpers/directiveHelper'
-import { AppMocksConfig } from '@/modules/mocks'
-import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import type { AppMocksConfig } from '@/modules/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { LoaderConfigurationError, LogicError } from '@/modules/shared/errors'
 import type { Registry } from 'prom-client'
 import type {
@@ -43,12 +44,13 @@ import {
   wrapWithCache
 } from '@/modules/shared/utils/caching'
 import TTLCache from '@isaacs/ttlcache'
-import { buildRequestLoaders, RequestDataLoaders } from '@/modules/core/loaders'
-import {
+import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { buildRequestLoaders } from '@/modules/core/loaders'
+import type {
   AllAuthCheckContextLoaders,
-  AuthCheckContextLoaderKeys,
   AuthCheckContextLoaders
 } from '@speckle/shared/authz'
+import { AuthCheckContextLoaderKeys } from '@speckle/shared/authz'
 
 /**
  * Cached speckle module requires

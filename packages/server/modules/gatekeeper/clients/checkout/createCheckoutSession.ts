@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
 import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
-import {
+import type {
   CreateCheckoutSession,
   GetStripeClient,
   GetWorkspacePlanPriceId
 } from '@/modules/gatekeeper/domain/billing'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { Stripe } from 'stripe'
+import type { Stripe } from 'stripe'
 
 export const createCheckoutSessionFactory =
   ({

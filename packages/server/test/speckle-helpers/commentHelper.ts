@@ -1,5 +1,5 @@
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   insertCommentLinksFactory,
   insertCommentsFactory,

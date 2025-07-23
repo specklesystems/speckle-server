@@ -1,10 +1,10 @@
 import { db } from '@/db/knex'
-import {
+import type {
   GetProjectDb,
-  getProjectDbClientFactory,
   GetRegionDb
 } from '@/modules/multiregion/services/projectRegion'
-import { Knex } from 'knex'
+import { getProjectDbClientFactory } from '@/modules/multiregion/services/projectRegion'
+import type { Knex } from 'knex'
 import { getRegionFactory } from '@/modules/multiregion/repositories'
 import {
   DatabaseError,
@@ -12,13 +12,14 @@ import {
   MisconfiguredEnvironmentError
 } from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
-import { InitializeRegion } from '@/modules/multiregion/domain/operations'
+import type { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
   getAvailableRegionConfig,
   getDefaultProjectRegionKey,
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
-import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 import { isDevOrTestEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
 import {

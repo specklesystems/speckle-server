@@ -1,4 +1,4 @@
-import cron from 'node-cron'
+import type cron from 'node-cron'
 import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { moduleLogger } from '@/observability/logging'
 import {
@@ -7,7 +7,7 @@ import {
   parseMessagePayload
 } from '@/modules/fileuploads/services/resultListener'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
   getProjectModelByIdFactory,
   getStreamBranchByNameFactory
@@ -53,10 +53,8 @@ import {
   initializeQueueFactory
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
-import {
-  initializeMetrics,
-  ObserveResult
-} from '@/modules/fileuploads/observability/metrics'
+import type { ObserveResult } from '@/modules/fileuploads/observability/metrics'
+import { initializeMetrics } from '@/modules/fileuploads/observability/metrics'
 import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/subscriptionListeners'
 import { configureClient } from '@/knexfile'
 import {
@@ -64,7 +62,7 @@ import {
   requestErrorHandlerFactory,
   requestFailedHandlerFactory
 } from '@/modules/fileuploads/services/requestHandler'
-import { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
+import type { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 
 const {

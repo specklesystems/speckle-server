@@ -25,22 +25,25 @@ import {
   ServerAcl
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
-import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import {
-  ProjectRecordVisibility,
+import type { StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import type {
   StreamAclRecord,
   StreamCommitRecord,
   StreamFavoriteRecord,
   StreamRecord,
   UserWithRole
 } from '@/modules/core/helpers/types'
-import {
-  DiscoverableStreamsSortType,
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type {
   ProjectUpdateInput,
-  SortDirection,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
+import {
+  DiscoverableStreamsSortType,
+  SortDirection
+} from '@/modules/core/graph/generated/graphql'
+import type { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import {
   decodeCompositeCursor,
   decodeCursor,
@@ -49,7 +52,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import {
   isProjectCreateInput,
   mapGqlToDbProjectVisibility
@@ -61,16 +64,16 @@ import {
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import {
+import type {
   DeleteProjectRole,
   UpdateProject,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
-import {
+import type {
   StreamWithCommitId,
   StreamWithOptionalRole
 } from '@/modules/core/domain/streams/types'
-import {
+import type {
   StoreStream,
   GetCommitStream,
   GetCommitStreams,

@@ -1,23 +1,23 @@
 import { Scopes, Roles } from '@/modules/core/helpers/mainConstants'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 
+import type { BaseError } from '@/modules/shared/errors'
 import {
-  BaseError,
   ForbiddenError,
   UnauthorizedError,
   ContextError,
   DatabaseError,
   NotFoundError
 } from '@/modules/shared/errors'
-import {
-  Authz,
+import type {
   AvailableRoles,
   MaybeNullOrUndefined,
   ServerRoles,
   StreamRoles
 } from '@speckle/shared'
+import { Authz } from '@speckle/shared'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
 import type {
   AuthContext,
@@ -25,13 +25,13 @@ import type {
   AuthResult,
   AuthData
 } from '@/modules/shared/domain/authz/types'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import {
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import type {
   ValidateServerRoleBuilder,
   ValidateStreamRoleBuilder
 } from '@/modules/shared/domain/authz/operations'
-import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
-import { ValidateUserServerRole } from '@/modules/shared/domain/operations'
+import type { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
+import type { ValidateUserServerRole } from '@/modules/shared/domain/operations'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { moduleAuthLoaders } from '@/modules/index'
 export { AuthContext, AuthParams }

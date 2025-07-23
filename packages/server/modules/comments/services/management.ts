@@ -1,11 +1,11 @@
 import { ensureError, SpeckleViewer } from '@speckle/shared'
-import {
+import type {
   CreateCommentReplyInput,
   EditCommentInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
-import {
+import type {
   CommentLinkRecord,
   CommentLinkResourceType,
   CommentRecord
@@ -14,7 +14,7 @@ import {
   formatSerializedViewerState,
   inputToDataStruct
 } from '@/modules/comments/services/data'
-import {
+import type {
   ArchiveCommentAndNotify,
   CreateCommentReplyAndNotify,
   CreateCommentThreadAndNotify,
@@ -29,10 +29,10 @@ import {
   UpdateComment,
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
-import { GetViewerResourceItemsUngrouped } from '@/modules/viewer/domain/operations/resources'
+import type { GetViewerResourceItemsUngrouped } from '@/modules/viewer/domain/operations/resources'
 
 export const createCommentThreadAndNotifyFactory =
   (deps: {

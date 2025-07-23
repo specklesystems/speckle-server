@@ -1,12 +1,14 @@
-import {
+import type {
   ConvertLegacyDataToState,
   GetViewerResourcesForComments
 } from '@/modules/comments/domain/operations'
-import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
+import type { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
 import { viewerResourcesToString } from '@/modules/viewer/services/viewerResources'
-import {
+import type {
   VersionedSerializedViewerState,
-  SerializedViewerState,
+  SerializedViewerState
+} from '@speckle/shared/viewer/state'
+import {
   formatSerializedViewerState,
   isVersionedSerializedViewerState,
   inputToVersionedState

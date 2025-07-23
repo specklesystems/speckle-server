@@ -1,24 +1,25 @@
-import { crossServerSyncLogger, Logger } from '@/observability/logging'
+import type { Logger } from '@/observability/logging'
+import { crossServerSyncLogger } from '@/observability/logging'
 import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
+import type { GraphQLClient } from '@/modules/cross-server-sync/utils/graphqlClient'
 import {
   createApolloClient,
-  GraphQLClient,
   gql,
   assertValidGraphQLResult
 } from '@/modules/cross-server-sync/utils/graphqlClient'
-import { CrossSyncProjectMetadataQuery } from '@/modules/core/graph/generated/graphql'
+import type { CrossSyncProjectMetadataQuery } from '@/modules/core/graph/generated/graphql'
 import { omit } from 'lodash-es'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import {
+import type {
   DownloadCommit,
   DownloadProject
 } from '@/modules/cross-server-sync/domain/operations'
-import {
+import type {
   CreateBranchAndNotify,
   GetStreamBranchByName
 } from '@/modules/core/domain/branches/operations'
-import { CreateProject } from '@/modules/core/domain/projects/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { CreateProject } from '@/modules/core/domain/projects/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 

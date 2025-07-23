@@ -1,4 +1,5 @@
 import { expect } from 'chai'
+import type { AuthContext, AuthFailedResult } from '@/modules/shared/authz'
 import {
   authPipelineCreator,
   authFailed,
@@ -10,9 +11,7 @@ import {
   allowForServerAdmins,
   validateResourceAccess,
   validateRequiredStreamFactory,
-  AuthContext,
-  isAuthFailedResult,
-  AuthFailedResult
+  isAuthFailedResult
 } from '@/modules/shared/authz'
 import {
   ForbiddenError as SFE,
@@ -22,15 +21,17 @@ import {
   NotFoundError,
   BaseError
 } from '@/modules/shared/errors'
-import { AvailableRoles, ensureError, Roles } from '@speckle/shared'
+import type { AvailableRoles } from '@speckle/shared'
+import { ensureError, Roles } from '@speckle/shared'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
-import {
+import type { StreamRecord } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type {
   AuthData,
   AuthPipelineFunction,
   AuthResult
 } from '@/modules/shared/domain/authz/types'
-import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 
 describe('AuthZ @shared', () => {
   const buildFooAuthData = (): AuthData =>

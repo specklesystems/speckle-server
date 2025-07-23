@@ -1,6 +1,7 @@
 import { basicWorkspaceFragment } from '@/modules/workspaces/tests/helpers/graphql'
-import { ProjectImplicitRoleCheckFragment } from '@/modules/core/graph/generated/graphql'
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import type { ProjectImplicitRoleCheckFragment } from '@/modules/core/graph/generated/graphql'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { gql } from 'graphql-tag'
 
 export const fullPermissionCheckResultFragment = gql(`

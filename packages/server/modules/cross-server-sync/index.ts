@@ -66,7 +66,7 @@ import {
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   getViewerResourceGroupsFactory,

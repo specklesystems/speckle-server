@@ -1,4 +1,4 @@
-import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 
 export type ResourceIdentifier = {
   resourceId: string

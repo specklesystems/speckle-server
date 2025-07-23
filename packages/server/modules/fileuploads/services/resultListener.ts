@@ -1,6 +1,9 @@
-import { GetFileInfo, UpdateFileUpload } from '@/modules/fileuploads/domain/operations'
-import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type {
+  GetFileInfo,
+  UpdateFileUpload
+} from '@/modules/fileuploads/domain/operations'
+import type { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 import { fileUploadsLogger as logger } from '@/observability/logging'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'

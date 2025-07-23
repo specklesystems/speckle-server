@@ -1,12 +1,8 @@
 import { AutomateModuleDisabledError } from '@/modules/core/errors/automate'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
-import {
-  BadRequestError,
-  BaseError,
-  ForbiddenError,
-  NotFoundError
-} from '@/modules/shared/errors'
+import type { BaseError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/modules/shared/errors'
 import { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 import { Authz, ensureError, throwUncoveredError } from '@speckle/shared'
 import VError from 'verror'

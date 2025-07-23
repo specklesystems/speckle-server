@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 /**
  * MIGRATING TIMESTAMP FIELDS TO A LOWER PRECISION, CAUSE JS CANT HANDLE
