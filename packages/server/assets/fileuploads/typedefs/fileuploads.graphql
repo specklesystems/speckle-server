@@ -128,15 +128,15 @@ input FileImportResultInput {
   """
   Total processing time in seconds, since job was picked up until it completed
   """
-  durationSeconds: Int!
+  durationSeconds: Float!
   """
   Duration of the file download before parsing started in seconds
   """
-  downloadDurationSeconds: Int!
+  downloadDurationSeconds: Float!
   """
   Duration of the transformation in seconds
   """
-  parseDurationSeconds: Int!
+  parseDurationSeconds: Float!
   """
   Parser used for import
   """

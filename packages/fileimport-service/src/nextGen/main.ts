@@ -111,6 +111,8 @@ export const main = async () => {
   })
 }
 
+type GQLResponse = { data?: { fileUploadMutations?: { finishFileImport?: boolean } } }
+
 const sendResult = async ({
   serverUrl,
   projectId,
@@ -124,20 +126,40 @@ const sendResult = async ({
   token: string
   result: FileImportResultPayload
 }) => {
-  const sendResultUrl = new URL(
-    `/api/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
-    serverUrl
-  )
-  const response = await fetch(sendResultUrl.toString(), {
+  const gqlEndpoint = new URL(`/graphql`, serverUrl).toString()
+  const mutation = `
+    mutation ($input: FinishFileImportInput!) {
+      fileUploadMutations {
+        finishFileImport(input: $input)
+      }
+    }
+  `
+  const input = {
+    jobId,
+    projectId,
+    ...result
+  }
+
+  const response = await fetch(gqlEndpoint, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-
-    body: JSON.stringify(result)
+    body: JSON.stringify({
+      query: mutation,
+      variables: {
+        input
+      }
+    })
   })
-  if (!response.ok) {
+
+  const json = (await response.json()) as GQLResponse
+
+  if (
+    response.status !== 200 ||
+    json?.data?.fileUploadMutations?.finishFileImport !== true
+  ) {
     const text = await response.text()
     currentJob?.logger.error(
-      { cause: text, sendResultUrl: sendResultUrl.toString() },
+      { cause: text, sendResultUrl: gqlEndpoint, jobId, projectId },
       'Failed to report result for job {jobId} to {sendResultUrl}'
     )
     throw new Error(`Failed to report result for job ${jobId}: ${text}`)

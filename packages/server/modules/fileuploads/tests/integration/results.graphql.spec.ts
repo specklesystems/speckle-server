@@ -100,7 +100,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
     ) =>
       sendRequest(token, {
         query: `mutation ($input: FinishFileImportInput!) {
-            fileUploadMutations {
+          fileUploadMutations {
             finishFileImport(input: $input)
           }
         }`,

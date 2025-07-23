@@ -1070,11 +1070,11 @@ export type EmbedTokenCreateInput = {
 
 export type FileImportResultInput = {
   /** Duration of the file download before parsing started in seconds */
-  downloadDurationSeconds: Scalars['Int']['input'];
+  downloadDurationSeconds: Scalars['Float']['input'];
   /** Total processing time in seconds, since job was picked up until it completed */
-  durationSeconds: Scalars['Int']['input'];
+  durationSeconds: Scalars['Float']['input'];
   /** Duration of the transformation in seconds */
-  parseDurationSeconds: Scalars['Int']['input'];
+  parseDurationSeconds: Scalars['Float']['input'];
   /** Parser used for import */
   parser: Scalars['String']['input'];
   /** Version asssociated if applicable */
