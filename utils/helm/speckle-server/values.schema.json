@@ -120,11 +120,6 @@
           "description": "Enables the ability to parse IFC files using the experimental IFC importer",
           "default": false
         },
-        "legacyIfcImporterEnabled": {
-          "type": "boolean",
-          "description": "Enables the ability to parse IFC files using the legacy IFC importer.",
-          "default": false
-        },
         "backgroundJobsEnabled": {
           "type": "boolean",
           "description": "Enables the ability to run background jobs (such as the IFC importer) in Speckle",

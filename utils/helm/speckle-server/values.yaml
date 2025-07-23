@@ -69,8 +69,6 @@ featureFlags:
   largeFileUploadsEnabled: false
   ## @param featureFlags.experimentalIfcImporterEnabled Enables the ability to parse IFC files using the experimental IFC importer
   experimentalIfcImporterEnabled: false
-  ## @param featureFlags.legacyIfcImporterEnabled Enables the ability to parse IFC files using the legacy IFC importer.
-  legacyIfcImporterEnabled: false
   ## @param featureFlags.backgroundJobsEnabled Enables the ability to run background jobs (such as the IFC importer) in Speckle
   backgroundJobsEnabled: false
 
