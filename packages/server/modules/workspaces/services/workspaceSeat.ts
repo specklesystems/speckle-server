@@ -1,12 +1,12 @@
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
-import {
+import type {
   CreateWorkspaceSeat,
   GetWorkspaceDefaultSeatType,
   GetWorkspaceUserSeat
 } from '@/modules/gatekeeper/domain/operations'
 import { NotFoundError } from '@/modules/shared/errors'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import {
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type {
   AssignWorkspaceSeat,
   EnsureValidWorkspaceRoleSeat,
   GetWorkspace,
@@ -15,7 +15,8 @@ import {
 import { InvalidWorkspaceSeatTypeError } from '@/modules/workspaces/errors/workspaceSeat'
 import { WorkspaceDefaultSeatType } from '@/modules/workspacesCore/domain/constants'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { Roles, WorkspaceRoles } from '@speckle/shared'
+import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { z } from 'zod'
 
 export const getWorkspaceDefaultSeatTypeFactory =

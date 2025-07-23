@@ -1,6 +1,7 @@
-import { JSONContent } from '@tiptap/core'
+import type { JSONContent } from '@tiptap/core'
 import { isString, isObjectLike, get, has } from 'lodash-es'
-import { MaybeNullOrUndefined, RichTextEditor } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { RichTextEditor } from '@speckle/shared'
 
 const { isDocEmpty, documentToBasicString, convertBasicStringToDocument } =
   RichTextEditor

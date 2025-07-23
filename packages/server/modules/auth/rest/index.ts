@@ -5,7 +5,8 @@ import {
 } from '@/modules/core/services/tokens'
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
-import { ensureError, Optional, Scopes } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import { ensureError, Scopes } from '@speckle/shared'
 import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import {
   getAppFactory,
@@ -22,7 +23,7 @@ import {
   createAppTokenFromAccessCodeFactory,
   refreshAppTokenFactory
 } from '@/modules/auth/services/serverApps'
-import { Express } from 'express'
+import type { Express } from 'express'
 import {
   getApiTokenByIdFactory,
   getTokenResourceAccessDefinitionsByIdFactory,

@@ -156,7 +156,7 @@ export function useViewerAnchoredPoints<
     () => {
       updatePositions()
     },
-    { initialOnly: true, waitForBusyOver: true }
+    { initialOnly: true, waitForLoadingOver: true }
   )
 
   watch(

@@ -1,5 +1,5 @@
 import { TIME } from '@speckle/shared'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { db } from '@/db/knex'
 import {
   getBranchPendingVersionsFactory,
@@ -66,11 +66,11 @@ import { getFeatureFlags } from '@speckle/shared/environment'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
-import {
+import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()

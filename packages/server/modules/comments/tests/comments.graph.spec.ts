@@ -6,12 +6,11 @@ import { beforeEachContext } from '@/test/hooks'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import gql from 'graphql-tag'
 import { convertBasicStringToDocument } from '@/modules/core/services/richTextEditorService'
+import type { ServerAndContext, ExecuteOperationResponse } from '@/test/graphqlHelper'
 import {
   createTestContext,
   createAuthedTestContext,
-  executeOperation,
-  ServerAndContext,
-  ExecuteOperationResponse
+  executeOperation
 } from '@/test/graphqlHelper'
 import {
   streamResourceCheckFactory,
@@ -83,7 +82,7 @@ import {
   getViewerResourcesFromLegacyIdentifiersFactory,
   getViewerResourcesForCommentsFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { SetNonNullable } from 'type-fest'
+import type { SetNonNullable } from 'type-fest'
 import { createProject } from '@/test/projectHelper'
 
 const getServerInfo = getServerInfoFactory({ db })

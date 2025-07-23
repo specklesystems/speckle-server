@@ -1,9 +1,9 @@
 import { db } from '@/db/knex'
-import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import { getFileUploadUrlExpiryMinutes } from '@/modules/shared/helpers/envHelper'
 import { TIME } from '@speckle/shared'
-import { ExpirePendingUploads } from '@/modules/blobstorage/domain/operations'
+import type { ExpirePendingUploads } from '@/modules/blobstorage/domain/operations'
 import { expirePendingUploadsFactory } from '@/modules/blobstorage/repositories'
 
 export const scheduleBlobPendingUploadExpiry = async ({

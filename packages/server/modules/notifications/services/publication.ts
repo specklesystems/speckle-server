@@ -1,4 +1,4 @@
-import {
+import type {
   NotificationPublisher,
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'

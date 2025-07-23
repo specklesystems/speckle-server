@@ -1,8 +1,8 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { cliLogger as logger } from '@/observability/logging'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
-import { UserRecord, UsersMetaRecord } from '@/modules/core/helpers/types'
+import type { UserRecord, UsersMetaRecord } from '@/modules/core/helpers/types'
 import { db } from '@/db/knex'
 
 const command: CommandModule = {

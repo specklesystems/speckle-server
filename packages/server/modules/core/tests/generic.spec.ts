@@ -5,7 +5,8 @@ import { beforeEachContext } from '@/test/hooks'
 
 import { validateScopes, authorizeResolver } from '@/modules/shared'
 import { buildContext } from '@/modules/shared/middleware'
-import { AvailableRoles, Roles, Scopes, ServerRoles } from '@speckle/shared'
+import type { AvailableRoles, ServerRoles } from '@speckle/shared'
+import { Roles, Scopes } from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { ForbiddenError } from '@/modules/shared/errors'
 import {
@@ -65,7 +66,7 @@ import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
-import { Request } from 'express'
+import type { Request } from 'express'
 
 const buildFinalizeProjectInvite = () =>
   finalizeResourceInviteFactory({

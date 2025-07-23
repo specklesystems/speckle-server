@@ -7,24 +7,23 @@ import {
 import { setStripeClient } from '@/modules/gatekeeper/clients/stripe'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
+import type { WorkspaceUpdateSeatTypeInput } from '@/modules/core/graph/generated/graphql'
 import {
   GetProjectCollaboratorsDocument,
-  UpdateWorkspaceSeatTypeDocument,
-  WorkspaceUpdateSeatTypeInput
+  UpdateWorkspaceSeatTypeDocument
 } from '@/modules/core/graph/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import {
-  addToStream,
-  BasicTestStream,
-  createTestStream
-} from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import dayjs from 'dayjs'

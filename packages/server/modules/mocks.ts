@@ -1,19 +1,17 @@
-import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import {
   mockedApiModules,
   isProdEnv,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { has, reduce } from 'lodash-es'
-import { IMockStore, IMocks } from '@graphql-tools/mock'
+import type { IMockStore, IMocks } from '@graphql-tools/mock'
 
 import { moduleMockConfigs } from '@/modules/index'
 import { isNonNullable, Roles, SourceAppNames } from '@speckle/shared'
-import {
-  getRandomDbRecords,
-  mockStoreHelpers,
-  SpeckleModuleMocksConfig
-} from '@/modules/shared/helpers/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import { getRandomDbRecords, mockStoreHelpers } from '@/modules/shared/helpers/mocks'
 import { Streams } from '@/modules/core/dbSchema'
 
 /**

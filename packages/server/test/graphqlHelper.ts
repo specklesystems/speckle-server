@@ -1,22 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DocumentNode, FormattedExecutionResult } from 'graphql'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { TypedDocumentNode } from '@graphql-typed-document-node/core'
+import type { DocumentNode, FormattedExecutionResult } from 'graphql'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import { buildApolloServer, buildApolloSubscriptionServer } from '@/app'
 import { buildContext } from '@/modules/shared/middleware'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import {
-  AllScopes,
-  buildManualPromise,
-  ensureError,
+import type {
   MaybeAsync,
   MaybeNullOrUndefined,
   Optional,
-  ServerScope,
-  timeoutAt
+  ServerScope
 } from '@speckle/shared'
+import { AllScopes, buildManualPromise, ensureError, timeoutAt } from '@speckle/shared'
 import { expect } from 'chai'
-import { ApolloServer, GraphQLResponse } from '@apollo/server'
+import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
 import { get, pick, set } from 'lodash-es'

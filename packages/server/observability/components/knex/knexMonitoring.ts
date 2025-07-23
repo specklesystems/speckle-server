@@ -1,7 +1,7 @@
 import { type Registry, Summary, Counter, Gauge, Histogram } from 'prom-client'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { type Knex } from 'knex'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash-es'
 import {

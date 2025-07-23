@@ -280,7 +280,7 @@ export type InjectableViewerState = Readonly<{
     selectedObjects: ShallowRef<SpeckleObject[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
-    viewerBusy: WritableComputedRef<boolean>
+    loading: WritableComputedRef<boolean>
     loadProgress: Ref<number>
     selection: Ref<Nullable<Vector3>>
     measurement: {
@@ -375,8 +375,7 @@ function setupViewerMetadata(params: {
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
-  const refreshWorldTreeAndFilters = async (busy: boolean) => {
-    if (busy) return
+  const refreshWorldTreeAndFilters = async () => {
     worldTree.value = viewer.getWorldTree()
     availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
@@ -386,14 +385,14 @@ function setupViewerMetadata(params: {
   }
 
   onMounted(() => {
-    viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
+    viewer.on(ViewerEvent.LoadComplete, refreshWorldTreeAndFilters)
     viewer
       .getExtension(FilteringExtension)
       .on(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   onBeforeUnmount(() => {
-    viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
+    viewer.removeListener(ViewerEvent.LoadComplete, refreshWorldTreeAndFilters)
     viewer
       .getExtension(FilteringExtension)
       .removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
@@ -929,10 +928,10 @@ function setupInterfaceState(
   state: InitialStateWithUrlHashState
 ): InitialStateWithInterface {
   // Is viewer busy - Using writable computed so that we can always intercept these calls
-  const isViewerBusy = ref(false)
-  const viewerBusy = computed({
-    get: () => isViewerBusy.value,
-    set: (newVal) => (isViewerBusy.value = !!newVal)
+  const isLoading = ref(false)
+  const loading = computed({
+    get: () => isLoading.value,
+    set: (newVal) => (isLoading.value = !!newVal)
   })
 
   const loadProgress = ref(0)
@@ -992,7 +991,7 @@ function setupInterfaceState(
       lightConfig,
       explodeFactor,
       spotlightUserSessionId,
-      viewerBusy,
+      loading,
       loadProgress,
       threads: {
         items: commentThreads,

@@ -1,8 +1,8 @@
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
-import { RenderEmail, SendEmail } from '@/modules/emails/domain/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { RenderEmail, SendEmail } from '@/modules/emails/domain/operations'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { SendWorkspaceJoinRequestApprovedEmail } from '@/modules/workspaces/domain/operations'
+import type { SendWorkspaceJoinRequestApprovedEmail } from '@/modules/workspaces/domain/operations'
 
 type WorkspaceJoinRequestApprovedEmailArgs = {
   workspace: { id: string; name: string; slug: string }

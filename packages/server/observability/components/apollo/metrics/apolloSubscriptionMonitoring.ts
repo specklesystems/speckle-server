@@ -1,4 +1,5 @@
-import { Counter, Gauge, Registry } from 'prom-client'
+import type { Registry } from 'prom-client'
+import { Counter, Gauge } from 'prom-client'
 
 let apolloSubscriptionMonitoringIsInitialized = false
 

@@ -1,6 +1,6 @@
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
-import {
+import type {
   CreateProject,
   DeleteProject,
   GetProject,
@@ -10,7 +10,10 @@ import {
   StoreProjectRole,
   WaitForRegionProject
 } from '@/modules/core/domain/projects/operations'
-import { Project, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import type {
+  Project,
+  StreamWithOptionalRole
+} from '@/modules/core/domain/streams/types'
 import {
   ProjectQueryError,
   RegionalProjectCreationError
@@ -19,11 +22,11 @@ import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { mapGqlToDbProjectVisibility } from '@/modules/core/helpers/project'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { GetExplicitProjects } from '@/modules/core/domain/streams/operations'
+import type { GetExplicitProjects } from '@/modules/core/domain/streams/operations'
 
 export const createNewProjectFactory =
   ({

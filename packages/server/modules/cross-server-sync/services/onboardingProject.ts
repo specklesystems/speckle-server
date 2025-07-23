@@ -1,10 +1,10 @@
 import { crossServerSyncLogger } from '@/observability/logging'
-import {
+import type {
   GetOnboardingBaseStream,
   MarkOnboardingBaseStream
 } from '@/modules/core/domain/streams/operations'
-import { GetFirstAdmin } from '@/modules/core/domain/users/operations'
-import {
+import type { GetFirstAdmin } from '@/modules/core/domain/users/operations'
+import type {
   DownloadProject,
   EnsureOnboardingProject,
   GetOnboardingBaseProject

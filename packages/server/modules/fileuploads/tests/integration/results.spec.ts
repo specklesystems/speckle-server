@@ -17,7 +17,7 @@ import type { Server } from 'http'
 import request from 'supertest'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { createFileUploadJob } from '@/modules/fileuploads/tests/helpers/creation'
-import {
+import type {
   FileImportErrorPayload,
   FileImportSuccessPayload
 } from '@speckle/shared/workers/fileimport'

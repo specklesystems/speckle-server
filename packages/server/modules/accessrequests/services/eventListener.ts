@@ -1,12 +1,10 @@
 import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
-import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
+import type { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import {
-  NotificationPublisher,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
-import { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
+import type { NotificationPublisher } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@/modules/notifications/helpers/types'
+import type { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
 
 type OnServerAccessRequestCreatedDeps = {
   getStreamCollaborators: GetStreamCollaborators

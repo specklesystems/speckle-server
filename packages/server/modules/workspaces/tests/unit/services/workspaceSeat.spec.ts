@@ -2,7 +2,8 @@ import {
   getWorkspaceDefaultSeatTypeFactory,
   isWorkspaceRoleWorkspaceSeatTypeValid
 } from '@/modules/workspaces/services/workspaceSeat'
-import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 

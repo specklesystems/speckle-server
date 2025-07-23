@@ -1,12 +1,13 @@
 import { notificationsLogger as logger } from '@/observability/logging'
-import { getQueue, NotificationJobResult } from '@/modules/notifications/services/queue'
+import type { NotificationJobResult } from '@/modules/notifications/services/queue'
+import { getQueue } from '@/modules/notifications/services/queue'
 import { EventEmitter } from 'events'
-import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
+import type { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
 import { pick } from 'lodash-es'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { NotificationsEvents } from '@/modules/notifications/domain/events'
-import { NotificationMessage } from '@/modules/notifications/helpers/types'
+import type { NotificationMessage } from '@/modules/notifications/helpers/types'
 
 type AckEvent = {
   result?: NotificationJobResult

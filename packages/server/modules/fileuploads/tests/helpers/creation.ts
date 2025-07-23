@@ -2,9 +2,9 @@ import { randomInt } from 'crypto'
 import cryptoRandomString from 'crypto-random-string'
 import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
-import { FileImportMessage } from '@/modules/fileuploads/domain/operations'
+import type { FileImportMessage } from '@/modules/fileuploads/domain/operations'
 import { assign } from 'lodash-es'
-import {
+import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'

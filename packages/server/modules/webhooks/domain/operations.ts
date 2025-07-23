@@ -1,4 +1,4 @@
-import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
+import type { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
 
 export type CreateWebhookConfig = (
   webhook: Pick<

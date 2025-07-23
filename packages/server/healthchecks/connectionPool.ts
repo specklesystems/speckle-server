@@ -1,4 +1,4 @@
-import {
+import type {
   FreeConnectionsCalculator,
   FreeConnectionsCalculators
 } from '@/healthchecks/types'

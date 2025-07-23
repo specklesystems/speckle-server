@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { MixpanelClient } from '@/modules/shared/utils/mixpanel'
+import type { MixpanelClient } from '@/modules/shared/utils/mixpanel'
 
 export type MixpanelFakeEventRecord = Array<Parameters<MixpanelClient['track']>[0]>
 type MixpanelFakeStorage = {

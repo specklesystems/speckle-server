@@ -1,12 +1,10 @@
-import {
+import type {
   GetRecurringPrices,
   GetWorkspacePlanProductPrices,
   GetWorkspacePlanProductAndPriceIds
 } from '@/modules/gatekeeper/domain/billing'
-import {
-  Currency,
-  WorkspacePlanProductPrices
-} from '@/modules/gatekeeperCore/domain/billing'
+import type { WorkspacePlanProductPrices } from '@/modules/gatekeeperCore/domain/billing'
+import { Currency } from '@/modules/gatekeeperCore/domain/billing'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import {
   redisCacheProviderFactory,

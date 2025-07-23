@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const WORKSPACES_TABLE = 'workspaces'
 const REGIONS_TABLE = 'regions'

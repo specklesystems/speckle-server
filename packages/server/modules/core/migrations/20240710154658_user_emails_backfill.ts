@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import crs from 'crypto-random-string'
 import { scanTableFactory } from '@/modules/core/helpers/scanTable'
 import { coreLogger } from '@/modules/core/logger'

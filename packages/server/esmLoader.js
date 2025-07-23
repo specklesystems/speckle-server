@@ -21,7 +21,7 @@ const aliases = {
 /**
  * EXTENSIONS TO EVALUATE FOR EXTENSIONLESS IMPORTS
  */
-const extensions = ['.js', '.mjs', '.cjs', '.json']
+const extensions = ['.ts', '.js', '.mjs', '.cjs', '.json']
 
 // Register the module hooks
 register('./esmLoader.js', {

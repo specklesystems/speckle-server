@@ -1,5 +1,5 @@
-import { PasswordResetTokenRecord } from '@/modules/pwdreset/repositories'
-import { Optional } from '@speckle/shared'
+import type { PasswordResetTokenRecord } from '@/modules/pwdreset/repositories'
+import type { Optional } from '@speckle/shared'
 
 export type EmailOrTokenId = { email?: string; tokenId?: string }
 

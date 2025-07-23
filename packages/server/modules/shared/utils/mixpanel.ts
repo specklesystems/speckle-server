@@ -1,11 +1,12 @@
-import { MaybeNullOrUndefined, Optional, resolveMixpanelUserId } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
+import { resolveMixpanelUserId } from '@speckle/shared'
 import * as MixpanelUtils from '@speckle/shared/observability/mixpanel'
 import {
   enableMixpanel,
   getServerOrigin,
   getServerVersion
 } from '@/modules/shared/helpers/envHelper'
-import Mixpanel from 'mixpanel'
+import type Mixpanel from 'mixpanel'
 import type express from 'express'
 import type http from 'http'
 import { mixpanelLogger } from '@/observability/logging'

@@ -1,6 +1,7 @@
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { GetWorkspacePlanPricesDocument } from '@/modules/core/graph/generated/graphql'
-import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { PaidWorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 import { Currency } from '@/modules/gatekeeper/domain/billing'

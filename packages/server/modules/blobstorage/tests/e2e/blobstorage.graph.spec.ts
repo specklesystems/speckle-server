@@ -4,11 +4,8 @@ import gql from 'graphql-tag'
 import { createBlobs } from '@/modules/blobstorage/tests/helpers'
 import { expect } from 'chai'
 import { Users, Streams } from '@/modules/core/dbSchema'
-import {
-  createAuthedTestContext,
-  executeOperation,
-  ServerAndContext
-} from '@/test/graphqlHelper'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext, executeOperation } from '@/test/graphqlHelper'
 import {
   getStreamFactory,
   createStreamFactory,
