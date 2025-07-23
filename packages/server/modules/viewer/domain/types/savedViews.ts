@@ -1,5 +1,6 @@
-import { Nullable, StringEnum, StringEnumValues } from '@speckle/shared'
-import { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
+import type { Nullable, StringEnumValues } from '@speckle/shared'
+import { StringEnum } from '@speckle/shared'
+import type { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
 
 export const SavedViewVisibility = StringEnum(['public', 'authorOnly'])
 export type SavedViewVisibility = StringEnumValues<typeof SavedViewVisibility>

@@ -1,4 +1,4 @@
-import {
+import type {
   CreateSavedView,
   GetStoredViewCount,
   StoreSavedView
@@ -8,7 +8,7 @@ import { SavedViewCreationValidationError } from '@/modules/viewer/errors/savedV
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
-import { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
+import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
 
 export const createSavedViewFactory =
   (deps: {

@@ -1,10 +1,10 @@
-import {
+import type {
   SavedView,
   SavedViewVisibility
 } from '@/modules/viewer/domain/types/savedViews'
-import { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shared'
-import { SerializedViewerState } from '@speckle/shared/viewer/state'
-import { SetOptional } from 'type-fest'
+import type { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shared'
+import type { SerializedViewerState } from '@speckle/shared/viewer/state'
+import type { SetOptional } from 'type-fest'
 
 // REPO OPERATIONS:
 

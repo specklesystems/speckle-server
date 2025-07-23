@@ -69,4 +69,4 @@ export type GraphQLContext = BaseContext &
     clearCache: () => void
   }
 
-export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }
+export type { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }

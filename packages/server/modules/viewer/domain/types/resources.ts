@@ -1,4 +1,4 @@
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 
 export type ViewerResourceItem = {
   /** Null if resource represents an object */

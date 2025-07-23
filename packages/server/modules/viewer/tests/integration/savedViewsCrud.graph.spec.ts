@@ -1,7 +1,5 @@
-import {
-  CreateSavedViewDocument,
-  CreateSavedViewMutationVariables
-} from '@/modules/core/graph/generated/graphql'
+import type { CreateSavedViewMutationVariables } from '@/modules/core/graph/generated/graphql'
+import { CreateSavedViewDocument } from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
   buildBasicTestProject
@@ -12,19 +10,19 @@ import {
   DuplicateSavedViewError,
   SavedViewCreationValidationError
 } from '@/modules/viewer/errors/savedViews'
-import { BasicTestUser, buildBasicTestUser, createTestUser } from '@/test/authHelper'
-import {
-  ExecuteOperationOptions,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
 import { merge } from 'lodash-es'
-import { PartialDeep } from 'type-fest'
+import type { PartialDeep } from 'type-fest'
 
 const fakeScreenshot =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='

@@ -1,5 +1,5 @@
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import {
   getBranchesByIdsFactory,

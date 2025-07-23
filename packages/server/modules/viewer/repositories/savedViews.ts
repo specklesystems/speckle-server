@@ -1,13 +1,13 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
-import {
+import type {
   GetStoredViewCount,
   StoreSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
-import { SavedView } from '@/modules/viewer/domain/types/savedViews'
+import type { SavedView } from '@/modules/viewer/domain/types/savedViews'
 import { DuplicateSavedViewError } from '@/modules/viewer/errors/savedViews'
 import { ensureError } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const SavedViews = buildTableHelper('saved_views', [
   'id',

@@ -1,4 +1,4 @@
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { viewerLogger } from '@/observability/logging'
 
 const viewerModule: SpeckleModule = {

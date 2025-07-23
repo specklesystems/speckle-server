@@ -1,5 +1,5 @@
-import { ViewerUpdateTrackingTarget } from '@/modules/core/graph/generated/graphql'
-import {
+import type { ViewerUpdateTrackingTarget } from '@/modules/core/graph/generated/graphql'
+import type {
   ViewerResourceGroup,
   ViewerResourceItem
 } from '@/modules/viewer/domain/types/resources'
