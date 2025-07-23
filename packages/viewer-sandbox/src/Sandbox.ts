@@ -1298,7 +1298,7 @@ export default class Sandbox {
       let dataProgress = 0
       let renderedCount = 0
       let traversedCount = 0
-      const shouldLog = getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true' //means we're not already logging
+      const shouldLog = getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true' // means we're not already logging
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)
