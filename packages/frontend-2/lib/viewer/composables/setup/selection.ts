@@ -5,6 +5,22 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 
+/**
+ * Extract object ID from Speckle object URL
+ */
+function extractObjectIdFromUrl(url: string): string {
+  if (!url.includes('/objects/')) {
+    return url // Already clean ID
+  }
+
+  try {
+    const segments = new URL(url).pathname.split('/')
+    return segments[4] || url
+  } catch {
+    return url.split('/').reverse()[0]
+  }
+}
+
 function useCollectSelection() {
   const {
     ui: { selection }
@@ -26,13 +42,30 @@ function useSelectionStateSync() {
   const state = useInjectedViewerState()
   const selExt = state.viewer.instance.getExtension(SelectionExtension)
 
+  let preventSelectionWatchers = false
+
   const update = () => {
+    preventSelectionWatchers = true
+
     const objs = selExt.getSelectedObjects() as SpeckleObject[]
     state.ui.selectedObjects.value = objs
+
+    nextTick(() => {
+      preventSelectionWatchers = false
+    })
   }
 
   watch(state.ui.selectedObjects, (newVal) => {
-    const newIds = newVal.map((obj) => obj.id as string)
+    if (preventSelectionWatchers) {
+      return
+    }
+
+    const newIds = newVal.map((obj) => {
+      const rawId = obj.id as string
+      const cleanId = extractObjectIdFromUrl(rawId)
+      return cleanId
+    })
+
     if (!newVal.length) {
       selExt.clearSelection()
     } else {
