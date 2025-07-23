@@ -37,6 +37,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { VersionCreatedTriggerManifest } from '@/modules/automate/helpers/types'
 
 export default function accRestApi(app: Express) {
   const sessionMiddleware = sessionMiddlewareFactory()
@@ -323,8 +324,10 @@ const schedulePendingAccSyncItemsPoll = () => {
             })),
             manifests: [
               {
-                triggerType: 'versionCreation'
-              }
+                triggerType: 'versionCreation',
+                modelId: syncItem.modelId,
+                versionId: cryptoRandomString({ length: 9 })
+              } as VersionCreatedTriggerManifest
             ],
             speckleToken: projectScopedToken,
             automationToken: automationToken.automateToken
