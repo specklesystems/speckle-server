@@ -1,18 +1,21 @@
 <template>
   <ViewerLayoutPanel>
-    <div class="w-56 px-2 py-2.5 flex flex-col space-y-2">
+    <div class="px-3 pt-2.5 pb-4 flex flex-col gap-y-3">
+      <div class="flex items-center justify-between">
+        <label class="text-body-2xs" for="intensity">Intensity</label>
+        <span class="text-body-2xs">{{ explodeFactor }}</span>
+      </div>
       <div class="flex items-center space-x-1">
         <input
           id="intensity"
           v-model="explodeFactor"
-          class="w-24 sm:w-32 h-2 mr-2"
+          class="w-24 sm:w-32 h-2"
           type="range"
           name="intensity"
           min="0"
           max="1"
           step="0.01"
         />
-        <label class="text-body-2xs" for="intensity">Intensity</label>
       </div>
     </div>
   </ViewerLayoutPanel>

@@ -12,7 +12,7 @@
         />
       </div>
     </div>
-    <div class="border-t border-outline-2 p-2 flex items-center justify-between">
+    <div class="border-t border-outline-2 p-3 flex items-center justify-between">
       <span class="text-body-2xs font-medium text-foreground leading-none">Edges</span>
       <div
         v-tippy="
@@ -31,7 +31,7 @@
         />
       </div>
     </div>
-    <div v-if="edgesEnabled" class="p-2 pt-1.5">
+    <div v-if="edgesEnabled" class="p-3 pt-1.5">
       <div>
         <div class="flex items-center justify-between gap-2">
           <div class="text-body-2xs">Weight</div>
@@ -40,7 +40,7 @@
         <input
           id="edge-stroke"
           v-model="edgesWeight"
-          class="w-full mt-1"
+          class="w-full mt-1.5"
           type="range"
           name="edge-stroke"
           :min="0.5"
@@ -48,29 +48,29 @@
           step="0.1"
           @input="handleEdgesWeightChange"
         />
-        <div class="flex items-center justify-between gap-2 mt-1.5 mb-1 pr-0.5">
+        <div class="flex items-center justify-between my-1">
           <div class="text-body-2xs">Color</div>
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 bg-highlight-1 rounded-lg p-1">
             <button
               v-for="(color, index) in edgesColorOptions"
               :key="color"
-              class="w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-110"
-              :class="[
-                edgesColor === color ? 'ring-2 ring-primary' : '',
-                'border-[1.5px] border-outline-2'
-              ]"
-              :style="
-                index === 0
-                  ? {
-                      background:
-                        'linear-gradient(to top left, #1a1a1a 50%, #ffffff 50%)'
-                    }
-                  : {
-                      backgroundColor: `#${color.toString(16).padStart(6, '0')}`
-                    }
+              class="flex items-center justify-center size-6"
+              :class="
+                edgesColor === color &&
+                'bg-foundation border border-outline-2 rounded-lg'
               "
               @click="setEdgesColor(color)"
-            />
+            >
+              <span
+                class="size-4 rounded-full cursor-pointer"
+                :style="{
+                  background:
+                    index === 0
+                      ? 'linear-gradient(to top left, #1a1a1a 50%, #ffffff 50%)'
+                      : `#${color.toString(16).padStart(6, '0')}`
+                }"
+              />
+            </button>
           </div>
         </div>
       </div>
