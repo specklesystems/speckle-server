@@ -110,7 +110,7 @@
           "description": "Enables the next generation file importer",
           "default": false
         },
-        "legacyFileUploadsEnabled": {
+        "legacyFileImportsEnabled": {
           "type": "boolean",
           "description": "Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server",
           "default": false
