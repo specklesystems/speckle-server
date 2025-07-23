@@ -1,0 +1,21 @@
+{
+  "signal": "SIGKILL",
+  "watch": [
+    "./modules",
+    "./assets",
+    "./db",
+    "./healthchecks",
+    "./observability",
+    "./app.ts",
+    "./bootstrap.ts",
+    "./knexfile.ts",
+    "./root.js",
+    ".env",
+    "multiregion.json"
+  ],
+  "ext": "js,ts,graphql,env,gql",
+  "execMap": {
+    "ts": "node --experimental-strip-types --experimental-transform-types --import ./esmLoader.js"
+  },
+  "delay": 1000
+}

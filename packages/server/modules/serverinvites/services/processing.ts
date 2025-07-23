@@ -4,15 +4,12 @@ import {
   InviteFinalizingError,
   InviteNotFoundError
 } from '@/modules/serverinvites/errors'
-import {
-  buildUserTarget,
-  ResolvedTargetData,
-  resolveTarget
-} from '@/modules/serverinvites/helpers/core'
+import type { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
+import { buildUserTarget, resolveTarget } from '@/modules/serverinvites/helpers/core'
 
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import {
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type {
   DeleteInvite,
   DeleteInvitesByTarget,
   DeleteServerOnlyInvites,
@@ -21,28 +18,29 @@ import {
   InsertInviteAndDeleteOld,
   UpdateAllInviteTargets
 } from '@/modules/serverinvites/domain/operations'
-import {
+import type {
   CollectAndValidateResourceTargets,
   FinalizeInvite,
   FinalizeInvitedServerRegistration,
-  InviteFinalizationAction,
   ProcessFinalizedResourceInvite,
   ResolveAuthRedirectPath,
   ValidateResourceInviteBeforeFinalization,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
+import { InviteFinalizationAction } from '@/modules/serverinvites/services/operations'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 import { noop } from 'lodash-es'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import {
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type {
   FindEmail,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import { ServerInfo } from '@/modules/core/helpers/types'
-import { GetUser } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { ServerInfo } from '@/modules/core/helpers/types'
+import type { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 /**
  * Convert the initial validation function to a finalization validation function so same logic can be reused

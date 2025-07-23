@@ -1,11 +1,11 @@
-import {
+import type {
   FindEmail,
   FindPrimaryEmailForUser
 } from '@/modules/core/domain/userEmails/operations'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
-import {
+import type {
   DeleteOldAndInsertNewVerification,
   EmailTemplateParams,
   RenderEmail,
@@ -13,8 +13,8 @@ import {
   RequestNewEmailVerification,
   SendEmail
 } from '@/modules/emails/domain/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const EMAIL_SUBJECT = 'Speckle account email verification'
 

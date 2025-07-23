@@ -1,4 +1,4 @@
-import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
+import type { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspacePlansByWorkspaceIdFactory } from '@/modules/gatekeeper/repositories/billing'
 import {
   getProjectsUsersSeatsFactory,
@@ -6,12 +6,8 @@ import {
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
-import {
-  WorkspaceLimits,
-  WorkspacePaidPlanConfigs,
-  WorkspacePlan,
-  WorkspaceUnpaidPlanConfigs
-} from '@speckle/shared'
+import type { WorkspaceLimits, WorkspacePlan } from '@speckle/shared'
+import { WorkspacePaidPlanConfigs, WorkspaceUnpaidPlanConfigs } from '@speckle/shared'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 

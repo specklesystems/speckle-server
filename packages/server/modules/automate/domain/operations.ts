@@ -1,5 +1,5 @@
-import { InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
-import {
+import type { InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
+import type {
   AutomationRevisionFunctionRecord,
   AutomationFunctionRunRecord,
   AutomationRecord,
@@ -15,16 +15,20 @@ import {
   BaseTriggerManifest,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import {
+import type {
   InsertableAutomationRevision,
   InsertableAutomationRun
 } from '@/modules/automate/repositories/automations'
-import { AuthCodePayload } from '@/modules/automate/services/authCode'
-import { ProjectAutomationCreateInput } from '@/modules/core/graph/generated/graphql'
-import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
-import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { Nullable, Optional, StreamRoles } from '@speckle/shared'
-import { SetRequired } from 'type-fest'
+import type { AuthCodePayload } from '@/modules/automate/services/authCode'
+import type { ProjectAutomationCreateInput } from '@/modules/core/graph/generated/graphql'
+import type { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import type {
+  BranchRecord,
+  CommitRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
+import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
+import type { SetRequired } from 'type-fest'
 
 export type StoreAutomation = (
   automation: AutomationRecord

@@ -1,7 +1,7 @@
-import { GendoAiRenderInput } from '@/modules/core/graph/generated/graphql'
-import { GendoAIRender, UserCredits } from '@/modules/gendo/domain/types'
-import { NullableKeysToOptional, Optional } from '@speckle/shared'
-import { SetOptional } from 'type-fest'
+import type { GendoAiRenderInput } from '@/modules/core/graph/generated/graphql'
+import type { GendoAIRender, UserCredits } from '@/modules/gendo/domain/types'
+import type { NullableKeysToOptional, Optional } from '@speckle/shared'
+import type { SetOptional } from 'type-fest'
 
 export type StoreRender = (
   input: NullableKeysToOptional<SetOptional<GendoAIRender, 'createdAt' | 'updatedAt'>>

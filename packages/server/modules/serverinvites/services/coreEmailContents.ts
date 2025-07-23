@@ -1,12 +1,12 @@
-import { GetStream } from '@/modules/core/domain/streams/operations'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   getRegistrationRoute,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
-import { StreamRecord } from '@/modules/core/helpers/types'
-import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import type { StreamRecord } from '@/modules/core/helpers/types'
+import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import { sanitizeMessage } from '@/modules/emails/services/emailRendering'
-import {
+import type {
   PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
@@ -15,7 +15,7 @@ import {
   isProjectResourceTarget,
   isServerResourceTarget
 } from '@/modules/serverinvites/helpers/core'
-import { BuildInviteEmailContents } from '@/modules/serverinvites/services/operations'
+import type { BuildInviteEmailContents } from '@/modules/serverinvites/services/operations'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
 function buildServerMjmlPreamble(params: Parameters<BuildInviteEmailContents>[0]) {

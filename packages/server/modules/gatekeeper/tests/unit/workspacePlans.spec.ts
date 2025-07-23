@@ -1,14 +1,14 @@
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
+import type { WorkspacePlan } from '@speckle/shared'
 import {
   PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
   UnpaidWorkspacePlans,
-  WorkspacePlan,
   WorkspacePlans
 } from '@speckle/shared'
 import { expect } from 'chai'

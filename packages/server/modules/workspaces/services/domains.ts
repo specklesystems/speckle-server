@@ -1,6 +1,6 @@
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
-import {
+import type {
   DeleteWorkspaceDomain,
   CountDomainsByWorkspaceId,
   UpdateWorkspace,

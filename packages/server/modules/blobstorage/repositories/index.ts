@@ -1,4 +1,4 @@
-import {
+import type {
   DeleteBlob,
   ExpirePendingUploads,
   GetBlob,
@@ -8,7 +8,7 @@ import {
   UpdateBlob,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
-import {
+import type {
   BlobStorageItem,
   BlobStorageItemInput
 } from '@/modules/blobstorage/domain/types'
@@ -19,9 +19,9 @@ import {
   NotFoundError,
   ResourceMismatch
 } from '@/modules/shared/errors'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { BlobUploadStatus } from '@speckle/shared/blobs'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 export const BlobStorage = buildTableHelper('blob_storage', [
   'id',

@@ -1,4 +1,4 @@
-import {
+import type {
   AddCommitCreatedActivity,
   AddCommitDeletedActivity,
   AddCommitUpdatedActivity,
@@ -9,10 +9,10 @@ import {
   StreamResourceTypes
 } from '@/modules/activitystream/helpers/types'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
-import { CommitCreateInput } from '@/modules/core/graph/generated/graphql'
-import { CommitRecord } from '@/modules/core/helpers/types'
-import { EventBusListen } from '@/modules/shared/services/eventBus'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import type { CommitCreateInput } from '@/modules/core/graph/generated/graphql'
+import type { CommitRecord } from '@/modules/core/helpers/types'
+import type { EventBusListen } from '@/modules/shared/services/eventBus'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 /**
  * Save "new commit created" activity item

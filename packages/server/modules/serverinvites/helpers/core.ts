@@ -1,16 +1,16 @@
-import { LimitedUserRecord } from '@/modules/core/helpers/types'
+import type { LimitedUserRecord } from '@/modules/core/helpers/types'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import {
+import type {
   InviteResourceTarget,
   PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget,
   ServerInviteRecord,
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
-import { Nullable, Optional, ServerRoles, StreamRoles } from '@speckle/shared'
+import type { Nullable, Optional, ServerRoles, StreamRoles } from '@speckle/shared'
 
 export type ResolvedTargetData = {
   userId: string | null

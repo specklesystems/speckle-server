@@ -1,39 +1,41 @@
-import { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
 
-import {
-  BatchCreateWorkspaceInvitesDocument,
+import type {
   BatchCreateWorkspaceInvitesMutationVariables,
-  CancelWorkspaceInviteDocument,
   CancelWorkspaceInviteMutationVariables,
-  CreateProjectInviteDocument,
   CreateProjectInviteMutationVariables,
-  CreateWorkspaceInviteDocument,
   CreateWorkspaceInviteMutationVariables,
-  CreateWorkspaceProjectInviteDocument,
   CreateWorkspaceProjectInviteMutationVariables,
-  GetMyWorkspaceInvitesDocument,
-  GetProjectDocument,
   GetProjectQueryVariables,
-  GetWorkspaceDocument,
-  GetWorkspaceInviteDocument,
   GetWorkspaceInviteQueryVariables,
   GetWorkspaceQueryVariables,
-  GetWorkspaceWithTeamDocument,
   GetWorkspaceWithTeamQueryVariables,
-  ResendWorkspaceInviteDocument,
   ResendWorkspaceInviteMutationVariables,
-  UseWorkspaceInviteDocument,
   UseWorkspaceInviteMutationVariables,
-  UseWorkspaceProjectInviteDocument,
   UseWorkspaceProjectInviteMutationVariables
+} from '@/modules/core/graph/generated/graphql'
+import {
+  BatchCreateWorkspaceInvitesDocument,
+  CancelWorkspaceInviteDocument,
+  CreateProjectInviteDocument,
+  CreateWorkspaceInviteDocument,
+  CreateWorkspaceProjectInviteDocument,
+  GetMyWorkspaceInvitesDocument,
+  GetProjectDocument,
+  GetWorkspaceDocument,
+  GetWorkspaceInviteDocument,
+  GetWorkspaceWithTeamDocument,
+  ResendWorkspaceInviteDocument,
+  UseWorkspaceInviteDocument,
+  UseWorkspaceProjectInviteDocument
 } from '@/modules/core/graph/generated/graphql'
 import { expect } from 'chai'
 
-import { MaybeAsync, StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import type { MaybeAsync, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expectToThrow } from '@/test/assertionHelper'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { isBoolean } from 'lodash-es'
-import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 
 export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const { apollo } = deps

@@ -1,19 +1,19 @@
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
+import type { Optional } from '@/modules/shared/helpers/typeHelper'
 import {
   InvalidNotificationError,
   NotificationValidationError,
   UnhandledNotificationError
 } from '@/modules/notifications/errors'
-import {
-  isNotificationMessage,
+import type {
   NotificationHandler,
   NotificationMessage,
   NotificationType,
   NotificationTypeHandlers
 } from '@/modules/notifications/helpers/types'
+import { isNotificationMessage } from '@/modules/notifications/helpers/types'
 import { getRedisUrl, isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
-import Bull from 'bull'
+import type Bull from 'bull'
 import { initializeQueue as setupQueue } from '@speckle/shared/queue'
 import cryptoRandomString from 'crypto-random-string'
 import { logger, notificationsLogger, Observability } from '@/observability/logging'

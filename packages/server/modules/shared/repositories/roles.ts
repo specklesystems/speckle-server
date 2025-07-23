@@ -1,6 +1,9 @@
-import { GetRoles, UpsertRole } from '@/modules/shared/domain/rolesAndScopes/operations'
-import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
-import { Knex } from 'knex'
+import type {
+  GetRoles,
+  UpsertRole
+} from '@/modules/shared/domain/rolesAndScopes/operations'
+import type { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { Knex } from 'knex'
 import { DatabaseError } from '@/modules/shared/errors'
 import { UserRoles } from '@/modules/core/dbSchema'
 import {

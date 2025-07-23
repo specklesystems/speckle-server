@@ -1,4 +1,4 @@
-import {
+import type {
   GetActiveUserStreams,
   GetActivities,
   GetActivityCountByResourceId,
@@ -12,7 +12,7 @@ import {
   SaveActivity,
   SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import {
+import type {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
@@ -22,19 +22,19 @@ import {
   StreamActivity
 } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { StreamAclRecord } from '@/modules/core/helpers/types'
+import type { StreamAclRecord } from '@/modules/core/helpers/types'
 import {
   createWebhookEventFactory,
   getStreamWebhooksFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { dispatchStreamEventFactory } from '@/modules/webhooks/services/webhooks'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import cryptoRandomString from 'crypto-random-string'
-import { Activity } from '@/modules/activitystream/domain/types'
+import type { Activity } from '@/modules/activitystream/domain/types'
 
 const tables = {
   streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>

@@ -1,5 +1,5 @@
-import { AuthContext } from '@/modules/shared/authz'
-import { mixpanel } from '@/modules/shared/utils/mixpanel'
+import type { AuthContext } from '@/modules/shared/authz'
+import type { mixpanel } from '@/modules/shared/utils/mixpanel'
 
 declare module 'express' {
   interface Request {

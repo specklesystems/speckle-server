@@ -1,14 +1,14 @@
-import { ServerAcl, StreamAcl } from '@/modules/core/dbSchema'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { AuthContext } from '@/modules/shared/domain/authz/types'
-import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
-import {
+import type { ServerAcl, StreamAcl } from '@/modules/core/dbSchema'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { AuthContext } from '@/modules/shared/domain/authz/types'
+import type { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
+import type {
   AvailableRoles,
   MaybeNullOrUndefined,
   Optional,
   ServerRoles
 } from '@speckle/shared'
-import { OperationTypeNode } from 'graphql'
+import type { OperationTypeNode } from 'graphql'
 
 export type GetUserAclRole = (params: {
   aclTableName: typeof ServerAcl.name | typeof StreamAcl.name | typeof WorkspaceAcl.name

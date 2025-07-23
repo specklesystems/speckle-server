@@ -1,8 +1,9 @@
-import Bull from 'bull'
+import type Bull from 'bull'
 import { logger } from '@/observability/logging'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { Optional, TIME_MS } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import { TIME_MS } from '@speckle/shared'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import {
   MultiRegionInvalidJobError,

@@ -1,6 +1,7 @@
 import { truncateTables } from '@/test/hooks'
 import { UserNotificationPreferences, Users } from '@/modules/core/dbSchema'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import { expect } from 'chai'
 import {
   NotificationType,

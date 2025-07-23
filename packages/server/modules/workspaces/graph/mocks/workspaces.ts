@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { listMock, SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import { listMock } from '@/modules/shared/helpers/mocks'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Roles } from '@speckle/shared'

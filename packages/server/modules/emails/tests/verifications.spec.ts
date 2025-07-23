@@ -1,5 +1,6 @@
 import { EmailVerifications, UserEmails, Users } from '@/modules/core/dbSchema'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
 import { buildApp, truncateTables } from '@/test/hooks'
 import request from 'supertest'
 import { expect } from 'chai'
@@ -13,13 +14,10 @@ import {
   requestVerification
 } from '@/test/graphql/users'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
-import { Express } from 'express'
+import type { Express } from 'express'
 import dayjs from 'dayjs'
-import {
-  createAuthedTestContext,
-  createTestContext,
-  ServerAndContext
-} from '@/test/graphqlHelper'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext, createTestContext } from '@/test/graphqlHelper'
 import { buildApolloServer } from '@/app'
 import { db } from '@/db/knex'
 import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
@@ -28,7 +26,8 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
+import type { TestEmailListener } from '@/test/speckle-helpers/email'
+import { createEmailListener } from '@/test/speckle-helpers/email'
 
 const getUser = getUserFactory({ db })
 const getPendingToken = getPendingTokenFactory({ db })

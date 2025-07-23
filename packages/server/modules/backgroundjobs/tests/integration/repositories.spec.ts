@@ -5,11 +5,11 @@ import {
   BackgroundJobs,
   getBackgroundJobCountFactory
 } from '@/modules/backgroundjobs/repositories'
-import {
+import type {
   BackgroundJob,
-  BackgroundJobPayload,
-  BackgroundJobStatus
+  BackgroundJobPayload
 } from '@/modules/backgroundjobs/domain'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
 import { expect } from 'chai'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 

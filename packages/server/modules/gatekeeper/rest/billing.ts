@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { ensureError } from '@speckle/shared'
-import { Stripe } from 'stripe'
+import type { Stripe } from 'stripe'
 import { getStripeEndpointSigningKey } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import { completeCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
@@ -21,7 +21,10 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
-import { GetStripeClient, SubscriptionData } from '@/modules/gatekeeper/domain/billing'
+import type {
+  GetStripeClient,
+  SubscriptionData
+} from '@/modules/gatekeeper/domain/billing'
 import { extendLoggerComponent } from '@/observability/logging'
 import {
   OperationName,

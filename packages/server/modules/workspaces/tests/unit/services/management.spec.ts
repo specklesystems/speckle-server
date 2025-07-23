@@ -1,10 +1,10 @@
-import {
+import type {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
-  WorkspaceSeatType,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import {
   addDomainToWorkspaceFactory,
   createWorkspaceFactory,
@@ -17,11 +17,9 @@ import {
 import { Roles, validateWorkspaceSlug } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import {
-  WorkspaceEvents,
-  WorkspaceEventsPayloads
-} from '@/modules/workspacesCore/domain/events'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import type { WorkspaceEventsPayloads } from '@/modules/workspacesCore/domain/events'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import {
@@ -34,13 +32,13 @@ import {
   WorkspaceSlugTakenError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { merge, omit } from 'lodash-es'
-import {
+import type {
   GetWorkspaceWithDomains,
   UpsertWorkspaceArgs
 } from '@/modules/workspaces/domain/operations'
-import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 
 type WorkspaceTestContext = {
   storedWorkspaces: UpsertWorkspaceArgs['workspace'][]

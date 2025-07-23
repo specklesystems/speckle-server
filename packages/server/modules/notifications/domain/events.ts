@@ -1,4 +1,4 @@
-import { NotificationMessage } from '@/modules/notifications/helpers/types'
+import type { NotificationMessage } from '@/modules/notifications/helpers/types'
 
 export const notificationsEventNamespace = 'notifications' as const
 

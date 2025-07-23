@@ -1,5 +1,5 @@
-import { Model } from '@/modules/core/domain/branches/types'
-import {
+import type { Model } from '@/modules/core/domain/branches/types'
+import type {
   BranchDeleteInput,
   BranchUpdateInput,
   DeleteModelInput,

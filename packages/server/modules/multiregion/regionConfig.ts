@@ -1,4 +1,4 @@
-import { GetAvailableRegionConfig } from '@/modules/multiregion/domain/operations'
+import type { GetAvailableRegionConfig } from '@/modules/multiregion/domain/operations'
 import { packageRoot } from '@/bootstrap'
 import path from 'node:path'
 
@@ -9,13 +9,13 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { type Optional } from '@speckle/shared'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import {
+import type {
   MainRegionConfig,
-  MultiRegionConfig,
-  loadMultiRegionsConfig
+  MultiRegionConfig
 } from '@speckle/shared/environment/db'
+import { loadMultiRegionsConfig } from '@speckle/shared/environment/db'
 import { TestOnlyLogicError } from '@/modules/shared/errors'
-import { PartialDeep } from 'type-fest'
+import type { PartialDeep } from 'type-fest'
 import { merge } from 'lodash-es'
 
 let multiRegionConfig: Optional<MultiRegionConfig> = undefined

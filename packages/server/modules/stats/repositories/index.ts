@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 export const getTotalStreamCountFactory = (deps: { db: Knex }) => async () => {
   const query = 'SELECT COUNT(*) FROM streams'

@@ -4,7 +4,7 @@ import {
   BranchDeleteError,
   BranchUpdateError
 } from '@/modules/core/errors/branch'
-import {
+import type {
   BranchCreateInput,
   BranchDeleteInput,
   BranchUpdateInput,
@@ -12,10 +12,10 @@ import {
   DeleteModelInput,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
-import { BranchRecord } from '@/modules/core/helpers/types'
+import type { BranchRecord } from '@/modules/core/helpers/types'
 import { has } from 'lodash-es'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
-import {
+import type {
   CreateBranchAndNotify,
   DeleteBranchAndNotify,
   DeleteBranchById,
@@ -25,11 +25,11 @@ import {
   UpdateBranch,
   UpdateBranchAndNotify
 } from '@/modules/core/domain/branches/operations'
-import {
+import type {
   GetStream,
   MarkBranchStreamUpdated
 } from '@/modules/core/domain/streams/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 
 const isBranchCreateInput = (
