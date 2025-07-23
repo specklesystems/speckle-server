@@ -115,6 +115,7 @@ graphql(`
   fragment ProjectModelPageVersionsPagination on Project {
     id
     visibility
+    role
     model(id: $modelId) {
       id
       versions(limit: 16, cursor: $versionsCursor) {

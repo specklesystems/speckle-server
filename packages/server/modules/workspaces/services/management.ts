@@ -536,7 +536,8 @@ export const addDomainToWorkspaceFactory =
 
     const email = userEmails.find(
       (userEmail) =>
-        userEmail.verified && userEmail.email.split('@')[1] === sanitizedDomain
+        userEmail.verified &&
+        userEmail.email.toLowerCase().split('@')[1] === sanitizedDomain
     )
 
     if (!email) {
