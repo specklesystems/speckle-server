@@ -7,10 +7,7 @@ import { moduleLogger } from '@/observability/logging'
 import { Express } from 'express'
 
 import { db } from '@/db/knex'
-import {
-  queryAllPendingAccSyncItemsFactory,
-  upsertAccSyncItemFactory
-} from '@/modules/acc/repositories/accSyncItems'
+import { queryAllPendingAccSyncItemsFactory } from '@/modules/acc/repositories/accSyncItems'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -219,8 +216,7 @@ const schedulePendingAccSyncItemsPoll = () => {
 
           const projectDb = await getProjectDbClient({ projectId: syncItem.projectId })
 
-          await upsertAccSyncItemFactory({ db: projectDb })({
-            ...syncItem,
+          await projectDb.table<AccSyncItem>(AccSyncItems.name).update({
             status: 'SYNCING'
           })
 
