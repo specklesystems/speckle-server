@@ -6,11 +6,11 @@ import { StreamFavorites, Streams, Users } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
 import gql from 'graphql-tag'
 import { sleep } from '@/test/helpers'
+import type { ServerAndContext } from '@/test/graphqlHelper'
 import {
   createAuthedTestContext,
   createTestContext,
-  executeOperation,
-  ServerAndContext
+  executeOperation
 } from '@/test/graphqlHelper'
 import {
   getStreamFactory,

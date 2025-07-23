@@ -4,10 +4,10 @@ import {
 } from '@/modules/blobstorage/services/presigned'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobMetadataFromStorage,
-  getSignedUrlFactory,
-  ObjectStorage
+  getSignedUrlFactory
 } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getBlobMetadataFactory,
@@ -21,7 +21,7 @@ import { BlobUploadStatus } from '@speckle/shared/blobs'
 import { createProject } from '@/test/projectHelper'
 import { createTestUser } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { testLogger } from '@/observability/logging'
@@ -32,7 +32,7 @@ import {
   StoredBlobAccessError
 } from '@/modules/blobstorage/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
-import {
+import type {
   GeneratePresignedUrl,
   GetBlobMetadata,
   RegisterCompletedUpload

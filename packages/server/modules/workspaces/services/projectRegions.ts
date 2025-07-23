@@ -1,6 +1,6 @@
-import { GetProject } from '@/modules/core/domain/projects/operations'
-import { UpdateProjectRegionKey } from '@/modules/multiregion/services/projectRegion'
-import {
+import type { GetProject } from '@/modules/core/domain/projects/operations'
+import type { UpdateProjectRegionKey } from '@/modules/multiregion/services/projectRegion'
+import type {
   CopyProjectAutomations,
   CopyProjectBlobs,
   CopyProjectComments,

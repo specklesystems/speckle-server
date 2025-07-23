@@ -1,8 +1,8 @@
-import {
+import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
-import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
+import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 
 export const fileuploadEventNamespace = 'fileupload' as const
 

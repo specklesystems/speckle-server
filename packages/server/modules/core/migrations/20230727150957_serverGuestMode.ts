@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const TABLE_NAME = 'server_config'
 const COL_NAME = 'guestModeEnabled'

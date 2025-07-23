@@ -4,7 +4,8 @@
  * available to Prometheus via an histogram.
  */
 
-import { Histogram, Registry } from 'prom-client'
+import type { Registry } from 'prom-client'
+import { Histogram } from 'prom-client'
 import { processCpuTotal } from '@/observability/components/highFrequencyMetrics/processCPUTotal'
 import { heapSizeAndUsed } from '@/observability/components/highFrequencyMetrics/heapSizeAndUsed'
 import { knexConnections } from '@/observability/components/highFrequencyMetrics/knexConnectionPool'

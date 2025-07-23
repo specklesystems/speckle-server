@@ -1,16 +1,16 @@
-import {
+import type {
   LegacyAdminUsersListItem,
   LegacyAdminUsersPaginationParams,
   LegacyGetAdminUsersListCollection,
   LegacyGetPaginatedUsers,
   LegacyGetPaginatedUsersCount
 } from '@/modules/core/domain/users/operations'
-import { UserRecord } from '@/modules/core/helpers/userHelper'
-import {
+import type { UserRecord } from '@/modules/core/helpers/userHelper'
+import type {
   CountServerInvites,
   FindServerInvites
 } from '@/modules/serverinvites/domain/operations'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { resolveTarget } from '@/modules/serverinvites/helpers/core'
 import { clamp } from 'lodash-es'
 

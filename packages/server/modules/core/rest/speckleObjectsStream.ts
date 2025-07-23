@@ -1,5 +1,6 @@
 import { ensureError } from '@speckle/shared'
-import { Transform, TransformCallback } from 'stream'
+import type { TransformCallback } from 'stream'
+import { Transform } from 'stream'
 
 /**
  * A stream that converts database objects stream to "{id}\t{data_json}\n" stream or a json stream of obj.data fields

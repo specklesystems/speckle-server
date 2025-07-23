@@ -1,16 +1,14 @@
-import { GetProjectModelById } from '@/modules/core/domain/branches/operations'
+import type { GetProjectModelById } from '@/modules/core/domain/branches/operations'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
-import { DependenciesOf } from '@/modules/shared/helpers/factory'
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
-import {
-  FileImportSubscriptions,
-  PublishSubscription
-} from '@/modules/shared/utils/subscriptions'
+import type { DependenciesOf } from '@/modules/shared/helpers/factory'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { PublishSubscription } from '@/modules/shared/utils/subscriptions'
+import { FileImportSubscriptions } from '@/modules/shared/utils/subscriptions'
 
 const reportFileUploadStartedFactory =
   (deps: { publish: PublishSubscription; getProjectModelById: GetProjectModelById }) =>

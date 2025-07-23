@@ -1,7 +1,8 @@
-import { BasicTestUser, buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
-  BasicTestStream,
   createTestStream,
   createTestStreams
 } from '@/test/speckle-helpers/streamHelper'

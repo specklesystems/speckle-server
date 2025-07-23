@@ -1,5 +1,5 @@
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
-import { SaveActivity } from '@/modules/activitystream/domain/operations'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { SaveActivity } from '@/modules/activitystream/domain/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 const addWorkspaceSeatUpdatedActivityFactory =

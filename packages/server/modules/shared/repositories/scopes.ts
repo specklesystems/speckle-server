@@ -1,7 +1,7 @@
-import { ScopeRecord } from '@/modules/auth/helpers/types'
+import type { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@/modules/core/dbSchema'
-import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
-import { Knex } from 'knex'
+import type { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { Knex } from 'knex'
 
 const tables = {
   scopes: (db: Knex) => db<ScopeRecord>(Scopes.name)

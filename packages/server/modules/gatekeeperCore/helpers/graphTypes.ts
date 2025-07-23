@@ -1,5 +1,5 @@
-import { Price } from '@/modules/core/graph/generated/graphql'
-import { WorkspacePlan } from '@speckle/shared'
+import type { Price } from '@/modules/core/graph/generated/graphql'
+import type { WorkspacePlan } from '@speckle/shared'
 
 export type PriceGraphQLReturn = Omit<Price, 'currencySymbol'>
 

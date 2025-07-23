@@ -1,5 +1,5 @@
-import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import {
+import type { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import type {
   LimitedWorkspace,
   Workspace,
   WorkspaceAcl,
@@ -10,8 +10,8 @@ import {
   WorkspaceWithDomains,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
-import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import {
+import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
+import type {
   MaybeNullOrUndefined,
   Nullable,
   NullableKeysToOptional,
@@ -20,14 +20,17 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
-import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
-import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
-import { Stream } from '@/modules/core/domain/streams/types'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { ServerRegion } from '@/modules/multiregion/domain/types'
-import { SetOptional } from 'type-fest'
-import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
-import { UserRecord } from '@/modules/core/helpers/userHelper'
+import type { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
+import type { WorkspaceTeam } from '@/modules/workspaces/domain/types'
+import type { Stream } from '@/modules/core/domain/streams/types'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { ServerRegion } from '@/modules/multiregion/domain/types'
+import type { SetOptional } from 'type-fest'
+import type {
+  WorkspaceSeat,
+  WorkspaceSeatType
+} from '@/modules/gatekeeper/domain/billing'
+import type { UserRecord } from '@/modules/core/helpers/userHelper'
 
 /** Workspace */
 

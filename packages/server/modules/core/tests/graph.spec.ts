@@ -58,12 +58,13 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { Express } from 'express'
-import { Server } from 'http'
+import type { Express } from 'express'
+import type { Server } from 'http'
 import { omit } from 'lodash-es'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 
 const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 

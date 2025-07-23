@@ -1,6 +1,6 @@
-import { UserRecord } from '@/modules/core/helpers/types'
-import { EmailVerification } from '@/modules/emails/domain/types'
-import { EmailVerificationRecord } from '@/modules/emails/repositories'
+import type { UserRecord } from '@/modules/core/helpers/types'
+import type { EmailVerification } from '@/modules/emails/domain/types'
+import type { EmailVerificationRecord } from '@/modules/emails/repositories'
 
 /**
  * Repositories

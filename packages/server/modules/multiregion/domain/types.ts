@@ -1,5 +1,5 @@
-import { RegionRecord } from '@/modules/multiregion/helpers/types'
-import { Nullable } from '@speckle/shared'
+import type { RegionRecord } from '@/modules/multiregion/helpers/types'
+import type { Nullable } from '@speckle/shared'
 import { DataRegionsConfig, RegionServerConfig } from '@speckle/shared/environment/db'
 
 export { RegionServerConfig, DataRegionsConfig }

@@ -1,4 +1,4 @@
-import { Merge } from 'type-fest'
+import type { Merge } from 'type-fest'
 import type { Options, Info } from 'verror'
 import VError from 'verror'
 

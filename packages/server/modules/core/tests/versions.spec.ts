@@ -1,20 +1,23 @@
 import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import {
-  CreateProjectVersionDocument,
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type {
   CreateVersionInput,
-  MarkProjectVersionReceivedDocument,
   MarkReceivedVersionInput
 } from '@/modules/core/graph/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import {
+  CreateProjectVersionDocument,
+  MarkProjectVersionReceivedDocument
+} from '@/modules/core/graph/generated/graphql'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
-import {
-  BasicTestBranch,
-  createTestBranches
-} from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranches } from '@/test/speckle-helpers/branchHelper'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import { omit } from 'lodash-es'
 

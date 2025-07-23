@@ -1,10 +1,10 @@
-import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
+import type { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { resolveTarget } from '@/modules/serverinvites/helpers/core'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash-es'
-import { FindServerInvite } from '@/modules/serverinvites/domain/operations'
-import { GetInvitationTargetUsers } from '@/modules/serverinvites/services/operations'
-import { GetUsers } from '@/modules/core/domain/users/operations'
+import type { FindServerInvite } from '@/modules/serverinvites/domain/operations'
+import type { GetInvitationTargetUsers } from '@/modules/serverinvites/services/operations'
+import type { GetUsers } from '@/modules/core/domain/users/operations'
 
 /**
  * Get all registered invitation target users keyed by their ID

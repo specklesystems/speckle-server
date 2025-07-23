@@ -1,5 +1,5 @@
+import type { CacheProvider } from '@/modules/shared/utils/caching'
 import {
-  CacheProvider,
   inMemoryCacheProviderFactory,
   redisCacheProviderFactory,
   wrapFactoryWithCache,
@@ -9,7 +9,7 @@ import { describeEach, itEach } from '@/test/assertionHelper'
 import TTLCache from '@isaacs/ttlcache'
 import { TIME_MS, wait } from '@speckle/shared'
 import { expect } from 'chai'
-import Redis from 'ioredis'
+import type Redis from 'ioredis'
 import MockRedis from 'ioredis-mock'
 
 const argsKey = (...args: Array<unknown>) => JSON.stringify(args)

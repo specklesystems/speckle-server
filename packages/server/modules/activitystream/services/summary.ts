@@ -1,14 +1,12 @@
-import {
-  NotificationPublisher,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
-import {
+import type { NotificationPublisher } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@/modules/notifications/helpers/types'
+import type {
   CreateActivitySummary,
   GetActiveUserStreams,
   GetUserStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 
 export const createActivitySummaryFactory =
   ({

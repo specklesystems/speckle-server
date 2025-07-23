@@ -1,5 +1,5 @@
-import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
-import {
+import type { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import type {
   CanWorkspaceAccessFeature,
   WorkspaceFeatureAccessFunction
 } from '@/modules/gatekeeper/domain/operations'

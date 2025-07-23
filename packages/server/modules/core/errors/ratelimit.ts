@@ -1,6 +1,6 @@
-import { RateLimitBreached } from '@/modules/core/utils/ratelimiter'
+import type { RateLimitBreached } from '@/modules/core/utils/ratelimiter'
 import { BaseError } from '@/modules/shared/errors'
-import { Options } from 'verror'
+import type { Options } from 'verror'
 
 export class RateLimitError extends BaseError {
   static defaultMessage =

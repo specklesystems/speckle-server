@@ -6,7 +6,7 @@ import {
   isTestEnv,
   shouldRunTestsInMultiregionMode
 } from '@/modules/shared/helpers/envHelper'
-import { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
 import {
   getRegionKeys,
   getMainTestRegionClient,

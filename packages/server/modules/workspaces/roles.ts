@@ -1,4 +1,4 @@
-import { UserWorkspaceRole } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { UserWorkspaceRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Roles, RoleInfo } from '@speckle/shared'
 import { pick } from 'lodash-es'
 

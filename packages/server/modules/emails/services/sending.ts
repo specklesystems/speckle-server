@@ -1,5 +1,5 @@
 import { emailLogger } from '@/observability/logging'
-import { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
+import type { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
 import { getTransporter } from '@/modules/emails/utils/transporter'
 import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'
 import { resolveMixpanelUserId } from '@speckle/shared'

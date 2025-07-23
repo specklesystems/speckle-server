@@ -1,6 +1,6 @@
-import { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
-import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
-import {
+import type { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
+import type { BranchLatestCommit } from '@/modules/core/domain/commits/types'
+import type {
   BranchCreateInput,
   BranchDeleteInput,
   BranchUpdateInput,
@@ -12,12 +12,12 @@ import {
   StreamBranchesArgs,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
-import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { EmailVerification } from '@/modules/emails/domain/types'
-import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
-import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { Knex } from 'knex'
-import { Merge } from 'type-fest'
+import type { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import type { EmailVerification } from '@/modules/emails/domain/types'
+import type { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import type { Knex } from 'knex'
+import type { Merge } from 'type-fest'
 
 export type GenerateBranchId = () => string
 

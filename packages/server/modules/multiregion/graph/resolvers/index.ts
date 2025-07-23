@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { initializeRegion as initializeDb } from '@/modules/multiregion/utils/dbSelector'
 import { getAvailableRegionConfig } from '@/modules/multiregion/regionConfig'
 import {

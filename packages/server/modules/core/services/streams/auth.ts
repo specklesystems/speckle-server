@@ -1,11 +1,14 @@
-import {
+import type {
   GetStream,
   ValidatePermissionsReadStream,
   ValidatePermissionsWriteStream
 } from '@/modules/core/domain/streams/operations'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
-import { AuthorizeResolver, ValidateScopes } from '@/modules/shared/domain/operations'
+import type {
+  AuthorizeResolver,
+  ValidateScopes
+} from '@/modules/shared/domain/operations'
 import { DatabaseError } from '@/modules/shared/errors'
 import { Roles, Scopes } from '@speckle/shared'
 

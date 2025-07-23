@@ -1,5 +1,6 @@
 /* istanbul ignore file */
-import prometheusClient, { Registry } from 'prom-client'
+import type { Registry } from 'prom-client'
+import prometheusClient from 'prom-client'
 import promBundle from 'express-prom-bundle'
 
 import { initKnexPrometheusMetrics } from '@/observability/components/knex/knexMonitoring'

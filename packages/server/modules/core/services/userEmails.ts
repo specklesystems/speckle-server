@@ -1,12 +1,12 @@
-import {
+import type {
   CreateUserEmail,
   FindEmail,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import { ensureNoPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
+import type { ensureNoPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 import { UserEmailAlreadyExistsError } from '@/modules/core/errors/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { RequestNewEmailVerification } from '@/modules/emails/domain/operations'
+import type { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import type { RequestNewEmailVerification } from '@/modules/emails/domain/operations'
 
 export const validateAndCreateUserEmailFactory =
   (deps: {

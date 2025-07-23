@@ -1,5 +1,6 @@
 import { Users } from '@/modules/core/dbSchema'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import { getActiveUser, getOtherUser } from '@/test/graphql/users'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
@@ -13,10 +14,10 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
+import type { ServerAndContext } from '@/test/graphqlHelper'
 import {
   createAuthedTestContext,
   createTestContext,
-  ServerAndContext,
   testApolloServer
 } from '@/test/graphqlHelper'
 import { GetActiveUserEmailsDocument } from '@/modules/core/graph/generated/graphql'
