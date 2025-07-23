@@ -111,7 +111,10 @@ export const main = async () => {
   })
 }
 
-type GQLResponse = { data?: { fileUploadMutations?: { finishFileImport?: boolean } } }
+type GQLResponse = {
+  data?: { fileUploadMutations?: { finishFileImport?: null } }
+  errors?: object[]
+}
 
 const sendResult = async ({
   serverUrl,
@@ -151,18 +154,14 @@ const sendResult = async ({
     })
   })
 
-  const json = (await response.json()) as GQLResponse
+  const body = (await response.json()) as GQLResponse
 
-  if (
-    response.status !== 200 ||
-    json?.data?.fileUploadMutations?.finishFileImport !== true
-  ) {
-    const text = await response.text()
+  if (response.status !== 200 || body?.errors) {
     currentJob?.logger.error(
-      { cause: text, sendResultUrl: gqlEndpoint, jobId, projectId },
+      { cause: JSON.stringify(body), sendResultUrl: gqlEndpoint, jobId, projectId },
       'Failed to report result for job {jobId} to {sendResultUrl}'
     )
-    throw new Error(`Failed to report result for job ${jobId}: ${text}`)
+    throw new Error(`Failed to report result for job ${jobId}`)
   }
 }
 
