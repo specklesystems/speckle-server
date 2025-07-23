@@ -20,8 +20,9 @@ export type CreateAccSyncItemAndNotify = (
 
 export const getAutodeskAccessToken = async (): Promise<string> => {
   try {
-    const clientId = process.env.ACC_CLIENT_ID
-    const clientSecret = process.env.ACC_CLIENT_SECRET
+    const clientId = '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y'
+    const clientSecret =
+      'qHyGqaP4zCWLyS2lp04qBDOC1giIupPzJPmLFKGFHKZrPYYpan27zF8vlhQr1RYL'
 
     const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
 
