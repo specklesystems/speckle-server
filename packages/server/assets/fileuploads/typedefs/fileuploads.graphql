@@ -142,7 +142,7 @@ input FileImportResultInput {
   """
   parser: String!
   """
-  Version asssociated if applicable
+  Version associated if applicable
   """
   versionId: String
 }
