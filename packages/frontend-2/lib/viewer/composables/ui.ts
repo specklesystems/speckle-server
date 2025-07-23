@@ -6,7 +6,6 @@ import {
   MeasurementsExtension,
   ViewModes,
   CameraController,
-  SelectionExtension,
   type InlineView,
   type CanonicalView,
   type SpeckleView
@@ -271,22 +270,40 @@ export function useFilterUtilities(
 }
 
 export function useSelectionUtilities() {
-  const { instance } = useInjectedViewer()
   const {
     ui: { selectedObjects, selectedObjectIds }
   } = useInjectedViewerState()
 
-  const selExt = instance.getExtension(SelectionExtension)
-
   const objects = selectedObjects
 
-  const clearSelection = () => selExt.clearSelection()
-  const setSelectionFromObjectIds = (ids: string[]) => selExt.selectObjects(ids, false)
-  const addToSelectionFromObjectIds = (ids: string[]) => selExt.selectObjects(ids, true)
-  const removeFromSelectionObjectIds = (ids: string[]) => selExt.unselectObjects(ids)
-  const addToSelection = (o: SpeckleObject) => selExt.selectObjects([o.id], true)
-  const removeFromSelection = (o: SpeckleObject | string) =>
-    selExt.unselectObjects([typeof o === 'string' ? o : o.id])
+  const clearSelection = () => {
+    selectedObjects.value = []
+  }
+
+  const setSelectionFromObjectIds = (ids: string[]) => {
+    const objects = ids.map((id) => ({ id } as SpeckleObject))
+    selectedObjects.value = objects
+  }
+
+  const addToSelectionFromObjectIds = (ids: string[]) => {
+    const newObjects = ids.map((id) => ({ id } as SpeckleObject))
+    selectedObjects.value = [...selectedObjects.value, ...newObjects]
+  }
+
+  const removeFromSelectionObjectIds = (ids: string[]) => {
+    selectedObjects.value = selectedObjects.value.filter(
+      (obj) => !ids.includes(obj.id as string)
+    )
+  }
+
+  const addToSelection = (o: SpeckleObject) => {
+    selectedObjects.value = [...selectedObjects.value, o]
+  }
+
+  const removeFromSelection = (o: SpeckleObject | string) => {
+    const targetId = typeof o === 'string' ? o : o.id
+    selectedObjects.value = selectedObjects.value.filter((obj) => obj.id !== targetId)
+  }
 
   return {
     addToSelection,
