@@ -10,9 +10,10 @@ import type {
   GetStoredViewCount,
   StoreSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
-import type {
-  SavedView,
-  SavedViewGroup
+import {
+  SavedViewVisibility,
+  type SavedView,
+  type SavedViewGroup
 } from '@/modules/viewer/domain/types/savedViews'
 import { DuplicateSavedViewError } from '@/modules/viewer/errors/savedViews'
 import {
@@ -128,6 +129,13 @@ const getProjectSavedViewGroupsBaseQueryFactory =
 
     if (onlyAuthored && userId) {
       q.where({ [SavedViews.col.authorId]: userId })
+    } else {
+      q.andWhere((w1) => {
+        w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
+        if (userId) {
+          w1.orWhere(SavedViews.col.authorId, userId)
+        }
+      })
     }
 
     if (search) {

@@ -329,13 +329,14 @@ describe('Saved Views GraphQL CRUD', () => {
   describe('reading', () => {
     const NAMED_GROUP_COUNT = 15
     const GROUP_COUNT = NAMED_GROUP_COUNT + 1 // + ungrouped group
+
     const PAGE_COUNT = 3
-    const PAGE_SIZE = Math.ceil(GROUP_COUNT / PAGE_COUNT)
 
     const SEARCH_STRING = 'bababooey'
     const SEARCH_STRING_ITEM_COUNT = GROUP_COUNT / 2
 
     const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
+    const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
 
     const modelIds: string[] = []
     let readTestProject: BasicTestStream
@@ -362,9 +363,12 @@ describe('Saved Views GraphQL CRUD', () => {
       })
 
       // Create a bunch of groups (views w/ groupNames), each w/ a different model
+      let includedSearchString = 0
       const createGroupView = async (groupName: string | null, idx: number) => {
-        const includeSearchString = idx % 2 === 0
         const useDifferentAuthor = idx % 4 === 0
+        const shouldBePrivate = useDifferentAuthor && idx % (2 * 4) === 0
+        const includeSearchString =
+          !shouldBePrivate && includedSearchString++ < SEARCH_STRING_ITEM_COUNT
 
         const model = await createTestBranch({
           branch: buildBasicTestModel({
@@ -383,6 +387,9 @@ describe('Saved Views GraphQL CRUD', () => {
           projectId: readTestProject.id,
           overrides: {
             groupName,
+            visibility: shouldBePrivate
+              ? SavedViewVisibility.authorOnly
+              : SavedViewVisibility.public,
             name: `View ${idx} ${includeSearchString ? SEARCH_STRING : ''}`
           }
         })
@@ -403,6 +410,8 @@ describe('Saved Views GraphQL CRUD', () => {
       let pagesLoaded = 0
       let groupsFound = 0
       const allReadModelResourceIds = getAllReadModelResourceIds()
+      const REAL_GROUP_COUNT = GROUP_COUNT - OTHER_AUTHOR_PRIVATE_ITEM_COUNT
+      const PAGE_SIZE = Math.ceil(REAL_GROUP_COUNT / PAGE_COUNT)
 
       const loadPage = async () => {
         const res = await getProjectViewGroups({
@@ -418,7 +427,7 @@ describe('Saved Views GraphQL CRUD', () => {
 
         const data = res.data?.project.savedViewGroups
         expect(data).to.be.ok
-        expect(data!.totalCount).to.equal(GROUP_COUNT)
+        expect(data!.totalCount).to.equal(REAL_GROUP_COUNT)
 
         if (data?.cursor) {
           expect(data!.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
@@ -453,7 +462,7 @@ describe('Saved Views GraphQL CRUD', () => {
       } while (cursor)
 
       expect(pagesLoaded).to.equal(PAGE_COUNT + 1) // +1 for last,empty page
-      expect(groupsFound).to.equal(GROUP_COUNT)
+      expect(groupsFound).to.equal(REAL_GROUP_COUNT)
     })
 
     it('should return different groups in same project, if resource string differs', async () => {
@@ -507,7 +516,5 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(data!.totalCount).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
       expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
     })
-
-    // TODO: Should not show private views
   })
 })
