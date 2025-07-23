@@ -1,15 +1,12 @@
-import {
+import type {
   Currency,
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
-import { SubscriptionState } from '@/modules/gatekeeperCore/domain/events'
-import {
-  Workspace,
-  WorkspaceSeat,
-  WorkspaceSeatType
-} from '@/modules/workspacesCore/domain/types'
-import {
+import type { SubscriptionState } from '@/modules/gatekeeperCore/domain/events'
+import type { Workspace, WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import type {
   Nullable,
   Optional,
   PaidWorkspacePlan,
@@ -19,7 +16,7 @@ import {
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
 import type Stripe from 'stripe'
-import { OverrideProperties } from 'type-fest'
+import type { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
 export { Currency } from '@/modules/gatekeeperCore/domain/billing'

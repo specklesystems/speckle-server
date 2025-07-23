@@ -30,7 +30,7 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
 
 const ResetTokens = () => knex('pwdreset_tokens')
 const db = knex

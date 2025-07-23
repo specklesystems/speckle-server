@@ -1,7 +1,7 @@
 import { TIME } from '@speckle/shared'
-import Bull from 'bull'
+import type Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
-import { ObserveMetrics } from '@/modules/previews/domain/operations'
+import type { ObserveMetrics } from '@/modules/previews/domain/operations'
 
 export const PreviewJobDurationStep = {
   TOTAL: 'total',

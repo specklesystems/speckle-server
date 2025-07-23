@@ -1,29 +1,30 @@
 import { db } from '@/db/knex'
-import { GetComment } from '@/modules/comments/domain/operations'
-import { ExtendedComment } from '@/modules/comments/domain/types'
+import type { GetComment } from '@/modules/comments/domain/operations'
+import type { ExtendedComment } from '@/modules/comments/domain/types'
 import { getCommentFactory } from '@/modules/comments/repositories/comments'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
-import { ServerInfo } from '@/modules/core/helpers/types'
+import type { ServerInfo } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { NotificationValidationError } from '@/modules/notifications/errors'
-import {
+import type {
   NotificationHandler,
   MentionedInCommentMessage
 } from '@/modules/notifications/helpers/types'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
-import { Knex } from 'knex'
+import type { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { Knex } from 'knex'
 
 type ValidatedNotificationState = {
   msg: MentionedInCommentMessage

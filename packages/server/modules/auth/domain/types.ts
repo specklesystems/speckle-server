@@ -1,5 +1,5 @@
-import { ScopeRecord } from '@/modules/auth/helpers/types'
-import { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
+import type { ScopeRecord } from '@/modules/auth/helpers/types'
+import type { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
 
 export type UserServerApp = ServerAppRecord & {
   author: Pick<UserRecord, 'id' | 'name' | 'avatar'> | null

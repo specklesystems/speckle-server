@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'

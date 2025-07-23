@@ -1,12 +1,15 @@
-import { Project } from '@/modules/core/domain/streams/types'
-import {
+import type { Project } from '@/modules/core/domain/streams/types'
+import type {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import { ResourceTargetTypeRoleTypeMap } from '@/modules/serverinvites/helpers/core'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
-import { ServerRoles, StreamRoles } from '@speckle/shared'
+import type { ResourceTargetTypeRoleTypeMap } from '@/modules/serverinvites/helpers/core'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type {
+  Workspace,
+  WorkspaceSeatType
+} from '@/modules/workspacesCore/domain/types'
+import type { ServerRoles, StreamRoles } from '@speckle/shared'
 
 export interface InviteResourceTargetTypeMap {
   project: 'project'

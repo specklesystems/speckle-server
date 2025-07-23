@@ -1,15 +1,15 @@
-import { GetTotalModelCount } from '@/modules/core/domain/branches/operations'
-import { GetTotalVersionCount } from '@/modules/core/domain/commits/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetTotalModelCount } from '@/modules/core/domain/branches/operations'
+import type { GetTotalVersionCount } from '@/modules/core/domain/commits/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
-import {
+import type { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
+import type {
   getTotalStreamCountFactory,
   getTotalUserCountFactory
 } from '@/modules/stats/repositories'
-import { GetTotalWorkspaceCountFactory } from '@/modules/workspacesCore/domain/operations'
+import type { GetTotalWorkspaceCountFactory } from '@/modules/workspacesCore/domain/operations'
 import { resolveMixpanelServerId } from '@speckle/shared'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 
 export const updateServerMixpanelProfileFactory =
   (deps: {

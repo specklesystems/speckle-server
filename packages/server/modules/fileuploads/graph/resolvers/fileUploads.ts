@@ -1,5 +1,5 @@
 import { TIME } from '@speckle/shared'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { db } from '@/db/knex'
 import {
   getBranchPendingVersionsFactory,
@@ -17,11 +17,7 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import {
-  BadRequestError,
-  ForbiddenError,
-  MisconfiguredEnvironmentError
-} from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   fileImportServiceShouldUsePrivateObjectsServerUrl,
@@ -66,14 +62,13 @@ import { getFeatureFlags } from '@speckle/shared/environment'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
-import {
+import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
-const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
-  getFeatureFlags()
+const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 const getFileUploadModel = async (params: {
   upload: FileUploadRecord | FileUploadRecordV2
@@ -101,11 +96,6 @@ const getFileUploadModel = async (params: {
 
 const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   async generateUploadUrl(_parent, args, ctx) {
-    if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
-      throw new MisconfiguredEnvironmentError(
-        'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
-      )
-    }
     const { projectId } = args.input
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
@@ -171,12 +161,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
     if (!isFileUploadsEnabled())
       throw new BadRequestError('File uploads are not enabled for this server')
-
-    if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
-      throw new MisconfiguredEnvironmentError(
-        'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
-      )
-    }
 
     const [projectDb, projectStorage] = await Promise.all([
       getProjectDbClient({ projectId }),

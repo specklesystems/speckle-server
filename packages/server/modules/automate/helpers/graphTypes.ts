@@ -1,4 +1,4 @@
-import {
+import type {
   AutomationRevisionFunctionRecord,
   AutomationFunctionRunRecord,
   AutomationRecord,
@@ -8,15 +8,15 @@ import {
   AutomationRunWithTriggersFunctionRuns,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
-import {
+import type {
   AutomateFunction,
   AutomateFunctionRelease,
   ProjectAutomationsUpdatedMessage,
   ProjectTriggeredAutomationsStatusUpdatedMessageType,
   TriggeredAutomationsStatus
 } from '@/modules/core/graph/generated/graphql'
-import { Nullable } from '@speckle/shared'
-import { Merge, SetOptional } from 'type-fest'
+import type { Nullable } from '@speckle/shared'
+import type { Merge, SetOptional } from 'type-fest'
 
 export type AutomateFunctionGraphQLReturn = Pick<
   AutomateFunction,

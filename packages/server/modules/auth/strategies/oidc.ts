@@ -15,21 +15,22 @@ import {
 import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
-import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import type { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { get } from 'lodash-es'
-import { ensureError, Optional } from '@speckle/shared'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import {
+import type { Optional } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type {
   FinalizeInvitedServerRegistration,
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
-import {
+import type { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import type {
   FindOrCreateValidatedUser,
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 

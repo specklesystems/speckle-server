@@ -16,7 +16,8 @@
    limitations under the License.
  */
 
-import { Histogram, Registry } from 'prom-client'
+import type { Registry } from 'prom-client'
+import { Histogram } from 'prom-client'
 import type { Metric } from '@/observability/components/highFrequencyMetrics/highfrequencyMonitoring'
 
 const PROCESS_CPU_USER_SECONDS = 'process_cpu_user_seconds_total_high_frequency'

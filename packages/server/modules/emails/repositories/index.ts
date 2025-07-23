@@ -1,5 +1,5 @@
 import { EmailVerifications } from '@/modules/core/dbSchema'
-import {
+import type {
   DeleteOldAndInsertNewVerification,
   DeleteVerifications,
   GetPendingToken,
@@ -8,9 +8,9 @@ import {
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { hash } from 'bcrypt'
-import { EmailVerification } from '@/modules/emails/domain/types'
+import type { EmailVerification } from '@/modules/emails/domain/types'
 
 const tables = {
   emailVerifications: (db: Knex) => db<EmailVerification>(EmailVerifications.name)

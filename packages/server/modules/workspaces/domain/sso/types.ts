@@ -1,4 +1,4 @@
-import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
+import type { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import type { infer as Infer } from 'zod'
 
 type ProviderBaseRecord = {

@@ -8,21 +8,19 @@ import {
   getServerOrigin,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
-import { Logger, fileUploadsLogger as logger } from '@/observability/logging'
+import type { Logger } from '@/observability/logging'
+import { fileUploadsLogger as logger } from '@/observability/logging'
 import { TIME, TIME_MS } from '@speckle/shared'
 import { initializeQueue as setupQueue } from '@speckle/shared/queue'
-import { JobPayload } from '@speckle/shared/workers/fileimport'
-import { FileImportQueue } from '@/modules/fileuploads/domain/types'
-import Bull, {
-  ActiveEventCallback,
-  ErrorEventCallback,
-  FailedEventCallback
-} from 'bull'
+import type { JobPayload } from '@speckle/shared/workers/fileimport'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
+import type { ActiveEventCallback, ErrorEventCallback, FailedEventCallback } from 'bull'
+import type Bull from 'bull'
 import {
   NumberOfFileImportRetries,
   DelayBetweenFileImportRetriesMinutes
 } from '@/modules/fileuploads/domain/consts'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
 import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
 import {

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
-import { BaseMetaRecord } from '@/modules/core/helpers/meta'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ServerRoles } from '@speckle/shared'
+import type { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import type { BaseMetaRecord } from '@/modules/core/helpers/meta'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { ServerRoles } from '@speckle/shared'
 
 export type UserRecord = {
   id: string

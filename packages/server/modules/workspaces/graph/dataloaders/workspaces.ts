@@ -6,7 +6,7 @@ import {
   getWorkspacesProjectsCountsFactory,
   getWorkspacesRolesForUsersFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import {
+import type {
   WorkspaceAcl,
   WorkspaceDomain,
   WorkspaceWithOptionalRole

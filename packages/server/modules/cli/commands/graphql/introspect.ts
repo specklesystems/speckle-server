@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { cliLogger as logger } from '@/observability/logging'
 import * as ModulesSetup from '@/modules/index'
 import { printSchema } from 'graphql/utilities'

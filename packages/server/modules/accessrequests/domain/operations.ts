@@ -1,10 +1,10 @@
-import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
-import {
+import type { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
+import type {
   AccessRequestType,
   ServerAccessRequestRecord,
   StreamAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
-import { Nullable, Optional } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 
 export type GetUsersPendingAccessRequest = <
   T extends AccessRequestType = AccessRequestType,

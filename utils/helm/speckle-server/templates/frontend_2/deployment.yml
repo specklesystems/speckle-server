@@ -143,8 +143,8 @@ spec:
             value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
           - name: NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED
             value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
-          - name: NUXT_PUBLIC_FF_LARGE_FILE_IMPORTS_ENABLED
-            value: {{ .Values.featureFlags.largeFileUploadsEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_LEGACY_FILE_IMPORTS_ENABLED
+            value: {{ .Values.featureFlags.legacyFileImportsEnabled | quote }}
           {{- if .Values.analytics.intercom_app_id }}
           - name: NUXT_PUBLIC_INTERCOM_APP_ID
             value: {{ .Values.analytics.intercom_app_id | quote }}

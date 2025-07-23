@@ -1,15 +1,13 @@
-import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  getClient,
-  MixpanelClient,
-  MixpanelEvents
-} from '@/modules/shared/utils/mixpanel'
+import type { EventPayload } from '@/modules/shared/services/eventBus'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import type { MixpanelClient } from '@/modules/shared/utils/mixpanel'
+import { getClient, MixpanelEvents } from '@/modules/shared/utils/mixpanel'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import { throwUncoveredError } from '@speckle/shared'
-import { GetProject } from '@/modules/core/domain/projects/operations'
-import { Knex } from 'knex'
+import type { GetProject } from '@/modules/core/domain/projects/operations'
+import type { Knex } from 'knex'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 import { getUserFactory } from '@/modules/core/repositories/users'
 
 export const fileuploadTrackingFactory =

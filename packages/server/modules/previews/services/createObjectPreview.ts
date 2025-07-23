@@ -1,7 +1,7 @@
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
-import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
-import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
-import {
+import type { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
+import type { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import type {
   CreateObjectPreview,
   RequestObjectPreview,
   StoreObjectPreview

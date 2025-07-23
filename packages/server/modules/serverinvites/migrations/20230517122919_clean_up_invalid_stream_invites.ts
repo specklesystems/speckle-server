@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { chunk } from 'lodash-es'
 
 const INVITES_TABLE = 'server_invites'

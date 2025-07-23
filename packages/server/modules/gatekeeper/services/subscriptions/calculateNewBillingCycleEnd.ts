@@ -1,4 +1,4 @@
-import { WorkspaceSubscription } from '@/modules/gatekeeper/domain/billing'
+import type { WorkspaceSubscription } from '@/modules/gatekeeper/domain/billing'
 import { throwUncoveredError } from '@speckle/shared'
 
 export const calculateNewBillingCycleEnd = ({

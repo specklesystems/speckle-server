@@ -1,4 +1,4 @@
-import {
+import type {
   AddBranchCreatedActivity,
   AddBranchDeletedActivity,
   AddBranchUpdatedActivity,
@@ -10,7 +10,7 @@ import {
 } from '@/modules/activitystream/helpers/types'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
-import { EventBusListen } from '@/modules/shared/services/eventBus'
+import type { EventBusListen } from '@/modules/shared/services/eventBus'
 
 /**
  * Save "branch created" activity

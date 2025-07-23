@@ -1,4 +1,4 @@
-import {
+import type {
   LeaveStreamMutation,
   LeaveStreamMutationVariables,
   CreateStreamMutation,
@@ -14,7 +14,8 @@ import {
   GetLimitedUserStreamsQuery,
   GetLimitedUserStreamsQueryVariables
 } from '@/modules/core/graph/generated/graphql'
-import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+import type { ExecuteOperationServer } from '@/test/graphqlHelper'
+import { executeOperation } from '@/test/graphqlHelper'
 import gql from 'graphql-tag'
 
 export const basicStreamFieldsFragment = gql`

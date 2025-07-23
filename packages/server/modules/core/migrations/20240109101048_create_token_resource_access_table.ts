@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const TABLE_NAME = 'token_resource_access'
 const TOKENS_TABLE_NAME = 'api_tokens'

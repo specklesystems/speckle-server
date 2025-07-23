@@ -1,10 +1,10 @@
 import { ScheduledTasks } from '@/modules/core/dbSchema'
-import {
+import type {
   AcquireTaskLock,
   ReleaseTaskLock
 } from '@/modules/core/domain/scheduledTasks/operations'
-import { ScheduledTask } from '@/modules/core/domain/scheduledTasks/types'
-import { Knex } from 'knex'
+import type { ScheduledTask } from '@/modules/core/domain/scheduledTasks/types'
+import type { Knex } from 'knex'
 
 const tables = {
   scheduledTasks: (db: Knex) => db<ScheduledTask>(ScheduledTasks.name)

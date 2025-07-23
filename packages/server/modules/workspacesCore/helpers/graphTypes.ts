@@ -1,13 +1,13 @@
-import { MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { LimitedUserRecord } from '@/modules/core/helpers/types'
-import { WorkspaceSsoProviderRecord } from '@/modules/workspaces/domain/sso/types'
-import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
-import {
+import type { MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import type { LimitedUserRecord } from '@/modules/core/helpers/types'
+import type { WorkspaceSsoProviderRecord } from '@/modules/workspaces/domain/sso/types'
+import type { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import type {
   LimitedWorkspace,
   Workspace,
   WorkspaceJoinRequest
 } from '@/modules/workspacesCore/domain/types'
-import { WorkspaceRoles } from '@speckle/shared'
+import type { WorkspaceRoles } from '@speckle/shared'
 
 export type WorkspaceGraphQLReturn = Workspace
 export type WorkspaceJoinRequestGraphQLReturn = WorkspaceJoinRequest

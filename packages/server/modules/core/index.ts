@@ -4,7 +4,7 @@ import {
   shutdownResultListener
 } from '@/modules/core/utils/dbNotificationListener'
 import * as mp from '@/modules/shared/utils/mixpanel'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import staticRest from '@/modules/core/rest/static'
 import uploadRest from '@/modules/core/rest/upload'
@@ -18,7 +18,7 @@ import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scop
 import db from '@/db/knex'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
+import type { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
 import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscriptionListeners'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'

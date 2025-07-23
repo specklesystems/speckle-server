@@ -204,7 +204,7 @@ const startFileImportMutation = graphql(`
 
 export const useFileImportApi = () => {
   const {
-    public: { FF_LARGE_FILE_IMPORTS_ENABLED }
+    public: { FF_LEGACY_FILE_IMPORTS_ENABLED }
   } = useRuntimeConfig()
   const apollo = useApolloClient().client
   const { registerActiveUpload, unregisterActiveUpload } = useGlobalFileImportManager()
@@ -321,7 +321,7 @@ export const useFileImportApi = () => {
     const uploadId = resolveUploadId()
     try {
       registerActiveUpload(uploadId)
-      return await (FF_LARGE_FILE_IMPORTS_ENABLED ? importFileV2 : importFileLegacy)(
+      return await (FF_LEGACY_FILE_IMPORTS_ENABLED ? importFileLegacy : importFileV2)(
         ...args
       )
     } finally {

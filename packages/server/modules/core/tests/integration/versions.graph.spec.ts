@@ -39,18 +39,17 @@ import {
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
-import { CreateVersionInput } from '@/modules/core/graph/generated/graphql'
+import type { CreateVersionInput } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { buildBasicTestUser, createTestUser, login } from '@/test/authHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import {
-  BasicTestCommit,
-  createTestCommit,
-  createTestObject
-} from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestCommit, createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { BranchCommits, Commits, StreamCommits } from '@/modules/core/dbSchema'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import dayjs from 'dayjs'
 import {
   buildBasicTestWorkspace,
@@ -61,7 +60,7 @@ import {
   buildBasicTestProject,
   buildBasicTestVersion
 } from '@/modules/core/tests/helpers/creation'
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })

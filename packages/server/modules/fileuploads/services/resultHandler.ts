@@ -1,5 +1,5 @@
 import type { Logger } from '@/observability/logging'
-import {
+import type {
   GetFileInfoV2,
   ProcessFileImportResult,
   UpdateFileUpload
@@ -10,9 +10,9 @@ import {
 } from '@/modules/fileuploads/helpers/convert'
 import { ensureError } from '@speckle/shared'
 import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { ObserveResult } from '@/modules/fileuploads/observability/metrics'
+import type { ObserveResult } from '@/modules/fileuploads/observability/metrics'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 
 type OnFileImportResultDeps = {

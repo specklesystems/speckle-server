@@ -1,6 +1,6 @@
 import _sodium from 'libsodium-wrappers'
 
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 
 const command: CommandModule = {
   command: 'generate-key-pair',

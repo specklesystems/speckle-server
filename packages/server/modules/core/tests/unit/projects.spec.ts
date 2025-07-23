@@ -1,5 +1,5 @@
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import { Project } from '@/modules/core/domain/streams/types'
+import type { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
@@ -9,7 +9,8 @@ import {
 } from '@/modules/core/services/projects'
 import { isSpecificEventPayload } from '@/modules/shared/services/eventBus'
 import { expectToThrow } from '@/test/assertionHelper'
-import { Roles, StreamRoles } from '@speckle/shared'
+import type { StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 

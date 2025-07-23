@@ -1,4 +1,4 @@
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import { moduleLogger } from '@/observability/logging'
@@ -25,7 +25,7 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import authRestApi from '@/modules/auth/rest/index'
 import authScopes from '@/modules/auth/scopes'
-import { AuthStrategyMetadata } from '@/modules/auth/helpers/types'
+import type { AuthStrategyMetadata } from '@/modules/auth/helpers/types'
 import azureAdStrategyBuilderFactory from '@/modules/auth/strategies/azureAd'
 import googleStrategyBuilderFactory from '@/modules/auth/strategies/google'
 import localStrategyBuilderFactory from '@/modules/auth/strategies/local'

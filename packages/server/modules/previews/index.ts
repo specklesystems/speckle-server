@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import cron from 'node-cron'
+import type cron from 'node-cron'
 import { moduleLogger, previewLogger as logger } from '@/observability/logging'
 import { buildConsumePreviewResult } from '@/modules/previews/resultListener'
 import {

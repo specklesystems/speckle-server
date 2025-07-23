@@ -1,7 +1,5 @@
-import {
-  AutomationRunStatus,
-  AutomationRunStatuses
-} from '@/modules/automate/helpers/types'
+import type { AutomationRunStatus } from '@/modules/automate/helpers/types'
+import { AutomationRunStatuses } from '@/modules/automate/helpers/types'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 
 export const mapGqlStatusToDbStatus = (status: AutomateRunStatus) => {
