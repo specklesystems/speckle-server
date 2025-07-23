@@ -1,8 +1,8 @@
 import { flattenBase } from '../types/flatten.js'
 import { Base } from '../types/types.js'
 
-type FlattenedBase = { value: string | number; id: string }
-type PropertyValues = { [key: string]: FlattenedBase[] }
+type FlattenedBase = { id: string; value: string | number }
+type PropertyValues = Record<string, FlattenedBase[]>
 
 export class PropertyManager {
   private properties: PropertyInfo[] = []
@@ -69,6 +69,7 @@ export class PropertyManager {
   }
 
   public getProperties(): PropertyInfo[] {
+    this.finalize()
     return this.properties
   }
 }

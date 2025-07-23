@@ -21,6 +21,10 @@ export class ObjLoader extends Loader {
     return this.isFinished
   }
 
+  public get properties(): PropertyInfo[] {
+    return []
+  }
+
   public constructor(targetTree: WorldTree, resource: string, resourceData?: unknown) {
     super(resource, resourceData)
     this.tree = targetTree
@@ -28,8 +32,8 @@ export class ObjLoader extends Loader {
     this.converter = new ObjConverter(this.tree)
   }
 
-  public load(): Promise<PropertyInfo[] | undefined> {
-    return new Promise<PropertyInfo[] | undefined>((resolve, reject) => {
+  public load(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
       new Promise<void>((loadResolve, loadReject) => {
         if (!this._resourceData) {
           this.baseLoader.load(
@@ -76,7 +80,7 @@ export class ObjLoader extends Loader {
             const res = await renderTree.buildRenderTree(new ObjGeometryConverter())
             Logger.log('Tree build time -> ', performance.now() - t0)
             this.isFinished = true
-            resolve(res ? [] : undefined)
+            resolve(res)
           } else {
             Logger.error(`Could not get render tree for ${this._resource}`)
             reject(new Error())

@@ -29,7 +29,7 @@ import { RenderTree } from './tree/RenderTree.js'
 import Logger from './utils/Logger.js'
 import Stats from './three/stats.js'
 import { TIME_MS } from '@speckle/shared'
-import { PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
+import { PropertyInfo } from './filtering/PropertyManager.js'
 import { PropertyInfo as OL2PropertyInfo } from '@speckle/objectloader2'
 
 export class Viewer extends EventEmitter implements IViewer {
@@ -244,19 +244,16 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public getObjectProperties(
-    resourceURL: string | null = null,
-    bypassCache = true
+    resourceURL: string | null = null
   ): Promise<PropertyInfo[]> {
     if (!resourceURL) {
       return Promise.resolve([])
     }
     const ol2Props = this.properties[resourceURL]
-    if (!ol2Props) {
-      const propManager = new PropertyManager()
-      return propManager.getProperties(this.tree, resourceURL, bypassCache)
-    } else {
+    if (ol2Props) {
       return Promise.resolve(ol2Props as unknown as PropertyInfo[])
     }
+    return Promise.resolve([])
   }
 
   public getDataTree(): void {
@@ -318,9 +315,8 @@ export class Viewer extends EventEmitter implements IViewer {
     }
 
     this.loaders[loader.resource] = loader
-    const properties = await loader.load()
-    if (properties) {
-      this.properties[loader.resource] = properties
+    const treeBuilt = await loader.load()
+    if (treeBuilt) {
       const renderTree: RenderTree | null = this.tree.getRenderTree(loader.resource)
       /** Catering to typescript
        *  The render tree can't be null, we've just built it
@@ -342,6 +338,7 @@ export class Viewer extends EventEmitter implements IViewer {
       Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
+      this.properties[loader.resource] = loader.properties
       this.emit(ViewerEvent.LoadComplete, loader.resource)
     }
 

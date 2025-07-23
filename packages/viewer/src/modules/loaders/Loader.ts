@@ -21,6 +21,7 @@ export abstract class Loader extends EventEmitter {
   protected _resource: string
   protected _resourceData: unknown
 
+  public abstract get properties(): PropertyInfo[]
   public abstract get resource(): string
   public abstract get finished(): boolean
 
@@ -37,7 +38,7 @@ export abstract class Loader extends EventEmitter {
     super.on(eventType, listener)
   }
 
-  public abstract load(): Promise<PropertyInfo[] | undefined>
+  public abstract load(): Promise<boolean>
   public abstract cancel(): void
   public dispose(): void {
     super.dispose()

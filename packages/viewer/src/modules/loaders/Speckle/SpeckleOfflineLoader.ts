@@ -26,15 +26,19 @@ export class SpeckleOfflineLoader extends SpeckleLoader {
     return ObjectLoader2Factory.createFromObjects([])
   }
 
-  public async load(): Promise<PropertyInfo[] | undefined> {
+  public get properties(): PropertyInfo[] {
+    return []
+  }
+
+  public async load(): Promise<boolean> {
     const rootObject = await this.loader.getRootObject()
     if (!rootObject && this._resource) {
       Logger.error('No root id set!')
-      return undefined
+      return false
     }
     /** If not id is provided, we make one up based on the root object id */
     this._resource =
       this._resource || `/json/${(rootObject?.baseId as string) ?? 'unnamed'}`
-    return super.load()
+    return await super.load()
   }
 }
