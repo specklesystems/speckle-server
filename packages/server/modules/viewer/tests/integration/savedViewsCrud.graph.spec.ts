@@ -1,10 +1,12 @@
 import type {
   CreateSavedViewMutationVariables,
-  GetProjectSavedViewGroupsQueryVariables
+  GetProjectSavedViewGroupsQueryVariables,
+  GetProjectSavedViewGroupsWithViewsQueryVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
   CreateSavedViewDocument,
-  GetProjectSavedViewGroupsDocument
+  GetProjectSavedViewGroupsDocument,
+  GetProjectSavedViewGroupsWithViewsDocument
 } from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
@@ -326,7 +328,7 @@ describe('Saved Views GraphQL CRUD', () => {
     })
   })
 
-  describe('reading', () => {
+  describe('reading groups', () => {
     const NAMED_GROUP_COUNT = 15
     const GROUP_COUNT = NAMED_GROUP_COUNT + 1 // + ungrouped group
 
@@ -515,6 +517,14 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(data).to.be.ok
       expect(data!.totalCount).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
       expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
+    })
+
+    describe('views', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const getGroupViews = (
+        input: GetProjectSavedViewGroupsWithViewsQueryVariables,
+        options?: ExecuteOperationOptions
+      ) => apollo.execute(GetProjectSavedViewGroupsWithViewsDocument, input, options)
     })
   })
 })

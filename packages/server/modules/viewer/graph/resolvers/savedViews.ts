@@ -14,12 +14,15 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { NotFoundError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { InvalidSavedViewGroupIdError } from '@/modules/viewer/errors/savedViews'
 import {
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
+  getSavedViewGroupFactory,
   getStoredViewCountFactory,
   storeSavedViewFactory
 } from '@/modules/viewer/repositories/savedViews'
@@ -55,6 +58,29 @@ const resolvers: Resolvers = {
         limit: input.limit,
         cursor: input.cursor
       })
+    },
+    async savedViewGroup(parent, args) {
+      const group = await getSavedViewGroupFactory({ db })({ id: args.id })
+      if (!group) {
+        throw new NotFoundError(
+          `Saved view group with ID ${args.id} not found in project ${parent.id}`
+        )
+      }
+
+      if (group.projectId !== parent.id) {
+        throw new InvalidSavedViewGroupIdError(
+          'The provided saved view group ID does not match the project ID',
+          {
+            info: {
+              projectId: parent.id,
+              groupId: args.id,
+              group
+            }
+          }
+        )
+      }
+
+      return group
     }
   },
   SavedView: {

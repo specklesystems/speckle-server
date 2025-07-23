@@ -12,3 +12,9 @@ export class DuplicateSavedViewError extends BaseError {
     'A saved view with the same name & group already exists in this project'
   static statusCode = 400
 }
+
+export class InvalidSavedViewGroupIdError extends BaseError {
+  static code = 'INVALID_SAVED_VIEW_GROUP_ID_ERROR'
+  static defaultMessage = 'The provided saved view group ID is invalid'
+  static statusCode = 400
+}

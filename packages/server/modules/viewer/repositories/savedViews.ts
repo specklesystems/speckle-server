@@ -7,6 +7,7 @@ import type {
   GetProjectSavedViewGroupsBaseParams,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
+  GetSavedViewGroup,
   GetStoredViewCount,
   StoreSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
@@ -19,12 +20,14 @@ import { DuplicateSavedViewError } from '@/modules/viewer/errors/savedViews'
 import {
   buildSavedViewGroupId,
   NULL_GROUP_NAME_VALUE,
+  parseSavedViewGroupId,
   savedGroupCursorUtils
 } from '@/modules/viewer/helpers/savedViews'
 import { ensureError } from '@speckle/shared'
 import {
   isModelResource,
   isObjectResource,
+  parseResourceFromString,
   resourceBuilder
 } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
@@ -185,7 +188,6 @@ export const getProjectSavedViewGroupsPageItemsFactory =
         projectId,
         resourceIds
       }),
-      groupName: item.groupName,
       projectId,
       resourceIds,
       name: item.groupName
@@ -263,4 +265,27 @@ export const getGroupSavedViewsPageItemsFactory =
       items,
       cursor: newCursor
     }
+  }
+
+export const getSavedViewGroupFactory =
+  (deps: { db: Knex }): GetSavedViewGroup =>
+  async ({ id }) => {
+    // See if any views exist with this group name, only then return the group struct
+    const groupIdentifiers = parseSavedViewGroupId(id)
+    const group: SavedViewGroup = {
+      id,
+      name: groupIdentifiers.name,
+      projectId: groupIdentifiers.projectId,
+      resourceIds: groupIdentifiers.resourceIds
+    }
+
+    const viewCount = await getGroupSavedViewsTotalCountFactory(deps)({
+      projectId: groupIdentifiers.projectId,
+      resourceIdString: resourceBuilder()
+        .addResources(groupIdentifiers.resourceIds.map(parseResourceFromString))
+        .toString(),
+      groupName: groupIdentifiers.name
+    })
+
+    return viewCount ? group : undefined
   }

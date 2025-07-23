@@ -100,6 +100,7 @@ input SavedViewGroupsInput {
 
 extend type Project {
   savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
+  savedViewGroup(id: ID!): SavedViewGroup!
 }
 
 input CreateSavedViewInput {

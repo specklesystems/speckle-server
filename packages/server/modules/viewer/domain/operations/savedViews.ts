@@ -68,6 +68,10 @@ export type GetGroupSavedViewsPageItems = (
   params: GetGroupSavedViewsPageParams
 ) => Promise<Omit<Collection<SavedView>, 'totalCount'>>
 
+export type GetSavedViewGroup = (params: {
+  id: string
+}) => Promise<SavedViewGroup | undefined>
+
 // SERVICE OPERATIONS:
 
 export type CreateSavedViewParams = {
