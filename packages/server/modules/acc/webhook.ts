@@ -1,10 +1,10 @@
-import { isDevEnv } from '@/modules/shared/helpers/envHelper'
+import { getServerOrigin, isDevEnv } from '@/modules/shared/helpers/envHelper'
 import { logger } from '@/observability/logging'
 
 const tailscaleUrl = 'https://oguzhans-macbook-pro.mermaid-emperor.ts.net' // TODO ACC for dev: Get your local url from tailscale and then we will got rid of
 
 const accWebhookCallbackUrl = `${
-  isDevEnv() ? tailscaleUrl : process.env.FRONTEND_HOST
+  isDevEnv() ? tailscaleUrl : getServerOrigin()
 }/acc/webhook/callback`
 
 export async function tryRegisterAccWebhook({
