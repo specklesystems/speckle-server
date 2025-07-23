@@ -54,18 +54,18 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
 
-function useViewerIsBusyEventHandler() {
+function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
 
-  const callback = (isBusy: boolean) => {
-    state.ui.viewerBusy.value = isBusy
+  const callback = () => {
+    state.ui.loading.value = false
   }
   onMounted(() => {
-    state.viewer.instance.on(ViewerEvent.Busy, callback)
+    state.viewer.instance.on(ViewerEvent.LoadComplete, callback)
   })
 
   onBeforeUnmount(() => {
-    state.viewer.instance.removeListener(ViewerEvent.Busy, callback)
+    state.viewer.instance.removeListener(ViewerEvent.LoadComplete, callback)
   })
 }
 
@@ -89,7 +89,7 @@ function useViewerObjectAutoLoading() {
     resources: {
       response: { resourceItems }
     },
-    ui: { loadProgress },
+    ui: { loadProgress, loading },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
@@ -102,13 +102,11 @@ function useViewerObjectAutoLoading() {
 
   const consolidateProgressInternal = (args: { progress: number; id: string }) => {
     loadingProgressMap[args.id] = args.progress
-    let min = 42
-    const values = Object.values(loadingProgressMap) as number[]
-    for (const num of values) {
-      min = Math.min(min, num)
-    }
+    const values = Object.values(loadingProgressMap)
+    const min = values.length ? Math.min(...values) : 1
 
     loadProgress.value = min
+    loading.value = min < 1
   }
 
   const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
@@ -131,7 +129,9 @@ function useViewerObjectAutoLoading() {
         undefined
       )
 
-      loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThorttled(args))
+      loader.on(LoaderEvent.LoadProgress, (args) => {
+        consolidateProgressThorttled(args)
+      })
       loader.on(LoaderEvent.LoadCancelled, (id) => {
         delete loadingProgressMap[id]
         consolidateProgressInternal({ id, progress: 1 })
@@ -905,7 +905,7 @@ export function useViewerPostSetup() {
   useViewerObjectAutoLoading()
   useViewerReceiveTracking()
   useViewerSelectionEventHandler()
-  useViewerIsBusyEventHandler()
+  useViewerLoadCompleteEventHandler()
   useViewerSubscriptionEventTracker()
   useViewerThreadTracking()
   useViewerOpenedThreadUpdateEmitter()
