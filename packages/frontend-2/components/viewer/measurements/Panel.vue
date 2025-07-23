@@ -1,63 +1,49 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
-    <template #title>Measure mode</template>
-    <div
-      class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 border-b border-outline-2 text-foreground-2"
-    >
-      <span class="text-body-3xs">Reloading will delete all measurements</span>
-    </div>
-    <template #actions>
-      <FormButton class="my-1" size="sm" color="outline" @click="clearMeasurements">
-        Delete all measurements
-      </FormButton>
-    </template>
-    <div class="p-2 px-3 flex flex-col gap-2 border-b border-outline-2">
-      <div>
-        <h6 class="text-body-2xs font-medium mb-2.5">Measurement type</h6>
-        <FormRadio
-          v-for="option in measurementTypeOptions"
-          :key="option.value"
-          :label="option.title"
-          :description="option.description"
-          :value="option.value.toString()"
-          name="measurementType"
-          :icon="option.icon"
-          :checked="measurementOptions.type === option.value"
+  <div>
+    <ViewerLayoutPanel v-if="showSettings" class="p-3 pt-2">
+      <div class="flex justify-between items-center">
+        <h6 class="text-body-2xs font-medium">Settings</h6>
+        <FormButton
           size="sm"
-          @change="updateMeasurementsType(option)"
+          color="subtle"
+          :icon-left="XMarkIcon"
+          hide-text
+          @click="showSettings = false"
         />
       </div>
-    </div>
-    <div class="py-1.5 px-3 flex items-center border-b border-outline-2">
-      <FormCheckbox
-        name="Snap to vertices"
-        hide-label
-        :model-value="measurementOptions.vertexSnap"
-        @update:model-value="toggleMeasurementsSnap"
-      />
-      <span class="text-body-2xs font-medium">Snap to vertices</span>
-    </div>
-    <div class="py-1.5 px-3 flex items-center border-b border-outline-2">
-      <FormCheckbox
-        name="Chain Measurements"
-        hide-label
-        :model-value="measurementOptions.chain"
-        @update:model-value="toggleMeasurementsChaining"
-      />
-      <span class="text-body-2xs font-medium">Chain Measurements</span>
-    </div>
-    <div class="pb-3 flex flex-col">
-      <div class="flex flex-col gap-1.5 p-3 pt-2 pb-3">
-        <h6 class="text-body-2xs font-medium">Units</h6>
+
+      <span class="flex flex-col gap-1.5 pt-2">
+        <label class="text-body-2xs" for="units">Units</label>
         <ViewerMeasurementsUnitSelect
           v-model="measurementOptions.units"
           mount-menu-on-body
           class="w-1/2"
           @update:model-value="onChangeMeasurementUnits"
         />
-      </div>
-      <div class="flex flex-col gap-1.5 px-3 pt-2 border-t border-outline-2">
-        <label class="text-body-2xs font-medium" for="precision">Precision</label>
+      </span>
+
+      <span class="flex items-center pt-3">
+        <FormCheckbox
+          name="Chain Measurements"
+          hide-label
+          :model-value="measurementOptions.chain"
+          @update:model-value="toggleMeasurementsChaining"
+        />
+        <label class="text-body-2xs" for="chain">Chain Measurements</label>
+      </span>
+
+      <span class="flex items-center pt-1">
+        <FormCheckbox
+          name="Snap to vertices"
+          hide-label
+          :model-value="measurementOptions.vertexSnap"
+          @update:model-value="toggleMeasurementsSnap"
+        />
+        <label class="text-body-2xs" for="snap">Snap to vertices</label>
+      </span>
+
+      <span class="flex flex-col gap-1.5 pt-3">
+        <label class="text-body-2xs" for="precision">Precision</label>
         <div class="flex gap-2 items-center">
           <input
             id="precision"
@@ -71,26 +57,63 @@
           />
           <span class="text-xs w-4">{{ measurementOptions.precision }}</span>
         </div>
+      </span>
+    </ViewerLayoutPanel>
+    <ViewerLayoutPanel class="mt-2 p-1 pr-2">
+      <div class="flex gap-2 justify-between items-center">
+        <div
+          class="flex gap-1 rounded-lg p-0.5 bg-highlight-1 border border-outline-2 self-start"
+        >
+          <button
+            v-for="option in measurementTypeOptions"
+            :key="option.value"
+            v-tippy="option.title"
+            class="size-8 flex items-center justify-center rounded-lg border"
+            :class="[
+              measurementOptions.type === option.value &&
+                'border-outline-2 bg-foundation',
+              measurementOptions.type !== option.value &&
+                'border-transparent hover:bg-foundation-2'
+            ]"
+            @click="updateMeasurementsType(option)"
+          >
+            <component :is="option.icon" class="size-6 flex-shrink-0" />
+          </button>
+        </div>
+
+        <div class="flex gap-1.5">
+          <FormButton size="sm" color="outline" @click="clearMeasurements">
+            Delete all
+          </FormButton>
+          <FormButton
+            size="sm"
+            color="subtle"
+            :icon-left="Cog8ToothIcon"
+            hide-text
+            @click="showSettings = !showSettings"
+          />
+        </div>
       </div>
-    </div>
-  </ViewerLayoutPanel>
+    </ViewerLayoutPanel>
+  </div>
 </template>
+
 <script setup lang="ts">
-import { FormRadio } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 import { resolveComponent } from 'vue'
 import type { ConcreteComponent } from 'vue'
+import { Cog8ToothIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 interface MeasurementTypeOption {
   title: string
   value: MeasurementType
 }
 
-defineEmits(['close'])
-
 const { measurementOptions, setMeasurementOptions, clearMeasurements } =
   useMeasurementUtilities()
+
+const showSettings = ref(false)
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   setMeasurementOptions({

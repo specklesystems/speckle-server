@@ -5,36 +5,12 @@
       class="absolute left-1/2 -translate-x-1/2 bottom-6 z-20"
     >
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleMeasurements)"
-        :active="activePanel === 'measurements'"
-        icon="IconViewerMeasurements"
-        @click="toggleActivePanel('measurements')"
-      />
-      <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleSectionBox)"
-        flat
-        secondary
-        :active="isSectionBoxVisible"
-        icon="IconViewerSectionBox"
-        @click="toggleSectionBoxPanel"
-      />
-      <ViewerControlsButtonToggle
-        v-tippy="isSmallerOrEqualSm ? undefined : 'Explode model'"
-        :active="activePanel === 'explode'"
-        icon="IconViewerExplode"
-        @click="toggleActivePanel('explode')"
-      />
-      <ViewerControlsButtonToggle
-        v-tippy="isSmallerOrEqualSm ? undefined : 'View modes'"
-        :active="activePanel === 'viewModes'"
-        icon="IconViewerViewModes"
-        @click="toggleActivePanel('viewModes')"
-      />
-      <ViewerControlsButtonToggle
-        v-tippy="isSmallerOrEqualSm ? undefined : 'Light controls'"
-        :active="activePanel === 'lightControls'"
-        icon="IconViewerLightControls"
-        @click="toggleActivePanel('lightControls')"
+        v-for="panel in panels"
+        :key="panel.id"
+        :active="activePanel === panel.id"
+        :icon="panel.icon"
+        :tooltip="panel.tooltip"
+        @click="toggleActivePanel(panel.id)"
       />
     </ViewerControlsButtonGroup>
 
@@ -43,13 +19,12 @@
       class="absolute left-1/2 -translate-x-1/2 bottom-6 z-30 flex p-1 items-center justify-between w-72"
     >
       <span class="flex items-center">
-        <component :is="iconMap[activePanel]" class="h-4 w-4 ml-1 mr-1.5" />
+        <component :is="panels[activePanel].icon" class="h-4 w-4 ml-1 mr-1.5" />
         <p class="text-body-2xs text-foreground">
-          {{ panelNames[activePanel] }}
+          {{ panels[activePanel].name }}
         </p>
       </span>
       <FormButton size="sm" @click="onActivePanelClose">Done</FormButton>
-
       <div class="absolute left-1/2 -translate-x-1/2 bottom-10 w-72">
         <KeepAlive>
           <ViewerMeasurementsPanel
@@ -74,56 +49,74 @@ import {
 import { onKeyStroke } from '@vueuse/core'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
-type ActivePanel =
-  | 'none'
-  | 'measurements'
-  | 'sectionBox'
-  | 'explode'
-  | 'viewModes'
-  | 'lightControls'
+enum ActivePanel {
+  none = 'none',
+  measurements = 'measurements',
+  sectionBox = 'sectionBox',
+  explode = 'explode',
+  viewModes = 'viewModes',
+  lightControls = 'lightControls'
+}
 
 const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortcuts()
-const { isSectionBoxVisible, toggleSectionBox } = useSectionBoxUtilities()
+const { toggleSectionBox } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
-const activePanel = ref<ActivePanel>('none')
-const iconMap = shallowRef({
-  measurements: 'IconViewerMeasurements',
-  sectionBox: 'IconViewerSectionBox',
-  explode: 'IconViewerExplode',
-  viewModes: 'IconViewerViewModes',
-  lightControls: 'IconViewerLightControls'
-})
-const panelNames = shallowRef({
-  measurements: 'Measurements',
-  sectionBox: 'Section box',
-  explode: 'Explode',
-  viewModes: 'View modes',
-  lightControls: 'Light controls'
+const activePanel = ref<ActivePanel>(ActivePanel.none)
+const panels = shallowRef({
+  [ActivePanel.measurements]: {
+    id: ActivePanel.measurements,
+    name: 'Measure',
+    icon: 'IconViewerMeasurements',
+    tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements)
+  },
+  [ActivePanel.sectionBox]: {
+    id: ActivePanel.sectionBox,
+    name: 'Section',
+    icon: 'IconViewerSectionBox',
+    tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox)
+  },
+  [ActivePanel.explode]: {
+    id: ActivePanel.explode,
+    name: 'Explode',
+    icon: 'IconViewerExplode',
+    tooltip: isSmallerOrEqualSm ? undefined : 'Explode model'
+  },
+  [ActivePanel.viewModes]: {
+    id: ActivePanel.viewModes,
+    name: 'View modes',
+    icon: 'IconViewerViewModes',
+    tooltip: isSmallerOrEqualSm ? undefined : 'View modes'
+  },
+  [ActivePanel.lightControls]: {
+    id: ActivePanel.lightControls,
+    name: 'Light controls',
+    icon: 'IconViewerLightControls',
+    tooltip: isSmallerOrEqualSm ? undefined : 'Light controls'
+  }
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
-  activePanel.value = activePanel.value === panel ? 'none' : panel
-}
+  activePanel.value = activePanel.value === panel ? ActivePanel.none : panel
 
-const toggleSectionBoxPanel = () => {
-  toggleSectionBox()
-  activePanel.value = activePanel.value === 'sectionBox' ? 'none' : 'sectionBox'
+  if (panel === ActivePanel.sectionBox) {
+    toggleSectionBox()
+  }
 }
 
 const toggleMeasurements = () => {
-  const isMeasurementsActive = activePanel.value === 'measurements'
+  const isMeasurementsActive = activePanel.value === ActivePanel.measurements
   enableMeasurements(!isMeasurementsActive)
-  activePanel.value = isMeasurementsActive ? 'none' : 'measurements'
+  activePanel.value = isMeasurementsActive ? ActivePanel.none : ActivePanel.measurements
 }
 
 const onActivePanelClose = () => {
-  if (activePanel.value === 'sectionBox') {
+  if (activePanel.value === ActivePanel.sectionBox) {
     toggleSectionBox()
   }
-  activePanel.value = 'none'
+  activePanel.value = ActivePanel.none
 }
 
 registerShortcuts({
@@ -137,10 +130,10 @@ onKeyStroke('Escape', () => {
   if (isActiveMeasurement) {
     removeMeasurement()
   } else {
-    if (activePanel.value === 'measurements') {
+    if (activePanel.value === ActivePanel.measurements) {
       toggleMeasurements()
     }
-    activePanel.value = 'none'
+    activePanel.value = ActivePanel.none
   }
 })
 </script>
