@@ -190,7 +190,8 @@ const resolvers: Resolvers = {
             ]
           }
         },
-        userId: ctx.userId!
+        userId: ctx.userId!,
+        skipInputValidation: true
       })
 
       const newItem = await createSyncItem({

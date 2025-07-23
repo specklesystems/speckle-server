@@ -374,8 +374,10 @@ export const createAutomationRevisionFactory =
     userId: string
     userResourceAccessRules?: ContextResourceAccessRules
     projectId?: string
+    skipInputValidation?: boolean
   }) => {
-    const { input, userId, userResourceAccessRules, projectId } = params
+    const { input, userId, userResourceAccessRules, projectId, skipInputValidation } =
+      params
     const {
       storeAutomationRevision,
       getAutomation,
@@ -465,7 +467,9 @@ export const createAutomationRevisionFactory =
             )
           }
 
-          validateInputAgainstFunctionSchema(schema, decryptedParams)
+          if (!skipInputValidation) {
+            validateInputAgainstFunctionSchema(schema, decryptedParams)
+          }
 
           // Didn't throw, let's continue
           const fn: InsertableAutomationRevisionFunction = {
