@@ -117,6 +117,8 @@ export function noErrors(res: unknown) {
  * @param {*} res
  */
 export function haveErrors(res: unknown) {
-  if (['error', 'body.errors', 'body.err', 'body.error'].some((path) => get(res, path)))
+  if (
+    !['error', 'body.errors', 'body.err', 'body.error'].some((path) => get(res, path))
+  )
     throw new Error(`Expected errors, but got none`)
 }
