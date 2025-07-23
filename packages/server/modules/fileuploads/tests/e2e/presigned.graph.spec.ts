@@ -12,9 +12,6 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import gql from 'graphql-tag'
 import type { SetNonNullable } from 'type-fest'
-import { getFeatureFlags } from '@speckle/shared/environment'
-
-const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
 const testForbiddenResponse = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -193,336 +190,333 @@ const startFileImport = async (params: TestContext) => {
   })
 }
 
-;(FF_LARGE_FILE_IMPORTS_ENABLED ? describe : describe.skip)(
-  'Presigned graph @fileuploads',
-  async () => {
-    const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
-    const regularServerUser = {
-      id: '',
-      name: 'regular server user',
-      role: Roles.Server.User
-    }
-    const archivedUser = {
-      id: '',
-      name: 'archived user',
-      role: Roles.Server.ArchivedUser
-    }
-    const unaffiliatedUser = {
-      id: '',
-      name: 'unaffiliated user',
-      role: Roles.Server.Guest
-    }
+describe('Presigned graph @fileuploads', async () => {
+  const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
+  const regularServerUser = {
+    id: '',
+    name: 'regular server user',
+    role: Roles.Server.User
+  }
+  const archivedUser = {
+    id: '',
+    name: 'archived user',
+    role: Roles.Server.ArchivedUser
+  }
+  const unaffiliatedUser = {
+    id: '',
+    name: 'unaffiliated user',
+    role: Roles.Server.Guest
+  }
 
-    const ownedProject = {
-      id: '',
-      name: 'owned stream',
-      isPublic: false
-    }
-    const contributorProject = {
-      id: '',
-      name: 'contributions are welcome',
-      isPublic: false
-    }
-    const reviewerProject = {
-      id: '',
-      name: 'reviewer stream',
-      isPublic: false
-    }
-    const noAccessProject = {
-      id: '',
-      name: 'cannot touch this',
-      isPublic: false
-    }
-    const publicProject = {
-      id: '',
-      name: 'everyone can look',
-      isPublic: true
-    }
+  const ownedProject = {
+    id: '',
+    name: 'owned stream',
+    isPublic: false
+  }
+  const contributorProject = {
+    id: '',
+    name: 'contributions are welcome',
+    isPublic: false
+  }
+  const reviewerProject = {
+    id: '',
+    name: 'reviewer stream',
+    isPublic: false
+  }
+  const noAccessProject = {
+    id: '',
+    name: 'cannot touch this',
+    isPublic: false
+  }
+  const publicProject = {
+    id: '',
+    name: 'everyone can look',
+    isPublic: true
+  }
 
-    before(async () => {
-      await beforeEachContext()
-      serverAdmin.id = (await createTestUser(serverAdmin)).id
-      regularServerUser.id = (await createTestUser(regularServerUser)).id
-      archivedUser.id = (await createTestUser(archivedUser)).id
-      unaffiliatedUser.id = (await createTestUser(unaffiliatedUser)).id
+  before(async () => {
+    await beforeEachContext()
+    serverAdmin.id = (await createTestUser(serverAdmin)).id
+    regularServerUser.id = (await createTestUser(regularServerUser)).id
+    archivedUser.id = (await createTestUser(archivedUser)).id
+    unaffiliatedUser.id = (await createTestUser(unaffiliatedUser)).id
 
-      ownedProject.id = (
-        await createProject({
-          ...ownedProject,
-          ownerId: serverAdmin.id
-        })
-      ).id
+    ownedProject.id = (
+      await createProject({
+        ...ownedProject,
+        ownerId: serverAdmin.id
+      })
+    ).id
 
-      contributorProject.id = (
-        await createProject({
-          ...contributorProject,
-          ownerId: serverAdmin.id
-        })
-      ).id
+    contributorProject.id = (
+      await createProject({
+        ...contributorProject,
+        ownerId: serverAdmin.id
+      })
+    ).id
 
-      reviewerProject.id = (
-        await createProject({
-          ...reviewerProject,
-          ownerId: serverAdmin.id
-        })
-      ).id
+    reviewerProject.id = (
+      await createProject({
+        ...reviewerProject,
+        ownerId: serverAdmin.id
+      })
+    ).id
 
-      noAccessProject.id = (
-        await createProject({
-          ...noAccessProject,
-          ownerId: serverAdmin.id
-        })
-      ).id
+    noAccessProject.id = (
+      await createProject({
+        ...noAccessProject,
+        ownerId: serverAdmin.id
+      })
+    ).id
 
-      publicProject.id = (
-        await createProject({
-          ...publicProject,
-          ownerId: serverAdmin.id
-        })
-      ).id
-    })
+    publicProject.id = (
+      await createProject({
+        ...publicProject,
+        ownerId: serverAdmin.id
+      })
+    ).id
+  })
 
-    const testData: {
-      user: Nullable<{ id: string; name: string; role: ServerRoles }>
-      projectData: {
-        project: { id: string; name: string; isPublic: boolean }
-        projectRole: Nullable<StreamRoles>
-        cases: {
-          testCase: (params: TestContext) => Promise<void>
-          shouldSucceed: boolean
-        }[]
+  const testData: {
+    user: Nullable<{ id: string; name: string; role: ServerRoles }>
+    projectData: {
+      project: { id: string; name: string; isPublic: boolean }
+      projectRole: Nullable<StreamRoles>
+      cases: {
+        testCase: (params: TestContext) => Promise<void>
+        shouldSucceed: boolean
       }[]
-    }[] = <const>[
-      {
-        user: regularServerUser,
-        projectData: [
-          {
-            project: ownedProject,
-            projectRole: Roles.Stream.Owner,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: true },
-              { testCase: startFileImport, shouldSucceed: true }
-            ]
-          },
-          {
-            project: contributorProject,
-            projectRole: Roles.Stream.Contributor,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: true },
-              { testCase: startFileImport, shouldSucceed: true }
-            ]
-          },
-          {
-            project: reviewerProject,
-            projectRole: Roles.Stream.Reviewer,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: noAccessProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: publicProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          }
-        ]
-      },
-      {
-        user: archivedUser,
-        projectData: [
-          {
-            project: ownedProject,
-            projectRole: Roles.Stream.Owner,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: contributorProject,
-            projectRole: Roles.Stream.Contributor,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: reviewerProject,
-            projectRole: Roles.Stream.Reviewer,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: noAccessProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: publicProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          }
-        ]
-      },
-      {
-        user: unaffiliatedUser,
-        projectData: [
-          {
-            project: ownedProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: contributorProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: reviewerProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: noAccessProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: publicProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          }
-        ]
-      },
-      {
-        user: null,
-        projectData: [
-          {
-            project: ownedProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: contributorProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: reviewerProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: noAccessProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          },
-          {
-            project: publicProject,
-            projectRole: null,
-            cases: [
-              { testCase: generateUploadUrl, shouldSucceed: false },
-              { testCase: startFileImport, shouldSucceed: false }
-            ]
-          }
-        ]
-      }
-    ]
+    }[]
+  }[] = <const>[
+    {
+      user: regularServerUser,
+      projectData: [
+        {
+          project: ownedProject,
+          projectRole: Roles.Stream.Owner,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: true },
+            { testCase: startFileImport, shouldSucceed: true }
+          ]
+        },
+        {
+          project: contributorProject,
+          projectRole: Roles.Stream.Contributor,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: true },
+            { testCase: startFileImport, shouldSucceed: true }
+          ]
+        },
+        {
+          project: reviewerProject,
+          projectRole: Roles.Stream.Reviewer,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: noAccessProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: publicProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        }
+      ]
+    },
+    {
+      user: archivedUser,
+      projectData: [
+        {
+          project: ownedProject,
+          projectRole: Roles.Stream.Owner,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: contributorProject,
+          projectRole: Roles.Stream.Contributor,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: reviewerProject,
+          projectRole: Roles.Stream.Reviewer,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: noAccessProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: publicProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        }
+      ]
+    },
+    {
+      user: unaffiliatedUser,
+      projectData: [
+        {
+          project: ownedProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: contributorProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: reviewerProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: noAccessProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: publicProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        }
+      ]
+    },
+    {
+      user: null,
+      projectData: [
+        {
+          project: ownedProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: contributorProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: reviewerProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: noAccessProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        },
+        {
+          project: publicProject,
+          projectRole: null,
+          cases: [
+            { testCase: generateUploadUrl, shouldSucceed: false },
+            { testCase: startFileImport, shouldSucceed: false }
+          ]
+        }
+      ]
+    }
+  ]
 
-    testData.forEach(async (userContext) => {
-      const testUser = userContext.user
+  testData.forEach(async (userContext) => {
+    const testUser = userContext.user
 
-      describe(`User: ${testUser?.name ?? 'Anonymous'} as a ${
-        testUser?.role ?? 'anonymous user'
-      }`, async () => {
-        let apollo: Awaited<ReturnType<typeof testApolloServer>>
-        before(async () => {
-          apollo = await testApolloServer({
-            authUserId: testUser?.id
-          })
+    describe(`User: ${testUser?.name ?? 'Anonymous'} as a ${
+      testUser?.role ?? 'anonymous user'
+    }`, async () => {
+      let apollo: Awaited<ReturnType<typeof testApolloServer>>
+      before(async () => {
+        apollo = await testApolloServer({
+          authUserId: testUser?.id
         })
+      })
 
-        userContext.projectData.forEach((projectContext) => {
-          const project = projectContext.project
-          const projectRole = projectContext.projectRole
+      userContext.projectData.forEach((projectContext) => {
+        const project = projectContext.project
+        const projectRole = projectContext.projectRole
 
-          describe(`testing ${projectContext.cases.length} cases for project "${
-            project.name
-          }" where I, "${testUser?.name ?? 'anonymous'}", ${
-            testUser && projectRole ? `have the role of ${projectRole}` : 'have no role'
-          }`, () => {
-            before(async () => {
-              if (testUser && projectRole) {
-                await grantProjectPermissions({
-                  projectId: project.id,
-                  userId: testUser.id,
-                  role: projectRole
-                })
-              }
-            })
+        describe(`testing ${projectContext.cases.length} cases for project "${
+          project.name
+        }" where I, "${testUser?.name ?? 'anonymous'}", ${
+          testUser && projectRole ? `have the role of ${projectRole}` : 'have no role'
+        }`, () => {
+          before(async () => {
+            if (testUser && projectRole) {
+              await grantProjectPermissions({
+                projectId: project.id,
+                userId: testUser.id,
+                role: projectRole
+              })
+            }
+          })
 
-            projectContext.cases.forEach((value) => {
-              it(`${value.shouldSucceed ? 'should' : 'should not be allowed to'} ${
-                value.testCase.name
-              }`, async () => {
-                await value.testCase({
-                  apollo,
-                  projectId: project.id,
-                  userId: testUser?.id,
-                  fileName: `${cryptoRandomString({ length: 10 })}.${FILE_TYPE}`,
-                  shouldSucceed: value.shouldSucceed
-                })
+          projectContext.cases.forEach((value) => {
+            it(`${value.shouldSucceed ? 'should' : 'should not be allowed to'} ${
+              value.testCase.name
+            }`, async () => {
+              await value.testCase({
+                apollo,
+                projectId: project.id,
+                userId: testUser?.id,
+                fileName: `${cryptoRandomString({ length: 10 })}.${FILE_TYPE}`,
+                shouldSucceed: value.shouldSucceed
               })
             })
           })
         })
       })
     })
-  }
-)
+  })
+})
