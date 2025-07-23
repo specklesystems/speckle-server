@@ -25,13 +25,9 @@
         </p>
       </span>
       <FormButton size="sm" @click="onActivePanelClose">Done</FormButton>
+
       <div class="absolute left-1/2 -translate-x-1/2 bottom-10 w-72">
-        <KeepAlive>
-          <ViewerMeasurementsPanel
-            v-show="activePanel === 'measurements'"
-            @close="toggleMeasurements"
-          />
-        </KeepAlive>
+        <ViewerMeasurementsMenu v-show="activePanel === 'measurements'" />
         <ViewerExplodeMenu v-show="activePanel === 'explode'" />
         <ViewerViewModesMenu v-show="activePanel === 'viewModes'" />
         <ViewerLightControlsMenu v-show="activePanel === 'lightControls'" />
