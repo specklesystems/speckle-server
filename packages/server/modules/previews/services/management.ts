@@ -8,8 +8,8 @@ import type {
   GetPreviewImage,
   SendObjectPreview
 } from '@/modules/previews/domain/operations'
-import { makeOgImage } from '@/modules/previews/ogImage'
-import { authorizeResolver, validateScopes } from '@/modules/shared'
+import type { makeOgImage } from '@/modules/previews/ogImage'
+import type { authorizeResolver, validateScopes } from '@/modules/shared'
 import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
 import type { Logger } from 'pino'

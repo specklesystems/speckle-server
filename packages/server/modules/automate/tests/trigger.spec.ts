@@ -2,37 +2,40 @@ import {
   FunctionRunReportStatusError,
   FunctionRunNotFoundError
 } from '@/modules/automate/errors/runs'
+import type { ManuallyTriggerAutomationDeps } from '@/modules/automate/services/trigger'
 import {
-  ManuallyTriggerAutomationDeps,
   ensureRunConditionsFactory,
   manuallyTriggerAutomationFactory,
   onModelVersionCreateFactory,
   triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
-import {
+import type {
   AutomationRecord,
   AutomationRevisionRecord,
-  AutomationRunStatuses,
   AutomationTriggerDefinitionRecord,
   AutomationTriggerType,
   BaseTriggerManifest,
   LiveAutomation,
+  VersionCreatedTriggerManifest
+} from '@/modules/automate/helpers/types'
+import {
+  AutomationRunStatuses,
   RunTriggerSource,
-  VersionCreatedTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
-  BasicTestStream,
   createTestStream,
   createTestStreams
 } from '@/test/speckle-helpers/streamHelper'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
+import type { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import {
-  InsertableAutomationRun,
   storeAutomationFactory,
   storeAutomationTokenFactory,
   storeAutomationRevisionFactory,
@@ -63,7 +66,7 @@ import {
 } from '@/test/speckle-helpers/automationHelper'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Commits } from '@/modules/core/dbSchema'
-import { BranchRecord } from '@/modules/core/helpers/types'
+import type { BranchRecord } from '@/modules/core/helpers/types'
 import { reportFunctionRunStatusFactory } from '@/modules/automate/services/runsManagement'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 import {

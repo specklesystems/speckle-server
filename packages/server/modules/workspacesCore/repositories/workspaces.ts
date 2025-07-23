@@ -1,9 +1,9 @@
-import {
+import type {
   GetTotalWorkspaceCountFactory,
   GetUserWorkspaceCountFactory,
   GetUserWorkspaceSeatsFactory
 } from '@/modules/workspacesCore/domain/operations'
-import {
+import type {
   Workspace,
   WorkspaceAcl,
   WorkspaceSeat
@@ -13,7 +13,7 @@ import {
   Workspaces,
   WorkspaceSeats
 } from '@/modules/workspacesCore/helpers/db'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),

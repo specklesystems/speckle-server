@@ -16,7 +16,8 @@
    limitations under the License.
  */
 
-import { Histogram, Registry } from 'prom-client'
+import type { Registry } from 'prom-client'
+import { Histogram } from 'prom-client'
 import type { Metric } from '@/observability/components/highFrequencyMetrics/highfrequencyMonitoring'
 
 const NODEJS_HEAP_SIZE_TOTAL = 'nodejs_heap_size_total_bytes_high_frequency'

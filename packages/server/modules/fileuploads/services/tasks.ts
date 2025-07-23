@@ -1,5 +1,5 @@
-import { Logger } from '@/observability/logging'
-import {
+import type { Logger } from '@/observability/logging'
+import type {
   GarbageCollectPendingUploadedFiles,
   NotifyChangeInFileStatus
 } from '@/modules/fileuploads/domain/operations'

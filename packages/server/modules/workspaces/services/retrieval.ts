@@ -1,12 +1,12 @@
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import {
+import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type {
   GetUserDiscoverableWorkspaces,
   GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces,
   GetWorkspaceRolesForUser,
   GetWorkspaces
 } from '@/modules/workspaces/domain/operations'
-import { LimitedWorkspace, Workspace } from '@/modules/workspacesCore/domain/types'
+import type { LimitedWorkspace, Workspace } from '@/modules/workspacesCore/domain/types'
 
 type GetDiscoverableWorkspaceForUserArgs = {
   userId: string

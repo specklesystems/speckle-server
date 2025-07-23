@@ -67,10 +67,11 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
-import { AppScopes, ensureError } from '@speckle/shared'
-import { ValidTokenResult } from '@/modules/core/helpers/types'
-import {
+import type { BasicTestUser } from '@/test/authHelper'
+import type { AppScopes } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ValidTokenResult } from '@/modules/core/helpers/types'
+import type {
   DefaultAppIds,
   DefaultAppWithUnwrappedScopes
 } from '@/modules/auth/defaultApps'

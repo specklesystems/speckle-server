@@ -5,18 +5,18 @@ import {
   UserEmails,
   Users
 } from '@/modules/core/dbSchema'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
-import { StreamAclRecord, UserRecord } from '@/modules/core/helpers/types'
+import type { StreamAclRecord, UserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
-import { SetUserActiveWorkspace } from '@/modules/workspaces/domain/operations'
-import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
-import { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
+import type { SetUserActiveWorkspace } from '@/modules/workspaces/domain/operations'
+import type { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import type { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
-import { ServerRoles } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { ServerRoles } from '@speckle/shared'
+import type { Knex } from 'knex'
 
 const tables = {
   users: (db: Knex) => db<UserRecord>(Users.name),

@@ -1,7 +1,5 @@
-import {
-  AutomationRunStatus,
-  AutomationRunStatuses
-} from '@/modules/automate/helpers/types'
+import type { AutomationRunStatus } from '@/modules/automate/helpers/types'
+import { AutomationRunStatuses } from '@/modules/automate/helpers/types'
 
 export const isFinished = (runStatus: AutomationRunStatus) => {
   const finishedStatuses: AutomationRunStatus[] = [

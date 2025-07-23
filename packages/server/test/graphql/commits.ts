@@ -1,4 +1,4 @@
-import {
+import type {
   DeleteCommitsMutation,
   DeleteCommitsMutationVariables,
   MoveCommitsMutation,
@@ -10,7 +10,8 @@ import {
   ReadStreamBranchCommitsQuery,
   ReadStreamBranchCommitsQueryVariables
 } from '@/modules/core/graph/generated/graphql'
-import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+import type { ExecuteOperationServer } from '@/test/graphqlHelper'
+import { executeOperation } from '@/test/graphqlHelper'
 import gql from 'graphql-tag'
 
 const baseCommitFieldsFragment = gql`

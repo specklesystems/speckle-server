@@ -4,7 +4,7 @@ import {
   initializeRegisteredRegionClients as initDb
 } from '@/modules/multiregion/utils/dbSelector'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
   initializeRegisteredRegionClients as initBlobs,
   isMultiRegionBlobStorageEnabled

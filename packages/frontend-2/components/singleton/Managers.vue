@@ -5,7 +5,6 @@
     </ClientOnly>
     <SingletonFileUploadErrorDialog />
     <SingletonAppErrorStateManager />
-    <SingletonExternalLinkDialog />
   </div>
   <div v-else />
 </template>

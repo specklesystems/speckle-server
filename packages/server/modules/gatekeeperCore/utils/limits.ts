@@ -1,9 +1,11 @@
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import {
-  getProjectLimitDateFactory as getProjectLimitDateFactoryBase,
-  isCreatedBeyondHistoryLimitCutoffFactory as isCreatedBeyondHistoryLimitCutoffFactoryBase,
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type {
   IsCreatedBeyondHistoryLimitCutoff,
   GetProjectLimitDate
+} from '@speckle/shared'
+import {
+  getProjectLimitDateFactory as getProjectLimitDateFactoryBase,
+  isCreatedBeyondHistoryLimitCutoffFactory as isCreatedBeyondHistoryLimitCutoffFactoryBase
 } from '@speckle/shared'
 import { PersonalProjectsLimits } from '@speckle/shared/authz'
 import { getFeatureFlags } from '@speckle/shared/environment'

@@ -1,5 +1,5 @@
-import cron from 'node-cron'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type cron from 'node-cron'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { activitiesLogger, moduleLogger } from '@/observability/logging'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
@@ -7,7 +7,7 @@ import {
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
 import { cleanOrphanedWebhookConfigsFactory } from '@/modules/webhooks/repositories/cleanup'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { db } from '@/db/knex'
 import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 

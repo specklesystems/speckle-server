@@ -1,16 +1,16 @@
 import { mainDb } from '@/db/knex'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import {
+import type {
   EmitArg,
   EventBus,
-  EventBusEmit,
-  getEventBus
+  EventBusEmit
 } from '@/modules/shared/services/eventBus'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
-import { MaybeAsync } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { MaybeAsync } from '@speckle/shared'
+import type { Knex } from 'knex'
 import { isBoolean } from 'lodash-es'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 
 /**
  * @deprecated asOperation does this and more. Also many usages of commandFactory are broken

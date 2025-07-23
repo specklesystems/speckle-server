@@ -9,12 +9,12 @@ import {
   getSessionSecret
 } from '@/modules/shared/helpers/envHelper'
 import { isString, noop } from 'lodash-es'
-import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
+import type { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
 import { ensureError, TIME_MS } from '@speckle/shared'
-import { LegacyGetUser } from '@/modules/core/domain/users/operations'
+import type { LegacyGetUser } from '@/modules/core/domain/users/operations'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
 
 export const sessionMiddlewareFactory = (): RequestHandler => {

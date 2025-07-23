@@ -1,5 +1,6 @@
 import fetch from 'cross-fetch'
-import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
+import type { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
+import { gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { Roles, TIME_MS, timeoutAt } from '@speckle/shared'
 import ObjectLoader from '@speckle/objectloader'
@@ -12,7 +13,7 @@ import {
   assertValidGraphQLResult
 } from '@/modules/cross-server-sync/utils/graphqlClient'
 import { CrossServerCommitSyncError } from '@/modules/cross-server-sync/errors'
-import {
+import type {
   CrossSyncBranchMetadataQuery,
   CrossSyncCommitBranchMetadataQuery,
   CrossSyncCommitDownloadMetadataQuery,
@@ -20,19 +21,19 @@ import {
   CrossSyncProjectViewerResourcesQuery,
   CreateCommentInput
 } from '@/modules/core/graph/generated/graphql'
-import { DownloadCommit } from '@/modules/cross-server-sync/domain/operations'
-import {
+import type { DownloadCommit } from '@/modules/cross-server-sync/domain/operations'
+import type {
   CreateCommentReplyAndNotify,
   CreateCommentThreadAndNotify
 } from '@/modules/comments/domain/operations'
-import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
-import { CreateCommitByBranchId } from '@/modules/core/domain/commits/operations'
-import { CreateObject, GetObject } from '@/modules/core/domain/objects/operations'
-import {
+import type { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import type { CreateCommitByBranchId } from '@/modules/core/domain/commits/operations'
+import type { CreateObject, GetObject } from '@/modules/core/domain/objects/operations'
+import type {
   GetStream,
   GetStreamCollaborators
 } from '@/modules/core/domain/streams/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }

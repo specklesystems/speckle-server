@@ -1,5 +1,4 @@
-import {
-  getSubscriptionState,
+import type {
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
@@ -9,7 +8,10 @@ import {
   SubscriptionData,
   SubscriptionDataInput,
   UpsertPaidWorkspacePlan,
-  UpsertWorkspaceSubscription,
+  UpsertWorkspaceSubscription
+} from '@/modules/gatekeeper/domain/billing'
+import {
+  getSubscriptionState,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import {
@@ -17,17 +19,13 @@ import {
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
-import {
-  PaidWorkspacePlans,
-  PaidWorkspacePlanStatuses,
-  throwUncoveredError,
-  WorkspacePlans
-} from '@speckle/shared'
+import type { PaidWorkspacePlans, PaidWorkspacePlanStatuses } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
 import { cloneDeep, isEqual, omit } from 'lodash-es'
-import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import { Logger } from '@/observability/logging'
+import type { Logger } from '@/observability/logging'
 
 export const handleSubscriptionUpdateFactory =
   ({

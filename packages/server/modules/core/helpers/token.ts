@@ -1,19 +1,18 @@
-import {
+import type {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
 import { TokenCreateError } from '@/modules/core/errors/user'
-import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
-import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+import type { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import { ForbiddenError } from '@/modules/shared/errors'
-import {
-  AllScopes,
+import type {
   MaybeNullOrUndefined,
   Nullable,
   Optional,
-  Scopes,
   ServerScope
 } from '@speckle/shared'
+import { AllScopes, Scopes } from '@speckle/shared'
 import { differenceBy } from 'lodash-es'
 
 export enum RoleResourceTargets {

@@ -1,5 +1,5 @@
-import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
+import type { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 export const workspaceEventNamespace = 'workspace' as const
 

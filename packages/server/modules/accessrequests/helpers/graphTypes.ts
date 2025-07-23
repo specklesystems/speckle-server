@@ -1,5 +1,5 @@
-import { StreamAccessRequestRecord } from '@/modules/accessrequests/repositories'
-import { StreamAccessRequest } from '@/modules/core/graph/generated/graphql'
+import type { StreamAccessRequestRecord } from '@/modules/accessrequests/repositories'
+import type { StreamAccessRequest } from '@/modules/core/graph/generated/graphql'
 
 export type StreamAccessRequestGraphQLReturn = Omit<
   StreamAccessRequest,

@@ -1,11 +1,12 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   createWebhookFactory,
   deleteWebhookFactory,
   updateWebhookFactory
 } from '@/modules/webhooks/services/webhooks'
-import { Authz, Roles } from '@speckle/shared'
+import type { Authz } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import {
   countWebhooksByStreamIdFactory,
   createWebhookConfigFactory,
@@ -17,10 +18,8 @@ import {
   updateWebhookConfigFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { ForbiddenError } from '@/modules/shared/errors'
-import {
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
-} from '@/modules/core/domain/tokens/types'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'

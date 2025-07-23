@@ -1,17 +1,17 @@
-import { Project } from '@/modules/core/domain/streams/types'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { ServerInfo } from '@/modules/core/helpers/types'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { EmailTemplateParams } from '@/modules/emails/domain/operations'
-import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
-import {
+import type { Project } from '@/modules/core/domain/streams/types'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { ServerInfo } from '@/modules/core/helpers/types'
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import type { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
+import type {
   InviteResourceTarget,
   PrimaryInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
-import { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
-import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
-import { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
+import type { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
+import type { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
+import type { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
 
 export type InviteResult = {
   inviteId: string

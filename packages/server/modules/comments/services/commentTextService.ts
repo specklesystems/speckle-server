@@ -1,19 +1,19 @@
 import { RichTextParseError } from '@/modules/shared/errors'
+import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import {
   isTextEditorValueSchema,
   isTextEditorDoc,
   convertBasicStringToDocument,
   isSerializedTextEditorValueSchema,
-  SmartTextEditorValueSchema,
   isDocEmpty,
   documentToBasicString
 } from '@/modules/core/services/richTextEditorService'
 import { isString, uniq } from 'lodash-es'
 import { InvalidAttachmentsError } from '@/modules/comments/errors'
-import { JSONContent } from '@tiptap/core'
-import { ValidateInputAttachments } from '@/modules/comments/domain/operations'
-import { GetBlobs } from '@/modules/blobstorage/domain/operations'
-import { Nullable } from '@speckle/shared'
+import type { JSONContent } from '@tiptap/core'
+import type { ValidateInputAttachments } from '@/modules/comments/domain/operations'
+import type { GetBlobs } from '@/modules/blobstorage/domain/operations'
+import type { Nullable } from '@speckle/shared'
 
 const COMMENT_SCHEMA_VERSION = '1.0.0'
 const COMMENT_SCHEMA_TYPE = 'stream_comment'

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import knex from '@/db/knex'
-import { BaseMetaRecord } from '@/modules/core/helpers/meta'
-import { Knex } from 'knex'
+import type { BaseMetaRecord } from '@/modules/core/helpers/meta'
+import type { Knex } from 'knex'
 import { reduce } from 'lodash-es'
 
 type BaseInnerSchemaConfig<T extends string, C extends string> = {

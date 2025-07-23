@@ -1,4 +1,4 @@
-import {
+import type {
   CreateCommentMutation,
   CreateCommentMutationVariables,
   CreateReplyMutation,
@@ -8,7 +8,8 @@ import {
   GetCommentsQuery,
   GetCommentsQueryVariables
 } from '@/modules/core/graph/generated/graphql'
-import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+import type { ExecuteOperationServer } from '@/test/graphqlHelper'
+import { executeOperation } from '@/test/graphqlHelper'
 import { gql } from 'graphql-tag'
 
 const commentWithRepliesFragment = gql`

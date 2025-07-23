@@ -1,5 +1,5 @@
 import type { Logger } from '@/observability/logging'
-import {
+import type {
   GetNumberOfJobsInRequestQueue,
   GetPaginatedObjectPreviewsInErrorState,
   GetPaginatedObjectPreviewsPage,
@@ -11,8 +11,8 @@ import { PreviewStatus } from '@/modules/previews/domain/consts'
 import { Roles, Scopes, TIME_MS } from '@speckle/shared'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
-import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
-import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import type { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
+import type { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { getPreviewServiceMaxQueueBackpressure } from '@/modules/shared/helpers/envHelper'
 
 export const getPaginatedObjectPreviewInErrorStateFactory =

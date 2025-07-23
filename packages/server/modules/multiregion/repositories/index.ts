@@ -1,12 +1,12 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
-import {
+import type {
   GetRegion,
   GetRegions,
   StoreRegion,
   UpdateRegion
 } from '@/modules/multiregion/domain/operations'
-import { RegionRecord } from '@/modules/multiregion/helpers/types'
-import { Knex } from 'knex'
+import type { RegionRecord } from '@/modules/multiregion/helpers/types'
+import type { Knex } from 'knex'
 import { pick } from 'lodash-es'
 
 export const Regions = buildTableHelper('regions', [

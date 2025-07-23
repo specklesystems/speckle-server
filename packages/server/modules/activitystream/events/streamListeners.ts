@@ -1,4 +1,4 @@
-import {
+import type {
   AddStreamDeletedActivity,
   AddStreamUpdatedActivity,
   SaveActivity,
@@ -9,12 +9,12 @@ import {
   StreamResourceTypes
 } from '@/modules/activitystream/helpers/types'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import {
+import type {
   ProjectCreateInput,
   StreamCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord } from '@/modules/core/helpers/types'
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { StreamRecord } from '@/modules/core/helpers/types'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 
 // Activity
 

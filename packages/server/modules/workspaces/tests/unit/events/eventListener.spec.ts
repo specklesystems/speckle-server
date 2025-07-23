@@ -4,7 +4,7 @@ import {
   buildTestWorkspaceSeat,
   buildTestWorkspaceWithOptionalRole
 } from '@/modules/workspaces/tests/helpers/creation'
-import {
+import type {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetWorkspace,
@@ -16,16 +16,14 @@ import {
   buildTestWorkspacePlan,
   buildTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
-import {
+import type {
   GetWorkspacePlan,
-  GetWorkspaceSubscription,
-  WorkspaceSeatType
+  GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
-import {
-  buildMixpanelFake,
-  MixpanelFakeEventRecord
-} from '@/modules/shared/test/helpers/mixpanel'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { MixpanelFakeEventRecord } from '@/modules/shared/test/helpers/mixpanel'
+import { buildMixpanelFake } from '@/modules/shared/test/helpers/mixpanel'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import {
@@ -35,7 +33,7 @@ import {
 import { expect } from 'chai'
 import { WorkspacePlans, WorkspacePlanStatuses } from '@speckle/shared'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 import cryptoRandomString from 'crypto-random-string'
 import { BillingInterval } from '@/modules/core/graph/generated/graphql'
 

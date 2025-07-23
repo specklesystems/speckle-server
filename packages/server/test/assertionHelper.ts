@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { MaybeAsync, ensureError } from '@speckle/shared'
+import type { MaybeAsync } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 import { AssertionError } from 'chai'
 
 export const expectToThrow = async (fn: () => MaybeAsync<any>) => {

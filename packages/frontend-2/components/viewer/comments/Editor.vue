@@ -22,7 +22,6 @@
         :disabled="disabled"
         :project-id="projectId"
         :disable-invitation-cta="!canInvite"
-        data-no-external-confirm
         @submit="onSubmit"
         @created="$emit('created')"
       />
