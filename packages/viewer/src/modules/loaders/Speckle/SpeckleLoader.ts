@@ -185,6 +185,8 @@ export class SpeckleLoader extends Loader {
       this.isFinished = true
     })
 
+    await p
+
     return this.loader.propertyManager.getProperties()
   }
 
