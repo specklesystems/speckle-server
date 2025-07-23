@@ -1,8 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`deferments > defer one 1`] = `
-{
-  "id": "id",
-  "speckle_type": "type",
-}
-`;

@@ -1,4 +1,4 @@
-import { CustomLogger } from '../types/functions.js'
+import { CustomLogger, getQueryParameter } from '../types/functions.js'
 import { Base } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import IndexedDatabase from './stages/indexedDatabase.js'
@@ -11,7 +11,7 @@ export interface ObjectLoader2FactoryOptions {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
   indexedDB?: IDBFactory
-  logger?: CustomLogger
+  logger2?: CustomLogger
 }
 
 export class ObjectLoader2Factory {
@@ -42,6 +42,7 @@ export class ObjectLoader2Factory {
     headers?: Headers
     options?: ObjectLoader2FactoryOptions
   }): ObjectLoader2 {
+    const log = ObjectLoader2Factory.getLogger(params.options?.logger2)
     let loader: ObjectLoader2
     if (params.options?.useMemoryCache) {
       loader = new ObjectLoader2({
@@ -56,7 +57,7 @@ export class ObjectLoader2Factory {
         database: new MemoryDatabase({
           items: new Map<string, Base>()
         }),
-        logger: params.options.logger
+        logger: log
       })
     } else {
       loader = new ObjectLoader2({
@@ -69,13 +70,24 @@ export class ObjectLoader2Factory {
           headers: params.headers
         }),
         database: new IndexedDatabase({
-          logger: params.options?.logger,
+          logger: log,
           indexedDB: params.options?.indexedDB,
           keyRange: params.options?.keyRange
         }),
-        logger: params.options?.logger
+        logger: log
       })
     }
     return loader
+  }
+
+  static getLogger(providedLogger?: CustomLogger): CustomLogger | undefined {
+    if (getQueryParameter('debug', 'false') === 'true') {
+      return providedLogger || this.logger
+    }
+    return providedLogger
+  }
+
+  static logger: CustomLogger = (m?: string, ...optionalParams: unknown[]) => {
+    console.log(`[debug] ${m}`, ...optionalParams)
   }
 }
