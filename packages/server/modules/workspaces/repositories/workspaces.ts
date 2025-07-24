@@ -244,6 +244,19 @@ export const getWorkspacesFactory =
     return results
   }
 
+export const getWorkspacesBySlugFactory =
+  (deps: { db: Knex }) =>
+  async (params: { workspaceSlugs: string[]; userId?: string }) => {
+    const { db } = deps
+    const q = workspaceWithRoleBaseQuery({ db, userId: params.userId }).whereIn(
+      Workspaces.col.slug,
+      params.workspaceSlugs
+    )
+
+    const results = await q
+    return results
+  }
+
 export const getAllWorkspacesFactory =
   ({ db }: { db: Knex }): GetAllWorkspaces =>
   async (args) => {
