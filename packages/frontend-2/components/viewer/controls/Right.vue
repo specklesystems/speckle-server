@@ -20,7 +20,7 @@
       />
     </ViewerControlsButtonGroup>
 
-    <div class="absolute top-0 right-[2.875rem]">
+    <div ref="menuContainer" class="absolute top-0 right-[2.875rem]">
       <ViewerCameraMenu v-show="activePanel === 'cameraControls'" />
     </div>
   </aside>
@@ -29,6 +29,8 @@
 <script setup lang="ts">
 import { useCameraUtilities, useViewerShortcuts } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { onClickOutside } from '@vueuse/core'
+import type { Nullable } from '@speckle/shared'
 
 type ActivePanel = 'none' | 'cameraControls'
 
@@ -47,10 +49,7 @@ const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortc
 const mixpanel = useMixpanel()
 
 const activePanel = ref<ActivePanel>('none')
-
-const toggleActivePanel = (panel: ActivePanel) => {
-  activePanel.value = activePanel.value === panel ? 'none' : panel
-}
+const menuContainer = ref<Nullable<HTMLElement>>(null)
 
 const dynamicStyles = computed(() => {
   if (props.sidebarOpen) {
@@ -64,6 +63,10 @@ const dynamicStyles = computed(() => {
   }
 })
 
+const toggleActivePanel = (panel: ActivePanel) => {
+  activePanel.value = activePanel.value === panel ? 'none' : panel
+}
+
 const trackAndzoomExtentsOrSelection = () => {
   zoomExtentsOrSelection()
   mixpanel.track('Viewer Action', { type: 'action', name: 'zoom', source: 'button' })
@@ -71,5 +74,9 @@ const trackAndzoomExtentsOrSelection = () => {
 
 registerShortcuts({
   ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection()
+})
+
+onClickOutside(menuContainer, () => {
+  activePanel.value = 'none'
 })
 </script>
