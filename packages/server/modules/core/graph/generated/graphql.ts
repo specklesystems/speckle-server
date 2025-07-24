@@ -1068,6 +1068,19 @@ export type EmbedTokenCreateInput = {
   resourceIdString: Scalars['String']['input'];
 };
 
+export type FileImportResultInput = {
+  /** Duration of the file download before parsing started in seconds */
+  downloadDurationSeconds: Scalars['Float']['input'];
+  /** Total processing time in seconds, since job was picked up until it completed */
+  durationSeconds: Scalars['Float']['input'];
+  /** Duration of the transformation in seconds */
+  parseDurationSeconds: Scalars['Float']['input'];
+  /** Parser used for import */
+  parser: Scalars['String']['input'];
+  /** Version asssociated if applicable */
+  versionId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName: Scalars['String']['output'];
@@ -1110,6 +1123,11 @@ export type FileUploadCollection = {
 export type FileUploadMutations = {
   __typename?: 'FileUploadMutations';
   /**
+   * Marks the file import flow as completed for that specific job
+   * recording the provided status, and emitting the needed subscriptions.
+   */
+  finishFileImport?: Maybe<Scalars['Boolean']['output']>;
+  /**
    * Generate a pre-signed url to which a file can be uploaded.
    * After uploading the file, call mutation startFileImport to register the completed upload.
    */
@@ -1124,6 +1142,11 @@ export type FileUploadMutations = {
 };
 
 
+export type FileUploadMutationsFinishFileImportArgs = {
+  input: FinishFileImportInput;
+};
+
+
 export type FileUploadMutationsGenerateUploadUrlArgs = {
   input: GenerateFileUploadUrlInput;
 };
@@ -1131,6 +1154,15 @@ export type FileUploadMutationsGenerateUploadUrlArgs = {
 
 export type FileUploadMutationsStartFileImportArgs = {
   input: StartFileImportInput;
+};
+
+export type FinishFileImportInput = {
+  jobId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+  result: FileImportResultInput;
+  status: JobResultStatus;
+  warnings?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type GendoAiRender = {
@@ -1190,6 +1222,12 @@ export type InvitableCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export const JobResultStatus = {
+  Error: 'error',
+  Success: 'success'
+} as const;
+
+export type JobResultStatus = typeof JobResultStatus[keyof typeof JobResultStatus];
 export type JoinWorkspaceInput = {
   workspaceId: Scalars['ID']['input'];
 };
@@ -5523,9 +5561,11 @@ export type ResolversTypes = {
   EmbedToken: ResolverTypeWrapper<EmbedTokenGraphQLReturn>;
   EmbedTokenCollection: ResolverTypeWrapper<Omit<EmbedTokenCollection, 'items'> & { items: Array<ResolversTypes['EmbedToken']> }>;
   EmbedTokenCreateInput: EmbedTokenCreateInput;
+  FileImportResultInput: FileImportResultInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   FileUploadCollection: ResolverTypeWrapper<Omit<FileUploadCollection, 'items'> & { items: Array<ResolversTypes['FileUpload']> }>;
   FileUploadMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  FinishFileImportInput: FinishFileImportInput;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   GendoAIRender: ResolverTypeWrapper<GendoAIRenderGraphQLReturn>;
   GendoAIRenderCollection: ResolverTypeWrapper<Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversTypes['GendoAIRender']>> }>;
@@ -5537,6 +5577,7 @@ export type ResolversTypes = {
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   InvitableCollaboratorsFilter: InvitableCollaboratorsFilter;
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']['output']>;
+  JobResultStatus: JobResultStatus;
   JoinWorkspaceInput: JoinWorkspaceInput;
   LegacyCommentViewerData: ResolverTypeWrapper<LegacyCommentViewerData>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
@@ -5870,9 +5911,11 @@ export type ResolversParentTypes = {
   EmbedToken: EmbedTokenGraphQLReturn;
   EmbedTokenCollection: Omit<EmbedTokenCollection, 'items'> & { items: Array<ResolversParentTypes['EmbedToken']> };
   EmbedTokenCreateInput: EmbedTokenCreateInput;
+  FileImportResultInput: FileImportResultInput;
   FileUpload: FileUploadGraphQLReturn;
   FileUploadCollection: Omit<FileUploadCollection, 'items'> & { items: Array<ResolversParentTypes['FileUpload']> };
   FileUploadMutations: MutationsObjectGraphQLReturn;
+  FinishFileImportInput: FinishFileImportInput;
   Float: Scalars['Float']['output'];
   GendoAIRender: GendoAIRenderGraphQLReturn;
   GendoAIRenderCollection: Omit<GendoAiRenderCollection, 'items'> & { items: Array<Maybe<ResolversParentTypes['GendoAIRender']>> };
@@ -6614,6 +6657,7 @@ export type FileUploadCollectionResolvers<ContextType = GraphQLContext, ParentTy
 };
 
 export type FileUploadMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUploadMutations'] = ResolversParentTypes['FileUploadMutations']> = {
+  finishFileImport?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<FileUploadMutationsFinishFileImportArgs, 'input'>>;
   generateUploadUrl?: Resolver<ResolversTypes['GenerateFileUploadUrlOutput'], ParentType, ContextType, RequireFields<FileUploadMutationsGenerateUploadUrlArgs, 'input'>>;
   startFileImport?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType, RequireFields<FileUploadMutationsStartFileImportArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

@@ -2,6 +2,7 @@ import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
+import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 
 export const fileuploadEventNamespace = 'fileupload' as const
 
@@ -9,7 +10,8 @@ const eventPrefix = `${fileuploadEventNamespace}.` as const
 
 export const FileuploadEvents = {
   Started: `${eventPrefix}started`,
-  Updated: `${eventPrefix}updated`
+  Updated: `${eventPrefix}updated`,
+  Finished: `${eventPrefix}finished`
 } as const
 
 export type FileuploadEvents = (typeof FileuploadEvents)[keyof typeof FileuploadEvents]
@@ -24,7 +26,13 @@ type FileuploadUpdatedPayload = {
   isNewModel: boolean
 }
 
+type FileuploadFinishedPayload = {
+  jobId: string
+  jobResult: FileImportResultPayload
+}
+
 export type FileuploadEventsPayloads = {
   [FileuploadEvents.Started]: FileuploadStartedPayload
   [FileuploadEvents.Updated]: FileuploadUpdatedPayload
+  [FileuploadEvents.Finished]: FileuploadFinishedPayload
 }
