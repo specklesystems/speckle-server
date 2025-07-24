@@ -1,9 +1,25 @@
-import { MeasurementType } from '@speckle/viewer'
+import { MeasurementType, SelectionExtension, ViewerEvent } from '@speckle/viewer'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+
+/**
+ * Extract object ID from Speckle object URL
+ */
+function extractObjectIdFromUrl(url: string): string {
+  if (!url.includes('/objects/')) {
+    return url // Already clean ID
+  }
+
+  try {
+    const segments = new URL(url).pathname.split('/')
+    return segments[4] || url
+  } catch {
+    return url.split('/').reverse()[0]
+  }
+}
 
 function useCollectSelection() {
   const {
@@ -22,9 +38,69 @@ function useCollectSelection() {
   })
 }
 
+function useSelectionStateSync() {
+  const state = useInjectedViewerState()
+  const selExt = state.viewer.instance.getExtension(SelectionExtension)
+
+  let preventSelectionWatchers = false
+
+  const update = () => {
+    preventSelectionWatchers = true
+
+    const objs = selExt.getSelectedObjects() as SpeckleObject[]
+    state.ui.selectedObjects.value = objs
+
+    nextTick(() => {
+      preventSelectionWatchers = false
+    })
+  }
+
+  watch(state.ui.selectedObjects, (newVal) => {
+    if (preventSelectionWatchers) {
+      return
+    }
+
+    const newIds = newVal.map((obj) => {
+      const rawId = obj.id as string
+      const cleanId = extractObjectIdFromUrl(rawId)
+      return cleanId
+    })
+
+    if (!newVal.length) {
+      selExt.clearSelection()
+    } else {
+      selExt.selectObjects(newIds)
+    }
+  })
+
+  onMounted(() => {
+    if (state.viewer.init.ref.value) {
+      update()
+    }
+  })
+
+  watch(
+    state.viewer.init.ref,
+    (isReady) => {
+      if (isReady) {
+        update()
+      }
+    },
+    { immediate: true }
+  )
+
+  state.viewer.instance.on(ViewerEvent.ObjectClicked, update)
+  state.viewer.instance.on(ViewerEvent.ObjectDoubleClicked, update)
+
+  onBeforeUnmount(() => {
+    state.viewer.instance.removeListener(ViewerEvent.ObjectClicked, update)
+    state.viewer.instance.removeListener(ViewerEvent.ObjectDoubleClicked, update)
+  })
+}
+
 function useSelectOrZoomOnSelection() {
   const state = useInjectedViewerState()
-  const { clearSelection, addToSelection } = useSelectionUtilities()
+  const { clearSelection, addToSelection, objectIds } = useSelectionUtilities()
   const { zoom } = useCameraUtilities()
   const mp = useMixpanel()
   const logger = useLogger()
@@ -99,10 +175,9 @@ function useSelectOrZoomOnSelection() {
         const firstVisHit = firstVisibleSelectionHit
         if (!firstVisHit) return clearSelection()
 
-        if (state.ui.filters.selectedObjects.value.length !== 0) {
-          const ids = state.ui.filters.selectedObjects.value.map((o) => o.id as string)
-          zoom(ids)
-        } // else somethingn is weird.
+        if (objectIds.value.length !== 0) {
+          zoom(objectIds.value)
+        } // else something is weird.
         else {
           logger.warn(
             "Got a double click event but there's no selected object in the state - this should be impossible :)"
@@ -122,4 +197,5 @@ function useSelectOrZoomOnSelection() {
 export function useViewerSelectionEventHandler() {
   useCollectSelection()
   useSelectOrZoomOnSelection()
+  useSelectionStateSync()
 }

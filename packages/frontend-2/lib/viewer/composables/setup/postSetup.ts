@@ -1,4 +1,4 @@
-import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { difference, isEqual, uniq } from 'lodash-es'
 import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
   ExplodeEvent,
@@ -6,7 +6,10 @@ import {
   LoaderEvent,
   type PropertyInfo,
   type StringPropertyInfo,
-  type SunLightConfiguration
+  type SunLightConfiguration,
+  FilteringExtension,
+  DiffExtension,
+  MeasurementsExtension
 } from '@speckle/viewer'
 import {
   ViewerEvent,
@@ -16,7 +19,8 @@ import {
   SectionOutlines,
   SectionToolEvent,
   SectionTool,
-  SpeckleLoader
+  SpeckleLoader,
+  SelectionExtension
 } from '@speckle/viewer'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
@@ -30,7 +34,7 @@ import {
   useGetObjectUrl,
   useOnViewerLoadComplete,
   useViewerCameraControlStartTracker,
-  useViewerCameraTracker,
+  useViewerCameraRestTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
@@ -40,9 +44,8 @@ import {
   useViewerThreadTracking
 } from '~~/lib/viewer/composables/commentBubbles'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
-import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3 } from 'three'
+import { arraysEqual } from '~~/lib/common/helpers/utils'
+import { Box3, Matrix3, Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage, type Nullable } from '@speckle/shared'
 import {
@@ -52,7 +55,9 @@ import {
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { OBB } from 'three/examples/jsm/math/OBB'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import { HighlightExtension } from '~/lib/viewer/extensions/HighlightExtension'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -358,7 +363,7 @@ function useViewerSectionBoxIntegration() {
         visible.value = false
         edited.value = false
 
-        instance.sectionBoxOff()
+        sectionTool.enabled = false
         instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
@@ -366,9 +371,15 @@ function useViewerSectionBoxIntegration() {
       if (newVal && (!oldVal || !sectionBoxDataEquals(newVal, oldVal))) {
         visible.value = true
         edited.value = false
+        const aabb = new Box3(
+          new Vector3().fromArray(newVal.min),
+          new Vector3().fromArray(newVal.max)
+        )
+        const box = new OBB().fromBox3(aabb)
+        if (newVal.rotation) box.rotation = new Matrix3().fromArray(newVal.rotation)
 
-        instance.setSectionBox(newVal)
-        instance.sectionBoxOn()
+        sectionTool.setBox(box)
+        sectionTool.enabled = true
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
         instance.requestRender(UpdateFlags.RENDER_RESET)
@@ -394,7 +405,7 @@ function useViewerSectionBoxIntegration() {
   )
 
   onBeforeUnmount(() => {
-    instance.sectionBoxOff()
+    sectionTool.enabled = false
     sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
@@ -430,14 +441,10 @@ function useViewerCameraIntegration() {
     return cameraManuallyChanged
   }
 
-  // viewer -> state
-  // debouncing pos/target updates to avoid jitteriness + spotlight mode unnecessarily disabling
-  useViewerCameraTracker(
-    () => {
-      loadCameraDataFromViewer()
-    }
-    // { debounceWait: 100 }
-  )
+  // viewer -> state (update once camera interaction ends)
+  useViewerCameraRestTracker(() => {
+    loadCameraDataFromViewer()
+  })
 
   useOnViewerLoadComplete(({ isInitial }) => {
     if (isInitial) {
@@ -472,17 +479,41 @@ function useViewerCameraIntegration() {
       throw new Error('Attempting to set projection too early')
     }
 
+    const camController = instance.getExtension(CameraController)
     if (newVal) {
-      instance.setOrthoCameraOn()
+      camController.setOrthoCameraOn()
     } else {
-      instance.setPerspectiveCameraOn()
+      camController.setPerspectiveCameraOn()
     }
 
     // reset camera pos, cause we've switched cameras now and it might not have the new ones
     forceViewToViewerSync()
   }
 
-  // state -> viewer
+  // state -> viewer: update camera once when either position or target meaningfully changes
+  watch(
+    () => ({ pos: position.value.clone(), tgt: target.value.clone() }),
+    (newVal, oldVal) => {
+      if (
+        oldVal &&
+        areVectorsLooselyEqual(newVal.pos, oldVal.pos) &&
+        areVectorsLooselyEqual(newVal.tgt, oldVal.tgt)
+      )
+        return
+
+      const camController = instance.getExtension(CameraController)
+      camController.setCameraView(
+        {
+          position: newVal.pos,
+          target: newVal.tgt
+        },
+        true
+      )
+    },
+    { immediate: true, deep: false }
+  )
+
+  // react to projection mode changes
   watch(
     isOrthoProjection,
     (newVal, oldVal) => {
@@ -491,35 +522,6 @@ function useViewerCameraIntegration() {
     },
     { immediate: true }
   )
-
-  watch(
-    position,
-    (newVal, oldVal) => {
-      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-        return
-      }
-      instance.setView({
-        position: newVal,
-        target: target.value
-      })
-    }
-    // { immediate: true }
-  )
-
-  watch(
-    target,
-    (newVal, oldVal) => {
-      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-        return
-      }
-
-      instance.setView({
-        position: position.value,
-        target: newVal
-      })
-    }
-    // { immediate: true }
-  )
 }
 
 function useViewerFiltersIntegration() {
@@ -527,6 +529,30 @@ function useViewerFiltersIntegration() {
     viewer: { instance },
     ui: { filters, highlightedObjectIds }
   } = useInjectedViewerState()
+
+  const selectionExt = instance.getExtension(SelectionExtension)
+  const highlightExt = instance.getExtension(HighlightExtension)
+
+  const preserveSelectionHighlightFilter = (filterFn: () => void) => {
+    const selectedObjects = selectionExt
+      .getSelectedObjects()
+      .map((obj) => obj.id as string)
+    const highlightedObjects = highlightedObjectIds.value.slice()
+
+    if (!selectedObjects.length && !highlightedObjects.length) {
+      filterFn()
+      return
+    }
+
+    // Clear, apply, restore
+    if (selectedObjects.length) selectionExt.clearSelection()
+    if (highlightedObjects.length) highlightExt.clearSelection()
+
+    filterFn()
+
+    // Only restore selection (highlights should be cleared by filtering)
+    if (selectedObjects.length) selectionExt.selectObjects(selectedObjects)
+  }
 
   const {
     metadata: { availableFilters: allFilters }
@@ -551,7 +577,11 @@ function useViewerFiltersIntegration() {
     (newVal, oldVal) => {
       if (arraysEqual(newVal, oldVal || [])) return
 
-      instance.highlightObjects(newVal)
+      if (!newVal.length) {
+        instance.getExtension(HighlightExtension).clearSelection()
+      } else {
+        instance.getExtension(HighlightExtension).selectObjects(newVal)
+      }
     },
     { immediate: true, flush: 'sync' }
   )
@@ -567,15 +597,23 @@ function useViewerFiltersIntegration() {
 
       if (isolatable.length) {
         withWatchersDisabled(() => {
-          instance.isolateObjects(isolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
+          preserveSelectionHighlightFilter(() => {
+            instance
+              .getExtension(FilteringExtension)
+              .isolateObjects(isolatable, stateKey, true)
+            filters.hiddenObjectIds.value = []
+          })
         })
       }
 
       if (unisolatable.length) {
         withWatchersDisabled(() => {
-          instance.unIsolateObjects(unisolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
+          preserveSelectionHighlightFilter(() => {
+            instance
+              .getExtension(FilteringExtension)
+              .unIsolateObjects(unisolatable, stateKey, true)
+            filters.hiddenObjectIds.value = []
+          })
         })
       }
     },
@@ -593,14 +631,22 @@ function useViewerFiltersIntegration() {
 
       if (hidable.length) {
         withWatchersDisabled(() => {
-          instance.hideObjects(hidable, stateKey, true)
-          filters.isolatedObjectIds.value = []
+          preserveSelectionHighlightFilter(() => {
+            instance
+              .getExtension(FilteringExtension)
+              .hideObjects(hidable, stateKey, true)
+            filters.isolatedObjectIds.value = []
+          })
         })
       }
       if (showable.length) {
         withWatchersDisabled(() => {
-          instance.showObjects(showable, stateKey, true)
-          filters.isolatedObjectIds.value = []
+          preserveSelectionHighlightFilter(() => {
+            instance
+              .getExtension(FilteringExtension)
+              .showObjects(showable, stateKey, true)
+            filters.isolatedObjectIds.value = []
+          })
         })
       }
     },
@@ -613,8 +659,11 @@ function useViewerFiltersIntegration() {
   ) => {
     const targetFilter = filter || speckleTypeFilter.value
 
-    if (isApplied && targetFilter) await instance.setColorFilter(targetFilter)
-    if (!isApplied) await instance.removeColorFilter()
+    preserveSelectionHighlightFilter(() => {
+      const filteringExt = instance.getExtension(FilteringExtension)
+      if (isApplied && targetFilter) filteringExt.setColorFilter(targetFilter)
+      if (!isApplied) filteringExt.removeColorFilter()
+    })
   }
 
   watch(
@@ -638,27 +687,6 @@ function useViewerFiltersIntegration() {
       await syncColorFilterToViewer(targetFilter, isApplied)
     },
     { initialOnly: true }
-  )
-
-  watch(
-    filters.selectedObjects,
-    (newVal, oldVal) => {
-      const newIds = flatten(newVal.map((v) => getTargetObjectIds({ ...v }))).filter(
-        isNonNullable
-      )
-      const oldIds = flatten(
-        (oldVal || []).map((v) => getTargetObjectIds({ ...v }))
-      ).filter(isNonNullable)
-      if (arraysEqual(newIds, oldIds)) return
-
-      if (!newVal.length) {
-        instance.resetSelection()
-        return
-      }
-
-      instance.selectObjects(newIds)
-    },
-    { immediate: true, flush: 'sync' }
   )
 }
 
@@ -723,15 +751,15 @@ function useExplodeFactorIntegration() {
   watch(
     explodeFactor,
     (newVal) => {
-      /** newVal turns out to be a string. It needs to be a */
-      instance.explode(newVal)
+      /** newVal comes in as a string, convert to number and apply */
+      instance.getExtension(ExplodeExtension).setExplode(Number(newVal))
     },
     { immediate: true }
   )
 
   useOnViewerLoadComplete(
     () => {
-      instance.explode(explodeFactor.value)
+      instance.getExtension(ExplodeExtension).setExplode(Number(explodeFactor.value))
     },
     { initialOnly: true }
   )
@@ -768,7 +796,7 @@ function useDiffingIntegration() {
         return
 
       if (!newCommand || oldVal) {
-        await state.viewer.instance.undiff()
+        await state.viewer.instance.getExtension(DiffExtension).undiff()
         if (!newCommand) return
       }
 
@@ -782,7 +810,8 @@ function useDiffingIntegration() {
         newVersion?.referencedObject as string
       )
 
-      state.ui.diff.result.value = await state.viewer.instance.diff(
+      const diffExt = state.viewer.instance.getExtension(DiffExtension)
+      state.ui.diff.result.value = await diffExt.diff(
         oldObjUrl,
         newObjUrl,
         state.ui.diff.mode.value,
@@ -816,7 +845,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setDiffTime(state.ui.diff.result.value, val)
+      state.viewer.instance.getExtension(DiffExtension).updateVisualDiff(val)
     }
   )
 
@@ -825,11 +854,9 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setVisualDiffMode(state.ui.diff.result.value, val)
-      state.viewer.instance.setDiffTime(
-        state.ui.diff.result.value,
-        state.ui.diff.time.value
-      ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
+      const diffExt = state.viewer.instance.getExtension(DiffExtension)
+      diffExt.updateVisualDiff(undefined, val)
+      diffExt.updateVisualDiff(state.ui.diff.time.value)
     })
 
   useOnViewerLoadComplete(({ isInitial }) => {
@@ -856,7 +883,7 @@ function useViewerMeasurementIntegration() {
     () => measurement.enabled.value,
     (newVal, oldVal) => {
       if (newVal !== oldVal) {
-        instance.enableMeasurements(newVal)
+        instance.getExtension(MeasurementsExtension).enabled = newVal
       }
     },
     { immediate: true }
@@ -866,7 +893,7 @@ function useViewerMeasurementIntegration() {
     () => ({ ...measurement.options.value }),
     (newMeasurementState) => {
       if (newMeasurementState) {
-        instance.setMeasurementOptions(newMeasurementState)
+        instance.getExtension(MeasurementsExtension).options = newMeasurementState
       }
     },
     { immediate: true, deep: true }
