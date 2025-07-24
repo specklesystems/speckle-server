@@ -949,71 +949,10 @@ export default class SpeckleConverter {
     }
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
-    const vertices = new ChunkArray(await this.dechunk(obj.vertices))
+    node.model.raw.vertices = await this.dechunk(obj.vertices)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
-    const faces = new ChunkArray(await this.dechunk(obj.faces))
-    let k = 0
-    let triangulated = true
-    let processed = false
-    const indices = []
-    faces.chunkArray.forEach((c: DataChunk) => {
-      processed ||= c.processed || false
-    })
-
-    if (!processed) {
-      while (k < faces.length) {
-        let n = faces.get(k)
-        if (n < 3) n += 3 // 0 -> 3, 1 -> 4
-
-        if (n === 3) {
-          k += n + 1
-          continue
-        }
-        triangulated = false
-        break
-      }
-
-      if (triangulated) {
-        faces.chunkArray.forEach((chunk: DataChunk) => {
-          if (chunk.processed) return
-
-          let write = 0
-          for (let read = 0; read < chunk.data.length; read++) {
-            if (read % 4 !== 0) {
-              chunk.data[write++] = chunk.data[read]
-            }
-          }
-          chunk.data.length = write
-          chunk.processed = true
-        })
-        faces.updateOffsets()
-      } else {
-        while (k < faces.length) {
-          let n = faces.get(k)
-          if (n < 3) n += 3 // 0 -> 3, 1 -> 4
-          const triangulation = MeshTriangulationHelper.triangulateFace(
-            k,
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            faces,
-            vertices
-          )
-          indices.push(
-            ...triangulation.filter((el) => {
-              return el !== undefined
-            })
-          )
-
-          k += n + 1
-        }
-      }
-    }
-    node.model.raw.vertices = vertices.chunkArray
-    node.model.raw.faces = triangulated
-      ? faces.chunkArray
-      : { data: indices, id: MathUtils.generateUUID(), references: 1, processed: true }
-
+    node.model.raw.faces = await this.dechunk(obj.faces)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     node.model.raw.colors = await this.dechunk(obj.colors)

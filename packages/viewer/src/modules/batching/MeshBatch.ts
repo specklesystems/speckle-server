@@ -290,6 +290,11 @@ export class MeshBatch extends PrimitiveBatch {
       batchObject.buildAccelerationStructure(positionSubarray, indicesSubArray)
       batchObjects.push(batchObject)
 
+      indices.set(
+        batchObject.accelerationStructure.bvh.geometry.index?.array as number[],
+        arrayOffset
+      )
+
       /** Re-index the indices inside the batch */
       for (let i = 0; i < indicesSubArray.length; i++) {
         indicesSubArray[i] = indicesSubArray[i] + offset / 3

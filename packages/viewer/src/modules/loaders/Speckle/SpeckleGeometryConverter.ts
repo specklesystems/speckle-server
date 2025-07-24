@@ -306,42 +306,46 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     let colors = undefined
     let k = 0
     let triangulated = true
-    let processed = false
-    faces.chunkArray.forEach((c: DataChunk) => {
-      processed ||= c.processed || false
-    })
 
-    if (!processed) {
+    while (k < faces.length) {
+      let n = faces.get(k)
+      if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+
+      if (n === 3) {
+        k += n + 1
+        continue
+      }
+      triangulated = false
+      break
+    }
+
+    if (triangulated) {
+      faces.chunkArray.forEach((chunk: DataChunk) => {
+        if (chunk.processed) return
+
+        let write = 0
+        for (let read = 0; read < chunk.data.length; read++) {
+          if (read % 4 !== 0) {
+            chunk.data[write++] = chunk.data[read]
+          }
+        }
+        chunk.data.length = write
+        chunk.processed = true
+      })
+      faces.updateOffsets()
+    } else {
       while (k < faces.length) {
-        let n = faces.get(k)
-        if (n < 3) n += 3 // 0 -> 3, 1 -> 4
-
-        if (n === 3) {
-          k += n + 1
+        const chunkIndex = faces.findChunkIndex(k)
+        if (faces.chunkArray[chunkIndex].processed) {
+          k += faces.chunkArray[chunkIndex].data.length
           continue
         }
-        triangulated = false
-        break
-      }
-
-      if (triangulated) {
-        faces.chunkArray.forEach((chunk: DataChunk) => {
-          if (chunk.processed) return
-
-          let write = 0
-          for (let read = 0; read < chunk.data.length; read++) {
-            if (read % 4 !== 0) {
-              chunk.data[write++] = chunk.data[read]
-            }
-          }
-          chunk.data.length = write
-          chunk.processed = true
-        })
-        faces.updateOffsets()
-      } else {
-        while (k < faces.length) {
-          let n = faces.get(k)
-          if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+        let n = faces.get(k)
+        if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+        if (n === 3) {
+          // Triangle face
+          indices.push(faces.get(k + 1), faces.get(k + 2), faces.get(k + 3))
+        } else {
           const start1 = performance.now()
           const triangulation = MeshTriangulationHelper.triangulateFace(
             k,
@@ -356,9 +360,9 @@ export class SpeckleGeometryConverter extends GeometryConverter {
               return el !== undefined
             })
           )
-
-          k += n + 1
         }
+
+        k += n + 1
       }
     }
 
