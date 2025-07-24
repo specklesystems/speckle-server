@@ -7,7 +7,10 @@
     <div class="flex flex-col gap-2 py-2">
       <!-- Models -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleModels)"
+        v-tippy="{
+          content: getShortcutDisplayText(shortcuts.ToggleModels),
+          placement: 'right'
+        }"
         :active="activePanel === 'models'"
         @click="toggleActivePanel('models')"
       >
@@ -16,7 +19,10 @@
 
       <!-- Explorer -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleExplorer)"
+        v-tippy="{
+          content: getShortcutDisplayText(shortcuts.ToggleExplorer),
+          placement: 'right'
+        }"
         :active="activePanel === 'explorer'"
         @click="toggleActivePanel('explorer')"
       >
@@ -25,7 +31,10 @@
 
       <!-- Filters -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleExplorer)"
+        v-tippy="{
+          content: 'Filters',
+          placement: 'right'
+        }"
         :active="activePanel === 'filters'"
         @click="toggleActivePanel('filters')"
       >
@@ -34,7 +43,10 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleDiscussions)"
+        v-tippy="{
+          content: getShortcutDisplayText(shortcuts.ToggleDiscussions),
+          placement: 'right'
+        }"
         :active="activePanel === 'discussions'"
         @click="toggleActivePanel('discussions')"
       >
@@ -44,7 +56,14 @@
       <!-- Automation runs -->
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
-        v-tippy="isMobile ? undefined : summary.longSummary"
+        v-tippy="
+          isMobile
+            ? undefined
+            : {
+                content: summary.longSummary,
+                placement: 'right'
+              }
+        "
         :active="activePanel === 'automate'"
         @click="toggleActivePanel('automate')"
       >

@@ -2,12 +2,18 @@
   <aside class="absolute top-[4.125rem] z-20" :style="dynamicStyles">
     <ViewerControlsButtonGroup direction="vertical">
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection)"
+        v-tippy="{
+          content: getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection),
+          placement: 'left'
+        }"
         icon="IconViewerZoom"
         @click="trackAndzoomExtentsOrSelection()"
       />
       <ViewerControlsButtonToggle
-        v-tippy="'Camera controls'"
+        v-tippy="{
+          content: 'Camera controls',
+          placement: 'left'
+        }"
         icon="IconViewerCameraControls"
         :active="activePanel === 'cameraControls'"
         @click="toggleActivePanel('cameraControls')"

@@ -1,6 +1,6 @@
 <template>
   <button
-    class="transition rounded-lg w-8 h-8 shrink-0 flex items-center justify-center outline-none"
+    class="transition rounded-md w-8 h-8 shrink-0 flex items-center justify-center outline-none"
     :class="
       active
         ? 'bg-info-lighter text-primary-focus dark:text-foreground-on-primary'

@@ -71,13 +71,13 @@
             class="size-8 flex items-center justify-center rounded-lg border"
             :class="[
               measurementOptions.type === option.value &&
-                'border-outline-2 bg-foundation',
+                'border-outline-2 bg-foundation text-foreground',
               measurementOptions.type !== option.value &&
-                'border-transparent hover:bg-foundation-2'
+                'border-transparent hover:bg-foundation-2 text-foreground-2'
             ]"
             @click="updateMeasurementsType(option)"
           >
-            <component :is="option.icon" class="size-6 flex-shrink-0" />
+            <component :is="option.icon" class="size-5 flex-shrink-0" />
           </button>
         </div>
 
@@ -101,8 +101,6 @@
 <script setup lang="ts">
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
-import { resolveComponent } from 'vue'
-import type { ConcreteComponent } from 'vue'
 import { Cog8ToothIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 interface MeasurementTypeOption {
@@ -151,37 +149,28 @@ const onChangeMeasurementPrecision = (newPrecision?: string) => {
   })
 }
 
-const IconMeasurePointToPoint = resolveComponent(
-  'IconMeasurePointToPoint'
-) as ConcreteComponent
-const IconMeasurePerpendicular = resolveComponent(
-  'IconMeasurePerpendicular'
-) as ConcreteComponent
-const IconMeasurePoint = resolveComponent('IconMeasurePoint') as ConcreteComponent
-const IconMeasureArea = resolveComponent('IconMeasureArea') as ConcreteComponent
-
 const measurementTypeOptions = [
   {
     title: 'Point to Point',
-    icon: IconMeasurePointToPoint,
+    icon: 'IconMeasurePointToPoint',
     value: MeasurementType.POINTTOPOINT,
     description: 'Measure between two points'
   },
   {
     title: 'Perpendicular',
-    icon: IconMeasurePerpendicular,
+    icon: 'IconMeasurePerpendicular',
     value: MeasurementType.PERPENDICULAR,
     description: 'Measure at a 90° angle'
   },
   {
     title: 'Area',
-    icon: IconMeasureArea,
+    icon: 'IconMeasureArea',
     value: MeasurementType.AREA,
     description: 'Measure area between points'
   },
   {
     title: 'Point coordinates',
-    icon: IconMeasurePoint,
+    icon: 'IconMeasurePoint',
     value: MeasurementType.POINT,
     description: 'Measure XYZ coordinates'
   }

@@ -7,9 +7,9 @@
       <ViewerControlsButtonToggle
         v-for="panel in panels"
         :key="panel.id"
+        v-tippy="panel.tooltip"
         :active="activePanel === panel.id"
         :icon="panel.icon"
-        :tooltip="panel.tooltip"
         @click="toggleActivePanel(panel.id)"
       />
     </ViewerControlsButtonGroup>
@@ -43,7 +43,6 @@ import {
   useViewerShortcuts
 } from '~~/lib/viewer/composables/ui'
 import { onKeyStroke } from '@vueuse/core'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 enum ActivePanel {
   none = 'none',
@@ -58,7 +57,6 @@ const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortc
 const { toggleSectionBox } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
 const panels = shallowRef({
@@ -78,19 +76,19 @@ const panels = shallowRef({
     id: ActivePanel.explode,
     name: 'Explode',
     icon: 'IconViewerExplode',
-    tooltip: isSmallerOrEqualSm ? undefined : 'Explode model'
+    tooltip: 'Explode model'
   },
   [ActivePanel.viewModes]: {
     id: ActivePanel.viewModes,
     name: 'View modes',
     icon: 'IconViewerViewModes',
-    tooltip: isSmallerOrEqualSm ? undefined : 'View modes'
+    tooltip: 'View modes'
   },
   [ActivePanel.lightControls]: {
     id: ActivePanel.lightControls,
     name: 'Light controls',
     icon: 'IconViewerLightControls',
-    tooltip: isSmallerOrEqualSm ? undefined : 'Light controls'
+    tooltip: 'Light controls'
   }
 })
 
