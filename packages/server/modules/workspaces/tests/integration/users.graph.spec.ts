@@ -69,19 +69,6 @@ describe('ActiveUserMutations', () => {
       expect(resB?.data?.activeUser?.activeWorkspace?.id).to.equal(workspace.id)
     })
 
-    it('should accurately report if last visited project is not a workspace project', async () => {
-      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
-        slug: null,
-        isProjectsActive: true
-      })
-      expect(resA).to.not.haveGraphQLErrors()
-
-      const resB = await apollo.execute(UserActiveResourcesDocument, {})
-      expect(resB).to.not.haveGraphQLErrors()
-
-      expect(resB?.data?.activeUser?.isProjectsActive).to.be.true
-    })
-
     it('should allow values to be cleared with null input', async () => {
       const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
         slug: workspace.slug

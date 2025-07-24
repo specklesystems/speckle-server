@@ -4,23 +4,19 @@
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }" class="w-full">
         <span class="sr-only">Open workspace menu</span>
         <div class="flex items-center gap-2 p-0.5 pr-1.5 hover:bg-highlight-2 rounded">
-          <template v-if="activeWorkspaceSlug || isProjectsActive">
-            <div class="relative">
-              <WorkspaceAvatar
-                size="base"
-                :name="displayName || ''"
-                :logo="displayLogo"
-              />
-              <div
-                v-if="hasDiscoverableWorkspaces"
-                class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-danger rounded-full"
-              />
-            </div>
-            <p class="text-body-xs text-foreground truncate max-w-40">
-              {{ displayName }}
-            </p>
-          </template>
-          <HeaderLogoBlock v-else no-link />
+          <div class="relative">
+            <WorkspaceAvatar
+              :name="activeWorkspace?.name || 'Personal projects'"
+              :logo="activeWorkspace?.logo"
+            />
+            <div
+              v-if="hasDiscoverableWorkspaces"
+              class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-danger rounded-full"
+            />
+          </div>
+          <p class="text-body-xs text-foreground truncate max-w-40">
+            {{ activeWorkspace?.name || 'Personal projects' }}
+          </p>
           <ChevronDownIcon
             :class="userOpen ? 'rotate-180' : ''"
             class="h-3 w-3 flex-shrink-0"
@@ -36,24 +32,31 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute left-2 lg:left-3 top-[3.2rem] lg:top-14 w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
+          class="absolute left-2 lg:left-3 top-[3.2rem] lg:top-14 w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
+          <HeaderWorkspaceSwitcherHeaderProjects v-if="!activeWorkspace" />
           <HeaderWorkspaceSwitcherHeaderSsoExpired
-            v-if="expiredSsoWorkspaceData"
-            :workspace="expiredSsoWorkspaceData"
+            v-else-if="ssoExpiredWorkspace"
+            :workspace="ssoExpiredWorkspace"
           />
-          <HeaderWorkspaceSwitcherHeaderProjects v-else-if="isProjectsActive" />
           <HeaderWorkspaceSwitcherHeaderWorkspace
-            v-else-if="!!activeWorkspace"
-            :workspace="activeWorkspace"
-            @show-invite-dialog="showInviteDialog = true"
+            v-else-if="activeWorkspace.role"
+            :workspace="fullActiveWorkspace"
+            @open-invite-dialog="isInviteDialogOpen = true"
           />
-          <HeaderWorkspaceSwitcherList
-            :workspaces="workspaces"
-            :has-personal-projects="hasPersonalProjects"
-          />
+          <HeaderWorkspaceSwitcherHeader
+            v-else
+            :name="activeWorkspace?.name"
+            :logo="activeWorkspace?.logo"
+            :to="workspaceRoute(activeWorkspace?.slug)"
+          >
+            <p class="text-body-xs text-foreground-2">
+              You are not part of this workspace.
+            </p>
+          </HeaderWorkspaceSwitcherHeader>
+          <HeaderWorkspaceSwitcherList class="border-t border-outline-2" />
           <MenuItem v-if="hasDiscoverableWorkspacesOrJoinRequests">
-            <div class="p-2">
+            <div class="p-2 border-t border-outline-2">
               <NuxtLink
                 class="flex justify-between items-center cursor-pointer hover:bg-highlight-1 py-1 px-2 rounded"
                 @click="showDiscoverableWorkspacesModal = true"
@@ -75,98 +78,113 @@
       </Transition>
     </Menu>
 
+    <InviteDialogWorkspace
+      v-model:open="isInviteDialogOpen"
+      :workspace="fullActiveWorkspace"
+    />
+
     <WorkspaceDiscoverableWorkspacesModal
       v-model:open="showDiscoverableWorkspacesModal"
     />
-
-    <InviteDialogWorkspace
-      v-model:open="showInviteDialog"
-      :workspace="activeWorkspace"
-    />
   </div>
 </template>
+
 <script setup lang="ts">
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
-import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { useQuery } from '@vue/apollo-composable'
 import {
-  navigationWorkspaceListQuery,
-  navigationActiveWorkspaceQuery
-} from '~~/lib/navigation/graphql/queries'
+  navigationWorkspaceSwitcherQuery,
+  workspaceSwitcherHeaderWorkspaceQuery
+} from '~/lib/navigation/graphql/queries'
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+import { workspaceRoute } from '~/lib/common/helpers/route'
+
+graphql(`
+  fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on LimitedWorkspace {
+    id
+    name
+    logo
+    slug
+    role
+  }
+`)
+
+graphql(`
+  fragment WorkspaceSwitcherActiveWorkspace_User on User {
+    id
+    activeWorkspace {
+      ...WorkspaceSwitcherActiveWorkspace_LimitedWorkspace
+    }
+    expiredSsoSessions {
+      id
+      ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace
+    }
+    discoverableWorkspaces {
+      id
+    }
+    workspaceJoinRequests(filter: $joinRequestFilter) {
+      totalCount
+    }
+  }
+`)
 
 const { $intercom } = useNuxtApp()
-const menuButtonId = useId()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
-const {
-  hasDiscoverableWorkspaces,
-  discoverableWorkspacesAndJoinRequestsCount,
-  hasDiscoverableWorkspacesOrJoinRequests
-} = useDiscoverableWorkspaces()
-const { result } = useQuery(
-  navigationWorkspaceListQuery,
+const menuButtonId = useId()
+const { result, onResult: onActiveWorkspaceResult } = useQuery(
+  navigationWorkspaceSwitcherQuery,
   () => ({
-    filter: {
-      personalOnly: true
+    joinRequestFilter: {
+      status: WorkspaceJoinRequestStatus.Pending
     }
   }),
-  {
+  () => ({
     enabled: isWorkspacesEnabled.value
-  }
-)
-const { result: activeWorkspaceResult, onResult: onActiveWorkspaceResult } = useQuery(
-  navigationActiveWorkspaceQuery,
-  () => ({
-    slug: activeWorkspaceSlug.value || ''
-  }),
-  () => ({
-    enabled: !!activeWorkspaceSlug.value && isWorkspacesEnabled.value
   })
+)
+// Seperate query to get the full workspace, because it's not always needed
+const { result: fullWorkspaceResult } = useQuery(
+  workspaceSwitcherHeaderWorkspaceQuery,
+  () => ({
+    slug: result.value?.activeUser?.activeWorkspace?.slug || ''
+  }),
+  {
+    enabled:
+      !!result.value?.activeUser?.activeWorkspace?.slug &&
+      isWorkspacesEnabled.value &&
+      !!result.value?.activeUser?.activeWorkspace?.role
+  }
 )
 
 const showDiscoverableWorkspacesModal = ref(false)
-const showInviteDialog = ref(false)
+const isInviteDialogOpen = ref(false)
 
-const expiredSsoSessions = computed(
-  () => result.value?.activeUser?.expiredSsoSessions || []
-)
-const expiredSsoWorkspaceData = computed(() =>
-  expiredSsoSessions.value.find((session) => session.slug === activeWorkspaceSlug.value)
-)
-const workspaces = computed(() =>
-  result.value?.activeUser
-    ? result.value.activeUser.workspaces.items.filter(
-        (workspace) => workspace.creationState?.completed !== false
-      )
-    : []
-)
-const hasPersonalProjects = computed(
-  () => !!result.value?.activeUser?.projects?.totalCount
-)
-
-const activeWorkspace = computed(() => activeWorkspaceResult.value?.workspaceBySlug)
-const selectedWorkspaceMeta = computed(() => {
-  return (
-    workspaces.value.find(
-      (workspace) => workspace.slug === activeWorkspaceSlug.value
-    ) || activeWorkspace.value
+const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
+const fullActiveWorkspace = computed(() => fullWorkspaceResult.value?.workspaceBySlug)
+const ssoExpiredWorkspace = computed(() =>
+  result.value?.activeUser?.expiredSsoSessions?.find(
+    (session) => session.slug === activeWorkspace.value?.slug
   )
-})
-
-const displayName = computed(() =>
-  isProjectsActive.value ? 'Personal projects' : selectedWorkspaceMeta.value?.name
 )
-const displayLogo = computed(() =>
-  isProjectsActive.value ? null : selectedWorkspaceMeta.value?.logo
+const hasDiscoverableWorkspaces = computed(
+  () => (result.value?.activeUser?.discoverableWorkspaces?.length || 0) > 0
+)
+const discoverableWorkspacesAndJoinRequestsCount = computed(
+  () =>
+    (result.value?.activeUser?.discoverableWorkspaces?.length || 0) +
+    (result.value?.activeUser?.workspaceJoinRequests?.totalCount || 0)
+)
+const hasDiscoverableWorkspacesOrJoinRequests = computed(
+  () => discoverableWorkspacesAndJoinRequestsCount.value > 0
 )
 
 onActiveWorkspaceResult(({ data }) => {
-  if (data?.workspaceBySlug) {
+  if (data?.activeUser?.activeWorkspace) {
     $intercom.updateCompany({
-      id: data.workspaceBySlug.id,
-      name: data.workspaceBySlug.name
+      id: data.activeUser.activeWorkspace.id,
+      name: data.activeUser.activeWorkspace.name
     })
   }
 })

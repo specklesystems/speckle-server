@@ -145,15 +145,16 @@ export const getUserActiveResources = gql`
         id
         name
       }
-      isProjectsActive
     }
   }
 `
 
 export const setUserActiveWorkspaceMutation = gql`
-  mutation SetUserActiveWorkspace($slug: String, $isProjectsActive: Boolean) {
+  mutation SetUserActiveWorkspace($slug: String) {
     activeUserMutations {
-      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)
+      setActiveWorkspace(slug: $slug) {
+        id
+      }
     }
   }
 `

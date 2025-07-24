@@ -45,7 +45,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
 import { homeRoute } from '~/lib/common/helpers/route'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
+import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -65,7 +65,7 @@ const { triggerNotification } = useGlobalToast()
 const { activeUser } = useActiveUser()
 const router = useRouter()
 const apollo = useApolloClient().client
-const { mutateActiveWorkspaceSlug } = useNavigation()
+const { setActiveWorkspace } = useSetActiveWorkspace()
 
 const workspaceNameInput = ref('')
 
@@ -110,7 +110,7 @@ const onDelete = async () => {
       title: `${workspaceName} workspace deleted`
     })
 
-    mutateActiveWorkspaceSlug(null)
+    await setActiveWorkspace({ id: null })
     router.push(homeRoute)
     isOpen.value = false
   } else {
