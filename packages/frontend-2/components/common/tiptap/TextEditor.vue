@@ -1,6 +1,11 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="['text-editor flex flex-col', !!readonly ? 'text-editor--read-only' : '']"
+    :class="[
+      'text-editor flex flex-col relative',
+      !!readonly ? 'text-editor--read-only' : ''
+    ]"
   >
     <EditorContent
       ref="editorContentRef"
@@ -81,6 +86,7 @@ const onEnter = () => {
   emit('submit', { data: getData() })
 }
 const onKeyDownHandler = (e: KeyboardEvent) => emit('keydown', e)
+
 const onEditorContentClick = (e: MouseEvent) => {
   const closestSelectorTarget = (e.target as HTMLElement).closest(
     '.editor-mention'
@@ -157,6 +163,7 @@ onBeforeUnmount(() => {
 
 .ProseMirror {
   flex: 1;
+  width: 100%;
 
   & p:last-of-type {
     margin-bottom: 0;
@@ -173,6 +180,10 @@ onBeforeUnmount(() => {
   & .editor-mention {
     box-decoration-break: clone;
     @apply text-foreground text-body-2xs font-semibold;
+  }
+
+  & a {
+    @apply border-b border-outline-3;
   }
 }
 

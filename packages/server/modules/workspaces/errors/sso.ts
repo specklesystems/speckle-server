@@ -1,5 +1,5 @@
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { User } from '@/modules/core/domain/users/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { User } from '@/modules/core/domain/users/types'
 import { BaseError } from '@/modules/shared/errors/base'
 export { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 

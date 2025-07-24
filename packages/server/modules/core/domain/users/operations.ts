@@ -1,14 +1,14 @@
-import {
+import type {
   LimitedUser,
   User,
   UserOnboardingChoices,
   UserSignUpContext,
   UserWithOptionalRole
 } from '@/modules/core/domain/users/types'
-import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
-import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
-import {
+import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import type { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
+import type { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
+import type {
   MaybeNullOrUndefined,
   Nullable,
   NullableKeysToOptional,

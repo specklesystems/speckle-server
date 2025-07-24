@@ -1,6 +1,6 @@
 import { authorizeResolver } from '@/modules/shared'
 import { isNonNullable, Roles } from '@speckle/shared'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getObjectChildrenFactory,
   getObjectChildrenQueryFactory,

@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const WORKSPACE_JOIN_REQUESTS_TABLE = 'workspace_join_requests'
 

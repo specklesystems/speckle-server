@@ -36,10 +36,8 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
-import {
-  CreateCheckoutSession,
-  WorkspaceSeatType
-} from '@/modules/gatekeeper/domain/billing'
+import type { CreateCheckoutSession } from '@/modules/gatekeeper/domain/billing'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/modules/core/graph/generated/graphql'
 import { LogicError, UnauthorizedError } from '@/modules/shared/errors'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
@@ -55,7 +53,7 @@ import {
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
@@ -208,7 +206,7 @@ export default FF_GATEKEEPER_MODULE_ENABLED
 
           return await getWorkspaceModelCountFactory({
             queryAllProjects: queryAllProjectsFactory({
-              getStreams: legacyGetStreamsFactory({ db })
+              getExplicitProjects: getExplicitProjects({ db })
             }),
             getPaginatedProjectModelsTotalCount: async (projectId, params) => {
               const regionDb = await getProjectDbClient({ projectId })

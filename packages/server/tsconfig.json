@@ -115,6 +115,7 @@
     "test/**/*",
     "type-augmentations/**/*",
     "app.ts",
+    "run.ts",
     "bootstrap.js",
     "knexfile.ts",
     "codegen.ts"

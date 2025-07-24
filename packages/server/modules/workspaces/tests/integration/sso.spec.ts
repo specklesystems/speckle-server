@@ -7,21 +7,22 @@ import {
   listWorkspaceSsoMembershipsFactory,
   upsertUserSsoSessionFactory
 } from '@/modules/workspaces/repositories/sso'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   createTestOidcProvider,
   createTestSsoSession,
   createTestWorkspace,
   createTestWorkspaces
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
 import { Roles, wait } from '@speckle/shared'
 import db from '@/db/knex'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
-import { UserSsoSessionRecord } from '@/modules/workspaces/domain/sso/types'
+import type { UserSsoSessionRecord } from '@/modules/workspaces/domain/sso/types'
 import { truncateTables } from '@/test/hooks'
 import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'

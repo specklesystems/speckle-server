@@ -1,4 +1,4 @@
-import {
+import type {
   GetCommentsResources,
   GetViewerResourceGroups,
   GetViewerResourceItemsUngrouped,
@@ -6,26 +6,27 @@ import {
   GetViewerResourcesForComments,
   GetViewerResourcesFromLegacyIdentifiers
 } from '@/modules/comments/domain/operations'
-import {
+import type {
   GetBranchLatestCommits,
   GetStreamBranchesByName
 } from '@/modules/core/domain/branches/operations'
-import {
+import type {
   GetAllBranchCommits,
   GetCommitsAndTheirBranchIds,
   GetSpecificBranchCommits
 } from '@/modules/core/domain/commits/operations'
-import { GetStreamObjects } from '@/modules/core/domain/objects/operations'
-import {
+import type { GetStreamObjects } from '@/modules/core/domain/objects/operations'
+import type {
   ResourceIdentifier,
   ResourceIdentifierInput,
-  ResourceType,
   ViewerResourceGroup,
   ViewerResourceItem,
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
-import { CommitRecord } from '@/modules/core/helpers/types'
-import { Optional, SpeckleViewer } from '@speckle/shared'
+import { ResourceType } from '@/modules/core/graph/generated/graphql'
+import type { CommitRecord } from '@/modules/core/helpers/types'
+import type { Optional } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { flatten, keyBy, reduce, uniq, uniqWith } from 'lodash-es'
 
 function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem) {

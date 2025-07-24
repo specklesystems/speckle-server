@@ -4,14 +4,14 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { throwUncoveredError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import crypto from 'crypto'
-import {
+import type {
   BuildConsumePreviewResult,
   ConsumePreviewResult,
   StorePreview,
   UpdateObjectPreview
 } from '@/modules/previews/domain/operations'
 import { joinImages } from 'join-images'
-import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
+import type { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 import {
   storePreviewFactory,
@@ -45,7 +45,6 @@ export const consumePreviewResultFactory =
     getObjectCommitsWithStreamIds: GetObjectCommitsWithStreamIds
   }): ConsumePreviewResult =>
   async ({ projectId, objectId, previewResult }) => {
-    const lastUpdate = new Date()
     const priority = PreviewPriority.LOW
     const log = logger.child({
       jobId: previewResult.jobId,
@@ -66,7 +65,6 @@ export const consumePreviewResultFactory =
           objectPreview: {
             objectId,
             streamId: projectId,
-            lastUpdate,
             preview: { err: previewResult.reason },
             priority,
             previewStatus: PreviewStatus.ERROR
@@ -113,7 +111,6 @@ export const consumePreviewResultFactory =
           objectPreview: {
             objectId,
             streamId: projectId,
-            lastUpdate,
             preview,
             priority,
             previewStatus: PreviewStatus.DONE

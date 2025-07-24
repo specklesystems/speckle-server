@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
@@ -20,7 +20,7 @@ import {
 import { Roles } from '@speckle/shared'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
@@ -77,7 +77,7 @@ export default {
       // Move existing workspace projects to new target region
       if (FF_MOVE_PROJECT_REGION_ENABLED) {
         const queryAllProjects = queryAllProjectsFactory({
-          getStreams: legacyGetStreamsFactory({ db })
+          getExplicitProjects: getExplicitProjects({ db })
         })
         for await (const projects of queryAllProjects({
           workspaceId

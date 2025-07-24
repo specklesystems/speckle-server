@@ -19,16 +19,12 @@ import {
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import type { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { buildBasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
-  BasicTestUser,
-  buildBasicTestUser,
-  createTestUser,
-  createTestUsers
-} from '@/test/authHelper'
-import {
-  BasicTestWorkspace,
   assignToWorkspace,
   buildBasicTestWorkspace,
   createTestWorkspace,

@@ -18,12 +18,13 @@ export class CacheReader {
   constructor(
     database: Database,
     defermentManager: DefermentManager,
+    logger: CustomLogger,
     options: CacheOptions
   ) {
     this.#database = database
     this.#defermentManager = defermentManager
+    this.#logger = logger
     this.#options = options
-    this.#logger = options.logger || ((): void => {})
   }
 
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
@@ -34,7 +35,7 @@ export class CacheReader {
   getObject(params: { id: string }): Promise<Base> {
     const [p, b] = this.#defermentManager.defer({ id: params.id })
     if (!b) {
-      this.#requestItem(params.id)
+      this.requestItem(params.id)
     }
     return p
   }
@@ -49,7 +50,7 @@ export class CacheReader {
     }
   }
 
-  #requestItem(id: string): void {
+  requestItem(id: string): void {
     this.#createReadQueue()
     if (!this.#readQueue?.get(id)) {
       this.#readQueue?.add(id, id)
@@ -58,9 +59,6 @@ export class CacheReader {
 
   requestAll(keys: string[]): void {
     this.#createReadQueue()
-    for (const key of keys) {
-      this.#defermentManager.trackDefermentRequest(key)
-    }
 
     this.#readQueue?.addAll(keys, keys)
   }
@@ -72,7 +70,7 @@ export class CacheReader {
       const item = items[i]
       if (item) {
         this.#foundQueue?.add(item)
-        this.#defermentManager.undefer(item)
+        this.#defermentManager.undefer(item, (id) => this.requestItem(id))
       } else {
         this.#notFoundQueue?.add(batch[i])
       }
@@ -80,7 +78,7 @@ export class CacheReader {
     this.#logger('readBatch: left, time', items.length, performance.now() - start)
   }
 
-  dispose(): void {
-    this.#readQueue?.dispose()
+  disposeAsync(): Promise<void> {
+    return this.#readQueue?.disposeAsync() || Promise.resolve()
   }
 }

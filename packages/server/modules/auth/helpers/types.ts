@@ -1,4 +1,4 @@
-import { MaybeAsync, ServerScope } from '@speckle/shared'
+import type { MaybeAsync, ServerScope } from '@speckle/shared'
 import type { Express, RequestHandler } from 'express'
 import type { Session, SessionData } from 'express-session'
 import type { TokenSet, UserinfoResponse } from 'openid-client'

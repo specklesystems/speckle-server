@@ -1,4 +1,4 @@
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 
 export type ObjectPreview = {
   streamId: string
@@ -7,6 +7,7 @@ export type ObjectPreview = {
   priority: number
   lastUpdate: Date
   preview: Nullable<Record<string, string>>
+  attempts: number
 }
 
 export type Preview = {

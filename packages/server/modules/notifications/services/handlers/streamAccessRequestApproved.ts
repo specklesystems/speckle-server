@@ -1,7 +1,7 @@
 import { db } from '@/db/knex'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 import {
   buildAbsoluteFrontendUrlFromPath,
   getStreamRoute
@@ -9,11 +9,11 @@ import {
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { NotificationValidationError } from '@/modules/notifications/errors'
-import {
+import type {
   NotificationHandler,
   StreamAccessRequestApprovedMessage
 } from '@/modules/notifications/helpers/types'

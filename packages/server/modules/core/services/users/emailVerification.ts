@@ -1,8 +1,8 @@
-import {
+import type {
   MarkUserEmailAsVerified,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import {
+import type {
   DeleteVerifications,
   GetPendingVerificationByEmail
 } from '@/modules/emails/domain/operations'

@@ -1,9 +1,9 @@
-import {
+import type {
   AutomationFunctionRunRecord,
   AutomationRunTriggerRecord,
   AutomationTriggerType
 } from '@/modules/automate/helpers/types'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import type { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 
 export type InsertableAutomationFunctionRun = Pick<
   AutomationFunctionRunRecord,

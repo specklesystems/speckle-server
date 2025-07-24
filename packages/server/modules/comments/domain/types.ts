@@ -1,5 +1,5 @@
-import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
-import { Nullable } from '@speckle/shared'
+import type { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
+import type { Nullable } from '@speckle/shared'
 
 export type ResourceIdentifier = {
   resourceId: string

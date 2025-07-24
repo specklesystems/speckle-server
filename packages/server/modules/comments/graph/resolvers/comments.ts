@@ -33,10 +33,8 @@ import {
   validateInputAttachmentsFactory
 } from '@/modules/comments/services/commentTextService'
 import { has } from 'lodash-es'
-import {
-  documentToBasicString,
-  SmartTextEditorValueSchema
-} from '@/modules/core/services/richTextEditorService'
+import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import { documentToBasicString } from '@/modules/core/services/richTextEditorService'
 import {
   getPaginatedBranchCommentsFactory,
   getPaginatedCommitCommentsFactory,
@@ -70,12 +68,13 @@ import {
   convertStateToLegacyData,
   convertLegacyDataToStateFactory
 } from '@/modules/comments/services/data'
-import { Resolvers, ResourceType } from '@/modules/core/graph/generated/graphql'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { ResourceType } from '@/modules/core/graph/generated/graphql'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 import { db, mainDb } from '@/db/knex'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import { ResourceIdentifier } from '@/modules/comments/domain/types'
+import type { ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
   getAllBranchCommitsFactory,
   getCommitsAndTheirBranchIdsFactory,
@@ -88,7 +87,7 @@ import {
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'

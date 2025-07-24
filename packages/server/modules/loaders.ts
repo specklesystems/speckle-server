@@ -1,6 +1,6 @@
-import { RequestDataLoaders } from '@/modules/core/loaders'
-import { MaybeAsync } from '@speckle/shared'
-import { AuthCheckContextLoaders } from '@speckle/shared/authz'
+import type { RequestDataLoaders } from '@/modules/core/loaders'
+import type { MaybeAsync } from '@speckle/shared'
+import type { AuthCheckContextLoaders } from '@speckle/shared/authz'
 
 export type ServerLoadersContext = {
   dataLoaders: RequestDataLoaders

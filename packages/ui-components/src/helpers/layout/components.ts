@@ -48,4 +48,10 @@ export type LayoutDialogButton = {
   id?: string
 }
 
+export type LayoutHeaderButton = {
+  label: string
+  props: Record<string, unknown> & FormButtonProps
+  onClick?: (e: MouseEvent) => void
+}
+
 export type LayoutTableColours = 'primary' | 'outline' | 'subtle' | 'danger'

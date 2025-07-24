@@ -45,18 +45,16 @@ import {
   validateSlugFactory,
   generateValidSlugFactory
 } from '@/modules/workspaces/services/management'
-import { BasicTestUser } from '@/test/authHelper'
-import { CreateWorkspaceInviteMutationVariables } from '@/modules/core/graph/generated/graphql'
+import type { BasicTestUser } from '@/test/authHelper'
+import type { CreateWorkspaceInviteMutationVariables } from '@/modules/core/graph/generated/graphql'
 import cryptoRandomString from 'crypto-random-string'
-import {
+import type {
   MaybeNullOrUndefined,
-  PaidWorkspacePlans,
-  Roles,
   WorkspacePlan,
   WorkspacePlans,
-  WorkspacePlanStatuses,
   WorkspaceRoles
 } from '@speckle/shared'
+import { PaidWorkspacePlans, Roles, WorkspacePlanStatuses } from '@speckle/shared'
 import {
   getStreamFactory,
   getStreamRolesFactory,
@@ -71,7 +69,7 @@ import {
   upsertUserSsoSessionFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getEncryptor } from '@/modules/workspaces/helpers/sso'
-import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
+import type { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 import {
@@ -80,7 +78,7 @@ import {
   upsertWorkspacePlanFactory,
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { SetOptional } from 'type-fest'
+import type { SetOptional } from 'type-fest'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import {
   assignWorkspaceRegionFactory,
@@ -130,8 +128,8 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
-import {
+import type { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
+import type {
   WorkspaceSeat,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'

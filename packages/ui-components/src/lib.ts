@@ -50,7 +50,8 @@ import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 import LayoutGridListToggle from '~~/src/components/layout/GridListToggle.vue'
 import type {
   LayoutPageTabItem,
-  LayoutDialogButton
+  LayoutDialogButton,
+  LayoutHeaderButton
 } from '~~/src/helpers/layout/components'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
 import {
@@ -188,6 +189,7 @@ export {
 }
 export type {
   LayoutDialogButton,
+  LayoutHeaderButton,
   ToastNotification,
   BulletStepType,
   NumberStepType,

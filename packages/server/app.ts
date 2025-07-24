@@ -3,7 +3,8 @@
 // eslint-disable-next-line no-restricted-imports
 import './bootstrap.js'
 import http from 'http'
-import express, { Express } from 'express'
+import type { Express } from 'express'
+import express from 'express'
 
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
@@ -24,7 +25,8 @@ import {
 } from '@/observability/components/express/expressLogging'
 
 import { errorMetricsMiddlewareFactory } from '@/observability/components/express/metrics/errorMetrics'
-import prometheusClient, { Registry } from 'prom-client'
+import type { Registry } from 'prom-client'
+import prometheusClient from 'prom-client'
 
 import { ApolloServer } from '@apollo/server'
 import { expressMiddleware } from '@apollo/server/express4'
@@ -52,7 +54,7 @@ import {
   isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules/index'
-import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
+import type { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 
 import { get, has, isString } from 'lodash-es'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
@@ -74,7 +76,7 @@ import { initFactory as healthchecksInitFactory } from '@/healthchecks'
 import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
 import type { Server as MockWsServer } from 'mock-socket'
-import { SetOptional } from 'type-fest'
+import type { SetOptional } from 'type-fest'
 import {
   enterNewRequestContext,
   getRequestContext,

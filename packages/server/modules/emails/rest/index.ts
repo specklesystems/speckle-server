@@ -1,4 +1,4 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
 import { finalizeEmailVerificationFactory } from '@/modules/emails/services/verification/finalize'
 import type { Express } from 'express'

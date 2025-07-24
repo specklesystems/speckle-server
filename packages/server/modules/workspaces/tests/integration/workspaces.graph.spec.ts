@@ -1,19 +1,17 @@
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
+import type { BasicTestUser } from '@/test/authHelper'
 import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
-import {
-  BasicTestUser,
   buildBasicTestUser,
   createAuthTokenForUser,
   createTestUser,
   createTestUsers,
   login
 } from '@/test/authHelper'
-import { Roles, wait, WorkspaceRoles } from '@speckle/shared'
+import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles, wait } from '@speckle/shared'
 import {
   CreateProjectInviteDocument,
   CreateWorkspaceDocument,
@@ -38,15 +36,17 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   buildBasicTestWorkspace,
   createTestWorkspace,
   createWorkspaceInviteDirectly
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { shuffle } from 'lodash-es'
 import knex, { db } from '@/db/knex'
 import {

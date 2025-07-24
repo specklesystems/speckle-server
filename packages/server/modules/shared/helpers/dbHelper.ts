@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { isNonNullable, MaybeAsync } from '@speckle/shared'
+import type { MaybeAsync } from '@speckle/shared'
+import { isNonNullable } from '@speckle/shared'
 import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelper'
-import dayjs, { Dayjs } from 'dayjs'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
-import { SchemaConfig } from '@/modules/core/dbSchema'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import type { SchemaConfig } from '@/modules/core/dbSchema'
 import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash-es'
 
 export type Collection<T> = {

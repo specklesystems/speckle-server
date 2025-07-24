@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Authz } from '@speckle/shared'
 
 export default {
@@ -28,6 +28,19 @@ export default {
           projectId: parent.projectId
         })
       return Authz.toGraphqlResult(canDeleteAutomation)
+    }
+  },
+  AutomateFunction: {
+    permissions: (parent) => ({ functionId: parent.id })
+  },
+  AutomateFunctionPermissionChecks: {
+    canRegenerateToken: async (parent, _args, context) => {
+      const authResult =
+        await context.authPolicies.automate.function.canRegenerateToken({
+          functionId: parent.functionId,
+          userId: context.userId
+        })
+      return Authz.toGraphqlResult(authResult)
     }
   },
   ProjectPermissionChecks: {

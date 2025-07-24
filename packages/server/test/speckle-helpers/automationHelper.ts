@@ -8,26 +8,26 @@ import {
   storeAutomationTokenFactory,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
+import type { CreateAutomationRevisionDeps } from '@/modules/automate/services/automationManagement'
 import {
-  CreateAutomationRevisionDeps,
   createAutomationFactory,
   createAutomationRevisionFactory
 } from '@/modules/automate/services/automationManagement'
 import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
 import { getInmemoryRedisClient } from '@/test/redisHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
+import type { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
   getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 
-import {
+import type {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { Automate } from '@speckle/shared'
+import type { Automate } from '@speckle/shared'
 import { truncateTables } from '@/test/hooks'
 import {
   AutomationRevisions,
@@ -49,7 +49,7 @@ import { validateStreamAccessFactory } from '@/modules/core/services/streams/acc
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { createTestAutomationRunFactory } from '@/modules/automate/services/trigger'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })

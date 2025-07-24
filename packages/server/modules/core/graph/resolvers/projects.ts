@@ -5,11 +5,10 @@ import {
   insertCommentLinksFactory,
   insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
-import {
-  Resolvers,
-  TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
-import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
+import type { StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import {
   isResourceAllowed,
   throwIfNewResourceNotAllowed,

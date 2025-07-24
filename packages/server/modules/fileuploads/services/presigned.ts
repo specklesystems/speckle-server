@@ -1,6 +1,6 @@
-import { RegisterCompletedUpload } from '@/modules/blobstorage/domain/operations'
-import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
-import {
+import type { RegisterCompletedUpload } from '@/modules/blobstorage/domain/operations'
+import type { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
+import type {
   GetFileInfoV2,
   InsertNewUploadAndNotify,
   InsertNewUploadAndNotifyV2,

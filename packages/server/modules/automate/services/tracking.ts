@@ -1,10 +1,10 @@
-import {
+import type {
   GetFullAutomationRevisionMetadata,
   GetFullAutomationRunById
 } from '@/modules/automate/domain/operations'
-import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
-import { GetCommit } from '@/modules/core/domain/commits/operations'
-import { LegacyGetUser } from '@/modules/core/domain/users/operations'
+import type { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
+import type { GetCommit } from '@/modules/core/domain/commits/operations'
+import type { LegacyGetUser } from '@/modules/core/domain/users/operations'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { throwUncoveredError } from '@speckle/shared'
 

@@ -1,11 +1,11 @@
+import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getMainObjectStorage,
   getObjectStorage,
-  getPublicMainObjectStorage,
-  ObjectStorage
+  getPublicMainObjectStorage
 } from '@/modules/blobstorage/clients/objectStorage'
 import { ensureStorageAccessFactory } from '@/modules/blobstorage/repositories/blobs'
-import {
+import type {
   GetProjectObjectStorage,
   GetRegionObjectStorage
 } from '@/modules/multiregion/domain/operations'
@@ -17,8 +17,8 @@ import {
 } from '@/modules/multiregion/utils/regionSelector'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { Optional } from '@speckle/shared'
-import { BlobStorageConfig } from '@speckle/shared/environment/db'
+import type { Optional } from '@speckle/shared'
+import type { BlobStorageConfig } from '@speckle/shared/environment/db'
 
 type RegionStorageClients = {
   [regionKey: string]: { private: ObjectStorage; public: ObjectStorage }

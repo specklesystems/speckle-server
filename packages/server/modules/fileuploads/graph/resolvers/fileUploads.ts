@@ -1,5 +1,5 @@
 import { TIME } from '@speckle/shared'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { db } from '@/db/knex'
 import {
   getBranchPendingVersionsFactory,
@@ -10,7 +10,8 @@ import {
   getStreamFileUploadsFactory,
   getStreamPendingModelsFactory,
   saveUploadFileFactory,
-  saveUploadFileFactoryV2
+  saveUploadFileFactoryV2,
+  updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
@@ -66,14 +67,16 @@ import { getFeatureFlags } from '@speckle/shared/environment'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
-import {
+import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
+import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
+import { JobResultStatus } from '@speckle/shared/workers/fileimport'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
-const { FF_LARGE_FILE_IMPORTS_ENABLED, FF_NEXT_GEN_FILE_IMPORTER_ENABLED } =
-  getFeatureFlags()
+const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 const getFileUploadModel = async (params: {
   upload: FileUploadRecord | FileUploadRecordV2
@@ -101,11 +104,6 @@ const getFileUploadModel = async (params: {
 
 const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   async generateUploadUrl(_parent, args, ctx) {
-    if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
-      throw new MisconfiguredEnvironmentError(
-        'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
-      )
-    }
     const { projectId } = args.input
     if (!ctx.userId) {
       throw new ForbiddenError('No userId provided')
@@ -171,12 +169,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
     if (!isFileUploadsEnabled())
       throw new BadRequestError('File uploads are not enabled for this server')
-
-    if (!FF_LARGE_FILE_IMPORTS_ENABLED) {
-      throw new MisconfiguredEnvironmentError(
-        'The large file import feature is not enabled on this server. Please contact your Speckle administrator.'
-      )
-    }
 
     const [projectDb, projectStorage] = await Promise.all([
       getProjectDbClient({ projectId }),
@@ -244,6 +236,73 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       streamId: uploadedFileData.projectId,
       branchName: uploadedFileData.modelName
     }
+  },
+
+  async finishFileImport(_parent, args, ctx) {
+    if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
+      throw new MisconfiguredEnvironmentError('File import next gen is not enabled')
+
+    const { projectId, jobId, status, warnings, reason, result } = args.input
+    const userId = ctx.userId
+    if (!userId) {
+      throw new ForbiddenError('No userId provided')
+    }
+
+    throwIfResourceAccessNotAllowed({
+      resourceId: projectId,
+      resourceType: TokenResourceIdentifierType.Project,
+      resourceAccessRules: ctx.resourceAccessRules
+    })
+
+    const canPublish = await ctx.authPolicies.project.canPublish({
+      userId: ctx.userId,
+      projectId
+    })
+    throwIfAuthNotOk(canPublish)
+
+    let jobResult: FileImportResultPayload
+    if (status === JobResultStatus.Error) {
+      if (!reason) throw new BadRequestError('No error reason provided')
+
+      jobResult = {
+        status: JobResultStatus.Error,
+        reason,
+        result
+      }
+    } else {
+      if (!result.versionId) throw new BadRequestError('VersionId not provided')
+
+      jobResult = {
+        status: JobResultStatus.Success,
+        warnings: warnings || [],
+        result: {
+          ...result,
+          versionId: result.versionId
+        }
+      }
+    }
+
+    const logger = ctx.log.child({
+      projectId,
+      streamId: projectId, //legacy
+      userId,
+      jobId
+    })
+
+    const projectDb = await getProjectDbClient({ projectId })
+    const onFileImportResult = onFileImportResultFactory({
+      logger: logger.child({ fileUploadStatus: status }),
+      updateFileUpload: updateFileUploadFactory({ db: projectDb }),
+      getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+      eventEmit: getEventBus().emit
+    })
+
+    await onFileImportResult({
+      jobId,
+      jobResult
+    })
+
+    return null
   }
 }
 

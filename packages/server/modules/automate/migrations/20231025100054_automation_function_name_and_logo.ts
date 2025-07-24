@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const AUTOMATION_FUNCTION_RUNS_TABLE_NAME = 'automation_function_runs'
 

@@ -4,17 +4,15 @@ import {
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
-  BasicTestWorkspace,
   buildBasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
-import {
-  PaidWorkspacePlans,
-  PaidWorkspacePlanStatuses,
-  WorkspacePlan
-} from '@speckle/shared'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import type { WorkspacePlan } from '@speckle/shared'
+import { PaidWorkspacePlans, PaidWorkspacePlanStatuses } from '@speckle/shared'
 import { expect } from 'chai'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()

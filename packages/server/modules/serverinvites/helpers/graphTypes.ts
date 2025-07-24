@@ -1,4 +1,4 @@
-import { LimitedUserRecord } from '@/modules/core/helpers/types'
+import type { LimitedUserRecord } from '@/modules/core/helpers/types'
 
 export type PendingStreamCollaboratorGraphQLReturn = {
   id: string

@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const TABLE_NAME = 'user_notification_preferences'
 

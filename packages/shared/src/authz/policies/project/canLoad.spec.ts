@@ -38,6 +38,21 @@ const buildCanLoadPolicy = (overrides?: Partial<Parameters<typeof canLoadPolicy>
   })
 
 describe('canLoad', () => {
+  it('returns ok if anyone is trying to load a publicly loadable project', async () => {
+    const canLoad = buildCanLoadPolicy()
+
+    // this is a deliberate copy pasta, if anyone removes from the baked in list,
+    // the test should fail
+    const publiclyLoadableProjects = ['8be1007be1']
+
+    for (const projectId of publiclyLoadableProjects) {
+      const result = await canLoad({
+        userId: undefined,
+        projectId
+      })
+      expect(result).toBeAuthOKResult()
+    }
+  })
   it('returns error if user is not logged in', async () => {
     const canLoad = buildCanLoadPolicy()
 

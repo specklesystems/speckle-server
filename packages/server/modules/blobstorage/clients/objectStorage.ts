@@ -6,15 +6,11 @@ import {
   getS3Region,
   getS3SecretKey
 } from '@/modules/shared/helpers/envHelper'
-import {
-  HeadObjectCommand,
-  PutObjectCommand,
-  S3Client,
-  S3ClientConfig
-} from '@aws-sdk/client-s3'
+import type { S3ClientConfig } from '@aws-sdk/client-s3'
+import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl as s3GetSignedUrl } from '@aws-sdk/s3-request-presigner'
 import type { Optional } from '@speckle/shared'
-import {
+import type {
   GetBlobMetadataFromStorage,
   GetSignedUrl
 } from '@/modules/blobstorage/domain/operations'

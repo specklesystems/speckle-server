@@ -50,8 +50,10 @@ import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { storeSingleObjectIfNotFoundFactory } from '@/modules/core/repositories/objects'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import type http from 'node:http'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { getActivitiesFactory } from '@/modules/activitystream/repositories/index'
 
 const getUser = getUserFactory({ db })
