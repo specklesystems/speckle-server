@@ -1054,7 +1054,7 @@ export type FileImportResultInput = {
   parseDurationSeconds: Scalars['Float']['input'];
   /** Parser used for import */
   parser: Scalars['String']['input'];
-  /** Version asssociated if applicable */
+  /** Version associated if applicable */
   versionId?: InputMaybe<Scalars['String']['input']>;
 };
 

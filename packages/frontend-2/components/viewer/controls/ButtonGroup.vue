@@ -1,6 +1,6 @@
 <template>
   <div
-    class="viewer-controls-button-group bg-foundation text-foreground rounded-lg flex justify-center items-center gap-1 border border-outline-2 p-1"
+    class="viewer-controls-button-group bg-foundation text-foreground rounded-xl flex justify-center items-center gap-1 border border-outline-2 p-1"
     :class="direction === 'horizontal' ? 'flex-row' : 'flex-col'"
   >
     <slot />
