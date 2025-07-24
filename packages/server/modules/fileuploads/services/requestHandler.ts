@@ -1,7 +1,7 @@
-import { Logger } from '@/observability/logging'
-import { ActiveEventCallback, ErrorEventCallback, FailedEventCallback } from 'bull'
-import { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
-import { JobPayload } from '@speckle/shared/workers/fileimport'
+import type { Logger } from '@/observability/logging'
+import type { ActiveEventCallback, ErrorEventCallback, FailedEventCallback } from 'bull'
+import type { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
+import type { JobPayload } from '@speckle/shared/workers/fileimport'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 import { ensureError } from '@speckle/shared'
 

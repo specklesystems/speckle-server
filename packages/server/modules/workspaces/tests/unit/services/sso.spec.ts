@@ -1,8 +1,8 @@
 /* eslint-disable camelcase */
 
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
-import {
+import type {
   OidcProvider,
   UserSsoSessionRecord,
   WorkspaceSsoProvider,
@@ -22,7 +22,7 @@ import {
   saveSsoProviderRegistrationFactory,
   startOidcSsoProviderValidationFactory
 } from '@/modules/workspaces/services/sso'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { wait } from '@speckle/shared'
 import { assert, expect } from 'chai'

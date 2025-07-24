@@ -24,7 +24,7 @@ import {
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { cloneStreamFactory } from '@/modules/core/services/streams/clone'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 
 const command: CommandModule<
   unknown,

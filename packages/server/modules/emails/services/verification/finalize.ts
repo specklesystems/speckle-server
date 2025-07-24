@@ -1,10 +1,10 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
-import {
+import type {
   DeleteVerifications,
   GetPendingToken
 } from '@/modules/emails/domain/operations'
-import { MarkUserAsVerified } from '@/modules/core/domain/users/operations'
+import type { MarkUserAsVerified } from '@/modules/core/domain/users/operations'
 
 type InitializeStateDeps = {
   getPendingToken: GetPendingToken

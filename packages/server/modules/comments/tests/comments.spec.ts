@@ -11,10 +11,8 @@ import {
   editCommentFactory,
   archiveCommentFactory
 } from '@/modules/comments/services/index'
-import {
-  convertBasicStringToDocument,
-  SmartTextEditorValueSchema
-} from '@/modules/core/services/richTextEditorService'
+import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import { convertBasicStringToDocument } from '@/modules/core/services/richTextEditorService'
 import {
   ensureCommentSchema,
   buildCommentTextFromInput,
@@ -24,16 +22,18 @@ import { get, range } from 'lodash-es'
 import { buildApolloServer } from '@/app'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createAuthTokenForUser } from '@/test/authHelper'
-import { uploadBlob, UploadedBlob } from '@/test/blobHelper'
+import type { UploadedBlob } from '@/test/blobHelper'
+import { uploadBlob } from '@/test/blobHelper'
 import { Comments } from '@/modules/core/dbSchema'
 import * as CommentsGraphQLClient from '@/test/graphql/comments'
+import type { NotificationsStateManager } from '@/test/notificationsHelper'
 import {
   buildNotificationsStateTracker,
-  NotificationsStateManager,
   purgeNotifications
 } from '@/test/notificationsHelper'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext } from '@/test/graphqlHelper'
 import {
   checkStreamResourceAccessFactory,
   markCommentViewedFactory,
@@ -121,12 +121,13 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import type express from 'express'
 import { ResourceType } from '@/modules/comments/domain/types'
-import {
+import type {
   CommentCreateInput,
   LegacyCommentViewerData,
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { MaybeNullOrUndefined, TIME_MS } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { TIME_MS } from '@speckle/shared'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import {
   getViewerResourcesForCommentFactory,
@@ -142,9 +143,10 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { createEmailListener, TestEmailListener } from '@/test/speckle-helpers/email'
+import type { TestEmailListener } from '@/test/speckle-helpers/email'
+import { createEmailListener } from '@/test/speckle-helpers/email'
 import { buildTestProject } from '@/modules/core/tests/helpers/creation'
-import { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
+import type { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })

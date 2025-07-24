@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const FILEUPLOADS_TABLE = 'file_uploads'
 const MESSAGE_FIELD = 'convertedMessage'

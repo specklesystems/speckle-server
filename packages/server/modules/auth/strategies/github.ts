@@ -10,7 +10,10 @@ import {
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
-import { AuthStrategyBuilder, AuthStrategyMetadata } from '@/modules/auth/helpers/types'
+import type {
+  AuthStrategyBuilder,
+  AuthStrategyMetadata
+} from '@/modules/auth/helpers/types'
 import {
   getGithubClientId,
   getGithubClientSecret,
@@ -18,23 +21,24 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
 import { get } from 'lodash-es'
-import { ensureError, Optional } from '@speckle/shared'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import {
+import type { Optional } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type {
   FinalizeInvitedServerRegistration,
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
-import {
+import type { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import type {
   FindOrCreateValidatedUser,
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
 import crs from 'crypto-random-string'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
-import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
+import type { ExpectedAuthFailure } from '@/modules/auth/domain/const'
 
 const githubStrategyBuilderFactory =
   (deps: {

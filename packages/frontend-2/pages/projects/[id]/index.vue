@@ -86,7 +86,6 @@ import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useCopyProjectLink } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -145,7 +144,6 @@ enum ActionTypes {
   Move = 'move'
 }
 
-const { mutateActiveWorkspaceSlug, mutateIsProjectsActive } = useNavigation()
 const route = useRoute()
 const router = useRouter()
 const copyProjectLink = useCopyProjectLink()
@@ -363,18 +361,4 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
   }
 }
-
-watch(
-  project,
-  (newVal) => {
-    if (newVal && isWorkspacesEnabled.value) {
-      if (newVal.workspace?.slug) {
-        mutateActiveWorkspaceSlug(newVal.workspace.slug)
-      } else {
-        mutateIsProjectsActive(true)
-      }
-    }
-  },
-  { immediate: true }
-)
 </script>

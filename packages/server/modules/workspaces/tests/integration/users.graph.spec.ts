@@ -2,17 +2,13 @@ import {
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import {
-  BasicTestUser,
-  createTestUser,
-  createTestUsers,
-  login
-} from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers, login } from '@/test/authHelper'
 import {
   ActiveUserUpdateMutationDocument,
   GetActiveUserDocument,
@@ -20,9 +16,11 @@ import {
   SetUserActiveWorkspaceDocument,
   UserActiveResourcesDocument
 } from '@/modules/core/graph/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -69,19 +67,6 @@ describe('ActiveUserMutations', () => {
       expect(resB).to.not.haveGraphQLErrors()
 
       expect(resB?.data?.activeUser?.activeWorkspace?.id).to.equal(workspace.id)
-    })
-
-    it('should accurately report if last visited project is not a workspace project', async () => {
-      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
-        slug: null,
-        isProjectsActive: true
-      })
-      expect(resA).to.not.haveGraphQLErrors()
-
-      const resB = await apollo.execute(UserActiveResourcesDocument, {})
-      expect(resB).to.not.haveGraphQLErrors()
-
-      expect(resB?.data?.activeUser?.isProjectsActive).to.be.true
     })
 
     it('should allow values to be cleared with null input', async () => {

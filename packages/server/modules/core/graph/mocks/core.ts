@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { faker } from '@faker-js/faker'
 
 // TODO: Some of these might make better sense in the base config, adjust as needed

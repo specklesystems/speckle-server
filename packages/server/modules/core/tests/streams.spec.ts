@@ -7,14 +7,15 @@ import {
   getUserStreams,
   leaveStream
 } from '@/test/graphql/streams'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
-  BasicTestStream,
   createTestStream,
   createTestStreams
 } from '@/test/speckle-helpers/streamHelper'
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import {
-  StreamWithOptionalRole,
   createStreamFactory,
   deleteStreamFactory,
   getStreamFactory,
@@ -28,19 +29,17 @@ import {
 } from '@/modules/core/repositories/streams'
 import { has, times } from 'lodash-es'
 import { Streams } from '@/modules/core/dbSchema'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { sleep } from '@/test/helpers'
-import dayjs, { Dayjs } from 'dayjs'
-import {
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
+import type {
   GetLimitedUserStreamsQuery,
   GetUserStreamsQuery
 } from '@/modules/core/graph/generated/graphql'
-import { Get } from 'type-fest'
-import {
-  createAuthedTestContext,
-  createTestContext,
-  ServerAndContext
-} from '@/test/graphqlHelper'
+import type { Get } from 'type-fest'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext, createTestContext } from '@/test/graphqlHelper'
 import { buildApolloServer } from '@/app'
 import {
   createBranchFactory,

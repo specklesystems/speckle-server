@@ -1,6 +1,6 @@
-import { Knex } from 'knex'
-import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
-import {
+import type { Knex } from 'knex'
+import type { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
+import type {
   CountWebhooksByStreamId,
   CreateWebhookConfig,
   CreateWebhookEvent,

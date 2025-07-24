@@ -1,13 +1,13 @@
 import { StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { UserRecord } from '@/modules/core/helpers/userHelper'
-import {
+import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import type { UserRecord } from '@/modules/core/helpers/userHelper'
+import type {
   GetProjectWorkspace,
   IntersectProjectCollaboratorsAndWorkspaceCollaborators
 } from '@/modules/workspaces/domain/operations'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceAcl, Workspaces } from '@/modules/workspacesCore/helpers/db'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const tables = {
   streamAcl: (db: Knex) => db.table<StreamAclRecord>(StreamAcl.name),

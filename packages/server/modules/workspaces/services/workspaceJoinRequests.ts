@@ -4,9 +4,9 @@ import {
   WorkspaceNotJoinableError,
   WorkspaceProtectedError
 } from '@/modules/workspaces/errors/workspace'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 import { NotFoundError } from '@/modules/shared/errors'
-import {
+import type {
   AddOrUpdateWorkspaceRole,
   ApproveWorkspaceJoinRequest,
   CreateWorkspaceJoinRequest,
@@ -21,9 +21,9 @@ import {
   UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
 import { Roles } from '@speckle/shared'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
-import { EventBus } from '@/modules/shared/services/eventBus'
+import type { EventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 export const dismissWorkspaceJoinRequestFactory =

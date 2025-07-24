@@ -1,5 +1,5 @@
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import {
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import type {
   ExtendedInvite,
   InviteResourceTarget,
   InviteResourceTargetType,
@@ -7,8 +7,8 @@ import {
   ProjectInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
-import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+import type { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
+import type { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 
 /**
  * Then looking for Workspace target invites, we also return workspace project invites, which are implicitly

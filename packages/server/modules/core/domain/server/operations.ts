@@ -1,5 +1,5 @@
-import { Scope, ServerInfo, UserRole } from '@/modules/core/domain/server/types'
-import { ServerConfigRecord } from '@/modules/core/helpers/types'
+import type { Scope, ServerInfo, UserRole } from '@/modules/core/domain/server/types'
+import type { ServerConfigRecord } from '@/modules/core/helpers/types'
 
 export type GetServerInfo = () => Promise<ServerInfo>
 

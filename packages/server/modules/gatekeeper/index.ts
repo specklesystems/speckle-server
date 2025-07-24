@@ -1,6 +1,6 @@
-import cron from 'node-cron'
+import type cron from 'node-cron'
 import { moduleLogger } from '@/observability/logging'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getBillingRouter } from '@/modules/gatekeeper/rest/billing'
@@ -28,7 +28,7 @@ import {
   getStripeSubscriptionDataFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
-import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import coreModule from '@/modules/core/index'
 import { isProjectReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'

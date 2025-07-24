@@ -1,6 +1,6 @@
 import { redisCacheProviderFactory } from '@/modules/shared/utils/caching'
-import { Optional } from '@speckle/shared'
-import Redis from 'ioredis'
+import type { Optional } from '@speckle/shared'
+import type Redis from 'ioredis'
 import MockRedis from 'ioredis-mock'
 
 let client: Optional<Redis> = undefined

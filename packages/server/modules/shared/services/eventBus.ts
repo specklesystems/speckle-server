@@ -1,67 +1,67 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
+import type {
   WorkspaceEventsPayloads,
   workspaceEventNamespace
 } from '@/modules/workspacesCore/domain/events'
-import {
+import type {
   gatekeeperEventNamespace,
   GatekeeperEventPayloads
 } from '@/modules/gatekeeperCore/domain/events'
-import { MaybeAsync } from '@speckle/shared'
-import { UnionToIntersection } from 'type-fest'
+import type { MaybeAsync } from '@speckle/shared'
+import type { UnionToIntersection } from 'type-fest'
 
 import EventEmitter from 'eventemitter2'
-import {
+import type {
   serverinvitesEventNamespace,
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
-import {
+import type {
   modelEventsNamespace,
   ModelEventsPayloads
 } from '@/modules/core/domain/branches/events'
-import {
+import type {
   projectEventsNamespace,
   ProjectEventsPayloads
 } from '@/modules/core/domain/projects/events'
-import {
+import type {
   userEventsNamespace,
   UserEventsPayloads
 } from '@/modules/core/domain/users/events'
-import {
+import type {
   versionEventsNamespace,
   VersionEventsPayloads
 } from '@/modules/core/domain/commits/events'
-import {
+import type {
   accessRequestEventsNamespace,
   AccessRequestEventsPayloads
 } from '@/modules/accessrequests/domain/events'
-import {
+import type {
   commentEventsNamespace,
   CommentEventsPayloads
 } from '@/modules/comments/domain/events'
-import {
+import type {
   automationEventsNamespace,
   AutomationEventsPayloads,
   automationRunEventsNamespace,
   AutomationRunEventsPayloads
 } from '@/modules/automate/domain/events'
-import {
+import type {
   multiregionEventNamespace,
   MultiregionEventsPayloads
 } from '@/modules/multiregion/domain/events'
-import {
+import type {
   fileuploadEventNamespace,
   FileuploadEventsPayloads
 } from '@/modules/fileuploads/domain/events'
-import {
+import type {
   accSyncItemEventsNamespace,
   AccSyncItemEventsPayloads
 } from '@/modules/acc/domain/events'
-import {
+import type {
   emailsEventNamespace,
   EmailsEventsPayloads
 } from '@/modules/emails/domain/events'
-import {
+import type {
   notificationsEventNamespace,
   NotificationsEventsPayloads
 } from '@/modules/notifications/domain/events'

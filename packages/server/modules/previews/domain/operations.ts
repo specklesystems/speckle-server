@@ -6,9 +6,9 @@ import type {
   PartialBy
 } from '@speckle/shared'
 import type { Request, Response } from 'express'
-import { PreviewStatus } from '@/modules/previews/domain/consts'
+import type { PreviewStatus } from '@/modules/previews/domain/consts'
 import type { Logger } from '@/observability/logging'
-import { PreviewResultPayload } from '@speckle/shared/workers/previews'
+import type { PreviewResultPayload } from '@speckle/shared/workers/previews'
 
 export type GetObjectPreviewInfo = (params: {
   streamId: string

@@ -1,11 +1,9 @@
 import { TIME } from '@speckle/shared'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
-import {
-  FileImportResultPayload,
-  JobResultStatus
-} from '@speckle/shared/workers/fileimport'
-import Bull from 'bull'
+import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
+import { JobResultStatus } from '@speckle/shared/workers/fileimport'
+import type Bull from 'bull'
 
 export const FileImportJobDurationStep = {
   TOTAL: 'total',

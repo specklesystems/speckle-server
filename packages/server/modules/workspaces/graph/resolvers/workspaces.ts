@@ -1,8 +1,6 @@
 import { db } from '@/db/knex'
-import {
-  Resolvers,
-  TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   updateProjectFactory,
@@ -113,11 +111,11 @@ import {
   getDiscoverableWorkspacesForUserFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
+import type { WorkspaceRoles } from '@speckle/shared'
 import {
   Roles,
   WorkspacePlanFeatures,
   WorkspacePlans,
-  WorkspaceRoles,
   removeNullOrUndefinedKeys,
   throwUncoveredError
 } from '@speckle/shared'
@@ -181,7 +179,7 @@ import {
   getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { BadRequestError, UnauthorizedError } from '@/modules/shared/errors'
 import {
@@ -2009,17 +2007,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
 
           if (!metaVal?.value) return null
 
-          return await getWorkspaceBySlugFactory({ db })({
-            workspaceSlug: metaVal.value
-          })
-        },
-        async isProjectsActive(parent, _args, ctx) {
-          const metaVal = await ctx.loaders.users.getUserMeta.load({
-            userId: parent.id,
-            key: UsersMeta.metaKey.isProjectsActive
-          })
-
-          return !!metaVal?.value
+          return await ctx.loaders.workspaces!.getWorkspaceBySlug.load(metaVal.value)
         }
       },
       Project: {
@@ -2095,6 +2083,13 @@ export default FF_WORKSPACES_MODULE_ENABLED
         workspacesEnabled: () => true
       },
       LimitedWorkspace: {
+        role: async (parent, _args, ctx) => {
+          const acl = await ctx.loaders.workspaces!.getWorkspaceRole.load({
+            userId: ctx.userId!,
+            workspaceId: parent.id
+          })
+          return acl?.role || null
+        },
         team: async (parent, args) => {
           const team = await getPaginatedItemsFactory({
             getItems: getWorkspaceCollaboratorsFactory({ db }),
@@ -2122,6 +2117,18 @@ export default FF_WORKSPACES_MODULE_ENABLED
           const userId = ctx.userId
           if (!userId) return false
 
+          let slug = args.slug
+          if (!slug && args.id) {
+            const workspace = await ctx.loaders.workspaces!.getWorkspace.load(args.id)
+            slug = workspace?.slug || null
+          }
+
+          await setUserActiveWorkspaceFactory({ db })({
+            userId,
+            workspaceSlug: slug || null
+          })
+
+          // Clear loader caches for up to date response data
           await Promise.all([
             ctx.loaders.users.getUserMeta.clear({
               userId,
@@ -2133,13 +2140,9 @@ export default FF_WORKSPACES_MODULE_ENABLED
             })
           ])
 
-          await setUserActiveWorkspaceFactory({ db })({
-            userId,
-            workspaceSlug: args.slug ?? null,
-            isProjectsActive: !!args.isProjectsActive
-          })
-
-          return true
+          return slug
+            ? await ctx.loaders.workspaces!.getWorkspaceBySlug.load(slug)
+            : null
         }
       },
       Subscription: {

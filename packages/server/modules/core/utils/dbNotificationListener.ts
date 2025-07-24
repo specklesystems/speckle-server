@@ -1,4 +1,5 @@
-import { MaybeAsync, Optional, md5, wait } from '@speckle/shared'
+import type { MaybeAsync, Optional } from '@speckle/shared'
+import { md5, wait } from '@speckle/shared'
 import { dbNotificationLogger } from '@/observability/logging'
 import pg from 'pg'
 import { createRedisClient } from '@/modules/shared/redis/redis'
@@ -7,10 +8,10 @@ import {
   isProdEnv,
   postgresConnectionCreateTimeoutMillis
 } from '@/modules/shared/helpers/envHelper'
-import Redis from 'ioredis'
+import type Redis from 'ioredis'
 import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { mainDb } from '@/db/knex'
-import { PartialDeep } from 'type-fest'
+import type { PartialDeep } from 'type-fest'
 import { merge } from 'lodash-es'
 import {
   getConnectionSettings,

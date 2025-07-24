@@ -51,7 +51,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
 
 let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 

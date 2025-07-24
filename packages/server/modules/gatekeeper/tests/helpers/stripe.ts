@@ -1,4 +1,4 @@
-import Stripe from 'stripe'
+import type Stripe from 'stripe'
 
 export const buildFakeStripe = (updates: Record<string, unknown> = {}): Stripe => {
   return {

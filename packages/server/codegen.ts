@@ -20,6 +20,7 @@ const config: CodegenConfig = {
         'typed-document-node'
       ],
       config: {
+        useTypeImports: true,
         enumsAsConst: true,
         contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext',
         mappers: {

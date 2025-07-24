@@ -1,18 +1,18 @@
 import passport from 'passport'
 import type { Express } from 'express'
-import {
+import type {
   AuthStrategyBuilder,
   AuthStrategyMetadata,
   AuthStrategyPassportUser
 } from '@/modules/auth/helpers/types'
-import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
+import type { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
 import {
   finalizeAuthMiddlewareFactory,
   moveAuthParamsToSessionMiddlewareFactory,
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
-import { LegacyGetUser } from '@/modules/core/domain/users/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { LegacyGetUser } from '@/modules/core/domain/users/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 
 const setupStrategiesFactory =
   (deps: {

@@ -4,23 +4,20 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import {
-  BasicTestWorkspace,
-  createTestWorkspace
-} from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import {
   CreateEmbedTokenDocument,
   GetActiveUserDocument,
   GetProjectDocument,
   GetWorkspaceDocument
 } from '@/modules/core/graph/generated/graphql'
-import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles, Scopes } from '@speckle/shared'
 import { expect } from 'chai'
 

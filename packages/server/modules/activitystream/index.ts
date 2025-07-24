@@ -1,9 +1,10 @@
-import cron from 'node-cron'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type cron from 'node-cron'
+import type { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { moduleLogger } from '@/observability/logging'
 import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
-import { EventBus, getEventBus } from '@/modules/shared/services/eventBus'
+import type { EventBus } from '@/modules/shared/services/eventBus'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import {
   getActiveUserStreamsFactory,
@@ -12,13 +13,13 @@ import {
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { reportUserActivityFactory } from '@/modules/activitystream/events/userListeners'
 import { reportAccessRequestActivityFactory } from '@/modules/activitystream/events/accessRequestListeners'
 import { reportBranchActivityFactory } from '@/modules/activitystream/events/branchListeners'

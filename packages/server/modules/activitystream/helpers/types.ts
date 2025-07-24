@@ -1,4 +1,4 @@
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
 
 export type StreamActivityRecord = {
   streamId: Nullable<string>

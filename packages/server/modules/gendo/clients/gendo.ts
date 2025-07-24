@@ -1,4 +1,4 @@
-import { RequestNewImageGeneration } from '@/modules/gendo/domain/operations'
+import type { RequestNewImageGeneration } from '@/modules/gendo/domain/operations'
 import { GendoRenderRequestError } from '@/modules/gendo/errors/main'
 
 /**

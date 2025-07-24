@@ -36,10 +36,8 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
-import {
-  CreateCheckoutSession,
-  WorkspaceSeatType
-} from '@/modules/gatekeeper/domain/billing'
+import type { CreateCheckoutSession } from '@/modules/gatekeeper/domain/billing'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/modules/core/graph/generated/graphql'
 import { LogicError, UnauthorizedError } from '@/modules/shared/errors'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'

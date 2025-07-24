@@ -1,6 +1,7 @@
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { CurrencyBasedPrices, Price } from '~/lib/common/generated/gql/graphql'
+import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
 
 graphql(`
   fragment PricesPrice on Price {
@@ -62,12 +63,11 @@ const workspacePlanPricesQuery = graphql(`
 `)
 
 const activeWorkspacePlanPricesQuery = graphql(`
-  query UseActiveWorkspacePlanPrices {
-    activeUser {
-      activeWorkspace {
-        planPrices {
-          ...PricesWorkspacePaidPlanPrices
-        }
+  query UseActiveWorkspacePlanPrices($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      id
+      planPrices {
+        ...PricesWorkspacePaidPlanPrices
       }
     }
   }
@@ -86,11 +86,19 @@ export const useWorkspacePlanPrices = () => {
 
 export const useActiveWorkspacePlanPrices = () => {
   const isBillingEnabled = useIsBillingIntegrationEnabled()
-  const { result } = useQuery(activeWorkspacePlanPricesQuery, undefined, () => ({
-    enabled: isBillingEnabled.value
-  }))
+  const activeWorkspaceSlug = useActiveWorkspaceSlug()
 
-  const prices = computed(() => result.value?.activeUser?.activeWorkspace?.planPrices)
+  const { result } = useQuery(
+    activeWorkspacePlanPricesQuery,
+    () => ({
+      slug: activeWorkspaceSlug.value || ''
+    }),
+    () => ({
+      enabled: isBillingEnabled.value && !!activeWorkspaceSlug.value
+    })
+  )
+
+  const prices = computed(() => result.value?.workspaceBySlug?.planPrices)
 
   return { prices }
 }

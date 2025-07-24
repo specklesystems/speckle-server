@@ -1,10 +1,11 @@
-import {
+import type {
   ConvertLegacyDataToState,
   GetViewerResourcesForComments
 } from '@/modules/comments/domain/operations'
-import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
+import type { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
 import { viewerResourcesToString } from '@/modules/core/services/commit/viewerResources'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { has, get, intersection, isObjectLike } from 'lodash-es'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState

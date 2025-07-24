@@ -1,4 +1,4 @@
-import {
+import type {
   Activity,
   ActivitySummary,
   CommentCreatedActivityInput,
@@ -7,12 +7,12 @@ import {
   ResourceType,
   StreamActionType
 } from '@/modules/activitystream/domain/types'
-import {
+import type {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import {
+import type { CommentRecord } from '@/modules/comments/helpers/types'
+import type {
   BranchDeleteInput,
   BranchUpdateInput,
   CommitCreateInput,
@@ -24,13 +24,13 @@ import {
   UpdateModelInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
-import {
+import type {
   BranchRecord,
   CommitRecord,
   StreamAclRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 
 export type GetUserStreamActivity = (
   streamId: string,

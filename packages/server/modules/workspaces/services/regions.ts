@@ -1,6 +1,6 @@
-import { WorkspaceFeatureAccessFunction } from '@/modules/gatekeeper/domain/operations'
-import { GetRegions } from '@/modules/multiregion/domain/operations'
-import {
+import type { WorkspaceFeatureAccessFunction } from '@/modules/gatekeeper/domain/operations'
+import type { GetRegions } from '@/modules/multiregion/domain/operations'
+import type {
   AssignWorkspaceRegion,
   GetAvailableRegions,
   GetDefaultRegion,
