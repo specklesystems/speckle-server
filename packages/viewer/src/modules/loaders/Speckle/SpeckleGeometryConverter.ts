@@ -396,7 +396,11 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     return {
       attributes: {
         POSITION: vertices,
-        INDEX: faces,
+        INDEX: triangulated
+          ? faces
+          : new ChunkArray([
+              { data: indices, id: MathUtils.generateUUID(), references: 1 }
+            ]),
         ...(colors && { COLOR: colors }),
         ...(normals && { NORMAL: normals })
       },

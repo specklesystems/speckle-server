@@ -125,7 +125,10 @@ export default class Materials {
     if (!materialNode) return null
     let renderMaterial: RenderMaterial | null = null
     if (materialNode.model.raw.renderMaterial) {
-      const colorsChunkArray = new ChunkArray(geometryNode?.model.raw.colors)
+      const colorsChunkArray = geometryNode?.model.raw.colors
+        ? new ChunkArray(geometryNode?.model.raw.colors)
+        : undefined
+
       renderMaterial = {
         id: materialNode.model.raw.renderMaterial.id,
         color: materialNode.model.raw.renderMaterial.diffuse,

@@ -197,7 +197,7 @@ const getStream = () => {
     // Luis sphere
     // 'https://app.speckle.systems/streams/b85d53c3b4/commits/b47f21b707'
     // Crankshaft
-    'https://app.speckle.systems/streams/c239718aff/commits/b3a8cfb97d'
+    // 'https://app.speckle.systems/streams/c239718aff/commits/b3a8cfb97d'
     // Building AO params
     // 'https://latest.speckle.systems/streams/0dd74866d0/commits/317e210afa'
     // Murder Cube
@@ -607,9 +607,17 @@ const getStream = () => {
     // Tower
     // 'https://app.speckle.systems/projects/e2a7b596f2/models/ddaf8349f5'
 
+    // Barbican
     // 'https://app.speckle.systems/projects/32baa9291e/models/all'
     // 'https://app.speckle.systems/streams/32baa9291e/objects/21a3621c0a3e6d2884e1315f02314313'
     // 'https://app.speckle.systems/projects/5d723f097a/models/c05abd36b5'
+
+    //Guggenheim
+    // 'https://app.speckle.systems/projects/937d78e0a5/models/a48f0274eb'
+    // 'https://app.speckle.systems/projects/937d78e0a5/objects/0e3c61147f3a035a85a3542c7f1c7a43'
+
+    // heatherwick
+    'https://app.speckle.systems/projects/63a3226049/models/bdd4f553a8'
   )
 }
 

@@ -321,6 +321,11 @@ export default class SpeckleConverter {
       } else {
         real.references++
       }
+      if (typeof real.data[0] !== 'number' || isNaN(real.data[0])) {
+        Logger.error(
+          `Chunk id ${real.id} used for mesh ${ref.referencedId} might not have numeric geometry data. This is not supported!`
+        )
+      }
       chunked.push(real)
       // await this.asyncPause()
     }
