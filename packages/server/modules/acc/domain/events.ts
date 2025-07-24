@@ -1,5 +1,5 @@
-import { AccSyncItem } from '@/modules/acc/domain/types'
-import {
+import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type {
   DeleteAccSyncItemInput,
   UpdateAccSyncItemInput
 } from '@/modules/core/graph/generated/graphql'

@@ -1,13 +1,13 @@
 import { AccSyncItems } from '@/modules/acc/dbSchema'
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
-import {
+import type {
   QueryAllAccSyncItems,
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
-import { AccSyncItem } from '@/modules/acc/domain/types'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { Knex } from 'knex'
+import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { Knex } from 'knex'
 import { tryRegisterAccWebhook } from '@/modules/acc/webhook'
 
 const tables = {

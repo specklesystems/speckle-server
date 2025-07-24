@@ -1,4 +1,4 @@
-import { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/types'
 
 export type UpsertAccSyncItem = (item: AccSyncItem) => Promise<void>
 

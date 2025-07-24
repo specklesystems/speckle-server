@@ -1,4 +1,4 @@
-import { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/types'
 import { createAccSyncItemAndNotifyFactory } from '@/modules/acc/repositories/accSyncItems'
 import {
   createAutomation,
@@ -21,8 +21,8 @@ import {
   getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { LimitedUserGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { LimitedUserGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getUsersFactory } from '@/modules/core/repositories/users'
@@ -34,7 +34,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import cryptoRandomString from 'crypto-random-string'
 import { GraphQLError } from 'graphql/error'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const ACC_SYNC_ITEMS = 'acc_sync_items'
 

@@ -2,9 +2,9 @@
 import { createAccOidcFlow } from '@/modules/acc/oidcHelper'
 import { tryRegisterAccWebhook } from '@/modules/acc/webhook'
 import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
-import { Express } from 'express'
+import type { Express } from 'express'
 
 import { db } from '@/db/knex'
 import { queryAllPendingAccSyncItemsFactory } from '@/modules/acc/repositories/accSyncItems'
@@ -14,14 +14,14 @@ import {
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
 import { Scopes, TIME_MS } from '@speckle/shared'
-import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { AccSyncItems } from '@/modules/acc/dbSchema'
-import { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import {
   getAutomationFactory,
   getAutomationTokenFactory,
   getLatestAutomationRevisionFactory,
-  InsertableAutomationRun,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -37,7 +37,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { VersionCreatedTriggerManifest } from '@/modules/automate/helpers/types'
+import type { VersionCreatedTriggerManifest } from '@/modules/automate/helpers/types'
 
 export default function accRestApi(app: Express) {
   const sessionMiddleware = sessionMiddlewareFactory()
