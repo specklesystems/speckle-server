@@ -14,9 +14,6 @@ import type { Nullable } from '@speckle/shared'
 import { ensureError } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-
-const { FF_LARGE_FILE_IMPORTS_ENABLED } = getFeatureFlags()
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -97,12 +94,10 @@ export const fileuploadRouterFactory = (): Router => {
             res.status(500)
           }
 
-          if (FF_LARGE_FILE_IMPORTS_ENABLED) {
-            res.setHeader(
-              'Warning',
-              'Deprecated API; use POST /graphql (mutation.fileUploadMutations.generateUploadUrl), then PUT (to the provided url), then POST /graphql (mutation.fileUploadMutations.startFileImport)'
-            )
-          }
+          res.setHeader(
+            'Warning',
+            'Deprecated API; use POST /graphql (mutation.fileUploadMutations.generateUploadUrl), then PUT (to the provided url), then POST /graphql (mutation.fileUploadMutations.startFileImport)'
+          )
 
           res.status(201).send({ uploadResults })
         },

@@ -1044,6 +1044,19 @@ export type EmbedTokenCreateInput = {
   resourceIdString: Scalars['String']['input'];
 };
 
+export type FileImportResultInput = {
+  /** Duration of the file download before parsing started in seconds */
+  downloadDurationSeconds: Scalars['Float']['input'];
+  /** Total processing time in seconds, since job was picked up until it completed */
+  durationSeconds: Scalars['Float']['input'];
+  /** Duration of the transformation in seconds */
+  parseDurationSeconds: Scalars['Float']['input'];
+  /** Parser used for import */
+  parser: Scalars['String']['input'];
+  /** Version asssociated if applicable */
+  versionId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName: Scalars['String']['output'];
@@ -1086,6 +1099,12 @@ export type FileUploadCollection = {
 export type FileUploadMutations = {
   __typename?: 'FileUploadMutations';
   /**
+   * Marks the file import flow as completed for that specific job
+   * recording the provided status, and emitting the needed subscriptions.
+   * Mostly for internal service usage.
+   */
+  finishFileImport?: Maybe<Scalars['Boolean']['output']>;
+  /**
    * Generate a pre-signed url to which a file can be uploaded.
    * After uploading the file, call mutation startFileImport to register the completed upload.
    */
@@ -1100,6 +1119,11 @@ export type FileUploadMutations = {
 };
 
 
+export type FileUploadMutationsFinishFileImportArgs = {
+  input: FinishFileImportInput;
+};
+
+
 export type FileUploadMutationsGenerateUploadUrlArgs = {
   input: GenerateFileUploadUrlInput;
 };
@@ -1107,6 +1131,15 @@ export type FileUploadMutationsGenerateUploadUrlArgs = {
 
 export type FileUploadMutationsStartFileImportArgs = {
   input: StartFileImportInput;
+};
+
+export type FinishFileImportInput = {
+  jobId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+  result: FileImportResultInput;
+  status: JobResultStatus;
+  warnings?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type GendoAiRender = {
@@ -1166,6 +1199,12 @@ export type InvitableCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export const JobResultStatus = {
+  Error: 'error',
+  Success: 'success'
+} as const;
+
+export type JobResultStatus = typeof JobResultStatus[keyof typeof JobResultStatus];
 export type JoinWorkspaceInput = {
   workspaceId: Scalars['ID']['input'];
 };
@@ -8551,6 +8590,7 @@ export type FileUploadCollectionFieldArgs = {
   totalCount: {},
 }
 export type FileUploadMutationsFieldArgs = {
+  finishFileImport: FileUploadMutationsFinishFileImportArgs,
   generateUploadUrl: FileUploadMutationsGenerateUploadUrlArgs,
   startFileImport: FileUploadMutationsStartFileImportArgs,
 }
