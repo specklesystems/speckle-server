@@ -1,5 +1,5 @@
 <template>
-  <aside class="absolute top-[4.125rem] z-20" :style="dynamicStyles">
+  <aside class="absolute top-[3.75rem] z-20" :style="dynamicStyles">
     <ViewerControlsButtonGroup direction="vertical">
       <ViewerControlsButtonToggle
         v-tippy="{
