@@ -20,7 +20,7 @@
       />
     </ViewerControlsButtonGroup>
 
-    <div class="absolute top-0 right-12">
+    <div class="absolute top-0 right-[2.875rem]">
       <ViewerCameraMenu v-show="activePanel === 'cameraControls'" />
     </div>
   </aside>

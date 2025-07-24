@@ -224,6 +224,10 @@ export function useFilterUtilities(
     // filters.selectedObjects.value = []
   }
 
+  const resetExplode = () => {
+    explodeFactor.value = 0
+  }
+
   const waitForAvailableFilter = async (
     key: string,
     options?: Partial<{ timeout: number }>
@@ -252,6 +256,7 @@ export function useFilterUtilities(
     removePropertyFilter,
     unApplyPropertyFilter,
     resetFilters,
+    resetExplode,
     waitForAvailableFilter
   }
 }

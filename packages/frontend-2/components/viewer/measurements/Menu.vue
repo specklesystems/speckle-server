@@ -59,7 +59,7 @@
         </div>
       </span>
     </ViewerLayoutPanel>
-    <ViewerLayoutPanel class="mt-2 p-1 pr-2">
+    <ViewerLayoutPanel class="mt-1 p-1 pr-2">
       <div class="flex gap-2 justify-between items-center">
         <div
           class="flex gap-1 rounded-lg p-0.5 bg-highlight-1 border border-outline-2 self-start"

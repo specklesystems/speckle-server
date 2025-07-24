@@ -24,9 +24,14 @@
           {{ panels[activePanel].name }}
         </p>
       </span>
-      <FormButton size="sm" @click="onActivePanelClose">Done</FormButton>
+      <div class="flex items-center gap-1">
+        <FormButton v-if="showResetButton" size="sm" color="subtle" @click="onReset">
+          Reset
+        </FormButton>
+        <FormButton size="sm" @click="onActivePanelClose">Done</FormButton>
+      </div>
 
-      <div class="absolute left-1/2 -translate-x-1/2 bottom-10 w-72">
+      <div class="absolute left-1/2 -translate-x-1/2 bottom-9 w-72">
         <ViewerMeasurementsMenu v-show="activePanel === 'measurements'" />
         <ViewerExplodeMenu v-show="activePanel === 'explode'" />
         <ViewerViewModesMenu v-show="activePanel === 'viewModes'" />
@@ -40,7 +45,8 @@
 import {
   useSectionBoxUtilities,
   useMeasurementUtilities,
-  useViewerShortcuts
+  useViewerShortcuts,
+  useFilterUtilities
 } from '~~/lib/viewer/composables/ui'
 import { onKeyStroke } from '@vueuse/core'
 
@@ -57,6 +63,7 @@ const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortc
 const { toggleSectionBox } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
+const { resetExplode } = useFilterUtilities()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
 const panels = shallowRef({
@@ -92,6 +99,10 @@ const panels = shallowRef({
   }
 })
 
+const showResetButton = computed(() => {
+  return activePanel.value === ActivePanel.explode
+})
+
 const toggleActivePanel = (panel: ActivePanel) => {
   activePanel.value = activePanel.value === panel ? ActivePanel.none : panel
 
@@ -111,6 +122,12 @@ const onActivePanelClose = () => {
     toggleSectionBox()
   }
   activePanel.value = ActivePanel.none
+}
+
+const onReset = () => {
+  if (activePanel.value === ActivePanel.explode) {
+    resetExplode()
+  }
 }
 
 registerShortcuts({
