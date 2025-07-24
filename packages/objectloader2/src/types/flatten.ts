@@ -33,6 +33,8 @@ export function flattenBase(obj: Base): Record<string, string | number> {
     const type = typeof v
     if (type === 'string' || type === 'number') {
       flatten[k] = v as string | number
+    } else if (type === 'boolean') {
+      flatten[k] = v ? 'true' : 'false' // Convert boolean to string for consistency
     }
   }
   if (obj.id) {

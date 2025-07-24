@@ -35,7 +35,9 @@ export class PropertyManager {
         const stringPropInfo = propInfo as StringPropertyInfo
         const valueGroups = {} as { [key: string]: string[] }
         for (const { value, id } of propValuesArr) {
-          if (!valueGroups[value]) valueGroups[value] = []
+          if (!valueGroups[value]) {
+            valueGroups[value] = []
+          }
           valueGroups[value].push(id)
         }
         stringPropInfo.valueGroups = []

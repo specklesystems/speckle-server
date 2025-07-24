@@ -29,7 +29,7 @@ import { RenderTree } from './tree/RenderTree.js'
 import Logger from './utils/Logger.js'
 import Stats from './three/stats.js'
 import { TIME_MS } from '@speckle/shared'
-import { PropertyInfo } from './filtering/PropertyManager.js'
+import { PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
 import { PropertyInfo as OL2PropertyInfo } from '@speckle/objectloader2'
 
 export class Viewer extends EventEmitter implements IViewer {
@@ -45,6 +45,7 @@ export class Viewer extends EventEmitter implements IViewer {
   protected world: World = new World()
   public static readonly theAssets: Assets = new Assets()
   public speckleRenderer: SpeckleRenderer
+  protected propertyManager: PropertyManager
 
   /** Misc members */
   protected clock: Clock
@@ -156,7 +157,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer = new SpeckleRenderer(this.tree, this)
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
-
+this.propertyManager = new PropertyManager()
     this.frame()
     this.resize()
   }
@@ -243,15 +244,36 @@ export class Viewer extends EventEmitter implements IViewer {
     super.on(eventType, listener)
   }
 
-  public getObjectProperties(
-    resourceURL: string | null = null
+  public async getObjectProperties(
+    resourceURL: string | null = null,
+    bypassCache = true
   ): Promise<PropertyInfo[]> {
     if (!resourceURL) {
       return Promise.resolve([])
     }
     const ol2Props = this.properties[resourceURL]
     if (ol2Props) {
-      return Promise.resolve(ol2Props as unknown as PropertyInfo[])
+      const oldProps = await this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
+      oldProps.sort((a, b) => a.key.localeCompare(b.key))
+      const newProps  = ol2Props as unknown as PropertyInfo[]
+      newProps.sort((a, b) => a.key.localeCompare(b.key))
+      if (oldProps.length !== newProps.length) {
+        console.error(
+          `Property count mismatch for ${resourceURL}: New: ${newProps.length}, Old: ${oldProps.length}`
+        )
+      }
+      for(const oldProp of oldProps) {
+        const newProp = newProps.find((p) => p.key === oldProp.key)
+        if (!newProp) {
+          console.error(`Property ${oldProp.key} not found in New properties`);
+        }
+      } for (const newProp of newProps) {
+        const oldProp = oldProps.find((p) => p.key === newProp.key)
+        if (!oldProp) {
+          console.error(`Property ${newProp.key} not found in Old properties`)
+        }
+      }
+      return newProps
     }
     return Promise.resolve([])
   }
