@@ -258,7 +258,7 @@ const schedulePendingAccSyncItemsPoll = () => {
                 results: null,
                 contextView: null,
                 statusMessage: null,
-                functionReleaseId: 'a01e7a2f62',
+                functionReleaseId: 'eeff138439',
                 createdAt: new Date(),
                 updatedAt: new Date()
               }
