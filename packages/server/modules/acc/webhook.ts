@@ -5,7 +5,7 @@ const tailscaleUrl = 'https://oguzhans-macbook-pro.mermaid-emperor.ts.net' // TO
 
 const accWebhookCallbackUrl = `${
   isDevEnv() ? tailscaleUrl : getServerOrigin()
-}/acc/webhook/callback`
+}/api/v1/acc/webhook/callback`
 
 export async function tryRegisterAccWebhook({
   accessToken,

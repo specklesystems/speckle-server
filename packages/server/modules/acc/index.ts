@@ -211,7 +211,7 @@ export default function accRestApi(app: Express) {
 
   // Registered ACC webhooks are handled here
   // https://aps.autodesk.com/en/docs/webhooks/v1/reference/events/data_management_events/dm.version.added/
-  app.post('/acc/webhook/callback', sessionMiddleware, async (req, res) => {
+  app.post('/api/v1/acc/webhook/callback', sessionMiddleware, async (req, res) => {
     const lineageUrn = req.body?.payload?.lineageUrn
 
     logger.info({ body: req.body }, `Processing ACC webhook event dm.version.added`)
