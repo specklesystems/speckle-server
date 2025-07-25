@@ -214,6 +214,9 @@ export default function accRestApi(app: Express) {
   app.post('/acc/webhook/callback', sessionMiddleware, async (req, res) => {
     const lineageUrn = req.body?.payload?.lineageUrn
 
+    console.log('dm.version.added')
+    console.log(req.body)
+
     if (!lineageUrn) {
       console.warn('Webhook received without lineageUrn')
       return res.status(400).send({ error: 'Missing lineageUrn' })
