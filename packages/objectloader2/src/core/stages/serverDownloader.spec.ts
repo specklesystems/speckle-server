@@ -118,6 +118,30 @@ describe('downloader', () => {
     await downloader.disposeAsync()
   })
 
+   test('download Objects.Other.RawEncoding doesn\'t exist', async () => {
+     const fetchMocker = createFetchMock(vi)
+     const i: Item = {
+       baseId: 'id',
+       base: {
+         id: 'id',
+         speckle_type: 'Objects.Other.RawEncoding',
+         __closure: { childIds: 1 }
+       }
+     }
+     fetchMocker.mockResponseOnce(JSON.stringify(i.base))
+     const downloader = new ServerDownloader({
+       serverUrl: 'http://speckle.test',
+       streamId: 'streamId',
+       objectId: i.baseId,
+       token: 'token',
+
+       fetch: fetchMocker
+     })
+     const x = await downloader.downloadSingle()
+     expect(x).toBeUndefined()
+     await downloader.disposeAsync()
+   })
+
   test('download single exists', async () => {
     const fetchMocker = createFetchMock(vi)
     const i: Item = {

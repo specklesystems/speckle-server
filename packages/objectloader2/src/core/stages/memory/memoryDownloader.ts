@@ -18,7 +18,7 @@ export class MemoryDownloader implements Downloader {
   }): void {
     this.#results = params.results
   }
-  downloadSingle(): Promise<Item> {
+  downloadSingle(): Promise<Item | undefined> {
     const root = this.#items.get(this.#rootId)
     if (root) {
       return Promise.resolve({ baseId: this.#rootId, base: root })

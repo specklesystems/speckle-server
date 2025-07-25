@@ -165,7 +165,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     callback: () => Promise<void>
   ): Promise<Uint8Array> {
     //this concat will allocate a new array
-    const combined = this.concatUint8Arrays(leftover, value)
+    const combined = this.#concatUint8Arrays(leftover, value)
     let start = 0
 
     //subarray doesn't allocate
@@ -173,25 +173,28 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       if (combined[i] === 0x0a) {
         const line = combined.subarray(start, i) // line without \n
         //strings are allocated here
-        const item = this.processLine(line)
-        this.#results?.add(item)
+        const item = this.#processLine(line)
         start = i + 1
         await callback()
         keys.delete(item.baseId)
+        if (!item.base) {
+          continue
+        }
+        this.#results?.add(item)
       }
     }
     return combined.subarray(start) // carry over remainder
   }
 
-  processLine(line: Uint8Array): Item {
+  #processLine(line: Uint8Array): Item {
     for (let i = 0; i < line.length; i++) {
       if (line[i] === 0x09) {
         //this is a tab
         const baseId = this.decodeChunk(line.subarray(0, i))
-        const json = line.subarray(i + 1)
-        const base = this.decodeChunk(json)
+        const jsonBytes = line.subarray(i + 1)
+        const base = this.decodeChunk(jsonBytes)
         const item = this.#processJson(baseId, base)
-        item.size = json.length
+        item.size = jsonBytes.length
         return item
       }
     }
@@ -203,6 +206,9 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
   #processJson(baseId: string, unparsedBase: string): Item {
     let base: unknown
     try {
+      if (!this.#isValid(unparsedBase)) {
+        return { baseId, base: undefined }
+      }
       base = JSON.parse(unparsedBase)
     } catch (e: unknown) {
       throw new Error(`Error parsing object ${baseId}: ${(e as Error).message}`)
@@ -214,20 +220,30 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     }
   }
 
-  concatUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
+  #isValid(json: string): boolean {
+    if (json.indexOf('Objects.Other.RawEncoding') === -1) {
+      return true
+    }
+    return false
+  }
+
+  #concatUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
     const c = new Uint8Array(a.length + b.length)
     c.set(a, 0)
     c.set(b, a.length)
     return c
   }
 
-  async downloadSingle(): Promise<Item> {
+  async downloadSingle(): Promise<Item | undefined> {
     const response = await this.#fetch(this.#requestUrlRootObj, {
       headers: this.#headers
     })
     this.#validateResponse(response)
     const responseText = await response.text()
     const item = this.#processJson(this.#options.objectId, responseText)
+    if (!item.base) {
+      return undefined
+    }
     item.size = 0
     return item
   }
