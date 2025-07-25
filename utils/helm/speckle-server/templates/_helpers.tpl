@@ -607,6 +607,21 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_RETRY_ERRORED_PREVIEWS_ENABLED
   value: {{ .Values.featureFlags.retryErroredPreviewsEnabled | quote }}
 
+- name: FF_ACC_INTEGRATION_ENABLED
+  value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
+
+{{- if .Values.featureFlags.accIntegrationEnabled }}
+- name: AUTODESK_INTEGRATION_CLIENT_ID
+  value: {{ .Values.accIntegration.client_id }}
+
+- name: AUTODESK_INTEGRATION_CLIENT_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.accIntegration.clientSecret.secretName }}
+      key: {{ default "acc_integration_client_secret" .Values.accIntegration.clientSecret.secretKey }}
+
+{{- end }}
+
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
