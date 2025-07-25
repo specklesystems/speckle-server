@@ -6,7 +6,6 @@
 
 <style scoped>
 .viewer-layout-panel {
-  box-shadow: 0px 2px 4px -2px rgba(0, 0, 0, 0.02),
-    0px 4px 6px -1px rgba(16, 16, 16, 0.02);
+  box-shadow: 0 2px 4px -2px rgb(0 0 0 / 2%), 0 4px 6px -1px rgb(16 16 16 / 2%);
 }
 </style>

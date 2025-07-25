@@ -3,17 +3,15 @@
     <div class="text-foreground text-body-xs">
       Add objects from the current project by their IDs or an Object URL.
     </div>
-    <form
-      class="flex flex-col gap-y-4 sm:space-y-0 sm:flex-row sm:space-x-4 w-full"
-      @submit="onSubmit"
-    >
+    <form class="flex flex-col gap-2" @submit="onSubmit">
       <FormTextInput
         name="objectIdsOrUrl"
         label="Value"
+        size="lg"
         full-width
         :custom-icon="LinkIcon"
         :rules="[isRequired, isValidValue]"
-        placeholder="Comma-delimited object IDs/URLs"
+        help="Comma-delimited object IDs/URLs"
         color="foundation"
         auto-focus
       />

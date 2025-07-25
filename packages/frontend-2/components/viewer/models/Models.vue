@@ -1,6 +1,7 @@
 <template>
   <div>
     <ViewerModelsVersions v-if="showVersions" @close="showVersions = false" />
+    <ViewerModelsAddPanel v-else-if="showAddModel" @close="showAddModel = false" />
     <ViewerLayoutSidePanel v-else>
       <template #title>
         <FormButton
@@ -21,7 +22,7 @@
           :show-remove="showRemove"
           @show-versions="showVersions = true"
           @remove="handleRemove()"
-          @add-model="open = true"
+          @add-model="showAddModel = true"
         />
       </template>
 
@@ -63,11 +64,9 @@
           <IconViewerModels v-if="!showVersions" class="h-10 w-10 text-foreground-2" />
           <IconVersions v-else class="h-10 w-10 text-foreground-2" />
           <p class="text-body-xs text-foreground-2">No models loaded, yet.</p>
-          <FormButton @click="open = true">Add model</FormButton>
+          <FormButton @click="showAddModel = true">Add model</FormButton>
         </div>
       </div>
-
-      <ViewerResourcesAddModelDialog v-model:open="open" />
     </ViewerLayoutSidePanel>
   </div>
 </template>
@@ -91,6 +90,7 @@ defineEmits(['close'])
 
 const showRemove = ref(false)
 const showVersions = ref(false)
+const showAddModel = ref(false)
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
 const { items } = useInjectedViewerRequestedResources()
@@ -103,7 +103,6 @@ const {
   }
 } = useInjectedViewerState()
 
-const open = ref(false)
 const expandLevel = ref(-1)
 const manualExpandLevel = ref(-1)
 const showRaw = ref(false)

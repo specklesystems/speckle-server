@@ -88,7 +88,7 @@
         class="relative flex flex-col gap-y-2"
       >
         <div v-for="(childNode, idx) in rootNodeChildren" :key="idx" class="rounded-xl">
-          <ViewerExplorerTreeItem
+          <ViewerModelsTreeItem
             :tree-item="{ rawNode: markRaw(childNode) }"
             :sub-header="'Model content'"
             :expand-level="expandLevel"

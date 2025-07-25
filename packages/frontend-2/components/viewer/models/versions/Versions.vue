@@ -17,7 +17,7 @@
           v-for="({ model, versionId }, index) in modelsAndVersionIds"
           :key="model.id"
         >
-          <ViewerVersionsCard
+          <ViewerModelsVersionsCard
             :model="model"
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
