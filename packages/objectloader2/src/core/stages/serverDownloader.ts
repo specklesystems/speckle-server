@@ -1,7 +1,7 @@
 import BatchedPool from '../../queues/batchedPool.js'
 import Queue from '../../queues/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
-import { Fetcher, isBase, take } from '../../types/functions.js'
+import { Fetcher, indexOf, isBase, take } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 import { Downloader } from '../interfaces.js'
 
@@ -29,6 +29,9 @@ export default class ServerDownloader implements Downloader {
   #decoder = new TextDecoder('utf-8', { fatal: true })
   #decodedBytesCount = 0
 
+  #rawString: string = 'Objects.Other.RawEncoding'
+  #rawEncoding: Uint8Array
+
   constructor(options: ServerDownloaderOptions) {
     this.#options = options
     this.#fetch =
@@ -51,6 +54,9 @@ export default class ServerDownloader implements Downloader {
     this.#requestUrlRootObj = `${this.#options.serverUrl}/objects/${
       this.#options.streamId
     }/${this.#options.objectId}/single`
+
+    const encoder = new TextEncoder()
+    this.#rawEncoding = encoder.encode(this.#rawString)
   }
 
   #getDownloadCountAndSizes(total: number): number[] {
@@ -192,6 +198,10 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
         //this is a tab
         const baseId = this.decodeChunk(line.subarray(0, i))
         const jsonBytes = line.subarray(i + 1)
+
+        if (!this.#isValidBytes(jsonBytes)) {
+          return { baseId, base: undefined }
+        }
         const base = this.decodeChunk(jsonBytes)
         const item = this.#processJson(baseId, base)
         item.size = jsonBytes.length
@@ -206,9 +216,6 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
   #processJson(baseId: string, unparsedBase: string): Item {
     let base: unknown
     try {
-      if (!this.#isValid(unparsedBase)) {
-        return { baseId, base: undefined }
-      }
       base = JSON.parse(unparsedBase)
     } catch (e: unknown) {
       throw new Error(`Error parsing object ${baseId}: ${(e as Error).message}`)
@@ -219,9 +226,15 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
     }
   }
-
-  #isValid(json: string): boolean {
+  #isValidString(json: string): boolean {
     if (!json.includes('Objects.Other.RawEncoding')) {
+      return true
+    }
+    return false
+  }
+
+  #isValidBytes(json: Uint8Array): boolean {
+    if (indexOf(json, this.#rawEncoding) === -1) {
       return true
     }
     return false
@@ -240,6 +253,9 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     })
     this.#validateResponse(response)
     const responseText = await response.text()
+    if (!this.#isValidString(responseText)) {
+      return undefined
+    }
     const item = this.#processJson(this.#options.objectId, responseText)
     if (!item.base) {
       return undefined
