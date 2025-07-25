@@ -288,7 +288,6 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     if (!node.raw) return null
 
     const conversionFactor = getConversionFactor(node.raw.units)
-    const indices = []
 
     if (!node.raw.vertices) return null
     if (!node.raw.faces) return null
@@ -306,20 +305,28 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     let colors = undefined
     let k = 0
     let triangulated = true
-
+    let triangulatedArraySize = 0
     while (k < faces.length) {
       let n = faces.get(k)
       if (n < 3) n += 3 // 0 -> 3, 1 -> 4
+      k += n + 1
 
       if (n === 3) {
-        k += n + 1
         continue
+      } else {
+        triangulatedArraySize += (n - 2) * 3
+        triangulated = false
       }
-      triangulated = false
-      break
     }
 
+    const indices =
+      triangulatedArraySize >= 65535 || vertices.length >= 65535
+        ? new Uint32Array(triangulatedArraySize)
+        : new Uint16Array(triangulatedArraySize)
+    let indicesOffset = 0
+
     if (triangulated) {
+      /** If already triangulated modfy the faces array in place */
       faces.chunkArray.forEach((chunk: DataChunk) => {
         if (chunk.processed) return
 
@@ -334,7 +341,9 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       })
       faces.updateOffsets()
     } else {
+      k = 0
       while (k < faces.length) {
+        /** We skip to the end of triangulated chunks */
         const chunkIndex = faces.findChunkIndex(k)
         if (faces.chunkArray[chunkIndex].processed) {
           k += faces.chunkArray[chunkIndex].data.length
@@ -344,22 +353,23 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         if (n < 3) n += 3 // 0 -> 3, 1 -> 4
         if (n === 3) {
           // Triangle face
-          indices.push(faces.get(k + 1), faces.get(k + 2), faces.get(k + 3))
+          indices[indicesOffset] = faces.get(k + 1)
+          indices[indicesOffset + 1] = faces.get(k + 2)
+          indices[indicesOffset + 2] = faces.get(k + 3)
+          indicesOffset += 3
         } else {
           const start1 = performance.now()
-          const triangulation = MeshTriangulationHelper.triangulateFace(
+          const indexCount = MeshTriangulationHelper.triangulateFace(
             k,
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             //@ts-ignore
             faces,
-            vertices
+            vertices,
+            indices, // inout
+            indicesOffset // in
           )
+          indicesOffset += indexCount
           this.actualTriangulateTime += performance.now() - start1
-          indices.push(
-            ...triangulation.filter((el) => {
-              return el !== undefined
-            })
-          )
         }
 
         k += n + 1
@@ -399,7 +409,11 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         INDEX: triangulated
           ? faces
           : new ChunkArray([
-              { data: indices, id: MathUtils.generateUUID(), references: 1 }
+              {
+                data: indices as unknown as number[],
+                id: MathUtils.generateUUID(),
+                references: 1
+              }
             ]),
         ...(colors && { COLOR: colors }),
         ...(normals && { NORMAL: normals })

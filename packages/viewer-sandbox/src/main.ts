@@ -393,7 +393,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/streams/b85d53c3b4/commits/be26146460'
 
     // Germany
-    // 'https://latest.speckle.systems/streams/7117052f4e/commits/a646bf659e'
+    'https://latest.speckle.systems/streams/7117052f4e/commits/a646bf659e'
 
     // Diffing tests
     // 'https://latest.speckle.systems/streams/aea12cab71/commits/787ade768e'
@@ -617,7 +617,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/937d78e0a5/objects/0e3c61147f3a035a85a3542c7f1c7a43'
 
     // heatherwick
-    'https://app.speckle.systems/projects/63a3226049/models/bdd4f553a8'
+    // 'https://app.speckle.systems/projects/63a3226049/models/bdd4f553a8'
   )
 }
 
