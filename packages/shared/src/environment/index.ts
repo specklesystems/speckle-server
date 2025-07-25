@@ -134,6 +134,12 @@ export const parseFeatureFlags = (
       description:
         'Enables the IFC file importer based on IFCOpenShell (as of July 2025). Even if enabled, the previous webIFC & .Net importer can be accessed by appending `.dotnetimporter.ifc` to the uploaded file name.',
       defaults: { _: false }
+    },
+    FF_ACC_INTEGRATION_ENABLED: {
+      schema: z.boolean(),
+      description:
+        'Enables the integration with ACC. This synchronizes models with specified ACC assets.',
+      defaults: { _: false }
     }
   })
 
@@ -172,6 +178,7 @@ export type FeatureFlags = {
   FF_LEGACY_FILE_IMPORTS_ENABLED: boolean
   FF_LEGACY_IFC_IMPORTER_ENABLED: boolean
   FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
+  FF_ACC_INTEGRATION_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

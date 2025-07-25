@@ -1,5 +1,5 @@
 import type { AccSyncItem } from '@/modules/acc/domain/types'
-import { createAccSyncItemAndNotifyFactory } from '@/modules/acc/repositories/accSyncItems'
+import { createAccSyncItem } from '@/modules/acc/services/management'
 import {
   createAutomation,
   getFunctionReleaseFactory,
@@ -123,7 +123,7 @@ const resolvers: Resolvers = {
         )
       }
 
-      const createSyncItem = createAccSyncItemAndNotifyFactory({
+      const createSyncItem = createAccSyncItem({
         db: await getProjectDbClient({ projectId: input.projectId }),
         eventEmit: getEventBus().emit
       })

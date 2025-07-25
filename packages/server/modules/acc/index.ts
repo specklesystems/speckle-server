@@ -1,12 +1,15 @@
 /* eslint-disable camelcase */
-import { createAccOidcFlow } from '@/modules/acc/oidcHelper'
+import { createAccOidcFlow } from '@/modules/acc/helpers/oidcHelper'
 import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
 import type { Express } from 'express'
 
 import { db } from '@/db/knex'
-import { queryAllPendingAccSyncItemsFactory } from '@/modules/acc/repositories/accSyncItems'
+import {
+  queryAllPendingAccSyncItemsFactory,
+  upsertAccSyncItemFactory
+} from '@/modules/acc/repositories/accSyncItems'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -15,10 +18,7 @@ import {
 import { Scopes, TIME_MS } from '@speckle/shared'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { AccSyncItems } from '@/modules/acc/dbSchema'
-import type {
-  AccSyncItem,
-  ModelDerivativeServiceDesignManifest
-} from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/types'
 import type { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import {
   getAutomationFactory,
@@ -38,12 +38,18 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getAutodeskIntegrationClientId,
+  getAutodeskIntegrationClientSecret,
+  getFeatureFlags,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
 import type { VersionCreatedTriggerManifest } from '@/modules/automate/helpers/types'
 import { getManifestByUrn } from '@/modules/acc/clients/autodesk'
 import { isReadyForImport } from '@/modules/acc/domain/logic'
+import { ImporterAutomateFunctions } from '@/modules/acc/domain/constants'
 
-export default function accRestApi(app: Express) {
+export function accRestApi(app: Express) {
   const sessionMiddleware = sessionMiddlewareFactory()
   app.post('/auth/acc/login', sessionMiddleware, async (req, res) => {
     const { projectId } = req.body
@@ -141,57 +147,6 @@ export default function accRestApi(app: Express) {
     }
   })
 
-  app.get('/acc/download', sessionMiddleware, async (req, res) => {
-    const clientId = '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y'
-    const clientSecret =
-      'qHyGqaP4zCWLyS2lp04qBDOC1giIupPzJPmLFKGFHKZrPYYpan27zF8vlhQr1RYL'
-
-    console.log('AAAAAA')
-    const token = Buffer.from(`${clientId}:${clientSecret}`, 'utf8').toString('base64')
-    const tokens = await fetch(
-      'https://developer.api.autodesk.com/authentication/v2/token',
-      {
-        method: 'POST',
-        body: new URLSearchParams({
-          grant_type: 'client_credentials',
-          scope: 'data:read account:read viewables:read'
-        }),
-        headers: {
-          Authorization: `Basic ${token}`,
-          Accept: 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    )
-
-    const data = await tokens.json()
-
-    console.log(data)
-
-    const { access_token } = data
-
-    // https://developer.api.autodesk.com/modelderivative/v2/designdata/{urn}/manifest
-    // (EMEA) https://developer.api.autodesk.com/modelderivative/v2/regions/eu/designdata/{urn}/manifest
-
-    const urn =
-      'dXJuOmFkc2sud2lwZW1lYTpmcy5maWxlOnZmLjVORWw3ajZJVF9PSmRDdjVDWFNHTlE_dmVyc2lvbj0xNA'
-    const response = await fetch(
-      `https://developer.api.autodesk.com/modelderivative/v2/regions/eu/designdata/${urn}/manifest`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${access_token}`
-        }
-      }
-    )
-
-    const manifest: ModelDerivativeServiceDesignManifest = await response.json()
-
-    console.log(manifest)
-
-    res.status(200).send('OK')
-  })
-
   // Registered ACC webhooks are handled here
   // https://aps.autodesk.com/en/docs/webhooks/v1/reference/events/data_management_events/dm.version.added/
   app.post('/api/v1/acc/webhook/callback', sessionMiddleware, async (req, res) => {
@@ -246,31 +201,30 @@ const schedulePendingAccSyncItemsPoll = () => {
   })
 
   return scheduleExecution(
-    '*/1 * * * *', // Every minute
+    '*/5 * * * *',
     'pendingAccSyncItemPolling',
     async (now: Date, { logger }) => {
-      logger.info('Checking for pending ACC Sync items')
+      // logger.info('Checking for pending ACC Sync items')
       for await (const items of queryAllPendingAccSyncItemsFactory({ db })()) {
         for (const syncItem of items) {
-          console.log(`${syncItem.accFileVersionUrn} : ${syncItem.accFileName}`)
-
           const projectDb = await getProjectDbClient({ projectId: syncItem.projectId })
 
-          const urn = btoa(syncItem.accFileVersionUrn)
-            .replaceAll('+', '-')
-            .replaceAll('/', '_')
-            .replaceAll('=', '')
+          const manifest = await getManifestByUrn(syncItem.accFileVersionUrn)
 
-          const manifest = await getManifestByUrn(urn)
+          const isReady = isReadyForImport(manifest)
 
-          console.log(manifest)
+          logger.info(
+            {
+              syncItem,
+              manifest
+            },
+            `ACC sync item {syncItem.id} is ${isReady ? '' : 'not'} ready`
+          )
 
-          if (!isReadyForImport(manifest)) {
-            console.log('NOT READY')
-            continue
-          }
+          if (!isReady) continue
 
-          await projectDb.table<AccSyncItem>(AccSyncItems.name).update({
+          await upsertAccSyncItemFactory({ db: projectDb })({
+            ...syncItem,
             status: 'SYNCING'
           })
 
@@ -304,14 +258,14 @@ const schedulePendingAccSyncItemsPoll = () => {
             ],
             functionRuns: [
               {
-                functionId: '2909d29a9d',
                 id: cryptoRandomString({ length: 15 }),
+                functionId: ImporterAutomateFunctions.svf2.functionId,
+                functionReleaseId: ImporterAutomateFunctions.svf2.functionId,
                 status: 'pending' as const,
                 elapsed: 0,
                 results: null,
                 contextView: null,
                 statusMessage: null,
-                functionReleaseId: 'eeff138439',
                 createdAt: new Date(),
                 updatedAt: new Date()
               }
@@ -332,8 +286,6 @@ const schedulePendingAccSyncItemsPoll = () => {
             appId: DefaultAppIds.Automate,
             name: `acct-${syncItem.id}`,
             userId: syncItem.authorId,
-            // for now this is a baked in constant
-            // should rely on the function definitions requesting the needed scopes
             scopes: [
               Scopes.Profile.Read,
               Scopes.Streams.Read,
@@ -352,8 +304,6 @@ const schedulePendingAccSyncItemsPoll = () => {
             syncItem.automationId
           )
 
-          console.log({ automationToken })
-
           if (!automationToken) continue
 
           await triggerAutomationRun({
@@ -366,13 +316,10 @@ const schedulePendingAccSyncItemsPoll = () => {
               functionInputs: {
                 projectId: syncItem.projectId,
                 modelId: syncItem.modelId,
-                autodeskUrn: btoa(syncItem.accFileVersionUrn)
-                  .replaceAll('/', '_')
-                  .replaceAll('==', ''),
-                autodeskRegion: 1,
-                autodeskClientId: '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y',
-                autodeskClientSecret:
-                  'qHyGqaP4zCWLyS2lp04qBDOC1giIupPzJPmLFKGFHKZrPYYpan27zF8vlhQr1RYL'
+                autodeskUrn: syncItem.accFileVersionUrn,
+                autodeskRegion: syncItem.accRegion === 'EMEA' ? 1 : 0,
+                autodeskClientId: getAutodeskIntegrationClientId(),
+                autodeskClientSecret: getAutodeskIntegrationClientSecret()
               }
             })),
             manifests: [
@@ -388,21 +335,28 @@ const schedulePendingAccSyncItemsPoll = () => {
         }
       }
     },
-    30 * TIME_MS.second
+    5 * TIME_MS.minute
   )
 }
 
-export const init: SpeckleModule['init'] = async ({ app }) => {
-  moduleLogger.info('🔑 Init acc module')
+const { FF_ACC_INTEGRATION_ENABLED } = getFeatureFlags()
 
-  // Hoist rest
-  accRestApi(app)
+const accModule: SpeckleModule = {
+  init: async ({ app, isInitial }) => {
+    if (!FF_ACC_INTEGRATION_ENABLED) return
 
-  scheduledTask = schedulePendingAccSyncItemsPoll()
+    moduleLogger.info('🖕 Init acc module')
+
+    if (isInitial) {
+      accRestApi(app)
+      scheduledTask = schedulePendingAccSyncItemsPoll()
+    }
+  },
+  shutdown: () => {
+    if (!FF_ACC_INTEGRATION_ENABLED) return
+    scheduledTask?.stop()
+  },
+  finalize: () => {}
 }
 
-export const shutdown: SpeckleModule['shutdown'] = async () => {
-  scheduledTask?.stop()
-}
-
-export const finalize: SpeckleModule['finalize'] = async () => {}
+export default accModule
