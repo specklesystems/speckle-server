@@ -221,7 +221,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
   }
 
   #isValid(json: string): boolean {
-    if (json.indexOf('Objects.Other.RawEncoding') === -1) {
+    if (!json.includes('Objects.Other.RawEncoding')) {
       return true
     }
     return false
