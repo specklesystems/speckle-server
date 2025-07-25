@@ -227,7 +227,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     }
   }
   #isValidString(json: string): boolean {
-    if (!json.includes('Objects.Other.RawEncoding')) {
+    if (!json.includes(this.#rawString)) {
       return true
     }
     return false
