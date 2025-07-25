@@ -303,7 +303,7 @@ export class SectionOutlines extends Extension {
   private createPlaneOutline(planeId: string): PlaneOutline {
     const buffer = new Float64Array(SectionOutlines.INITIAL_BUFFER_SIZE)
     const lineGeometry = new LineSegmentsGeometry()
-    lineGeometry.setPositions(new Float32Array(buffer))
+    lineGeometry.setPositions(new Float32Array(buffer.buffer))
     ;(
       lineGeometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data.setUsage(DynamicDrawUsage)
@@ -390,7 +390,7 @@ export class SectionOutlines extends Extension {
 
     const buffer = new Float32Array(size)
     outline.renderable.geometry = new LineSegmentsGeometry()
-    outline.renderable.geometry.setPositions(new Float32Array(buffer))
+    outline.renderable.geometry.setPositions(buffer)
     ;(
       outline.renderable.geometry.attributes[
         'instanceStart'

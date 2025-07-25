@@ -135,6 +135,7 @@ const getStream = () => {
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
     'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://app.speckle.systems/streams/da9e320dad/objects/ee5d160d84090822813bc74188da34a7'
 
     //large tower
     //'https://app.speckle.systems/projects/e2a7b596f2/models/ddaf8349f5'
@@ -162,6 +163,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/3ed8357f29/commits/d10f2af1ce'
     // AutoCAD NEW
     // 'https://latest.speckle.systems/streams/3ed8357f29/commits/46905429f6'
+    // 'https://latest.speckle.systems/streams/3ed8357f29/objects/95160b8d593a0ba12dd004d5fe142257'
     //Blizzard world
     // 'https://latest.speckle.systems/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
@@ -355,7 +357,6 @@ const getStream = () => {
     // 'https://app.speckle.systems/streams/25d8a162af/commits/6c842a713c'
     // 'https://app.speckle.systems/streams/76e3acde68/commits/0ea3d47e6c'
     // Point cloud
-    // 'https://app.speckle.systems/streams/b920636274/commits/8df6496749'
     // 'https://multiconsult.speckle.xyz/streams/9721fe797c/objects/ff5d939a8c26bde092152d5b4a0c945d'
     // 'https://app.speckle.systems/streams/87a2be92c7/objects/803c3c413b133ee9a6631160ccb194c9'
     // 'https://latest.speckle.systems/streams/1422d91a81/commits/480d88ba68'
@@ -543,7 +544,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/7591c56179/models/82b94108a3'
 
     // SUPER slow tree build time (LARGE N-GONS TRIANGULATION)
-    // 'https://app.speckle.systems/projects/0edb6ef628/models/ff3d8480bc@cd83d90a2c'
+    // 'https://app.speckle.systems/projects/0edb6ef628/models/87f3fb5e2bd681d731dd048390ae3a8f'
 
     /* ObjectLoader 2 tests */
     // `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
@@ -601,6 +602,22 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/f28ad5b38a/models/b63ebcd807'
     // Duplicate display values
     // 'https://app.speckle.systems/projects/1466fe31c6/models/2eaf0f0571'
+    // MEPS
+    // 'https://app.speckle.systems/projects/f3cee517d4/models/21f128a3ea'
+    // Tower
+    // 'https://app.speckle.systems/projects/e2a7b596f2/models/ddaf8349f5'
+
+    // Barbican
+    // 'https://app.speckle.systems/projects/32baa9291e/models/all'
+    // 'https://app.speckle.systems/streams/32baa9291e/objects/21a3621c0a3e6d2884e1315f02314313'
+    // 'https://app.speckle.systems/projects/5d723f097a/models/c05abd36b5'
+
+    //Guggenheim
+    // 'https://app.speckle.systems/projects/937d78e0a5/models/a48f0274eb'
+    // 'https://app.speckle.systems/projects/937d78e0a5/objects/0e3c61147f3a035a85a3542c7f1c7a43'
+
+    // heatherwick LARGE
+    // 'https://app.speckle.systems/projects/63a3226049/models/bdd4f553a8'
   )
 }
 

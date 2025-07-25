@@ -1,4 +1,4 @@
-import { Box3 } from 'three'
+import { Box3, Matrix4 } from 'three'
 import { GeometryType } from '../batching/Batch.js'
 import { GeometryAttributes, type GeometryData } from '../converter/Geometry.js'
 import Materials, {
@@ -7,6 +7,9 @@ import Materials, {
   type RenderMaterial
 } from '../materials/Materials.js'
 import { SpeckleType } from '../loaders/GeometryConverter.js'
+import { DataChunk } from '../../IViewer.js'
+import { ChunkArray } from '../converter/VirtualArray.js'
+const _box3: Box3 = new Box3()
 
 export interface NodeRenderData {
   id: string
@@ -150,14 +153,20 @@ export class NodeRenderView {
     if (vertEnd !== undefined) this._batchVertexEnd = vertEnd
   }
 
-  public computeAABB() {
+  public computeAABB(transform?: Matrix4) {
     if (!this._aabb) this._aabb = new Box3()
 
     if (
       this._renderData.geometry.attributes &&
       this._renderData.geometry.attributes.POSITION.length
     ) {
-      this._aabb.setFromArray(this._renderData.geometry.attributes.POSITION)
+      this._renderData.geometry.attributes.POSITION.chunkArray.forEach(
+        (c: DataChunk) => {
+          _box3.setFromArray(c.data)
+          if (transform) _box3.applyMatrix4(transform)
+          this._aabb.union(_box3)
+        }
+      )
     }
   }
 
@@ -181,7 +190,9 @@ export class NodeRenderView {
 
   public disposeGeometry() {
     for (const attr in this._renderData.geometry.attributes) {
-      this._renderData.geometry.attributes[attr as GeometryAttributes] = []
+      this._renderData.geometry.attributes[attr as GeometryAttributes] = new ChunkArray(
+        []
+      )
     }
   }
 }
