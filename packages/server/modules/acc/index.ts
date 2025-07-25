@@ -3,7 +3,7 @@ import { createAccOidcFlow } from '@/modules/acc/oidcHelper'
 import { tryRegisterAccWebhook } from '@/modules/acc/webhook'
 import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { moduleLogger } from '@/observability/logging'
+import { logger, moduleLogger } from '@/observability/logging'
 import type { Express } from 'express'
 
 import { db } from '@/db/knex'
@@ -214,8 +214,7 @@ export default function accRestApi(app: Express) {
   app.post('/acc/webhook/callback', sessionMiddleware, async (req, res) => {
     const lineageUrn = req.body?.payload?.lineageUrn
 
-    console.log('dm.version.added')
-    console.log(req.body)
+    logger.info({ body: req.body }, `Processing ACC webhook event dm.version.added`)
 
     if (!lineageUrn) {
       console.warn('Webhook received without lineageUrn')
