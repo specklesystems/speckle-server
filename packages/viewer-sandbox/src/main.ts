@@ -393,7 +393,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/streams/b85d53c3b4/commits/be26146460'
 
     // Germany
-    'https://latest.speckle.systems/streams/7117052f4e/commits/a646bf659e'
+    // 'https://latest.speckle.systems/streams/7117052f4e/commits/a646bf659e'
 
     // Diffing tests
     // 'https://latest.speckle.systems/streams/aea12cab71/commits/787ade768e'
@@ -544,7 +544,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/7591c56179/models/82b94108a3'
 
     // SUPER slow tree build time (LARGE N-GONS TRIANGULATION)
-    // 'https://app.speckle.systems/projects/0edb6ef628/models/ff3d8480bc@cd83d90a2c'
+    'https://app.speckle.systems/projects/0edb6ef628/models/87f3fb5e2bd681d731dd048390ae3a8f'
 
     /* ObjectLoader 2 tests */
     // `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
@@ -618,6 +618,7 @@ const getStream = () => {
 
     // heatherwick
     // 'https://app.speckle.systems/projects/63a3226049/models/bdd4f553a8'
+    // 'https://latest.speckle.systems/streams/7117052f4e/objects/867b89e22c7287bbfbe9c269dd8bfaae'
   )
 }
 

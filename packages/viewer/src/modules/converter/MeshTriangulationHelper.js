@@ -85,7 +85,7 @@ export default class MeshTriangulationHelper {
         _triangle.b.copy(earVertex)
         _triangle.c.copy(nextVertex)
 
-        if (!_triangle.isFrontFacing(faceNormal)) {
+        if (_triangle.isFrontFacing(faceNormal)) {
           let k = next[next[i]]
 
           do {
