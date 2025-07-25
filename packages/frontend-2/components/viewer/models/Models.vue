@@ -1,59 +1,33 @@
 <template>
-  <ViewerLayoutSidePanel :title="showRemove ? 'Remove models' : 'Models'">
-    <template #actions>
-      <div class="flex items-center justify-between w-full">
+  <div>
+    <ViewerModelsVersions v-if="showVersions" @close="showVersions = false" />
+    <ViewerLayoutSidePanel v-else>
+      <template #title>
         <FormButton
           v-if="showRemove"
-          size="sm"
+          :icon-left="ChevronLeftIcon"
           color="subtle"
+          class="-ml-3"
           @click="showRemove = false"
         >
-          <IconPlus class="rotate-45 text-foreground -ml-1 -mr-1" />
-          <span class="sr-only">Close</span>
+          Exit
         </FormButton>
-        <div v-else class="flex gap-0.5">
-          <FormButton
-            v-if="resourceItems.length"
-            size="sm"
-            color="subtle"
-            @click="$emit('openVersions')"
-          >
-            <IconVersions class="h-3.5 w-3.5 text-foreground -ml-1 -mr-1" />
-            <span class="sr-only">Versions</span>
-          </FormButton>
-          <div
-            v-if="resourceItems.length"
-            v-tippy="removeEnabled ? undefined : 'You cannot remove the last model'"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :disabled="!removeEnabled"
-              @click="handleRemove()"
-            >
-              <IconMinus class="h-3.5 w-3.5 text-foreground -ml-1 -mr-1" />
-              <span class="sr-only">
-                {{ showRemove ? 'Done' : 'Remove' }}
-              </span>
-            </FormButton>
-          </div>
-          <FormButton
-            size="sm"
-            color="subtle"
-            :disabled="showRemove"
-            @click="open = true"
-          >
-            <IconPlus class="h-3.5 w-3.5 text-foreground -ml-1 -mr-1" />
-            <span class="sr-only">Add model</span>
-          </FormButton>
-        </div>
-      </div>
-    </template>
+        <span v-else>Models</span>
+      </template>
+      <template #actions>
+        <ViewerModelsActions
+          v-if="!showRemove"
+          :remove-enabled="removeEnabled"
+          :show-remove="showRemove"
+          @show-versions="showVersions = true"
+          @remove="handleRemove()"
+          @add-model="open = true"
+        />
+      </template>
 
-    <div class="flex flex-col h-full">
-      <template v-if="resourceItems.length">
-        <!-- Models with Scene Explorer -->
-        <template v-if="!showRaw">
+      <div class="flex flex-col h-full">
+        <template v-if="resourceItems.length">
+          <!-- Models with Scene Explorer -->
           <div
             v-for="({ model, versionId }, index) in modelsAndVersionIds"
             :key="model.id"
@@ -79,22 +53,23 @@
               @remove="(id: string) => removeModel(id)"
             />
           </template>
+
+          <!-- Dev Mode -->
+          <ViewerDataviewerPanel v-if="showRaw" class="pointer-events-auto" />
         </template>
 
-        <!-- Dev Mode -->
-        <ViewerDataviewerPanel v-if="showRaw" class="pointer-events-auto" />
-      </template>
-
-      <!-- Empty State -->
-      <div v-else class="flex flex-col items-center justify-center gap-4 h-full">
-        <IconViewerModels class="h-10 w-10 text-foreground-2" />
-        <p class="text-body-xs text-foreground-2">No models loaded, yet.</p>
-        <FormButton @click="open = true">Add model</FormButton>
+        <!-- Empty State -->
+        <div v-else class="flex flex-col items-center justify-center gap-4 h-full">
+          <IconViewerModels v-if="!showVersions" class="h-10 w-10 text-foreground-2" />
+          <IconVersions v-else class="h-10 w-10 text-foreground-2" />
+          <p class="text-body-xs text-foreground-2">No models loaded, yet.</p>
+          <FormButton @click="open = true">Add model</FormButton>
+        </div>
       </div>
-    </div>
 
-    <ViewerResourcesAddModelDialog v-model:open="open" />
-  </ViewerLayoutSidePanel>
+      <ViewerResourcesAddModelDialog v-model:open="open" />
+    </ViewerLayoutSidePanel>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -110,10 +85,12 @@ import { ViewerEvent } from '@speckle/viewer'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import { sortBy, flatten } from 'lodash-es'
+import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 
-defineEmits(['close', 'openVersions'])
+defineEmits(['close'])
 
 const showRemove = ref(false)
+const showVersions = ref(false)
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
 const { items } = useInjectedViewerRequestedResources()

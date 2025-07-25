@@ -9,7 +9,7 @@
         unfold && !isSelected ? 'bg-foundation-2' : '',
         isSelected ? 'bg-highlight-3' : 'hover:bg-highlight-1'
       ]"
-      @click="(e:MouseEvent) => setSelection(e)"
+      @click.stop="(e:MouseEvent) => setSelection(e)"
       @mouseenter="highlightObject"
       @focusin="highlightObject"
       @mouseleave="unhighlightObject"
@@ -51,10 +51,9 @@
 
       <div class="flex items-center">
         <FormButton
-          size="sm"
           color="subtle"
           hide-text
-          :icon-left="isHidden ? EyeSlashIcon : EyeIcon"
+          :icon-left="isHidden ? IconEyeClosed : IconEye"
           :class="
             isHidden || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           "
@@ -63,7 +62,6 @@
           {{ isHidden ? 'Show' : 'Hide' }}
         </FormButton>
         <FormButton
-          size="sm"
           color="subtle"
           hide-text
           :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
@@ -126,7 +124,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
+import { FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import type {
   ExplorerNode,
@@ -145,6 +143,9 @@ import {
   useHighlightedObjectsUtilities,
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
+
+const IconEye = resolveComponent('IconEye')
+const IconEyeClosed = resolveComponent('IconEyeClosed')
 
 const props = withDefaults(
   defineProps<{

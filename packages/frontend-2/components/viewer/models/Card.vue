@@ -2,17 +2,25 @@
 <template>
   <div class="relative border-b border-outline-3">
     <div
+      :class="showRemove ? 'pointer-events-none' : ''"
       @mouseenter="highlightObject"
       @mouseleave="unhighlightObject"
       @focusin="highlightObject"
       @focusout="unhighlightObject"
+      @click="selectObject"
+      @keydown.enter="selectObject"
     >
       <!-- Model Header -->
       <div
         class="group flex items-center px-1 py-3 select-none cursor-pointer hover:bg-highlight-1"
         :class="isExpanded && !showRemove ? 'border-b border-outline-3' : ''"
       >
-        <FormButton size="sm" color="subtle" @click.stop="isExpanded = !isExpanded">
+        <FormButton
+          v-if="!showRemove"
+          size="sm"
+          color="subtle"
+          @click.stop="isExpanded = !isExpanded"
+        >
           <IconTriangle
             class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
             :class="isExpanded ? 'rotate-90' : ''"
@@ -21,6 +29,7 @@
             {{ isExpanded ? 'Collapse' : 'Expand' }}
           </span>
         </FormButton>
+        <div v-else class="w-2" />
         <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3">
           <NuxtImg
             :src="loadedVersion?.previewUrl"
@@ -42,41 +51,32 @@
           </div>
         </div>
         <div class="flex items-center gap-2 ml-auto">
-          <div class="flex">
+          <div class="flex text-foreground">
             <FormButton
-              size="sm"
               color="subtle"
               class="group-hover:opacity-100"
+              :icon-left="isHidden ? IconEyeClosed : IconEye"
+              hide-text
               :class="{
                 'opacity-100': isHidden,
                 'opacity-0': !isHidden
               }"
-              @click="hideOrShowObject"
+              @click.stop="hideOrShowObject"
             >
-              <EyeIcon v-if="!isHidden" class="h-3 w-3 text-foreground -ml-1 -mr-1" />
-              <EyeSlashIcon v-else class="h-3 w-3 text-foreground -ml-1 -mr-1" />
-              <span class="sr-only">
-                {{ isHidden ? 'Show' : 'Hide' }}
-              </span>
+              {{ isHidden ? 'Show' : 'Hide' }}
             </FormButton>
             <FormButton
-              size="sm"
               color="subtle"
               :class="{
                 'opacity-100': isIsolated,
                 'opacity-0': !isIsolated
               }"
               class="group-hover:opacity-100"
-              @click="isolateOrUnisolateObject"
+              :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
+              hide-text
+              @click.stop="isolateOrUnisolateObject"
             >
-              <FunnelIconOutline
-                v-if="!isIsolated"
-                class="h-3 w-3 text-foreground -ml-1 -mr-1"
-              />
-              <FunnelIcon v-else class="h-3 w-3 text-foreground -ml-1 -mr-1" />
-              <span class="sr-only">
-                {{ isIsolated ? 'Unisolate' : 'Isolate' }}
-              </span>
+              {{ isIsolated ? 'Unisolate' : 'Isolate' }}
             </FormButton>
           </div>
         </div>
@@ -117,14 +117,15 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { XMarkIcon, EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
+import { XMarkIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import {
   useHighlightedObjectsUtilities,
-  useFilterUtilities
+  useFilterUtilities,
+  useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { containsAll } from '~~/lib/common/helpers/utils'
@@ -149,6 +150,7 @@ const props = defineProps<{
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { setSelectionFromObjectIds } = useSelectionUtilities()
 const {
   viewer: {
     metadata: { filteringState }
@@ -156,6 +158,9 @@ const {
 } = useInjectedViewerState()
 
 const isExpanded = ref(false)
+
+const IconEye = resolveComponent('IconEye')
+const IconEyeClosed = resolveComponent('IconEyeClosed')
 
 const rootNodeChildren = computed(() => {
   const children: ExplorerNode[] = []
@@ -261,5 +266,10 @@ const highlightObject = () => {
 const unhighlightObject = () => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
   if (refObject) unhighlightObjects([refObject])
+}
+
+const selectObject = () => {
+  if (modelObjectIds.value.length === 0) return
+  setSelectionFromObjectIds(modelObjectIds.value)
 }
 </script>

@@ -2,17 +2,16 @@
   <ViewerLayoutSidePanel>
     <template #title>
       <FormButton
-        size="sm"
+        :icon-left="ChevronLeftIcon"
         color="subtle"
-        :icon-left="ArrowLeftIcon"
-        class="-ml-2"
+        class="-ml-3"
         @click="$emit('close')"
       >
         Exit versions
       </FormButton>
     </template>
 
-    <div class="flex flex-col">
+    <div class="flex flex-col h-full">
       <template v-if="resourceItems.length">
         <div
           v-for="({ model, versionId }, index) in modelsAndVersionIds"
@@ -22,7 +21,7 @@
             :model="model"
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
-            :show-remove="showRemove"
+            :show-remove="false"
             @remove="(id: string) => removeModel(id)"
           />
         </div>
@@ -31,21 +30,12 @@
             v-for="object in objects"
             :key="object.objectId"
             :object="object"
-            :show-remove="showRemove"
+            :show-remove="false"
             @remove="(id: string) => removeModel(id)"
           />
         </template>
       </template>
-
-      <!-- Empty State -->
-      <div v-else class="flex flex-col items-center justify-center gap-4 h-full">
-        <IconVersions class="h-10 w-10 text-foreground-2" />
-        <p class="text-body-xs text-foreground-2">No models loaded, yet.</p>
-        <FormButton @click="open = true">Add model</FormButton>
-      </div>
     </div>
-
-    <ViewerResourcesAddModelDialog v-model:open="open" />
   </ViewerLayoutSidePanel>
 </template>
 
@@ -54,18 +44,17 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-import { ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { ViewerEvent } from '@speckle/viewer'
+import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 
 defineEmits(['close'])
 
-const showRemove = ref(false)
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
 const { items } = useInjectedViewerRequestedResources()
-
-const open = ref(false)
 
 const mp = useMixpanel()
 
@@ -87,7 +76,11 @@ const removeModel = async (modelId: string) => {
   await items.update(builder.toResources())
 }
 
-watch(modelsAndVersionIds, (newVal) => {
-  if (newVal.length <= 1) showRemove.value = false
+// TODO: worldTree being set in postSetup.ts (viewer) does not seem to create a reactive effect
+// in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.
+// Possibly Fabs will know more :)
+const refhack = ref(1)
+useViewerEventListener(ViewerEvent.LoadComplete, () => {
+  refhack.value++
 })
 </script>

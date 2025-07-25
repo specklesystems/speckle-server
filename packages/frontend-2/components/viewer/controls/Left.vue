@@ -71,30 +71,20 @@
     <!-- Scrollable controls container -->
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 left-[calc(3rem+1px)] right-2  h-[calc(100dvh-3rem)] overflow-y-auto  ${
+      :class="`simple-scrollbar bg-foundation absolute z-10 left-[calc(3rem+1px)] right-2  h-[calc(100dvh-3rem)] overflow-y-auto  ${
         activePanel !== 'none' ? 'opacity-100' : 'opacity-0'
       }`"
       :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >
       <!-- Models panel -->
-      <KeepAlive v-show="activePanel === 'models'">
-        <ViewerModels
-          v-if="!enabled"
-          class="pointer-events-auto"
-          @close="activePanel = 'none'"
-          @open-versions="activePanel = 'versions'"
-        />
-        <ViewerCompareChangesPanel v-else @close="activePanel = 'none'" />
-      </KeepAlive>
+      <ViewerModels
+        v-if="resourceItems.length !== 0 && activePanel === 'models'"
+        @close="activePanel = 'none'"
+      />
 
       <!-- Filter panel -->
       <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
         <ViewerFilters class="pointer-events-auto" @close="activePanel = 'none'" />
-      </KeepAlive>
-
-      <!-- Versions panel -->
-      <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'versions'">
-        <ViewerVersions class="pointer-events-auto" @close="activePanel = 'models'" />
       </KeepAlive>
 
       <!-- Comment threads panel -->
@@ -113,18 +103,15 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/core'
 import { type Nullable, isNonNullable } from '@speckle/shared'
-import {
-  useInjectedViewerLoadedResources,
-  useInjectedViewerInterfaceState
-} from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 type ActivePanel =
   | 'none'
   | 'models'
   | 'discussions'
+  | 'explorer'
   | 'automate'
   | 'filters'
-  | 'versions'
 
 const width = ref(264)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -152,8 +139,8 @@ if (import.meta.client) {
     if (isResizing.value) {
       const diffX = event.clientX - startX
       width.value = Math.max(
-        240,
-        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
+        300,
+        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
       )
     }
   })
@@ -168,9 +155,6 @@ if (import.meta.client) {
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 const { isEnabled: isEmbedEnabled } = useEmbed()
-const {
-  diff: { enabled }
-} = useInjectedViewerInterfaceState()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
