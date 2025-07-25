@@ -166,8 +166,8 @@ if (import.meta.client) {
     if (isResizing.value) {
       const diffX = event.clientX - startX
       width.value = Math.max(
-        300,
-        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+        240,
+        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
       )
     }
   })

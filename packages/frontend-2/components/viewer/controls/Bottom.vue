@@ -2,7 +2,7 @@
   <aside>
     <ViewerControlsButtonGroup
       v-show="activePanel === 'none'"
-      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-20"
+      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-40"
     >
       <ViewerControlsButtonToggle
         v-for="panel in panels"
