@@ -16,7 +16,10 @@ import {
 import { Scopes, TIME_MS } from '@speckle/shared'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { AccSyncItems } from '@/modules/acc/dbSchema'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type {
+  AccSyncItem,
+  ModelDerivativeServiceDesignManifest
+} from '@/modules/acc/domain/types'
 import type { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import {
   getAutomationFactory,
@@ -38,6 +41,8 @@ import {
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import type { VersionCreatedTriggerManifest } from '@/modules/automate/helpers/types'
+import { getManifestByUrn } from '@/modules/acc/clients/autodesk'
+import { isReadyForImport } from '@/modules/acc/domain/logic'
 
 export default function accRestApi(app: Express) {
   const sessionMiddleware = sessionMiddlewareFactory()
@@ -137,6 +142,57 @@ export default function accRestApi(app: Express) {
     }
   })
 
+  app.get('/acc/download', sessionMiddleware, async (req, res) => {
+    const clientId = '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y'
+    const clientSecret =
+      'qHyGqaP4zCWLyS2lp04qBDOC1giIupPzJPmLFKGFHKZrPYYpan27zF8vlhQr1RYL'
+
+    console.log('AAAAAA')
+    const token = Buffer.from(`${clientId}:${clientSecret}`, 'utf8').toString('base64')
+    const tokens = await fetch(
+      'https://developer.api.autodesk.com/authentication/v2/token',
+      {
+        method: 'POST',
+        body: new URLSearchParams({
+          grant_type: 'client_credentials',
+          scope: 'data:read account:read viewables:read'
+        }),
+        headers: {
+          Authorization: `Basic ${token}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    )
+
+    const data = await tokens.json()
+
+    console.log(data)
+
+    const { access_token } = data
+
+    // https://developer.api.autodesk.com/modelderivative/v2/designdata/{urn}/manifest
+    // (EMEA) https://developer.api.autodesk.com/modelderivative/v2/regions/eu/designdata/{urn}/manifest
+
+    const urn =
+      'dXJuOmFkc2sud2lwZW1lYTpmcy5maWxlOnZmLjVORWw3ajZJVF9PSmRDdjVDWFNHTlE_dmVyc2lvbj0xNA'
+    const response = await fetch(
+      `https://developer.api.autodesk.com/modelderivative/v2/regions/eu/designdata/${urn}/manifest`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${access_token}`
+        }
+      }
+    )
+
+    const manifest: ModelDerivativeServiceDesignManifest = await response.json()
+
+    console.log(manifest)
+
+    res.status(200).send('OK')
+  })
+
   app.post('/acc/sync-item-created', sessionMiddleware, async (req, res) => {
     const { accHubUrn } = req.body
 
@@ -216,6 +272,15 @@ const schedulePendingAccSyncItemsPoll = () => {
           console.log(`${syncItem.accFileVersionUrn} : ${syncItem.accFileName}`)
 
           const projectDb = await getProjectDbClient({ projectId: syncItem.projectId })
+
+          const manifest = await getManifestByUrn(syncItem.accFileVersionUrn)
+
+          console.log(manifest)
+
+          if (!isReadyForImport(manifest)) {
+            console.log('NOT READY')
+            continue
+          }
 
           await projectDb.table<AccSyncItem>(AccSyncItems.name).update({
             status: 'SYNCING'
