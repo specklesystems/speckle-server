@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="inline-block">
     <Menu as="div" class="flex items-center">
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }" class="w-full">
         <span class="sr-only">Open workspace menu</span>

@@ -51,8 +51,13 @@
             :class="isEmbedEnabled ? 'top-0' : ' -top-2'"
           />
 
-          <!-- Sidebar controls -->
-          <ViewerControls v-if="showControls" class="relative z-20" />
+          <!-- Controls -->
+          <!-- <ViewerControls v-if="showControls" class="relative z-20" /> -->
+          <template v-if="showControls">
+            <ViewerControlsLeft />
+            <ViewerControlsBottom />
+            <ViewerControlsRight v-if="!isMobile" />
+          </template>
 
           <ViewerLimitsDialog
             v-if="project"
@@ -71,8 +76,7 @@
             <ViewerSelectionSidebar class="z-20" />
           </Transition>
           <div
-            class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2"
-            :class="isEmbedEnabled ? 'bottom-16 mb-1' : 'bottom-6'"
+            class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2 top-[3.75rem]"
           >
             <div class="flex items-end justify-center sm:justify-start">
               <PortalTarget name="pocket-left"></PortalTarget>
@@ -82,11 +86,7 @@
               <div class="flex gap-3">
                 <PortalTarget name="pocket-actions"></PortalTarget>
                 <!-- Shows up when filters are applied for an easy return to normality -->
-                <ViewerGlobalFilterReset
-                  v-if="hasAnyFiltersApplied"
-                  class="z-20"
-                  :embed="!!isEmbedEnabled"
-                />
+                <ViewerGlobalFilterReset v-if="hasAnyFiltersApplied" class="z-20" />
               </div>
             </div>
             <div class="flex items-end justify-center sm:justify-end">
@@ -126,6 +126,8 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
 import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/route'
 import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -154,6 +156,8 @@ const emit = defineEmits<{
 const router = useRouter()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const resourceIdString = computed(() => route.params.modelId as string)
 const projectId = writableAsyncComputed({

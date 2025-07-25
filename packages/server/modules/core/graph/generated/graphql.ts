@@ -1078,7 +1078,7 @@ export type FileImportResultInput = {
   parseDurationSeconds: Scalars['Float']['input'];
   /** Parser used for import */
   parser: Scalars['String']['input'];
-  /** Version asssociated if applicable */
+  /** Version associated if applicable */
   versionId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1126,6 +1126,7 @@ export type FileUploadMutations = {
   /**
    * Marks the file import flow as completed for that specific job
    * recording the provided status, and emitting the needed subscriptions.
+   * Mostly for internal service usage.
    */
   finishFileImport?: Maybe<Scalars['Boolean']['output']>;
   /**

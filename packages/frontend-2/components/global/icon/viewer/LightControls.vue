@@ -1,50 +1,63 @@
 <template>
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
     <path
-      d="M12 6V18"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-dasharray="1 3"
-    />
-    <path
-      d="M12 22C13.1046 22 14 21.1046 14 20C14 18.8954 13.1046 18 12 18C10.8954 18 10 18.8954 10 20C10 21.1046 10.8954 22 12 22Z"
+      d="M9.99984 13.3332C11.8408 13.3332 13.3332 11.8408 13.3332 9.99984C13.3332 8.15889 11.8408 6.6665 9.99984 6.6665C8.15889 6.6665 6.6665 8.15889 6.6665 9.99984C6.6665 11.8408 8.15889 13.3332 9.99984 13.3332Z"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
-      d="M12 6C13.1046 6 14 5.10457 14 4C14 2.89543 13.1046 2 12 2C10.8954 2 10 2.89543 10 4C10 5.10457 10.8954 6 12 6Z"
+      d="M10 2.5V3.33333"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
-      d="M6 20H10"
+      d="M10 16.6665V17.4998"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
-      d="M14 20H18"
+      d="M2.5 10H3.33333"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
-      d="M6 4H10"
+      d="M16.6665 10H17.4998"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
-      d="M14 4H18"
+      d="M15.3035 4.69678L14.7144 5.28594"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M5.28594 14.7144L4.69678 15.3035"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M4.69678 4.69678L5.28594 5.28594"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M14.7144 14.7144L15.3035 15.3035"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"

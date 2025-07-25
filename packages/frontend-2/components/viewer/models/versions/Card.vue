@@ -1,23 +1,25 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="relative">
-    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
+  <div class="relative border-b border-outline-3">
     <div
-      :class="`rounded-md overflow-hidden ${showVersions ? 'max-h-96 shadow-md' : ''}`"
+      :class="showVersions ? 'max-h-96 shadow-md' : ''"
       @mouseenter="highlightObject"
       @mouseleave="unhighlightObject"
       @focusin="highlightObject"
       @focusout="unhighlightObject"
     >
-      <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
+      <!-- Model Header -->
       <div
-        :class="`${
-          showVersions ? 'bg-primary' : 'bg-foundation hover:bg-foundation-2'
-        } group sticky cursor-pointer top-0 z-20 flex min-w-0 max-w-full items-center justify-between space-x-2 pr-2 pl-1.5 py-1 select-none`"
+        class="group sticky cursor-pointer top-0 z-20 flex min-w-0 max-w-full items-center justify-between gap-3 pl-1 pr-4 py-2 select-none"
+        :class="showVersions ? 'bg-primary' : 'bg-foundation hover:bg-foundation-2'"
         @click="showVersions = !showVersions"
       >
-        <div>
-          <UserAvatar :user="loadedVersion?.authorUser" class="!w-7 !h-7" />
+        <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3">
+          <NuxtImg
+            :src="loadedVersion?.previewUrl"
+            class="object-cover h-full w-full"
+          />
         </div>
         <div class="flex min-w-0 flex-grow flex-col">
           <div
@@ -39,13 +41,9 @@
             </span>
           </div>
         </div>
-        <div
-          v-if="!showVersions"
-          class="flex flex-none items-center space-x-1.5 text-foreground-2 text-body-2xs font-medium"
-        >
-          <IconVersions class="h-3 w-3" />
-          <span>{{ model.versions?.totalCount }}</span>
-        </div>
+        <span v-if="!showVersions" class="text-foreground-2 text-body-2xs font-medium">
+          {{ model.versions?.totalCount }}
+        </span>
         <div
           v-else
           :class="`${
@@ -55,11 +53,15 @@
           <ChevronUpIcon class="h-4 w-4" />
         </div>
       </div>
-      <ViewerResourcesActiveVersionCard
+
+      <!-- Active Version Card (when expanded but no scene data) -->
+      <ViewerModelsActiveVersionCard
         v-if="loadedVersion && showVersions"
         :version="loadedVersion"
       />
     </div>
+
+    <!-- Remove Overlay -->
     <Transition>
       <div
         v-if="showRemove"
@@ -74,6 +76,8 @@
         />
       </div>
     </Transition>
+
+    <!-- Version List (when expanded and not in remove mode) -->
     <div
       v-show="showVersions && !showRemove"
       class="mt-2 ml-4 flex h-auto flex-col space-y-0"
@@ -99,6 +103,7 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -127,6 +132,7 @@ const props = defineProps<{
   model: ModelItem
   versionId: string
   showRemove: boolean
+  last: boolean
 }>()
 
 const { switchModelToVersion } = useInjectedViewerRequestedResources()

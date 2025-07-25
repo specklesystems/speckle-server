@@ -2,41 +2,23 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
+    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen top-[3rem] sm:h-[calc(100dvh-3rem)]"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
-    :class="[
-      open ? '' : 'pointer-events-none',
-      isEmbedEnabled === true
-        ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
-        : 'sm:top-[3.7rem] sm:h-[calc(100dvh-3.8rem)]'
-    ]"
+    :class="[open ? '' : 'pointer-events-none']"
   >
-    <div
-      class="flex transition-all h-full"
-      :class="open ? '' : 'sm:translate-x-[100%]'"
-    >
+    <div class="flex h-full" :class="open ? '' : 'sm:translate-x-[100%]'">
       <!-- Resize Handle -->
       <div
         ref="resizeHandle"
-        class="hidden sm:flex group relative z-30 hover:z-50 w-6 h-full items-center overflow-hidden -mr-1"
-      >
-        <div
-          class="w-7 h-8 mr-1 bg-primary group-hover:primary-focus rounded-l translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition cursor-ew-resize flex items-center justify-center"
-          @mousedown="startResizing"
-        >
-          <ArrowsRightLeftIcon class="h-3 w-3 transition text-foundation" />
-        </div>
-        <div
-          class="relative z-30 w-1 h-full pt-[2.5rem] -ml-1 bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-l"
-          @mousedown="startResizing"
-        ></div>
-      </div>
+        class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l hover:border-l-[2px] border-outline-2 hover:border-primary hidden sm:flex items-center cursor-ew-resize z-30"
+        @mousedown="startResizing"
+      />
+
       <div
-        class="flex flex-col w-full h-full relative z-20 overflow-hidden border border-outline-2 rounded-lg shadow"
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden border-l border-outline-2"
       >
-        <!-- Header -->
         <div
-          class="h-[6.5rem] absolute z-10 top-0 w-full left-0 bg-foundation border-b border-outline-2 sm:rounded-t-md"
+          class="h-[6.5rem] absolute z-10 top-0 w-full left-0 bg-foundation border-b border-outline-2"
         >
           <div
             class="flex items-center justify-between py-1.5 pl-3 pr-1 border-b border-outline-2"
@@ -68,11 +50,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { XMarkIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 defineProps<{
   open: boolean
@@ -80,17 +61,17 @@ defineProps<{
 
 const emit = defineEmits<{
   (event: 'close'): void
+  (event: 'width-change', width: number): void
 }>()
 
 const resizableElement = ref(null)
 const resizeHandle = ref(null)
 const isResizing = ref(false)
-const width = ref(300)
+const width = ref(240)
 let startWidth = 0
 let startX = 0
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()
@@ -105,10 +86,12 @@ if (import.meta.client) {
   useEventListener(document, 'mousemove', (event) => {
     if (isResizing.value) {
       const diffX = startX - event.clientX
-      width.value = Math.max(
-        300,
-        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+      const newWidth = Math.max(
+        240,
+        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
       )
+      width.value = newWidth
+      emit('width-change', newWidth)
     }
   })
 
@@ -119,8 +102,13 @@ if (import.meta.client) {
   })
 }
 
+onMounted(() => {
+  emit('width-change', width.value)
+})
+
 const minimize = () => {
-  width.value = 300
+  width.value = 240
+  emit('width-change', 240)
 }
 
 const onClose = () => {

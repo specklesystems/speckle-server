@@ -1,20 +1,21 @@
 <template>
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 16 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
     <path
-      d="M3.33325 8H12.6666"
+      d="M2.5 5H17.5"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
-      d="M8 3.33334V12.6667"
+      d="M5.83337 10H14.1667"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M8.33337 15H11.6667"
       stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"

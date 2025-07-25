@@ -1,11 +1,12 @@
 <template>
-  <div
-    class="bg-pink-300/0 flex justify-center items-center pointer-events-none transition-all duration-300 ease-in overflow-hidden h-8"
+  <FormButton
+    size="sm"
+    color="outline"
+    class="pointer-events-auto"
+    @click="trackAndResetFilters"
   >
-    <FormButton class="pointer-events-auto" @click="trackAndResetFilters">
-      Reset filters
-    </FormButton>
-  </div>
+    Reset filters
+  </FormButton>
 </template>
 <script setup lang="ts">
 import { useMixpanel } from '~~/lib/core/composables/mp'

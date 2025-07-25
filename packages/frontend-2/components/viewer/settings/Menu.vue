@@ -9,10 +9,12 @@
     <IconFreeOrbit class="h-5 w-5" />
   </ViewerControlsButtonToggle>
 </template>
+
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import { CameraController } from '@speckle/viewer'
+
 type ViewerUserSettings = {
   turntableMode: boolean
 }

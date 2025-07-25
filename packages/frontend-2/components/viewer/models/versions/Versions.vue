@@ -1,40 +1,28 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
-    <template #title>Models</template>
-    <template #actions>
-      <div class="flex gap-x-1.5">
-        <FormButton
-          size="sm"
-          color="outline"
-          :icon-left="PlusIcon"
-          :disabled="showRemove"
-          @click="open = true"
-        >
-          Add
-        </FormButton>
-        <FormButton
-          size="sm"
-          color="outline"
-          :icon-left="showRemove ? CheckIcon : MinusIcon"
-          :disabled="!removeEnabled"
-          @click="showRemove = !showRemove"
-        >
-          {{ showRemove ? 'Done' : 'Remove' }}
-        </FormButton>
-      </div>
+  <ViewerLayoutSidePanel>
+    <template #title>
+      <FormButton
+        :icon-left="ChevronLeftIcon"
+        color="subtle"
+        class="-ml-3"
+        @click="$emit('close')"
+      >
+        Exit versions
+      </FormButton>
     </template>
-    <div class="flex flex-col space-y-2 px-1 py-1">
+
+    <div class="flex flex-col h-full">
       <template v-if="resourceItems.length">
         <div
           v-for="({ model, versionId }, index) in modelsAndVersionIds"
           :key="model.id"
         >
-          <ViewerResourcesModelCard
+          <ViewerModelsVersionsCard
             :model="model"
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
-            :show-remove="showRemove"
-            @remove="(id:string) => removeModel(id)"
+            :show-remove="false"
+            @remove="(id: string) => removeModel(id)"
           />
         </div>
         <template v-if="objects.length !== 0">
@@ -42,34 +30,34 @@
             v-for="object in objects"
             :key="object.objectId"
             :object="object"
-            :show-remove="showRemove"
-            @remove="(id:string) => removeModel(id)"
+            :show-remove="false"
+            @remove="(id: string) => removeModel(id)"
           />
         </template>
       </template>
     </div>
-    <ViewerResourcesAddModelDialog v-model:open="open" />
-  </ViewerLayoutPanel>
+  </ViewerLayoutSidePanel>
 </template>
+
 <script setup lang="ts">
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-import { PlusIcon, CheckIcon, MinusIcon } from '@heroicons/vue/24/solid'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { ViewerEvent } from '@speckle/viewer'
+import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 
 defineEmits(['close'])
 
-const showRemove = ref(false)
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
 const { items } = useInjectedViewerRequestedResources()
 
-const open = ref(false)
-
 const mp = useMixpanel()
+
 const removeModel = async (modelId: string) => {
   // Convert requested resource string to references to specific models
   // to ensure remove works even when we have "all" or "$folder" in the URL
@@ -88,9 +76,11 @@ const removeModel = async (modelId: string) => {
   await items.update(builder.toResources())
 }
 
-watch(modelsAndVersionIds, (newVal) => {
-  if (newVal.length <= 1) showRemove.value = false
+// TODO: worldTree being set in postSetup.ts (viewer) does not seem to create a reactive effect
+// in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.
+// Possibly Fabs will know more :)
+const refhack = ref(1)
+useViewerEventListener(ViewerEvent.LoadComplete, () => {
+  refhack.value++
 })
-
-const removeEnabled = computed(() => items.value.length > 1)
 </script>
