@@ -1,20 +1,34 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { isSafari } from '@speckle/shared'
 import { CustomLogger } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 
 /**
  * A wrapper class for IndexedDB to simplify common database operations.
  */
+export interface ItemStoreOptions {
+  indexedDB?: IDBFactory
+  keyRange?: {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    bound: Function
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    lowerBound: Function
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    upperBound: Function
+  }
+}
+export class ItemStore {
+  #options: ItemStoreOptions
 
-export class IndexedDBWrapper {
   private logger: CustomLogger
   private db: IDBDatabase | null = null
   private readonly dbName: string
   private readonly storeName: string
 
-  constructor(logger: CustomLogger, dbName: string, storeName: string) {
+  constructor(options: ItemStoreOptions, logger: CustomLogger, dbName: string, storeName: string) {
+    this.#options = options
     this.logger = logger
     this.dbName = dbName
     this.storeName = storeName
@@ -26,7 +40,7 @@ export class IndexedDBWrapper {
    */
   public init(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1)
+      const request = (this.#options.indexedDB ?? indexedDB).open(this.dbName, 1)
 
       request.onerror = (): any => {
         this.logger(`Database error: ${request.error}`)
@@ -36,7 +50,7 @@ export class IndexedDBWrapper {
       request.onupgradeneeded = (event): any => {
         const db = (event.target as IDBOpenDBRequest).result
         if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName, { keyPath: 'id' })
+          db.createObjectStore(this.storeName, { keyPath: 'baseId' })
         }
       }
 
@@ -55,13 +69,35 @@ export class IndexedDBWrapper {
   }
 
   /**
+   * Fixes a Safari bug where IndexedDB requests get lost and never resolve - invoke before you use IndexedDB
+   * @link Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
+   */
+  async #safariFix(): Promise<void> {
+    // No point putting other browsers or older versions of Safari through this mess.
+    if (!isSafari() || !this.#options.indexedDB?.databases) return Promise.resolve()
+
+    let intervalId: ReturnType<typeof setInterval>
+
+    return new Promise<void>((resolve: () => void) => {
+      const tryIdb = (): Promise<IDBDatabaseInfo[]> | undefined =>
+        this.#options.indexedDB?.databases().finally(resolve)
+      intervalId = setInterval(() => {
+        void tryIdb()
+      }, 100)
+      void tryIdb()
+    }).finally(() => clearInterval(intervalId))
+  }
+
+  /**
    * Inserts or updates an array of items in a single transaction.
    * @param data The array of items to insert.
    */
   public bulkInsert(data: Item[]): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const transaction = this.getDB().transaction(this.storeName, 'readwrite')
+        const transaction = this.getDB().transaction(this.storeName, 'readwrite', {
+          durability: 'strict'
+        })
         const store = transaction.objectStore(this.storeName)
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,7 +127,9 @@ export class IndexedDBWrapper {
         return resolve([])
       }
       try {
-        const transaction = this.getDB().transaction(this.storeName, 'readonly')
+        const transaction = this.getDB().transaction(this.storeName, 'readonly', {
+          durability: 'relaxed'
+        })
         const store = transaction.objectStore(this.storeName)
         const promises: Promise<Item | undefined>[] = []
 
@@ -102,7 +140,7 @@ export class IndexedDBWrapper {
               request.onerror = (): void =>
                 rejectGet(`Request error for id ${id}: ${request.error}`)
               // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-              request.onsuccess = ():void => resolveGet(request.result)
+              request.onsuccess = (): void => resolveGet(request.result)
             })
           )
         }
