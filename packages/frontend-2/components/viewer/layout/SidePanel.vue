@@ -1,59 +1,24 @@
 <template>
-  <div
-    class="bg-foundation overflow-hidden border-outline-2 flex flex-col h-full"
-    :class="borderPosition === 'left' ? 'border-l' : 'border-r'"
-  >
-    <div class="sticky top-0 z-50 flex flex-col bg-foundation">
-      <div v-if="!hideClose" class="absolute top-1.5 right-1 z-10">
-        <FormButton
-          color="subtle"
-          size="sm"
-          hide-text
-          :icon-left="XMarkIcon"
-          @click="$emit('close')"
-        />
+  <div class="bg-foundation overflow-hidden border-outline-2 flex flex-col h-full">
+    <div class="flex justify-between items-center border-b border-outline-3 p-2 pl-4">
+      <div class="text-body-xs text-foreground font-medium">
+        <span v-if="title" class="truncate">{{ title }}</span>
+        <slot name="title"></slot>
       </div>
-      <div
-        v-if="$slots.title"
-        class="flex items-center py-1.5 px-3 border-b border-outline-2"
-      >
-        <div
-          class="flex items-center h-full w-full pr-8 text-body-xs text-foreground font-medium"
-        >
-          <span class="truncate">
-            <slot name="title"></slot>
-          </span>
-        </div>
+      <div>
+        <slot name="actions"></slot>
       </div>
     </div>
-    <div
-      v-if="$slots.actions"
-      class="flex items-center py-1.5 px-3 relative z-10 border-outline-2"
-      :class="moveActionsToBottom ? 'order-3 border-t' : 'order-2 border-b'"
-    >
-      <slot name="actions"></slot>
-    </div>
-    <div :class="moveActionsToBottom ? 'order-2' : 'order-3'">
+    <div class="flex-1">
       <slot></slot>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/24/solid'
-
 defineEmits(['close'])
 
-withDefaults(
-  defineProps<{
-    hideClose?: boolean
-    moveActionsToBottom?: boolean
-    borderPosition?: 'left' | 'right'
-  }>(),
-  {
-    hideClose: false,
-    moveActionsToBottom: false,
-    borderPosition: 'right'
-  }
-)
+defineProps<{
+  title?: string
+}>()
 </script>

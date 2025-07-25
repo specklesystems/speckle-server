@@ -17,24 +17,9 @@
         <IconViewerModels class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
-      <!-- Explorer -->
-      <ViewerControlsButtonToggle
-        v-tippy="{
-          content: getShortcutDisplayText(shortcuts.ToggleExplorer),
-          placement: 'right'
-        }"
-        :active="activePanel === 'explorer'"
-        @click="toggleActivePanel('explorer')"
-      >
-        <IconViewerExplorer class="h-4 w-4 md:h-5 md:w-5" />
-      </ViewerControlsButtonToggle>
-
       <!-- Filters -->
       <ViewerControlsButtonToggle
-        v-tippy="{
-          content: 'Filters',
-          placement: 'right'
-        }"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleFilters)"
         :active="activePanel === 'filters'"
         @click="toggleActivePanel('filters')"
       >
@@ -93,22 +78,23 @@
     >
       <!-- Models panel -->
       <KeepAlive v-show="activePanel === 'models'">
-        <ViewerResourcesList
+        <ViewerModels
           v-if="!enabled"
           class="pointer-events-auto"
           @close="activePanel = 'none'"
+          @open-versions="activePanel = 'versions'"
         />
         <ViewerCompareChangesPanel v-else @close="activePanel = 'none'" />
-      </KeepAlive>
-
-      <!-- Explorer panel -->
-      <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'explorer'">
-        <ViewerExplorer class="pointer-events-auto" @close="activePanel = 'none'" />
       </KeepAlive>
 
       <!-- Filter panel -->
       <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
         <ViewerFilters class="pointer-events-auto" @close="activePanel = 'none'" />
+      </KeepAlive>
+
+      <!-- Versions panel -->
+      <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'versions'">
+        <ViewerVersions class="pointer-events-auto" @close="activePanel = 'models'" />
       </KeepAlive>
 
       <!-- Comment threads panel -->
@@ -136,9 +122,9 @@ type ActivePanel =
   | 'none'
   | 'models'
   | 'discussions'
-  | 'explorer'
   | 'automate'
   | 'filters'
+  | 'versions'
 
 const width = ref(264)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -210,7 +196,7 @@ const { summary } = useFunctionRunsStatusSummary({
 
 registerShortcuts({
   ToggleModels: () => toggleActivePanel('models'),
-  ToggleExplorer: () => toggleActivePanel('explorer'),
+  ToggleFilters: () => toggleActivePanel('filters'),
   ToggleDiscussions: () => toggleActivePanel('discussions')
 })
 

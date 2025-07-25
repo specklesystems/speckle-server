@@ -5694,6 +5694,8 @@ export type SettingsWorkspacesSecuritySsoWrapper_WorkspaceFragment = { __typenam
 
 export type ModelPageProjectFragment = { __typename?: 'Project', id: string, createdAt: string, name: string, visibility: ProjectVisibility, hasAccessToFeature: boolean, workspaceId?: string | null, workspace?: { __typename?: 'Workspace', id: string, slug: string, name: string, role?: string | null, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null } | null, embedOptions: { __typename?: 'ProjectEmbedOptions', hideSpeckleBranding: boolean }, permissions: { __typename?: 'ProjectPermissionChecks', canMoveToWorkspace: { __typename?: 'PermissionCheckResult', authorized: boolean, code: string, message: string, payload?: {} | null } } };
 
+export type ViewerModelVersionCardItemFragment = { __typename?: 'Version', id: string, message?: string | null, referencedObject?: string | null, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null };
+
 export type ViewerCommentThreadDataFragment = { __typename?: 'Comment', id: string, permissions: { __typename?: 'CommentPermissionChecks', canArchive: { __typename?: 'PermissionCheckResult', authorized: boolean, code: string, message: string, payload?: {} | null } } };
 
 export type ThreadCommentAttachmentFragment = { __typename?: 'Comment', text?: { __typename?: 'SmartTextEditorValue', attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null } | null };
@@ -5705,8 +5707,6 @@ export type ViewerLimitsDialog_ProjectFragment = { __typename?: 'Project', id: s
 export type ViewerLimitsWorkspaceDialog_ProjectFragment = { __typename?: 'Project', id: string, workspace?: { __typename?: 'Workspace', id: string, role?: string | null, slug: string, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null } | null };
 
 export type ViewerResourcesLimitAlert_ProjectFragment = { __typename?: 'Project', id: string, workspaceId?: string | null, workspace?: { __typename?: 'Workspace', id: string, slug: string } | null, permissions: { __typename?: 'ProjectPermissionChecks', canMoveToWorkspace: { __typename?: 'PermissionCheckResult', authorized: boolean, code: string, message: string, payload?: {} | null } } };
-
-export type ViewerModelVersionCardItemFragment = { __typename?: 'Version', id: string, message?: string | null, referencedObject?: string | null, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null };
 
 export type ViewerResourcesPersonalLimitAlert_ProjectFragment = { __typename?: 'Project', id: string, workspaceId?: string | null, permissions: { __typename?: 'ProjectPermissionChecks', canMoveToWorkspace: { __typename?: 'PermissionCheckResult', authorized: boolean, code: string, message: string, payload?: {} | null } } };
 

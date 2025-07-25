@@ -1,97 +1,86 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div class="w-full select-none">
+  <div>
     <!-- Header -->
-    <div class="bg-foundation w-full rounded-md py-1 px-1">
-      <div class="flex w-full items-stretch space-x-1">
-        <!-- Unfold button -->
-        <div class="flex w-5 flex-shrink-0 justify-center overflow-hidden">
-          <button
-            v-if="isSingleCollection || isMultipleCollection"
-            class="hover:bg-foundation-2 hover:text-primary flex h-full w-full items-center justify-center rounded"
-            @click="manualUnfoldToggle()"
-          >
-            <ChevronDownIcon
-              :class="`h-3 w-3 ${!unfold ? '-rotate-90' : 'rotate-0'} ${
-                isSelected ? 'text-primary' : ''
-              }`"
-            />
-          </button>
-        </div>
-        <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-        <div
-          :class="`hover:bg-foundation-2 group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1
-            ${isSelected ? 'border-primary bg-foundation-2' : 'border-transparent'}
-          `"
-          @click="(e:MouseEvent) => setSelection(e)"
-          @mouseenter="highlightObject"
-          @focusin="highlightObject"
-          @mouseleave="unhighlightObject"
-          @focusout="unhighlightObject"
+    <div
+      class="group flex items-center justify-between w-full p-2 pr-1 cursor-pointer"
+      :class="[
+        unfold && !isSelected ? 'bg-foundation-2' : '',
+        isSelected ? 'bg-highlight-3' : 'hover:bg-highlight-1'
+      ]"
+      @click="(e:MouseEvent) => setSelection(e)"
+      @mouseenter="highlightObject"
+      @focusin="highlightObject"
+      @mouseleave="unhighlightObject"
+      @focusout="unhighlightObject"
+    >
+      <div class="flex items-center gap-0.5">
+        <FormButton
+          v-if="isSingleCollection || isMultipleCollection"
+          size="sm"
+          color="subtle"
+          @click.stop="manualUnfoldToggle"
         >
-          <div
-            :class="`truncate ${
-              isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
-                ? 'text-foreground-2'
-                : ''
-            }`"
-          >
-            <div :class="`truncate text-body-xs ${unfold ? 'font-medium' : ''}`">
-              <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
-              {{ header || headerAndSubheader.header }}
-            </div>
-            <div class="text-body-3xs text-foreground-2 truncate -mt-0.5">
-              {{ subHeader || headerAndSubheader.subheader }}
-            </div>
-            <div v-if="debug" class="text-tiny text-foreground-2">
-              unfold: {{ unfold }} / selected: {{ isSelected }} / hidden:
-              {{ isHidden }} / isolated:
-              {{ isIsolated }}
-            </div>
+          <IconTriangle
+            class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
+            :class="unfold ? 'rotate-90' : ''"
+          />
+          <span class="sr-only">
+            {{ unfold ? 'Collapse' : 'Expand' }}
+          </span>
+        </FormButton>
+        <div v-else class="w-4 shrink-0"></div>
+        <div
+          class="flex flex-col"
+          :class="
+            isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
+              ? 'text-foreground-2'
+              : ''
+          "
+        >
+          <div class="flex truncate text-body-2xs">
+            <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
+            {{ header || headerAndSubheader.header }}
           </div>
-          <div class="flex-grow"></div>
-          <div class="flex flex-shrink-0 items-center space-x-1">
-            <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
-            <div class="flex space-x-2">
-              <button
-                :class="`hover:text-primary px-1 py-2 opacity-0 group-hover:opacity-100 ${
-                  isHidden ? 'opacity-100' : ''
-                }`"
-                @click.stop="hideOrShowObject"
-              >
-                <EyeIcon v-if="!isHidden" class="h-3 w-3" />
-                <EyeSlashIcon v-else class="h-3 w-3" />
-              </button>
-              <button
-                :class="`hover:text-primary px-1 py-2 opacity-0 group-hover:opacity-100 ${
-                  isIsolated ? 'opacity-100' : ''
-                }`"
-                @click.stop="isolateOrUnisolateObject"
-              >
-                <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
-                <FunnelIcon v-else class="h-3 w-3" />
-              </button>
-            </div>
-            <div
-              v-if="
-                (isSingleCollection || isMultipleCollection) &&
-                typeof childrenLength === 'number'
-              "
-            >
-              <span class="text-foreground-2 text-xs">({{ childrenLength }})</span>
-            </div>
+          <div class="flex text-body-3xs text-foreground-2 truncate">
+            {{ subHeader || headerAndSubheader.subheader }}
           </div>
         </div>
       </div>
-      <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-      <div v-if="debug" class="text-foreground-2 text-xs" @click="setSelection">
-        single: {{ isSingleCollection }}; multiple: {{ isMultipleCollection }}; a:
-        {{ isAtomic }}
+
+      <div class="flex items-center">
+        <FormButton
+          size="sm"
+          color="subtle"
+          hide-text
+          :icon-left="isHidden ? EyeSlashIcon : EyeIcon"
+          :class="
+            isHidden || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          "
+          @click.stop="hideOrShowObject"
+        >
+          {{ isHidden ? 'Show' : 'Hide' }}
+        </FormButton>
+        <FormButton
+          size="sm"
+          color="subtle"
+          hide-text
+          :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
+          :class="
+            isIsolated || isSelected
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100'
+          "
+          @click.stop="isolateOrUnisolateObject"
+        >
+          {{ isIsolated ? 'Unisolate' : 'Isolate' }}
+        </FormButton>
       </div>
     </div>
 
-    <!-- Children Contents -->
-    <div v-if="unfold" class="relative pl-1 text-xs">
+    <!-- Children contents -->
+    <div v-if="unfold" class="pl-1.5 bg-foundation-2">
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
@@ -105,7 +94,6 @@
             :depth="depth + 1"
             :expand-level="props.expandLevel"
             :manual-expand-level="manualExpandLevel"
-            :debug="debug"
             :parent="treeItem"
             @expanded="(e) => $emit('expanded', e)"
           />
@@ -124,7 +112,6 @@
             :depth="depth + 1"
             :expand-level="props.expandLevel"
             :manual-expand-level="manualExpandLevel"
-            :debug="debug"
             :parent="treeItem"
             @expanded="(e) => $emit('expanded', e)"
           />
@@ -139,12 +126,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ChevronDownIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  FunnelIcon
-} from '@heroicons/vue/24/solid'
+import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import type {
   ExplorerNode,
@@ -169,13 +151,12 @@ const props = withDefaults(
     treeItem: TreeItemComponentModel
     parent?: TreeItemComponentModel
     depth?: number
-    debug?: boolean
     expandLevel: number
     manualExpandLevel: number
     header?: string | null
     subHeader?: string | null
   }>(),
-  { depth: 0, debug: false, header: null, subHeader: null }
+  { depth: 0, header: null, subHeader: null }
 )
 
 const emit = defineEmits<{
@@ -210,14 +191,6 @@ const headerAndSubheader = computed(() => {
     header: getNestedModelHeader(header),
     subheader
   }
-})
-
-const childrenLength = computed(() => {
-  if (rawSpeckleData.value.elements && Array.isArray(rawSpeckleData.value.elements))
-    return rawSpeckleData.value.elements.length
-  if (rawSpeckleData.value.children && Array.isArray(rawSpeckleData.value.children))
-    return rawSpeckleData.value.children.length
-  return 0
 })
 
 const isSingleCollection = computed(() => {

@@ -1,42 +1,29 @@
 <template>
-  <ViewerLayoutSidePanel title="Models">
-    <template #actions>
-      <div class="flex gap-x-1.5">
-        <FormButton
-          size="sm"
-          color="subtle"
-          :icon-left="PlusIcon"
-          hide-text
-          :disabled="showRemove"
-          @click="open = true"
-        >
-          Add model
-        </FormButton>
-        <FormButton
-          v-if="resourceItems.length"
-          size="sm"
-          color="subtle"
-          hide-text
-          :icon-left="showRemove ? CheckIcon : MinusIcon"
-          :disabled="!removeEnabled"
-          @click="showRemove = !showRemove"
-        >
-          {{ showRemove ? 'Done' : 'Remove' }}
-        </FormButton>
-      </div>
+  <ViewerLayoutSidePanel>
+    <template #title>
+      <FormButton
+        size="sm"
+        color="subtle"
+        :icon-left="ArrowLeftIcon"
+        class="-ml-2"
+        @click="$emit('close')"
+      >
+        Exit versions
+      </FormButton>
     </template>
-    <div class="flex flex-col space-y-2 px-1 py-1 h-full">
+
+    <div class="flex flex-col">
       <template v-if="resourceItems.length">
         <div
           v-for="({ model, versionId }, index) in modelsAndVersionIds"
           :key="model.id"
         >
-          <ViewerResourcesModelCard
+          <ViewerVersionsCard
             :model="model"
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
             :show-remove="showRemove"
-            @remove="(id:string) => removeModel(id)"
+            @remove="(id: string) => removeModel(id)"
           />
         </div>
         <template v-if="objects.length !== 0">
@@ -45,25 +32,29 @@
             :key="object.objectId"
             :object="object"
             :show-remove="showRemove"
-            @remove="(id:string) => removeModel(id)"
+            @remove="(id: string) => removeModel(id)"
           />
         </template>
       </template>
+
+      <!-- Empty State -->
       <div v-else class="flex flex-col items-center justify-center gap-4 h-full">
-        <IconViewerModels class="h-10 w-10 text-foreground-2" />
+        <IconVersions class="h-10 w-10 text-foreground-2" />
         <p class="text-body-xs text-foreground-2">No models loaded, yet.</p>
         <FormButton @click="open = true">Add model</FormButton>
       </div>
     </div>
+
     <ViewerResourcesAddModelDialog v-model:open="open" />
   </ViewerLayoutSidePanel>
 </template>
+
 <script setup lang="ts">
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-import { PlusIcon, CheckIcon, MinusIcon } from '@heroicons/vue/24/solid'
+import { ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -77,6 +68,7 @@ const { items } = useInjectedViewerRequestedResources()
 const open = ref(false)
 
 const mp = useMixpanel()
+
 const removeModel = async (modelId: string) => {
   // Convert requested resource string to references to specific models
   // to ensure remove works even when we have "all" or "$folder" in the URL
@@ -98,6 +90,4 @@ const removeModel = async (modelId: string) => {
 watch(modelsAndVersionIds, (newVal) => {
   if (newVal.length <= 1) showRemove.value = false
 })
-
-const removeEnabled = computed(() => items.value.length > 1)
 </script>

@@ -9,12 +9,12 @@ export const PanelShortcuts = {
     key: 'M',
     action: 'ToggleModels'
   },
-  ToggleExplorer: {
-    name: 'Scene explorer',
-    description: 'Toggle scene explorer panel',
+  ToggleFilters: {
+    name: 'Filters',
+    description: 'Toggle filters panel',
     modifiers: [ModifierKeys.Shift],
-    key: 'E',
-    action: 'ToggleExplorer'
+    key: 'F',
+    action: 'ToggleFilters'
   },
   ToggleDiscussions: {
     name: 'Discussions',
