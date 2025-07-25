@@ -60,7 +60,10 @@ const defaultValues: Record<ObjectLoader2Flags, string> = {
   [ObjectLoader2Flags.USE_CACHE]: 'true'
 }
 
-export function getFeatureFlag(paramName: ObjectLoader2Flags, useDefault: boolean = true): string | undefined{
+export function getFeatureFlag(
+  paramName: ObjectLoader2Flags,
+  useDefault: boolean = true
+): string | undefined {
   // Check if the code is running in a browser environment 🌐
   const isBrowser =
     typeof window !== 'undefined' && typeof window.document !== 'undefined'
