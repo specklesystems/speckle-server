@@ -4,30 +4,30 @@ import { Dexie, DexieOptions, Table } from 'dexie'
 import { isSafari } from '@speckle/shared'
 import { CustomLogger } from '../types/functions.js'
 
-    const defaultModel = 'Xenova/all-MiniLM-L6-v2'
+const defaultModel = 'Xenova/all-MiniLM-L6-v2'
 let status: string = 'Loading model...'
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let pipe: any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getPipeline = async (model: string): Promise<any> => {
-      if (pipe) {
-        return pipe
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pipe: any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getPipeline = async (model: string): Promise<any> => {
+  if (pipe) {
+    return pipe
+  }
+  const { pipeline } = await import('@huggingface/transformers')
+  pipe = await pipeline('feature-extraction', model, {
+    progress_callback: (progressInfo: { status: string }) => {
+      if (progressInfo.status !== status) {
+        status = progressInfo.status
+        console.log(`Loading model: ${progressInfo.status}`)
       }
-      const { pipeline } = await import('@huggingface/transformers')
-      pipe = await pipeline('feature-extraction', model, {
-        progress_callback: (progressInfo: { status: string }) => {
-          if (progressInfo.status !== status) {
-            status = progressInfo.status
-          console.log(`Loading model: ${progressInfo.status}`)
-          }
-        }
-      })
-      return pipe
     }
+  })
+  return pipe
+}
 
 export interface VectorEntry {
-  id: number
+  id: number // Dexie requires an id field, but we will not use it
   baseId: string
   vector: number[]
 }
@@ -55,16 +55,15 @@ const getEmbeddingFromText = async (text: string): Promise<number[]> => {
   return output.data as number[]
 }
 
-
 export class VectorStore extends Dexie {
   static #databaseName: string = 'speckle-vectors'
-  vectors!: Table<VectorEntry, number> // Table type: <entity, primaryKey>
+  vectors!: Table<VectorEntry, string> // Table type: <entity, primaryKey>
 
   constructor(options: DexieOptions) {
     super(VectorStore.#databaseName, options)
 
     this.version(1).stores({
-      vectors: 'id' // id is primary key
+      vectors: '++id' // baseId is primary key
     })
   }
 }
@@ -130,7 +129,7 @@ export class VectorManager {
   }
 
   // Insert data by generating embeddings from text
-  async insert(data: StringPropertyInfo): Promise<number> {
+  async insert(data: StringPropertyInfo): Promise<string> {
     await this.#setupCacheDb()
     const embeddings: VectorEntry[] = []
     for (const group of data.valueGroups) {
@@ -143,8 +142,13 @@ export class VectorManager {
       'rw',
       this.#vectorDb!.vectors,
       async () => {
-        const key = await this.#vectorDb!.vectors.bulkPut(embeddings)
-        return key
+        try {
+          const key = await this.#vectorDb!.vectors.bulkPut(embeddings)
+          return key
+        } catch (error) {
+          this.#logger(`Error inserting vectors: ${error}`)
+          return ''
+        }
       }
     )
     return k
