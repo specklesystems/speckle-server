@@ -1,18 +1,7 @@
 <template>
   <div>
-    <ViewerLayoutPanel v-if="showSettings" class="p-3 pt-2">
-      <div class="flex justify-between items-center">
-        <h6 class="text-body-2xs font-medium">Settings</h6>
-        <FormButton
-          size="sm"
-          color="subtle"
-          :icon-left="XMarkIcon"
-          hide-text
-          @click="showSettings = false"
-        />
-      </div>
-
-      <span class="flex flex-col gap-1.5 pt-2">
+    <ViewerLayoutPanel v-if="showSettings" class="p-3">
+      <span class="flex flex-col gap-1.5">
         <label class="text-body-2xs" for="units">Units</label>
         <ViewerMeasurementsUnitSelect
           v-model="measurementOptions.units"
@@ -85,13 +74,16 @@
           <FormButton size="sm" color="outline" @click="clearMeasurements">
             Delete all
           </FormButton>
-          <FormButton
-            size="sm"
-            color="subtle"
-            :icon-left="Cog8ToothIcon"
-            hide-text
+          <button
+            class="size-6 flex items-center justify-center rounded-md"
+            :class="[
+              showSettings && 'text-primary-focus bg-info-lighter',
+              !showSettings && 'text-foreground hover:bg-foundation-2'
+            ]"
             @click="showSettings = !showSettings"
-          />
+          >
+            <IconViewerSettings class="size-4" />
+          </button>
         </div>
       </div>
     </ViewerLayoutPanel>
@@ -101,7 +93,6 @@
 <script setup lang="ts">
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
-import { Cog8ToothIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 interface MeasurementTypeOption {
   title: string
