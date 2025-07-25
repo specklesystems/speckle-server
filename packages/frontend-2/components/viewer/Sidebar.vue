@@ -67,7 +67,7 @@ const emit = defineEmits<{
 const resizableElement = ref(null)
 const resizeHandle = ref(null)
 const isResizing = ref(false)
-const width = ref(280)
+const width = ref(240)
 let startWidth = 0
 let startX = 0
 
@@ -87,8 +87,8 @@ if (import.meta.client) {
     if (isResizing.value) {
       const diffX = startX - event.clientX
       const newWidth = Math.max(
-        280,
-        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+        240,
+        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
       )
       width.value = newWidth
       emit('width-change', newWidth)
@@ -107,8 +107,8 @@ onMounted(() => {
 })
 
 const minimize = () => {
-  width.value = 280
-  emit('width-change', 280)
+  width.value = 240
+  emit('width-change', 240)
 }
 
 const onClose = () => {
