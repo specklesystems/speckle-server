@@ -40,17 +40,21 @@ export type ModelDerivativeServiceDesignManifestDerivative = {
   name?: string
   status: 'pending' | 'inprogress' | 'success' | 'failed' | 'timeout'
   progress: 'complete' | `${number}%`
-  outputType:
-    | 'dwg'
-    | 'fbx'
-    | 'ifc'
-    | 'iges'
-    | 'obj'
-    | 'step'
-    | 'stl'
-    | 'svf'
-    | 'svf2'
-    | 'thumbnail'
+  outputType: AccDerivativeOutputType
   /** Sometimes `outputType` is "svf" and `overrideOutputType` is "svf2" */
   overrideOutputType?: string
 }
+
+export type AccRegion = 'US' | 'EMEA' | 'AUS' | 'CAN' | 'DEU' | 'IND' | 'JPN' | 'GBR'
+
+export type AccDerivativeOutputType =
+  | 'dwg'
+  | 'fbx'
+  | 'ifc'
+  | 'iges'
+  | 'obj'
+  | 'step'
+  | 'stl'
+  | 'svf'
+  | 'svf2'
+  | 'thumbnail'

@@ -5,10 +5,11 @@ import type {
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccRegion, AccSyncItem } from '@/modules/acc/domain/types'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import type { Knex } from 'knex'
-import { tryRegisterAccWebhook } from '@/modules/acc/webhook'
+import { tryRegisterAccWebhook } from '@/modules/acc/clients/autodesk'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
 const tables = {
   accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
@@ -64,18 +65,18 @@ export const createAccSyncItemAndNotifyFactory = (deps: {
   eventEmit: EventBusEmit
 }): CreateAccSyncItemAndNotify => {
   return async (input) => {
-    // TODO ACC: we might need to cache the retrieved token to prevent rate limiting etc.
-
-    const token = await getAutodeskAccessToken()
-    await tryRegisterAccWebhook({
-      accessToken: token, // TODO ACC: get the token from 2legged server-to-server auth
-      rootProjectId: input.accRootProjectFolderId,
-      region: input.accRegion,
+    const webhookId = await tryRegisterAccWebhook({
+      rootProjectFolderUrn: input.accRootProjectFolderId,
+      // For local development, you may set your public tailscale url as your local server's canonical origin
+      callbackUrl: `${getServerOrigin()}/api/v1/acc/webhook/callback`,
+      region: input.accRegion as AccRegion,
       event: 'dm.version.added' // NOTE ACC: you can register an event only once
     })
-    // TODO ACC: get webhook id and store it in item -> not sure it is make sense to have many webhooks per file as `/acc/webhook/callback/:filelineageUrn`
 
-    // TODO ACC: trigger automation and update status of sync item
+    if (webhookId) {
+      // TODO ACC: Update webhook id on sync record
+    }
+
     const now = new Date()
 
     const [item] = await tables

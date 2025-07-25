@@ -103,12 +103,12 @@ const invokeSafeJsonRequestFactory =
 const invokeJsonRequest = async <R = Record<string, unknown>>(
   ...args: Parameters<typeof invokeRequest>
 ) => {
-  const [{ url, method = 'get', body, token }] = args
+  const [{ url, method = 'get', body }] = args
   const response = await invokeRequest(...args)
 
   const result = (await response.json()) as R
   if (isErrorResponse(result)) {
-    throw new ExecutionEngineFailedResponseError(result, { method, url, body, token })
+    throw new ExecutionEngineFailedResponseError(result, { method, url, body })
   }
 
   return result

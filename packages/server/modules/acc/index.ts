@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 import { createAccOidcFlow } from '@/modules/acc/oidcHelper'
-import { tryRegisterAccWebhook } from '@/modules/acc/webhook'
 import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
@@ -193,25 +192,9 @@ export default function accRestApi(app: Express) {
     res.status(200).send('OK')
   })
 
-  app.post('/acc/sync-item-created', sessionMiddleware, async (req, res) => {
-    const { accHubUrn } = req.body
-
-    if (!req.session.accTokens) {
-      throw new Error('whatever')
-    }
-    const { access_token } = req.session.accTokens
-    await tryRegisterAccWebhook({
-      accessToken: access_token,
-      rootProjectId: accHubUrn,
-      region: 'EMEA',
-      event: ''
-    })
-    res.status(200)
-  })
-
   // Registered ACC webhooks are handled here
   // https://aps.autodesk.com/en/docs/webhooks/v1/reference/events/data_management_events/dm.version.added/
-  app.post('/acc/webhook/callback', sessionMiddleware, async (req, res) => {
+  app.post('/api/v1/acc/webhook/callback', sessionMiddleware, async (req, res) => {
     const lineageUrn = req.body?.payload?.lineageUrn
 
     if (!lineageUrn) {
