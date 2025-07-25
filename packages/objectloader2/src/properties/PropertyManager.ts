@@ -65,6 +65,9 @@ export class PropertyManager {
         // const sorted = propValuesArr.sort((a, b) => a.value - b.value)
         // propInfo.sortedValues = sorted.map(s => s.value)
         // propInfo.sortedIds = sorted.map(s => s.value) // tl;dr: not worth it
+      } else {
+        // Handle unsupported property types
+        console.warn(`Unsupported property type "${propInfo.type}" for property "${propInfo.key}"`)
       }
       this.properties.push(propInfo)
     }

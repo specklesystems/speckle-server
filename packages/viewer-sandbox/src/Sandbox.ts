@@ -186,19 +186,19 @@ export default class Sandbox {
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
-      this.properties = await this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties(url)
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
     viewer.on(ViewerEvent.UnloadComplete, async () => {
       this.removeViewControls()
       this.addViewControls()
-      this.properties = await this.viewer.getObjectProperties()
+      this.properties = []
     })
     viewer.on(ViewerEvent.UnloadAllComplete, async () => {
       this.removeViewControls()
       this.addViewControls()
-      this.properties = await this.viewer.getObjectProperties()
+      this.properties = []
     })
     viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent | null) => {
       if (selectionEvent && selectionEvent.hits) {

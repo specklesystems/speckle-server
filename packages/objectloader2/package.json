@@ -33,6 +33,7 @@
   "author": "AEC Systems",
   "license": "Apache-2.0",
   "dependencies": {
+    "@huggingface/transformers": "^3.7.0",
     "@speckle/shared": "workspace:^",
     "dexie": "^4.0.11"
   },

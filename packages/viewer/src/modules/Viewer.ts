@@ -30,7 +30,11 @@ import Logger from './utils/Logger.js'
 import Stats from './three/stats.js'
 import { TIME_MS } from '@speckle/shared'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
-import { PropertyInfo as OL2PropertyInfo } from '@speckle/objectloader2'
+import {
+  PropertyInfo as OL2PropertyInfo,
+  StringPropertyInfo as OL2StringPropertyInfo,
+  VectorManager
+} from '@speckle/objectloader2'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -51,6 +55,7 @@ export class Viewer extends EventEmitter implements IViewer {
   protected clock: Clock
   protected loaders: { [id: string]: Loader } = {}
   private properties: Record<string, OL2PropertyInfo[]> = {}
+  private vectorManager: VectorManager = new VectorManager({})
 
   protected extensions: {
     [id: string]: Extension
@@ -271,6 +276,9 @@ this.propertyManager = new PropertyManager()
         const oldProp = oldProps.find((p) => p.key === newProp.key)
         if (!oldProp) {
           console.error(`Property ${newProp.key} not found in Old properties`)
+        }
+        if (newProp.type === 'string') {
+          await this.vectorManager.insert(newProp as OL2StringPropertyInfo)
         }
       }
       return newProps

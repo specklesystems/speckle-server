@@ -8,3 +8,5 @@ export {
   NumericPropertyInfo,
   StringPropertyInfo
 } from './properties/PropertyManager.js'
+
+export { VectorManager } from './properties/PropertyVectorizer.js'
