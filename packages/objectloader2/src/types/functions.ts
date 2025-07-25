@@ -60,14 +60,17 @@ const defaultValues: Record<ObjectLoader2Flags, string> = {
   [ObjectLoader2Flags.USE_CACHE]: 'true'
 }
 
-export function getFeatureFlag(paramName: ObjectLoader2Flags): string {
+export function getFeatureFlag(
+  paramName: ObjectLoader2Flags,
+  useDefault: boolean = true
+): string | undefined {
   // Check if the code is running in a browser environment 🌐
   const isBrowser =
     typeof window !== 'undefined' && typeof window.document !== 'undefined'
 
   if (!isBrowser) {
     // If in Node.js or another server environment, return the default
-    return defaultValues[paramName]
+    return useDefault ? defaultValues[paramName] : undefined
   }
 
   // In a browser, parse the query string
@@ -76,5 +79,5 @@ export function getFeatureFlag(paramName: ObjectLoader2Flags): string {
   // .get() returns the value, or null if it's not found.
   // The nullish coalescing operator (??) provides the default value
   // if the left-hand side is null or undefined.
-  return params.get(paramName) ?? defaultValues[paramName]
+  return params.get(paramName) ?? (useDefault ? defaultValues[paramName] : undefined)
 }
