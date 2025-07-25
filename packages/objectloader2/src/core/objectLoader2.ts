@@ -91,6 +91,10 @@ export class ObjectLoader2 {
       this.#root = (await this.#database.getAll([this.#rootId]))[0]
       if (!this.#root) {
         this.#root = await this.#downloader.downloadSingle()
+        if (!this.#root) {
+          this.#logger('Root object not found!')
+          return undefined
+        }
       } else {
         this.#isRootStored = true
       }
