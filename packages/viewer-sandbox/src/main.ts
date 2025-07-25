@@ -134,7 +134,7 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://app.speckle.systems/streams/da9e320dad/objects/ee5d160d84090822813bc74188da34a7'
 
     //large tower
@@ -544,7 +544,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/7591c56179/models/82b94108a3'
 
     // SUPER slow tree build time (LARGE N-GONS TRIANGULATION)
-    'https://app.speckle.systems/projects/0edb6ef628/models/87f3fb5e2bd681d731dd048390ae3a8f'
+    // 'https://app.speckle.systems/projects/0edb6ef628/models/87f3fb5e2bd681d731dd048390ae3a8f'
 
     /* ObjectLoader 2 tests */
     // `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
@@ -616,9 +616,8 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/937d78e0a5/models/a48f0274eb'
     // 'https://app.speckle.systems/projects/937d78e0a5/objects/0e3c61147f3a035a85a3542c7f1c7a43'
 
-    // heatherwick
+    // heatherwick LARGE
     // 'https://app.speckle.systems/projects/63a3226049/models/bdd4f553a8'
-    // 'https://latest.speckle.systems/streams/7117052f4e/objects/867b89e22c7287bbfbe9c269dd8bfaae'
   )
 }
 

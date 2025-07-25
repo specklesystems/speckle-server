@@ -7,8 +7,6 @@ import Logger from '../../utils/Logger.js'
 import { ObjectLoader2 } from '@speckle/objectloader2'
 import { SpeckleTypeAllRenderables } from '../GeometryConverter.js'
 import { DataChunk } from '../../../IViewer.js'
-import MeshTriangulationHelper from '../../converter/MeshTriangulationHelper.js'
-import { ChunkArray } from '../../converter/VirtualArray.js'
 
 export type ConverterResultDelegate = (count: number) => void
 export type SpeckleConverterNodeDelegate =
@@ -67,7 +65,7 @@ export default class SpeckleConverter {
     Parameter: null
   }
 
-  protected readonly IgnoreNodes = ['Parameter']
+  protected readonly IgnoreNodes = ['Parameter', 'RawEncoding']
 
   constructor(objectLoader: ObjectLoader2, tree: WorldTree) {
     if (!objectLoader) {
