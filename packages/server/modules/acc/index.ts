@@ -273,7 +273,12 @@ const schedulePendingAccSyncItemsPoll = () => {
 
           const projectDb = await getProjectDbClient({ projectId: syncItem.projectId })
 
-          const manifest = await getManifestByUrn(syncItem.accFileVersionUrn)
+          const urn = btoa(syncItem.accFileVersionUrn)
+            .replaceAll('+', '-')
+            .replaceAll('/', '_')
+            .replaceAll('=', '')
+
+          const manifest = await getManifestByUrn(urn)
 
           console.log(manifest)
 
