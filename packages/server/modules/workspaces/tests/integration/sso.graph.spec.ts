@@ -1,17 +1,14 @@
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspaces,
-  BasicTestWorkspace,
   createTestOidcProvider,
   createTestSsoSession,
   createTestWorkspaces
 } from '@/modules/workspaces/tests/helpers/creation'
-import {
-  BasicTestUser,
-  createAuthTokenForUser,
-  createTestUsers
-} from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createAuthTokenForUser, createTestUsers } from '@/test/authHelper'
 import {
   ActiveUserExpiredSsoSessionsDocument,
   GetActiveUserWorkspacesDocument,
@@ -20,13 +17,11 @@ import {
   GetWorkspaceProjectsDocument,
   GetWorkspaceSsoDocument
 } from '@/modules/core/graph/generated/graphql'
-import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { AllScopes, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'

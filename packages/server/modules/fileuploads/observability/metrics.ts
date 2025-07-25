@@ -1,8 +1,9 @@
 import { TIME } from '@speckle/shared'
-import Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
-import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
+import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
+import { JobResultStatus } from '@speckle/shared/workers/fileimport'
+import type Bull from 'bull'
 
 export const FileImportJobDurationStep = {
   TOTAL: 'total',
@@ -10,11 +11,17 @@ export const FileImportJobDurationStep = {
   PARSE: 'parse' // time taken by the parser to process the file, including sending the objects
 } as const
 
+export type QueueMetrics = {
+  getPendingJobCount: () => Promise<number>
+  getWaitingJobCount: () => Promise<number>
+  getActiveJobCount: () => Promise<number>
+}
+
 export type ObserveResult = (params: { jobResult: FileImportResultPayload }) => void
 
 export const initializeMetrics = (params: {
   registers: Registry[]
-  requestQueues: (FileImportQueue & { queue: Bull.Queue })[]
+  requestQueues: (FileImportQueue & { queue?: Bull.Queue })[]
 }) => {
   const { registers, requestQueues } = params
 
@@ -29,7 +36,10 @@ export const initializeMetrics = (params: {
     registers,
     async collect() {
       requestQueues.forEach(async (requestQueue) => {
-        this.set({ parser: requestQueue.label }, await requestQueue.queue.count())
+        this.set(
+          { parser: requestQueue.label },
+          await requestQueue.metrics.getPendingJobCount()
+        )
       })
     }
   })
@@ -46,7 +56,7 @@ export const initializeMetrics = (params: {
       requestQueues.forEach(async (requestQueue) => {
         this.set(
           { parser: requestQueue.label },
-          await requestQueue.queue.getWaitingCount()
+          await requestQueue.metrics.getWaitingJobCount()
         )
       })
     }
@@ -64,7 +74,7 @@ export const initializeMetrics = (params: {
       requestQueues.forEach(async (requestQueue) => {
         this.set(
           { parser: requestQueue.label },
-          await requestQueue.queue.getActiveCount()
+          await requestQueue.metrics.getActiveJobCount()
         )
       })
     }
@@ -99,6 +109,8 @@ export const initializeMetrics = (params: {
   }
 
   requestQueues.forEach((requestQueue) => {
+    if (!requestQueue.queue) return
+
     const completedHandler = completedHandlerFactory(requestQueue.label)
     const failedHandler = failedHandlerFactory(requestQueue.label)
 
@@ -124,6 +136,12 @@ export const initializeMetrics = (params: {
 
   const observeResult: ObserveResult = (params) => {
     const { jobResult } = params
+
+    ;(jobResult.status === JobResultStatus.Error
+      ? fileImportJobsRequestFailedCounter
+      : fileImportJobsRequestCompletedCounter
+    ).inc({ parser: jobResult.result.parser })
+
     fileImportJobsProcessedSummary.observe(
       {
         parser: jobResult.result.parser,

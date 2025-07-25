@@ -1,17 +1,15 @@
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
 import { difference, flatten } from 'lodash-es'
-import {
-  NotificationPublisher,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
-import {
+import type { NotificationPublisher } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@/modules/notifications/helpers/types'
+import type {
   AddStreamCommentMentionActivity,
   SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import { EventBus } from '@/modules/shared/services/eventBus'
+import type { EventBus } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import {
   StreamActionTypes,

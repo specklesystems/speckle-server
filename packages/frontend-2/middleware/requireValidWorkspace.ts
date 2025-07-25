@@ -4,6 +4,7 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { workspaceAccessCheckQuery } from '~~/lib/workspaces/graphql/queries'
+import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 
 /**
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
@@ -12,6 +13,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const workspaceSlug = to.params.slug as string
 
   const client = useApolloClientFromNuxt()
+  const { setActiveWorkspace } = useSetActiveWorkspace()
+  const { isLoggedIn } = useActiveUser()
 
   const { data, errors } = await client
     .query({
@@ -24,7 +27,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
     .catch(convertThrowIntoFetchResult)
 
-  if (data?.workspaceBySlug.id) return
+  if (data?.workspaceBySlug.id && isLoggedIn.value) {
+    await setActiveWorkspace({ slug: workspaceSlug })
+  }
 
   const isForbidden = (errors || []).find((e) => e.extensions?.['code'] === 'FORBIDDEN')
   const isNotFound = (errors || []).find(

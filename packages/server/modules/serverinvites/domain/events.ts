@@ -1,4 +1,4 @@
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 
 export const serverinvitesEventNamespace = 'serverinvites' as const
 

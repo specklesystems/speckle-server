@@ -1,4 +1,4 @@
-import {
+import type {
   AddOrUpdateStreamCollaborator,
   GetStream
 } from '@/modules/core/domain/streams/operations'
@@ -6,11 +6,11 @@ import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { InviteFinalizingError } from '@/modules/serverinvites/errors'
-import {
-  InviteFinalizationAction,
+import type {
   ProcessFinalizedResourceInvite,
   ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
+import { InviteFinalizationAction } from '@/modules/serverinvites/services/operations'
 import { Roles } from '@speckle/shared'
 
 type ValidateProjectInviteBeforeFinalizationFactoryDeps = {

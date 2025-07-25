@@ -1,6 +1,6 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import crs from 'crypto-random-string'
-import {
+import type {
   CountEmailsByUserId,
   CreateUserEmail,
   DeleteUserEmail,
@@ -11,7 +11,7 @@ import {
   SetPrimaryUserEmail,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UserEmails } from '@/modules/core/dbSchema'
 import {
   UserEmailDeleteError,

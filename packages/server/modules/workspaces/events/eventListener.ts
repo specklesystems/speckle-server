@@ -1,13 +1,13 @@
 import {
+  getExplicitProjects,
   getStreamFactory,
   getStreamRolesFactory,
   getStreamsCollaboratorCountsFactory,
   grantStreamPermissionsFactory,
-  legacyGetStreamsFactory,
   revokeStreamPermissionsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
-import {
+import type {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetProjectWorkspace,
@@ -20,36 +20,26 @@ import {
   GetWorkspacesProjectsCounts,
   ValidateWorkspaceMemberProjectRole
 } from '@/modules/workspaces/domain/operations'
-import {
-  ServerInvitesEvents,
-  ServerInvitesEventsPayloads
-} from '@/modules/serverinvites/domain/events'
+import type { ServerInvitesEventsPayloads } from '@/modules/serverinvites/domain/events'
+import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import {
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import { logger, moduleLogger } from '@/observability/logging'
+import type { logger } from '@/observability/logging'
+import { moduleLogger } from '@/observability/logging'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import {
-  EventBusEmit,
-  EventPayload,
-  getEventBus
-} from '@/modules/shared/services/eventBus'
+import type { EventBusEmit, EventPayload } from '@/modules/shared/services/eventBus'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import {
-  isPaidPlan,
-  MaybeNullOrUndefined,
-  Roles,
-  StreamRoles,
-  throwUncoveredError,
-  WorkspaceRoles
-} from '@speckle/shared'
-import {
+import type { MaybeNullOrUndefined, StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { isPaidPlan, Roles, throwUncoveredError } from '@speckle/shared'
+import type {
   QueryAllProjects,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceCollaboratorsFactory,
@@ -71,12 +61,12 @@ import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory
 } from '@/modules/core/repositories/userEmails'
-import {
+import type {
   GetStream,
   GetStreamsCollaboratorCounts,
   SetStreamCollaborator
 } from '@/modules/core/domain/streams/operations'
-import {
+import type {
   GetUserSsoSession,
   GetWorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/operations'
@@ -90,21 +80,22 @@ import { WorkspacesNotAuthorizedError } from '@/modules/workspaces/errors/worksp
 import { publish, WorkspaceSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { isWorkspaceResourceTarget } from '@/modules/workspaces/services/invites'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import type { MixpanelClient } from '@/modules/shared/utils/mixpanel'
 import {
   getBaseTrackingProperties,
   getClient,
   mapPlanStatusToMixpanelEvent as mapNonValidPlanStatusToMixpanelEventName,
-  MixpanelClient,
   MixpanelEvents,
   WORKSPACE_TRACKING_ID_KEY
 } from '@/modules/shared/utils/mixpanel'
-import {
+import type {
   GetWorkspacePlan,
   GetWorkspaceSubscription,
   GetWorkspaceWithPlan
 } from '@/modules/gatekeeper/domain/billing'
-import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
   getWorkspacePlanFactory,
@@ -123,7 +114,7 @@ import {
   getWorkspaceRoleAndSeatFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
-import {
+import type {
   DeleteWorkspaceSeat,
   GetWorkspaceUserSeat
 } from '@/modules/gatekeeper/domain/operations'
@@ -142,7 +133,7 @@ import { buildWorkspaceTrackingPropertiesFactory } from '@/modules/workspaces/se
 import { assign } from 'lodash-es'
 import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 import { WorkspacePlans } from '@/modules/core/graph/generated/graphql'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
@@ -861,7 +852,6 @@ export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
-    const getStreams = legacyGetStreamsFactory({ db })
     const getWorkspace = getWorkspaceFactory({ db })
     const emitWorkspaceGraphqlSubscriptions = emitWorkspaceGraphqlSubscriptionsFactory({
       getWorkspace,
@@ -929,7 +919,9 @@ export const initializeEventListenersFactory =
           getWorkspacePlan,
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
           getWorkspaceModelCount: getWorkspaceModelCountFactory({
-            queryAllProjects: queryAllProjectsFactory({ getStreams }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db })
+            }),
             getPaginatedProjectModelsTotalCount:
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
@@ -947,7 +939,9 @@ export const initializeEventListenersFactory =
           getWorkspacePlan,
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
           getWorkspaceModelCount: getWorkspaceModelCountFactory({
-            queryAllProjects: queryAllProjectsFactory({ getStreams }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db })
+            }),
             getPaginatedProjectModelsTotalCount:
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
@@ -986,7 +980,9 @@ export const initializeEventListenersFactory =
         await withTransaction(
           async ({ db: trx }) => {
             const onWorkspaceRoleDeleted = onWorkspaceRoleDeletedFactory({
-              queryAllProjects: queryAllProjectsFactory({ getStreams }),
+              queryAllProjects: queryAllProjectsFactory({
+                getExplicitProjects: getExplicitProjects({ db })
+              }),
               deleteWorkspaceSeat: deleteWorkspaceSeatFactory({ db: trx }),
               getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
               getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
@@ -1020,7 +1016,9 @@ export const initializeEventListenersFactory =
         await withTransaction(
           async ({ db: trx }) => {
             const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
-              queryAllProjects: queryAllProjectsFactory({ getStreams }),
+              queryAllProjects: queryAllProjectsFactory({
+                getExplicitProjects: getExplicitProjects({ db })
+              }),
               setStreamCollaborator: setStreamCollaboratorFactory({
                 getUser: getUserFactory({ db }),
                 validateStreamAccess: validateStreamAccessFactory({
@@ -1065,7 +1063,9 @@ export const initializeEventListenersFactory =
                 revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
                 getStreamRoles: getStreamRolesFactory({ db: trx })
               }),
-              queryAllProjects: queryAllProjectsFactory({ getStreams }),
+              queryAllProjects: queryAllProjectsFactory({
+                getExplicitProjects: getExplicitProjects({ db })
+              }),
               getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
               getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
               getWorkspaceSeatTypeToProjectRoleMapping:

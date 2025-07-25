@@ -1,4 +1,5 @@
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import {
   GetLegacyProjectsExplainerCollapsedDocument,
   GetNewWorkspaceExplainerDismissedDocument,
@@ -7,7 +8,8 @@ import {
   SetNewWorkspaceExplainerDismissedDocument,
   SetSpeckleConBannerDismissedDocument
 } from '@/modules/core/graph/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 

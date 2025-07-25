@@ -1,4 +1,4 @@
-import Redis from 'ioredis'
+import type Redis from 'ioredis'
 
 export type CheckResponse = { isAlive: true } | { isAlive: false; err: unknown }
 export type RedisCheck = (params: { client: Redis }) => Promise<CheckResponse>

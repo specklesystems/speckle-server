@@ -19,10 +19,8 @@ import {
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
-import {
-  Resolvers,
-  TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { filteredSubscribe } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'

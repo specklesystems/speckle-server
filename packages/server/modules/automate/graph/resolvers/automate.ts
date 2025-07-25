@@ -8,10 +8,11 @@ import {
   getFunctionReleasesFactory,
   getUserGithubAuthState,
   getUserGithubOrganizations,
-  getUserFunctionsFactory
+  getUserFunctionsFactory,
+  regenerateFunctionToken
 } from '@/modules/automate/clients/executionEngine'
+import type { GetProjectAutomationsParams } from '@/modules/automate/repositories/automations'
 import {
-  GetProjectAutomationsParams,
   getAutomationFactory,
   getAutomationRunsItemsFactory,
   getAutomationRunsTotalCountFactory,
@@ -49,12 +50,11 @@ import {
   convertFunctionReleaseToGraphQLReturn,
   convertFunctionToGraphQLReturn,
   createFunctionFromTemplateFactory,
+  regenerateFunctionTokenFactory,
   updateFunctionFactory
 } from '@/modules/automate/services/functionManagement'
-import {
-  Resolvers,
-  AutomateRunTriggerType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { AutomateRunTriggerType } from '@/modules/core/graph/generated/graphql'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
@@ -79,14 +79,14 @@ import {
   AutomationNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
+import type { FunctionReleaseSchemaType } from '@/modules/automate/helpers/executionEngine'
 import {
-  FunctionReleaseSchemaType,
   dbToGraphqlTriggerTypeMap,
   functionTemplateRepos
 } from '@/modules/automate/helpers/executionEngine'
 import { authorizeResolver } from '@/modules/shared'
+import type { AutomationRevisionFunctionForInputRedaction } from '@/modules/automate/services/encryption'
 import {
-  AutomationRevisionFunctionForInputRedaction,
   getEncryptionKeyPair,
   getEncryptionKeyPairFor,
   getEncryptionPublicKey,
@@ -630,6 +630,31 @@ export default (FF_AUTOMATE_MODULE_ENABLED
               operationDescription: 'Update an Automate function'
             }
           )
+        },
+        regenerateFunctionToken: async (_parent, args, context) => {
+          const { functionId } = args
+
+          const authResult =
+            await context.authPolicies.automate.function.canRegenerateToken({
+              functionId,
+              userId: context.userId
+            })
+          throwIfAuthNotOk(authResult)
+
+          const logger = context.log.child({
+            functionId
+          })
+
+          return await regenerateFunctionTokenFactory({
+            regenerateFunctionToken,
+            getFunction: getFunctionFactory({ logger }),
+            createStoredAuthCode: createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })
+          })({
+            functionId,
+            userId: context.userId!
+          })
         }
       },
       ProjectAutomationMutations: {

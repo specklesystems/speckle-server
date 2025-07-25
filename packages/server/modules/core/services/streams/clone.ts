@@ -1,47 +1,47 @@
 import { StreamCloneError } from '@/modules/core/errors/stream'
-import {
+import type {
   BranchCommitRecord,
   StreamCommitRecord,
   UserRecord
 } from '@/modules/core/helpers/types'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { generateCommitId } from '@/modules/core/repositories/commits'
 import { chunk } from 'lodash-es'
 import { generateBranchId } from '@/modules/core/repositories/branches'
 import { generateCommentId } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'
-import { Knex } from 'knex'
-import {
+import type { Knex } from 'knex'
+import type {
   GetBatchedStreamComments,
   GetCommentLinks,
   InsertCommentLinks,
   InsertCommentPayload,
   InsertComments
 } from '@/modules/comments/domain/operations'
-import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
-import {
+import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import type {
   CloneStream,
   GetStream,
   StoreStream
 } from '@/modules/core/domain/streams/operations'
-import {
+import type {
   GetBatchedStreamObjects,
   StoreObjects
 } from '@/modules/core/domain/objects/operations'
-import {
+import type {
   GetBatchedBranchCommits,
   GetBatchedStreamCommits,
   InsertBranchCommits,
   InsertCommits,
   InsertStreamCommits
 } from '@/modules/core/domain/commits/operations'
-import {
+import type {
   GetBatchedStreamBranches,
   InsertBranches
 } from '@/modules/core/domain/branches/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetUser } from '@/modules/core/domain/users/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 

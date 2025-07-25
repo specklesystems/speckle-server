@@ -2,9 +2,9 @@
 import { type Registry, Counter } from 'prom-client'
 import { graphqlLogger } from '@/observability/logging'
 import { redactSensitiveVariables } from '@/observability/utils/redact'
-import { FieldNode, SelectionNode } from 'graphql'
-import { ApolloServerPlugin } from '@apollo/server'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { FieldNode, SelectionNode } from 'graphql'
+import type { ApolloServerPlugin } from '@apollo/server'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { shouldLogAsInfoLevel } from '@/observability/utils/logLevels'
 import { getRequestContext } from '@/observability/utils/requestContext'
 

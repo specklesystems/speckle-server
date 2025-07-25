@@ -1,5 +1,5 @@
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import {
+import type {
   AddOrUpdateStreamCollaborator,
   GetStream,
   GetStreamRoles,
@@ -10,17 +10,18 @@ import {
   SetStreamCollaborator,
   ValidateStreamAccess
 } from '@/modules/core/domain/streams/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 import {
   StreamAccessUpdateError,
   StreamInvalidAccessError
 } from '@/modules/core/errors/stream'
-import { StreamRecord } from '@/modules/core/helpers/types'
-import { AuthorizeResolver } from '@/modules/shared/domain/operations'
+import type { StreamRecord } from '@/modules/core/helpers/types'
+import type { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { BadRequestError, ForbiddenError, LogicError } from '@/modules/shared/errors'
-import { DependenciesOf } from '@/modules/shared/helpers/factory'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { ensureError, Roles, StreamRoles } from '@speckle/shared'
+import type { DependenciesOf } from '@/modules/shared/helpers/factory'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { StreamRoles } from '@speckle/shared'
+import { ensureError, Roles } from '@speckle/shared'
 
 /**
  * Check if user is a stream collaborator

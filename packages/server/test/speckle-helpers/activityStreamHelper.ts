@@ -1,4 +1,4 @@
-import { StreamActivityRecord } from '@/modules/activitystream/helpers/types'
+import type { StreamActivityRecord } from '@/modules/activitystream/helpers/types'
 import { StreamActivity } from '@/modules/core/dbSchema'
 
 export async function getStreamActivities(

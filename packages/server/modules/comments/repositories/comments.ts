@@ -1,4 +1,4 @@
-import {
+import type {
   CommentLinkRecord,
   CommentRecord,
   CommentLinkResourceType,
@@ -15,20 +15,18 @@ import {
   Objects,
   StreamCommits
 } from '@/modules/core/dbSchema'
-import {
-  ResourceIdentifier,
-  ResourceType
-} from '@/modules/core/graph/generated/graphql'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
+import type { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { ResourceType } from '@/modules/core/graph/generated/graphql'
+import type { Optional } from '@/modules/shared/helpers/typeHelper'
 import { clamp, keyBy, reduce } from 'lodash-es'
 import crs from 'crypto-random-string'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/dbHelper'
 import { isNullOrUndefined, SpeckleViewer } from '@speckle/shared'
-import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
-import { Merge } from 'type-fest'
-import {
+import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import type { Merge } from 'type-fest'
+import type {
   CheckStreamResourceAccess,
   DeleteComment,
   GetBatchedStreamComments,
@@ -56,14 +54,14 @@ import {
   ResolvePaginatedProjectCommentsLatestModelResources,
   UpdateComment
 } from '@/modules/comments/domain/operations'
-import {
+import type {
   BranchRecord,
   CommitRecord,
   ObjectRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
-import { ExtendedComment } from '@/modules/comments/domain/types'
-import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
+import type { ExtendedComment } from '@/modules/comments/domain/types'
+import type { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { ResourceMismatch } from '@/modules/shared/errors'

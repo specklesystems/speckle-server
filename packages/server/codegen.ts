@@ -20,6 +20,7 @@ const config: CodegenConfig = {
         'typed-document-node'
       ],
       config: {
+        useTypeImports: true,
         enumsAsConst: true,
         contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext',
         mappers: {
@@ -60,6 +61,8 @@ const config: CodegenConfig = {
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           CommentMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
+          AutomateFunctionPermissionChecks:
+            '@/modules/automate/helpers/graphTypes#AutomateFunctionPermissionChecksGraphQLReturn',
           AutomateMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           AdminMutations:

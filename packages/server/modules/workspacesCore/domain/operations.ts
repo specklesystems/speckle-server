@@ -1,4 +1,4 @@
-import { WorkspaceAcl, WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceAcl, WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
 
 export type GetWorkspaceRolesAndSeats = (params: {
   workspaceId: string

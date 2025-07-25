@@ -1,4 +1,4 @@
-import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
+import type { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { pick } from 'lodash-es'
 
 /**

@@ -1,5 +1,5 @@
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
-import {
+import type {
   AssociateSsoProviderWithWorkspace,
   GetOidcProviderData,
   GetWorkspaceSsoProvider,
@@ -12,15 +12,15 @@ import {
   GetUserSsoSession,
   DeleteSsoProvider
 } from '@/modules/workspaces/domain/sso/operations'
-import {
+import type {
   SsoProviderRecord,
   UserSsoSessionRecord,
   WorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/types'
 import { SsoProviderTypeNotSupportedError } from '@/modules/workspaces/errors/sso'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
-import Redis from 'ioredis'
-import { Knex } from 'knex'
+import type { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import type Redis from 'ioredis'
+import type { Knex } from 'knex'
 import { omit } from 'lodash-es'
 
 type Crypt = (input: string) => Promise<string>

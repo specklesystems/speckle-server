@@ -5,136 +5,157 @@
     :buttons="buttons"
     title="Embed model"
   >
-    <CommonAlert v-if="multipleVersionedResources" class="mb-4" color="info" size="xs">
-      <template #title>You are embedding a specific version</template>
-      <template #description>
-        <p>
-          Anyone with this embed link can view your model data. Be careful where you
-          share it!
-        </p>
-      </template>
-    </CommonAlert>
+    <template v-if="canGenerateEmbed">
+      <CommonAlert
+        v-if="multipleVersionedResources"
+        class="mb-4"
+        color="info"
+        size="xs"
+      >
+        <template #title>You are embedding a specific version</template>
+        <template #description>
+          <p>
+            Anyone with this embed link can view your model data. Be careful where you
+            share it!
+          </p>
+        </template>
+      </CommonAlert>
 
-    <CommonAlert
-      v-if="!isPublicProject && canCreateEmbedTokens"
-      class="mb-4"
-      color="info"
-      size="2xs"
-    >
-      <template #title>
-        You are embedding a
-        <span class="lowercase">{{ projectVisibility }}</span>
-        project
-      </template>
-      <template #description>
-        <p>
-          Anyone with this embed link can view your model, be careful where you share
-          it.
-        </p>
-      </template>
-    </CommonAlert>
+      <CommonAlert
+        v-if="!isPublicProject && canCreateEmbedTokens"
+        class="mb-4"
+        color="info"
+        size="2xs"
+      >
+        <template #title>
+          You are embedding a
+          <span class="lowercase">{{ projectVisibility }}</span>
+          project
+        </template>
+        <template #description>
+          <p>
+            Anyone with this embed link can view your model, be careful where you share
+            it.
+          </p>
+        </template>
+      </CommonAlert>
 
-    <div class="flex flex-col lg:flex-row gap-8 mb-6">
-      <div class="flex-1 order-1 lg:order-2">
-        <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed code</h4>
-        <FormClipboardInput :value="iframeCode" is-multiline />
-        <p class="text-body-xs text-foreground-2 mt-2 mb-5 ml-0.5">
-          Copy this code to embed your model in a webpage or document.
-        </p>
-        <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed URL</h4>
-        <FormClipboardInput class="mb-4" :value="updatedUrl" />
-        <LayoutDialogSection border-b border-t title="Options">
-          <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
-            <div v-for="option in embedDialogOptions" :key="option.id">
-              <label
-                :for="`option-${option.id}`"
-                class="flex items-center gap-1 cursor-pointer max-w-max"
-              >
-                <FormCheckbox
-                  :id="`option-${option.id}`"
-                  :model-value="option.value.value"
-                  :name="option.label"
-                  hide-label
-                  class="cursor-pointer"
-                  @update:model-value="
-                    (newValue) => updateOption(option.value, newValue)
-                  "
-                />
-                <span>{{ option.label }}</span>
-              </label>
-            </div>
-            <div v-if="isWorkspacesEnabled">
-              <label
-                :for="`option-hide-logo`"
-                class="flex items-center gap-1 cursor-pointer max-w-max"
-              >
-                <FormCheckbox
-                  id="option-hide-logo"
-                  v-model="hideSpeckleBranding"
-                  name="Hide Speckle logo"
-                  hide-label
-                  class="cursor-pointer"
-                  :disabled="
-                    workspaceHideSpeckleBrandingEnabled ||
-                    !canEditEmbedOptions?.authorized
-                  "
-                />
-                <div class="flex flex-col gap-0.5">
-                  <span
-                    :key="`hide-branding-tooltip-${workspaceHideSpeckleBrandingEnabled}`"
-                    v-tippy="hideSpeckleBrandingTooltip"
-                  >
-                    Hide Speckle logo
-                  </span>
-                  <span
-                    v-if="
-                      !canEditEmbedOptions?.authorized &&
-                      canEditEmbedOptions?.code === 'WorkspaceNoFeatureAccess'
+      <div class="flex flex-col lg:flex-row gap-8 mb-6">
+        <div class="flex-1 order-1 lg:order-2">
+          <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed code</h4>
+          <FormClipboardInput :value="iframeCode" is-multiline />
+          <p class="text-body-xs text-foreground-2 mt-2 mb-5 ml-0.5">
+            Copy this code to embed your model in a webpage or document.
+          </p>
+          <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed URL</h4>
+          <FormClipboardInput class="mb-4" :value="updatedUrl" />
+          <LayoutDialogSection border-b border-t title="Options">
+            <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
+              <div v-for="option in embedDialogOptions" :key="option.id">
+                <label
+                  :for="`option-${option.id}`"
+                  class="flex items-center gap-1 cursor-pointer max-w-max"
+                >
+                  <FormCheckbox
+                    :id="`option-${option.id}`"
+                    :model-value="option.value.value"
+                    :name="option.label"
+                    hide-label
+                    class="cursor-pointer"
+                    @update:model-value="
+                      (newValue) => updateOption(option.value, newValue)
                     "
-                    class="text-body-2xs text-foreground-2"
-                  >
-                    This feature is only available on the business plan
-                    <NuxtLink
-                      :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
-                      class="underline"
+                  />
+                  <span>{{ option.label }}</span>
+                </label>
+              </div>
+              <div v-if="isWorkspacesEnabled">
+                <label
+                  :for="`option-hide-logo`"
+                  class="flex items-center gap-1 cursor-pointer max-w-max"
+                >
+                  <FormCheckbox
+                    id="option-hide-logo"
+                    v-model="hideSpeckleBranding"
+                    name="Hide Speckle logo"
+                    hide-label
+                    class="cursor-pointer"
+                    :disabled="
+                      workspaceHideSpeckleBrandingEnabled ||
+                      !canEditEmbedOptions?.authorized
+                    "
+                  />
+                  <div class="flex flex-col gap-0.5">
+                    <span
+                      :key="`hide-branding-tooltip-${workspaceHideSpeckleBrandingEnabled}`"
+                      v-tippy="hideSpeckleBrandingTooltip"
                     >
-                      upgrade now
-                    </NuxtLink>
-                  </span>
-                  <span
-                    v-if="hideSpeckleBranding && !workspaceHideSpeckleBrandingEnabled"
-                    class="text-body-2xs text-foreground-2"
-                  >
-                    Tip: You can also hide the logo for all embeds in
-                    <NuxtLink
-                      :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
-                      class="underline"
+                      Hide Speckle logo
+                    </span>
+                    <span
+                      v-if="
+                        !canEditEmbedOptions?.authorized &&
+                        canEditEmbedOptions?.code === 'WorkspaceNoFeatureAccess'
+                      "
+                      class="text-body-2xs text-foreground-2"
                     >
-                      workspace settings.
-                    </NuxtLink>
-                  </span>
-                </div>
-              </label>
+                      This feature is only available on the business plan
+                      <NuxtLink
+                        :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
+                        class="underline"
+                      >
+                        upgrade now
+                      </NuxtLink>
+                    </span>
+                    <span
+                      v-if="hideSpeckleBranding && !workspaceHideSpeckleBrandingEnabled"
+                      class="text-body-2xs text-foreground-2"
+                    >
+                      Tip: You can also hide the logo for all embeds in
+                      <NuxtLink
+                        :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
+                        class="underline"
+                      >
+                        workspace settings.
+                      </NuxtLink>
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
-          </div>
-        </LayoutDialogSection>
-        <LayoutDialogSection
-          v-if="!isSmallerOrEqualSm"
-          lazy-load
-          border-b
-          title="Preview"
-        >
-          <ProjectModelPageDialogEmbedIframe
+          </LayoutDialogSection>
+          <LayoutDialogSection
             v-if="!isSmallerOrEqualSm"
-            :src="updatedUrl"
+            lazy-load
+            border-b
             title="Preview"
-            width="600"
-            height="400"
-            class="shrink-0 w-[600px] h-[400px] mx-auto border border-outline-2"
-          />
-        </LayoutDialogSection>
+          >
+            <ProjectModelPageDialogEmbedIframe
+              v-if="!isSmallerOrEqualSm"
+              :src="updatedUrl"
+              title="Preview"
+              width="600"
+              height="400"
+              class="shrink-0 w-[600px] h-[400px] mx-auto border border-outline-2"
+            />
+          </LayoutDialogSection>
+        </div>
       </div>
-    </div>
+    </template>
+    <template v-else>
+      <CommonAlert color="info" size="xs">
+        <template #title>
+          Cannot embed
+          <span class="lowercase">'{{ project.visibility }}'</span>
+          project
+        </template>
+        <template #description>
+          <p>
+            {{ cantGenerateDialogDescription }}
+          </p>
+        </template>
+      </CommonAlert>
+    </template>
   </LayoutDialog>
 </template>
 
@@ -184,7 +205,7 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const { track } = useMixpanel()
+const mixpanel = useMixpanel()
 const route = useRoute()
 const { copy } = useClipboard()
 const {
@@ -239,7 +260,7 @@ const updatedUrl = computed(() => {
 
   // Add token parameter if embed token exists
   if (embedToken.value) {
-    url.searchParams.set('token', embedToken.value)
+    url.searchParams.set('embedToken', embedToken.value)
   }
 
   // Construct the embed options as a hash fragment
@@ -277,13 +298,17 @@ const buttons = computed((): LayoutDialogButton[] => [
       isOpen.value = false
     }
   },
-  {
-    text: 'Copy embed code',
-    props: {},
-    onClick: () => {
-      handleEmbedCodeCopy(iframeCode.value)
-    }
-  }
+  ...(isPublicProject.value || (!isPublicProject.value && canCreateEmbedTokens.value)
+    ? [
+        {
+          text: 'Copy embed code',
+          props: {},
+          onClick: () => {
+            handleEmbedCodeCopy(iframeCode.value)
+          }
+        }
+      ]
+    : [])
 ])
 
 const workspaceSlug = computed(() => {
@@ -311,6 +336,17 @@ const hideSpeckleBrandingTooltip = computed(() => {
     return 'Speckle branding is disabled for all embeds in this workspace'
   }
   return ''
+})
+const canGenerateEmbed = computed(() => {
+  return isPublicProject.value || (!isPublicProject.value && canCreateEmbedTokens.value)
+})
+const cantGenerateDialogDescription = computed(() => {
+  if (
+    props.project.permissions?.canCreateEmbedTokens?.code === 'WorkspaceNoFeatureAccess'
+  ) {
+    return `Embedding ${props.project.visibility.toLowerCase()} projects is not available on your plan. Upgrade your workspace to get access to this feature.`
+  }
+  return `The visibility of this project is set to '${props.project.visibility.toLowerCase()}'. Please contact the project owner to change the visibility or generate an embed link.`
 })
 
 const handleEmbedCodeCopy = async (value: string) => {
@@ -372,13 +408,13 @@ watch(
   isOpen,
   async (newValue) => {
     if (newValue) {
-      track('Embed Dialog Opened', {
+      mixpanel.track('Embed Dialog Opened', {
         projectId: props.project.id,
         visibility: projectVisibility.value
       })
 
       if (canCreateEmbedTokens.value) {
-        track('Embed Token Created', {
+        mixpanel.track('Embed Token Created', {
           projectId: props.project.id,
           visibility: projectVisibility.value
         })

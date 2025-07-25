@@ -1,22 +1,22 @@
-import { GetStream } from '@/modules/core/domain/streams/operations'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   isResourceAllowed,
   RoleResourceTargets,
   roleResourceTypeToTokenResourceType
 } from '@/modules/core/helpers/token'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import {
+import type {
   AuthorizeResolver,
   GetUserAclRole,
   GetUserServerRole,
   ValidateScopes
 } from '@/modules/shared/domain/operations'
-import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
+import type { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
+import type { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
 import { isNullOrUndefined, Roles } from '@speckle/shared'
 import { OperationTypeNode } from 'graphql'
 

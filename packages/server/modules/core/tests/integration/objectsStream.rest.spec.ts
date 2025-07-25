@@ -30,7 +30,8 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -41,10 +42,11 @@ import {
 import { Scopes } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { generateManyObjects } from '@/test/helpers'
-import { RawSpeckleObject } from '@/modules/core/domain/objects/types'
+import type { RawSpeckleObject } from '@/modules/core/domain/objects/types'
 import { storeObjectsIfNotFoundFactory } from '@/modules/core/repositories/objects'
 import { expect } from 'chai'
-import { parse, Parser } from 'csv-parse'
+import type { Parser } from 'csv-parse'
+import { parse } from 'csv-parse'
 import { createReadStream } from 'fs'
 import { createObjectsBatchedAndNoClosuresFactory } from '@/modules/core/services/objects/management'
 

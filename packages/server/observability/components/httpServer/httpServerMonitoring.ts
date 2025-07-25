@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 import type { Nullable } from '@speckle/shared'
-import { Registry, Gauge } from 'prom-client'
+import type { Registry } from 'prom-client'
+import { Gauge } from 'prom-client'
 import type { Server } from 'http'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

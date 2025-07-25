@@ -1,5 +1,6 @@
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import {
   AdminProjectListDocument,
   AppTokenCreateDocument,
@@ -10,13 +11,11 @@ import {
   RevokeTokenDocument,
   TokenAppInfoDocument
 } from '@/modules/core/graph/generated/graphql'
-import {
-  TestApolloServer,
-  createTestContext,
-  testApolloServer
-} from '@/test/graphqlHelper'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { AllScopes, Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'

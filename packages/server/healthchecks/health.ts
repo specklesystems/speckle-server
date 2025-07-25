@@ -1,7 +1,7 @@
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 import { join, merge } from 'lodash-es'
 import VError from 'verror'
-import {
+import type {
   FreeConnectionsCalculators,
   MultiDBCheck,
   ReadinessHandler,

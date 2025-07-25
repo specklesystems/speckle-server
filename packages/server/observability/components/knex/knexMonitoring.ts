@@ -1,7 +1,7 @@
 import { type Registry, Summary, Counter, Gauge, Histogram } from 'prom-client'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { type Knex } from 'knex'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash-es'
 import {
@@ -10,6 +10,7 @@ import {
   isTaskContext
 } from '@/observability/utils/requestContext'
 import { collectLongTrace, TIME, TIME_MS } from '@speckle/shared'
+import { isNumber } from 'lodash-es'
 
 let metricQueryDuration: Summary<string>
 let metricQueryErrors: Counter<string>
@@ -264,7 +265,9 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
     }
 
     const trace = stackTrace || collectLongTrace()
-    params.logger.debug(
+    const tooLong = isNumber(durationMs) && durationMs > 500 // over 500ms
+
+    params.logger[tooLong ? 'warn' : 'debug'](
       {
         region,
         sql: data.sql,

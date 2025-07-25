@@ -1,6 +1,7 @@
 import { db } from '@/db/knex'
 import { StreamAcl, Streams } from '@/modules/core/dbSchema'
-import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   deleteProjectFactory,
   getProjectFactory
@@ -11,19 +12,19 @@ import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
   assignToWorkspaces,
-  BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { describeEach, itEach } from '@/test/assertionHelper'
-import {
-  BasicTestUser,
-  createTestUser,
-  createTestUsers,
-  login
-} from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers, login } from '@/test/authHelper'
+import type {
+  GetWorkspaceProjectsQuery,
+  ProjectUpdateRoleInput
+} from '@/modules/core/graph/generated/graphql'
 import {
   ActiveUserProjectsDocument,
   ActiveUserProjectsWorkspaceDocument,
@@ -31,33 +32,27 @@ import {
   GetProjectDocument,
   GetWorkspaceDocument,
   GetWorkspaceProjectsDocument,
-  GetWorkspaceProjectsQuery,
   GetWorkspaceTeamDocument,
   MoveProjectToWorkspaceDocument,
-  ProjectUpdateRoleInput,
   ProjectVisibility,
   UpdateProjectDocument,
   UpdateProjectRoleDocument,
   UpdateWorkspaceProjectRoleDocument
 } from '@/modules/core/graph/generated/graphql'
-import {
-  ExecuteOperationResponse,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+import type { ExecuteOperationResponse, TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { mockAdminOverride } from '@/test/mocks/global'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
   addToStream,
-  BasicTestStream,
   createTestStream,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
+import type { Nullable, Optional } from '@speckle/shared'
 import {
   isNonNullable,
-  Nullable,
-  Optional,
   PaidWorkspacePlans,
   Roles,
   WorkspacePlans
@@ -65,7 +60,7 @@ import {
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { times } from 'lodash-es'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })

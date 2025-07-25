@@ -1,6 +1,6 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { isUndefined } from 'lodash-es'
-import {
+import type {
   GetPaginatedBranchCommentsFactory,
   GetPaginatedBranchCommentsPage,
   GetPaginatedBranchCommentsTotalCount,
@@ -15,7 +15,7 @@ import {
   PaginatedProjectCommentsParams,
   ResolvePaginatedProjectCommentsLatestModelResources
 } from '@/modules/comments/domain/operations'
-import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
+import type { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 
 export const getPaginatedCommitCommentsFactory =
   (deps: {

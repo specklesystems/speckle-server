@@ -1,5 +1,5 @@
-import { BillingInterval } from '@/modules/core/graph/generated/graphql'
-import { WorkspacePlan } from '@speckle/shared'
+import type { BillingInterval } from '@/modules/core/graph/generated/graphql'
+import type { WorkspacePlan } from '@speckle/shared'
 
 export const gatekeeperEventNamespace = 'gatekeeper' as const
 

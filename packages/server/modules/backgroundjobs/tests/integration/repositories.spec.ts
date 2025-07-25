@@ -1,14 +1,15 @@
-import { db } from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import {
   storeBackgroundJobFactory,
   getBackgroundJobFactory,
-  BackgroundJobs
+  BackgroundJobs,
+  getBackgroundJobCountFactory
 } from '@/modules/backgroundjobs/repositories'
-import {
+import type {
   BackgroundJob,
-  BackgroundJobPayload,
-  BackgroundJobStatus
+  BackgroundJobPayload
 } from '@/modules/backgroundjobs/domain'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
 import { expect } from 'chai'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 
@@ -20,9 +21,10 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     originServerUrl
   })
   const getBackgroundJob = getBackgroundJobFactory({ db })
+  const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
 
   type TestJobPayload = BackgroundJobPayload & {
-    jobType: 'test-job'
+    jobType: 'fileImport'
     payloadVersion: 1
     testData: string
   }
@@ -31,9 +33,9 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     overrides: Partial<BackgroundJob<TestJobPayload>> = {}
   ): BackgroundJob<TestJobPayload> => ({
     id: createRandomString(10),
-    jobType: 'test-job',
+    jobType: 'fileImport',
     payload: {
-      jobType: 'test-job',
+      jobType: 'fileImport',
       payloadVersion: 1,
       testData: 'test-data-value'
     },
@@ -55,7 +57,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     it('should store a background job in the database', async () => {
       const job = createTestJob({
         payload: {
-          jobType: 'test-job',
+          jobType: 'fileImport',
           payloadVersion: 1,
           testData: 'complex-test-data'
         }
@@ -101,6 +103,77 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       const retrievedJob = await getBackgroundJob({ jobId: nonExistentId })
 
       expect(retrievedJob).to.be.null
+    })
+  })
+
+  describe('getBackgroundJobCount', () => {
+    it('counts all background jobs given a status and a jobType', async () => {
+      const queuedJob = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Queued
+      })
+      const anotherQueuedJob = createTestJob({
+        jobType: 'fileImport-2' as unknown as 'fileImport',
+        status: BackgroundJobStatus.Queued
+      })
+      const failedJob = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Failed
+      })
+      await storeBackgroundJob({ job: queuedJob })
+      await storeBackgroundJob({ job: failedJob })
+      await storeBackgroundJob({ job: anotherQueuedJob })
+
+      const count = await getBackgroundJobCount({
+        status: BackgroundJobStatus.Queued,
+        jobType: 'fileImport'
+      })
+
+      expect(count).to.equal(1)
+    })
+
+    it('is able to count locked jobs', async () => {
+      const job = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Queued
+      })
+      await storeBackgroundJob({ job })
+
+      const trx = await knex.transaction()
+      await trx().from(BackgroundJobs.name).where({ id: job.id }).forUpdate().first() // acquire lock
+
+      const [processingCount, queuedCount] = await Promise.all([
+        getBackgroundJobCount({ status: 'processing', jobType: 'fileImport' }),
+        getBackgroundJobCount({ status: 'queued', jobType: 'fileImport' })
+      ])
+
+      expect(processingCount).to.equal(1)
+      expect(queuedCount).to.equal(0)
+
+      await trx.commit()
+    })
+
+    it('filters by min attempts', async () => {
+      const pendingJob = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Queued,
+        attempt: 0
+      })
+      const waitingJob = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Queued,
+        attempt: 1
+      })
+      await storeBackgroundJob({ job: pendingJob })
+      await storeBackgroundJob({ job: waitingJob })
+
+      const count = await getBackgroundJobCount({
+        status: BackgroundJobStatus.Queued,
+        jobType: 'fileImport',
+        minAttempts: 1
+      })
+
+      expect(count).to.equal(1)
     })
   })
 })

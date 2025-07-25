@@ -1,7 +1,7 @@
-import { EmbedApiTokenRecord } from '@/modules/auth/helpers/types'
-import { ApiTokenRecord } from '@/modules/auth/repositories'
+import type { EmbedApiTokenRecord } from '@/modules/auth/helpers/types'
+import type { ApiTokenRecord } from '@/modules/auth/repositories'
 import { ApiTokens, EmbedApiTokens } from '@/modules/core/dbSchema'
-import {
+import type {
   CountProjectEmbedTokens,
   ListProjectEmbedTokens,
   RevokeEmbedTokenById,
@@ -9,7 +9,7 @@ import {
   StoreEmbedApiToken
 } from '@/modules/core/domain/tokens/operations'
 import { UserInputError } from '@/modules/core/errors/userinput'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { clamp } from 'lodash-es'
 
 const tables = {

@@ -1,7 +1,8 @@
 import { db } from '@/db/knex'
-import { BasicTestUser, buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
-  BasicTestWorkspace,
   buildBasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
@@ -16,7 +17,7 @@ import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/service
 import { logger } from '@/observability/logging'
 import {
   deleteStreamFactory,
-  legacyGetStreamsFactory
+  getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -45,7 +46,7 @@ describe('WorkspaceCreationState services', () => {
       deleteProject: deleteStreamFactory({ db }),
       deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
       queryAllProjects: queryAllProjectsFactory({
-        getStreams: legacyGetStreamsFactory({ db })
+        getExplicitProjects: getExplicitProjects({ db })
       }),
       deleteSsoProvider: deleteSsoProviderFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit

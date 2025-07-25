@@ -1,9 +1,12 @@
 /* istanbul ignore file */
+import type cron from 'node-cron'
 import { moduleLogger, previewLogger as logger } from '@/observability/logging'
-
+import { buildConsumePreviewResult } from '@/modules/previews/resultListener'
 import {
   disablePreviews,
+  getFeatureFlags,
   getPreviewServiceRedisUrl,
+  getPreviewServiceRetryPeriodMinutes,
   getRedisUrl,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
@@ -15,17 +18,27 @@ import {
   initializeMetrics,
   observeMetricsFactory
 } from '@/modules/previews/observability/metrics'
-import { responseHandlerFactory } from '@/modules/previews/services/responses'
-import { createRequestAndResponseQueues } from '@/modules/previews/clients/bull'
-import { buildConsumePreviewResult } from '@/modules/previews/resultListener'
 import {
   requestActiveHandlerFactory,
   requestErrorHandlerFactory,
   requestFailedHandlerFactory
 } from '@/modules/previews/queues/previews'
-import type { BuildUpdateObjectPreview } from '@/modules/previews/domain/operations'
+import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { db } from '@/db/knex'
+import { createRequestAndResponseQueues } from '@/modules/previews/clients/bull'
+import { responseHandlerFactory } from '@/modules/previews/services/responses'
 import { updateObjectPreviewFactory } from '@/modules/previews/repository/previews'
+import type { BuildUpdateObjectPreview } from '@/modules/previews/domain/operations'
+import { scheduleRetryFailedPreviews } from '@/modules/previews/tasks/tasks'
+
+const { FF_RETRY_ERRORED_PREVIEWS_ENABLED } = getFeatureFlags()
+
+let scheduledTasks: cron.ScheduledTask[] = []
 
 const JobQueueName = 'preview-service-jobs'
 const ResponseQueueNamePrefix = 'preview-service-results'
@@ -50,6 +63,11 @@ export const init: SpeckleModule['init'] = async ({
   } else {
     moduleLogger.info('📸 Init object preview module')
   }
+
+  const scheduleExecution = scheduleExecutionFactory({
+    acquireTaskLock: acquireTaskLockFactory({ db }),
+    releaseTaskLock: releaseTaskLockFactory({ db })
+  })
 
   const responseQueueName = `${ResponseQueueNamePrefix}-${
     new URL(getServerOrigin()).hostname
@@ -77,6 +95,19 @@ export const init: SpeckleModule['init'] = async ({
     return
   }
 
+  scheduledTasks = [
+    ...(FF_RETRY_ERRORED_PREVIEWS_ENABLED
+      ? [
+          await scheduleRetryFailedPreviews({
+            scheduleExecution,
+            previewRequestQueue,
+            responseQueueName,
+            cronExpression: `*/${getPreviewServiceRetryPeriodMinutes()} * * * *`
+          })
+        ]
+      : [])
+  ]
+
   const { previewJobsProcessedSummary } = initializeMetrics({
     registers: [metricsRegister],
     previewRequestQueue,
@@ -99,3 +130,9 @@ export const init: SpeckleModule['init'] = async ({
 }
 
 export const finalize = () => {}
+
+export const shutdown: SpeckleModule['shutdown'] = async () => {
+  scheduledTasks.forEach((task) => {
+    task.stop()
+  })
+}

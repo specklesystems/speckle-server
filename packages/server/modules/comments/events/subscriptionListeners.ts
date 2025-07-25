@@ -1,12 +1,12 @@
 import { CommentEvents } from '@/modules/comments/domain/events'
-import { GetViewerResourcesForComment } from '@/modules/comments/domain/operations'
+import type { GetViewerResourcesForComment } from '@/modules/comments/domain/operations'
 import { ProjectCommentsUpdatedMessageType } from '@/modules/core/graph/generated/graphql'
-import { DependenciesOf } from '@/modules/shared/helpers/factory'
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { DependenciesOf } from '@/modules/shared/helpers/factory'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { PublishSubscription } from '@/modules/shared/utils/subscriptions'
 import {
   CommentSubscriptions,
-  ProjectSubscriptions,
-  PublishSubscription
+  ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 
 const reportCommentCreatedFactory =

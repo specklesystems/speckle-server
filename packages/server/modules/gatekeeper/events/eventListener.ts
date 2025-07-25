@@ -15,8 +15,8 @@ import {
 } from '@/modules/gatekeeper/helpers/prices'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { Knex } from 'knex'
-import { GetStripeClient } from '@/modules/gatekeeper/domain/billing'
+import type { Knex } from 'knex'
+import type { GetStripeClient } from '@/modules/gatekeeper/domain/billing'
 
 export const initializeEventListenersFactory =
   ({ db, getStripeClient }: { db: Knex; getStripeClient: GetStripeClient }) =>

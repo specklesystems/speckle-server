@@ -7,29 +7,27 @@ import {
   StreamCommits,
   Streams
 } from '@/modules/core/dbSchema'
-import {
+import type {
   BranchCommitRecord,
   BranchRecord,
   CommitRecord,
-  ProjectRecordVisibility,
   StreamAclRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { clamp, uniq, uniqBy, reduce, keyBy, mapValues } from 'lodash-es'
 import crs from 'crypto-random-string'
-import {
-  BatchedSelectOptions,
-  executeBatchedSelect
-} from '@/modules/shared/helpers/dbHelper'
-import { Knex } from 'knex'
-import { MaybeNullOrUndefined, Optional } from '@speckle/shared'
-import {
+import type { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
+import type { Knex } from 'knex'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
+import type {
   CommitWithStreamBranchId,
   CommitWithStreamBranchMetadata,
   LegacyStreamCommit,
   LegacyUserCommit
 } from '@/modules/core/domain/commits/types'
-import {
+import type {
   StoreCommit,
   DeleteCommit,
   DeleteCommits,

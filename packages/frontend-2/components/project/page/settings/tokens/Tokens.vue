@@ -9,9 +9,10 @@
     <h3 class="text-heading-sm mt-6 mb-4">Embed tokens</h3>
     <LayoutTable
       :columns="[
-        { id: 'createdAt', header: 'Created at', classes: 'col-span-4' },
-        { id: 'lastUsed', header: 'Last used', classes: 'col-span-4' },
-        { id: 'createdBy', header: 'Created by', classes: 'col-span-4' }
+        { id: 'createdAt', header: 'Created at', classes: 'col-span-3' },
+        { id: 'lastUsed', header: 'Last used', classes: 'col-span-3' },
+        { id: 'createdBy', header: 'Created by', classes: 'col-span-3' },
+        { id: 'resourceIdString', header: 'Resource ID', classes: 'col-span-3' }
       ]"
       :items="embedTokens"
       :buttons="
@@ -36,6 +37,11 @@
         <span class="flex items-center gap-2">
           <UserAvatar :user="item.user" size="sm" />
           {{ item.user?.name }}
+        </span>
+      </template>
+      <template #resourceIdString="{ item }">
+        <span class="text-body-xs text-foreground truncate">
+          {{ item.resourceIdString }}
         </span>
       </template>
     </LayoutTable>
@@ -70,6 +76,7 @@ graphql(`
     createdAt
     lastUsed
     tokenId
+    resourceIdString
     user {
       id
       avatar

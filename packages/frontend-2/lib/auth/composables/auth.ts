@@ -26,6 +26,7 @@ import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import type { ActiveUserMainMetadataQuery } from '~~/lib/common/generated/gql/graphql'
 import { useScopedState } from '~/lib/common/composables/scopedState'
 import type { ApolloClient } from '@apollo/client/core'
+import { AuthFailedError } from '~/lib/auth/errors/errors'
 
 type UseOnAuthStateChangeCallback = (
   user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']>,
@@ -167,11 +168,6 @@ export const useAuthCookie = () =>
     maxAge: 60 * 60 * 24 * 30 // 30 days
   })
 
-export const useEmbedTokenCookie = () =>
-  useSynchronizedCookie<Optional<string>>('embedToken', {
-    maxAge: 60 * 60 * 24 * 30 // 30 days
-  })
-
 export const useAuthManager = (
   options?: Partial<{
     /**
@@ -195,6 +191,7 @@ export const useAuthManager = (
   const getMixpanel = useDeferredMixpanel()
   const postAuthRedirect = usePostAuthRedirect()
   const { markLoggedOut } = useJustLoggedOutTracking()
+  const logger = useLogger()
 
   /**
    * Invite token, if any
@@ -207,9 +204,9 @@ export const useAuthManager = (
   const authToken = useAuthCookie()
 
   /**
-   * Observable embed token cookie
+   * Token used for embedding
    */
-  const embedToken = useEmbedTokenCookie()
+  const embedToken = computed(() => route.query.embedToken as Optional<string>)
 
   /**
    * Get the effective auth token (embed token takes precedence)
@@ -243,10 +240,17 @@ export const useAuthManager = (
     options?: Partial<{ skipRedirect: boolean }>
   ) => {
     const accessCode = route.query['access_code'] as Optional<string>
-    const challenge = SafeLocalStorage.get(LocalStorageKeys.AuthAppChallenge) || ''
-    if (!accessCode) return
 
     try {
+      const challenge = SafeLocalStorage.get(LocalStorageKeys.AuthAppChallenge) || ''
+      if (!challenge.length) {
+        throw new AuthFailedError(
+          'Empty challenge, cannot finalize login. Please reload the page and try again or contact support.'
+        )
+      }
+
+      if (!accessCode) return
+
       const newToken = await getTokenFromAccessCode({
         accessCode,
         challenge,
@@ -320,11 +324,13 @@ export const useAuthManager = (
 
             postAuthRedirect.popAndFollowRedirect()
           } catch (e) {
+            const err = ensureError(e)
             triggerNotification({
               type: ToastNotificationType.Danger,
               title: 'Authentication failed',
-              description: `${ensureError(e).message}`
+              description: err.message
             })
+            logger.error({ err }, 'Failed to finalize login with access code')
           }
         }
       },
@@ -337,11 +343,9 @@ export const useAuthManager = (
    */
   const watchEmbedToken = () => {
     watch(
-      () => route.query['token'] as Optional<string>,
+      () => embedToken.value,
       async (newVal, oldVal) => {
-        if (newVal && newVal !== oldVal && newVal !== embedToken.value) {
-          embedToken.value = newVal
-          // Reset auth state to reload user data with new token
+        if (newVal && newVal !== oldVal) {
           await resetAuthState()
         }
       },
@@ -434,13 +438,6 @@ export const useAuthManager = (
   }
 
   /**
-   * Clear embed token
-   */
-  const clearEmbedToken = () => {
-    embedToken.value = undefined
-  }
-
-  /**
    * Log out
    */
   const logout = async (
@@ -455,7 +452,6 @@ export const useAuthManager = (
     }>
   ) => {
     await saveNewToken(undefined, { skipRedirect: true })
-    clearEmbedToken()
 
     if (!options?.skipToast) {
       triggerNotification({
@@ -484,7 +480,6 @@ export const useAuthManager = (
     authToken,
     embedToken,
     effectiveAuthToken,
-    clearEmbedToken,
     loginWithEmail,
     signUpWithEmail,
     signInOrSignUpWithSso,

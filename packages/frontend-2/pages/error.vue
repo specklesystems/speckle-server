@@ -1,5 +1,5 @@
 <template>
-  <ErrorPageRenderer :error="error" />
+  <ErrorPageRenderer :error="error" is-generic-error-page />
 </template>
 <script setup lang="ts">
 import type { Optional } from '@speckle/shared'
@@ -22,6 +22,6 @@ const error = computed(() => ({
 }))
 
 useHead({
-  title: computed(() => `${error.value.statusCode} - ${error.value.message}`)
+  title: computed(() => `Error: ${error.value.message}`)
 })
 </script>

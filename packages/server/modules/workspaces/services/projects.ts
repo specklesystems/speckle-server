@@ -1,5 +1,6 @@
-import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
-import {
+import type { StreamRecord } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type {
   GetDefaultRegion,
   GetWorkspaceDomains,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
@@ -14,15 +15,19 @@ import {
   WorkspaceInvalidRoleError,
   WorkspaceNotFoundError
 } from '@/modules/workspaces/errors/workspace'
-import { GetProject, UpdateProject } from '@/modules/core/domain/projects/operations'
+import type {
+  GetProject,
+  UpdateProject
+} from '@/modules/core/domain/projects/operations'
 import { chunk } from 'lodash-es'
-import { Roles, WorkspaceRoles } from '@speckle/shared'
-import {
+import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type {
   GetStreamCollaborators,
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
-import { WorkspaceProjectCreateInput } from '@/modules/core/graph/generated/graphql'
+import type { WorkspaceProjectCreateInput } from '@/modules/core/graph/generated/graphql'
 import {
   getDb,
   getValidDefaultProjectRegionKey
@@ -44,16 +49,16 @@ import {
   getWorkspaceFactory,
   upsertWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import {
+import type {
   GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats,
-  GetWorkspaceWithPlan,
-  WorkspaceSeatType
+  GetWorkspaceWithPlan
 } from '@/modules/gatekeeper/domain/billing'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
-import { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
-import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import type { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
+import type { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 type MoveProjectToWorkspaceArgs = {
   projectId: string

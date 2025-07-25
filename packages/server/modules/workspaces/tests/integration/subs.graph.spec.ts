@@ -13,29 +13,27 @@ import {
   validateSlugFactory
 } from '@/modules/workspaces/services/management'
 import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/projects'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
-  BasicTestWorkspace,
   createTestWorkspace,
   unassignFromWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import {
-  buildInvitesGraphqlOperations,
-  TestInvitesGraphQLOperations
-} from '@/modules/workspaces/tests/helpers/invites'
+import type { TestInvitesGraphQLOperations } from '@/modules/workspaces/tests/helpers/invites'
+import { buildInvitesGraphqlOperations } from '@/modules/workspaces/tests/helpers/invites'
 import { itEach } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import {
   OnWorkspaceProjectsUpdatedDocument,
   OnWorkspaceUpdatedDocument,
   WorkspaceProjectsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import {
-  testApolloServer,
+import type {
   TestApolloServer,
   TestApolloSubscriptionClient,
-  testApolloSubscriptionServer,
   TestApolloSubscriptionServer
 } from '@/test/graphqlHelper'
+import { testApolloServer, testApolloSubscriptionServer } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {

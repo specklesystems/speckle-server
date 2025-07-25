@@ -8,24 +8,26 @@ import {
   getServerOrigin,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
-import { Logger, fileUploadsLogger as logger } from '@/observability/logging'
+import type { Logger } from '@/observability/logging'
+import { fileUploadsLogger as logger } from '@/observability/logging'
 import { TIME, TIME_MS } from '@speckle/shared'
 import { initializeQueue as setupQueue } from '@speckle/shared/queue'
-import { JobPayload } from '@speckle/shared/workers/fileimport'
-import { FileImportQueue } from '@/modules/fileuploads/domain/types'
-import Bull, {
-  ActiveEventCallback,
-  ErrorEventCallback,
-  FailedEventCallback
-} from 'bull'
+import type { JobPayload } from '@speckle/shared/workers/fileimport'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
+import type { ActiveEventCallback, ErrorEventCallback, FailedEventCallback } from 'bull'
+import type Bull from 'bull'
 import {
   NumberOfFileImportRetries,
   DelayBetweenFileImportRetriesMinutes
 } from '@/modules/fileuploads/domain/consts'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
 import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
-import { storeBackgroundJobFactory } from '@/modules/backgroundjobs/repositories'
+import {
+  getBackgroundJobCountFactory,
+  storeBackgroundJobFactory
+} from '@/modules/backgroundjobs/repositories'
+import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -111,6 +113,11 @@ export const initializeQueueFactory =
       shutdown: async () => await queue.close(),
       scheduleJob: async (jobData: JobPayload): Promise<void> => {
         await queue.add(jobData, defaultJobOptions)
+      },
+      metrics: {
+        getPendingJobCount: () => queue.count(),
+        getWaitingJobCount: () => queue.getWaitingCount(),
+        getActiveJobCount: () => queue.getActiveCount()
       }
     }
     fileImportQueues.push(fileImportQueue)
@@ -136,6 +143,8 @@ export const initializePostgresQueue = async ({
       originServerUrl: getServerOrigin()
     })
   })
+  const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
+
   const fileImportQueue = {
     label,
     supportedFileTypes: supportedFileTypes.map(
@@ -146,6 +155,24 @@ export const initializePostgresQueue = async ({
       await scheduleBackgroundJob({
         jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
       })
+    },
+    metrics: {
+      getPendingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport
+        }),
+      getWaitingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport,
+          minAttempts: 1
+        }),
+      getActiveJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Processing,
+          jobType: BackgroundJobType.FileImport
+        })
     }
   }
   fileImportQueues.push(fileImportQueue)

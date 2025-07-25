@@ -1,4 +1,4 @@
-import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Scopes } from '@speckle/shared'
 
 export const gatekeeperScopes: TokenScopeData[] = [

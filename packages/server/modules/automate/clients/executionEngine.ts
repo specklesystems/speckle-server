@@ -10,10 +10,10 @@ import type {
   FunctionSchemaType,
   FunctionWithVersionsSchemaType
 } from '@/modules/automate/helpers/executionEngine'
+import type { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 import {
   type AutomationFunctionRunRecord,
   type BaseTriggerManifest,
-  VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
 import type { AuthCodePayload } from '@/modules/automate/services/authCode'
@@ -394,6 +394,21 @@ export const updateFunction = async (params: {
     method: 'PATCH',
     body: formattedBody,
     retry: false
+  })
+}
+
+export const regenerateFunctionToken = async (params: {
+  functionId: string
+  authCode: AuthCodePayload
+}): Promise<{ token: string }> => {
+  const { functionId, authCode } = params
+  const url = getApiUrl(`/api/v2/functions/${functionId}/tokens/regenerate`)
+  return await invokeJsonRequest<{ token: string }>({
+    url,
+    method: 'POST',
+    body: {
+      speckleServerAuthenticationPayload: addOrigin(authCode)
+    }
   })
 }
 

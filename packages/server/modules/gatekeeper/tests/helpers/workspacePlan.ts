@@ -1,7 +1,7 @@
-import { WorkspacePlan } from '@speckle/shared'
+import type { WorkspacePlan } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { assign } from 'lodash-es'
-import {
+import type {
   SubscriptionData,
   SubscriptionProduct,
   WorkspaceSubscription

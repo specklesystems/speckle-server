@@ -1,14 +1,14 @@
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
-import {
+import type {
   GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats
 } from '@/modules/workspacesCore/domain/operations'
-import {
+import type {
   WorkspaceSeat,
   WorkspaceAcl as WorkspaceAclRecord
 } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceAcl, WorkspaceSeats } from '@/modules/workspacesCore/helpers/db'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const tables = {
   workspaceSeats: (db: Knex) => db<WorkspaceSeat>(WorkspaceSeats.name),

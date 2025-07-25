@@ -1,7 +1,7 @@
 import { BadRequestError } from '@/modules/shared/errors'
 import { ensureError } from '@speckle/shared'
 import Busboy from 'busboy'
-import { Request } from 'express'
+import type { Request } from 'express'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 
 export const createBusboy = (req: Request) => {
