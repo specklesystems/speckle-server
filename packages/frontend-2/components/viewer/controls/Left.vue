@@ -127,6 +127,7 @@ let startWidth = 0
 let startX = 0
 
 const startResizing = (event: MouseEvent) => {
+  if (isMobile.value) return
   event.preventDefault()
   isResizing.value = true
   startX = event.clientX
@@ -143,10 +144,11 @@ if (import.meta.client) {
   useEventListener(document, 'mousemove', (event) => {
     if (isResizing.value) {
       const diffX = event.clientX - startX
-      width.value = Math.max(
-        300,
-        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+      const newWidth = Math.max(
+        240,
+        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
       )
+      width.value = newWidth
     }
   })
 
