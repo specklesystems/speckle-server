@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="h-full">
     <ViewerModelsVersions v-if="showVersions" @close="showVersions = false" />
     <ViewerModelsAddPanel v-else-if="showAddModel" @close="showAddModel = false" />
     <ViewerLayoutSidePanel v-else>
