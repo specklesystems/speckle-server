@@ -242,7 +242,7 @@ export const saveStreamActivityFactory =
       actionType, // "commit_receive"
       userId, // populated by the api
       info: JSON.stringify(info), // can be anything with conventions! (TBD)
-      message // something human understandable for frontend purposes mostly
+      message: message?.slice(0, 255) ?? message // something human understandable for frontend purposes mostly
     }
 
     await tables
