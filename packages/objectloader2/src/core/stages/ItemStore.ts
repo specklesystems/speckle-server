@@ -25,11 +25,16 @@ export class ItemStore {
   private readonly dbName: string
   private readonly storeName: string
 
-  constructor(options: ItemStoreOptions, logger: CustomLogger, dbName: string, storeName: string) {
+  constructor(
+    options: ItemStoreOptions,
+    logger: CustomLogger,
+    dbName: string,
+    storeName: string
+  ) {
     this.#options = options
     this.logger = logger
-      this.dbName = dbName
-      this.storeName = storeName
+    this.dbName = dbName
+    this.storeName = storeName
   }
 
   /**
@@ -100,9 +105,7 @@ export class ItemStore {
         })
         const store = transaction.objectStore(this.storeName)
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         transaction.onerror = (): any => {
-          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors, @typescript-eslint/no-base-to-string
           reject(`Transaction error: ${transaction.error}`)
         }
         transaction.oncomplete = (): any => {
@@ -111,7 +114,6 @@ export class ItemStore {
 
         data.forEach((item) => store.put(item))
       } catch (error) {
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         reject(error)
       }
     })

@@ -76,9 +76,9 @@ export class CacheReader {
       }
     }
     this.#logger(
-      `readBatch: batch ${batch.length}, time ${performance.now() - start} ms left ${
-        this.#readQueue?.count()
-      }`
+      `readBatch: batch ${batch.length}, time ${
+        performance.now() - start
+      } ms left ${this.#readQueue?.count()}`
     )
   }
 
