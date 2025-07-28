@@ -1,4 +1,10 @@
-import { CustomLogger, getFeatureFlag, ObjectLoader2Flags } from '../types/functions.js'
+import {
+  canUseWorkers,
+  CustomLogger,
+  getFeatureFlag,
+  getQueryParameter,
+  ObjectLoader2Flags
+} from '../types/functions.js'
 import { Base } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import IndexedDatabase from './stages/indexedDatabase.js'
@@ -69,9 +75,23 @@ export class ObjectLoader2Factory {
         headers: params.headers
       }),
       database,
-      logger: log
+      logger: log,
+      useWriteWorker: ObjectLoader2Factory.useWriteWorker()
     })
     return loader
+  }
+
+  static useWriteWorker(): boolean {
+    const enabled = getFeatureFlag(ObjectLoader2Flags.USE_WRITER_WORKER) === '1'
+    //const workersEnabled = getQueryParameter('workers', 'false') === 'true'
+    // If both server and workers are enabled, check if we can use them
+    if (enabled && !canUseWorkers()) {
+      this.logger(
+        'Workers are not enabled. As browsers have removed support for SharedArrayBuffer and Atomics in cross-origin contexts, you need to enable them in your server response headers or use a modern browser that supports them.'
+      )
+      return false
+    }
+    return enabled
   }
 
   static getLogger(providedLogger?: CustomLogger): CustomLogger | undefined {

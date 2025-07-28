@@ -1,12 +1,12 @@
 import { DefermentManager } from '../../deferment/defermentManager.js'
 import BatchingQueue from '../../queues/batchingQueue.js'
-import Queue from '../../queues/queue.js'
 import { CustomLogger } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 import { Database } from '../interfaces.js'
 import { CacheOptions } from '../options.js'
+import { Writer } from './interfaces.js'
 
-export class CacheWriter implements Queue<Item> {
+export class CacheWriter implements Writer{
   #writeQueue: BatchingQueue<Item> | undefined
   #database: Database
   #defermentManager: DefermentManager

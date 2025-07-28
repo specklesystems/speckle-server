@@ -7,6 +7,7 @@ export interface ObjectLoader2Options {
   downloader: Downloader
   database: Database
   logger?: CustomLogger
+  useWriteWorker?: boolean
 }
 
 export interface CacheOptions {

@@ -52,25 +52,24 @@ export function take<T>(it: Iterator<T>, count: number): T[] {
 
 export enum ObjectLoader2Flags {
   DEBUG = 'debug',
-  USE_CACHE = 'useCache'
+  USE_CACHE = 'useCache',
+  USE_WRITER_WORKER = 'sharedArrayBufferHeaders'
 }
 
 const defaultValues: Record<ObjectLoader2Flags, string> = {
   [ObjectLoader2Flags.DEBUG]: 'false',
-  [ObjectLoader2Flags.USE_CACHE]: 'true'
+  [ObjectLoader2Flags.USE_CACHE]: 'true',
+  [ObjectLoader2Flags.USE_WRITER_WORKER]: '0'
 }
 
-export function getFeatureFlag(
-  paramName: ObjectLoader2Flags,
-  useDefault: boolean = true
-): string | undefined {
+export function getQueryParameter(paramName: string, defaultValue: string | undefined): string | undefined {
   // Check if the code is running in a browser environment 🌐
   const isBrowser =
     typeof window !== 'undefined' && typeof window.document !== 'undefined'
 
   if (!isBrowser) {
     // If in Node.js or another server environment, return the default
-    return useDefault ? defaultValues[paramName] : undefined
+    return defaultValue
   }
 
   // In a browser, parse the query string
@@ -79,7 +78,17 @@ export function getFeatureFlag(
   // .get() returns the value, or null if it's not found.
   // The nullish coalescing operator (??) provides the default value
   // if the left-hand side is null or undefined.
-  return params.get(paramName) ?? (useDefault ? defaultValues[paramName] : undefined)
+  return params.get(paramName) ?? defaultValue
+}
+
+export function getFeatureFlag(
+  paramName: ObjectLoader2Flags,
+  useDefault: boolean = true
+): string | undefined {
+  return getQueryParameter(
+    paramName,
+    useDefault ? defaultValues[paramName] : undefined
+  )
 }
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))

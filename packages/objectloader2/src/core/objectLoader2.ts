@@ -9,6 +9,8 @@ import { ObjectLoader2Factory } from './objectLoader2Factory.js'
 import { ObjectLoader2Options, CacheOptions } from './options.js'
 import { CacheReader } from './stages/cacheReader.js'
 import { CacheWriter } from './stages/cacheWriter.js'
+import { CacheWriterWorker } from './stages/cacheWriterWorker.js'
+import { Writer } from './stages/interfaces.js'
 
 const MAX_CLOSURES_TO_TAKE = 100
 const EXPECTED_CLOSURE_VALUE = 100
@@ -21,7 +23,7 @@ export class ObjectLoader2 {
   #database: Database
   #downloader: Downloader
   #cacheReader: CacheReader
-  #cacheWriter: CacheWriter
+  #writer: Writer
 
   #deferments: DefermentManager
   #cache: MemoryCache
@@ -64,22 +66,26 @@ export class ObjectLoader2 {
       cacheOptions
     )
     this.#cacheReader.initializeQueue(this.#gathered, this.#downloader)
-    this.#cacheWriter = new CacheWriter(
-      this.#database,
-      this.#logger,
-      this.#deferments,
-      cacheOptions,
-      (id: string) => {
-        this.#cacheReader.requestItem(id)
-      }
-    )
+    if (options.useWriteWorker) {
+      this.#writer = new CacheWriterWorker(this.#logger)
+    } else {
+      this.#writer = new CacheWriter(
+        this.#database,
+        this.#logger,
+        this.#deferments,
+        cacheOptions,
+        (id: string) => {
+          this.#cacheReader.requestItem(id)
+        }
+      )
+    }
   }
 
   async disposeAsync(): Promise<void> {
     await Promise.all([
       this.#gathered.disposeAsync(),
       this.#downloader.disposeAsync(),
-      this.#cacheWriter.disposeAsync(),
+      this.#writer.disposeAsync(),
       this.#cacheReader.disposeAsync()
     ])
     this.#deferments.dispose()
@@ -132,7 +138,7 @@ export class ObjectLoader2 {
     const children = sortedClosures.map((x) => x[0])
     const total = children.length + 1 // +1 for the root object
     this.#downloader.initializePool({
-      results: new AggregateQueue(this.#gathered, this.#cacheWriter),
+      results: new AggregateQueue(this.#gathered, this.#writer),
       total
     })
     //only for root
