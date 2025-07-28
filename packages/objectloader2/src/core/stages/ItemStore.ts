@@ -96,7 +96,7 @@ export class ItemStore {
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.getDB().transaction(this.storeName, 'readwrite', {
-          durability: 'strict'
+          durability: 'relaxed'
         })
         const store = transaction.objectStore(this.storeName)
 
