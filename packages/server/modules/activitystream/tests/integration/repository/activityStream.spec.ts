@@ -33,6 +33,11 @@ describe('Stream activity repository @activitystream', () => {
     const activity = await db
       .table(StreamActivity.name)
       .select(StreamActivity.cols)
+      .where({
+        userId,
+        resourceId,
+        actionType: 'user_update'
+      })
       .first()
 
     expect(activity).to.nested.include({
@@ -54,6 +59,11 @@ describe('Stream activity repository @activitystream', () => {
     const activity = await db
       .table(StreamActivity.name)
       .select(StreamActivity.cols)
+      .where({
+        userId,
+        resourceId,
+        actionType: 'user_update'
+      })
       .first()
 
     expect(activity).to.nested.include({
