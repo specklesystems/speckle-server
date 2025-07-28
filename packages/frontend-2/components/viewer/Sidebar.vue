@@ -15,35 +15,21 @@
       />
 
       <div
-        class="flex flex-col w-full h-full relative z-20 overflow-hidden border-l border-outline-2"
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden border-l border-outline-2 bg-foundation"
       >
         <div
-          class="h-[6.5rem] absolute z-10 top-0 w-full left-0 bg-foundation border-b border-outline-2"
+          class="py-2 pl-4 pr-2 flex items-center justify-between border-b border-outline-2"
         >
-          <div
-            class="flex items-center justify-between py-1.5 pl-3 pr-1 border-b border-outline-2"
-          >
-            <div v-if="$slots.title" class="text-body-xs text-foreground font-semibold">
-              <slot name="title"></slot>
-            </div>
-
-            <FormButton
-              hide-text
-              :icon-left="XMarkIcon"
-              size="sm"
-              color="subtle"
-              @click="onClose"
-            />
+          <div class="text-body-xs text-foreground font-medium">
+            <slot name="title" />
           </div>
-          <div v-if="$slots.actions" class="w-full">
-            <slot name="actions"></slot>
-          </div>
+          <slot name="actions" />
         </div>
-        <div class="w-full" :class="$slots.actions ? 'h-[7rem]' : 'h-10'"></div>
-        <div
-          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md max-h-[220px] sm:max-h-none"
-        >
-          <slot></slot>
+        <div class="simple-scrollbar overflow-y-auto h-full flex-1">
+          <slot />
+        </div>
+        <div v-if="$slots.footer" class="py-2 px-4 border-t border-outline-2">
+          <slot name="footer" />
         </div>
       </div>
     </div>
@@ -52,7 +38,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 defineProps<{
@@ -67,7 +52,7 @@ const emit = defineEmits<{
 const resizableElement = ref(null)
 const resizeHandle = ref(null)
 const isResizing = ref(false)
-const width = ref(240)
+const width = ref(280)
 let startWidth = 0
 let startX = 0
 
@@ -87,7 +72,7 @@ if (import.meta.client) {
     if (isResizing.value) {
       const diffX = startX - event.clientX
       const newWidth = Math.max(
-        240,
+        280,
         Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
       )
       width.value = newWidth
@@ -105,14 +90,4 @@ if (import.meta.client) {
 onMounted(() => {
   emit('width-change', width.value)
 })
-
-const minimize = () => {
-  width.value = 240
-  emit('width-change', 240)
-}
-
-const onClose = () => {
-  minimize()
-  emit('close')
-}
 </script>
