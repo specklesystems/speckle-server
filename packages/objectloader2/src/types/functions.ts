@@ -81,3 +81,21 @@ export function getFeatureFlag(
   // if the left-hand side is null or undefined.
   return params.get(paramName) ?? (useDefault ? defaultValues[paramName] : undefined)
 }
+export function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export function canUseWorkers(): boolean {
+  if (typeof SharedArrayBuffer === 'undefined' || typeof Atomics === 'undefined') {
+    return false
+  }
+  return true
+}
+
+export function throwIfCantUseWorkers(): void {
+  if (!canUseWorkers()) {
+    throw new Error(
+      'SharedArrayBuffer and Atomics are not available. Workers cannot be used.'
+    )
+  }
+}
