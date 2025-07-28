@@ -15,7 +15,7 @@ import type { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/h
 import type { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
 import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
-import type { AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
+import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
@@ -5568,7 +5568,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
-  AccSyncItem: ResolverTypeWrapper<Omit<AccSyncItem, 'author'> & { author?: Maybe<ResolversTypes['LimitedUser']> }>;
+  AccSyncItem: ResolverTypeWrapper<AccSyncItemGraphQLReturn>;
   AccSyncItemCollection: ResolverTypeWrapper<Omit<AccSyncItemCollection, 'items'> & { items: Array<ResolversTypes['AccSyncItem']> }>;
   AccSyncItemMutations: ResolverTypeWrapper<AccSyncItemMutationsGraphQLReturn>;
   AccSyncItemStatus: AccSyncItemStatus;
@@ -5933,7 +5933,7 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
-  AccSyncItem: Omit<AccSyncItem, 'author'> & { author?: Maybe<ResolversParentTypes['LimitedUser']> };
+  AccSyncItem: AccSyncItemGraphQLReturn;
   AccSyncItemCollection: Omit<AccSyncItemCollection, 'items'> & { items: Array<ResolversParentTypes['AccSyncItem']> };
   AccSyncItemMutations: AccSyncItemMutationsGraphQLReturn;
   ActiveUserMutations: MutationsObjectGraphQLReturn;

@@ -74,7 +74,7 @@ import type { CommentRecord } from '@/modules/comments/helpers/types'
 import type { CommitRecord } from '@/modules/core/helpers/types'
 import type { BranchRecord } from '@/modules/core/helpers/types'
 import type { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
-import type { AccSyncItemGraphQLReturn } from '@/modules/acc/graphTypes'
+import type { AccSyncItemGraphQLReturn } from '@/modules/acc/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance

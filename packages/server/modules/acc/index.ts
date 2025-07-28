@@ -4,7 +4,6 @@ import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
 import type { Express } from 'express'
-
 import { db } from '@/db/knex'
 import {
   queryAllPendingAccSyncItemsFactory,

@@ -51,7 +51,8 @@ import type {
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
-  UpdateAutomation
+  UpdateAutomation,
+  CreateAutomationRevision
 } from '@/modules/automate/domain/operations'
 import type { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import type { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
@@ -368,16 +369,14 @@ export type CreateAutomationRevisionDeps = {
   ValidateNewRevisionFunctionsDeps
 
 export const createAutomationRevisionFactory =
-  (deps: CreateAutomationRevisionDeps) =>
-  async (params: {
-    input: ProjectAutomationRevisionCreateInput
-    userId: string
-    userResourceAccessRules?: ContextResourceAccessRules
-    projectId?: string
-    skipInputValidation?: boolean
+  (deps: CreateAutomationRevisionDeps): CreateAutomationRevision =>
+  async ({
+    input,
+    userId,
+    userResourceAccessRules,
+    projectId,
+    skipInputValidation
   }) => {
-    const { input, userId, userResourceAccessRules, projectId, skipInputValidation } =
-      params
     const {
       storeAutomationRevision,
       getAutomation,

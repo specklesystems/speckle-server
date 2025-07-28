@@ -97,7 +97,7 @@ type AccWebhookConfig = {
   rootProjectFolderUrn: string
   // The Speckle endpoint to hit when the given event fires.
   callbackUrl: string
-  // The ACC webhook event to subscribe to.
+  // The ACC webhook event to subscribe to. You can register an event to a given callback url only once.
   event: 'dm.version.added'
   // The region where the request is executed
   region: AccRegion

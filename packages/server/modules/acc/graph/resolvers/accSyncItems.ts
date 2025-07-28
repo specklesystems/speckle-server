@@ -1,5 +1,12 @@
 import type { AccSyncItem } from '@/modules/acc/domain/types'
-import { createAccSyncItem } from '@/modules/acc/services/management'
+import {
+  getAccSyncItemByUrnFactory,
+  upsertAccSyncItemFactory
+} from '@/modules/acc/repositories/accSyncItems'
+import {
+  createAccSyncItemFactory,
+  updateAccSyncItemFactory
+} from '@/modules/acc/services/management'
 import {
   createAutomation,
   getFunctionReleaseFactory,
@@ -25,24 +32,28 @@ import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import type { LimitedUserGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
-import { getUsersFactory } from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { authorizeResolver } from '@/modules/shared'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
-import cryptoRandomString from 'crypto-random-string'
 import { GraphQLError } from 'graphql/error'
 import type { Knex } from 'knex'
-
-const ACC_SYNC_ITEMS = 'acc_sync_items'
+import { db } from '@/db/knex'
+import { AccSyncItems } from '@/modules/acc/dbSchema'
 
 const tables = {
-  accSyncItems: (db: Knex) => db<AccSyncItem>(ACC_SYNC_ITEMS)
+  accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
 }
 
 const resolvers: Resolvers = {
+  AccSyncItem: {
+    author: async (parent) => {
+      return await getUserFactory({ db })(parent.authorId)
+    }
+  },
   Project: {
     async accSyncItems(parent, args, ctx) {
       throwIfResourceAccessNotAllowed({
@@ -75,6 +86,7 @@ const resolvers: Resolvers = {
     },
     async accSyncItem(parent, args, ctx) {
       const { id } = args
+
       throwIfResourceAccessNotAllowed({
         resourceId: parent.id,
         resourceAccessRules: ctx.resourceAccessRules,
@@ -99,8 +111,9 @@ const resolvers: Resolvers = {
     accSyncItemMutations: () => ({})
   },
   AccSyncItemMutations: {
-    async create(parent, args, ctx) {
+    async create(_parent, args, ctx) {
       const { input } = args
+
       throwIfResourceAccessNotAllowed({
         resourceId: input.projectId,
         resourceAccessRules: ctx.resourceAccessRules,
@@ -109,104 +122,36 @@ const resolvers: Resolvers = {
 
       const projectDb = await getProjectDbClient({ projectId: input.projectId })
 
-      const existing = await tables
-        .accSyncItems(projectDb)
-        .where({ accFileLineageId: input.accFileLineageId })
-        .first()
-
-      if (existing) {
-        throw new GraphQLError(
-          `A SyncItem with accFileLineageId "${input.accFileLineageId}" already exists.`,
-          {
-            extensions: { code: 'DUPLICATE_ACC_FILE_LINEAGE_ID' }
-          }
-        )
-      }
-
-      const createSyncItem = createAccSyncItem({
-        db: await getProjectDbClient({ projectId: input.projectId }),
-        eventEmit: getEventBus().emit
-      })
-
-      // TODO ACC: Create automation at this step
-      // const automationId = cryptoRandomString({ length: 9 })
-
-      // await storeAutomationFactory({ db: projectDb })({
-      //   id: automationId,
-      //   name: 'converter',
-      //   userId: ctx.userId!,
-      //   createdAt: new Date(),
-      //   updatedAt: new Date(),
-      //   enabled: false,
-      //   projectId: input.projectId,
-      //   executionEngineAutomationId: null,
-      //   isTestAutomation: true,
-      //   isDeleted: false
-      // })
-
-      const { automation } = await createAutomationFactory({
-        createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
-        automateCreateAutomation: createAutomation,
-        storeAutomation: storeAutomationFactory({ db: projectDb }),
-        storeAutomationToken: storeAutomationTokenFactory({ db: projectDb }),
-        eventEmit: getEventBus().emit
-      })({
-        input: {
-          name: 'converter',
-          enabled: false
-        },
-        projectId: args.input.projectId,
-        userId: ctx.userId!
-      })
-
-      await createAutomationRevisionFactory({
-        getAutomation: getAutomationFactory({ db: projectDb }),
-        storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
-        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
-        getFunctionRelease: getFunctionReleaseFactory({ logger: ctx.log }),
-        getEncryptionKeyPair,
-        getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
-          buildDecryptor
+      return await createAccSyncItemFactory({
+        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db: projectDb }),
+        upsertAccSyncItem: upsertAccSyncItemFactory({ db: projectDb }),
+        createAutomation: createAutomationFactory({
+          createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
+          automateCreateAutomation: createAutomation,
+          storeAutomation: storeAutomationFactory({ db: projectDb }),
+          storeAutomationToken: storeAutomationTokenFactory({ db: projectDb }),
+          eventEmit: getEventBus().emit
         }),
-        getFunctionReleases: getFunctionReleasesFactory({ logger: ctx.log }),
-        eventEmit: getEventBus().emit,
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver })
+        createAutomationRevision: createAutomationRevisionFactory({
+          getAutomation: getAutomationFactory({ db: projectDb }),
+          storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
+          getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+          getFunctionRelease: getFunctionReleaseFactory({ logger: ctx.log }),
+          getEncryptionKeyPair,
+          getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+            buildDecryptor
+          }),
+          getFunctionReleases: getFunctionReleasesFactory({ logger: ctx.log }),
+          eventEmit: getEventBus().emit,
+          validateStreamAccess: validateStreamAccessFactory({ authorizeResolver })
+        }),
+        eventEmit: getEventBus().emit
       })({
-        input: {
-          automationId: automation.id,
-          functions: [
-            {
-              functionId: '2909d29a9d',
-              functionReleaseId: 'd6947185f3'
-            }
-          ],
-          triggerDefinitions: {
-            version: 1,
-            definitions: [
-              {
-                type: 'VERSION_CREATED',
-                modelId: input.modelId
-              }
-            ]
-          }
-        },
-        userId: ctx.userId!,
-        skipInputValidation: true
+        syncItem: input,
+        creatorUserId: ctx.userId!
       })
-
-      const newItem = await createSyncItem({
-        id: cryptoRandomString({ length: 10 }),
-        status: 'PENDING',
-        authorId: ctx.userId as string,
-        automationId: automation.id,
-        ...input
-      })
-
-      // TODO: Service function where we also create automation. (Include automation id in sync item record?)
-
-      return newItem
     },
-    async update(parent, args, ctx) {
+    async update(_parent, args, ctx) {
       const { input } = args
 
       throwIfResourceAccessNotAllowed({
@@ -215,32 +160,16 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const projectDB = await getProjectDbClient({ projectId: input.projectId })
+      const projectDb = await getProjectDbClient({ projectId: input.projectId })
 
-      const [updated] = await tables
-        .accSyncItems(projectDB)
-        .where({ accFileLineageId: input.accFileLineageId })
-        .update({
-          status: input.status,
-          updatedAt: new Date()
-        })
-        .returning('*')
-
-      if (!updated) {
-        throw new GraphQLError('Sync item not found for update', {
-          extensions: { code: 'SYNC_ITEM_NOT_FOUND' }
-        })
-      }
-
-      const getUser = getUsersFactory({ db: projectDB })
-      const user = await getUser(ctx.userId as string)
-
-      return {
-        ...updated,
-        author: user as unknown as LimitedUserGraphQLReturn
-      }
+      return await updateAccSyncItemFactory({
+        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db: projectDb }),
+        upsertAccSyncItem: upsertAccSyncItemFactory({ db: projectDb })
+      })({
+        syncItem: args.input
+      })
     },
-    async delete(parent, args, ctx) {
+    async delete(_parent, args, ctx) {
       const { input } = args
 
       throwIfResourceAccessNotAllowed({
