@@ -77,7 +77,6 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
-
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
