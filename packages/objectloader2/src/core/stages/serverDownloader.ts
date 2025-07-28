@@ -1,7 +1,7 @@
 import BatchedPool from '../../queues/batchedPool.js'
 import Queue from '../../queues/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
-import { Fetcher, isBase, take } from '../../types/functions.js'
+import { Fetcher, indexOf, isBase, take } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 import { Downloader } from '../interfaces.js'
 
@@ -29,6 +29,9 @@ export default class ServerDownloader implements Downloader {
   #decoder = new TextDecoder('utf-8', { fatal: true })
   #decodedBytesCount = 0
 
+  #rawString: string = 'Objects.Other.RawEncoding'
+  #rawEncoding: Uint8Array
+
   constructor(options: ServerDownloaderOptions) {
     this.#options = options
     this.#fetch =
@@ -51,6 +54,9 @@ export default class ServerDownloader implements Downloader {
     this.#requestUrlRootObj = `${this.#options.serverUrl}/objects/${
       this.#options.streamId
     }/${this.#options.objectId}/single`
+
+    const encoder = new TextEncoder()
+    this.#rawEncoding = encoder.encode(this.#rawString)
   }
 
   #getDownloadCountAndSizes(total: number): number[] {
@@ -140,7 +146,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       const { done, value } = await reader.read()
       if (done) break
 
-      leftover = await this.processArray(leftover, value, keys, async () => {
+      leftover = await this.#processArray(leftover, value, keys, async () => {
         count++
         if (count % 1000 === 0) {
           await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
@@ -158,14 +164,14 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     }
   }
 
-  async processArray(
+  async #processArray(
     leftover: Uint8Array,
     value: Uint8Array,
     keys: Set<string>,
     callback: () => Promise<void>
   ): Promise<Uint8Array> {
     //this concat will allocate a new array
-    const combined = this.concatUint8Arrays(leftover, value)
+    const combined = this.#concatUint8Arrays(leftover, value)
     let start = 0
 
     //subarray doesn't allocate
@@ -173,25 +179,29 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       if (combined[i] === 0x0a) {
         const line = combined.subarray(start, i) // line without \n
         //strings are allocated here
-        const item = this.processLine(line)
-        this.#results?.add(item)
+        const item = this.#processLine(line)
         start = i + 1
         await callback()
         keys.delete(item.baseId)
+        this.#results?.add(item)
       }
     }
     return combined.subarray(start) // carry over remainder
   }
 
-  processLine(line: Uint8Array): Item {
+  #processLine(line: Uint8Array): Item {
     for (let i = 0; i < line.length; i++) {
       if (line[i] === 0x09) {
         //this is a tab
         const baseId = this.decodeChunk(line.subarray(0, i))
-        const json = line.subarray(i + 1)
-        const base = this.decodeChunk(json)
+        const jsonBytes = line.subarray(i + 1)
+
+        if (!this.#isValidBytes(jsonBytes)) {
+          return { baseId, base: undefined }
+        }
+        const base = this.decodeChunk(jsonBytes)
         const item = this.#processJson(baseId, base)
-        item.size = json.length
+        item.size = jsonBytes.length
         return item
       }
     }
@@ -213,8 +223,21 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
     }
   }
+  #isValidString(json: string): boolean {
+    if (!json.includes(this.#rawString)) {
+      return true
+    }
+    return false
+  }
 
-  concatUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
+  #isValidBytes(json: Uint8Array): boolean {
+    if (indexOf(json, this.#rawEncoding) === -1) {
+      return true
+    }
+    return false
+  }
+
+  #concatUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
     const c = new Uint8Array(a.length + b.length)
     c.set(a, 0)
     c.set(b, a.length)
@@ -227,7 +250,13 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     })
     this.#validateResponse(response)
     const responseText = await response.text()
+    if (!this.#isValidString(responseText)) {
+      throw new ObjectLoaderRuntimeError('Invalid base object')
+    }
     const item = this.#processJson(this.#options.objectId, responseText)
+    if (!item.base) {
+      throw new ObjectLoaderRuntimeError('Invalid base object')
+    }
     item.size = 0
     return item
   }
