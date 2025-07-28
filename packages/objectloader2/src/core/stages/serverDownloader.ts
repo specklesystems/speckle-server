@@ -133,7 +133,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     }
 
     const reader = response.body.getReader()
-    let leftover = new Uint8Array(0)
+    let leftover: Uint8Array = new Uint8Array(0)
 
     let count = 0
     while (true) {

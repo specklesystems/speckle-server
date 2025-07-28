@@ -62,7 +62,7 @@ const defaultValues: Record<ObjectLoader2Flags, string> = {
   [ObjectLoader2Flags.USE_WRITER_WORKER]: '0'
 }
 
-export function getQueryParameter(paramName: string, defaultValue: string | undefined): string | undefined {
+function getQueryParameter(paramName: string, defaultValue: string | undefined): string | undefined {
   // Check if the code is running in a browser environment 🌐
   const isBrowser =
     typeof window !== 'undefined' && typeof window.document !== 'undefined'

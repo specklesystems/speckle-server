@@ -2,7 +2,6 @@ import {
   canUseWorkers,
   CustomLogger,
   getFeatureFlag,
-  getQueryParameter,
   ObjectLoader2Flags
 } from '../types/functions.js'
 import { Base } from '../types/types.js'

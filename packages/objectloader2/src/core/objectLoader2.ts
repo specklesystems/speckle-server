@@ -7,9 +7,9 @@ import { Item, Base } from '../types/types.js'
 import { Database, Downloader } from './interfaces.js'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
 import { ObjectLoader2Options, CacheOptions } from './options.js'
+import { CacheWriterWorker } from './stages/CacheWriterWorker.js'
 import { CacheReader } from './stages/cacheReader.js'
 import { CacheWriter } from './stages/cacheWriter.js'
-import { CacheWriterWorker } from './stages/cacheWriterWorker.js'
 import { Writer } from './stages/interfaces.js'
 
 const MAX_CLOSURES_TO_TAKE = 100
