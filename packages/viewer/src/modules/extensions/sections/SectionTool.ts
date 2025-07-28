@@ -20,7 +20,8 @@ import {
   DynamicDrawUsage,
   Color,
   MeshBasicMaterial,
-  PlaneGeometry
+  PlaneGeometry,
+  Euler
 } from 'three'
 import { intersectObjectWithRay, TransformControls } from '../TransformControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
@@ -199,6 +200,11 @@ export class SectionTool extends Extension {
   /** Hit testing related */
   protected raycaster: Raycaster
   protected dragging = false
+  protected shiftKeyPressed = false
+  protected tempEuler = new Euler()
+  protected tempQuaternion = new Quaternion()
+  protected keydownHandler: (e: KeyboardEvent) => void
+  protected keyupHandler: (e: KeyboardEvent) => void
 
   /** Manadatory property for all extensions */
   public get enabled() {
@@ -316,6 +322,9 @@ export class SectionTool extends Extension {
     // })
     /** Hook up to le click */
     this.viewer.getRenderer().input.on(InputEvent.Click, this.clickHandler.bind(this))
+
+    /** Add keyboard event listeners for shift key rotation snapping */
+    this.setupKeyboardListeners()
 
     /** Start off disabled */
     this.enabled = false
@@ -515,6 +524,31 @@ export class SectionTool extends Extension {
   }
 
   /**
+   * Sets up keyboard event listeners for shift key rotation snapping
+   */
+  protected setupKeyboardListeners() {
+    /** Store shift state for use in changeHandler */
+    this.shiftKeyPressed = false
+
+    /** Store references to event listeners for cleanup */
+    this.keydownHandler = (e: KeyboardEvent) => {
+      if (e.shiftKey && !this.shiftKeyPressed) {
+        this.shiftKeyPressed = true
+      }
+    }
+
+    this.keyupHandler = (e: KeyboardEvent) => {
+      if (!e.shiftKey && this.shiftKeyPressed) {
+        this.shiftKeyPressed = false
+      }
+    }
+
+    /** Event listeners */
+    document.addEventListener('keydown', this.keydownHandler)
+    document.addEventListener('keyup', this.keyupHandler)
+  }
+
+  /**
    * Controls, outline and hitbox update based on the OBB model
    */
   protected updateVisual() {
@@ -574,12 +608,17 @@ export class SectionTool extends Extension {
   protected changeHandler() {
     /** Just copy over position, rotation  and scale*/
     this.obb.center.copy(this.translationRotationAnchor.position)
+
+    /** Apply rotation snapping if shift key is pressed */
+    let quaternion = this.translationRotationAnchor.quaternion
+    if (this.shiftKeyPressed) {
+      quaternion = this.snapQuaternionToGrid(quaternion)
+      /** Update the anchor's quaternion to keep visual controls in sync */
+      this.translationRotationAnchor.quaternion.copy(quaternion)
+    }
+
     this.obb.rotation.copy(
-      new Matrix3().setFromMatrix4(
-        new Matrix4().makeRotationFromQuaternion(
-          this.translationRotationAnchor.quaternion
-        )
-      )
+      new Matrix3().setFromMatrix4(new Matrix4().makeRotationFromQuaternion(quaternion))
     )
     this.obb.halfSize.copy(this.scaleAnchor.scale)
 
@@ -919,5 +958,38 @@ export class SectionTool extends Extension {
     box: Box3 | { min: Vector3Like; max: Vector3Like } | OBB
   ): box is OBB {
     return box instanceof OBB
+  }
+
+  /**
+   * Snaps a quaternion to the nearest 15-degree grid.
+   * This is useful for rotation snapping.
+   * @param q The quaternion to snap.
+   * @returns The snapped quaternion.
+   */
+  protected snapQuaternionToGrid(q: Quaternion): Quaternion {
+    /** Convert quaternion to Euler angles using pooled object */
+    this.tempEuler.setFromQuaternion(q)
+
+    /** Snap each axis to 15-degree increments (π/12 radians) */
+    const snapAngle = Math.PI / 12 // 15 degrees
+    this.tempEuler.x = Math.round(this.tempEuler.x / snapAngle) * snapAngle
+    this.tempEuler.y = Math.round(this.tempEuler.y / snapAngle) * snapAngle
+    this.tempEuler.z = Math.round(this.tempEuler.z / snapAngle) * snapAngle
+
+    /** Convert back to quaternion using pooled object */
+    this.tempQuaternion.setFromEuler(this.tempEuler)
+    return this.tempQuaternion
+  }
+
+  /**
+   * Cleanup method to remove event listeners and prevent memory leaks
+   */
+  public dispose() {
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler)
+    }
+    if (this.keyupHandler) {
+      document.removeEventListener('keyup', this.keyupHandler)
+    }
   }
 }
