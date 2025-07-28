@@ -36,18 +36,39 @@ export class ItemStore {
   async init(): Promise<void> {
     if (this.#db) return
     await this.#safariFix()
+    return this.#openDatabase()
+  }
+
+  /**
+   * Opens the database, and if there's an error, deletes the database and tries again.
+   */
+  async #openDatabase(): Promise<void> {
+    const idb = this.#options.indexedDB ?? indexedDB
+
     return new Promise((resolve, reject) => {
-      const request = (this.#options.indexedDB ?? indexedDB).open(this.#dbName, 2)
+      const request = idb.open(this.#dbName, 1)
 
       request.onerror = (): any => {
-        reject(`Failed to open database: ${this.#dbName}`)
+        console.warn(
+          `Failed to open database: ${this.#dbName}, deleting and trying again`
+        )
+        // Delete the database and try again
+        const deleteRequest = idb.deleteDatabase(this.#dbName)
+        deleteRequest.onsuccess = (): any => {
+          // Try opening again after deletion
+          void this.#openDatabase().then(resolve).catch(reject)
+        }
+        deleteRequest.onerror = (): any => {
+          reject(`Failed to delete and reopen database: ${this.#dbName}`)
+        }
       }
 
       request.onupgradeneeded = (event): any => {
         const db = (event.target as IDBOpenDBRequest).result
-        if (!db.objectStoreNames.contains(this.#storeName)) {
-          db.createObjectStore(this.#storeName, { keyPath: 'baseId' })
+        if (db.objectStoreNames.contains(this.#storeName)) {
+          db.deleteObjectStore(this.#storeName)
         }
+        db.createObjectStore(this.#storeName, { keyPath: 'baseId' })
       }
 
       request.onsuccess = (event): any => {
