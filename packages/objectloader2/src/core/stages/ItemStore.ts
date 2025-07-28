@@ -123,7 +123,7 @@ export class ItemStore {
    * Retrieves an array of items from the object store based on their IDs.
    * @param ids The array of IDs to retrieve.
    */
-  public bulkGet(ids: string[]): Promise<(Item | undefined)[]> {
+  bulkGet(ids: string[]): Promise<(Item | undefined)[]> {
     return new Promise((resolve, reject) => {
       if (ids.length === 0) {
         return resolve([])
@@ -161,7 +161,7 @@ export class ItemStore {
   /**
    * Retrieves all items from the object store.
    */
-  public getAll(): Promise<Item[]> {
+  getAll(): Promise<Item[]> {
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.#getDB().transaction(this.storeName, 'readonly')
@@ -174,5 +174,11 @@ export class ItemStore {
         reject(error)
       }
     })
+  }
+
+  close(): void {
+    if (!this.#db) return
+    this.#db.close()
+    this.#db = undefined
   }
 }

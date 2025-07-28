@@ -51,5 +51,6 @@ export default class IndexedDatabase implements Database {
   async disposeAsync(): Promise<void> {
     await this.#writeQueue?.disposeAsync()
     this.#writeQueue = undefined
+    this.#cacheDB.close()
   }
 }
