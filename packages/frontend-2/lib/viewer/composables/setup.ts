@@ -2,10 +2,19 @@ import {
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
-  LegacyViewer,
+  Viewer,
+  CameraController,
+  SectionTool,
+  SectionOutlines,
+  ExplodeExtension,
+  FilteringExtension,
+  DiffExtension,
+  MeasurementsExtension,
+  SelectionExtension,
   MeasurementType,
-  FilteringExtension
+  ViewModes
 } from '@speckle/viewer'
+import { HighlightExtension } from '~~/lib/viewer/extensions/HighlightExtension'
 import {
   type FilteringState,
   type PropertyInfo,
@@ -13,16 +22,15 @@ import {
   type SpeckleView,
   type MeasurementOptions,
   type DiffResult,
-  type Viewer,
   type WorldTree,
   type VisualDiffMode,
   ViewMode
 } from '@speckle/viewer'
-import { inject, ref, provide } from 'vue'
-import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
+import { inject, ref, provide, shallowRef } from 'vue'
+import type { ComputedRef, WritableComputedRef, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { SpeckleViewer, isNonNullable } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
@@ -49,7 +57,6 @@ import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
@@ -64,8 +71,8 @@ import {
 } from '~/lib/viewer/composables/setup/core'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
-import { PassReader } from '../extensions/PassReader'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -95,7 +102,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * The actual viewer instance
      */
-    instance: LegacyViewer
+    instance: Viewer
     /**
      * Container onto which the Viewer instance is attached
      */
@@ -243,11 +250,6 @@ export type InjectableViewerState = Readonly<{
     filters: {
       isolatedObjectIds: Ref<string[]>
       hiddenObjectIds: Ref<string[]>
-      selectedObjects: Ref<Raw<SpeckleObject>[]>
-      /**
-       * For quick object ID lookups
-       */
-      selectedObjectIds: ComputedRef<Set<string>>
       propertyFilter: {
         filter: Ref<Nullable<PropertyInfo>>
         isApplied: Ref<boolean>
@@ -274,6 +276,8 @@ export type InjectableViewerState = Readonly<{
       edited: Ref<boolean>
     }
     highlightedObjectIds: Ref<string[]>
+    selectedObjectIds: Ref<string[]>
+    selectedObjects: ShallowRef<SpeckleObject[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
     loading: WritableComputedRef<boolean>
@@ -335,11 +339,22 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
     container.style.width = '100%'
     container.style.height = '100%'
 
-    const viewer = new LegacyViewer(container, {
+    const viewer = new Viewer(container, {
       ...DefaultViewerParams,
       verbose: !!(import.meta.client && params.viewerDebug)
     })
-    viewer.createExtension(PassReader)
+
+    viewer.createExtension(CameraController)
+    viewer.createExtension(SectionTool)
+    viewer.createExtension(SectionOutlines)
+    viewer.createExtension(FilteringExtension)
+    viewer.createExtension(ExplodeExtension)
+    viewer.createExtension(DiffExtension)
+    viewer.createExtension(MeasurementsExtension)
+    viewer.createExtension(SelectionExtension)
+    viewer.createExtension(ViewModes)
+    viewer.createExtension(HighlightExtension)
+
     const initPromise = viewer.init()
 
     return {
@@ -922,8 +937,14 @@ function setupInterfaceState(
   const loadProgress = ref(0)
 
   const isolatedObjectIds = ref([] as string[])
+  /**
+   * Currently selected objects in the viewer.
+   * Stored in viewer state so that every composable/component can access the
+   * same reactive reference without spawning duplicate refs or event
+   * listeners.  Populated & kept in sync inside useSelectionUtilities().
+   */
+  const selectedObjects = shallowRef<SpeckleObject[]>([])
   const hiddenObjectIds = ref([] as string[])
-  const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
   const propertyFilter = ref(null as Nullable<PropertyInfo>)
   const isPropertyFilterApplied = ref(false)
   const hasAnyFiltersApplied = computed(() => {
@@ -941,15 +962,6 @@ function setupInterfaceState(
   const lightConfig = ref(DefaultLightConfiguration)
   const explodeFactor = ref(0)
   const selection = ref(null as Nullable<Vector3>)
-
-  const selectedObjectIds = computed(
-    () =>
-      new Set(
-        selectedObjects.value
-          .map((o) => o.id as MaybeNullOrUndefined<string>)
-          .filter(isNonNullable)
-      )
-  )
 
   /**
    * THREADS
@@ -1006,14 +1018,16 @@ function setupInterfaceState(
       filters: {
         isolatedObjectIds,
         hiddenObjectIds,
-        selectedObjects,
-        selectedObjectIds,
         propertyFilter: {
           filter: propertyFilter,
           isApplied: isPropertyFilterApplied
         },
         hasAnyFiltersApplied
       },
+      selectedObjectIds: computed(() =>
+        selectedObjects.value.map((obj) => obj.id as string)
+      ),
+      selectedObjects,
       highlightedObjectIds,
       measurement: {
         enabled: ref(false),
