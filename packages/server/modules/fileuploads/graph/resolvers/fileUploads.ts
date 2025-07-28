@@ -302,7 +302,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       jobResult
     })
 
-    return null
+    return true
   }
 }
 

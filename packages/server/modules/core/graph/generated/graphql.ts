@@ -1077,7 +1077,7 @@ export type FileImportResultInput = {
   parseDurationSeconds: Scalars['Float']['input'];
   /** Parser used for import */
   parser: Scalars['String']['input'];
-  /** Version asssociated if applicable */
+  /** Version associated if applicable */
   versionId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1125,8 +1125,9 @@ export type FileUploadMutations = {
   /**
    * Marks the file import flow as completed for that specific job
    * recording the provided status, and emitting the needed subscriptions.
+   * Mostly for internal service usage.
    */
-  finishFileImport?: Maybe<Scalars['Boolean']['output']>;
+  finishFileImport: Scalars['Boolean']['output'];
   /**
    * Generate a pre-signed url to which a file can be uploaded.
    * After uploading the file, call mutation startFileImport to register the completed upload.
@@ -6657,7 +6658,7 @@ export type FileUploadCollectionResolvers<ContextType = GraphQLContext, ParentTy
 };
 
 export type FileUploadMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUploadMutations'] = ResolversParentTypes['FileUploadMutations']> = {
-  finishFileImport?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<FileUploadMutationsFinishFileImportArgs, 'input'>>;
+  finishFileImport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<FileUploadMutationsFinishFileImportArgs, 'input'>>;
   generateUploadUrl?: Resolver<ResolversTypes['GenerateFileUploadUrlOutput'], ParentType, ContextType, RequireFields<FileUploadMutationsGenerateUploadUrlArgs, 'input'>>;
   startFileImport?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType, RequireFields<FileUploadMutationsStartFileImportArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

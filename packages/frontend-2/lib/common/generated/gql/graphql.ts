@@ -1053,7 +1053,7 @@ export type FileImportResultInput = {
   parseDurationSeconds: Scalars['Float']['input'];
   /** Parser used for import */
   parser: Scalars['String']['input'];
-  /** Version asssociated if applicable */
+  /** Version associated if applicable */
   versionId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1103,7 +1103,7 @@ export type FileUploadMutations = {
    * recording the provided status, and emitting the needed subscriptions.
    * Mostly for internal service usage.
    */
-  finishFileImport?: Maybe<Scalars['Boolean']['output']>;
+  finishFileImport: Scalars['Boolean']['output'];
   /**
    * Generate a pre-signed url to which a file can be uploaded.
    * After uploading the file, call mutation startFileImport to register the completed upload.
