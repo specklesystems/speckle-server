@@ -67,6 +67,10 @@ exports[`downloader > download batch of three with Objects.Other.RawEncoding 1`]
     "size": 34,
   },
   {
+    "base": undefined,
+    "baseId": "id2",
+  },
+  {
     "base": {
       "id": "id3",
       "speckle_type": "type",
