@@ -75,7 +75,11 @@ export class CacheReader {
         this.#notFoundQueue?.add(batch[i])
       }
     }
-    this.#logger('readBatch: left, time', items.length, performance.now() - start)
+    this.#logger(
+      `readBatch: batch ${batch.length}, time ${performance.now() - start} ms left ${
+        this.#readQueue?.count()
+      }`
+    )
   }
 
   disposeAsync(): Promise<void> {

@@ -23,8 +23,6 @@ export default class IndexedDatabase implements Database {
 
   #writeQueue: BatchingQueue<Item> | undefined
 
-  // #count: number = 0
-
   constructor(options: IndexedDatabaseOptions) {
     this.#options = options
     this.#logger = options.logger || ((): void => {})
@@ -47,15 +45,7 @@ export default class IndexedDatabase implements Database {
   async saveBatch(params: { batch: Item[] }): Promise<void> {
     await this.#cacheDB.init()
     const { batch } = params
-    //const x = this.#count
-    //this.#count++
-
-    // const startTime = performance.now()
-    //  this.#logger('Start save ' + x + ' ' + batch.length)
     await this.#cacheDB.bulkInsert(batch)
-    // const endTime = performance.now()
-    // const duration = endTime - startTime
-    //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / TIME_MS.second)
   }
 
   async disposeAsync(): Promise<void> {

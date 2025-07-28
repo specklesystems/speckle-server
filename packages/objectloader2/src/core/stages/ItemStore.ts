@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import { isSafari } from '@speckle/shared'
 import { CustomLogger } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
@@ -11,11 +12,8 @@ import { Item } from '../../types/types.js'
 export interface ItemStoreOptions {
   indexedDB?: IDBFactory
   keyRange?: {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     bound: Function
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     lowerBound: Function
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     upperBound: Function
   }
 }
@@ -23,22 +21,24 @@ export class ItemStore {
   #options: ItemStoreOptions
 
   private logger: CustomLogger
-  private db: IDBDatabase | null = null
+  #db: IDBDatabase | undefined = undefined
   private readonly dbName: string
   private readonly storeName: string
 
   constructor(options: ItemStoreOptions, logger: CustomLogger, dbName: string, storeName: string) {
     this.#options = options
     this.logger = logger
-    this.dbName = dbName
-    this.storeName = storeName
+      this.dbName = dbName
+      this.storeName = storeName
   }
 
   /**
    * Initializes the database connection and creates the object store if needed.
    * This must be called before any other database operations.
    */
-  public init(): Promise<void> {
+  async init(): Promise<void> {
+    if (this.#db) return
+    await this.#safariFix()
     return new Promise((resolve, reject) => {
       const request = (this.#options.indexedDB ?? indexedDB).open(this.dbName, 1)
 
@@ -55,17 +55,17 @@ export class ItemStore {
       }
 
       request.onsuccess = (event): any => {
-        this.db = (event.target as IDBOpenDBRequest).result
+        this.#db = (event.target as IDBOpenDBRequest).result
         resolve()
       }
     })
   }
 
-  private getDB(): IDBDatabase {
-    if (!this.db) {
+  #getDB(): IDBDatabase {
+    if (!this.#db) {
       throw new Error('Database not initialized. Call init() first.')
     }
-    return this.db
+    return this.#db
   }
 
   /**
@@ -92,10 +92,10 @@ export class ItemStore {
    * Inserts or updates an array of items in a single transaction.
    * @param data The array of items to insert.
    */
-  public bulkInsert(data: Item[]): Promise<void> {
+  bulkInsert(data: Item[]): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const transaction = this.getDB().transaction(this.storeName, 'readwrite', {
+        const transaction = this.#getDB().transaction(this.storeName, 'readwrite', {
           durability: 'relaxed'
         })
         const store = transaction.objectStore(this.storeName)
@@ -127,7 +127,7 @@ export class ItemStore {
         return resolve([])
       }
       try {
-        const transaction = this.getDB().transaction(this.storeName, 'readonly', {
+        const transaction = this.#getDB().transaction(this.storeName, 'readonly', {
           durability: 'relaxed'
         })
         const store = transaction.objectStore(this.storeName)
@@ -162,30 +162,12 @@ export class ItemStore {
   public getAll(): Promise<Item[]> {
     return new Promise((resolve, reject) => {
       try {
-        const transaction = this.getDB().transaction(this.storeName, 'readonly')
+        const transaction = this.#getDB().transaction(this.storeName, 'readonly')
         const store = transaction.objectStore(this.storeName)
         const request = store.getAll()
 
         request.onerror = (): any => reject(`Request error: ${request.error}`)
         request.onsuccess = (): any => resolve(request.result)
-      } catch (error) {
-        reject(error)
-      }
-    })
-  }
-
-  /**
-   * Clears all items from the object store.
-   */
-  public clear(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const transaction = this.getDB().transaction(this.storeName, 'readwrite')
-        const store = transaction.objectStore(this.storeName)
-        const request = store.clear()
-
-        request.onerror = (): any => reject(`Request error: ${request.error}`)
-        request.onsuccess = (): any => resolve()
       } catch (error) {
         reject(error)
       }
