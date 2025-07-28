@@ -57,7 +57,7 @@ export class VectorStore {
         if (db.objectStoreNames.contains(this.#storeName)) {
           db.deleteObjectStore(this.#storeName)
         }
-        db.createObjectStore(this.#storeName, { keyPath: 'id' })
+        db.createObjectStore(this.#storeName, { keyPath: 'id', autoIncrement: true })
       }
 
       request.onsuccess = (event): any => {

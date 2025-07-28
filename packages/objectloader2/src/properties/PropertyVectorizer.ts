@@ -44,8 +44,8 @@ const getEmbeddingFromText = async (text: string): Promise<number[]> => {
     pooling: 'mean',
     normalize: true
   })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  return output.data as number[]
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+  return Array.from(output.data)
 }
 
 export interface VectorManagerOptions {
@@ -89,7 +89,6 @@ export class VectorManager {
       const embedding = await getEmbeddingFromText(group.value)
       for (const id of group.ids) {
         embeddings.push({
-          id: this.#count++,
           baseId: id,
           vector: embedding,
           prop: group.value
