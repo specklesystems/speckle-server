@@ -32,15 +32,15 @@ describe('MemoryDownloader', () => {
     )
   })
 
-  it('should add found item to results queue', () => {
+  it('should add found item to results queue', async () => {
     downloader.initializePool({ results, total: 2 })
-    downloader.add('id2')
+    await downloader.add('id2')
     expect(items).toMatchSnapshot()
   })
 
-  it('should throw if added item is missing', () => {
+  it('should throw if added item is missing', async () => {
     downloader.initializePool({ results, total: 2 })
-    expect(() => downloader.add('missing')).toThrow()
+    await expect(downloader.add('missing')).rejects.toThrow()
   })
 
   it('disposeAsync should resolve', async () => {

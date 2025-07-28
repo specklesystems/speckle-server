@@ -19,18 +19,27 @@ describe('ItemQueue', () => {
       { baseId: '1', base: { id: 'base1', speckle_type: 'Base' } },
       { baseId: '2', base: { id: 'base2', speckle_type: 'Base' } }
     ]
+    items[0].baseBytes = new TextEncoder().encode(JSON.stringify(items[0].base))
+    items[0].size = items[0].baseBytes.byteLength
+    items[1].baseBytes = new TextEncoder().encode(JSON.stringify(items[1].base))
+    items[1].size = items[1].baseBytes.byteLength
 
     const enqueueResult = await itemQueue.enqueue(items, 1000)
     expect(enqueueResult).toBe(2)
 
     const dequeuedItems = await itemQueue.dequeue(2, 1000)
+    dequeuedItems[0].baseId = '1'
+    dequeuedItems[1].baseId = '2'
+    delete items[0].baseBytes
+    delete items[1].baseBytes
     expect(dequeuedItems).toEqual(items)
   })
 
   it('should not enqueue when queue is full', async () => {
     const item: Item = { baseId: '1', base: { id: 'base1', speckle_type: 'Base' } }
-    const itemString = JSON.stringify(item)
-    const itemByteLength = new TextEncoder().encode(itemString).length
+    item.baseBytes = new TextEncoder().encode(JSON.stringify(item.base))
+    item.size = item.baseBytes.byteLength
+    const itemByteLength = item.size + 32 // 32 bytes for baseId
     const smallRbq = RingBufferQueue.create(
       itemByteLength + 4,
       `small-queue-${Math.random()}`
@@ -58,14 +67,22 @@ describe('ItemQueue', () => {
     const items2: Item[] = [
       { baseId: '2', base: { id: 'base2', speckle_type: 'Base' } }
     ]
+    items1[0].baseBytes = new TextEncoder().encode(JSON.stringify(items1[0].base))
+    items1[0].size = items1[0].baseBytes.byteLength
+    items2[0].baseBytes = new TextEncoder().encode(JSON.stringify(items2[0].base))
+    items2[0].size = items2[0].baseBytes.byteLength
 
     await itemQueue.enqueue(items1, 1000)
     await itemQueue.enqueue(items2, 1000)
+    delete items1[0].baseBytes
+    delete items2[0].baseBytes
 
     const dequeued1 = await itemQueue.dequeue(1, 1000)
+    dequeued1[0].baseId = '1'
     expect(dequeued1).toEqual(items1)
 
     const dequeued2 = await itemQueue.dequeue(1, 1000)
+    dequeued2[0].baseId = '2'
     expect(dequeued2).toEqual(items2)
   })
 

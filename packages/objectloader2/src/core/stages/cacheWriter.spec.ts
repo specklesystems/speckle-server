@@ -118,14 +118,14 @@ describe('CacheWriter', () => {
     ])
   })
 
-  it('should call undefer on the defermentManager', () => {
+  it('should call undefer on the defermentManager', async () => {
     const spy = vi.spyOn(defermentManager, 'undefer')
     const item: Item = {
       baseId: 'test-id',
       base: { id: 'test-id', speckle_type: 'test-type' }
     }
 
-    cacheWriter.add(item)
+    await cacheWriter.add(item)
 
     expect(spy).toHaveBeenCalledWith(item, requestItemMock)
   })
