@@ -146,7 +146,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       const { done, value } = await reader.read()
       if (done) break
 
-      leftover = await this.processArray(leftover, value, keys, async () => {
+      leftover = await this.#processArray(leftover, value, keys, async () => {
         count++
         if (count % 1000 === 0) {
           await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
@@ -164,7 +164,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     }
   }
 
-  async processArray(
+  async #processArray(
     leftover: Uint8Array,
     value: Uint8Array,
     keys: Set<string>,
@@ -183,9 +183,6 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
         start = i + 1
         await callback()
         keys.delete(item.baseId)
-        if (!item.base) {
-          continue
-        }
         this.#results?.add(item)
       }
     }
@@ -247,18 +244,18 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     return c
   }
 
-  async downloadSingle(): Promise<Item | undefined> {
+  async downloadSingle(): Promise<Item> {
     const response = await this.#fetch(this.#requestUrlRootObj, {
       headers: this.#headers
     })
     this.#validateResponse(response)
     const responseText = await response.text()
     if (!this.#isValidString(responseText)) {
-      return undefined
+      throw new ObjectLoaderRuntimeError('Invalid base object')
     }
     const item = this.#processJson(this.#options.objectId, responseText)
     if (!item.base) {
-      return undefined
+      throw new ObjectLoaderRuntimeError('Invalid base object')
     }
     item.size = 0
     return item

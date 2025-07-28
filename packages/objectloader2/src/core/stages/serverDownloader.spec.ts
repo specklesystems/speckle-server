@@ -185,8 +185,7 @@ describe('downloader', () => {
 
       fetch: fetchMocker
     })
-    const x = await downloader.downloadSingle()
-    expect(x).toBeUndefined()
+    await expect(downloader.downloadSingle()).rejects.toThrow()
     await downloader.disposeAsync()
   })
 
