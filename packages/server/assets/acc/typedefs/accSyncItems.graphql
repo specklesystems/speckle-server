@@ -1,12 +1,12 @@
 extend type Project {
-  accSyncItems: AccSyncItemCollection!
+  accSyncItems(cursor: String, limit: Int): AccSyncItemCollection!
   accSyncItem(lineageUrn: String!): AccSyncItem!
 }
 
 type AccSyncItemCollection {
+  items: [AccSyncItem!]!
   totalCount: Int!
   cursor: String
-  items: [AccSyncItem!]!
 }
 
 type AccSyncItem {

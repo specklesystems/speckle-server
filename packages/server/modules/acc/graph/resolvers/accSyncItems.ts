@@ -8,6 +8,7 @@ import {
   createAccSyncItemFactory,
   deleteAccSyncItemFactory,
   getAccSyncItemFactory,
+  getPaginatedAccSyncItemsFactory,
   updateAccSyncItemFactory
 } from '@/modules/acc/services/management'
 import {
@@ -137,6 +138,8 @@ const resolvers: Resolvers = {
   },
   Project: {
     async accSyncItems(parent, args, ctx) {
+      const { cursor, limit } = args
+
       throwIfResourceAccessNotAllowed({
         resourceId: parent.id,
         resourceAccessRules: ctx.resourceAccessRules,
@@ -145,25 +148,15 @@ const resolvers: Resolvers = {
 
       const projectDB = await getProjectDbClient({ projectId: parent.id })
 
-      const items = await tables
-        .accSyncItems(projectDB)
-        .where({ projectId: parent.id })
-        .orderBy('createdAt', 'desc')
+      return await getPaginatedAccSyncItemsFactory({
 
-      const authorIds = [...new Set(items.map((i) => i.authorId).filter(Boolean))]
-
-      const getUser = getUsersFactory({ db: projectDB })
-      const authors = await Promise.all(authorIds.map((id) => getUser(id)))
-      const authorsMap = Object.fromEntries(authors.map((u) => [u[0].id, u]))
-
-      return {
-        totalCount: items.length,
-        cursor: null, // TODO
-        items: items.map((item) => ({
-          ...item,
-          author: authorsMap[item.authorId][0] || null
-        }))
-      }
+      })({
+        projectId: parent.id,
+        filter: {
+          cursor: cursor ?? undefined,
+          limit: limit ?? undefined
+        }
+      })
     },
     async accSyncItem(parent, args, ctx) {
       const { lineageUrn } = args

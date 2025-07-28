@@ -2339,6 +2339,12 @@ export type ProjectAccSyncItemArgs = {
 };
 
 
+export type ProjectAccSyncItemsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type ProjectAutomationArgs = {
   id: Scalars['String']['input'];
 };
@@ -7138,7 +7144,7 @@ export type PriceResolvers<ContextType = GraphQLContext, ParentType extends Reso
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
   accSyncItem?: Resolver<ResolversTypes['AccSyncItem'], ParentType, ContextType, RequireFields<ProjectAccSyncItemArgs, 'lineageUrn'>>;
-  accSyncItems?: Resolver<ResolversTypes['AccSyncItemCollection'], ParentType, ContextType>;
+  accSyncItems?: Resolver<ResolversTypes['AccSyncItemCollection'], ParentType, ContextType, Partial<ProjectAccSyncItemsArgs>>;
   allowPublicComments?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   automation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationArgs, 'id'>>;
   automations?: Resolver<ResolversTypes['AutomationCollection'], ParentType, ContextType, Partial<ProjectAutomationsArgs>>;
