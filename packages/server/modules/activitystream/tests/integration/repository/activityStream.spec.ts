@@ -6,11 +6,10 @@ import cryptoRandomString from 'crypto-random-string'
 
 describe('Stream activity repository @activitystream', () => {
   const saveStreamActivity = saveStreamActivityFactory({ db })
-  const streamId = cryptoRandomString({ length: 10 })
   const resourceId = cryptoRandomString({ length: 10 })
   const userId = cryptoRandomString({ length: 10 })
   const exampleActivity = {
-    streamId,
+    streamId: null,
     resourceType: 'user' as const,
     resourceId,
     userId,
@@ -37,7 +36,6 @@ describe('Stream activity repository @activitystream', () => {
       .first()
 
     expect(activity).to.nested.include({
-      streamId,
       resourceType: 'user',
       resourceId,
       userId,
@@ -59,7 +57,6 @@ describe('Stream activity repository @activitystream', () => {
       .first()
 
     expect(activity).to.nested.include({
-      streamId,
       resourceType: 'user',
       resourceId,
       userId,
