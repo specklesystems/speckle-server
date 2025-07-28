@@ -200,18 +200,18 @@ export class SpeckleLoader extends Loader {
     this.on(LoaderEvent.LoadProgress, (data) => {
       const p = Math.floor(data.progress * 100)
       if (p > dataProgress) {
-        Logger.log(`[debug] Loading ${p}%`)
+        Logger.log(`[debug] [Main] Loading ${p}%`)
         dataProgress = p
       }
     })
     this.on(LoaderEvent.Traversed, (data) => {
       if (data.count % 500 === 0) {
-        Logger.log(`[debug] Traversed ${data.count}`)
+        Logger.log(`[debug] [Main] Traversed ${data.count}`)
       }
     })
     this.on(LoaderEvent.Converted, (data) => {
       if (data.count % 500 === 0) {
-        Logger.log(`[debug] Converted ${data.count}`)
+        Logger.log(`[debug] [Main] Converted ${data.count}`)
       }
     })
   }

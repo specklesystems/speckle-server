@@ -24,21 +24,22 @@ export abstract class ObjectQueue<T> {
         const actuallyEnqueued = await this.enqueue(s.slice(enqueuedInChunk), timeoutMs)
         if (actuallyEnqueued === 0) {
           // If no items were enqueued, wait before retrying to avoid a busy loop.
-          this.logger(
+          /*this.logger(
             'fullyEnqueue: enqueue returned 0, waiting before retry for remaining items',
             s.length - enqueuedInChunk
-          )
+          )*/
           await delay(1000)
           continue
         }
         enqueuedInChunk += actuallyEnqueued
+        /*
         this.logger(
           'fullyEnqueue: enqueued',
           enqueuedInChunk,
           'of',
           s.length,
           'in current chunk'
-        )
+        )*/
       }
       remainingMessages = remainingMessages.slice(s.length)
     }
@@ -98,5 +99,9 @@ export abstract class ObjectQueue<T> {
 
   public getSharedArrayBuffer(): SharedArrayBuffer {
     return this.rbq.getSharedArrayBuffer()
+  }
+
+  get count(): number {
+    return this.rbq.enqueued
   }
 }

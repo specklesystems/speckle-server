@@ -1,4 +1,4 @@
-import { CustomLogger, getQueryParameter } from '../types/functions.js'
+import { canUseWorkers, CustomLogger, getQueryParameter } from '../types/functions.js'
 import { Base } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import IndexedDatabase from './stages/indexedDatabase.js'
@@ -82,6 +82,19 @@ export class ObjectLoader2Factory {
     return loader
   }
 
+  private static allowWorkers(): boolean {
+    const enabled = getQueryParameter('sharedArrayBufferHeaders', '0') === '1'
+    //const workersEnabled = getQueryParameter('workers', 'false') === 'true'
+  // If both server and workers are enabled, check if we can use them
+    if (enabled && !canUseWorkers()) {
+      this.logger(
+        'Workers are not enabled. As browsers have removed support for SharedArrayBuffer and Atomics in cross-origin contexts, you need to enable them in your server response headers or use a modern browser that supports them.'
+      )
+      return false
+    }
+    return enabled
+  }
+
   static getLogger(providedLogger?: CustomLogger): CustomLogger | undefined {
     if (getQueryParameter('debug', 'false') === 'true') {
       return providedLogger || this.logger
@@ -90,6 +103,6 @@ export class ObjectLoader2Factory {
   }
 
   static logger: CustomLogger = (m?: string, ...optionalParams: unknown[]) => {
-    console.log(`[debug] ${m}`, ...optionalParams)
+    console.log(`[debug] ${m?.trim()}`, ...optionalParams)
   }
 }

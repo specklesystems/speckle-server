@@ -8,6 +8,7 @@ import { Reader } from './interfaces.js'
 
 export class AggregateCacheReaderWorker implements Reader {
   private workers: CacheReaderWorker[] = []
+  #requestedItems: Set<string> = new Set()
 
   constructor(defermentManager: DefermentManager, count: number, logger: CustomLogger) {
     for (let i = 1; i <= count; i++) {
@@ -16,18 +17,19 @@ export class AggregateCacheReaderWorker implements Reader {
     }
   }
 
-  #getRandomWorker(): CacheReaderWorker {
-    const index = Math.floor(Math.random() * this.workers.length)
-    return this.workers[index]
+  #getLowestCount(): CacheReaderWorker {
+    return this.workers.reduce((shortest, current) =>
+      current.readQueueSize < shortest.readQueueSize ? current : shortest
+    )
   }
 
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
     this.workers.forEach((worker) => {
-      worker.initializeQueue(foundQueue, notFoundQueue)
+      worker.initializeQueue(foundQueue, notFoundQueue, this.#requestedItems)
     })
   }
   getObject(params: { id: string }): Promise<Base> {
-    return this.workers[0].getObject(params)
+    return this.#getLowestCount().getObject(params)
   }
 
   requestItem(id: string): void {
@@ -39,13 +41,13 @@ export class AggregateCacheReaderWorker implements Reader {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.requestAllInternal(keys)
   }
-  async requestAllInternal(keys: string[]): Promise<void> {
+  private async requestAllInternal(keys: string[]): Promise<void> {
     let remainingKeys = keys
     while (remainingKeys.length > 0) {
       const s = remainingKeys.slice(0, WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE)
       let enqueuedInChunk = 0
       while (enqueuedInChunk < s.length) {
-        const actuallyEnqueued = await this.#getRandomWorker().enqueue(
+        const actuallyEnqueued = await this.#getLowestCount().enqueue(
           s.slice(enqueuedInChunk),
           WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
         )
@@ -59,6 +61,7 @@ export class AggregateCacheReaderWorker implements Reader {
     }
   }
   disposeAsync(): Promise<void> {
+    this.#requestedItems.clear()
     return Promise.all(this.workers.map((worker) => worker.disposeAsync())).then(() => {
       this.workers = []
     })

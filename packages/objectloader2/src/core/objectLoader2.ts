@@ -72,6 +72,10 @@ export class ObjectLoader2 {
     }
   }
 
+  log(message: string, ...args: unknown[]): void {
+    this.#logger(`[ObjectLoader2] ${message}`, ...args)
+  }
+
   async disposeAsync(): Promise<void> {
     await Promise.all([
       this.#gathered.disposeAsync(),
@@ -108,7 +112,7 @@ export class ObjectLoader2 {
   async *getObjectIterator(): AsyncGenerator<Base> {
     const rootItem = await this.getRootObject()
     if (rootItem?.base === undefined) {
-      this.#logger('No root object found!')
+      this.log('No root object found!')
       return
     }
     if (!rootItem.base.__closure) {
@@ -120,7 +124,7 @@ export class ObjectLoader2 {
     const sortedClosures = Object.entries(rootItem.base.__closure ?? []).sort(
       (a, b) => b[1] - a[1]
     )
-    this.#logger(
+    this.log(
       'calculated closures: ',
       !take(sortedClosures.values(), MAX_CLOSURES_TO_TAKE).every(
         (x) => x[1] === EXPECTED_CLOSURE_VALUE
@@ -149,7 +153,7 @@ export class ObjectLoader2 {
       await this.#database.saveBatch({ batch: [rootItem] })
       this.#isRootStored = true
     }
-    this.#logger(
+    this.log(
       `getObjectIterator: processed ${count} items in ${performance.now() - start}ms`
     )
   }

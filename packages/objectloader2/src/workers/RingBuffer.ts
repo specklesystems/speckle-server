@@ -1,3 +1,4 @@
+import { throwIfCantUseWorkers } from '../types/functions.js'
 import { RingBufferState } from './RingBufferState.js'
 
 export interface Uint8ArrayConstructor {
@@ -34,12 +35,7 @@ export class RingBuffer {
     capacityElements: number, // This is capacity in terms of number of elements of typeConstructor
     isNewBuffer: boolean = false
   ) {
-    if (typeof SharedArrayBuffer === 'undefined' || typeof Atomics === 'undefined') {
-      throw new Error(
-        'SharedArrayBuffer and Atomics are not supported in this environment.'
-      )
-    }
-
+    throwIfCantUseWorkers()
     this.internalSharedBuffer = sharedBuffer
     this.typeConstructor = typeConstructor
     this.elementSize = this.typeConstructor.BYTES_PER_ELEMENT // Should always be 1 for Uint8Array
