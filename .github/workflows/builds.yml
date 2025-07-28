@@ -16,6 +16,10 @@ on:
         required: false
         type: boolean
         default: false
+      PUBLISH_LATEST:
+        required: false
+        type: boolean
+        default: false
     secrets:
       DATADOG_API_KEY:
         required: true
@@ -38,12 +42,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set image tags
+        id: set-tags
+        run: |
+          TAGS="${{ inputs.IMAGE_PREFIX }}/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}"
+          if [[ "${{ inputs.PUBLISH_LATEST }}" == "true" ]]; then
+            TAGS="$TAGS,${{ inputs.IMAGE_PREFIX }}/speckle-server:latest"
+          fi
+          echo "TAGS=$TAGS" >> "$GITHUB_OUTPUT"
       - name: Build and push
         uses: useblacksmith/build-push-action@v1
         with:
           push: true
-          tags: |
-            ${{ inputs.IMAGE_PREFIX }}/speckle-server:${{ inputs.IMAGE_VERSION_TAG }}
+          tags: ${{ steps.set-tags.outputs.TAGS }}
           # TODO add docker hub tag, but only if we want to push to docker hub
           file: ./packages/server/Dockerfile
           build-args: |
