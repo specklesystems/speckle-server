@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import { isSafari } from '@speckle/shared'
-import { CustomLogger } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 
 /**
@@ -20,21 +19,14 @@ export interface ItemStoreOptions {
 export class ItemStore {
   #options: ItemStoreOptions
 
-  private logger: CustomLogger
   #db: IDBDatabase | undefined = undefined
-  private readonly dbName: string
-  private readonly storeName: string
+  readonly #dbName: string
+  readonly #storeName: string
 
-  constructor(
-    options: ItemStoreOptions,
-    logger: CustomLogger,
-    dbName: string,
-    storeName: string
-  ) {
+  constructor(options: ItemStoreOptions, dbName: string, storeName: string) {
     this.#options = options
-    this.logger = logger
-    this.dbName = dbName
-    this.storeName = storeName
+    this.#dbName = dbName
+    this.#storeName = storeName
   }
 
   /**
@@ -45,17 +37,16 @@ export class ItemStore {
     if (this.#db) return
     await this.#safariFix()
     return new Promise((resolve, reject) => {
-      const request = (this.#options.indexedDB ?? indexedDB).open(this.dbName, 1)
+      const request = (this.#options.indexedDB ?? indexedDB).open(this.#dbName, 2)
 
       request.onerror = (): any => {
-        this.logger(`Database error: ${request.error}`)
-        reject(`Failed to open database: ${this.dbName}`)
+        reject(`Failed to open database: ${this.#dbName}`)
       }
 
       request.onupgradeneeded = (event): any => {
         const db = (event.target as IDBOpenDBRequest).result
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName, { keyPath: 'baseId' })
+        if (!db.objectStoreNames.contains(this.#storeName)) {
+          db.createObjectStore(this.#storeName, { keyPath: 'baseId' })
         }
       }
 
@@ -100,10 +91,10 @@ export class ItemStore {
   bulkInsert(data: Item[]): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const transaction = this.#getDB().transaction(this.storeName, 'readwrite', {
+        const transaction = this.#getDB().transaction(this.#storeName, 'readwrite', {
           durability: 'relaxed'
         })
-        const store = transaction.objectStore(this.storeName)
+        const store = transaction.objectStore(this.#storeName)
 
         transaction.onerror = (): any => {
           reject(`Transaction error: ${transaction.error}`)
@@ -129,10 +120,10 @@ export class ItemStore {
         return resolve([])
       }
       try {
-        const transaction = this.#getDB().transaction(this.storeName, 'readonly', {
+        const transaction = this.#getDB().transaction(this.#storeName, 'readonly', {
           durability: 'relaxed'
         })
-        const store = transaction.objectStore(this.storeName)
+        const store = transaction.objectStore(this.#storeName)
         const promises: Promise<Item | undefined>[] = []
 
         for (const id of ids) {
@@ -164,8 +155,8 @@ export class ItemStore {
   getAll(): Promise<Item[]> {
     return new Promise((resolve, reject) => {
       try {
-        const transaction = this.#getDB().transaction(this.storeName, 'readonly')
-        const store = transaction.objectStore(this.storeName)
+        const transaction = this.#getDB().transaction(this.#storeName, 'readonly')
+        const store = transaction.objectStore(this.#storeName)
         const request = store.getAll()
 
         request.onerror = (): any => reject(`Request error: ${request.error}`)

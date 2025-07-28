@@ -48,7 +48,6 @@ export class ObjectLoader2Factory {
     }
     if (getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true') {
       database = new IndexedDatabase({
-        logger: log,
         indexedDB: params.options?.indexedDB,
         keyRange: params.options?.keyRange
       })
