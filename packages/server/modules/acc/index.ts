@@ -165,7 +165,7 @@ export function accRestApi(app: Express) {
       // TODO: Multiple references to same item?
 
       const affectedRows = await db<AccSyncItem>('acc_sync_items')
-        .where({ accFileLineageId: lineageUrn })
+        .where({ accFileLineageUrn: lineageUrn })
         .andWhere(AccSyncItems.col.accFileVersionIndex, '<', accFileVersionIndex)
         .update({
           status: 'PENDING',

@@ -2,6 +2,7 @@ import { tryRegisterAccWebhook } from '@/modules/acc/clients/autodesk'
 import { ImporterAutomateFunctions } from '@/modules/acc/domain/constants'
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
 import type {
+  DeleteAccSyncItemByUrn,
   GetAccSyncItemByUrn,
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
@@ -23,8 +24,8 @@ export type CreateAccSyncItem = (params: {
     | 'accRegion'
     | 'accHubId'
     | 'accProjectId'
-    | 'accRootProjectFolderId'
-    | 'accFileLineageId'
+    | 'accRootProjectFolderUrn'
+    | 'accFileLineageUrn'
     | 'accFileName'
     | 'accFileExtension'
     | 'accFileVersionIndex'
@@ -43,18 +44,18 @@ export const createAccSyncItemFactory =
   }): CreateAccSyncItem =>
   async ({ syncItem, creatorUserId }) => {
     const existingSyncItem = await deps.getAccSyncItemByUrn({
-      urn: syncItem.accFileLineageId
+      lineageUrn: syncItem.accFileLineageUrn
     })
 
     if (!!existingSyncItem) {
-      throw new DuplicateSyncItemError(syncItem.accFileLineageId)
+      throw new DuplicateSyncItemError(syncItem.accFileLineageUrn)
     }
 
     const webhookId = await tryRegisterAccWebhook({
       // For local development, you may set your public tailscale url as your local server's canonical origin
       callbackUrl: `${getServerOrigin()}/api/v1/acc/webhook/callback`,
       event: 'dm.version.added',
-      rootProjectFolderUrn: syncItem.accRootProjectFolderId,
+      rootProjectFolderUrn: syncItem.accRootProjectFolderUrn,
       region: syncItem.accRegion as AccRegion
     })
 
@@ -117,8 +118,22 @@ export const createAccSyncItemFactory =
     return newSyncItem
   }
 
+export type GetAccSyncItem = (params: { lineageUrn: string }) => Promise<AccSyncItem>
+
+export const getAccSyncItemFactory =
+  (deps: { getAccSyncItemByUrn: GetAccSyncItemByUrn }): GetAccSyncItem =>
+  async ({ lineageUrn }) => {
+    const syncItem = await deps.getAccSyncItemByUrn({ lineageUrn })
+
+    if (!syncItem) {
+      throw new SyncItemNotFoundError()
+    }
+
+    return syncItem
+  }
+
 export type UpdateAccSyncItem = (params: {
-  syncItem: Pick<AccSyncItem, 'accFileLineageId' | 'status'>
+  syncItem: Pick<AccSyncItem, 'accFileLineageUrn' | 'status'>
 }) => Promise<AccSyncItem>
 
 export const updateAccSyncItemFactory =
@@ -128,7 +143,7 @@ export const updateAccSyncItemFactory =
   }): UpdateAccSyncItem =>
   async ({ syncItem }) => {
     const existingSyncItem = await deps.getAccSyncItemByUrn({
-      urn: syncItem.accFileLineageId
+      lineageUrn: syncItem.accFileLineageUrn
     })
 
     if (!existingSyncItem) {
@@ -144,4 +159,16 @@ export const updateAccSyncItemFactory =
     await deps.upsertAccSyncItem(newSyncItem)
 
     return newSyncItem
+  }
+
+export type DeleteAccSyncItem = (params: { lineageUrn: string }) => Promise<void>
+
+export const deleteAccSyncItemFactory =
+  (deps: { deleteAccSyncItemByUrn: DeleteAccSyncItemByUrn }): DeleteAccSyncItem =>
+  async ({ lineageUrn }) => {
+    const itemCount = await deps.deleteAccSyncItemByUrn({ lineageUrn })
+
+    if (itemCount === 0) {
+      throw new SyncItemNotFoundError()
+    }
   }

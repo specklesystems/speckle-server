@@ -1,7 +1,6 @@
 import { AccSyncItems } from '@/modules/acc/dbSchema'
 import type {
-  DeleteAccSyncItem,
-  GetAccSyncItem,
+  DeleteAccSyncItemByUrn,
   GetAccSyncItemByUrn,
   QueryAllAccSyncItems,
   UpsertAccSyncItem
@@ -15,24 +14,14 @@ const tables = {
   accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
 }
 
-export const getAccSyncItemFactory =
-  (deps: { db: Knex }): GetAccSyncItem =>
-  async ({ id }) => {
-    return (
-      (await tables.accSyncItems(deps.db).select('*').where({ id }).first()) ?? null
-    )
-  }
-
 export const getAccSyncItemByUrnFactory =
   (deps: { db: Knex }): GetAccSyncItemByUrn =>
-  async ({ urn }) => {
-    return (
-      (await tables
-        .accSyncItems(deps.db)
-        .select('*')
-        .where({ accFileLineageId: urn })
-        .first()) ?? null
-    )
+  async ({ lineageUrn }) => {
+    return await tables
+      .accSyncItems(deps.db)
+      .select('*')
+      .where(AccSyncItems.col.accFileLineageUrn, lineageUrn)
+      .first()
   }
 
 export const upsertAccSyncItemFactory =
@@ -50,10 +39,13 @@ export const upsertAccSyncItemFactory =
       )
   }
 
-export const deleteAccSyncItemFactory =
-  (deps: { db: Knex }): DeleteAccSyncItem =>
-  async ({ id }) => {
-    await tables.accSyncItems(deps.db).where({ id }).delete()
+export const deleteAccSyncItemByUrnFactory =
+  (deps: { db: Knex }): DeleteAccSyncItemByUrn =>
+  async ({ lineageUrn }) => {
+    return await tables
+      .accSyncItems(deps.db)
+      .where(AccSyncItems.col.accFileLineageUrn, lineageUrn)
+      .delete()
   }
 
 export const queryAllPendingAccSyncItemsFactory =

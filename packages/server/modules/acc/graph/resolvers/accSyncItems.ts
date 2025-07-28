@@ -1,10 +1,13 @@
 import type { AccSyncItem } from '@/modules/acc/domain/types'
 import {
+  deleteAccSyncItemByUrnFactory,
   getAccSyncItemByUrnFactory,
   upsertAccSyncItemFactory
 } from '@/modules/acc/repositories/accSyncItems'
 import {
   createAccSyncItemFactory,
+  deleteAccSyncItemFactory,
+  getAccSyncItemFactory,
   updateAccSyncItemFactory
 } from '@/modules/acc/services/management'
 import {
@@ -29,7 +32,6 @@ import {
 } from '@/modules/automate/services/encryption'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
-import type { LimitedUserGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
@@ -39,7 +41,6 @@ import { authorizeResolver } from '@/modules/shared'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
-import { GraphQLError } from 'graphql/error'
 import type { Knex } from 'knex'
 import { db } from '@/db/knex'
 import { AccSyncItems } from '@/modules/acc/dbSchema'
@@ -49,64 +50,6 @@ const tables = {
 }
 
 const resolvers: Resolvers = {
-  AccSyncItem: {
-    author: async (parent) => {
-      return await getUserFactory({ db })(parent.authorId)
-    }
-  },
-  Project: {
-    async accSyncItems(parent, args, ctx) {
-      throwIfResourceAccessNotAllowed({
-        resourceId: parent.id,
-        resourceAccessRules: ctx.resourceAccessRules,
-        resourceType: TokenResourceIdentifierType.Project
-      })
-
-      const projectDB = await getProjectDbClient({ projectId: parent.id })
-
-      const items = await tables
-        .accSyncItems(projectDB)
-        .where({ projectId: parent.id })
-        .orderBy('createdAt', 'desc')
-
-      const authorIds = [...new Set(items.map((i) => i.authorId).filter(Boolean))]
-
-      const getUser = getUsersFactory({ db: projectDB })
-      const authors = await Promise.all(authorIds.map((id) => getUser(id)))
-      const authorsMap = Object.fromEntries(authors.map((u) => [u[0].id, u]))
-
-      return {
-        totalCount: items.length,
-        cursor: null, // TODO
-        items: items.map((item) => ({
-          ...item,
-          author: authorsMap[item.authorId][0] || null
-        }))
-      }
-    },
-    async accSyncItem(parent, args, ctx) {
-      const { id } = args
-
-      throwIfResourceAccessNotAllowed({
-        resourceId: parent.id,
-        resourceAccessRules: ctx.resourceAccessRules,
-        resourceType: TokenResourceIdentifierType.Project
-      })
-
-      // Get project-scoped DB
-      const projectDB = await getProjectDbClient({ projectId: parent.id })
-      const item = await tables.accSyncItems(projectDB).where({ id }).first()
-
-      if (!item) throw new Error(`SyncItem with id "${id}" not found`) // TODO: create acc kind error types later
-
-      const getUser = getUsersFactory({ db: projectDB })
-      const user = await getUser(ctx.userId as string)
-      return {
-        ...item,
-        author: user as unknown as LimitedUserGraphQLReturn
-      }
-    }
-  },
   Mutation: {
     accSyncItemMutations: () => ({})
   },
@@ -166,7 +109,7 @@ const resolvers: Resolvers = {
         getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db: projectDb }),
         upsertAccSyncItem: upsertAccSyncItemFactory({ db: projectDb })
       })({
-        syncItem: args.input
+        syncItem: input
       })
     },
     async delete(_parent, args, ctx) {
@@ -178,22 +121,67 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const projectDB = await getProjectDbClient({ projectId: input.projectId })
+      const projectDb = await getProjectDbClient({ projectId: input.projectId })
 
-      const deleted = await tables
-        .accSyncItems(projectDB)
-        .where({ accFileLineageId: input.accFileLineageId })
-        .del()
-
-      if (deleted === 0) {
-        throw new GraphQLError('Sync item not found for delete', {
-          extensions: { code: 'SYNC_ITEM_NOT_FOUND' }
-        })
-      }
+      await deleteAccSyncItemFactory({
+        deleteAccSyncItemByUrn: deleteAccSyncItemByUrnFactory({ db: projectDb })
+      })
 
       return true
     }
+  },
+  AccSyncItem: {
+    author: async (parent) => {
+      return await getUserFactory({ db })(parent.authorId)
+    }
+  },
+  Project: {
+    async accSyncItems(parent, args, ctx) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: parent.id,
+        resourceAccessRules: ctx.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
+
+      const projectDB = await getProjectDbClient({ projectId: parent.id })
+
+      const items = await tables
+        .accSyncItems(projectDB)
+        .where({ projectId: parent.id })
+        .orderBy('createdAt', 'desc')
+
+      const authorIds = [...new Set(items.map((i) => i.authorId).filter(Boolean))]
+
+      const getUser = getUsersFactory({ db: projectDB })
+      const authors = await Promise.all(authorIds.map((id) => getUser(id)))
+      const authorsMap = Object.fromEntries(authors.map((u) => [u[0].id, u]))
+
+      return {
+        totalCount: items.length,
+        cursor: null, // TODO
+        items: items.map((item) => ({
+          ...item,
+          author: authorsMap[item.authorId][0] || null
+        }))
+      }
+    },
+    async accSyncItem(parent, args, ctx) {
+      const { lineageUrn } = args
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: parent.id,
+        resourceAccessRules: ctx.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
+
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+
+      return await getAccSyncItemFactory({
+        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db: projectDb })
+      })({ lineageUrn })
+    }
   }
+
   // TODO ACC: not working yet
   // Subscription: {
   //   projectAccSyncItemsUpdated: {
@@ -220,7 +208,7 @@ const resolvers: Resolvers = {
 
   //         return (
   //           accSyncItem?.projectId === projectId &&
-  //           (!itemIds || itemIds.includes(accSyncItem.accFileLineageId))
+  //           (!itemIds || itemIds.includes(accSyncItem.accFileLineageUrn))
   //         )
   //       }
   //     )

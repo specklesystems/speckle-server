@@ -36,14 +36,14 @@
             color="outline"
             :icon-left="item.status === 'PAUSED' ? PlayIcon : PauseIcon"
             @click="
-              handleStatusSyncItem(item.accFileLineageId, item.status === 'PAUSED')
+              handleStatusSyncItem(item.accFileLineageUrn, item.status === 'PAUSED')
             "
           />
           <FormButton
             hide-text
             color="outline"
             :icon-left="TrashIcon"
-            @click="handleDeleteSyncItem(item.accFileLineageId)"
+            @click="handleDeleteSyncItem(item.accFileLineageUrn)"
           />
         </div>
       </template>
@@ -219,7 +219,7 @@ const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
   onProjectAccSyncItemUpdatedSubscription,
   () => ({
     id: props.projectId,
-    itemIds: accSyncItems.value.map((s) => s.accFileLineageId)
+    itemIds: accSyncItems.value.map((s) => s.accFileLineageUrn)
   })
 )
 
@@ -232,7 +232,7 @@ onProjectAccSyncItemsUpdated((res) => {
   triggerNotification({
     type: ToastNotificationType.Info,
     title: 'Acc Sync Item updated',
-    description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageId
+    description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageUrn
   })
 })
 
@@ -444,8 +444,8 @@ const addSync = async () => {
         accFileExtension: selectedFolderContent.value?.fileExtension as string,
         accHubId: selectedHubId.value!,
         accProjectId: selectedProjectId.value as string,
-        accRootProjectFolderId: rootProjectFolderId.value!,
-        accFileLineageId: selectedFolderContent.value?.id as string,
+        accRootProjectFolderUrn: rootProjectFolderId.value!,
+        accFileLineageUrn: selectedFolderContent.value?.id as string,
         accFileName: (selectedFolderContent.value?.attributes.displayName ||
           selectedFolderContent.value?.attributes.name) as string,
         accFileVersionIndex: fileVersion,
@@ -476,7 +476,7 @@ const handleDeleteSyncItem = async (fileLineageId: string) => {
     await deleteAccSyncItem({
       input: {
         projectId: props.projectId,
-        accFileLineageId: fileLineageId
+        accFileLineageUrn: fileLineageId
       }
     })
     // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
@@ -499,7 +499,7 @@ const handleStatusSyncItem = async (fileLineageId: string, isPaused: boolean) =>
     await updateAccSyncItem({
       input: {
         projectId: props.projectId,
-        accFileLineageId: fileLineageId,
+        accFileLineageUrn: fileLineageId,
         status: isPaused ? 'PENDING' : 'PAUSED'
       }
     })

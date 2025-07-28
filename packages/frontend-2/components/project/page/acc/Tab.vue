@@ -91,7 +91,7 @@ const loadingUser = ref(false)
 //   onProjectAccSyncItemUpdatedSubscription,
 //   () => ({
 //     id: props.projectId,
-//     itemIds: accSyncItems.value.map((s) => s.accFileLineageId)
+//     itemIds: accSyncItems.value.map((s) => s.accFileLineageUrn)
 //   })
 // )
 
@@ -100,7 +100,7 @@ const loadingUser = ref(false)
 //   triggerNotification({
 //     type: ToastNotificationType.Info,
 //     title: 'Acc Sync Item updated',
-//     description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageId
+//     description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageUrn
 //   })
 // })
 

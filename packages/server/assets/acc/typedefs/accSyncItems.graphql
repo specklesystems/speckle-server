@@ -1,6 +1,6 @@
 extend type Project {
   accSyncItems: AccSyncItemCollection!
-  accSyncItem(id: String!): AccSyncItem!
+  accSyncItem(lineageUrn: String!): AccSyncItem!
 }
 
 type AccSyncItemCollection {
@@ -16,8 +16,8 @@ type AccSyncItem {
   accRegion: String!
   accHubId: String!
   accProjectId: String!
-  accRootProjectFolderId: String!
-  accFileLineageId: String!
+  accRootProjectFolderUrn: String!
+  accFileLineageUrn: String!
   accFileName: String!
   accFileExtension: String!
   accFileVersionIndex: Int!
@@ -39,12 +39,12 @@ enum AccSyncItemStatus {
 
 input DeleteAccSyncItemInput {
   projectId: ID!
-  accFileLineageId: ID!
+  accFileLineageUrn: ID!
 }
 
 input UpdateAccSyncItemInput {
   projectId: ID!
-  accFileLineageId: ID!
+  accFileLineageUrn: ID!
   status: AccSyncItemStatus!
 }
 
@@ -54,8 +54,8 @@ input CreateAccSyncItemInput {
   accRegion: String!
   accHubId: String!
   accProjectId: String!
-  accRootProjectFolderId: String!
-  accFileLineageId: String!
+  accRootProjectFolderUrn: String!
+  accFileLineageUrn: String!
   accFileName: String!
   accFileExtension: String!
   accFileVersionIndex: Int!

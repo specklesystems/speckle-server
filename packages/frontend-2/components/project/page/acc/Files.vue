@@ -9,7 +9,7 @@
           :loading="loading"
           :selected="item.id === selectedFolderContent?.id"
           :disabled="
-            syncItems.find((si) => si.accFileLineageId === item.id) !== undefined
+            syncItems.find((si) => si.accFileLineageUrn === item.id) !== undefined
           "
           @download="(i) => $emit('download', i)"
           @select="(i) => $emit('select', i)"

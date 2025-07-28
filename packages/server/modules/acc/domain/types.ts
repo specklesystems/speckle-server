@@ -6,8 +6,8 @@ export type AccSyncItem = {
   accRegion: string
   accHubId: string
   accProjectId: string
-  accRootProjectFolderId: string
-  accFileLineageId: string
+  accRootProjectFolderUrn: string
+  accFileLineageUrn: string
   accFileName: string
   accFileExtension: string
   accFileVersionIndex: number

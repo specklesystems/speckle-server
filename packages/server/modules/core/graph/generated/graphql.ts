@@ -45,14 +45,14 @@ export type Scalars = {
 export type AccSyncItem = {
   __typename?: 'AccSyncItem';
   accFileExtension: Scalars['String']['output'];
-  accFileLineageId: Scalars['String']['output'];
+  accFileLineageUrn: Scalars['String']['output'];
   accFileName: Scalars['String']['output'];
   accFileVersionIndex: Scalars['Int']['output'];
   accFileVersionUrn: Scalars['String']['output'];
   accHubId: Scalars['String']['output'];
   accProjectId: Scalars['String']['output'];
   accRegion: Scalars['String']['output'];
-  accRootProjectFolderId: Scalars['String']['output'];
+  accRootProjectFolderUrn: Scalars['String']['output'];
   accWebhookId?: Maybe<Scalars['String']['output']>;
   author?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime']['output'];
@@ -984,14 +984,14 @@ export type CountOnlyCollection = {
 
 export type CreateAccSyncItemInput = {
   accFileExtension: Scalars['String']['input'];
-  accFileLineageId: Scalars['String']['input'];
+  accFileLineageUrn: Scalars['String']['input'];
   accFileName: Scalars['String']['input'];
   accFileVersionIndex: Scalars['Int']['input'];
   accFileVersionUrn: Scalars['String']['input'];
   accHubId: Scalars['String']['input'];
   accProjectId: Scalars['String']['input'];
   accRegion: Scalars['String']['input'];
-  accRootProjectFolderId: Scalars['String']['input'];
+  accRootProjectFolderUrn: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
 };
@@ -1078,7 +1078,7 @@ export type CurrencyBasedPrices = {
 };
 
 export type DeleteAccSyncItemInput = {
-  accFileLineageId: Scalars['ID']['input'];
+  accFileLineageUrn: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
 };
 
@@ -2335,7 +2335,7 @@ export type Project = {
 
 
 export type ProjectAccSyncItemArgs = {
-  id: Scalars['String']['input'];
+  lineageUrn: Scalars['String']['input'];
 };
 
 
@@ -4133,7 +4133,7 @@ export type TriggeredAutomationsStatus = {
 };
 
 export type UpdateAccSyncItemInput = {
-  accFileLineageId: Scalars['ID']['input'];
+  accFileLineageUrn: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
   status: AccSyncItemStatus;
 };
@@ -6296,14 +6296,14 @@ export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContex
 
 export type AccSyncItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccSyncItem'] = ResolversParentTypes['AccSyncItem']> = {
   accFileExtension?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  accFileLineageId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  accFileLineageUrn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accFileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accFileVersionIndex?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   accFileVersionUrn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accHubId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accProjectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accRegion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  accRootProjectFolderId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  accRootProjectFolderUrn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accWebhookId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   author?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -7137,7 +7137,7 @@ export type PriceResolvers<ContextType = GraphQLContext, ParentType extends Reso
 };
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
-  accSyncItem?: Resolver<ResolversTypes['AccSyncItem'], ParentType, ContextType, RequireFields<ProjectAccSyncItemArgs, 'id'>>;
+  accSyncItem?: Resolver<ResolversTypes['AccSyncItem'], ParentType, ContextType, RequireFields<ProjectAccSyncItemArgs, 'lineageUrn'>>;
   accSyncItems?: Resolver<ResolversTypes['AccSyncItemCollection'], ParentType, ContextType>;
   allowPublicComments?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   automation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationArgs, 'id'>>;

@@ -8,8 +8,8 @@ export const projectAccSyncItemFragment = graphql(`
     accRegion
     accHubId
     accProjectId
-    accRootProjectFolderId
-    accFileLineageId
+    accRootProjectFolderUrn
+    accFileLineageUrn
     accFileName
     accFileExtension
     accFileVersionIndex
