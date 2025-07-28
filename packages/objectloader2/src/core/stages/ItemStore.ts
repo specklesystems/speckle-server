@@ -121,7 +121,7 @@ export class ItemStore {
    * Retrieves an array of items from the object store based on their IDs.
    * @param ids The array of IDs to retrieve.
    */
-  public bulkGet(ids: string[]): Promise<Item[]> {
+  public bulkGet(ids: string[]): Promise<(Item | undefined)[]> {
     return new Promise((resolve, reject) => {
       if (ids.length === 0) {
         return resolve([])
@@ -147,8 +147,7 @@ export class ItemStore {
 
         Promise.all(promises)
           .then((results) => {
-            // Filter out any undefined results for keys that were not found
-            resolve(results.filter((item): item is Item => item !== undefined))
+            resolve(results)
           })
           .catch(reject)
       } catch (error) {

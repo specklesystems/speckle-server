@@ -39,7 +39,7 @@ export default class IndexedDatabase implements Database {
     )
   }
 
-  async getAll(keys: string[]): Promise<Item[]> {
+  async getAll(keys: string[]): Promise<(Item | undefined)[]> {
     await this.#cacheDB.init()
     return await this.#cacheDB.bulkGet(keys)
   }
