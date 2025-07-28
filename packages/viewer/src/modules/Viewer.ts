@@ -272,17 +272,31 @@ this.propertyManager = new PropertyManager()
         if (!newProp) {
           console.error(`Property ${oldProp.key} not found in New properties`);
         }
-      } for (const newProp of newProps) {
+      }
+      for (let i = 0; i < newProps.length; i++) {
+        const newProp = newProps[i]
         const oldProp = oldProps.find((p) => p.key === newProp.key)
         if (!oldProp) {
           console.error(`Property ${newProp.key} not found in Old properties`)
         }
         if (newProp.type === 'string') {
-          await this.vectorManager.insert(newProp as OL2StringPropertyInfo)
+          // await this.vectorManager.insert(newProp as OL2StringPropertyInfo)
+          if (i % 100 === 0) {
+            Logger.log(`Inserted ${i} string properties into vector store, out of ${newProps.length}`)
+          }
         }
       }
+    this.vectorManager
+      .query('what are the biggest properties?')
+      .then((res) => {
+        console.log('Vector store query result:', res)
+      })
+      .catch((err) => {
+        console.error('Vector store query failed:', err)
+      })
       return newProps
     }
+    console.warn(`No properties found for resource ${resourceURL}`)
     return Promise.resolve([])
   }
 
