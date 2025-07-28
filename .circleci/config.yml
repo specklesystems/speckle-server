@@ -3,6 +3,18 @@ version: 2.1
 orbs:
   snyk: snyk/snyk@2.0.3
 
+aliases:
+  - &docker-node-image
+    docker:
+      - image: cimg/node:22.6.0
+
+  - &yarn
+    run:
+      name: Install Dependencies
+      command: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+
+  - &work-dir /tmp/ci
+
 workflows:
   test-build:
     jobs:
@@ -14,3 +26,20 @@ workflows:
               only:
                 - main
                 - hotfix*
+
+jobs:
+  vulnerability-scan:
+    # snyk can undertake most types of scans through GitHub integration
+    # which does not require integration with the CI
+    # but it is not possible to scan npm/yarn package.json
+    # because it requires node_modules
+    # therefore this scanning has to be triggered via the cli
+    <<: *docker-node-image
+    resource_class: large
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - *yarn
+      - snyk/scan:
+          additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
+          fail-on-issues: false
