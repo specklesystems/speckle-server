@@ -94,8 +94,8 @@ export default class ServerDownloader implements Downloader {
     throw new Error('Download pool is not initialized')
   }
 
-  add(id: string): void {
-    this.#getPool().add(id)
+  add(id: string): Promise<void> {
+    return this.#getPool().add(id)
   }
 
   /*
@@ -146,12 +146,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       const { done, value } = await reader.read()
       if (done) break
 
-      leftover = await this.#processArray(leftover, value, keys, async () => {
-        count++
-        if (count % 1000 === 0) {
-          await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
-        }
-      })
+      leftover = await this.#processArray(leftover, value, keys)
     }
     if (keys.size > 0) {
       throw new Error(
@@ -167,8 +162,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
   async #processArray(
     leftover: Uint8Array,
     value: Uint8Array,
-    keys: Set<string>,
-    callback: () => Promise<void>
+    keys: Set<string>
   ): Promise<Uint8Array> {
     //this concat will allocate a new array
     const combined = this.#concatUint8Arrays(leftover, value)
@@ -181,9 +175,8 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
         //strings are allocated here
         const item = this.#processLine(line)
         start = i + 1
-        await callback()
         keys.delete(item.baseId)
-        this.#results?.add(item)
+        await this.#results?.add(item)
       }
     }
     return combined.subarray(start) // carry over remainder
@@ -201,6 +194,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
         }
         const base = this.decodeChunk(jsonBytes)
         const item = this.#processJson(baseId, base)
+        item.baseBytes = jsonBytes
         item.size = jsonBytes.length
         return item
       }

@@ -1,6 +1,7 @@
 export interface Item {
   baseId: string
   base?: Base
+  baseBytes?: Uint8Array
   size?: number
 }
 

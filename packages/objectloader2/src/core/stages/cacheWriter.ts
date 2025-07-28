@@ -29,7 +29,7 @@ export class CacheWriter implements Writer{
     this.#requestItem = requestItem
   }
 
-  add(item: Item): void {
+  async add(item: Item): Promise<void> {
     if (!this.#writeQueue) {
       this.#writeQueue = new BatchingQueue({
         batchSize: this.#options.maxCacheWriteSize,
@@ -39,7 +39,7 @@ export class CacheWriter implements Writer{
         }
       })
     }
-    this.#writeQueue.add(item.baseId, item)
+    await this.#writeQueue.add(item.baseId, item)
     this.#defermentManager.undefer(item, this.#requestItem)
   }
 

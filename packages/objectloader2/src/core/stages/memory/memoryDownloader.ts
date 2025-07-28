@@ -28,10 +28,10 @@ export class MemoryDownloader implements Downloader {
   disposeAsync(): Promise<void> {
     return Promise.resolve()
   }
-  add(id: string): void {
+  async add(id: string): Promise<void> {
     const base = this.#items.get(id)
     if (base) {
-      this.#results?.add({ baseId: id, base })
+      await this.#results?.add({ baseId: id, base })
       return
     }
     throw new Error('Method not implemented.')

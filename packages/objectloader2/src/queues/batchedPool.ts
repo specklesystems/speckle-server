@@ -21,8 +21,9 @@ export default class BatchedPool<T> implements Queue<T> {
     this.#processingLoop = this.#loop()
   }
 
-  add(item: T): void {
+  async add(item: T): Promise<void> {
     this.#queue.push(item)
+    return Promise.resolve()
   }
 
   getBatch(batchSize: number): T[] {

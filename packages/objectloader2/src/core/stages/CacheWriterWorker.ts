@@ -1,23 +1,31 @@
 import { ItemQueue } from '../../caching/ItemQueue.js'
+import { DefermentManager } from '../../deferment/defermentManager.js'
 import { CustomLogger } from '../../types/functions.js'
 import { Item } from '../../types/types.js'
 import { RingBufferQueue } from '../../workers/RingBufferQueue.js'
 import { WorkerMessageType } from '../../workers/WorkerMessageType.js'
 import { Writer } from './interfaces.js'
 
-const DEFAULT_ENQUEUE_TIMEOUT_MS = 500
 const BASE_BUFFER_CAPACITY_BYTES = 1024 * 1024 * 200 // 1MB capacity for each queue
 
 export class CacheWriterWorker implements Writer {
   #logger: CustomLogger
   #disposed = false
+  #defermentManager: DefermentManager
+  #requestItem: (id: string) => void
   private name: string = 'Speckle Cache Writer'
 
   mainToWorkerQueue?: ItemQueue
   indexedDbWriter?: Worker
 
-  constructor(logger: CustomLogger) {
+  constructor(
+    logger: CustomLogger,
+    defermentManager: DefermentManager,
+    requestItem: (id: string) => void
+  ) {
     this.#logger = logger
+    this.#defermentManager = defermentManager
+    this.#requestItem = requestItem
     this.name = `[Speckle Cache Writer]`
     this.initializeIndexedDbWriter()
   }
@@ -30,7 +38,7 @@ export class CacheWriterWorker implements Writer {
       BASE_BUFFER_CAPACITY_BYTES,
       this.name + ' ItemQueue MainToWorkerQueue'
     )
-    this.mainToWorkerQueue = new ItemQueue(rawMainToWorkerRbq, this.#logger)
+    this.mainToWorkerQueue = new ItemQueue(rawMainToWorkerRbq)
     const mainToWorkerSab = rawMainToWorkerRbq.getSharedArrayBuffer()
     this.logToMainUI(
       `Worker-to-Main ItemQueue created with ${
@@ -53,17 +61,9 @@ export class CacheWriterWorker implements Writer {
     })
   }
 
-  add(item: Item): void {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.mainToWorkerQueue?.enqueue([item], DEFAULT_ENQUEUE_TIMEOUT_MS)
-  }
-
-  writeAll(items: Item[]): Promise<void> {
-    const start = performance.now()
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.mainToWorkerQueue?.fullyEnqueue(items, DEFAULT_ENQUEUE_TIMEOUT_MS)
-    this.#logger('writeBatch: left, time', items.length, performance.now() - start)
-    return Promise.resolve()
+  async add(item: Item): Promise<void> {
+    await this.mainToWorkerQueue?.enqueueSingle(item, 500)
+    this.#defermentManager.undefer(item, this.#requestItem)
   }
 
   async disposeAsync(): Promise<void> {

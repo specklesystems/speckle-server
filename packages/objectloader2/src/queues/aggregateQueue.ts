@@ -13,9 +13,9 @@ export default class AggregateQueue<T> implements Queue<T> {
     await this.#queue2.disposeAsync()
   }
 
-  add(value: T): void {
-    this.#queue1.add(value)
-    this.#queue2.add(value)
+  async add(value: T): Promise<void> {
+    await this.#queue1.add(value)
+    await this.#queue2.add(value)
   }
 
   values(): never {

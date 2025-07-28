@@ -1,15 +1,13 @@
 import { WorkerCachingConstants } from '../caching/WorkerCachingConstants.js'
-import { CustomLogger, delay } from '../types/functions.js'
+import { delay } from '../types/functions.js'
 import { RingBufferQueue } from './RingBufferQueue.js'
 import { handleError } from './WorkerMessageType.js'
 
 export abstract class ObjectQueue<T> {
   private rbq: RingBufferQueue
-  private logger: CustomLogger
 
-  constructor(ringBufferQueue: RingBufferQueue, logger?: CustomLogger) {
+  constructor(ringBufferQueue: RingBufferQueue) {
     this.rbq = ringBufferQueue
-    this.logger = logger || ((): void => {})
   }
 
   abstract getBytes(item: T): Uint8Array
@@ -42,6 +40,26 @@ export abstract class ObjectQueue<T> {
         )*/
       }
       remainingMessages = remainingMessages.slice(s.length)
+    }
+  }
+
+  async enqueueSingle(item: T, timeoutMs: number): Promise<void> {
+    while (true) {
+      try {
+        const bytes = this.getBytes(item)
+        if (await this.rbq.enqueue(bytes, timeoutMs)) {
+          break; // Successfully enqueued
+        }
+      } catch (e: unknown) {
+        handleError(
+          e,
+          (err) =>
+            '[ItemQueue] Error serializing Item:' +
+            err.message +
+            ' ' +
+            JSON.stringify(item)
+        )
+      }
     }
   }
 

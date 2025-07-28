@@ -70,10 +70,11 @@ export default class BatchingQueue<T> {
     }
   }
 
-  add(key: string, item: T): void {
-    if (this.#disposed) return
+  add(key: string, item: T): Promise<void> {
+    if (this.#disposed) return Promise.resolve()
     this.#queue.enqueue(key, item)
     this.#addCheck()
+    return Promise.resolve()
   }
 
   addAll(keys: string[], items: T[]): void {
