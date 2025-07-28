@@ -43,12 +43,10 @@ import {
   NumberOfFileImportRetries
 } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
-import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
 import {
   initializeRhinoQueueFactory,
   initializeIfcQueueFactory,
   shutdownQueues,
-  fileImportQueues,
   initializePostgresQueue,
   initializeQueueFactory
 } from '@/modules/fileuploads/queues/fileimports'
@@ -133,6 +131,9 @@ export const init: SpeckleModule['init'] = async ({
   }
   moduleLogger.info('📄 Init FileUploads module')
 
+  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
+    moduleLogger.info('📄 Next Gen File Importer is ENABLED')
+
   let observeResult: ObserveResult | undefined = undefined
 
   if (isInitial) {
@@ -141,36 +142,33 @@ export const init: SpeckleModule['init'] = async ({
       // this freature flag is going away soon, it will be on by default
       // once we switch stabilize the background jobs mechanism
       if (FF_BACKGROUND_JOBS_ENABLED) {
+        moduleLogger.info('🗳️ Background Jobs are ENABLED')
         const connectionUri = getFileImporterQueuePostgresUrl()
         const queueDb = connectionUri
           ? configureClient({ postgres: { connectionUri } }).public
           : db
-        const queueInits = [
-          initializePostgresQueue({
+        const requestQueues = [
+          await initializePostgresQueue({
             label: 'ifc',
             supportedFileTypes: ['ifc'],
             db: queueDb
           })
         ]
         if (FF_RHINO_FILE_IMPORTER_ENABLED) {
-          const connectionUri = getFileImporterQueuePostgresUrl()
+          moduleLogger.info('🦏 Rhino File Importer is ENABLED')
           if (!connectionUri)
             throw new MisconfiguredEnvironmentError(
               'Need a dedicated queue for Rhino based fileimports'
             )
-          const rhinoQueueDb = configureClient({ postgres: { connectionUri } })
-          queueInits.push(
-            initializePostgresQueue({
+          requestQueues.push(
+            await initializePostgresQueue({
               label: 'rhino',
               supportedFileTypes: ['obj', 'stl', 'skp'],
               // using public here, as the private uri is not applicable here
-              db: rhinoQueueDb.public
+              db: queueDb
             })
           )
         }
-        // no need to store the queue refs here for now
-        const requestQueues = await Promise.all(queueInits)
-        //stick to the bull queue based mechanism by default
         ;({ observeResult } = initializeMetrics({
           registers: [metricsRegister],
           requestQueues
@@ -251,7 +249,7 @@ export const init: SpeckleModule['init'] = async ({
       })(parsedMessage)
     })
 
-    initializeEventListenersFactory({ db })()
+    initializeEventListenersFactory({ db, observeResult })()
     reportSubscriptionEventsFactory({
       publish,
       eventListen: getEventBus().listen,
@@ -262,16 +260,6 @@ export const init: SpeckleModule['init'] = async ({
         return getProjectModelByIdFactory({ db: projectDb })(params)
       }
     })()
-  }
-
-  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-    moduleLogger.info('📄 Next Gen File Importer is ENABLED')
-    app.use(
-      nextGenFileImporterRouterFactory({
-        queues: fileImportQueues,
-        observeResult: observeResult ?? undefined
-      })
-    )
   }
 
   // the two routers can be used independently and can both be enabled

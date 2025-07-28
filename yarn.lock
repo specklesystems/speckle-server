@@ -16178,7 +16178,6 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
     "@vitest/ui": "npm:^3.0.9"
-    dexie: "npm:^4.0.11"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     fake-indexeddb: "npm:^6.0.0"

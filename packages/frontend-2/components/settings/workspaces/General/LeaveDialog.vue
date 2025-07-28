@@ -34,7 +34,7 @@ import { isUndefined } from 'lodash-es'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { homeRoute } from '~/lib/common/helpers/route'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
+import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -54,7 +54,7 @@ const { triggerNotification } = useGlobalToast()
 const { activeUser } = useActiveUser()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
-const { mutateActiveWorkspaceSlug } = useNavigation()
+const { setActiveWorkspace } = useSetActiveWorkspace()
 
 const onLeave = async () => {
   isOpen.value = false
@@ -90,7 +90,7 @@ const onLeave = async () => {
       )
     }
 
-    mutateActiveWorkspaceSlug(null)
+    await setActiveWorkspace({ id: null })
     navigateTo(homeRoute)
 
     triggerNotification({

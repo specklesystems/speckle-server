@@ -16,6 +16,7 @@ describe('CacheReader testing', () => {
         items: new Map<string, Base>([[i1.baseId, i1.base!]])
       }),
       deferments,
+      () => {},
       {
         maxCacheReadSize: 1,
         maxCacheWriteSize: 1,
