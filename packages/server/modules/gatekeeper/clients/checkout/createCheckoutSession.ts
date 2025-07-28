@@ -45,6 +45,12 @@ export const createCheckoutSessionFactory =
 
       success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url,
+      automatic_tax: {
+        enabled: true
+      },
+      invoice_creation: {
+        enabled: true
+      },
       tax_id_collection: {
         enabled: true
       }
