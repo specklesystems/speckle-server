@@ -48,12 +48,10 @@
             ]"
           >
             <div
-              class="relative w-full flex justify-between items-center border-b border-outline-2"
-              :class="isEmbedEnabled ? 'p-2' : 'p-3 md:px-4'"
+              class="relative w-full flex justify-between items-center border-b border-outline-2 p-2 pb-1.5"
             >
               <div class="flex-grow flex items-center gap-x-1.5">
                 <FormButton
-                  v-tippy="'Previous'"
                   :icon-left="ChevronLeftIcon"
                   color="outline"
                   hide-text
@@ -64,7 +62,6 @@
                   <ChevronLeftIcon class="w-3 h-3" />
                 </FormButton>
                 <FormButton
-                  v-tippy="'Next'"
                   :icon-left="ChevronRightIcon"
                   color="outline"
                   hide-text
@@ -133,7 +130,7 @@
             >
               <div
                 ref="commentsContainer"
-                class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 py-2 sm:pr-3"
+                class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col px-2 py-1"
               >
                 <ViewerAnchoredPointThreadComment
                   v-for="comment in comments"

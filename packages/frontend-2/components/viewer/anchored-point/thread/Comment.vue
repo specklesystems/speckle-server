@@ -1,52 +1,48 @@
 <template>
   <div class="flex flex-col items-center">
-    <div
-      class="w-full relative"
-      :class="isEmbedEnabled ? 'px-2 py-1' : 'px-3 md:px-0 md:pl-4 py-2'"
-    >
-      <div class="flex items-center space-x-2">
-        <UserAvatar
-          :user="comment.author"
-          hide-tooltip
-          :class="isEmbedEnabled && '!w-7 !h-7'"
-        />
-        <span class="grow truncate text-body-xs">
-          {{ comment.author.name }}
-        </span>
-        <span v-tippy="createdAt.full" class="text-body-3xs truncate text-foreground-2">
-          {{ createdAt.relative }}
-        </span>
-      </div>
-      <div
-        class="truncate text-body-2xs text-foreground dark:text-foreground-2 flex flex-col"
-        :class="isEmbedEnabled ? 'mt-2' : 'mt-3'"
-      >
-        <template v-if="isLimited">
-          <ViewerResourcesLimitAlert limit-type="comment" :project="project" />
-        </template>
-        <template v-else>
-          <CommonTiptapTextEditor
-            v-if="comment?.text?.doc"
-            :model-value="comment.text.doc"
-            :schema-options="{ multiLine: false }"
-            :project-id="projectId"
-            disable-invitation-cta
-            readonly
-            @created="emit('mounted')"
-          />
-        </template>
+    <div class="w-full relative py-2 flex items-start gap-x-2">
+      <UserAvatar :user="comment.author" hide-tooltip size="sm" class="!size-7" />
+      <div class="pt-1">
+        <div class="flex items-center space-x-2">
+          <span class="truncate text-body-2xs font-medium">
+            {{ comment.author.name }}
+          </span>
+          <span
+            v-tippy="createdAt.full"
+            class="text-body-2xs truncate text-foreground-2"
+          >
+            {{ createdAt.relative }}
+          </span>
+        </div>
+        <div
+          class="truncate text-body-2xs text-foreground dark:text-foreground-2 flex flex-col pt-2"
+        >
+          <template v-if="isLimited">
+            <ViewerResourcesLimitAlert limit-type="comment" :project="project" />
+          </template>
+          <template v-else>
+            <CommonTiptapTextEditor
+              v-if="comment?.text?.doc"
+              :model-value="comment.text.doc"
+              :schema-options="{ multiLine: false }"
+              :project-id="projectId"
+              disable-invitation-cta
+              readonly
+              @created="emit('mounted')"
+            />
+          </template>
 
-        <ViewerAnchoredPointThreadCommentAttachments
-          :attachments="comment"
-          :project-id="projectId"
-        />
+          <ViewerAnchoredPointThreadCommentAttachments
+            :attachments="comment"
+            :project-id="projectId"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import type { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
 const props = defineProps<{
@@ -58,7 +54,6 @@ const emit = defineEmits<{
   (e: 'mounted'): void
 }>()
 
-const { isEmbedEnabled } = useEmbed()
 const {
   resources: {
     response: { project }

@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 top-[3.5rem] z-20 flex rounded-lg border border-outline-2 bg-foundation px-1"
+    class="absolute left-2 lg:left-0 top-[3.5rem] z-20 flex rounded-lg border border-outline-2 bg-foundation px-1 h-full"
     :class="[
       isEmbedEnabled
         ? ''
@@ -58,6 +58,28 @@
           class="h-5 w-5 md:h-6 md:w-6"
         />
       </ViewerControlsButtonToggle>
+      <div class="mt-auto flex flex-col gap-2">
+        <ViewerControlsButtonToggle
+          v-tippy="
+            getTooltipProps(getShortcutDisplayText(shortcuts.ToggleDevMode), {
+              placement: 'right'
+            })
+          "
+          :active="activePanel === 'devMode'"
+          :icon="'IconViewerDev'"
+          @click="toggleActivePanel('devMode')"
+        />
+        <ViewerControlsButtonToggle
+          v-tippy="getTooltipProps('Documentation', { placement: 'right' })"
+          :icon="'IconDocs'"
+          @click="openDocs"
+        />
+        <!-- TODO: Add intercom click event -->
+        <ViewerControlsButtonToggle
+          v-tippy="getTooltipProps('Get help', { placement: 'right' })"
+          :icon="'IconIntercom'"
+        />
+      </div>
     </div>
 
     <!-- Resize handle -->
@@ -96,6 +118,17 @@
         class="pointer-events-auto"
         @close="activePanel = 'none'"
       />
+
+      <!-- Dev mode panel -->
+      <ViewerLayoutSidePanel
+        v-if="activePanel === 'devMode'"
+        class="pointer-events-auto"
+      >
+        <template #title>
+          <span>Dev mode</span>
+        </template>
+        <ViewerDataviewerPanel />
+      </ViewerLayoutSidePanel>
     </div>
   </aside>
 </template>
@@ -116,6 +149,7 @@ type ActivePanel =
   | 'explorer'
   | 'automate'
   | 'filters'
+  | 'devMode'
 
 const width = ref(264)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -190,11 +224,16 @@ const { summary } = useFunctionRunsStatusSummary({
 registerShortcuts({
   ToggleModels: () => toggleActivePanel('models'),
   ToggleFilters: () => toggleActivePanel('filters'),
-  ToggleDiscussions: () => toggleActivePanel('discussions')
+  ToggleDiscussions: () => toggleActivePanel('discussions'),
+  ToggleDevMode: () => toggleActivePanel('devMode')
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
   activePanel.value = activePanel.value === panel ? 'none' : panel
+}
+
+const openDocs = () => {
+  window.open('https://docs.speckle.systems/', '_blank')
 }
 
 onMounted(() => {

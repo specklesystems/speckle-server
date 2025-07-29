@@ -39,9 +39,6 @@
               @remove="(id: string) => removeModel(id)"
             />
           </template>
-
-          <!-- Dev Mode -->
-          <ViewerDataviewerPanel v-if="showRaw" class="pointer-events-auto" />
         </template>
 
         <!-- Empty State -->
@@ -90,7 +87,6 @@ const {
 
 const expandLevel = ref(-1)
 const manualExpandLevel = ref(-1)
-const showRaw = ref(false)
 
 const mp = useMixpanel()
 

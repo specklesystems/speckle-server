@@ -69,6 +69,11 @@
             </button>
           </LayoutMenu>
           <button
+            v-tippy="
+              getTooltipProps(isHidden ? 'Show' : 'Hide', {
+                placement: 'top'
+              })
+            "
             class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
             :class="{
               'opacity-100': isHidden,
@@ -80,6 +85,11 @@
             <IconEye v-else class="w-4 h-4" />
           </button>
           <button
+            v-tippy="
+              getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', {
+                placement: 'top'
+              })
+            "
             class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
             :class="{
               'opacity-100': isIsolated,
@@ -146,6 +156,8 @@ const props = defineProps<{
   manualExpandLevel: number
   rootNodes: ExplorerNode[]
 }>()
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =

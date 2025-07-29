@@ -106,5 +106,8 @@ export const getMentionExtension = () =>
     suggestion: suggestionOptions,
     HTMLAttributes: {
       class: 'editor-mention'
+    },
+    renderLabel({ node }) {
+      return `${node.attrs.label ?? node.attrs.id}`
     }
   })

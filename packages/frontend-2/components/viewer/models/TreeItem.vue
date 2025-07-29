@@ -49,6 +49,7 @@
 
       <div class="flex items-center">
         <button
+          v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
           class="p-1 rounded-md hover:bg-highlight-3"
           :icon-left="isHidden ? IconEyeClosed : IconEye"
           :class="
@@ -60,6 +61,9 @@
           <IconEye v-else class="w-4 h-4" />
         </button>
         <button
+          v-tippy="
+            getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', { placement: 'top' })
+          "
           class="p-1 rounded-md hover:bg-highlight-3"
           :class="
             isIsolated || isSelected
@@ -114,7 +118,13 @@
           />
         </div>
         <div v-if="itemCount <= singleCollectionItems.length" class="mb-2">
-          <FormButton size="sm" text full-width @click="itemCount += pageSize">
+          <FormButton
+            size="sm"
+            color="outline"
+            text
+            full-width
+            @click="itemCount += pageSize"
+          >
             View more ({{ singleCollectionItems.length - itemCount }})
           </FormButton>
         </div>
@@ -172,6 +182,7 @@ const { addToSelection, clearSelection, removeFromSelection, objects } =
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const isAtomic = computed(() => props.treeItem.rawNode.atomic === true)
 const rawSpeckleData = computed(() => props.treeItem?.rawNode.raw as SpeckleObject)
