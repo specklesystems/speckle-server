@@ -1,8 +1,33 @@
 <template>
   <ViewerLayoutSidePanel @close="$emit('close')">
-    <template #title>Filtering</template>
+    <template #title>Filters</template>
     <template #actions>
-      <div class="flex justify-between items-center w-full">
+      <div class="flex gap-x-0.5 pr-2">
+        <FormButton
+          v-if="title !== 'Object Type'"
+          size="sm"
+          color="subtle"
+          @click="
+            ;(showAllFilters = false),
+              removePropertyFilter(),
+              refreshColorsIfSetOrActiveFilterIsNumeric()
+          "
+        >
+          Reset
+        </FormButton>
+        <FormButton
+          v-tippy="'Toggle coloring'"
+          size="sm"
+          color="subtle"
+          hide-text
+          :icon-right="colors ? 'IconColouring' : 'IconColouringOutline'"
+          @click="toggleColors()"
+        />
+      </div>
+    </template>
+
+    <div class="h-full flex flex-col">
+      <div class="px-4 py-1 border-b border-outline-2">
         <FormButton
           text
           color="subtle"
@@ -15,85 +40,63 @@
             {{ title.split('.').reverse()[0] || title || 'No title' }}
           </span>
         </FormButton>
-        <div class="flex gap-x-1">
-          <FormButton
-            v-if="title !== 'Object Type'"
+      </div>
+
+      <div
+        :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden ${
+          showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible'
+        } transition-[height] border-b border-outline-2`"
+      >
+        <div class="sticky top-0 bg-foundation p-2 pb-1">
+          <FormTextInput
+            v-model="searchString"
+            name="filter search"
+            placeholder="Search for a property"
             size="sm"
-            color="outline"
-            @click="
-              ;(showAllFilters = false),
-                removePropertyFilter(),
-                refreshColorsIfSetOrActiveFilterIsNumeric()
-            "
+            color="foundation"
+            :show-clear="!!searchString"
+            class="!text-body-2xs"
+          />
+        </div>
+        <div>
+          <div
+            v-for="(filter, index) in relevantFiltersLimited"
+            :key="index"
+            v-tippy="filter.key"
+            class="text-body-2xs"
           >
-            Reset
-          </FormButton>
-          <FormButton
-            v-tippy="'Toggle coloring'"
-            size="sm"
-            color="subtle"
-            text
-            @click="toggleColors()"
-          >
-            <IconColouringOutline v-if="!colors" class="w-4 h-4" />
-            <IconColouring v-else class="w-4 h-4" />
-          </FormButton>
+            <button
+              class="flex w-full text-left hover:bg-primary-muted truncate rounded-md py-[3px] px-2 mx-2 text-[10px] text-foreground-3 gap-1 items-center"
+              @click="
+                ;(showAllFilters = false),
+                  setPropertyFilter(filter),
+                  refreshColorsIfSetOrActiveFilterIsNumeric()
+              "
+            >
+              <span class="text-foreground text-body-3xs">
+                {{ getPropertyName(filter.key) }}
+              </span>
+              <span class="truncate">{{ filter.key }}</span>
+            </button>
+          </div>
+          <div v-if="itemCount < relevantFiltersSearched.length" class="px-4">
+            <FormButton size="sm" text @click="itemCount += 30">
+              View more ({{ relevantFiltersSearched.length - itemCount }})
+            </FormButton>
+          </div>
         </div>
       </div>
-    </template>
-    <div
-      :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden ${
-        showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible'
-      } transition-[height] border-b border-outline-2`"
-    >
-      <div class="sticky top-0 bg-foundation p-2 pb-1">
-        <FormTextInput
-          v-model="searchString"
-          name="filter search"
-          placeholder="Search for a property"
-          size="sm"
-          color="foundation"
-          :show-clear="!!searchString"
-          class="!text-body-2xs"
+
+      <div v-if="activeFilter" class="overflow-y-scroll simple-scrollbar flex-1">
+        <ViewerFiltersStringFilter
+          v-if="stringActiveFilter"
+          :filter="stringActiveFilter"
+        />
+        <ViewerFiltersNumericFilter
+          v-if="numericActiveFilter"
+          :filter="numericActiveFilter"
         />
       </div>
-      <div>
-        <div
-          v-for="(filter, index) in relevantFiltersLimited"
-          :key="index"
-          v-tippy="filter.key"
-          class="text-body-2xs"
-        >
-          <button
-            class="flex w-full text-left hover:bg-primary-muted truncate rounded-md py-[3px] px-2 mx-2 text-[10px] text-foreground-3 gap-1 items-center"
-            @click="
-              ;(showAllFilters = false),
-                setPropertyFilter(filter),
-                refreshColorsIfSetOrActiveFilterIsNumeric()
-            "
-          >
-            <span class="text-foreground text-body-3xs">
-              {{ getPropertyName(filter.key) }}
-            </span>
-            <span class="truncate">{{ filter.key }}</span>
-          </button>
-        </div>
-        <div v-if="itemCount < relevantFiltersSearched.length" class="px-4">
-          <FormButton size="sm" text @click="itemCount += 30">
-            View more ({{ relevantFiltersSearched.length - itemCount }})
-          </FormButton>
-        </div>
-      </div>
-    </div>
-    <div v-if="activeFilter">
-      <ViewerFiltersStringFilter
-        v-if="stringActiveFilter"
-        :filter="stringActiveFilter"
-      />
-      <ViewerFiltersNumericFilter
-        v-if="numericActiveFilter"
-        :filter="numericActiveFilter"
-      />
     </div>
   </ViewerLayoutSidePanel>
 </template>

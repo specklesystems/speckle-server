@@ -87,10 +87,9 @@ interface MeasurementTypeOption {
 
 const { measurementOptions, setMeasurementOptions, clearMeasurements } =
   useMeasurementUtilities()
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const showSettings = ref(false)
-
-const { getTooltipProps } = useSmartTooltipDelay()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   setMeasurementOptions({

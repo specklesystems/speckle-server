@@ -1,7 +1,7 @@
 <template>
-  <ViewerLayoutSidePanel @close="$emit('close')">
+  <ViewerLayoutSidePanel>
     <template #title>Discussions</template>
-    <template #actions>
+    <div class="px-4 py-1 border-b border-outline-2">
       <FormButton
         text
         size="sm"
@@ -11,7 +11,7 @@
       >
         Discussion visibility options
       </FormButton>
-    </template>
+    </div>
     <div class="flex flex-col">
       <div
         v-show="showVisibilityOptions"
@@ -85,8 +85,6 @@ import {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
-
-defineEmits(['close'])
 
 graphql(`
   fragment ViewerCommentsListItem on Comment {
