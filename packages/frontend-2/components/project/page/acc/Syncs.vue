@@ -218,8 +218,7 @@ const accSyncItems = computed(
 const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
   onProjectAccSyncItemUpdatedSubscription,
   () => ({
-    id: props.projectId,
-    itemIds: accSyncItems.value.map((s) => s.accFileLineageUrn)
+    id: props.projectId
   })
 )
 
@@ -228,6 +227,7 @@ const disabledItemPredicate = (item: ProjectPageLatestItemsModelItemFragment) =>
 }
 
 onProjectAccSyncItemsUpdated((res) => {
+  // TODO ACC: Mutate local cache instead of refetch
   refetchAccSyncItems()
   triggerNotification({
     type: ToastNotificationType.Info,

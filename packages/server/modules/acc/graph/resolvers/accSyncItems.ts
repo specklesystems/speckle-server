@@ -56,6 +56,11 @@ import {
   storeTokenResourceAccessDefinitionsFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import {
+  filteredSubscribe,
+  ProjectSubscriptions
+} from '@/modules/shared/utils/subscriptions'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 
 const resolvers: Resolvers = {
   Mutation: {
@@ -201,40 +206,33 @@ const resolvers: Resolvers = {
         getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db: projectDb })
       })({ lineageUrn })
     }
+  },
+  Subscription: {
+    projectAccSyncItemsUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectAccSyncItemUpdated,
+        async (payload, args, ctx) => {
+          const { id: projectId, itemUrns } = args
+          if (payload.projectId !== projectId) return false
+
+          throwIfResourceAccessNotAllowed({
+            resourceAccessRules: ctx.resourceAccessRules,
+            resourceId: projectId,
+            resourceType: TokenResourceIdentifierType.Project
+          })
+
+          const canReadProject = await ctx.authPolicies.project.canRead({
+            userId: ctx.userId,
+            projectId
+          })
+          throwIfAuthNotOk(canReadProject)
+
+          if (!itemUrns?.length) return true
+          return itemUrns.includes(payload.projectAccSyncItemsUpdated.lineageUrn)
+        }
+      )
+    }
   }
-
-  // TODO ACC: not working yet
-  // Subscription: {
-  //   projectAccSyncItemsUpdated: {
-  //     subscribe: filteredSubscribe(
-  //       ProjectSubscriptions.ProjectAccSyncItemUpdated,
-  //       async (payload, args, ctx) => {
-  //         const { id: projectId, itemIds } = args
-
-  //         if (payload.projectId !== projectId) return false
-
-  //         throwIfResourceAccessNotAllowed({
-  //           resourceAccessRules: ctx.resourceAccessRules,
-  //           resourceId: projectId,
-  //           resourceType: TokenResourceIdentifierType.Project
-  //         })
-
-  //         const canReadProject = await ctx.authPolicies.project.canRead({
-  //           userId: ctx.userId,
-  //           projectId
-  //         })
-  //         throwIfAuthNotOk(canReadProject)
-
-  //         const accSyncItem = payload.projectAccSyncItemsUpdated.accSyncItem
-
-  //         return (
-  //           accSyncItem?.projectId === projectId &&
-  //           (!itemIds || itemIds.includes(accSyncItem.accFileLineageUrn))
-  //         )
-  //       }
-  //     )
-  //   }
-  // }
 }
 
 export default resolvers

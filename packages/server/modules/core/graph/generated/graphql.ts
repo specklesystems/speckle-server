@@ -2467,7 +2467,8 @@ export type ProjectWebhooksArgs = {
 export type ProjectAccSyncItemsUpdatedMessage = {
   __typename?: 'ProjectAccSyncItemsUpdatedMessage';
   accSyncItem?: Maybe<AccSyncItem>;
-  type?: Maybe<ProjectAccSyncItemsUpdatedMessageType>;
+  lineageUrn: Scalars['String']['output'];
+  type: ProjectAccSyncItemsUpdatedMessageType;
 };
 
 export const ProjectAccSyncItemsUpdatedMessageType = {
@@ -3875,6 +3876,7 @@ export type Subscription = {
    * Note: Only works in test environment
    */
   ping: Scalars['String']['output'];
+  /** Subscribe to changes to a project's sync items. Optionally specify lineage urns to subscribe to. */
   projectAccSyncItemsUpdated: ProjectAccSyncItemsUpdatedMessage;
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
@@ -3994,7 +3996,7 @@ export type SubscriptionCommitUpdatedArgs = {
 
 export type SubscriptionProjectAccSyncItemsUpdatedArgs = {
   id: Scalars['String']['input'];
-  itemIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  itemUrns?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -7187,7 +7189,8 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
 
 export type ProjectAccSyncItemsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAccSyncItemsUpdatedMessage'] = ResolversParentTypes['ProjectAccSyncItemsUpdatedMessage']> = {
   accSyncItem?: Resolver<Maybe<ResolversTypes['AccSyncItem']>, ParentType, ContextType>;
-  type?: Resolver<Maybe<ResolversTypes['ProjectAccSyncItemsUpdatedMessageType']>, ParentType, ContextType>;
+  lineageUrn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectAccSyncItemsUpdatedMessageType'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

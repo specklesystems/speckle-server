@@ -81,14 +81,18 @@ enum ProjectAccSyncItemsUpdatedMessageType {
 }
 
 type ProjectAccSyncItemsUpdatedMessage {
-  type: ProjectAccSyncItemsUpdatedMessageType
+  type: ProjectAccSyncItemsUpdatedMessageType!
+  lineageUrn: String!
   accSyncItem: AccSyncItem
 }
 
 extend type Subscription {
+  """
+  Subscribe to changes to a project's sync items. Optionally specify lineage urns to subscribe to.
+  """
   projectAccSyncItemsUpdated(
     id: String!
-    itemIds: [String!]
+    itemUrns: [String!]
   ): ProjectAccSyncItemsUpdatedMessage!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
