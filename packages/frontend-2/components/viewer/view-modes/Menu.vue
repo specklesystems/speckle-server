@@ -67,7 +67,7 @@
         <ViewerButtonGroupButton
           v-for="shortcut in viewModeShortcuts"
           :key="shortcut.name"
-          v-tippy="shortcut.description"
+          v-tippy="getTooltipProps(getShortcutDisplayText(shortcut))"
           :is-active="isActiveMode(shortcut.viewMode)"
           @click="handleViewModeChange(shortcut.viewMode)"
         >
@@ -109,8 +109,9 @@ const {
   setEdgesColor,
   edgesColor
 } = useViewModeUtilities()
-const { registerShortcuts } = useViewerShortcuts()
+const { registerShortcuts, getShortcutDisplayText } = useViewerShortcuts()
 const { isLightTheme } = useTheme()
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const showSettings = ref(false)
 
@@ -126,10 +127,6 @@ const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
 
 const viewModeShortcuts = Object.values(ViewModeShortcuts)
 
-const emit = defineEmits<{
-  (e: 'force-close-others'): void
-}>()
-
 const edgesColorOptions = computed(() => [
   isLightTheme.value || currentViewMode.value !== ViewMode.PEN ? 0x1a1a1a : 0xffffff, // black or white
   0x3b82f6, // blue-500
@@ -143,9 +140,6 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
   setViewMode(mode)
 
   if (isShortcut) {
-    if (!open.value) {
-      emit('force-close-others')
-    }
     open.value = true
   }
 }

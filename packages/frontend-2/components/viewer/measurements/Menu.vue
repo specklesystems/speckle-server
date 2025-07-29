@@ -47,7 +47,7 @@
           <ViewerButtonGroupButton
             v-for="option in measurementTypeOptions"
             :key="option.value"
-            v-tippy="option.title"
+            v-tippy="getTooltipProps(option.title)"
             class="size-8"
             :is-active="measurementOptions.type === option.value"
             @click="updateMeasurementsType(option)"
@@ -89,6 +89,8 @@ const { measurementOptions, setMeasurementOptions, clearMeasurements } =
   useMeasurementUtilities()
 
 const showSettings = ref(false)
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   setMeasurementOptions({

@@ -7,7 +7,7 @@
       <ViewerControlsButtonToggle
         v-for="panel in panels"
         :key="panel.id"
-        v-tippy="panel.tooltip"
+        v-tippy="getTooltipProps(panel.tooltip)"
         :active="activePanel === panel.id"
         :icon="panel.icon"
         @click="toggleActivePanel(panel.id)"
@@ -64,6 +64,7 @@ const { toggleSectionBox } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
 const panels = shallowRef({
