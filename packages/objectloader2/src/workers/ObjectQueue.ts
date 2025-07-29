@@ -72,6 +72,7 @@ export abstract class ObjectQueue<T> {
 
   async dequeue(maxItems: number, timeoutMs: number): Promise<T[]> {
     const items: T[] = []
+    const start = performance.now()
 
     while (items.length < maxItems) {
       const bytes = await this.rbq.dequeue(timeoutMs)
@@ -93,6 +94,9 @@ export abstract class ObjectQueue<T> {
               .join('')}`
         )
       }
+    }
+    if (items.length > 0) {
+      console.warn(`Dequeued ${items.length} items in ${performance.now() - start}ms`)
     }
     return items
   }

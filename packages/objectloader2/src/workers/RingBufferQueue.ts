@@ -53,11 +53,12 @@ export class RingBufferQueue {
     }
 
     this.lengthPrefixDataView.setUint32(0, messageLength, true) // true for littleEndian
-    const dataBytes = new Uint8Array(item.length + RingBufferQueue.LENGTH_PREFIX_BYTES)
-    dataBytes.set(this.lengthPrefixArray, 0) // Set the length prefix at the start
-    dataBytes.set(item, RingBufferQueue.LENGTH_PREFIX_BYTES) // Set the actual
-
-    const pushedData = await this.ringBuffer.push(dataBytes, timeoutMs)
+    let pushedData = await this.ringBuffer.push(this.lengthPrefixArray, timeoutMs)
+  if (!pushedData) {
+    console.error(`${this.name} Failed to push length prefix to the ring buffer.`)
+    return false
+  }
+     pushedData = await this.ringBuffer.push(item, timeoutMs)
     if (!pushedData) {
       console.error(`${this.name} Failed to push length prefix to the ring buffer.`)
       return false

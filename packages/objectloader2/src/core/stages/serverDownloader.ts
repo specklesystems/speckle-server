@@ -202,6 +202,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
         const base = this.decodeChunk(jsonBytes)
         const item = this.#processJson(baseId, base)
         item.size = jsonBytes.length
+        item.baseBytes = jsonBytes // store the raw bytes
         return item
       }
     }

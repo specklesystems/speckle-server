@@ -1,5 +1,5 @@
 import { CustomLogger } from '../types/functions.js'
-import { Item } from '../types/types.js'
+import { Base, Item } from '../types/types.js'
 import { ObjectQueue } from '../workers/ObjectQueue.js'
 import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 
@@ -14,10 +14,17 @@ export class ItemQueue extends ObjectQueue<Item> {
   }
 
   getBytes(item: Item): Uint8Array {
-    return this.textEncoder.encode(JSON.stringify(item))
+    if (!item.baseBytes) {
+      throw new Error("Item baseBytes is required for serialization");
+    }
+    return item.baseBytes
   }
 
   getItem(item: Uint8Array): Item {
-    return JSON.parse(this.textDecoder.decode(item)) as Item
+    if (item.length < 4) {
+      throw new Error("Item data is too short to contain baseId");
+    }
+    const base = JSON.parse(this.textDecoder.decode(item)) as Base;
+    return { baseId: base.id, size: item.length, base };
   }
 }

@@ -234,22 +234,16 @@ export class RingBuffer {
   }
 
   async waitForData(requiredLength: number, timeoutMs: number): Promise<boolean> {
-    const start = Date.now()
     while (true) {
       if (this.length >= requiredLength) {
         return true
-      }
-      const remainingTimeout = timeoutMs - (Date.now() - start)
-      if (remainingTimeout <= 0) {
-        return false
       }
       // Wait for a writer to make a change. A writer notifies on READ_IDX_POS after it writes.
       const outcome = Atomics.waitAsync(
         this.controlBuffer,
         RingBuffer.READ_IDX_POS,
         Atomics.load(this.controlBuffer, RingBuffer.READ_IDX_POS),
-        remainingTimeout
-      )
+        timeoutMs      )
       const res = outcome.async ? await outcome.value : outcome.value
       if (res === 'timed-out') {
         return false
