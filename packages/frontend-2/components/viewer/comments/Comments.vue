@@ -49,7 +49,7 @@
           Exclude threads from other versions
         </FormButton>
       </div>
-      <div class="flex flex-col gap-y-1 p-1">
+      <div class="flex flex-col gap-y-2 p-1">
         <ViewerCommentsListItem
           v-for="thread in commentThreads"
           :key="thread.id"
