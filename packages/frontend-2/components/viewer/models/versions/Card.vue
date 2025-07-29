@@ -47,7 +47,7 @@
     </div>
 
     <!-- Version List -->
-    <div v-show="showVersions" class="mt-2 ml-4 flex h-auto flex-col space-y-0">
+    <div v-show="showVersions" class="flex-col">
       <ViewerResourcesVersionCard
         v-for="(version, index) in props.model.versions.items"
         :key="version.id"
