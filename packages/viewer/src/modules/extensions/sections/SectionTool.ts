@@ -577,12 +577,12 @@ export class SectionTool extends Extension {
       this.sectionBoxHistory.push(this.initialSectionBoxState)
     }
 
-    /** Truncate history if we're not at the end and we have more than just the initial state */
+    /** If we're not at the latest state and make a new change, remove all future states */
     if (
       this.currentHistoryIndex < this.sectionBoxHistory.length - 1 &&
       this.sectionBoxHistory.length > 1
     ) {
-      /** Always preserve the initial state (index 0) and states up to current cursor */
+      /** Keep the initial state and all states up to the current position */
       this.sectionBoxHistory = this.sectionBoxHistory.slice(
         0,
         this.currentHistoryIndex + 1
@@ -593,7 +593,7 @@ export class SectionTool extends Extension {
     this.sectionBoxHistory.push(currentState)
     this.currentHistoryIndex = this.sectionBoxHistory.length - 1
 
-    /** Limit history size to prevent memory issues */
+    /** Remove oldest states if we exceed the history limit */
     if (this.sectionBoxHistory.length > this.maxHistorySize) {
       this.sectionBoxHistory.shift()
       this.currentHistoryIndex = Math.max(0, this.currentHistoryIndex - 1)
