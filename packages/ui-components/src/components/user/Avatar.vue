@@ -73,7 +73,7 @@ const initials = computed(() => {
 const borderClasses = computed(() => {
   if (props.noBorder) return ''
   if (props.lightStyle) return 'border border-outline-2'
-  return 'border-2 border-foundation'
+  return 'border border-foundation'
 })
 
 const bgClasses = computed(() => {
