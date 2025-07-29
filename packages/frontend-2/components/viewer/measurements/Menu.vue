@@ -11,23 +11,17 @@
       </span>
 
       <span class="flex flex-col gap-1.5 pt-3">
-        <label class="text-body-2xs" for="precision">Precision</label>
-        <div class="flex gap-2 items-center">
-          <input
-            id="precision"
-            v-model="measurementOptions.precision"
-            class="h-2 mr-2 flex-1"
-            type="range"
-            min="1"
-            max="5"
-            step="1"
-            @change="(e: Event) => onChangeMeasurementPrecision((e.target as HTMLInputElement).value)"
-          />
-          <span class="text-xs w-4">{{ measurementOptions.precision }}</span>
-        </div>
+        <FormRange
+          v-model="measurementOptions.precision"
+          name="precision"
+          label="Precision"
+          :min="1"
+          :max="5"
+          :step="1"
+        />
       </span>
 
-      <span class="flex items-center pt-3">
+      <span class="flex items-center pt-2">
         <FormCheckbox
           name="Chain Measurements"
           hide-label
@@ -128,14 +122,6 @@ const toggleMeasurementsSnap = () => {
   setMeasurementOptions({
     ...measurementOptions.value,
     vertexSnap: !measurementOptions.value.vertexSnap
-  })
-}
-
-const onChangeMeasurementPrecision = (newPrecision?: string) => {
-  if (!newPrecision) return
-  setMeasurementOptions({
-    ...measurementOptions.value,
-    precision: Number(newPrecision)
   })
 }
 

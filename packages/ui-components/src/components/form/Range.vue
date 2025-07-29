@@ -1,7 +1,11 @@
 <template>
-  <div class="w-full py-4">
+  <div class="w-full">
     <div class="flex items-center justify-between">
-      <label :for="name" class="block text-body-2xs text-foreground">
+      <label
+        :for="name"
+        class="block text-body-2xs"
+        :class="disabled ? 'text-foreground-2' : 'text-foreground'"
+      >
         {{ label || name }}
       </label>
       <input
@@ -10,8 +14,9 @@
         :max="max"
         :step="step"
         :value="currentValue"
+        :disabled="disabled"
         :aria-label="`${label} current value`"
-        class="w-8 text-body-2xs text-foreground bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 rounded !p-0.5 text-right"
+        class="w-8 text-body-2xs text-foreground-2 bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-0.5 text-right"
         @input="handleNumberInput"
         @blur="validateAndClamp"
       />
@@ -25,7 +30,9 @@
       :max="max"
       :step="step"
       :value="currentValue"
+      :disabled="disabled"
       class="mt-1.5 w-full h-4 outline-none slider"
+      :class="{ 'disabled:opacity-50 disabled:cursor-not-allowed': disabled }"
       :aria-label="label"
       :aria-valuemin="min"
       :aria-valuemax="max"
@@ -42,6 +49,7 @@ const props = defineProps<{
   step: number
   name: string
   label: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue'])
