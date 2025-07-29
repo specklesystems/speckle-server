@@ -139,6 +139,11 @@ export class SectionTool extends Extension {
   /** Configurable rotation snap angle in radians. Set to null to disable snapping */
   public rotationSnapAngle: number | null = Math.PI / 12 // 15 degrees by default
 
+  /** Note: Rotation snapping only applies to mouse interactions via TransformControls.
+   *  Programmatic calls to setBox() will not apply rotation snapping.
+   *  For complete snapping support, programmatic rotations will need to be handled separately.
+   */
+
   /** This is our data model. All we need is an OBB */
   protected obb: OBB = new OBB()
 
