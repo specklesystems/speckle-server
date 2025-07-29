@@ -19,7 +19,7 @@
       :project="project"
       :project-id="project.id"
       :excluded-ids="alreadyLoadedModelIds"
-      :small-view="true"
+      small-view
       :show-actions="false"
       :show-versions="false"
       disable-default-links
