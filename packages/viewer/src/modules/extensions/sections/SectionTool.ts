@@ -213,6 +213,13 @@ export class SectionTool extends Extension {
   protected shiftKeyPressed = false
   protected keydownHandler: (e: KeyboardEvent) => void
   protected keyupHandler: (e: KeyboardEvent) => void
+  protected rotationHistory: Quaternion[] = []
+  protected maxHistorySize = 10
+  protected isUndoing = false
+  protected lastSavedRotation: Quaternion | null = null
+  protected hasInitialized = false
+  protected hasSavedForCurrentDrag = false
+  protected initialRotationForCurrentDrag: Quaternion | null = null
 
   /** Manadatory property for all extensions */
   public get enabled() {
@@ -543,6 +550,12 @@ export class SectionTool extends Extension {
       if (e.shiftKey && !this.shiftKeyPressed) {
         this.shiftKeyPressed = true
       }
+
+      /** Handle Cmd/Ctrl+Z for rotation undo */
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault()
+        this.undoRotation()
+      }
     }
 
     this.keyupHandler = (e: KeyboardEvent) => {
@@ -590,11 +603,39 @@ export class SectionTool extends Extension {
   protected draggingHandler(event) {
     this.dragging = event.value
     if (this.dragging) {
+      /** Mark as initialized when first rotation drag starts */
+      if (event.target === this.rotateControls && !this.hasInitialized) {
+        this.hasInitialized = true
+      }
+
+      /** Store initial state when rotation drag starts */
+      if (event.target === this.rotateControls && !this.hasSavedForCurrentDrag) {
+        this.initialRotationForCurrentDrag =
+          this.translationRotationAnchor.quaternion.clone()
+        this.hasSavedForCurrentDrag = true
+      }
+
       this.cameraProvider.enabled = false
       if (event.target === this.translateControls) this.rotateControls.detach()
       else if (event.target === this.rotateControls) this.translateControls.detach()
       this.emit(SectionToolEvent.DragStart)
     } else {
+      /** Save to history when rotation drag ends */
+      if (event.target === this.rotateControls && this.initialRotationForCurrentDrag) {
+        /** Save the initial state (not the final state) to history */
+        this.rotationHistory.push(this.initialRotationForCurrentDrag)
+        this.lastSavedRotation = this.initialRotationForCurrentDrag.clone()
+        this.initialRotationForCurrentDrag = null
+
+        /** Limit history size to prevent memory issues */
+        if (this.rotationHistory.length > this.maxHistorySize) {
+          this.rotationHistory.shift()
+        }
+      }
+
+      /** Reset the flag when drag ends */
+      this.hasSavedForCurrentDrag = false
+
       this.cameraProvider.enabled = true
       if (event.target === this.translateControls)
         this.rotateControls.attach(this.translationRotationAnchor)
@@ -614,7 +655,7 @@ export class SectionTool extends Extension {
    */
   //@ts-ignore
   protected changeHandler() {
-    /** Just copy over position, rotation  and scale*/
+    /** Just copy over position, rotation and scale*/
     this.obb.center.copy(this.translationRotationAnchor.position)
 
     /** Apply rotation snapping if shift key is pressed */
@@ -991,6 +1032,48 @@ export class SectionTool extends Extension {
     /** Convert back to quaternion using pooled object */
     _tempQuaternion.setFromEuler(_tempEuler)
     return _tempQuaternion
+  }
+
+  /**
+   * Saves the current rotation state to history
+   */
+  protected saveRotationState() {
+    const currentRotation = new Quaternion().copy(
+      this.translationRotationAnchor.quaternion
+    )
+    this.rotationHistory.push(currentRotation)
+
+    /** Limit history size to prevent memory issues */
+    if (this.rotationHistory.length > this.maxHistorySize) {
+      this.rotationHistory.shift()
+    }
+  }
+
+  /**
+   * Undoes the last rotation change
+   */
+  protected undoRotation() {
+    if (this.rotationHistory.length > 0) {
+      const previousRotation = this.rotationHistory.pop()
+      if (previousRotation) {
+        /** Directly update the anchor's quaternion */
+        this.translationRotationAnchor.quaternion.copy(previousRotation)
+        this.lastSavedRotation = previousRotation.clone()
+
+        /** Update OBB rotation directly */
+        this.obb.rotation.copy(
+          new Matrix3().setFromMatrix4(
+            new Matrix4().makeRotationFromQuaternion(previousRotation)
+          )
+        )
+
+        /** Update visual state directly */
+        this.updatePlanes()
+        this.updateVisual()
+        this.updateFaceControls(this.draggingFace)
+        this.viewer.requestRender()
+      }
+    }
   }
 
   /**
