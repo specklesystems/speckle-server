@@ -16,7 +16,7 @@
           :disabled="loading"
           color="subtle"
           hide-text
-          class="!bg-foundation-page dark:!bg-foundation"
+          class="!bg-foundation dark:!bg-foundation-2"
           @click="trackAttachAndOpenFilePicker()"
         />
         <FormButton

@@ -33,7 +33,7 @@
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-page border border-outline-2 sm:rounded-lg shadow-md"
+          class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-2 border border-outline-2 sm:rounded-xl shadow-md"
         >
           <div class="relative">
             <ViewerCommentsEditor
@@ -48,12 +48,11 @@
             />
             <div class="w-full flex justify-between items-center p-1">
               <FormButton
-                v-tippy="'Attach'"
                 :icon-left="PaperClipIcon"
                 hide-text
                 :disabled="isPostingNewThread"
                 color="subtle"
-                class="!bg-foundation-page dark:!bg-foundation"
+                class="!bg-foundation dark:!bg-foundation-2"
                 @click="trackAttachAndOpenFilePicker()"
               />
               <FormButton

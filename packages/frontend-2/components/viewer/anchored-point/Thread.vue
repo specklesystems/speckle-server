@@ -43,7 +43,7 @@
         >
           <div
             :class="[
-              'relative bg-foundation dark:bg-foundation-page border border-outline-2 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
+              'relative bg-foundation border border-outline-2 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
               'group-[.is-dragging]:bg-foundation'
             ]"
           >
