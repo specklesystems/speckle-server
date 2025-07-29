@@ -17,7 +17,6 @@
       <hr class="w-full border-outline-2" />
       <div class="p-1 flex flex-col gap-1">
         <ViewerMenuItem
-          v-tippy="getShortcutDisplayText(shortcuts.ToggleProjection)"
           label="Ortographic projection"
           :active="isOrthoProjection"
           :shortcut="
@@ -26,7 +25,6 @@
           @click="trackAndtoggleProjection()"
         />
         <ViewerMenuItem
-          v-tippy="'Free orbit'"
           label="Free orbit"
           :active="!localViewerSettings.turntableMode"
           @click="toggleTurntableMode()"

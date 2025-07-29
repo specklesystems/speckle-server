@@ -60,7 +60,7 @@ const { errorMessage, progressBarClasses, progressBarStyle } =
 
 const containerClasses = computed(() => {
   const classParts = [
-    'bg-foundation-page dark:bg-foundation border rounded-lg p-1.5 pl-2 w-full max-w-full relative'
+    'bg-foundation-page dark:bg-foundation-2 border rounded-md p-1.5 pl-2 w-full max-w-full relative'
   ]
 
   if (errorMessage.value) {
