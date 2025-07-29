@@ -1,6 +1,11 @@
-import { tryRegisterAccWebhook } from '@/modules/acc/clients/autodesk'
+import {
+  getManifestByUrn,
+  getToken,
+  tryRegisterAccWebhook
+} from '@/modules/acc/clients/autodesk'
 import { ImporterAutomateFunctions } from '@/modules/acc/domain/constants'
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
+import { isReadyForImport } from '@/modules/acc/domain/logic'
 import type {
   CountAccSyncItems,
   DeleteAccSyncItemByUrn,
@@ -10,6 +15,7 @@ import type {
 } from '@/modules/acc/domain/operations'
 import type { AccRegion, AccSyncItem } from '@/modules/acc/domain/types'
 import { DuplicateSyncItemError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
+import type { TriggerSyncItemAutomation } from '@/modules/acc/services/automate'
 import type {
   CreateAutomation,
   CreateAutomationRevision
@@ -46,6 +52,7 @@ export const createAccSyncItemFactory =
     upsertAccSyncItem: UpsertAccSyncItem
     createAutomation: CreateAutomation
     createAutomationRevision: CreateAutomationRevision
+    triggerSyncItemAutomation: TriggerSyncItemAutomation
     eventEmit: EventBusEmit
   }): CreateAccSyncItem =>
   async ({ syncItem, creatorUserId }) => {
@@ -121,7 +128,20 @@ export const createAccSyncItemFactory =
       }
     })
 
-    return newSyncItem
+    // Import new sync item immediately, if possible
+    const tokenData = await getToken()
+    const manifest = await getManifestByUrn(
+      {
+        urn: newSyncItem.accFileVersionUrn,
+        region: newSyncItem.accRegion as AccRegion
+      },
+      { token: tokenData.access_token }
+    )
+    const isReady = isReadyForImport(manifest)
+
+    if (!isReady) return newSyncItem
+
+    return await deps.triggerSyncItemAutomation({ id: newSyncItem.id })
   }
 
 export type GetAccSyncItem = (params: { lineageUrn: string }) => Promise<AccSyncItem>

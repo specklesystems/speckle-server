@@ -1,10 +1,15 @@
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem, AccSyncItemStatus } from '@/modules/acc/domain/types'
 
 export type UpsertAccSyncItem = (item: AccSyncItem) => Promise<void>
 
+export type UpdateAccSyncItemStatus = (args: {
+  id: string
+  status: AccSyncItemStatus
+}) => Promise<AccSyncItem | null>
+
 export type GetAccSyncItemByUrn = (args: {
   lineageUrn: string
-}) => Promise<AccSyncItem | undefined>
+}) => Promise<AccSyncItem | null>
 
 export type ListAccSyncItems = (args: {
   projectId: string

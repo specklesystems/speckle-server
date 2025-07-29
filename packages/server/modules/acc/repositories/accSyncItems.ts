@@ -5,6 +5,7 @@ import type {
   GetAccSyncItemByUrn,
   ListAccSyncItems,
   QueryAllAccSyncItems,
+  UpdateAccSyncItemStatus,
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
@@ -19,11 +20,13 @@ const tables = {
 export const getAccSyncItemByUrnFactory =
   (deps: { db: Knex }): GetAccSyncItemByUrn =>
   async ({ lineageUrn }) => {
-    return await tables
-      .accSyncItems(deps.db)
-      .select('*')
-      .where(AccSyncItems.col.accFileLineageUrn, lineageUrn)
-      .first()
+    return (
+      (await tables
+        .accSyncItems(deps.db)
+        .select('*')
+        .where(AccSyncItems.col.accFileLineageUrn, lineageUrn)
+        .first()) ?? null
+    )
   }
 
 export const upsertAccSyncItemFactory =
@@ -39,6 +42,22 @@ export const upsertAccSyncItemFactory =
           AccSyncItems.withoutTablePrefix.col.id
         ) as (keyof AccSyncItem)[]
       )
+  }
+
+export const updateAccSyncItemStatusFactory =
+  (deps: { db: Knex }): UpdateAccSyncItemStatus =>
+  async ({ id, status }) => {
+    return (
+      (
+        await tables
+          .accSyncItems(deps.db)
+          .update({
+            [AccSyncItems.col.status]: status
+          })
+          .where(AccSyncItems.col.id, id)
+          .returning('*')
+      ).at(0) ?? null
+    )
   }
 
 export const deleteAccSyncItemByUrnFactory =

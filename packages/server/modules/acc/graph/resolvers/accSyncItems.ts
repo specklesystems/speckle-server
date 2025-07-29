@@ -3,6 +3,7 @@ import {
   deleteAccSyncItemByUrnFactory,
   getAccSyncItemByUrnFactory,
   listAccSyncItemsFactory,
+  updateAccSyncItemStatusFactory,
   upsertAccSyncItemFactory
 } from '@/modules/acc/repositories/accSyncItems'
 import {
@@ -19,9 +20,12 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import {
   getAutomationFactory,
+  getAutomationTokenFactory,
+  getLatestAutomationRevisionFactory,
   storeAutomationFactory,
   storeAutomationRevisionFactory,
-  storeAutomationTokenFactory
+  storeAutomationTokenFactory,
+  upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
 import {
@@ -44,6 +48,14 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { db } from '@/db/knex'
+import { triggerSyncItemAutomationFactory } from '@/modules/acc/services/automate'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 const resolvers: Resolvers = {
   Mutation: {
@@ -83,6 +95,26 @@ const resolvers: Resolvers = {
           getFunctionReleases: getFunctionReleasesFactory({ logger: ctx.log }),
           eventEmit: getEventBus().emit,
           validateStreamAccess: validateStreamAccessFactory({ authorizeResolver })
+        }),
+        triggerSyncItemAutomation: triggerSyncItemAutomationFactory({
+          updateAccSyncItemStatus: updateAccSyncItemStatusFactory({ db }),
+          getAutomation: getAutomationFactory({ db: projectDb }),
+          getLatestAutomationRevision: getLatestAutomationRevisionFactory({
+            db: projectDb
+          }),
+          upsertAutomationRun: upsertAutomationRunFactory({ db: projectDb }),
+          createAppToken: createAppTokenFactory({
+            storeApiToken: storeApiTokenFactory({ db }),
+            storeTokenScopes: storeTokenScopesFactory({ db }),
+            storeTokenResourceAccessDefinitions:
+              storeTokenResourceAccessDefinitionsFactory({
+                db
+              }),
+            storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+          }),
+          getAutomationToken: getAutomationTokenFactory({
+            db: projectDb
+          })
         }),
         eventEmit: getEventBus().emit
       })({

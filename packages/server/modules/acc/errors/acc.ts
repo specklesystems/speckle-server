@@ -15,3 +15,8 @@ export class SyncItemNotFoundError extends BaseError {
   static defaultMessage = 'Sync item not found'
   static code = 'ACC_SYNC_ITEM_NOT_FOUND'
 }
+
+export class SyncItemAutomationTriggerError extends BaseError {
+  static defaultMessage = 'Failed to trigger automation associated with sync item'
+  static code = 'ACC_SYNC_ITEM_AUTOMATION_TRIGGER_ERROR'
+}
