@@ -37,11 +37,8 @@
     >
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
-          :class="[
-            'relative bg-foundation border border-outline-2 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
-            'group-[.is-dragging]:bg-foundation',
-            isDragging ? 'is-dragging border-outline-5' : ''
-          ]"
+          class="relative bg-foundation border border-outline-2 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200"
+          :class="{ 'is-dragging border-outline-5': isDragging }"
         >
           <div
             ref="handle"
