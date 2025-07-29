@@ -1,27 +1,14 @@
 <template>
-  <div>
+  <div class="select-none">
     <ViewerModelsVersions v-if="showVersions" @close="showVersions = false" />
     <ViewerModelsAddPanel v-else-if="showAddModel" @close="showAddModel = false" />
     <ViewerLayoutSidePanel v-else>
       <template #title>
-        <FormButton
-          v-if="showRemove"
-          :icon-left="ChevronLeftIcon"
-          color="subtle"
-          class="-ml-3"
-          @click="showRemove = false"
-        >
-          Exit
-        </FormButton>
-        <span v-else>Models</span>
+        <span>Models</span>
       </template>
       <template #actions>
         <ViewerModelsActions
-          v-if="!showRemove"
-          :remove-enabled="removeEnabled"
-          :show-remove="showRemove"
           @show-versions="showVersions = true"
-          @remove="handleRemove()"
           @add-model="showAddModel = true"
         />
       </template>
@@ -37,7 +24,6 @@
               :model="model"
               :version-id="versionId"
               :last="index === modelsAndVersionIds.length - 1"
-              :show-remove="showRemove"
               :expand-level="expandLevel"
               :manual-expand-level="manualExpandLevel"
               :root-nodes="getRootNodesForModel(model.id)"
@@ -50,7 +36,7 @@
               v-for="object in objects"
               :key="object.objectId"
               :object="object"
-              :show-remove="showRemove"
+              :show-remove="false"
               @remove="(id: string) => removeModel(id)"
             />
           </template>
@@ -84,11 +70,9 @@ import { ViewerEvent } from '@speckle/viewer'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import { sortBy, flatten } from 'lodash-es'
-import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 
 defineEmits(['close'])
 
-const showRemove = ref(false)
 const showVersions = ref(false)
 const showAddModel = ref(false)
 const { resourceItems, modelsAndVersionIds, objects } =
@@ -108,8 +92,6 @@ const manualExpandLevel = ref(-1)
 const showRaw = ref(false)
 
 const mp = useMixpanel()
-
-const removeEnabled = computed(() => items.value.length > 1)
 
 const removeModel = async (modelId: string) => {
   // Convert requested resource string to references to specific models
@@ -194,12 +176,4 @@ const getRootNodesForModel = (modelId: string) => {
 
   return nodes
 }
-
-const handleRemove = () => {
-  showRemove.value = true
-}
-
-watch(modelsAndVersionIds, (newVal) => {
-  if (newVal.length <= 1) showRemove.value = false
-})
 </script>

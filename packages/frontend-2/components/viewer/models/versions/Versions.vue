@@ -21,8 +21,6 @@
             :model="model"
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
-            :show-remove="false"
-            @remove="(id: string) => removeModel(id)"
           />
         </div>
         <template v-if="objects.length !== 0">

@@ -2,7 +2,6 @@
 <template>
   <div class="relative border-b border-outline-3">
     <div
-      :class="showRemove ? 'pointer-events-none' : ''"
       @mouseenter="highlightObject"
       @mouseleave="unhighlightObject"
       @focusin="highlightObject"
@@ -13,14 +12,9 @@
       <!-- Model Header -->
       <div
         class="group flex items-center px-1 py-3 select-none cursor-pointer hover:bg-highlight-1"
-        :class="isExpanded && !showRemove ? 'border-b border-outline-3' : ''"
+        :class="isExpanded ? 'border-b border-outline-3' : ''"
       >
-        <FormButton
-          v-if="!showRemove"
-          size="sm"
-          color="subtle"
-          @click.stop="isExpanded = !isExpanded"
-        >
+        <FormButton size="sm" color="subtle" @click.stop="isExpanded = !isExpanded">
           <IconTriangle
             class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
             :class="isExpanded ? 'rotate-90' : ''"
@@ -29,7 +23,6 @@
             {{ isExpanded ? 'Collapse' : 'Expand' }}
           </span>
         </FormButton>
-        <div v-else class="w-2" />
         <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3">
           <NuxtImg
             :src="loadedVersion?.previewUrl"
@@ -52,6 +45,22 @@
         </div>
         <div class="flex items-center gap-2 ml-auto">
           <div class="flex text-foreground">
+            <LayoutMenu
+              v-model:open="showActionsMenu"
+              :items="actionsItems"
+              :menu-position="HorizontalDirection.Left"
+              mount-menu-on-body
+              @click.stop.prevent
+              @chosen="onActionChosen"
+            >
+              <FormButton
+                color="subtle"
+                class="group-hover:opacity-100 opacity-0"
+                hide-text
+                :icon-right="EllipsisHorizontalIcon"
+                @click="showActionsMenu = !showActionsMenu"
+              />
+            </LayoutMenu>
             <FormButton
               color="subtle"
               class="group-hover:opacity-100"
@@ -84,7 +93,7 @@
 
       <!-- Scene Explorer Content -->
       <div
-        v-if="isExpanded && rootNodeChildren.length && !showRemove"
+        v-if="isExpanded && rootNodeChildren.length"
         class="relative flex flex-col gap-y-2"
       >
         <div v-for="(childNode, idx) in rootNodeChildren" :key="idx" class="rounded-xl">
@@ -98,41 +107,32 @@
         </div>
       </div>
     </div>
-
-    <!-- Remove Overlay -->
-    <div
-      v-if="showRemove"
-      class="absolute top-0 right-2 h-full z-10 flex items-center justify-end"
-    >
-      <FormButton
-        color="danger"
-        size="sm"
-        hide-text
-        :icon-left="XMarkIcon"
-        @click="$emit('remove', props.model.id)"
-      />
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { XMarkIcon, FunnelIcon } from '@heroicons/vue/24/solid'
+import { FunnelIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 import {
   useHighlightedObjectsUtilities,
   useFilterUtilities,
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerState,
+  useInjectedViewerRequestedResources
+} from '~~/lib/viewer/composables/setup'
 import { containsAll } from '~~/lib/common/helpers/utils'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'remove', val: string): void
   (e: 'expanded', depth: number): void
 }>()
@@ -140,7 +140,6 @@ defineEmits<{
 const props = defineProps<{
   model: ModelItem
   versionId: string
-  showRemove: boolean
   last: boolean
   expandLevel: number
   manualExpandLevel: number
@@ -151,6 +150,7 @@ const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities(
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 const { setSelectionFromObjectIds } = useSelectionUtilities()
+const { items } = useInjectedViewerRequestedResources()
 const {
   viewer: {
     metadata: { filteringState }
@@ -158,9 +158,23 @@ const {
 } = useInjectedViewerState()
 
 const isExpanded = ref(false)
+const showActionsMenu = ref(false)
 
 const IconEye = resolveComponent('IconEye')
 const IconEyeClosed = resolveComponent('IconEyeClosed')
+
+const removeEnabled = computed(() => items.value.length > 1)
+
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title: 'Remove model',
+      id: 'remove-model',
+      disabled: !removeEnabled.value,
+      disabledTooltip: 'You cannot remove the last model'
+    }
+  ]
+])
 
 const rootNodeChildren = computed(() => {
   const children: ExplorerNode[] = []
@@ -271,5 +285,17 @@ const unhighlightObject = () => {
 const selectObject = () => {
   if (modelObjectIds.value.length === 0) return
   setSelectionFromObjectIds(modelObjectIds.value)
+}
+
+const onActionChosen = (params: { item: LayoutMenuItem }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case 'remove-model':
+      if (removeEnabled.value) {
+        emit('remove', props.model.id)
+      }
+      break
+  }
 }
 </script>

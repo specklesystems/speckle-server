@@ -1,9 +1,12 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="relative border-b border-outline-3">
+  <div
+    class="relative border-b border-outline-3"
+    :class="showVersions ? 'bg-foundation-page' : 'bg-foundation hover:bg-highlight-1'"
+  >
     <div
-      :class="showVersions ? 'max-h-96 shadow-md' : ''"
+      :class="showVersions ? 'max-h-96' : ''"
       @mouseenter="highlightObject"
       @mouseleave="unhighlightObject"
       @focusin="highlightObject"
@@ -11,77 +14,40 @@
     >
       <!-- Model Header -->
       <div
-        class="group sticky cursor-pointer top-0 z-20 flex min-w-0 max-w-full items-center justify-between gap-3 pl-1 pr-4 py-2 select-none"
-        :class="showVersions ? 'bg-primary' : 'bg-foundation hover:bg-foundation-2'"
+        class="group sticky cursor-pointer flex items-center gap-3 py-2 px-1"
         @click="showVersions = !showVersions"
       >
         <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3">
-          <NuxtImg
-            :src="loadedVersion?.previewUrl"
-            class="object-cover h-full w-full"
+          <PreviewImage
+            v-if="loadedVersion?.previewUrl"
+            :preview-url="loadedVersion?.previewUrl"
           />
         </div>
-        <div class="flex min-w-0 flex-grow flex-col">
-          <div
+        <div class="flex flex-col">
+          <span
             v-tippy="modelName.subheader ? model.name : null"
-            :class="`${
-              showVersions ? 'text-foundation' : ''
-            } text-body-xs truncate min-w-0`"
+            class="text-foreground text-body-2xs font-medium"
           >
             {{ modelName.header }}
-          </div>
-          <div class="truncate -mt-1.5">
-            <span
-              v-tippy="createdAtFormatted.full"
-              :class="`${
-                showVersions ? 'text-foundation' : 'text-foreground-2'
-              } text-body-3xs`"
-            >
-              {{ isLatest ? 'Latest version' : createdAtFormatted.relative }}
-            </span>
-          </div>
+          </span>
+          <span v-if="isLatest" class="text-body-3xs text-foreground">
+            Latest version
+          </span>
+          <span
+            v-tippy="createdAtFormatted.full"
+            class="text-body-3xs text-foreground-2"
+          >
+            {{ createdAtFormatted.relative }}
+          </span>
         </div>
-        <span v-if="!showVersions" class="text-foreground-2 text-body-2xs font-medium">
+        <span class="text-foreground-2 text-body-3xs font-medium ml-auto pr-3">
           {{ model.versions?.totalCount }}
         </span>
-        <div
-          v-else
-          :class="`${
-            showVersions ? 'text-white' : ''
-          } flex flex-none items-center space-x-2 text-xs font-medium opacity-80 transition-opacity group-hover:opacity-100`"
-        >
-          <ChevronUpIcon class="h-4 w-4" />
-        </div>
       </div>
-
-      <!-- Active Version Card (when expanded but no scene data) -->
-      <ViewerModelsActiveVersionCard
-        v-if="loadedVersion && showVersions"
-        :version="loadedVersion"
-      />
     </div>
 
-    <!-- Remove Overlay -->
-    <Transition>
-      <div
-        v-if="showRemove"
-        class="to-foundation group absolute inset-0 z-[21] flex h-full w-full items-center justify-end space-x-2 rounded bg-gradient-to-r from-blue-500/0 p-4"
-      >
-        <FormButton
-          color="danger"
-          size="sm"
-          hide-text
-          :icon-left="XMarkIcon"
-          @click="$emit('remove', props.model.id)"
-        />
-      </div>
-    </Transition>
-
-    <!-- Version List (when expanded and not in remove mode) -->
-    <div
-      v-show="showVersions && !showRemove"
-      class="mt-2 ml-4 flex h-auto flex-col space-y-0"
-    >
+    <!-- Version List -->
+    <div v-show="showVersions" class="mt-2 ml-4 flex h-auto flex-col space-y-0">
       <ViewerResourcesVersionCard
         v-for="(version, index) in props.model.versions.items"
         :key="version.id"
@@ -92,22 +58,39 @@
         :last="index === props.model.versions.totalCount - 1"
         :last-loaded="index === props.model.versions.items.length - 1"
         :clickable="version.id !== loadedVersion?.id"
+        :total-versions="props.model.versions.totalCount"
         @change-version="handleVersionChange"
         @view-changes="handleViewChanges"
+        @remove-version="handleRemoveVersion"
       />
-      <div class="mt-4 px-2 py-2">
-        <FormButton full-width text :disabled="!showLoadMore" @click="onLoadMore">
+      <div class="mt-4 pr-2 py-2 -ml-3">
+        <FormButton
+          full-width
+          text
+          color="subtle"
+          :disabled="!showLoadMore"
+          @click="onLoadMore"
+        >
           {{ showLoadMore ? 'View older versions' : 'No more versions' }}
         </FormButton>
       </div>
     </div>
+
+    <!-- Version Delete Dialog -->
+    <ProjectModelPageDialogDelete
+      v-if="project?.id"
+      v-model:open="showDeleteDialog"
+      :project-id="project.id"
+      :model-id="model.id"
+      :versions="versionsToDelete"
+      @deleted="onVersionDeleted"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
-import { XMarkIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
 import type {
   ViewerLoadedResourcesQuery,
   ViewerModelVersionCardItemFragment
@@ -115,7 +98,8 @@ import type {
 import type { Get } from 'type-fest'
 import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerRequestedResources
+  useInjectedViewerRequestedResources,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import {
   useDiffUtilities,
@@ -124,14 +108,9 @@ import {
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
-defineEmits<{
-  (e: 'remove', val: string): void
-}>()
-
 const props = defineProps<{
   model: ModelItem
   versionId: string
-  showRemove: boolean
   last: boolean
 }>()
 
@@ -139,8 +118,15 @@ const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 const { diffModelVersions } = useDiffUtilities()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
 
 const showVersions = ref(false)
+const showDeleteDialog = ref(false)
+const versionsToDelete = ref<{ id: string; message?: string | null }[]>([])
 
 graphql(`
   fragment ViewerModelVersionCardItem on Version {
@@ -229,4 +215,26 @@ const unhighlightObject = () => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
   if (refObject) unhighlightObjects([refObject])
 }
+
+const handleRemoveVersion = (versionId: string) => {
+  // Find the version to delete
+  const versionToDelete = versions.value.find((v) => v.id === versionId)
+  if (versionToDelete) {
+    versionsToDelete.value = [
+      { id: versionToDelete.id, message: versionToDelete.message }
+    ]
+    showDeleteDialog.value = true
+  }
+}
+
+const onVersionDeleted = () => {
+  // Refresh the versions list after successful deletion
+  loadMoreVersions(props.model.id)
+}
+
+watch(showDeleteDialog, (isOpen) => {
+  if (!isOpen) {
+    versionsToDelete.value = []
+  }
+})
 </script>
