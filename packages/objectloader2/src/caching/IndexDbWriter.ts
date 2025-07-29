@@ -1,7 +1,6 @@
 import { RingBufferQueue } from '../workers/RingBufferQueue.js'
 import { ItemQueue } from './ItemQueue.js'
 import IndexedDatabase from '../core/stages/indexedDatabase.js'
-import { WorkerCachingConstants } from './WorkerCachingConstants.js'
 import { CustomLogger, delay } from '../types/functions.js'
 
 export class IndexDbWriter {
@@ -18,8 +17,7 @@ export class IndexDbWriter {
   public async processMessages(): Promise<void> {
     while (true) {
       const receivedMessages = await this.mainToWorkerQueue.dequeue(
-        WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE,
-        WorkerCachingConstants.DEFAULT_ENQUEUE_TIMEOUT_MS
+        10000, 50
       ) // receivedMessages will be string[]
       if (receivedMessages && receivedMessages.length > 0) {
         const start = performance.now()

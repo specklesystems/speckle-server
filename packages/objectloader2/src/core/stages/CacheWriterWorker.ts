@@ -70,8 +70,8 @@ export class CacheWriterWorker implements Writer {
  add(item: Item): void {
     if (!this.#writeQueue) {
       this.#writeQueue = new BatchingQueue({
-        batchSize: this.#options.maxCacheWriteSize,
-        maxWaitTime: this.#options.maxCacheBatchWriteWait,
+        batchSize: 10000,
+        maxWaitTime: 50,
         processFunction: async (batch: Item[]): Promise<void> => {
           await this.writeAll(batch)
         }
@@ -85,7 +85,7 @@ export class CacheWriterWorker implements Writer {
     const start = performance.now()
     await this.mainToWorkerQueue?.enqueue(items, DEFAULT_ENQUEUE_TIMEOUT_MS)
     this.#logger(
-      `writeBatch: wrote ${items.length}, time ${
+      `wrote to SAB: wrote ${items.length}, time ${
         performance.now() - start
       } ms left ${this.#writeQueue?.count()}`
     )

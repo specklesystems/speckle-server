@@ -1,4 +1,3 @@
-import { WorkerCachingConstants } from '../caching/WorkerCachingConstants.js'
 import { CustomLogger, delay } from '../types/functions.js'
 import { RingBufferQueue } from './RingBufferQueue.js'
 import { handleError } from './WorkerMessageType.js'
@@ -18,7 +17,7 @@ export abstract class ObjectQueue<T> {
   async fullyEnqueue(messages: T[], timeoutMs: number): Promise<void> {
     let remainingMessages = messages
     while (remainingMessages.length > 0) {
-      const s = remainingMessages.slice(0, WorkerCachingConstants.DEFAULT_ENQUEUE_SIZE)
+      const s = remainingMessages.slice(0, 10000)
       let enqueuedInChunk = 0
       while (enqueuedInChunk < s.length) {
         const actuallyEnqueued = await this.enqueue(s.slice(enqueuedInChunk), timeoutMs)

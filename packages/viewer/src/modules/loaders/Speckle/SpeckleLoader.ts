@@ -136,12 +136,6 @@ export class SpeckleLoader extends Loader {
       await firstObjectPromise
     }
 
-    Logger.warn(
-      `Finished converting object ${this.resource} in ${
-        (performance.now() - start) / TIME_MS.second
-      } seconds. Node count: ${this.tree.nodeCount}`
-    )
-
     if (traversals === 0) {
       Logger.warn(`Viewer: no 3d objects found in object ${this.resource}`)
       this.emit(LoaderEvent.LoadWarning, {
@@ -157,6 +151,7 @@ export class SpeckleLoader extends Loader {
     await this.converter.handleDuplicates()
     await this.loader.disposeAsync()
 
+
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()
 
@@ -169,7 +164,9 @@ export class SpeckleLoader extends Loader {
     })
 
     Logger.warn(
-      `Finished rendering object . Node count: ${this.tree.nodeCount} Total: ${total}`
+      `Finished converting object ${this.resource} in ${
+        (performance.now() - start) / TIME_MS.second
+      } seconds. Node count: ${this.tree.nodeCount}`
     )
 
     void p.then(() => {
