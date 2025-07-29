@@ -104,34 +104,21 @@
       ]"
       :style="`width: ${isMobile ? 'calc(100vw - 3.75rem)' : `${width + 4}px`};`"
     >
-      <!-- Models panel -->
-      <ViewerModels
+      <ViewerModelsPanel
         v-if="resourceItems.length !== 0 && activePanel === 'models'"
-        @close="activePanel = 'none'"
       />
-
-      <!-- Filter panel -->
       <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
-        <ViewerFilters class="pointer-events-auto" @close="activePanel = 'none'" />
+        <ViewerFiltersPanel />
       </KeepAlive>
-
-      <!-- Comment threads panel -->
-      <ViewerComments
+      <ViewerCommentsPanel
         v-if="resourceItems.length !== 0 && activePanel === 'discussions'"
-        class="pointer-events-auto"
-        @close="activePanel = 'none'"
       />
-
-      <!-- Dev mode panel -->
-      <ViewerLayoutSidePanel
-        v-if="activePanel === 'devMode'"
-        class="pointer-events-auto"
-      >
-        <template #title>
-          <span>Dev mode</span>
-        </template>
-        <ViewerDataviewerPanel />
-      </ViewerLayoutSidePanel>
+      <AutomateViewerPanel
+        v-if="activePanel === 'automate'"
+        :automation-runs="allAutomationRuns"
+        :summary="summary"
+      />
+      <ViewerDataviewerPanel v-if="activePanel === 'devMode'" />
     </div>
   </aside>
 </template>

@@ -2,7 +2,7 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`p-1.5 pb-1 flex flex-col rounded-md
+    :class="`p-1.5 pt-0.5 flex flex-col rounded-md
       ${isOpenInViewer ? 'bg-highlight-2' : ''}
       ${isLimited ? 'cursor-default' : 'cursor-pointer hover:bg-highlight-3'}
     `"
