@@ -337,7 +337,10 @@ export default class LineBatch implements Batch {
   ): LineSegmentsGeometry {
     const geometry = new LineSegmentsGeometry()
     /** This will set the instanceStart and instanceEnd attributes. These will be our high parts */
-    geometry.setPositions(new Float32Array(position.buffer))
+    if (position instanceof Float64Array)
+      /** We need to re-allocate because there is no way to cast it down to float32. If we pass in a Float64Array, three.js will do it anyway */
+      geometry.setPositions(new Float32Array(position))
+    else geometry.setPositions(position)
 
     const buffer = new Float32Array(position.length + position.length / 3)
     this.colorBuffer = new InstancedInterleavedBuffer(buffer, 8, 1) // rgba, rgba
