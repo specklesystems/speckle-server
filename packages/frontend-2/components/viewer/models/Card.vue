@@ -24,9 +24,9 @@
           </span>
         </FormButton>
         <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3">
-          <NuxtImg
-            :src="loadedVersion?.previewUrl"
-            class="object-cover h-full w-full"
+          <PreviewImage
+            v-if="loadedVersion?.previewUrl"
+            :preview-url="loadedVersion.previewUrl"
           />
         </div>
         <div class="flex flex-col">
