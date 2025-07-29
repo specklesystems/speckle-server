@@ -222,7 +222,7 @@ export class SectionTool extends Extension {
   protected keydownHandler: (e: KeyboardEvent) => void
   protected keyupHandler: (e: KeyboardEvent) => void
   protected sectionBoxHistory: SectionBoxState[] = []
-  protected currentHistoryIndex = -1
+  protected currentHistoryIndex = 0
   protected maxHistorySize = 100
   protected initialSectionBoxState: SectionBoxState | null = null
   protected hasInitialized = false
@@ -677,7 +677,7 @@ export class SectionTool extends Extension {
         /** Reset initial state for new session */
         this.initialSectionBoxState = null
         /** Reset cursor for new session */
-        this.currentHistoryIndex = -1
+        this.currentHistoryIndex = 0
       }
 
       /** Store initial state when drag starts */
