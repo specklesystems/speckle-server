@@ -136,6 +136,9 @@ export class SectionTool extends Extension {
     return [CameraController]
   }
 
+  /** Configurable rotation snap angle in radians. Set to null to disable snapping */
+  public rotationSnapAngle: number | null = Math.PI / 12 // 15 degrees by default
+
   /** This is our data model. All we need is an OBB */
   protected obb: OBB = new OBB()
 
@@ -961,7 +964,7 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Snaps a quaternion to the nearest 15-degree grid.
+   * Snaps a quaternion to the nearest grid based on rotationSnapAngle.
    * This is useful for rotation snapping.
    * @param q The quaternion to snap.
    * @returns The snapped quaternion.
@@ -970,11 +973,15 @@ export class SectionTool extends Extension {
     /** Convert quaternion to Euler angles using pooled object */
     _tempEuler.setFromQuaternion(q)
 
-    /** Snap each axis to 15-degree increments (π/12 radians) */
-    const snapAngle = Math.PI / 12 // 15 degrees
-    _tempEuler.x = Math.round(_tempEuler.x / snapAngle) * snapAngle
-    _tempEuler.y = Math.round(_tempEuler.y / snapAngle) * snapAngle
-    _tempEuler.z = Math.round(_tempEuler.z / snapAngle) * snapAngle
+    /** Snap each axis to the configured angle increments */
+    if (this.rotationSnapAngle !== null) {
+      _tempEuler.x =
+        Math.round(_tempEuler.x / this.rotationSnapAngle) * this.rotationSnapAngle
+      _tempEuler.y =
+        Math.round(_tempEuler.y / this.rotationSnapAngle) * this.rotationSnapAngle
+      _tempEuler.z =
+        Math.round(_tempEuler.z / this.rotationSnapAngle) * this.rotationSnapAngle
+    }
 
     /** Convert back to quaternion using pooled object */
     _tempQuaternion.setFromEuler(_tempEuler)
