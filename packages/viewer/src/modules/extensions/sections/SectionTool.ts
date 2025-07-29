@@ -214,7 +214,9 @@ export class SectionTool extends Extension {
   protected keydownHandler: (e: KeyboardEvent) => void
   protected keyupHandler: (e: KeyboardEvent) => void
   protected rotationHistory: Quaternion[] = []
+  protected currentHistoryIndex = -1
   protected maxHistorySize = 10
+  protected initialRotationState: Quaternion | null = null
   protected isUndoing = false
   protected lastSavedRotation: Quaternion | null = null
   protected hasInitialized = false
@@ -552,9 +554,15 @@ export class SectionTool extends Extension {
       }
 
       /** Handle Cmd/Ctrl+Z for rotation undo */
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
         this.undoRotation()
+      }
+
+      /** Handle Cmd/Ctrl+Shift+Z for rotation redo */
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault()
+        this.redoRotation()
       }
     }
 
@@ -606,6 +614,10 @@ export class SectionTool extends Extension {
       /** Mark as initialized when first rotation drag starts */
       if (event.target === this.rotateControls && !this.hasInitialized) {
         this.hasInitialized = true
+        /** Reset initial state for new rotation session */
+        this.initialRotationState = null
+        /** Reset cursor for new session */
+        this.currentHistoryIndex = -1
       }
 
       /** Store initial state when rotation drag starts */
@@ -613,6 +625,11 @@ export class SectionTool extends Extension {
         this.initialRotationForCurrentDrag =
           this.translationRotationAnchor.quaternion.clone()
         this.hasSavedForCurrentDrag = true
+
+        /** Save the initial state for the entire rotation session */
+        if (!this.initialRotationState) {
+          this.initialRotationState = this.translationRotationAnchor.quaternion.clone()
+        }
       }
 
       this.cameraProvider.enabled = false
@@ -622,14 +639,31 @@ export class SectionTool extends Extension {
     } else {
       /** Save to history when rotation drag ends */
       if (event.target === this.rotateControls && this.initialRotationForCurrentDrag) {
-        /** Save the initial state (not the final state) to history */
-        this.rotationHistory.push(this.initialRotationForCurrentDrag)
-        this.lastSavedRotation = this.initialRotationForCurrentDrag.clone()
+        /** If this is the first rotation, save the initial state first */
+        if (this.rotationHistory.length === 0) {
+          this.rotationHistory.push(this.initialRotationForCurrentDrag)
+          this.currentHistoryIndex = 0
+        }
+
+        /** Truncate history if we're not at the end (i.e., we've undone and are making a new change) */
+        if (this.currentHistoryIndex < this.rotationHistory.length - 1) {
+          /** Always preserve the initial state (index 0) and states up to current cursor */
+          this.rotationHistory = this.rotationHistory.slice(
+            0,
+            this.currentHistoryIndex + 1
+          )
+        }
+
+        /** Add final state to history */
+        this.rotationHistory.push(this.translationRotationAnchor.quaternion.clone())
+        this.currentHistoryIndex = this.rotationHistory.length - 1
+        this.lastSavedRotation = this.translationRotationAnchor.quaternion.clone()
         this.initialRotationForCurrentDrag = null
 
         /** Limit history size to prevent memory issues */
         if (this.rotationHistory.length > this.maxHistorySize) {
           this.rotationHistory.shift()
+          this.currentHistoryIndex = Math.max(0, this.currentHistoryIndex - 1)
         }
       }
 
@@ -1035,26 +1069,16 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Saves the current rotation state to history
-   */
-  protected saveRotationState() {
-    const currentRotation = new Quaternion().copy(
-      this.translationRotationAnchor.quaternion
-    )
-    this.rotationHistory.push(currentRotation)
-
-    /** Limit history size to prevent memory issues */
-    if (this.rotationHistory.length > this.maxHistorySize) {
-      this.rotationHistory.shift()
-    }
-  }
-
-  /**
    * Undoes the last rotation change
    */
   protected undoRotation() {
-    if (this.rotationHistory.length > 0) {
-      const previousRotation = this.rotationHistory.pop()
+    if (this.currentHistoryIndex > 0) {
+      /** Move cursor back */
+      this.currentHistoryIndex--
+
+      /** Get the state at current cursor position */
+      const previousRotation = this.rotationHistory[this.currentHistoryIndex]
+
       if (previousRotation) {
         /** Directly update the anchor's quaternion */
         this.translationRotationAnchor.quaternion.copy(previousRotation)
@@ -1064,6 +1088,37 @@ export class SectionTool extends Extension {
         this.obb.rotation.copy(
           new Matrix3().setFromMatrix4(
             new Matrix4().makeRotationFromQuaternion(previousRotation)
+          )
+        )
+
+        /** Update visual state directly */
+        this.updatePlanes()
+        this.updateVisual()
+        this.updateFaceControls(this.draggingFace)
+        this.viewer.requestRender()
+      }
+    }
+  }
+
+  /**
+   * Redoes the last undone rotation change
+   */
+  protected redoRotation() {
+    if (this.currentHistoryIndex < this.rotationHistory.length - 1) {
+      /** Move cursor forward */
+      this.currentHistoryIndex++
+
+      /** Get the state at current cursor position */
+      const nextRotation = this.rotationHistory[this.currentHistoryIndex]
+      if (nextRotation) {
+        /** Directly update the anchor's quaternion */
+        this.translationRotationAnchor.quaternion.copy(nextRotation)
+        this.lastSavedRotation = nextRotation.clone()
+
+        /** Update OBB rotation directly */
+        this.obb.rotation.copy(
+          new Matrix3().setFromMatrix4(
+            new Matrix4().makeRotationFromQuaternion(nextRotation)
           )
         )
 
