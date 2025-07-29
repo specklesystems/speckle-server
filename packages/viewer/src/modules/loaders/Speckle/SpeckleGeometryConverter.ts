@@ -346,6 +346,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         /** We skip to the end of triangulated chunks */
         const chunkIndex = faces.findChunkIndex(k)
         if (faces.chunkArray[chunkIndex].processed) {
+          indices.set(faces.chunks[chunkIndex], k)
           k += faces.chunkArray[chunkIndex].data.length
           continue
         }
