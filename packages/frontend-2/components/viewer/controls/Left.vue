@@ -67,17 +67,20 @@
           "
           :active="activePanel === 'devMode'"
           :icon="'IconViewerDev'"
+          secondary
           @click="toggleActivePanel('devMode')"
         />
         <ViewerControlsButtonToggle
           v-tippy="getTooltipProps('Documentation', { placement: 'right' })"
           :icon="'IconDocs'"
+          secondary
           @click="openDocs"
         />
         <!-- TODO: Add intercom click event -->
         <ViewerControlsButtonToggle
           v-tippy="getTooltipProps('Get help', { placement: 'right' })"
           :icon="'IconIntercom'"
+          secondary
         />
       </div>
     </div>
