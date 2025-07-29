@@ -44,18 +44,18 @@
     <ViewerLayoutPanel class="mt-1 p-1 pr-2">
       <div class="flex gap-2 justify-between items-center">
         <div
-          class="flex gap-1 rounded-lg p-0.5 bg-highlight-1 border border-outline-2 self-start"
+          class="flex gap-1 rounded-lg bg-highlight-1 border border-outline-2 self-start overflow-hidden"
         >
           <button
             v-for="option in measurementTypeOptions"
             :key="option.value"
             v-tippy="option.title"
-            class="size-8 flex items-center justify-center rounded-lg border"
+            class="size-8 flex items-center justify-center rounded-lg"
             :class="[
               measurementOptions.type === option.value &&
-                'border-outline-2 bg-foundation text-foreground',
+                'shadow-[0px_1px_2px_rgba(0,0,0,0.05),0px_0px_1px_rgba(0,0,0,0.05)] bg-foundation text-foreground',
               measurementOptions.type !== option.value &&
-                'border-transparent hover:bg-foundation-2 text-foreground-2'
+                'hover:bg-foundation-2 text-foreground-2'
             ]"
             @click="updateMeasurementsType(option)"
           >
