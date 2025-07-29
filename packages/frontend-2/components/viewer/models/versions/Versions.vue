@@ -1,11 +1,16 @@
 <template>
-  <ViewerLayoutSidePanel>
+  <ViewerCompareChangesPanel
+    v-if="showDiff"
+    :clear-on-back="false"
+    @close="handleDiffClose"
+  />
+  <ViewerLayoutSidePanel v-else>
     <template #title>
       <FormButton
         :icon-left="ChevronLeftIcon"
         color="subtle"
         class="-ml-3"
-        @click="$emit('close')"
+        @click="handleClose"
       >
         Exit versions
       </FormButton>
@@ -40,21 +45,58 @@
 <script setup lang="ts">
 import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerRequestedResources
+  useInjectedViewerRequestedResources,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { ViewerEvent } from '@speckle/viewer'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
+import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
 const { items } = useInjectedViewerRequestedResources()
+const {
+  ui: { diff: diffState }
+} = useInjectedViewerState()
+const { endDiff } = useDiffUtilities()
 
 const mp = useMixpanel()
+
+const showDiff = ref(false)
+
+const hasDiffActive = computed(() => {
+  return !!(diffState.oldVersion.value && diffState.newVersion.value)
+})
+
+// Watch for diff becoming active and show it
+watch(
+  hasDiffActive,
+  (newVal) => {
+    if (newVal) {
+      showDiff.value = true
+    }
+  },
+  { immediate: true }
+)
+
+const handleDiffClose = async () => {
+  showDiff.value = false
+  if (hasDiffActive.value) {
+    await endDiff()
+  }
+}
+
+const handleClose = async () => {
+  if (hasDiffActive.value) {
+    await endDiff()
+  }
+  emit('close')
+}
 
 const removeModel = async (modelId: string) => {
   // Convert requested resource string to references to specific models

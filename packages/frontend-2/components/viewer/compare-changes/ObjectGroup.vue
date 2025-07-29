@@ -1,17 +1,16 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`bg-foundation-2 shadow h-24 flex items-center justify-center flex-col rounded-md min-w-0 cursor-pointer
-    border-b-4 hover:bg-primary-muted
-    ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}`"
+    class="bg-foundation-2 h-24 flex items-center justify-center flex-col rounded-md min-w-0 cursor-pointer border-b-4 hover:bg-highlight-3 text-center"
+    :class="isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'"
     @click="setSelection()"
     @keypress="keyboardClick(setSelection)"
   >
-    <div :class="`text-heading-xl -mb-1 font-medium truncate max-w-full ${color}`">
+    <div :class="`text-heading-lg font-medium truncate max-w-full ${color}`">
       {{ objectCount }}
     </div>
-    <div class="text-body-xs -mb-1">{{ name }}</div>
-    <div class="text-body-2xs text-foreground-2 px-1">{{ description }}</div>
+    <div class="text-body-2xs">{{ name }}</div>
+    <div class="text-body-3xs text-foreground-2 px-2">{{ description }}</div>
   </div>
 </template>
 <script setup lang="ts">

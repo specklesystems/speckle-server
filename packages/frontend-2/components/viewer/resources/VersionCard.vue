@@ -15,7 +15,7 @@
     >
       <div
         v-if="isLoaded"
-        class="absolute -top-1.5 -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
+        class="absolute -top-px -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
       >
         <IconCheck class="h-4 w-4 text-foreground" />
       </div>
@@ -53,7 +53,6 @@
           color="subtle"
           class="opacity-0 group-hover:opacity-100"
           hide-text
-          size="sm"
           :icon-right="EllipsisHorizontalIcon"
           @click.stop="showActionsMenu = !showActionsMenu"
         />

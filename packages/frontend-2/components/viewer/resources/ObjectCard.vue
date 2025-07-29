@@ -16,32 +16,17 @@
         </div>
       </div>
     </div>
-    <Transition>
-      <div
-        v-if="showRemove"
-        class="group absolute inset-0 z-[21] flex h-full w-full items-center justify-end space-x-2 rounded bg-gradient-to-r from-transparent to-foundation p-4"
-      >
-        <FormButton
-          color="danger"
-          size="sm"
-          class="rounded-full"
-          @click="$emit('remove', props.object.objectId)"
-        >
-          <XMarkIcon class="h-5 w-5" />
-        </FormButton>
-      </div>
-    </Transition>
   </div>
 </template>
 <script setup lang="ts">
-import { XMarkIcon, CubeIcon } from '@heroicons/vue/24/solid'
+import { CubeIcon } from '@heroicons/vue/24/solid'
 import type { ViewerResourceItem } from '~/lib/common/generated/gql/graphql'
 
 defineEmits<{
   (e: 'remove', val: string): void
 }>()
 
-const props = defineProps<{
+defineProps<{
   object: ViewerResourceItem
   showRemove: boolean
 }>()

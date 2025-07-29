@@ -75,6 +75,7 @@
       <div class="mt-4 pr-2 py-2 -ml-3">
         <FormButton
           full-width
+          size="sm"
           text
           color="subtle"
           :disabled="!showLoadMore"

@@ -48,21 +48,19 @@
       </div>
 
       <div class="flex items-center">
-        <FormButton
-          color="subtle"
-          hide-text
+        <button
+          class="p-1 rounded-md hover:bg-highlight-3"
           :icon-left="isHidden ? IconEyeClosed : IconEye"
           :class="
             isHidden || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           "
           @click.stop="hideOrShowObject"
         >
-          {{ isHidden ? 'Show' : 'Hide' }}
-        </FormButton>
-        <FormButton
-          color="subtle"
-          hide-text
-          :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
+          <IconEyeClosed v-if="isHidden" class="w-4 h-4" />
+          <IconEye v-else class="w-4 h-4" />
+        </button>
+        <button
+          class="p-1 rounded-md hover:bg-highlight-3"
           :class="
             isIsolated || isSelected
               ? 'opacity-100'
@@ -70,8 +68,9 @@
           "
           @click.stop="isolateOrUnisolateObject"
         >
-          {{ isIsolated ? 'Unisolate' : 'Isolate' }}
-        </FormButton>
+          <IconViewerUnisolate v-if="isIsolated" class="w-3.5 h-3.5" />
+          <IconViewerIsolate v-else class="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
 
@@ -124,8 +123,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { FunnelIcon } from '@heroicons/vue/24/solid'
-import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import type {
   ExplorerNode,
   SpeckleObject,
