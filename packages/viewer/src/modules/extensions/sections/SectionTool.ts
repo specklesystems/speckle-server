@@ -214,7 +214,7 @@ export class SectionTool extends Extension {
   protected keydownHandler: (e: KeyboardEvent) => void
   protected keyupHandler: (e: KeyboardEvent) => void
   protected rotationHistory: Quaternion[] = []
-  protected currentHistoryIndex = -1
+  protected currentHistoryIndex = 0
   protected maxHistorySize = 10
   protected initialRotationState: Quaternion | null = null
   protected isUndoing = false
@@ -642,11 +642,13 @@ export class SectionTool extends Extension {
         /** If this is the first rotation, save the initial state first */
         if (this.rotationHistory.length === 0) {
           this.rotationHistory.push(this.initialRotationForCurrentDrag)
-          this.currentHistoryIndex = 0
         }
 
-        /** Truncate history if we're not at the end (i.e., we've undone and are making a new change) */
-        if (this.currentHistoryIndex < this.rotationHistory.length - 1) {
+        /** Truncate history if we're not at the end and we have more than just the initial state */
+        if (
+          this.currentHistoryIndex < this.rotationHistory.length - 1 &&
+          this.rotationHistory.length > 1
+        ) {
           /** Always preserve the initial state (index 0) and states up to current cursor */
           this.rotationHistory = this.rotationHistory.slice(
             0,
