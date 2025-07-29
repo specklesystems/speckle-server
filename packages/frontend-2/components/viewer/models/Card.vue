@@ -14,25 +14,31 @@
         class="group flex items-center px-1 py-3 select-none cursor-pointer hover:bg-highlight-1"
         :class="isExpanded ? 'border-b border-outline-3' : ''"
       >
-        <FormButton size="sm" color="subtle" @click.stop="isExpanded = !isExpanded">
+        <button
+          class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center"
+          @click.stop="isExpanded = !isExpanded"
+        >
           <IconTriangle
-            class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
+            class="w-4 h-4 text-foreground-2"
             :class="isExpanded ? 'rotate-90' : ''"
           />
           <span class="sr-only">
             {{ isExpanded ? 'Collapse' : 'Expand' }}
           </span>
-        </FormButton>
-        <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3">
+        </button>
+        <div
+          class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
+          :class="{ grayscale: shouldShowDimmed }"
+        >
           <PreviewImage
             v-if="loadedVersion?.previewUrl"
             :preview-url="loadedVersion.previewUrl"
           />
         </div>
-        <div class="flex flex-col">
+        <div class="flex flex-col min-w-0">
           <div
             v-tippy="modelName.subheader ? model.name : null"
-            class="text-body-2xs font-medium"
+            class="text-body-2xs font-medium truncate"
           >
             {{ modelName.header }}
           </div>
@@ -43,51 +49,47 @@
             {{ createdAtFormatted.relative }}
           </div>
         </div>
-        <div class="flex items-center gap-2 ml-auto">
-          <div class="flex text-foreground">
-            <LayoutMenu
-              v-model:open="showActionsMenu"
-              :items="actionsItems"
-              :menu-position="HorizontalDirection.Left"
-              mount-menu-on-body
-              @click.stop.prevent
-              @chosen="onActionChosen"
-            >
-              <FormButton
-                color="subtle"
-                class="group-hover:opacity-100 opacity-0"
-                hide-text
-                :icon-right="EllipsisHorizontalIcon"
-                @click="showActionsMenu = !showActionsMenu"
-              />
-            </LayoutMenu>
-            <FormButton
-              color="subtle"
-              class="group-hover:opacity-100"
-              :icon-left="isHidden ? IconEyeClosed : IconEye"
-              hide-text
+        <div class="flex items-center ml-auto">
+          <LayoutMenu
+            v-model:open="showActionsMenu"
+            :items="actionsItems"
+            mount-menu-on-body
+            @click.stop.prevent
+            @chosen="onActionChosen"
+          >
+            <button
+              class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
               :class="{
-                'opacity-100': isHidden,
-                'opacity-0': !isHidden
+                'opacity-100': showActionsMenu,
+                'opacity-0': !showActionsMenu
               }"
-              @click.stop="hideOrShowObject"
+              @click.stop="showActionsMenu = !showActionsMenu"
             >
-              {{ isHidden ? 'Show' : 'Hide' }}
-            </FormButton>
-            <FormButton
-              color="subtle"
-              :class="{
-                'opacity-100': isIsolated,
-                'opacity-0': !isIsolated
-              }"
-              class="group-hover:opacity-100"
-              :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
-              hide-text
-              @click.stop="isolateOrUnisolateObject"
-            >
-              {{ isIsolated ? 'Unisolate' : 'Isolate' }}
-            </FormButton>
-          </div>
+              <EllipsisHorizontalIcon class="w-4 h-4" />
+            </button>
+          </LayoutMenu>
+          <button
+            class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
+            :class="{
+              'opacity-100': isHidden,
+              'opacity-0': !isHidden
+            }"
+            @click.stop="hideOrShowObject"
+          >
+            <IconEyeClosed v-if="isHidden" class="w-4 h-4" />
+            <IconEye v-else class="w-4 h-4" />
+          </button>
+          <button
+            class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
+            :class="{
+              'opacity-100': isIsolated,
+              'opacity-0': !isIsolated
+            }"
+            @click.stop="isolateOrUnisolateObject"
+          >
+            <IconViewerUnisolate v-if="isIsolated" class="w-3.5 h-3.5" />
+            <IconViewerIsolate v-else class="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -96,12 +98,13 @@
         v-if="isExpanded && rootNodeChildren.length"
         class="relative flex flex-col gap-y-2"
       >
-        <div v-for="(childNode, idx) in rootNodeChildren" :key="idx" class="rounded-xl">
+        <div v-for="(childNode, idx) in rootNodeChildren" :key="idx">
           <ViewerModelsTreeItem
             :tree-item="{ rawNode: markRaw(childNode) }"
             :sub-header="'Model content'"
             :expand-level="expandLevel"
             :manual-expand-level="manualExpandLevel"
+            :is-descendant-of-selected="false"
             @expanded="(e: number) => $emit('expanded', e)"
           />
         </div>
@@ -112,13 +115,11 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { FunnelIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
-import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { HorizontalDirection } from '~~/lib/common/composables/window'
 import {
   useHighlightedObjectsUtilities,
   useFilterUtilities,
@@ -249,6 +250,42 @@ const isIsolated = computed(() => {
   return containsAll(modelObjectIds.value, isolatedObjects.value)
 })
 
+const stateHasIsolatedObjectsInGeneral = computed(() => {
+  if (!isolatedObjects.value) return false
+  return isolatedObjects.value.length > 0
+})
+
+const modelContainsIsolatedObjects = computed(() => {
+  if (!isolatedObjects.value || isolatedObjects.value.length === 0) return false
+
+  // Check if any isolated object is a descendant of this model
+  const getAllDescendantIds = (nodes: ExplorerNode[]): string[] => {
+    const ids: string[] = []
+    for (const node of nodes) {
+      if (node.raw?.id) {
+        ids.push(node.raw.id)
+      }
+      if (node.children && node.children.length > 0) {
+        ids.push(...getAllDescendantIds(node.children))
+      }
+    }
+    return ids
+  }
+
+  const allModelObjectIds = [
+    ...modelObjectIds.value,
+    ...getAllDescendantIds(props.rootNodes)
+  ]
+
+  return isolatedObjects.value.some((isolatedId) =>
+    allModelObjectIds.includes(isolatedId)
+  )
+})
+
+const shouldShowDimmed = computed(() => {
+  return stateHasIsolatedObjectsInGeneral.value && !modelContainsIsolatedObjects.value
+})
+
 // Functions for hide/show and isolate
 const hideOrShowObject = (e: Event) => {
   e.stopPropagation()
@@ -285,6 +322,11 @@ const unhighlightObject = () => {
 const selectObject = () => {
   if (modelObjectIds.value.length === 0) return
   setSelectionFromObjectIds(modelObjectIds.value)
+
+  // Auto-expand when selecting if it has content and is not already expanded
+  if (rootNodeChildren.value.length > 0 && !isExpanded.value) {
+    isExpanded.value = true
+  }
 }
 
 const onActionChosen = (params: { item: LayoutMenuItem }) => {

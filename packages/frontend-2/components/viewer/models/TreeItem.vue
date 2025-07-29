@@ -1,21 +1,19 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div>
+  <div :class="{ 'opacity-60': shouldShowDimmed }">
     <!-- Header -->
     <div
       class="group flex items-center justify-between w-full p-2 pr-1 cursor-pointer"
-      :class="[
-        unfold && !isSelected ? 'bg-foundation-2' : '',
-        isSelected ? 'bg-highlight-3' : 'hover:bg-highlight-1'
-      ]"
+      :class="getBackgroundClass"
       @click.stop="(e:MouseEvent) => setSelection(e)"
       @mouseenter="highlightObject"
       @focusin="highlightObject"
       @mouseleave="unhighlightObject"
       @focusout="unhighlightObject"
     >
-      <div class="flex items-center gap-0.5">
+      <div class="flex items-center gap-0.5 min-w-0">
+        <div :style="{ width: `${depth * 0.375}rem` }" class="shrink-0"></div>
         <FormButton
           v-if="isSingleCollection || isMultipleCollection"
           size="sm"
@@ -32,39 +30,37 @@
         </FormButton>
         <div v-else class="w-4 shrink-0"></div>
         <div
-          class="flex flex-col"
+          class="flex flex-col min-w-0"
           :class="
             isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
               ? 'text-foreground-2'
               : ''
           "
         >
-          <div class="flex truncate text-body-2xs">
+          <div class="truncate text-body-2xs">
             <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
             {{ header || headerAndSubheader.header }}
           </div>
-          <div class="flex text-body-3xs text-foreground-2 truncate">
+          <div class="truncate text-body-3xs text-foreground-2">
             {{ subHeader || headerAndSubheader.subheader }}
           </div>
         </div>
       </div>
 
       <div class="flex items-center">
-        <FormButton
-          color="subtle"
-          hide-text
+        <button
+          class="p-1 rounded-md hover:bg-highlight-3"
           :icon-left="isHidden ? IconEyeClosed : IconEye"
           :class="
             isHidden || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           "
           @click.stop="hideOrShowObject"
         >
-          {{ isHidden ? 'Show' : 'Hide' }}
-        </FormButton>
-        <FormButton
-          color="subtle"
-          hide-text
-          :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
+          <IconEyeClosed v-if="isHidden" class="w-4 h-4" />
+          <IconEye v-else class="w-4 h-4" />
+        </button>
+        <button
+          class="p-1 rounded-md hover:bg-highlight-3"
           :class="
             isIsolated || isSelected
               ? 'opacity-100'
@@ -72,13 +68,14 @@
           "
           @click.stop="isolateOrUnisolateObject"
         >
-          {{ isIsolated ? 'Unisolate' : 'Isolate' }}
-        </FormButton>
+          <IconViewerUnisolate v-if="isIsolated" class="w-3.5 h-3.5" />
+          <IconViewerIsolate v-else class="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
 
     <!-- Children contents -->
-    <div v-if="unfold" class="pl-1.5 bg-foundation-2">
+    <div v-if="unfold" class="bg-foundation-2">
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
@@ -93,6 +90,7 @@
             :expand-level="props.expandLevel"
             :manual-expand-level="manualExpandLevel"
             :parent="treeItem"
+            :is-descendant-of-selected="isSelected || isChildOfSelected"
             @expanded="(e) => $emit('expanded', e)"
           />
         </div>
@@ -111,6 +109,7 @@
             :expand-level="props.expandLevel"
             :manual-expand-level="manualExpandLevel"
             :parent="treeItem"
+            :is-descendant-of-selected="isSelected || isChildOfSelected"
             @expanded="(e) => $emit('expanded', e)"
           />
         </div>
@@ -124,8 +123,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { FunnelIcon } from '@heroicons/vue/24/solid'
-import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import type {
   ExplorerNode,
   SpeckleObject,
@@ -156,8 +153,9 @@ const props = withDefaults(
     manualExpandLevel: number
     header?: string | null
     subHeader?: string | null
+    isDescendantOfSelected?: boolean
   }>(),
-  { depth: 0, header: null, subHeader: null }
+  { depth: 0, header: null, subHeader: null, isDescendantOfSelected: false }
 )
 
 const emit = defineEmits<{
@@ -339,8 +337,32 @@ const isSelected = computed(() => {
   return !!objects.value.find((o) => o.id === speckleData.value.id)
 })
 
+const isChildOfSelected = computed(() => {
+  return (
+    props.isDescendantOfSelected ||
+    (props.parent &&
+      !!objects.value.find((o) => {
+        const parentSpeckleData = props.parent!.rawNode.raw as SpeckleObject
+        return o.id === parentSpeckleData.id
+      }))
+  )
+})
+
+const getBackgroundClass = computed(() => {
+  if (isSelected.value) return 'bg-highlight-3'
+  if (isChildOfSelected.value) return 'bg-foundation-2'
+  return 'bg-foundation hover:bg-highlight-1'
+})
+
 const setSelection = (e: MouseEvent) => {
   if (isSelected.value && !e.shiftKey) {
+    // If already selected, try to expand first before deselecting
+    if ((isSingleCollection.value || isMultipleCollection.value) && !unfold.value) {
+      unfold.value = true
+      emit('expanded', props.depth)
+      return
+    }
+    // Only deselect if can't expand or already expanded
     clearSelection()
     return
   }
@@ -350,6 +372,12 @@ const setSelection = (e: MouseEvent) => {
   }
   if (!e.shiftKey) clearSelection()
   addToSelection(rawSpeckleData.value)
+
+  // Auto-expand when selecting if it has children
+  if ((isSingleCollection.value || isMultipleCollection.value) && !unfold.value) {
+    unfold.value = true
+    emit('expanded', props.depth)
+  }
 }
 
 const highlightObject = () => {
@@ -378,6 +406,10 @@ const isIsolated = computed(() => {
   if (!isolatedObjects.value) return false
   const ids = getTargetObjectIds(rawSpeckleData.value)
   return containsAll(ids, isolatedObjects.value)
+})
+
+const shouldShowDimmed = computed(() => {
+  return stateHasIsolatedObjectsInGeneral.value && !isIsolated.value
 })
 
 const hideOrShowObject = () => {
