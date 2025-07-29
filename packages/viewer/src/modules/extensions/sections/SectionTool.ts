@@ -20,7 +20,8 @@ import {
   DynamicDrawUsage,
   Color,
   MeshBasicMaterial,
-  PlaneGeometry
+  PlaneGeometry,
+  Euler
 } from 'three'
 import { intersectObjectWithRay, TransformControls } from '../TransformControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
@@ -56,6 +57,8 @@ export interface SectionToolEventPayload {
 const _matrix4 = new Matrix4()
 const _quaternion = new Quaternion()
 const _vector3 = new Vector3()
+const _tempEuler = new Euler()
+const _tempQuaternion = new Quaternion()
 
 const unitCube = [
   -1 * 0.5,
@@ -133,6 +136,14 @@ export class SectionTool extends Extension {
     return [CameraController]
   }
 
+  /** Configurable rotation snap angle in radians. Set to null to disable snapping */
+  public rotationSnapAngle: number | null = Math.PI / 12 // 15 degrees by default
+
+  /** Note: Rotation snapping only applies to mouse interactions via TransformControls.
+   *  Programmatic calls to setBox() will not apply rotation snapping.
+   *  For complete snapping support, programmatic rotations will need to be handled separately.
+   */
+
   /** This is our data model. All we need is an OBB */
   protected obb: OBB = new OBB()
 
@@ -199,6 +210,9 @@ export class SectionTool extends Extension {
   /** Hit testing related */
   protected raycaster: Raycaster
   protected dragging = false
+  protected shiftKeyPressed = false
+  protected keydownHandler: (e: KeyboardEvent) => void
+  protected keyupHandler: (e: KeyboardEvent) => void
 
   /** Manadatory property for all extensions */
   public get enabled() {
@@ -316,6 +330,9 @@ export class SectionTool extends Extension {
     // })
     /** Hook up to le click */
     this.viewer.getRenderer().input.on(InputEvent.Click, this.clickHandler.bind(this))
+
+    /** Add keyboard event listeners for shift key rotation snapping */
+    this.setupKeyboardListeners()
 
     /** Start off disabled */
     this.enabled = false
@@ -515,6 +532,31 @@ export class SectionTool extends Extension {
   }
 
   /**
+   * Sets up keyboard event listeners for shift key rotation snapping
+   */
+  protected setupKeyboardListeners() {
+    /** Store shift state for use in changeHandler */
+    this.shiftKeyPressed = false
+
+    /** Store references to event listeners for cleanup */
+    this.keydownHandler = (e: KeyboardEvent) => {
+      if (e.shiftKey && !this.shiftKeyPressed) {
+        this.shiftKeyPressed = true
+      }
+    }
+
+    this.keyupHandler = (e: KeyboardEvent) => {
+      if (!e.shiftKey && this.shiftKeyPressed) {
+        this.shiftKeyPressed = false
+      }
+    }
+
+    /** Event listeners */
+    document.addEventListener('keydown', this.keydownHandler)
+    document.addEventListener('keyup', this.keyupHandler)
+  }
+
+  /**
    * Controls, outline and hitbox update based on the OBB model
    */
   protected updateVisual() {
@@ -574,12 +616,17 @@ export class SectionTool extends Extension {
   protected changeHandler() {
     /** Just copy over position, rotation  and scale*/
     this.obb.center.copy(this.translationRotationAnchor.position)
+
+    /** Apply rotation snapping if shift key is pressed */
+    let quaternion = this.translationRotationAnchor.quaternion
+    if (this.shiftKeyPressed) {
+      quaternion = this.snapQuaternionToGrid(quaternion)
+      /** Update the anchor's quaternion to keep visual controls in sync */
+      this.translationRotationAnchor.quaternion.copy(quaternion)
+    }
+
     this.obb.rotation.copy(
-      new Matrix3().setFromMatrix4(
-        new Matrix4().makeRotationFromQuaternion(
-          this.translationRotationAnchor.quaternion
-        )
-      )
+      new Matrix3().setFromMatrix4(new Matrix4().makeRotationFromQuaternion(quaternion))
     )
     this.obb.halfSize.copy(this.scaleAnchor.scale)
 
@@ -919,5 +966,42 @@ export class SectionTool extends Extension {
     box: Box3 | { min: Vector3Like; max: Vector3Like } | OBB
   ): box is OBB {
     return box instanceof OBB
+  }
+
+  /**
+   * Snaps a quaternion to the nearest grid based on rotationSnapAngle.
+   * This is useful for rotation snapping.
+   * @param q The quaternion to snap.
+   * @returns The snapped quaternion.
+   */
+  protected snapQuaternionToGrid(q: Quaternion): Quaternion {
+    /** Convert quaternion to Euler angles using pooled object */
+    _tempEuler.setFromQuaternion(q)
+
+    /** Snap each axis to the configured angle increments */
+    if (this.rotationSnapAngle !== null) {
+      _tempEuler.x =
+        Math.round(_tempEuler.x / this.rotationSnapAngle) * this.rotationSnapAngle
+      _tempEuler.y =
+        Math.round(_tempEuler.y / this.rotationSnapAngle) * this.rotationSnapAngle
+      _tempEuler.z =
+        Math.round(_tempEuler.z / this.rotationSnapAngle) * this.rotationSnapAngle
+    }
+
+    /** Convert back to quaternion using pooled object */
+    _tempQuaternion.setFromEuler(_tempEuler)
+    return _tempQuaternion
+  }
+
+  /**
+   * Cleanup method to remove event listeners and prevent memory leaks
+   */
+  public dispose() {
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler)
+    }
+    if (this.keyupHandler) {
+      document.removeEventListener('keyup', this.keyupHandler)
+    }
   }
 }
