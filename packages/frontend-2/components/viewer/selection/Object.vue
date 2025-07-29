@@ -232,13 +232,9 @@ const headerClasses = computed(() => {
   if (!props.root) return ''
   if (!diffEnabled.value) return ''
   if (!Object.keys(props.object).includes('applicationId')) return ''
-
   if (isAdded.value) return 'text-green-500'
-
   if (isRemoved.value) return 'text-red-500'
-
   if (isUnchanged.value) return 'text-foreground-2'
-
   return 'text-amber-500'
 })
 

@@ -16,7 +16,7 @@
 
     <ViewerLayoutPanel
       v-if="activePanel !== 'none'"
-      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-30 flex p-1 items-center justify-between w-72"
+      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-30 flex p-1 items-center justify-between w-80"
     >
       <span class="flex items-center">
         <component :is="panels[activePanel].icon" class="h-4 w-4 ml-1 mr-1.5" />
@@ -31,7 +31,7 @@
         <FormButton size="sm" @click="onActivePanelClose">Done</FormButton>
       </div>
 
-      <div class="absolute left-1/2 -translate-x-1/2 bottom-9 w-72">
+      <div class="absolute left-1/2 -translate-x-1/2 bottom-9 w-80">
         <ViewerMeasurementsMenu v-show="activePanel === 'measurements'" />
         <ViewerExplodeMenu v-show="activePanel === 'explode'" />
         <ViewerViewModesMenu v-show="activePanel === 'viewModes'" />

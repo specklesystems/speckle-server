@@ -1,75 +1,93 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <ViewerLayoutPanel>
-    <div class="w-full p-1.5">
-      <div v-for="shortcut in viewModeShortcuts" :key="shortcut.name">
-        <ViewerMenuItem
-          :label="shortcut.name"
-          :description="shortcut.description"
-          :active="isActiveMode(shortcut.viewMode)"
-          :shortcut="getShortcutDisplayText(shortcut, { hideName: true })"
-          @click="handleViewModeChange(shortcut.viewMode)"
-        />
+  <div>
+    <ViewerLayoutPanel v-if="showSettings">
+      <div class="p-3 py-2.5 flex items-center justify-between">
+        <span class="text-body-2xs font-medium text-foreground leading-none">
+          Edges
+        </span>
+        <div
+          v-tippy="
+            currentViewMode === ViewMode.PEN
+              ? 'Edges are always enabled in Pen mode'
+              : undefined
+          "
+        >
+          <FormSwitch
+            :model-value="edgesEnabled"
+            :show-label="false"
+            name="toggle-edges"
+            class="text-body-2xs"
+            :disabled="currentViewMode === ViewMode.PEN"
+            @update:model-value="toggleEdgesEnabled"
+          />
+        </div>
       </div>
-    </div>
-    <div class="border-t border-outline-2 p-3 flex items-center justify-between">
-      <span class="text-body-2xs font-medium text-foreground leading-none">Edges</span>
-      <div
-        v-tippy="
-          currentViewMode === ViewMode.PEN
-            ? 'Edges are always enabled in Pen mode'
-            : undefined
-        "
-      >
-        <FormSwitch
-          :model-value="edgesEnabled"
-          :show-label="false"
-          name="toggle-edges"
-          class="text-body-2xs"
-          :disabled="currentViewMode === ViewMode.PEN"
-          @update:model-value="toggleEdgesEnabled"
-        />
-      </div>
-    </div>
-    <div v-if="edgesEnabled" class="p-3 pt-1.5">
-      <div>
-        <FormRange
-          :model-value="edgesWeight"
-          name="edge-stroke"
-          label="Weight"
-          :min="0.5"
-          :max="3"
-          :step="0.1"
-          @update:model-value="setEdgesWeight"
-        />
-        <div class="flex items-center justify-between my-1">
-          <div class="text-body-2xs">Color</div>
-          <div class="flex items-center gap-1 bg-highlight-1 rounded-lg p-1">
-            <button
-              v-for="(color, index) in edgesColorOptions"
-              :key="color"
-              class="flex items-center justify-center size-6"
-              :class="
-                edgesColor === color &&
-                'bg-foundation border border-outline-2 rounded-lg'
-              "
-              @click="setEdgesColor(color)"
-            >
-              <span
-                class="size-4 rounded-full cursor-pointer"
-                :style="{
-                  background:
-                    index === 0
-                      ? 'linear-gradient(to top left, #1a1a1a 50%, #ffffff 50%)'
-                      : `#${color.toString(16).padStart(6, '0')}`
-                }"
-              />
-            </button>
+      <div v-if="edgesEnabled" class="p-3 pb-2.5 pt-1">
+        <div>
+          <FormRange
+            :model-value="edgesWeight"
+            name="edge-stroke"
+            label="Weight"
+            :min="0.5"
+            :max="3"
+            :step="0.1"
+            @update:model-value="setEdgesWeight"
+          />
+          <div class="flex items-center justify-between my-1">
+            <div class="text-body-2xs">Color</div>
+            <div class="flex items-center gap-1 bg-highlight-1 rounded-lg p-1">
+              <button
+                v-for="(color, index) in edgesColorOptions"
+                :key="color"
+                class="flex items-center justify-center size-6"
+                :class="
+                  edgesColor === color &&
+                  'bg-foundation border border-outline-2 rounded-lg'
+                "
+                @click="setEdgesColor(color)"
+              >
+                <span
+                  class="size-4 rounded-full cursor-pointer"
+                  :style="{
+                    background:
+                      index === 0
+                        ? 'linear-gradient(to top left, #1a1a1a 50%, #ffffff 50%)'
+                        : `#${color.toString(16).padStart(6, '0')}`
+                  }"
+                />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </ViewerLayoutPanel>
+    </ViewerLayoutPanel>
+    <ViewerLayoutPanel class="mt-1 p-2 flex justify-between items-center">
+      <ViewerButtonGroup>
+        <ViewerButtonGroupButton
+          v-for="shortcut in viewModeShortcuts"
+          :key="shortcut.name"
+          v-tippy="shortcut.description"
+          :is-active="isActiveMode(shortcut.viewMode)"
+          @click="handleViewModeChange(shortcut.viewMode)"
+        >
+          <span class="text-body-2xs text-foreground px-2 py-1">
+            {{ shortcut.name }}
+          </span>
+        </ViewerButtonGroupButton>
+      </ViewerButtonGroup>
+      <button
+        class="size-6 flex items-center justify-center rounded-md"
+        :class="[
+          showSettings && 'text-primary-focus bg-info-lighter',
+          !showSettings && 'text-foreground hover:bg-foundation-2'
+        ]"
+        @click="showSettings = !showSettings"
+      >
+        <IconViewerSettings class="size-4" />
+      </button>
+    </ViewerLayoutPanel>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -91,8 +109,10 @@ const {
   setEdgesColor,
   edgesColor
 } = useViewModeUtilities()
-const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
+const { registerShortcuts } = useViewerShortcuts()
 const { isLightTheme } = useTheme()
+
+const showSettings = ref(false)
 
 registerShortcuts({
   SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT, true),

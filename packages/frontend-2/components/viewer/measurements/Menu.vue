@@ -43,25 +43,18 @@
     </ViewerLayoutPanel>
     <ViewerLayoutPanel class="mt-1 p-1 pr-2">
       <div class="flex gap-2 justify-between items-center">
-        <div
-          class="flex gap-1 rounded-lg p-0.5 bg-highlight-1 border border-outline-2 self-start"
-        >
-          <button
+        <ViewerButtonGroup>
+          <ViewerButtonGroupButton
             v-for="option in measurementTypeOptions"
             :key="option.value"
             v-tippy="option.title"
-            class="size-8 flex items-center justify-center rounded-lg border"
-            :class="[
-              measurementOptions.type === option.value &&
-                'border-outline-2 bg-foundation text-foreground',
-              measurementOptions.type !== option.value &&
-                'border-transparent hover:bg-foundation-2 text-foreground-2'
-            ]"
+            class="size-8"
+            :is-active="measurementOptions.type === option.value"
             @click="updateMeasurementsType(option)"
           >
             <component :is="option.icon" class="size-5 flex-shrink-0" />
-          </button>
-        </div>
+          </ViewerButtonGroupButton>
+        </ViewerButtonGroup>
 
         <div class="flex gap-1.5">
           <FormButton size="sm" color="outline" @click="clearMeasurements">
