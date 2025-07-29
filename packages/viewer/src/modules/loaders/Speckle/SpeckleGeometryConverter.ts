@@ -307,6 +307,11 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     let triangulated = true
     let triangulatedArraySize = 0
     while (k < faces.length) {
+      const chunkIndex = faces.findChunkIndex(k)
+      if (faces.chunkArray[chunkIndex].processed) {
+        k += faces.chunkArray[chunkIndex].data.length
+        continue
+      }
       let n = faces.get(k)
       if (n < 3) n += 3 // 0 -> 3, 1 -> 4
       k += n + 1
