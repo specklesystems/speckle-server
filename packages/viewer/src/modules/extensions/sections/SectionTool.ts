@@ -40,6 +40,7 @@ import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import SpeckleStandardMaterial from '../../materials/SpeckleStandardMaterial.js'
 import { Extension } from '../Extension.js'
+import { SectionOutlines } from './SectionOutlines.js'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
@@ -1121,6 +1122,13 @@ export class SectionTool extends Extension {
         this.updatePlanes()
         this.updateVisual()
         this.updateFaceControls(this.draggingFace)
+
+        /** Update section outlines */
+        const sectionOutlines = this.viewer.getExtension(SectionOutlines)
+        if (sectionOutlines && sectionOutlines.enabled) {
+          sectionOutlines.requestUpdate(true)
+        }
+
         this.viewer.requestRender()
       }
     }
@@ -1144,6 +1152,13 @@ export class SectionTool extends Extension {
         this.updatePlanes()
         this.updateVisual()
         this.updateFaceControls(this.draggingFace)
+
+        /** Update section outlines */
+        const sectionOutlines = this.viewer.getExtension(SectionOutlines)
+        if (sectionOutlines && sectionOutlines.enabled) {
+          sectionOutlines.requestUpdate(true)
+        }
+
         this.viewer.requestRender()
       }
     }
