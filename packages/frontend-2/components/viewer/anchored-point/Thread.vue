@@ -21,9 +21,9 @@
             class="w-7 h-7 flex items-center justify-center"
           >
             <div
-              class="w-6 h-6 flex items-center justify-center bg-primary rounded-full"
+              class="w-6 h-6 flex items-center justify-center bg-foundation dark:bg-foundation-2 rounded-full"
             >
-              <CheckIcon class="w-3 h-3 text-foundation" />
+              <IconCircleCheck class="size-5 text-primary" />
             </div>
           </div>
         </button>
@@ -85,7 +85,7 @@
               />
               <FormButton
                 v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-                :icon-left="CheckIcon"
+                :icon-left="IconCircleCheck"
                 hide-text
                 :disabled="!canArchiveOrUnarchive"
                 color="subtle"
@@ -93,7 +93,7 @@
                 @click="toggleCommentResolvedStatus()"
               />
               <FormButton
-                :icon-left="XMarkIcon"
+                :icon-left="IconXMark"
                 hide-text
                 color="subtle"
                 size="sm"
@@ -177,8 +177,6 @@ import {
   LinkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  XMarkIcon,
-  CheckIcon,
   ArrowTopRightOnSquareIcon,
   ArrowLeftIcon,
   ArrowUpRightIcon
@@ -205,6 +203,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { graphql } from '~/lib/common/generated/gql'
+import type { ConcreteComponent } from 'vue'
 
 graphql(`
   fragment ViewerCommentThreadData on Comment {
@@ -269,6 +268,8 @@ onClickOutside(threadContainer, (event) => {
 
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
+const IconXMark = resolveComponent('IconXMark') as ConcreteComponent
+const IconCircleCheck = resolveComponent('IconCircleCheck') as ConcreteComponent
 
 const comments = computed(() => [
   props.modelValue,
@@ -278,12 +279,6 @@ const comments = computed(() => [
 const showNewReplyComponent = computed(() => {
   return !props.modelValue.archived && canReply.value && !isEmbedEnabled.value
 })
-
-// Note: conflicted with dragging styles, so took it out temporarily
-// const { style } = useExpandedThreadResponsiveLocation({
-//   threadContainer,
-//   width: 320
-// })
 
 const isExpanded = computed(() => isOpenThread(props.modelValue.id))
 
