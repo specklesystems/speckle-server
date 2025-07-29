@@ -87,7 +87,38 @@ const { FF_WORKSPACES_MULTI_REGION_ENABLED } = getFeatureFlags()
       expect(scopeMain).to.deep.equal(scopeSlave2)
     })
 
-    it('rolls back all commits in case of one node failure', async () => {
+    it('rollsback when one node fails on write', async () => {
+      const email = 'test2@example.com'
+      const query = storeUserFactory
+      const user = {
+        id: cryptoRandomString({ length: 10 }),
+        name: cryptoRandomString({ length: 10 }),
+        email,
+        verified: true
+      }
+      const params = { user }
+
+      // user pre exist
+      await slave2.table(Users.name).insert(user)
+
+      const promise = replicateQuery({
+        dbs: ALL_DBS,
+        query,
+        params
+      })
+
+      await expect(promise).eventually.to.be.rejected
+
+      const userMain = await main.table(Users.name).where({ email }).first()
+      const userSlave1 = await slave1.table(Users.name).where({ email }).first()
+      const userSlave2 = await slave2.table(Users.name).where({ email }).first()
+
+      expect(userMain).to.be.undefined
+      expect(userSlave1).to.be.undefined
+      expect(userSlave2).to.exist
+    })
+
+    it('rolls back all commits in case of one node failure on transaction', async () => {
       const name = 'test:new:scope'
       const query =
         ({ db }: { db: Knex }) =>
