@@ -7,7 +7,7 @@ export interface Downloader extends Queue<string> {
     total: number
     maxDownloadBatchWait?: number
   }): void
-  downloadSingle(): Promise<Item | undefined>
+  downloadSingle(): Promise<Item>
   disposeAsync(): Promise<void>
 }
 
