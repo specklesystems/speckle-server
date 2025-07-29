@@ -23,7 +23,10 @@
             {{ isExpanded ? 'Collapse' : 'Expand' }}
           </span>
         </FormButton>
-        <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3">
+        <div
+          class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
+          :class="{ grayscale: shouldShowDimmed }"
+        >
           <PreviewImage
             v-if="loadedVersion?.previewUrl"
             :preview-url="loadedVersion.previewUrl"
@@ -102,6 +105,7 @@
             :sub-header="'Model content'"
             :expand-level="expandLevel"
             :manual-expand-level="manualExpandLevel"
+            :is-descendant-of-selected="false"
             @expanded="(e: number) => $emit('expanded', e)"
           />
         </div>
@@ -249,6 +253,42 @@ const isIsolated = computed(() => {
   return containsAll(modelObjectIds.value, isolatedObjects.value)
 })
 
+const stateHasIsolatedObjectsInGeneral = computed(() => {
+  if (!isolatedObjects.value) return false
+  return isolatedObjects.value.length > 0
+})
+
+const modelContainsIsolatedObjects = computed(() => {
+  if (!isolatedObjects.value || isolatedObjects.value.length === 0) return false
+
+  // Check if any isolated object is a descendant of this model
+  const getAllDescendantIds = (nodes: ExplorerNode[]): string[] => {
+    const ids: string[] = []
+    for (const node of nodes) {
+      if (node.raw?.id) {
+        ids.push(node.raw.id)
+      }
+      if (node.children && node.children.length > 0) {
+        ids.push(...getAllDescendantIds(node.children))
+      }
+    }
+    return ids
+  }
+
+  const allModelObjectIds = [
+    ...modelObjectIds.value,
+    ...getAllDescendantIds(props.rootNodes)
+  ]
+
+  return isolatedObjects.value.some((isolatedId) =>
+    allModelObjectIds.includes(isolatedId)
+  )
+})
+
+const shouldShowDimmed = computed(() => {
+  return stateHasIsolatedObjectsInGeneral.value && !modelContainsIsolatedObjects.value
+})
+
 // Functions for hide/show and isolate
 const hideOrShowObject = (e: Event) => {
   e.stopPropagation()
@@ -285,6 +325,11 @@ const unhighlightObject = () => {
 const selectObject = () => {
   if (modelObjectIds.value.length === 0) return
   setSelectionFromObjectIds(modelObjectIds.value)
+
+  // Auto-expand when selecting if it has content and is not already expanded
+  if (rootNodeChildren.value.length > 0 && !isExpanded.value) {
+    isExpanded.value = true
+  }
 }
 
 const onActionChosen = (params: { item: LayoutMenuItem }) => {

@@ -14,10 +14,19 @@
     >
       <!-- Model Header -->
       <div
-        class="group sticky cursor-pointer flex items-center gap-3 py-2 px-1"
+        class="group sticky cursor-pointer flex items-center py-3 px-1"
         @click="showVersions = !showVersions"
       >
-        <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3">
+        <FormButton size="sm" color="subtle" @click.stop="showVersions = !showVersions">
+          <IconTriangle
+            class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
+            :class="showVersions ? 'rotate-90' : ''"
+          />
+          <span class="sr-only">
+            {{ showVersions ? 'Collapse' : 'Expand' }}
+          </span>
+        </FormButton>
+        <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3">
           <PreviewImage
             v-if="loadedVersion?.previewUrl"
             :preview-url="loadedVersion?.previewUrl"
