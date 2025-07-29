@@ -103,21 +103,19 @@
           </div>
           <div
             v-if="showBanner"
-            class="flex items-center justify-between gap-4 border-b border-outline-2 py-2 px-4 w-full"
+            class="flex items-center justify-between gap-4 border-b border-outline-2 py-2 px-2 w-full"
           >
             <div class="text-body-2xs text-foreground-2 font-medium">
               {{ bannerText }}
             </div>
-            <div class="-mr-1 flex">
-              <FormButton
-                :icon-right="bannerButton.icon"
-                size="sm"
-                color="outline"
-                @click="bannerButton.action"
-              >
-                {{ bannerButton.text }}
-              </FormButton>
-            </div>
+            <FormButton
+              :icon-right="bannerButton.icon"
+              size="sm"
+              color="outline"
+              @click="bannerButton.action"
+            >
+              {{ bannerButton.text }}
+            </FormButton>
           </div>
           <div
             class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between"
