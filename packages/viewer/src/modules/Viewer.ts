@@ -280,7 +280,7 @@ this.propertyManager = new PropertyManager()
           console.error(`Property ${newProp.key} not found in Old properties`)
         }
         if (newProp.type === 'string') {
-         // await this.vectorManager.insert(newProp as OL2StringPropertyInfo)
+          await this.vectorManager.insert(newProp as OL2StringPropertyInfo)
           if (i % 100 === 0) {
             Logger.log(`Inserted ${i} string properties into vector store, out of ${newProps.length}`)
           }

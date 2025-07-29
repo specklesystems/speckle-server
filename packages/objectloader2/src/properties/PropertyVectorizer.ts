@@ -3,26 +3,21 @@
 import { StringPropertyInfo } from './PropertyManager.js'
 import { CustomLogger } from '../types/functions.js'
 import { VectorEntry, VectorStore } from './VectorStore.js'
-
-const defaultModel = 'Xenova/all-MiniLM-L6-v2'
+import { InferenceClient } from '@huggingface/inference'
 let status: string = 'Loading model...'
 
-let pipe: any
 
-const getPipeline = async (model: string): Promise<any> => {
-  if (pipe) {
-    return pipe
+class PipelineSingleton {
+  static task = 'feature-extraction'
+  static model = 'mixedbread-ai/mxbai-embed-large-v1'
+  static instance?: any = null
+
+  static async getInstance(progress_callback: any): Promise<any> {
+    const { pipeline } = await import('@huggingface/transformers')
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    this.instance ??= pipeline(this.task as any, this.model, { progress_callback })
+    return this.instance
   }
-  const { pipeline } = await import('@huggingface/transformers')
-  pipe = await pipeline('feature-extraction', model, {
-    progress_callback: (progressInfo: { status: string }) => {
-      if (progressInfo.status !== status) {
-        status = progressInfo.status
-        console.log(`Loading model: ${progressInfo.status}`)
-      }
-    }
-  })
-  return pipe
 }
 
 export interface QueryResult {
@@ -38,7 +33,12 @@ const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
 }
 const getEmbeddingFromText = async (text: string): Promise<number[]> => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const pipe = await getPipeline(defaultModel)
+  const pipe = await PipelineSingleton.getInstance(({ currentStatus }: { currentStatus: string }) => {
+    if (status !== currentStatus) {
+      status = currentStatus
+      console.log(`Loading model: ${status}`)
+    }
+  })
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const output = await pipe(text, {
     pooling: 'mean',
