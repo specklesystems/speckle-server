@@ -578,8 +578,7 @@ export function useViewModeUtilities() {
     outlineOpacity.value = 0.75
     edgesColor.value = defaultColor.value
 
-    // Reset view mode to default
-    viewMode.value = ViewMode.DEFAULT
+    // Note: Don't reset view mode here as it should persist when panel closes
     updateViewMode()
   })
 

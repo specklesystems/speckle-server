@@ -1,5 +1,5 @@
 <template>
-  <div class="select-none">
+  <div class="select-none h-full">
     <ViewerModelsVersions v-if="showVersions" @close="showVersions = false" />
     <ViewerModelsAddPanel v-else-if="showAddModel" @close="showAddModel = false" />
     <ViewerLayoutSidePanel v-else>

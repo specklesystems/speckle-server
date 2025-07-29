@@ -8,8 +8,7 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="flex h-full w-full pl-1 pr-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
-        :class="unfold && 'text-primary'"
+        class="flex h-full w-full pl-1 pr-2 py-0.5 items-center gap-1 rounded-[2px] bg-foundation-2"
         @click="unfold = !unfold"
         @mouseenter="highlightObject"
         @focusin="highlightObject"
@@ -21,7 +20,7 @@
             !unfold ? '-rotate-90' : 'rotate-0'
           }`"
         />
-        <div :class="`truncate text-body-2xs font-medium ${headerClasses}`">
+        <div :class="`truncate text-body-3xs font-medium ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
@@ -47,7 +46,7 @@
           }`"
         >
           <div
-            class="col-span-1 truncate text-body-3xs mr-2 font-medium"
+            class="col-span-1 truncate text-body-3xs mr-2 font-medium text-foreground-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
@@ -128,7 +127,7 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="col-span-1 truncate text-xs font-medium pl-2"
+            class="col-span-1 truncate text-xs font-medium pl-2 text-foreground-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
@@ -238,7 +237,7 @@ const headerClasses = computed(() => {
 
   if (isRemoved.value) return 'text-red-500'
 
-  if (isUnchanged.value) return 'text-foreground'
+  if (isUnchanged.value) return 'text-foreground-2'
 
   return 'text-amber-500'
 })

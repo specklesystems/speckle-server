@@ -1,10 +1,15 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-0 top-0 z-20 flex h-full max-h-[calc(100dvh-3rem)] border-r border-outline-2 bg-foundation px-2"
-    :class="!isEmbedEnabled ? 'top-[3rem]' : 'pt-2 pb-16'"
+    class="absolute left-2 lg:left-0 top-[3.5rem] z-20 flex rounded-lg border border-outline-2 bg-foundation px-1"
+    :class="[
+      isEmbedEnabled
+        ? ''
+        : 'lg:top-[3rem] lg:rounded-none lg:px-2 lg:max-h-[calc(100dvh-3rem)] lg:border-l-0 lg:border-t-0 lg:border-b-0',
+      hasActivePanel && 'h-full max-h-[calc(100dvh-7.875rem)] rounded-r-none'
+    ]"
   >
-    <div class="flex flex-col gap-2 py-2">
+    <div class="flex flex-col gap-2 py-1" :class="isEmbedEnabled ? '' : 'lg:py-2'">
       <!-- Models -->
       <ViewerControlsButtonToggle
         v-tippy="{
@@ -12,19 +17,17 @@
           placement: 'right'
         }"
         :active="activePanel === 'models'"
+        :icon="'IconViewerModels'"
         @click="toggleActivePanel('models')"
-      >
-        <IconViewerModels class="h-4 w-4 md:h-5 md:w-5" />
-      </ViewerControlsButtonToggle>
+      />
 
       <!-- Filters -->
       <ViewerControlsButtonToggle
         v-tippy="getShortcutDisplayText(shortcuts.ToggleFilters)"
         :active="activePanel === 'filters'"
+        :icon="'IconViewerExplorer'"
         @click="toggleActivePanel('filters')"
-      >
-        <IconViewerExplorer class="h-4 w-4 md:h-5 md:w-5" />
-      </ViewerControlsButtonToggle>
+      />
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
@@ -33,10 +36,9 @@
           placement: 'right'
         }"
         :active="activePanel === 'discussions'"
+        :icon="'IconViewerDiscussions'"
         @click="toggleActivePanel('discussions')"
-      >
-        <IconViewerDiscussions class="h-4 w-4 md:h-5 md:w-5" />
-      </ViewerControlsButtonToggle>
+      />
 
       <!-- Automation runs -->
       <ViewerControlsButtonToggle
@@ -63,7 +65,7 @@
     <div
       v-if="activePanel !== 'none'"
       ref="resizeHandle"
-      class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l hover:border-l-[2px] border-outline-2 hover:border-primary hidden sm:flex items-center cursor-ew-resize z-30"
+      class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l hover:border-l-[2px] border-outline-2 hover:border-primary hidden lg:flex items-center cursor-ew-resize z-30"
       :style="`left:${width + 52}px;`"
       @mousedown="startResizing"
     />
@@ -71,10 +73,12 @@
     <!-- Scrollable controls container -->
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar bg-foundation absolute z-10 left-[calc(3rem+1px)] right-2  h-[calc(100dvh-3rem)] overflow-y-auto  ${
-        activePanel !== 'none' ? 'opacity-100' : 'opacity-0'
-      }`"
-      :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
+      :class="[
+        'simple-scrollbar bg-foundation absolute z-10 left-[calc(2.5rem+1px)] top-[-1px] bottom-[-1px] overflow-y-auto border-outline-2 border border-l-0 rounded-lg rounded-tl-none rounded-bl-none',
+        hasActivePanel ? 'opacity-100' : 'opacity-0',
+        isEmbedEnabled ? '' : 'lg:left-[calc(3rem+1px)] lg:border-none lg:rounded-none'
+      ]"
+      :style="`width: ${isMobile ? 'calc(100vw - 3.75rem)' : `${width + 4}px`};`"
     >
       <!-- Models panel -->
       <ViewerModels
@@ -105,6 +109,7 @@ import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/cor
 import { type Nullable, isNonNullable } from '@speckle/shared'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
+
 type ActivePanel =
   | 'none'
   | 'models'
@@ -122,6 +127,7 @@ let startWidth = 0
 let startX = 0
 
 const startResizing = (event: MouseEvent) => {
+  if (isMobile.value) return
   event.preventDefault()
   isResizing.value = true
   startX = event.clientX
@@ -138,10 +144,11 @@ if (import.meta.client) {
   useEventListener(document, 'mousemove', (event) => {
     if (isResizing.value) {
       const diffX = event.clientX - startX
-      width.value = Math.max(
-        300,
-        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+      const newWidth = Math.max(
+        240,
+        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
       )
+      width.value = newWidth
     }
   })
 
@@ -160,6 +167,8 @@ const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
 
 const activePanel = ref<ActivePanel>('none')
+
+const hasActivePanel = computed(() => activePanel.value !== 'none')
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value

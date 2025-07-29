@@ -11,61 +11,61 @@
       @close="onClose"
       @width-change="sidebarWidth = $event"
     >
-      <template #title>Selection info</template>
-      <template #actions>
-        <div class="flex flex-col divide-y divide-outline-3">
-          <div class="flex py-1.5 pl-3 pr-1.5 gap-x-1.5 items-center">
-            <FormButton
-              size="sm"
-              color="outline"
-              :icon-left="isHidden ? EyeSlashIcon : EyeIcon"
-              @click.stop="hideOrShowSelection"
-            >
-              {{ isHidden ? 'Hidden' : 'Hide' }}
-            </FormButton>
-            <FormButton
-              size="sm"
-              color="outline"
-              :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
-              @click.stop="isolateOrUnisolateSelection"
-            >
-              {{ isIsolated ? 'Isolated' : 'Isolate' }}
-            </FormButton>
-            <div class="flex justify-end w-full">
-              <div v-tippy="`Open selection in new window`" class="max-w-max">
-                <FormButton
-                  size="sm"
-                  color="subtle"
-                  :to="selectionLink"
-                  target="_blank"
-                >
-                  <span class="sr-only">Open selection in new window</span>
-                  <ArrowTopRightOnSquareIcon class="w-4" />
-                </FormButton>
-              </div>
-            </div>
-          </div>
-          <div class="text-foreground-2 text-body-3xs py-1.5 px-3">
-            Hold "shift" to select multiple objects
-          </div>
+      <template #title>
+        <div class="flex items-center gap-x-2">
+          <p>Selected objects</p>
+          <CommonBadge v-if="objects.length" rounded>
+            {{ objects.length }}
+          </CommonBadge>
         </div>
       </template>
-      <div class="p-1 mb-2 sm:mb-0 sm:py-2">
-        <div class="space-y-2">
-          <ViewerSelectionObject
-            v-for="object in objectsLimited"
-            :key="(object.id as string)"
-            :object="object"
-            :root="true"
-            :unfold="objectsLimited.length === 1 && !isSmallerOrEqualSm"
+      <template #actions>
+        <div class="flex gap-x-0.5 items-center">
+          <FormButton
+            size="sm"
+            color="subtle"
+            :icon-left="isHidden ? EyeSlashIcon : EyeIcon"
+            hide-text
+            @click.stop="hideOrShowSelection"
+          />
+          <FormButton
+            size="sm"
+            color="subtle"
+            :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
+            hide-text
+            @click.stop="isolateOrUnisolateSelection"
+          />
+          <FormButton
+            size="sm"
+            color="subtle"
+            :icon-left="ArrowTopRightOnSquareIcon"
+            :to="selectionLink"
+            target="_blank"
+            hide-text
           />
         </div>
-        <div v-if="itemCount <= objects.length" class="mb-2">
-          <FormButton size="sm" text full-width @click="itemCount += 10">
-            View more ({{ objects.length - itemCount }})
-          </FormButton>
-        </div>
+      </template>
+
+      <div class="space-y-2">
+        <ViewerSelectionObject
+          v-for="object in objectsLimited"
+          :key="(object.id as string)"
+          :object="object"
+          :root="true"
+          :unfold="objectsLimited.length === 1 && !isSmallerOrEqualSm"
+        />
       </div>
+      <div v-if="itemCount <= objects.length" class="mb-2">
+        <FormButton size="sm" text full-width @click="itemCount += 10">
+          View more ({{ objects.length - itemCount }})
+        </FormButton>
+      </div>
+
+      <template #footer>
+        <p class="text-foreground-2 text-body-3xs">
+          Hold "shift" to select multiple objects
+        </p>
+      </template>
     </ViewerSidebar>
   </ViewerCommentsPortalOrDiv>
 </template>
@@ -77,7 +77,6 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
-
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'

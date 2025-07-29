@@ -33,20 +33,14 @@
     </div>
     <div v-if="edgesEnabled" class="p-3 pt-1.5">
       <div>
-        <div class="flex items-center justify-between gap-2">
-          <div class="text-body-2xs">Weight</div>
-          <div class="text-body-2xs">{{ edgesWeight }}</div>
-        </div>
-        <input
-          id="edge-stroke"
-          v-model="edgesWeight"
-          class="w-full mt-1.5"
-          type="range"
+        <FormRange
+          :model-value="edgesWeight"
           name="edge-stroke"
+          label="Weight"
           :min="0.5"
           :max="3"
-          step="0.1"
-          @input="handleEdgesWeightChange"
+          :step="0.1"
+          @update:model-value="setEdgesWeight"
         />
         <div class="flex items-center justify-between my-1">
           <div class="text-body-2xs">Color</div>
@@ -99,10 +93,6 @@ const {
 } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const { isLightTheme } = useTheme()
-
-const handleEdgesWeightChange = () => {
-  setEdgesWeight(Number(edgesWeight.value))
-}
 
 registerShortcuts({
   SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT, true),
