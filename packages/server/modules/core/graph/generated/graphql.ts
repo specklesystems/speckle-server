@@ -1128,7 +1128,7 @@ export type FileUploadMutations = {
    * recording the provided status, and emitting the needed subscriptions.
    * Mostly for internal service usage.
    */
-  finishFileImport?: Maybe<Scalars['Boolean']['output']>;
+  finishFileImport: Scalars['Boolean']['output'];
   /**
    * Generate a pre-signed url to which a file can be uploaded.
    * After uploading the file, call mutation startFileImport to register the completed upload.
@@ -6659,7 +6659,7 @@ export type FileUploadCollectionResolvers<ContextType = GraphQLContext, ParentTy
 };
 
 export type FileUploadMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUploadMutations'] = ResolversParentTypes['FileUploadMutations']> = {
-  finishFileImport?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<FileUploadMutationsFinishFileImportArgs, 'input'>>;
+  finishFileImport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<FileUploadMutationsFinishFileImportArgs, 'input'>>;
   generateUploadUrl?: Resolver<ResolversTypes['GenerateFileUploadUrlOutput'], ParentType, ContextType, RequireFields<FileUploadMutationsGenerateUploadUrlArgs, 'input'>>;
   startFileImport?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType, RequireFields<FileUploadMutationsStartFileImportArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

@@ -36,6 +36,7 @@ jobs:
       DOCKERHUB_USERNAME: 'speckledevops'
       IMAGE_PREFIX: 'speckle' # without an explicit host, Docker defaults to pushing Docker Hub
       PUBLISH: true # publish the sourcemaps and include the version in frontend-2 builds
+      PUBLISH_LATEST: ${{ startsWith(github.ref, 'refs/heads/main') }}
     secrets: inherit
 
   test-deployments:
