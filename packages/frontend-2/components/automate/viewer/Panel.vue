@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ViewerLayoutPanel @close="$emit('close')">
+    <ViewerLayoutSidePanel>
       <template #title>Automate</template>
 
       <div class="flex items-center space-x-2 w-full pl-3 mt-3 mb-1">
@@ -22,7 +22,7 @@
           :automation-name="run.automationName"
         />
       </div>
-    </ViewerLayoutPanel>
+    </ViewerLayoutSidePanel>
   </div>
 </template>
 <script setup lang="ts">
