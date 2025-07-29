@@ -108,3 +108,38 @@ export function throwIfCantUseWorkers(): void {
     )
   }
 }
+
+/**
+ * Finds the first index of a "needle" Uint8Array within a "haystack" Uint8Array.
+ * @param haystack The larger array to search within.
+ * @param needle The smaller array to search for.
+ * @param start The index to start searching from. Defaults to 0.
+ * @returns The starting index of the needle, or -1 if not found.
+ */
+export function indexOf(
+  haystack: Uint8Array,
+  needle: Uint8Array,
+  start: number = 0
+): number {
+  if (needle.length === 0) {
+    return 0
+  }
+
+  // The last possible starting position for a match
+  const limit = haystack.length - needle.length
+
+  for (let i = start; i <= limit; i++) {
+    let foundMatch = true
+    for (let j = 0; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        foundMatch = false
+        break // Mismatch, break inner loop
+      }
+    }
+    if (foundMatch) {
+      return i // Found a full match at index i
+    }
+  }
+
+  return -1 // No match found
+}
