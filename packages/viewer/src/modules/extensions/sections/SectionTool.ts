@@ -223,7 +223,7 @@ export class SectionTool extends Extension {
   protected keyupHandler: (e: KeyboardEvent) => void
   protected sectionBoxHistory: SectionBoxState[] = []
   protected currentHistoryIndex = -1
-  protected maxHistorySize = 20
+  protected maxHistorySize = 100
   protected initialSectionBoxState: SectionBoxState | null = null
   protected hasInitialized = false
   protected hasSavedForCurrentDrag = false
