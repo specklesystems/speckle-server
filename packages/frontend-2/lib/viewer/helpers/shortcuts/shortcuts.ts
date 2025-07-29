@@ -22,6 +22,13 @@ export const PanelShortcuts = {
     modifiers: [ModifierKeys.Shift],
     key: 'D',
     action: 'ToggleDiscussions'
+  },
+  ToggleDevMode: {
+    name: 'Dev Mode',
+    description: 'Toggle dev mode',
+    modifiers: [ModifierKeys.Shift],
+    key: 'E',
+    action: 'ToggleDevMode'
   }
 } as const
 
