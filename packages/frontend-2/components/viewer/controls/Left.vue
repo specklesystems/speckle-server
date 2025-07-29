@@ -10,37 +10,36 @@
     ]"
   >
     <div class="flex flex-col gap-2 py-1" :class="isEmbedEnabled ? '' : 'lg:py-2'">
-      <!-- Models -->
       <ViewerControlsButtonToggle
-        v-tippy="{
-          content: getShortcutDisplayText(shortcuts.ToggleModels),
-          placement: 'right'
-        }"
+        v-tippy="
+          getTooltipProps(getShortcutDisplayText(shortcuts.ToggleModels), {
+            placement: 'right'
+          })
+        "
         :active="activePanel === 'models'"
         :icon="'IconViewerModels'"
         @click="toggleActivePanel('models')"
       />
-
-      <!-- Filters -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleFilters)"
+        v-tippy="
+          getTooltipProps(getShortcutDisplayText(shortcuts.ToggleFilters), {
+            placement: 'right'
+          })
+        "
         :active="activePanel === 'filters'"
         :icon="'IconViewerExplorer'"
         @click="toggleActivePanel('filters')"
       />
-
-      <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="{
-          content: getShortcutDisplayText(shortcuts.ToggleDiscussions),
-          placement: 'right'
-        }"
+        v-tippy="
+          getTooltipProps(getShortcutDisplayText(shortcuts.ToggleDiscussions), {
+            placement: 'right'
+          })
+        "
         :active="activePanel === 'discussions'"
         :icon="'IconViewerDiscussions'"
         @click="toggleActivePanel('discussions')"
       />
-
-      <!-- Automation runs -->
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
         v-tippy="
@@ -165,6 +164,7 @@ const { isEnabled: isEmbedEnabled } = useEmbed()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const activePanel = ref<ActivePanel>('none')
 
