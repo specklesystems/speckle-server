@@ -1,11 +1,9 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    class="group relative w-full rounded-md pb-2 text-left"
+    class="group relative w-full rounded-md pb-2 text-left pl-5"
     :class="
-      clickable && !isLimited
-        ? 'hover:bg-primary-muted cursor-pointer'
-        : 'cursor-default'
+      clickable && !isLimited ? 'hover:bg-highlight-1 cursor-pointer' : 'cursor-default'
     "
     @click="handleClick"
     @keypress="keyboardClick(handleClick)"
@@ -13,7 +11,7 @@
     <!-- Timeline left border -->
     <div
       v-if="showTimeline"
-      class="absolute top-3 ml-[2px] h-[99%] w-1 border-l border-outline-3 group-hover:border-primary left-0 z-10"
+      class="absolute top-3 left-4 z-10 ml-[2px] h-[99%] w-1 border-l border-outline-3"
     >
       <div
         v-if="isLoaded"
@@ -31,7 +29,7 @@
       />
     </div>
 
-    <div class="flex items-center gap-1 pl-1">
+    <div class="flex items-center gap-1">
       <div
         v-show="showTimeline"
         v-tippy="createdAt.full"
@@ -41,21 +39,10 @@
           {{ isLatest ? 'Latest' : createdAt.relative }}
         </span>
       </div>
-      <FormButton
-        v-if="!isLoaded"
-        v-tippy="'Shows a summary of added, deleted and changed elements.'"
-        size="sm"
-        text
-        :disabled="isLimited"
-        :class="isLimited ? '!text-foreground-3 font-medium' : 'font-medium'"
-        @click.stop="handleViewChanges"
-      >
-        View changes
-      </FormButton>
-      <CommonBadge v-else rounded>Viewing</CommonBadge>
+      <CommonBadge v-if="isLoaded" rounded>Viewing</CommonBadge>
       <LayoutMenu
         v-model:open="showActionsMenu"
-        class="ml-auto mr-2"
+        class="ml-auto mr-2 mt-1"
         :items="actionsItems"
         :menu-position="HorizontalDirection.Left"
         mount-menu-on-body
@@ -194,6 +181,16 @@ const deleteDisabledReason = computed(() => {
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
+      title: 'View changes',
+      id: 'view-changes',
+      disabled: isLoaded.value || isLimited.value,
+      disabledTooltip: isLoaded.value
+        ? 'Cannot compare current version with itself'
+        : isLimited.value
+        ? 'Version comparison unavailable'
+        : undefined
+    },
+    {
       title: 'Remove version',
       id: 'remove-version',
       disabled: !canDeleteVersion.value,
@@ -224,6 +221,11 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
   const { item } = params
 
   switch (item.id) {
+    case 'view-changes':
+      if (!isLoaded.value && !isLimited.value) {
+        handleViewChanges()
+      }
+      break
     case 'remove-version':
       if (canDeleteVersion.value) {
         emit('removeVersion', props.version.id)

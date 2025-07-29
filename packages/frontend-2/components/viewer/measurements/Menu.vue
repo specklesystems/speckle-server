@@ -43,25 +43,18 @@
     </ViewerLayoutPanel>
     <ViewerLayoutPanel class="mt-1 p-1 pr-2">
       <div class="flex gap-2 justify-between items-center">
-        <div
-          class="flex gap-1 rounded-lg bg-highlight-1 border border-outline-2 self-start overflow-hidden"
-        >
-          <button
+        <ViewerButtonGroup>
+          <ViewerButtonGroupButton
             v-for="option in measurementTypeOptions"
             :key="option.value"
-            v-tippy="option.title"
-            class="size-8 flex items-center justify-center rounded-lg"
-            :class="[
-              measurementOptions.type === option.value &&
-                'shadow-[0px_1px_2px_rgba(0,0,0,0.05),0px_0px_1px_rgba(0,0,0,0.05)] bg-foundation text-foreground',
-              measurementOptions.type !== option.value &&
-                'hover:bg-foundation-2 text-foreground-2'
-            ]"
+            v-tippy="getTooltipProps(option.title)"
+            class="size-8"
+            :is-active="measurementOptions.type === option.value"
             @click="updateMeasurementsType(option)"
           >
             <component :is="option.icon" class="size-5 flex-shrink-0" />
-          </button>
-        </div>
+          </ViewerButtonGroupButton>
+        </ViewerButtonGroup>
 
         <div class="flex gap-1.5">
           <FormButton size="sm" color="outline" @click="clearMeasurements">
@@ -96,6 +89,8 @@ const { measurementOptions, setMeasurementOptions, clearMeasurements } =
   useMeasurementUtilities()
 
 const showSettings = ref(false)
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   setMeasurementOptions({

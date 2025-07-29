@@ -2,18 +2,16 @@
   <aside class="absolute top-[3.75rem] z-20" :style="dynamicStyles">
     <ViewerControlsButtonGroup direction="vertical">
       <ViewerControlsButtonToggle
-        v-tippy="{
-          content: getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection),
-          placement: 'left'
-        }"
+        v-tippy="
+          getTooltipProps(getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection), {
+            placement: 'left'
+          })
+        "
         icon="IconViewerZoom"
         @click="trackAndzoomExtentsOrSelection()"
       />
       <ViewerControlsButtonToggle
-        v-tippy="{
-          content: 'Camera controls',
-          placement: 'left'
-        }"
+        v-tippy="getTooltipProps('Camera controls', { placement: 'left' })"
         icon="IconViewerCameraControls"
         :active="activePanel === 'cameraControls'"
         @click="toggleActivePanel('cameraControls')"
@@ -47,6 +45,7 @@ const props = withDefaults(defineProps<Props>(), {
 const { zoomExtentsOrSelection } = useCameraUtilities()
 const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 const mixpanel = useMixpanel()
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const activePanel = ref<ActivePanel>('none')
 const menuContainer = ref<Nullable<HTMLElement>>(null)
