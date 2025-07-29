@@ -56,6 +56,31 @@ exports[`downloader > download batch of three 1`] = `
 ]
 `;
 
+exports[`downloader > download batch of three with Objects.Other.RawEncoding 1`] = `
+[
+  {
+    "base": {
+      "id": "id1",
+      "speckle_type": "type",
+    },
+    "baseId": "id1",
+    "size": 34,
+  },
+  {
+    "base": undefined,
+    "baseId": "id2",
+  },
+  {
+    "base": {
+      "id": "id3",
+      "speckle_type": "type",
+    },
+    "baseId": "id3",
+    "size": 34,
+  },
+]
+`;
+
 exports[`downloader > download batch of two 1`] = `
 [
   {

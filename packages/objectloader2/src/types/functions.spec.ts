@@ -100,10 +100,14 @@ describe('take', () => {
   })
 })
 
-describe('getQueryParameter', () => {
+describe('getFeatureFlag', () => {
   describe('in a non-browser environment', () => {
     it('should return the default value', () => {
       expect(getFeatureFlag(ObjectLoader2Flags.USE_CACHE)).toBe('true')
+    })
+
+    it('should return undefined when useDefault is false', () => {
+      expect(getFeatureFlag(ObjectLoader2Flags.USE_CACHE, false)).toBe(undefined)
     })
   })
 
@@ -136,6 +140,16 @@ describe('getQueryParameter', () => {
     it('should return the default value if the URL has no query string', () => {
       mockWindow.location.search = ''
       expect(getFeatureFlag(ObjectLoader2Flags.DEBUG)).toBe('false')
+    })
+
+    it('should return undefined if useDefault is false and parameter is not in URL', () => {
+      mockWindow.location.search = '?otherparam=value'
+      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG, false)).toBe(undefined)
+    })
+
+    it('should still return the parameter value from URL when useDefault is false', () => {
+      mockWindow.location.search = '?debug=custom'
+      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG, false)).toBe('custom')
     })
   })
 })
