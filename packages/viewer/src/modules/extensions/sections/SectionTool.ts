@@ -57,6 +57,8 @@ export interface SectionToolEventPayload {
 const _matrix4 = new Matrix4()
 const _quaternion = new Quaternion()
 const _vector3 = new Vector3()
+const _tempEuler = new Euler()
+const _tempQuaternion = new Quaternion()
 
 const unitCube = [
   -1 * 0.5,
@@ -201,8 +203,6 @@ export class SectionTool extends Extension {
   protected raycaster: Raycaster
   protected dragging = false
   protected shiftKeyPressed = false
-  protected tempEuler = new Euler()
-  protected tempQuaternion = new Quaternion()
   protected keydownHandler: (e: KeyboardEvent) => void
   protected keyupHandler: (e: KeyboardEvent) => void
 
@@ -968,17 +968,17 @@ export class SectionTool extends Extension {
    */
   protected snapQuaternionToGrid(q: Quaternion): Quaternion {
     /** Convert quaternion to Euler angles using pooled object */
-    this.tempEuler.setFromQuaternion(q)
+    _tempEuler.setFromQuaternion(q)
 
     /** Snap each axis to 15-degree increments (π/12 radians) */
     const snapAngle = Math.PI / 12 // 15 degrees
-    this.tempEuler.x = Math.round(this.tempEuler.x / snapAngle) * snapAngle
-    this.tempEuler.y = Math.round(this.tempEuler.y / snapAngle) * snapAngle
-    this.tempEuler.z = Math.round(this.tempEuler.z / snapAngle) * snapAngle
+    _tempEuler.x = Math.round(_tempEuler.x / snapAngle) * snapAngle
+    _tempEuler.y = Math.round(_tempEuler.y / snapAngle) * snapAngle
+    _tempEuler.z = Math.round(_tempEuler.z / snapAngle) * snapAngle
 
     /** Convert back to quaternion using pooled object */
-    this.tempQuaternion.setFromEuler(this.tempEuler)
-    return this.tempQuaternion
+    _tempQuaternion.setFromEuler(_tempEuler)
+    return _tempQuaternion
   }
 
   /**
