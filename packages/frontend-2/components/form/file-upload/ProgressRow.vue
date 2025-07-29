@@ -1,7 +1,7 @@
 <template>
   <div :class="containerClasses">
     <div class="flex space-x-1 items-center">
-      <span class="truncate text-xs pr-4 flex-1">{{ item.file.name }}</span>
+      <span class="truncate text-xs pr-2 flex-1">{{ item.file.name }}</span>
       <span class="text-tiny text-foreground-2">
         {{ prettyFileSize(item.file.size) }}
       </span>
@@ -22,7 +22,7 @@
 
     <div v-if="false" class="flex flex-col flex-grow">
       <div class="text-foreground space-x-1 inline-flex max-w-full truncate">
-        <span class="normal truncate">{{ item.file.name }}</span>
+        <span class="text-body-3xs truncate">{{ item.file.name }}</span>
         <span class="label label--light text-foreground-2 truncate">
           {{ prettyFileSize(item.file.size) }}
         </span>
@@ -60,7 +60,7 @@ const { errorMessage, progressBarClasses, progressBarStyle } =
 
 const containerClasses = computed(() => {
   const classParts = [
-    'bg-foundation-page dark:bg-foundation border rounded-lg p-2 pr-1 w-full max-w-full relative'
+    'bg-foundation-page dark:bg-foundation border rounded-lg p-1.5 pl-2 w-full max-w-full relative'
   ]
 
   if (errorMessage.value) {
