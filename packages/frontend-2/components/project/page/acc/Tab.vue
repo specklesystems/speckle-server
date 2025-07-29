@@ -126,7 +126,7 @@ const loadingUser = ref(false)
 // AUTH + TOKEN FLOW
 const fetchTokens = async () => {
   try {
-    const res = await fetch('/auth/acc/status', { credentials: 'include' })
+    const res = await fetch('/api/v1/acc/auth/status', { credentials: 'include' })
     if (!res.ok) return
     tokens.value = await res.json()
   } finally {
@@ -137,7 +137,7 @@ fetchTokens()
 
 const authAcc = async () => {
   try {
-    const response = await fetch('/auth/acc/login', {
+    const response = await fetch('/api/v1/acc/auth/login', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -160,7 +160,7 @@ const scheduleRefresh = (expiresInSeconds: number) => {
   const refreshTime = (expiresInSeconds - 60) * 1000
   setTimeout(async () => {
     loadingTokens.value = true
-    const res = await fetch('/auth/acc/refresh', {
+    const res = await fetch('/api/v1/acc/auth/refresh', {
       method: 'POST',
       credentials: 'include'
     })

@@ -1,8 +1,15 @@
+/* eslint-disable camelcase */
+
 import type {
   AccRegion,
   ModelDerivativeServiceDesignManifest
 } from '@/modules/acc/domain/types'
+import {
+  getAutodeskIntegrationClientId,
+  getAutodeskIntegrationClientSecret
+} from '@/modules/shared/helpers/envHelper'
 import { logger } from '@/observability/logging'
+import { z } from 'zod'
 
 const invokeJsonRequest = async <T>(params: {
   url: string
@@ -36,24 +43,17 @@ type AutodeskIntegrationTokenData = {
   expires_in: number
 }
 
-/**
- *
- * @returns
- */
-const getToken = async (): Promise<AutodeskIntegrationTokenData> => {
-  const clientId = '5Y2LzxsL3usaD1xAMyElBY8mcN6XKyfHfulZDV3up0jfhN5Y'
-  const clientSecret =
-    'qHyGqaP4zCWLyS2lp04qBDOC1giIupPzJPmLFKGFHKZrPYYpan27zF8vlhQr1RYL'
+export const getToken = async (): Promise<AutodeskIntegrationTokenData> => {
+  const clientId = getAutodeskIntegrationClientId()
+  const clientSecret = getAutodeskIntegrationClientSecret()
 
   const token = Buffer.from(`${clientId}:${clientSecret}`, 'utf8').toString('base64')
 
-  // TODO ACC: Cache valid token instead of generating a new one on every request
   const response = await fetch(
     'https://developer.api.autodesk.com/authentication/v2/token',
     {
       method: 'POST',
       body: new URLSearchParams({
-        /* eslint-disable-next-line */
         grant_type: 'client_credentials',
         scope: 'data:read account:read viewables:read'
       }),
@@ -65,7 +65,16 @@ const getToken = async (): Promise<AutodeskIntegrationTokenData> => {
     }
   )
 
-  return (await response.json()) as AutodeskIntegrationTokenData
+  const data = await response.json()
+
+  return z
+    .object({
+      access_token: z.string(),
+      refresh_token: z.string(),
+      token_type: z.string(),
+      expires_in: z.number()
+    })
+    .parse(data)
 }
 
 /**
@@ -162,17 +171,24 @@ export const tryRegisterAccWebhook = async (
  * @see https://aps.autodesk.com/en/docs/model-derivative/v2/reference/http/manifest/urn-manifest-GET/
  */
 export const getManifestByUrn = async (
-  urn: string,
-  region: AccRegion = 'EMEA'
+  params: {
+    urn: string
+    region: AccRegion
+  },
+  context: {
+    token: string
+  }
 ): Promise<ModelDerivativeServiceDesignManifest> => {
-  const tokenData = await getToken()
+  const { urn, region = 'EMEA' } = params
+  const { token } = context
+
   const encodedUrn = encodeUrn(urn)
 
   const url = getApiUrl(`/designdata/${encodedUrn}/manifest`, region)
 
   return await invokeJsonRequest({
     url,
-    token: tokenData.access_token,
+    token,
     method: 'GET'
   })
 }

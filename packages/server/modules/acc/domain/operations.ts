@@ -7,16 +7,14 @@ export type GetAccSyncItemByUrn = (args: {
 }) => Promise<AccSyncItem | undefined>
 
 export type ListAccSyncItems = (args: {
-  projectId: string,
+  projectId: string
   filter?: {
-    limit?: number
-    updatedBefore?: string | null
+    limit: number | null
+    updatedBefore: string | null
   }
 }) => Promise<AccSyncItem[]>
 
-export type CountAccSyncItems = (args: {
-  projectId: string
-}) => Promise<number>
+export type CountAccSyncItems = (args: { projectId: string }) => Promise<number>
 
 export type DeleteAccSyncItemByUrn = (args: { lineageUrn: string }) => Promise<number>
 

@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
-// modules/accIntegration/oidcHelper.ts
+
 import crypto from 'crypto'
+import { z } from 'zod'
 
 interface BuildAuthorizeUrlOptions {
   clientId: string
@@ -17,64 +18,71 @@ interface ExchangeCodeOptions {
   redirectUri: string
 }
 
-export function createAccOidcFlow() {
-  return {
-    generateCodeVerifier() {
-      const codeVerifier = crypto.randomBytes(32).toString('base64url')
-      const codeChallenge = crypto
-        .createHash('sha256')
-        .update(codeVerifier)
-        .digest('base64url')
-      return { codeVerifier, codeChallenge }
-    },
+const AccTokens = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  token_type: z.string(),
+  id_token: z.string(),
+  expires_in: z.number()
+})
 
-    buildAuthorizeUrl({
-      clientId,
-      redirectUri,
-      codeChallenge,
-      scopes
-    }: BuildAuthorizeUrlOptions) {
-      const params = new URLSearchParams({
-        response_type: 'code',
-        client_id: clientId,
-        redirect_uri: redirectUri,
-        scope: scopes.join(' '),
-        code_challenge: codeChallenge,
-        code_challenge_method: 'S256'
-      })
+export type AccTokens = z.infer<typeof AccTokens>
 
-      return `https://developer.api.autodesk.com/authentication/v2/authorize?${params.toString()}`
-    },
+export const generateCodeVerifier = () => {
+  const codeVerifier = crypto.randomBytes(32).toString('base64url')
+  const codeChallenge = crypto
+    .createHash('sha256')
+    .update(codeVerifier)
+    .digest('base64url')
+  return { codeVerifier, codeChallenge }
+}
 
-    async exchangeCodeForTokens({
-      code,
-      codeVerifier,
-      clientId,
-      clientSecret,
-      redirectUri
-    }: ExchangeCodeOptions) {
-      const params = new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: redirectUri,
-        code,
-        code_verifier: codeVerifier
-      })
+export const buildAuthorizeUrl = ({
+  clientId,
+  redirectUri,
+  codeChallenge,
+  scopes
+}: BuildAuthorizeUrlOptions) => {
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: scopes.join(' '),
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256'
+  })
 
-      const response = await fetch(
-        'https://developer.api.autodesk.com/authentication/v2/token',
-        {
-          method: 'POST',
-          body: params.toString(),
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        }
-      )
+  return `https://developer.api.autodesk.com/authentication/v2/authorize?${params.toString()}`
+}
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return await response.json() // includes access_token, refresh_token, expires_in, token_type, etc.
+export const exchangeCodeForTokens = async ({
+  code,
+  codeVerifier,
+  clientId,
+  clientSecret,
+  redirectUri
+}: ExchangeCodeOptions): Promise<AccTokens> => {
+  const params = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: clientId,
+    client_secret: clientSecret,
+    redirect_uri: redirectUri,
+    code,
+    code_verifier: codeVerifier
+  })
+
+  const response = await fetch(
+    'https://developer.api.autodesk.com/authentication/v2/token',
+    {
+      method: 'POST',
+      body: params,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     }
-  }
+  )
+
+  const data = await response.json()
+
+  return AccTokens.parse(data)
 }

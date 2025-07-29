@@ -1,7 +1,9 @@
 import { AccSyncItems } from '@/modules/acc/dbSchema'
 import type {
+  CountAccSyncItems,
   DeleteAccSyncItemByUrn,
   GetAccSyncItemByUrn,
+  ListAccSyncItems,
   QueryAllAccSyncItems,
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
@@ -46,6 +48,37 @@ export const deleteAccSyncItemByUrnFactory =
       .accSyncItems(deps.db)
       .where(AccSyncItems.col.accFileLineageUrn, lineageUrn)
       .delete()
+  }
+
+export const listAccSyncItemsFactory =
+  (deps: { db: Knex }): ListAccSyncItems =>
+  async ({ projectId, filter = {} }) => {
+    const query = tables
+      .accSyncItems(deps.db)
+      .select('*')
+      .where(AccSyncItems.col.projectId, projectId)
+      // TODO ACC: Better default order once we know how we're presenting the snyc list (i.e. tree vs list)
+      .orderBy(AccSyncItems.col.updatedAt, 'desc')
+
+    if (filter.limit) {
+      query.limit(filter.limit)
+    }
+
+    if (filter.updatedBefore) {
+      query.where(AccSyncItems.col.updatedAt, '<', filter.updatedBefore)
+    }
+
+    return await query
+  }
+
+export const countAccSyncItemsFactory =
+  (deps: { db: Knex }): CountAccSyncItems =>
+  async ({ projectId }) => {
+    const [{ count }] = await tables
+      .accSyncItems(deps.db)
+      .where(AccSyncItems.col.projectId, projectId)
+      .count()
+    return Number.parseInt(count as string)
   }
 
 export const queryAllPendingAccSyncItemsFactory =

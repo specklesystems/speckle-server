@@ -1,7 +1,8 @@
-import type { AccSyncItem } from '@/modules/acc/domain/types'
 import {
+  countAccSyncItemsFactory,
   deleteAccSyncItemByUrnFactory,
   getAccSyncItemByUrnFactory,
+  listAccSyncItemsFactory,
   upsertAccSyncItemFactory
 } from '@/modules/acc/repositories/accSyncItems'
 import {
@@ -35,20 +36,14 @@ import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
-import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { authorizeResolver } from '@/modules/shared'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
-import type { Knex } from 'knex'
 import { db } from '@/db/knex'
-import { AccSyncItems } from '@/modules/acc/dbSchema'
-
-const tables = {
-  accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
-}
 
 const resolvers: Resolvers = {
   Mutation: {
@@ -138,7 +133,7 @@ const resolvers: Resolvers = {
   },
   Project: {
     async accSyncItems(parent, args, ctx) {
-      const { cursor, limit } = args
+      const { cursor = null, limit = null } = args
 
       throwIfResourceAccessNotAllowed({
         resourceId: parent.id,
@@ -146,15 +141,16 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const projectDB = await getProjectDbClient({ projectId: parent.id })
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
 
       return await getPaginatedAccSyncItemsFactory({
-
+        listAccSyncItems: listAccSyncItemsFactory({ db: projectDb }),
+        countAccSyncItems: countAccSyncItemsFactory({ db: projectDb })
       })({
         projectId: parent.id,
         filter: {
-          cursor: cursor ?? undefined,
-          limit: limit ?? undefined
+          cursor,
+          limit
         }
       })
     },
