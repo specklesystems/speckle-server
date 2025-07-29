@@ -53,6 +53,13 @@ export interface SectionToolEventPayload {
   [SectionToolEvent.Updated]: Plane[]
 }
 
+/** Interface for storing complete section box state */
+interface SectionBoxState {
+  center: Vector3
+  halfSize: Vector3
+  rotation: Matrix3
+}
+
 /** Buffers */
 const _matrix4 = new Matrix4()
 const _quaternion = new Quaternion()
@@ -213,15 +220,13 @@ export class SectionTool extends Extension {
   protected shiftKeyPressed = false
   protected keydownHandler: (e: KeyboardEvent) => void
   protected keyupHandler: (e: KeyboardEvent) => void
-  protected rotationHistory: Quaternion[] = []
-  protected currentHistoryIndex = 0
-  protected maxHistorySize = 10
-  protected initialRotationState: Quaternion | null = null
-  protected isUndoing = false
-  protected lastSavedRotation: Quaternion | null = null
+  protected sectionBoxHistory: SectionBoxState[] = []
+  protected currentHistoryIndex = -1
+  protected maxHistorySize = 20
+  protected initialSectionBoxState: SectionBoxState | null = null
   protected hasInitialized = false
   protected hasSavedForCurrentDrag = false
-  protected initialRotationForCurrentDrag: Quaternion | null = null
+  protected initialStateForCurrentDrag: SectionBoxState | null = null
 
   /** Manadatory property for all extensions */
   public get enabled() {
@@ -541,7 +546,61 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Sets up keyboard event listeners for shift key rotation snapping
+   * Creates a SectionBoxState from the current OBB
+   */
+  protected createSectionBoxState(): SectionBoxState {
+    return {
+      center: this.obb.center.clone(),
+      halfSize: this.obb.halfSize.clone(),
+      rotation: this.obb.rotation.clone()
+    }
+  }
+
+  /**
+   * Applies a SectionBoxState to the current OBB
+   */
+  protected applySectionBoxState(state: SectionBoxState): void {
+    this.obb.center.copy(state.center)
+    this.obb.halfSize.copy(state.halfSize)
+    this.obb.rotation.copy(state.rotation)
+  }
+
+  /**
+   * Saves the current section box state to history
+   */
+  protected saveToHistory(): void {
+    const currentState = this.createSectionBoxState()
+
+    /** If this is the first change, save the initial state first */
+    if (this.sectionBoxHistory.length === 0 && this.initialSectionBoxState) {
+      this.sectionBoxHistory.push(this.initialSectionBoxState)
+    }
+
+    /** Truncate history if we're not at the end and we have more than just the initial state */
+    if (
+      this.currentHistoryIndex < this.sectionBoxHistory.length - 1 &&
+      this.sectionBoxHistory.length > 1
+    ) {
+      /** Always preserve the initial state (index 0) and states up to current cursor */
+      this.sectionBoxHistory = this.sectionBoxHistory.slice(
+        0,
+        this.currentHistoryIndex + 1
+      )
+    }
+
+    /** Add current state to history */
+    this.sectionBoxHistory.push(currentState)
+    this.currentHistoryIndex = this.sectionBoxHistory.length - 1
+
+    /** Limit history size to prevent memory issues */
+    if (this.sectionBoxHistory.length > this.maxHistorySize) {
+      this.sectionBoxHistory.shift()
+      this.currentHistoryIndex = Math.max(0, this.currentHistoryIndex - 1)
+    }
+  }
+
+  /**
+   * Sets up keyboard event listeners for shift key rotation snapping and undo/redo
    */
   protected setupKeyboardListeners() {
     /** Store shift state for use in changeHandler */
@@ -553,16 +612,16 @@ export class SectionTool extends Extension {
         this.shiftKeyPressed = true
       }
 
-      /** Handle Cmd/Ctrl+Z for rotation undo */
+      /** Handle Cmd/Ctrl+Z for section box undo */
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
-        this.undoRotation()
+        this.undoSectionBox()
       }
 
-      /** Handle Cmd/Ctrl+Shift+Z for rotation redo */
+      /** Handle Cmd/Ctrl+Shift+Z for section box redo */
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
         e.preventDefault()
-        this.redoRotation()
+        this.redoSectionBox()
       }
     }
 
@@ -611,24 +670,23 @@ export class SectionTool extends Extension {
   protected draggingHandler(event) {
     this.dragging = event.value
     if (this.dragging) {
-      /** Mark as initialized when first rotation drag starts */
-      if (event.target === this.rotateControls && !this.hasInitialized) {
+      /** Mark as initialized when first drag starts */
+      if (!this.hasInitialized) {
         this.hasInitialized = true
-        /** Reset initial state for new rotation session */
-        this.initialRotationState = null
+        /** Reset initial state for new session */
+        this.initialSectionBoxState = null
         /** Reset cursor for new session */
         this.currentHistoryIndex = -1
       }
 
-      /** Store initial state when rotation drag starts */
-      if (event.target === this.rotateControls && !this.hasSavedForCurrentDrag) {
-        this.initialRotationForCurrentDrag =
-          this.translationRotationAnchor.quaternion.clone()
+      /** Store initial state when drag starts */
+      if (!this.hasSavedForCurrentDrag) {
+        this.initialStateForCurrentDrag = this.createSectionBoxState()
         this.hasSavedForCurrentDrag = true
 
-        /** Save the initial state for the entire rotation session */
-        if (!this.initialRotationState) {
-          this.initialRotationState = this.translationRotationAnchor.quaternion.clone()
+        /** Save the initial state for the entire session */
+        if (!this.initialSectionBoxState) {
+          this.initialSectionBoxState = this.createSectionBoxState()
         }
       }
 
@@ -637,36 +695,10 @@ export class SectionTool extends Extension {
       else if (event.target === this.rotateControls) this.translateControls.detach()
       this.emit(SectionToolEvent.DragStart)
     } else {
-      /** Save to history when rotation drag ends */
-      if (event.target === this.rotateControls && this.initialRotationForCurrentDrag) {
-        /** If this is the first rotation, save the initial state first */
-        if (this.rotationHistory.length === 0) {
-          this.rotationHistory.push(this.initialRotationForCurrentDrag)
-        }
-
-        /** Truncate history if we're not at the end and we have more than just the initial state */
-        if (
-          this.currentHistoryIndex < this.rotationHistory.length - 1 &&
-          this.rotationHistory.length > 1
-        ) {
-          /** Always preserve the initial state (index 0) and states up to current cursor */
-          this.rotationHistory = this.rotationHistory.slice(
-            0,
-            this.currentHistoryIndex + 1
-          )
-        }
-
-        /** Add final state to history */
-        this.rotationHistory.push(this.translationRotationAnchor.quaternion.clone())
-        this.currentHistoryIndex = this.rotationHistory.length - 1
-        this.lastSavedRotation = this.translationRotationAnchor.quaternion.clone()
-        this.initialRotationForCurrentDrag = null
-
-        /** Limit history size to prevent memory issues */
-        if (this.rotationHistory.length > this.maxHistorySize) {
-          this.rotationHistory.shift()
-          this.currentHistoryIndex = Math.max(0, this.currentHistoryIndex - 1)
-        }
+      /** Save to history when drag ends */
+      if (this.initialStateForCurrentDrag) {
+        this.saveToHistory()
+        this.initialStateForCurrentDrag = null
       }
 
       /** Reset the flag when drag ends */
@@ -1071,29 +1103,21 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Undoes the last rotation change
+   * Undoes the last section box change
    */
-  protected undoRotation() {
+  protected undoSectionBox() {
     if (this.currentHistoryIndex > 0) {
       /** Move cursor back */
       this.currentHistoryIndex--
 
       /** Get the state at current cursor position */
-      const previousRotation = this.rotationHistory[this.currentHistoryIndex]
+      const previousState = this.sectionBoxHistory[this.currentHistoryIndex]
 
-      if (previousRotation) {
-        /** Directly update the anchor's quaternion */
-        this.translationRotationAnchor.quaternion.copy(previousRotation)
-        this.lastSavedRotation = previousRotation.clone()
+      if (previousState) {
+        /** Apply the previous state */
+        this.applySectionBoxState(previousState)
 
-        /** Update OBB rotation directly */
-        this.obb.rotation.copy(
-          new Matrix3().setFromMatrix4(
-            new Matrix4().makeRotationFromQuaternion(previousRotation)
-          )
-        )
-
-        /** Update visual state directly */
+        /** Update visual state */
         this.updatePlanes()
         this.updateVisual()
         this.updateFaceControls(this.draggingFace)
@@ -1103,28 +1127,20 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Redoes the last undone rotation change
+   * Redoes the last undone section box change
    */
-  protected redoRotation() {
-    if (this.currentHistoryIndex < this.rotationHistory.length - 1) {
+  protected redoSectionBox() {
+    if (this.currentHistoryIndex < this.sectionBoxHistory.length - 1) {
       /** Move cursor forward */
       this.currentHistoryIndex++
 
       /** Get the state at current cursor position */
-      const nextRotation = this.rotationHistory[this.currentHistoryIndex]
-      if (nextRotation) {
-        /** Directly update the anchor's quaternion */
-        this.translationRotationAnchor.quaternion.copy(nextRotation)
-        this.lastSavedRotation = nextRotation.clone()
+      const nextState = this.sectionBoxHistory[this.currentHistoryIndex]
+      if (nextState) {
+        /** Apply the next state */
+        this.applySectionBoxState(nextState)
 
-        /** Update OBB rotation directly */
-        this.obb.rotation.copy(
-          new Matrix3().setFromMatrix4(
-            new Matrix4().makeRotationFromQuaternion(nextRotation)
-          )
-        )
-
-        /** Update visual state directly */
+        /** Update visual state */
         this.updatePlanes()
         this.updateVisual()
         this.updateFaceControls(this.draggingFace)
