@@ -164,7 +164,7 @@ onBeforeUnmount(() => {
 
   & .editor-mention {
     box-decoration-break: clone;
-    @apply text-blue-400 text-body-2xs;
+    @apply text-primary dark:text-blue-400 text-body-2xs;
   }
 
   & a {
