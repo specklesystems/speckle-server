@@ -264,7 +264,6 @@ dependencies = [
 dev = [
     { name = "asyncpg-stubs" },
     { name = "colorama" },
-    { name = "colorful" },
     { name = "ruff" },
 ]
 
@@ -284,7 +283,6 @@ requires-dist = [
 dev = [
     { name = "asyncpg-stubs", specifier = ">=0.30.2" },
     { name = "colorama", specifier = ">=0.4.6" },
-    { name = "colorful", specifier = ">=0.5.7" },
     { name = "ruff", specifier = ">=0.12.2" },
 ]
 
