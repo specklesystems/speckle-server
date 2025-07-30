@@ -67,7 +67,7 @@ export class ObjectLoader2Factory {
         objectId: params.objectId,
         token: params.token,
         headers: params.headers,
-        logger: log || (():void => {})
+        logger: log || ((): void => {})
       }),
       database,
       logger: log

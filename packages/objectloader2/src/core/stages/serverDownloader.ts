@@ -62,17 +62,17 @@ export default class ServerDownloader implements Downloader {
     this.#rawEncoding = encoder.encode(this.#rawString)
   }
 
-  initializePool(params: {
+  initialize(params: {
     results: Queue<Item>
     total: number
     maxDownloadBatchWait?: number
   }): void {
-    const { results, total } = params
+    const { results, total, maxDownloadBatchWait } = params
     this.#results = results
     this.#total = total
     this.#downloadQueue = new BatchingQueue<string>({
       batchSize: 15000, // 15k is a good number for most cases
-      maxWaitTime: 1000, // 1 second
+      maxWaitTime: maxDownloadBatchWait ?? 1000, // 1 second
       processFunction: (batch: string[]): Promise<void> =>
         this.downloadBatch({
           batch,
