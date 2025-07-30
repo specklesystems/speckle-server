@@ -17,7 +17,7 @@ describe('downloader', () => {
       objectId: 'objectId',
       token: 'token',
       fetch: fetchMocker,
-      logger: ():void => {}
+      logger: (): void => {}
     })
     downloader.initialize({
       results: gathered,
