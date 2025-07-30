@@ -12,10 +12,9 @@
       <!-- Model Header -->
       <div
         class="group flex items-center px-1 py-3 select-none cursor-pointer hover:bg-highlight-1"
-        :class="isExpanded ? 'border-b border-outline-3' : ''"
       >
         <button
-          class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center"
+          class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
           @click.stop="isExpanded = !isExpanded"
         >
           <IconTriangle
