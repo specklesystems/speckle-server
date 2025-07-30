@@ -1,17 +1,16 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="relative border-b border-outline-3">
-    <div
-      @mouseenter="highlightObject"
-      @mouseleave="unhighlightObject"
-      @focusin="highlightObject"
-      @focusout="unhighlightObject"
-      @click="selectObject"
-      @keydown.enter="selectObject"
-    >
+    <div>
       <!-- Model Header -->
       <div
         class="group flex items-center px-1 py-3 select-none cursor-pointer hover:bg-highlight-1"
+        @mouseenter="highlightObject"
+        @mouseleave="unhighlightObject"
+        @focusin="highlightObject"
+        @focusout="unhighlightObject"
+        @click="selectObject"
+        @keydown.enter="selectObject"
       >
         <button
           class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
@@ -105,7 +104,7 @@
       <!-- Scene Explorer Content -->
       <div
         v-if="isExpanded && rootNodeChildren.length"
-        class="relative flex flex-col gap-y-2"
+        class="relative flex flex-col gap-y-2 overflow-y-auto"
       >
         <div v-for="(childNode, idx) in rootNodeChildren" :key="idx">
           <ViewerModelsTreeItem
@@ -113,6 +112,7 @@
             :sub-header="'Model content'"
             :expand-level="expandLevel"
             :manual-expand-level="manualExpandLevel"
+            :force-expanded-node-ids="forceExpandedNodeIds"
             :is-descendant-of-selected="false"
             @expanded="(e: number) => $emit('expanded', e)"
           />
@@ -164,7 +164,7 @@ const { getTooltipProps } = useSmartTooltipDelay()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
-const { setSelectionFromObjectIds } = useSelectionUtilities()
+const { setSelectionFromObjectIds, objects } = useSelectionUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const {
   viewer: {
@@ -192,6 +192,9 @@ const { load: loadLatestVersion } = useLoadLatestVersion({
 
 const isExpanded = ref(false)
 const showActionsMenu = ref(false)
+
+// Track expansion state for auto-expanding selected objects
+const forceExpandedNodeIds = ref<Set<string>>(new Set())
 
 const IconEye = resolveComponent('IconEye')
 const IconEyeClosed = resolveComponent('IconEyeClosed')
@@ -410,4 +413,68 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
       break
   }
 }
+
+const expandToShowSelectedObjects = (selectedIds: string[]) => {
+  // Find paths to all selected objects in this model's tree
+  const pathsToExpand = findPathsToSelectedObjects(selectedIds)
+
+  if (pathsToExpand.length > 0) {
+    // Expand the model itself
+    if (!isExpanded.value) {
+      isExpanded.value = true
+    }
+
+    // Clear previous force-expanded nodes and set new ones
+    const nodeIdsToExpand = pathsToExpand.flat()
+    forceExpandedNodeIds.value = new Set(nodeIdsToExpand)
+  }
+}
+
+const findPathsToSelectedObjects = (selectedIds: string[]): string[][] => {
+  const paths: string[][] = []
+
+  for (const rootNode of props.rootNodes) {
+    const nodePaths = findPathsInNode(rootNode, selectedIds, [])
+    paths.push(...nodePaths)
+  }
+
+  return paths
+}
+
+const findPathsInNode = (
+  node: ExplorerNode,
+  selectedIds: string[],
+  currentPath: string[]
+): string[][] => {
+  const paths: string[][] = []
+  const nodeId = node.raw?.id || node.guid || ''
+  const newPath = nodeId ? [...currentPath, nodeId] : currentPath
+
+  if (nodeId && selectedIds.includes(nodeId)) {
+    paths.push(newPath)
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      const childPaths = findPathsInNode(child, selectedIds, newPath)
+      paths.push(...childPaths)
+    }
+  }
+
+  return paths
+}
+
+// Auto-expand tree to show selected objects
+watch(
+  () => objects.value,
+  (selectedObjects) => {
+    const selectedIds = selectedObjects.map((obj: { id: string }) => obj.id)
+
+    if (selectedObjects.length > 0) {
+      expandToShowSelectedObjects(selectedIds)
+    } else {
+      forceExpandedNodeIds.value = new Set()
+    }
+  },
+  { deep: true }
+)
 </script>

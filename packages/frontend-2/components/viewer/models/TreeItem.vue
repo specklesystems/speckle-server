@@ -4,6 +4,7 @@
   <div :class="{ 'opacity-60': shouldShowDimmed }">
     <!-- Header -->
     <div
+      ref="headerElement"
       class="group flex items-center justify-between w-full p-2 pr-1 cursor-pointer"
       :class="getBackgroundClass"
       @click.stop="(e:MouseEvent) => setSelection(e)"
@@ -114,12 +115,13 @@
             :depth="depth + 1"
             :expand-level="props.expandLevel"
             :manual-expand-level="manualExpandLevel"
+            :force-expanded-node-ids="props.forceExpandedNodeIds"
             :parent="treeItem"
             :is-descendant-of-selected="isSelected || isChildOfSelected"
             @expanded="(e) => $emit('expanded', e)"
           />
         </div>
-        <div v-if="itemCount <= singleCollectionItems.length" class="mb-2">
+        <div v-if="itemCount < singleCollectionItems.length">
           <FormButton
             size="sm"
             color="outline"
@@ -166,6 +168,7 @@ const props = withDefaults(
     header?: string | null
     subHeader?: string | null
     isDescendantOfSelected?: boolean
+    forceExpandedNodeIds?: Set<string>
   }>(),
   { depth: 0, header: null, subHeader: null, isDescendantOfSelected: false }
 )
@@ -312,33 +315,6 @@ const isAllowedType = (node: ExplorerNode) => {
 
 const unfold = ref(false)
 
-// NOTE: not happy with how unfolding and collapsing panned out :(
-// it works, but requiring two different props... phew.
-watch(
-  () => props.expandLevel,
-  (newVal) => {
-    if (isSingleCollection.value || isMultipleCollection.value) {
-      unfold.value = newVal >= props.depth
-    }
-    // if (newVal > oldVal) unfold.value = true
-    // else if (newVal <= props.depth) unfold.value = false
-  }
-)
-
-watch(
-  () => props.manualExpandLevel,
-  (newVal, oldVal) => {
-    if (!(isSingleCollection.value || isMultipleCollection.value)) return
-    if (
-      newVal < oldVal &&
-      unfold.value &&
-      (isSingleCollection.value || isMultipleCollection.value) &&
-      props.depth > newVal
-    )
-      unfold.value = false
-  }
-)
-
 // Note: we need to emit a manual unfold event with the current depth so we can set it upstream
 // for the collapse/unfold functionality
 const manualUnfoldToggle = () => {
@@ -366,32 +342,6 @@ const getBackgroundClass = computed(() => {
   if (isChildOfSelected.value) return 'bg-foundation-2'
   return 'bg-foundation hover:bg-highlight-1'
 })
-
-const setSelection = (e: MouseEvent) => {
-  if (isSelected.value && !e.shiftKey) {
-    // If already selected, try to expand first before deselecting
-    if ((isSingleCollection.value || isMultipleCollection.value) && !unfold.value) {
-      unfold.value = true
-      emit('expanded', props.depth)
-      return
-    }
-    // Only deselect if can't expand or already expanded
-    clearSelection()
-    return
-  }
-  if (isSelected.value && e.shiftKey) {
-    removeFromSelection(rawSpeckleData.value)
-    return
-  }
-  if (!e.shiftKey) clearSelection()
-  addToSelection(rawSpeckleData.value)
-
-  // Auto-expand when selecting if it has children
-  if ((isSingleCollection.value || isMultipleCollection.value) && !unfold.value) {
-    unfold.value = true
-    emit('expanded', props.depth)
-  }
-}
 
 const highlightObject = () => {
   highlightObjects(getTargetObjectIds(rawSpeckleData.value))
@@ -444,4 +394,122 @@ const isolateOrUnisolateObject = () => {
 
   unIsolateObjects(ids)
 }
+
+const setSelection = (e: MouseEvent) => {
+  disableScrollOnNextSelection.value = true
+
+  if (isSelected.value && !e.shiftKey) {
+    // If already selected, try to expand if possible, but don't deselect
+    if ((isSingleCollection.value || isMultipleCollection.value) && !unfold.value) {
+      unfold.value = true
+      emit('expanded', props.depth)
+    }
+    disableScrollOnNextSelection.value = false
+    return
+  }
+  if (isSelected.value && e.shiftKey) {
+    removeFromSelection(rawSpeckleData.value)
+    disableScrollOnNextSelection.value = false
+    return
+  }
+  if (!e.shiftKey) clearSelection()
+  addToSelection(rawSpeckleData.value)
+
+  // Auto-expand when selecting if it has children
+  if ((isSingleCollection.value || isMultipleCollection.value) && !unfold.value) {
+    unfold.value = true
+    emit('expanded', props.depth)
+  }
+}
+
+const ensureSelectedItemsVisible = () => {
+  const selectedIds = objects.value.map((obj: { id: string }) => obj.id)
+  if (selectedIds.length === 0) return
+
+  // Check if any selected items are in this container but beyond current pagination
+  const allItems = singleCollectionItems.value
+  const selectedIndices = allItems
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => {
+      const itemId = item.rawNode.raw?.id
+      return itemId && selectedIds.includes(itemId)
+    })
+    .map(({ index }) => index)
+
+  if (selectedIndices.length > 0) {
+    const maxSelectedIndex = Math.max(...selectedIndices)
+    // Ensure itemCount is high enough to show the selected item
+    if (maxSelectedIndex >= itemCount.value) {
+      itemCount.value = Math.max(maxSelectedIndex + 1, itemCount.value)
+    }
+  }
+}
+
+const checkAndExpand = () => {
+  const nodeId = rawSpeckleData.value.id
+  const shouldForceExpand = props.forceExpandedNodeIds?.has(nodeId)
+
+  if (
+    (isSingleCollection.value || isMultipleCollection.value) &&
+    (props.expandLevel >= props.depth || shouldForceExpand)
+  ) {
+    unfold.value = true
+    ensureSelectedItemsVisible()
+  }
+}
+
+const headerElement = ref<HTMLElement>()
+const disableScrollOnNextSelection = ref(false)
+
+onMounted(() => {
+  checkAndExpand()
+
+  const nodeId = rawSpeckleData.value.id
+  const isForceExpanded = props.forceExpandedNodeIds?.has(nodeId)
+
+  if (
+    isSelected.value &&
+    isForceExpanded &&
+    headerElement.value &&
+    !disableScrollOnNextSelection.value
+  ) {
+    headerElement.value.scrollIntoView({
+      behavior: 'instant',
+      block: 'center'
+    })
+  }
+
+  disableScrollOnNextSelection.value = false
+})
+
+watch(
+  () => props.forceExpandedNodeIds,
+  () => {
+    checkAndExpand()
+  },
+  { deep: true }
+)
+
+watch(
+  () => isSelected.value,
+  (newIsSelected, oldIsSelected) => {
+    if (newIsSelected && !oldIsSelected) {
+      const nodeId = rawSpeckleData.value.id
+      const isForceExpanded = props.forceExpandedNodeIds?.has(nodeId)
+
+      if (
+        isForceExpanded &&
+        headerElement.value &&
+        !disableScrollOnNextSelection.value
+      ) {
+        headerElement.value.scrollIntoView({
+          behavior: 'instant',
+          block: 'center'
+        })
+      }
+
+      disableScrollOnNextSelection.value = false
+    }
+  }
+)
 </script>
