@@ -1,54 +1,51 @@
 <template>
   <ViewerLayoutSidePanel>
-    <template #title>Discussions</template>
-    <div class="px-4 py-1 border-b border-outline-2">
-      <FormButton
-        text
-        size="sm"
-        color="subtle"
-        :icon-right="showVisibilityOptions ? ChevronUpIcon : ChevronDownIcon"
-        @click="showVisibilityOptions = !showVisibilityOptions"
-      >
-        Discussion visibility options
-      </FormButton>
-    </div>
-    <div class="flex flex-col">
-      <div
-        v-show="showVisibilityOptions"
-        class="sticky top-10 px-2 py-1.5 flex flex-col gap-y-0.5 border-b border-outline-2 bg-foundation"
-      >
+    <template #title>
+      <span>Discussions</span>
+    </template>
+    <template #actions>
+      <div class="relative pr-2">
         <FormButton
+          ref="settingsButtonRef"
+          hide-text
           size="sm"
-          :icon-left="!hideBubbles ? CheckCircleIcon : CheckCircleIconOutlined"
-          text
-          class="!text-foreground"
-          @click="hideBubbles = !hideBubbles"
-        >
-          Show in 3D model
-        </FormButton>
+          color="subtle"
+          :icon-left="settingsIcon"
+          :class="showVisibilityOptions ? '!text-primary-focus !bg-info-lighter' : ''"
+          @click="showVisibilityOptions = !showVisibilityOptions"
+        />
 
-        <FormButton
-          size="sm"
-          :icon-left="includeArchived ? CheckCircleIcon : CheckCircleIconOutlined"
-          text
-          class="!text-foreground"
-          @click="includeArchived = includeArchived ? undefined : 'includeArchived'"
+        <ViewerLayoutPanel
+          v-if="showVisibilityOptions"
+          class="absolute right-2 top-full w-56 z-50"
         >
-          Show resolved ({{ commentThreadsMetadata?.totalArchivedCount }})
-        </FormButton>
-
-        <FormButton
-          size="sm"
-          :icon-left="loadedVersionsOnly ? CheckCircleIcon : CheckCircleIconOutlined"
-          text
-          class="!text-foreground"
-          @click="
-            loadedVersionsOnly = loadedVersionsOnly ? undefined : 'loadedVersionsOnly'
-          "
-        >
-          Exclude threads from other versions
-        </FormButton>
+          <div class="p-1">
+            <ViewerMenuItem
+              label="Show in 3D model"
+              :active="!hideBubbles"
+              @click="hideBubbles = !hideBubbles"
+            />
+            <ViewerMenuItem
+              :label="`Show resolved (${
+                commentThreadsMetadata?.totalArchivedCount || 0
+              })`"
+              :active="!!includeArchived"
+              @click="includeArchived = includeArchived ? undefined : 'includeArchived'"
+            />
+            <ViewerMenuItem
+              label="Exclude threads from other versions"
+              :active="!!loadedVersionsOnly"
+              @click="
+                loadedVersionsOnly = loadedVersionsOnly
+                  ? undefined
+                  : 'loadedVersionsOnly'
+              "
+            />
+          </div>
+        </ViewerLayoutPanel>
       </div>
+    </template>
+    <div class="flex flex-col">
       <div class="flex flex-col gap-y-2 p-1">
         <ViewerCommentsListItem
           v-for="thread in commentThreads"
@@ -71,12 +68,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon
-} from '@heroicons/vue/24/solid'
-import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
+import type { ConcreteComponent } from 'vue'
 import {
   useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources,
@@ -127,6 +119,7 @@ const {
 const canPostComment = useCheckViewerCommentingAccess()
 
 const showVisibilityOptions = ref(false)
+const settingsIcon = resolveComponent('IconViewerSettings') as ConcreteComponent
 
 const loadedVersionsOnly = computed({
   get: () =>
