@@ -1,6 +1,6 @@
 <template>
   <div class="w-full">
-    <div class="flex items-center justify-between">
+    <div v-if="!hideHeader" class="flex items-center justify-between">
       <label
         :for="name"
         class="block text-body-2xs"
@@ -50,6 +50,7 @@ const props = defineProps<{
   name: string
   label: string
   disabled?: boolean
+  hideHeader?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue'])
