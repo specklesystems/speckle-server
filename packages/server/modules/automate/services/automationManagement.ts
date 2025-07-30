@@ -19,7 +19,6 @@ import {
 import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import type {
   ProjectAutomationCreateInput,
-  ProjectAutomationRevisionCreateInput,
   ProjectAutomationUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import type { ContextResourceAccessRules } from '@/modules/core/helpers/token'
