@@ -7,7 +7,7 @@ type SavedView {
   id: ID!
   name: String!
   description: String
-  groupName: String
+  groupId: ID
   author: LimitedUser
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -64,7 +64,14 @@ input SavedViewGroupViewsInput {
 }
 
 type SavedViewGroup {
+  """
+  This is always set even for fake/not persisted groups for Apollo caching
+  """
   id: ID!
+  """
+  Only set if this is a real/persisted group.
+  """
+  groupId: ID
   projectId: ID!
   """
   Resources that were used to find this group
@@ -107,9 +114,9 @@ input CreateSavedViewInput {
   projectId: ID!
   resourceIdString: String!
   """
-  Group name, if grouping necessary
+  Group id, if grouping necessary
   """
-  groupName: String
+  groupId: ID
 
   """
   Auto-generated name, if not specified
@@ -135,10 +142,21 @@ input CreateSavedViewInput {
   visibility: SavedViewVisibility
 }
 
+input CreateSavedViewGroupInput {
+  projectId: ID!
+  resourceIdString: String!
+  groupName: String!
+}
+
 type SavedViewMutations {
+  createGroup(input: CreateSavedViewGroupInput!): SavedViewGroup!
   createView(input: CreateSavedViewInput!): SavedView!
 }
 
 extend type ProjectMutations {
   savedViewMutations: SavedViewMutations!
+}
+
+extend type ProjectPermissionChecks {
+  canCreateSavedView: PermissionCheckResult!
 }

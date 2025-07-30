@@ -9,28 +9,26 @@ import type {
   GetProjectSavedViewGroupsTotalCount,
   GetSavedViewGroup,
   GetStoredViewCount,
-  StoreSavedView
+  RecalculateGroupResourceIds,
+  StoreSavedView,
+  StoreSavedViewGroup
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
   type SavedView,
   type SavedViewGroup
 } from '@/modules/viewer/domain/types/savedViews'
-import { DuplicateSavedViewError } from '@/modules/viewer/errors/savedViews'
 import {
-  buildSavedViewGroupId,
-  NULL_GROUP_NAME_VALUE,
-  parseSavedViewGroupId,
-  savedGroupCursorUtils
+  buildDefaultGroupId,
+  decodeDefaultGroupId
 } from '@/modules/viewer/helpers/savedViews'
-import { ensureError } from '@speckle/shared'
 import {
   isModelResource,
   isObjectResource,
-  parseResourceFromString,
   resourceBuilder
 } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
+import dayjs from 'dayjs'
 import { type Knex } from 'knex'
 import { clamp } from 'lodash-es'
 
@@ -40,7 +38,7 @@ const SavedViews = buildTableHelper('saved_views', [
   'description',
   'projectId',
   'authorId',
-  'groupName',
+  'groupId',
   'resourceIds',
   'isHomeView',
   'visibility',
@@ -51,33 +49,70 @@ const SavedViews = buildTableHelper('saved_views', [
   'updatedAt'
 ])
 
+const SavedViewGroups = buildTableHelper('saved_view_groups', [
+  'id',
+  'authorId',
+  'projectId',
+  'resourceIds',
+  'name',
+  'createdAt',
+  'updatedAt'
+])
+
+const savedGroupCursorUtils = () =>
+  compositeCursorTools({
+    schema: SavedViewGroups,
+    cols: ['updatedAt', 'id']
+  })
+
+const generateId = () => cryptoRandomString({ length: 10 })
+
+const buildDefaultGroup = (params: {
+  resourceIds: string[]
+  projectId: string
+}): SavedViewGroup => {
+  const { resourceIds, projectId } = params
+
+  return {
+    id: buildDefaultGroupId({ projectId, resourceIds }),
+    authorId: null,
+    projectId,
+    resourceIds,
+    name: null,
+    createdAt: dayjs(0).toDate(),
+    updatedAt: dayjs(0).toDate()
+  }
+}
+
 const tables = {
-  savedViews: (db: Knex) => db<SavedView>(SavedViews.name)
+  savedViews: (db: Knex) => db<SavedView>(SavedViews.name),
+  savedViewGroups: (db: Knex) => db<SavedViewGroup>(SavedViewGroups.name)
 }
 
 export const storeSavedViewFactory =
   (deps: { db: Knex }): StoreSavedView =>
   async ({ view }) => {
-    try {
-      const [insertedItem] = await tables.savedViews(deps.db).insert(
-        {
-          id: cryptoRandomString({ length: 10 }),
-          ...view
-        },
-        '*'
-      )
-      return insertedItem
-    } catch (e) {
-      if (
-        ensureError(e).message.includes(
-          'duplicate key value violates unique constraint'
-        )
-      ) {
-        throw new DuplicateSavedViewError()
-      }
+    const [insertedItem] = await tables.savedViews(deps.db).insert(
+      {
+        id: generateId(),
+        ...view
+      },
+      '*'
+    )
+    return insertedItem
+  }
 
-      throw e
-    }
+export const storeSavedViewGroupFactory =
+  (deps: { db: Knex }): StoreSavedViewGroup =>
+  async ({ group }) => {
+    const [insertedItem] = await tables.savedViewGroups(deps.db).insert(
+      {
+        id: generateId(),
+        ...group
+      },
+      '*'
+    )
+    return insertedItem
   }
 
 export const getStoredViewCountFactory =
@@ -107,48 +142,64 @@ const cleanLookupResourceIdString = (resourceIdString: string) => {
 
 const getProjectSavedViewGroupsBaseQueryFactory =
   (deps: { db: Knex }) => (params: GetProjectSavedViewGroupsBaseParams) => {
-    const { projectId, resourceIdString, onlyAuthored, search, userId } = params
+    const { projectId, resourceIdString, search, userId } = params
+    const onlyAuthored = params.onlyAuthored && userId
+    const isFiltering = search || onlyAuthored
+
+    // TODO: How to make default group appear here, but only if its relevant?
+    // E.g. if filtering but filter found view in default group
+    // (its hacky to add/remove count and item otherwise)
+    /**
+     * I could select views instead, and group by, but then I would miss out on empty groups
+     * If not filtering, then always return default group on first page
+     * Only if filtering does it matter if the default group should be returned or not
+     */
+
+    /**
+     *
+     * TODO: DO groups even need resourceIds field? We manually keep it in sync, bad design
+     * U could just check if group can have view on insertion
+     *
+     * Since im filtering both groups and views by view characteristics, there's no point
+     * in keeping resourceIds and other such fields in groups
+     *
+     * And group resourceIds can be easily introduced later, if needed, by recalculating
+     *
+     * ** What if we start to need to filter by group name too, not just view name?
+     * *** What are groups even for then? Just associating views together?
+     */
 
     const q = tables
-      .savedViews(deps.db)
-      // Select groupName and 'cursor' which is coalesced groupName || NULL_GROUP_NAME_VALUE
-      .select<Array<{ groupName: string | null; cursor: string }>>([
-        SavedViews.col.groupName,
-        deps.db.raw(`COALESCE(??, ?) as cursor`, [
-          SavedViews.col.groupName,
-          NULL_GROUP_NAME_VALUE
-        ])
-      ])
-      .where({ [SavedViews.col.projectId]: projectId })
+      .savedViewGroups(deps.db)
+      .select<SavedViewGroup[]>(SavedViewGroups.cols)
+      .where({ [SavedViewGroups.col.projectId]: projectId })
+
+    // Inner joining views if filtering
+    if (isFiltering) {
+      q.innerJoin(SavedViews.name, SavedViewGroups.col.id, SavedViews.col.groupId)
+    }
 
     const resourceIds = cleanLookupResourceIdString(resourceIdString)
     if (resourceIds.length) {
       // Col contains at least one of the resources
-      q.whereRaw('?? && ?', [SavedViews.col.resourceIds, resourceIds])
+      q.whereRaw('?? && ?', [SavedViewGroups.col.resourceIds, resourceIds])
     } else {
       // Make query exit early - no resources
       q.whereRaw('false')
     }
 
-    if (onlyAuthored && userId) {
+    if (onlyAuthored) {
       q.where({ [SavedViews.col.authorId]: userId })
-    } else {
-      q.andWhere((w1) => {
-        w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
-        if (userId) {
-          w1.orWhere(SavedViews.col.authorId, userId)
-        }
-      })
     }
 
     if (search) {
       q.where(SavedViews.col.name, 'ilike', `%${search}%`)
     }
 
-    // Group by groupName (including NULL group) and ONLY select the groupNames
-    q.groupBy(SavedViews.col.groupName, 'cursor').orderBy('cursor', 'asc')
+    // Group by groupId
+    q.groupBy(SavedViewGroups.col.id)
 
-    return { q, resourceIds }
+    return { q, resourceIds, isFiltering }
   }
 
 export const getProjectSavedViewGroupsTotalCountFactory =
@@ -157,7 +208,9 @@ export const getProjectSavedViewGroupsTotalCountFactory =
     const { q } = getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
     const countQ = deps.db.count<{ count: string }[]>().from(q.as('sq1'))
     const [count] = await countQ
-    return parseInt(count.count + '')
+
+    const numberCount = parseInt(count.count + '')
+    return numberCount
   }
 
 export const getProjectSavedViewGroupsPageItemsFactory =
@@ -165,63 +218,68 @@ export const getProjectSavedViewGroupsPageItemsFactory =
   async (params) => {
     const { projectId } = params
     const { q, resourceIds } = getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
-    const { encode, decode } = savedGroupCursorUtils()
+    const { applyCursorSortAndFilter, resolveNewCursor } = savedGroupCursorUtils()
 
     const limit = clamp(params.limit ?? 10, 0, 100)
     q.limit(limit)
 
-    const cursor = decode(params.cursor)
-    if (cursor) {
-      q.whereRaw('?? > ?', [
-        deps.db.raw(`COALESCE(??, ?)`, [
-          SavedViews.col.groupName,
-          NULL_GROUP_NAME_VALUE
-        ]),
-        cursor
-      ])
+    // Apply cursor filter and sort
+    applyCursorSortAndFilter({
+      query: q,
+      cursor: params.cursor
+    })
+
+    const items: SavedViewGroup[] = await q
+
+    // If first page, add the default/unsorted group
+    if (!params.cursor) {
+      const defaultGroup: SavedViewGroup = buildDefaultGroup({
+        resourceIds,
+        projectId
+      })
+
+      // Add to beginning, and pop last item
+      items.unshift(defaultGroup)
+      items.pop()
     }
 
-    const items = await q
-    const groups: SavedViewGroup[] = items.map((item) => ({
-      id: buildSavedViewGroupId({
-        name: item.groupName,
-        projectId,
-        resourceIds
-      }),
-      projectId,
-      resourceIds,
-      name: item.groupName
-    }))
-    const lastItem = items.at(-1)
-    const newCursor = lastItem ? encode({ name: lastItem.groupName }) : null
+    const newCursor = resolveNewCursor(items)
 
     return {
-      items: groups,
+      items,
       cursor: newCursor
     }
   }
 
 const getGroupSavedViewsBaseQueryFactory =
   (deps: { db: Knex }) => (params: GetGroupSavedViewsBaseParams) => {
-    const { projectId, resourceIdString, groupName, onlyAuthored, search, userId } =
-      params
+    const { projectId, resourceIdString, groupId, search, userId } = params
+    const onlyAuthored = params.onlyAuthored && userId
 
     const q = tables
       .savedViews(deps.db)
       .where({ [SavedViews.col.projectId]: projectId })
-      .where({ [SavedViews.col.groupName]: groupName })
 
     const resourceIds = cleanLookupResourceIdString(resourceIdString)
-    if (resourceIds.length) {
-      // Col contains at least one of the resources
+    if (groupId) {
+      q.where({ [SavedViews.col.groupId]: groupId })
+    } else if (resourceIds.length) {
+      // If no groupId, filter by resourceIds
       q.whereRaw('?? && ?', [SavedViews.col.resourceIds, resourceIds])
     } else {
       // Make query exit early - no resources
       q.whereRaw('false')
     }
 
-    if (onlyAuthored && userId) {
+    if (onlyAuthored) {
       q.where({ [SavedViews.col.authorId]: userId })
+    } else {
+      q.andWhere((w1) => {
+        w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
+        if (userId) {
+          w1.orWhere(SavedViews.col.authorId, userId)
+        }
+      })
     }
 
     if (search) {
@@ -269,23 +327,58 @@ export const getGroupSavedViewsPageItemsFactory =
 
 export const getSavedViewGroupFactory =
   (deps: { db: Knex }): GetSavedViewGroup =>
-  async ({ id }) => {
-    // See if any views exist with this group name, only then return the group struct
-    const groupIdentifiers = parseSavedViewGroupId(id)
-    const group: SavedViewGroup = {
-      id,
-      name: groupIdentifiers.name,
-      projectId: groupIdentifiers.projectId,
-      resourceIds: groupIdentifiers.resourceIds
+  async ({ id, projectId }) => {
+    // Check if default group ID
+    const defaultGroupMetadata = decodeDefaultGroupId(id)
+    if (defaultGroupMetadata) {
+      if (projectId && defaultGroupMetadata.projectId !== projectId) {
+        return undefined
+      }
+
+      return buildDefaultGroup({
+        resourceIds: defaultGroupMetadata.resourceIds,
+        projectId: defaultGroupMetadata.projectId
+      })
     }
 
-    const viewCount = await getGroupSavedViewsTotalCountFactory(deps)({
-      projectId: groupIdentifiers.projectId,
-      resourceIdString: resourceBuilder()
-        .addResources(groupIdentifiers.resourceIds.map(parseResourceFromString))
-        .toString(),
-      groupName: groupIdentifiers.name
+    const q = tables.savedViewGroups(deps.db).where({
+      [SavedViewGroups.col.id]: id
     })
 
-    return viewCount ? group : undefined
+    if (projectId) {
+      q.andWhere({ [SavedViewGroups.col.projectId]: projectId })
+    }
+
+    const group = await q.first()
+    return group
+  }
+
+export const recalculateGroupResourceIdsFactory =
+  (deps: { db: Knex }): RecalculateGroupResourceIds =>
+  async ({ groupId }) => {
+    const RawSavedViews = SavedViews.with({ quoted: true, withCustomTablePrefix: 'v' })
+    const RawSavedViewGroups = SavedViewGroups.with({ quoted: true })
+
+    const q = tables
+      .savedViewGroups(deps.db)
+      .where({ [SavedViewGroups.col.id]: groupId })
+      .update(
+        {
+          // Recalculate the groups resourceIds based on the views in the group
+          [SavedViewGroups.withoutTablePrefix.col.resourceIds]: deps.db.raw(
+            `(
+            SELECT ARRAY(
+              SELECT DISTINCT unnest
+              FROM ${RawSavedViews.name},
+                  unnest(${RawSavedViews.col.resourceIds}) AS unnest
+              WHERE ${RawSavedViews.col.groupId} = ${RawSavedViewGroups.col.id}
+            )
+           )`
+          )
+        },
+        '*'
+      )
+
+    const results = await q
+    return results.at(0)
   }

@@ -8,7 +8,7 @@ const basicSavedViewFragment = gql`
     author {
       id
     }
-    groupName
+    groupId
     createdAt
     updatedAt
     resourceIdString
@@ -43,6 +43,18 @@ export const createSavedViewMutation = gql`
   }
 
   ${basicSavedViewFragment}
+`
+
+export const createSavedGroupMutation = gql`
+  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {
+    projectMutations {
+      savedViewMutations {
+        createGroup(input: $input) {
+          ...BasicSavedViewGroup
+        }
+      }
+    }
+  }
 `
 
 export const getProjectSavedViewGroupsQuery = gql`

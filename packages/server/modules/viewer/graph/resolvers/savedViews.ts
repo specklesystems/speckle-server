@@ -16,7 +16,6 @@ import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { NotFoundError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { InvalidSavedViewGroupIdError } from '@/modules/viewer/errors/savedViews'
 import {
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
@@ -24,16 +23,33 @@ import {
   getProjectSavedViewGroupsTotalCountFactory,
   getSavedViewGroupFactory,
   getStoredViewCountFactory,
-  storeSavedViewFactory
+  recalculateGroupResourceIdsFactory,
+  storeSavedViewFactory,
+  storeSavedViewGroupFactory
 } from '@/modules/viewer/repositories/savedViews'
 import {
   createSavedViewFactory,
+  createSavedViewGroupFactory,
   getGroupSavedViewsFactory,
   getProjectSavedViewGroupsFactory
 } from '@/modules/viewer/services/savedViewsManagement'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
+import { Authz } from '@speckle/shared'
 import { parseResourceFromString, resourceBuilder } from '@speckle/shared/viewer/route'
 import { formatSerializedViewerState } from '@speckle/shared/viewer/state'
+import type { Knex } from 'knex'
+
+const buildGetViewerResourceGroups = (params: { projectDb: Knex }) => {
+  const { projectDb } = params
+  return getViewerResourceGroupsFactory({
+    getStreamObjects: getStreamObjectsFactory({ db: projectDb }),
+    getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
+    getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
+    getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
+    getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+    getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
+  })
+}
 
 const resolvers: Resolvers = {
   Project: {
@@ -60,23 +76,13 @@ const resolvers: Resolvers = {
       })
     },
     async savedViewGroup(parent, args) {
-      const group = await getSavedViewGroupFactory({ db })({ id: args.id })
+      const group = await getSavedViewGroupFactory({ db })({
+        id: args.id,
+        projectId: parent.id
+      })
       if (!group) {
         throw new NotFoundError(
           `Saved view group with ID ${args.id} not found in project ${parent.id}`
-        )
-      }
-
-      if (group.projectId !== parent.id) {
-        throw new InvalidSavedViewGroupIdError(
-          'The provided saved view group ID does not match the project ID',
-          {
-            info: {
-              projectId: parent.id,
-              groupId: args.id,
-              group
-            }
-          }
         )
       }
 
@@ -100,6 +106,7 @@ const resolvers: Resolvers = {
   SavedViewGroup: {
     title: (parent) => parent.name || 'Ungrouped scenes',
     isUngroupedViewsGroup: (parent) => parent.name === null,
+    groupId: (parent) => (parent.name ? parent.id : null),
     async views(parent, args, ctx) {
       const { input } = args
       const getGroupSavedViews = getGroupSavedViewsFactory({
@@ -118,7 +125,7 @@ const resolvers: Resolvers = {
           .addResources(parent.resourceIds.map(parseResourceFromString))
           .toString(),
         userId: ctx.userId,
-        groupName: parent.name,
+        groupId: parent.name ? parent.id : null,
         onlyAuthored: input.onlyAuthored,
         search: input.search,
         limit: input.limit,
@@ -150,18 +157,49 @@ const resolvers: Resolvers = {
 
       const projectDb = await getProjectDbClient({ projectId })
       const createSavedView = createSavedViewFactory({
-        getViewerResourceGroups: getViewerResourceGroupsFactory({
-          getStreamObjects: getStreamObjectsFactory({ db: projectDb }),
-          getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
-          getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
-          getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-          getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
-          getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
-        }),
+        getViewerResourceGroups: buildGetViewerResourceGroups({ projectDb }),
         getStoredViewCount: getStoredViewCountFactory({ db: projectDb }),
-        storeSavedView: storeSavedViewFactory({ db: projectDb })
+        storeSavedView: storeSavedViewFactory({ db: projectDb }),
+        getSavedViewGroup: getSavedViewGroupFactory({ db: projectDb }),
+        recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
+          db: projectDb
+        })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
+    },
+    createGroup: async (_parent, args, ctx) => {
+      const projectId = args.input.projectId
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canCreate = await ctx.authPolicies.project.savedViews.canCreate({
+        userId: ctx.userId,
+        projectId
+      })
+      throwIfAuthNotOk(canCreate)
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const createSavedViewGroup = createSavedViewGroupFactory({
+        storeSavedViewGroup: storeSavedViewGroupFactory({ db: projectDb }),
+        getViewerResourceGroups: buildGetViewerResourceGroups({ projectDb })
+      })
+      return await createSavedViewGroup({
+        input: args.input,
+        authorId: ctx.userId!
+      })
+    }
+  },
+  ProjectPermissionChecks: {
+    canCreateSavedView: async (parent, _args, ctx) => {
+      const projectId = parent.projectId
+      const canCreate = await ctx.authPolicies.project.savedViews.canCreate({
+        userId: ctx.userId,
+        projectId
+      })
+      return Authz.toGraphqlResult(canCreate)
     }
   }
 }

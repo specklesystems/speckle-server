@@ -1,10 +1,37 @@
 import type { Knex } from 'knex'
 
-const tableName = 'saved_views'
+const viewsTable = 'saved_views'
+const groupsTable = 'saved_view_groups'
 
 // TODO: Validate indexing strategy based on queries
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable(tableName, (table) => {
+  await knex.schema.createTable(groupsTable, (table) => {
+    table.string('id').notNullable().primary()
+    table.string('name').notNullable()
+    table
+      .string('projectId')
+      .notNullable()
+      .references('id')
+      .inTable('streams')
+      .onDelete('CASCADE')
+    table
+      .string('authorId')
+      .nullable()
+      .references('id')
+      .inTable('users')
+      .onDelete('SET NULL') // If the author is deleted, we keep the view but lose the author reference
+    table.specificType('resourceIds', 'varchar(255)[]').notNullable().defaultTo('{}')
+    table
+      .timestamp('createdAt', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .notNullable()
+    table
+      .timestamp('updatedAt', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .notNullable()
+  })
+
+  await knex.schema.createTable(viewsTable, (table) => {
     table.string('id').notNullable().primary()
     table.string('name').notNullable()
     table.text('description').nullable()
@@ -20,7 +47,13 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('users')
       .onDelete('SET NULL') // If the author is deleted, we keep the view but lose the author reference
-    table.string('groupName').nullable() // Used for optionally grouping views
+    table
+      .string('groupId')
+      .nullable()
+      .references('id')
+      .inTable(groupsTable)
+      .onDelete('SET NULL') // If group deleted, ungroup
+
     table.specificType('resourceIds', 'varchar(255)[]').notNullable().defaultTo('{}')
     table.boolean('isHomeView').notNullable().defaultTo(false)
     table.string('visibility').defaultTo('public').notNullable() // public, authorOnly
@@ -37,15 +70,9 @@ export async function up(knex: Knex): Promise<void> {
       .defaultTo(knex.fn.now())
       .notNullable()
   })
-
-  // Add unique idx on projectId, name, groupName
-  // (+ coalesce NULL to empty string, cause NULL !== NULL IN PGSQL)
-  await knex.raw(`
-  CREATE UNIQUE INDEX saved_views_projectid_name_groupname_unique_idx
-  ON "${tableName}" ("projectId", "name", COALESCE("groupName", ''))
-`)
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTableIfExists(tableName)
+  await knex.schema.dropTableIfExists(viewsTable)
+  await knex.schema.dropTableIfExists(groupsTable)
 }

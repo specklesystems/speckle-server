@@ -1,10 +1,13 @@
 import type {
+  BasicSavedViewGroupFragment,
+  CreateSavedViewGroupMutationVariables,
   CreateSavedViewMutationVariables,
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewGroupsWithViewsQueryVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
   CreateSavedViewDocument,
+  CreateSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
   GetProjectSavedViewGroupsWithViewsDocument
 } from '@/modules/core/graph/generated/graphql'
@@ -14,10 +17,7 @@ import {
 } from '@/modules/core/tests/helpers/creation'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
-import {
-  DuplicateSavedViewError,
-  SavedViewCreationValidationError
-} from '@/modules/viewer/errors/savedViews'
+import { SavedViewCreationValidationError } from '@/modules/viewer/errors/savedViews'
 import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
@@ -30,7 +30,7 @@ import { Roles } from '@speckle/shared'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
-import { merge, times } from 'lodash-es'
+import { intersection, merge, times } from 'lodash-es'
 import type { PartialDeep } from 'type-fest'
 
 const fakeScreenshot =
@@ -62,6 +62,7 @@ describe('Saved Views GraphQL CRUD', () => {
   let guest: BasicTestUser
   let myProject: BasicTestStream
   let myModel1: BasicTestBranch
+  let testGroup1: BasicSavedViewGroupFragment
 
   const buildCreateInput = (params: {
     resourceIdString: string
@@ -95,6 +96,11 @@ describe('Saved Views GraphQL CRUD', () => {
     options?: ExecuteOperationOptions
   ) => apollo.execute(CreateSavedViewDocument, input, options)
 
+  const createSavedViewGroup = (
+    input: CreateSavedViewGroupMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CreateSavedViewGroupDocument, input, options)
+
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
   before(async () => {
@@ -106,11 +112,51 @@ describe('Saved Views GraphQL CRUD', () => {
       stream: myProject,
       owner: me
     })
-
     apollo = await testApolloServer({ authUserId: me.id })
+
+    testGroup1 = (
+      await createSavedViewGroup(
+        {
+          input: {
+            projectId: myProject.id,
+            resourceIdString: model1ResourceIds().toString(),
+            groupName: 'Test Group 1'
+          }
+        },
+        { assertNoErrors: true }
+      )
+    )?.data?.projectMutations.savedViewMutations.createGroup!
   })
 
   describe('creation', () => {
+    it('should successfully create a saved view group', async () => {
+      const resourceIds = model1ResourceIds()
+      const resourceIdString = resourceIds.toString()
+
+      const res = await createSavedViewGroup({
+        input: {
+          projectId: myProject.id,
+          resourceIdString,
+          groupName: 'Test Group'
+        }
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+
+      const group = res.data?.projectMutations.savedViewMutations.createGroup
+      expect(group).to.be.ok
+      expect(group!.id).to.be.ok
+      expect(group!.projectId).to.equal(myProject.id)
+      expect(group!.resourceIds).to.deep.equal(
+        resourceIds.toResources().map((r) => r.toString())
+      )
+      expect(group!.title).to.equal('Test Group')
+      expect(group!.isUngroupedViewsGroup).to.be.false
+    })
+
+    it('should fail to create group w/ invalid name', async () => {})
+    it('should fail to create group w/ invalid resourceIdString', async () => {})
+
     it('should successfully create a saved view', async () => {
       const resourceIds = model1ResourceIds()
       const resourceIdString = resourceIds.toString()
@@ -135,7 +181,7 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(view!.name).to.contain('Scene - ') // auto-generated name
       expect(view!.description).to.be.null
       expect(view!.author?.id).to.equal(me.id)
-      expect(view!.groupName).to.be.null
+      expect(view!.groupId).to.be.null
       expect(view!.createdAt).to.be.ok
       expect(view!.updatedAt).to.be.ok
       expect(view!.resourceIdString).to.equal(resourceIdString)
@@ -150,7 +196,7 @@ describe('Saved Views GraphQL CRUD', () => {
     })
 
     it('should successfully create a saved view w/ non-default input values', async () => {
-      const groupName = 'gugugaga'
+      const groupId = testGroup1.id
       const name = 'heyooo brodie'
       const description = 'this is a description'
       const isHomeView = true
@@ -172,7 +218,7 @@ describe('Saved Views GraphQL CRUD', () => {
           resourceIdString,
           viewerState,
           overrides: {
-            groupName,
+            groupId,
             name,
             description,
             isHomeView,
@@ -188,12 +234,12 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(view!.id).to.be.ok
       expect(view!.name).to.equal(name)
       expect(view!.description).to.equal(description)
-      expect(view!.groupName).to.equal(groupName)
+      expect(view!.groupId).to.equal(groupId)
       expect(view!.isHomeView).to.equal(isHomeView)
       expect(view!.visibility).to.equal(visibility)
     })
 
-    it('should fail if no access', async () => {
+    it('should fail to create view if no access', async () => {
       const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(buildCreateInput({ resourceIdString }), {
         authUserId: guest.id
@@ -203,7 +249,11 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
 
-    it('should fail w/ invalid resourceIdString', async () => {
+    it('should fail to create view if invalid groupId', async () => {})
+
+    it('should recalculate group resourceIds on view assignment', async () => {})
+
+    it('should fail to create view w/ invalid resourceIdString', async () => {
       const res = await createSavedView(
         buildCreateInput({
           resourceIdString: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
@@ -214,7 +264,7 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
 
-    it('should fail w/ invalid screenshot', async () => {
+    it('should fail to create view w/ invalid screenshot', async () => {
       const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(
         buildCreateInput({
@@ -230,7 +280,7 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
 
-    it('should fail w/ invalid viewerState resourceIdString', async () => {
+    it('should fail to create view w/ invalid viewerState resourceIdString', async () => {
       const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(
         buildCreateInput({
@@ -255,7 +305,7 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
 
-    it('should fail w/ invalid viewerState projectId', async () => {
+    it('should fail to create view w/ invalid viewerState projectId', async () => {
       const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(
         buildCreateInput({
@@ -280,7 +330,7 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
 
-    it('should fail w/ invalid viewerState', async () => {
+    it('should fail to create view w/ invalid viewerState', async () => {
       const resourceIdString = model1ResourceIds().toString()
       const res = await createSavedView(
         buildCreateInput({
@@ -296,17 +346,16 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
 
-    it('should fail w/ duplicate name', async () => {
+    it('should not fail to create view w/ duplicate name', async () => {
       const resourceIdString = model1ResourceIds().toString()
       const name = 'test1'
-      const groupName = null
 
       await createSavedView(
         buildCreateInput({
           resourceIdString,
           overrides: {
             name,
-            groupName
+            groupId: null
           }
         }),
         {
@@ -314,17 +363,16 @@ describe('Saved Views GraphQL CRUD', () => {
         }
       )
 
-      const res2 = await createSavedView(
+      await createSavedView(
         buildCreateInput({
           resourceIdString,
           overrides: {
             name,
-            groupName
+            groupId: null
           }
-        })
+        }),
+        { assertNoErrors: true }
       )
-      expect(res2).to.haveGraphQLErrors({ code: DuplicateSavedViewError.code })
-      expect(res2.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
   })
 
@@ -384,18 +432,38 @@ describe('Saved Views GraphQL CRUD', () => {
         const resourceIdString = ViewerRoute.resourceBuilder()
           .addModel(model.id)
           .toString()
-        const input = buildCreateInput({
+
+        let groupId: string | null = null
+        if (groupName) {
+          const group = await createSavedViewGroup(
+            {
+              input: {
+                projectId: readTestProject.id,
+                resourceIdString,
+                groupName
+              }
+            },
+            {
+              assertNoErrors: true,
+              authUserId: useDifferentAuthor ? otherReader.id : me.id
+            }
+          )
+          groupId =
+            group.data?.projectMutations.savedViewMutations.createGroup?.id || null
+        }
+
+        const viewInput = buildCreateInput({
           resourceIdString,
           projectId: readTestProject.id,
           overrides: {
-            groupName,
+            groupId,
             visibility: shouldBePrivate
               ? SavedViewVisibility.authorOnly
               : SavedViewVisibility.public,
             name: `View ${idx} ${includeSearchString ? SEARCH_STRING : ''}`
           }
         })
-        return await createSavedView(input, {
+        return await createSavedView(viewInput, {
           assertNoErrors: true,
           authUserId: useDifferentAuthor ? otherReader.id : me.id
         })
@@ -412,8 +480,7 @@ describe('Saved Views GraphQL CRUD', () => {
       let pagesLoaded = 0
       let groupsFound = 0
       const allReadModelResourceIds = getAllReadModelResourceIds()
-      const REAL_GROUP_COUNT = GROUP_COUNT - OTHER_AUTHOR_PRIVATE_ITEM_COUNT
-      const PAGE_SIZE = Math.ceil(REAL_GROUP_COUNT / PAGE_COUNT)
+      const PAGE_SIZE = Math.ceil(GROUP_COUNT / PAGE_COUNT)
 
       const loadPage = async () => {
         const res = await getProjectViewGroups({
@@ -429,7 +496,7 @@ describe('Saved Views GraphQL CRUD', () => {
 
         const data = res.data?.project.savedViewGroups
         expect(data).to.be.ok
-        expect(data!.totalCount).to.equal(REAL_GROUP_COUNT)
+        expect(data!.totalCount).to.equal(GROUP_COUNT)
 
         if (data?.cursor) {
           expect(data!.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
@@ -437,11 +504,14 @@ describe('Saved Views GraphQL CRUD', () => {
           expect(data!.items.length).to.eq(0)
         }
 
+        const allResourceIds = allReadModelResourceIds
+          .toResources()
+          .map((r) => r.toString())
         for (const group of data!.items) {
           expect(group.projectId).to.equal(readTestProject.id)
-          expect(group.resourceIds).to.deep.equalInAnyOrder(
-            allReadModelResourceIds.toResources().map((r) => r.toString())
-          )
+          expect(
+            intersection(group.resourceIds, allResourceIds).length
+          ).to.be.greaterThan(0)
           groupsFound++
         }
 
@@ -464,7 +534,7 @@ describe('Saved Views GraphQL CRUD', () => {
       } while (cursor)
 
       expect(pagesLoaded).to.equal(PAGE_COUNT + 1) // +1 for last,empty page
-      expect(groupsFound).to.equal(REAL_GROUP_COUNT)
+      expect(groupsFound).to.equal(GROUP_COUNT)
     })
 
     it('should return different groups in same project, if resource string differs', async () => {
@@ -479,8 +549,8 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res).to.not.haveGraphQLErrors()
       const data = res.data?.project.savedViewGroups
       expect(data).to.be.ok
-      expect(data!.totalCount).to.equal(0)
-      expect(data!.items.length).to.equal(0)
+      expect(data!.totalCount).to.equal(1) // only default group returned
+      expect(data!.items.length).to.equal(1)
       expect(data!.cursor).to.be.null
     })
 
@@ -496,6 +566,7 @@ describe('Saved Views GraphQL CRUD', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       const data = res.data?.project.savedViewGroups
+
       expect(data).to.be.ok
       expect(data!.totalCount).to.equal(SEARCH_STRING_ITEM_COUNT)
       expect(data!.items.length).to.equal(SEARCH_STRING_ITEM_COUNT)

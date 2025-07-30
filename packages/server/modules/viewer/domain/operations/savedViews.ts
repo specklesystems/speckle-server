@@ -6,13 +6,30 @@ import type {
 } from '@/modules/viewer/domain/types/savedViews'
 import type { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shared'
 import type { SerializedViewerState } from '@speckle/shared/viewer/state'
-import type { SetOptional } from 'type-fest'
+import type { Exact, SetOptional } from 'type-fest'
 
 // REPO OPERATIONS:
 
-export type StoreSavedView = (params: {
-  view: SetOptional<NullableKeysToOptional<SavedView>, 'id' | 'createdAt' | 'updatedAt'>
+export type StoreSavedView = <
+  View extends Exact<
+    SetOptional<NullableKeysToOptional<SavedView>, 'id' | 'createdAt' | 'updatedAt'>,
+    View
+  >
+>(params: {
+  view: View
 }) => Promise<SavedView>
+
+export type StoreSavedViewGroup = <
+  Group extends Exact<
+    SetOptional<
+      NullableKeysToOptional<SavedViewGroup>,
+      'id' | 'createdAt' | 'updatedAt'
+    >,
+    Group
+  >
+>(params: {
+  group: Group
+}) => Promise<SavedViewGroup>
 
 export type GetStoredViewCount = (params: { projectId: string }) => Promise<number>
 
@@ -48,7 +65,7 @@ export type GetGroupSavedViewsBaseParams = {
   userId?: MaybeNullOrUndefined<string>
   projectId: string
   resourceIdString: string
-  groupName: MaybeNullOrUndefined<string>
+  groupId: MaybeNullOrUndefined<string>
   onlyAuthored?: MaybeNullOrUndefined<boolean>
   search?: MaybeNullOrUndefined<string>
 }
@@ -70,6 +87,14 @@ export type GetGroupSavedViewsPageItems = (
 
 export type GetSavedViewGroup = (params: {
   id: string
+  /**
+   * If undefined, skip project ID check
+   */
+  projectId: string | undefined
+}) => Promise<SavedViewGroup | undefined>
+
+export type RecalculateGroupResourceIds = (params: {
+  groupId: string
 }) => Promise<SavedViewGroup | undefined>
 
 // SERVICE OPERATIONS:
@@ -78,7 +103,7 @@ export type CreateSavedViewParams = {
   input: {
     projectId: string
     resourceIdString: string
-    groupName?: MaybeNullOrUndefined<string>
+    groupId?: MaybeNullOrUndefined<string>
     name?: MaybeNullOrUndefined<string>
     description?: MaybeNullOrUndefined<string>
     /**
@@ -97,6 +122,19 @@ export type CreateSavedViewParams = {
 }
 
 export type CreateSavedView = (params: CreateSavedViewParams) => Promise<SavedView>
+
+export type CreateSavedViewGroupParams = {
+  input: {
+    projectId: string
+    resourceIdString: string
+    groupName: string
+  }
+  authorId: string
+}
+
+export type CreateSavedViewGroup = (
+  params: CreateSavedViewGroupParams
+) => Promise<SavedViewGroup>
 
 export type GetProjectSavedViewGroups = (
   params: GetProjectSavedViewGroupsPageParams

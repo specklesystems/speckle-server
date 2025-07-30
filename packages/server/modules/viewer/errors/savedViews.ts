@@ -6,15 +6,8 @@ export class SavedViewCreationValidationError extends BaseError {
   static statusCode = 400
 }
 
-export class DuplicateSavedViewError extends BaseError {
-  static code = 'DUPLICATE_SAVED_VIEW_ERROR'
-  static defaultMessage =
-    'A saved view with the same name & group already exists in this project'
-  static statusCode = 400
-}
-
-export class InvalidSavedViewGroupIdError extends BaseError {
-  static code = 'INVALID_SAVED_VIEW_GROUP_ID_ERROR'
-  static defaultMessage = 'The provided saved view group ID is invalid'
+export class SavedViewGroupCreationValidationError extends BaseError {
+  static code = 'SAVED_VIEW_GROUP_CREATION_VALIDATION_ERROR'
+  static defaultMessage = 'Saved view group creation failed due to a validation error'
   static statusCode = 400
 }

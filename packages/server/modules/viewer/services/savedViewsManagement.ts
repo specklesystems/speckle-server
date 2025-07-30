@@ -1,30 +1,39 @@
 import type {
   CreateSavedView,
+  CreateSavedViewGroup,
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
   GetGroupSavedViewsTotalCount,
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
+  GetSavedViewGroup,
   GetStoredViewCount,
-  StoreSavedView
+  RecalculateGroupResourceIds,
+  StoreSavedView,
+  StoreSavedViewGroup
 } from '@/modules/viewer/domain/operations/savedViews'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
-import { SavedViewCreationValidationError } from '@/modules/viewer/errors/savedViews'
+import {
+  SavedViewCreationValidationError,
+  SavedViewGroupCreationValidationError
+} from '@/modules/viewer/errors/savedViews'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
-import { NULL_GROUP_NAME_VALUE } from '@/modules/viewer/helpers/savedViews'
 
-export const createSavedViewFactory =
-  (deps: {
-    getViewerResourceGroups: GetViewerResourceGroups
-    getStoredViewCount: GetStoredViewCount
-    storeSavedView: StoreSavedView
-  }): CreateSavedView =>
-  async ({ input, authorId }) => {
-    const { resourceIdString, projectId } = input
+/**
+ * Validates an incoming resourceIdString against the resources in the project and returns the validated list (as a builder)
+ */
+const validateProjectResourceIdStringFactory =
+  (deps: { getViewerResourceGroups: GetViewerResourceGroups }) =>
+  async (params: {
+    resourceIdString: string
+    projectId: string
+    errorMetadata: Record<string, unknown>
+  }) => {
+    const { resourceIdString, errorMetadata, projectId } = params
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
     const resourceIds = resourceBuilder().addFromString(resourceIdString)
@@ -32,13 +41,11 @@ export const createSavedViewFactory =
       throw new SavedViewCreationValidationError(
         "No valid resources referenced in 'resourceIdString'",
         {
-          info: {
-            input,
-            authorId
-          }
+          info: errorMetadata
         }
       )
     }
+
     const resourceGroups = await deps.getViewerResourceGroups({
       projectId,
       loadedVersionsOnly: true,
@@ -59,13 +66,41 @@ export const createSavedViewFactory =
         'One or more resources could not be found in the project: {resourceIdString}',
         {
           info: {
-            input,
-            authorId,
+            ...errorMetadata,
             resourceIdString: failingResources.toString()
           }
         }
       )
     }
+
+    return resourceIds
+  }
+
+export const createSavedViewFactory =
+  (deps: {
+    getViewerResourceGroups: GetViewerResourceGroups
+    getStoredViewCount: GetStoredViewCount
+    storeSavedView: StoreSavedView
+    getSavedViewGroup: GetSavedViewGroup
+    recalculateGroupResourceIds: RecalculateGroupResourceIds
+  }): CreateSavedView =>
+  async ({ input, authorId }) => {
+    const { resourceIdString, projectId } = input
+    const visibility = input.visibility || SavedViewVisibility.public
+    const position = 0 // TODO: Resolve based on existing views
+    const groupId = input.groupId?.trim() || null
+    const description = input.description?.trim() || null
+    const isHomeView = input.isHomeView || false
+
+    // Validate resourceIdString - it should only point to valid resources belonging to the project
+    const resourceIds = await validateProjectResourceIdStringFactory(deps)({
+      resourceIdString,
+      projectId,
+      errorMetadata: {
+        input,
+        authorId
+      }
+    })
 
     const screenshot = input.screenshot.trim()
     if (!isValidBase64Image(screenshot)) {
@@ -117,11 +152,24 @@ export const createSavedViewFactory =
       )
     }
 
-    const visibility = input.visibility || SavedViewVisibility.public
-    const position = 0 // TODO: Resolve based on existing views
-    const groupName = input.groupName?.trim() || null
-    const description = input.description?.trim() || null
-    const isHomeView = input.isHomeView || false
+    // Validate groupId - group is a valid and accessible group in the project
+    if (groupId) {
+      const group = await deps.getSavedViewGroup({
+        id: groupId,
+        projectId
+      })
+      if (!group) {
+        throw new SavedViewCreationValidationError(
+          'Provided groupId does not exist in the project.',
+          {
+            info: {
+              input,
+              authorId
+            }
+          }
+        )
+      }
+    }
 
     // Auto-generate name, if one not set
     let name = input.name?.trim()
@@ -130,23 +178,11 @@ export const createSavedViewFactory =
       name = `Scene - ${String(viewCount + 1).padStart(3, '0')}`
     }
 
-    if (name === NULL_GROUP_NAME_VALUE) {
-      throw new SavedViewCreationValidationError(
-        'This name is reserved and cannot be used.',
-        {
-          info: {
-            input,
-            authorId
-          }
-        }
-      )
-    }
-
     const ret = await deps.storeSavedView({
       view: {
         projectId,
         resourceIds: resourceIds.toResources().map((r) => r.toString()),
-        groupName,
+        groupId,
         name,
         description,
         viewerState: state,
@@ -158,7 +194,55 @@ export const createSavedViewFactory =
       }
     })
 
+    // If grouped view, recalculate its resourceIds
+    if (groupId) {
+      await deps.recalculateGroupResourceIds({ groupId })
+    }
+
     return ret
+  }
+
+export const createSavedViewGroupFactory =
+  (deps: {
+    storeSavedViewGroup: StoreSavedViewGroup
+    getViewerResourceGroups: GetViewerResourceGroups
+  }): CreateSavedViewGroup =>
+  async ({ input, authorId }) => {
+    const { projectId, resourceIdString } = input
+    const groupName = input.groupName.trim()
+    if (groupName.length < 1 || groupName.length > 255) {
+      throw new SavedViewGroupCreationValidationError(
+        'Group name must be between 1 and 255 characters long',
+        {
+          info: {
+            input,
+            authorId
+          }
+        }
+      )
+    }
+
+    // Validate resourceIdString - it should only point to valid resources belonging to the project
+    const resourceIds = await validateProjectResourceIdStringFactory(deps)({
+      resourceIdString,
+      projectId,
+      errorMetadata: {
+        input,
+        authorId
+      }
+    })
+
+    // Insert
+    const group = await deps.storeSavedViewGroup({
+      group: {
+        projectId,
+        resourceIds: resourceIds.toResources().map((r) => r.toString()),
+        name: groupName,
+        authorId
+      }
+    })
+
+    return group
   }
 
 export const getProjectSavedViewGroupsFactory =
