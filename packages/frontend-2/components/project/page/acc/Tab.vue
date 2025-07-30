@@ -70,6 +70,7 @@ const props = defineProps<{ projectId: string }>()
 const { triggerNotification } = useGlobalToast()
 const { copy } = useClipboard()
 
+const apiOrigin = useApiOrigin()
 const tokens = ref<AccTokens>()
 const hasTokens = computed(() => !!tokens.value?.access_token)
 const loadingTokens = ref(true)
@@ -126,7 +127,9 @@ const loadingUser = ref(false)
 // AUTH + TOKEN FLOW
 const fetchTokens = async () => {
   try {
-    const res = await fetch('/api/v1/acc/auth/status', { credentials: 'include' })
+    const res = await fetch(`${apiOrigin}/api/v1/acc/auth/status`, {
+      credentials: 'include'
+    })
     if (!res.ok) return
     tokens.value = await res.json()
   } finally {
@@ -137,7 +140,7 @@ fetchTokens()
 
 const authAcc = async () => {
   try {
-    const response = await fetch('/api/v1/acc/auth/login', {
+    const response = await fetch(`${apiOrigin}/api/v1/acc/auth/login`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -160,7 +163,7 @@ const scheduleRefresh = (expiresInSeconds: number) => {
   const refreshTime = (expiresInSeconds - 60) * 1000
   setTimeout(async () => {
     loadingTokens.value = true
-    const res = await fetch('/api/v1/acc/auth/refresh', {
+    const res = await fetch(`${apiOrigin}/api/v1/acc/auth/refresh`, {
       method: 'POST',
       credentials: 'include'
     })
