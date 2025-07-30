@@ -536,9 +536,9 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Creates an OBB copy from the current OBB
+   * Creates an OBB state from the current OBB
    */
-  protected createObbCopy(): OBB {
+  protected createObbState(): OBB {
     return new OBB().copy(this.obb)
   }
 
@@ -553,7 +553,7 @@ export class SectionTool extends Extension {
    * Saves the current section box state to history
    */
   protected saveToHistory(): void {
-    const currentState = this.createObbCopy()
+    const currentState = this.createObbState()
 
     /** If we're not at the latest state and make a new change, remove all future states */
     if (
@@ -657,7 +657,7 @@ export class SectionTool extends Extension {
     if (this.dragging) {
       /** Save initial state when interaction starts (if this is the first change) */
       if (this.sectionBoxHistory.length === 0) {
-        this.sectionBoxHistory.push(this.createObbCopy())
+        this.sectionBoxHistory.push(this.createObbState())
         this.currentHistoryIndex = 0
       }
 
