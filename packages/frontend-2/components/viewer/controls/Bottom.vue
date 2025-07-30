@@ -60,7 +60,7 @@ enum ActivePanel {
 }
 
 const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortcuts()
-const { toggleSectionBox } = useSectionBoxUtilities()
+const { toggleSectionBox, resetSectionBox } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
@@ -101,7 +101,10 @@ const panels = shallowRef({
 })
 
 const showResetButton = computed(() => {
-  return activePanel.value === ActivePanel.explode
+  return (
+    activePanel.value === ActivePanel.explode ||
+    activePanel.value === ActivePanel.sectionBox
+  )
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
@@ -128,6 +131,10 @@ const onActivePanelClose = () => {
 const onReset = () => {
   if (activePanel.value === ActivePanel.explode) {
     resetExplode()
+  }
+  if (activePanel.value === ActivePanel.sectionBox) {
+    resetSectionBox()
+    toggleSectionBox()
   }
 }
 
