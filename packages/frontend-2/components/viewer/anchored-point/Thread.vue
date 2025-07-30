@@ -21,9 +21,9 @@
             class="w-7 h-7 flex items-center justify-center"
           >
             <div
-              class="w-6 h-6 flex items-center justify-center bg-primary rounded-full"
+              class="w-6 h-6 flex items-center justify-center bg-foundation dark:bg-foundation-2 rounded-full"
             >
-              <CheckIcon class="w-3 h-3 text-foundation" />
+              <IconCircleCheck class="size-5 text-primary" />
             </div>
           </div>
         </button>
@@ -37,34 +37,24 @@
     >
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
-          ref="handle"
-          class="thread-handle sm:p-1 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 h-full transition-all duration-200"
-          :class="{ 'is-dragging bg-blue-500/50': isDragging }"
+          class="relative bg-foundation border border-outline-2 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200"
+          :class="{ 'is-dragging border-outline-5': isDragging }"
         >
           <div
-            :class="[
-              'relative bg-foundation dark:bg-foundation-page border border-outline-2 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
-              'group-[.is-dragging]:bg-foundation'
-            ]"
+            ref="handle"
+            class="relative w-full flex justify-between items-center border-b border-outline-2 p-2 pb-1.5 cursor-move"
           >
-            <div
-              class="relative w-full flex justify-between items-center border-b border-outline-2"
-              :class="isEmbedEnabled ? 'p-2' : 'p-3 md:px-4'"
-            >
-              <div class="flex-grow flex items-center gap-x-1.5">
+            <div class="flex-grow flex items-center gap-x-1">
+              <div class="flex items-center gap-x-0.5">
                 <FormButton
-                  v-tippy="'Previous'"
                   :icon-left="ChevronLeftIcon"
                   color="outline"
                   hide-text
                   size="sm"
                   :disabled="!hasPrevious"
                   @click="emit('prev', modelValue)"
-                >
-                  <ChevronLeftIcon class="w-3 h-3" />
-                </FormButton>
+                />
                 <FormButton
-                  v-tippy="'Next'"
                   :icon-left="ChevronRightIcon"
                   color="outline"
                   hide-text
@@ -72,112 +62,110 @@
                   :disabled="!hasNext"
                   @click="emit('next', modelValue)"
                 />
-                <FormButton
-                  v-show="isDragged"
-                  v-tippy="'Pop in'"
-                  :icon-left="ArrowTopRightOnSquareIcon"
-                  hide-text
-                  class="rotate-180"
-                  color="subtle"
-                  size="sm"
-                  @click="isDragged = false"
-                />
               </div>
-              <div class="flex gap-x-0.5">
-                <FormButton
-                  v-tippy="'Copy link'"
-                  :icon-left="LinkIcon"
-                  hide-text
-                  color="subtle"
-                  size="sm"
-                  @click="onCopyLink"
-                />
-                <FormButton
-                  v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-                  :icon-left="CheckIcon"
-                  hide-text
-                  :disabled="!canArchiveOrUnarchive"
-                  color="subtle"
-                  size="sm"
-                  @click="toggleCommentResolvedStatus()"
-                />
-                <FormButton
-                  :icon-left="XMarkIcon"
-                  hide-text
-                  color="subtle"
-                  size="sm"
-                  @click="changeExpanded(false)"
-                />
-              </div>
-            </div>
-            <div
-              v-if="showBanner"
-              class="flex items-center justify-between gap-4 border-b border-outline-2 py-2 px-4 w-full"
-            >
-              <div class="text-body-2xs text-foreground-2 font-medium">
-                {{ bannerText }}
-              </div>
-              <div class="-mr-1 flex">
-                <FormButton
-                  :icon-right="bannerButton.icon"
-                  size="sm"
-                  color="outline"
-                  @click="bannerButton.action"
-                >
-                  {{ bannerButton.text }}
-                </FormButton>
-              </div>
-            </div>
-            <div
-              class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between"
-            >
-              <div
-                ref="commentsContainer"
-                class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 py-2 sm:pr-3"
-              >
-                <ViewerAnchoredPointThreadComment
-                  v-for="comment in comments"
-                  :key="comment.id"
-                  :comment="comment"
-                  :project-id="projectId"
-                  @mounted="onCommentMounted"
-                />
-              </div>
-              <div
-                v-if="isTypingMessage"
-                class="w-full px-3 md:px-4 pb-3 caption mt-1 text-body-2xs"
-              >
-                {{ isTypingMessage }}
-              </div>
-            </div>
-            <ViewerAnchoredPointThreadNewReply
-              v-if="showNewReplyComponent"
-              :model-value="modelValue"
-              @submit="onNewReply"
-            />
-            <div
-              v-if="isEmbedEnabled"
-              class="flex justify-between w-full p-2 border-t border-outline-2"
-            >
               <FormButton
-                full-width
-                :to="getLinkToThread(projectId, props.modelValue)"
-                external
-                target="_blank"
+                v-show="isDragged"
+                v-tippy="'Pop in'"
+                :icon-left="ArrowTopRightOnSquareIcon"
+                hide-text
+                class="rotate-180"
+                color="subtle"
                 size="sm"
-                color="outline"
-              >
-                Reply in Speckle
-              </FormButton>
+                @click="isDragged = false"
+              />
+            </div>
+            <div class="flex gap-x-0.5">
+              <FormButton
+                v-tippy="'Copy link'"
+                :icon-left="LinkIcon"
+                hide-text
+                color="subtle"
+                size="sm"
+                @click="onCopyLink"
+              />
+              <FormButton
+                v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
+                :icon-left="IconCircleCheck"
+                hide-text
+                :disabled="!canArchiveOrUnarchive"
+                color="subtle"
+                size="sm"
+                @click="toggleCommentResolvedStatus()"
+              />
+              <FormButton
+                :icon-left="IconXMark"
+                hide-text
+                color="subtle"
+                size="sm"
+                @click="changeExpanded(false)"
+              />
+            </div>
+          </div>
+          <div
+            v-if="showBanner"
+            class="flex items-center justify-between gap-4 border-b border-outline-2 py-2 px-2 w-full"
+          >
+            <div class="text-body-2xs text-foreground-2 font-medium">
+              {{ bannerText }}
+            </div>
+            <FormButton
+              :icon-right="bannerButton.icon"
+              size="sm"
+              color="outline"
+              @click="bannerButton.action"
+            >
+              {{ bannerButton.text }}
+            </FormButton>
+          </div>
+          <div
+            class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between"
+          >
+            <div
+              ref="commentsContainer"
+              class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col px-2 py-1"
+            >
+              <ViewerAnchoredPointThreadComment
+                v-for="comment in comments"
+                :key="comment.id"
+                :comment="comment"
+                :project-id="projectId"
+                @mounted="onCommentMounted"
+              />
             </div>
             <div
-              v-if="!canReply && !isEmbedEnabled && !isLoggedIn"
-              class="flex justify-between w-full p-2 border-t border-outline-2"
+              v-if="isTypingMessage"
+              class="w-full px-3 md:px-4 pb-3 caption mt-1 text-body-2xs"
             >
-              <FormButton full-width color="outline" size="sm" @click="$emit('login')">
-                Reply
-              </FormButton>
+              {{ isTypingMessage }}
             </div>
+          </div>
+          <ViewerAnchoredPointThreadNewReply
+            v-if="showNewReplyComponent"
+            :model-value="modelValue"
+            @submit="onNewReply"
+          />
+          <div
+            v-if="isEmbedEnabled"
+            class="flex justify-between w-full p-2 border-t border-outline-2"
+          >
+            <FormButton
+              full-width
+              :to="getLinkToThread(projectId, props.modelValue)"
+              external
+              target="_blank"
+              size="sm"
+              color="outline"
+            >
+              Reply in Speckle
+            </FormButton>
+          </div>
+          <div
+            v-if="!canReply && !isEmbedEnabled && !isLoggedIn"
+            class="flex justify-between w-full p-2 border-t border-outline-2"
+          >
+            <FormButton full-width color="outline" size="sm" @click="$emit('login')">
+              Reply
+            </FormButton>
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
@@ -189,8 +177,6 @@ import {
   LinkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  XMarkIcon,
-  CheckIcon,
   ArrowTopRightOnSquareIcon,
   ArrowLeftIcon,
   ArrowUpRightIcon
@@ -217,6 +203,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { graphql } from '~/lib/common/generated/gql'
+import type { ConcreteComponent } from 'vue'
 
 graphql(`
   fragment ViewerCommentThreadData on Comment {
@@ -281,6 +268,8 @@ onClickOutside(threadContainer, (event) => {
 
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
+const IconXMark = resolveComponent('IconXMark') as ConcreteComponent
+const IconCircleCheck = resolveComponent('IconCircleCheck') as ConcreteComponent
 
 const comments = computed(() => [
   props.modelValue,
@@ -290,12 +279,6 @@ const comments = computed(() => [
 const showNewReplyComponent = computed(() => {
   return !props.modelValue.archived && canReply.value && !isEmbedEnabled.value
 })
-
-// Note: conflicted with dragging styles, so took it out temporarily
-// const { style } = useExpandedThreadResponsiveLocation({
-//   threadContainer,
-//   width: 320
-// })
 
 const isExpanded = computed(() => isOpenThread(props.modelValue.id))
 
@@ -325,9 +308,19 @@ const { x, y, isDragging, position } = useDraggable(threadContainer, {
   handle,
   initialValue: initialDragPosition,
   onStart(_pos, event) {
-    // Only allow dragging by border
+    // Only allow dragging from header, but not from interactive elements
     const target = event.target as HTMLElement
-    if (target !== handle.value) return false
+
+    // Check if target is the handle or contained within it
+    const isWithinHandle = target === handle.value || handle.value?.contains(target)
+    if (!isWithinHandle) return false
+
+    // Prevent dragging when clicking on buttons or other interactive elements
+    const isInteractiveElement =
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('[role="button"]')
+    if (isInteractiveElement) return false
 
     // Reset pos, if starting dragging from scratch
     if (!isDragged.value) position.value = { x: 0, y: 0 }

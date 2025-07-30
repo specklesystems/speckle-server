@@ -1,32 +1,31 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <div
-    class="w-full relative flex flex-col border-t border-outline-2 p-3 md:p-4 pr-2 md:pr-3"
-  >
-    <ViewerCommentsEditor
-      ref="editor"
-      v-model="commentValue"
-      prompt="Press Enter to reply"
-      autofocus
-      @keydown="onKeyDownHandler"
-      @submit="onSubmit"
-    />
-    <div class="flex justify-between items-center pt-2 md:pt-3 pr-1">
-      <FormButton
-        v-tippy="'Attach'"
-        :icon-left="PaperClipIcon"
-        :disabled="loading"
-        color="subtle"
-        hide-text
-        class="!bg-foundation-page dark:!bg-foundation"
-        @click="trackAttachAndOpenFilePicker()"
+  <div class="w-full relative flex flex-col p-2 pt-1">
+    <div class="border border-outline-2 rounded-lg dark:bg-foundation-2">
+      <ViewerCommentsEditor
+        ref="editor"
+        v-model="commentValue"
+        prompt="Add reply"
+        autofocus
+        @keydown="onKeyDownHandler"
+        @submit="onSubmit"
       />
-      <FormButton
-        :icon-left="PaperAirplaneIcon"
-        hide-text
-        :disabled="loading"
-        @click="onSubmit"
-      />
+      <div class="flex justify-between items-center p-1">
+        <FormButton
+          :icon-left="PaperClipIcon"
+          :disabled="loading"
+          color="subtle"
+          hide-text
+          class="!bg-foundation dark:!bg-foundation-2"
+          @click="trackAttachAndOpenFilePicker()"
+        />
+        <FormButton
+          :icon-left="PaperAirplaneIcon"
+          hide-text
+          :disabled="loading"
+          @click="onSubmit"
+        />
+      </div>
     </div>
   </div>
 </template>

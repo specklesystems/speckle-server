@@ -1,5 +1,5 @@
 <template>
-  <ViewerLayoutSidePanel @close="$emit('close')">
+  <ViewerLayoutSidePanel>
     <template #title>Filters</template>
     <template #actions>
       <div class="flex gap-x-0.5 pr-2">
@@ -110,8 +110,6 @@ import {
   isStringPropertyInfo
 } from '~/lib/viewer/helpers/sceneExplorer'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
-
-defineEmits(['close'])
 
 const {
   setPropertyFilter,

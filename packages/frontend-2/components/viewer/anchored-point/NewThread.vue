@@ -11,9 +11,7 @@
     <div class="relative">
       <button
         v-tippy="!modelValue.isExpanded ? 'New comment' : 'Close'"
-        :class="`bg-foundation-2 ${
-          modelValue.isExpanded ? 'outline outline-2 outline-primary' : ''
-        } rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md`"
+        class="bg-foundation-2 outline outline-2 outline-primary rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md"
         @click="onThreadClick"
       >
         <PlusIcon
@@ -35,27 +33,26 @@
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-page border border-outline-2 sm:rounded-lg shadow-md"
+          class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-2 border border-outline-2 sm:rounded-xl shadow-md"
         >
-          <div class="relative p-3 px-2 pr-1 sm:p-3 sm:pr-2">
+          <div class="relative">
             <ViewerCommentsEditor
               ref="editor"
               v-model="commentValue"
-              prompt="Press enter to comment"
+              prompt="Add comment"
               max-height="300px"
               autofocus
               :disabled="isPostingNewThread"
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
             />
-            <div class="w-full flex justify-between items-center pr-1 pt-4">
+            <div class="w-full flex justify-between items-center p-1">
               <FormButton
-                v-tippy="'Attach'"
                 :icon-left="PaperClipIcon"
                 hide-text
                 :disabled="isPostingNewThread"
                 color="subtle"
-                class="!bg-foundation-page dark:!bg-foundation"
+                class="!bg-foundation dark:!bg-foundation-2"
                 @click="trackAttachAndOpenFilePicker()"
               />
               <FormButton
