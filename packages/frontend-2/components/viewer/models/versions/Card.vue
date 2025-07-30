@@ -77,9 +77,8 @@
         @view-changes="handleViewChanges"
         @remove-version="handleRemoveVersion"
       />
-      <div class="mt-4 pr-2 py-2 -ml-3">
+      <div v-if="showLoadMore" class="mt-4 pr-2 py-2 -ml-3">
         <FormButton
-          v-if="showLoadMore"
           full-width
           size="sm"
           text
@@ -128,6 +127,7 @@ const props = defineProps<{
   model: ModelItem
   versionId: string
   last: boolean
+  initiallyExpanded?: boolean
 }>()
 
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
@@ -140,7 +140,7 @@ const {
   }
 } = useInjectedViewerState()
 
-const showVersions = ref(false)
+const showVersions = ref(!!props.initiallyExpanded)
 const showDeleteDialog = ref(false)
 const versionsToDelete = ref<{ id: string; message?: string | null }[]>([])
 
@@ -194,18 +194,9 @@ const latestVersionId = computed(() => latestVersion.value.id)
 
 const modelName = computed(() => {
   const parts = props.model.name.split('/')
-  if (parts.length > 1) {
-    const name = parts[parts.length - 1]
-    parts.pop()
-    return {
-      subheader: parts.join('/'),
-      header: name
-    }
-  } else {
-    return {
-      subheader: null,
-      header: props.model.name
-    }
+  return {
+    subheader: parts.length > 1 ? parts.slice(0, -1).join('/') : null,
+    header: parts[parts.length - 1]
   }
 })
 

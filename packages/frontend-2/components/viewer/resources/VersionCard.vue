@@ -11,21 +11,18 @@
     <!-- Timeline left border -->
     <div
       v-if="showTimeline"
-      class="absolute top-3 left-4 z-10 ml-[2px] h-[99%] w-1 border-l border-outline-3"
+      class="absolute top-3 left-4 z-10 ml-[2px] w-1 border-l border-outline-3"
+      :class="last ? 'h-0' : 'h-[99%]'"
     >
       <div
         v-if="isLoaded"
-        class="absolute -top-px -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
+        class="absolute -top-2 -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
       >
         <IconCheck class="h-4 w-4 text-foreground" />
       </div>
       <div
         v-else
         class="absolute top-0 -left-[2px] h-[3px] w-[3px] bg-foreground rounded-full"
-      />
-      <div
-        v-if="last"
-        class="absolute bottom-0 -left-[2px] h-[3px] w-[3px] bg-foreground rounded-full"
       />
     </div>
 
@@ -49,13 +46,12 @@
         @click.stop.prevent
         @chosen="onActionChosen"
       >
-        <FormButton
-          color="subtle"
-          class="opacity-0 group-hover:opacity-100"
-          hide-text
-          :icon-right="IconThreeDots"
+        <button
+          class="opacity-0 group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-5 flex items-center justify-center shrink-0"
           @click.stop="showActionsMenu = !showActionsMenu"
-        />
+        >
+          <IconThreeDots />
+        </button>
       </LayoutMenu>
     </div>
     <!-- Main stuff -->

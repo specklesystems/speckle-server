@@ -138,12 +138,16 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { containsAll } from '~~/lib/common/helpers/utils'
+import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+import { useLoadLatestVersion } from '~~/lib/viewer/composables/resources'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
 const emit = defineEmits<{
   (e: 'remove', val: string): void
   (e: 'expanded', depth: number): void
+  (e: 'show-versions', modelId: string): void
+  (e: 'show-diff', modelId: string, versionA: string, versionB: string): void
 }>()
 
 const props = defineProps<{
@@ -168,6 +172,24 @@ const {
   }
 } = useInjectedViewerState()
 
+const route = useRoute()
+
+const resourceIdString = computed(() => {
+  const resourceParam = route.params.modelId
+  return Array.isArray(resourceParam) ? resourceParam.join('/') : resourceParam
+})
+
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
+
+const { load: loadLatestVersion } = useLoadLatestVersion({
+  project: computed(() => project.value),
+  resourceIdString: computed(() => resourceIdString.value || '')
+})
+
 const isExpanded = ref(false)
 const showActionsMenu = ref(false)
 
@@ -180,7 +202,9 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
       title: 'Load latest version',
-      id: 'load-latest-version'
+      id: 'load-latest-version',
+      disabled: isLatest.value,
+      disabledTooltip: 'Already on the latest version'
     },
     {
       title: 'Show version history',
@@ -188,7 +212,9 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
     },
     {
       title: 'Show version changes',
-      id: 'show-version-changes'
+      id: 'show-version-changes',
+      disabled: isLatest.value,
+      disabledTooltip: 'No changes to show for the latest version'
     }
   ],
   [
@@ -254,13 +280,11 @@ const modelName = computed(() => {
   }
 })
 
-// Get target object IDs for the model
 const modelObjectIds = computed(() => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
-  return refObject ? [refObject] : []
+  return refObject ? getTargetObjectIds({ id: refObject }) : []
 })
 
-// State for hide/show and isolate
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
 const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 
@@ -310,7 +334,6 @@ const shouldShowDimmed = computed(() => {
   return stateHasIsolatedObjectsInGeneral.value && !modelContainsIsolatedObjects.value
 })
 
-// Functions for hide/show and isolate
 const hideOrShowObject = (e: Event) => {
   e.stopPropagation()
   if (modelObjectIds.value.length === 0) return
@@ -357,6 +380,29 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
   const { item } = params
 
   switch (item.id) {
+    case 'load-latest-version':
+      if (!isLatest.value) {
+        loadLatestVersion()
+      }
+      break
+    case 'show-version-history':
+      emit('show-versions', props.model.id)
+      break
+    case 'show-version-changes':
+      // Diff current version with latest version
+      if (
+        loadedVersion.value &&
+        latestVersion.value &&
+        loadedVersion.value.id !== latestVersion.value.id
+      ) {
+        emit(
+          'show-diff',
+          props.model.id,
+          loadedVersion.value.id,
+          latestVersion.value.id
+        )
+      }
+      break
     case 'remove-model':
       if (removeEnabled.value) {
         emit('remove', props.model.id)

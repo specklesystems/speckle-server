@@ -1,6 +1,10 @@
 <template>
   <div class="select-none h-full">
-    <ViewerModelsVersions v-if="showVersions" @close="showVersions = false" />
+    <ViewerModelsVersions
+      v-if="showVersions"
+      :expanded-model-id="expandedModelId"
+      @close="handleVersionsClose"
+    />
     <ViewerLayoutSidePanel v-else>
       <template #title>
         <span>Models</span>
@@ -28,6 +32,8 @@
               :root-nodes="getRootNodesForModel(model.id)"
               @remove="(id: string) => removeModel(id)"
               @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
+              @show-versions="handleShowVersions"
+              @show-diff="handleShowDiff"
             />
           </div>
           <template v-if="objects.length !== 0">
@@ -68,11 +74,13 @@ import { ViewerEvent } from '@speckle/viewer'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import { sortBy, flatten } from 'lodash-es'
+import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
 
 defineEmits(['close'])
 
 const showVersions = ref(false)
 const showAddModel = ref(false)
+const expandedModelId = ref<string | null>(null)
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
 const { items } = useInjectedViewerRequestedResources()
@@ -89,6 +97,24 @@ const expandLevel = ref(-1)
 const manualExpandLevel = ref(-1)
 
 const mp = useMixpanel()
+const { diffModelVersions } = useDiffUtilities()
+
+// Handle showing versions for a specific model
+const handleShowVersions = (modelId: string) => {
+  expandedModelId.value = modelId
+  showVersions.value = true
+}
+
+const handleShowDiff = async (modelId: string, versionA: string, versionB: string) => {
+  await diffModelVersions(modelId, versionA, versionB)
+  expandedModelId.value = modelId
+  showVersions.value = true
+}
+
+const handleVersionsClose = () => {
+  showVersions.value = false
+  expandedModelId.value = null
+}
 
 const removeModel = async (modelId: string) => {
   // Convert requested resource string to references to specific models
