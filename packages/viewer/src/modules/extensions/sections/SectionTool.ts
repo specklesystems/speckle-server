@@ -593,14 +593,20 @@ export class SectionTool extends Extension {
 
       /** Handle Cmd/Ctrl+Z for section box undo */
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault()
-        this.undoSectionBox()
+        /** Only allow undo/redo when section box controls are visible */
+        if (this.enabled && this.visible) {
+          e.preventDefault()
+          this.undoSectionBox()
+        }
       }
 
       /** Handle Cmd/Ctrl+Shift+Z for section box redo */
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
-        e.preventDefault()
-        this.redoSectionBox()
+        /** Only allow undo/redo when section box controls are visible */
+        if (this.enabled && this.visible) {
+          e.preventDefault()
+          this.redoSectionBox()
+        }
       }
     }
 
