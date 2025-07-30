@@ -5,44 +5,26 @@
     </template>
     <template #actions>
       <div class="relative pr-2">
-        <FormButton
-          ref="settingsButtonRef"
-          hide-text
-          size="sm"
-          color="subtle"
-          :icon-left="settingsIcon"
-          :class="showVisibilityOptions ? '!text-primary-focus !bg-info-lighter' : ''"
-          @click="showVisibilityOptions = !showVisibilityOptions"
-        />
-
-        <ViewerLayoutPanel
-          v-if="showVisibilityOptions"
-          class="absolute right-2 top-full w-56 z-50"
+        <LayoutMenu
+          v-model:open="showVisibilityOptions"
+          :menu-id="menuId"
+          :items="actionsItems"
+          :menu-position="HorizontalDirection.Right"
+          mount-menu-on-body
+          :custom-menu-items-classes="['!w-[270px]']"
+          show-ticks
+          @click.stop.prevent
+          @chosen="onActionChosen"
         >
-          <div class="p-1">
-            <ViewerMenuItem
-              label="Show in 3D model"
-              :active="!hideBubbles"
-              @click="hideBubbles = !hideBubbles"
-            />
-            <ViewerMenuItem
-              :label="`Show resolved (${
-                commentThreadsMetadata?.totalArchivedCount || 0
-              })`"
-              :active="!!includeArchived"
-              @click="includeArchived = includeArchived ? undefined : 'includeArchived'"
-            />
-            <ViewerMenuItem
-              label="Exclude threads from other versions"
-              :active="!!loadedVersionsOnly"
-              @click="
-                loadedVersionsOnly = loadedVersionsOnly
-                  ? undefined
-                  : 'loadedVersionsOnly'
-              "
-            />
-          </div>
-        </ViewerLayoutPanel>
+          <FormButton
+            hide-text
+            size="sm"
+            color="subtle"
+            :icon-left="settingsIcon"
+            :class="showVisibilityOptions ? '!text-primary-focus !bg-info-lighter' : ''"
+            @click="showVisibilityOptions = !showVisibilityOptions"
+          />
+        </LayoutMenu>
       </div>
     </template>
     <div class="flex flex-col">
@@ -77,6 +59,14 @@ import {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
+
+enum ActionTypes {
+  HideBubbles = 'hide-bubbles',
+  IncludeArchived = 'include-archived',
+  LoadedVersionsOnly = 'loaded-versions-only'
+}
 
 graphql(`
   fragment ViewerCommentsListItem on Comment {
@@ -117,6 +107,7 @@ const {
   }
 } = useInjectedViewerInterfaceState()
 const canPostComment = useCheckViewerCommentingAccess()
+const menuId = useId()
 
 const showVisibilityOptions = ref(false)
 const settingsIcon = resolveComponent('IconViewerSettings') as ConcreteComponent
@@ -159,7 +150,43 @@ watch(includeArchived, (newVal) =>
 const { objectIds: selectedObjectIds } = useSelectionUtilities()
 
 const hasSelectedObjects = computed(() => selectedObjectIds.value.size > 0)
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title: 'Show in 3D model',
+      id: ActionTypes.HideBubbles,
+      active: !hideBubbles.value
+    },
+    {
+      title: `Show resolved (${commentThreadsMetadata.value?.totalArchivedCount || 0})`,
+      id: ActionTypes.IncludeArchived,
+      active: !!includeArchived.value
+    },
+    {
+      title: 'Exclude threads from other versions',
+      id: ActionTypes.LoadedVersionsOnly,
+      active: !!loadedVersionsOnly.value
+    }
+  ]
+])
 
+const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case ActionTypes.HideBubbles:
+      hideBubbles.value = !hideBubbles.value
+      break
+    case ActionTypes.IncludeArchived:
+      includeArchived.value = includeArchived.value ? undefined : 'includeArchived'
+      break
+    case ActionTypes.LoadedVersionsOnly:
+      loadedVersionsOnly.value = loadedVersionsOnly.value
+        ? undefined
+        : 'loadedVersionsOnly'
+      break
+  }
+}
 const onNewDiscussion = () => {
   if (!hasSelectedObjects.value) return
   newThreadEditor.value = true

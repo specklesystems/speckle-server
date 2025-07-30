@@ -63,26 +63,26 @@
                   @click="emit('next', modelValue)"
                 />
               </div>
-              <FormButton
-                v-show="isDragged"
-                v-tippy="'Pop in'"
-                :icon-left="ArrowTopRightOnSquareIcon"
-                hide-text
-                class="rotate-180"
-                color="subtle"
-                size="sm"
-                @click="isDragged = false"
-              />
             </div>
             <div class="flex gap-x-0.5">
-              <FormButton
-                v-tippy="'Copy link'"
-                :icon-left="LinkIcon"
-                hide-text
-                color="subtle"
-                size="sm"
-                @click="onCopyLink"
-              />
+              <div class="cursor-pointer">
+                <LayoutMenu
+                  v-model:open="showMenu"
+                  :menu-id="menuId"
+                  :items="actionsItems"
+                  mount-menu-on-body
+                  @click.stop.prevent
+                  @chosen="onActionChosen"
+                >
+                  <FormButton
+                    hide-text
+                    size="sm"
+                    color="subtle"
+                    :icon-left="iconThreeDots"
+                    @click="showMenu = !showMenu"
+                  />
+                </LayoutMenu>
+              </div>
               <FormButton
                 v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
                 :icon-left="IconCircleCheck"
@@ -172,10 +172,8 @@
 </template>
 <script setup lang="ts">
 import {
-  LinkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ArrowTopRightOnSquareIcon,
   ArrowLeftIcon,
   ArrowUpRightIcon
 } from '@heroicons/vue/24/outline'
@@ -202,6 +200,12 @@ import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ConcreteComponent } from 'vue'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+
+enum ActionTypes {
+  CopyLink = 'copy-link',
+  PopIn = 'pop-in'
+}
 
 graphql(`
   fragment ViewerCommentThreadData on Comment {
@@ -235,7 +239,6 @@ const { copy } = useClipboard()
 const { isLoggedIn } = useActiveUser()
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
-
 const { projectId } = useInjectedViewerState()
 const canReply = useCheckViewerCommentingAccess()
 const { disableTextSelection } = useDisableGlobalTextSelection()
@@ -246,10 +249,13 @@ const { threadResourceStatus, hasClickedFullContext, goBack, handleContextClick 
   useCommentContext()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 const router = useRouter()
+const menuId = useId()
 
+const showMenu = ref(false)
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
+const iconThreeDots = resolveComponent('IconThreeDots') as ConcreteComponent
 
 onClickOutside(threadContainer, (event) => {
   const viewerElement = document.getElementById('viewer')
@@ -382,6 +388,37 @@ const threadAuthors = computed(() => {
   return authors
 })
 
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title: 'Copy link',
+      id: ActionTypes.CopyLink
+    },
+    {
+      title: 'Pop in',
+      id: ActionTypes.PopIn,
+      disabled: !isDragged.value
+    }
+  ]
+])
+
+const canArchiveOrUnarchive = computed(
+  () => props.modelValue.permissions.canArchive.authorized
+)
+
+const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case ActionTypes.CopyLink:
+      onCopyLink()
+      break
+    case ActionTypes.PopIn:
+      isDragged.value = false
+      break
+  }
+}
+
 const changeExpanded = async (newVal: boolean) => {
   if (newVal) {
     await open(props.modelValue.id)
@@ -397,10 +434,6 @@ const changeExpanded = async (newVal: boolean) => {
     source: 'bubble'
   })
 }
-
-const canArchiveOrUnarchive = computed(
-  () => props.modelValue.permissions.canArchive.authorized
-)
 
 const toggleCommentResolvedStatus = async () => {
   // Remove thread ID from URL when resolving
