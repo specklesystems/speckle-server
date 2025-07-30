@@ -40,6 +40,7 @@ import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import SpeckleStandardMaterial from '../../materials/SpeckleStandardMaterial.js'
 import { Extension } from '../Extension.js'
+import { SectionOutlines } from './SectionOutlines.js'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
@@ -213,6 +214,9 @@ export class SectionTool extends Extension {
   protected shiftKeyPressed = false
   protected keydownHandler: (e: KeyboardEvent) => void
   protected keyupHandler: (e: KeyboardEvent) => void
+  protected sectionBoxHistory: OBB[] = []
+  protected currentHistoryIndex = 0
+  protected maxHistorySize = 100
 
   /** Manadatory property for all extensions */
   public get enabled() {
@@ -532,7 +536,50 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Sets up keyboard event listeners for shift key rotation snapping
+   * Creates an OBB state from the current OBB
+   */
+  protected createObbState(): OBB {
+    return new OBB().copy(this.obb)
+  }
+
+  /**
+   * Applies an OBB state to the current OBB
+   */
+  protected applyObbState(state: OBB): void {
+    this.obb.copy(state)
+  }
+
+  /**
+   * Saves the current section box state to history
+   */
+  protected saveToHistory(): void {
+    const currentState = this.createObbState()
+
+    /** If we're not at the latest state and make a new change, remove all future states */
+    if (
+      this.currentHistoryIndex < this.sectionBoxHistory.length - 1 &&
+      this.sectionBoxHistory.length > 1
+    ) {
+      /** Keep the initial state and all states up to the current position */
+      this.sectionBoxHistory = this.sectionBoxHistory.slice(
+        0,
+        this.currentHistoryIndex + 1
+      )
+    }
+
+    /** Add current state to history */
+    this.sectionBoxHistory.push(currentState)
+    this.currentHistoryIndex = this.sectionBoxHistory.length - 1
+
+    /** Remove oldest states if we exceed the history limit */
+    if (this.sectionBoxHistory.length > this.maxHistorySize) {
+      this.sectionBoxHistory.shift()
+      this.currentHistoryIndex = Math.max(0, this.currentHistoryIndex - 1)
+    }
+  }
+
+  /**
+   * Sets up keyboard event listeners for shift key rotation snapping and undo/redo
    */
   protected setupKeyboardListeners() {
     /** Store shift state for use in changeHandler */
@@ -542,6 +589,24 @@ export class SectionTool extends Extension {
     this.keydownHandler = (e: KeyboardEvent) => {
       if (e.shiftKey && !this.shiftKeyPressed) {
         this.shiftKeyPressed = true
+      }
+
+      /** Handle Cmd/Ctrl+Z for section box undo */
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        /** Only allow undo/redo when section box controls are visible */
+        if (this.enabled && this.visible) {
+          e.preventDefault()
+          this.undoSectionBox()
+        }
+      }
+
+      /** Handle Cmd/Ctrl+Shift+Z for section box redo */
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
+        /** Only allow undo/redo when section box controls are visible */
+        if (this.enabled && this.visible) {
+          e.preventDefault()
+          this.redoSectionBox()
+        }
       }
     }
 
@@ -583,18 +648,27 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Triggers when dragging starts/stops
+   * Triggers when transform interactions start/stop
    * @param event Controls event
    */
   //@ts-ignore
   protected draggingHandler(event) {
     this.dragging = event.value
     if (this.dragging) {
+      /** Save initial state when interaction starts (if this is the first change) */
+      if (this.sectionBoxHistory.length === 0) {
+        this.sectionBoxHistory.push(this.createObbState())
+        this.currentHistoryIndex = 0
+      }
+
       this.cameraProvider.enabled = false
       if (event.target === this.translateControls) this.rotateControls.detach()
       else if (event.target === this.rotateControls) this.translateControls.detach()
       this.emit(SectionToolEvent.DragStart)
     } else {
+      /** Save final state when interaction ends */
+      this.saveToHistory()
+
       this.cameraProvider.enabled = true
       if (event.target === this.translateControls)
         this.rotateControls.attach(this.translationRotationAnchor)
@@ -614,7 +688,7 @@ export class SectionTool extends Extension {
    */
   //@ts-ignore
   protected changeHandler() {
-    /** Just copy over position, rotation  and scale*/
+    /** Just copy over position, rotation and scale*/
     this.obb.center.copy(this.translationRotationAnchor.position)
 
     /** Apply rotation snapping if shift key is pressed */
@@ -991,6 +1065,67 @@ export class SectionTool extends Extension {
     /** Convert back to quaternion using pooled object */
     _tempQuaternion.setFromEuler(_tempEuler)
     return _tempQuaternion
+  }
+
+  /**
+   * Undoes the last section box change
+   */
+  protected undoSectionBox() {
+    if (this.currentHistoryIndex > 0) {
+      /** Move cursor back */
+      this.currentHistoryIndex--
+
+      /** Get the state at current cursor position */
+      const previousState = this.sectionBoxHistory[this.currentHistoryIndex]
+
+      if (previousState) {
+        /** Apply the previous state */
+        this.applyObbState(previousState)
+
+        /** Update visual state */
+        this.updatePlanes()
+        this.updateVisual()
+        this.updateFaceControls(this.draggingFace)
+
+        /** Update section outlines */
+        const sectionOutlines = this.viewer.getExtension(SectionOutlines)
+        if (sectionOutlines && sectionOutlines.enabled) {
+          sectionOutlines.requestUpdate(true)
+        }
+
+        this.viewer.requestRender()
+      }
+    }
+  }
+
+  /**
+   * Redoes the last undone section box change
+   */
+  protected redoSectionBox() {
+    if (this.currentHistoryIndex < this.sectionBoxHistory.length - 1) {
+      /** Move cursor forward */
+      this.currentHistoryIndex++
+
+      /** Get the state at current cursor position */
+      const nextState = this.sectionBoxHistory[this.currentHistoryIndex]
+      if (nextState) {
+        /** Apply the next state */
+        this.applyObbState(nextState)
+
+        /** Update visual state */
+        this.updatePlanes()
+        this.updateVisual()
+        this.updateFaceControls(this.draggingFace)
+
+        /** Update section outlines */
+        const sectionOutlines = this.viewer.getExtension(SectionOutlines)
+        if (sectionOutlines && sectionOutlines.enabled) {
+          sectionOutlines.requestUpdate(true)
+        }
+
+        this.viewer.requestRender()
+      }
+    }
   }
 
   /**
