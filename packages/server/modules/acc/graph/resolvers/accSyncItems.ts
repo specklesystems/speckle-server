@@ -79,8 +79,8 @@ const resolvers: Resolvers = {
       const projectDb = await getProjectDbClient({ projectId: input.projectId })
 
       return await createAccSyncItemFactory({
-        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db: projectDb }),
-        upsertAccSyncItem: upsertAccSyncItemFactory({ db: projectDb }),
+        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db }),
+        upsertAccSyncItem: upsertAccSyncItemFactory({ db }),
         createAutomation: createAutomationFactory({
           createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
           automateCreateAutomation: createAutomation,
@@ -136,11 +136,9 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const projectDb = await getProjectDbClient({ projectId: input.projectId })
-
       return await updateAccSyncItemFactory({
-        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db: projectDb }),
-        upsertAccSyncItem: upsertAccSyncItemFactory({ db: projectDb })
+        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db }),
+        upsertAccSyncItem: upsertAccSyncItemFactory({ db })
       })({
         syncItem: input
       })
@@ -154,10 +152,8 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const projectDb = await getProjectDbClient({ projectId: input.projectId })
-
       await deleteAccSyncItemFactory({
-        deleteAccSyncItemByUrn: deleteAccSyncItemByUrnFactory({ db: projectDb })
+        deleteAccSyncItemByUrn: deleteAccSyncItemByUrnFactory({ db })
       })
 
       return true
@@ -178,11 +174,9 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const projectDb = await getProjectDbClient({ projectId: parent.id })
-
       return await getPaginatedAccSyncItemsFactory({
-        listAccSyncItems: listAccSyncItemsFactory({ db: projectDb }),
-        countAccSyncItems: countAccSyncItemsFactory({ db: projectDb })
+        listAccSyncItems: listAccSyncItemsFactory({ db }),
+        countAccSyncItems: countAccSyncItemsFactory({ db })
       })({
         projectId: parent.id,
         filter: {
@@ -200,10 +194,8 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const projectDb = await getProjectDbClient({ projectId: parent.id })
-
       return await getAccSyncItemFactory({
-        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db: projectDb })
+        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db })
       })({ lineageUrn })
     }
   },
