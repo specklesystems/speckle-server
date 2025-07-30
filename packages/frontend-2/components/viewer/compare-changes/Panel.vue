@@ -1,9 +1,18 @@
 <template>
   <ViewerLayoutSidePanel>
     <template #title>
-      <FormButton color="subtle" text :icon-left="ChevronLeftIcon" @click="handleBack">
+      <div class="flex items-center gap-1">
+        <FormButton
+          color="subtle"
+          :icon-left="ChevronLeftIcon"
+          hide-text
+          size="sm"
+          @click="handleBack"
+        >
+          Go back
+        </FormButton>
         Go back
-      </FormButton>
+      </div>
     </template>
     <div class="flex flex-col text-sm p-2">
       <div
@@ -33,6 +42,7 @@
         <FormRange
           v-model="localDiffTime"
           label="Diff time"
+          hide-header
           :min="0"
           :max="1"
           :step="0.01"
