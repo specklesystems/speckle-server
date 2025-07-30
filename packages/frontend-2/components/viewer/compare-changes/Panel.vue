@@ -1,17 +1,18 @@
 <template>
   <ViewerLayoutSidePanel>
     <template #title>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-x-1">
         <FormButton
-          color="subtle"
           :icon-left="ChevronLeftIcon"
+          color="subtle"
+          class="-ml-3"
           hide-text
           size="sm"
           @click="handleBack"
         >
           Go back
         </FormButton>
-        Go back
+        Version changes
       </div>
     </template>
     <div class="flex flex-col text-sm p-2">

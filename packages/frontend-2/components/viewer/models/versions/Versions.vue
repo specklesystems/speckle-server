@@ -31,6 +31,9 @@
             :model="model"
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
+            :initially-expanded="
+              props.expandedModelId === model.id || modelsAndVersionIds.length === 1
+            "
           />
         </div>
         <template v-if="objects.length !== 0">
@@ -60,6 +63,10 @@ import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
 
+const props = defineProps<{
+  expandedModelId?: string | null
+}>()
+
 const emit = defineEmits(['close'])
 
 const { resourceItems, modelsAndVersionIds, objects } =
@@ -77,17 +84,6 @@ const showDiff = ref(false)
 const hasDiffActive = computed(() => {
   return !!(diffState.oldVersion.value && diffState.newVersion.value)
 })
-
-// Watch for diff becoming active and show it
-watch(
-  hasDiffActive,
-  (newVal) => {
-    if (newVal) {
-      showDiff.value = true
-    }
-  },
-  { immediate: true }
-)
 
 const handleDiffClose = async () => {
   showDiff.value = false
@@ -128,4 +124,15 @@ const refhack = ref(1)
 useViewerEventListener(ViewerEvent.LoadComplete, () => {
   refhack.value++
 })
+
+// Watch for diff becoming active and show it
+watch(
+  hasDiffActive,
+  (newVal) => {
+    if (newVal) {
+      showDiff.value = true
+    }
+  },
+  { immediate: true }
+)
 </script>
