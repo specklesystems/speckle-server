@@ -426,9 +426,8 @@ const expandToShowSelectedObjects = (selectedIds: string[]) => {
     }
 
     // Clear previous force-expanded nodes and set new ones
-    forceExpandedNodeIds.value.clear()
     const nodeIdsToExpand = pathsToExpand.flat()
-    nodeIdsToExpand.forEach((id) => forceExpandedNodeIds.value.add(id))
+    forceExpandedNodeIds.value = new Set(nodeIdsToExpand)
   }
 }
 
@@ -474,7 +473,7 @@ watch(
     if (selectedObjects.length > 0) {
       expandToShowSelectedObjects(selectedIds)
     } else {
-      forceExpandedNodeIds.value.clear()
+      forceExpandedNodeIds.value = new Set()
     }
   },
   { deep: true }
