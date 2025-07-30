@@ -60,7 +60,7 @@
           @update:model-value="swapDiffMode"
         />
       </div>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="flex flex-col gap-2">
         <ViewerCompareChangesObjectGroup name="unchanged" :object-ids="unchangedIds" />
         <ViewerCompareChangesObjectGroup name="modified" :object-ids="modifiedIds" />
         <ViewerCompareChangesObjectGroup name="added" :object-ids="addedIds" />
