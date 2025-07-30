@@ -3,7 +3,7 @@
     class="bg-foundation flex items-center gap-2 py-2 px-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
   >
     <UserAvatar hide-tooltip :user="collaborator.user" />
-    <div class="flex gap-x-2 flex-1">
+    <div class="flex gap-x-2 flex-1 items-center">
       <span class="truncate text-body-xs">
         {{ collaborator.title }}
         <span v-if="isYou" class="text-foreground-3 text-body-3xs">(you)</span>
