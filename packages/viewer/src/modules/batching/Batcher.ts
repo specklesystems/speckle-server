@@ -141,6 +141,7 @@ export default class Batcher {
           rvs.forEach((nodeRv) => {
             const geometry = nodeRv.renderData.geometry
             geometry.instanced = false
+            nodeRv.computeAABB(geometry.transform)
             /** I don't think we need to duplicate geometry here, now that we're transforming the batch position directly */
             // const attribs = geometry.attributes
             // geometry.attributes = {
