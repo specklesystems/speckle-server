@@ -17,7 +17,6 @@
           @chosen="onActionChosen"
         >
           <FormButton
-            ref="settingsButtonRef"
             hide-text
             size="sm"
             color="subtle"
