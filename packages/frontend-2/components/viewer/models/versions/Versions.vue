@@ -6,17 +6,18 @@
   />
   <ViewerLayoutSidePanel v-else>
     <template #title>
-      <div class="flex items-center">
+      <div class="flex items-center gap-x-1">
         <FormButton
           :icon-left="ChevronLeftIcon"
           color="subtle"
           class="-ml-3"
           hide-text
+          size="sm"
           @click="handleClose"
         >
           Exit versions
         </FormButton>
-        Exit versions
+        Versions
       </div>
     </template>
 
