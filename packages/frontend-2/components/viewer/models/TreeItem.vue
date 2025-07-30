@@ -50,10 +50,12 @@
       <div class="flex items-center w-0 group-hover:w-auto">
         <button
           v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
-          class="p-1 rounded-md hover:bg-highlight-3"
+          class="p-1 rounded-md"
           :icon-left="isHidden ? IconEyeClosed : IconEye"
           :class="
-            isHidden || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            isHidden || isSelected
+              ? 'opacity-100 hover:bg-highlight-1'
+              : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
           "
           @click.stop="hideOrShowObject"
         >
@@ -64,11 +66,11 @@
           v-tippy="
             getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', { placement: 'top' })
           "
-          class="p-1 rounded-md hover:bg-highlight-3"
+          class="p-1 rounded-md"
           :class="
             isIsolated || isSelected
-              ? 'opacity-100'
-              : 'opacity-0 group-hover:opacity-100'
+              ? 'opacity-100 hover:bg-highlight-1'
+              : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
           "
           @click.stop="isolateOrUnisolateObject"
         >

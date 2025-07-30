@@ -9,7 +9,7 @@
       </div>
       <slot name="actions"></slot>
     </div>
-    <div class="flex-1">
+    <div class="flex-1 overflow-y-auto">
       <slot />
     </div>
   </div>
