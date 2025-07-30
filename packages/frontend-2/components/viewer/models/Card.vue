@@ -1,17 +1,16 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="relative border-b border-outline-3">
-    <div
-      @mouseenter="highlightObject"
-      @mouseleave="unhighlightObject"
-      @focusin="highlightObject"
-      @focusout="unhighlightObject"
-      @click="selectObject"
-      @keydown.enter="selectObject"
-    >
+    <div>
       <!-- Model Header -->
       <div
         class="group flex items-center px-1 py-3 select-none cursor-pointer hover:bg-highlight-1"
+        @mouseenter="highlightObject"
+        @mouseleave="unhighlightObject"
+        @focusin="highlightObject"
+        @focusout="unhighlightObject"
+        @click="selectObject"
+        @keydown.enter="selectObject"
       >
         <button
           class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
