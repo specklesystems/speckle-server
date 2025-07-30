@@ -217,10 +217,6 @@ export class SectionTool extends Extension {
   protected sectionBoxHistory: OBB[] = []
   protected currentHistoryIndex = 0
   protected maxHistorySize = 100
-  protected initialSectionBoxState: OBB | null = null
-  protected hasInitialized = false
-  protected hasSavedForCurrentDrag = false
-  protected initialStateForCurrentDrag: OBB | null = null
 
   /** Manadatory property for all extensions */
   public get enabled() {
@@ -559,11 +555,6 @@ export class SectionTool extends Extension {
   protected saveToHistory(): void {
     const currentState = this.createObbCopy()
 
-    /** If this is the first change, save the initial state first */
-    if (this.sectionBoxHistory.length === 0 && this.initialSectionBoxState) {
-      this.sectionBoxHistory.push(this.initialSectionBoxState)
-    }
-
     /** If we're not at the latest state and make a new change, remove all future states */
     if (
       this.currentHistoryIndex < this.sectionBoxHistory.length - 1 &&
@@ -651,31 +642,17 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Triggers when dragging starts/stops
+   * Triggers when transform interactions start/stop
    * @param event Controls event
    */
   //@ts-ignore
   protected draggingHandler(event) {
     this.dragging = event.value
     if (this.dragging) {
-      /** Mark as initialized when first drag starts */
-      if (!this.hasInitialized) {
-        this.hasInitialized = true
-        /** Reset initial state for new session */
-        this.initialSectionBoxState = null
-        /** Reset cursor for new session */
+      /** Save initial state when interaction starts (if this is the first change) */
+      if (this.sectionBoxHistory.length === 0) {
+        this.sectionBoxHistory.push(this.createObbCopy())
         this.currentHistoryIndex = 0
-      }
-
-      /** Store initial state when drag starts */
-      if (!this.hasSavedForCurrentDrag) {
-        this.initialStateForCurrentDrag = this.createObbCopy()
-        this.hasSavedForCurrentDrag = true
-
-        /** Save the initial state for the entire session */
-        if (!this.initialSectionBoxState) {
-          this.initialSectionBoxState = this.createObbCopy()
-        }
       }
 
       this.cameraProvider.enabled = false
@@ -683,14 +660,8 @@ export class SectionTool extends Extension {
       else if (event.target === this.rotateControls) this.translateControls.detach()
       this.emit(SectionToolEvent.DragStart)
     } else {
-      /** Save to history when drag ends */
-      if (this.initialStateForCurrentDrag) {
-        this.saveToHistory()
-        this.initialStateForCurrentDrag = null
-      }
-
-      /** Reset the flag when drag ends */
-      this.hasSavedForCurrentDrag = false
+      /** Save final state when interaction ends */
+      this.saveToHistory()
 
       this.cameraProvider.enabled = true
       if (event.target === this.translateControls)
