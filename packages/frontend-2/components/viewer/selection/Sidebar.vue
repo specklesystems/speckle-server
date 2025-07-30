@@ -46,7 +46,7 @@
         </div>
       </template>
 
-      <div class="space-y-2">
+      <div class="space-y-1">
         <ViewerSelectionObject
           v-for="object in objectsLimited"
           :key="(object.id as string)"

@@ -53,13 +53,13 @@
           color="subtle"
           class="opacity-0 group-hover:opacity-100"
           hide-text
-          :icon-right="EllipsisHorizontalIcon"
+          :icon-right="IconThreeDots"
           @click.stop="showActionsMenu = !showActionsMenu"
         />
       </LayoutMenu>
     </div>
     <!-- Main stuff -->
-    <div class="flex items-center space-x-1 pl-5">
+    <div class="flex items-center pl-5 gap-2">
       <div
         class="bg-foundation h-12 w-12 flex-shrink-0 rounded-md border border-outline-3"
         :class="isLimited ? 'diagonal-stripes' : ''"
@@ -81,11 +81,11 @@
             variant="inline"
             :project="project"
           />
-          <div v-else class="truncate">
-            <div v-if="author" class="text-body-2xs">
+          <div v-else class="truncate pr-2">
+            <div v-if="author" class="text-body-2xs truncate">
               {{ author.name }}
             </div>
-            <div class="text-body-3xs text-foreground-2">
+            <div class="text-body-3xs text-foreground-2 truncate">
               {{ version.message || 'no message' }}
             </div>
           </div>
@@ -95,7 +95,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { LockClosedIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { LockClosedIcon } from '@heroicons/vue/24/solid'
 import { CommonBadge, keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
@@ -140,6 +140,8 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+
+const IconThreeDots = resolveComponent('IconThreeDots')
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)

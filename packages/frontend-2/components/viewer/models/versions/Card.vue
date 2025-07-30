@@ -17,16 +17,21 @@
         class="group sticky cursor-pointer flex items-center py-3 px-1"
         @click="showVersions = !showVersions"
       >
-        <FormButton size="sm" color="subtle" @click.stop="showVersions = !showVersions">
+        <button
+          class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
+          @click.stop="showVersions = !showVersions"
+        >
           <IconTriangle
-            class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
+            class="w-4 h-4 text-foreground-2"
             :class="showVersions ? 'rotate-90' : ''"
           />
           <span class="sr-only">
             {{ showVersions ? 'Collapse' : 'Expand' }}
           </span>
-        </FormButton>
-        <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3">
+        </button>
+        <div
+          class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
+        >
           <PreviewImage
             v-if="loadedVersion?.previewUrl"
             :preview-url="loadedVersion?.previewUrl"
@@ -74,6 +79,7 @@
       />
       <div class="mt-4 pr-2 py-2 -ml-3">
         <FormButton
+          v-if="showLoadMore"
           full-width
           size="sm"
           text
@@ -81,7 +87,7 @@
           :disabled="!showLoadMore"
           @click="onLoadMore"
         >
-          {{ showLoadMore ? 'View older versions' : 'No more versions' }}
+          View older versions
         </FormButton>
       </div>
     </div>

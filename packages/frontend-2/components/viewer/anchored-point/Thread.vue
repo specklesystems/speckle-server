@@ -117,9 +117,7 @@
               {{ bannerButton.text }}
             </FormButton>
           </div>
-          <div
-            class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between"
-          >
+          <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
             <div
               ref="commentsContainer"
               class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col px-2 py-1"
