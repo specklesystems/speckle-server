@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div class="flex items-center w-0 group-hover:w-auto overflow-hidden">
+      <div class="flex items-center w-0 group-hover:w-auto overflow-hidden shrink-0">
         <button
           v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
           class="p-1 rounded-md"
