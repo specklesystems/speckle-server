@@ -73,7 +73,7 @@ featureFlags:
   legacyIfcImporterEnabled: false
   ## @param featureFlags.backgroundJobsEnabled Enables the ability to run background jobs (such as the IFC importer) in Speckle
   backgroundJobsEnabled: false
-  ## @param Enables the ability to import data from ACC
+  ## @param featureFlags.accIntegrationEnabled Enables the ability to import data from ACC
   accIntegrationEnabled: false
 
 analytics:

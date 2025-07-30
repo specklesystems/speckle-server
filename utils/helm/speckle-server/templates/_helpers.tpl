@@ -612,14 +612,13 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 {{- if .Values.featureFlags.accIntegrationEnabled }}
 - name: AUTODESK_INTEGRATION_CLIENT_ID
-  value: {{ .Values.accIntegration.client_id }}
+  value: {{ .Values.server.accIntegration.client_id }}
 
 - name: AUTODESK_INTEGRATION_CLIENT_SECRET
   valueFrom:
     secretKeyRef:
-      name: {{ default .Values.secretName .Values.accIntegration.clientSecret.secretName }}
-      key: {{ default "acc_integration_client_secret" .Values.accIntegration.clientSecret.secretKey }}
-
+      name: {{ default .Values.secretName .Values.server.accIntegration.clientSecret.secretName }}
+      key: {{ default "acc_integration_client_secret" .Values.server.accIntegration.clientSecret.secretKey }}
 {{- end }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
