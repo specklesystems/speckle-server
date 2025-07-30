@@ -317,6 +317,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       k += n + 1
 
       if (n === 3) {
+        triangulatedArraySize += 3
         continue
       } else {
         triangulatedArraySize += (n - 2) * 3
