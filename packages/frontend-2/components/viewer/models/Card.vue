@@ -64,7 +64,7 @@
               }"
               @click.stop="showActionsMenu = !showActionsMenu"
             >
-              <EllipsisHorizontalIcon class="w-4 h-4" />
+              <IconThreeDots class="w-4 h-4" />
             </button>
           </LayoutMenu>
           <button
@@ -124,7 +124,6 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
