@@ -29,7 +29,9 @@
             {{ showVersions ? 'Collapse' : 'Expand' }}
           </span>
         </button>
-        <div class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3">
+        <div
+          class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
+        >
           <PreviewImage
             v-if="loadedVersion?.previewUrl"
             :preview-url="loadedVersion?.previewUrl"
@@ -77,6 +79,7 @@
       />
       <div class="mt-4 pr-2 py-2 -ml-3">
         <FormButton
+          v-if="showLoadMore"
           full-width
           size="sm"
           text
@@ -84,7 +87,7 @@
           :disabled="!showLoadMore"
           @click="onLoadMore"
         >
-          {{ showLoadMore ? 'View older versions' : 'No more versions' }}
+          View older versions
         </FormButton>
       </div>
     </div>

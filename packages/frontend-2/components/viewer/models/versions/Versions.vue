@@ -10,11 +10,14 @@
         <FormButton
           :icon-left="ChevronLeftIcon"
           color="subtle"
+          class="-ml-3"
           hide-text
           size="sm"
           @click="handleClose"
-        />
-        <span>Versions</span>
+        >
+          Exit versions
+        </FormButton>
+        Versions
       </div>
     </template>
 
