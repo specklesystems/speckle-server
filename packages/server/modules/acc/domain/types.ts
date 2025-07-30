@@ -1,9 +1,11 @@
+import type { AccRegion, AccSyncItemStatus } from '@/modules/acc/domain/constants'
+
 export type AccSyncItem = {
   id: string
   projectId: string
   modelId: string
   automationId: string
-  accRegion: string
+  accRegion: AccRegion
   accHubId: string
   accProjectId: string
   accRootProjectFolderUrn: string
@@ -18,15 +20,6 @@ export type AccSyncItem = {
   createdAt: Date
   updatedAt: Date
 }
-
-export type AccSyncItemStatus =
-  // A new file version had been detected, and we are awaiting a processable file.
-  | 'PENDING'
-  // We are actively processing the new file version. (The Automate function has been triggered.)
-  | 'SYNCING'
-  | 'FAILED'
-  | 'PAUSED'
-  | 'SUCCEEDED'
 
 export type ModelDerivativeServiceDesignManifest = {
   type: 'manifest'
@@ -44,8 +37,6 @@ export type ModelDerivativeServiceDesignManifestDerivative = {
   /** Sometimes `outputType` is "svf" and `overrideOutputType` is "svf2" */
   overrideOutputType?: string
 }
-
-export type AccRegion = 'US' | 'EMEA' | 'AUS' | 'CAN' | 'DEU' | 'IND' | 'JPN' | 'GBR'
 
 export type AccDerivativeOutputType =
   | 'dwg'

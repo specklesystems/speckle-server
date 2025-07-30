@@ -12,6 +12,7 @@ import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import type { AccSyncItem } from '@/modules/acc/domain/types'
 import type { Knex } from 'knex'
 import { without } from 'lodash-es'
+import { AccSyncItemStatuses } from '@/modules/acc/domain/constants'
 
 const tables = {
   accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
@@ -106,7 +107,7 @@ export const queryAllPendingAccSyncItemsFactory =
     const selectItems = tables
       .accSyncItems(deps.db)
       .select<AccSyncItem[]>('*')
-      .where(AccSyncItems.col.status, 'PENDING')
+      .where(AccSyncItems.col.status, AccSyncItemStatuses.pending)
       .orderBy(AccSyncItems.col.createdAt)
     return executeBatchedSelect(selectItems, { batchSize: 10 })
   }

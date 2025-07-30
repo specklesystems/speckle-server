@@ -22,7 +22,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import { TIME_MS } from '@speckle/shared'
-import type { AccRegion } from '@/modules/acc/domain/types'
+import type { AccRegion } from '@/modules/acc/domain/constants'
 import { triggerSyncItemAutomationFactory } from '@/modules/acc/services/automate'
 
 const queryAllPendingAccSyncItems = queryAllPendingAccSyncItemsFactory({ db })

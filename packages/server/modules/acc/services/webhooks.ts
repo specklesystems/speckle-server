@@ -1,3 +1,4 @@
+import { AccSyncItemStatuses } from '@/modules/acc/domain/constants'
 import type {
   GetAccSyncItemByUrn,
   UpsertAccSyncItem
@@ -28,7 +29,7 @@ export const onVersionAddedFactory =
 
     await deps.upsertAccSyncItem({
       ...syncItem,
-      status: 'PENDING',
+      status: AccSyncItemStatuses.pending,
       accFileVersionIndex: fileVersionIndex,
       accFileVersionUrn: fileVersionUrn
     })

@@ -13,7 +13,7 @@ import type {
   ListAccSyncItems,
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
-import type { AccRegion, AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/types'
 import { DuplicateSyncItemError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
 import type { TriggerSyncItemAutomation } from '@/modules/acc/services/automate'
 import type {
@@ -69,7 +69,7 @@ export const createAccSyncItemFactory =
       callbackUrl: `${getServerOrigin()}/api/v1/acc/webhook/callback`,
       event: 'dm.version.added',
       rootProjectFolderUrn: syncItem.accRootProjectFolderUrn,
-      region: syncItem.accRegion as AccRegion
+      region: syncItem.accRegion
     })
 
     const { automation } = await deps.createAutomation({
@@ -133,7 +133,7 @@ export const createAccSyncItemFactory =
     const manifest = await getManifestByUrn(
       {
         urn: newSyncItem.accFileVersionUrn,
-        region: newSyncItem.accRegion as AccRegion
+        region: newSyncItem.accRegion
       },
       { token: tokenData.access_token }
     )

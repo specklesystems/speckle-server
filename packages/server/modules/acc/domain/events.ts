@@ -17,7 +17,6 @@ export type AccSyncItemEventsPayloads = {
     syncItem: AccSyncItem
     projectId: string
   }
-
   [AccSyncItemEvents.Updated]: {
     oldSyncItem: AccSyncItem
     newSyncItem: AccSyncItem
@@ -25,7 +24,6 @@ export type AccSyncItemEventsPayloads = {
     userId?: string
     input: UpdateAccSyncItemInput
   }
-
   [AccSyncItemEvents.Deleted]: {
     syncItem: AccSyncItem
     projectId: string

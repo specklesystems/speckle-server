@@ -1,4 +1,7 @@
-import { ImporterAutomateFunctions } from '@/modules/acc/domain/constants'
+import {
+  AccSyncItemStatuses,
+  ImporterAutomateFunctions
+} from '@/modules/acc/domain/constants'
 import type { UpdateAccSyncItemStatus } from '@/modules/acc/domain/operations'
 import type { AccSyncItem } from '@/modules/acc/domain/types'
 import {
@@ -39,7 +42,7 @@ export const triggerSyncItemAutomationFactory =
   async ({ id }) => {
     const syncItem = await deps.updateAccSyncItemStatus({
       id,
-      status: 'SYNCING'
+      status: AccSyncItemStatuses.syncing
     })
 
     if (!syncItem) {
@@ -106,7 +109,7 @@ export const triggerSyncItemAutomationFactory =
 
     const projectScopedToken = await deps.createAppToken({
       appId: DefaultAppIds.Automate,
-      name: `acct-${syncItem.id}`,
+      name: `acctoken-${syncItem.id}`,
       userId: syncItem.authorId,
       scopes: [
         Scopes.Profile.Read,

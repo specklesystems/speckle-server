@@ -1,9 +1,8 @@
 /* eslint-disable camelcase */
 
-import type {
-  AccRegion,
-  ModelDerivativeServiceDesignManifest
-} from '@/modules/acc/domain/types'
+import type { AccRegion } from '@/modules/acc/domain/constants'
+import { AccRegions } from '@/modules/acc/domain/constants'
+import type { ModelDerivativeServiceDesignManifest } from '@/modules/acc/domain/types'
 import {
   getAutodeskIntegrationClientId,
   getAutodeskIntegrationClientSecret
@@ -83,7 +82,7 @@ export const getToken = async (): Promise<AutodeskIntegrationTokenData> => {
  */
 const getRegionUrl = (region: AccRegion): string => {
   switch (region) {
-    case 'EMEA':
+    case AccRegions.EMEA:
       return 'https://developer.api.autodesk.com/modelderivative/v2/regions/eu'
     default:
       return 'https://developer.api.autodesk.com/modelderivative/v2'
@@ -179,7 +178,7 @@ export const getManifestByUrn = async (
     token: string
   }
 ): Promise<ModelDerivativeServiceDesignManifest> => {
-  const { urn, region = 'EMEA' } = params
+  const { urn, region = AccRegions.EMEA } = params
   const { token } = context
 
   const encodedUrn = encodeUrn(urn)
