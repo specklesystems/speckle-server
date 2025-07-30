@@ -13,7 +13,7 @@
     >
       <template #title>
         <div class="flex items-center gap-x-2">
-          <p>Selected objects</p>
+          <p>Selected</p>
           <CommonBadge v-if="objects.length" rounded>
             {{ objects.length }}
           </CommonBadge>
@@ -24,25 +24,33 @@
           <FormButton
             size="sm"
             color="subtle"
-            :icon-left="isHidden ? EyeSlashIcon : EyeIcon"
+            :icon-left="isHidden ? iconEyeClosed : iconEye"
             hide-text
             @click.stop="hideOrShowSelection"
           />
           <FormButton
             size="sm"
             color="subtle"
-            :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
+            :icon-left="isIsolated ? iconViewerUnisolate : iconViewerIsolate"
             hide-text
             @click.stop="isolateOrUnisolateSelection"
           />
-          <FormButton
-            size="sm"
-            color="subtle"
-            :icon-left="ArrowTopRightOnSquareIcon"
-            :to="selectionLink"
-            target="_blank"
-            hide-text
-          />
+          <LayoutMenu
+            v-model:open="showSubMenu"
+            :menu-id="menuId"
+            :items="actionsItems"
+            :custom-menu-items-classes="['!w-48']"
+            @click.stop.prevent
+            @chosen="onActionChosen"
+          >
+            <FormButton
+              hide-text
+              size="sm"
+              color="subtle"
+              :icon-left="settingsIcon"
+              @click="showSubMenu = !showSubMenu"
+            />
+          </LayoutMenu>
         </div>
       </template>
 
@@ -70,13 +78,6 @@
   </ViewerCommentsPortalOrDiv>
 </template>
 <script setup lang="ts">
-import {
-  EyeSlashIcon,
-  EyeIcon,
-  FunnelIcon,
-  ArrowTopRightOnSquareIcon
-} from '@heroicons/vue/24/solid'
-import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
@@ -87,6 +88,12 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { modelRoute } from '~/lib/common/helpers/route'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import type { ConcreteComponent } from 'vue'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+
+enum ActionTypes {
+  OpenInNewTab = 'open-in-new-tab'
+}
 
 const {
   projectId,
@@ -103,10 +110,18 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
+const menuId = useId()
+const mp = useMixpanel()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
 const sidebarWidth = ref(280)
+const showSubMenu = ref(false)
+const iconViewerUnisolate = resolveComponent('IconViewerUnisolate') as ConcreteComponent
+const iconViewerIsolate = resolveComponent('IconViewerIsolate') as ConcreteComponent
+const iconEyeClosed = resolveComponent('IconEyeClosed') as ConcreteComponent
+const iconEye = resolveComponent('IconEye') as ConcreteComponent
+const settingsIcon = resolveComponent('IconThreeDots') as ConcreteComponent
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value
@@ -145,11 +160,28 @@ const isIsolated = computed(() => {
   return containsAll(allTargetIds.value, isolatedObjects.value)
 })
 
-const mp = useMixpanel()
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title: 'Open selection in new tab',
+      id: ActionTypes.OpenInNewTab
+    }
+  ]
+])
 
 const selectionLink = computed(() => {
   return modelRoute(projectId.value, allTargetIds.value.join(','))
 })
+
+const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case ActionTypes.OpenInNewTab:
+      window.open(selectionLink.value, '_blank')
+      break
+  }
+}
 
 const hideOrShowSelection = () => {
   if (!isHidden.value) {
