@@ -942,14 +942,23 @@ export default class SpeckleConverter {
       Logger.warn(
         `Object id ${obj.id} of type ${obj.speckle_type} has no vertex position data and will be ignored`
       )
+      node.model.raw.vertices = []
+      node.model.raw.faces = []
+      node.model.raw.colors = []
+      node.model.raw.vertexNormals = []
       return
     }
     if (!obj.faces || (obj.faces as Array<number>).length === 0) {
       Logger.warn(
         `Object id ${obj.id} of type ${obj.speckle_type} has no face data and will be ignored`
       )
+      node.model.raw.vertices = []
+      node.model.raw.faces = []
+      node.model.raw.colors = []
+      node.model.raw.vertexNormals = []
       return
     }
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     node.model.raw.vertices = await this.dechunk(obj.vertices)
