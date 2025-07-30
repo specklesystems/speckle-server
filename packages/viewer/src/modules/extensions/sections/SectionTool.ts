@@ -20,7 +20,8 @@ import {
   DynamicDrawUsage,
   Color,
   MeshBasicMaterial,
-  PlaneGeometry
+  PlaneGeometry,
+  Euler
 } from 'three'
 import { intersectObjectWithRay, TransformControls } from '../TransformControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
@@ -39,6 +40,7 @@ import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import SpeckleStandardMaterial from '../../materials/SpeckleStandardMaterial.js'
 import { Extension } from '../Extension.js'
+import { SectionOutlines } from './SectionOutlines.js'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
@@ -56,6 +58,8 @@ export interface SectionToolEventPayload {
 const _matrix4 = new Matrix4()
 const _quaternion = new Quaternion()
 const _vector3 = new Vector3()
+const _tempEuler = new Euler()
+const _tempQuaternion = new Quaternion()
 
 const unitCube = [
   -1 * 0.5,
@@ -133,6 +137,14 @@ export class SectionTool extends Extension {
     return [CameraController]
   }
 
+  /** Configurable rotation snap angle in radians. Set to null to disable snapping */
+  public rotationSnapAngle: number | null = Math.PI / 12 // 15 degrees by default
+
+  /** Note: Rotation snapping only applies to mouse interactions via TransformControls.
+   *  Programmatic calls to setBox() will not apply rotation snapping.
+   *  For complete snapping support, programmatic rotations will need to be handled separately.
+   */
+
   /** This is our data model. All we need is an OBB */
   protected obb: OBB = new OBB()
 
@@ -199,6 +211,12 @@ export class SectionTool extends Extension {
   /** Hit testing related */
   protected raycaster: Raycaster
   protected dragging = false
+  protected shiftKeyPressed = false
+  protected keydownHandler: (e: KeyboardEvent) => void
+  protected keyupHandler: (e: KeyboardEvent) => void
+  protected sectionBoxHistory: OBB[] = []
+  protected currentHistoryIndex = 0
+  protected maxHistorySize = 100
 
   /** Manadatory property for all extensions */
   public get enabled() {
@@ -316,6 +334,9 @@ export class SectionTool extends Extension {
     // })
     /** Hook up to le click */
     this.viewer.getRenderer().input.on(InputEvent.Click, this.clickHandler.bind(this))
+
+    /** Add keyboard event listeners for shift key rotation snapping */
+    this.setupKeyboardListeners()
 
     /** Start off disabled */
     this.enabled = false
@@ -515,6 +536,92 @@ export class SectionTool extends Extension {
   }
 
   /**
+   * Creates an OBB state from the current OBB
+   */
+  protected createObbState(): OBB {
+    return new OBB().copy(this.obb)
+  }
+
+  /**
+   * Applies an OBB state to the current OBB
+   */
+  protected applyObbState(state: OBB): void {
+    this.obb.copy(state)
+  }
+
+  /**
+   * Saves the current section box state to history
+   */
+  protected saveToHistory(): void {
+    const currentState = this.createObbState()
+
+    /** If we're not at the latest state and make a new change, remove all future states */
+    if (
+      this.currentHistoryIndex < this.sectionBoxHistory.length - 1 &&
+      this.sectionBoxHistory.length > 1
+    ) {
+      /** Keep the initial state and all states up to the current position */
+      this.sectionBoxHistory = this.sectionBoxHistory.slice(
+        0,
+        this.currentHistoryIndex + 1
+      )
+    }
+
+    /** Add current state to history */
+    this.sectionBoxHistory.push(currentState)
+    this.currentHistoryIndex = this.sectionBoxHistory.length - 1
+
+    /** Remove oldest states if we exceed the history limit */
+    if (this.sectionBoxHistory.length > this.maxHistorySize) {
+      this.sectionBoxHistory.shift()
+      this.currentHistoryIndex = Math.max(0, this.currentHistoryIndex - 1)
+    }
+  }
+
+  /**
+   * Sets up keyboard event listeners for shift key rotation snapping and undo/redo
+   */
+  protected setupKeyboardListeners() {
+    /** Store shift state for use in changeHandler */
+    this.shiftKeyPressed = false
+
+    /** Store references to event listeners for cleanup */
+    this.keydownHandler = (e: KeyboardEvent) => {
+      if (e.shiftKey && !this.shiftKeyPressed) {
+        this.shiftKeyPressed = true
+      }
+
+      /** Handle Cmd/Ctrl+Z for section box undo */
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        /** Only allow undo/redo when section box controls are visible */
+        if (this.enabled && this.visible) {
+          e.preventDefault()
+          this.undoSectionBox()
+        }
+      }
+
+      /** Handle Cmd/Ctrl+Shift+Z for section box redo */
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
+        /** Only allow undo/redo when section box controls are visible */
+        if (this.enabled && this.visible) {
+          e.preventDefault()
+          this.redoSectionBox()
+        }
+      }
+    }
+
+    this.keyupHandler = (e: KeyboardEvent) => {
+      if (!e.shiftKey && this.shiftKeyPressed) {
+        this.shiftKeyPressed = false
+      }
+    }
+
+    /** Event listeners */
+    document.addEventListener('keydown', this.keydownHandler)
+    document.addEventListener('keyup', this.keyupHandler)
+  }
+
+  /**
    * Controls, outline and hitbox update based on the OBB model
    */
   protected updateVisual() {
@@ -541,18 +648,27 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Triggers when dragging starts/stops
+   * Triggers when transform interactions start/stop
    * @param event Controls event
    */
   //@ts-ignore
   protected draggingHandler(event) {
     this.dragging = event.value
     if (this.dragging) {
+      /** Save initial state when interaction starts (if this is the first change) */
+      if (this.sectionBoxHistory.length === 0) {
+        this.sectionBoxHistory.push(this.createObbState())
+        this.currentHistoryIndex = 0
+      }
+
       this.cameraProvider.enabled = false
       if (event.target === this.translateControls) this.rotateControls.detach()
       else if (event.target === this.rotateControls) this.translateControls.detach()
       this.emit(SectionToolEvent.DragStart)
     } else {
+      /** Save final state when interaction ends */
+      this.saveToHistory()
+
       this.cameraProvider.enabled = true
       if (event.target === this.translateControls)
         this.rotateControls.attach(this.translationRotationAnchor)
@@ -572,14 +688,19 @@ export class SectionTool extends Extension {
    */
   //@ts-ignore
   protected changeHandler() {
-    /** Just copy over position, rotation  and scale*/
+    /** Just copy over position, rotation and scale*/
     this.obb.center.copy(this.translationRotationAnchor.position)
+
+    /** Apply rotation snapping if shift key is pressed */
+    let quaternion = this.translationRotationAnchor.quaternion
+    if (this.shiftKeyPressed) {
+      quaternion = this.snapQuaternionToGrid(quaternion)
+      /** Update the anchor's quaternion to keep visual controls in sync */
+      this.translationRotationAnchor.quaternion.copy(quaternion)
+    }
+
     this.obb.rotation.copy(
-      new Matrix3().setFromMatrix4(
-        new Matrix4().makeRotationFromQuaternion(
-          this.translationRotationAnchor.quaternion
-        )
-      )
+      new Matrix3().setFromMatrix4(new Matrix4().makeRotationFromQuaternion(quaternion))
     )
     this.obb.halfSize.copy(this.scaleAnchor.scale)
 
@@ -919,5 +1040,103 @@ export class SectionTool extends Extension {
     box: Box3 | { min: Vector3Like; max: Vector3Like } | OBB
   ): box is OBB {
     return box instanceof OBB
+  }
+
+  /**
+   * Snaps a quaternion to the nearest grid based on rotationSnapAngle.
+   * This is useful for rotation snapping.
+   * @param q The quaternion to snap.
+   * @returns The snapped quaternion.
+   */
+  protected snapQuaternionToGrid(q: Quaternion): Quaternion {
+    /** Convert quaternion to Euler angles using pooled object */
+    _tempEuler.setFromQuaternion(q)
+
+    /** Snap each axis to the configured angle increments */
+    if (this.rotationSnapAngle !== null) {
+      _tempEuler.x =
+        Math.round(_tempEuler.x / this.rotationSnapAngle) * this.rotationSnapAngle
+      _tempEuler.y =
+        Math.round(_tempEuler.y / this.rotationSnapAngle) * this.rotationSnapAngle
+      _tempEuler.z =
+        Math.round(_tempEuler.z / this.rotationSnapAngle) * this.rotationSnapAngle
+    }
+
+    /** Convert back to quaternion using pooled object */
+    _tempQuaternion.setFromEuler(_tempEuler)
+    return _tempQuaternion
+  }
+
+  /**
+   * Undoes the last section box change
+   */
+  protected undoSectionBox() {
+    if (this.currentHistoryIndex > 0) {
+      /** Move cursor back */
+      this.currentHistoryIndex--
+
+      /** Get the state at current cursor position */
+      const previousState = this.sectionBoxHistory[this.currentHistoryIndex]
+
+      if (previousState) {
+        /** Apply the previous state */
+        this.applyObbState(previousState)
+
+        /** Update visual state */
+        this.updatePlanes()
+        this.updateVisual()
+        this.updateFaceControls(this.draggingFace)
+
+        /** Update section outlines */
+        const sectionOutlines = this.viewer.getExtension(SectionOutlines)
+        if (sectionOutlines && sectionOutlines.enabled) {
+          sectionOutlines.requestUpdate(true)
+        }
+
+        this.viewer.requestRender()
+      }
+    }
+  }
+
+  /**
+   * Redoes the last undone section box change
+   */
+  protected redoSectionBox() {
+    if (this.currentHistoryIndex < this.sectionBoxHistory.length - 1) {
+      /** Move cursor forward */
+      this.currentHistoryIndex++
+
+      /** Get the state at current cursor position */
+      const nextState = this.sectionBoxHistory[this.currentHistoryIndex]
+      if (nextState) {
+        /** Apply the next state */
+        this.applyObbState(nextState)
+
+        /** Update visual state */
+        this.updatePlanes()
+        this.updateVisual()
+        this.updateFaceControls(this.draggingFace)
+
+        /** Update section outlines */
+        const sectionOutlines = this.viewer.getExtension(SectionOutlines)
+        if (sectionOutlines && sectionOutlines.enabled) {
+          sectionOutlines.requestUpdate(true)
+        }
+
+        this.viewer.requestRender()
+      }
+    }
+  }
+
+  /**
+   * Cleanup method to remove event listeners and prevent memory leaks
+   */
+  public dispose() {
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler)
+    }
+    if (this.keyupHandler) {
+      document.removeEventListener('keyup', this.keyupHandler)
+    }
   }
 }

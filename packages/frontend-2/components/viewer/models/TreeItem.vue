@@ -5,7 +5,7 @@
     <!-- Header -->
     <div
       ref="headerElement"
-      class="group flex items-center justify-between w-full p-2 pr-1 cursor-pointer"
+      class="group flex items-center justify-between w-full p-1 cursor-pointer"
       :class="getBackgroundClass"
       @click.stop="(e:MouseEvent) => setSelection(e)"
       @mouseenter="highlightObject"
@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div class="flex items-center w-0 group-hover:w-auto">
+      <div class="flex items-center w-0 group-hover:w-auto overflow-hidden">
         <button
           v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
           class="p-1 rounded-md"

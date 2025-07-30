@@ -2,7 +2,7 @@
   <ViewerLayoutSidePanel>
     <template #title>Filters</template>
     <template #actions>
-      <div class="flex gap-x-0.5 pr-2">
+      <div class="flex gap-x-0.5">
         <FormButton
           v-if="title !== 'Object Type'"
           size="sm"
