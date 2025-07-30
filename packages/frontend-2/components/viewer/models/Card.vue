@@ -179,6 +179,20 @@ const removeEnabled = computed(() => items.value.length > 1)
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
+      title: 'Load latest version',
+      id: 'load-latest-version'
+    },
+    {
+      title: 'Show version history',
+      id: 'show-version-history'
+    },
+    {
+      title: 'Show version changes',
+      id: 'show-version-changes'
+    }
+  ],
+  [
+    {
       title: 'Remove model',
       id: 'remove-model',
       disabled: !removeEnabled.value,
