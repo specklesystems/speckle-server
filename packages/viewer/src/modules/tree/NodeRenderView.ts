@@ -7,9 +7,7 @@ import Materials, {
   type RenderMaterial
 } from '../materials/Materials.js'
 import { SpeckleType } from '../loaders/GeometryConverter.js'
-import { DataChunk } from '../../IViewer.js'
 import { ChunkArray } from '../converter/VirtualArray.js'
-const _box3: Box3 = new Box3()
 
 export interface NodeRenderData {
   id: string
@@ -160,13 +158,8 @@ export class NodeRenderView {
       this._renderData.geometry.attributes &&
       this._renderData.geometry.attributes.POSITION.length
     ) {
-      this._renderData.geometry.attributes.POSITION.chunkArray.forEach(
-        (c: DataChunk) => {
-          _box3.setFromArray(c.data)
-          if (transform) _box3.applyMatrix4(transform)
-          this._aabb.union(_box3)
-        }
-      )
+      this._aabb.copy(this._renderData.geometry.attributes.POSITION.computeBox3())
+      if (transform) this._aabb.applyMatrix4(transform)
     }
   }
 

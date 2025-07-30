@@ -1,6 +1,6 @@
 import { TypedArray } from 'type-fest'
 import { DataChunk } from '../../IViewer.js'
-import { MathUtils } from 'three'
+import { Box3, MathUtils, Vector3 } from 'three'
 
 export class VirtualArray {
   private offsets: number[]
@@ -89,6 +89,51 @@ export class ChunkArray extends VirtualArray {
       )
       chunkOffset += chunk.data.length
     })
+  }
+
+  public computeBox3(): Box3 {
+    const box = new Box3()
+    const vec3 = new Vector3()
+    let carry: number[] = [] // to hold x/y if vec3 is split
+
+    for (let c = 0; c < this.chunks.length; c++) {
+      const chunk = this.chunks[c]
+      let i = 0
+
+      // Handle carry-over from previous chunk
+      if (carry.length > 0) {
+        while (carry.length < 3 && i < chunk.length) {
+          carry.push(chunk[i++])
+        }
+        if (carry.length === 3) {
+          vec3.set(carry[0], carry[1], carry[2])
+          box.expandByPoint(vec3)
+          carry = []
+        }
+      }
+
+      // Now read as many full vec3s as possible from this chunk
+      const fullVec3Count = Math.floor((chunk.length - i) / 3)
+      for (let j = 0; j < fullVec3Count; j++) {
+        const x = chunk[i++]
+        const y = chunk[i++]
+        const z = chunk[i++]
+        vec3.set(x, y, z)
+        box.expandByPoint(vec3)
+      }
+
+      // If there's a leftover partial vec3 at the end, save it
+      while (i < chunk.length) {
+        carry.push(chunk[i++])
+      }
+    }
+
+    // Final sanity check
+    if (carry.length !== 0) {
+      console.warn('Virtual position buffer ended with incomplete vec3 data')
+    }
+
+    return box
   }
 
   protected getFlatArray<T extends TypedArray>(Type: { new (length: number): T }) {
