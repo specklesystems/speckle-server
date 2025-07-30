@@ -181,7 +181,7 @@ type FileUploadMutations {
   recording the provided status, and emitting the needed subscriptions.
   Mostly for internal service usage.
   """
-  finishFileImport(input: FinishFileImportInput!): Boolean
+  finishFileImport(input: FinishFileImportInput!): Boolean!
     @hasScope(scope: "streams:write")
 }
 
