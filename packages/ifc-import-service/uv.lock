@@ -251,6 +251,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "asyncpg" },
+    { name = "colorful" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "specklepy", extra = ["speckleifc"] },
@@ -270,6 +271,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", specifier = ">=0.30.0" },
+    { name = "colorful", specifier = ">=0.5.7" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "specklepy", extras = ["speckleifc"], specifier = ">=3.0.4.dev8" },
