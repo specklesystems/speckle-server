@@ -232,6 +232,7 @@ export default class LineBatch implements Batch {
 
   public buildBatch() {
     let attributeCount = 0
+    const rvAABB: Box3 = new Box3()
     const bounds = new Box3()
     this.renderViews.forEach((val: NodeRenderView) => {
       if (!val.renderData.geometry.attributes) {
@@ -272,17 +273,20 @@ export default class LineBatch implements Batch {
           points[2 * i + 5] = geometry.attributes.POSITION.get(i + 5)
         }
         position.set(points, offset)
-        Geometry.transformArray(position, geometry.transform, offset, points.length)
       } else {
         points = geometry.attributes.POSITION
         geometry.attributes.POSITION.copyToBuffer(position, offset)
-        Geometry.transformArray(
-          position,
-          geometry.transform,
-          offset,
-          geometry.attributes.POSITION.length
-        )
       }
+
+      const positionSubArray = position.subarray(offset, offset + points.length)
+      Geometry.transformArray(positionSubArray, geometry.transform, 0, points.length)
+      /** We re-compute the render view aabb based on transformed geometry
+       *  We do this because some transforms like non-uniform scaling can produce incorrect results
+       *  if we compute an aabb from original geometry then apply the transform. That's why we compute
+       *  an aabb from the transformed geometry here and set it in the rv
+       */
+      rvAABB.setFromArray(positionSubArray)
+      this.renderViews[k].aabb = rvAABB
 
       this.renderViews[k].setBatchData(this.id, offset / 6, points.length / 6)
 

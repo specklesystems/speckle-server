@@ -193,6 +193,7 @@ export class MeshBatch extends PrimitiveBatch {
   public buildBatch(): Promise<void> {
     let indicesCount = 0
     let attributeCount = 0
+    const rvAABB: Box3 = new Box3()
     const bounds: Box3 = new Box3()
     for (let k = 0; k < this.renderViews.length; k++) {
       const ervee = this.renderViews[k]
@@ -285,6 +286,14 @@ export class MeshBatch extends PrimitiveBatch {
         offset / 3,
         offset / 3 + geometry.attributes.POSITION.length
       )
+
+      /** We re-compute the render view aabb based on transformed geometry
+       *  We do this because some transforms like non-uniform scaling can produce incorrect results
+       *  if we compute an aabb from original geometry then apply the transform. That's why we compute
+       *  an aabb from the transformed geometry here and set it in the rv
+       */
+      rvAABB.setFromArray(positionSubarray)
+      this.renderViews[k].aabb = rvAABB
 
       const batchObject = new BatchObject(this.renderViews[k], k)
       batchObject.buildAccelerationStructure(positionSubarray, indicesSubArray)

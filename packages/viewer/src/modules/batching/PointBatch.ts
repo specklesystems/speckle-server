@@ -158,6 +158,7 @@ export class PointBatch extends PrimitiveBatch {
 
   public buildBatch(): Promise<void> {
     let attributeCount = 0
+    const rvAABB: Box3 = new Box3()
     const bounds = new Box3()
     for (let k = 0; k < this.renderViews.length; k++) {
       const ervee = this.renderViews[k]
@@ -190,10 +191,16 @@ export class PointBatch extends PrimitiveBatch {
       }
 
       geometry.attributes?.POSITION.copyToBuffer(position, offset)
-      Geometry.transformArray(
-        position,
-        geometry.transform,
+      const positionSubarray = position.subarray(
         offset,
+        offset +
+          (this.renderViews[k].renderData.geometry.attributes?.POSITION.length ?? 0)
+      )
+
+      Geometry.transformArray(
+        positionSubarray,
+        geometry.transform,
+        0,
         geometry.attributes?.POSITION.length
       )
       if (geometry.attributes.COLOR) {
@@ -206,6 +213,15 @@ export class PointBatch extends PrimitiveBatch {
         ).map((_value, index) => index + indexOffset),
         indexOffset
       )
+
+      /** We re-compute the render view aabb based on transformed geometry
+       *  We do this because some transforms like non-uniform scaling can produce incorrect results
+       *  if we compute an aabb from original geometry then apply the transform. That's why we compute
+       *  an aabb from the transformed geometry here and set it in the rv
+       */
+      rvAABB.setFromArray(positionSubarray)
+      this.renderViews[k].aabb = rvAABB
+
       this.renderViews[k].setBatchData(
         this.id,
         offset / 3,
