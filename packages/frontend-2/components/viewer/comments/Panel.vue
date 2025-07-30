@@ -4,28 +4,26 @@
       <span>Discussions</span>
     </template>
     <template #actions>
-      <div class="relative pr-2">
-        <LayoutMenu
-          v-model:open="showVisibilityOptions"
-          :menu-id="menuId"
-          :items="actionsItems"
-          :menu-position="HorizontalDirection.Right"
-          mount-menu-on-body
-          :custom-menu-items-classes="['!w-[270px]']"
-          show-ticks
-          @click.stop.prevent
-          @chosen="onActionChosen"
-        >
-          <FormButton
-            hide-text
-            size="sm"
-            color="subtle"
-            :icon-left="settingsIcon"
-            :class="showVisibilityOptions ? '!text-primary-focus !bg-info-lighter' : ''"
-            @click="showVisibilityOptions = !showVisibilityOptions"
-          />
-        </LayoutMenu>
-      </div>
+      <LayoutMenu
+        v-model:open="showVisibilityOptions"
+        :menu-id="menuId"
+        :items="actionsItems"
+        :menu-position="HorizontalDirection.Right"
+        mount-menu-on-body
+        :custom-menu-items-classes="['!w-[270px]']"
+        show-ticks
+        @click.stop.prevent
+        @chosen="onActionChosen"
+      >
+        <FormButton
+          hide-text
+          size="sm"
+          color="subtle"
+          :icon-left="settingsIcon"
+          :class="showVisibilityOptions ? '!text-primary-focus !bg-info-lighter' : ''"
+          @click="showVisibilityOptions = !showVisibilityOptions"
+        />
+      </LayoutMenu>
     </template>
     <div class="flex flex-col">
       <div class="flex flex-col gap-y-2 p-1">

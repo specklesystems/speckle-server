@@ -1,5 +1,5 @@
 <template>
-  <div class="flex pr-1">
+  <div class="flex">
     <div v-tippy="'Versions'" class="flex">
       <button
         class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center shrink-0"

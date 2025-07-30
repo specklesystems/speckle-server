@@ -1,7 +1,7 @@
 <template>
   <div class="overflow-hidden flex flex-col h-full">
     <div
-      class="flex flex-shrink-0 justify-between items-center border-b border-outline-3 h-10 pl-4"
+      class="flex flex-shrink-0 justify-between items-center border-b border-outline-3 h-10 pl-4 pr-2"
     >
       <div class="text-body-xs text-foreground font-medium">
         <span v-if="title" class="truncate">{{ title }}</span>
@@ -16,8 +16,6 @@
 </template>
 
 <script setup lang="ts">
-defineEmits(['close'])
-
 defineProps<{
   title?: string
 }>()
