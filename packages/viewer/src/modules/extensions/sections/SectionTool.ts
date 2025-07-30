@@ -54,13 +54,6 @@ export interface SectionToolEventPayload {
   [SectionToolEvent.Updated]: Plane[]
 }
 
-/** Interface for storing complete section box state */
-interface SectionBoxState {
-  center: Vector3
-  halfSize: Vector3
-  rotation: Matrix3
-}
-
 /** Buffers */
 const _matrix4 = new Matrix4()
 const _quaternion = new Quaternion()
@@ -221,13 +214,13 @@ export class SectionTool extends Extension {
   protected shiftKeyPressed = false
   protected keydownHandler: (e: KeyboardEvent) => void
   protected keyupHandler: (e: KeyboardEvent) => void
-  protected sectionBoxHistory: SectionBoxState[] = []
+  protected sectionBoxHistory: OBB[] = []
   protected currentHistoryIndex = 0
   protected maxHistorySize = 100
-  protected initialSectionBoxState: SectionBoxState | null = null
+  protected initialSectionBoxState: OBB | null = null
   protected hasInitialized = false
   protected hasSavedForCurrentDrag = false
-  protected initialStateForCurrentDrag: SectionBoxState | null = null
+  protected initialStateForCurrentDrag: OBB | null = null
 
   /** Manadatory property for all extensions */
   public get enabled() {
@@ -547,30 +540,24 @@ export class SectionTool extends Extension {
   }
 
   /**
-   * Creates a SectionBoxState from the current OBB
+   * Creates an OBB copy from the current OBB
    */
-  protected createSectionBoxState(): SectionBoxState {
-    return {
-      center: this.obb.center.clone(),
-      halfSize: this.obb.halfSize.clone(),
-      rotation: this.obb.rotation.clone()
-    }
+  protected createObbCopy(): OBB {
+    return new OBB().copy(this.obb)
   }
 
   /**
-   * Applies a SectionBoxState to the current OBB
+   * Applies an OBB state to the current OBB
    */
-  protected applySectionBoxState(state: SectionBoxState): void {
-    this.obb.center.copy(state.center)
-    this.obb.halfSize.copy(state.halfSize)
-    this.obb.rotation.copy(state.rotation)
+  protected applyObbState(state: OBB): void {
+    this.obb.copy(state)
   }
 
   /**
    * Saves the current section box state to history
    */
   protected saveToHistory(): void {
-    const currentState = this.createSectionBoxState()
+    const currentState = this.createObbCopy()
 
     /** If this is the first change, save the initial state first */
     if (this.sectionBoxHistory.length === 0 && this.initialSectionBoxState) {
@@ -682,12 +669,12 @@ export class SectionTool extends Extension {
 
       /** Store initial state when drag starts */
       if (!this.hasSavedForCurrentDrag) {
-        this.initialStateForCurrentDrag = this.createSectionBoxState()
+        this.initialStateForCurrentDrag = this.createObbCopy()
         this.hasSavedForCurrentDrag = true
 
         /** Save the initial state for the entire session */
         if (!this.initialSectionBoxState) {
-          this.initialSectionBoxState = this.createSectionBoxState()
+          this.initialSectionBoxState = this.createObbCopy()
         }
       }
 
@@ -1116,7 +1103,7 @@ export class SectionTool extends Extension {
 
       if (previousState) {
         /** Apply the previous state */
-        this.applySectionBoxState(previousState)
+        this.applyObbState(previousState)
 
         /** Update visual state */
         this.updatePlanes()
@@ -1146,7 +1133,7 @@ export class SectionTool extends Extension {
       const nextState = this.sectionBoxHistory[this.currentHistoryIndex]
       if (nextState) {
         /** Apply the next state */
-        this.applySectionBoxState(nextState)
+        this.applyObbState(nextState)
 
         /** Update visual state */
         this.updatePlanes()
