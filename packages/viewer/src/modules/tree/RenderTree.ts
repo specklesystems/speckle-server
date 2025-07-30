@@ -55,7 +55,7 @@ export class RenderTree {
           transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
         }
         node.model.renderView.renderData.geometry.transform = transform
-        node.model.renderView.computeAABB(transform)
+        node.model.renderView.computeAABB(!node.model.instanced ? transform : undefined)
         /** I like that this is gone now! */
         //   if (
         //     node.model.instanced &&
