@@ -432,12 +432,12 @@ describe('Core GraphQL Subscriptions (New)', () => {
         ])
 
         const projectSubs = onUserProjectsUpdated.getMessages()
-        expect(projectSubs).to.have.gte(1)
-        expect(projectSubs).to.have.lte(2)
+        expect(projectSubs.length).to.be.gte(1)
+        expect(projectSubs.length).to.be.lte(2)
 
         const userSubs = onUserStreamAdded.getMessages()
-        expect(userSubs).to.have.gte(1)
-        expect(userSubs).to.have.lte(2)
+        expect(userSubs.length).to.be.gte(1)
+        expect(userSubs.length).to.be.lte(2)
       })
 
       it('should notify me of a project ive just been added to (userProjectsUpdated/userStreamAdded)', async () => {
