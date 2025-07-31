@@ -36,7 +36,8 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                         AND status = $2
                     )
                 OR ( --timed job left on processing state
-                        status = $1
+                        payload ->> 'fileType' = 'ifc'
+                        AND status = $1
                         AND "updatedAt" < NOW() - ("timeoutMs" * interval '1 millisecond')
                     )
                 ORDER BY "createdAt"

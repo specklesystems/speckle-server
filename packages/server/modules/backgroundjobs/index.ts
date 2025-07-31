@@ -1,21 +1,11 @@
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/observability/logging'
-import {
-  shutdownSchedule,
-  startSchedule
-} from '@/modules/backgroundjobs/services/schedule'
 
 const backgroundJobsModule: SpeckleModule = {
-  async init({ isInitial }) {
+  async init() {
     moduleLogger.info('🛠️  Init backgroundjobs module')
-
-    if (isInitial) {
-      startSchedule()
-    }
   },
-  async shutdown() {
-    shutdownSchedule()
-  }
+  async shutdown() {}
 }
 
 export default backgroundJobsModule

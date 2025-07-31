@@ -1,10 +1,5 @@
 import type { Knex } from 'knex'
-import type {
-  GetStaleBackgroundJobs,
-  UpdateBackgroundJobStatus
-} from '@/modules/backgroundjobs/domain'
 import {
-  BackgroundJobStatus,
   type BackgroundJob,
   type BackgroundJobPayload,
   type GetBackgroundJob,
@@ -69,24 +64,4 @@ export const getBackgroundJobCountFactory =
     const res = await q.andWhere({ jobType })
 
     return res.length
-  }
-
-export const getStaleBackgroundJobsFactory =
-  ({ db }: { db: Knex }): GetStaleBackgroundJobs =>
-  async () => {
-    const jobs = await tables
-      .backgroundJobs(db)
-      .select('*')
-      .where(BackgroundJobs.col.status, BackgroundJobStatus.Processing)
-      .andWhereRaw(`"updatedAt" < NOW() - ("timeoutMs" * interval '1 millisecond')`)
-      .forUpdate()
-      .skipLocked()
-
-    return jobs
-  }
-
-export const updateBackgroundJobStatusFactory =
-  ({ db }: { db: Knex }): UpdateBackgroundJobStatus =>
-  async ({ jobId, status }) => {
-    await tables.backgroundJobs(db).where({ id: jobId }).update({ status })
   }
