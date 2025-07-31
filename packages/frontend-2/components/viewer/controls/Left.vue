@@ -1,12 +1,12 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 top-[3.5rem] z-20 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible"
+    class="absolute left-2 lg:left-0 top-[3.5rem] z-40 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible"
     :class="[
       isEmbedEnabled
         ? ''
         : 'lg:top-[3rem] lg:rounded-none lg:px-2 lg:max-h-[calc(100dvh-3rem)] lg:border-l-0 lg:border-t-0 lg:border-b-0',
-      hasActivePanel && 'h-full max-h-[calc(100dvh-7.875rem)] rounded-r-none'
+      hasActivePanel && 'h-full max-h-[calc(100dvh-8rem)] rounded-r-none'
     ]"
   >
     <div class="flex flex-col gap-2 py-1" :class="isEmbedEnabled ? '' : 'lg:py-2'">
@@ -99,15 +99,14 @@
 
     <!-- Scrollable controls container -->
     <div
+      v-show="activePanel !== 'none'"
       ref="scrollableControlsContainer"
       :class="[
-        'simple-scrollbar bg-foundation absolute z-10 left-[calc(2.5rem+1px)] top-[-1px] bottom-[-1px] overflow-y-auto overflow-x-visible border-outline-2 border border-l-0 rounded-lg rounded-tl-none rounded-bl-none',
+        'simple-scrollbar overflow-x-hidden bg-foundation absolute z-10 left-[calc(2.5rem+1px)] top-[-1px] bottom-[-1px] overflow-y-auto border-outline-2 border border-l-0 rounded-lg rounded-tl-none rounded-bl-none',
         hasActivePanel ? 'opacity-100' : 'opacity-0',
         isEmbedEnabled ? '' : 'lg:left-[calc(3rem+1px)] lg:border-none lg:rounded-none'
       ]"
-      :style="`width: ${
-        isMobile ? 'calc(100vw - 3.75rem)' : `${width + 4}px`
-      }; overflow-x: visible !important;`"
+      :style="`width: ${isMobile ? 'calc(100vw - 3.75rem)' : `${width + 4}px`};`"
     >
       <ViewerModelsPanel
         v-if="resourceItems.length !== 0 && activePanel === 'models'"
