@@ -63,7 +63,8 @@
           <button
             class="size-6 flex items-center justify-center rounded-md"
             :class="[
-              showSettings && 'text-primary-focus bg-info-lighter',
+              showSettings &&
+                'text-primary-focus bg-info-lighter dark:text-foreground-on-primary',
               !showSettings && 'text-foreground hover:bg-foundation-2'
             ]"
             @click="showSettings = !showSettings"
