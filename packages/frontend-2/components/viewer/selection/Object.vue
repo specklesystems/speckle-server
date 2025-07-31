@@ -16,7 +16,7 @@
         @focusout="unhighlightObject"
       >
         <IconTriangle
-          :class="`h-3 w-3 ${headerClasses} ${unfold ? 'rotate-90' : ''}`"
+          :class="`h-3 w-3 shrink-0 ${headerClasses} ${unfold ? 'rotate-90' : ''}`"
         />
         <div :class="`truncate text-body-3xs font-medium ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
