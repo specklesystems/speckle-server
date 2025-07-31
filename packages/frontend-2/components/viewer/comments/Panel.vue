@@ -19,7 +19,11 @@
           hide-text
           color="subtle"
           :icon-left="settingsIcon"
-          :class="showVisibilityOptions ? '!text-primary-focus !bg-info-lighter' : ''"
+          :class="
+            showVisibilityOptions
+              ? '!text-primary-focus !dark:text-foreground-on-primary !bg-info-lighter'
+              : ''
+          "
           @click="showVisibilityOptions = !showVisibilityOptions"
         />
       </LayoutMenu>
