@@ -1,6 +1,5 @@
 import {
   Box3,
-  BufferAttribute,
   BufferGeometry,
   Color,
   DoubleSide,
@@ -24,6 +23,7 @@ import SpeckleBasicMaterial, {
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 import { ObjectLayers } from '../../index.js'
 import Logger from '../utils/Logger.js'
+import { Uint16BufferAttribute } from 'three'
 
 const _mat40: Matrix4 = new Matrix4()
 const _mat41: Matrix4 = new Matrix4()
@@ -517,12 +517,9 @@ export class TextLabel extends Text {
     }
 
     const geometry = new BufferGeometry()
-    geometry.setIndex(new BufferAttribute(new Uint32Array(indices), 1))
-    geometry.setAttribute(
-      'position',
-      new BufferAttribute(new Float32Array(positions), 3)
-    )
-    geometry.setAttribute('uv', new BufferAttribute(new Float32Array(uvs), 2))
+    geometry.setIndex(new Uint16BufferAttribute(indices, 1))
+    geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))
+    geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2))
     geometry.computeBoundingBox()
 
     return geometry

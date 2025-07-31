@@ -73,6 +73,8 @@ featureFlags:
   legacyIfcImporterEnabled: false
   ## @param featureFlags.backgroundJobsEnabled Enables the ability to run background jobs (such as the IFC importer) in Speckle
   backgroundJobsEnabled: false
+  ## @param featureFlags.rhinoFileImporterEnabled  Enables the dedicated Rhino based file importer. This is not part of the deployment.
+  rhinoFileImporterEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
