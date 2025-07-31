@@ -1,7 +1,7 @@
 <template>
   <aside
     ref="buttonContainer"
-    class="absolute top-[3.75rem] z-20"
+    class="absolute top-[3.75rem] sm:top-[3.5rem] lg:top-[3.75rem] z-20"
     :style="dynamicStyles"
   >
     <ViewerControlsButtonGroup ref="buttonContainer" direction="vertical">
@@ -31,7 +31,8 @@
 <script setup lang="ts">
 import { useCameraUtilities, useViewerShortcuts } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { onClickOutside } from '@vueuse/core'
+import { onClickOutside, useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import type { Nullable } from '@speckle/shared'
 
 type ActivePanel = 'none' | 'cameraControls'
@@ -51,14 +52,19 @@ const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortc
 const mixpanel = useMixpanel()
 const { getTooltipProps } = useSmartTooltipDelay()
 
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isSmOrLarger = breakpoints.greaterOrEqual('sm')
+const isLgOrLarger = breakpoints.greaterOrEqual('lg')
+
 const activePanel = ref<ActivePanel>('none')
 const menuContainer = ref<Nullable<HTMLElement>>(null)
 const buttonContainer = ref<Nullable<HTMLElement>>(null)
 
 const dynamicStyles = computed(() => {
   if (props.sidebarOpen) {
+    const offset = isSmOrLarger.value && !isLgOrLarger.value ? 1 : 0.75
     return {
-      right: `${props.sidebarWidth / 16 + 0.75}rem`
+      right: `${props.sidebarWidth / 16 + offset}rem`
     }
   } else {
     return {

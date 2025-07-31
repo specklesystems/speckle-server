@@ -2,7 +2,7 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen bottom-0 sm:bottom-auto sm:top-[3rem] h-[40dvh] sm:h-[calc(100dvh-3rem)]"
+    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen bottom-0 sm:bottom-auto sm:top-[3.5rem] lg:top-[3rem] sm:right-2 lg:right-0 h-[40dvh] sm:h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-3rem)]"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
     :class="[open ? '' : 'pointer-events-none']"
   >
@@ -10,12 +10,12 @@
       <!-- Resize Handle -->
       <div
         ref="resizeHandle"
-        class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l hover:border-l-[2px] border-outline-2 hover:border-primary hidden sm:flex items-center cursor-ew-resize z-30"
+        class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l sm:rounded-lg lg:rounded-none hover:border-l-[2px] border-outline-2 hover:border-primary hidden sm:flex items-center cursor-ew-resize z-30"
         @mousedown="startResizing"
       />
 
       <div
-        class="flex flex-col w-full h-full relative z-20 overflow-hidden border-l border-outline-2 bg-foundation"
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden sm:rounded-lg lg:rounded-none border-l sm:border lg:border-0 lg:border-l border-outline-2 bg-foundation"
       >
         <div
           class="h-10 pl-4 pr-2 flex items-center justify-between border-b border-outline-2"
