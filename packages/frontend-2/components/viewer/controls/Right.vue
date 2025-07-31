@@ -1,6 +1,10 @@
 <template>
-  <aside class="absolute top-[3.75rem] z-20" :style="dynamicStyles">
-    <ViewerControlsButtonGroup direction="vertical">
+  <aside
+    ref="buttonContainer"
+    class="absolute top-[3.75rem] z-20"
+    :style="dynamicStyles"
+  >
+    <ViewerControlsButtonGroup ref="buttonContainer" direction="vertical">
       <ViewerControlsButtonToggle
         v-tippy="
           getTooltipProps(getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection), {
@@ -49,6 +53,7 @@ const { getTooltipProps } = useSmartTooltipDelay()
 
 const activePanel = ref<ActivePanel>('none')
 const menuContainer = ref<Nullable<HTMLElement>>(null)
+const buttonContainer = ref<Nullable<HTMLElement>>(null)
 
 const dynamicStyles = computed(() => {
   if (props.sidebarOpen) {
@@ -75,7 +80,13 @@ registerShortcuts({
   ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection()
 })
 
-onClickOutside(menuContainer, () => {
-  activePanel.value = 'none'
-})
+onClickOutside(
+  menuContainer,
+  () => {
+    activePanel.value = 'none'
+  },
+  {
+    ignore: [buttonContainer]
+  }
+)
 </script>
