@@ -82,8 +82,8 @@ export class AccelerationStructure {
   }
 
   public static buildBVH(
-    indices: number[] | undefined,
-    position: number[] | undefined,
+    indices: Uint16Array | Uint32Array | undefined,
+    position: Float32Array | Float64Array | undefined,
     options: BVHOptions = DefaultBVHOptions,
     transform?: Matrix4
   ): MeshBVH {
@@ -92,7 +92,7 @@ export class AccelerationStructure {
       throw new Error('Cannot build BVH with undefined indices or position!')
     }
 
-    let bvhPositions = new Float32Array(position)
+    let bvhPositions = position
     if (transform) {
       bvhPositions = new Float32Array(position.length)
       const vecBuff = new Vector3()

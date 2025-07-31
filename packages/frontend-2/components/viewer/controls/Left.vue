@@ -106,7 +106,7 @@
         hasActivePanel ? 'opacity-100' : 'opacity-0',
         isEmbedEnabled ? '' : 'lg:left-[calc(3rem+1px)] lg:border-none lg:rounded-none'
       ]"
-      :style="`width: ${isMobile ? 'calc(100vw - 3.75rem)' : `${width + 4}px`};`"
+      :style="`width: ${isMobile ? 'calc(100vw - 3.6rem)' : `${width + 4}px`};`"
     >
       <ViewerModelsPanel
         v-if="resourceItems.length !== 0 && activePanel === 'models'"

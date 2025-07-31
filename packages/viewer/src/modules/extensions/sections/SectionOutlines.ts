@@ -303,6 +303,7 @@ export class SectionOutlines extends Extension {
   private createPlaneOutline(planeId: string): PlaneOutline {
     const buffer = new Float64Array(SectionOutlines.INITIAL_BUFFER_SIZE)
     const lineGeometry = new LineSegmentsGeometry()
+    /** We need to re-allocate, otherwise three.js will do it anyway */
     lineGeometry.setPositions(new Float32Array(buffer))
     ;(
       lineGeometry.attributes['instanceStart'] as InterleavedBufferAttribute
@@ -390,7 +391,7 @@ export class SectionOutlines extends Extension {
 
     const buffer = new Float32Array(size)
     outline.renderable.geometry = new LineSegmentsGeometry()
-    outline.renderable.geometry.setPositions(new Float32Array(buffer))
+    outline.renderable.geometry.setPositions(buffer)
     ;(
       outline.renderable.geometry.attributes[
         'instanceStart'
