@@ -2,7 +2,8 @@
   <aside>
     <ViewerControlsButtonGroup
       v-show="activePanel === 'none'"
-      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-50"
+      class="absolute left-1/2 -translate-x-1/2 z-50"
+      :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <ViewerControlsButtonToggle
         v-for="panel in panels"
@@ -16,7 +17,8 @@
 
     <ViewerLayoutPanel
       v-if="activePanel !== 'none'"
-      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-50 flex p-1 items-center justify-between w-80"
+      class="absolute left-1/2 -translate-x-1/2 z-50 flex p-1 items-center justify-between w-80"
+      :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <span class="flex items-center">
         <component :is="panels[activePanel].icon" class="h-4 w-4 ml-1 mr-1.5" />
@@ -49,6 +51,7 @@ import {
   useFilterUtilities
 } from '~~/lib/viewer/composables/ui'
 import { onKeyStroke } from '@vueuse/core'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 enum ActivePanel {
   none = 'none',
@@ -65,6 +68,7 @@ const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
 const { getTooltipProps } = useSmartTooltipDelay()
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
 const panels = shallowRef({

@@ -1,11 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 top-[3.5rem] z-40 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full"
+    class="absolute left-2 lg:left-0 z-40 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full"
     :class="[
       isEmbedEnabled
-        ? ''
-        : 'lg:top-[3rem] lg:rounded-none lg:px-2 lg:max-h-[calc(100dvh-3rem)] lg:border-l-0 lg:border-t-0 lg:border-b-0',
+        ? 'top-[0.5rem]'
+        : 'top-[3.5rem] lg:top-[3rem] lg:rounded-none lg:px-2 lg:max-h-[calc(100dvh-3rem)] lg:border-l-0 lg:border-t-0 lg:border-b-0',
       hasActivePanel && 'h-full max-h-[calc(100dvh-8rem)] rounded-r-none'
     ]"
   >
@@ -55,7 +55,7 @@
         />
       </ViewerControlsButtonToggle>
       <div
-        v-if="!isTablet || activePanel !== 'none'"
+        v-if="!isEmbedEnabled && (!isTablet || activePanel !== 'none')"
         class="mt-auto flex flex-col gap-2"
       >
         <ViewerControlsButtonToggle
@@ -70,14 +70,15 @@
           @click="toggleActivePanel('devMode')"
         />
         <ViewerControlsButtonToggle
-          v-tippy="getTooltipProps('Documentation', { placement: 'top' })"
+          v-tippy="getTooltipProps('Documentation')"
           :icon="'IconDocs'"
           secondary
           @click="openDocs"
         />
         <!-- TODO: Add intercom click event -->
         <ViewerControlsButtonToggle
-          v-tippy="getTooltipProps('Get help', { placement: 'top' })"
+          v-if="isIntercomEnabled"
+          v-tippy="getTooltipProps('Get help')"
           :icon="'IconIntercom'"
           secondary
         />
@@ -131,6 +132,7 @@ import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/cor
 import { type Nullable, isNonNullable } from '@speckle/shared'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
+import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 
 type ActivePanel =
   | 'none'
@@ -182,6 +184,7 @@ if (import.meta.client) {
   })
 }
 
+const { isIntercomEnabled } = useIntercomEnabled()
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 const { isEnabled: isEmbedEnabled } = useEmbed()
