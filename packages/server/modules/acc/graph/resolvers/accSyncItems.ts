@@ -153,6 +153,8 @@ const resolvers: Resolvers = {
 
       await deleteAccSyncItemFactory({
         deleteAccSyncItemById: deleteAccSyncItemByIdFactory({ db })
+      })({
+        id: input.id
       })
 
       return true
