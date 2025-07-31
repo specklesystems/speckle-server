@@ -24,15 +24,17 @@ type StalePendingTransaction = {
 const getStalePreparedTransactionsFactory =
   ({ db }: { db: Knex }) =>
   async (): Promise<StalePendingTransaction[]> => {
-    return await db.raw(
-      `SELECT * FROM pg_prepared_xacts WHERE prepared < NOW() - INTERVAL '10 minutes';`
-    )
+    return (
+      await db.raw<{ rows: StalePendingTransaction[] }>(
+        `SELECT * FROM pg_prepared_xacts WHERE prepared < NOW() - INTERVAL '2 minutes';`
+      )
+    ).rows
   }
 
 const rollbackPreparedTransactionFactory =
   ({ db }: { db: Knex }) =>
-  async ({ transaction }: StalePendingTransaction): Promise<void> => {
-    await db.raw(`ROLLBACK PREPARED '${transaction}';`)
+  async ({ gid }: StalePendingTransaction): Promise<void> => {
+    await db.raw(`ROLLBACK PREPARED '${gid}';`)
   }
 
 const rollbackStalePreparedTransactions = async ({
