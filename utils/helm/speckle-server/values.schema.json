@@ -110,9 +110,9 @@
           "description": "Enables the next generation file importer",
           "default": false
         },
-        "largeFileUploadsEnabled": {
+        "legacyFileImportsEnabled": {
           "type": "boolean",
-          "description": "Enables the ability to upload large files to Speckle",
+          "description": "Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server",
           "default": false
         },
         "experimentalIfcImporterEnabled": {
@@ -128,6 +128,11 @@
         "backgroundJobsEnabled": {
           "type": "boolean",
           "description": "Enables the ability to run background jobs (such as the IFC importer) in Speckle",
+          "default": false
+        },
+        "rhinoFileImporterEnabled": {
+          "type": "boolean",
+          "description": "Enables the dedicated Rhino based file importer. This is not part of the deployment.",
           "default": false
         }
       }

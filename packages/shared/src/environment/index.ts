@@ -104,8 +104,7 @@ export const parseFeatureFlags = (
     },
     FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
       schema: z.boolean(),
-      description:
-        'Enables the new file importer. Requires FF_LARGE_FILE_IMPORTS_ENABLED to be true.',
+      description: 'Enables the new file importer.',
       defaults: { _: false }
     },
     FF_RHINO_FILE_IMPORTER_ENABLED: {
@@ -118,10 +117,10 @@ export const parseFeatureFlags = (
       description: 'Enables the postgres based background job mechanism',
       defaults: { _: false }
     },
-    FF_LARGE_FILE_IMPORTS_ENABLED: {
+    FF_LEGACY_FILE_IMPORTS_ENABLED: {
       schema: z.boolean(),
       description:
-        'Enables the new file importer to handle large files via pre-signed URLs.',
+        'Enables the legacy file importer. This proxies file uploads via REST API on the server instead of directly PUTing files to S3 via pre-signed urls.',
       defaults: { _: false }
     },
     FF_LEGACY_IFC_IMPORTER_ENABLED: {
@@ -175,7 +174,7 @@ export type FeatureFlags = {
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
   FF_RHINO_FILE_IMPORTER_ENABLED: boolean
   FF_BACKGROUND_JOBS_ENABLED: boolean
-  FF_LARGE_FILE_IMPORTS_ENABLED: boolean
+  FF_LEGACY_FILE_IMPORTS_ENABLED: boolean
   FF_LEGACY_IFC_IMPORTER_ENABLED: boolean
   FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
   FF_SAVED_VIEWS_ENABLED: boolean

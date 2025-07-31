@@ -1,4 +1,4 @@
-import { CustomLogger, getQueryParameter } from '../types/functions.js'
+import { CustomLogger, getFeatureFlag, ObjectLoader2Flags } from '../types/functions.js'
 import { Base } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import IndexedDatabase from './stages/indexedDatabase.js'
@@ -7,11 +7,10 @@ import { MemoryDownloader } from './stages/memory/memoryDownloader.js'
 import ServerDownloader from './stages/serverDownloader.js'
 
 export interface ObjectLoader2FactoryOptions {
-  useMemoryCache?: boolean
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
   indexedDB?: IDBFactory
-  logger2?: CustomLogger
+  logger?: CustomLogger
 }
 
 export class ObjectLoader2Factory {
@@ -42,46 +41,41 @@ export class ObjectLoader2Factory {
     headers?: Headers
     options?: ObjectLoader2FactoryOptions
   }): ObjectLoader2 {
-    const log = ObjectLoader2Factory.getLogger(params.options?.logger2)
-    let loader: ObjectLoader2
-    if (params.options?.useMemoryCache) {
-      loader = new ObjectLoader2({
-        rootId: params.objectId,
-        downloader: new ServerDownloader({
-          serverUrl: params.serverUrl,
-          streamId: params.streamId,
-          objectId: params.objectId,
-          token: params.token,
-          headers: params.headers
-        }),
-        database: new MemoryDatabase({
-          items: new Map<string, Base>()
-        }),
-        logger: log
+    const log = ObjectLoader2Factory.getLogger(params.options?.logger)
+    let database
+    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+      this.logger('Using DEBUG mode for ObjectLoader2Factory')
+    }
+    if (getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true') {
+      database = new IndexedDatabase({
+        indexedDB: params.options?.indexedDB,
+        keyRange: params.options?.keyRange
       })
     } else {
-      loader = new ObjectLoader2({
-        rootId: params.objectId,
-        downloader: new ServerDownloader({
-          serverUrl: params.serverUrl,
-          streamId: params.streamId,
-          objectId: params.objectId,
-          token: params.token,
-          headers: params.headers
-        }),
-        database: new IndexedDatabase({
-          logger: log,
-          indexedDB: params.options?.indexedDB,
-          keyRange: params.options?.keyRange
-        }),
-        logger: log
+      database = new MemoryDatabase({
+        items: new Map<string, Base>()
       })
+      this.logger(
+        'Disabled persistent caching for ObjectLoader2.  Using MemoryDatabase'
+      )
     }
+    const loader = new ObjectLoader2({
+      rootId: params.objectId,
+      downloader: new ServerDownloader({
+        serverUrl: params.serverUrl,
+        streamId: params.streamId,
+        objectId: params.objectId,
+        token: params.token,
+        headers: params.headers
+      }),
+      database,
+      logger: log
+    })
     return loader
   }
 
   static getLogger(providedLogger?: CustomLogger): CustomLogger | undefined {
-    if (getQueryParameter('debug', 'false') === 'true') {
+    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
       return providedLogger || this.logger
     }
     return providedLogger

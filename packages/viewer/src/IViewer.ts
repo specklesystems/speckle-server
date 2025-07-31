@@ -28,6 +28,13 @@ export type SpeckleObject = {
   applicationId?: string
 }
 
+export type DataChunk = {
+  id: string
+  data: number[]
+  references: number
+  processed?: boolean
+}
+
 export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset
@@ -73,7 +80,6 @@ export enum ViewerEvent {
   LoadComplete = 'load-complete',
   UnloadComplete = 'unload-complete',
   UnloadAllComplete = 'unload-all-complete',
-  Busy = 'busy',
   FilteringStateSet = 'filtering-state-set',
   LightConfigUpdated = 'light-config-updated'
 }
@@ -84,7 +90,6 @@ export interface ViewerEventPayload {
   [ViewerEvent.LoadComplete]: string
   [ViewerEvent.UnloadComplete]: string
   [ViewerEvent.UnloadAllComplete]: void
-  [ViewerEvent.Busy]: boolean
   [ViewerEvent.FilteringStateSet]: FilteringState
   [ViewerEvent.LightConfigUpdated]: LightConfiguration
 }

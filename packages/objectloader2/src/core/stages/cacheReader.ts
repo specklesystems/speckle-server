@@ -18,12 +18,13 @@ export class CacheReader {
   constructor(
     database: Database,
     defermentManager: DefermentManager,
+    logger: CustomLogger,
     options: CacheOptions
   ) {
     this.#database = database
     this.#defermentManager = defermentManager
+    this.#logger = logger
     this.#options = options
-    this.#logger = options.logger || ((): void => {})
   }
 
   initializeQueue(foundQueue: Queue<Item>, notFoundQueue: Queue<string>): void {
@@ -74,7 +75,11 @@ export class CacheReader {
         this.#notFoundQueue?.add(batch[i])
       }
     }
-    this.#logger('readBatch: left, time', items.length, performance.now() - start)
+    this.#logger(
+      `readBatch: batch ${batch.length}, time ${
+        performance.now() - start
+      } ms left ${this.#readQueue?.count()}`
+    )
   }
 
   disposeAsync(): Promise<void> {

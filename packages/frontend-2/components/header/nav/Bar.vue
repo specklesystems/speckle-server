@@ -3,7 +3,7 @@
     <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
       <div class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3">
         <div class="hidden lg:block">
-          <HeaderWorkspaceSwitcher v-if="showWorkspaceSwitcher" />
+          <HeaderWorkspaceSwitcher v-if="isWorkspacesEnabled && isLoggedIn" />
           <HeaderLogoBlock
             v-else
             :active="false"
@@ -62,9 +62,5 @@ const loginUrl = computed(() =>
       token: token.value || undefined
     }
   })
-)
-
-const showWorkspaceSwitcher = computed(
-  () => isWorkspacesEnabled.value && activeUser.value
 )
 </script>

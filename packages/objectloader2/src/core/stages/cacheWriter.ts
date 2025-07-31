@@ -17,13 +17,14 @@ export class CacheWriter implements Queue<Item> {
 
   constructor(
     database: Database,
-    options: CacheOptions,
+    logger: CustomLogger,
     defermentManager: DefermentManager,
+    options: CacheOptions,
     requestItem: (id: string) => void
   ) {
     this.#database = database
     this.#options = options
-    this.#logger = options.logger || ((): void => {})
+    this.#logger = logger
     this.#defermentManager = defermentManager
     this.#requestItem = requestItem
   }
@@ -45,7 +46,11 @@ export class CacheWriter implements Queue<Item> {
   async writeAll(items: Item[]): Promise<void> {
     const start = performance.now()
     await this.#database.saveBatch({ batch: items })
-    this.#logger('writeBatch: left, time', items.length, performance.now() - start)
+    this.#logger(
+      `writeBatch: wrote ${items.length}, time ${
+        performance.now() - start
+      } ms left ${this.#writeQueue?.count()}`
+    )
   }
 
   async disposeAsync(): Promise<void> {

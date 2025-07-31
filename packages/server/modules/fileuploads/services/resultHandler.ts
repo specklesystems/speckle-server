@@ -10,7 +10,6 @@ import {
 } from '@/modules/fileuploads/helpers/convert'
 import { ensureError } from '@speckle/shared'
 import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import type { ObserveResult } from '@/modules/fileuploads/observability/metrics'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
@@ -19,17 +18,14 @@ type OnFileImportResultDeps = {
   getFileInfo: GetFileInfoV2
   updateFileUpload: UpdateFileUpload
   eventEmit: EventBusEmit
-  observeResult?: ObserveResult
   logger: Logger
 }
 
 export const onFileImportResultFactory =
   (deps: OnFileImportResultDeps): ProcessFileImportResult =>
   async (params) => {
-    const { logger, observeResult } = deps
+    const { logger } = deps
     const { jobId, jobResult } = params
-
-    if (observeResult) observeResult({ jobResult })
 
     const fileInfo = await deps.getFileInfo({ fileId: jobId })
     if (!fileInfo) {
@@ -109,6 +105,14 @@ export const onFileImportResultFactory =
           projectId: updatedFile.streamId
         },
         isNewModel: false // next gen file uploads don't support this
+      }
+    })
+
+    await deps.eventEmit({
+      eventName: FileuploadEvents.Finished,
+      payload: {
+        jobId,
+        jobResult
       }
     })
 
