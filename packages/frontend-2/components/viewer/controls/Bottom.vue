@@ -11,6 +11,7 @@
         v-tippy="getTooltipProps(panel.tooltip)"
         :active="activePanel === panel.id"
         :icon="panel.icon"
+        :class="panel.extraClasses"
         @click="toggleActivePanel(panel.id)"
       />
     </ViewerControlsButtonGroup>
@@ -76,31 +77,36 @@ const panels = shallowRef({
     id: ActivePanel.measurements,
     name: 'Measure',
     icon: 'IconViewerMeasurements',
-    tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements)
+    tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements),
+    extraClasses: 'hidden md:flex'
   },
   [ActivePanel.sectionBox]: {
     id: ActivePanel.sectionBox,
     name: 'Section',
     icon: 'IconViewerSectionBox',
-    tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox)
+    tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox),
+    extraClasses: ''
   },
   [ActivePanel.explode]: {
     id: ActivePanel.explode,
     name: 'Explode',
     icon: 'IconViewerExplode',
-    tooltip: 'Explode model'
+    tooltip: 'Explode model',
+    extraClasses: 'hidden md:flex'
   },
   [ActivePanel.viewModes]: {
     id: ActivePanel.viewModes,
     name: 'View modes',
     icon: 'IconViewerViewModes',
-    tooltip: 'View modes'
+    tooltip: 'View modes',
+    extraClasses: ''
   },
   [ActivePanel.lightControls]: {
     id: ActivePanel.lightControls,
     name: 'Light controls',
     icon: 'IconViewerLightControls',
-    tooltip: 'Light controls'
+    tooltip: 'Light controls',
+    extraClasses: 'hidden md:flex'
   }
 })
 
