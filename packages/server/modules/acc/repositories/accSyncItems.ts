@@ -1,6 +1,7 @@
 import { AccSyncItems } from '@/modules/acc/dbSchema'
 import type {
   CountAccSyncItems,
+  DeleteAccSyncItemById,
   DeleteAccSyncItemByUrn,
   GetAccSyncItemById,
   GetAccSyncItemByUrn,
@@ -81,6 +82,12 @@ export const deleteAccSyncItemByUrnFactory =
       .accSyncItems(deps.db)
       .where(AccSyncItems.col.accFileLineageUrn, lineageUrn)
       .delete()
+  }
+
+export const deleteAccSyncItemByIdFactory =
+  (deps: { db: Knex }): DeleteAccSyncItemById =>
+  async ({ id }) => {
+    return await tables.accSyncItems(deps.db).where(AccSyncItems.col.id, id).delete()
   }
 
 export const listAccSyncItemsFactory =

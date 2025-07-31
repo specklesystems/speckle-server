@@ -26,4 +26,6 @@ export type CountAccSyncItems = (args: { projectId: string }) => Promise<number>
 
 export type DeleteAccSyncItemByUrn = (args: { lineageUrn: string }) => Promise<number>
 
+export type DeleteAccSyncItemById = (args: { id: string }) => Promise<number>
+
 export type QueryAllAccSyncItems = () => AsyncGenerator<AccSyncItem[], void, unknown>

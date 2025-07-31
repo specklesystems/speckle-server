@@ -1,6 +1,6 @@
 import {
   countAccSyncItemsFactory,
-  deleteAccSyncItemByUrnFactory,
+  deleteAccSyncItemByIdFactory,
   getAccSyncItemByIdFactory,
   listAccSyncItemsFactory,
   updateAccSyncItemStatusFactory,
@@ -152,7 +152,7 @@ const resolvers: Resolvers = {
       })
 
       await deleteAccSyncItemFactory({
-        deleteAccSyncItemByUrn: deleteAccSyncItemByUrnFactory({ db })
+        deleteAccSyncItemById: deleteAccSyncItemByIdFactory({ db })
       })
 
       return true

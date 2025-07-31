@@ -8,7 +8,7 @@ import { AccSyncItemEvents } from '@/modules/acc/domain/events'
 import { isReadyForImport } from '@/modules/acc/domain/logic'
 import type {
   CountAccSyncItems,
-  DeleteAccSyncItemByUrn,
+  DeleteAccSyncItemById,
   GetAccSyncItemById,
   ListAccSyncItems,
   UpsertAccSyncItem
@@ -219,12 +219,12 @@ export const updateAccSyncItemFactory =
     return newSyncItem
   }
 
-export type DeleteAccSyncItem = (params: { lineageUrn: string }) => Promise<void>
+export type DeleteAccSyncItem = (params: { id: string }) => Promise<void>
 
 export const deleteAccSyncItemFactory =
-  (deps: { deleteAccSyncItemByUrn: DeleteAccSyncItemByUrn }): DeleteAccSyncItem =>
-  async ({ lineageUrn }) => {
-    const itemCount = await deps.deleteAccSyncItemByUrn({ lineageUrn })
+  (deps: { deleteAccSyncItemById: DeleteAccSyncItemById }): DeleteAccSyncItem =>
+  async ({ id }) => {
+    const itemCount = await deps.deleteAccSyncItemById({ id })
 
     if (itemCount === 0) {
       throw new SyncItemNotFoundError()
