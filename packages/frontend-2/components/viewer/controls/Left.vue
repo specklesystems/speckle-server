@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 top-[3.5rem] z-20 flex rounded-lg border border-outline-2 bg-foundation px-1 h-full overflow-visible"
+    class="absolute left-2 lg:left-0 top-[3.5rem] z-20 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible"
     :class="[
       isEmbedEnabled
         ? ''
@@ -58,7 +58,10 @@
           class="h-5 w-5 md:h-6 md:w-6"
         />
       </ViewerControlsButtonToggle>
-      <div class="mt-auto flex flex-col gap-2">
+      <div
+        v-if="!isMobile || activePanel !== 'none'"
+        class="mt-auto flex flex-col gap-2"
+      >
         <ViewerControlsButtonToggle
           v-tippy="
             getTooltipProps(getShortcutDisplayText(shortcuts.ToggleDevMode), {
