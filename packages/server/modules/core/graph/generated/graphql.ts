@@ -2337,7 +2337,7 @@ export type Project = {
 
 
 export type ProjectAccSyncItemArgs = {
-  lineageUrn: Scalars['String']['input'];
+  id: Scalars['String']['input'];
 };
 
 
@@ -7148,7 +7148,7 @@ export type PriceResolvers<ContextType = GraphQLContext, ParentType extends Reso
 };
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
-  accSyncItem?: Resolver<ResolversTypes['AccSyncItem'], ParentType, ContextType, RequireFields<ProjectAccSyncItemArgs, 'lineageUrn'>>;
+  accSyncItem?: Resolver<ResolversTypes['AccSyncItem'], ParentType, ContextType, RequireFields<ProjectAccSyncItemArgs, 'id'>>;
   accSyncItems?: Resolver<ResolversTypes['AccSyncItemCollection'], ParentType, ContextType, Partial<ProjectAccSyncItemsArgs>>;
   allowPublicComments?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   automation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationArgs, 'id'>>;
