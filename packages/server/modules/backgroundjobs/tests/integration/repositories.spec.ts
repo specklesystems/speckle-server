@@ -1,9 +1,11 @@
-import knex, { db } from '@/db/knex'
+import { db } from '@/db/knex'
 import {
   storeBackgroundJobFactory,
   getBackgroundJobFactory,
   BackgroundJobs,
-  getBackgroundJobCountFactory
+  getBackgroundJobCountFactory,
+  getStaleBackgroundJobsFactory,
+  updateBackgroundJobStatusFactory
 } from '@/modules/backgroundjobs/repositories'
 import type {
   BackgroundJob,
@@ -22,6 +24,8 @@ describe('Background Jobs repositories @backgroundjobs', () => {
   })
   const getBackgroundJob = getBackgroundJobFactory({ db })
   const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
+  const getStaleBackgroundJobs = getStaleBackgroundJobsFactory({ db })
+  const updateBackgroundJobStatus = updateBackgroundJobStatusFactory({ db })
 
   type TestJobPayload = BackgroundJobPayload & {
     jobType: 'fileImport'
@@ -135,12 +139,9 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     it('is able to count locked jobs', async () => {
       const job = createTestJob({
         jobType: 'fileImport',
-        status: BackgroundJobStatus.Queued
+        status: BackgroundJobStatus.Processing
       })
       await storeBackgroundJob({ job })
-
-      const trx = await knex.transaction()
-      await trx().from(BackgroundJobs.name).where({ id: job.id }).forUpdate().first() // acquire lock
 
       const [processingCount, queuedCount] = await Promise.all([
         getBackgroundJobCount({ status: 'processing', jobType: 'fileImport' }),
@@ -149,8 +150,6 @@ describe('Background Jobs repositories @backgroundjobs', () => {
 
       expect(processingCount).to.equal(1)
       expect(queuedCount).to.equal(0)
-
-      await trx.commit()
     })
 
     it('filters by min attempts', async () => {
@@ -175,5 +174,59 @@ describe('Background Jobs repositories @backgroundjobs', () => {
 
       expect(count).to.equal(1)
     })
+  })
+
+  describe('getStaleBackgroundJobs', () => {
+    it('avoids jobs that are getting processed', async () => {
+      const job = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Processing,
+        updatedAt: new Date(Date.now() - 1000),
+        timeoutMs: 2000
+      })
+
+      await storeBackgroundJob({ job })
+
+      const staleJobs = await getStaleBackgroundJobs()
+
+      expect(staleJobs).to.be.empty
+    })
+
+    it('picks up those jobs that already timed out', async () => {
+      const job = createTestJob({
+        jobType: 'fileImport',
+        status: BackgroundJobStatus.Processing,
+        updatedAt: new Date(Date.now() - 1000),
+        timeoutMs: 500
+      })
+
+      await storeBackgroundJob({ job })
+
+      const staleJobs = await getStaleBackgroundJobs()
+
+      expect(staleJobs).to.have.lengthOf(1)
+    })
+  })
+
+  it('updates a backgroundjob status', async () => {
+    const job = createTestJob({
+      jobType: 'fileImport',
+      status: BackgroundJobStatus.Queued,
+      attempt: 0
+    })
+
+    await storeBackgroundJob({ job })
+
+    await updateBackgroundJobStatus({
+      jobId: job.id,
+      status: BackgroundJobStatus.Processing
+    })
+
+    const count = await getBackgroundJobCount({
+      status: BackgroundJobStatus.Processing,
+      jobType: 'fileImport'
+    })
+
+    expect(count).to.equal(1)
   })
 })
