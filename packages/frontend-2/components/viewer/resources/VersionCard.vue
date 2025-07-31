@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    class="group relative w-full rounded-md pb-2 text-left pl-5"
+    class="group relative w-full rounded-md pb-2 text-left pl-5 pt-2"
     :class="
       clickable && !isLimited ? 'hover:bg-highlight-1 cursor-pointer' : 'cursor-default'
     "
@@ -11,7 +11,7 @@
     <!-- Timeline left border -->
     <div
       v-if="showTimeline"
-      class="absolute top-3 left-4 z-10 ml-[2px] w-1 border-l border-outline-3"
+      class="absolute top-5 left-4 z-10 ml-[2px] w-1 border-l border-outline-3"
       :class="last ? 'h-0' : 'h-[99%]'"
     >
       <div
@@ -39,7 +39,7 @@
       <CommonBadge v-if="isLoaded" rounded>Viewing</CommonBadge>
       <LayoutMenu
         v-model:open="showActionsMenu"
-        class="ml-auto mr-2 mt-1"
+        class="ml-auto mr-2"
         :items="actionsItems"
         :menu-position="HorizontalDirection.Left"
         mount-menu-on-body
@@ -55,7 +55,7 @@
       </LayoutMenu>
     </div>
     <!-- Main stuff -->
-    <div class="flex items-center pl-5 gap-2">
+    <div class="flex items-center pl-5 gap-2 mt-2">
       <div
         class="bg-foundation h-12 w-12 flex-shrink-0 rounded-md border border-outline-3"
         :class="isLimited ? 'diagonal-stripes' : ''"

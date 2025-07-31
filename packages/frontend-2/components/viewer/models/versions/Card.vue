@@ -1,63 +1,53 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div
-    class="relative border-b border-outline-3"
-    :class="showVersions ? 'bg-foundation-page' : 'bg-foundation hover:bg-highlight-1'"
-  >
+  <div class="relative" :class="showVersions ? 'border-b border-outline-3' : ''">
+    <!-- Model Header - Sticky -->
     <div
-      :class="showVersions ? 'max-h-96' : ''"
+      class="group sticky top-0 z-20 bg-foundation cursor-pointer flex items-center py-3 px-1 border-b border-outline-3 hover:bg-highlight-1"
+      @click="showVersions = !showVersions"
       @mouseenter="highlightObject"
       @mouseleave="unhighlightObject"
       @focusin="highlightObject"
       @focusout="unhighlightObject"
     >
-      <!-- Model Header -->
-      <div
-        class="group sticky cursor-pointer flex items-center py-3 px-1"
-        @click="showVersions = !showVersions"
+      <button
+        class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
+        @click.stop="showVersions = !showVersions"
       >
-        <button
-          class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
-          @click.stop="showVersions = !showVersions"
+        <IconTriangle
+          class="w-4 h-4 text-foreground-2"
+          :class="showVersions ? 'rotate-90' : ''"
+        />
+        <span class="sr-only">
+          {{ showVersions ? 'Collapse' : 'Expand' }}
+        </span>
+      </button>
+      <div
+        class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
+      >
+        <PreviewImage
+          v-if="loadedVersion?.previewUrl"
+          :preview-url="loadedVersion?.previewUrl"
+        />
+      </div>
+      <div class="flex flex-col">
+        <span
+          v-tippy="modelName.subheader ? model.name : null"
+          class="text-foreground text-body-2xs font-medium"
         >
-          <IconTriangle
-            class="w-4 h-4 text-foreground-2"
-            :class="showVersions ? 'rotate-90' : ''"
-          />
-          <span class="sr-only">
-            {{ showVersions ? 'Collapse' : 'Expand' }}
-          </span>
-        </button>
-        <div
-          class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
-        >
-          <PreviewImage
-            v-if="loadedVersion?.previewUrl"
-            :preview-url="loadedVersion?.previewUrl"
-          />
-        </div>
-        <div class="flex flex-col">
-          <span
-            v-tippy="modelName.subheader ? model.name : null"
-            class="text-foreground text-body-2xs font-medium"
-          >
-            {{ modelName.header }}
-          </span>
-          <span v-if="isLatest" class="text-body-3xs text-foreground">
-            Latest version
-          </span>
-          <span
-            v-tippy="createdAtFormatted.full"
-            class="text-body-3xs text-foreground-2"
-          >
-            {{ createdAtFormatted.relative }}
-          </span>
-        </div>
-        <span class="text-foreground-2 text-body-3xs font-medium ml-auto pr-3">
-          {{ model.versions?.totalCount }}
+          {{ modelName.header }}
+        </span>
+        <span v-if="isLatest" class="text-body-3xs text-foreground">
+          Latest version
+        </span>
+        <span v-tippy="createdAtFormatted.full" class="text-body-3xs text-foreground-2">
+          {{ createdAtFormatted.relative }}
         </span>
       </div>
+      <span class="text-foreground-2 text-body-3xs font-medium ml-auto pr-3">
+        {{ model.versions?.totalCount }}
+      </span>
     </div>
 
     <!-- Version List -->
