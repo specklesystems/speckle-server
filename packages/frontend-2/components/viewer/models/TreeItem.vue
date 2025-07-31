@@ -486,8 +486,7 @@ watch(
   () => props.forceExpandedNodeIds,
   () => {
     checkAndExpand()
-  },
-  { deep: true }
+  }
 )
 
 watch(
