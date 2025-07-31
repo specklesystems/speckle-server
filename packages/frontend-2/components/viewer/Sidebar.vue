@@ -2,8 +2,8 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen bottom-0 sm:bottom-auto sm:top-[3.5rem] lg:top-[3rem] sm:right-2 lg:right-0 h-[40dvh] sm:h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-3rem)]"
-    :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
+    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen bottom-0 sm:bottom-auto sm:top-[3.5rem] lg:top-[3rem] sm:right-2 lg:right-0 h-[40dvh] sm:h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-3rem)] sm:max-w-[264px]"
+    :style="isLgOrLarger ? { maxWidth: width + 'px' } : {}"
     :class="[open ? '' : 'pointer-events-none']"
   >
     <div class="flex h-full" :class="open ? '' : 'sm:translate-x-[100%]'">
@@ -37,8 +37,8 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useEventListener } from '@vueuse/core'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useEventListener, useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 defineProps<{
   open: boolean
@@ -56,7 +56,8 @@ const width = ref(280)
 let startWidth = 0
 let startX = 0
 
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isLgOrLarger = breakpoints.greaterOrEqual('lg')
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()
