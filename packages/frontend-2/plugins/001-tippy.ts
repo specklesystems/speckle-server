@@ -8,7 +8,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       arrow: false,
       animation: 'fade',
       theme: 'speckleTooltip',
-      offset: [0, 4]
+      offset: [0, 8]
     },
     flipDuration: 0
   })

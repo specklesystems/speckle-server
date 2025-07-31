@@ -16,7 +16,7 @@
     >
       <div
         v-if="isLoaded"
-        class="absolute -top-2 -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
+        class="absolute -top-2.5 -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
       >
         <IconCheck class="h-4 w-4 text-foreground" />
       </div>
@@ -30,7 +30,7 @@
       <div
         v-show="showTimeline"
         v-tippy="createdAt.full"
-        class="rounded-full px-2 text-body-xs font-medium ml-2.5"
+        class="rounded-full px-2 text-body-xs font-medium ml-3"
       >
         <span>
           {{ isLatest ? 'Latest' : createdAt.relative }}
@@ -41,16 +41,13 @@
         v-model:open="showActionsMenu"
         class="ml-auto mr-2"
         :items="actionsItems"
-        :menu-position="HorizontalDirection.Right"
+        :menu-position="HorizontalDirection.Left"
         mount-menu-on-body
         @click.stop.prevent
         @chosen="onActionChosen"
       >
         <button
-          class="opacity-0 group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center shrink-0"
-          :class="{
-            'opacity-100 bg-highlight-3': showActionsMenu
-          }"
+          class="opacity-0 group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-5 flex items-center justify-center shrink-0"
           @click.stop="showActionsMenu = !showActionsMenu"
         >
           <IconThreeDots />

@@ -1,5 +1,11 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
+import {
+  useThrottleFn,
+  onKeyStroke,
+  watchTriggerable,
+  useMagicKeys,
+  useEventListener
+} from '@vueuse/core'
 import {
   ExplodeEvent,
   ExplodeExtension,
@@ -23,7 +29,8 @@ import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
   useInjectedViewer,
-  useInjectedViewerState
+  useInjectedViewerState,
+  useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import {
@@ -900,6 +907,57 @@ function useDisableZoomOnEmbed() {
   )
 }
 
+function useViewerCursorIntegration() {
+  const {
+    viewer: { container }
+  } = useInjectedViewerState()
+
+  const {
+    filters: { selectedObjects }
+  } = useInjectedViewerInterfaceState()
+
+  const { shift } = useMagicKeys()
+  const isDragging = ref(false)
+
+  // Handle mouse down/up to track dragging state
+  const handlePointerDown = (_event: PointerEvent) => {
+    if (shift.value && selectedObjects.value.length === 0) {
+      isDragging.value = true
+    }
+  }
+
+  const handlePointerUp = () => {
+    isDragging.value = false
+  }
+
+  // Show different cursors: grab (ready to drag) vs grabbing (actively dragging)
+  watch(
+    [shift, selectedObjects, isDragging],
+    () => {
+      if (!container) return
+
+      const hasSelection = selectedObjects.value.length > 0
+      const shouldShowDrag = shift.value && !hasSelection
+
+      if (shouldShowDrag) {
+        container.style.cursor = isDragging.value ? 'grabbing' : 'grab'
+      } else {
+        container.style.cursor = ''
+      }
+    },
+    { immediate: true }
+  )
+
+  useEventListener(container, 'pointerdown', handlePointerDown, { passive: true })
+  useEventListener(document, 'pointerup', handlePointerUp, { passive: true })
+
+  onBeforeUnmount(() => {
+    if (container) {
+      container.style.cursor = ''
+    }
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
@@ -917,5 +975,6 @@ export function useViewerPostSetup() {
   useDiffingIntegration()
   useViewerMeasurementIntegration()
   useDisableZoomOnEmbed()
+  useViewerCursorIntegration()
   setupDebugMode()
 }
