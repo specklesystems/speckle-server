@@ -1055,7 +1055,7 @@ export type CurrencyBasedPrices = {
 };
 
 export type DeleteAccSyncItemInput = {
-  accFileLineageUrn: Scalars['ID']['input'];
+  id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
 };
 
@@ -2312,7 +2312,7 @@ export type Project = {
 
 
 export type ProjectAccSyncItemArgs = {
-  lineageUrn: Scalars['String']['input'];
+  id: Scalars['String']['input'];
 };
 
 
@@ -4118,7 +4118,7 @@ export type TriggeredAutomationsStatus = {
 };
 
 export type UpdateAccSyncItemInput = {
-  accFileLineageUrn: Scalars['ID']['input'];
+  id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
   status: AccSyncItemStatus;
 };

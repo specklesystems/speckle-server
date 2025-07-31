@@ -35,15 +35,13 @@
             hide-text
             color="outline"
             :icon-left="item.status === 'PAUSED' ? PlayIcon : PauseIcon"
-            @click="
-              handleStatusSyncItem(item.accFileLineageUrn, item.status === 'PAUSED')
-            "
+            @click="handleStatusSyncItem(item.id, item.status === 'PAUSED')"
           />
           <FormButton
             hide-text
             color="outline"
             :icon-left="TrashIcon"
-            @click="handleDeleteSyncItem(item.accFileLineageUrn)"
+            @click="handleDeleteSyncItem(item.id)"
           />
         </div>
       </template>
@@ -485,12 +483,12 @@ const addSync = async () => {
 
 const { mutate: deleteAccSyncItem } = useMutation(accSyncItemDeleteMutation)
 
-const handleDeleteSyncItem = async (fileLineageId: string) => {
+const handleDeleteSyncItem = async (id: string) => {
   try {
     await deleteAccSyncItem({
       input: {
         projectId: props.projectId,
-        accFileLineageUrn: fileLineageId
+        id
       }
     })
     // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
@@ -508,12 +506,12 @@ const handleDeleteSyncItem = async (fileLineageId: string) => {
 
 const { mutate: updateAccSyncItem } = useMutation(accSyncItemUpdateMutation)
 
-const handleStatusSyncItem = async (fileLineageId: string, isPaused: boolean) => {
+const handleStatusSyncItem = async (id: string, isPaused: boolean) => {
   try {
     await updateAccSyncItem({
       input: {
         projectId: props.projectId,
-        accFileLineageUrn: fileLineageId,
+        id,
         status: isPaused ? 'PENDING' : 'PAUSED'
       }
     })
