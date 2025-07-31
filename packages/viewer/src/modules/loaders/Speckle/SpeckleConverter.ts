@@ -226,7 +226,12 @@ export default class SpeckleConverter {
             this.activePromises -= childrenConversionPromisses.length
           }
 
-          return
+          // Return early unless this object has displayValue but no/empty elements
+          const hasUsefulElements =
+            elements && (!Array.isArray(elements) || elements.length > 0)
+          if (hasUsefulElements || !displayValue) {
+            return
+          }
         }
       }
 
