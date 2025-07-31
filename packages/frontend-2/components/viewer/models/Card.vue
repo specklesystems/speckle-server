@@ -104,7 +104,7 @@
       <!-- Scene Explorer Content - No individual scroll container -->
       <div
         v-if="isExpanded && rootNodeChildren.length"
-        class="relative flex flex-col gap-y-2 px-1"
+        class="relative flex flex-col gap-y-2 px-1 pt-1"
       >
         <div v-for="(childNode, idx) in rootNodeChildren" :key="idx">
           <ViewerModelsTreeItem

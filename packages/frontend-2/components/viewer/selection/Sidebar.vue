@@ -25,7 +25,6 @@
             v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
           >
             <FormButton
-              size="sm"
               color="subtle"
               :icon-left="isHidden ? iconEyeClosed : iconEye"
               hide-text
@@ -40,7 +39,6 @@
             "
           >
             <FormButton
-              size="sm"
               color="subtle"
               :icon-left="isIsolated ? iconViewerUnisolate : iconViewerIsolate"
               hide-text
@@ -57,7 +55,6 @@
           >
             <FormButton
               hide-text
-              size="sm"
               color="subtle"
               :icon-left="settingsIcon"
               @click="showSubMenu = !showSubMenu"
