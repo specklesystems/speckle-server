@@ -163,6 +163,8 @@ onKeyStroke('Escape', () => {
   } else {
     if (activePanel.value === ActivePanel.measurements) {
       toggleMeasurements()
+    } else if (activePanel.value === ActivePanel.sectionBox) {
+      toggleSectionBox()
     }
     activePanel.value = ActivePanel.none
   }
