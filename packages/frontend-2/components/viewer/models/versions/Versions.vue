@@ -23,28 +23,31 @@
 
     <div class="flex flex-col h-full">
       <template v-if="resourceItems.length">
-        <div
-          v-for="({ model, versionId }, index) in modelsAndVersionIds"
-          :key="model.id"
-        >
-          <ViewerModelsVersionsCard
-            :model="model"
-            :version-id="versionId"
-            :last="index === modelsAndVersionIds.length - 1"
-            :initially-expanded="
-              props.expandedModelId === model.id || modelsAndVersionIds.length === 1
-            "
-          />
+        <!-- Versions with single scroll container for sticky headers -->
+        <div class="flex-1 overflow-y-auto">
+          <div
+            v-for="({ model, versionId }, index) in modelsAndVersionIds"
+            :key="model.id"
+          >
+            <ViewerModelsVersionsCard
+              :model="model"
+              :version-id="versionId"
+              :last="index === modelsAndVersionIds.length - 1"
+              :initially-expanded="
+                props.expandedModelId === model.id || modelsAndVersionIds.length === 1
+              "
+            />
+          </div>
+          <template v-if="objects.length !== 0">
+            <ViewerResourcesObjectCard
+              v-for="object in objects"
+              :key="object.objectId"
+              :object="object"
+              :show-remove="false"
+              @remove="(id: string) => removeModel(id)"
+            />
+          </template>
         </div>
-        <template v-if="objects.length !== 0">
-          <ViewerResourcesObjectCard
-            v-for="object in objects"
-            :key="object.objectId"
-            :object="object"
-            :show-remove="false"
-            @remove="(id: string) => removeModel(id)"
-          />
-        </template>
       </template>
     </div>
   </ViewerLayoutSidePanel>

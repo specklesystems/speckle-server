@@ -49,7 +49,7 @@
         <div class="sticky top-0 bg-foundation p-2 pb-1">
           <FormTextInput
             v-model="searchString"
-            name="filter search"
+            name="filter-search"
             placeholder="Search for a property"
             size="sm"
             color="foundation"
