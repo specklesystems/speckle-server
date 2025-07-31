@@ -474,7 +474,6 @@ watch(
     } else {
       forceExpandedNodeIds.value = new Set()
     }
-  },
-  { deep: true }
+  }
 )
 </script>
