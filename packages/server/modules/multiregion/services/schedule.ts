@@ -8,10 +8,11 @@ import {
 import { db } from '@/db/knex'
 import type { Logger } from '@/observability/logging'
 import type { Knex } from 'knex'
+import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = getFeatureFlags()
 
-const allRegions: Knex[] = [] // TODO: load multiregion
+let allRegions: { client: Knex; regionKey: string }[] = []
 const scheduledTasks: cron.ScheduledTask[] = []
 
 type StalePendingTransaction = {
@@ -39,19 +40,28 @@ const rollbackStalePreparedTransactions = async ({
 }: {
   logger: Logger
 }): Promise<void> => {
-  for (const db of allRegions) {
-    const getStalePreparedTransactions = getStalePreparedTransactionsFactory({ db })
+  for (const { regionKey, client } of allRegions) {
+    const getStalePreparedTransactions = getStalePreparedTransactionsFactory({
+      db: client
+    })
     const pendingTransactions = await getStalePreparedTransactions()
     if (!pendingTransactions.length) continue
 
-    logger.error({ pendingTransactions }, 'Found stale prepared transactions.')
-    const rollbackPreparedTransaction = rollbackPreparedTransactionFactory({ db })
+    logger.error(
+      { pendingTransactions, regionKey },
+      'Found stale prepared transactions.'
+    )
+    const rollbackPreparedTransaction = rollbackPreparedTransactionFactory({
+      db: client
+    })
     await Promise.all(pendingTransactions.map(rollbackPreparedTransaction))
   }
 }
 
-export const startSchedule = () => {
+export const startSchedule = async () => {
   if (!FF_WORKSPACES_MULTI_REGION_ENABLED) return
+
+  allRegions = await getAllRegisteredDbClients()
 
   const scheduleExecution = scheduleExecutionFactory({
     acquireTaskLock: acquireTaskLockFactory({ db }),
@@ -64,7 +74,7 @@ export const startSchedule = () => {
       every5Mins,
       'RollbackStalePreparedTransactions',
       async (_scheduledTime, { logger }) => {
-        await Promise.all([rollbackStalePreparedTransactions({ logger })])
+        await rollbackStalePreparedTransactions({ logger })
       }
     )
   )
