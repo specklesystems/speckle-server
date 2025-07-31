@@ -1148,6 +1148,12 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
   value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
 {{- end }}
+
+{{- if .Values.featureFlags.rhinoFileImporterEnabled }}
+- name: FF_RHINO_FILE_IMPORTER_ENABLED
+  value: {{ .Values.featureFlags.rhinoFileImporterEnabled  | quote }}
+{{- end }}
+
 {{- if .Values.featureFlags.backgroundJobsEnabled }}
 - name: FILEIMPORT_QUEUE_POSTGRES_URL
   valueFrom:

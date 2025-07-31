@@ -18,7 +18,7 @@
         class="flex flex-col w-full h-full relative z-20 overflow-hidden border-l border-outline-2 bg-foundation"
       >
         <div
-          class="py-2 pl-4 pr-2 flex items-center justify-between border-b border-outline-2"
+          class="h-10 pl-4 pr-2 flex items-center justify-between border-b border-outline-2"
         >
           <div class="text-body-xs text-foreground font-medium">
             <slot name="title" />

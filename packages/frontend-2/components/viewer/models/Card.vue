@@ -104,7 +104,7 @@
       <!-- Scene Explorer Content -->
       <div
         v-if="isExpanded && rootNodeChildren.length"
-        class="relative flex flex-col gap-y-2 overflow-y-auto"
+        class="relative flex flex-col gap-y-2 overflow-y-auto px-1"
       >
         <div v-for="(childNode, idx) in rootNodeChildren" :key="idx">
           <ViewerModelsTreeItem
