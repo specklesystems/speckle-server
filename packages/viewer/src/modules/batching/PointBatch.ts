@@ -158,6 +158,7 @@ export class PointBatch extends PrimitiveBatch {
 
   public buildBatch(): Promise<void> {
     let attributeCount = 0
+    const rvAABB: Box3 = new Box3()
     const bounds = new Box3()
     for (let k = 0; k < this.renderViews.length; k++) {
       const ervee = this.renderViews[k]
@@ -170,9 +171,17 @@ export class PointBatch extends PrimitiveBatch {
       attributeCount += ervee.renderData.geometry.attributes.POSITION.length
       bounds.union(ervee.aabb)
     }
-    const position = new Float64Array(attributeCount)
-    const color = new Float32Array(attributeCount).fill(1)
-    const index = new Int32Array(attributeCount / 3)
+    const needsRTE = Geometry.needsRTE(bounds)
+    const hasVertexColors =
+      this.renderViews[0].renderData.geometry.attributes?.COLOR !== undefined
+    const needsInt32Indices = attributeCount >= 65535
+    const position = needsRTE
+      ? new Float64Array(attributeCount)
+      : new Float32Array(attributeCount)
+    const color = new Float32Array(hasVertexColors ? attributeCount : 0).fill(1)
+    const index = needsInt32Indices
+      ? new Uint32Array(attributeCount / 3)
+      : new Uint16Array(attributeCount / 3)
     let offset = 0
     let indexOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
@@ -180,14 +189,39 @@ export class PointBatch extends PrimitiveBatch {
       if (!geometry.attributes) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
       }
-      position.set(geometry.attributes.POSITION, offset)
-      if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+
+      geometry.attributes?.POSITION.copyToBuffer(position, offset)
+      const positionSubarray = position.subarray(
+        offset,
+        offset +
+          (this.renderViews[k].renderData.geometry.attributes?.POSITION.length ?? 0)
+      )
+
+      Geometry.transformArray(
+        positionSubarray,
+        geometry.transform,
+        0,
+        geometry.attributes?.POSITION.length
+      )
+      if (geometry.attributes.COLOR) {
+        geometry.attributes?.COLOR.copyToBuffer(color, offset)
+      }
       index.set(
-        new Int32Array(geometry.attributes.POSITION.length / 3).map(
-          (_value, index) => index + indexOffset
-        ),
+        (needsInt32Indices
+          ? new Uint32Array(geometry.attributes.POSITION.length / 3)
+          : new Uint16Array(geometry.attributes.POSITION.length / 3)
+        ).map((_value, index) => index + indexOffset),
         indexOffset
       )
+
+      /** We re-compute the render view aabb based on transformed geometry
+       *  We do this because some transforms like non-uniform scaling can produce incorrect results
+       *  if we compute an aabb from original geometry then apply the transform. That's why we compute
+       *  an aabb from the transformed geometry here and set it in the rv
+       */
+      rvAABB.setFromArray(positionSubarray)
+      this.renderViews[k].aabb = rvAABB
+
       this.renderViews[k].setBatchData(
         this.id,
         offset / 3,
@@ -201,7 +235,7 @@ export class PointBatch extends PrimitiveBatch {
     }
     const geometry = this.makePointGeometry(index, position, color)
 
-    if (Geometry.needsRTE(bounds)) {
+    if (needsRTE) {
       Geometry.updateRTEGeometry(geometry, position)
       if (!this.batchMaterial.defines) this.batchMaterial.defines = {}
       this.batchMaterial.defines['USE_RTE'] = ' '
@@ -221,8 +255,8 @@ export class PointBatch extends PrimitiveBatch {
   }
 
   protected makePointGeometry(
-    index: Int32Array,
-    position: Float64Array,
+    index: Uint32Array | Uint16Array,
+    position: Float64Array | Float32Array,
     color: Float32Array
   ): BufferGeometry {
     const geometry = new BufferGeometry()

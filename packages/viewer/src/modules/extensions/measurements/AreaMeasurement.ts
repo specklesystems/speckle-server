@@ -16,6 +16,7 @@ import {
   Quaternion,
   Raycaster,
   ReplaceStencilOp,
+  Uint16BufferAttribute,
   Vector2,
   Vector3,
   type Intersection
@@ -370,7 +371,7 @@ export class AreaMeasurement extends Measurement {
     }
 
     if (!index || index.count !== indices.length) {
-      geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
+      geometry.setIndex(new Uint16BufferAttribute(indices, 1))
     } else {
       ;(index.array as Uint16Array).set(indices, 0)
       index.needsUpdate = true

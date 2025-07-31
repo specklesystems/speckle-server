@@ -42,14 +42,10 @@
       />
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
-        v-tippy="
-          isMobile
-            ? undefined
-            : {
-                content: summary.longSummary,
-                placement: 'right'
-              }
-        "
+        v-tippy="{
+          content: summary.longSummary,
+          placement: 'right'
+        }"
         :active="activePanel === 'automate'"
         @click="toggleActivePanel('automate')"
       >
@@ -59,7 +55,7 @@
         />
       </ViewerControlsButtonToggle>
       <div
-        v-if="!isMobile || activePanel !== 'none'"
+        v-if="!isTablet || activePanel !== 'none'"
         class="mt-auto flex flex-col gap-2"
       >
         <ViewerControlsButtonToggle
@@ -106,7 +102,7 @@
         hasActivePanel ? 'opacity-100' : 'opacity-0',
         isEmbedEnabled ? '' : 'lg:left-[calc(3rem+1px)] lg:border-none lg:rounded-none'
       ]"
-      :style="`width: ${isMobile ? 'calc(100vw - 3.75rem)' : `${width + 4}px`};`"
+      :style="`width: ${isMobile ? 'calc(100vw - 3.6rem)' : `${width + 4}px`};`"
     >
       <ViewerModelsPanel
         v-if="resourceItems.length !== 0 && activePanel === 'models'"
@@ -192,6 +188,7 @@ const { isEnabled: isEmbedEnabled } = useEmbed()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
+const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 
 const activePanel = ref<ActivePanel>('none')

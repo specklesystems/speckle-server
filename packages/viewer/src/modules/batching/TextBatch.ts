@@ -144,8 +144,8 @@ export default class TextBatch implements Batch {
    * - Even if, the **text batch does not use the materials in it's draw groups**, it emulates the behavior as if it would
    */
   public setBatchBuffers(ranges: BatchUpdateRange[]): void {
-    console.warn(' Groups -> ', this.mesh.groups)
-    console.warn(' Ranges -> ', ranges)
+    // console.warn(' Groups -> ', this.mesh.groups)
+    // console.warn(' Ranges -> ', ranges)
     const splitRanges: BatchUpdateRange[] = []
     ranges.forEach((range: BatchUpdateRange) => {
       for (let k = 0; k < range.count; k++) {
@@ -321,7 +321,7 @@ export default class TextBatch implements Batch {
           screenOriented: boolean
         }
         const text = new Text()
-        this.renderViews[k].renderData.geometry.bakeTransform?.decompose(
+        this.renderViews[k].renderData.geometry.transform?.decompose(
           text.position,
           text.quaternion,
           text.scale
@@ -349,24 +349,23 @@ export default class TextBatch implements Batch {
           /** We're using visibleBounds for a better fit */
           const bounds = textRenderInfo.visibleBounds
           // console.log('bounds -> ', bounds)
-          const vertices = []
-          vertices.push(
-            bounds[0],
-            bounds[3],
-            0,
-            bounds[2],
-            bounds[3],
-            0,
-            bounds[0],
-            bounds[1],
-            0,
-            bounds[2],
-            bounds[1],
-            0
-          )
+          const vertices = new Float32Array(12)
+          vertices[0] = bounds[0]
+          vertices[1] = bounds[3]
+          vertices[2] = 0
+          vertices[3] = bounds[2]
+          vertices[4] = bounds[3]
+          vertices[5] = 0
+          vertices[6] = bounds[0]
+          vertices[7] = bounds[1]
+          vertices[8] = 0
+          vertices[9] = bounds[2]
+          vertices[10] = bounds[1]
+          vertices[11] = 0
+
           box.setFromArray(vertices)
           box.applyMatrix4(
-            this.renderViews[k].renderData.geometry.bakeTransform || new Matrix4()
+            this.renderViews[k].renderData.geometry.transform || new Matrix4()
           )
 
           needsRTE ||= Geometry.needsRTE(box)
@@ -374,7 +373,7 @@ export default class TextBatch implements Batch {
           const geometry = text.geometry
           geometry.computeBoundingBox()
           const textBvh = AccelerationStructure.buildBVH(
-            geometry.index?.array as number[],
+            geometry.index?.array as unknown as Uint16Array | Uint32Array,
             vertices,
             DefaultBVHOptions
           )

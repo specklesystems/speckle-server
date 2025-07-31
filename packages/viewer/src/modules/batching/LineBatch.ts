@@ -24,6 +24,7 @@ import {
 } from './Batch.js'
 import { ObjectLayers } from '../../IViewer.js'
 import Materials from '../materials/Materials.js'
+import { ChunkArray } from '../converter/VirtualArray.js'
 
 export default class LineBatch implements Batch {
   public id: string
@@ -231,6 +232,7 @@ export default class LineBatch implements Batch {
 
   public buildBatch() {
     let attributeCount = 0
+    const rvAABB: Box3 = new Box3()
     const bounds = new Box3()
     this.renderViews.forEach((val: NodeRenderView) => {
       if (!val.renderData.geometry.attributes) {
@@ -241,14 +243,18 @@ export default class LineBatch implements Batch {
         : val.renderData.geometry.attributes.POSITION.length
       bounds.union(val.aabb)
     })
-    const position = new Float64Array(attributeCount)
+    const needsRTE = Geometry.needsRTE(bounds)
+
+    const position = needsRTE
+      ? new Float64Array(attributeCount)
+      : new Float32Array(attributeCount)
     let offset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
       if (!geometry.attributes) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry`)
       }
-      let points: Array<number>
+      let points: Array<number> | ChunkArray
       /** We need to make sure the line geometry has a layout of :
        *  start(x,y,z), end(x,y,z), start(x,y,z), end(x,y,z)... etc
        *  Some geometries have that inherent form, some don't
@@ -258,19 +264,30 @@ export default class LineBatch implements Batch {
         points = new Array(2 * length)
 
         for (let i = 0; i < length; i += 3) {
-          points[2 * i] = geometry.attributes.POSITION[i]
-          points[2 * i + 1] = geometry.attributes.POSITION[i + 1]
-          points[2 * i + 2] = geometry.attributes.POSITION[i + 2]
+          points[2 * i] = geometry.attributes.POSITION.get(i)
+          points[2 * i + 1] = geometry.attributes.POSITION.get(i + 1)
+          points[2 * i + 2] = geometry.attributes.POSITION.get(i + 2)
 
-          points[2 * i + 3] = geometry.attributes.POSITION[i + 3]
-          points[2 * i + 4] = geometry.attributes.POSITION[i + 4]
-          points[2 * i + 5] = geometry.attributes.POSITION[i + 5]
+          points[2 * i + 3] = geometry.attributes.POSITION.get(i + 3)
+          points[2 * i + 4] = geometry.attributes.POSITION.get(i + 4)
+          points[2 * i + 5] = geometry.attributes.POSITION.get(i + 5)
         }
+        position.set(points, offset)
       } else {
         points = geometry.attributes.POSITION
+        geometry.attributes.POSITION.copyToBuffer(position, offset)
       }
 
-      position.set(points, offset)
+      const positionSubArray = position.subarray(offset, offset + points.length)
+      Geometry.transformArray(positionSubArray, geometry.transform, 0, points.length)
+      /** We re-compute the render view aabb based on transformed geometry
+       *  We do this because some transforms like non-uniform scaling can produce incorrect results
+       *  if we compute an aabb from original geometry then apply the transform. That's why we compute
+       *  an aabb from the transformed geometry here and set it in the rv
+       */
+      rvAABB.setFromArray(positionSubArray)
+      this.renderViews[k].aabb = rvAABB
+
       this.renderViews[k].setBatchData(this.id, offset / 6, points.length / 6)
 
       offset += points.length
@@ -319,10 +336,15 @@ export default class LineBatch implements Batch {
     return material
   }
 
-  private makeLineGeometry(position: Float64Array): LineSegmentsGeometry {
+  private makeLineGeometry(
+    position: Float64Array | Float32Array
+  ): LineSegmentsGeometry {
     const geometry = new LineSegmentsGeometry()
     /** This will set the instanceStart and instanceEnd attributes. These will be our high parts */
-    geometry.setPositions(new Float32Array(position))
+    if (position instanceof Float64Array)
+      /** We need to re-allocate because there is no way to cast it down to float32. If we pass in a Float64Array, three.js will do it anyway */
+      geometry.setPositions(new Float32Array(position))
+    else geometry.setPositions(position)
 
     const buffer = new Float32Array(position.length + position.length / 3)
     this.colorBuffer = new InstancedInterleavedBuffer(buffer, 8, 1) // rgba, rgba

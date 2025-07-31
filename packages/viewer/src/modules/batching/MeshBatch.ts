@@ -193,6 +193,7 @@ export class MeshBatch extends PrimitiveBatch {
   public buildBatch(): Promise<void> {
     let indicesCount = 0
     let attributeCount = 0
+    const rvAABB: Box3 = new Box3()
     const bounds: Box3 = new Box3()
     for (let k = 0; k < this.renderViews.length; k++) {
       const ervee = this.renderViews[k]
@@ -209,11 +210,17 @@ export class MeshBatch extends PrimitiveBatch {
       attributeCount += ervee.renderData.geometry.attributes.POSITION.length
       bounds.union(ervee.aabb)
     }
+    const needsRTE = Geometry.needsRTE(bounds)
 
     const hasVertexColors =
       this.renderViews[0].renderData.geometry.attributes?.COLOR !== undefined
-    const indices = new Uint32Array(indicesCount)
-    const position = new Float64Array(attributeCount)
+    const indices =
+      attributeCount >= 65535 || indicesCount >= 65535
+        ? new Uint32Array(indicesCount)
+        : new Uint16Array(indicesCount)
+    const position = needsRTE
+      ? new Float64Array(attributeCount)
+      : new Float32Array(attributeCount)
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
     const batchIndices = new Float32Array(attributeCount / 3)
@@ -228,49 +235,84 @@ export class MeshBatch extends PrimitiveBatch {
       /** Catering to typescript
        *  There is no unniverse where indices or positions are undefined at this point
        */
-      if (!geometry.attributes || !geometry.attributes.INDEX) {
+      if (!geometry.attributes || !geometry.attributes?.INDEX) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
       }
-      indices.set(
-        geometry.attributes.INDEX.map((val) => val + offset / 3),
-        arrayOffset
+
+      geometry.attributes?.INDEX.copyToBuffer(indices, arrayOffset)
+      const indicesSubArray = indices.subarray(
+        arrayOffset,
+        arrayOffset + geometry.attributes?.INDEX.length
       )
-      position.set(geometry.attributes.POSITION, offset)
-      if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+
+      geometry.attributes?.POSITION.copyToBuffer(position, offset)
+      const positionSubarray = position.subarray(
+        offset,
+        offset +
+          (this.renderViews[k].renderData.geometry.attributes?.POSITION.length ?? 0)
+      )
+      /** We transform the copied geometry so that we do not alter original chunk data which might be shared */
+      Geometry.transformArray(
+        positionSubarray,
+        geometry.transform,
+        0,
+        geometry.attributes?.POSITION.length
+      )
+
+      if (geometry.attributes.COLOR) {
+        geometry.attributes?.COLOR.copyToBuffer(color, offset)
+      }
 
       /** We either copy over the provided vertex normals */
       if (geometry.attributes.NORMAL) {
-        normals.set(geometry.attributes.NORMAL, offset)
+        geometry.attributes?.NORMAL.copyToBuffer(normals, offset)
       } else {
         /** Either we compute them ourselves */
-        Geometry.computeVertexNormalsBuffer(
+        Geometry.computeVertexNormalsBufferVirtual(
           normals.subarray(
             offset,
-            offset + geometry.attributes.POSITION.length
+            offset +
+              (this.renderViews[k].renderData.geometry.attributes?.POSITION.length ?? 0)
           ) as unknown as number[],
           geometry.attributes.POSITION,
           geometry.attributes.INDEX
         )
       }
-      batchIndices.fill(
-        k,
-        offset / 3,
-        offset / 3 + geometry.attributes.POSITION.length / 3
-      )
+      batchIndices.fill(k, offset / 3, offset / 3 + geometry.attributes.POSITION.length)
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
         geometry.attributes.INDEX.length,
         offset / 3,
-        offset / 3 + geometry.attributes.POSITION.length / 3
+        offset / 3 + geometry.attributes.POSITION.length
       )
 
+      /** We re-compute the render view aabb based on transformed geometry
+       *  We do this because some transforms like non-uniform scaling can produce incorrect results
+       *  if we compute an aabb from original geometry then apply the transform. That's why we compute
+       *  an aabb from the transformed geometry here and set it in the rv
+       */
+      rvAABB.setFromArray(positionSubarray)
+      this.renderViews[k].aabb = rvAABB
+
       const batchObject = new BatchObject(this.renderViews[k], k)
-      batchObject.buildAccelerationStructure()
+      batchObject.buildAccelerationStructure(positionSubarray, indicesSubArray)
       batchObjects.push(batchObject)
+
+      indices.set(
+        batchObject.accelerationStructure.bvh.geometry.index?.array as number[],
+        arrayOffset
+      )
+
+      /** Re-index the indices inside the batch */
+      for (let i = 0; i < indicesSubArray.length; i++) {
+        indicesSubArray[i] = indicesSubArray[i] + offset / 3
+      }
 
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
+
+      this.renderViews[k].disposeGeometry()
     }
 
     const geometry = this.makeMeshGeometry(
@@ -280,7 +322,7 @@ export class MeshBatch extends PrimitiveBatch {
       batchIndices,
       hasVertexColors ? color : undefined
     )
-    const needsRTE = Geometry.needsRTE(bounds)
+
     if (needsRTE) Geometry.updateRTEGeometry(geometry, position)
 
     this.primitive = new SpeckleMesh(geometry, needsRTE)
@@ -296,16 +338,16 @@ export class MeshBatch extends PrimitiveBatch {
     this.primitive.frustumCulled = false
     this.primitive.geometry.addGroup(0, this.getCount(), 0)
 
-    batchObjects.forEach((element: BatchObject) => {
-      element.renderView.disposeGeometry()
-    })
+    // batchObjects.forEach((element: BatchObject) => {
+    //   element.renderView.disposeGeometry()
+    // })
 
     return Promise.resolve()
   }
 
   protected makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
-    position: Float64Array,
+    position: Float64Array | Float32Array,
     normals: Float32Array,
     batchIndices: Float32Array,
     color?: Float32Array
@@ -313,10 +355,10 @@ export class MeshBatch extends PrimitiveBatch {
     const geometry = new BufferGeometry()
     if (position.length >= 65535 || indices.length >= 65535) {
       this.indexBuffer0 = new Uint32BufferAttribute(indices, 1)
-      this.indexBuffer1 = new Uint32BufferAttribute(new Uint32Array(indices.length), 1)
+      this.indexBuffer1 = new Uint32BufferAttribute(indices, 1)
     } else {
       this.indexBuffer0 = new Uint16BufferAttribute(indices, 1)
-      this.indexBuffer1 = new Uint16BufferAttribute(new Uint16Array(indices.length), 1)
+      this.indexBuffer1 = new Uint16BufferAttribute(indices, 1)
     }
     geometry.setIndex(this.indexBuffer0)
 

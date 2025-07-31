@@ -2,7 +2,7 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen top-[3rem] sm:h-[calc(100dvh-3rem)]"
+    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen bottom-0 sm:bottom-auto sm:top-[3rem] h-[40dvh] sm:h-[calc(100dvh-3rem)]"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
     :class="[open ? '' : 'pointer-events-none']"
   >
