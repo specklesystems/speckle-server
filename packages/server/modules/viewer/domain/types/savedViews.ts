@@ -41,6 +41,7 @@ export type SavedViewGroup = {
   projectId: string
   /**
    * Resource (model) ids associated w/ this group. This is kept in sync w/ all of the resourceIds for the views in this group too.
+   * Groups need resourceIds independent of views, because you have to be able to retrieve empty groups too.
    */
   resourceIds: string[]
   /**

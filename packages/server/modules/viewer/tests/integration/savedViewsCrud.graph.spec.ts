@@ -386,7 +386,7 @@ describe('Saved Views GraphQL CRUD', () => {
     const SEARCH_STRING_ITEM_COUNT = GROUP_COUNT / 2
 
     const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
-    const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
+    // const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
 
     const modelIds: string[] = []
     let readTestProject: BasicTestStream
@@ -479,6 +479,7 @@ describe('Saved Views GraphQL CRUD', () => {
       let cursor: string | null = null
       let pagesLoaded = 0
       let groupsFound = 0
+      let defaultGroupsFound = 0
       const allReadModelResourceIds = getAllReadModelResourceIds()
       const PAGE_SIZE = Math.ceil(GROUP_COUNT / PAGE_COUNT)
 
@@ -503,6 +504,11 @@ describe('Saved Views GraphQL CRUD', () => {
         } else {
           expect(data!.items.length).to.eq(0)
         }
+
+        const defaultGroupsInResult = data?.items.filter(
+          (group) => group.isUngroupedViewsGroup
+        )
+        defaultGroupsFound += defaultGroupsInResult?.length || 0
 
         const allResourceIds = allReadModelResourceIds
           .toResources()
@@ -535,6 +541,7 @@ describe('Saved Views GraphQL CRUD', () => {
 
       expect(pagesLoaded).to.equal(PAGE_COUNT + 1) // +1 for last,empty page
       expect(groupsFound).to.equal(GROUP_COUNT)
+      expect(defaultGroupsFound).to.equal(1) // only 1 default group
     })
 
     it('should return different groups in same project, if resource string differs', async () => {
@@ -551,7 +558,7 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(data).to.be.ok
       expect(data!.totalCount).to.equal(1) // only default group returned
       expect(data!.items.length).to.equal(1)
-      expect(data!.cursor).to.be.null
+      expect(data!.cursor).to.not.be.null
     })
 
     it('should respect search filter and filter out groups w/ views that dont have the search string in their name', async () => {

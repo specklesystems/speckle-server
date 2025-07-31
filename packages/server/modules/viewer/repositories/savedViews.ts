@@ -141,75 +141,100 @@ const cleanLookupResourceIdString = (resourceIdString: string) => {
 }
 
 const getProjectSavedViewGroupsBaseQueryFactory =
-  (deps: { db: Knex }) => (params: GetProjectSavedViewGroupsBaseParams) => {
+  (deps: { db: Knex }) => async (params: GetProjectSavedViewGroupsBaseParams) => {
     const { projectId, resourceIdString, search, userId } = params
     const onlyAuthored = params.onlyAuthored && userId
     const isFiltering = search || onlyAuthored
-
-    // TODO: How to make default group appear here, but only if its relevant?
-    // E.g. if filtering but filter found view in default group
-    // (its hacky to add/remove count and item otherwise)
-    /**
-     * I could select views instead, and group by, but then I would miss out on empty groups
-     * If not filtering, then always return default group on first page
-     * Only if filtering does it matter if the default group should be returned or not
-     */
+    const resourceIds = cleanLookupResourceIdString(resourceIdString)
 
     /**
-     *
-     * TODO: DO groups even need resourceIds field? We manually keep it in sync, bad design
-     * U could just check if group can have view on insertion
-     *
-     * Since im filtering both groups and views by view characteristics, there's no point
-     * in keeping resourceIds and other such fields in groups
-     *
-     * And group resourceIds can be easily introduced later, if needed, by recalculating
-     *
-     * ** What if we start to need to filter by group name too, not just view name?
-     * *** What are groups even for then? Just associating views together?
+     * When looking for default group items, the group doesn't exist, so we have to apply
+     * the same filters to the views table instead
      */
+    const applyFilters = (query: Knex.QueryBuilder, mode: 'view' | 'group') => {
+      const isGroupQuery = mode === 'group'
+      const isViewQuery = mode === 'view'
+
+      if (isViewQuery) {
+        // empty groupId - we're looking for ungrouped views only
+        query.andWhere({
+          [SavedViews.col.groupId]: null
+        })
+      }
+
+      // group's or view's authorId
+      query.andWhere({
+        [isGroupQuery ? SavedViewGroups.col.projectId : SavedViews.col.projectId]:
+          projectId
+      })
+
+      // group's or view's resourceIds
+      if (resourceIds.length) {
+        // Col contains at least one of the resources
+        query.andWhereRaw('?? && ?', [
+          isGroupQuery ? SavedViewGroups.col.resourceIds : SavedViews.col.resourceIds,
+          resourceIds
+        ])
+      } else {
+        // Make query exit early - no resources
+        query.andWhereRaw('false')
+      }
+
+      // checking authored only on views (in case of groups, they're joined on)
+      if (onlyAuthored) {
+        query.andWhere({ [SavedViews.col.authorId]: userId })
+      } else if (mode === 'view') {
+        query.andWhere((w1) => {
+          w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
+          if (userId) {
+            w1.orWhere(SavedViews.col.authorId, userId)
+          }
+        })
+      }
+
+      // checking search only on views
+      if (search) {
+        query.andWhere(SavedViews.col.name, 'ilike', `%${search}%`)
+      }
+
+      return query
+    }
 
     const q = tables
       .savedViewGroups(deps.db)
       .select<SavedViewGroup[]>(SavedViewGroups.cols)
-      .where({ [SavedViewGroups.col.projectId]: projectId })
 
-    // Inner joining views if filtering
     if (isFiltering) {
-      q.innerJoin(SavedViews.name, SavedViewGroups.col.id, SavedViews.col.groupId)
+      q.innerJoin(SavedViews.name, SavedViews.col.groupId, SavedViewGroups.col.id)
     }
 
-    const resourceIds = cleanLookupResourceIdString(resourceIdString)
-    if (resourceIds.length) {
-      // Col contains at least one of the resources
-      q.whereRaw('?? && ?', [SavedViewGroups.col.resourceIds, resourceIds])
-    } else {
-      // Make query exit early - no resources
-      q.whereRaw('false')
-    }
-
-    if (onlyAuthored) {
-      q.where({ [SavedViews.col.authorId]: userId })
-    }
-
-    if (search) {
-      q.where(SavedViews.col.name, 'ilike', `%${search}%`)
-    }
+    applyFilters(q, 'group')
 
     // Group by groupId
     q.groupBy(SavedViewGroups.col.id)
 
-    return { q, resourceIds, isFiltering }
+    /**
+     * If filtering, then we need to check if default group should be shown. If not, always shown on first page
+     * (2nd query could be avoided w/ a FULL OUTER JOIN, but it could get even more complicated)
+     */
+    const ungroupedViewFound = isFiltering
+      ? await applyFilters(tables.savedViews(deps.db), 'view').first()
+      : null
+    const includeDefaultGroup = Boolean(!isFiltering || ungroupedViewFound)
+
+    return { q, resourceIds, isFiltering, includeDefaultGroup }
   }
 
 export const getProjectSavedViewGroupsTotalCountFactory =
   (deps: { db: Knex }): GetProjectSavedViewGroupsTotalCount =>
   async (params) => {
-    const { q } = getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
+    const { q, includeDefaultGroup } = await getProjectSavedViewGroupsBaseQueryFactory(
+      deps
+    )(params)
     const countQ = deps.db.count<{ count: string }[]>().from(q.as('sq1'))
     const [count] = await countQ
 
-    const numberCount = parseInt(count.count + '')
+    const numberCount = parseInt(count.count + '') + (includeDefaultGroup ? 1 : 0)
     return numberCount
   }
 
@@ -217,7 +242,8 @@ export const getProjectSavedViewGroupsPageItemsFactory =
   (deps: { db: Knex }): GetProjectSavedViewGroupsPageItems =>
   async (params) => {
     const { projectId } = params
-    const { q, resourceIds } = getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
+    const { q, resourceIds, includeDefaultGroup } =
+      await getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
     const { applyCursorSortAndFilter, resolveNewCursor } = savedGroupCursorUtils()
 
     const limit = clamp(params.limit ?? 10, 0, 100)
@@ -231,16 +257,19 @@ export const getProjectSavedViewGroupsPageItemsFactory =
 
     const items: SavedViewGroup[] = await q
 
-    // If first page, add the default/unsorted group
-    if (!params.cursor) {
+    // If first page and allowed, add the default/unsorted group
+    if (!params.cursor && includeDefaultGroup) {
       const defaultGroup: SavedViewGroup = buildDefaultGroup({
         resourceIds,
         projectId
       })
 
-      // Add to beginning, and pop last item
+      // Before we add the group, we need to potentially pop the last item
+      // if the limit was reached
+      if (items.length >= limit) {
+        items.pop()
+      }
       items.unshift(defaultGroup)
-      items.pop()
     }
 
     const newCursor = resolveNewCursor(items)
