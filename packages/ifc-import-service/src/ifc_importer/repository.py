@@ -22,12 +22,32 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
 
     job = await connection.fetchrow(
         """
-        SELECT * FROM background_jobs
-        WHERE payload ->> 'fileType' = 'ifc' AND status = $1 AND attempt < "maxAttempt"
-        ORDER BY "createdAt"
-        FOR UPDATE SKIP LOCKED
-        LIMIT 1
+        WITH next_job AS (
+            UPDATE background_jobs
+            SET
+                "attempt" = "attempt" + 1,
+                "status" = $1,
+                "updatedAt" = NOW()
+            WHERE id = (
+                SELECT id FROM background_jobs
+                WHERE ( --queued job
+                    payload ->> 'fileType' = 'ifc'
+                    AND status = $2
+                )
+                OR ( --timed job left on processing state
+                    payload ->> 'fileType' = 'ifc'
+                    AND status = $1
+                    AND "updatedAt" < NOW() - ("timeoutMs" * interval '1 millisecond')
+                )
+                ORDER BY "createdAt"
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+            )
+            RETURNING *
+        )
+        SELECT * FROM next_job;
         """,
+        JobStatus.PROCESSING.value,
         JobStatus.QUEUED.value,
     )
     if not job:
@@ -36,16 +56,15 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
 
 
 async def set_job_status(
-    connection: Connection, job_id: str, job_status: JobStatus, attempt: int
+    connection: Connection, job_id: str, job_status: JobStatus
 ) -> None:
-    print(f"updating job: {job_id}'s status to {job_status}, with attempt: {attempt}")
+    print(f"updating job: {job_id}'s status to {job_status}")
     _ = await connection.execute(
         """
         UPDATE background_jobs
-        SET status = $1, "updatedAt" = NOW(), attempt = $3
+        SET status = $1, "updatedAt" = NOW()
         WHERE id = $2
         """,
         job_status.value,
         job_id,
-        attempt,
     )

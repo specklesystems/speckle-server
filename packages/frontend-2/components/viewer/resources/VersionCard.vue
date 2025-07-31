@@ -41,13 +41,16 @@
         v-model:open="showActionsMenu"
         class="ml-auto mr-2"
         :items="actionsItems"
-        :menu-position="HorizontalDirection.Left"
+        :menu-position="HorizontalDirection.Right"
         mount-menu-on-body
         @click.stop.prevent
         @chosen="onActionChosen"
       >
         <button
-          class="opacity-0 group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-5 flex items-center justify-center shrink-0"
+          class="opacity-0 group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center shrink-0"
+          :class="{
+            'opacity-100 bg-highlight-3': showActionsMenu
+          }"
           @click.stop="showActionsMenu = !showActionsMenu"
         >
           <IconThreeDots />

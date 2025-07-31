@@ -7,7 +7,7 @@ import type {
 import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
 import cryptoRandomString from 'crypto-random-string'
 
-export const scheduleBackgroundJobFactory = <T extends BackgroundJobPayload>({
+export const createBackgroundJobFactory = <T extends BackgroundJobPayload>({
   storeBackgroundJob,
   jobConfig
 }: {

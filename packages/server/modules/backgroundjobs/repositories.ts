@@ -1,12 +1,11 @@
 import type { Knex } from 'knex'
-import type {
-  BackgroundJob,
-  BackgroundJobPayload,
-  GetBackgroundJob,
-  GetBackgroundJobCount,
-  StoreBackgroundJob
+import {
+  type BackgroundJob,
+  type BackgroundJobPayload,
+  type GetBackgroundJob,
+  type GetBackgroundJobCount,
+  type StoreBackgroundJob
 } from '@/modules/backgroundjobs/domain'
-import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
 import { buildTableHelper } from '@/modules/core/dbSchema'
 
 export const BackgroundJobs = buildTableHelper('background_jobs', [
@@ -54,22 +53,8 @@ export const getBackgroundJobCountFactory =
   async ({ status, jobType, minAttempts }) => {
     const q = tables.backgroundJobs(db).select(BackgroundJobs.col.id)
 
-    // using less restrictive lock to check locked jobs
-    if (status === BackgroundJobStatus.Processing) {
-      q.whereNotExists(function () {
-        const subquery = this.from(BackgroundJobs.name)
-          .select(BackgroundJobs.col.id)
-          .whereRaw('id = background_jobs.id')
-          .where({ jobType })
-
-        if (minAttempts) {
-          q.andWhere(BackgroundJobs.col.attempt, '>=', minAttempts)
-        }
-
-        subquery.forKeyShare().skipLocked()
-      })
-    } else {
-      q.where({ status }).forKeyShare().skipLocked()
+    if (status) {
+      q.where({ status })
     }
 
     if (minAttempts) {

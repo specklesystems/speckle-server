@@ -22,7 +22,7 @@ import {
 } from '@/modules/fileuploads/domain/consts'
 import type { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
-import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
+import { createBackgroundJobFactory } from '@/modules/backgroundjobs/services/create'
 import {
   getBackgroundJobCountFactory,
   storeBackgroundJobFactory
@@ -136,7 +136,7 @@ export const initializePostgresQueue = async ({
   // migrating the DB up, the queue DB might be added based on a config
   await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
 
-  const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+  const createBackgroundJob = createBackgroundJobFactory({
     jobConfig: { maxAttempt: 3, timeoutMs: timeout },
     storeBackgroundJob: storeBackgroundJobFactory({
       db,
@@ -152,7 +152,7 @@ export const initializePostgresQueue = async ({
     ),
     shutdown: async () => {},
     scheduleJob: async (jobData: JobPayload) => {
-      await scheduleBackgroundJob({
+      await createBackgroundJob({
         jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
       })
     },
