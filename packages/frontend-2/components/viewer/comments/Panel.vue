@@ -4,29 +4,31 @@
       <span>Discussions</span>
     </template>
     <template #actions>
-      <LayoutMenu
-        v-model:open="showVisibilityOptions"
-        :menu-id="menuId"
-        :items="actionsItems"
-        :menu-position="HorizontalDirection.Right"
-        mount-menu-on-body
-        :custom-menu-items-classes="['!w-[270px]']"
-        show-ticks
-        @click.stop.prevent
-        @chosen="onActionChosen"
-      >
-        <FormButton
-          hide-text
-          color="subtle"
-          :icon-left="settingsIcon"
-          :class="
-            showVisibilityOptions
-              ? '!text-primary-focus !dark:text-foreground-on-primary !bg-info-lighter'
-              : ''
-          "
-          @click="showVisibilityOptions = !showVisibilityOptions"
-        />
-      </LayoutMenu>
+      <div class="flex items-center leading-none">
+        <LayoutMenu
+          v-model:open="showVisibilityOptions"
+          :menu-id="menuId"
+          :items="actionsItems"
+          :menu-position="HorizontalDirection.Right"
+          mount-menu-on-body
+          :custom-menu-items-classes="['!w-[270px]']"
+          show-ticks
+          @click.stop.prevent
+          @chosen="onActionChosen"
+        >
+          <FormButton
+            hide-text
+            color="subtle"
+            :icon-left="settingsIcon"
+            :class="
+              showVisibilityOptions
+                ? '!text-primary-focus !dark:text-foreground-on-primary !bg-info-lighter'
+                : ''
+            "
+            @click="showVisibilityOptions = !showVisibilityOptions"
+          />
+        </LayoutMenu>
+      </div>
     </template>
     <div class="flex flex-col h-full">
       <div class="flex flex-col flex-1 gap-y-2 p-1">
