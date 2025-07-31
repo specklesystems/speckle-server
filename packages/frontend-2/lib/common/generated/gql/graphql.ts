@@ -29,6 +29,7 @@ export type AccSyncItem = {
   accFileName: Scalars['String']['output'];
   accFileVersionIndex: Scalars['Int']['output'];
   accFileVersionUrn: Scalars['String']['output'];
+  accFileViewName?: Maybe<Scalars['String']['output']>;
   accHubId: Scalars['String']['output'];
   accProjectId: Scalars['String']['output'];
   accRegion: Scalars['String']['output'];
@@ -963,6 +964,7 @@ export type CreateAccSyncItemInput = {
   accFileName: Scalars['String']['input'];
   accFileVersionIndex: Scalars['Int']['input'];
   accFileVersionUrn: Scalars['String']['input'];
+  accFileViewName?: InputMaybe<Scalars['String']['input']>;
   accHubId: Scalars['String']['input'];
   accProjectId: Scalars['String']['input'];
   accRegion: Scalars['String']['input'];
@@ -8420,6 +8422,7 @@ export type AccSyncItemFieldArgs = {
   accFileName: {},
   accFileVersionIndex: {},
   accFileVersionUrn: {},
+  accFileViewName: {},
   accHubId: {},
   accProjectId: {},
   accRegion: {},

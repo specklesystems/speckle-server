@@ -60,7 +60,7 @@
       </template>
     </FormButton>
     <LayoutDialog v-model:open="showNewSyncDialog" title="Create new sync">
-      <div class="flex flex-col space-y-2">
+      <div class="flex flex-col space-y-4">
         <div v-if="step === 0">
           <ProjectPageAccHubs
             :hubs="hubs"
@@ -85,6 +85,15 @@
             @download="onDownloadClick"
             @select="onFileSelected"
           />
+
+          <FormTextInput
+            v-model="revitViewName"
+            name="revitFileViewName"
+            color="foundation"
+            label="Revit view name (Optional)"
+            show-label
+            :disabled="!selectedFolderContent"
+          ></FormTextInput>
 
           <div class="flex flex-row justify-center mt-4 space-x-2">
             <FormButton size="sm" color="outline" @click="showNewSyncDialog = false">
@@ -178,6 +187,8 @@ const selectedProjectId = ref<string | null>(null)
 const folderContents = ref<AccItem[]>([])
 const selectedFolderContent = ref<AccItem>()
 const loadingFiles = ref(false)
+
+const revitViewName = ref<string>()
 
 const searchText = ref<string>()
 
@@ -436,6 +447,8 @@ const addSync = async () => {
       ).get('version')
     )
 
+    const accFileViewName = revitViewName.value === '' ? undefined : revitViewName.value
+
     await createAccSyncItem({
       input: {
         projectId: props.projectId,
@@ -449,7 +462,8 @@ const addSync = async () => {
         accFileName: (selectedFolderContent.value?.attributes.displayName ||
           selectedFolderContent.value?.attributes.name) as string,
         accFileVersionIndex: fileVersion,
-        accFileVersionUrn: selectedFolderContent.value?.latestVersionId as string
+        accFileVersionUrn: selectedFolderContent.value?.latestVersionId as string,
+        accFileViewName
       }
     })
     // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS

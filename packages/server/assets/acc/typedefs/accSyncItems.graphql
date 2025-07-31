@@ -22,7 +22,7 @@ type AccSyncItem {
   accFileExtension: String!
   accFileVersionIndex: Int!
   accFileVersionUrn: String!
-  accFileViewName: string
+  accFileViewName: String
   accWebhookId: String
   status: AccSyncItemStatus!
   author: LimitedUser
@@ -61,6 +61,7 @@ input CreateAccSyncItemInput {
   accFileExtension: String!
   accFileVersionIndex: Int!
   accFileVersionUrn: String!
+  accFileViewName: String
 }
 
 type AccSyncItemMutations {
