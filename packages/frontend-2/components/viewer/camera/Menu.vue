@@ -9,7 +9,7 @@
           :label="shortcut.name"
           hide-active-tick
           :active="activeView === shortcut.name.toLowerCase()"
-          :shortcut="getShortcutDisplayText(shortcut, { hideName: true })"
+          :shortcut="getShortcutDisplayText(shortcut, { hideName: true }) as string"
           @click="handleViewChange(shortcut.name.toLowerCase() as CanonicalView)"
         />
       </div>
@@ -20,7 +20,7 @@
           label="Ortographic projection"
           :active="isOrthoProjection"
           :shortcut="
-            getShortcutDisplayText(shortcuts.ToggleProjection, { hideName: true })
+            getShortcutDisplayText(shortcuts.ToggleProjection, { hideName: true }) as string
           "
           @click="trackAndtoggleProjection()"
         />

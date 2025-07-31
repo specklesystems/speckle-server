@@ -131,7 +131,7 @@
       <div v-if="isSingleCollection">
         <!-- single col items -->
         <div
-          v-for="(item, idx) in singleCollectionItemsPaginated"
+          v-for="(item, idx) in singleCollectionItems"
           :key="item.rawNode.raw?.id || idx"
         >
           <TreeItem
@@ -145,17 +145,6 @@
             :is-descendant-of-selected="isSelected || isChildOfSelected"
             @expanded="(e) => $emit('expanded', e)"
           />
-        </div>
-        <div v-if="itemCount < singleCollectionItems.length">
-          <FormButton
-            size="sm"
-            color="outline"
-            text
-            full-width
-            @click="itemCount += pageSize"
-          >
-            View more ({{ singleCollectionItems.length - itemCount }})
-          </FormButton>
         </div>
       </div>
     </div>
@@ -265,12 +254,6 @@ const singleCollectionItems = computed(() => {
       rawNode: i
     })
   )
-})
-
-const itemCount = ref(10)
-const pageSize = 10
-const singleCollectionItemsPaginated = computed(() => {
-  return singleCollectionItems.value.slice(0, itemCount.value)
 })
 
 // Creates a list of all model collections that are not defined as collections. specifically, handles cases such as
@@ -454,29 +437,6 @@ const setSelection = (e: MouseEvent) => {
   }
 }
 
-const ensureSelectedItemsVisible = () => {
-  const selectedIds = objects.value.map((obj: { id: string }) => obj.id)
-  if (selectedIds.length === 0) return
-
-  // Check if any selected items are in this container but beyond current pagination
-  const allItems = singleCollectionItems.value
-  const selectedIndices = allItems
-    .map((item, index) => ({ item, index }))
-    .filter(({ item }) => {
-      const itemId = item.rawNode.raw?.id
-      return itemId && selectedIds.includes(itemId)
-    })
-    .map(({ index }) => index)
-
-  if (selectedIndices.length > 0) {
-    const maxSelectedIndex = Math.max(...selectedIndices)
-    // Ensure itemCount is high enough to show the selected item
-    if (maxSelectedIndex >= itemCount.value) {
-      itemCount.value = Math.max(maxSelectedIndex + 1, itemCount.value)
-    }
-  }
-}
-
 const checkAndExpand = () => {
   const nodeId = rawSpeckleData.value.id
   const shouldForceExpand = props.forceExpandedNodeIds?.has(nodeId)
@@ -486,7 +446,6 @@ const checkAndExpand = () => {
     (props.expandLevel >= props.depth || shouldForceExpand)
   ) {
     unfold.value = true
-    ensureSelectedItemsVisible()
   }
 }
 
