@@ -12,9 +12,12 @@
     <div class="flex flex-col gap-2 py-1" :class="isEmbedEnabled ? '' : 'lg:py-2'">
       <ViewerControlsButtonToggle
         v-tippy="
-          getTooltipProps(getShortcutDisplayText(shortcuts.ToggleModels), {
-            placement: 'top'
-          })
+          getTooltipProps(
+            getShortcutDisplayText(shortcuts.ToggleModels, { format: 'separate' }),
+            {
+              placement: 'top'
+            }
+          )
         "
         :active="activePanel === 'models'"
         :icon="'IconViewerModels'"
@@ -22,9 +25,12 @@
       />
       <ViewerControlsButtonToggle
         v-tippy="
-          getTooltipProps(getShortcutDisplayText(shortcuts.ToggleFilters), {
-            placement: 'top'
-          })
+          getTooltipProps(
+            getShortcutDisplayText(shortcuts.ToggleFilters, { format: 'separate' }),
+            {
+              placement: 'top'
+            }
+          )
         "
         :active="activePanel === 'filters'"
         :icon="'IconViewerExplorer'"
@@ -32,9 +38,12 @@
       />
       <ViewerControlsButtonToggle
         v-tippy="
-          getTooltipProps(getShortcutDisplayText(shortcuts.ToggleDiscussions), {
-            placement: 'top'
-          })
+          getTooltipProps(
+            getShortcutDisplayText(shortcuts.ToggleDiscussions, { format: 'separate' }),
+            {
+              placement: 'top'
+            }
+          )
         "
         :active="activePanel === 'discussions'"
         :icon="'IconViewerDiscussions'"
@@ -60,9 +69,12 @@
       >
         <ViewerControlsButtonToggle
           v-tippy="
-            getTooltipProps(getShortcutDisplayText(shortcuts.ToggleDevMode), {
-              placement: 'top'
-            })
+            getTooltipProps(
+              getShortcutDisplayText(shortcuts.ToggleDevMode, { format: 'separate' }),
+              {
+                placement: 'top'
+              }
+            )
           "
           :active="activePanel === 'devMode'"
           :icon="'IconViewerDev'"
