@@ -16,7 +16,8 @@ import type {
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
-  SavedViewGroupCreationValidationError
+  SavedViewGroupCreationValidationError,
+  SavedViewInvalidResourceTargetError
 } from '@/modules/viewer/errors/savedViews'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
@@ -38,7 +39,7 @@ const validateProjectResourceIdStringFactory =
     // Validate resourceIdString - it should only point to valid resources belonging to the project
     const resourceIds = resourceBuilder().addFromString(resourceIdString)
     if (!resourceIds.length) {
-      throw new SavedViewCreationValidationError(
+      throw new SavedViewInvalidResourceTargetError(
         "No valid resources referenced in 'resourceIdString'",
         {
           info: errorMetadata
@@ -62,7 +63,7 @@ const validateProjectResourceIdStringFactory =
       return false
     })
     if (failingResources.length) {
-      throw new SavedViewCreationValidationError(
+      throw new SavedViewInvalidResourceTargetError(
         'One or more resources could not be found in the project: {resourceIdString}',
         {
           info: {

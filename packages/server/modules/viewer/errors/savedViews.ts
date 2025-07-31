@@ -11,3 +11,9 @@ export class SavedViewGroupCreationValidationError extends BaseError {
   static defaultMessage = 'Saved view group creation failed due to a validation error'
   static statusCode = 400
 }
+
+export class SavedViewInvalidResourceTargetError extends BaseError {
+  static code = 'SAVED_VIEW_INVALID_RESOURCE_TARGET_ERROR'
+  static defaultMessage = 'Invalid resource ids specified'
+  static statusCode = 400
+}

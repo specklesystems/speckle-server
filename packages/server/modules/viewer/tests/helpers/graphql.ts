@@ -73,6 +73,18 @@ export const getProjectSavedViewGroupsQuery = gql`
   ${basicSavedViewGroupFragment}
 `
 
+export const getProjectSavedViewGroupQuery = gql`
+  query GetProjectSavedViewGroup($projectId: String!, $groupId: ID!) {
+    project(id: $projectId) {
+      savedViewGroup(id: $groupId) {
+        ...BasicSavedViewGroup
+      }
+    }
+  }
+
+  ${basicSavedViewGroupFragment}
+`
+
 export const getProjectSavedViewGroupsWithViewsQuery = gql`
   query GetProjectSavedViewGroupsWithViews(
     $projectId: String!

@@ -2,12 +2,14 @@ import type {
   BasicSavedViewGroupFragment,
   CreateSavedViewGroupMutationVariables,
   CreateSavedViewMutationVariables,
+  GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewGroupsWithViewsQueryVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
   CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
+  GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
   GetProjectSavedViewGroupsWithViewsDocument
 } from '@/modules/core/graph/generated/graphql'
@@ -17,7 +19,12 @@ import {
 } from '@/modules/core/tests/helpers/creation'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
-import { SavedViewCreationValidationError } from '@/modules/viewer/errors/savedViews'
+import {
+  SavedViewCreationValidationError,
+  SavedViewGroupCreationValidationError,
+  SavedViewInvalidResourceTargetError
+} from '@/modules/viewer/errors/savedViews'
+import { itEach } from '@/test/assertionHelper'
 import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
@@ -30,6 +37,7 @@ import { Roles } from '@speckle/shared'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
+import cryptoRandomString from 'crypto-random-string'
 import { intersection, merge, times } from 'lodash-es'
 import type { PartialDeep } from 'type-fest'
 
@@ -62,6 +70,7 @@ describe('Saved Views GraphQL CRUD', () => {
   let guest: BasicTestUser
   let myProject: BasicTestStream
   let myModel1: BasicTestBranch
+  let myModel2: BasicTestBranch
   let testGroup1: BasicSavedViewGroupFragment
 
   const buildCreateInput = (params: {
@@ -101,7 +110,14 @@ describe('Saved Views GraphQL CRUD', () => {
     options?: ExecuteOperationOptions
   ) => apollo.execute(CreateSavedViewGroupDocument, input, options)
 
+  const getGroup = (
+    input: GetProjectSavedViewGroupQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectSavedViewGroupDocument, input, options)
+
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
+
+  const model2ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel2.id)
 
   before(async () => {
     me = await createTestUser(buildBasicTestUser({ name: 'me' }))
@@ -109,6 +125,11 @@ describe('Saved Views GraphQL CRUD', () => {
     myProject = await createTestStream(buildBasicTestProject(), me)
     myModel1 = await createTestBranch({
       branch: buildBasicTestModel(),
+      stream: myProject,
+      owner: me
+    })
+    myModel2 = await createTestBranch({
+      branch: buildBasicTestModel({ name: 'model-2' }),
       stream: myProject,
       owner: me
     })
@@ -154,8 +175,45 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(group!.isUngroupedViewsGroup).to.be.false
     })
 
-    it('should fail to create group w/ invalid name', async () => {})
-    it('should fail to create group w/ invalid resourceIdString', async () => {})
+    itEach(
+      [
+        { val: '', title: 'too short' },
+        { val: cryptoRandomString({ length: 300 }), title: 'too long' }
+      ],
+      ({ title }) => `should fail to create group w/ invalid name: ${title}`,
+      async ({ val }) => {
+        const resourceIds = model1ResourceIds()
+        const resourceIdString = resourceIds.toString()
+
+        const res = await createSavedViewGroup({
+          input: {
+            projectId: myProject.id,
+            resourceIdString,
+            groupName: val // invalid name
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewGroupCreationValidationError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
+      }
+    )
+
+    it('should fail to create group w/ invalid resourceIdString', async () => {
+      const res = await createSavedViewGroup({
+        input: {
+          projectId: myProject.id,
+          resourceIdString: 'invalid',
+          groupName: 'Test Group'
+        }
+      })
+
+      expect(res).to.haveGraphQLErrors({
+        code: SavedViewInvalidResourceTargetError.code
+      })
+      expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
+    })
 
     it('should successfully create a saved view', async () => {
       const resourceIds = model1ResourceIds()
@@ -249,9 +307,63 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
 
-    it('should fail to create view if invalid groupId', async () => {})
+    it('should fail to create view if invalid groupId', async () => {
+      const resourceIdString = model1ResourceIds().toString()
+      const res = await createSavedView(
+        buildCreateInput({
+          resourceIdString,
+          overrides: { groupId: 'invalid-group-id' }
+        }),
+        {
+          authUserId: me.id
+        }
+      )
 
-    it('should recalculate group resourceIds on view assignment', async () => {})
+      expect(res).to.haveGraphQLErrors({ code: SavedViewCreationValidationError.code })
+      expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+    })
+
+    it('should recalculate group resourceIds on view assignment', async () => {
+      const testGroup1 = (
+        await createSavedViewGroup(
+          {
+            input: {
+              projectId: myProject.id,
+              resourceIdString: model1ResourceIds().toString(),
+              groupName: 'Test Recalculation Group'
+            }
+          },
+          { assertNoErrors: true }
+        )
+      )?.data?.projectMutations.savedViewMutations.createGroup!
+
+      const getCurrentGroup = async () =>
+        await getGroup(
+          { groupId: testGroup1.id, projectId: myProject.id },
+          { assertNoErrors: true }
+        )
+
+      const groupInitial = await getCurrentGroup()
+      const initialResourceIds =
+        groupInitial.data?.project.savedViewGroup?.resourceIds || []
+      expect(initialResourceIds.find((r) => r === myModel1.id)).to.be.ok // initial empty group string only
+      expect(initialResourceIds.find((r) => r === myModel2.id)).to.not.be.ok
+
+      await createSavedView(
+        buildCreateInput({
+          resourceIdString: model2ResourceIds().toString(),
+          overrides: { groupId: testGroup1.id }
+        }),
+        { assertNoErrors: true }
+      )
+
+      const groupAfter = await getCurrentGroup()
+      const updatedResourceIds =
+        groupAfter.data?.project.savedViewGroup?.resourceIds || []
+
+      expect(updatedResourceIds.find((r) => r === myModel1.id)).to.not.be.ok // gone, no such views in there
+      expect(updatedResourceIds.find((r) => r === myModel2.id)).to.be.ok // this is now added
+    })
 
     it('should fail to create view w/ invalid resourceIdString', async () => {
       const res = await createSavedView(
@@ -260,7 +372,9 @@ describe('Saved Views GraphQL CRUD', () => {
         })
       )
 
-      expect(res).to.haveGraphQLErrors({ code: SavedViewCreationValidationError.code })
+      expect(res).to.haveGraphQLErrors({
+        code: SavedViewInvalidResourceTargetError.code
+      })
       expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
     })
 
