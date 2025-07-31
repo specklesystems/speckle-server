@@ -23,6 +23,7 @@ import {
   getProjectSavedViewGroupsTotalCountFactory,
   getSavedViewGroupFactory,
   getStoredViewCountFactory,
+  getUngroupedSavedViewsGroupFactory,
   recalculateGroupResourceIdsFactory,
   storeSavedViewFactory,
   storeSavedViewGroupFactory
@@ -85,6 +86,15 @@ const resolvers: Resolvers = {
           `Saved view group with ID ${args.id} not found in project ${parent.id}`
         )
       }
+
+      return group
+    },
+    ungroupedViewGroup: async (parent, args) => {
+      const getDefaultGroup = getUngroupedSavedViewsGroupFactory()
+      const group = getDefaultGroup({
+        projectId: parent.id,
+        resourceIdString: args.input.resourceIdString
+      })
 
       return group
     }

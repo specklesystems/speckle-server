@@ -11,6 +11,7 @@ type SavedView {
   author: LimitedUser
   createdAt: DateTime!
   updatedAt: DateTime!
+  projectId: ID!
   """
   Original resource ID string that this view is associated with.
   """
@@ -105,9 +106,17 @@ input SavedViewGroupsInput {
   cursor: String
 }
 
+input GetUngroupedViewGroupInput {
+  """
+  Viewer resource ID string that identifies which resources should be loaded
+  """
+  resourceIdString: String!
+}
+
 extend type Project {
   savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
   savedViewGroup(id: ID!): SavedViewGroup!
+  ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!
 }
 
 input CreateSavedViewInput {

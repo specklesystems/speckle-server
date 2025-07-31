@@ -65,6 +65,9 @@ export type GetGroupSavedViewsBaseParams = {
   userId?: MaybeNullOrUndefined<string>
   projectId: string
   resourceIdString: string
+  /**
+   * Null means a group w/ null id, undefined means - dont filter by group id at all
+   */
   groupId: MaybeNullOrUndefined<string>
   onlyAuthored?: MaybeNullOrUndefined<boolean>
   search?: MaybeNullOrUndefined<string>
@@ -92,6 +95,11 @@ export type GetSavedViewGroup = (params: {
    */
   projectId: string | undefined
 }) => Promise<SavedViewGroup | undefined>
+
+export type GetUngroupedSavedViewsGroup = (params: {
+  projectId: string
+  resourceIdString: string
+}) => SavedViewGroup
 
 export type RecalculateGroupResourceIds = (params: {
   groupId: string

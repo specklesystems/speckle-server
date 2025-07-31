@@ -4,14 +4,14 @@ import type {
   CreateSavedViewMutationVariables,
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
-  GetProjectSavedViewGroupsWithViewsQueryVariables
+  GetProjectUngroupedViewGroupQueryVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
   CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
-  GetProjectSavedViewGroupsWithViewsDocument
+  GetProjectUngroupedViewGroupDocument
 } from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
@@ -38,6 +38,7 @@ import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import dayjs from 'dayjs'
 import { intersection, merge, times } from 'lodash-es'
 import type { PartialDeep } from 'type-fest'
 
@@ -63,6 +64,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     }),
     overrides || {}
   )
+
+/**
+ * TODO: Saved views for business plans only
+ */
 
 describe('Saved Views GraphQL CRUD', () => {
   let apollo: TestApolloServer
@@ -114,6 +119,11 @@ describe('Saved Views GraphQL CRUD', () => {
     input: GetProjectSavedViewGroupQueryVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(GetProjectSavedViewGroupDocument, input, options)
+
+  const getProjectUngroupedViewGroup = (
+    input: GetProjectUngroupedViewGroupQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectUngroupedViewGroupDocument, input, options)
 
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
@@ -583,6 +593,7 @@ describe('Saved Views GraphQL CRUD', () => {
         })
       }
 
+      // one view without a group at the end
       const groupNames = [...times(NAMED_GROUP_COUNT, (i) => `group-${i + 1}`), null]
       await Promise.all(
         groupNames.map((groupName, idx) => createGroupView(groupName, idx))
@@ -711,12 +722,311 @@ describe('Saved Views GraphQL CRUD', () => {
       expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
     })
 
+    it('can retrieve default group both by id and also ungroupedViewGroup query', async () => {
+      const allGroupsRes = await getProjectViewGroups(
+        {
+          projectId: readTestProject.id,
+          input: {
+            limit: GROUP_COUNT, // all in 1 page
+            resourceIdString: getAllReadModelResourceIds().toString()
+          }
+        },
+        { assertNoErrors: true }
+      )
+
+      const defaultGroup = allGroupsRes.data?.project.savedViewGroups.items.find(
+        (g) => g.isUngroupedViewsGroup
+      )
+      expect(defaultGroup).to.be.ok
+      expect(defaultGroup!.views.items.length).to.equal(1) // 1 view in there
+
+      const defaultGroupViewId = defaultGroup!.views.items[0].id
+      expect(defaultGroupViewId).to.be.ok
+
+      const groupById = await getGroup(
+        {
+          projectId: readTestProject.id,
+          groupId: defaultGroup!.id
+        },
+        { assertNoErrors: true }
+      )
+      const groupByIdData = groupById.data?.project.savedViewGroup
+      expect(groupByIdData).to.be.ok
+      expect(groupByIdData!.id).to.equal(defaultGroup!.id)
+      expect(groupByIdData!.isUngroupedViewsGroup).to.be.true
+      expect(groupByIdData!.views.items.length).to.equal(1) // 1 view in there
+      expect(groupByIdData!.views.items[0].id).to.equal(defaultGroupViewId)
+
+      const ungroupedGroup = await getProjectUngroupedViewGroup(
+        {
+          projectId: readTestProject.id,
+          input: { resourceIdString: getAllReadModelResourceIds().toString() }
+        },
+        { assertNoErrors: true }
+      )
+      const ungroupedGroupData = ungroupedGroup.data?.project.ungroupedViewGroup
+      expect(ungroupedGroupData).to.be.ok
+      expect(ungroupedGroupData!.id).to.equal(defaultGroup!.id)
+      expect(ungroupedGroupData!.isUngroupedViewsGroup).to.be.true
+      expect(ungroupedGroupData!.views.items.length).to.equal(1) // 1 view in there
+      expect(ungroupedGroupData!.views.items[0].id).to.equal(defaultGroupViewId)
+    })
+
     describe('views', () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const getGroupViews = (
-        input: GetProjectSavedViewGroupsWithViewsQueryVariables,
-        options?: ExecuteOperationOptions
-      ) => apollo.execute(GetProjectSavedViewGroupsWithViewsDocument, input, options)
+      let myFirstGroup: BasicSavedViewGroupFragment
+      const VIEW_COUNT = GROUP_COUNT
+      const OTHER_USER_VIEW_COUNT = VIEW_COUNT / 2
+      const OTHER_USER_PRIVATE_VIEW_COUNT = OTHER_USER_VIEW_COUNT / 2
+      const PUBLIC_VIEW_COUNT = VIEW_COUNT - OTHER_USER_PRIVATE_VIEW_COUNT
+
+      const SEARCH_STRING = 'babab123'
+      const SEARCHABLE_VIEW_COUNT = PUBLIC_VIEW_COUNT / 3
+
+      /**
+       * Similar to 'reading groups' - create a test group and a bunch of views in it, based on const params,
+       * and then do various tests there
+       */
+
+      before(async () => {
+        // Create new group
+        const group = await createSavedViewGroup(
+          {
+            input: {
+              projectId: readTestProject.id,
+              resourceIdString: ViewerRoute.resourceBuilder()
+                .addModel(modelIds[0])
+                .toString(),
+              groupName: 'My First Views Test Group'
+            }
+          },
+          {
+            assertNoErrors: true
+          }
+        )
+        myFirstGroup = group.data?.projectMutations.savedViewMutations.createGroup!
+
+        // Create a bunch of views, one for each modelId
+        // Serial creation for ordered dates
+        for (let i = 0; i < modelIds.length; i++) {
+          const modelId = modelIds[i]
+          const idx = i + 1 // 1-based index for naming
+
+          const shouldBeOtherUser = i % 2 === 0
+          const shouldBePrivate = shouldBeOtherUser && i % 4 === 0
+          const shouldAddSearchString = !shouldBePrivate && i % 3 === 0
+
+          await createSavedView(
+            buildCreateInput({
+              resourceIdString: ViewerRoute.resourceBuilder()
+                .addModel(modelId)
+                .toString(),
+              projectId: readTestProject.id,
+              overrides: {
+                groupId: myFirstGroup.id,
+                name: `Grouped View ${shouldAddSearchString ? SEARCH_STRING : ''} #${
+                  idx + 1
+                }`,
+                visibility: shouldBePrivate
+                  ? SavedViewVisibility.authorOnly
+                  : SavedViewVisibility.public
+              }
+            }),
+            {
+              assertNoErrors: true,
+              authUserId: shouldBeOtherUser ? otherReader.id : me.id
+            }
+          )
+        }
+      })
+
+      it('should successfully read a group with its views', async () => {
+        const res = await getGroup(
+          {
+            projectId: readTestProject.id,
+            groupId: myFirstGroup.id,
+            viewsInput: {
+              limit: 100 // all in 1 page
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const data = res.data?.project.savedViewGroup
+        expect(data).to.be.ok
+        expect(data!.id).to.equal(myFirstGroup.id)
+        expect(data!.title).to.equal(myFirstGroup.title)
+        expect(data!.resourceIds).to.deep.equalInAnyOrder(
+          getAllReadModelResourceIds().map((r) => r.toString())
+        )
+
+        const views = data!.views
+        expect(views).to.be.ok
+        expect(views.totalCount).to.equal(PUBLIC_VIEW_COUNT)
+        expect(views.items.length).to.equal(PUBLIC_VIEW_COUNT)
+
+        for (const view of views.items) {
+          expect(view.groupId).to.equal(myFirstGroup.id)
+          expect(view.projectId).to.equal(readTestProject.id)
+          expect(view.resourceIds.length).to.equal(1)
+
+          const resourceId = view.resourceIds[0]
+          expect(modelIds.includes(resourceId)).to.be.true
+        }
+      })
+
+      it('should handle pagination', async () => {
+        let cursor: string | null = null
+        let pagesLoaded = 0
+        let viewsFound = 0
+        const allReadModelResourceIds = getAllReadModelResourceIds()
+        const PAGE_SIZE = Math.ceil(PUBLIC_VIEW_COUNT / PAGE_COUNT)
+
+        const loadPage = async () => {
+          const res = await getGroup(
+            {
+              projectId: readTestProject.id,
+              groupId: myFirstGroup.id,
+              viewsInput: {
+                limit: PAGE_SIZE,
+                cursor
+              }
+            },
+            { assertNoErrors: true }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const data = res.data?.project.savedViewGroup.views
+          expect(data).to.be.ok
+          expect(data!.totalCount).to.equal(PUBLIC_VIEW_COUNT)
+
+          if (data?.cursor) {
+            expect(data!.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+          } else {
+            expect(data!.items.length).to.eq(0)
+          }
+
+          const allResourceIds = allReadModelResourceIds
+            .toResources()
+            .map((r) => r.toString())
+          for (const view of data!.items) {
+            expect(view.projectId).to.equal(readTestProject.id)
+            expect(
+              intersection(view.resourceIds, allResourceIds).length
+            ).to.be.greaterThan(0)
+            viewsFound++
+          }
+
+          if (!data?.cursor) {
+            expect(data?.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+          }
+
+          cursor = data?.cursor || null
+          pagesLoaded++
+        }
+
+        do {
+          if (pagesLoaded > PAGE_COUNT) {
+            throw new Error(
+              'Too many pages loaded, something is wrong with pagination logic'
+            )
+          }
+
+          await loadPage()
+        } while (cursor)
+
+        expect(pagesLoaded).to.equal(PAGE_COUNT + 1) // +1 for last,empty page
+        expect(viewsFound).to.equal(PUBLIC_VIEW_COUNT)
+      })
+
+      it('should respect onlyAuthored flag', async () => {
+        const res = await getGroup(
+          {
+            projectId: readTestProject.id,
+            groupId: myFirstGroup.id,
+            viewsInput: {
+              limit: 100, // all in 1 page
+              onlyAuthored: true
+            }
+          },
+          { assertNoErrors: true, authUserId: otherReader.id }
+        )
+
+        const data = res.data?.project.savedViewGroup.views
+        expect(data).to.be.ok
+        expect(data!.totalCount).to.equal(OTHER_USER_VIEW_COUNT)
+        expect(data!.items.length).to.equal(OTHER_USER_VIEW_COUNT)
+        expect(data!.items.every((v) => v.author?.id === otherReader.id)).to.be.true
+      })
+
+      it('should respect search filter', async () => {
+        const res = await getGroup(
+          {
+            projectId: readTestProject.id,
+            groupId: myFirstGroup.id,
+            viewsInput: {
+              limit: 100, // all in 1 page
+              search: SEARCH_STRING
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const data = res.data?.project.savedViewGroup.views
+        expect(data).to.be.ok
+        expect(data!.totalCount).to.equal(SEARCHABLE_VIEW_COUNT)
+        expect(data!.items.length).to.equal(SEARCHABLE_VIEW_COUNT)
+
+        for (const view of data!.items) {
+          expect(view.name.includes(SEARCH_STRING)).to.be.true
+        }
+      })
+
+      it('should allow sorting by name asc', async () => {
+        const res = await getGroup(
+          {
+            projectId: readTestProject.id,
+            groupId: myFirstGroup.id,
+            viewsInput: {
+              limit: 100, // all in 1 page
+              sortBy: 'name',
+              sortDirection: 'ASC'
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const data = res.data?.project.savedViewGroup.views
+        expect(data).to.be.ok
+        expect(data!.items.length).to.equal(PUBLIC_VIEW_COUNT)
+
+        const names = data!.items.map((v) => v.name)
+        const sortedNames = [...names].sort()
+        expect(names).to.deep.equal(sortedNames)
+      })
+
+      it('should allow sorting by createdAt desc', async () => {
+        const res = await getGroup(
+          {
+            projectId: readTestProject.id,
+            groupId: myFirstGroup.id,
+            viewsInput: {
+              limit: 100, // all in 1 page
+              sortBy: 'createdAt',
+              sortDirection: 'DESC'
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const data = res.data?.project.savedViewGroup.views
+        expect(data).to.be.ok
+        expect(data!.items.length).to.equal(PUBLIC_VIEW_COUNT)
+
+        const createdAt = data!.items.map((v) => dayjs(v.createdAt))
+        const sortedCreatedAt = [...createdAt].sort((a, b) => (b.isAfter(a) ? 1 : -1))
+        expect(createdAt).to.deep.equal(sortedCreatedAt)
+      })
     })
   })
 })

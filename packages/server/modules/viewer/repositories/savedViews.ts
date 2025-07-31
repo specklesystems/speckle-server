@@ -9,6 +9,7 @@ import type {
   GetProjectSavedViewGroupsTotalCount,
   GetSavedViewGroup,
   GetStoredViewCount,
+  GetUngroupedSavedViewsGroup,
   RecalculateGroupResourceIds,
   StoreSavedView,
   StoreSavedViewGroup
@@ -30,7 +31,7 @@ import {
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
 import { type Knex } from 'knex'
-import { clamp } from 'lodash-es'
+import { clamp, isUndefined } from 'lodash-es'
 
 const SavedViews = buildTableHelper('saved_views', [
   'id',
@@ -290,14 +291,20 @@ const getGroupSavedViewsBaseQueryFactory =
       .where({ [SavedViews.col.projectId]: projectId })
 
     const resourceIds = cleanLookupResourceIdString(resourceIdString)
-    if (groupId) {
-      q.where({ [SavedViews.col.groupId]: groupId })
-    } else if (resourceIds.length) {
-      // If no groupId, filter by resourceIds
-      q.whereRaw('?? && ?', [SavedViews.col.resourceIds, resourceIds])
-    } else {
-      // Make query exit early - no resources
+
+    if (!resourceIds.length && !groupId) {
+      // If no resources and no groupId, exit early
       q.whereRaw('false')
+    }
+
+    // Set group filter
+    if (!isUndefined(groupId)) {
+      q.where({ [SavedViews.col.groupId]: groupId })
+    }
+
+    // If no groupId, filter by resourceIds
+    if (resourceIds.length && !groupId) {
+      q.whereRaw('?? && ?', [SavedViews.col.resourceIds, resourceIds])
     }
 
     if (onlyAuthored) {
@@ -330,8 +337,8 @@ export const getGroupSavedViewsTotalCountFactory =
 export const getGroupSavedViewsPageItemsFactory =
   (deps: { db: Knex }): GetGroupSavedViewsPageItems =>
   async (params) => {
-    const sortByCol = params.sortBy || 'name'
-    const sortDir = params.sortDirection || 'asc'
+    const sortByCol = params.sortBy || 'updatedAt'
+    const sortDir = params.sortDirection || 'desc'
 
     const q = getGroupSavedViewsBaseQueryFactory(deps)(params)
     const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
@@ -381,6 +388,16 @@ export const getSavedViewGroupFactory =
     const group = await q.first()
     return group
   }
+
+export const getUngroupedSavedViewsGroupFactory =
+  (): GetUngroupedSavedViewsGroup =>
+  ({ projectId, resourceIdString }) =>
+    buildDefaultGroup({
+      resourceIds: resourceBuilder()
+        .addFromString(resourceIdString)
+        .map((r) => r.toString()),
+      projectId
+    })
 
 export const recalculateGroupResourceIdsFactory =
   (deps: { db: Knex }): RecalculateGroupResourceIds =>

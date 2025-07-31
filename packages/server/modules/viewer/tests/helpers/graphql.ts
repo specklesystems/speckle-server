@@ -18,6 +18,7 @@ const basicSavedViewFragment = gql`
     viewerState
     screenshot
     position
+    projectId
   }
 `
 
@@ -28,6 +29,13 @@ const basicSavedViewGroupFragment = gql`
     resourceIds
     title
     isUngroupedViewsGroup
+    views(input: $viewsInput) {
+      totalCount
+      cursor
+      items {
+        ...BasicSavedView
+      }
+    }
   }
 `
 
@@ -46,7 +54,10 @@ export const createSavedViewMutation = gql`
 `
 
 export const createSavedGroupMutation = gql`
-  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {
+  mutation CreateSavedViewGroup(
+    $input: CreateSavedViewGroupInput!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
+  ) {
     projectMutations {
       savedViewMutations {
         createGroup(input: $input) {
@@ -58,7 +69,11 @@ export const createSavedGroupMutation = gql`
 `
 
 export const getProjectSavedViewGroupsQuery = gql`
-  query GetProjectSavedViewGroups($projectId: String!, $input: SavedViewGroupsInput!) {
+  query GetProjectSavedViewGroups(
+    $projectId: String!
+    $input: SavedViewGroupsInput!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
+  ) {
     project(id: $projectId) {
       savedViewGroups(input: $input) {
         totalCount
@@ -74,7 +89,11 @@ export const getProjectSavedViewGroupsQuery = gql`
 `
 
 export const getProjectSavedViewGroupQuery = gql`
-  query GetProjectSavedViewGroup($projectId: String!, $groupId: ID!) {
+  query GetProjectSavedViewGroup(
+    $projectId: String!
+    $groupId: ID!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
+  ) {
     project(id: $projectId) {
       savedViewGroup(id: $groupId) {
         ...BasicSavedViewGroup
@@ -85,25 +104,16 @@ export const getProjectSavedViewGroupQuery = gql`
   ${basicSavedViewGroupFragment}
 `
 
-export const getProjectSavedViewGroupsWithViewsQuery = gql`
-  query GetProjectSavedViewGroupsWithViews(
+export const getProjectUngroupedViewGroupQuery = gql`
+  query GetProjectUngroupedViewGroup(
     $projectId: String!
-    $groupId: ID!
-    $viewsInput: SavedViewGroupViewsInput!
+    $input: GetUngroupedViewGroupInput!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
   ) {
     project(id: $projectId) {
-      savedViewGroup(id: $groupId) {
+      ungroupedViewGroup(input: $input) {
         ...BasicSavedViewGroup
-        views(input: $viewsInput) {
-          totalCount
-          cursor
-          items {
-            ...BasicSavedView
-          }
-        }
       }
     }
   }
-
-  ${basicSavedViewGroupFragment}
 `
