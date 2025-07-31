@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   checkIfPubliclyReadableProjectFragment,
+  ensureCanUseProjectWorkspacePlanFeatureFragment,
   ensureImplicitProjectMemberWithReadAccessFragment,
   ensureImplicitProjectMemberWithWriteAccessFragment,
   ensureMinimumProjectRoleFragment,
@@ -16,12 +17,23 @@ import {
   ServerNoSessionError,
   ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspacePlanNoFeatureAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
-import { getProjectFake, getWorkspaceFake } from '../../tests/fakes.js'
+import {
+  getEnvFake,
+  getProjectFake,
+  getWorkspaceFake,
+  getWorkspacePlanFake
+} from '../../tests/fakes.js'
 import { TIME_MS } from '../../core/index.js'
 import { ProjectVisibility } from '../domain/projects/types.js'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  WorkspacePlanFeatures
+} from '../../workspaces/index.js'
 
 describe('ensureMinimumProjectRoleFragment', () => {
   const buildSUT = (overrides?: OverridesOf<typeof ensureMinimumProjectRoleFragment>) =>
@@ -924,6 +936,107 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       expect(result).toBeAuthErrorResult({
         code: WorkspaceSsoSessionNoAccessError.code
       })
+    })
+  })
+})
+
+describe('ensureCanUseProjectWorkspacePlanFeatureFragment', () => {
+  const buildSUT = (
+    overrides?: OverridesOf<typeof ensureCanUseProjectWorkspacePlanFeatureFragment>
+  ) =>
+    ensureCanUseProjectWorkspacePlanFeatureFragment({
+      getProject: getProjectFake({
+        id: 'project-id',
+        workspaceId: 'workspace-id'
+      }),
+      getWorkspacePlan: getWorkspacePlanFake({
+        workspaceId: 'workspace-id',
+        name: PaidWorkspacePlans.Pro,
+        status: PaidWorkspacePlanStatuses.Valid
+      }),
+      getEnv: getEnvFake({
+        FF_WORKSPACES_MODULE_ENABLED: true
+      }),
+      ...overrides
+    })
+
+  it('succeeds if project has workspace and feature is enabled', async () => {
+    const sut = buildSUT()
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeAuthOKResult()
+  })
+
+  it('fails if project not found', async () => {
+    const sut = buildSUT({
+      getProject: async () => null
+    })
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNotFoundError.code
+    })
+  })
+
+  it('fails if project w/o a workspace', async () => {
+    const sut = buildSUT({
+      getProject: getProjectFake({
+        id: 'project-id',
+        workspaceId: null
+      })
+    })
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceNoAccessError.code
+    })
+  })
+
+  it('succeeds if project w/o a workspace, but allowUnworkspaced === true', async () => {
+    const sut = buildSUT({
+      getProject: getProjectFake({
+        id: 'project-id',
+        workspaceId: null
+      })
+    })
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.SavedViews,
+      allowUnworkspaced: true
+    })
+
+    expect(result).toBeAuthOKResult()
+  })
+
+  it('fails if projects plan does not have access to feature', async () => {
+    const sut = buildSUT({
+      getWorkspacePlan: getWorkspacePlanFake({
+        workspaceId: 'workspace-id',
+        name: PaidWorkspacePlans.Team,
+        status: PaidWorkspacePlanStatuses.Valid
+      })
+    })
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspacePlanNoFeatureAccessError.code
     })
   })
 })

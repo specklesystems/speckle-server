@@ -1,15 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import { Roles } from '../../../../core/constants.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
-import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes.js'
+import {
+  getProjectFake,
+  getWorkspaceFake,
+  getWorkspacePlanFake
+} from '../../../../tests/fakes.js'
 import { OverridesOf } from '../../../../tests/helpers/types.js'
 import { canCreateSavedViewPolicy } from './canCreate.js'
 import { TIME_MS } from '../../../../core/index.js'
 import {
   ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
-  ServerNoAccessError
+  ServerNoAccessError,
+  WorkspaceNoAccessError,
+  WorkspacePlanNoFeatureAccessError,
+  WorkspaceReadOnlyError
 } from '../../../domain/authErrors.js'
+import { PaidWorkspacePlans } from '../../../../workspaces/index.js'
 
 const buildSUT = (overrides?: OverridesOf<typeof canCreateSavedViewPolicy>) =>
   canCreateSavedViewPolicy({
@@ -22,61 +30,21 @@ const buildSUT = (overrides?: OverridesOf<typeof canCreateSavedViewPolicy>) =>
     getWorkspace: async () => null,
     getWorkspaceSsoProvider: async () => null,
     getWorkspaceSsoSession: async () => null,
+    getWorkspacePlan: async () => null,
     getProjectRole: async () => Roles.Stream.Contributor,
     ...overrides
   })
 
 describe('canCreateSavedViewPolicy', () => {
-  it('succeeds for project contributor', async () => {
+  it('fails when not workspaced project', async () => {
     const canCreate = buildSUT()
 
     const result = await canCreate({
       userId: 'user-id',
       projectId: 'project-id'
     })
-    expect(result).toBeOKResult()
-  })
-
-  it('fails if not contributor+', async () => {
-    const canCreate = buildSUT({
-      getProjectRole: async () => Roles.Stream.Reviewer
-    })
-
-    const result = await canCreate({
-      userId: 'user-id',
-      projectId: 'project-id'
-    })
     expect(result).toBeAuthErrorResult({
-      code: ProjectNotEnoughPermissionsError.code
-    })
-  })
-
-  it('fails if no project access', async () => {
-    const canCreate = buildSUT({
-      getProjectRole: async () => null
-    })
-
-    const result = await canCreate({
-      userId: 'user-id',
-      projectId: 'project-id'
-    })
-    expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
-    })
-  })
-
-  it('fails if logged out', async () => {
-    const canCreate = buildSUT({
-      getServerRole: async () => null,
-      getProjectRole: async () => null
-    })
-
-    const result = await canCreate({
-      userId: 'aaa',
-      projectId: 'project-id'
-    })
-    expect(result).toBeAuthErrorResult({
-      code: ServerNoAccessError.code
+      code: WorkspaceNoAccessError.code
     })
   })
 
@@ -98,6 +66,9 @@ describe('canCreateSavedViewPolicy', () => {
         getWorkspace: getWorkspaceFake({
           id: 'workspace-id'
         }),
+        getWorkspacePlan: getWorkspacePlanFake({
+          name: PaidWorkspacePlans.Pro
+        }),
         getWorkspaceSsoProvider: async () => ({
           providerId: 'provider-id'
         }),
@@ -117,6 +88,98 @@ describe('canCreateSavedViewPolicy', () => {
         projectId: 'project-id'
       })
       expect(result).toBeOKResult()
+    })
+
+    it('succeeds for project contributor', async () => {
+      const canCreate = buildWorkspaceSUT({
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getProjectRole: async () => Roles.Stream.Contributor
+      })
+
+      const result = await canCreate({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeOKResult()
+    })
+
+    it('fails if not contributor+', async () => {
+      const canCreate = buildWorkspaceSUT({
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getProjectRole: async () => Roles.Stream.Reviewer
+      })
+
+      const result = await canCreate({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNotEnoughPermissionsError.code
+      })
+    })
+
+    it('fails if no project access', async () => {
+      const canCreate = buildWorkspaceSUT({
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getProjectRole: async () => null
+      })
+
+      const result = await canCreate({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
+
+    it('fails if logged out', async () => {
+      const canCreate = buildWorkspaceSUT({
+        getWorkspaceRole: async () => null,
+        getServerRole: async () => null,
+        getProjectRole: async () => null
+      })
+
+      const result = await canCreate({
+        userId: 'aaa',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: ServerNoAccessError.code
+      })
+    })
+
+    it('fails if not on pro/business plan', async () => {
+      const canCreate = buildWorkspaceSUT({
+        getWorkspacePlan: getWorkspacePlanFake({
+          name: PaidWorkspacePlans.Team
+        })
+      })
+
+      const result = await canCreate({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: WorkspacePlanNoFeatureAccessError.code
+      })
+    })
+
+    it('fails if workspace readonly', async () => {
+      const canCreate = buildWorkspaceSUT({
+        getWorkspacePlan: getWorkspacePlanFake({
+          name: PaidWorkspacePlans.Pro,
+          status: 'canceled'
+        })
+      })
+
+      const result = await canCreate({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceReadOnlyError.code
+      })
     })
   })
 })

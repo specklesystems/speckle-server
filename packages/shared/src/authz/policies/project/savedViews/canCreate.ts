@@ -1,4 +1,5 @@
 import { Roles } from '../../../../core/constants.js'
+import { WorkspacePlanFeatures } from '../../../../workspaces/index.js'
 import {
   ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
@@ -8,12 +9,18 @@ import {
   ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
   WorkspaceNotEnoughPermissionsError,
+  WorkspacePlanNoFeatureAccessError,
+  WorkspaceReadOnlyError,
+  WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { MaybeUserContext, ProjectContext } from '../../../domain/context.js'
 import { Loaders } from '../../../domain/loaders.js'
 import { AuthPolicy } from '../../../domain/policies.js'
-import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fragments/projects.js'
+import {
+  ensureCanUseProjectWorkspacePlanFeatureFragment,
+  ensureImplicitProjectMemberWithWriteAccessFragment
+} from '../../../fragments/projects.js'
 import { err, ok } from 'true-myth/result'
 
 export const canCreateSavedViewPolicy: AuthPolicy<
@@ -23,6 +30,7 @@ export const canCreateSavedViewPolicy: AuthPolicy<
   | typeof Loaders.getWorkspaceRole
   | typeof Loaders.getWorkspace
   | typeof Loaders.getWorkspaceSsoProvider
+  | typeof Loaders.getWorkspacePlan
   | typeof Loaders.getWorkspaceSsoSession
   | typeof Loaders.getProjectRole,
   MaybeUserContext & ProjectContext,
@@ -36,10 +44,21 @@ export const canCreateSavedViewPolicy: AuthPolicy<
     | typeof ServerNotEnoughPermissionsError
     | typeof ProjectNotEnoughPermissionsError
     | typeof WorkspaceNotEnoughPermissionsError
+    | typeof WorkspacePlanNoFeatureAccessError
+    | typeof WorkspaceReadOnlyError
+    | typeof WorkspacesNotEnabledError
   >
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
+    const canUseSavedViews = await ensureCanUseProjectWorkspacePlanFeatureFragment(
+      loaders
+    )({
+      projectId,
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+    if (canUseSavedViews.isErr) return err(canUseSavedViews.error)
+
     const ensuredWriteAccess = await ensureImplicitProjectMemberWithWriteAccessFragment(
       loaders
     )({
