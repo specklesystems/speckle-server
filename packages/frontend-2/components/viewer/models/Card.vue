@@ -1,11 +1,10 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="relative border-b border-outline-3">
+  <div class="relative">
     <div>
-      <!-- Model Header -->
+      <!-- Model Header - Sticky -->
       <div
-        class="group flex items-center pl-1 pr-2 py-3 select-none cursor-pointer hover:bg-highlight-1"
-        :class="isExpanded ? 'border-b border-outline-3' : ''"
+        class="sticky top-0 z-10 bg-foundation group flex items-center pl-1 pr-2 py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
         @mouseenter="highlightObject"
         @mouseleave="unhighlightObject"
         @focusin="highlightObject"
@@ -102,10 +101,10 @@
         </div>
       </div>
 
-      <!-- Scene Explorer Content -->
+      <!-- Scene Explorer Content - No individual scroll container -->
       <div
         v-if="isExpanded && rootNodeChildren.length"
-        class="relative flex flex-col gap-y-2 overflow-y-auto px-1"
+        class="relative flex flex-col gap-y-2 px-1"
       >
         <div v-for="(childNode, idx) in rootNodeChildren" :key="idx">
           <ViewerModelsTreeItem
