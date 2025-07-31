@@ -87,9 +87,11 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
         version_id: str | None = None
 
         try:
-            if ( attempt > job.max_attempt ):
+            if attempt > job.max_attempt:
                 # something went wrong, it should have been marked as failed
-                raise Exception('Unhandled error silently failed the job multiple times')
+                raise Exception(
+                    "Unhandled error silently failed the job multiple times"
+                )
 
             logger = logger.bind(job_id=job_id, project_id=job.payload.project_id)
             logger.info("starting job")

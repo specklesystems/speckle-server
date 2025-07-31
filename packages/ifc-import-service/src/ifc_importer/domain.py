@@ -29,6 +29,7 @@ class FileimportPayload(JobBase):
 
 class JobStatus(StrEnum):
     """Status enumeration for the job."""
+
     QUEUED = "queued"
     PROCESSING = "processing"
     SUCCEEDED = "succeeded"
