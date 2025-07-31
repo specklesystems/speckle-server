@@ -1,7 +1,10 @@
 <template>
   <aside
     ref="buttonContainer"
-    class="absolute top-[3.75rem] sm:top-[3.5rem] lg:top-[3.75rem] z-20"
+    class="absolute z-20"
+    :class="
+      isEmbedEnabled ? 'top-[0.5rem]' : 'top-[3.75rem] sm:top-[3.5rem] lg:top-[3.75rem]'
+    "
     :style="dynamicStyles"
   >
     <ViewerControlsButtonGroup ref="buttonContainer" direction="vertical">
@@ -22,7 +25,11 @@
       />
     </ViewerControlsButtonGroup>
 
-    <div ref="menuContainer" class="absolute top-0 right-[2.875rem]">
+    <div
+      ref="menuContainer"
+      class="absolute right-[2.875rem]"
+      :class="isEmbedEnabled ? 'top-0' : 'top-[2.5rem]'"
+    >
       <ViewerCameraMenu v-show="activePanel === 'cameraControls'" />
     </div>
   </aside>
@@ -34,6 +41,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { onClickOutside, useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import type { Nullable } from '@speckle/shared'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 type ActivePanel = 'none' | 'cameraControls'
 
@@ -51,6 +59,7 @@ const { zoomExtentsOrSelection } = useCameraUtilities()
 const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 const mixpanel = useMixpanel()
 const { getTooltipProps } = useSmartTooltipDelay()
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isSmOrLarger = breakpoints.greaterOrEqual('sm')

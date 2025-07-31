@@ -2,7 +2,8 @@
   <aside>
     <ViewerControlsButtonGroup
       v-show="activePanel === 'none'"
-      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-50"
+      class="absolute left-1/2 -translate-x-1/2 z-50"
+      :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <ViewerControlsButtonToggle
         v-for="panel in panels"
@@ -10,13 +11,15 @@
         v-tippy="getTooltipProps(panel.tooltip)"
         :active="activePanel === panel.id"
         :icon="panel.icon"
+        :class="panel.extraClasses"
         @click="toggleActivePanel(panel.id)"
       />
     </ViewerControlsButtonGroup>
 
     <ViewerLayoutPanel
       v-if="activePanel !== 'none'"
-      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-50 flex p-1 items-center justify-between w-80"
+      class="absolute left-1/2 -translate-x-1/2 z-50 flex p-1 items-center justify-between w-80"
+      :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <span class="flex items-center">
         <component :is="panels[activePanel].icon" class="h-4 w-4 ml-1 mr-1.5" />
@@ -49,6 +52,7 @@ import {
   useFilterUtilities
 } from '~~/lib/viewer/composables/ui'
 import { onKeyStroke } from '@vueuse/core'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 enum ActivePanel {
   none = 'none',
@@ -65,6 +69,7 @@ const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
 const { getTooltipProps } = useSmartTooltipDelay()
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
 const panels = shallowRef({
@@ -72,31 +77,36 @@ const panels = shallowRef({
     id: ActivePanel.measurements,
     name: 'Measure',
     icon: 'IconViewerMeasurements',
-    tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements)
+    tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements),
+    extraClasses: 'hidden md:flex'
   },
   [ActivePanel.sectionBox]: {
     id: ActivePanel.sectionBox,
     name: 'Section',
     icon: 'IconViewerSectionBox',
-    tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox)
+    tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox),
+    extraClasses: ''
   },
   [ActivePanel.explode]: {
     id: ActivePanel.explode,
     name: 'Explode',
     icon: 'IconViewerExplode',
-    tooltip: 'Explode model'
+    tooltip: 'Explode model',
+    extraClasses: 'hidden md:flex'
   },
   [ActivePanel.viewModes]: {
     id: ActivePanel.viewModes,
     name: 'View modes',
     icon: 'IconViewerViewModes',
-    tooltip: 'View modes'
+    tooltip: 'View modes',
+    extraClasses: ''
   },
   [ActivePanel.lightControls]: {
     id: ActivePanel.lightControls,
     name: 'Light controls',
     icon: 'IconViewerLightControls',
-    tooltip: 'Light controls'
+    tooltip: 'Light controls',
+    extraClasses: 'hidden md:flex'
   }
 })
 
