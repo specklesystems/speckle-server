@@ -7,7 +7,7 @@
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleModels)"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleModels, { format: 'separate' })"
         :active="activePanel === 'models'"
         @click="toggleActivePanel('models')"
       >
@@ -16,7 +16,9 @@
 
       <!-- Explorer -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleExplorer)"
+        v-tippy="
+          getShortcutDisplayText(shortcuts.ToggleExplorer, { format: 'separate' })
+        "
         :active="activePanel === 'explorer'"
         @click="toggleActivePanel('explorer')"
       >
@@ -25,7 +27,9 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleDiscussions)"
+        v-tippy="
+          getShortcutDisplayText(shortcuts.ToggleDiscussions, { format: 'separate' })
+        "
         :active="activePanel === 'discussions'"
         @click="toggleActivePanel('discussions')"
       >
