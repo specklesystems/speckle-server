@@ -42,6 +42,7 @@ export type CreateAccSyncItem = (params: {
     | 'accFileExtension'
     | 'accFileVersionIndex'
     | 'accFileVersionUrn'
+    | 'accFileViewName'
   >
   creatorUserId: string
 }) => Promise<AccSyncItem>
