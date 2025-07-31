@@ -16,8 +16,8 @@ export function useSmartTooltipDelay() {
   const breakpoints = useBreakpoints(TailwindBreakpoints)
   const isMobile = breakpoints.smaller('sm')
 
-  const initialDelay = 1000
-  const resetAfter = 3000
+  const initialDelay = 350
+  const resetAfter = 2000
 
   const hasShownAny = ref(false)
   const resetTimer = ref<NodeJS.Timeout | null>(null)
