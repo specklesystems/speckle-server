@@ -1,0 +1,3 @@
+.tippy-box[data-theme~='speckleTooltip'] {
+  @apply bg-foundation border border-outline-2 rounded text-foreground text-xs shadow-sm font-medium;
+}

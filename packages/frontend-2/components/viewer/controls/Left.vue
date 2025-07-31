@@ -13,7 +13,7 @@
       <ViewerControlsButtonToggle
         v-tippy="
           getTooltipProps(getShortcutDisplayText(shortcuts.ToggleModels), {
-            placement: 'right'
+            placement: 'top'
           })
         "
         :active="activePanel === 'models'"
@@ -23,7 +23,7 @@
       <ViewerControlsButtonToggle
         v-tippy="
           getTooltipProps(getShortcutDisplayText(shortcuts.ToggleFilters), {
-            placement: 'right'
+            placement: 'top'
           })
         "
         :active="activePanel === 'filters'"
@@ -33,7 +33,7 @@
       <ViewerControlsButtonToggle
         v-tippy="
           getTooltipProps(getShortcutDisplayText(shortcuts.ToggleDiscussions), {
-            placement: 'right'
+            placement: 'top'
           })
         "
         :active="activePanel === 'discussions'"
@@ -44,7 +44,7 @@
         v-if="allAutomationRuns.length !== 0"
         v-tippy="{
           content: summary.longSummary,
-          placement: 'right'
+          placement: 'top'
         }"
         :active="activePanel === 'automate'"
         @click="toggleActivePanel('automate')"
@@ -61,7 +61,7 @@
         <ViewerControlsButtonToggle
           v-tippy="
             getTooltipProps(getShortcutDisplayText(shortcuts.ToggleDevMode), {
-              placement: 'right'
+              placement: 'top'
             })
           "
           :active="activePanel === 'devMode'"
@@ -70,14 +70,14 @@
           @click="toggleActivePanel('devMode')"
         />
         <ViewerControlsButtonToggle
-          v-tippy="getTooltipProps('Documentation', { placement: 'right' })"
+          v-tippy="getTooltipProps('Documentation', { placement: 'top' })"
           :icon="'IconDocs'"
           secondary
           @click="openDocs"
         />
         <!-- TODO: Add intercom click event -->
         <ViewerControlsButtonToggle
-          v-tippy="getTooltipProps('Get help', { placement: 'right' })"
+          v-tippy="getTooltipProps('Get help', { placement: 'top' })"
           :icon="'IconIntercom'"
           secondary
         />
