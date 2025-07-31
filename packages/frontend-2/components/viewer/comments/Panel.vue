@@ -17,7 +17,6 @@
       >
         <FormButton
           hide-text
-          size="sm"
           color="subtle"
           :icon-left="settingsIcon"
           :class="showVisibilityOptions ? '!text-primary-focus !bg-info-lighter' : ''"

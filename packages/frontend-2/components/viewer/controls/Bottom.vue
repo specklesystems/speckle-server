@@ -2,7 +2,7 @@
   <aside>
     <ViewerControlsButtonGroup
       v-show="activePanel === 'none'"
-      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-40"
+      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-50"
     >
       <ViewerControlsButtonToggle
         v-for="panel in panels"
@@ -16,7 +16,7 @@
 
     <ViewerLayoutPanel
       v-if="activePanel !== 'none'"
-      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-30 flex p-1 items-center justify-between w-80"
+      class="absolute left-1/2 -translate-x-1/2 bottom-4 z-50 flex p-1 items-center justify-between w-80"
     >
       <span class="flex items-center">
         <component :is="panels[activePanel].icon" class="h-4 w-4 ml-1 mr-1.5" />

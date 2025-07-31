@@ -56,7 +56,7 @@
           <template v-if="showControls">
             <ViewerControlsLeft />
             <ViewerControlsBottom />
-            <ViewerControlsRight v-if="!isMobile" />
+            <ViewerControlsRight v-if="isMobile" />
           </template>
 
           <ViewerLimitsDialog
