@@ -299,9 +299,10 @@ async function runAllModelsQuery(
     const urls: string[] = []
     data.project.models.items.forEach(
       (element: { versions: { items: { referencedObject: string }[] } }) => {
-        urls.push(
-          `${ref.origin}/streams/${ref.projectId}/objects/${element.versions.items[0].referencedObject}`
-        )
+        if (element.versions.items.length)
+          urls.push(
+            `${ref.origin}/streams/${ref.projectId}/objects/${element.versions.items[0].referencedObject}`
+          )
       }
     )
     return urls

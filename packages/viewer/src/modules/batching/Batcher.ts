@@ -141,21 +141,23 @@ export default class Batcher {
           rvs.forEach((nodeRv) => {
             const geometry = nodeRv.renderData.geometry
             geometry.instanced = false
-            const attribs = geometry.attributes
-            geometry.attributes = {
-              POSITION: attribs.POSITION.slice(),
-              INDEX: attribs.INDEX.slice(),
-              ...(attribs.COLOR && {
-                COLOR: attribs.COLOR.slice()
-              })
-            }
-            /**  - I don't particularly like this branch -
-             *  All instances should have a transform. But it's the easiest thing we can do
-             *  until we figure out the viewer <-> connector object duplication inconsistency
-             */
-            if (geometry.transform)
-              Geometry.transformGeometryData(geometry, geometry.transform)
-            nodeRv.computeAABB()
+            nodeRv.computeAABB(geometry.transform)
+            /** I don't think we need to duplicate geometry here, now that we're transforming the batch position directly */
+            // const attribs = geometry.attributes
+            // geometry.attributes = {
+            //   POSITION: attribs.POSITION.slice(),
+            //   INDEX: attribs.INDEX.slice(),
+            //   ...(attribs.COLOR && {
+            //     COLOR: attribs.COLOR.slice()
+            //   })
+            // }
+            // /**  - I don't particularly like this branch -
+            //  *  All instances should have a transform. But it's the easiest thing we can do
+            //  *  until we figure out the viewer <-> connector object duplication inconsistency
+            //  */
+            // if (geometry.transform)
+            //   Geometry.transformGeometryData(geometry, geometry.transform)
+            // nodeRv.computeAABB()
           })
           continue
         }
