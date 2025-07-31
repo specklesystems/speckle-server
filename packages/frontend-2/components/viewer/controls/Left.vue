@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 top-[3.5rem] z-40 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible"
+    class="absolute left-2 lg:left-0 top-[3.5rem] z-40 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full"
     :class="[
       isEmbedEnabled
         ? ''
@@ -102,7 +102,7 @@
       v-show="activePanel !== 'none'"
       ref="scrollableControlsContainer"
       :class="[
-        'simple-scrollbar overflow-x-hidden bg-foundation absolute z-10 left-[calc(2.5rem+1px)] top-[-1px] bottom-[-1px] overflow-y-auto border-outline-2 border border-l-0 rounded-lg rounded-tl-none rounded-bl-none',
+        'simple-scrollbar overflow-x-hidden bg-foundation absolute z-10 left-[calc(2.5rem+1px)] top-[-1px] bottom-[-1px] overflow-y-auto border-outline-2 border border-l-0 rounded-lg rounded-tl-none rounded-bl-none ',
         hasActivePanel ? 'opacity-100' : 'opacity-0',
         isEmbedEnabled ? '' : 'lg:left-[calc(3rem+1px)] lg:border-none lg:rounded-none'
       ]"
