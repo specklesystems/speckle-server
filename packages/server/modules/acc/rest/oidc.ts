@@ -24,6 +24,7 @@ export const accOidc = (app: Express) => {
   })
   const sessionMiddleware = sessionMiddlewareFactory()
 
+  app.options('/api/v1/acc/auth/login', corsMiddleware)
   app.post(
     '/api/v1/acc/auth/login',
     corsMiddleware,
@@ -48,6 +49,7 @@ export const accOidc = (app: Express) => {
     }
   )
 
+  app.options('/api/v1/acc/auth/callback', corsMiddleware)
   app.get(
     '/api/v1/acc/auth/callback',
     corsMiddleware,
@@ -79,6 +81,7 @@ export const accOidc = (app: Express) => {
     }
   )
 
+  app.options('/api/v1/acc/auth/status', corsMiddleware)
   app.get('/api/v1/acc/auth/status', corsMiddleware, sessionMiddleware, (req, res) => {
     if (!req.session.accTokens) {
       return res.status(404).send({ error: 'No ACC tokens found' })
@@ -86,6 +89,7 @@ export const accOidc = (app: Express) => {
     res.send(req.session.accTokens)
   })
 
+  app.options('/api/v1/acc/auth/refresh', corsMiddleware)
   app.post(
     '/api/v1/acc/auth/refresh',
     corsMiddleware,

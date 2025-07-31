@@ -53,9 +53,9 @@ export const updateAccSyncItemStatusFactory =
         await tables
           .accSyncItems(deps.db)
           .update({
-            [AccSyncItems.col.status]: status
+            [AccSyncItems.withoutTablePrefix.col.status]: status
           })
-          .where(AccSyncItems.col.id, id)
+          .where(AccSyncItems.withoutTablePrefix.col.id, id)
           .returning('*')
       ).at(0) ?? null
     )
