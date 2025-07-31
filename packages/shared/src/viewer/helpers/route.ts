@@ -1,11 +1,13 @@
 import { uniq, uniqBy } from '#lodash'
 
-export enum ViewerResourceType {
-  Model = 'Model',
-  Object = 'Object',
-  ModelFolder = 'ModelFolder',
-  AllModels = 'all-models'
+export const ViewerResourceType = <const>{
+  Model: 'Model',
+  Object: 'Object',
+  ModelFolder: 'ModelFolder',
+  AllModels: 'all-models'
 }
+export type ViewerResourceType =
+  (typeof ViewerResourceType)[keyof typeof ViewerResourceType]
 
 export interface ViewerResource {
   type: ViewerResourceType
@@ -84,7 +86,7 @@ export const parseResourceFromString = (resourceId: string): ViewerResource => {
     return new ViewerAllModelsResource()
   } else if (resourceId.includes('@')) {
     const [modelId, versionId] = resourceId.split('@')
-    return new ViewerModelResource(modelId, versionId)
+    return new ViewerVersionResource(modelId, versionId)
   } else if (resourceId.startsWith('$')) {
     return new ViewerModelFolderResource(resourceId.substring(1))
   } else if (resourceId.length === 32) {
@@ -96,7 +98,11 @@ export const parseResourceFromString = (resourceId: string): ViewerResource => {
 
 export function parseUrlParameters(resourceGetParam: string) {
   if (!resourceGetParam?.length) return []
-  const parts = resourceGetParam.toLowerCase().split(',').sort()
+  const parts = resourceGetParam
+    .toLowerCase()
+    .split(',')
+    .filter((i) => i.trim().length)
+    .sort()
   const resources: ViewerResource[] = []
   for (const part of parts) {
     const resource = parseResourceFromString(part)
