@@ -3,86 +3,90 @@
 <template>
   <div :class="{ 'opacity-60': shouldShowDimmed }">
     <!-- Header -->
-    <div
-      ref="headerElement"
-      class="group flex items-center justify-between w-full p-1 cursor-pointer"
-      :class="getBackgroundClass"
-      @click.stop="(e:MouseEvent) => setSelection(e)"
-      @mouseenter="highlightObject"
-      @focusin="highlightObject"
-      @mouseleave="unhighlightObject"
-      @focusout="unhighlightObject"
-    >
-      <div class="flex items-center gap-0.5 min-w-0">
-        <div :style="{ width: `${depth * 0.375}rem` }" class="shrink-0"></div>
-        <FormButton
-          v-if="isSingleCollection || isMultipleCollection"
-          size="sm"
-          color="subtle"
-          @click.stop="manualUnfoldToggle"
-        >
-          <IconTriangle
-            class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
-            :class="unfold ? 'rotate-90' : ''"
-          />
-          <span class="sr-only">
-            {{ unfold ? 'Collapse' : 'Expand' }}
-          </span>
-        </FormButton>
-        <div v-else class="w-4 shrink-0"></div>
-        <div
-          class="flex flex-col min-w-0"
-          :class="
-            isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
-              ? 'text-foreground-2'
-              : ''
-          "
-        >
-          <div class="truncate text-body-2xs">
-            <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
-            {{ header || headerAndSubheader.header }}
-          </div>
-          <div class="truncate text-body-3xs text-foreground-2">
-            {{ subHeader || headerAndSubheader.subheader }}
+    <div class="rounded-t-sm" :class="unfold ? 'bg-foundation-2' : ''">
+      <div
+        ref="headerElement"
+        class="group flex items-center justify-between w-full p-1 cursor-pointer"
+        :class="getBackgroundClass"
+        @click.stop="(e:MouseEvent) => setSelection(e)"
+        @mouseenter="highlightObject"
+        @focusin="highlightObject"
+        @mouseleave="unhighlightObject"
+        @focusout="unhighlightObject"
+      >
+        <div class="flex items-center gap-0.5 min-w-0">
+          <div :style="{ width: `${depth * 0.375}rem` }" class="shrink-0"></div>
+          <FormButton
+            v-if="isSingleCollection || isMultipleCollection"
+            size="sm"
+            color="subtle"
+            @click.stop="manualUnfoldToggle"
+          >
+            <IconTriangle
+              class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
+              :class="unfold ? 'rotate-90' : ''"
+            />
+            <span class="sr-only">
+              {{ unfold ? 'Collapse' : 'Expand' }}
+            </span>
+          </FormButton>
+          <div v-else class="w-4 shrink-0"></div>
+          <div
+            class="flex flex-col min-w-0"
+            :class="
+              isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
+                ? 'text-foreground-2'
+                : ''
+            "
+          >
+            <div class="truncate text-body-2xs">
+              <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
+              {{ header || headerAndSubheader.header }}
+            </div>
+            <div class="truncate text-body-3xs text-foreground-2">
+              {{ subHeader || headerAndSubheader.subheader }}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="flex items-center w-0 group-hover:w-auto overflow-hidden shrink-0">
-        <button
-          v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
-          class="p-1 rounded-md"
-          :icon-left="isHidden ? IconEyeClosed : IconEye"
-          :class="
-            isHidden || isSelected
-              ? 'opacity-100 hover:bg-highlight-1'
-              : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
-          "
-          @click.stop="hideOrShowObject"
-        >
-          <IconEyeClosed v-if="isHidden" class="w-4 h-4" />
-          <IconEye v-else class="w-4 h-4" />
-        </button>
-        <button
-          v-tippy="
-            getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', { placement: 'top' })
-          "
-          class="p-1 rounded-md"
-          :class="
-            isIsolated || isSelected
-              ? 'opacity-100 hover:bg-highlight-1'
-              : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
-          "
-          @click.stop="isolateOrUnisolateObject"
-        >
-          <IconViewerUnisolate v-if="isIsolated" class="w-3.5 h-3.5" />
-          <IconViewerIsolate v-else class="w-3.5 h-3.5" />
-        </button>
+        <div class="flex items-center w-0 group-hover:w-auto overflow-hidden shrink-0">
+          <button
+            v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
+            class="p-1 rounded-md"
+            :icon-left="isHidden ? IconEyeClosed : IconEye"
+            :class="
+              isHidden || isSelected
+                ? 'opacity-100 hover:bg-highlight-1'
+                : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
+            "
+            @click.stop="hideOrShowObject"
+          >
+            <IconEyeClosed v-if="isHidden" class="w-4 h-4" />
+            <IconEye v-else class="w-4 h-4" />
+          </button>
+          <button
+            v-tippy="
+              getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', {
+                placement: 'top'
+              })
+            "
+            class="p-1 rounded-md"
+            :class="
+              isIsolated || isSelected
+                ? 'opacity-100 hover:bg-highlight-1'
+                : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
+            "
+            @click.stop="isolateOrUnisolateObject"
+          >
+            <IconViewerUnisolate v-if="isIsolated" class="w-3.5 h-3.5" />
+            <IconViewerIsolate v-else class="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Children contents -->
-    <div v-if="unfold" class="bg-foundation-2">
+    <div v-if="unfold">
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
@@ -338,9 +342,9 @@ const isChildOfSelected = computed(() => {
 })
 
 const getBackgroundClass = computed(() => {
-  if (isSelected.value) return 'bg-highlight-3'
+  if (isSelected.value) return 'bg-highlight-3 rounded-sm'
   if (isChildOfSelected.value) return 'bg-foundation-2'
-  return 'bg-foundation hover:bg-highlight-1'
+  return 'bg-foundation hover:bg-highlight-1 hover:rounded-sm'
 })
 
 const highlightObject = () => {
