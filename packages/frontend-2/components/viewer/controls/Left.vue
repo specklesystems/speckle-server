@@ -15,7 +15,7 @@
           getTooltipProps(
             getShortcutDisplayText(shortcuts.ToggleModels, { format: 'separate' }),
             {
-              placement: 'top'
+              placement: 'right'
             }
           )
         "
@@ -28,7 +28,7 @@
           getTooltipProps(
             getShortcutDisplayText(shortcuts.ToggleFilters, { format: 'separate' }),
             {
-              placement: 'top'
+              placement: 'right'
             }
           )
         "
@@ -41,7 +41,7 @@
           getTooltipProps(
             getShortcutDisplayText(shortcuts.ToggleDiscussions, { format: 'separate' }),
             {
-              placement: 'top'
+              placement: 'right'
             }
           )
         "
@@ -72,7 +72,7 @@
             getTooltipProps(
               getShortcutDisplayText(shortcuts.ToggleDevMode, { format: 'separate' }),
               {
-                placement: 'top'
+                placement: 'right'
               }
             )
           "

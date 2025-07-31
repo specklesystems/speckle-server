@@ -2,7 +2,7 @@
   <ViewerLayoutSidePanel>
     <template #title>Filters</template>
     <template #actions>
-      <div class="flex gap-x-0.5">
+      <div class="flex gap-x-0.5 items-center">
         <FormButton
           v-if="title !== 'Object Type'"
           size="sm"
@@ -61,7 +61,6 @@
           <div
             v-for="(filter, index) in relevantFiltersLimited"
             :key="index"
-            v-tippy="filter.key"
             class="text-body-2xs"
           >
             <button
