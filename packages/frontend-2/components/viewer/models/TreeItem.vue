@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div :class="{ 'opacity-60': shouldShowDimmed }">
+  <div>
     <!-- Header -->
     <div class="rounded-t-sm" :class="unfold ? 'bg-foundation-2' : ''">
       <div
@@ -20,6 +20,11 @@
             v-if="isSingleCollection || isMultipleCollection"
             size="sm"
             color="subtle"
+            :class="
+              isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
+                ? 'opacity-60'
+                : ''
+            "
             @click.stop="manualUnfoldToggle"
           >
             <IconTriangle
@@ -33,11 +38,14 @@
           <div v-else class="w-4 shrink-0"></div>
           <div
             class="flex flex-col min-w-0"
-            :class="
+            :class="[
               isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
                 ? 'text-foreground-2'
+                : '',
+              isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
+                ? 'opacity-60'
                 : ''
-            "
+            ]"
           >
             <div class="truncate text-body-2xs">
               <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
@@ -49,17 +57,30 @@
           </div>
         </div>
 
-        <div class="flex items-center w-0 group-hover:w-auto overflow-hidden shrink-0">
+        <div
+          class="flex items-center group-hover:w-auto overflow-hidden shrink-0"
+          :class="isHidden || isIsolated ? 'w-auto' : 'w-0'"
+        >
           <button
-            v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
-            class="p-1 rounded-md"
-            :icon-left="isHidden ? IconEyeClosed : IconEye"
-            :class="
-              isHidden || isSelected
-                ? 'opacity-100 hover:bg-highlight-1'
-                : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
+            v-tippy="
+              getTooltipProps(
+                !canToggleVisibility
+                  ? 'Hidden by parent - unhide parent to show'
+                  : isHidden
+                  ? 'Show'
+                  : 'Hide',
+                { placement: 'top' }
+              )
             "
-            @click.stop="hideOrShowObject"
+            class="p-1 rounded-md"
+            :class="[
+              canToggleVisibility
+                ? 'hover:bg-highlight-3'
+                : 'cursor-not-allowed opacity-50',
+              isHidden ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            ]"
+            :disabled="!canToggleVisibility"
+            @click.stop="canToggleVisibility && hideOrShowObject()"
           >
             <IconEyeClosed v-if="isHidden" class="w-4 h-4" />
             <IconEye v-else class="w-4 h-4" />
@@ -72,7 +93,7 @@
             "
             class="p-1 rounded-md"
             :class="
-              isIsolated || isSelected
+              isIsolated
                 ? 'opacity-100 hover:bg-highlight-1'
                 : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
             "
@@ -375,8 +396,15 @@ const isIsolated = computed(() => {
   return containsAll(ids, isolatedObjects.value)
 })
 
-const shouldShowDimmed = computed(() => {
-  return stateHasIsolatedObjectsInGeneral.value && !isIsolated.value
+const isHiddenDueToParent = computed(() => {
+  if (!props.parent || !hiddenObjects.value) return false
+  const parentSpeckleData = props.parent.rawNode.raw as SpeckleObject
+  const parentIds = getTargetObjectIds(parentSpeckleData)
+  return containsAll(parentIds, hiddenObjects.value)
+})
+
+const canToggleVisibility = computed(() => {
+  return !isHiddenDueToParent.value
 })
 
 const hideOrShowObject = () => {
