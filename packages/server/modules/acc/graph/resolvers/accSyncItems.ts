@@ -1,7 +1,7 @@
 import {
   countAccSyncItemsFactory,
   deleteAccSyncItemByUrnFactory,
-  getAccSyncItemByUrnFactory,
+  getAccSyncItemByIdFactory,
   listAccSyncItemsFactory,
   updateAccSyncItemStatusFactory,
   upsertAccSyncItemFactory
@@ -79,7 +79,6 @@ const resolvers: Resolvers = {
       const projectDb = await getProjectDbClient({ projectId: input.projectId })
 
       return await createAccSyncItemFactory({
-        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db }),
         upsertAccSyncItem: upsertAccSyncItemFactory({ db }),
         createAutomation: createAutomationFactory({
           createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
@@ -137,7 +136,7 @@ const resolvers: Resolvers = {
       })
 
       return await updateAccSyncItemFactory({
-        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db }),
+        getAccSyncItemById: getAccSyncItemByIdFactory({ db }),
         upsertAccSyncItem: upsertAccSyncItemFactory({ db })
       })({
         syncItem: input
@@ -186,7 +185,7 @@ const resolvers: Resolvers = {
       })
     },
     async accSyncItem(parent, args, ctx) {
-      const { lineageUrn } = args
+      const { id } = args
 
       throwIfResourceAccessNotAllowed({
         resourceId: parent.id,
@@ -195,8 +194,8 @@ const resolvers: Resolvers = {
       })
 
       return await getAccSyncItemFactory({
-        getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db })
-      })({ lineageUrn })
+        getAccSyncItemById: getAccSyncItemByIdFactory({ db })
+      })({ id })
     }
   },
   Subscription: {

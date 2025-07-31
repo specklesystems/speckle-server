@@ -2,6 +2,7 @@ import { AccSyncItems } from '@/modules/acc/dbSchema'
 import type {
   CountAccSyncItems,
   DeleteAccSyncItemByUrn,
+  GetAccSyncItemById,
   GetAccSyncItemByUrn,
   ListAccSyncItems,
   QueryAllAccSyncItems,
@@ -17,6 +18,18 @@ import { AccSyncItemStatuses } from '@/modules/acc/domain/constants'
 const tables = {
   accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
 }
+
+export const getAccSyncItemByIdFactory =
+  (deps: { db: Knex }): GetAccSyncItemById =>
+  async ({ id }) => {
+    return (
+      (await tables
+        .accSyncItems(deps.db)
+        .select('*')
+        .where(AccSyncItems.col.id, id)
+        .first()) ?? null
+    )
+  }
 
 export const getAccSyncItemByUrnFactory =
   (deps: { db: Knex }): GetAccSyncItemByUrn =>

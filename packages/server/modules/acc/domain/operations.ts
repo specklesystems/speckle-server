@@ -12,6 +12,8 @@ export type GetAccSyncItemByUrn = (args: {
   lineageUrn: string
 }) => Promise<AccSyncItem | null>
 
+export type GetAccSyncItemById = (args: { id: string }) => Promise<AccSyncItem | null>
+
 export type ListAccSyncItems = (args: {
   projectId: string
   filter?: {

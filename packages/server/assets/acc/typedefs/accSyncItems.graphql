@@ -1,6 +1,6 @@
 extend type Project {
   accSyncItems(cursor: String, limit: Int): AccSyncItemCollection!
-  accSyncItem(lineageUrn: String!): AccSyncItem!
+  accSyncItem(id: String!): AccSyncItem!
 }
 
 type AccSyncItemCollection {
@@ -40,12 +40,12 @@ enum AccSyncItemStatus {
 
 input DeleteAccSyncItemInput {
   projectId: ID!
-  accFileLineageUrn: ID!
+  id: ID!
 }
 
 input UpdateAccSyncItemInput {
   projectId: ID!
-  accFileLineageUrn: ID!
+  id: ID!
   status: AccSyncItemStatus!
 }
 

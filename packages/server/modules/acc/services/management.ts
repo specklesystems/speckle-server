@@ -9,12 +9,12 @@ import { isReadyForImport } from '@/modules/acc/domain/logic'
 import type {
   CountAccSyncItems,
   DeleteAccSyncItemByUrn,
-  GetAccSyncItemByUrn,
+  GetAccSyncItemById,
   ListAccSyncItems,
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
 import type { AccSyncItem } from '@/modules/acc/domain/types'
-import { DuplicateSyncItemError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
+import { SyncItemNotFoundError } from '@/modules/acc/errors/acc'
 import type { TriggerSyncItemAutomation } from '@/modules/acc/services/automate'
 import type {
   CreateAutomation,
@@ -49,7 +49,6 @@ export type CreateAccSyncItem = (params: {
 
 export const createAccSyncItemFactory =
   (deps: {
-    getAccSyncItemByUrn: GetAccSyncItemByUrn
     upsertAccSyncItem: UpsertAccSyncItem
     createAutomation: CreateAutomation
     createAutomationRevision: CreateAutomationRevision
@@ -57,14 +56,6 @@ export const createAccSyncItemFactory =
     eventEmit: EventBusEmit
   }): CreateAccSyncItem =>
   async ({ syncItem, creatorUserId }) => {
-    const existingSyncItem = await deps.getAccSyncItemByUrn({
-      lineageUrn: syncItem.accFileLineageUrn
-    })
-
-    if (!!existingSyncItem) {
-      throw new DuplicateSyncItemError(syncItem.accFileLineageUrn)
-    }
-
     const webhookId = await tryRegisterAccWebhook({
       // For local development, you may set your public tailscale url as your local server's canonical origin
       callbackUrl: `${getServerOrigin()}/api/v1/acc/webhook/callback`,
@@ -145,12 +136,12 @@ export const createAccSyncItemFactory =
     return await deps.triggerSyncItemAutomation({ id: newSyncItem.id })
   }
 
-export type GetAccSyncItem = (params: { lineageUrn: string }) => Promise<AccSyncItem>
+export type GetAccSyncItem = (params: { id: string }) => Promise<AccSyncItem>
 
 export const getAccSyncItemFactory =
-  (deps: { getAccSyncItemByUrn: GetAccSyncItemByUrn }): GetAccSyncItem =>
-  async ({ lineageUrn }) => {
-    const syncItem = await deps.getAccSyncItemByUrn({ lineageUrn })
+  (deps: { getAccSyncItemById: GetAccSyncItemById }): GetAccSyncItem =>
+  async ({ id }) => {
+    const syncItem = await deps.getAccSyncItemById({ id })
 
     if (!syncItem) {
       throw new SyncItemNotFoundError()
@@ -200,17 +191,17 @@ export const getPaginatedAccSyncItemsFactory =
   }
 
 export type UpdateAccSyncItem = (params: {
-  syncItem: Pick<AccSyncItem, 'accFileLineageUrn' | 'status'>
+  syncItem: Pick<AccSyncItem, 'accFileLineageUrn' | 'status' | 'id'>
 }) => Promise<AccSyncItem>
 
 export const updateAccSyncItemFactory =
   (deps: {
-    getAccSyncItemByUrn: GetAccSyncItemByUrn
+    getAccSyncItemById: GetAccSyncItemById
     upsertAccSyncItem: UpsertAccSyncItem
   }): UpdateAccSyncItem =>
   async ({ syncItem }) => {
-    const existingSyncItem = await deps.getAccSyncItemByUrn({
-      lineageUrn: syncItem.accFileLineageUrn
+    const existingSyncItem = await deps.getAccSyncItemById({
+      id: syncItem.id
     })
 
     if (!existingSyncItem) {
