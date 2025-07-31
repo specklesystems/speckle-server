@@ -145,6 +145,7 @@ import { type Nullable, isNonNullable } from '@speckle/shared'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
+import { viewerDocsRoute } from '~~/lib/common/helpers/route'
 
 type ActivePanel =
   | 'none'
@@ -249,7 +250,7 @@ const toggleActivePanel = (panel: ActivePanel) => {
 }
 
 const openDocs = () => {
-  window.open('https://docs.speckle.systems/', '_blank')
+  window.open(viewerDocsRoute, '_blank')
 }
 
 onMounted(() => {
