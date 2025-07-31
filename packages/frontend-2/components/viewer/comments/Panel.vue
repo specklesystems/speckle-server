@@ -28,23 +28,14 @@
         />
       </LayoutMenu>
     </template>
-    <div class="flex flex-col">
-      <div class="flex flex-col gap-y-2 p-1">
+    <div class="flex flex-col h-full">
+      <div class="flex flex-col flex-1 gap-y-2 p-1">
         <ViewerCommentsListItem
           v-for="thread in commentThreads"
           :key="thread.id"
           :thread="thread"
         />
-        <div v-if="commentThreads.length === 0" class="pb-4">
-          <ProjectPageLatestItemsCommentsEmptyState
-            small
-            :show-button="canPostComment && hasSelectedObjects"
-            :text="
-              hasSelectedObjects ? undefined : 'Select an object to start collaborating'
-            "
-            @new-discussion="onNewDiscussion"
-          />
-        </div>
+        <ProjectPageLatestItemsCommentsEmptyState v-if="commentThreads.length === 0" />
       </div>
     </div>
   </ViewerLayoutSidePanel>
@@ -58,8 +49,6 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
-import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 
@@ -102,12 +91,8 @@ graphql(`
 const { commentThreads, commentThreadsMetadata } = useInjectedViewerLoadedResources()
 const { threadFilters } = useInjectedViewerRequestedResources()
 const {
-  threads: {
-    hideBubbles,
-    openThread: { newThreadEditor }
-  }
+  threads: { hideBubbles }
 } = useInjectedViewerInterfaceState()
-const canPostComment = useCheckViewerCommentingAccess()
 const menuId = useId()
 
 const showVisibilityOptions = ref(false)
@@ -148,9 +133,6 @@ watch(includeArchived, (newVal) =>
   })
 )
 
-const { objectIds: selectedObjectIds } = useSelectionUtilities()
-
-const hasSelectedObjects = computed(() => selectedObjectIds.value.size > 0)
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
@@ -187,9 +169,5 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
         : 'loadedVersionsOnly'
       break
   }
-}
-const onNewDiscussion = () => {
-  if (!hasSelectedObjects.value) return
-  newThreadEditor.value = true
 }
 </script>

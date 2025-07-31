@@ -64,7 +64,7 @@ enum ActivePanel {
 }
 
 const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortcuts()
-const { toggleSectionBox } = useSectionBoxUtilities()
+const { toggleSectionBox, resetSectionBox, closeSectionBox } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
@@ -113,7 +113,10 @@ const panels = shallowRef({
 })
 
 const showResetButton = computed(() => {
-  return activePanel.value === ActivePanel.explode
+  return (
+    activePanel.value === ActivePanel.explode ||
+    activePanel.value === ActivePanel.sectionBox
+  )
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
@@ -136,7 +139,7 @@ const toggleMeasurements = () => {
 
 const onActivePanelClose = () => {
   if (activePanel.value === ActivePanel.sectionBox) {
-    toggleSectionBox()
+    closeSectionBox()
   }
   if (activePanel.value === ActivePanel.measurements) {
     enableMeasurements(false)
@@ -147,6 +150,9 @@ const onActivePanelClose = () => {
 const onReset = () => {
   if (activePanel.value === ActivePanel.explode) {
     resetExplode()
+  }
+  if (activePanel.value === ActivePanel.sectionBox) {
+    resetSectionBox()
   }
 }
 
@@ -164,7 +170,7 @@ onKeyStroke('Escape', () => {
     if (activePanel.value === ActivePanel.measurements) {
       toggleMeasurements()
     } else if (activePanel.value === ActivePanel.sectionBox) {
-      toggleSectionBox()
+      closeSectionBox()
     }
     activePanel.value = ActivePanel.none
   }
