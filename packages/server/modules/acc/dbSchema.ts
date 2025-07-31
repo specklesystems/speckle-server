@@ -14,6 +14,7 @@ export const AccSyncItems = buildTableHelper('acc_sync_items', [
   'accFileLineageUrn',
   'accFileVersionIndex',
   'accFileVersionUrn',
+  'accFileViewName',
   'accWebhookId',
   'status',
   'createdAt',

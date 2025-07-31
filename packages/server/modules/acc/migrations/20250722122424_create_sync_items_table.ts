@@ -24,9 +24,10 @@ export async function up(knex: Knex): Promise<void> {
     table.string('accRootProjectFolderUrn').notNullable()
     table.string('accFileName').notNullable()
     table.string('accFileExtension').notNullable()
-    table.string('accFileLineageUrn').notNullable().unique()
+    table.string('accFileLineageUrn').notNullable()
     table.integer('accFileVersionIndex').defaultTo(0)
     table.string('accFileVersionUrn').notNullable()
+    table.string('accFileViewName').nullable()
     table.string('accWebhookId').nullable()
     table
       .enum('status', ['PENDING', 'SYNCING', 'FAILED', 'PAUSED', 'SUCCEEDED'])

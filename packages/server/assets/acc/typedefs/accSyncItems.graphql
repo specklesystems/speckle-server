@@ -22,6 +22,7 @@ type AccSyncItem {
   accFileExtension: String!
   accFileVersionIndex: Int!
   accFileVersionUrn: String!
+  accFileViewName: string
   accWebhookId: String
   status: AccSyncItemStatus!
   author: LimitedUser

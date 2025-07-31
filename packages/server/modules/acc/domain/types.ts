@@ -14,6 +14,7 @@ export type AccSyncItem = {
   accFileExtension: string
   accFileVersionIndex: number
   accFileVersionUrn: string
+  accFileViewName: string
   accWebhookId?: string
   status: AccSyncItemStatus
   authorId: string
