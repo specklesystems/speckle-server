@@ -8,6 +8,7 @@ import {
   getAutodeskIntegrationClientSecret
 } from '@/modules/shared/helpers/envHelper'
 import { logger } from '@/observability/logging'
+import { isObjectLike } from 'lodash-es'
 import { z } from 'zod'
 
 const invokeJsonRequest = async <T>(params: {
@@ -17,7 +18,7 @@ const invokeJsonRequest = async <T>(params: {
   body?: URLSearchParams | Record<string, unknown>
   headers?: Record<string, string>
 }) => {
-  const { url, method = 'get', body = {}, headers = {}, token } = params
+  const { url, method = 'get', body, headers = {}, token } = params
 
   const response = await fetch(url, {
     method,
@@ -29,7 +30,12 @@ const invokeJsonRequest = async <T>(params: {
       Authorization: `Bearer ${token}`,
       ...headers
     },
-    body: body && body instanceof URLSearchParams ? body : JSON.stringify(body)
+    body:
+      body && body instanceof URLSearchParams
+        ? body
+        : isObjectLike(body)
+        ? JSON.stringify(body)
+        : undefined
   })
 
   return (await response.json()) as T
