@@ -7,10 +7,13 @@
     />
     <ViewerLayoutSidePanel v-else>
       <template #title>
-        <span>Models</span>
+        <span v-if="objects.length === 1">Detached object</span>
+        <span v-else-if="objects.length > 1">Detached objects</span>
+        <span v-else>Models</span>
       </template>
       <template #actions>
         <ViewerModelsActions
+          v-if="!hasObjects"
           @show-versions="showVersions = true"
           @add-model="showAddModel = true"
         />
@@ -36,7 +39,7 @@
               @show-diff="handleShowDiff"
             />
           </div>
-          <template v-if="objects.length !== 0">
+          <template v-if="hasObjects">
             <ViewerResourcesObjectCard
               v-for="object in objects"
               :key="object.objectId"
@@ -98,6 +101,8 @@ const manualExpandLevel = ref(-1)
 
 const mp = useMixpanel()
 const { diffModelVersions } = useDiffUtilities()
+
+const hasObjects = computed(() => objects.value.length > 0)
 
 // Handle showing versions for a specific model
 const handleShowVersions = (modelId: string) => {

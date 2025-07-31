@@ -21,20 +21,32 @@
       </template>
       <template #actions>
         <div class="flex gap-x-0.5 items-center">
-          <FormButton
-            size="sm"
-            color="subtle"
-            :icon-left="isHidden ? iconEyeClosed : iconEye"
-            hide-text
-            @click.stop="hideOrShowSelection"
-          />
-          <FormButton
-            size="sm"
-            color="subtle"
-            :icon-left="isIsolated ? iconViewerUnisolate : iconViewerIsolate"
-            hide-text
-            @click.stop="isolateOrUnisolateSelection"
-          />
+          <div
+            v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
+          >
+            <FormButton
+              size="sm"
+              color="subtle"
+              :icon-left="isHidden ? iconEyeClosed : iconEye"
+              hide-text
+              @click.stop="hideOrShowSelection"
+            />
+          </div>
+          <div
+            v-tippy="
+              getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', {
+                placement: 'top'
+              })
+            "
+          >
+            <FormButton
+              size="sm"
+              color="subtle"
+              :icon-left="isIsolated ? iconViewerUnisolate : iconViewerIsolate"
+              hide-text
+              @click.stop="isolateOrUnisolateSelection"
+            />
+          </div>
           <LayoutMenu
             v-model:open="showSubMenu"
             :menu-id="menuId"
@@ -112,6 +124,7 @@ const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
 const menuId = useId()
 const mp = useMixpanel()
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
