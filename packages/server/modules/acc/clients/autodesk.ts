@@ -37,7 +37,6 @@ const invokeJsonRequest = async <T>(params: {
 
 type AutodeskIntegrationTokenData = {
   access_token: string
-  refresh_token: string
   token_type: string
   expires_in: number
 }
@@ -69,7 +68,6 @@ export const getToken = async (): Promise<AutodeskIntegrationTokenData> => {
   return z
     .object({
       access_token: z.string(),
-      refresh_token: z.string(),
       token_type: z.string(),
       expires_in: z.number()
     })
