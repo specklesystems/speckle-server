@@ -23,7 +23,9 @@ export function useSmartTooltipDelay() {
   const resetTimer = ref<NodeJS.Timeout | null>(null)
 
   const getTooltipProps = (
-    content?: MaybeNullOrUndefined<string>,
+    content?: MaybeNullOrUndefined<
+      string | { content: string; allowHTML?: boolean; theme?: string }
+    >,
     additionalProps: Record<string, unknown> = {}
   ) => {
     // Don't show tooltips on mobile devices
@@ -35,6 +37,25 @@ export function useSmartTooltipDelay() {
       }
     }
 
+    // If content is already a tooltip configuration object, merge it with our base props
+    if (typeof content === 'object' && content !== null) {
+      return {
+        ...content,
+        delay: hasShownAny.value ? 0 : initialDelay,
+        onShow: () => {
+          hasShownAny.value = true
+          if (resetTimer.value) {
+            clearTimeout(resetTimer.value)
+          }
+          resetTimer.value = setTimeout(() => {
+            hasShownAny.value = false
+          }, resetAfter)
+        },
+        ...additionalProps
+      }
+    }
+
+    // Handle string content
     return {
       content,
       delay: hasShownAny.value ? 0 : initialDelay,
