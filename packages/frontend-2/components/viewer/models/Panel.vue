@@ -21,33 +21,34 @@
 
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length">
-          <!-- Models with Scene Explorer -->
-          <div
-            v-for="({ model, versionId }, index) in modelsAndVersionIds"
-            :key="model.id"
-          >
-            <ViewerModelsCard
-              :model="model"
-              :version-id="versionId"
-              :last="index === modelsAndVersionIds.length - 1"
-              :expand-level="expandLevel"
-              :manual-expand-level="manualExpandLevel"
-              :root-nodes="getRootNodesForModel(model.id)"
-              @remove="(id: string) => removeModel(id)"
-              @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
-              @show-versions="handleShowVersions"
-              @show-diff="handleShowDiff"
-            />
+          <div class="flex-1 overflow-y-auto">
+            <div
+              v-for="({ model, versionId }, index) in modelsAndVersionIds"
+              :key="model.id"
+            >
+              <ViewerModelsCard
+                :model="model"
+                :version-id="versionId"
+                :last="index === modelsAndVersionIds.length - 1"
+                :expand-level="expandLevel"
+                :manual-expand-level="manualExpandLevel"
+                :root-nodes="getRootNodesForModel(model.id)"
+                @remove="(id: string) => removeModel(id)"
+                @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
+                @show-versions="handleShowVersions"
+                @show-diff="handleShowDiff"
+              />
+            </div>
+            <template v-if="hasObjects">
+              <ViewerResourcesObjectCard
+                v-for="object in objects"
+                :key="object.objectId"
+                :object="object"
+                :show-remove="false"
+                @remove="(id: string) => removeModel(id)"
+              />
+            </template>
           </div>
-          <template v-if="hasObjects">
-            <ViewerResourcesObjectCard
-              v-for="object in objects"
-              :key="object.objectId"
-              :object="object"
-              :show-remove="false"
-              @remove="(id: string) => removeModel(id)"
-            />
-          </template>
         </template>
 
         <!-- Empty State -->
