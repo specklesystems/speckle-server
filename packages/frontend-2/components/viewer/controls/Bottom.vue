@@ -77,14 +77,16 @@ const panels = shallowRef({
     id: ActivePanel.measurements,
     name: 'Measure',
     icon: 'IconViewerMeasurements',
-    tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements),
+    tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements, {
+      format: 'separate'
+    }),
     extraClasses: 'hidden md:flex'
   },
   [ActivePanel.sectionBox]: {
     id: ActivePanel.sectionBox,
     name: 'Section',
     icon: 'IconViewerSectionBox',
-    tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox),
+    tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox, { format: 'separate' }),
     extraClasses: ''
   },
   [ActivePanel.explode]: {

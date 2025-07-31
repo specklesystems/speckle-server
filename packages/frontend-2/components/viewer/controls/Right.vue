@@ -10,9 +10,14 @@
     <ViewerControlsButtonGroup ref="buttonContainer" direction="vertical">
       <ViewerControlsButtonToggle
         v-tippy="
-          getTooltipProps(getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection), {
-            placement: 'left'
-          })
+          getTooltipProps(
+            getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection, {
+              format: 'separate'
+            }),
+            {
+              placement: 'left'
+            }
+          )
         "
         icon="IconViewerZoom"
         @click="trackAndzoomExtentsOrSelection()"
