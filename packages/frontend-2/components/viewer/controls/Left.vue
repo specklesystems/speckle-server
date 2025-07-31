@@ -102,7 +102,7 @@
         hasActivePanel ? 'opacity-100' : 'opacity-0',
         isEmbedEnabled ? '' : 'lg:left-[calc(3rem+1px)] lg:border-none lg:rounded-none'
       ]"
-      :style="`width: ${isMobile ? 'calc(100vw - 3.6rem)' : `${width + 4}px`};`"
+      :style="`width: ${widthClass};`"
     >
       <ViewerModelsPanel
         v-if="resourceItems.length !== 0 && activePanel === 'models'"
@@ -206,6 +206,16 @@ const allAutomationRuns = computed(() => {
 
 const allFunctionRuns = computed(() => {
   return allAutomationRuns.value.map((run) => run.functionRuns).flat()
+})
+
+const widthClass = computed(() => {
+  if (isMobile.value) {
+    return 'calc(100vw - 3.6rem)'
+  } else if (isTablet.value) {
+    return '240px'
+  } else {
+    return `${width.value + 4}px`
+  }
 })
 
 const { summary } = useFunctionRunsStatusSummary({
