@@ -3,7 +3,7 @@
     <div class="sticky top-0 bg-foundation">
       <FormTextInput
         v-model="searchString"
-        name="filter search"
+        name="string-filter-search"
         placeholder="Search for a value"
         size="sm"
         color="foundation"
