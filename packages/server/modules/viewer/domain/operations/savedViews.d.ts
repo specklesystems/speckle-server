@@ -114,6 +114,12 @@ export type GetSavedViewGroups = (params: {
   [groupId: string]: SavedViewGroup | undefined
 }>
 
+export type GetSavedViews = (params: {
+  viewIds: Array<{ viewId: string; projectId: string }>
+}) => Promise<{
+  [viewId: string]: SavedView | undefined
+}>
+
 // SERVICE OPERATIONS:
 
 export type CreateSavedViewParams = {

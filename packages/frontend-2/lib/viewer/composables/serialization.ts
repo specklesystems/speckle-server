@@ -133,7 +133,8 @@ export enum StateApplyMode {
   ThreadOpen,
   ThreadFullContextOpen,
   Reset,
-  FederatedContext
+  FederatedContext,
+  SavedView
 }
 
 export function useApplySerializedState() {
@@ -288,7 +289,7 @@ export function useApplySerializedState() {
       }
     }
 
-    if ([StateApplyMode.Spotlight].includes(mode)) {
+    if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
       await urlHashState.focusedThreadId.update(
         state.ui?.threads?.openThread?.threadId || null
       )

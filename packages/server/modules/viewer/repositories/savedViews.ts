@@ -13,7 +13,8 @@ import type {
   GetUngroupedSavedViewsGroup,
   RecalculateGroupResourceIds,
   StoreSavedView,
-  StoreSavedViewGroup
+  StoreSavedViewGroup,
+  GetSavedViews
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -460,4 +461,25 @@ export const getSavedViewGroupsFactory =
       }
     }
     return groupsMap
+  }
+
+export const getSavedViewsFactory =
+  (deps: { db: Knex }): GetSavedViews =>
+  async ({ viewIds }) => {
+    if (!viewIds.length) {
+      return {}
+    }
+
+    const q = tables.savedViews(deps.db).whereIn(
+      [SavedViews.col.id, SavedViews.col.projectId],
+      viewIds.map((v) => [v.viewId, v.projectId])
+    )
+
+    const views = await q
+
+    const viewsMap: { [viewId: string]: SavedView | undefined } = {}
+    for (const view of views) {
+      viewsMap[view.id] = view
+    }
+    return viewsMap
   }

@@ -1,6 +1,12 @@
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
-import type { SavedViewGroup } from '@/modules/viewer/domain/types/savedViews'
-import { getSavedViewGroupsFactory } from '@/modules/viewer/repositories/savedViews'
+import type {
+  SavedView,
+  SavedViewGroup
+} from '@/modules/viewer/domain/types/savedViews'
+import {
+  getSavedViewGroupsFactory,
+  getSavedViewsFactory
+} from '@/modules/viewer/repositories/savedViews'
 import type { Nullable } from '@speckle/shared'
 
 declare module '@/modules/core/loaders' {
@@ -10,6 +16,8 @@ declare module '@/modules/core/loaders' {
 const dataLoadersDefinition = defineRequestDataloaders(
   ({ createLoader, deps: { db } }) => {
     const getSavedViewGroups = getSavedViewGroupsFactory({ db })
+    const getSavedViews = getSavedViewsFactory({ db })
+
     return {
       savedViews: {
         /**
@@ -27,6 +35,22 @@ const dataLoadersDefinition = defineRequestDataloaders(
           },
           {
             cacheKeyFn: ({ groupId, projectId }) => `${groupId}-${projectId}`
+          }
+        ),
+        /**
+         * Get saved views by their IDs
+         */
+        getSavedViews: createLoader<
+          { viewId: string; projectId: string },
+          Nullable<SavedView>,
+          string
+        >(
+          async (ids) => {
+            const views = await getSavedViews({ viewIds: ids.slice() })
+            return ids.map(({ viewId }) => views[viewId] || null)
+          },
+          {
+            cacheKeyFn: ({ viewId, projectId }) => `${viewId}-${projectId}`
           }
         )
       }

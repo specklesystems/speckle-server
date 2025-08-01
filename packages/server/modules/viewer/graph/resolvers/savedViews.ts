@@ -102,6 +102,24 @@ const resolvers: Resolvers = {
       })
 
       return group
+    },
+    savedView: async (parent, args, ctx) => {
+      if (!args.id) return null
+
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const view = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getSavedViews.load({
+          viewId: args.id,
+          projectId: parent.id
+        })
+      if (!view) {
+        throw new NotFoundError(
+          `Saved view with ID ${args.id} not found in project ${parent.id}`
+        )
+      }
+
+      return view
     }
   },
   SavedView: {

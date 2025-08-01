@@ -38,7 +38,8 @@ import type {
   ViewerResourceItem,
   ViewerLoadedThreadsQueryVariables,
   ProjectCommentsFilter,
-  ViewerModelVersionCardItemFragment
+  ViewerModelVersionCardItemFragment,
+  UseViewerSavedViewSetup_SavedViewFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { SetNonNullable, Get } from 'type-fest'
 import {
@@ -66,6 +67,7 @@ import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -74,6 +76,8 @@ export type LoadedModel = NonNullable<
 export type LoadedThreadsMetadata = NonNullable<
   Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>
 >
+
+export type LoadedSavedView = UseViewerSavedViewSetup_SavedViewFragment
 
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
 
@@ -162,6 +166,10 @@ export type InjectableViewerState = Readonly<{
      */
     response: {
       /**
+       * Resource id string w/ saved view applied, if any
+       */
+      resolvedResourceIdString: ComputedRef<string>
+      /**
        * Metadata about loaded items
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
@@ -218,6 +226,10 @@ export type InjectableViewerState = Readonly<{
        */
       loadMoreVersions: (modelId: string) => Promise<void>
       resourcesLoading: ComputedRef<boolean>
+      /**
+       * Loaded saved view, if any
+       */
+      savedView: ComputedRef<Optional<LoadedSavedView>>
     }
   }
   /**
@@ -290,6 +302,7 @@ export type InjectableViewerState = Readonly<{
   urlHashState: {
     focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
     diff: AsyncWritableComputedRef<Nullable<DiffStateCommand>>
+    savedViewId: AsyncWritableComputedRef<Nullable<string>>
   }
 }>
 
@@ -540,14 +553,18 @@ function setupResponseResourceItems(
   state: InitialStateWithRequest
 ): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
+  | 'resourceItems'
+  | 'resourceItemsQueryVariables'
+  | 'resourceItemsLoaded'
+  | 'resolvedResourceIdString'
 > {
   const globalError = useError()
   const {
     projectId,
     resources: {
       request: { resourceIdString }
-    }
+    },
+    urlHashState: { savedViewId }
   } = state
 
   const initLoadDone = ref(import.meta.server ? false : true)
@@ -560,7 +577,8 @@ function setupResponseResourceItems(
     projectViewerResourcesQuery,
     () => ({
       projectId: projectId.value,
-      resourceUrlString: resourceIdString.value
+      resourceUrlString: resourceIdString.value,
+      savedViewId: savedViewId.value
     }),
     { keepPreviousResult: true }
   )
@@ -645,10 +663,18 @@ function setupResponseResourceItems(
 
   const resourceItemsLoaded = computed(() => initLoadDone.value)
 
+  const resolvedResourceIdString = computed(() =>
+    resourceBuilder()
+      // Combined group identifiers should result in the final resource id string
+      .addFromString(resolvedResourceGroups.value.map((group) => group.identifier))
+      .toString()
+  )
+
   return {
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
-    resourceItemsLoaded
+    resourceItemsLoaded,
+    resolvedResourceIdString
   }
 }
 
@@ -657,7 +683,10 @@ function setupResponseResourceData(
   resourceItemsData: ReturnType<typeof setupResponseResourceItems>
 ): Omit<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
+  | 'resourceItems'
+  | 'resourceItemsQueryVariables'
+  | 'resourceItemsLoaded'
+  | 'resolvedResourceIdString'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()
@@ -669,7 +698,7 @@ function setupResponseResourceData(
     resources: {
       request: { resourceIdString, threadFilters }
     },
-    urlHashState: { diff }
+    urlHashState: { diff, savedViewId }
   } = state
   const { resourceItems, resourceItemsLoaded } = resourceItemsData
 
@@ -706,7 +735,8 @@ function setupResponseResourceData(
     (): ViewerLoadedResourcesQueryVariables => ({
       projectId: projectId.value,
       modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
-      versionIds: versionIds.value
+      versionIds: versionIds.value,
+      savedViewId: savedViewId.value
     })
 
   // MODELS AND VERSIONS
@@ -742,6 +772,7 @@ function setupResponseResourceData(
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
+  const savedView = computed(() => project.value?.savedView || undefined)
 
   const modelsAndVersionIds = computed(() =>
     nonObjectResourceItems.value
@@ -882,7 +913,8 @@ function setupResponseResourceData(
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
     loadMoreVersions,
     resourcesLoaded: computed(() => initLoadDone.value),
-    resourcesLoading: computed(() => viewerLoadedResourcesLoading.value)
+    resourcesLoading: computed(() => viewerLoadedResourcesLoading.value),
+    savedView
   }
 }
 

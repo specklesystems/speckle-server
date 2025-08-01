@@ -152,9 +152,14 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
     this.#resources.push(new ViewerObjectResource(objectId))
     return this
   }
-  addFromString(resourceIdString: string) {
-    const resources = parseUrlParameters(resourceIdString)
-    this.#resources.push(...resources)
+  addFromString(resourceIdStrings: string | string[]) {
+    const strings = Array.isArray(resourceIdStrings)
+      ? resourceIdStrings
+      : [resourceIdStrings]
+    for (const resourceIdString of strings) {
+      const resources = parseUrlParameters(resourceIdString)
+      this.#resources.push(...resources)
+    }
     return this
   }
   addResources(resources: ViewerResource[]) {
@@ -184,9 +189,13 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
     this.#resources.forEach(callback)
     return this
   }
-  filter(callback: (resource: ViewerResource) => boolean) {
-    this.#resources = this.#resources.filter(callback)
-    return this
+  filter<Res extends ViewerResource>(
+    callback: (resource: ViewerResource) => resource is Res
+  ) {
+    return this.#resources.filter(callback)
+  }
+  find(callback: (resource: ViewerResource) => boolean) {
+    return this.#resources.find(callback)
   }
   map<T>(callback: (resource: ViewerResource) => T): T[] {
     return this.#resources.map(callback)

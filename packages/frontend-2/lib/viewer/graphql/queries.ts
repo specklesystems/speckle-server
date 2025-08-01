@@ -1,10 +1,14 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const projectViewerResourcesQuery = graphql(`
-  query ProjectViewerResources($projectId: String!, $resourceUrlString: String!) {
+  query ProjectViewerResources(
+    $projectId: String!
+    $resourceUrlString: String!
+    $savedViewId: String
+  ) {
     project(id: $projectId) {
       id
-      viewerResources(resourceIdString: $resourceUrlString) {
+      viewerResources(resourceIdString: $resourceUrlString, savedViewId: $savedViewId) {
         identifier
         items {
           modelId
@@ -25,6 +29,7 @@ export const viewerLoadedResourcesQuery = graphql(`
     $projectId: String!
     $modelIds: [String!]!
     $versionIds: [String!]
+    $savedViewId: ID
   ) {
     project(id: $projectId) {
       id
@@ -66,6 +71,10 @@ export const viewerLoadedResourcesQuery = graphql(`
       ...ViewerGendoPanel_Project
       ...ViewerResourcesLimitAlert_Project
       ...ViewerSavedViewsPanel_Project
+      savedView(id: $savedViewId) {
+        id
+        ...UseViewerSavedViewSetup_SavedView
+      }
     }
   }
 `)

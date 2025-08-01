@@ -124,6 +124,10 @@ extend type Project {
   savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
   savedViewGroup(id: ID!): SavedViewGroup!
   ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!
+  """
+  Allows for optional loading by passing in empty value
+  """
+  savedView(id: ID): SavedView
 }
 
 input CreateSavedViewInput {

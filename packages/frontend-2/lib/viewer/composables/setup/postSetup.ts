@@ -52,7 +52,16 @@ import {
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import {
+  isSerializedViewerState,
+  type SectionBoxData,
+  type SerializedViewerState
+} from '@speckle/shared/viewer/state'
+import { graphql } from '~/lib/common/generated/gql'
+import {
+  StateApplyMode,
+  useApplySerializedState
+} from '~/lib/viewer/composables/serialization'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -900,9 +909,63 @@ function useDisableZoomOnEmbed() {
   )
 }
 
+graphql(`
+  fragment UseViewerSavedViewSetup_SavedView on SavedView {
+    id
+    viewerState
+  }
+`)
+
+const useViewerSavedViewSetup = () => {
+  const {
+    resources: {
+      request: { resourceIdString },
+      response: { savedView, resolvedResourceIdString }
+    },
+    urlHashState: { savedViewId }
+  } = useInjectedViewerState()
+  const applyState = useApplySerializedState()
+
+  const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
+
+  const apply = async (state: SerializedViewerState) => {
+    await resourceIdString.update(resolvedResourceIdString.value)
+    await applyState(state, StateApplyMode.SavedView)
+    await savedViewId.update(null)
+
+    // // Concurrent update to reduce the amount of time we're in a state w/o both set
+    await Promise.all([
+      // TODO: What if federated? Change resourceIdString too
+      // resourceIdString.update(resolvedResourceIdString.value)
+      //   // TODO: Remove tag from URL
+      //   savedViewId.update(null)
+    ])
+  }
+
+  // Apply saved view state
+  useOnViewerLoadComplete(async ({ isInitial }) => {
+    const state = validState(savedView.value?.viewerState)
+
+    if (isInitial && state) {
+      await apply(state)
+    }
+  })
+
+  watch(savedView, (newVal, oldVal) => {
+    if (!newVal || newVal.id === oldVal?.id) return
+
+    const state = validState(newVal.viewerState)
+    if (!state) return
+
+    // If the saved view has changed, apply it
+    apply(state)
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
+  useViewerSavedViewSetup()
   useViewerReceiveTracking()
   useViewerSelectionEventHandler()
   useViewerLoadCompleteEventHandler()

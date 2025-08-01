@@ -60,6 +60,12 @@ import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
+import { NotFoundError } from '@/modules/shared/errors'
+import {
+  isModelResource,
+  resourceBuilder,
+  ViewerModelResource
+} from '@speckle/shared/viewer/route'
 
 export default {
   User: {
@@ -164,7 +170,11 @@ export default {
         }
       )
     },
-    async viewerResources(parent, { resourceIdString, loadedVersionsOnly }) {
+    async viewerResources(
+      parent,
+      { resourceIdString, loadedVersionsOnly, savedViewId },
+      ctx
+    ) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })
       const getStreamObjects = getStreamObjectsFactory({ db: projectDB })
       const getViewerResourceGroups = getViewerResourceGroupsFactory({
@@ -175,6 +185,42 @@ export default {
         getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDB }),
         getBranchesByIds: getBranchesByIdsFactory({ db: projectDB })
       })
+
+      // Saved View: By default load already specified versions were available,
+      // otherwise load latest versions
+      if (savedViewId) {
+        const savedView = await ctx.loaders
+          .forRegion({ db: projectDB })
+          .savedViews.getSavedViews.load({ viewId: savedViewId, projectId: parent.id })
+        if (!savedView) {
+          throw new NotFoundError(
+            `Saved view with ID ${savedViewId} not found in project ${parent.id}`
+          )
+        }
+
+        const savedViewResources = resourceBuilder().addFromString(
+          savedView.resourceIds
+        )
+        const baseResources = resourceBuilder().addFromString(resourceIdString)
+        const finalSavedViewResources = savedViewResources.map((r) => {
+          if (!isModelResource(r) || !r.versionId) {
+            return r
+          }
+
+          const matchingBaseResource = baseResources
+            .filter(isModelResource)
+            .find((r2) => {
+              return r2.modelId === r.modelId
+            })
+
+          return new ViewerModelResource(r.modelId, matchingBaseResource?.versionId)
+        })
+
+        resourceIdString = resourceBuilder()
+          .addResources(finalSavedViewResources)
+          .toString()
+      }
+
       return await getViewerResourceGroups({
         projectId: parent.id,
         resourceIdString,
