@@ -14,6 +14,7 @@
       <template #actions>
         <ViewerModelsActions
           v-if="!hasObjects"
+          :hide-versions="resourceItems.length === 0"
           @show-versions="showVersions = true"
           @add-model="showAddModel = true"
         />
@@ -52,10 +53,12 @@
         </template>
 
         <!-- Empty State -->
-        <div v-else class="flex flex-col items-center justify-center gap-4 h-full">
-          <IconViewerModels v-if="!showVersions" class="h-10 w-10 text-foreground-2" />
-          <IconVersions v-else class="h-10 w-10 text-foreground-2" />
-          <p class="text-body-xs text-foreground-2">No models loaded, yet.</p>
+        <div
+          v-else
+          class="flex flex-col items-center justify-center gap-4 h-full -mt-8"
+        >
+          <IllustrationEmptystateModels />
+          <span class="text-body-xs text-foreground-2">No models loaded, yet.</span>
           <FormButton @click="showAddModel = true">Add model</FormButton>
         </div>
       </div>
