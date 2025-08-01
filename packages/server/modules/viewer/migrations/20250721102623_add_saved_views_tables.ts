@@ -55,6 +55,10 @@ export async function up(knex: Knex): Promise<void> {
       .onDelete('SET NULL') // If group deleted, ungroup
 
     table.specificType('resourceIds', 'varchar(255)[]').notNullable().defaultTo('{}')
+    table
+      .specificType('groupResourceIds', 'varchar(255)[]')
+      .notNullable()
+      .defaultTo('{}')
     table.boolean('isHomeView').notNullable().defaultTo(false)
     table.string('visibility').defaultTo('public').notNullable() // public, authorOnly
     table.jsonb('viewerState').notNullable() // SerializedViewerState

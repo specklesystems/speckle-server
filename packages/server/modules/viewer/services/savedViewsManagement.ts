@@ -23,6 +23,7 @@ import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
+import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
 
 /**
  * Validates an incoming resourceIdString against the resources in the project and returns the validated list (as a builder)
@@ -179,10 +180,12 @@ export const createSavedViewFactory =
       name = `Scene - ${String(viewCount + 1).padStart(3, '0')}`
     }
 
+    const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
     const ret = await deps.storeSavedView({
       view: {
         projectId,
-        resourceIds: resourceIds.toResources().map((r) => r.toString()),
+        resourceIds: concreteResourceIds,
+        groupResourceIds: formatResourceIdsForGroup(concreteResourceIds),
         groupId,
         name,
         description,

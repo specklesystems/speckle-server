@@ -75,6 +75,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     overrides || {}
   )
 
+/**
+ * TODO:
+ * - Test that default group can be resolved even if view has more specific resourceIds w/ versions
+ * - Test that default group shows up or doesn't depending if there are views in it, regardless of
+ * whether there's filtering
+ */
+
 describe('Saved Views GraphQL CRUD', () => {
   let apollo: TestApolloServer
   let me: BasicTestUser
@@ -745,6 +752,24 @@ describe('Saved Views GraphQL CRUD', () => {
         )
       })
 
+      it('returns no groups, not even default one, if no views exist', async () => {
+        const res = await getProjectViewGroups({
+          projectId: readTestProject.id,
+          input: {
+            limit: GROUP_COUNT, // all in 1 page
+            resourceIdString: 'zabababababababa'
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const data = res.data?.project.savedViewGroups
+        expect(data).to.be.ok
+        expect(data!.totalCount).to.equal(0)
+        expect(data!.items.length).to.equal(0)
+        expect(data!.cursor).to.be.null
+      })
+
       it('should successfully read a projects view groups w/ pagination', async () => {
         let cursor: string | null = null
         let pagesLoaded = 0
@@ -814,22 +839,22 @@ describe('Saved Views GraphQL CRUD', () => {
         expect(defaultGroupsFound).to.equal(1) // only 1 default group
       })
 
-      it('should return different groups in same project, if resource string differs', async () => {
-        const res = await getProjectViewGroups({
-          projectId: readTestProject.id,
-          input: {
-            limit: GROUP_COUNT, // all in 1 page
-            resourceIdString: 'ayy'
-          }
-        })
+      // it('should return different groups in same project, if resource string differs', async () => {
+      //   const res = await getProjectViewGroups({
+      //     projectId: readTestProject.id,
+      //     input: {
+      //       limit: GROUP_COUNT, // all in 1 page
+      //       resourceIdString: 'ayy'
+      //     }
+      //   })
 
-        expect(res).to.not.haveGraphQLErrors()
-        const data = res.data?.project.savedViewGroups
-        expect(data).to.be.ok
-        expect(data!.totalCount).to.equal(1) // only default group returned
-        expect(data!.items.length).to.equal(1)
-        expect(data!.cursor).to.not.be.null
-      })
+      //   expect(res).to.not.haveGraphQLErrors()
+      //   const data = res.data?.project.savedViewGroups
+      //   expect(data).to.be.ok
+      //   expect(data!.totalCount).to.equal(1) // only default group returned
+      //   expect(data!.items.length).to.equal(1)
+      //   expect(data!.cursor).to.not.be.null
+      // })
 
       it('should respect search filter and filter out groups w/ views that dont have the search string in their name', async () => {
         const res = await getProjectViewGroups({

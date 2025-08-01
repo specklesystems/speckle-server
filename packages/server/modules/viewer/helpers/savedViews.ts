@@ -1,5 +1,10 @@
 import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelper'
 import type { Nullable } from '@speckle/shared'
+import {
+  isModelResource,
+  isObjectResource,
+  resourceBuilder
+} from '@speckle/shared/viewer/route'
 import { isObjectLike } from 'lodash-es'
 
 export type DefaultGroupMetadata = {
@@ -39,4 +44,28 @@ export const decodeDefaultGroupId = (id: string): Nullable<DefaultGroupMetadata>
     // Suppress - not the default group ID
     return null
   }
+}
+
+/**
+ * Converts a resourceId string into a more abstract format used by groups that disregards
+ * specific versions of models and objects.
+ */
+export const formatResourceIdsForGroup = (resourceIdString: string | string[]) => {
+  resourceIdString = Array.isArray(resourceIdString)
+    ? resourceIdString.join(',')
+    : resourceIdString
+
+  return resourceBuilder()
+    .addFromString(resourceIdString)
+    .forEach((r) => {
+      if (isModelResource(r)) {
+        // not interested in the specific version ids originally used
+        r.versionId = undefined
+      }
+    })
+    .filter((r) => {
+      // filter out any resources that are not ViewerModelResource or ViewerObjectResource
+      return isModelResource(r) || isObjectResource(r)
+    })
+    .map((r) => r.toString())
 }

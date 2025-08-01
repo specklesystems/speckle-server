@@ -104,8 +104,7 @@ const canCreateViewOrGroup = computed(
 )
 
 const onAddView = async () => {
-  if (!isLoading.value) return
-
+  if (isLoading.value) return
   await createSavedView({})
 }
 </script>

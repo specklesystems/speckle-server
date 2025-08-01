@@ -23,13 +23,10 @@ import {
 import type { DefaultGroupMetadata } from '@/modules/viewer/helpers/savedViews'
 import {
   buildDefaultGroupId,
-  decodeDefaultGroupId
+  decodeDefaultGroupId,
+  formatResourceIdsForGroup
 } from '@/modules/viewer/helpers/savedViews'
-import {
-  isModelResource,
-  isObjectResource,
-  resourceBuilder
-} from '@speckle/shared/viewer/route'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
 import { type Knex } from 'knex'
@@ -43,6 +40,7 @@ const SavedViews = buildTableHelper('saved_views', [
   'authorId',
   'groupId',
   'resourceIds',
+  'groupResourceIds',
   'isHomeView',
   'visibility',
   'viewerState',
@@ -125,30 +123,12 @@ export const getStoredViewCountFactory =
     return parseInt(count.count + '')
   }
 
-const cleanLookupResourceIdString = (resourceIdString: string) => {
-  // resourceIdString looks like: modelId, modelId@versionId, objectId etc.
-  // We want to find all saved views that reference any of these resources
-  return resourceBuilder()
-    .addFromString(resourceIdString)
-    .forEach((r) => {
-      if (isModelResource(r)) {
-        // not interested in the specific version ids originally used
-        r.versionId = undefined
-      }
-    })
-    .filter((r) => {
-      // filter out any resources that are not ViewerModelResource or ViewerObjectResource
-      return isModelResource(r) || isObjectResource(r)
-    })
-    .map((r) => r.toString())
-}
-
 const getProjectSavedViewGroupsBaseQueryFactory =
   (deps: { db: Knex }) => async (params: GetProjectSavedViewGroupsBaseParams) => {
     const { projectId, resourceIdString, search, userId } = params
     const onlyAuthored = params.onlyAuthored && userId
     const isFiltering = search || onlyAuthored
-    const resourceIds = cleanLookupResourceIdString(resourceIdString)
+    const resourceIds = formatResourceIdsForGroup(resourceIdString)
 
     /**
      * When looking for default group items, the group doesn't exist, so we have to apply
@@ -175,7 +155,9 @@ const getProjectSavedViewGroupsBaseQueryFactory =
       if (resourceIds.length) {
         // Col contains at least one of the resources
         query.andWhereRaw('?? && ?', [
-          isGroupQuery ? SavedViewGroups.col.resourceIds : SavedViews.col.resourceIds,
+          isGroupQuery
+            ? SavedViewGroups.col.resourceIds
+            : SavedViews.col.groupResourceIds,
           resourceIds
         ])
       } else {
@@ -217,13 +199,13 @@ const getProjectSavedViewGroupsBaseQueryFactory =
     q.groupBy(SavedViewGroups.col.id)
 
     /**
-     * If filtering, then we need to check if default group should be shown. If not, always shown on first page
-     * (2nd query could be avoided w/ a FULL OUTER JOIN, but it could get even more complicated)
+     * Check if default group should be shown
      */
-    const ungroupedViewFound = isFiltering
-      ? await applyFilters(tables.savedViews(deps.db), 'view').first()
-      : null
-    const includeDefaultGroup = Boolean(!isFiltering || ungroupedViewFound)
+    const ungroupedViewFound = await applyFilters(
+      tables.savedViews(deps.db),
+      'view'
+    ).first()
+    const includeDefaultGroup = Boolean(ungroupedViewFound)
 
     return { q, resourceIds, isFiltering, includeDefaultGroup }
   }
@@ -292,7 +274,7 @@ const getGroupSavedViewsBaseQueryFactory =
       .savedViews(deps.db)
       .where({ [SavedViews.col.projectId]: projectId })
 
-    const resourceIds = cleanLookupResourceIdString(resourceIdString)
+    const resourceIds = formatResourceIdsForGroup(resourceIdString)
 
     if (!resourceIds.length && !groupId) {
       // If no resources and no groupId, exit early

@@ -1050,9 +1050,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   return rawState
 }
 
-/**
- * COMPOSABLES FOR RETRIEVING (PARTS OF) INJECTABLE STATE
- */
+// COMPOSABLES FOR RETRIEVING (PARTS OF) INJECTABLE STATE
 
 export function useInjectedViewerState(): InjectableViewerState {
   // we're forcing TS to ignore the scenario where this data can't be found and returns undefined
