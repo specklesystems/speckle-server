@@ -10,6 +10,7 @@
         :key="group.id"
         :group="group"
         :is-selected="group.id === selectedGroupId"
+        :only-authored="viewsType === ViewsType.My"
       />
       <InfiniteLoading
         v-if="groups.length"
@@ -25,7 +26,7 @@ import { omit } from 'lodash-es'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import { ViewsType } from '~/lib/viewer/helpers/savedViews'
 
 /**
  * LOADING MECHANISM:
