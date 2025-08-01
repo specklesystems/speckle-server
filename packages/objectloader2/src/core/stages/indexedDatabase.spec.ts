@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 
 import { Base, Item } from '../../types/types.js'
-import IndexedDatabase, { IndexedDatabaseOptions } from './indexedDatabase.js'
+import {IndexedDatabase, IndexedDatabaseOptions } from './indexedDatabase.js'
 
 // Mock Item
 const defaultItem = (id: string): Item => ({
@@ -19,19 +19,19 @@ describe('IndexedDatabase', () => {
     db = new IndexedDatabase(options)
   })
 
-  afterEach(async () => {
-    await db.disposeAsync()
+  afterEach(() => {
+    db.dispose()
   })
 
   it('should add and get multiple items', async () => {
     const items = [defaultItem('id1'), defaultItem('id2')]
-    await db.saveBatch({ batch: items })
+    await db.putAll(items)
     const result = await db.getAll(['id1', 'id2'])
     expect(result).toMatchSnapshot()
     expect(result).toEqual(items)
   })
 
-  it('should dispose without error', async () => {
-    await expect(db.disposeAsync()).resolves.not.toThrow()
+  it('should dispose without error', () => {
+    expect(() => db.dispose()).not.toThrow()
   })
 })
