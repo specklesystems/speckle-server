@@ -78,11 +78,14 @@ const resolvers: Resolvers = {
         cursor: input.cursor
       })
     },
-    async savedViewGroup(parent, args) {
-      const group = await getSavedViewGroupFactory({ db })({
-        id: args.id,
-        projectId: parent.id
-      })
+    async savedViewGroup(parent, args, ctx) {
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const group = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getSavedViewGroup.load({
+          groupId: args.id,
+          projectId: parent.id
+        })
       if (!group) {
         throw new NotFoundError(
           `Saved view group with ID ${args.id} not found in project ${parent.id}`
@@ -121,10 +124,13 @@ const resolvers: Resolvers = {
           resourceIds: parent.resourceIds,
           projectId: parent.projectId
         })
-      const group = await ctx.loaders.savedViews.getSavedViewGroup.load({
-        groupId,
-        projectId: parent.projectId
-      })
+      const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+      const group = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getSavedViewGroup.load({
+          groupId,
+          projectId: parent.projectId
+        })
       if (!group) {
         throw new LogicError('Unexpectedly could not resolve a view group')
       }
