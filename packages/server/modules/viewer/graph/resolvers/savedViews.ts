@@ -40,6 +40,7 @@ import { Authz } from '@speckle/shared'
 import { parseResourceFromString, resourceBuilder } from '@speckle/shared/viewer/route'
 import { formatSerializedViewerState } from '@speckle/shared/viewer/state'
 import type { Knex } from 'knex'
+import { ungroupedScenesGroupTitle } from '@speckle/shared/saved-views'
 
 const buildGetViewerResourceGroups = (params: { projectDb: Knex }) => {
   const { projectDb } = params
@@ -132,7 +133,7 @@ const resolvers: Resolvers = {
     }
   },
   SavedViewGroup: {
-    title: (parent) => parent.name || 'Ungrouped scenes',
+    title: (parent) => parent.name || ungroupedScenesGroupTitle,
     isUngroupedViewsGroup: (parent) => parent.name === null,
     groupId: (parent) => (parent.name ? parent.id : null),
     async views(parent, args, ctx) {

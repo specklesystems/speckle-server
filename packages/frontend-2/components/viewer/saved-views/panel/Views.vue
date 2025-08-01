@@ -4,12 +4,19 @@
   </div>
   <div v-else>
     <ViewerSavedViewsPanelViewsEmptyState v-if="!hasGroups" :type="emptyStateType" />
-    <template v-else>
+    <div v-else class="p-2">
       <ViewerSavedViewsPanelViewsGroup
-        v-for="group in result?.project.savedViewGroups.items || []"
+        v-for="group in groups"
         :key="group.id"
+        :group="group"
       />
-    </template>
+      <InfiniteLoading
+        v-if="groups.length"
+        :settings="{ identifier }"
+        hide-when-complete
+        @infinite="onInfiniteLoad"
+      />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -34,6 +41,7 @@ graphql(`
       cursor
       items {
         id
+        ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup
       }
     }
   }
@@ -73,7 +81,7 @@ const {
   baseVariables: computed(() => ({
     projectId: projectId.value,
     savedViewGroupsInput: {
-      limit: 10,
+      limit: 1,
       resourceIdString: resourceIdString.value,
       cursor: null as null | string,
       search: search.value?.trim() || null
@@ -99,4 +107,8 @@ const hasGroups = computed(
 )
 const isSearch = computed(() => search.value?.trim().length > 0)
 const emptyStateType = computed(() => (isSearch.value ? 'search' : 'base'))
+
+const groups = computed(() => {
+  return result.value?.project.savedViewGroups.items || []
+})
 </script>
