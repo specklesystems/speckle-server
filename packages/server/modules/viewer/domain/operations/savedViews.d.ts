@@ -64,7 +64,7 @@ export type GetGroupSavedViewsBaseParams = {
    */
   userId?: MaybeNullOrUndefined<string>
   projectId: string
-  resourceIdString: string
+  groupResourceIdString: string
   /**
    * Null means a group w/ null id, undefined means - dont filter by group id at all
    */

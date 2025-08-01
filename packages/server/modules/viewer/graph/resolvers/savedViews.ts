@@ -150,7 +150,7 @@ const resolvers: Resolvers = {
 
       return await getGroupSavedViews({
         projectId: parent.projectId,
-        resourceIdString: resourceBuilder()
+        groupResourceIdString: resourceBuilder()
           .addResources(parent.resourceIds.map(parseResourceFromString))
           .toString(),
         userId: ctx.userId,

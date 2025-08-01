@@ -1,18 +1,22 @@
 <template>
   <div>
-    <HeadlessDisclosure v-slot="{ open }">
+    <HeadlessDisclosure v-slot="{ open: baseIsOpen }">
       <DisclosureButton :class="buttonClasses">
         <div class="inline-flex items-center space-x-2">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
           <span>{{ title }}</span>
         </div>
-        <ChevronUpIcon :class="!open ? 'rotate-180 transform' : ''" class="h-5 w-5" />
+        <ChevronUpIcon
+          :class="!baseIsOpen ? 'rotate-180 transform' : ''"
+          class="h-5 w-5"
+        />
       </DisclosureButton>
       <DisclosurePanel :class="panelClasses">
-        <div class="label-light">
+        <div v-if="!lazyLoad || baseIsOpen" class="label-light">
           <slot>Panel contents</slot>
         </div>
       </DisclosurePanel>
+      <div :class="syncOpen(baseIsOpen)" />
     </HeadlessDisclosure>
   </div>
 </template>
@@ -23,10 +27,14 @@ import {
   DisclosurePanel
 } from '@headlessui/vue'
 import { ChevronUpIcon } from '@heroicons/vue/24/solid'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type DisclosureColor = 'default' | 'danger' | 'success' | 'warning'
+
+const emit = defineEmits<{
+  'update:open': [boolean]
+}>()
 
 const props = withDefaults(
   defineProps<{
@@ -36,11 +44,17 @@ const props = withDefaults(
      */
     icon?: PropAnyComponent
     color?: DisclosureColor
+    /**
+     * Whether to lazy load the panel contents only upon opening
+     */
+    lazyLoad?: boolean
   }>(),
   {
     color: 'default'
   }
 )
+
+const open = ref(false)
 
 const buttonClasses = computed(() => {
   const classParts = [
@@ -93,5 +107,13 @@ const panelClasses = computed(() => {
   }
 
   return classParts.join(' ')
+})
+
+const syncOpen = (newOpen: boolean) => {
+  open.value = newOpen
+}
+
+watch(open, (newOpen) => {
+  emit('update:open', newOpen)
 })
 </script>

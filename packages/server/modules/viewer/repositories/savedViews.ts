@@ -267,16 +267,16 @@ export const getProjectSavedViewGroupsPageItemsFactory =
 
 const getGroupSavedViewsBaseQueryFactory =
   (deps: { db: Knex }) => (params: GetGroupSavedViewsBaseParams) => {
-    const { projectId, resourceIdString, groupId, search, userId } = params
+    const { projectId, groupResourceIdString, groupId, search, userId } = params
     const onlyAuthored = params.onlyAuthored && userId
 
     const q = tables
       .savedViews(deps.db)
       .where({ [SavedViews.col.projectId]: projectId })
 
-    const resourceIds = formatResourceIdsForGroup(resourceIdString)
+    const groupResourceIds = formatResourceIdsForGroup(groupResourceIdString)
 
-    if (!resourceIds.length && !groupId) {
+    if (!groupResourceIds.length && !groupId) {
       // If no resources and no groupId, exit early
       q.whereRaw('false')
     }
@@ -287,8 +287,8 @@ const getGroupSavedViewsBaseQueryFactory =
     }
 
     // If no groupId, filter by resourceIds
-    if (resourceIds.length && !groupId) {
-      q.whereRaw('?? && ?', [SavedViews.col.resourceIds, resourceIds])
+    if (groupResourceIds.length && !groupId) {
+      q.whereRaw('?? && ?', [SavedViews.col.groupResourceIds, groupResourceIds])
     }
 
     if (onlyAuthored) {

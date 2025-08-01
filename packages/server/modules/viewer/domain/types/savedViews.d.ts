@@ -22,7 +22,7 @@ export type SavedView = {
   /**
    * More abstract resource ids, w/o specific versions, used to group views together. Largely
    * only exists because PGSQL can't simply truncate resourceIds in a query in realtime, and we use
-   * this to find views for default groups.
+   * this to find views for groups.
    */
   groupResourceIds: string[]
   isHomeView: boolean
