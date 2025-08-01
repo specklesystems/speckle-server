@@ -2,7 +2,7 @@ import Queue from '../queues/queue.js'
 import { Item } from '../types/types.js'
 
 export interface Downloader extends Queue<string> {
-  initializePool(params: {
+  initialize(params: {
     results: Queue<Item>
     total: number
     maxDownloadBatchWait?: number

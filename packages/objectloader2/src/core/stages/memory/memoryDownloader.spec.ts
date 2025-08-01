@@ -33,13 +33,13 @@ describe('MemoryDownloader', () => {
   })
 
   it('should add found item to results queue', () => {
-    downloader.initializePool({ results, total: 2 })
+    downloader.initialize({ results, total: 2 })
     downloader.add('id2')
     expect(items).toMatchSnapshot()
   })
 
   it('should throw if added item is missing', () => {
-    downloader.initializePool({ results, total: 2 })
+    downloader.initialize({ results, total: 2 })
     expect(() => downloader.add('missing')).toThrow()
   })
 
