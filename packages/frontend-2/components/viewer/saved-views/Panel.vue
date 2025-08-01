@@ -56,7 +56,11 @@
       <ViewerSavedViewsPanelConnectorViews
         v-if="selectedViewsType === ViewsType.Connector"
       />
-      <ViewerSavedViewsPanelViews v-else :views-type="selectedViewsType" />
+      <ViewerSavedViewsPanelViews
+        v-else
+        v-model:selected-group-id="selectedGroupId"
+        :views-type="selectedViewsType"
+      />
     </div>
   </ViewerLayoutPanel>
 </template>
@@ -93,6 +97,7 @@ const createSavedView = useCreateSavedView()
 const isLoading = useMutationLoading()
 
 const selectedViewsType = ref<ViewsType>(ViewsType.All)
+const selectedGroupId = ref<string | null>(null)
 
 const viewsTypeItems = computed((): ViewsType[] => [
   ViewsType.All,
@@ -105,6 +110,10 @@ const canCreateViewOrGroup = computed(
 
 const onAddView = async () => {
   if (isLoading.value) return
-  await createSavedView({})
+  const view = await createSavedView({})
+  if (view) {
+    // Auto-open the group that the view created to
+    selectedGroupId.value = view.group.id
+  }
 }
 </script>

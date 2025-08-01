@@ -18,7 +18,7 @@ export const buildDefaultGroupId = (params: {
   projectId: string
 }) => {
   const payload: DefaultGroupMetadata = {
-    resourceIds: params.resourceIds,
+    resourceIds: formatResourceIdsForGroup(params.resourceIds),
     projectId: params.projectId,
     name: 'Default Group'
   }

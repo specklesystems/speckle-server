@@ -1,25 +1,27 @@
 <template>
-  <LayoutDisclosure :title="group.title" lazy-load @update:open="open = $event">
-    <div v-if="isVeryFirstLoading" class="flex justify-center">
-      <CommonLoadingIcon class="m-4" />
-    </div>
-    <div v-else>
-      <div v-if="views.length">
-        <ViewerSavedViewsPanelView
-          v-for="view in views"
-          :key="view.id"
-          :view="view"
-        ></ViewerSavedViewsPanelView>
+  <LayoutDisclosure v-model:open="open" :title="group.title" lazy-load>
+    <div>
+      <div v-if="isVeryFirstLoading" class="flex justify-center">
+        <CommonLoadingIcon class="m-4" />
       </div>
       <div v-else>
-        <!-- Blank state, could add a message or illustration here -->
+        <div
+          v-if="views.length"
+          class="flex flex-col gap-3 max-h-64 overflow-y-auto simple-scrollbar"
+        >
+          <ViewerSavedViewsPanelView
+            v-for="view in views"
+            :key="view.id"
+            :view="view"
+          ></ViewerSavedViewsPanelView>
+        </div>
+        <InfiniteLoading
+          v-if="views.length"
+          :settings="{ identifier }"
+          hide-when-complete
+          @infinite="onInfiniteLoad"
+        />
       </div>
-      <InfiniteLoading
-        v-if="views.length"
-        :settings="{ identifier }"
-        hide-when-complete
-        @infinite="onInfiniteLoad"
-      />
     </div>
   </LayoutDisclosure>
 </template>
@@ -71,6 +73,7 @@ const props = defineProps<{
   group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
   search?: string
   onlyAuthored?: boolean
+  isSelected?: boolean
 }>()
 
 const { projectId } = useInjectedViewerState()
@@ -114,4 +117,14 @@ const {
 })
 
 const views = computed(() => result.value?.project.savedViewGroup.views.items || [])
+
+watch(
+  () => props.isSelected,
+  (isSelected) => {
+    if (isSelected) {
+      open.value = true
+    }
+  },
+  { immediate: true }
+)
 </script>

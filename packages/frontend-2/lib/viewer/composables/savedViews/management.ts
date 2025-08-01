@@ -10,22 +10,11 @@ const createSavedViewMutation = graphql(`
       savedViewMutations {
         createView(input: $input) {
           id
-          name
-          description
-          groupId
-          author {
+          ...ViewerSavedViewsPanelView_SavedView
+          group {
             id
+            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup
           }
-          createdAt
-          updatedAt
-          projectId
-          resourceIdString
-          resourceIds
-          isHomeView
-          visibility
-          viewerState
-          screenshot
-          position
         }
       }
     }
@@ -63,7 +52,44 @@ export const useCreateSavedView = () => {
       },
       {
         update: (cache, { data }) => {
-          // TODO:
+          const res = data?.projectMutations.savedViewMutations.createView
+          if (!res) return
+
+          const viewId = res.id
+          const groupId = res.group.id
+
+          // Project.savedViewGroups + 1, if it is a new group
+          modifyObjectField(
+            cache,
+            getCacheId('Project', projectId.value),
+            'savedViewGroups',
+            ({ helpers: { createUpdatedValue, ref, readField }, value }) => {
+              const isNewGroup = !value?.items?.some(
+                (group) => readField(group, 'id') === groupId
+              )
+              if (!isNewGroup) return
+
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (count) => count + 1)
+                update('items', (items) => [...items, ref('SavedViewGroup', groupId)])
+              })
+            },
+            { autoEvictFiltered: true }
+          )
+
+          // SavedViewGroup.views + 1
+          modifyObjectField(
+            cache,
+            getCacheId('SavedViewGroup', groupId),
+            'views',
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (count) => count + 1)
+                update('items', (items) => [ref('SavedView', viewId), ...items])
+              })
+            },
+            { autoEvictFiltered: true }
+          )
         }
       }
     ).catch(convertThrowIntoFetchResult)

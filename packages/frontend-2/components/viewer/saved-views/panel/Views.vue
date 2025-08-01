@@ -9,6 +9,7 @@
         v-for="group in groups"
         :key="group.id"
         :group="group"
+        :is-selected="group.id === selectedGroupId"
       />
       <InfiniteLoading
         v-if="groups.length"
@@ -61,6 +62,10 @@ const paginableGroupsQuery = graphql(`
 defineProps<{
   viewsType: ViewsType
 }>()
+
+const selectedGroupId = defineModel<string | null>('selectedGroupId', {
+  required: true
+})
 
 const {
   projectId,

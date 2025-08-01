@@ -1,5 +1,6 @@
 import { FaceSmileIcon } from '@heroicons/vue/24/outline'
 import type { Meta, StoryObj } from '@storybook/vue3'
+import { ref } from 'vue'
 import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 
 export default {
@@ -66,5 +67,30 @@ export const Warning: StoryObj = {
   args: {
     ...Default.args,
     color: 'warning'
+  }
+}
+
+export const WithModel: StoryObj = {
+  render: (args) => ({
+    components: { LayoutDisclosure },
+    setup() {
+      const open = ref(false)
+      return { args, open }
+    },
+    template: `
+    <div>
+      <LayoutDisclosure v-bind="args" v-model:open="open">
+        <div class="flex flex-col text-foreground space-y-4">
+          <div class="h4 font-semibold">Hello world!</div>
+          <div>Lorem ipsum blah blah blah</div>
+        </div>
+      </LayoutDisclosure>
+      <div class="mt-4">
+        <button @click="open = !open" class="btn btn-primary">Toggle Disclosure</button>
+      </div>
+    </div>`
+  }),
+  args: {
+    ...Default.args
   }
 }
