@@ -26,6 +26,7 @@ import { SpeckleViewer, isNonNullable } from '@speckle/shared'
 import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
+  viewerActiveSavedViewQuery,
   viewerLoadedResourcesQuery,
   viewerLoadedThreadsQuery,
   viewerModelVersionsQuery
@@ -86,6 +87,11 @@ export type InjectableViewerState = Readonly<{
    * The project which we're opening in the viewer (all loaded models should belong to it)
    */
   projectId: AsyncWritableComputedRef<string>
+  /**
+   * Core source of truth for the view id (other is in hash state). This allows you to
+   * set a view to load, without it showing up in the URL.
+   */
+  savedViewId: Ref<Nullable<string>>
   /**
    * User viewer session ID. The same user will have different IDs in different tabs if multiple are open.
    * This is used to ignore user activity messages from the same tab.
@@ -315,7 +321,7 @@ type CachedViewerState = Pick<
 
 type InitialSetupState = Pick<
   InjectableViewerState,
-  'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
+  'projectId' | 'viewer' | 'sessionId' | 'urlHashState' | 'savedViewId'
 >
 
 type InitialStateWithRequest = InitialSetupState & {
@@ -423,6 +429,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 
   return {
     projectId: params.projectId,
+    savedViewId: ref<string | null>(null),
     sessionId,
     viewer: import.meta.server
       ? ({
@@ -561,10 +568,10 @@ function setupResponseResourceItems(
   const globalError = useError()
   const {
     projectId,
+    savedViewId,
     resources: {
       request: { resourceIdString }
-    },
-    urlHashState: { savedViewId }
+    }
   } = state
 
   const initLoadDone = ref(import.meta.server ? false : true)
@@ -694,11 +701,12 @@ function setupResponseResourceData(
   const logger = useLogger()
 
   const {
+    savedViewId,
     projectId,
     resources: {
       request: { resourceIdString, threadFilters }
     },
-    urlHashState: { diff, savedViewId }
+    urlHashState: { diff }
   } = state
   const { resourceItems, resourceItemsLoaded } = resourceItemsData
 
@@ -735,8 +743,7 @@ function setupResponseResourceData(
     (): ViewerLoadedResourcesQueryVariables => ({
       projectId: projectId.value,
       modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
-      versionIds: versionIds.value,
-      savedViewId: savedViewId.value
+      versionIds: versionIds.value
     })
 
   // MODELS AND VERSIONS
@@ -772,7 +779,6 @@ function setupResponseResourceData(
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
-  const savedView = computed(() => project.value?.savedView || undefined)
 
   const modelsAndVersionIds = computed(() =>
     nonObjectResourceItems.value
@@ -897,6 +903,32 @@ function setupResponseResourceData(
     })
     logger.error(err)
   })
+
+  // SAVED VIEW
+  const { result: viewerActiveSavedViewResult, onError: onViewerActiveSavedViewError } =
+    useQuery(
+      viewerActiveSavedViewQuery,
+      () => ({
+        projectId: projectId.value,
+        savedViewId: savedViewId.value!
+      }),
+      {
+        enabled: computed(() => !!savedViewId.value)
+      }
+    )
+
+  onViewerActiveSavedViewError((err) => {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Saved view loading failed',
+      description: `${err.message}`
+    })
+    logger.error(err)
+  })
+
+  const savedView = computed(
+    () => viewerActiveSavedViewResult.value?.project?.savedView
+  )
 
   onServerPrefetch(async () => {
     await Promise.all([serverResourcesLoadedPromise.promise])

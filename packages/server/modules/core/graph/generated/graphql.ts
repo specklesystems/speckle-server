@@ -2270,8 +2270,7 @@ export type Project = {
   permissions: ProjectPermissionChecks;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
-  /** Allows for optional loading by passing in empty value */
-  savedView?: Maybe<SavedView>;
+  savedView: SavedView;
   savedViewGroup: SavedViewGroup;
   savedViewGroups: SavedViewGroupCollection;
   /** Source apps used in any models of this project */
@@ -2391,7 +2390,7 @@ export type ProjectPendingImportedModelsArgs = {
 
 
 export type ProjectSavedViewArgs = {
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id: Scalars['ID']['input'];
 };
 
 
@@ -7193,7 +7192,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   pendingImportedModels?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ProjectPendingImportedModelsArgs, 'limit'>>;
   permissions?: Resolver<ResolversTypes['ProjectPermissionChecks'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType, Partial<ProjectSavedViewArgs>>;
+  savedView?: Resolver<ResolversTypes['SavedView'], ParentType, ContextType, RequireFields<ProjectSavedViewArgs, 'id'>>;
   savedViewGroup?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType, RequireFields<ProjectSavedViewGroupArgs, 'id'>>;
   savedViewGroups?: Resolver<ResolversTypes['SavedViewGroupCollection'], ParentType, ContextType, RequireFields<ProjectSavedViewGroupsArgs, 'input'>>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;

@@ -48,9 +48,9 @@ const props = defineProps<{
   view: ViewerSavedViewsPanelView_SavedViewFragment
 }>()
 
-const { urlHashState } = useInjectedViewerState()
+const { savedViewId } = useInjectedViewerState()
 
 const apply = async () => {
-  await urlHashState.savedViewId.update(props.view.id)
+  savedViewId.value = props.view.id
 }
 </script>

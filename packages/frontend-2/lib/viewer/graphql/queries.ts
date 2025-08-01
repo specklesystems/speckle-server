@@ -20,6 +20,18 @@ export const projectViewerResourcesQuery = graphql(`
   }
 `)
 
+export const viewerActiveSavedViewQuery = graphql(`
+  query ViewerActiveSavedView($projectId: String!, $savedViewId: ID!) {
+    project(id: $projectId) {
+      id
+      savedView(id: $savedViewId) {
+        id
+        ...UseViewerSavedViewSetup_SavedView
+      }
+    }
+  }
+`)
+
 /**
  * Query to load all metadata needed for loaded models (& their versions) in the viewer, for
  * all sidebar panels and everything
@@ -29,7 +41,6 @@ export const viewerLoadedResourcesQuery = graphql(`
     $projectId: String!
     $modelIds: [String!]!
     $versionIds: [String!]
-    $savedViewId: ID
   ) {
     project(id: $projectId) {
       id
@@ -71,10 +82,6 @@ export const viewerLoadedResourcesQuery = graphql(`
       ...ViewerGendoPanel_Project
       ...ViewerResourcesLimitAlert_Project
       ...ViewerSavedViewsPanel_Project
-      savedView(id: $savedViewId) {
-        id
-        ...UseViewerSavedViewSetup_SavedView
-      }
     }
   }
 `)

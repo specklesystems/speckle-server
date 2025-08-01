@@ -918,11 +918,12 @@ graphql(`
 
 const useViewerSavedViewSetup = () => {
   const {
+    savedViewId,
     resources: {
       request: { resourceIdString },
       response: { savedView, resolvedResourceIdString }
     },
-    urlHashState: { savedViewId }
+    urlHashState: { savedViewId: urlHashSavedViewId }
   } = useInjectedViewerState()
   const applyState = useApplySerializedState()
 
@@ -931,15 +932,7 @@ const useViewerSavedViewSetup = () => {
   const apply = async (state: SerializedViewerState) => {
     await resourceIdString.update(resolvedResourceIdString.value)
     await applyState(state, StateApplyMode.SavedView)
-    await savedViewId.update(null)
-
-    // // Concurrent update to reduce the amount of time we're in a state w/o both set
-    await Promise.all([
-      // TODO: What if federated? Change resourceIdString too
-      // resourceIdString.update(resolvedResourceIdString.value)
-      //   // TODO: Remove tag from URL
-      //   savedViewId.update(null)
-    ])
+    await urlHashSavedViewId.update(null) // will updated savedViewId downstream too
   }
 
   // Apply saved view state
@@ -960,6 +953,17 @@ const useViewerSavedViewSetup = () => {
     // If the saved view has changed, apply it
     apply(state)
   })
+
+  watch(
+    urlHashSavedViewId,
+    async (newVal, oldVal) => {
+      if (newVal === oldVal) return
+
+      // If the URL hash saved view ID has changed, update the saved view ID
+      savedViewId.value = newVal
+    },
+    { immediate: true }
+  )
 }
 
 export function useViewerPostSetup() {
