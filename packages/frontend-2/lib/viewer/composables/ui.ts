@@ -622,7 +622,7 @@ export function useViewerShortcuts() {
 
   const getShortcutDisplayText = (
     shortcut: ViewerShortcut,
-    options?: { hideName?: boolean }
+    options?: { hideName?: boolean; format?: 'default' | 'separate' }
   ) => {
     if (isSmallerOrEqualSm.value) return undefined
     if (isEmbedEnabled.value) return undefined
@@ -631,6 +631,31 @@ export function useViewerShortcuts() {
       ...shortcut.modifiers,
       formatKey(shortcut.key)
     ])
+
+    if (options?.format === 'separate') {
+      const modifiersText =
+        shortcut.modifiers.length > 0
+          ? getKeyboardShortcutTitle([...shortcut.modifiers])
+          : ''
+      const keyText = getKeyboardShortcutTitle([formatKey(shortcut.key)])
+
+      return {
+        content: `
+        <div class="flex flex-row gap-2 m-0 p-0">
+          <div class="text-body-2xs font-medium text-foreground">${shortcut.name}</div>
+          <div class="text-body-3xs text-foreground-3">
+            ${
+              modifiersText
+                ? `<kbd class="p-0.5 min-w-4 text-foreground-2 rounded-md text-body-3xs font-normal font-sans">${modifiersText}</kbd>`
+                : 'then'
+            }<kbd class="min-w-3 text-foreground-2 rounded-sm text-body-3xs font-medium font-sans">${keyText}</kbd>
+          </div>
+        </div>
+      `,
+        allowHTML: true,
+        theme: 'speckleTooltip'
+      }
+    }
 
     if (!options?.hideName) {
       return `${shortcut.name} (${shortcutText})`
