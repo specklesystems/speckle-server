@@ -4,13 +4,16 @@ export const isValidBase64Image = (data: string): boolean => {
   const parts = data.split(',')
   if (parts.length !== 2) return false
 
-  const base64String = parts[1]
+  // Remove all whitespace characters from base64 string
+  const base64String = parts[1].replace(/\s+/g, '')
 
-  // Check if base64 string is valid
+  // Validate that the cleaned string only has valid base64 characters
+  const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/
+  if (!base64Regex.test(base64String)) return false
+
   try {
     const buffer = Buffer.from(base64String, 'base64')
-    // Optionally check that re-encoding it gives the same result (sanity check)
-    return buffer.toString('base64') === base64String.replace(/\s/g, '')
+    return buffer.length > 0
   } catch {
     return false
   }
