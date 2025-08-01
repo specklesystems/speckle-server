@@ -189,12 +189,18 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
     this.#resources.forEach(callback)
     return this
   }
+
+  filter(callback: (resource: ViewerResource) => boolean): ViewerResource[]
   filter<Res extends ViewerResource>(
     callback: (resource: ViewerResource) => resource is Res
   ) {
     return this.#resources.filter(callback)
   }
-  find(callback: (resource: ViewerResource) => boolean) {
+
+  find(callback: (resource: ViewerResource) => boolean): ViewerResource | undefined
+  find<Res extends ViewerResource>(
+    callback: (resource: ViewerResource) => resource is Res
+  ) {
     return this.#resources.find(callback)
   }
   map<T>(callback: (resource: ViewerResource) => T): T[] {
