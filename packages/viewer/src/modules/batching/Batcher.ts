@@ -21,7 +21,7 @@ import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh.js'
 import { SpeckleType } from '../loaders/GeometryConverter.js'
 import { type TreeNode, WorldTree } from '../../index.js'
 import { InstancedMeshBatch } from './InstancedMeshBatch.js'
-import { Geometry } from '../converter/Geometry.js'
+import { Geometry, GeometryData } from '../converter/Geometry.js'
 import { MeshBatch } from './MeshBatch.js'
 import { PointBatch } from './PointBatch.js'
 import Logger from '../utils/Logger.js'
@@ -139,9 +139,11 @@ export default class Batcher {
           needsRTE
         ) {
           rvs.forEach((nodeRv) => {
-            const geometry = nodeRv.renderData.geometry
+            const geometry = nodeRv.renderData.geometry as GeometryData
             geometry.instanced = false
             nodeRv.computeAABB(geometry.transform)
+            if ((geometry.transform?.determinant() ?? 0) < 0)
+              geometry.flipNormals = true
             /** I don't think we need to duplicate geometry here, now that we're transforming the batch position directly */
             // const attribs = geometry.attributes
             // geometry.attributes = {
@@ -385,7 +387,9 @@ export default class Batcher {
     } else if (geometryType === GeometryType.POINT_CLOUD) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.TEXT) {
-      matRef = renderViews[0].renderData.displayStyle
+      matRef = renderViews[0].renderData.colorMaterial
+        ? renderViews[0].renderData.colorMaterial
+        : renderViews[0].renderData.displayStyle
     }
 
     const material = this.materials.getMaterial(materialHash, matRef, geometryType)
