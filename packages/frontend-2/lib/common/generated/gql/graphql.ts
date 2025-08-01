@@ -947,10 +947,16 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateSavedViewGroupInput = {
+  groupName: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+  resourceIdString: Scalars['String']['input'];
+};
+
 export type CreateSavedViewInput = {
   description?: InputMaybe<Scalars['String']['input']>;
-  /** Group name, if grouping necessary */
-  groupName?: InputMaybe<Scalars['String']['input']>;
+  /** Group id, if grouping necessary */
+  groupId?: InputMaybe<Scalars['ID']['input']>;
   /** Optionally also set this as the home/default view for the target model */
   isHomeView?: InputMaybe<Scalars['Boolean']['input']>;
   /** Auto-generated name, if not specified */
@@ -1215,6 +1221,11 @@ export type GetModelUploadsInput = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   /** The maximum number of uploads to return. */
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type GetUngroupedViewGroupInput = {
+  /** Viewer resource ID string that identifies which resources should be loaded */
+  resourceIdString: Scalars['String']['input'];
 };
 
 export type InvitableCollaboratorsFilter = {
@@ -2232,10 +2243,12 @@ export type Project = {
   permissions: ProjectPermissionChecks;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
+  savedViewGroup: SavedViewGroup;
   savedViewGroups: SavedViewGroupCollection;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']['output']>;
   team: Array<ProjectCollaborator>;
+  ungroupedViewGroup: SavedViewGroup;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
   version: Version;
@@ -2348,8 +2361,18 @@ export type ProjectPendingImportedModelsArgs = {
 };
 
 
+export type ProjectSavedViewGroupArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type ProjectSavedViewGroupsArgs = {
   input: SavedViewGroupsInput;
+};
+
+
+export type ProjectUngroupedViewGroupArgs = {
+  input: GetUngroupedViewGroupInput;
 };
 
 
@@ -2803,6 +2826,7 @@ export type ProjectPermissionChecks = {
   canCreateComment: PermissionCheckResult;
   canCreateEmbedTokens: PermissionCheckResult;
   canCreateModel: PermissionCheckResult;
+  canCreateSavedView: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canLeave: PermissionCheckResult;
@@ -3252,15 +3276,16 @@ export type RootPermissionChecks = {
 
 export type SavedView = {
   __typename?: 'SavedView';
-  author: LimitedUser;
+  author?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
-  groupName?: Maybe<Scalars['String']['output']>;
+  groupId?: Maybe<Scalars['ID']['output']>;
   id: Scalars['ID']['output'];
   isHomeView: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   /** For figuring out position in the group */
   position: Scalars['Float']['output'];
+  projectId: Scalars['ID']['output'];
   /** Original resource ID string that this view is associated with. */
   resourceIdString: Scalars['String']['output'];
   /** Same as resourceIdString, but split into an array of resource IDs. */
@@ -3282,10 +3307,14 @@ export type SavedViewCollection = {
 
 export type SavedViewGroup = {
   __typename?: 'SavedViewGroup';
+  /** Only set if this is a real/persisted group. */
+  groupId?: Maybe<Scalars['ID']['output']>;
+  /** This is always set even for fake/not persisted groups for Apollo caching */
   id: Scalars['ID']['output'];
   isUngroupedViewsGroup: Scalars['Boolean']['output'];
-  modelIds: Array<Scalars['ID']['output']>;
   projectId: Scalars['ID']['output'];
+  /** Resources that were used to find this group */
+  resourceIds: Array<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   views: SavedViewCollection;
 };
@@ -3331,7 +3360,13 @@ export type SavedViewGroupsInput = {
 
 export type SavedViewMutations = {
   __typename?: 'SavedViewMutations';
+  createGroup: SavedViewGroup;
   createView: SavedView;
+};
+
+
+export type SavedViewMutationsCreateGroupArgs = {
+  input: CreateSavedViewGroupInput;
 };
 
 
@@ -9033,9 +9068,11 @@ export type ProjectFieldArgs = {
   pendingImportedModels: ProjectPendingImportedModelsArgs,
   permissions: {},
   role: {},
+  savedViewGroup: ProjectSavedViewGroupArgs,
   savedViewGroups: ProjectSavedViewGroupsArgs,
   sourceApps: {},
   team: {},
+  ungroupedViewGroup: ProjectUngroupedViewGroupArgs,
   updatedAt: {},
   version: ProjectVersionArgs,
   versions: ProjectVersionsArgs,
@@ -9151,6 +9188,7 @@ export type ProjectPermissionChecksFieldArgs = {
   canCreateComment: {},
   canCreateEmbedTokens: {},
   canCreateModel: {},
+  canCreateSavedView: {},
   canDelete: {},
   canInvite: {},
   canLeave: {},
@@ -9247,11 +9285,12 @@ export type SavedViewFieldArgs = {
   author: {},
   createdAt: {},
   description: {},
-  groupName: {},
+  groupId: {},
   id: {},
   isHomeView: {},
   name: {},
   position: {},
+  projectId: {},
   resourceIdString: {},
   resourceIds: {},
   screenshot: {},
@@ -9265,10 +9304,11 @@ export type SavedViewCollectionFieldArgs = {
   totalCount: {},
 }
 export type SavedViewGroupFieldArgs = {
+  groupId: {},
   id: {},
   isUngroupedViewsGroup: {},
-  modelIds: {},
   projectId: {},
+  resourceIds: {},
   title: {},
   views: SavedViewGroupViewsArgs,
 }
@@ -9278,6 +9318,7 @@ export type SavedViewGroupCollectionFieldArgs = {
   totalCount: {},
 }
 export type SavedViewMutationsFieldArgs = {
+  createGroup: SavedViewMutationsCreateGroupArgs,
   createView: SavedViewMutationsCreateViewArgs,
 }
 export type ScopeFieldArgs = {

@@ -32,6 +32,15 @@
         <ChatBubbleLeftRightIcon class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
+      <!-- Saved views -->
+      <ViewerControlsButtonToggle
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleSavedViews)"
+        :active="activePanel === 'savedViews'"
+        @click="toggleActivePanel('savedViews')"
+      >
+        <Camera class="h-4 w-4 md:h-5 md:w-5" />
+      </ViewerControlsButtonToggle>
+
       <!-- Automation runs -->
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
@@ -192,6 +201,9 @@
           <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
         </KeepAlive>
       </div>
+      <div v-if="activePanel === 'savedViews'">
+        <ViewerSavedViewsPanel @close="activePanel = 'none'" />
+      </div>
       <div v-show="activePanel === 'models'">
         <KeepAlive>
           <div>
@@ -287,6 +299,7 @@ import {
 } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { Camera } from 'lucide-vue-next'
 
 type ActivePanel =
   | 'none'
@@ -297,6 +310,7 @@ type ActivePanel =
   | 'measurements'
   | 'gendo'
   | 'mobileOverflow'
+  | 'savedViews'
 
 type ActiveControl =
   | 'none'
@@ -427,6 +441,7 @@ registerShortcuts({
   ToggleMeasurements: () => toggleMeasurements(),
   ToggleProjection: () => trackAndtoggleProjection(),
   ToggleSectionBox: () => toggleSectionBox(),
+  ToggleSavedViews: () => toggleActivePanel('savedViews'),
   ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection()
 })
 
