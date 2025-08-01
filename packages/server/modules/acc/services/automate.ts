@@ -143,9 +143,11 @@ export const triggerSyncItemAutomationFactory =
         runId: cryptoRandomString({ length: 15 }),
         resultVersions: [],
         functionInputs: {
+          syncItemId: syncItem.id,
           projectId: syncItem.projectId,
           modelId: syncItem.modelId,
-          autodeskUrn: syncItem.accFileVersionUrn,
+          versionUrn: syncItem.accFileVersionUrn,
+          viewName: syncItem.accFileViewName ?? null,
           autodeskRegion: syncItem.accRegion === 'EMEA' ? 1 : 0,
           autodeskClientId: getAutodeskIntegrationClientId(),
           autodeskClientSecret: getAutodeskIntegrationClientSecret()
