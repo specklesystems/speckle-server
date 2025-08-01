@@ -108,7 +108,8 @@ export class IndexedDatabase implements Database {
    * Inserts or updates an array of items in a single transaction.
    * @param data The array of items to insert.
    */
-  putAll(data: Item[]): Promise<void> {
+  async putAll(data: Item[]): Promise<void> {
+    await this.init() // Ensure the database is initialized
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.#getDB().transaction(this.#storeName, 'readwrite', {
@@ -134,7 +135,8 @@ export class IndexedDatabase implements Database {
    * Retrieves an array of items from the object store based on their IDs.
    * @param ids The array of IDs to retrieve.
    */
-  getAll(ids: string[]): Promise<(Item | undefined)[]> {
+  async getAll(ids: string[]): Promise<(Item | undefined)[]> {
+    await this.init() // Ensure the database is initialized
     return new Promise((resolve, reject) => {
       if (ids.length === 0) {
         return resolve([])
