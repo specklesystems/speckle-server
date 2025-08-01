@@ -1,7 +1,17 @@
+/* eslint-disable camelcase */
+import { Triangle, Vector3 } from 'three'
+
 /**
  * Set of functions to triangulate n-gon faces (i.e. polygon faces with an arbitrary (n) number of vertices).
  * This class is a JavaScript port of https://github.com/specklesystems/speckle-sharp/blob/main/Objects/Objects/Utils/MeshTriangulationHelper.cs
  */
+const _vec30 = new Vector3()
+const _vec31 = new Vector3()
+const _vec32 = new Vector3()
+const _vec33 = new Vector3()
+const _normal = new Vector3()
+const _triangle = new Triangle()
+
 export default class MeshTriangulationHelper {
   /**
    * Calculates the triangulation of the face at given faceIndex.
@@ -9,30 +19,39 @@ export default class MeshTriangulationHelper {
    * @param {Number}   faceIndex      The index of the face's cardinality indicator `n`
    * @param {Number[]}   faces      The list of faces in the mesh
    * @param {Number[]}   vertices   The list of vertices in the mesh
-   * @return {Number[]} flat list of triangle faces (without cardinality indicators)
+   * @return {Number} flat list of triangle faces (without cardinality indicators)
    */
-  static triangulateFace(faceIndex, faces, vertices) {
-    let n = faces[faceIndex]
+  static triangulateFace(
+    faceIndex,
+    faces,
+    vertices,
+    /** Purists rolling over in their graves because of this */
+    _inout_targetArray,
+    _in_offset
+  ) {
+    let n = faces.get(faceIndex)
     if (n < 3) n += 3 // 0 -> 3, 1 -> 4
 
     //Converts from relative to absolute index (returns index in mesh.vertices list)
+    /** Why doesn't javascript have a means to inline functions?! */
     function asIndex(v) {
       return faceIndex + v + 1
     }
 
     //Gets vertex from a relative vert index
-    function V(v) {
-      const index = faces[asIndex(v)] * 3
-      return new Vector3(vertices[index], vertices[index + 1], vertices[index + 2])
+    function V(v, target) {
+      const index = faces.get(asIndex(v)) * 3
+      target.x = vertices.get(index)
+      target.y = vertices.get(index + 1)
+      target.z = vertices.get(index + 2)
+      return target
     }
 
-    const triangleFaces = Array((n - 2) * 3)
-
     //Calculate face normal using the Newell Method
-    const faceNormal = new Vector3(0, 0, 0)
+    const faceNormal = _normal
     for (let ii = n - 1, jj = 0; jj < n; ii = jj, jj++) {
-      const iPos = V(ii)
-      const jPos = V(jj)
+      const iPos = V(ii, _vec30)
+      const jPos = V(jj, _vec31)
       faceNormal.x += (jPos.y - iPos.y) * (iPos.z + jPos.z) // projection on yz
       faceNormal.y += (jPos.z - iPos.z) * (iPos.x + jPos.x) // projection on xz
       faceNormal.z += (jPos.x - iPos.x) * (iPos.y + jPos.y) // projection on xy
@@ -40,8 +59,8 @@ export default class MeshTriangulationHelper {
     faceNormal.normalize()
 
     //Set up previous and next links to effectively form a double-linked vertex list
-    const prev = Array(n)
-    const next = Array(n)
+    const prev = [] //new Array(n)
+    const next = [] //new Array(n)
     for (let j = 0; j < n; j++) {
       prev[j] = j - 1
       next[j] = j + 1
@@ -52,20 +71,25 @@ export default class MeshTriangulationHelper {
     //Start clipping ears until we are left with a triangle
     let i = 0
     let counter = 0
+    let localOffset = 0
     while (n >= 3) {
       let isEar = true
 
       //If we are the last triangle or we have exhausted our vertices, the below statement will be false
       if (n > 3 && counter < n) {
-        const prevVertex = V(prev[i])
-        const earVertex = V(i)
-        const nextVertex = V(next[i])
+        const prevVertex = V(prev[i], _vec30)
+        const earVertex = V(i, _vec31)
+        const nextVertex = V(next[i], _vec32)
 
-        if (this.triangleIsCCW(faceNormal, prevVertex, earVertex, nextVertex)) {
+        _triangle.a.copy(prevVertex)
+        _triangle.b.copy(earVertex)
+        _triangle.c.copy(nextVertex)
+
+        if (_triangle.isFrontFacing(faceNormal)) {
           let k = next[next[i]]
 
           do {
-            if (this.testPointTriangle(V(k), prevVertex, earVertex, nextVertex)) {
+            if (_triangle.containsPoint(V(k, _vec33))) {
               isEar = false
               break
             }
@@ -78,10 +102,13 @@ export default class MeshTriangulationHelper {
       }
 
       if (isEar) {
-        const a = faces[asIndex(i)]
-        const b = faces[asIndex(next[i])]
-        const c = faces[asIndex(prev[i])]
-        triangleFaces.push(a, b, c)
+        const a = faces.get(asIndex(i))
+        const b = faces.get(asIndex(next[i]))
+        const c = faces.get(asIndex(prev[i]))
+        _inout_targetArray[_in_offset + localOffset] = a
+        _inout_targetArray[_in_offset + localOffset + 1] = b
+        _inout_targetArray[_in_offset + localOffset + 2] = c
+        localOffset += 3
 
         next[prev[i]] = next[i]
         prev[next[i]] = prev[i]
@@ -94,89 +121,6 @@ export default class MeshTriangulationHelper {
       }
     }
 
-    return triangleFaces
-  }
-
-  /**
-   * Tests if point v is within the triangle *abc*.
-   * @param {Vector3} v
-   * @param {Vector3} a
-   * @param {Vector3} b
-   * @param {Vector3} c
-   * @returns {boolean} true if v is within triangle.
-   */
-  static testPointTriangle(v, a, b, c) {
-    function Test(_v, _a, _b) {
-      const crossA = _v.cross(_a)
-      const crossB = _v.cross(_b)
-      const dotWithEpsilon = Number.EPSILON + crossA.dot(crossB)
-      return Math.sign(dotWithEpsilon) !== -1
-    }
-
-    return (
-      Test(b.sub(a), v.sub(a), c.sub(a)) &&
-      Test(c.sub(b), v.sub(b), a.sub(b)) &&
-      Test(a.sub(c), v.sub(c), b.sub(c))
-    )
-  }
-
-  /**
-   * Checks that triangle abc is clockwise with reference to referenceNormal.
-   * @param {Vector3} referenceNormal The normal direction of the face.
-   * @param {Vector3} a
-   * @param {Vector3} b
-   * @param {Vector3} c
-   * @returns {boolean} true if triangle is ccw
-   */
-  static triangleIsCCW(referenceNormal, a, b, c) {
-    const triangleNormal = c.sub(a).cross(b.sub(a))
-    triangleNormal.normalize()
-    return referenceNormal.dot(triangleNormal) > 0.0
-  }
-}
-
-/**
- * Encapsulates vector maths operations required for polygon triangulation
- */
-class Vector3 {
-  constructor(x, y, z) {
-    this.x = x
-    this.y = y
-    this.z = z
-  }
-
-  add(v) {
-    return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z)
-  }
-
-  sub(v) {
-    return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z)
-  }
-
-  mul(n) {
-    return new Vector3(this.x - n, this.y - n, this.z - n)
-  }
-
-  dot(v) {
-    return this.x * v.x + this.y * v.y + this.z * v.z
-  }
-
-  cross(v) {
-    const nx = this.y * v.z - this.z * v.y
-    const ny = this.z * v.x - this.x * v.z
-    const nz = this.x * v.y - this.y * v.x
-
-    return new Vector3(nx, ny, nz)
-  }
-
-  squareSum() {
-    return this.x * this.x + this.y * this.y + this.z * this.z
-  }
-
-  normalize() {
-    const scale = 1.0 / Math.sqrt(this.squareSum())
-    this.x *= scale
-    this.y *= scale
-    this.z *= scale
+    return localOffset
   }
 }

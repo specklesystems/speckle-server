@@ -102,8 +102,16 @@ export class BatchObject {
       this.pivot_High
     )
   }
+  public buildAccelerationStructure(
+    position: Float32Array | Float64Array,
+    indices: Uint16Array | Uint32Array
+  ): void
+  public buildAccelerationStructure(bvh: MeshBVH): void
 
-  public buildAccelerationStructure(bvh?: MeshBVH) {
+  public buildAccelerationStructure(
+    positionOrBvh: Float32Array | Float64Array | MeshBVH,
+    indices?: Uint16Array | Uint32Array
+  ): void {
     const transform = new Matrix4().makeTranslation(
       this._localOrigin.x,
       this._localOrigin.y,
@@ -111,14 +119,15 @@ export class BatchObject {
     )
     transform.invert()
 
-    if (!bvh) {
-      const indices: number[] | undefined =
-        this._renderView.renderData.geometry.attributes?.INDEX
-      const position: number[] | undefined =
-        this._renderView.renderData.geometry.attributes?.POSITION
+    let bvh = positionOrBvh
+
+    if (!(bvh instanceof MeshBVH)) {
+      if (!indices) {
+        throw new Error(`Cannot build a BVH with only positions. Need indices too`)
+      }
       bvh = AccelerationStructure.buildBVH(
         indices,
-        position,
+        positionOrBvh as Float32Array | Float64Array,
         DefaultBVHOptions,
         transform
       )
