@@ -1,22 +1,18 @@
 <template>
   <div>
-    <HeadlessDisclosure v-slot="{ open: actuallyOpen }">
-      <DisclosureButton ref="disclosureRef" :class="buttonClasses">
+    <HeadlessDisclosure>
+      <DisclosureButton :class="buttonClasses" @click="toggle">
         <div class="inline-flex items-center space-x-2">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
           <span>{{ title }}</span>
         </div>
-        <ChevronUpIcon
-          :class="!actuallyOpen ? 'rotate-180 transform' : ''"
-          class="h-5 w-5"
-        />
+        <ChevronUpIcon :class="!open ? 'rotate-180 transform' : ''" class="h-5 w-5" />
       </DisclosureButton>
-      <DisclosurePanel :class="panelClasses">
-        <div v-if="!lazyLoad || actuallyOpen" class="label-light">
+      <DisclosurePanel v-if="open" :class="panelClasses" static>
+        <div v-if="!lazyLoad || open" class="label-light">
           <slot>Panel contents</slot>
         </div>
       </DisclosurePanel>
-      <div :class="syncOpen(actuallyOpen)" />
     </HeadlessDisclosure>
   </div>
 </template>
@@ -27,14 +23,10 @@ import {
   DisclosurePanel
 } from '@headlessui/vue'
 import { ChevronUpIcon } from '@heroicons/vue/24/solid'
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type DisclosureColor = 'default' | 'danger' | 'success' | 'warning'
-
-const emit = defineEmits<{
-  'update:open': [boolean]
-}>()
 
 const props = withDefaults(
   defineProps<{
@@ -48,15 +40,15 @@ const props = withDefaults(
      * Whether to lazy load the panel contents only upon opening
      */
     lazyLoad?: boolean
-    open?: boolean
   }>(),
   {
     color: 'default'
   }
 )
 
-const syncedOpenState = ref(false)
-const disclosureRef = ref<{ $el: HTMLElement } | null>(null)
+const open = defineModel<boolean>('open', {
+  default: false
+})
 
 const buttonClasses = computed(() => {
   const classParts = [
@@ -111,24 +103,7 @@ const panelClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const syncOpen = (newOpen: boolean) => {
-  syncedOpenState.value = newOpen
-}
-
 const toggle = () => {
-  disclosureRef.value?.$el.click()
+  open.value = !open.value
 }
-
-watch(
-  () => props.open,
-  (newOpen) => {
-    if (newOpen !== syncedOpenState.value) {
-      toggle()
-    }
-  }
-)
-
-watch(syncedOpenState, (newOpen) => {
-  emit('update:open', newOpen)
-})
 </script>

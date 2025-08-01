@@ -34,6 +34,7 @@
 
       <!-- Saved views -->
       <ViewerControlsButtonToggle
+        v-if="isSavedViewsEnabled"
         v-tippy="getShortcutDisplayText(shortcuts.ToggleSavedViews)"
         :active="activePanel === 'savedViews'"
         @click="toggleActivePanel('savedViews')"
@@ -202,7 +203,10 @@
         </KeepAlive>
       </div>
       <div v-if="activePanel === 'savedViews'">
-        <ViewerSavedViewsPanel @close="activePanel = 'none'" />
+        <ViewerSavedViewsPanel
+          v-if="isSavedViewsEnabled"
+          @close="activePanel = 'none'"
+        />
       </div>
       <div v-show="activePanel === 'models'">
         <KeepAlive>
@@ -300,6 +304,7 @@ import {
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { Camera } from 'lucide-vue-next'
+import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
 
 type ActivePanel =
   | 'none'
@@ -322,6 +327,7 @@ type ActiveControl =
   | 'explode'
   | 'settings'
 
+const isSavedViewsEnabled = useAreSavedViewsEnabled()
 const isGendoEnabled = useIsGendoModuleEnabled()
 const { width: windowWidth } = useWindowSize()
 
@@ -440,7 +446,7 @@ registerShortcuts({
   ToggleDiscussions: () => toggleActivePanel('discussions'),
   ToggleMeasurements: () => toggleMeasurements(),
   ToggleProjection: () => trackAndtoggleProjection(),
-  ToggleSectionBox: () => toggleSectionBox(),
+  ToggleSectionBox: () => isSavedViewsEnabled && toggleSectionBox(),
   ToggleSavedViews: () => toggleActivePanel('savedViews'),
   ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection()
 })

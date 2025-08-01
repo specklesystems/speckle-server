@@ -79,15 +79,15 @@ export const WithModel: StoryObj = {
     },
     template: `
     <div>
+      <div class="mb-4">
+        <button @click="open = !open" class="btn btn-primary">Toggle Disclosure</button>
+      </div>
       <LayoutDisclosure v-bind="args" v-model:open="open">
         <div class="flex flex-col text-foreground space-y-4">
           <div class="h4 font-semibold">Hello world!</div>
           <div>Lorem ipsum blah blah blah</div>
         </div>
       </LayoutDisclosure>
-      <div class="mt-4">
-        <button @click="open = !open" class="btn btn-primary">Toggle Disclosure</button>
-      </div>
     </div>`
   }),
   args: {

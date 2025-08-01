@@ -117,4 +117,14 @@ const emptyStateType = computed(() => (isSearch.value ? 'search' : 'base'))
 const groups = computed(() => {
   return result.value?.project.savedViewGroups.items || []
 })
+
+watch(
+  groups,
+  (newGroups) => {
+    if (newGroups.length && !selectedGroupId.value) {
+      selectedGroupId.value = newGroups[0].id
+    }
+  },
+  { immediate: true }
+)
 </script>
