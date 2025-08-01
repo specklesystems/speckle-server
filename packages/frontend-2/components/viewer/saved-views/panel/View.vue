@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="flex gap-2 p-2 w-full" :class="{ 'bg-foundation-2 rounded': isActive }">
+  <div class="flex gap-2 p-2 w-full hover:bg-foundation-2 rounded">
     <img
       v-keyboard-clickable
       :src="view.screenshot"
@@ -53,5 +53,4 @@ const { urlHashState } = useInjectedViewerState()
 const apply = async () => {
   await urlHashState.savedViewId.update(props.view.id)
 }
-const isActive = computed(() => urlHashState.savedViewId.value === props.view.id)
 </script>

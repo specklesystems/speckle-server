@@ -315,6 +315,9 @@ function createCache(): InMemoryCache {
       ServerInfo: {
         merge: true
       },
+      ServerConfiguration: {
+        merge: true
+      },
       CommentThreadActivityMessage: {
         merge: true
       },
