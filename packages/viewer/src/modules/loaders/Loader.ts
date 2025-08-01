@@ -1,4 +1,4 @@
-import { PropertyInfo } from '@speckle/objectloader2'
+import { SententizedBase } from '@speckle/objectloader2'
 import EventEmitter from '../EventEmitter.js'
 
 export enum LoaderEvent {
@@ -21,7 +21,7 @@ export abstract class Loader extends EventEmitter {
   protected _resource: string
   protected _resourceData: unknown
 
-  public abstract get properties(): PropertyInfo[]
+  public abstract get sentences(): SententizedBase[]
   public abstract get resource(): string
   public abstract get finished(): boolean
 

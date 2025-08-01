@@ -6,7 +6,8 @@ export {
   PropertyManager,
   PropertyInfo,
   NumericPropertyInfo,
-  StringPropertyInfo
+  StringPropertyInfo,
+  SententizedBase
 } from './properties/PropertyManager.js'
 
 export { VectorManager } from './properties/PropertyVectorizer.js'

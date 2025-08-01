@@ -42,3 +42,14 @@ export function flattenBase(obj: Base): Record<string, string | number> {
   }
   return flatten
 }
+
+export function sententizeBase(obj: Base): string {
+  const flattened = flattenBase(obj)
+  const propertyStrings = Object.entries(flattened).map(([key, value]) => {
+    // Make the key more readable (e.g., "Fire Rating" instead of "FireRating")
+    const formattedKey = key.replace(/([A-Z])/g, ' $1').trim()
+    return `${formattedKey} is ${value}`
+  })
+  // Join the individual strings with a comma and a space.
+  return `This object has the following properties: ${propertyStrings.join(', ')}.`
+}

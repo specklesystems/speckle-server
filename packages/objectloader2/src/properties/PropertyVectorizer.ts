@@ -1,21 +1,25 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
-import { StringPropertyInfo } from './PropertyManager.js'
+import { SententizedBase, StringPropertyInfo } from './PropertyManager.js'
 import { CustomLogger } from '../types/functions.js'
 import { VectorEntry, VectorStore } from './VectorStore.js'
-import { InferenceClient } from '@huggingface/inference'
 let status: string = 'Loading model...'
-
 
 class PipelineSingleton {
   static task = 'feature-extraction'
-  static model = 'mixedbread-ai/mxbai-embed-large-v1'
+  static model = 'Xenova/all-MiniLM-L6-v2'
   static instance?: any = null
 
   static async getInstance(progress_callback: any): Promise<any> {
-    const { pipeline } = await import('@huggingface/transformers')
+    if (this.instance) {
+      return this.instance
+    }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    this.instance ??= pipeline(this.task as any, this.model, { progress_callback })
+    const { pipeline } = await import('@huggingface/transformers')
+    this.instance ??= pipeline(this.task as any, this.model, {
+      progress_callback
+    })
     return this.instance
   }
 }
@@ -33,12 +37,14 @@ const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
 }
 const getEmbeddingFromText = async (text: string): Promise<number[]> => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const pipe = await PipelineSingleton.getInstance(({ currentStatus }: { currentStatus: string }) => {
-    if (status !== currentStatus) {
-      status = currentStatus
-      console.log(`Loading model: ${status}`)
+  const pipe = await PipelineSingleton.getInstance(
+    ( c: any) => {
+      if (status !== c.status) {
+        status = c.status as string
+        console.log(`Loading model: ${c.status}`)
+      }
     }
-  })
+  )
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const output = await pipe(text, {
     pooling: 'mean',
@@ -82,19 +88,15 @@ export class VectorManager {
   }
 
   // Insert data by generating embeddings from text
-  async insert(data: StringPropertyInfo): Promise<void> {
+  async insert(data: SententizedBase): Promise<void> {
     await this.#setupCacheDb()
     const embeddings: VectorEntry[] = []
-    for (const group of data.valueGroups) {
-      const embedding = await getEmbeddingFromText(group.value)
-      for (const id of group.ids) {
-        embeddings.push({
-          baseId: id,
+    const embedding = await getEmbeddingFromText(data.props)
+      embeddings.push({
+          baseId: data.id,
           vector: embedding,
-          prop: group.value
+          prop: data.props
         } as VectorEntry)
-      }
-    }
     await this.#vectorDb!.bulkInsert(embeddings)
   }
 

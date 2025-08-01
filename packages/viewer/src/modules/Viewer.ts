@@ -31,8 +31,7 @@ import Stats from './three/stats.js'
 import { TIME_MS } from '@speckle/shared'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
 import {
-  PropertyInfo as OL2PropertyInfo,
-  StringPropertyInfo as OL2StringPropertyInfo,
+  SententizedBase,
   VectorManager
 } from '@speckle/objectloader2'
 
@@ -54,7 +53,7 @@ export class Viewer extends EventEmitter implements IViewer {
   /** Misc members */
   protected clock: Clock
   protected loaders: { [id: string]: Loader } = {}
-  private properties: Record<string, OL2PropertyInfo[]> = {}
+  private sentences: Record<string, SententizedBase[]> = {}
   private vectorManager: VectorManager = new VectorManager({})
 
   protected extensions: {
@@ -162,7 +161,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer = new SpeckleRenderer(this.tree, this)
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
-this.propertyManager = new PropertyManager()
+    this.propertyManager = new PropertyManager()
     this.frame()
     this.resize()
   }
@@ -250,51 +249,31 @@ this.propertyManager = new PropertyManager()
   }
 
   public async getObjectProperties(
-    resourceURL: string | null = null,
-    bypassCache = true
+    resourceURL: string | null = null
   ): Promise<PropertyInfo[]> {
     if (!resourceURL) {
       return Promise.resolve([])
     }
-    const ol2Props = this.properties[resourceURL]
-    if (ol2Props) {
-      const oldProps = await this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
-      oldProps.sort((a, b) => a.key.localeCompare(b.key))
-      const newProps  = ol2Props as unknown as PropertyInfo[]
-      newProps.sort((a, b) => a.key.localeCompare(b.key))
-      if (oldProps.length !== newProps.length) {
-        console.error(
-          `Property count mismatch for ${resourceURL}: New: ${newProps.length}, Old: ${oldProps.length}`
-        )
-      }
-      for(const oldProp of oldProps) {
-        const newProp = newProps.find((p) => p.key === oldProp.key)
-        if (!newProp) {
-          console.error(`Property ${oldProp.key} not found in New properties`);
-        }
-      }
+    const newProps = this.sentences[resourceURL]
+    if (newProps) {
       for (let i = 0; i < newProps.length; i++) {
-        const newProp = newProps[i]
-        const oldProp = oldProps.find((p) => p.key === newProp.key)
-        if (!oldProp) {
-          console.error(`Property ${newProp.key} not found in Old properties`)
-        }
-        if (newProp.type === 'string') {
-          await this.vectorManager.insert(newProp as OL2StringPropertyInfo)
-          if (i % 100 === 0) {
-            Logger.log(`Inserted ${i} string properties into vector store, out of ${newProps.length}`)
-          }
-        }
+        const prop = newProps[i]
+        await this.vectorManager.insert(prop)
+         if (i % 100 === 0) {
+           console.log(
+             `Inserted ${i} string properties into vector store, out of ${newProps.length}`
+           )
+         }
       }
-    this.vectorManager
-      .query('roof')
-      .then((res) => {
-        console.log('Vector store query result:', res)
-      })
-      .catch((err) => {
-        console.error('Vector store query failed:', err)
-      })
-      return newProps
+      this.vectorManager
+        .query('roof')
+        .then((res) => {
+          console.log('Vector store query result:', res)
+        })
+        .catch((err) => {
+          console.error('Vector store query failed:', err)
+        })
+      return []
     }
     console.warn(`No properties found for resource ${resourceURL}`)
     return Promise.resolve([])
@@ -382,7 +361,7 @@ this.propertyManager = new PropertyManager()
       Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
-      this.properties[loader.resource] = loader.properties
+      this.sentences[loader.resource] = loader.sentences
       this.emit(ViewerEvent.LoadComplete, loader.resource)
     }
 

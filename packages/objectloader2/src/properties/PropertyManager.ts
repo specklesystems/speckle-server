@@ -1,4 +1,4 @@
-import { flattenBase } from '../types/flatten.js'
+import { sententizeBase } from '../types/flatten.js'
 import { Base } from '../types/types.js'
 
 type FlattenedBase = { id: string; value: string | number }
@@ -7,18 +7,11 @@ type PropertyValues = Record<string, FlattenedBase[]>
 export class PropertyManager {
   private properties: PropertyInfo[] = []
   private propValues: PropertyValues = {}
+  private sentences: SententizedBase[] = []
 
   public addBase(base: Base): void {
-    const obj = flattenBase(base)
-    for (const key in obj) {
-      if (Array.isArray(obj[key])) {
-        continue
-      }
-      if (!this.propValues[key]) {
-        this.propValues[key] = []
-      }
-      this.propValues[key].push({ value: obj[key], id: obj.id as string })
-    }
+    const obj = sententizeBase(base)
+    this.sentences.push({ id: base.id, props: obj })
   }
 
   public finalize(): void {
@@ -67,7 +60,9 @@ export class PropertyManager {
         // propInfo.sortedIds = sorted.map(s => s.value) // tl;dr: not worth it
       } else {
         // Handle unsupported property types
-        console.warn(`Unsupported property type "${propInfo.type}" for property "${propInfo.key}"`)
+        console.warn(
+          `Unsupported property type "${propInfo.type}" for property "${propInfo.key}"`
+        )
       }
       this.properties.push(propInfo)
     }
@@ -77,6 +72,14 @@ export class PropertyManager {
     this.finalize()
     return this.properties
   }
+  public getSentences(): SententizedBase[] {
+    return this.sentences
+  }
+}
+
+export interface SententizedBase {
+  id: string
+  props: string
 }
 
 /**

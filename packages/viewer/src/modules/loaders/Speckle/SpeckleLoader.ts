@@ -8,7 +8,7 @@ import {
   ObjectLoader2Flags,
   ObjectLoader2,
   ObjectLoader2Factory,
-  PropertyInfo
+  SententizedBase
 } from '@speckle/objectloader2'
 import { TIME_MS } from '@speckle/shared'
 
@@ -54,8 +54,8 @@ export class SpeckleLoader extends Loader {
     this.converter = new SpeckleConverter(this.loader, this.tree)
   }
 
-  public get properties(): PropertyInfo[] {
-    return this.loader.propertyManager.getProperties()
+  public get sentences(): SententizedBase[] {
+    return this.loader.propertyManager.getSentences()
   }
 
   protected initObjectLoader(
