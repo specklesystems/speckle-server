@@ -104,8 +104,6 @@ const resolvers: Resolvers = {
       return group
     },
     savedView: async (parent, args, ctx) => {
-      if (!args.id) return null
-
       const projectDb = await getProjectDbClient({ projectId: parent.id })
       const view = await ctx.loaders
         .forRegion({ db: projectDb })

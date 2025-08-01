@@ -256,7 +256,7 @@ export function useApplySerializedState() {
     if (mode === StateApplyMode.Spotlight) {
       highlightedObjectIds.value = selectedObjectIds
     } else {
-      if (selectedObjectIds.length) {
+      if (selectedObjectIds.length || mode === StateApplyMode.SavedView) {
         setSelectionFromObjectIds(selectedObjectIds)
       }
     }
