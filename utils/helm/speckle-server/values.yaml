@@ -75,6 +75,8 @@ featureFlags:
   backgroundJobsEnabled: false
   ## @param featureFlags.accIntegrationEnabled Enables the ability to import data from ACC
   accIntegrationEnabled: false
+  ## @param featureFlags.rhinoFileImporterEnabled Enables the dedicated Rhino based file importer. This is not part of the deployment.
+  rhinoFileImporterEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

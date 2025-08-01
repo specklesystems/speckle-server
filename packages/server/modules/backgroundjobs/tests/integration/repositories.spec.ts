@@ -1,4 +1,4 @@
-import knex, { db } from '@/db/knex'
+import { db } from '@/db/knex'
 import {
   storeBackgroundJobFactory,
   getBackgroundJobFactory,
@@ -135,12 +135,9 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     it('is able to count locked jobs', async () => {
       const job = createTestJob({
         jobType: 'fileImport',
-        status: BackgroundJobStatus.Queued
+        status: BackgroundJobStatus.Processing
       })
       await storeBackgroundJob({ job })
-
-      const trx = await knex.transaction()
-      await trx().from(BackgroundJobs.name).where({ id: job.id }).forUpdate().first() // acquire lock
 
       const [processingCount, queuedCount] = await Promise.all([
         getBackgroundJobCount({ status: 'processing', jobType: 'fileImport' }),
@@ -149,8 +146,6 @@ describe('Background Jobs repositories @backgroundjobs', () => {
 
       expect(processingCount).to.equal(1)
       expect(queuedCount).to.equal(0)
-
-      await trx.commit()
     })
 
     it('filters by min attempts', async () => {

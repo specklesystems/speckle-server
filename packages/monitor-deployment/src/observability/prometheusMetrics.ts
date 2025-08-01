@@ -6,10 +6,12 @@ import { Counter, Histogram, Registry } from 'prom-client'
 import prometheusClient from 'prom-client'
 import { init as commits } from '@/observability/metrics/commits.js'
 import { init as dbMaxLogicalReplicationWorkers } from '@/observability/metrics/dbMaxLogicalReplicationWorkers.js'
+import { init as dbMaxPerparedTransactions } from '@/observability/metrics/dbMaxPerparedTransactions.js'
 import { init as dbMaxReplicationSlots } from '@/observability/metrics/dbMaxReplicationSlots.js'
 import { init as dbMaxSyncWorkersPerSubscription } from '@/observability/metrics/dbMaxSyncWorkersPerSubscription.js'
 import { init as dbMaxWalSenders } from '@/observability/metrics/dbMaxWalSenders.js'
 import { init as dbMaxWorkerProcesses } from '@/observability/metrics/dbMaxWorkerProcesses.js'
+import { init as dbPreparedTransactions } from '@/observability/metrics/dbPreparedTransactions.js'
 import { init as dbSize } from '@/observability/metrics/dbSize.js'
 import { init as dbWalLevel } from '@/observability/metrics/dbWalLevel.js'
 import { init as dbWorkers } from '@/observability/metrics/dbWorkers.js'
@@ -62,10 +64,12 @@ function initMonitoringMetrics(params: {
   const metricsToInitialize = [
     commits,
     dbMaxLogicalReplicationWorkers,
+    dbMaxPerparedTransactions,
     dbMaxReplicationSlots,
     dbMaxSyncWorkersPerSubscription,
     dbMaxWalSenders,
     dbMaxWorkerProcesses,
+    dbPreparedTransactions,
     dbWalLevel,
     dbSize,
     dbWorkers,
