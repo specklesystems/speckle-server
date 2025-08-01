@@ -272,9 +272,9 @@ describe('Viewer Route Helpers', () => {
 
     it('can use filter', () => {
       const builder = resourceBuilder().addModel('abc').addModel('def')
-      builder.filter((r) => r.toString() === 'abc')
-      expect(builder.length).toBe(1)
-      expect(builder.toString()).toBe('abc')
+      const res = builder.filter((r) => r.toString() === 'abc')
+      expect(res.length).toBe(1)
+      expect(res[0].toString()).toBe('abc')
     })
 
     it('can use map', () => {
