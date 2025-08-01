@@ -1279,8 +1279,8 @@ class TransformControlsGizmo extends Object3D {
           [0, 0, 0],
           [0, 0, -Math.PI / 2]
         ]
-      ],
-      E: [[new Mesh(new TorusGeometry(0.75, 0.1, 2, 24), matInvisible)]]
+      ]
+      // E: [[new Mesh(new TorusGeometry(0.75, 0.1, 2, 24), matInvisible)]]
     }
 
     const gizmoScale = {
