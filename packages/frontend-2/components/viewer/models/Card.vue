@@ -74,8 +74,8 @@
             "
             class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
             :class="{
-              'opacity-100': isHidden || showActionsMenu,
-              'opacity-0': !isHidden && !showActionsMenu
+              'opacity-100': isHidden,
+              'opacity-0': !isHidden
             }"
             @click.stop="hideOrShowObject"
           >
@@ -90,8 +90,8 @@
             "
             class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
             :class="{
-              'opacity-100': isIsolated || showActionsMenu,
-              'opacity-0': !isIsolated && !showActionsMenu
+              'opacity-100': isIsolated,
+              'opacity-0': !isIsolated
             }"
             @click.stop="isolateOrUnisolateObject"
           >
