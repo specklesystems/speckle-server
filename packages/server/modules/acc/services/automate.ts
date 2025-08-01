@@ -93,7 +93,7 @@ export const triggerSyncItemAutomationFactory =
         {
           id: cryptoRandomString({ length: 15 }),
           functionId: ImporterAutomateFunctions.svf2.functionId,
-          functionReleaseId: ImporterAutomateFunctions.svf2.functionId,
+          functionReleaseId: ImporterAutomateFunctions.svf2.functionReleaseId,
           status: 'pending' as const,
           elapsed: 0,
           results: null,
