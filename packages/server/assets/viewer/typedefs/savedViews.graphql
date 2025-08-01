@@ -7,7 +7,14 @@ type SavedView {
   id: ID!
   name: String!
   description: String
+  """
+  Empty ID means default/ungrouped view
+  """
   groupId: ID
+  """
+  Always available because even ungrouped views show up in a fake "Ungrouped" group
+  """
+  group: SavedViewGroup!
   author: LimitedUser
   createdAt: DateTime!
   updatedAt: DateTime!

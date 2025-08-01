@@ -125,7 +125,7 @@ export function useStateSerialization() {
     return ret
   }
 
-  return { serialize }
+  return { serialize, buildConcreteResourceIdString }
 }
 
 export enum StateApplyMode {

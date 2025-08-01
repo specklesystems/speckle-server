@@ -7,6 +7,7 @@ import type {
   GetProjectSavedViewGroupsBaseParams,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
+  GetSavedViewGroups,
   GetSavedViewGroup,
   GetStoredViewCount,
   GetUngroupedSavedViewsGroup,
@@ -19,6 +20,7 @@ import {
   type SavedView,
   type SavedViewGroup
 } from '@/modules/viewer/domain/types/savedViews'
+import type { DefaultGroupMetadata } from '@/modules/viewer/helpers/savedViews'
 import {
   buildDefaultGroupId,
   decodeDefaultGroupId
@@ -427,4 +429,53 @@ export const recalculateGroupResourceIdsFactory =
 
     const results = await q
     return results.at(0)
+  }
+
+/**
+ * Get saved groups by IDs. Can handle unpersisted ungrouped groups too.
+ */
+export const getSavedViewGroupsFactory =
+  (deps: { db: Knex }): GetSavedViewGroups =>
+  async ({ groupIds }) => {
+    if (!groupIds.length) {
+      return {}
+    }
+
+    const defaultGroupsMetadata: { [groupId: string]: DefaultGroupMetadata } = {}
+    const persistedGroupIds: Array<{ groupId: string; projectId: string }> = []
+    for (const { groupId, projectId } of groupIds) {
+      const defaultGroupMetadata = decodeDefaultGroupId(groupId)
+      if (defaultGroupMetadata) {
+        if (defaultGroupMetadata.projectId === projectId) {
+          defaultGroupsMetadata[groupId] = defaultGroupMetadata
+        }
+      } else {
+        persistedGroupIds.push({ groupId, projectId })
+      }
+    }
+
+    let persistedGroups: SavedViewGroup[] = []
+    if (persistedGroupIds.length) {
+      const q = tables.savedViewGroups(deps.db).whereIn(
+        [SavedViewGroups.col.id, SavedViewGroups.col.projectId],
+        persistedGroupIds.map((g) => [g.groupId, g.projectId])
+      )
+      persistedGroups = await q
+    }
+
+    const groupsMap: { [groupId: string]: SavedViewGroup | undefined } = {}
+    for (const { groupId, projectId } of groupIds) {
+      const defaultGroupMetadata = defaultGroupsMetadata[groupId]
+      if (defaultGroupMetadata) {
+        groupsMap[groupId] = buildDefaultGroup({
+          resourceIds: defaultGroupMetadata.resourceIds,
+          projectId: defaultGroupMetadata.projectId
+        })
+      } else {
+        groupsMap[groupId] =
+          persistedGroups.find((g) => g.id === groupId && g.projectId === projectId) ||
+          undefined
+      }
+    }
+    return groupsMap
   }

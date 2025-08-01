@@ -2,7 +2,7 @@ import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelpe
 import type { Nullable } from '@speckle/shared'
 import { isObjectLike } from 'lodash-es'
 
-type DefaultGroupMetadata = {
+export type DefaultGroupMetadata = {
   resourceIds: string[]
   projectId: string
   name: 'Default Group'
@@ -18,12 +18,13 @@ export const buildDefaultGroupId = (params: {
     name: 'Default Group'
   }
   const str = JSON.stringify(payload)
-  return base64Encode(str)
+  return 'default-' + base64Encode(str)
 }
 
 export const decodeDefaultGroupId = (id: string): Nullable<DefaultGroupMetadata> => {
   try {
-    const json = base64Decode(id)
+    if (!id.startsWith('default-')) return null
+    const json = base64Decode(id.replace('default-', ''))
     const obj = JSON.parse(json)
     if (
       !isObjectLike(obj) ||

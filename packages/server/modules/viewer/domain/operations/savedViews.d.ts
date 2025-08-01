@@ -105,6 +105,15 @@ export type RecalculateGroupResourceIds = (params: {
   groupId: string
 }) => Promise<SavedViewGroup | undefined>
 
+/**
+ * Get saved groups by IDs and their project IDs
+ */
+export type GetSavedViewGroups = (params: {
+  groupIds: Array<{ groupId: string; projectId: string }>
+}) => Promise<{
+  [groupId: string]: SavedViewGroup | undefined
+}>
+
 // SERVICE OPERATIONS:
 
 export type CreateSavedViewParams = {

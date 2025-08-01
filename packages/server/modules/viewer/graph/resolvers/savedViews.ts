@@ -14,8 +14,9 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { NotFoundError } from '@/modules/shared/errors'
+import { LogicError, NotFoundError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { buildDefaultGroupId } from '@/modules/viewer/helpers/savedViews'
 import {
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
@@ -111,6 +112,23 @@ const resolvers: Resolvers = {
     },
     viewerState(parent) {
       return formatSerializedViewerState(parent.viewerState.state)
+    },
+    group: async (parent, _args, ctx) => {
+      const groupId =
+        parent.groupId ||
+        buildDefaultGroupId({
+          resourceIds: parent.resourceIds,
+          projectId: parent.projectId
+        })
+      const group = await ctx.loaders.savedViews.getSavedViewGroup.load({
+        groupId,
+        projectId: parent.projectId
+      })
+      if (!group) {
+        throw new LogicError('Unexpectedly could not resolve a view group')
+      }
+
+      return group
     }
   },
   SavedViewGroup: {

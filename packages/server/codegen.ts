@@ -190,7 +190,9 @@ const config: CodegenConfig = {
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           SavedView: '@/modules/viewer/helpers/graphTypes#SavedViewGraphQLReturn',
           SavedViewGroup:
-            '@/modules/viewer/helpers/graphTypes#SavedViewGroupGraphQLReturn'
+            '@/modules/viewer/helpers/graphTypes#SavedViewGroupGraphQLReturn',
+          PermissionCheckResult:
+            '@/modules/core/helpers/graphTypes#PermissionCheckResultGraphQLReturn'
         }
       }
     }
