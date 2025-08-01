@@ -329,8 +329,6 @@ export async function init() {
     compressionMiddlewareFactory({ isCompressionEnabled: isCompressionEnabled() })
   )
 
-  app.use(corsMiddlewareFactory())
-
   app.use(
     requestBodyParsingMiddlewareFactory({
       maximumRequestBodySizeMb: getMaximumRequestBodySizeMB()
@@ -347,6 +345,8 @@ export async function init() {
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init({ app, metricsRegister: prometheusClient.register })
+
+  app.use(corsMiddlewareFactory())
 
   // Initialize healthchecks
   const healthchecks = await healthchecksInitFactory()(app, true)

@@ -188,6 +188,12 @@ type Documents = {
     "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceSidebarAbout_Workspace\n    ...WorkspaceSidebarSecurity_Workspace\n    id\n    role\n    slug\n    domains {\n      id\n    }\n    plan {\n      name\n    }\n  }\n": typeof types.WorkspaceSidebar_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizard_Workspace on Workspace {\n    creationState {\n      completed\n      state\n    }\n    name\n    slug\n  }\n": typeof types.WorkspaceWizard_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": typeof types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
+    "\n  fragment ProjectAccSyncItem on AccSyncItem {\n    id\n    projectId\n    modelId\n    accRegion\n    accHubId\n    accProjectId\n    accRootProjectFolderUrn\n    accFileLineageUrn\n    accFileName\n    accFileExtension\n    accFileVersionIndex\n    updatedAt\n    status\n    author {\n      name\n      avatar\n    }\n  }\n": typeof types.ProjectAccSyncItemFragmentDoc,
+    "\n  mutation CreateAccSyncItem($input: CreateAccSyncItemInput!) {\n    accSyncItemMutations {\n      create(input: $input) {\n        id\n        accFileLineageUrn\n        status\n      }\n    }\n  }\n": typeof types.CreateAccSyncItemDocument,
+    "\n  mutation DeleteAccSyncItem($input: DeleteAccSyncItemInput!) {\n    accSyncItemMutations {\n      delete(input: $input)\n    }\n  }\n": typeof types.DeleteAccSyncItemDocument,
+    "\n  mutation UpdateAccSyncItem($input: UpdateAccSyncItemInput!) {\n    accSyncItemMutations {\n      update(input: $input) {\n        id\n        status\n      }\n    }\n  }\n": typeof types.UpdateAccSyncItemDocument,
+    "\n  query ProjectAccSyncItems($id: String!) {\n    project(id: $id) {\n      accSyncItems {\n        items {\n          ...ProjectAccSyncItem\n        }\n      }\n    }\n  }\n": typeof types.ProjectAccSyncItemsDocument,
+    "\n  subscription OnProjectAccSyncItemUpdated($id: String!, $itemUrns: [String!]) {\n    projectAccSyncItemsUpdated(id: $id, itemUrns: $itemUrns) {\n      type\n      accSyncItem {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n": typeof types.OnProjectAccSyncItemUpdatedDocument,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        email\n        verified\n        primary\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n      ...ProjectsAdd_User\n    }\n  }\n": typeof types.ActiveUserMainMetadataDocument,
     "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserProjectsToMoveDocument,
     "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n  }\n": typeof types.FullPermissionCheckResultFragmentDoc,
@@ -664,6 +670,12 @@ const documents: Documents = {
     "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceSidebarAbout_Workspace\n    ...WorkspaceSidebarSecurity_Workspace\n    id\n    role\n    slug\n    domains {\n      id\n    }\n    plan {\n      name\n    }\n  }\n": types.WorkspaceSidebar_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizard_Workspace on Workspace {\n    creationState {\n      completed\n      state\n    }\n    name\n    slug\n  }\n": types.WorkspaceWizard_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
+    "\n  fragment ProjectAccSyncItem on AccSyncItem {\n    id\n    projectId\n    modelId\n    accRegion\n    accHubId\n    accProjectId\n    accRootProjectFolderUrn\n    accFileLineageUrn\n    accFileName\n    accFileExtension\n    accFileVersionIndex\n    updatedAt\n    status\n    author {\n      name\n      avatar\n    }\n  }\n": types.ProjectAccSyncItemFragmentDoc,
+    "\n  mutation CreateAccSyncItem($input: CreateAccSyncItemInput!) {\n    accSyncItemMutations {\n      create(input: $input) {\n        id\n        accFileLineageUrn\n        status\n      }\n    }\n  }\n": types.CreateAccSyncItemDocument,
+    "\n  mutation DeleteAccSyncItem($input: DeleteAccSyncItemInput!) {\n    accSyncItemMutations {\n      delete(input: $input)\n    }\n  }\n": types.DeleteAccSyncItemDocument,
+    "\n  mutation UpdateAccSyncItem($input: UpdateAccSyncItemInput!) {\n    accSyncItemMutations {\n      update(input: $input) {\n        id\n        status\n      }\n    }\n  }\n": types.UpdateAccSyncItemDocument,
+    "\n  query ProjectAccSyncItems($id: String!) {\n    project(id: $id) {\n      accSyncItems {\n        items {\n          ...ProjectAccSyncItem\n        }\n      }\n    }\n  }\n": types.ProjectAccSyncItemsDocument,
+    "\n  subscription OnProjectAccSyncItemUpdated($id: String!, $itemUrns: [String!]) {\n    projectAccSyncItemsUpdated(id: $id, itemUrns: $itemUrns) {\n      type\n      accSyncItem {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n": types.OnProjectAccSyncItemUpdatedDocument,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        email\n        verified\n        primary\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n      ...ProjectsAdd_User\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserProjectsToMoveDocument,
     "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n  }\n": types.FullPermissionCheckResultFragmentDoc,
@@ -1676,6 +1688,30 @@ export function graphql(source: "\n  fragment WorkspaceWizard_Workspace on Works
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectAccSyncItem on AccSyncItem {\n    id\n    projectId\n    modelId\n    accRegion\n    accHubId\n    accProjectId\n    accRootProjectFolderUrn\n    accFileLineageUrn\n    accFileName\n    accFileExtension\n    accFileVersionIndex\n    updatedAt\n    status\n    author {\n      name\n      avatar\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectAccSyncItem on AccSyncItem {\n    id\n    projectId\n    modelId\n    accRegion\n    accHubId\n    accProjectId\n    accRootProjectFolderUrn\n    accFileLineageUrn\n    accFileName\n    accFileExtension\n    accFileVersionIndex\n    updatedAt\n    status\n    author {\n      name\n      avatar\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateAccSyncItem($input: CreateAccSyncItemInput!) {\n    accSyncItemMutations {\n      create(input: $input) {\n        id\n        accFileLineageUrn\n        status\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateAccSyncItem($input: CreateAccSyncItemInput!) {\n    accSyncItemMutations {\n      create(input: $input) {\n        id\n        accFileLineageUrn\n        status\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteAccSyncItem($input: DeleteAccSyncItemInput!) {\n    accSyncItemMutations {\n      delete(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteAccSyncItem($input: DeleteAccSyncItemInput!) {\n    accSyncItemMutations {\n      delete(input: $input)\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateAccSyncItem($input: UpdateAccSyncItemInput!) {\n    accSyncItemMutations {\n      update(input: $input) {\n        id\n        status\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateAccSyncItem($input: UpdateAccSyncItemInput!) {\n    accSyncItemMutations {\n      update(input: $input) {\n        id\n        status\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProjectAccSyncItems($id: String!) {\n    project(id: $id) {\n      accSyncItems {\n        items {\n          ...ProjectAccSyncItem\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectAccSyncItems($id: String!) {\n    project(id: $id) {\n      accSyncItems {\n        items {\n          ...ProjectAccSyncItem\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  subscription OnProjectAccSyncItemUpdated($id: String!, $itemUrns: [String!]) {\n    projectAccSyncItemsUpdated(id: $id, itemUrns: $itemUrns) {\n      type\n      accSyncItem {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnProjectAccSyncItemUpdated($id: String!, $itemUrns: [String!]) {\n    projectAccSyncItemsUpdated(id: $id, itemUrns: $itemUrns) {\n      type\n      accSyncItem {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
