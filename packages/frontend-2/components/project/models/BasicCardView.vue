@@ -9,6 +9,7 @@
       :project="project"
       :show-actions="showActions"
       :show-versions="showVersions"
+      :small-view="smallView"
       height="h-32 sm:h-64"
       :disable-default-link="disableDefaultLinks"
       :style="`z-index: ${items.length - i};`"

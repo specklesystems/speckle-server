@@ -1,17 +1,24 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`bg-foundation-2 shadow h-24 flex items-center justify-center flex-col rounded-md min-w-0 cursor-pointer
-    border-b-4 hover:bg-primary-muted
-    ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}`"
+    class="rounded-md p-2 flex items-center gap-3"
+    :class="[
+      isSelected ? '' : 'border-transparent',
+      objectCount > 0 ? 'cursor-pointer hover:bg-highlight-1' : ''
+    ]"
     @click="setSelection()"
     @keypress="keyboardClick(setSelection)"
   >
-    <div :class="`text-heading-xl -mb-1 font-medium truncate max-w-full ${color}`">
+    <div class="shrink-0 h-10 w-1 rounded-full" :class="color" />
+    <div class="flex flex-col">
+      <div class="text-body-xs font-medium capitalize">{{ name }}</div>
+      <div class="text-body-xs font-medium text-foreground-2 -mt-0.5">
+        {{ description }}
+      </div>
+    </div>
+    <div class="text-heading-lg font-medium ml-auto">
       {{ objectCount }}
     </div>
-    <div class="text-body-xs -mb-1">{{ name }}</div>
-    <div class="text-body-2xs text-foreground-2 px-1">{{ description }}</div>
   </div>
 </template>
 <script setup lang="ts">
@@ -33,14 +40,14 @@ const props = defineProps<{
 const color = computed(() => {
   switch (props.name) {
     case 'added':
-      return 'text-green-500'
+      return 'bg-green-500'
     case 'removed':
-      return 'text-rose-500'
+      return 'bg-rose-500'
     case 'modified':
-      return 'text-yellow-500'
+      return 'bg-yellow-500'
     case 'unchanged':
     default:
-      return 'text-neutral-500'
+      return 'bg-neutral-500'
   }
 })
 

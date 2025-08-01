@@ -1,67 +1,63 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`group relative block w-full space-y-2 rounded-md pb-2 text-left ${
-      clickable && !isLimited
-        ? 'hover:bg-primary-muted cursor-pointer'
-        : 'cursor-default'
-    }
-    ${isLoaded ? 'bg-highlight-3' : 'bg-highlight-1'}
-    `"
+    class="group relative w-full rounded-md pb-2 text-left pl-5 pt-2"
+    :class="
+      clickable && !isLimited ? 'hover:bg-highlight-1 cursor-pointer' : 'cursor-default'
+    "
     @click="handleClick"
     @keypress="keyboardClick(handleClick)"
   >
     <!-- Timeline left border -->
     <div
       v-if="showTimeline"
-      :class="`absolute top-3 ml-[2px] h-[99%] w-1 ${
-        isLoaded
-          ? 'border-primary border-r-4 border'
-          : 'border-dashed border-outline-3 border-r-2'
-      } group-hover:border-primary left-[7px] z-10`"
-    ></div>
-    <div
-      v-if="last"
-      class="bg-primary absolute -bottom-5 ml-2 h-2 w-2 rounded-sm"
-    ></div>
-    <div
-      v-if="lastLoaded && !last"
-      class="bg-primary absolute -bottom-6 z-10 ml-[4px] flex h-4 w-4 items-center justify-center rounded-full text-foreground-on-primary"
+      class="absolute top-5 left-4 z-10 ml-[2px] w-1 border-l border-outline-3"
+      :class="last ? 'h-0' : 'h-[99%]'"
     >
-      <ChevronDownIcon class="h-3 w-3" />
-    </div>
-    <div class="flex items-center gap-1 pl-1">
-      <div class="z-20 -ml-2">
-        <UserAvatar :user="author" />
+      <div
+        v-if="isLoaded"
+        class="absolute -top-2.5 -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
+      >
+        <IconCheck class="h-4 w-4 text-foreground" />
       </div>
+      <div
+        v-else
+        class="absolute top-0 -left-[2px] h-[3px] w-[3px] bg-foreground rounded-full"
+      />
+    </div>
+
+    <div class="flex items-center gap-1">
       <div
         v-show="showTimeline"
         v-tippy="createdAt.full"
-        class="bg-foundation-focus inline-block rounded-full px-2 text-body-xs font-medium shrink-0"
+        class="rounded-full px-2 text-body-xs font-medium ml-3"
       >
         <span>
           {{ isLatest ? 'Latest' : createdAt.relative }}
         </span>
       </div>
-      <FormButton
-        v-if="!isLoaded"
-        v-tippy="'Shows a summary of added, deleted and changed elements.'"
-        size="sm"
-        text
-        :disabled="isLimited"
-        :class="isLimited ? '!text-foreground-3 font-medium' : 'font-medium'"
-        @click.stop="handleViewChanges"
+      <CommonBadge v-if="isLoaded" rounded>Viewing</CommonBadge>
+      <LayoutMenu
+        v-model:open="showActionsMenu"
+        class="ml-auto mr-2"
+        :items="actionsItems"
+        :menu-position="HorizontalDirection.Left"
+        mount-menu-on-body
+        @click.stop.prevent
+        @chosen="onActionChosen"
       >
-        View changes
-      </FormButton>
-      <FormButton v-else size="sm" text class="cursor-not-allowed">
-        Currently viewing
-      </FormButton>
+        <button
+          class="opacity-0 group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-5 flex items-center justify-center shrink-0"
+          @click.stop="showActionsMenu = !showActionsMenu"
+        >
+          <IconThreeDots />
+        </button>
+      </LayoutMenu>
     </div>
     <!-- Main stuff -->
-    <div class="flex items-center space-x-1 pl-5">
+    <div class="flex items-center pl-5 gap-2 mt-2">
       <div
-        class="bg-foundation h-16 w-16 flex-shrink-0 rounded-md border border-outline-3"
+        class="bg-foundation h-12 w-12 flex-shrink-0 rounded-md border border-outline-3"
         :class="isLimited ? 'diagonal-stripes' : ''"
       >
         <div v-if="isLimited" class="flex items-center justify-center w-full h-full">
@@ -81,27 +77,28 @@
             variant="inline"
             :project="project"
           />
-          <div v-else class="truncate text-xs">
-            {{ version.message || 'no message' }}
+          <div v-else class="truncate pr-2">
+            <div v-if="author" class="text-body-2xs truncate">
+              {{ author.name }}
+            </div>
+            <div class="text-body-3xs text-foreground-2 truncate">
+              {{ version.message || 'no message' }}
+            </div>
           </div>
-        </div>
-        <div
-          v-if="!isLimited"
-          class="text-primary inline-block rounded-full pl-1 text-xs font-medium"
-        >
-          {{ version.sourceApplication }}
         </div>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
-import { keyboardClick } from '@speckle/ui-components'
+import { LockClosedIcon } from '@heroicons/vue/24/solid'
+import { CommonBadge, keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 dayjs.extend(localizedFormat)
@@ -115,6 +112,8 @@ const props = withDefaults(
     showTimeline?: boolean
     last: boolean
     lastLoaded: boolean
+    modelId?: string
+    totalVersions?: number
   }>(),
   {
     clickable: true,
@@ -128,6 +127,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'changeVersion', version: string): void
   (e: 'viewChanges', version: ViewerModelVersionCardItemFragment): void
+  (e: 'removeVersion', versionId: string): void
 }>()
 
 const mp = useMixpanel()
@@ -136,6 +136,8 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+
+const IconThreeDots = resolveComponent('IconThreeDots')
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
@@ -154,6 +156,46 @@ const createdAt = computed(() => {
 
 const author = computed(() => props.version.authorUser)
 
+const IconCheck = resolveComponent('IconCheck')
+const showActionsMenu = ref(false)
+
+const canDeleteVersion = computed(() => {
+  if (isLoaded.value) return false
+  if (props.totalVersions && props.totalVersions <= 1) return false
+  return true
+})
+
+const deleteDisabledReason = computed(() => {
+  if (isLoaded.value) {
+    return 'Cannot delete the currently viewed version'
+  }
+  if (props.totalVersions && props.totalVersions <= 1) {
+    return 'Cannot delete the last version'
+  }
+  return undefined
+})
+
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title: 'View changes',
+      id: 'view-changes',
+      disabled: isLoaded.value || isLimited.value,
+      disabledTooltip: isLoaded.value
+        ? 'Cannot compare current version with itself'
+        : isLimited.value
+        ? 'Version comparison unavailable'
+        : undefined
+    },
+    {
+      title: 'Remove version',
+      id: 'remove-version',
+      disabled: !canDeleteVersion.value,
+      disabledTooltip: deleteDisabledReason.value
+    }
+  ]
+])
+
 const handleClick = () => {
   if (isLimited.value) return
   if (props.clickable) emit('changeVersion', props.version.id)
@@ -170,5 +212,22 @@ const handleViewChanges = () => {
     name: 'diffs',
     action: 'enable'
   })
+}
+
+const onActionChosen = (params: { item: LayoutMenuItem }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case 'view-changes':
+      if (!isLoaded.value && !isLimited.value) {
+        handleViewChanges()
+      }
+      break
+    case 'remove-version':
+      if (canDeleteVersion.value) {
+        emit('removeVersion', props.version.id)
+      }
+      break
+  }
 }
 </script>

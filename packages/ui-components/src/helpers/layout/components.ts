@@ -31,6 +31,7 @@ export type LayoutMenuItem<I extends string = string> = {
   disabled?: boolean
   disabledTooltip?: string
   color?: 'danger' | 'info'
+  active?: boolean
 }
 
 export type LayoutDialogButton = {

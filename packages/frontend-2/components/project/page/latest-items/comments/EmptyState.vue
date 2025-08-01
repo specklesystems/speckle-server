@@ -1,27 +1,10 @@
 <template>
-  <ProjectEmptyState :small="small" title="No discussions, yet." :text="text">
-    <template #illustration>
-      <IllustrationEmptystateDiscussionTab />
-    </template>
-    <template #cta>
-      <div v-if="showButton" class="mt-3">
-        <FormButton :icon-left="PlusIcon" @click="() => $emit('new-discussion')">
-          New discussion
-        </FormButton>
-      </div>
-    </template>
-  </ProjectEmptyState>
+  <div
+    class="w-full flex justify-center items-center p-10 h-full gap-8 text-balance flex-col text-center"
+  >
+    <IllustrationEmptystateDiscussionTab />
+    <div>
+      <p class="text-foreground-2 text-heading-sm">No discussions, yet.</p>
+    </div>
+  </div>
 </template>
-<script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/solid'
-
-defineEmits<{
-  (e: 'new-discussion'): void
-}>()
-
-defineProps<{
-  small?: boolean
-  showButton?: boolean
-  text?: string
-}>()
-</script>
