@@ -25,7 +25,6 @@
             v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
           >
             <FormButton
-              size="sm"
               color="subtle"
               :icon-left="isHidden ? iconEyeClosed : iconEye"
               hide-text
@@ -40,7 +39,6 @@
             "
           >
             <FormButton
-              size="sm"
               color="subtle"
               :icon-left="isIsolated ? iconViewerUnisolate : iconViewerIsolate"
               hide-text
@@ -51,13 +49,12 @@
             v-model:open="showSubMenu"
             :menu-id="menuId"
             :items="actionsItems"
-            :custom-menu-items-classes="['!w-48']"
+            :custom-menu-items-classes="['!w-42']"
             @click.stop.prevent
             @chosen="onActionChosen"
           >
             <FormButton
               hide-text
-              size="sm"
               color="subtle"
               :icon-left="settingsIcon"
               @click="showSubMenu = !showSubMenu"
@@ -176,7 +173,10 @@ const isIsolated = computed(() => {
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
-      title: 'Open selection in new tab',
+      title:
+        allTargetIds.value.length > 1
+          ? 'Open objects in new tab'
+          : 'Open object in new tab',
       id: ActionTypes.OpenInNewTab
     }
   ]

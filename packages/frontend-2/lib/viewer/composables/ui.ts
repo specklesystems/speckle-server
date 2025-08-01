@@ -53,6 +53,10 @@ export function useSectionBoxUtilities() {
     }
   }
 
+  const closeSectionBox = () => {
+    visible.value = false
+  }
+
   const toggleSectionBox = () => {
     if (!isSectionBoxEnabled.value) {
       resolveSectionBoxFromSelection()
@@ -86,7 +90,8 @@ export function useSectionBoxUtilities() {
     isSectionBoxEdited,
     toggleSectionBox,
     resetSectionBox,
-    sectionBox
+    sectionBox,
+    closeSectionBox
   }
 }
 

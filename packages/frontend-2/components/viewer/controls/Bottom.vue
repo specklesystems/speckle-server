@@ -64,7 +64,7 @@ enum ActivePanel {
 }
 
 const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortcuts()
-const { toggleSectionBox, resetSectionBox } = useSectionBoxUtilities()
+const { toggleSectionBox, resetSectionBox, closeSectionBox } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
@@ -139,7 +139,7 @@ const toggleMeasurements = () => {
 
 const onActivePanelClose = () => {
   if (activePanel.value === ActivePanel.sectionBox) {
-    toggleSectionBox()
+    closeSectionBox()
   }
   if (activePanel.value === ActivePanel.measurements) {
     enableMeasurements(false)
@@ -170,6 +170,8 @@ onKeyStroke('Escape', () => {
   } else {
     if (activePanel.value === ActivePanel.measurements) {
       toggleMeasurements()
+    } else if (activePanel.value === ActivePanel.sectionBox) {
+      closeSectionBox()
     }
     activePanel.value = ActivePanel.none
   }

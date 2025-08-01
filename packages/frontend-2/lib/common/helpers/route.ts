@@ -21,6 +21,7 @@ export const docsPageUrl = 'https://docs.speckle.systems/'
 export const forumPageUrl = 'https://speckle.community/'
 export const guideBillingUrl = 'https://docs.speckle.systems/workspaces/billing'
 export const onboardingRoute = '/onboarding'
+export const viewerDocsRoute = 'https://docs.speckle.systems/3d-viewer/interface-nav'
 
 export const settingsUserRoutes = {
   profile: '/settings/user/profile',

@@ -57,7 +57,12 @@
         </ViewerButtonGroup>
 
         <div class="flex gap-1.5">
-          <FormButton size="sm" color="outline" @click="clearMeasurements">
+          <FormButton
+            v-if="hasActiveMeasurement"
+            size="sm"
+            color="outline"
+            @click="clearMeasurements"
+          >
             Delete all
           </FormButton>
           <button
@@ -86,11 +91,17 @@ interface MeasurementTypeOption {
   value: MeasurementType
 }
 
-const { measurementOptions, setMeasurementOptions, clearMeasurements } =
-  useMeasurementUtilities()
+const {
+  measurementOptions,
+  setMeasurementOptions,
+  clearMeasurements,
+  getActiveMeasurement
+} = useMeasurementUtilities()
 const { getTooltipProps } = useSmartTooltipDelay()
 
 const showSettings = ref(false)
+
+const hasActiveMeasurement = computed(() => getActiveMeasurement() !== null)
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   setMeasurementOptions({
