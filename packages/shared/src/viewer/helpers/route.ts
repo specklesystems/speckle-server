@@ -190,17 +190,19 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
     return this
   }
 
-  filter(callback: (resource: ViewerResource) => boolean): ViewerResource[]
   filter<Res extends ViewerResource>(
     callback: (resource: ViewerResource) => resource is Res
-  ) {
+  ): Res[]
+  filter(callback: (resource: ViewerResource) => boolean): ViewerResource[]
+  filter(callback: (resource: ViewerResource) => boolean) {
     return this.#resources.filter(callback)
   }
 
-  find(callback: (resource: ViewerResource) => boolean): ViewerResource | undefined
   find<Res extends ViewerResource>(
     callback: (resource: ViewerResource) => resource is Res
-  ) {
+  ): Res | undefined
+  find(callback: (resource: ViewerResource) => boolean): ViewerResource | undefined
+  find(callback: (resource: ViewerResource) => boolean) {
     return this.#resources.find(callback)
   }
   map<T>(callback: (resource: ViewerResource) => T): T[] {
