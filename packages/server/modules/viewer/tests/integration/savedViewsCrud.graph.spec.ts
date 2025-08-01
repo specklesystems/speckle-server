@@ -75,8 +75,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     overrides || {}
   )
 
-// TODO: Test authPolicy - workspace feature plan access etc.
-
 describe('Saved Views GraphQL CRUD', () => {
   let apollo: TestApolloServer
   let me: BasicTestUser
@@ -198,6 +196,93 @@ describe('Saved Views GraphQL CRUD', () => {
 
   if (FF_WORKSPACES_MODULE_ENABLED) {
     describe('creation', () => {
+      describe('canCreateSavedViewPolicy - forbidden error branches', () => {
+        it('should fail with ForbiddenError if user is not logged in', async () => {
+          const res = await createSavedView(
+            buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
+            { authUserId: null }
+          )
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError if user is not a project member', async () => {
+          const res = await createSavedView(
+            buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
+            { authUserId: guest.id }
+          )
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError if user is a member but lacks write access', async () => {
+          const newUser = await createTestUser(buildBasicTestUser({ name: 'new-user' }))
+          await addToStream(myProject, newUser, Roles.Stream.Reviewer)
+
+          const res = await createSavedView(
+            buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
+            { authUserId: newUser.id }
+          )
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError if workspace plan does not include SavedViews', async () => {
+          const res = await createSavedView(
+            buildCreateInput({
+              projectId: myLackingProject.id,
+              resourceIdString: 'abc'
+            })
+          )
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError to create a saved view group if user lacks access (free plan)', async () => {
+          const resourceIds = ViewerRoute.resourceBuilder().addModel(
+            myLackingProject.id
+          )
+          const resourceIdString = resourceIds.toString()
+
+          const res = await createSavedViewGroup({
+            input: {
+              projectId: myLackingProject.id,
+              resourceIdString,
+              groupName: 'Should Not Work'
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError to create a saved view if user lacks access (free plan)', async () => {
+          const resourceIds = ViewerRoute.resourceBuilder().addModel(
+            myLackingProject.id
+          )
+          const resourceIdString = resourceIds.toString()
+          const viewerState = fakeViewerState({
+            projectId: myLackingProject.id,
+            resources: {
+              request: {
+                resourceIdString
+              }
+            }
+          })
+
+          const res = await createSavedView(
+            buildCreateInput({
+              projectId: myLackingProject.id,
+              resourceIdString,
+              viewerState
+            })
+          )
+
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+      })
+
       it('should successfully create a saved view group', async () => {
         const resourceIds = model1ResourceIds()
         const resourceIdString = resourceIds.toString()
