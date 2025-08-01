@@ -1,6 +1,6 @@
 {
   "mochaExplorer.env": { "NODE_ENV": "test" },
-  "mochaExplorer.nodeArgv": ["--require", "ts-node/register"],
+  "mochaExplorer.nodeArgv": ["--import", "tsx"],
   "javascript.suggest.autoImports": true,
   "typescript.suggest.autoImports": true,
   "typescript.preferences.importModuleSpecifier": "non-relative",

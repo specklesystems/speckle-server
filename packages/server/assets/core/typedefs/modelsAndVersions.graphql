@@ -200,11 +200,12 @@ input MarkReceivedVersionInput {
 }
 
 type VersionMutations {
-  moveToModel(input: MoveVersionsInput!): Model!
-  delete(input: DeleteVersionsInput!): Boolean!
-  update(input: UpdateVersionInput!): Version!
-  create(input: CreateVersionInput!): Version!
+  moveToModel(input: MoveVersionsInput!): Model! @hasScope(scope: "streams:write")
+  delete(input: DeleteVersionsInput!): Boolean! @hasScope(scope: "streams:write")
+  update(input: UpdateVersionInput!): Version! @hasScope(scope: "streams:write")
+  create(input: CreateVersionInput!): Version! @hasScope(scope: "streams:write")
   markReceived(input: MarkReceivedVersionInput!): Boolean!
+    @hasScope(scope: "streams:read")
 }
 
 extend type Mutation {
@@ -212,9 +213,7 @@ extend type Mutation {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 
-  versionMutations: VersionMutations!
-    @hasServerRole(role: SERVER_GUEST)
-    @hasScope(scope: "streams:write")
+  versionMutations: VersionMutations! @hasServerRole(role: SERVER_GUEST)
 }
 
 type ModelsTreeItem {

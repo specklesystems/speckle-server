@@ -195,7 +195,7 @@ export class SpeckleLoader extends Loader {
   }
 
   private progressListen(): void {
-    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) !== 'true') {
+    if (getFeatureFlag(ObjectLoader2Flags.DEBUG, false) !== 'true') {
       return
     }
 

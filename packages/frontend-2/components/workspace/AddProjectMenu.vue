@@ -32,6 +32,7 @@
     <ProjectsAdd
       v-model:open="showNewProjectDialog"
       :workspace="workspace"
+      :workspace-slug="workspaceSlug"
       location="add-project-menu"
     />
     <WorkspaceMoveProject
