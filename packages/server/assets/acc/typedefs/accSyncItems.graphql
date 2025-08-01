@@ -39,13 +39,13 @@ enum AccSyncItemStatus {
 }
 
 input DeleteAccSyncItemInput {
-  projectId: ID!
   id: ID!
+  projectId: String!
 }
 
 input UpdateAccSyncItemInput {
-  projectId: ID!
   id: ID!
+  projectId: String!
   status: AccSyncItemStatus!
 }
 

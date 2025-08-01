@@ -1081,7 +1081,7 @@ export type CurrencyBasedPrices = {
 
 export type DeleteAccSyncItemInput = {
   id: Scalars['ID']['input'];
-  projectId: Scalars['ID']['input'];
+  projectId: Scalars['String']['input'];
 };
 
 export type DeleteModelInput = {
@@ -4144,7 +4144,7 @@ export type TriggeredAutomationsStatus = {
 
 export type UpdateAccSyncItemInput = {
   id: Scalars['ID']['input'];
-  projectId: Scalars['ID']['input'];
+  projectId: Scalars['String']['input'];
   status: AccSyncItemStatus;
 };
 

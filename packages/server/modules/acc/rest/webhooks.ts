@@ -1,5 +1,5 @@
 import {
-  getAccSyncItemByUrnFactory,
+  queryAllAccSyncItemsFactory,
   upsertAccSyncItemFactory
 } from '@/modules/acc/repositories/accSyncItems'
 import { onVersionAddedFactory } from '@/modules/acc/services/webhooks'
@@ -25,7 +25,7 @@ export const accWebhooks = (app: Express) => {
           .parse(req.body?.payload)
 
         const onVersionAdded = onVersionAddedFactory({
-          getAccSyncItemByUrn: getAccSyncItemByUrnFactory({ db }),
+          queryAllAccSyncItems: queryAllAccSyncItemsFactory({ db }),
           upsertAccSyncItem: upsertAccSyncItemFactory({ db })
         })
 

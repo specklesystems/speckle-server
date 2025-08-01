@@ -1,5 +1,5 @@
 import {
-  queryAllPendingAccSyncItemsFactory,
+  queryAllAccSyncItemsFactory,
   updateAccSyncItemStatusFactory
 } from '@/modules/acc/repositories/accSyncItems'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
@@ -22,17 +22,19 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import { TIME_MS } from '@speckle/shared'
-import type { AccRegion } from '@/modules/acc/domain/constants'
+import { AccSyncItemStatuses, type AccRegion } from '@/modules/acc/domain/constants'
 import { triggerSyncItemAutomationFactory } from '@/modules/acc/services/automate'
 
-const queryAllPendingAccSyncItems = queryAllPendingAccSyncItemsFactory({ db })
+const queryAllAccSyncItems = queryAllAccSyncItemsFactory({ db })
 
 export const schedulePendingSyncItemsCheck = (deps: {
   scheduleExecution: ScheduleExecution
 }) => {
   const callback = async (_now: Date, { logger }: { logger: Logger }) => {
     const tokenData = await getToken()
-    for await (const items of queryAllPendingAccSyncItems()) {
+    for await (const items of queryAllAccSyncItems({
+      filter: { status: AccSyncItemStatuses.pending }
+    })) {
       for (const syncItem of items) {
         const manifest = await getManifestByUrn(
           {

@@ -8,10 +8,6 @@ export type UpdateAccSyncItemStatus = (args: {
   status: AccSyncItemStatus
 }) => Promise<AccSyncItem | null>
 
-export type GetAccSyncItemByUrn = (args: {
-  lineageUrn: string
-}) => Promise<AccSyncItem | null>
-
 export type GetAccSyncItemById = (args: { id: string }) => Promise<AccSyncItem | null>
 
 export type ListAccSyncItems = (args: {
@@ -24,8 +20,12 @@ export type ListAccSyncItems = (args: {
 
 export type CountAccSyncItems = (args: { projectId: string }) => Promise<number>
 
-export type DeleteAccSyncItemByUrn = (args: { lineageUrn: string }) => Promise<number>
-
 export type DeleteAccSyncItemById = (args: { id: string }) => Promise<number>
 
-export type QueryAllAccSyncItems = () => AsyncGenerator<AccSyncItem[], void, unknown>
+export type QueryAllAccSyncItems = (args: {
+  batchSize?: number
+  filter?: {
+    status?: AccSyncItemStatus
+    lineageUrn?: string
+  }
+}) => AsyncGenerator<AccSyncItem[], void, unknown>

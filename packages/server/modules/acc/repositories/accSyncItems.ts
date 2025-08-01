@@ -2,9 +2,7 @@ import { AccSyncItems } from '@/modules/acc/dbSchema'
 import type {
   CountAccSyncItems,
   DeleteAccSyncItemById,
-  DeleteAccSyncItemByUrn,
   GetAccSyncItemById,
-  GetAccSyncItemByUrn,
   ListAccSyncItems,
   QueryAllAccSyncItems,
   UpdateAccSyncItemStatus,
@@ -14,7 +12,6 @@ import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import type { AccSyncItem } from '@/modules/acc/domain/types'
 import type { Knex } from 'knex'
 import { without } from 'lodash-es'
-import { AccSyncItemStatuses } from '@/modules/acc/domain/constants'
 
 const tables = {
   accSyncItems: (db: Knex) => db<AccSyncItem>(AccSyncItems.name)
@@ -28,18 +25,6 @@ export const getAccSyncItemByIdFactory =
         .accSyncItems(deps.db)
         .select('*')
         .where(AccSyncItems.col.id, id)
-        .first()) ?? null
-    )
-  }
-
-export const getAccSyncItemByUrnFactory =
-  (deps: { db: Knex }): GetAccSyncItemByUrn =>
-  async ({ lineageUrn }) => {
-    return (
-      (await tables
-        .accSyncItems(deps.db)
-        .select('*')
-        .where(AccSyncItems.col.accFileLineageUrn, lineageUrn)
         .first()) ?? null
     )
   }
@@ -73,15 +58,6 @@ export const updateAccSyncItemStatusFactory =
           .returning('*')
       ).at(0) ?? null
     )
-  }
-
-export const deleteAccSyncItemByUrnFactory =
-  (deps: { db: Knex }): DeleteAccSyncItemByUrn =>
-  async ({ lineageUrn }) => {
-    return await tables
-      .accSyncItems(deps.db)
-      .where(AccSyncItems.col.accFileLineageUrn, lineageUrn)
-      .delete()
   }
 
 export const deleteAccSyncItemByIdFactory =
@@ -121,13 +97,23 @@ export const countAccSyncItemsFactory =
     return Number.parseInt(count as string)
   }
 
-export const queryAllPendingAccSyncItemsFactory =
+export const queryAllAccSyncItemsFactory =
   (deps: { db: Knex }): QueryAllAccSyncItems =>
-  () => {
-    const selectItems = tables
+  ({ batchSize = 10, filter = {} }) => {
+    const { status, lineageUrn } = filter
+
+    const query = tables
       .accSyncItems(deps.db)
       .select<AccSyncItem[]>('*')
-      .where(AccSyncItems.col.status, AccSyncItemStatuses.pending)
       .orderBy(AccSyncItems.col.createdAt)
-    return executeBatchedSelect(selectItems, { batchSize: 10 })
+
+    if (filter.status) {
+      query.where(AccSyncItems.withoutTablePrefix.col.status, status)
+    }
+
+    if (filter.lineageUrn) {
+      query.where(AccSyncItems.withoutTablePrefix.col.accFileLineageUrn, lineageUrn)
+    }
+
+    return executeBatchedSelect(query, { batchSize })
   }

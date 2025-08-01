@@ -191,7 +191,7 @@ export const getPaginatedAccSyncItemsFactory =
   }
 
 export type UpdateAccSyncItem = (params: {
-  syncItem: Pick<AccSyncItem, 'status' | 'id'>
+  syncItem: Partial<AccSyncItem> & Pick<AccSyncItem, 'id'>
 }) => Promise<AccSyncItem>
 
 export const updateAccSyncItemFactory =
