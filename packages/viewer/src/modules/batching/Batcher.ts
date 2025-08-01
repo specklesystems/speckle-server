@@ -387,7 +387,9 @@ export default class Batcher {
     } else if (geometryType === GeometryType.POINT_CLOUD) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.TEXT) {
-      matRef = renderViews[0].renderData.displayStyle
+      matRef = renderViews[0].renderData.colorMaterial
+        ? renderViews[0].renderData.colorMaterial
+        : renderViews[0].renderData.displayStyle
     }
 
     const material = this.materials.getMaterial(materialHash, matRef, geometryType)
