@@ -45,7 +45,7 @@ export class CacheWriter implements Queue<Item> {
 
   async writeAll(items: Item[]): Promise<void> {
     const start = performance.now()
-    await this.#database.saveBatch({ batch: items })
+    await this.#database.putAll(items)
     this.#logger(
       `writeBatch: wrote ${items.length}, time ${
         performance.now() - start
