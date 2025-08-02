@@ -220,6 +220,10 @@ export default defineNuxtConfig({
         to: '/workspaces/actions/create',
         statusCode: 301
       }
+    },
+    // CSR only viewer, we cant preload much because of the url hash state which is CSR only
+    '/projects/:id/models/:modelId': {
+      ssr: false
     }
   },
 

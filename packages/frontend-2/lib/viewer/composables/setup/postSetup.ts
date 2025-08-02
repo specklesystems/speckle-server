@@ -929,6 +929,8 @@ const useViewerSavedViewSetup = () => {
   const applyState = useApplySerializedState()
   const { serializedStateId } = useViewerRealtimeActivityTracker()
 
+  // Saved View ID will be unset, once the user does anything to the viewer that
+  // changes it from the saved view
   const savedViewStateId = ref<string>()
 
   const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
@@ -937,16 +939,7 @@ const useViewerSavedViewSetup = () => {
     await resourceIdString.update(resolvedResourceIdString.value)
     await applyState(state, StateApplyMode.SavedView)
     savedViewStateId.value = serializedStateId.value
-
-    // // Reset active saved view right after
-    // await urlHashSavedViewId.update(null)
-    // savedViewId.value = null
   }
-
-  /**
-   * TODO: Better tracking - just track user activity, and once it changes from view, break ID
-   * (then id can stay in url until action)
-   */
 
   // Apply saved view state on initial load
   useOnViewerLoadComplete(async ({ isInitial }) => {
