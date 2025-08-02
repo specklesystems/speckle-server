@@ -25,7 +25,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   const client = useApolloClientFromNuxt()
 
-  // if same path and query, lets skip refetch - its likely a viewer hash update
   const isInPlaceNavigation = checkIfIsInPlaceNavigation(to, from)
 
   // Fetch required data
