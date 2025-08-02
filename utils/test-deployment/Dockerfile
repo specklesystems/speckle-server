@@ -1,4 +1,4 @@
-FROM debian:12-slim@sha256:67f3931ad8cb1967beec602d8c0506af1e37e8d73c2a0b38b181ec5d8560d395 AS build-stage
+FROM debian:12-slim@sha256:2424c1850714a4d94666ec928e24d86de958646737b1d113f5b2207be44d37d8 AS build-stage
 WORKDIR /venv
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install \
@@ -9,7 +9,7 @@ RUN apt-get update && \
 COPY utils/test-deployment/requirements.txt /requirements.txt
 RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirements.txt
 
-FROM gcr.io/distroless/python3-debian12:nonroot@sha256:14c62b8925d3bb30319de2f346bde203fe18103a68898284a62db9d4aa54c794 AS production-stage
+FROM gcr.io/distroless/python3-debian12:nonroot@sha256:f0705bdc0d76976fc0a7a1995a4135eb9a3358d021f960dfe1a80bd3a4eade82 AS production-stage
 
 COPY --from=build-stage /venv /venv
 COPY utils/test-deployment /app
