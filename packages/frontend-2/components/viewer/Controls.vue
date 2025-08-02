@@ -446,8 +446,8 @@ registerShortcuts({
   ToggleDiscussions: () => toggleActivePanel('discussions'),
   ToggleMeasurements: () => toggleMeasurements(),
   ToggleProjection: () => trackAndtoggleProjection(),
-  ToggleSectionBox: () => isSavedViewsEnabled && toggleSectionBox(),
-  ToggleSavedViews: () => toggleActivePanel('savedViews'),
+  ToggleSectionBox: () => toggleSectionBox(),
+  ToggleSavedViews: () => isSavedViewsEnabled && toggleActivePanel('savedViews'),
   ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection()
 })
 

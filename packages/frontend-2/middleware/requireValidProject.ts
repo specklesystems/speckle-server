@@ -29,8 +29,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   // if same path and query, lets skip refetch - its likely a viewer hash update
-  const isSamePathAndQuery =
-    to.path + JSON.stringify(to.query) === from.path + JSON.stringify(from.query)
+  const isInPlaceNavigation = checkIfIsInPlaceNavigation(to, from)
 
   const { data, errors } = await client
     .query({
@@ -39,7 +38,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       context: {
         skipLoggingErrors: true
       },
-      fetchPolicy: isSamePathAndQuery ? 'cache-first' : 'network-only'
+      fetchPolicy: isInPlaceNavigation ? 'cache-first' : 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
 
@@ -83,7 +82,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
   }
 
-  if (isLoggedIn.value && isWorkspacesEnabled.value && !isSamePathAndQuery) {
+  if (isLoggedIn.value && isWorkspacesEnabled.value && !isInPlaceNavigation) {
     await setActiveWorkspace({ id: data?.project.workspaceId })
   }
 })

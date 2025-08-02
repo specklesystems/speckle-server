@@ -26,21 +26,20 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const client = useApolloClientFromNuxt()
 
   // if same path and query, lets skip refetch - its likely a viewer hash update
-  const isSamePathAndQuery =
-    to.path + JSON.stringify(to.query) === from.path + JSON.stringify(from.query)
+  const isInPlaceNavigation = checkIfIsInPlaceNavigation(to, from)
 
   // Fetch required data
   const [{ data: serverInfoData }, { data: userData }] = await Promise.all([
     client
       .query({
         query: mainServerInfoDataQuery,
-        fetchPolicy: isSamePathAndQuery ? 'cache-first' : undefined
+        fetchPolicy: isInPlaceNavigation ? 'cache-first' : undefined
       })
       .catch(convertThrowIntoFetchResult),
     client
       .query({
         query: activeUserQuery,
-        fetchPolicy: isSamePathAndQuery ? 'cache-first' : undefined
+        fetchPolicy: isInPlaceNavigation ? 'cache-first' : undefined
       })
       .catch(convertThrowIntoFetchResult)
   ])

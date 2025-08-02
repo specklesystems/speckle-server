@@ -48,9 +48,14 @@ const props = defineProps<{
   view: ViewerSavedViewsPanelView_SavedViewFragment
 }>()
 
-const { savedViewId } = useInjectedViewerState()
+const {
+  savedViewId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  urlHashState: { savedViewId: urlSavedViewId }
+} = useInjectedViewerState()
 
 const apply = async () => {
   savedViewId.value = props.view.id
+  // await urlSavedViewId.update(props.view.id)
 }
 </script>

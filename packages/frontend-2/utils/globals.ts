@@ -11,6 +11,7 @@ import {
   ROOT_QUERY,
   ROOT_SUBSCRIPTION
 } from '~/lib/common/helpers/graphql'
+import { checkIfIsInPlaceNavigation } from '~/lib/common/helpers/navigation'
 
 /**
  * Debugging helper to ensure variables are available in debugging scope
@@ -24,7 +25,6 @@ export const getRouteDefinition = (route?: RouteLocationNormalized) => {
   const matchedPath = route ? route.matched[route.matched.length - 1]?.path : undefined
   return matchedPath || '/404'
 }
-
 export {
   ToastNotificationType,
   wrapRefWithTracking,
@@ -33,6 +33,7 @@ export {
   getFirstGqlErrorMessage,
   modifyObjectField,
   getCacheId,
+  checkIfIsInPlaceNavigation,
   ROOT_QUERY,
   ROOT_MUTATION,
   ROOT_SUBSCRIPTION
