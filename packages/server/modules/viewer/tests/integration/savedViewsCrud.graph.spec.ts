@@ -1,14 +1,17 @@
 import type {
+  BasicSavedViewFragment,
   BasicSavedViewGroupFragment,
   CreateSavedViewGroupMutationVariables,
   CreateSavedViewMutationVariables,
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
+  GetProjectSavedViewQueryVariables,
   GetProjectUngroupedViewGroupQueryVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
   CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
+  GetProjectSavedViewDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
   GetProjectUngroupedViewGroupDocument
@@ -17,7 +20,7 @@ import {
   buildBasicTestModel,
   buildBasicTestProject
 } from '@/modules/core/tests/helpers/creation'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { ForbiddenError, NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
@@ -135,6 +138,11 @@ describe('Saved Views GraphQL CRUD', () => {
     input: GetProjectSavedViewGroupQueryVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(GetProjectSavedViewGroupDocument, input, options)
+
+  const getView = (
+    input: GetProjectSavedViewQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectSavedViewDocument, input, options)
 
   const getProjectUngroupedViewGroup = (
     input: GetProjectUngroupedViewGroupQueryVariables,
@@ -752,6 +760,16 @@ describe('Saved Views GraphQL CRUD', () => {
         )
       })
 
+      it('should get NotFoundError if trying to get nonexistant group', async () => {
+        const res = await getGroup({
+          groupId: 'zabababababababa',
+          projectId: readTestProject.id
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
+        expect(res.data?.project.savedViewGroup).to.not.be.ok
+      })
+
       it('returns no groups, not even default one, if no views exist', async () => {
         const res = await getProjectViewGroups({
           projectId: readTestProject.id,
@@ -944,6 +962,8 @@ describe('Saved Views GraphQL CRUD', () => {
 
       describe('views', () => {
         let myFirstGroup: BasicSavedViewGroupFragment
+        const myFirstGroupViews: BasicSavedViewFragment[] = []
+
         const VIEW_COUNT = GROUP_COUNT
         const OTHER_USER_VIEW_COUNT = VIEW_COUNT / 2
         const OTHER_USER_PRIVATE_VIEW_COUNT = OTHER_USER_VIEW_COUNT / 2
@@ -985,7 +1005,7 @@ describe('Saved Views GraphQL CRUD', () => {
             const shouldBePrivate = shouldBeOtherUser && i % 4 === 0
             const shouldAddSearchString = !shouldBePrivate && i % 3 === 0
 
-            await createSavedView(
+            const res = await createSavedView(
               buildCreateInput({
                 resourceIdString: ViewerRoute.resourceBuilder()
                   .addModel(modelId)
@@ -1006,7 +1026,40 @@ describe('Saved Views GraphQL CRUD', () => {
                 authUserId: shouldBeOtherUser ? otherReader.id : me.id
               }
             )
+            const view = res.data?.projectMutations.savedViewMutations.createView
+            myFirstGroupViews.push(view!)
           }
+        })
+
+        it('should successfully read specific view', async () => {
+          const view = myFirstGroupViews[0]
+          const res = await getView(
+            {
+              projectId: readTestProject.id,
+              viewId: view.id
+            },
+            { assertNoErrors: true }
+          )
+
+          const data = res.data?.project.savedView
+          expect(data).to.be.ok
+          expect(data!.id).to.equal(view.id)
+          expect(data!.name).to.equal(view.name)
+          expect(data!.description).to.equal(view.description)
+          expect(data!.author?.id).to.equal(view.author?.id)
+          expect(data!.groupId).to.equal(view.groupId)
+          expect(data!.createdAt.toISOString()).to.equal(view.createdAt.toISOString())
+          expect(data!.group.id).to.equal(myFirstGroup.id)
+        })
+
+        it('should get NotFoundError if trying to get nonexistant view', async () => {
+          const res = await getView({
+            projectId: readTestProject.id,
+            viewId: 'zabababababababa'
+          })
+
+          expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
+          expect(res.data?.project.savedView).to.not.be.ok
         })
 
         it('should successfully read a group with its views', async () => {

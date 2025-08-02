@@ -9,6 +9,11 @@ const basicSavedViewFragment = gql`
       id
     }
     groupId
+    group {
+      id
+      title
+      isUngroupedViewsGroup
+    }
     createdAt
     updatedAt
     resourceIdString
@@ -116,4 +121,15 @@ export const getProjectUngroupedViewGroupQuery = gql`
       }
     }
   }
+`
+
+export const getProjectSavedViewQuery = gql`
+  query GetProjectSavedView($projectId: String!, $viewId: ID!) {
+    project(id: $projectId) {
+      savedView(id: $viewId) {
+        ...BasicSavedView
+      }
+    }
+  }
+  ${basicSavedViewFragment}
 `
