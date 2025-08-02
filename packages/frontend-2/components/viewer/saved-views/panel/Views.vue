@@ -28,13 +28,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType } from '~/lib/viewer/helpers/savedViews'
 
-/**
- * LOADING MECHANISM:
- * - Instead of adding to main resources query, lets load it separately only when panel is opened
- * - The actual core necessary data for view to actually load can be added to main query
- * - Also group views could also load separately only upon open. Or load small 1st page and load more on open
- */
-
 graphql(`
   fragment ViewerSavedViewsPanelViews_Project on Project {
     id
@@ -55,6 +48,7 @@ const paginableGroupsQuery = graphql(`
     $savedViewGroupsInput: SavedViewGroupsInput!
   ) {
     project(id: $projectId) {
+      id
       ...ViewerSavedViewsPanelViews_Project
     }
   }

@@ -252,15 +252,6 @@ export function useApplySerializedState() {
         })
     }
 
-    const selectedObjectIds = Object.keys(filters.selectedObjectApplicationIds ?? {})
-    if (mode === StateApplyMode.Spotlight) {
-      highlightedObjectIds.value = selectedObjectIds
-    } else {
-      if (selectedObjectIds.length || mode === StateApplyMode.SavedView) {
-        setSelectionFromObjectIds(selectedObjectIds)
-      }
-    }
-
     // Handle resource string updates
     if (
       [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
@@ -293,6 +284,15 @@ export function useApplySerializedState() {
       await urlHashState.focusedThreadId.update(
         state.ui?.threads?.openThread?.threadId || null
       )
+    }
+
+    const selectedObjectIds = Object.keys(filters.selectedObjectApplicationIds ?? {})
+    if (mode === StateApplyMode.Spotlight) {
+      highlightedObjectIds.value = selectedObjectIds
+    } else {
+      if (selectedObjectIds.length || mode === StateApplyMode.SavedView) {
+        setSelectionFromObjectIds(selectedObjectIds)
+      }
     }
 
     const command = state.ui?.diff?.command
