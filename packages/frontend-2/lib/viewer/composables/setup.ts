@@ -926,8 +926,12 @@ function setupResponseResourceData(
     logger.error(err)
   })
 
-  const savedView = computed(
-    () => viewerActiveSavedViewResult.value?.project?.savedView
+  // Shows only the one matching the savedViewId. If the query is still loading/stale, it will return undefined
+  const savedView = computed(() =>
+    savedViewId.value &&
+    viewerActiveSavedViewResult.value?.project?.savedView.id === savedViewId.value
+      ? viewerActiveSavedViewResult.value?.project?.savedView
+      : undefined
   )
 
   onServerPrefetch(async () => {

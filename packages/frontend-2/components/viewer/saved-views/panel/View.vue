@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="flex gap-2 p-2 w-full hover:bg-foundation-2 rounded">
+  <div class="flex gap-2 p-2 w-full hover:bg-foundation-2 rounded" :view-id="view.id">
     <img
       v-keyboard-clickable
       :src="view.screenshot"

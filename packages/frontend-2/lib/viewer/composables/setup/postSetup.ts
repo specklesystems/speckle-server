@@ -62,6 +62,7 @@ import {
   StateApplyMode,
   useApplySerializedState
 } from '~/lib/viewer/composables/serialization'
+import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -926,16 +927,28 @@ const useViewerSavedViewSetup = () => {
     urlHashState: { savedViewId: urlHashSavedViewId }
   } = useInjectedViewerState()
   const applyState = useApplySerializedState()
+  const { serializedStateId } = useViewerRealtimeActivityTracker()
+
+  const savedViewStateId = ref<string>()
 
   const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
 
   const apply = async (state: SerializedViewerState) => {
     await resourceIdString.update(resolvedResourceIdString.value)
     await applyState(state, StateApplyMode.SavedView)
-    await urlHashSavedViewId.update(null) // will updated savedViewId downstream too
+    savedViewStateId.value = serializedStateId.value
+
+    // // Reset active saved view right after
+    // await urlHashSavedViewId.update(null)
+    // savedViewId.value = null
   }
 
-  // Apply saved view state
+  /**
+   * TODO: Better tracking - just track user activity, and once it changes from view, break ID
+   * (then id can stay in url until action)
+   */
+
+  // Apply saved view state on initial load
   useOnViewerLoadComplete(async ({ isInitial }) => {
     const state = validState(savedView.value?.viewerState)
 
@@ -944,6 +957,7 @@ const useViewerSavedViewSetup = () => {
     }
   })
 
+  // Saved view changed, apply
   watch(savedView, (newVal, oldVal) => {
     if (!newVal || newVal.id === oldVal?.id) return
 
@@ -954,13 +968,29 @@ const useViewerSavedViewSetup = () => {
     apply(state)
   })
 
+  // If the URL hash saved view ID has changed, update the saved view ID
   watch(
     urlHashSavedViewId,
     async (newVal, oldVal) => {
       if (newVal === oldVal) return
 
-      // If the URL hash saved view ID has changed, update the saved view ID
       savedViewId.value = newVal
+    },
+    { immediate: true }
+  )
+
+  // Did state change after applying saved view? Undo view
+  watch(
+    serializedStateId,
+    (newVal, oldVal) => {
+      if (newVal === oldVal) return
+
+      // If the saved view state ID is different from the current serialized state ID, reset the saved view
+      if (savedViewStateId.value && newVal !== savedViewStateId.value) {
+        savedViewId.value = null
+        void urlHashSavedViewId.update(null)
+        savedViewStateId.value = undefined
+      }
     },
     { immediate: true }
   )

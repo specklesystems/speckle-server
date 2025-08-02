@@ -14,6 +14,7 @@ import { CameraController, ViewMode, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import type { PartialDeep } from 'type-fest'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -168,10 +169,12 @@ export function useApplySerializedState() {
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
   const logger = useLogger()
+  const { update } = useViewerRealtimeActivityTracker()
 
   return async (state: PartialDeep<SerializedViewerState>, mode: StateApplyMode) => {
     if (mode === StateApplyMode.Reset) {
       resetState()
+      update() // Trigger activity update
       return
     }
 
@@ -325,5 +328,8 @@ export function useApplySerializedState() {
       ...lightConfig.value,
       ...(state.ui?.lightConfig || {})
     }
+
+    // Trigger activity update
+    update()
   }
 }
