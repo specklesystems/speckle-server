@@ -220,6 +220,21 @@ function createCache(): InMemoryCache {
           },
           permissions: {
             merge: mergeAsObjectsFunction
+          },
+          savedViewGroups: {
+            keyArgs: ['input', ['limit', 'search', 'onlyAuthored', 'resourceIdString']],
+            merge: buildAbstractCollectionMergeFunction('SavedViewGroupCollection')
+          }
+        }
+      },
+      SavedViewGroup: {
+        fields: {
+          views: {
+            keyArgs: [
+              'input',
+              ['limit', 'search', 'sortBy', 'sortDirection', 'onlyAuthored']
+            ],
+            merge: buildAbstractCollectionMergeFunction('SavedViewCollection')
           }
         }
       },
@@ -298,6 +313,9 @@ function createCache(): InMemoryCache {
         merge: true
       },
       ServerInfo: {
+        merge: true
+      },
+      ServerConfiguration: {
         merge: true
       },
       CommentThreadActivityMessage: {

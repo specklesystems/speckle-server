@@ -1,11 +1,13 @@
 import { uniq, uniqBy } from '#lodash'
 
-export enum ViewerResourceType {
-  Model = 'Model',
-  Object = 'Object',
-  ModelFolder = 'ModelFolder',
-  AllModels = 'all-models'
+export const ViewerResourceType = <const>{
+  Model: 'Model',
+  Object: 'Object',
+  ModelFolder: 'ModelFolder',
+  AllModels: 'all-models'
 }
+export type ViewerResourceType =
+  (typeof ViewerResourceType)[keyof typeof ViewerResourceType]
 
 export interface ViewerResource {
   type: ViewerResourceType
@@ -79,22 +81,33 @@ export class ViewerModelFolderResource implements ViewerResource {
   }
 }
 
+export const parseResourceFromString = (resourceId: string): ViewerResource => {
+  if (resourceId === 'all') {
+    return new ViewerAllModelsResource()
+  } else if (resourceId.includes('@')) {
+    const [modelId, versionId] = resourceId.split('@')
+    return new ViewerVersionResource(modelId, versionId)
+  } else if (resourceId.startsWith('$')) {
+    return new ViewerModelFolderResource(resourceId.substring(1))
+  } else if (resourceId.length === 32) {
+    return new ViewerObjectResource(resourceId)
+  } else {
+    return new ViewerModelResource(resourceId)
+  }
+}
+
 export function parseUrlParameters(resourceGetParam: string) {
   if (!resourceGetParam?.length) return []
-  const parts = resourceGetParam.toLowerCase().split(',').sort()
+  const parts = resourceGetParam
+    .toLowerCase()
+    .split(',')
+    .filter((i) => i.trim().length)
+    .sort()
   const resources: ViewerResource[] = []
   for (const part of parts) {
-    if (part === 'all') {
-      resources.push(new ViewerAllModelsResource())
-    } else if (part.includes('@')) {
-      const [modelId, versionId] = part.split('@')
-      resources.push(new ViewerModelResource(modelId, versionId))
-    } else if (part.startsWith('$')) {
-      resources.push(new ViewerModelFolderResource(part.substring(1)))
-    } else if (part.length === 32) {
-      resources.push(new ViewerObjectResource(part))
-    } else {
-      resources.push(new ViewerModelResource(part))
+    const resource = parseResourceFromString(part)
+    if (resource) {
+      resources.push(resource)
     }
   }
 
@@ -120,7 +133,7 @@ export const isModelFolderResource = (
   r: ViewerResource
 ): r is ViewerModelFolderResource => r.type === ViewerResourceType.ModelFolder
 
-class ViewerResourceBuilder {
+class ViewerResourceBuilder implements Iterable<ViewerResource> {
   #resources: ViewerResource[] = []
 
   addAllModels() {
@@ -139,6 +152,20 @@ class ViewerResourceBuilder {
     this.#resources.push(new ViewerObjectResource(objectId))
     return this
   }
+  addFromString(resourceIdStrings: string | string[]) {
+    const strings = Array.isArray(resourceIdStrings)
+      ? resourceIdStrings
+      : [resourceIdStrings]
+    for (const resourceIdString of strings) {
+      const resources = parseUrlParameters(resourceIdString)
+      this.#resources.push(...resources)
+    }
+    return this
+  }
+  addResources(resources: ViewerResource[]) {
+    this.#resources.push(...resources)
+    return this
+  }
   toString() {
     return createGetParamFromResources(this.#resources)
   }
@@ -148,6 +175,41 @@ class ViewerResourceBuilder {
   clear() {
     this.#resources = []
     return this
+  }
+  clone() {
+    const clone = new ViewerResourceBuilder()
+    const resources = this.toString()
+    clone.addFromString(resources)
+    return clone
+  }
+  get length() {
+    return this.#resources.length
+  }
+  forEach(callback: (resource: ViewerResource) => void) {
+    this.#resources.forEach(callback)
+    return this
+  }
+
+  filter<Res extends ViewerResource>(
+    callback: (resource: ViewerResource) => resource is Res
+  ): Res[]
+  filter(callback: (resource: ViewerResource) => boolean): ViewerResource[]
+  filter(callback: (resource: ViewerResource) => boolean) {
+    return this.#resources.filter(callback)
+  }
+
+  find<Res extends ViewerResource>(
+    callback: (resource: ViewerResource) => resource is Res
+  ): Res | undefined
+  find(callback: (resource: ViewerResource) => boolean): ViewerResource | undefined
+  find(callback: (resource: ViewerResource) => boolean) {
+    return this.#resources.find(callback)
+  }
+  map<T>(callback: (resource: ViewerResource) => T): T[] {
+    return this.#resources.map(callback)
+  }
+  [Symbol.iterator](): Iterator<ViewerResource> {
+    return this.#resources[Symbol.iterator]()
   }
 }
 

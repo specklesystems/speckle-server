@@ -169,7 +169,7 @@ export const createTestWorkspace = async (
     regionKey?: string
     addCreationState?: Pick<WorkspaceCreationState, 'completed' | 'state'>
   }
-) => {
+): Promise<BasicTestWorkspace> => {
   const {
     domain,
     addPlan = true,
@@ -185,7 +185,8 @@ export const createTestWorkspace = async (
     // be created as if it was not assigned to a workspace, allowing tests to still work
     // (Surely if you explicitly invoke createTestWorkspace with FFs off, you know what you're doing)
     workspace.id = undefined as unknown as string
-    return
+    workspace.slug = undefined as unknown as string
+    return workspace as BasicTestWorkspace
   }
 
   const upsertWorkspacePlan = upsertWorkspacePlanFactory({ db })
@@ -361,6 +362,14 @@ export const createTestWorkspace = async (
       workspaceId: newWorkspace.id,
       workspaceInput: { domainBasedMembershipProtectionEnabled: true }
     })
+  }
+
+  return {
+    ...workspace,
+    ...newWorkspace,
+    description: workspace.description || undefined,
+    logo: workspace.logo || undefined,
+    ownerId: owner.id
   }
 }
 

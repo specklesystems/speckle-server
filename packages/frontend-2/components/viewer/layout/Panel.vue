@@ -19,7 +19,7 @@
         <div
           class="flex items-center h-full w-full pr-8 text-body-xs text-foreground font-medium"
         >
-          <span class="truncate">
+          <span class="truncate grow">
             <slot name="title"></slot>
           </span>
         </div>

@@ -54,6 +54,8 @@ export async function createTestBranch(params: {
     )
   ).id
   branch.id = id
+
+  return branch
 }
 
 export async function createTestBranches(

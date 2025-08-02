@@ -10,6 +10,7 @@ import {
 import {
   createBranchFactory,
   getBranchByIdFactory,
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory,
@@ -35,8 +36,6 @@ import {
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
-  getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
@@ -70,6 +69,10 @@ import {
 } from '@/modules/core/repositories/projects'
 import { storeModelFactory } from '@/modules/core/repositories/models'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
 
 const command: CommandModule<
   unknown,
@@ -142,7 +145,8 @@ const command: CommandModule<
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =

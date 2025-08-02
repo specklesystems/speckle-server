@@ -14,6 +14,7 @@ import { CameraController, ViewMode, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import type { PartialDeep } from 'type-fest'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -125,7 +126,7 @@ export function useStateSerialization() {
     return ret
   }
 
-  return { serialize }
+  return { serialize, buildConcreteResourceIdString }
 }
 
 export enum StateApplyMode {
@@ -133,7 +134,8 @@ export enum StateApplyMode {
   ThreadOpen,
   ThreadFullContextOpen,
   Reset,
-  FederatedContext
+  FederatedContext,
+  SavedView
 }
 
 export function useApplySerializedState() {
@@ -167,10 +169,12 @@ export function useApplySerializedState() {
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
   const logger = useLogger()
+  const { update } = useViewerRealtimeActivityTracker()
 
   return async (state: PartialDeep<SerializedViewerState>, mode: StateApplyMode) => {
     if (mode === StateApplyMode.Reset) {
       resetState()
+      update() // Trigger activity update
       return
     }
 
@@ -251,15 +255,6 @@ export function useApplySerializedState() {
         })
     }
 
-    const selectedObjectIds = Object.keys(filters.selectedObjectApplicationIds ?? {})
-    if (mode === StateApplyMode.Spotlight) {
-      highlightedObjectIds.value = selectedObjectIds
-    } else {
-      if (selectedObjectIds.length) {
-        setSelectionFromObjectIds(selectedObjectIds)
-      }
-    }
-
     // Handle resource string updates
     if (
       [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
@@ -288,10 +283,19 @@ export function useApplySerializedState() {
       }
     }
 
-    if ([StateApplyMode.Spotlight].includes(mode)) {
+    if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
       await urlHashState.focusedThreadId.update(
         state.ui?.threads?.openThread?.threadId || null
       )
+    }
+
+    const selectedObjectIds = Object.keys(filters.selectedObjectApplicationIds ?? {})
+    if (mode === StateApplyMode.Spotlight) {
+      highlightedObjectIds.value = selectedObjectIds
+    } else {
+      if (selectedObjectIds.length || mode === StateApplyMode.SavedView) {
+        setSelectionFromObjectIds(selectedObjectIds)
+      }
     }
 
     const command = state.ui?.diff?.command
@@ -324,5 +328,8 @@ export function useApplySerializedState() {
       ...lightConfig.value,
       ...(state.ui?.lightConfig || {})
     }
+
+    // Trigger activity update
+    update()
   }
 }

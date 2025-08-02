@@ -2,7 +2,7 @@ import type {
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput
 } from '@/modules/activitystream/domain/types'
-import type { ViewerResourceItem } from '@/modules/comments/domain/types'
+import type { ViewerResourceItem } from '@/modules/viewer/domain/types/resources'
 import type { CommentRecord } from '@/modules/comments/helpers/types'
 import type { MutationCommentArchiveArgs } from '@/modules/core/graph/generated/graphql'
 

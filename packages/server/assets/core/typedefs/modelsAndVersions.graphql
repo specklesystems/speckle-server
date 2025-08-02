@@ -29,6 +29,10 @@ extend type Project {
   """
   viewerResources(
     resourceIdString: String!
+    """
+    If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead
+    """
+    savedViewId: String
     loadedVersionsOnly: Boolean = true
   ): [ViewerResourceGroup!]!
   """

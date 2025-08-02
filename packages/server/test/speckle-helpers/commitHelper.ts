@@ -119,7 +119,7 @@ export async function createTestCommits(
   })
 
   await ensureObjects(commits)
-  await Promise.all(
+  const newCommits = await Promise.all(
     commits.map(async (c) => {
       const projectDb = await getProjectDbClient({ projectId: c.streamId })
       const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
@@ -165,11 +165,14 @@ export async function createTestCommits(
       return c
     })
   )
+
+  return newCommits
 }
 
 export async function createTestCommit(
   commit: BasicTestCommit,
   options?: Partial<{ owner: BasicTestUser; stream: BasicTestStream }>
 ) {
-  await createTestCommits([commit], options)
+  const [newCommit] = await createTestCommits([commit], options)
+  return newCommit
 }

@@ -26,6 +26,7 @@ import { SpeckleViewer, isNonNullable } from '@speckle/shared'
 import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
+  viewerActiveSavedViewQuery,
   viewerLoadedResourcesQuery,
   viewerLoadedThreadsQuery,
   viewerModelVersionsQuery
@@ -38,7 +39,8 @@ import type {
   ViewerResourceItem,
   ViewerLoadedThreadsQueryVariables,
   ProjectCommentsFilter,
-  ViewerModelVersionCardItemFragment
+  ViewerModelVersionCardItemFragment,
+  UseViewerSavedViewSetup_SavedViewFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { SetNonNullable, Get } from 'type-fest'
 import {
@@ -66,6 +68,7 @@ import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -75,6 +78,8 @@ export type LoadedThreadsMetadata = NonNullable<
   Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>
 >
 
+export type LoadedSavedView = UseViewerSavedViewSetup_SavedViewFragment
+
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
 
 export type InjectableViewerState = Readonly<{
@@ -82,6 +87,11 @@ export type InjectableViewerState = Readonly<{
    * The project which we're opening in the viewer (all loaded models should belong to it)
    */
   projectId: AsyncWritableComputedRef<string>
+  /**
+   * Core source of truth for the view id (other is in hash state). This allows you to
+   * set a view to load, without it showing up in the URL.
+   */
+  savedViewId: Ref<Nullable<string>>
   /**
    * User viewer session ID. The same user will have different IDs in different tabs if multiple are open.
    * This is used to ignore user activity messages from the same tab.
@@ -162,6 +172,10 @@ export type InjectableViewerState = Readonly<{
      */
     response: {
       /**
+       * Resource id string w/ saved view applied, if any
+       */
+      resolvedResourceIdString: ComputedRef<string>
+      /**
        * Metadata about loaded items
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
@@ -218,6 +232,10 @@ export type InjectableViewerState = Readonly<{
        */
       loadMoreVersions: (modelId: string) => Promise<void>
       resourcesLoading: ComputedRef<boolean>
+      /**
+       * Loaded saved view, if any
+       */
+      savedView: ComputedRef<Optional<LoadedSavedView>>
     }
   }
   /**
@@ -290,6 +308,7 @@ export type InjectableViewerState = Readonly<{
   urlHashState: {
     focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
     diff: AsyncWritableComputedRef<Nullable<DiffStateCommand>>
+    savedViewId: AsyncWritableComputedRef<Nullable<string>>
   }
 }>
 
@@ -302,7 +321,7 @@ type CachedViewerState = Pick<
 
 type InitialSetupState = Pick<
   InjectableViewerState,
-  'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
+  'projectId' | 'viewer' | 'sessionId' | 'urlHashState' | 'savedViewId'
 >
 
 type InitialStateWithRequest = InitialSetupState & {
@@ -410,6 +429,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 
   return {
     projectId: params.projectId,
+    savedViewId: ref<string | null>(null),
     sessionId,
     viewer: import.meta.server
       ? ({
@@ -540,11 +560,15 @@ function setupResponseResourceItems(
   state: InitialStateWithRequest
 ): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
+  | 'resourceItems'
+  | 'resourceItemsQueryVariables'
+  | 'resourceItemsLoaded'
+  | 'resolvedResourceIdString'
 > {
   const globalError = useError()
   const {
     projectId,
+    savedViewId,
     resources: {
       request: { resourceIdString }
     }
@@ -560,7 +584,8 @@ function setupResponseResourceItems(
     projectViewerResourcesQuery,
     () => ({
       projectId: projectId.value,
-      resourceUrlString: resourceIdString.value
+      resourceUrlString: resourceIdString.value,
+      savedViewId: savedViewId.value
     }),
     { keepPreviousResult: true }
   )
@@ -645,10 +670,18 @@ function setupResponseResourceItems(
 
   const resourceItemsLoaded = computed(() => initLoadDone.value)
 
+  const resolvedResourceIdString = computed(() =>
+    resourceBuilder()
+      // Combined group identifiers should result in the final resource id string
+      .addFromString(resolvedResourceGroups.value.map((group) => group.identifier))
+      .toString()
+  )
+
   return {
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
-    resourceItemsLoaded
+    resourceItemsLoaded,
+    resolvedResourceIdString
   }
 }
 
@@ -657,7 +690,10 @@ function setupResponseResourceData(
   resourceItemsData: ReturnType<typeof setupResponseResourceItems>
 ): Omit<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
+  | 'resourceItems'
+  | 'resourceItemsQueryVariables'
+  | 'resourceItemsLoaded'
+  | 'resolvedResourceIdString'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()
@@ -665,6 +701,7 @@ function setupResponseResourceData(
   const logger = useLogger()
 
   const {
+    savedViewId,
     projectId,
     resources: {
       request: { resourceIdString, threadFilters }
@@ -867,6 +904,36 @@ function setupResponseResourceData(
     logger.error(err)
   })
 
+  // SAVED VIEW
+  const { result: viewerActiveSavedViewResult, onError: onViewerActiveSavedViewError } =
+    useQuery(
+      viewerActiveSavedViewQuery,
+      () => ({
+        projectId: projectId.value,
+        savedViewId: savedViewId.value!
+      }),
+      {
+        enabled: computed(() => !!savedViewId.value)
+      }
+    )
+
+  onViewerActiveSavedViewError((err) => {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Saved view loading failed',
+      description: `${err.message}`
+    })
+    logger.error(err)
+  })
+
+  // Shows only the one matching the savedViewId. If the query is still loading/stale, it will return undefined
+  const savedView = computed(() =>
+    savedViewId.value &&
+    viewerActiveSavedViewResult.value?.project?.savedView.id === savedViewId.value
+      ? viewerActiveSavedViewResult.value?.project?.savedView
+      : undefined
+  )
+
   onServerPrefetch(async () => {
     await Promise.all([serverResourcesLoadedPromise.promise])
   })
@@ -882,7 +949,8 @@ function setupResponseResourceData(
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
     loadMoreVersions,
     resourcesLoaded: computed(() => initLoadDone.value),
-    resourcesLoading: computed(() => viewerLoadedResourcesLoading.value)
+    resourcesLoading: computed(() => viewerLoadedResourcesLoading.value),
+    savedView
   }
 }
 
@@ -1050,9 +1118,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   return rawState
 }
 
-/**
- * COMPOSABLES FOR RETRIEVING (PARTS OF) INJECTABLE STATE
- */
+// COMPOSABLES FOR RETRIEVING (PARTS OF) INJECTABLE STATE
 
 export function useInjectedViewerState(): InjectableViewerState {
   // we're forcing TS to ignore the scenario where this data can't be found and returns undefined

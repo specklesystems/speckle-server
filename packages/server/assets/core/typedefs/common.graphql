@@ -45,4 +45,8 @@ type PermissionCheckResult {
   code: String!
   message: String!
   payload: JSONObject
+  """
+  Same as message, or undefined if check is authorized
+  """
+  errorMessage: String
 }

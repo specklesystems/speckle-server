@@ -380,8 +380,7 @@ export function modifyObjectFields<
     debug: boolean
   }>
 ) {
-  const { fieldNameWhitelist, debug = !!(import.meta.dev && import.meta.client) } =
-    options || {}
+  const { fieldNameWhitelist, debug = false } = options || {}
 
   const logger = useLogger()
   const invocationId = nanoid()

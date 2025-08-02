@@ -22,7 +22,8 @@ export const WorkspacePlanFeatures = <const>{
   CustomDataRegion: 'workspaceDataRegionSpecificity',
   HideSpeckleBranding: 'hideSpeckleBranding',
   ExclusiveMembership: 'exclusiveMembership',
-  EmbedPrivateProjects: 'embedPrivateProjects'
+  EmbedPrivateProjects: 'embedPrivateProjects',
+  SavedViews: 'savedViews'
 }
 
 export type WorkspacePlanFeatures =
@@ -62,6 +63,10 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.EmbedPrivateProjects]: {
     displayName: 'Embed private projects',
     description: 'Embed projects with visibility set to private or workspace'
+  },
+  [WorkspacePlanFeatures.SavedViews]: {
+    displayName: 'Saved views',
+    description: 'Create and share saved views of your models'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -130,7 +135,8 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.SavedViews
     ],
     limits: {
       projectCount: 10,
@@ -146,7 +152,8 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.SavedViews
     ],
     limits: {
       projectCount: null,
@@ -168,7 +175,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.ExclusiveMembership
+      WorkspacePlanFeatures.ExclusiveMembership,
+      WorkspacePlanFeatures.SavedViews
     ],
     limits: unlimited
   },
@@ -180,7 +188,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.ExclusiveMembership
+      WorkspacePlanFeatures.ExclusiveMembership,
+      WorkspacePlanFeatures.SavedViews
     ],
     limits: unlimited
   },
@@ -191,7 +200,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      WorkspacePlanFeatures.SavedViews
     ],
     limits: unlimited
   },

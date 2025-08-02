@@ -12,7 +12,7 @@
   },
   "type": "module",
   "engines": {
-    "node": "^22.6.0"
+    "node": "^22.17.1"
   },
   "scripts": {
     "build:tsc:watch": "tsc -p ./tsconfig.build.json --watch",

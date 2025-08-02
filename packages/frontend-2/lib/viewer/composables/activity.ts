@@ -13,7 +13,7 @@ import {
   useSelectionEvents,
   useViewerCameraControlEndTracker
 } from '~~/lib/viewer/composables/viewer'
-import { SpeckleViewer, xor, TIME_MS } from '@speckle/shared'
+import { xor, TIME_MS } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -35,8 +35,13 @@ import {
   useApplySerializedState,
   useStateSerialization
 } from '~~/lib/viewer/composables/serialization'
-import type { Merge } from 'type-fest'
+import type { Merge, OverrideProperties } from 'type-fest'
 import { graphql } from '~/lib/common/generated/gql'
+import {
+  isSerializedViewerState,
+  type SerializedViewerState
+} from '@speckle/shared/viewer/state'
+import { omit } from 'lodash-es'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -55,11 +60,16 @@ const USER_STALE_AFTER_PERIOD = 20 * OWN_ACTIVITY_UPDATE_INTERVAL
  */
 const USER_REMOVABLE_AFTER_PERIOD = USER_STALE_AFTER_PERIOD * 2
 
+type ViewerActivityMetadata = OverrideProperties<
+  Required<Omit<ViewerUserActivityMessageInput, 'status'>>,
+  { state: SerializedViewerState }
+>
+
 function useCollectMainMetadata() {
   const { sessionId } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
   const { serialize } = useStateSerialization()
-  return (): Omit<ViewerUserActivityMessageInput, 'status' | 'selection'> => ({
+  return (): ViewerActivityMetadata => ({
     userId: activeUser.value?.id || null,
     userName: activeUser.value?.name || 'Anonymous Viewer',
     state: serialize(),
@@ -78,6 +88,57 @@ graphql(`
   }
 `)
 
+const useViewerRealtimeActivityState = () =>
+  useState('viewer_realtime_activity_state', () => ({
+    activity: undefined as Optional<ViewerActivityMetadata>,
+    status: ViewerUserActivityStatus.Viewing as ViewerUserActivityStatus
+  }))
+
+export const useViewerRealtimeActivityTracker = () => {
+  const state = useViewerRealtimeActivityState()
+  const getMainMetadata = useCollectMainMetadata()
+
+  const activity = computed({
+    get: () => state.value.activity || getMainMetadata(),
+    set: (value) => {
+      state.value.activity = value
+    }
+  })
+
+  const status = computed({
+    get: () => state.value.status,
+    set: (value) => {
+      state.value.status = value
+    }
+  })
+
+  const serializedState = computed(() => activity.value.state)
+
+  // Ids for easy equality comparisons
+  const serializedStateId = computed(() => JSON.stringify(serializedState.value))
+  const activityId = computed(() => {
+    const stateId = serializedStateId.value
+    const otherActivity: Omit<ViewerActivityMetadata, 'state'> = omit(activity.value, [
+      'state'
+    ])
+    const otherActivityId = JSON.stringify(otherActivity)
+    return `${stateId}-${otherActivityId}-${status.value}`
+  })
+
+  const update = (params?: {
+    newActivity?: ViewerActivityMetadata
+    status?: ViewerUserActivityStatus
+  }) => {
+    activity.value = params?.newActivity || getMainMetadata()
+
+    if (params?.status) {
+      status.value = params.status
+    }
+  }
+
+  return { activity, serializedState, status, update, serializedStateId, activityId }
+}
+
 export function useViewerUserActivityBroadcasting(
   options?: Partial<{
     state: InjectableViewerState
@@ -90,7 +151,7 @@ export function useViewerUserActivityBroadcasting(
       response: { project }
     }
   } = options?.state || useInjectedViewerState()
-  const getMainMetadata = useCollectMainMetadata()
+  const { update, activity, status, activityId } = useViewerRealtimeActivityTracker()
   const apollo = useApolloClient().client
   const { isEnabled: isEmbedEnabled } = useEmbed()
 
@@ -98,22 +159,25 @@ export function useViewerUserActivityBroadcasting(
     () => project.value?.permissions.canBroadcastActivity.authorized
   )
 
-  const isSameMessage = (
-    previousSerializedMessage: Optional<string>,
-    newMessage: ViewerUserActivityMessageInput
+  const isSameActivity = (
+    previousActivityId: Optional<string>,
+    newActivityId: string
   ) => {
-    if (xor(previousSerializedMessage, newMessage)) return false
-    if (!previousSerializedMessage && !newMessage) return false
-    return previousSerializedMessage === JSON.stringify(newMessage)
+    if (xor(previousActivityId, newActivityId)) return false
+    if (!previousActivityId && !newActivityId) return false
+    return previousActivityId === newActivityId
   }
 
-  const invokeMutation = async (message: ViewerUserActivityMessageInput) => {
+  const invokeMutation = async () => {
     const result = await apollo
       .mutate({
         mutation: broadcastViewerUserActivityMutation,
         variables: {
           resourceIdString: resourceIdString.value,
-          message,
+          message: {
+            ...activity.value,
+            status: status.value
+          },
           projectId: projectId.value
         }
       })
@@ -122,43 +186,43 @@ export function useViewerUserActivityBroadcasting(
     return result.data?.broadcastViewerUserActivity || false
   }
 
-  let serializedPreviousMessage: Optional<string> = undefined
-  const invokeObservabilityEvent = async (message: ViewerUserActivityMessageInput) => {
+  let previousActivityId: Optional<string> = undefined
+  const invokeObservabilityEvent = async () => {
     const dd = window.DD_RUM
     if (!dd || !('addAction' in dd)) return
 
-    if (isSameMessage(serializedPreviousMessage, message)) return
+    const message = {
+      ...activity.value,
+      status: status.value
+    }
 
-    serializedPreviousMessage = JSON.stringify(message)
+    if (isSameActivity(previousActivityId, activityId.value)) return
+
+    previousActivityId = activityId.value
     dd.addAction('Viewer User Activity', { message })
   }
 
-  const invoke = async (message: ViewerUserActivityMessageInput) => {
+  const invoke = async () => {
     if (!canBroadcast.value || isEmbedEnabled.value) return false
-    return await Promise.all([
-      invokeMutation(message),
-      invokeObservabilityEvent(message)
-    ])
+
+    return await Promise.all([invokeMutation(), invokeObservabilityEvent()])
   }
 
   return {
-    emitDisconnected: async () =>
-      await invoke({
-        ...getMainMetadata(),
-        status: ViewerUserActivityStatus.Disconnected
-      }),
+    emitDisconnected: async () => {
+      update({ status: ViewerUserActivityStatus.Disconnected })
+      await invoke()
+    },
     emitViewing: async () => {
-      await invoke({
-        ...getMainMetadata(),
-        status: ViewerUserActivityStatus.Viewing
-      })
+      update({ status: ViewerUserActivityStatus.Viewing })
+      await invoke()
     }
   }
 }
 
 export type UserActivityModel = Merge<
   OnViewerUserActivityBroadcastedSubscription['viewerUserActivityBroadcasted'],
-  { state: SpeckleViewer.ViewerState.SerializedViewerState }
+  { state: SerializedViewerState }
 > & {
   isStale: boolean
   isOccluded: boolean
@@ -239,9 +303,7 @@ export function useViewerUserActivityTracking(params: {
       return
     }
 
-    const state = SpeckleViewer.ViewerState.isSerializedViewerState(event.state)
-      ? event.state
-      : null
+    const state = isSerializedViewerState(event.state) ? event.state : null
     if (!state) return
 
     const userData: UserActivityModel = {
@@ -429,7 +491,7 @@ function useViewerSpotlightTracking() {
 type UserTypingInfo = {
   userId: string
   userName: string
-  thread: SpeckleViewer.ViewerState.SerializedViewerState['ui']['threads']['openThread']
+  thread: SerializedViewerState['ui']['threads']['openThread']
   lastSeen: Dayjs
 }
 
@@ -471,9 +533,7 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
       usersTyping.value.splice(existingItemIdx, 1)
     }
 
-    const state = SpeckleViewer.ViewerState.isSerializedViewerState(event.state)
-      ? event.state
-      : null
+    const state = isSerializedViewerState(event.state) ? event.state : null
     if (!state) return
     const typingPayload = state.ui.threads.openThread
     if (typingPayload.threadId !== unref(threadId)) {

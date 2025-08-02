@@ -37,6 +37,7 @@ export const emailLogger = extendLoggerComponent(logger, 'email')
 export const taskSchedulerLogger = extendLoggerComponent(logger, 'task-scheduler')
 export const cacheLogger = extendLoggerComponent(logger, 'cache')
 export const previewLogger = extendLoggerComponent(logger, 'preview')
+export const viewerLogger = extendLoggerComponent(logger, 'viewer')
 
 export type Logger = typeof logger
 export { extendLoggerComponent, Observability }

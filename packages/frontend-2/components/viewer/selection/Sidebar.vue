@@ -68,7 +68,6 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
-
 import { onKeyStroke } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
@@ -205,36 +204,30 @@ onKeyStroke('Escape', () => {
 })
 
 watch(
-  () => objects.value.length,
-  (newLength) => {
-    // Dont open sidebar if a comment is open
-    if (newLength !== 0 && !focusedThreadId.value) {
-      sidebarOpen.value = true
-    } else if (newLength === 0) {
+  [
+    () => objects.value.length,
+    () => focusedThreadId.value,
+    () => threads.openThread.newThreadEditor.value,
+    () => isSmallerOrEqualSm.value
+  ],
+  ([objLen, threadId, isNewThreadEditorOpen, isSmSm]) => {
+    // Close sidebar if a thread is focused
+    if (threadId) {
       sidebarOpen.value = false
+      return
     }
-  }
-)
 
-// Close sidebar when a new thread is being added and screen is smaller than md breakpoint
-watch(
-  () => threads.openThread.newThreadEditor.value,
-  (isNewThreadEditorOpen) => {
-    if (isNewThreadEditorOpen && isSmallerOrEqualSm.value) {
+    // Close sidebar if new thread editor is open and screen is small
+    if (isNewThreadEditorOpen && isSmSm) {
       sidebarOpen.value = false
+      return
     }
-  }
-)
 
-watch(
-  () => focusedThreadId.value,
-  (newThreadId) => {
-    if (newThreadId) {
-      // If a thread is focused, close the sidebar
-      sidebarOpen.value = false
-    } else if (objects.value.length > 0) {
-      // If no thread is focused and we have objects selected, open the sidebar
+    // Open sidebar if objects are selected and no thread is focused
+    if (objLen !== 0 && !threadId) {
       sidebarOpen.value = true
+    } else if (objLen === 0) {
+      sidebarOpen.value = false
     }
   }
 )

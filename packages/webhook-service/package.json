@@ -13,7 +13,7 @@
   },
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
   "engines": {
-    "node": "^22.6.0"
+    "node": "^22.17.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

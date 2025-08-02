@@ -21,6 +21,7 @@ import type {
   UserRecord
 } from '@/modules/core/helpers/types'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type { GraphqlPermissionCheckResult } from '@speckle/shared/authz'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -157,3 +158,5 @@ export type VersionPermissionChecksGraphQLReturn = {
 }
 
 export type EmbedTokenGraphQLReturn = EmbedApiTokenWithMetadata
+
+export type PermissionCheckResultGraphQLReturn = GraphqlPermissionCheckResult
