@@ -2,7 +2,7 @@
 <template>
   <div class="relative">
     <div>
-      <!-- Model Header - Sticky -->
+      <!-- Model Header -->
       <div
         class="sticky top-0 z-10 bg-foundation group flex items-center pl-1 pr-2 py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
         @mouseenter="highlightObject"
@@ -14,7 +14,7 @@
       >
         <button
           class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
-          @click.stop="isExpanded = !isExpanded"
+          @click.stop="emit('toggle-expansion')"
         >
           <IconTriangle
             class="w-4 h-4 text-foreground-2"
@@ -100,24 +100,6 @@
           </button>
         </div>
       </div>
-
-      <!-- Scene Explorer Content - No individual scroll container -->
-      <div
-        v-if="isExpanded && rootNodeChildren.length"
-        class="relative flex flex-col gap-y-2 p-1"
-      >
-        <div v-for="(childNode, idx) in rootNodeChildren" :key="idx">
-          <ViewerModelsTreeItem
-            :tree-item="{ rawNode: markRaw(childNode) }"
-            :sub-header="'Model content'"
-            :expand-level="expandLevel"
-            :manual-expand-level="manualExpandLevel"
-            :force-expanded-node-ids="forceExpandedNodeIds"
-            :is-descendant-of-selected="false"
-            @expanded="(e: number) => $emit('expanded', e)"
-          />
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -148,6 +130,7 @@ const emit = defineEmits<{
   (e: 'expanded', depth: number): void
   (e: 'show-versions', modelId: string): void
   (e: 'show-diff', modelId: string, versionA: string, versionB: string): void
+  (e: 'toggle-expansion'): void
 }>()
 
 const props = defineProps<{
@@ -157,14 +140,14 @@ const props = defineProps<{
   expandLevel: number
   manualExpandLevel: number
   rootNodes: ExplorerNode[]
+  isExpanded?: boolean
 }>()
 
 const { getTooltipProps } = useSmartTooltipDelay()
-
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
-const { setSelectionFromObjectIds, objects } = useSelectionUtilities()
+const { setSelectionFromObjectIds } = useSelectionUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const {
   viewer: {
@@ -173,7 +156,6 @@ const {
 } = useInjectedViewerState()
 
 const route = useRoute()
-
 const resourceIdString = computed(() => {
   const resourceParam = route.params.modelId
   return Array.isArray(resourceParam) ? resourceParam.join('/') : resourceParam
@@ -190,17 +172,9 @@ const { load: loadLatestVersion } = useLoadLatestVersion({
   resourceIdString: computed(() => resourceIdString.value || '')
 })
 
-const isExpanded = ref(false)
 const showActionsMenu = ref(false)
 
-// Track expansion state for auto-expanding selected objects
-const forceExpandedNodeIds = ref<Set<string>>(new Set())
-
-const IconEye = resolveComponent('IconEye')
-const IconEyeClosed = resolveComponent('IconEyeClosed')
-
 const removeEnabled = computed(() => items.value.length > 1)
-
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
@@ -230,15 +204,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ]
 ])
 
-const rootNodeChildren = computed(() => {
-  const children: ExplorerNode[] = []
-  for (const rootNode of props.rootNodes) {
-    if (rootNode.children && rootNode.children.length > 0) {
-      children.push(...rootNode.children)
-    }
-  }
-  return children
-})
+const IconEye = resolveComponent('IconEye')
+const IconEyeClosed = resolveComponent('IconEyeClosed')
 
 const versions = computed(() => [
   ...props.model.loadedVersion.items,
@@ -250,7 +217,6 @@ const loadedVersion = computed(() =>
 )
 
 const createdAt = computed(() => loadedVersion.value?.createdAt)
-
 const createdAtFormatted = computed(() => {
   return {
     full: formattedFullDate(createdAt.value),
@@ -288,8 +254,8 @@ const modelObjectIds = computed(() => {
   return refObject ? getTargetObjectIds({ id: refObject }) : []
 })
 
-const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
+const hiddenObjects = computed(() => filteringState.value?.hiddenObjectIds)
+const isolatedObjects = computed(() => filteringState.value?.isolatedObjectIds)
 
 const isHidden = computed(() => {
   if (!hiddenObjects.value || modelObjectIds.value.length === 0) return false
@@ -309,7 +275,6 @@ const stateHasIsolatedObjectsInGeneral = computed(() => {
 const modelContainsIsolatedObjects = computed(() => {
   if (!isolatedObjects.value || isolatedObjects.value.length === 0) return false
 
-  // Check if any isolated object is a descendant of this model
   const getAllDescendantIds = (nodes: ExplorerNode[]): string[] => {
     const ids: string[] = []
     for (const node of nodes) {
@@ -373,9 +338,9 @@ const selectObject = () => {
   if (modelObjectIds.value.length === 0) return
   setSelectionFromObjectIds(modelObjectIds.value)
 
-  // Auto-expand when selecting if it has content and is not already expanded
-  if (rootNodeChildren.value.length > 0 && !isExpanded.value) {
-    isExpanded.value = true
+  // Only expand if not already expanded
+  if (!props.isExpanded) {
+    emit('toggle-expansion')
   }
 }
 
@@ -392,7 +357,6 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
       emit('show-versions', props.model.id)
       break
     case 'show-version-changes':
-      // Diff current version with latest version
       if (
         loadedVersion.value &&
         latestVersion.value &&
@@ -413,68 +377,4 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
       break
   }
 }
-
-const expandToShowSelectedObjects = (selectedIds: string[]) => {
-  // Find paths to all selected objects in this model's tree
-  const pathsToExpand = findPathsToSelectedObjects(selectedIds)
-
-  if (pathsToExpand.length > 0) {
-    // Expand the model itself
-    if (!isExpanded.value) {
-      isExpanded.value = true
-    }
-
-    // Clear previous force-expanded nodes and set new ones
-    const nodeIdsToExpand = pathsToExpand.flat()
-    forceExpandedNodeIds.value = new Set(nodeIdsToExpand)
-  }
-}
-
-const findPathsToSelectedObjects = (selectedIds: string[]): string[][] => {
-  const paths: string[][] = []
-
-  for (const rootNode of props.rootNodes) {
-    const nodePaths = findPathsInNode(rootNode, selectedIds, [])
-    paths.push(...nodePaths)
-  }
-
-  return paths
-}
-
-const findPathsInNode = (
-  node: ExplorerNode,
-  selectedIds: string[],
-  currentPath: string[]
-): string[][] => {
-  const paths: string[][] = []
-  const nodeId = node.raw?.id || node.guid || ''
-  const newPath = nodeId ? [...currentPath, nodeId] : currentPath
-
-  if (nodeId && selectedIds.includes(nodeId)) {
-    paths.push(newPath)
-  }
-  if (node.children) {
-    for (const child of node.children) {
-      const childPaths = findPathsInNode(child, selectedIds, newPath)
-      paths.push(...childPaths)
-    }
-  }
-
-  return paths
-}
-
-// Auto-expand tree to show selected objects
-watch(
-  () => objects.value,
-  (selectedObjects) => {
-    const selectedIds = selectedObjects.map((obj: { id: string }) => obj.id)
-
-    if (selectedObjects.length > 0) {
-      expandToShowSelectedObjects(selectedIds)
-    } else {
-      forceExpandedNodeIds.value = new Set()
-    }
-  },
-  { deep: true }
-)
 </script>
