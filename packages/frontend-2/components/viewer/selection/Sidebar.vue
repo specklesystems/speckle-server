@@ -65,11 +65,11 @@
 
       <div class="space-y-1">
         <ViewerSelectionObject
-          v-for="object in objectsLimited"
+          v-for="(object, index) in objectsLimited"
           :key="(object.id as string)"
           :object="object"
           :root="true"
-          :unfold="objectsLimited.length === 1 && !isSmallerOrEqualSm"
+          :unfold="index === 0 && !isSmallerOrEqualSm"
         />
       </div>
       <div v-if="itemCount <= objects.length" class="mb-2">
