@@ -12,18 +12,10 @@
         @click="selectObject"
         @keydown.enter="selectObject"
       >
-        <button
-          class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
-          @click.stop="emit('toggle-expansion')"
-        >
-          <IconTriangle
-            class="w-4 h-4 text-foreground-2"
-            :class="isExpanded ? 'rotate-90' : ''"
-          />
-          <span class="sr-only">
-            {{ isExpanded ? 'Collapse' : 'Expand' }}
-          </span>
-        </button>
+        <ViewerExpansionTriangle
+          :is-expanded="isExpanded"
+          @click="emit('toggle-expansion')"
+        />
         <div
           class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
           :class="{ grayscale: shouldShowDimmed }"
@@ -66,38 +58,26 @@
               <IconThreeDots class="w-4 h-4" />
             </button>
           </LayoutMenu>
-          <button
-            v-tippy="
+          <ViewerVisibilityButton
+            :is-hidden="isHidden"
+            :force-visible="showActionsMenu"
+            :tooltip="
               getTooltipProps(isHidden ? 'Show' : 'Hide', {
                 placement: 'top'
               })
             "
-            class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
-            :class="{
-              'opacity-100': isHidden,
-              'opacity-0': !isHidden
-            }"
-            @click.stop="hideOrShowObject"
-          >
-            <IconEyeClosed v-if="isHidden" class="w-4 h-4" />
-            <IconEye v-else class="w-4 h-4" />
-          </button>
-          <button
-            v-tippy="
+            @click="hideOrShowObject"
+          />
+          <ViewerIsolateButton
+            :is-isolated="isIsolated"
+            :force-visible="showActionsMenu"
+            :tooltip="
               getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', {
                 placement: 'top'
               })
             "
-            class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
-            :class="{
-              'opacity-100': isIsolated,
-              'opacity-0': !isIsolated
-            }"
-            @click.stop="isolateOrUnisolateObject"
-          >
-            <IconViewerUnisolate v-if="isIsolated" class="w-3.5 h-3.5" />
-            <IconViewerIsolate v-else class="w-3.5 h-3.5" />
-          </button>
+            @click="isolateOrUnisolateObject"
+          />
         </div>
       </div>
     </div>
@@ -202,9 +182,6 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
     }
   ]
 ])
-
-const IconEye = resolveComponent('IconEye')
-const IconEyeClosed = resolveComponent('IconEyeClosed')
 
 const versions = computed(() => [
   ...props.model.loadedVersion.items,
