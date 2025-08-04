@@ -51,8 +51,9 @@ import {
   useViewerShortcuts,
   useFilterUtilities
 } from '~~/lib/viewer/composables/ui'
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 enum ActivePanel {
   none = 'none',
@@ -63,6 +64,10 @@ enum ActivePanel {
   lightControls = 'lightControls'
 }
 
+const emit = defineEmits<{
+  forceClosePanels: []
+}>()
+
 const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortcuts()
 const { toggleSectionBox, resetSectionBox, closeSectionBox } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
@@ -70,8 +75,11 @@ const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
 const { resetExplode } = useFilterUtilities()
 const { getTooltipProps } = useSmartTooltipDelay()
 const { isEnabled: isEmbedEnabled } = useEmbed()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
+
 const panels = shallowRef({
   [ActivePanel.measurements]: {
     id: ActivePanel.measurements,
@@ -122,6 +130,10 @@ const showResetButton = computed(() => {
 const toggleActivePanel = (panel: ActivePanel) => {
   activePanel.value = activePanel.value === panel ? ActivePanel.none : panel
 
+  if (activePanel.value !== ActivePanel.none && isMobile.value) {
+    emit('forceClosePanels')
+  }
+
   if (panel === ActivePanel.sectionBox) {
     toggleSectionBox()
   }
@@ -161,6 +173,10 @@ registerShortcuts({
   ToggleSectionBox: () => toggleSectionBox()
 })
 
+const forceClosePanels = () => {
+  activePanel.value = ActivePanel.none
+}
+
 onKeyStroke('Escape', () => {
   const isActiveMeasurement = getActiveMeasurement()
 
@@ -174,5 +190,9 @@ onKeyStroke('Escape', () => {
     }
     activePanel.value = ActivePanel.none
   }
+})
+
+defineExpose({
+  forceClosePanels
 })
 </script>

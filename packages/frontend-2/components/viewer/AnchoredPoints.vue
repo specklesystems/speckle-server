@@ -144,17 +144,25 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useThreadUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
+
+const emit = defineEmits<{
+  forceClosePanels: []
+}>()
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { isLoggedIn } = useActiveUser()
 const viewerState = useInjectedViewerState()
 const { sessionId } = viewerState
 const { users } = useViewerUserActivityTracking({ parentEl })
-const { isOpenThread, open } = useThreadUtilities()
+const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 const {
   filters: { hasAnyFiltersApplied }
 } = useFilterUtilities({ state: viewerState })
 const canPostComment = useCheckViewerCommentingAccess()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
@@ -275,4 +283,23 @@ function setUserSpotlight(sessionId: string) {
     source: 'navbar'
   })
 }
+
+const forceCloseThreads = async () => {
+  await closeAllThreads()
+}
+
+// Watch for thread opening on mobile and emit event
+watch(
+  () => openThread.value,
+  (newThread, oldThread) => {
+    // If a thread opened (wasn't open before) on mobile, emit event
+    if (newThread && !oldThread && isMobile.value) {
+      emit('forceClosePanels')
+    }
+  }
+)
+
+defineExpose({
+  forceCloseThreads
+})
 </script>
