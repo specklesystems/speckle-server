@@ -1,11 +1,12 @@
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
+import type { WorldTree } from '@speckle/viewer'
 import { sortBy, flatten } from 'lodash-es'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
-interface UnifiedVirtualItem {
+export type UnifiedVirtualItem = {
   type: 'model-header' | 'tree-item'
   id: string
   modelId: string
@@ -14,6 +15,9 @@ interface UnifiedVirtualItem {
   hasChildren?: boolean
   isExpanded?: boolean
   isDescendantOfSelected?: boolean
+  isFirstChildOfModel?: boolean
+  isLastChildOfModel?: boolean
+  isFirstModel?: boolean
 }
 
 export function useTreeManagement() {
@@ -165,7 +169,7 @@ export function useTreeManagement() {
 
   const getRootNodesForModel = (
     modelId: string,
-    worldTree: { _root: { children: ExplorerNode[] } } | null,
+    worldTree: WorldTree | null,
     stateResourceItems: { objectId: string; modelId?: string }[],
     modelsAndVersionIds: { model: ModelItem; versionId: string }[]
   ) => {

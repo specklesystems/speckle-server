@@ -25,8 +25,11 @@
 
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length">
-          <!-- 🚀 UNIFIED VIRTUAL LIST: Single scrollbar for all models and tree items -->
-          <div class="flex-1" v-bind="containerProps">
+          <div
+            class="flex-1 simple-scrollbar"
+            data-virtual-list-container
+            v-bind="containerProps"
+          >
             <div v-bind="wrapperProps">
               <div
                 v-for="{ data: item } in virtualList"
@@ -36,20 +39,23 @@
               >
                 <!-- Model Header -->
                 <template v-if="item.type === 'model-header'">
-                  <ViewerModelsCard
-                    :model="getModelFromItem(item)"
-                    :version-id="getVersionIdFromItem(item)"
-                    :last="false"
-                    :expand-level="expandLevel"
-                    :manual-expand-level="manualExpandLevel"
-                    :root-nodes="[]"
-                    :is-expanded="expandedModels.has(item.modelId)"
-                    @toggle-expansion="toggleModelExpansion(item.modelId)"
-                    @remove="(id: string) => removeModel(id)"
-                    @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
-                    @show-versions="handleShowVersions"
-                    @show-diff="handleShowDiff"
-                  />
+                  <div class="sticky top-0 z-20 bg-foundation">
+                    <ViewerModelsCard
+                      :model="getModelFromItem(item)"
+                      :version-id="getVersionIdFromItem(item)"
+                      :last="false"
+                      :first="item.isFirstModel"
+                      :expand-level="expandLevel"
+                      :manual-expand-level="manualExpandLevel"
+                      :root-nodes="[]"
+                      :is-expanded="expandedModels.has(item.modelId)"
+                      @toggle-expansion="toggleModelExpansion(item.modelId)"
+                      @remove="(id: string) => removeModel(id)"
+                      @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
+                      @show-versions="handleShowVersions"
+                      @show-diff="handleShowDiff"
+                    />
+                  </div>
                 </template>
 
                 <!-- Tree Item -->
@@ -58,8 +64,6 @@
                     :item="item"
                     @toggle-expansion="toggleTreeItemExpansion"
                     @item-click="handleItemClick"
-                    @mouse-enter="handleItemMouseEnter"
-                    @mouse-leave="handleItemMouseLeave"
                   />
                 </template>
               </div>
@@ -98,27 +102,14 @@ import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
 
+import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import {
-  useDiffUtilities,
-  useHighlightedObjectsUtilities,
-  useSelectionUtilities
-} from '~~/lib/viewer/composables/ui'
-import { useTreeManagement } from '~~/lib/viewer/composables/tree'
-import { useVirtualList } from '@vueuse/core'
-import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+  useTreeManagement,
+  type UnifiedVirtualItem
+} from '~~/lib/viewer/composables/tree'
+import { useVirtualList, useDebounceFn } from '@vueuse/core'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
-
-interface UnifiedVirtualItem {
-  type: 'model-header' | 'tree-item'
-  id: string
-  modelId: string
-  data: ExplorerNode | { model: ModelItem; versionId: string }
-  indent?: number
-  hasChildren?: boolean
-  isExpanded?: boolean
-  isDescendantOfSelected?: boolean
-}
 
 defineEmits(['close'])
 
@@ -143,7 +134,6 @@ const {
     response: { resourceItems: stateResourceItems }
   }
 } = useInjectedViewerState()
-const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const {
   objects: selectedObjects,
   addToSelection,
@@ -170,23 +160,37 @@ const unifiedVirtualItems = computed(() => {
       type: 'model-header',
       id: `model-${model.id}`,
       modelId: model.id,
-      data: { model, versionId }
+      data: { model, versionId },
+      isFirstModel: result.length === 0
     })
 
     if (expandedModels.value.has(model.id)) {
       const modelRootNodes = getRootNodesForModel(
         model.id,
-        worldTree.value,
-        stateResourceItems.value,
+        worldTree.value || null,
+        stateResourceItems.value as { objectId: string; modelId?: string }[],
         modelsAndVersionIds.value
       )
 
+      // Skip the root nodes (which duplicate model card info) and flatten their children directly
+      const childNodes: ExplorerNode[] = []
+      for (const rootNode of modelRootNodes) {
+        if (rootNode.children && rootNode.children.length > 0) {
+          childNodes.push(...rootNode.children)
+        }
+      }
+
       const treeItems = flattenModelTree(
-        modelRootNodes,
+        childNodes,
         model.id,
         expandedNodes.value,
         selectedObjects.value
       )
+
+      if (treeItems.length > 0) {
+        treeItems[0].isFirstChildOfModel = true
+        treeItems[treeItems.length - 1].isLastChildOfModel = true
+      }
 
       result.push(...treeItems)
     }
@@ -295,26 +299,6 @@ const handleItemClick = (
   })
 }
 
-const handleItemMouseEnter = (item: UnifiedVirtualItem) => {
-  if (item.type !== 'tree-item') return
-
-  const node = item.data as ExplorerNode
-  const speckleData = node.raw
-  if (!speckleData?.id) return
-
-  highlightObjects(getTargetObjectIds(speckleData))
-}
-
-const handleItemMouseLeave = (item: UnifiedVirtualItem) => {
-  if (item.type !== 'tree-item') return
-
-  const node = item.data as ExplorerNode
-  const speckleData = node.raw
-  if (!speckleData?.id) return
-
-  unhighlightObjects(getTargetObjectIds(speckleData))
-}
-
 const getModelFromItem = (item: UnifiedVirtualItem): ModelItem => {
   if (item.type === 'model-header') {
     return (item.data as { model: ModelItem; versionId: string }).model
@@ -329,49 +313,47 @@ const getVersionIdFromItem = (item: UnifiedVirtualItem): string => {
   return ''
 }
 
-const scrollToSelectedItem = (objectId: string) => {
-  const itemIndex = unifiedVirtualItems.value.findIndex(
-    (item) => item.type === 'tree-item' && item.id === objectId
-  )
-
-  if (itemIndex !== -1) {
-    const virtualListContainer =
-      document.querySelector('[data-item-id]')?.parentElement?.parentElement
-    if (virtualListContainer) {
-      const itemHeight = 40
-      const modelHeaderHeight = 80
-
-      let scrollTop = 0
-      for (let i = 0; i < itemIndex; i++) {
-        const item = unifiedVirtualItems.value[i]
-        scrollTop += item.type === 'model-header' ? modelHeaderHeight : itemHeight
-      }
-
-      const containerHeight = virtualListContainer.clientHeight
-      scrollTop -= containerHeight / 2
-
-      virtualListContainer.scrollTo({
-        top: Math.max(0, scrollTop),
-        behavior: 'instant'
-      })
-    }
-  }
-}
-
 useViewerEventListener(ViewerEvent.LoadComplete, () => {
   void refhack.value++
 })
 
-watch(
-  () => selectedObjects.value,
-  (newSelection) => {
+// Scroll to selected item in virtual list (centered)
+const scrollToSelectedItem = (objectId: string) => {
+  nextTick(() => {
+    const itemIndex = unifiedVirtualItems.value.findIndex(
+      (item) =>
+        item.type === 'tree-item' && (item.data as ExplorerNode).raw?.id === objectId
+    )
+    if (itemIndex !== -1) {
+      // Scroll to center the item in the viewport
+      const container = document.querySelector(
+        '[data-virtual-list-container]'
+      ) as HTMLElement
+      if (container) {
+        const containerHeight = container.clientHeight
+        const itemHeight = 40 // tree items are 40px tall
+        const totalOffset = itemIndex * itemHeight
+        const centerOffset = containerHeight / 2 - itemHeight / 2
+        const scrollPosition = Math.max(0, totalOffset - centerOffset)
+
+        container.scrollTo({
+          top: scrollPosition
+        })
+      }
+    }
+  })
+}
+
+// Debounced selection handler for better performance
+const handleSelectionChange = useDebounceFn(
+  (newSelection: typeof selectedObjects.value) => {
     if (newSelection.length > 0 && !disableScrollOnNextSelection.value) {
       for (const selectedObj of newSelection) {
         for (const { model } of modelsAndVersionIds.value) {
           const modelRootNodes = getRootNodesForModel(
             model.id,
-            worldTree.value,
-            stateResourceItems.value,
+            worldTree.value || null,
+            stateResourceItems.value as { objectId: string; modelId?: string }[],
             modelsAndVersionIds.value
           )
           const containsObject = findObjectInNodes(modelRootNodes, selectedObj.id)
@@ -389,17 +371,16 @@ watch(
             if (objectDepth > manualExpandLevel.value) {
               manualExpandLevel.value = objectDepth
             }
+
+            // Scroll to the selected item
+            scrollToSelectedItem(selectedObj.id)
           }
         }
       }
-
-      nextTick(() => {
-        setTimeout(() => {
-          scrollToSelectedItem(newSelection[0].id)
-        }, 100)
-      })
     }
   },
-  { deep: true }
+  100
 )
+
+watch(selectedObjects, handleSelectionChange, { deep: true })
 </script>

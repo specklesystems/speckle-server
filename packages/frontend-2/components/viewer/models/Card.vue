@@ -4,7 +4,7 @@
     <div>
       <!-- Model Header -->
       <div
-        class="sticky top-0 z-10 bg-foundation group flex items-center pl-1 pr-2 py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
+        class="group flex items-center pl-1 pr-2 py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
         @mouseenter="highlightObject"
         @mouseleave="unhighlightObject"
         @focusin="highlightObject"
@@ -112,8 +112,7 @@ import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   useHighlightedObjectsUtilities,
-  useFilterUtilities,
-  useSelectionUtilities
+  useFilterUtilities
 } from '~~/lib/viewer/composables/ui'
 import {
   useInjectedViewerState,
@@ -137,6 +136,7 @@ const props = defineProps<{
   model: ModelItem
   versionId: string
   last: boolean
+  first?: boolean
   expandLevel: number
   manualExpandLevel: number
   rootNodes: ExplorerNode[]
@@ -147,7 +147,6 @@ const { getTooltipProps } = useSmartTooltipDelay()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
-const { setSelectionFromObjectIds } = useSelectionUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const {
   viewer: {
@@ -254,8 +253,8 @@ const modelObjectIds = computed(() => {
   return refObject ? getTargetObjectIds({ id: refObject }) : []
 })
 
-const hiddenObjects = computed(() => filteringState.value?.hiddenObjectIds)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjectIds)
+const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
+const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 
 const isHidden = computed(() => {
   if (!hiddenObjects.value || modelObjectIds.value.length === 0) return false
@@ -335,9 +334,6 @@ const unhighlightObject = () => {
 }
 
 const selectObject = () => {
-  if (modelObjectIds.value.length === 0) return
-  setSelectionFromObjectIds(modelObjectIds.value)
-
   // Only expand if not already expanded
   if (!props.isExpanded) {
     emit('toggle-expansion')
