@@ -117,9 +117,9 @@
       ]"
       :style="`width: ${widthClass};`"
     >
-      <ViewerModelsPanel
-        v-if="resourceItems.length !== 0 && activePanel === 'models'"
-      />
+      <KeepAlive v-show="activePanel === 'models'">
+        <ViewerModelsPanel />
+      </KeepAlive>
       <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
         <ViewerFiltersPanel />
       </KeepAlive>

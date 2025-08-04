@@ -21,8 +21,9 @@ export class ShadedViewPipeline extends ProgressivePipeline {
 
     const edgesPipeline = options.edges ? new EdgesPipeline(speckleRenderer) : null
     /** We'll just render all objects outlines, not just opaque */
-    edgesPipeline?.depthPass.setVisibility(null)
-    edgesPipeline?.depthPassDynamic.setVisibility(null)
+    /** Alex 01.08.2025: I don't think this is needed anymore. */
+    // edgesPipeline?.depthPass.setVisibility(null)
+    // edgesPipeline?.depthPassDynamic.setVisibility(null)
 
     const depthSubPipelineDynamic =
       (options.edges ? edgesPipeline?.dynamicPasses : []) || []

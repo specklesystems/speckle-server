@@ -20,3 +20,20 @@ declare module 'knex/lib/query/querycompiler' {
 
   export default QueryCompiler
 }
+
+declare module 'knex/lib/migrations/migrate/sources/fs-migrations' {
+  declare class FsMigrations {
+    loadExtensions: string[]
+    sortDirsSeparately: boolean
+    migrationPaths: string[]
+
+    constructor(
+      migrationDirectories: string[],
+      sortDirsSeparately: boolean,
+      loadExtensions: string[]
+    )
+
+    getMigrationName(migration: { file: string }): string
+  }
+  export { FsMigrations }
+}
