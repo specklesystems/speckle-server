@@ -3,12 +3,13 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="select-none h-full">
-    <ViewerModelsVersions
-      v-if="showVersions"
-      :expanded-model-id="expandedModelId"
-      @close="handleVersionsClose"
-    />
-    <ViewerLayoutSidePanel v-else>
+    <div v-show="showVersions">
+      <ViewerModelsVersions
+        :expanded-model-id="expandedModelId"
+        @close="handleVersionsClose"
+      />
+    </div>
+    <ViewerLayoutSidePanel v-show="!showVersions">
       <template #title>
         <span v-if="objects.length === 1">Detached object</span>
         <span v-else-if="objects.length > 1">Detached objects</span>

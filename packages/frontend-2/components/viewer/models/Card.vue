@@ -4,7 +4,7 @@
     <div>
       <!-- Model Header -->
       <div
-        class="group flex items-center pl-px pr-2 py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
+        class="group flex items-center py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
         @mouseenter="highlightObject"
         @mouseleave="unhighlightObject"
         @focusin="highlightObject"
@@ -39,7 +39,7 @@
             {{ createdAtFormatted.relative }}
           </div>
         </div>
-        <div class="flex items-center ml-auto">
+        <div class="flex items-center ml-auto mr-2">
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
