@@ -2,9 +2,35 @@ import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
 import type { WorldTree } from '@speckle/viewer'
-import { sortBy, flatten } from 'lodash-es'
+import { sortBy, flatten, isArray, isString } from 'lodash-es'
+import { isObjectLike } from '~/lib/common/helpers/type'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
+
+const HIDDEN_SPECKLE_TYPES = [
+  'Objects.Other',
+  'ColorProxy',
+  'InstanceDefinitionProxy',
+  'GroupProxy',
+  'RenderMaterialProxy',
+  'Objects.BuiltElements.Revit.ProjectInfo',
+  'Objects.BuiltElements.View',
+  'Objects.BuiltElements.View3D'
+] as const
+
+const EXCLUDED_COLLECTION_KEYS = ['children', 'elements'] as const
+const DISPLAY_VALUE_KEY = 'displayValue'
+const MAX_EXPANSION_DEPTH = 20
+
+const isReferencedIdArray = (value: unknown): value is { referencedId: string }[] => {
+  return (
+    isArray(value) &&
+    value.length > 0 &&
+    isObjectLike(value[0]) &&
+    'referencedId' in value[0] &&
+    isString(value[0].referencedId)
+  )
+}
 
 export type UnifiedVirtualItem = {
   type: 'model-header' | 'tree-item'
@@ -22,19 +48,8 @@ export type UnifiedVirtualItem = {
 
 export function useTreeManagement() {
   const isAllowedType = (node: ExplorerNode) => {
-    const hiddenSpeckleTypes = [
-      'Objects.Other',
-      'ColorProxy',
-      'InstanceDefinitionProxy',
-      'GroupProxy',
-      'RenderMaterialProxy',
-      'Objects.BuiltElements.Revit.ProjectInfo',
-      'Objects.BuiltElements.View',
-      'Objects.BuiltElements.View3D'
-    ]
-
     const speckleType = node.raw?.speckle_type || ''
-    return !hiddenSpeckleTypes.some((substring) => speckleType.includes(substring))
+    return !HIDDEN_SPECKLE_TYPES.some((substring) => speckleType.includes(substring))
   }
 
   const flattenModelTree = (
@@ -69,10 +84,16 @@ export function useTreeManagement() {
 
       const arrayCollections = []
       for (const k of Object.keys(speckleData || {})) {
-        if (k === 'children' || k === 'elements' || k.includes('displayValue')) continue
+        if (
+          EXCLUDED_COLLECTION_KEYS.includes(
+            k as (typeof EXCLUDED_COLLECTION_KEYS)[number]
+          ) ||
+          k.includes(DISPLAY_VALUE_KEY)
+        )
+          continue
 
-        const val = speckleData?.[k] as { referencedId: string }[]
-        if (!isNonEmptyObjectArray(val)) continue
+        const val = speckleData?.[k]
+        if (!isReferencedIdArray(val)) continue
 
         const ids = val.map((ref) => ref.referencedId)
         const actualRawRefs =
@@ -131,12 +152,10 @@ export function useTreeManagement() {
             []
 
           if (
-            isNonEmptyObjectArray(speckleData?.elements) &&
+            isReferencedIdArray(speckleData?.elements) &&
             speckleData?.atomic === true
           ) {
-            const elementIds = (speckleData.elements as { referencedId: string }[]).map(
-              (obj) => obj.referencedId
-            )
+            const elementIds = speckleData.elements.map((obj) => obj.referencedId)
             const filteredItems = treeItems.filter((item) =>
               elementIds.includes(item.raw?.id as string)
             )
@@ -249,7 +268,7 @@ export function useTreeManagement() {
     expandedNodes: Set<string>,
     depth = 0
   ): boolean => {
-    if (!nodes || nodes.length === 0 || depth > 20) return false
+    if (!nodes || nodes.length === 0 || depth > MAX_EXPANSION_DEPTH) return false
 
     for (const node of nodes) {
       if (node.raw?.id === objectId) {
@@ -274,11 +293,16 @@ export function useTreeManagement() {
           const speckleData = node.raw
           if (speckleData) {
             for (const k of Object.keys(speckleData)) {
-              if (k === 'children' || k === 'elements' || k.includes('displayValue'))
+              if (
+                EXCLUDED_COLLECTION_KEYS.includes(
+                  k as (typeof EXCLUDED_COLLECTION_KEYS)[number]
+                ) ||
+                k.includes(DISPLAY_VALUE_KEY)
+              )
                 continue
 
-              const val = speckleData[k] as { referencedId: string }[]
-              if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+              const val = speckleData[k]
+              if (isReferencedIdArray(val)) {
                 const ids = val.map((ref) => ref.referencedId)
                 const hasMatchingChild = node.children?.some((child) =>
                   ids.includes(child.raw?.id as string)
