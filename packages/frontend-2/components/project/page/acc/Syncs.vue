@@ -240,11 +240,12 @@ const disabledItemPredicate = (item: ProjectPageLatestItemsModelItemFragment) =>
 
 onProjectAccSyncItemsUpdated((res) => {
   // TODO ACC: Mutate local cache instead of refetch
+
   refetchAccSyncItems()
   triggerNotification({
     type: ToastNotificationType.Info,
-    title: 'ACC sync model updated',
-    description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageUrn
+    title: `ACC sync model ${res.data?.projectAccSyncItemsUpdated.type.toLowerCase()}`,
+    description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileName
   })
 })
 
