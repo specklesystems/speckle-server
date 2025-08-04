@@ -2469,7 +2469,7 @@ export type ProjectWebhooksArgs = {
 export type ProjectAccSyncItemsUpdatedMessage = {
   __typename?: 'ProjectAccSyncItemsUpdatedMessage';
   accSyncItem?: Maybe<AccSyncItem>;
-  lineageUrn: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   type: ProjectAccSyncItemsUpdatedMessageType;
 };
 
@@ -7192,7 +7192,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
 
 export type ProjectAccSyncItemsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAccSyncItemsUpdatedMessage'] = ResolversParentTypes['ProjectAccSyncItemsUpdatedMessage']> = {
   accSyncItem?: Resolver<Maybe<ResolversTypes['AccSyncItem']>, ParentType, ContextType>;
-  lineageUrn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['ProjectAccSyncItemsUpdatedMessageType'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

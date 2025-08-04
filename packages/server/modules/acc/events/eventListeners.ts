@@ -12,7 +12,7 @@ export const reportAccSyncItemCreatedFactory =
       projectId,
       projectAccSyncItemsUpdated: {
         type: 'CREATED',
-        lineageUrn: syncItem.accFileLineageUrn,
+        id: syncItem.id,
         accSyncItem: syncItem
       }
     })
@@ -27,7 +27,7 @@ export const reportAccSyncItemUpdatedFactory =
       projectId,
       projectAccSyncItemsUpdated: {
         type: 'UPDATED',
-        lineageUrn: newSyncItem.accFileLineageUrn,
+        id: newSyncItem.id,
         accSyncItem: newSyncItem
       }
     })
@@ -36,13 +36,13 @@ export const reportAccSyncItemUpdatedFactory =
 export const reportAccSyncItemDeletedFactory =
   (deps: { publish: PublishSubscription }) =>
   async (payload: EventPayload<typeof AccSyncItemEvents.Deleted>) => {
-    const { projectId, syncItem } = payload.payload
+    const { projectId, id } = payload.payload
 
     await deps.publish(ProjectSubscriptions.ProjectAccSyncItemUpdated, {
       projectId,
       projectAccSyncItemsUpdated: {
         type: 'DELETED',
-        lineageUrn: syncItem.accFileLineageUrn,
+        id,
         accSyncItem: null
       }
     })

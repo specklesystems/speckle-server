@@ -137,7 +137,8 @@ const resolvers: Resolvers = {
 
       return await updateAccSyncItemFactory({
         getAccSyncItemById: getAccSyncItemByIdFactory({ db }),
-        upsertAccSyncItem: upsertAccSyncItemFactory({ db })
+        upsertAccSyncItem: upsertAccSyncItemFactory({ db }),
+        eventEmit: getEventBus().emit
       })({
         syncItem: input
       })
@@ -152,9 +153,11 @@ const resolvers: Resolvers = {
       })
 
       await deleteAccSyncItemFactory({
-        deleteAccSyncItemById: deleteAccSyncItemByIdFactory({ db })
+        deleteAccSyncItemById: deleteAccSyncItemByIdFactory({ db }),
+        eventEmit: getEventBus().emit
       })({
-        id: input.id
+        id: input.id,
+        projectId: input.projectId
       })
 
       return true

@@ -84,7 +84,7 @@ enum ProjectAccSyncItemsUpdatedMessageType {
 
 type ProjectAccSyncItemsUpdatedMessage {
   type: ProjectAccSyncItemsUpdatedMessageType!
-  lineageUrn: String!
+  id: String!
   accSyncItem: AccSyncItem
 }
 

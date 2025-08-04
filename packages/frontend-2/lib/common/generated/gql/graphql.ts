@@ -2444,7 +2444,7 @@ export type ProjectWebhooksArgs = {
 export type ProjectAccSyncItemsUpdatedMessage = {
   __typename?: 'ProjectAccSyncItemsUpdatedMessage';
   accSyncItem?: Maybe<AccSyncItem>;
-  lineageUrn: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   type: ProjectAccSyncItemsUpdatedMessageType;
 };
 
@@ -9121,7 +9121,7 @@ export type ProjectFieldArgs = {
 }
 export type ProjectAccSyncItemsUpdatedMessageFieldArgs = {
   accSyncItem: {},
-  lineageUrn: {},
+  id: {},
   type: {},
 }
 export type ProjectAccessRequestFieldArgs = {

@@ -1,8 +1,4 @@
 import type { AccSyncItem } from '@/modules/acc/domain/types'
-import type {
-  DeleteAccSyncItemInput,
-  UpdateAccSyncItemInput
-} from '@/modules/core/graph/generated/graphql'
 
 export const accSyncItemEventsNamespace = 'accSyncItems' as const
 
@@ -22,12 +18,10 @@ export type AccSyncItemEventsPayloads = {
     newSyncItem: AccSyncItem
     projectId: string
     userId?: string
-    input: UpdateAccSyncItemInput
   }
   [AccSyncItemEvents.Deleted]: {
-    syncItem: AccSyncItem
+    id: string
     projectId: string
     userId?: string
-    input: DeleteAccSyncItemInput
   }
 }

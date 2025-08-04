@@ -198,6 +198,7 @@ export const updateAccSyncItemFactory =
   (deps: {
     getAccSyncItemById: GetAccSyncItemById
     upsertAccSyncItem: UpsertAccSyncItem
+    eventEmit: EventBusEmit
   }): UpdateAccSyncItem =>
   async ({ syncItem }) => {
     const existingSyncItem = await deps.getAccSyncItemById({
@@ -216,17 +217,40 @@ export const updateAccSyncItemFactory =
 
     await deps.upsertAccSyncItem(newSyncItem)
 
+    await deps.eventEmit({
+      eventName: AccSyncItemEvents.Updated,
+      payload: {
+        oldSyncItem: existingSyncItem,
+        newSyncItem,
+        projectId: newSyncItem.projectId
+      }
+    })
+
     return newSyncItem
   }
 
-export type DeleteAccSyncItem = (params: { id: string }) => Promise<void>
+export type DeleteAccSyncItem = (params: {
+  id: string
+  projectId: string
+}) => Promise<void>
 
 export const deleteAccSyncItemFactory =
-  (deps: { deleteAccSyncItemById: DeleteAccSyncItemById }): DeleteAccSyncItem =>
-  async ({ id }) => {
+  (deps: {
+    deleteAccSyncItemById: DeleteAccSyncItemById
+    eventEmit: EventBusEmit
+  }): DeleteAccSyncItem =>
+  async ({ id, projectId }) => {
     const itemCount = await deps.deleteAccSyncItemById({ id })
 
     if (itemCount === 0) {
       throw new SyncItemNotFoundError()
     }
+
+    await deps.eventEmit({
+      eventName: AccSyncItemEvents.Deleted,
+      payload: {
+        id,
+        projectId
+      }
+    })
   }
