@@ -227,6 +227,7 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
 const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
 const isAutomateEnabled = useIsAutomateModuleEnabled()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isAccEnabled = useIsAccModuleEnabled()
 
 const pageTabItems = computed((): LayoutPageTabItem[] => {
   const items: LayoutPageTabItem[] = [
@@ -254,7 +255,6 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
   }
 
   if (isAccEnabled.value) {
-    //and the rest of checks
     items.push({
       title: 'ACC',
       id: 'acc'
@@ -275,8 +275,6 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
 
   return items
 })
-
-const isAccEnabled = ref(true) // TODO
 
 const findTabById = (id: string) =>
   pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
