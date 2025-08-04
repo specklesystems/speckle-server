@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { isArray } from 'lodash-es'
-import type { AccHub } from '~/lib/acc/types'
+import type { AccHub } from '@speckle/shared/acc'
 
 const props = defineProps<{
   hubs: AccHub[]

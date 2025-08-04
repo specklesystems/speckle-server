@@ -9,7 +9,7 @@ import type { Express } from 'express'
 import { z } from 'zod'
 import { db } from '@/db/knex'
 
-export const accWebhooks = (app: Express) => {
+export const setupAccWebhookEndpoints = (app: Express) => {
   const sessionMiddleware = sessionMiddlewareFactory()
   app.post('/api/v1/acc/webhook/callback', sessionMiddleware, async (req, res) => {
     logger.info({ hook: req.body?.hook, payload: req.body?.payload })

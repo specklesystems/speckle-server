@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AccTokens, AccUserInfo } from '~/lib/acc/types'
+import type { AccTokens, AccUserInfo } from '@speckle/shared/acc'
 // import { DocumentDuplicateIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{ projectId: string }>()

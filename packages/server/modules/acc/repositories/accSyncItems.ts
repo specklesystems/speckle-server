@@ -3,6 +3,7 @@ import type {
   CountAccSyncItems,
   DeleteAccSyncItemById,
   GetAccSyncItemById,
+  GetAccSyncItemsById,
   ListAccSyncItems,
   QueryAllAccSyncItems,
   UpdateAccSyncItemStatus,
@@ -23,10 +24,18 @@ export const getAccSyncItemByIdFactory =
     return (
       (await tables
         .accSyncItems(deps.db)
-        .select('*')
+        .select()
         .where(AccSyncItems.col.id, id)
         .first()) ?? null
     )
+  }
+
+export const getAccSyncItemsByIdFactory =
+  (deps: { db: Knex }): GetAccSyncItemsById =>
+  async ({ ids }) => {
+    if (!ids.length) return []
+
+    return await tables.accSyncItems(deps.db).select().whereIn(AccSyncItems.col.id, ids)
   }
 
 export const upsertAccSyncItemFactory =

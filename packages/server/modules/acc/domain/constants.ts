@@ -7,12 +7,12 @@ export const ImporterAutomateFunctions = {
 
 export const AccSyncItemStatuses = {
   // A new file version had been detected, and we are awaiting a processable file.
-  pending: 'PENDING',
+  pending: 'pending',
   // We are actively processing the new file version. (The Automate function has been triggered.)
-  syncing: 'SYNCING',
-  failed: 'FAILED',
-  paused: 'PAUSED',
-  succeeded: 'SUCCEEDED'
+  syncing: 'syncing',
+  failed: 'failed',
+  paused: 'paused',
+  succeeded: 'succeeded'
 } as const
 export type AccSyncItemStatus =
   (typeof AccSyncItemStatuses)[keyof typeof AccSyncItemStatuses]

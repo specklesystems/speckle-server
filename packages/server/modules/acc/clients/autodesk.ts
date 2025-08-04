@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 
+import type { AccTokens } from '@speckle/shared/acc'
 import type { AccRegion } from '@/modules/acc/domain/constants'
 import { AccRegions } from '@/modules/acc/domain/constants'
 import type { ModelDerivativeServiceDesignManifest } from '@/modules/acc/domain/types'
@@ -10,6 +11,7 @@ import {
 import { logger } from '@/observability/logging'
 import { isObjectLike } from 'lodash-es'
 import { z } from 'zod'
+import crypto from 'crypto'
 
 const invokeJsonRequest = async <T>(params: {
   url: string
@@ -41,12 +43,121 @@ const invokeJsonRequest = async <T>(params: {
   return (await response.json()) as T
 }
 
+interface BuildAuthorizeUrlOptions {
+  clientId: string
+  redirectUri: string
+  codeChallenge: string
+  scopes: string[]
+}
+
+interface ExchangeCodeOptions {
+  code: string
+  codeVerifier: string
+  clientId: string
+  clientSecret: string
+  redirectUri: string
+}
+
+const AccTokens = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  token_type: z.string(),
+  id_token: z.string(),
+  expires_in: z.number()
+})
+
+export const generateCodeVerifier = () => {
+  const codeVerifier = crypto.randomBytes(32).toString('base64url')
+  const codeChallenge = crypto
+    .createHash('sha256')
+    .update(codeVerifier)
+    .digest('base64url')
+  return { codeVerifier, codeChallenge }
+}
+
+export const buildAuthorizeUrl = ({
+  clientId,
+  redirectUri,
+  codeChallenge,
+  scopes
+}: BuildAuthorizeUrlOptions) => {
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: scopes.join(' '),
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256'
+  })
+
+  return `https://developer.api.autodesk.com/authentication/v2/authorize?${params.toString()}`
+}
+
+export const exchangeCodeForTokens = async ({
+  code,
+  codeVerifier,
+  clientId,
+  clientSecret,
+  redirectUri
+}: ExchangeCodeOptions): Promise<AccTokens> => {
+  const params = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: clientId,
+    client_secret: clientSecret,
+    redirect_uri: redirectUri,
+    code,
+    code_verifier: codeVerifier
+  })
+
+  const response = await fetch(
+    'https://developer.api.autodesk.com/authentication/v2/token',
+    {
+      method: 'POST',
+      body: params,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }
+  )
+
+  const data = await response.json()
+
+  return AccTokens.parse(data)
+}
+
+export const exchangeRefreshTokenForTokens = async (args: {
+  refresh_token: string
+}): Promise<AccTokens> => {
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    client_id: getAutodeskIntegrationClientId(),
+    client_secret: getAutodeskIntegrationClientSecret(),
+    refresh_token: args.refresh_token
+  })
+
+  const response = await fetch(
+    'https://developer.api.autodesk.com/authentication/v2/token',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params
+    }
+  )
+
+  const data = await response.json()
+
+  return AccTokens.parse(data)
+}
+
 type AutodeskIntegrationTokenData = {
   access_token: string
   token_type: string
   expires_in: number
 }
 
+/**
+ * Fetch a valid token for server-side operations as our custom integration
+ */
 export const getToken = async (): Promise<AutodeskIntegrationTokenData> => {
   const clientId = getAutodeskIntegrationClientId()
   const clientSecret = getAutodeskIntegrationClientSecret()

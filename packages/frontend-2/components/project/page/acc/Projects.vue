@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { isArray } from 'lodash-es'
-import type { AccProject } from '~/lib/acc/types'
+import type { AccProject } from '@speckle/shared/acc'
 
 const props = defineProps<{
   hubId: string

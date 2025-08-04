@@ -38,8 +38,8 @@
           <FormButton
             hide-text
             color="outline"
-            :icon-left="item.status === 'PAUSED' ? PlayIcon : PauseIcon"
-            @click="handleStatusSyncItem(item.id, item.status === 'PAUSED')"
+            :icon-left="item.status === 'paused' ? PlayIcon : PauseIcon"
+            @click="handleStatusSyncItem(item.id, item.status === 'paused')"
           />
           <FormButton
             hide-text
@@ -144,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AccTokens, AccHub, AccProject, AccItem } from '~/lib/acc/types'
+import type { AccTokens, AccHub, AccProject, AccItem } from '@speckle/shared/acc'
 import { ref, computed } from 'vue'
 import type {
   ProjectLatestModelsPaginationQueryVariables,
@@ -168,8 +168,6 @@ const props = defineProps<{
   tokens: AccTokens | undefined
   isLoggedIn: boolean
 }>()
-
-// TODO ACC: Need to think about data residency from "ACC > Speckle" and warn users accordingly
 
 const step = ref(0)
 
@@ -481,7 +479,7 @@ const handleStatusSyncItem = async (id: string, isPaused: boolean) => {
       input: {
         projectId: props.projectId,
         id,
-        status: isPaused ? 'PENDING' : 'PAUSED'
+        status: isPaused ? 'pending' : 'paused'
       }
     })
   } catch (error) {

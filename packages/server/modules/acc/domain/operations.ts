@@ -1,7 +1,10 @@
 import type { AccSyncItemStatus } from '@/modules/acc/domain/constants'
 import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { Exact } from 'type-fest'
 
-export type UpsertAccSyncItem = (item: AccSyncItem) => Promise<void>
+export type UpsertAccSyncItem = <Item extends Exact<AccSyncItem, Item>>(
+  item: Item
+) => Promise<void>
 
 export type UpdateAccSyncItemStatus = (args: {
   id: string
@@ -9,6 +12,8 @@ export type UpdateAccSyncItemStatus = (args: {
 }) => Promise<AccSyncItem | null>
 
 export type GetAccSyncItemById = (args: { id: string }) => Promise<AccSyncItem | null>
+
+export type GetAccSyncItemsById = (args: { ids: string[] }) => Promise<AccSyncItem[]>
 
 export type ListAccSyncItems = (args: {
   projectId: string

@@ -3,8 +3,9 @@
 import {
   buildAuthorizeUrl,
   exchangeCodeForTokens,
+  exchangeRefreshTokenForTokens,
   generateCodeVerifier
-} from '@/modules/acc/helpers/oidcHelper'
+} from '@/modules/acc/clients/autodesk'
 import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import {
@@ -15,7 +16,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import type { Express } from 'express'
 
-export const accOidc = (app: Express) => {
+export const setupAccOidcEndpoints = (app: Express) => {
   const corsMiddleware = corsMiddlewareFactory({
     corsConfig: {
       origin: [getServerOrigin(), getFrontendOrigin()],
@@ -101,30 +102,8 @@ export const accOidc = (app: Express) => {
       }
 
       try {
-        const params = new URLSearchParams({
-          grant_type: 'refresh_token',
-          client_id: getAutodeskIntegrationClientId(),
-          client_secret: getAutodeskIntegrationClientSecret(),
-          refresh_token
-        })
-
-        const response = await fetch(
-          'https://developer.api.autodesk.com/authentication/v2/token',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params
-          }
-        )
-
-        if (!response.ok) {
-          console.error(await response.text())
-          return res.status(500).json({ error: 'Failed to refresh token' })
-        }
-
-        const newTokens = await response.json()
+        const newTokens = await exchangeRefreshTokenForTokens({ refresh_token })
         req.session.accTokens = newTokens
-
         res.json(newTokens)
       } catch (error) {
         console.error('Error refreshing token:', error)

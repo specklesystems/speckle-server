@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/20/solid'
-import type { AccItem } from '~/lib/acc/types'
+import type { AccItem } from '@speckle/shared/acc'
 
 defineProps<{
   folderContent: AccItem

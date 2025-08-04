@@ -31,11 +31,11 @@ type AccSyncItem {
 }
 
 enum AccSyncItemStatus {
-  PENDING
-  SYNCING
-  FAILED
-  SUCCEEDED
-  PAUSED
+  pending
+  syncing
+  failed
+  succeeded
+  paused
 }
 
 input DeleteAccSyncItemInput {

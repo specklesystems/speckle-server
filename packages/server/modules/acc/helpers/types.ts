@@ -1,4 +1,4 @@
-import type { AccTokens } from '@/modules/acc/helpers/oidcHelper'
+import type { AccTokens } from '@speckle/shared/acc'
 import type { Session, SessionData } from 'express-session'
 
 declare module 'express-session' {

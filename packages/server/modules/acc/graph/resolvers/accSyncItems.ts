@@ -9,7 +9,6 @@ import {
 import {
   createAccSyncItemFactory,
   deleteAccSyncItemFactory,
-  getAccSyncItemFactory,
   getPaginatedAccSyncItemsFactory,
   updateAccSyncItemFactory
 } from '@/modules/acc/services/management'
@@ -40,7 +39,6 @@ import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
-import { getUserFactory } from '@/modules/core/repositories/users'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { authorizeResolver } from '@/modules/shared'
@@ -61,6 +59,12 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { AccModuleDisabledError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
+import { getFeatureFlags } from '@speckle/shared/environment'
+
+const { FF_ACC_INTEGRATION_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
+
+const enableAcc = FF_ACC_INTEGRATION_ENABLED && FF_AUTOMATE_MODULE_ENABLED
 
 const resolvers: Resolvers = {
   Mutation: {
@@ -164,8 +168,8 @@ const resolvers: Resolvers = {
     }
   },
   AccSyncItem: {
-    author: async (parent) => {
-      return await getUserFactory({ db })(parent.authorId)
+    author: async (parent, _args, context) => {
+      return await context.loaders.users.getUser.load(parent.authorId)
     }
   },
   Project: {
@@ -198,9 +202,13 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      return await getAccSyncItemFactory({
-        getAccSyncItemById: getAccSyncItemByIdFactory({ db })
-      })({ id })
+      const syncItem = await ctx.loaders.acc.getAccSyncItem.load(id)
+
+      if (!syncItem) {
+        throw new SyncItemNotFoundError()
+      }
+
+      return syncItem
     }
   },
   Subscription: {
@@ -231,4 +239,37 @@ const resolvers: Resolvers = {
   }
 }
 
-export default resolvers
+const disabledResolvers: Resolvers = {
+  Mutation: {
+    accSyncItemMutations: () => ({})
+  },
+  AccSyncItemMutations: {
+    async create() {
+      throw new AccModuleDisabledError()
+    },
+    async update() {
+      throw new AccModuleDisabledError()
+    },
+    async delete() {
+      throw new AccModuleDisabledError()
+    }
+  },
+  Project: {
+    async accSyncItem() {
+      throw new AccModuleDisabledError()
+    },
+    async accSyncItems() {
+      throw new AccModuleDisabledError()
+    }
+  },
+  Subscription: {
+    projectAccSyncItemsUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectAccSyncItemUpdated,
+        async () => false
+      )
+    }
+  }
+}
+
+export default enableAcc ? resolvers : disabledResolvers

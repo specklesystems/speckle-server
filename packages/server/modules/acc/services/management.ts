@@ -3,9 +3,12 @@ import {
   getToken,
   tryRegisterAccWebhook
 } from '@/modules/acc/clients/autodesk'
-import { ImporterAutomateFunctions } from '@/modules/acc/domain/constants'
+import {
+  AccSyncItemStatuses,
+  ImporterAutomateFunctions
+} from '@/modules/acc/domain/constants'
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
-import { isReadyForImport } from '@/modules/acc/domain/logic'
+import { isReadyForImport } from '@/modules/acc/helpers/svfUtils'
 import type {
   CountAccSyncItems,
   DeleteAccSyncItemById,
@@ -27,6 +30,7 @@ import {
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import cryptoRandomString from 'crypto-random-string'
+import type { Exact } from 'type-fest'
 
 export type CreateAccSyncItem = (params: {
   syncItem: Pick<
@@ -101,7 +105,7 @@ export const createAccSyncItemFactory =
       ...syncItem,
       id: cryptoRandomString({ length: 10 }),
       automationId: automation.id,
-      status: 'PENDING',
+      status: AccSyncItemStatuses.pending,
       authorId: creatorUserId,
       accWebhookId: webhookId ?? undefined,
       createdAt: new Date(),
@@ -134,20 +138,6 @@ export const createAccSyncItemFactory =
     if (!isReady) return newSyncItem
 
     return await deps.triggerSyncItemAutomation({ id: newSyncItem.id })
-  }
-
-export type GetAccSyncItem = (params: { id: string }) => Promise<AccSyncItem>
-
-export const getAccSyncItemFactory =
-  (deps: { getAccSyncItemById: GetAccSyncItemById }): GetAccSyncItem =>
-  async ({ id }) => {
-    const syncItem = await deps.getAccSyncItemById({ id })
-
-    if (!syncItem) {
-      throw new SyncItemNotFoundError()
-    }
-
-    return syncItem
   }
 
 export type GetPaginatedAccSyncItems = (params: {
@@ -190,8 +180,10 @@ export const getPaginatedAccSyncItemsFactory =
     }
   }
 
-export type UpdateAccSyncItem = (params: {
-  syncItem: Partial<AccSyncItem> & Pick<AccSyncItem, 'id'>
+export type UpdateAccSyncItem = <
+  Item extends Exact<Partial<AccSyncItem> & Pick<AccSyncItem, 'id'>, Item>
+>(params: {
+  syncItem: Item
 }) => Promise<AccSyncItem>
 
 export const updateAccSyncItemFactory =

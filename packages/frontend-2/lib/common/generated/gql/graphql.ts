@@ -74,11 +74,11 @@ export type AccSyncItemMutationsUpdateArgs = {
 };
 
 export const AccSyncItemStatus = {
-  Failed: 'FAILED',
-  Paused: 'PAUSED',
-  Pending: 'PENDING',
-  Succeeded: 'SUCCEEDED',
-  Syncing: 'SYNCING'
+  Failed: 'failed',
+  Paused: 'paused',
+  Pending: 'pending',
+  Succeeded: 'succeeded',
+  Syncing: 'syncing'
 } as const;
 
 export type AccSyncItemStatus = typeof AccSyncItemStatus[keyof typeof AccSyncItemStatus];

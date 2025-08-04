@@ -19,19 +19,19 @@ const runStatusClasses = (run: AccSyncItemStatus) => {
   const classParts = ['w-24 justify-center']
 
   switch (run) {
-    case 'SYNCING':
+    case 'syncing':
       classParts.push('bg-info-lighter')
       break
-    case 'PENDING':
+    case 'pending':
       classParts.push('bg-warning-lighter')
       break
-    case 'PAUSED':
+    case 'paused':
       classParts.push('bg-warning-lighter')
       break
-    case 'FAILED':
+    case 'failed':
       classParts.push('bg-danger-lighter')
       break
-    case 'SUCCEEDED':
+    case 'succeeded':
       classParts.push('bg-success-lighter')
       break
   }

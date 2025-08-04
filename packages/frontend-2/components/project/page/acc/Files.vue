@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AccItem } from '~/lib/acc/types'
+import type { AccItem } from '@speckle/shared/acc'
 import type { ProjectAccSyncItemFragment } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{

@@ -5,7 +5,7 @@ import {
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { db } from '@/db/knex'
 import { getManifestByUrn, getToken } from '@/modules/acc/clients/autodesk'
-import { isReadyForImport } from '@/modules/acc/domain/logic'
+import { isReadyForImport } from '@/modules/acc/helpers/svfUtils'
 import type { Logger } from '@/observability/logging'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
