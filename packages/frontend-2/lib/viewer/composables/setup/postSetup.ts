@@ -63,6 +63,9 @@ import {
   useApplySerializedState
 } from '~/lib/viewer/composables/serialization'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
+import { useEventBus } from '~/lib/core/composables/eventBus'
+import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -445,8 +448,8 @@ function useViewerCameraIntegration() {
   useViewerCameraTracker(
     () => {
       loadCameraDataFromViewer()
-    }
-    // { debounceWait: 100 }
+    },
+    { throttleWait: 100 }
   )
 
   useOnViewerLoadComplete(({ isInitial }) => {
@@ -928,6 +931,7 @@ const useViewerSavedViewSetup = () => {
   } = useInjectedViewerState()
   const applyState = useApplySerializedState()
   const { serializedStateId } = useViewerRealtimeActivityTracker()
+  const { on } = useEventBus()
 
   // Saved View ID will be unset, once the user does anything to the viewer that
   // changes it from the saved view
@@ -936,10 +940,35 @@ const useViewerSavedViewSetup = () => {
   const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
 
   const apply = async (state: SerializedViewerState) => {
-    await resourceIdString.update(resolvedResourceIdString.value)
+    // Combine resolved w/ old, resolved taking precedence - we dont want to unload
+    // other federated resources that are not a part of the saved view
+    const combinedIdString = resourceBuilder()
+      .addResources(resolvedResourceIdString.value)
+      .addNew(resourceIdString.value)
+      .toString()
+
+    await resourceIdString.update(combinedIdString)
     await applyState(state, StateApplyMode.SavedView)
     savedViewStateId.value = serializedStateId.value
   }
+
+  const update = (params: { viewId?: string }) => {
+    // If passing in viewId and it differs, apply and wait for that to finish
+    if (params.viewId && params.viewId !== savedViewId.value) {
+      savedViewId.value = params.viewId
+      return
+    }
+
+    // Re-apply current state
+    const state = validState(savedView.value?.viewerState)
+    if (!state) return
+    apply(state)
+  }
+
+  // Allow force update
+  on(ViewerEventBusKeys.UpdateSavedView, (params) => {
+    update(params)
+  })
 
   // Apply saved view state on initial load
   useOnViewerLoadComplete(async ({ isInitial }) => {

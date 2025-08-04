@@ -136,6 +136,12 @@ export const useViewerRealtimeActivityTracker = () => {
     }
   }
 
+  onUnmounted(() => {
+    // Reset activity state on unmount
+    state.value.activity = undefined
+    state.value.status = ViewerUserActivityStatus.Viewing
+  })
+
   return { activity, serializedState, status, update, serializedStateId, activityId }
 }
 

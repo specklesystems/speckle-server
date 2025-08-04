@@ -22,7 +22,7 @@ import { inject, ref, provide } from 'vue'
 import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { SpeckleViewer, isNonNullable } from '@speckle/shared'
+import { isNonNullable } from '@speckle/shared'
 import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
@@ -68,7 +68,17 @@ import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
-import { resourceBuilder } from '@speckle/shared/viewer/route'
+import {
+  createGetParamFromResources,
+  isAllModelsResource,
+  isModelFolderResource,
+  isModelResource,
+  isObjectResource,
+  parseUrlParameters,
+  resourceBuilder,
+  ViewerModelResource,
+  type ViewerResource
+} from '@speckle/shared/viewer/route'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -146,7 +156,7 @@ export type InjectableViewerState = Readonly<{
        * All currently requested identifiers. You
        * can write to this to change which resources should be loaded.
        */
-      items: AsyncWritableComputedRef<SpeckleViewer.ViewerRoute.ViewerResource[]>
+      items: AsyncWritableComputedRef<ViewerResource[]>
       /**
        * All currently requested identifiers in a comma-delimited string, the way it's
        * represented in the URL. Is writable also.
@@ -470,10 +480,9 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
   const getParam = computed(() => route.params.modelId as string)
 
   const resources = writableAsyncComputed({
-    get: () => SpeckleViewer.ViewerRoute.parseUrlParameters(getParam.value),
+    get: () => parseUrlParameters(getParam.value),
     set: async (newResources) => {
-      const modelId =
-        SpeckleViewer.ViewerRoute.createGetParamFromResources(newResources)
+      const modelId = createGetParamFromResources(newResources)
       await router.push({
         params: { modelId },
         query: route.query,
@@ -485,11 +494,15 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
   })
 
   // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
+  // + we can skip duplicate updates
   const resourceIdString = writableAsyncComputed({
-    get: () => SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value),
+    get: () => createGetParamFromResources(resources.value),
     set: async (newVal) => {
-      const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(newVal)
-      await resources.update(newResources)
+      const newResources = resourceBuilder().addResources(parseUrlParameters(newVal))
+      const currentResources = resourceBuilder().addResources(resources.value)
+      if (newResources.toString() === currentResources.toString()) return
+
+      await resources.update(newResources.toResources())
     },
     initialState: '',
     asyncRead: false
@@ -508,23 +521,19 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     const resourceArr = resources.value.slice()
 
     const resourceIdx = resourceArr.findIndex(
-      (r) => SpeckleViewer.ViewerRoute.isModelResource(r) && r.modelId === modelId
+      (r) => isModelResource(r) && r.modelId === modelId
     )
 
     if (resourceIdx !== -1) {
       // Replace
       const newResources = resources.value.slice()
-      newResources.splice(
-        resourceIdx,
-        1,
-        new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId)
-      )
+      newResources.splice(resourceIdx, 1, new ViewerModelResource(modelId, versionId))
 
       await resources.update(newResources)
     } else {
       // Add new one and allow de-duplication to do its thing
       await resources.update([
-        new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
+        new ViewerModelResource(modelId, versionId),
         ...resources.value
       ])
     }
@@ -620,20 +629,20 @@ function setupResponseResourceItems(
     const objectItems: ViewerResourceItem[] = []
     const allModelItems: ViewerResourceItem[] = []
     for (const group of resolvedResourceGroups.value) {
-      const [resource] = SpeckleViewer.ViewerRoute.parseUrlParameters(group.identifier)
+      const [resource] = parseUrlParameters(group.identifier)
 
       for (const item of group.items) {
-        if (SpeckleViewer.ViewerRoute.isModelResource(resource)) {
+        if (isModelResource(resource)) {
           if (resource.versionId) {
             versionItems.push(item)
           } else {
             modelItems.push(item)
           }
-        } else if (SpeckleViewer.ViewerRoute.isAllModelsResource(resource)) {
+        } else if (isAllModelsResource(resource)) {
           allModelItems.push(item)
-        } else if (SpeckleViewer.ViewerRoute.isModelFolderResource(resource)) {
+        } else if (isModelFolderResource(resource)) {
           folderItems.push(item)
-        } else if (SpeckleViewer.ViewerRoute.isObjectResource(resource)) {
+        } else if (isObjectResource(resource)) {
           objectItems.push(item)
         }
       }

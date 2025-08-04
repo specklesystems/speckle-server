@@ -28,7 +28,8 @@
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
 import type { ViewerSavedViewsPanelView_SavedViewFragment } from '~/lib/common/generated/gql/graphql'
-import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+import { useEventBus } from '~/lib/core/composables/eventBus'
+import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 graphql(`
   fragment ViewerSavedViewsPanelView_SavedView on SavedView {
@@ -48,14 +49,13 @@ const props = defineProps<{
   view: ViewerSavedViewsPanelView_SavedViewFragment
 }>()
 
-const {
-  savedViewId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  urlHashState: { savedViewId: urlSavedViewId }
-} = useInjectedViewerState()
+const eventBus = useEventBus()
 
 const apply = async () => {
-  savedViewId.value = props.view.id
-  // await urlSavedViewId.update(props.view.id)
+  // Force update, even if the view id is already set
+  // (in case this is a frustration click w/ the state not applying)
+  eventBus.emit(ViewerEventBusKeys.UpdateSavedView, {
+    viewId: props.view.id
+  })
 }
 </script>

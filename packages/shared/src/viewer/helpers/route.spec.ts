@@ -29,7 +29,7 @@ describe('Viewer Route Helpers', () => {
     it('parses $folderName as ViewerModelFolderResource', () => {
       const resource = parseResourceFromString('$myFolder')
       expect(resource.type).toBe('ModelFolder')
-      expect(resource.toString()).toBe('$myfolder')
+      expect(resource.toString()).toBe('$myFolder') // keep casing
     })
 
     it('parses 32-char string as ViewerObjectResource', () => {
@@ -48,7 +48,7 @@ describe('Viewer Route Helpers', () => {
     it('parses $FOLDERNAME with uppercase as ViewerModelFolderResource and lowercases it', () => {
       const resource = parseResourceFromString('$FOLDERNAME')
       expect(resource.type).toBe('ModelFolder')
-      expect(resource.toString()).toBe('$foldername')
+      expect(resource.toString()).toBe('$FOLDERNAME')
     })
 
     it('parses modelId@versionId with uppercase as ViewerModelResource and lowercases it', () => {
@@ -110,7 +110,7 @@ describe('Viewer Route Helpers', () => {
     it('lowercases all resource strings', () => {
       const resources = parseUrlParameters('ABC,$FOLDER,DEF@VER')
       expect(resources.map((r) => r.toString()).sort()).toEqual(
-        ['$folder', 'abc', 'def@ver'].sort()
+        ['$FOLDER', 'abc', 'def@ver'].sort()
       )
     })
 
@@ -178,7 +178,7 @@ describe('Viewer Route Helpers', () => {
         parseResourceFromString('$FolderA'),
         parseResourceFromString('$folderb')
       ]
-      expect(createGetParamFromResources(resources)).toBe('$foldera,$folderb')
+      expect(createGetParamFromResources(resources)).toBe('$FolderA,$folderb')
     })
   })
 
@@ -207,7 +207,7 @@ describe('Viewer Route Helpers', () => {
       const builder = resourceBuilder().addModelFolder('MyFolder')
       expect(builder.length).toBe(1)
       expect(builder.toResources()[0].type).toBe('ModelFolder')
-      expect(builder.toString()).toBe('$myfolder')
+      expect(builder.toString()).toBe('$MyFolder')
     })
 
     it('can add an object', () => {
@@ -289,6 +289,55 @@ describe('Viewer Route Helpers', () => {
       expect(arr).toHaveLength(1)
       arr.push(parseResourceFromString('def'))
       expect(builder.length).toBe(1)
+    })
+
+    it('can find an item', () => {
+      const builder = resourceBuilder().addModel('abc').addModel('def')
+      const found = builder.find((r) => r.toString() === 'def')
+      expect(found).toBeDefined()
+      expect(found?.toString()).toBe('def')
+    })
+
+    it('addNew only adds new resources', () => {
+      const builder = resourceBuilder().addModel('abc').addModel('def')
+      builder.addNew('abc') // should not add
+      expect(builder.length).toBe(2)
+      builder.addNew('abc@yaya') // should not add
+      expect(builder.length).toBe(2)
+      builder.addNew('xyz') // should add
+      expect(builder.length).toBe(3)
+      builder.addNew('$newFolder') // should add
+      expect(builder.length).toBe(4)
+      expect(builder.toString()).toBe('$newFolder,abc,def,xyz') // $newFolder should keep casing
+    })
+
+    it('addResources can add any kind of ViewerResources', () => {
+      const resources = [
+        'abc',
+        ['def@ver', '$folder'],
+        parseResourceFromString('abc2'),
+        parseResourceFromString('def2@ver'),
+        parseResourceFromString('$2folder'),
+        resourceBuilder().addModel('nestedModel')
+      ]
+
+      const builder = resourceBuilder()
+      for (const res of resources) {
+        builder.addResources(res)
+      }
+
+      expect(builder.length).toBe(7)
+      expect(builder.toString().split(',').sort()).toEqual(
+        [
+          'abc',
+          'abc2',
+          'def@ver',
+          'def2@ver',
+          'nestedmodel',
+          '$2folder',
+          '$folder'
+        ].sort()
+      )
     })
   })
 })

@@ -1,4 +1,4 @@
-import { uniq, uniqBy } from '#lodash'
+import { isString, uniq, uniqBy } from '#lodash'
 
 export const ViewerResourceType = <const>{
   Model: 'Model',
@@ -29,8 +29,8 @@ export class ViewerModelResource implements ViewerResource {
 
   constructor(modelId: string, versionId?: string) {
     this.type = ViewerResourceType.Model
-    this.modelId = modelId
-    this.versionId = versionId
+    this.modelId = modelId.toLowerCase()
+    this.versionId = versionId?.toLowerCase()
   }
 
   toString(): string {
@@ -45,7 +45,7 @@ export class ViewerVersionResource extends ViewerModelResource {
 
   constructor(modelId: string, versionId: string) {
     super(modelId, versionId)
-    this.versionId = versionId
+    this.versionId = versionId?.toLowerCase()
   }
 
   toJSON() {
@@ -59,7 +59,7 @@ export class ViewerObjectResource implements ViewerResource {
 
   constructor(objectId: string) {
     this.type = ViewerResourceType.Object
-    this.objectId = objectId
+    this.objectId = objectId.toLowerCase()
   }
 
   toString(): string {
@@ -77,7 +77,7 @@ export class ViewerModelFolderResource implements ViewerResource {
   }
 
   toString(): string {
-    return ('$' + this.folderName).toLowerCase()
+    return '$' + this.folderName
   }
 }
 
@@ -99,7 +99,6 @@ export const parseResourceFromString = (resourceId: string): ViewerResource => {
 export function parseUrlParameters(resourceGetParam: string) {
   if (!resourceGetParam?.length) return []
   const parts = resourceGetParam
-    .toLowerCase()
     .split(',')
     .filter((i) => i.trim().length)
     .sort()
@@ -116,7 +115,7 @@ export function parseUrlParameters(resourceGetParam: string) {
 }
 
 export function createGetParamFromResources(resources: ViewerResource[]) {
-  const resourceParts = uniq(resources.map((r) => r.toString().toLowerCase())).sort()
+  const resourceParts = uniq(resources.map((r) => r.toString())).sort()
   return resourceParts.join(',')
 }
 
@@ -133,39 +132,111 @@ export const isModelFolderResource = (
   r: ViewerResource
 ): r is ViewerModelFolderResource => r.type === ViewerResourceType.ModelFolder
 
+type StringViewerResources = string | string[]
+type ViewerResources =
+  | ViewerResourceBuilder
+  | ViewerResource[]
+  | ViewerResource
+  | StringViewerResources
+
+const toViewerResourceArray = (res: ViewerResources): ViewerResource[] => {
+  if (res instanceof ViewerResourceBuilder) {
+    return res.toResources()
+  }
+
+  const fixString = (r: string | ViewerResource): ViewerResource[] =>
+    isString(r) ? parseUrlParameters(r) : [r]
+
+  if (Array.isArray(res)) {
+    return res.flatMap(fixString)
+  } else {
+    return fixString(res)
+  }
+}
+
 class ViewerResourceBuilder implements Iterable<ViewerResource> {
   #resources: ViewerResource[] = []
 
+  #order() {
+    this.#resources = uniq(this.#resources).sort()
+  }
+
   addAllModels() {
     this.#resources.push(new ViewerAllModelsResource())
+    this.#order()
     return this
   }
   addModel(modelId: string, versionId?: string) {
     this.#resources.push(new ViewerModelResource(modelId, versionId))
+    this.#order()
     return this
   }
   addModelFolder(folderName: string) {
     this.#resources.push(new ViewerModelFolderResource(folderName))
+    this.#order()
     return this
   }
   addObject(objectId: string) {
     this.#resources.push(new ViewerObjectResource(objectId))
+    this.#order()
     return this
   }
-  addFromString(resourceIdStrings: string | string[]) {
-    const strings = Array.isArray(resourceIdStrings)
-      ? resourceIdStrings
-      : [resourceIdStrings]
+  /**
+   * @deprecated Use 'addResources' or 'addNew' instead
+   */
+  addFromString(stringResources: StringViewerResources) {
+    const strings = Array.isArray(stringResources) ? stringResources : [stringResources]
     for (const resourceIdString of strings) {
-      const resources = parseUrlParameters(resourceIdString)
+      const resources = parseUrlParameters(resourceIdString.toLowerCase())
       this.#resources.push(...resources)
     }
+
+    this.#order()
     return this
   }
-  addResources(resources: ViewerResource[]) {
-    this.#resources.push(...resources)
+  addResources(res: ViewerResources) {
+    this.#resources.push(...toViewerResourceArray(res))
+    this.#order()
     return this
   }
+
+  /**
+   * Only add those resources that are not already in the builder.
+   */
+  addNew(
+    incoming: ViewerResources,
+    options?: {
+      /**
+       * If true, will require exact version matches for model resources
+       * Default: false
+       */
+      requireExactMatch?: boolean
+    }
+  ) {
+    const { requireExactMatch = false } = options || {}
+    const resources = toViewerResourceArray(incoming)
+
+    const newResources: ViewerResource[] = this.#resources.slice()
+    for (const resource of resources) {
+      // check if newResources has a resource w/ same modelId (check w/ isModelResource)
+      if (isModelResource(resource) && !requireExactMatch) {
+        const existing = newResources.find(
+          (r) => isModelResource(r) && r.modelId === resource.modelId
+        )
+        if (!existing) {
+          newResources.push(resource)
+        }
+      } else if (!newResources.some((r) => r.toString() === resource.toString())) {
+        newResources.push(resource)
+      }
+    }
+
+    this.#resources = newResources
+    this.#order()
+
+    return this
+  }
+
   toString() {
     return createGetParamFromResources(this.#resources)
   }
@@ -179,7 +250,7 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
   clone() {
     const clone = new ViewerResourceBuilder()
     const resources = this.toString()
-    clone.addFromString(resources)
+    clone.addResources(resources)
     return clone
   }
   get length() {
