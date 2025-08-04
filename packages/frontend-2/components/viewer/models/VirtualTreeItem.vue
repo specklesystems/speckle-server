@@ -48,7 +48,7 @@
       <!-- Action buttons -->
       <div
         class="flex items-center group-hover:w-auto overflow-hidden shrink-0"
-        :class="isTreeItemHidden || isTreeItemIsolated ? 'w-auto' : 'w-0'"
+        :class="isTreeItemHidden || isTreeItemIsolated ? 'w-auto' : 'sm:w-0'"
       >
         <ViewerVisibilityButton
           :is-hidden="isTreeItemHidden"

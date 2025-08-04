@@ -51,7 +51,7 @@
               class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
               :class="{
                 'opacity-100 bg-highlight-3': showActionsMenu,
-                'opacity-0': !showActionsMenu
+                'sm:opacity-0': !showActionsMenu
               }"
               @click.stop="showActionsMenu = !showActionsMenu"
             >
