@@ -5,7 +5,7 @@
     :class="{
       'opacity-100 hover:bg-highlight-1': isIsolated,
       'opacity-100 hover:bg-highlight-3': !isIsolated && forceVisible,
-      'opacity-0 hover:bg-highlight-3': !isIsolated && !forceVisible
+      'sm:opacity-0 hover:bg-highlight-3': !isIsolated && !forceVisible
     }"
     @click.stop="$emit('click', $event)"
   >

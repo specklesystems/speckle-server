@@ -156,6 +156,10 @@ type ActivePanel =
   | 'filters'
   | 'devMode'
 
+const emit = defineEmits<{
+  forceClosePanels: []
+}>()
+
 const width = ref(264)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const height = ref(scrollableControlsContainer.value?.clientHeight)
@@ -246,7 +250,17 @@ registerShortcuts({
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
+  const wasNone = activePanel.value === 'none'
   activePanel.value = activePanel.value === panel ? 'none' : panel
+
+  // If a panel is being opened (not closed) on mobile, emit event to parent
+  if (wasNone && activePanel.value !== 'none' && isMobile.value) {
+    emit('forceClosePanels')
+  }
+}
+
+const forceClosePanel = () => {
+  activePanel.value = 'none'
 }
 
 const openDocs = () => {
@@ -260,5 +274,10 @@ onMounted(() => {
 
 watch(isSmallerOrEqualSm, (newVal) => {
   activePanel.value = newVal ? 'none' : 'models'
+})
+
+defineExpose({
+  forceClosePanel,
+  forceClosePanels: forceClosePanel
 })
 </script>

@@ -100,6 +100,10 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import type { ConcreteComponent } from 'vue'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
+const emit = defineEmits<{
+  forceClosePanels: []
+}>()
+
 enum ActionTypes {
   OpenInNewTab = 'open-in-new-tab'
 }
@@ -119,6 +123,7 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
+const isMobile = breakpoints.smaller('sm')
 const menuId = useId()
 const mp = useMixpanel()
 const { getTooltipProps } = useSmartTooltipDelay()
@@ -248,6 +253,10 @@ const onClose = () => {
   trackAndClearSelection()
 }
 
+const forceClose = () => {
+  sidebarOpen.value = false
+}
+
 onKeyStroke('Escape', () => {
   // Cleareance of any vis/iso state coming from here should happen in clearSelection()
   // Note: we're not using the trackAndClearSelection method beacuse
@@ -267,6 +276,10 @@ watch(
     // Dont open sidebar if a comment is open
     if (newLength !== 0 && !focusedThreadId.value) {
       sidebarOpen.value = true
+      // Emit event when sidebar opens on mobile
+      if (isMobile.value) {
+        emit('forceClosePanels')
+      }
     } else if (newLength === 0) {
       sidebarOpen.value = false
     }
@@ -295,4 +308,8 @@ watch(
     }
   }
 )
+
+defineExpose({
+  forceClose
+})
 </script>

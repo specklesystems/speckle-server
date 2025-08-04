@@ -41,7 +41,10 @@
               enter-from-class="opacity-0"
               enter-active-class="transition duration-1000"
             >
-              <ViewerAnchoredPoints />
+              <ViewerAnchoredPoints
+                ref="anchoredPoints"
+                @force-close-panels="() => closeAllPanels('threads')"
+              />
             </Transition>
           </div>
 
@@ -54,8 +57,14 @@
           <!-- Controls -->
           <!-- <ViewerControls v-if="showControls" class="relative z-20" /> -->
           <template v-if="showControls">
-            <ViewerControlsLeft />
-            <ViewerControlsBottom />
+            <ViewerControlsLeft
+              ref="leftControls"
+              @force-close-panels="() => closeAllPanels('left')"
+            />
+            <ViewerControlsBottom
+              ref="bottomControls"
+              @force-close-panels="() => closeAllPanels('bottom')"
+            />
             <ViewerControlsRight v-if="isMobile" />
           </template>
 
@@ -73,7 +82,11 @@
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerSelectionSidebar class="z-20" />
+            <ViewerSelectionSidebar
+              ref="selectionSidebar"
+              class="z-20"
+              @force-close-panels="() => closeAllPanels('selection')"
+            />
           </Transition>
           <div
             class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2 top-[3.75rem]"
@@ -155,6 +168,11 @@ const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
+
+const leftControls = ref()
+const bottomControls = ref()
+const selectionSidebar = ref()
+const anchoredPoints = ref()
 
 const resourceIdString = computed(() => route.params.modelId as string)
 const projectId = writableAsyncComputed({
@@ -294,4 +312,19 @@ watch(
   },
   { immediate: true }
 )
+
+const closeAllPanels = (except?: 'left' | 'bottom' | 'selection' | 'threads') => {
+  if (except !== 'left' && leftControls.value?.forceClosePanels) {
+    leftControls.value.forceClosePanels()
+  }
+  if (except !== 'bottom' && bottomControls.value?.forceClosePanels) {
+    bottomControls.value.forceClosePanels()
+  }
+  if (except !== 'selection' && selectionSidebar.value?.forceClose) {
+    selectionSidebar.value.forceClose()
+  }
+  if (except !== 'threads' && anchoredPoints.value?.forceCloseThreads) {
+    anchoredPoints.value.forceCloseThreads()
+  }
+}
 </script>
