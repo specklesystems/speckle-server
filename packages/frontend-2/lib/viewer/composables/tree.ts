@@ -225,10 +225,20 @@ export function useTreeManagement() {
   }
 
   const findObjectInNodes = (nodes: ExplorerNode[], objectId: string): boolean => {
+    if (!nodes || nodes.length === 0) return false
+
     for (const node of nodes) {
-      if (node.raw?.id === objectId) return true
-      if (node.children && findObjectInNodes(node.children, objectId)) return true
+      if (node.raw?.id === objectId) {
+        return true
+      }
+
+      if (node.children && node.children.length > 0) {
+        if (findObjectInNodes(node.children, objectId)) {
+          return true
+        }
+      }
     }
+
     return false
   }
 
@@ -239,28 +249,49 @@ export function useTreeManagement() {
     expandedNodes: Set<string>,
     depth = 0
   ): boolean => {
+    if (!nodes || nodes.length === 0 || depth > 20) return false
+
     for (const node of nodes) {
       if (node.raw?.id === objectId) {
-        if (node.children && node.children.length > 0) {
-          expandedNodes.add(node.raw.id)
-        }
         return true
       }
 
-      if (
-        node.children &&
-        expandNodesToShowObject(
-          node.children,
-          objectId,
-          modelId,
-          expandedNodes,
-          depth + 1
-        )
-      ) {
-        if (node.raw?.id) {
-          expandedNodes.add(node.raw.id)
+      if (node.children && node.children.length > 0) {
+        if (
+          expandNodesToShowObject(
+            node.children,
+            objectId,
+            modelId,
+            expandedNodes,
+            depth + 1
+          )
+        ) {
+          if (node.raw?.id) {
+            expandedNodes.add(node.raw.id)
+          }
+
+          // Also check if we need to expand array collection
+          const speckleData = node.raw
+          if (speckleData) {
+            for (const k of Object.keys(speckleData)) {
+              if (k === 'children' || k === 'elements' || k.includes('displayValue'))
+                continue
+
+              const val = speckleData[k] as { referencedId: string }[]
+              if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+                const ids = val.map((ref) => ref.referencedId)
+                const hasMatchingChild = node.children?.some((child) =>
+                  ids.includes(child.raw?.id as string)
+                )
+                if (hasMatchingChild) {
+                  expandedNodes.add(k)
+                }
+              }
+            }
+          }
+
+          return true
         }
-        return true
       }
     }
     return false
