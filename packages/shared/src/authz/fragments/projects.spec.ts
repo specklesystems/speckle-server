@@ -50,7 +50,8 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getProjectRole: async () => Roles.Stream.Contributor,
       getEnv: async () =>
         parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'true'
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
         }),
       ...overrides
     })
@@ -222,7 +223,8 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
       }),
       getEnv: async () =>
         parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'true'
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
         }),
       ...overrides
     })
@@ -286,7 +288,11 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
         id: 'projectId',
         workspaceId: null
       }),
-      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
+        }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -443,7 +449,8 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       getProjectRole: async () => Roles.Stream.Contributor,
       getEnv: async () =>
         parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'true'
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
         }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
@@ -682,7 +689,11 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       }),
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
+        }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -955,7 +966,8 @@ describe('ensureCanUseProjectWorkspacePlanFeatureFragment', () => {
         status: PaidWorkspacePlanStatuses.Valid
       }),
       getEnv: getEnvFake({
-        FF_WORKSPACES_MODULE_ENABLED: true
+        FF_WORKSPACES_MODULE_ENABLED: true,
+        FF_SAVED_VIEWS_ENABLED: true
       }),
       ...overrides
     })

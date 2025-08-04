@@ -36,6 +36,7 @@ import type { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useFeatureFlags } from '~/lib/common/composables/env'
 
 type AddonIncludedSelect = 'yes' | 'no'
 
@@ -59,6 +60,7 @@ const { hasUnlimitedAddon, plan, subscription, statusIsCanceled, seats } =
   useWorkspacePlan(props.slug)
 const mixpanel = useMixpanel()
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
+const featureFlags = useFeatureFlags()
 
 const showAddonSelect = ref<boolean>(true)
 const isLoading = ref<boolean>(false)
@@ -78,7 +80,7 @@ const title = computed(() => {
 })
 
 const usageExceedsNewPlanLimit = computed(() => {
-  const limits = WorkspacePlanConfigs()[props.plan].limits
+  const limits = WorkspacePlanConfigs({ featureFlags })[props.plan].limits
   const modelLimit = limits.modelCount
   const projectLimit = limits.projectCount
 

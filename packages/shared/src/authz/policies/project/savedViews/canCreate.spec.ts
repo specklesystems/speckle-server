@@ -24,7 +24,10 @@ const buildSUT = (overrides?: OverridesOf<typeof canCreateSavedViewPolicy>) =>
     getProject: getProjectFake({
       id: 'project-id'
     }),
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () =>
+      parseFeatureFlags({
+        FF_SAVED_VIEWS_ENABLED: 'true'
+      }),
     getServerRole: async () => Roles.Server.User,
     getWorkspaceRole: async () => null,
     getWorkspace: async () => null,
@@ -59,7 +62,8 @@ describe('canCreateSavedViewPolicy', () => {
         }),
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_SAVED_VIEWS_ENABLED: 'true'
           }),
         getWorkspaceRole: async () => Roles.Workspace.Admin,
         getProjectRole: async () => null,

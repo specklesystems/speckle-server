@@ -378,9 +378,12 @@ export const ensureCanUseWorkspacePlanFeatureFragment: AuthPolicyEnsureFragment<
 
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
     if (!workspacePlan) return err(new WorkspaceNoAccessError())
+
+    const featureFlags = await loaders.getEnv()
     const canUseFeature = workspacePlanHasAccessToFeature({
       plan: workspacePlan.name,
-      feature
+      feature,
+      featureFlags
     })
     return canUseFeature ? ok() : err(new WorkspacePlanNoFeatureAccessError())
   }

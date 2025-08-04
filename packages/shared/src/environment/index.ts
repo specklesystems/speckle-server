@@ -1,11 +1,6 @@
 import { has } from '#lodash'
 import { parseEnv } from 'znv'
 import { z } from 'zod'
-import {
-  FeatureFlags,
-  getFeatureFlags as baseGetFeatureFlags,
-  loadFeatureFlags
-} from './featureFlags.js'
 
 // Convenience variable to override below individual feature flags, which has the effect of setting all to 'false' (disabled)
 // Takes precedence over ENABLE_ALL_FFS
@@ -161,26 +156,32 @@ export const parseFeatureFlags = (
   return res
 }
 
-let processFlagsLoaded = false
+let parsedFlags: FeatureFlags | undefined
 
-/**
- * Get the current feature flags from process.env and retain them in-memory
- * ONLY SAFE FOR NODE.JS ENVIRONMENTS
- */
-export const getFeatureFlags: typeof baseGetFeatureFlags = () => {
-  if (!processFlagsLoaded) {
-    if (typeof process === 'undefined' || !process.env) {
-      throw new Error('Cannot autoload feature flags outside of a Node.js environment.')
-    }
-
-    // allow reading from process.env
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    loadFeatureFlags(parseFeatureFlags(process.env, { forceInputs: false }))
-    processFlagsLoaded = true
-  }
-
-  return baseGetFeatureFlags()
+export type FeatureFlags = {
+  FF_AUTOMATE_MODULE_ENABLED: boolean
+  FF_GENDOAI_MODULE_ENABLED: boolean
+  FF_WORKSPACES_MODULE_ENABLED: boolean
+  FF_WORKSPACES_SSO_ENABLED: boolean
+  FF_GATEKEEPER_MODULE_ENABLED: boolean
+  FF_BILLING_INTEGRATION_ENABLED: boolean
+  FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
+  FF_FORCE_ONBOARDING: boolean
+  FF_MOVE_PROJECT_REGION_ENABLED: boolean
+  FF_NO_PERSONAL_EMAILS_ENABLED: boolean
+  FF_RETRY_ERRORED_PREVIEWS_ENABLED: boolean
+  FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
+  FF_RHINO_FILE_IMPORTER_ENABLED: boolean
+  FF_BACKGROUND_JOBS_ENABLED: boolean
+  FF_LEGACY_FILE_IMPORTS_ENABLED: boolean
+  FF_LEGACY_IFC_IMPORTER_ENABLED: boolean
+  FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
+  FF_SAVED_VIEWS_ENABLED: boolean
 }
 
-export type { FeatureFlags }
+export function getFeatureFlags(): FeatureFlags {
+  //@ts-expect-error this way, the parse function typing is a lot better
+  if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env, { forceInputs: false })
+  return parsedFlags
+}

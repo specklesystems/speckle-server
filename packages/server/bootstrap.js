@@ -11,7 +11,6 @@ import { initOpenTelemetry } from '@/observability/otel'
 import { patchKnex } from '@/modules/core/patches/knex'
 import { appRoot, packageRoot, isTsMode } from '#/root.js'
 import inspector from 'node:inspector'
-import { getFeatureFlags } from '@speckle/shared/environment'
 
 /**
  * Bootstrap module that should be imported at the very top of each entry point module
@@ -47,9 +46,6 @@ if ((isTestEnv() || isDevEnv()) && startDebugger) {
 
 // Load dotenv
 dotenv.config({ path: `${packageRoot}/.env` })
-
-// Load feature flags
-getFeatureFlags() // load them in-memory so that @speckle/shared internals can use them too
 
 // knex is a singleton controlled by module so can't wait til app init
 initOpenTelemetry()

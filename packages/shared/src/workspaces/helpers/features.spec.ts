@@ -13,8 +13,14 @@ describe('workspacePlanHasAccessToFeature', () => {
 
     describe.each(allPlans)('should work for %s plan', (plan) => {
       it.each(allFeatures)('%s feature combination', (feature) => {
-        const expectedResult = WorkspacePlanConfigs()[plan].features.includes(feature)
-        const actualResult = workspacePlanHasAccessToFeature({ plan, feature })
+        const expectedResult = WorkspacePlanConfigs({ featureFlags: undefined })[
+          plan
+        ].features.includes(feature)
+        const actualResult = workspacePlanHasAccessToFeature({
+          plan,
+          feature,
+          featureFlags: undefined
+        })
 
         expect(
           actualResult,

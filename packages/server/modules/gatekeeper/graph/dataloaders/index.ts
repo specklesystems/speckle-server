@@ -81,14 +81,15 @@ const dataLoadersDefinition = defineRequestDataloaders(
             const workspacePlans = await getWorkspacePlansByWorkspaceId({
               workspaceIds: workspaceIds.slice()
             })
+            const featureFlags = getFeatureFlags()
 
             return workspaceIds.map((workspaceId) => {
               const plan = workspacePlans[workspaceId]
               if (!plan) return null
 
               const config = {
-                ...WorkspacePaidPlanConfigs(),
-                ...WorkspaceUnpaidPlanConfigs()
+                ...WorkspacePaidPlanConfigs({ featureFlags }),
+                ...WorkspaceUnpaidPlanConfigs({ featureFlags })
               }
               return config[plan.name]?.limits || null
             })
