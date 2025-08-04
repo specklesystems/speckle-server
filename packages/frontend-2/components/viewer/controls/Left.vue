@@ -111,7 +111,7 @@
       v-show="activePanel !== 'none'"
       ref="scrollableControlsContainer"
       :class="[
-        'simple-scrollbar overflow-x-hidden bg-foundation absolute z-10 left-[calc(2.5rem+1px)] top-[-1px] bottom-[-1px] overflow-y-auto border-outline-2 border border-l-0 rounded-lg rounded-tl-none rounded-bl-none ',
+        'bg-foundation absolute z-10 left-[calc(2.5rem+1px)] top-[-1px] bottom-[-1px] overflow-hidden border-outline-2 border border-l-0 rounded-lg rounded-tl-none rounded-bl-none ',
         hasActivePanel ? 'opacity-100' : 'opacity-0',
         isEmbedEnabled ? '' : 'lg:left-[calc(3rem+1px)] lg:border-none lg:rounded-none'
       ]"

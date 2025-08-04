@@ -6,6 +6,7 @@ import { sortBy, flatten, isArray, isString } from 'lodash-es'
 import { isObjectLike } from '~/lib/common/helpers/type'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
+type ModelWithVersion = { model: ModelItem; versionId: string }
 
 const HIDDEN_SPECKLE_TYPES = [
   'Objects.Other',
@@ -36,7 +37,7 @@ export type UnifiedVirtualItem = {
   type: 'model-header' | 'tree-item'
   id: string
   modelId: string
-  data: ExplorerNode | { model: ModelItem; versionId: string }
+  data: ExplorerNode | ModelWithVersion
   indent?: number
   hasChildren?: boolean
   isExpanded?: boolean
@@ -104,16 +105,15 @@ export function useTreeManagement() {
 
         if (actualRawRefs.length === 0) continue
 
-        const modelCollectionItem = {
+        const modelCollectionItem: ExplorerNode = {
           raw: {
             name: k,
             id: k,
             speckle_type: 'Array Collection', // eslint-disable-line camelcase
             children: val
           },
-          children: actualRawRefs,
-          expanded: false
-        } as ExplorerNode
+          children: actualRawRefs
+        }
 
         arrayCollections.push(modelCollectionItem)
       }
