@@ -4,7 +4,7 @@
     <div>
       <!-- Model Header -->
       <div
-        class="group flex items-center pl-1 pr-2 py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
+        class="group flex items-center pl-px pr-2 py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
         @mouseenter="highlightObject"
         @mouseleave="unhighlightObject"
         @focusin="highlightObject"
