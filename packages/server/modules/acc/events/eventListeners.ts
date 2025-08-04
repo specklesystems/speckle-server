@@ -8,6 +8,8 @@ export const reportAccSyncItemCreatedFactory =
   async (payload: EventPayload<typeof AccSyncItemEvents.Created>) => {
     const { projectId, syncItem } = payload.payload
 
+    console.log('ACC REPORT SYNC ITEM CREATED')
+
     await deps.publish(ProjectSubscriptions.ProjectAccSyncItemUpdated, {
       projectId,
       projectAccSyncItemsUpdated: {
