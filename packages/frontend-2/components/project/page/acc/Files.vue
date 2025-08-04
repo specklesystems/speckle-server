@@ -8,9 +8,6 @@
           :folder-content="item"
           :loading="loading"
           :selected="item.id === selectedFolderContent?.id"
-          :disabled="
-            syncItems.find((si) => si.accFileLineageUrn === item.id) !== undefined
-          "
           @select="(i) => $emit('select', i)"
         ></ProjectPageAccFileItem>
       </div>
