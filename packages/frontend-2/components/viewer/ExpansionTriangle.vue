@@ -1,13 +1,10 @@
 <template>
   <button
     type="button"
-    class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
+    class="text-foreground-2 hover:text-foreground rounded-md h-8 w-4 flex items-center justify-center shrink-0"
     @click.stop="$emit('click')"
   >
-    <IconTriangle
-      class="w-4 h-4 text-foreground-2"
-      :class="isExpanded ? 'rotate-90' : ''"
-    />
+    <IconTriangle class="w-4 h-4" :class="isExpanded ? 'rotate-90' : ''" />
     <span class="sr-only">
       {{ isExpanded ? 'Collapse' : 'Expand' }}
     </span>
