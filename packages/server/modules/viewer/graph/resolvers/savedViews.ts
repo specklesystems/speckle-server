@@ -14,7 +14,7 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { LogicError, NotFoundError } from '@/modules/shared/errors'
+import { LogicError, NotFoundError, NotImplementedError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { buildDefaultGroupId } from '@/modules/viewer/helpers/savedViews'
 import {
@@ -41,6 +41,7 @@ import { parseResourceFromString, resourceBuilder } from '@speckle/shared/viewer
 import { formatSerializedViewerState } from '@speckle/shared/viewer/state'
 import type { Knex } from 'knex'
 import { ungroupedScenesGroupTitle } from '@speckle/shared/saved-views'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const buildGetViewerResourceGroups = (params: { projectDb: Knex }) => {
   const { projectDb } = params
@@ -254,4 +255,38 @@ const resolvers: Resolvers = {
     }
   }
 }
-export default resolvers
+
+const disabledMessage = 'Saved views are disabled on this server'
+const disabledResolvers: Resolvers = {
+  Project: {
+    savedViewGroups: () => {
+      throw new NotImplementedError(disabledMessage)
+    },
+    savedViewGroup: () => {
+      throw new NotImplementedError(disabledMessage)
+    },
+    ungroupedViewGroup: () => {
+      throw new NotImplementedError(disabledMessage)
+    },
+    savedView: () => {
+      throw new NotImplementedError(disabledMessage)
+    }
+  },
+  ProjectMutations: {
+    savedViewMutations: () => {
+      throw new NotImplementedError(disabledMessage)
+    }
+  },
+  ProjectPermissionChecks: {
+    canCreateSavedView: () => {
+      return {
+        authorized: false,
+        message: disabledMessage,
+        code: 'SAVED_VIEWS_DISABLED',
+        payload: null
+      }
+    }
+  }
+}
+
+export default getFeatureFlags().FF_SAVED_VIEWS_ENABLED ? resolvers : disabledResolvers

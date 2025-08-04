@@ -121,8 +121,9 @@ const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected'
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
 
-const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
-const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
+const planLimits = computed(() => WorkspacePlanConfigs()[props.plan].limits)
+const planFeatures = computed(() => WorkspacePlanConfigs()[props.plan].features)
+
 const commonFeatures = shallowRef([
   {
     displayName: 'Unlimited members and guests',

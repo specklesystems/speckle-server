@@ -44,7 +44,7 @@ export const useWorkspaceLimits = (params: {
         commentHistory: null
       }
 
-    const planConfig = WorkspacePlanConfigs[planName]
+    const planConfig = WorkspacePlanConfigs()[planName]
     return planConfig?.limits
   })
 

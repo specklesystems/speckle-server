@@ -78,7 +78,7 @@ const title = computed(() => {
 })
 
 const usageExceedsNewPlanLimit = computed(() => {
-  const limits = WorkspacePlanConfigs[props.plan].limits
+  const limits = WorkspacePlanConfigs()[props.plan].limits
   const modelLimit = limits.modelCount
   const projectLimit = limits.projectCount
 

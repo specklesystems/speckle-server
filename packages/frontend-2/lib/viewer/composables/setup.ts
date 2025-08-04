@@ -79,6 +79,7 @@ import {
   ViewerModelResource,
   type ViewerResource
 } from '@speckle/shared/viewer/route'
+import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -708,6 +709,7 @@ function setupResponseResourceData(
   const globalError = useError()
   const { triggerNotification } = useGlobalToast()
   const logger = useLogger()
+  const savedViewsEnabled = useAreSavedViewsEnabled()
 
   const {
     savedViewId,
@@ -922,7 +924,7 @@ function setupResponseResourceData(
         savedViewId: savedViewId.value!
       }),
       {
-        enabled: computed(() => !!savedViewId.value)
+        enabled: computed(() => !!savedViewId.value && savedViewsEnabled)
       }
     )
 

@@ -87,8 +87,8 @@ const dataLoadersDefinition = defineRequestDataloaders(
               if (!plan) return null
 
               const config = {
-                ...WorkspacePaidPlanConfigs,
-                ...WorkspaceUnpaidPlanConfigs
+                ...WorkspacePaidPlanConfigs(),
+                ...WorkspaceUnpaidPlanConfigs()
               }
               return config[plan.name]?.limits || null
             })

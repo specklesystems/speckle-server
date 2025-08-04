@@ -42,7 +42,7 @@ const mixpanel = useMixpanel()
 
 const planConfig = computed(() => {
   if (!props.plan) return null
-  return WorkspacePlanConfigs[props.plan]
+  return WorkspacePlanConfigs()[props.plan]
 })
 
 const explorePlansButton: LayoutDialogButton = {

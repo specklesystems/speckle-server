@@ -53,7 +53,7 @@ import dayjs from 'dayjs'
 import { intersection, merge, times } from 'lodash-es'
 import type { PartialDeep } from 'type-fest'
 
-const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED, FF_SAVED_VIEWS_ENABLED } = getFeatureFlags()
 
 const fakeScreenshot =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='
@@ -85,7 +85,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
  * whether there's filtering
  */
 
-describe('Saved Views GraphQL CRUD', () => {
+;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
   let apollo: TestApolloServer
   let me: BasicTestUser
   let guest: BasicTestUser

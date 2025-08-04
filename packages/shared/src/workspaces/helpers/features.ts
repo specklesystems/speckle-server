@@ -7,6 +7,7 @@ import {
   WorkspacePlans
 } from './plans.js'
 import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
+import { getFeatureFlags } from '../../environment/featureFlags.js'
 
 /**
  * WORKSPACE FEATURES
@@ -105,9 +106,9 @@ const baseFeatures = [
   WorkspacePlanFeatures.EmbedPrivateProjects
 ] as const
 
-export const WorkspacePaidPlanConfigs: {
+export const WorkspacePaidPlanConfigs: () => {
   [plan in PaidWorkspacePlans]: WorkspacePlanConfig<plan>
-} = {
+} = () => ({
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
     features: [...baseFeatures],
@@ -136,7 +137,9 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.SavedViews
+      ...(getFeatureFlags().FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: {
       projectCount: 10,
@@ -153,7 +156,9 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.SavedViews
+      ...(getFeatureFlags().FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: {
       projectCount: null,
@@ -162,11 +167,11 @@ export const WorkspacePaidPlanConfigs: {
       commentHistory: null
     }
   }
-}
+})
 
-export const WorkspaceUnpaidPlanConfigs: {
+export const WorkspaceUnpaidPlanConfigs: () => {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
-} = {
+} = () => ({
   [UnpaidWorkspacePlans.Enterprise]: {
     plan: UnpaidWorkspacePlans.Enterprise,
     features: [
@@ -176,7 +181,9 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
       WorkspacePlanFeatures.ExclusiveMembership,
-      WorkspacePlanFeatures.SavedViews
+      ...(getFeatureFlags().FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: unlimited
   },
@@ -189,7 +196,9 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
       WorkspacePlanFeatures.ExclusiveMembership,
-      WorkspacePlanFeatures.SavedViews
+      ...(getFeatureFlags().FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: unlimited
   },
@@ -201,16 +210,18 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.SavedViews
+      ...(getFeatureFlags().FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: unlimited
   },
   [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
-    ...WorkspacePaidPlanConfigs.teamUnlimited,
+    ...WorkspacePaidPlanConfigs().teamUnlimited,
     plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
   },
   [UnpaidWorkspacePlans.ProUnlimitedInvoiced]: {
-    ...WorkspacePaidPlanConfigs.proUnlimited,
+    ...WorkspacePaidPlanConfigs().proUnlimited,
     plan: UnpaidWorkspacePlans.ProUnlimitedInvoiced
   },
   [UnpaidWorkspacePlans.Free]: {
@@ -223,12 +234,12 @@ export const WorkspaceUnpaidPlanConfigs: {
       commentHistory: { value: 7, unit: 'day' }
     }
   }
-}
+})
 
-export const WorkspacePlanConfigs = {
-  ...WorkspacePaidPlanConfigs,
-  ...WorkspaceUnpaidPlanConfigs
-}
+export const WorkspacePlanConfigs = () => ({
+  ...WorkspacePaidPlanConfigs(),
+  ...WorkspaceUnpaidPlanConfigs()
+})
 
 /**
  * Checks if a workspace exceeds its plan limits for projects and models
@@ -240,7 +251,7 @@ export const workspaceExceedsPlanLimit = (
 ): boolean => {
   if (!plan) return false
 
-  const planConfig = WorkspacePlanConfigs[plan]
+  const planConfig = WorkspacePlanConfigs()[plan]
   if (!planConfig) return false
 
   const limits = planConfig.limits
@@ -260,7 +271,7 @@ export const workspaceReachedPlanLimit = (
 ): boolean => {
   if (!plan) return false
 
-  const planConfig = WorkspacePlanConfigs[plan]
+  const planConfig = WorkspacePlanConfigs()[plan]
   if (!planConfig) return false
 
   const limits = planConfig.limits
@@ -276,7 +287,7 @@ export const workspacePlanHasAccessToFeature = ({
   plan: WorkspacePlans
   feature: WorkspacePlanFeatures
 }): boolean => {
-  const planConfig = WorkspacePlanConfigs[plan]
+  const planConfig = WorkspacePlanConfigs()[plan]
   const hasAccess = planConfig.features.includes(feature)
   return hasAccess
 }

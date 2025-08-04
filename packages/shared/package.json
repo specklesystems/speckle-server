@@ -90,6 +90,7 @@
       "./environment/db": "./src/environment/db.ts",
       "./environment/node": "./src/environment/node.ts",
       "./environment/multiRegionConfig": "./src/environment/db.ts",
+      "./environment/featureFlags": "./src/environment/featureFlags.ts",
       "./observability": "./src/observability/index.ts",
       "./observability/mixpanel": "./src/observability/mixpanel.ts",
       "./blobs": "./src/blobs/index.ts",
@@ -170,6 +171,16 @@
       "require": {
         "types": "./dist/commonjs/environment/db.d.ts",
         "default": "./dist/commonjs/environment/db.js"
+      }
+    },
+    "./environment/featureFlags": {
+      "import": {
+        "types": "./dist/esm/environment/featureFlags.d.ts",
+        "default": "./dist/esm/environment/featureFlags.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/featureFlags.d.ts",
+        "default": "./dist/commonjs/environment/featureFlags.js"
       }
     },
     "./observability": {
