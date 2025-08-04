@@ -74,6 +74,13 @@ const resolvers: Resolvers = {
     async create(_parent, args, ctx) {
       const { input } = args
 
+      const authResult = await ctx.authPolicies.project.canUpdateAccIntegrationSettings(
+        {
+          userId: ctx.userId,
+          projectId: input.projectId
+        }
+      )
+      throwIfAuthNotOk(authResult)
       throwIfResourceAccessNotAllowed({
         resourceId: input.projectId,
         resourceAccessRules: ctx.resourceAccessRules,
@@ -133,6 +140,13 @@ const resolvers: Resolvers = {
     async update(_parent, args, ctx) {
       const { input } = args
 
+      const authResult = await ctx.authPolicies.project.canUpdateAccIntegrationSettings(
+        {
+          userId: ctx.userId,
+          projectId: input.projectId
+        }
+      )
+      throwIfAuthNotOk(authResult)
       throwIfResourceAccessNotAllowed({
         resourceId: input.projectId,
         resourceAccessRules: ctx.resourceAccessRules,
@@ -150,6 +164,13 @@ const resolvers: Resolvers = {
     async delete(_parent, args, ctx) {
       const { input } = args
 
+      const authResult = await ctx.authPolicies.project.canUpdateAccIntegrationSettings(
+        {
+          userId: ctx.userId,
+          projectId: input.projectId
+        }
+      )
+      throwIfAuthNotOk(authResult)
       throwIfResourceAccessNotAllowed({
         resourceId: input.projectId,
         resourceAccessRules: ctx.resourceAccessRules,
@@ -176,6 +197,11 @@ const resolvers: Resolvers = {
     async accSyncItems(parent, args, ctx) {
       const { cursor = null, limit = null } = args
 
+      const authResult = await ctx.authPolicies.project.canReadAccIntegrationSettings({
+        userId: ctx.userId,
+        projectId: parent.id
+      })
+      throwIfAuthNotOk(authResult)
       throwIfResourceAccessNotAllowed({
         resourceId: parent.id,
         resourceAccessRules: ctx.resourceAccessRules,
@@ -196,6 +222,11 @@ const resolvers: Resolvers = {
     async accSyncItem(parent, args, ctx) {
       const { id } = args
 
+      const authResult = await ctx.authPolicies.project.canReadAccIntegrationSettings({
+        userId: ctx.userId,
+        projectId: parent.id
+      })
+      throwIfAuthNotOk(authResult)
       throwIfResourceAccessNotAllowed({
         resourceId: parent.id,
         resourceAccessRules: ctx.resourceAccessRules,

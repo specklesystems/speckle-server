@@ -22,7 +22,8 @@ export const WorkspacePlanFeatures = <const>{
   CustomDataRegion: 'workspaceDataRegionSpecificity',
   HideSpeckleBranding: 'hideSpeckleBranding',
   ExclusiveMembership: 'exclusiveMembership',
-  EmbedPrivateProjects: 'embedPrivateProjects'
+  EmbedPrivateProjects: 'embedPrivateProjects',
+  AccIntegration: 'accIntegration'
 }
 
 export type WorkspacePlanFeatures =
@@ -62,6 +63,10 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.EmbedPrivateProjects]: {
     displayName: 'Embed private projects',
     description: 'Embed projects with visibility set to private or workspace'
+  },
+  [WorkspacePlanFeatures.AccIntegration]: {
+    displayName: 'ACC connector',
+    description: 'Configure automatic import of ACC assets into workspace projects'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -168,7 +173,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.ExclusiveMembership
+      WorkspacePlanFeatures.ExclusiveMembership,
+      WorkspacePlanFeatures.AccIntegration
     ],
     limits: unlimited
   },
@@ -180,7 +186,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.ExclusiveMembership
+      WorkspacePlanFeatures.ExclusiveMembership,
+      WorkspacePlanFeatures.AccIntegration
     ],
     limits: unlimited
   },

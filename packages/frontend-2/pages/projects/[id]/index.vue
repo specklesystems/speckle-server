@@ -104,6 +104,9 @@ graphql(`
       canReadSettings {
         ...FullPermissionCheckResult
       }
+      canReadAccIntegrationSettings {
+        ...FullPermissionCheckResult
+      }
       canUpdate {
         ...FullPermissionCheckResult
       }
@@ -179,6 +182,9 @@ const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
 
 const canReadSettings = computed(() => project.value?.permissions.canReadSettings)
+const canReadAccIntegrationSettings = computed(
+  () => project.value?.permissions.canReadAccIntegrationSettings
+)
 const canUpdate = computed(() => project.value?.permissions.canUpdate)
 const hasRole = computed(() => project.value?.role)
 const teamUsers = computed(() => project.value?.team.map((t) => t.user) || [])
@@ -254,7 +260,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     })
   }
 
-  if (isAccEnabled.value) {
+  if (isAccEnabled.value && canReadAccIntegrationSettings.value?.authorized) {
     items.push({
       title: 'ACC',
       id: 'acc'
