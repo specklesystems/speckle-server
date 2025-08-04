@@ -346,8 +346,8 @@ const scrollToSelectedItem = (objectId: string) => {
 
 // Debounced selection handler for better performance
 const handleSelectionChange = useDebounceFn(
-  (newSelection: typeof selectedObjects.value) => {
-    if (newSelection.length > 0 && !disableScrollOnNextSelection.value) {
+  (newSelection: typeof selectedObjects.value, shouldScroll: boolean) => {
+    if (newSelection.length > 0) {
       for (const selectedObj of newSelection) {
         for (const { model } of modelsAndVersionIds.value) {
           const modelRootNodes = getRootNodesForModel(
@@ -372,8 +372,9 @@ const handleSelectionChange = useDebounceFn(
               manualExpandLevel.value = objectDepth
             }
 
-            // Scroll to the selected item
-            scrollToSelectedItem(selectedObj.id)
+            if (shouldScroll) {
+              scrollToSelectedItem(selectedObj.id)
+            }
           }
         }
       }
@@ -382,5 +383,12 @@ const handleSelectionChange = useDebounceFn(
   100
 )
 
-watch(selectedObjects, handleSelectionChange, { deep: true })
+watch(
+  selectedObjects,
+  (newSelection) => {
+    const shouldScroll = !disableScrollOnNextSelection.value
+    handleSelectionChange(newSelection, shouldScroll)
+  },
+  { deep: true }
+)
 </script>
