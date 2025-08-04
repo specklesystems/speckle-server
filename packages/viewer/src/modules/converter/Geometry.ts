@@ -50,6 +50,7 @@ export interface GeometryData {
   transform: Matrix4 | null
   metaData?: SpeckleObject
   instanced?: boolean
+  flipNormals?: boolean
 }
 
 export class Geometry {
@@ -499,7 +500,8 @@ export class Geometry {
   public static computeVertexNormalsBufferVirtual(
     buffer: number[],
     position: ChunkArray,
-    index: ChunkArray
+    index: ChunkArray,
+    flip: boolean = false
   ) {
     const pA = new Vector3(),
       pB = new Vector3(),
@@ -531,6 +533,16 @@ export class Geometry {
       nB.add(cb)
       nC.add(cb)
 
+      if (flip) {
+        nA.normalize()
+        nB.normalize()
+        nC.normalize()
+
+        nA.negate()
+        nB.negate()
+        nC.negate()
+      }
+
       buffer[vA * 3] = nA.x
       buffer[vA * 3 + 1] = nA.y
       buffer[vA * 3 + 2] = nA.z
@@ -542,6 +554,19 @@ export class Geometry {
       buffer[vC * 3] = nC.x
       buffer[vC * 3 + 1] = nC.y
       buffer[vC * 3 + 2] = nC.z
+    }
+  }
+
+  // ¯\_(ツ)_/¯
+  public static flipNormalsBuffer(buffer: Float32Array) {
+    const vec3 = new Vector3()
+    for (let k = 0; k < buffer.length; k += 3) {
+      vec3.set(buffer[k], buffer[k + 1], buffer[k + 2])
+      vec3.normalize()
+      vec3.negate()
+      buffer[k] = vec3.x
+      buffer[k + 1] = vec3.y
+      buffer[k + 2] = vec3.z
     }
   }
 

@@ -618,6 +618,12 @@ const getStream = () => {
 
     // heatherwick LARGE
     // 'https://app.speckle.systems/projects/63a3226049/models/bdd4f553a8'
+
+    // Mirrored instances
+    // 'https://app.speckle.systems/projects/b6e95c0c63/models/024ce31c6f@a66c3956d6'
+
+    // Text with color proxy
+    // 'https://app.speckle.systems/projects/ebf93a561b/models/0a07bc3231'
   )
 }
 
