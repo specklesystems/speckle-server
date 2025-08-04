@@ -9,7 +9,7 @@ import {
 import { logger } from '@/observability/logging'
 import { initOpenTelemetry } from '@/observability/otel'
 import { patchKnex } from '@/modules/core/patches/knex'
-import { appRoot, packageRoot } from '#/root.js'
+import { appRoot, packageRoot, isTsMode } from '#/root.js'
 import inspector from 'node:inspector'
 
 /**
@@ -50,4 +50,4 @@ dotenv.config({ path: `${packageRoot}/.env` })
 initOpenTelemetry()
 patchKnex()
 
-export { appRoot, packageRoot }
+export { appRoot, packageRoot, isTsMode }
