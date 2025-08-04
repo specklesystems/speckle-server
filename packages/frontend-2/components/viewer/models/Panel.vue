@@ -25,11 +25,7 @@
 
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length">
-          <div
-            class="flex-1 simple-scrollbar"
-            data-virtual-list-container
-            v-bind="containerProps"
-          >
+          <div class="flex-1 simple-scrollbar" v-bind="containerProps">
             <div v-bind="wrapperProps">
               <div
                 v-for="{ data: item } in virtualList"
@@ -325,13 +321,10 @@ const scrollToSelectedItem = (objectId: string) => {
         item.type === 'tree-item' && (item.data as ExplorerNode).raw?.id === objectId
     )
     if (itemIndex !== -1) {
-      // Scroll to center the item in the viewport
-      const container = document.querySelector(
-        '[data-virtual-list-container]'
-      ) as HTMLElement
+      const container = containerProps.ref.value
       if (container) {
         const containerHeight = container.clientHeight
-        const itemHeight = 40 // tree items are 40px tall
+        const itemHeight = 40
         const totalOffset = itemIndex * itemHeight
         const centerOffset = containerHeight / 2 - itemHeight / 2
         const scrollPosition = Math.max(0, totalOffset - centerOffset)
@@ -344,7 +337,6 @@ const scrollToSelectedItem = (objectId: string) => {
   })
 }
 
-// Debounced selection handler for better performance
 const handleSelectionChange = useDebounceFn(
   (newSelection: typeof selectedObjects.value, shouldScroll: boolean) => {
     if (newSelection.length > 0) {
