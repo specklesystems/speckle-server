@@ -1,7 +1,7 @@
 <template>
   <div
     class="border py-1 px-2 rounded"
-    :class="selected ? 'bg-blue-100' : 'bg-foundation'"
+    :class="selected ? 'bg-foundation-focus' : 'bg-foundation'"
   >
     <div class="flex flex-col justify-between">
       <button
