@@ -1,9 +1,9 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    class="w-full rounded pl-1 py-0.5 text-body-3xs"
+    class="w-full rounded pl-1 py-0.5 text-body-3xs border-l-2"
     :class="[
-      expandable ? 'bg-highlight-1' : '',
+      expandable ? 'border-foreground' : 'border-transparent',
       expanded ? 'border-neutral-500 border-opacity-30' : ''
     ]"
   >
