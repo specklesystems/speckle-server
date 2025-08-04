@@ -17,7 +17,7 @@ import { dbLogger as logger } from '@/observability/logging'
 import type { Knex } from 'knex'
 import type { KnexConfigArgs, RegionServerConfig } from '@speckle/shared/environment/db'
 import { createKnexConfig, configureKnexClient } from '@speckle/shared/environment/db'
-import { SpeckleFsMigrations } from '@/modules/core/configs/knexMigrations.js'
+import { SpeckleFsMigrations } from '@/modules/core/configs/knexMigrations'
 
 function walk(dir: string) {
   let results: string[] = []
