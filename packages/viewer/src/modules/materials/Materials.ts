@@ -276,7 +276,8 @@ export default class Materials {
       colorMaterialData &&
       !materialData &&
       (renderView.geometryType === GeometryType.LINE ||
-        renderView.geometryType === GeometryType.POINT)
+        renderView.geometryType === GeometryType.POINT ||
+        renderView.geometryType === GeometryType.TEXT)
 
     const displayStyleFirst = renderView.geometryType === GeometryType.LINE
     if (!materialData) {

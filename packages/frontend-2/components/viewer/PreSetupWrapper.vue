@@ -85,8 +85,6 @@
               <PortalTarget name="pocket-tip"></PortalTarget>
               <div class="flex gap-3">
                 <PortalTarget name="pocket-actions"></PortalTarget>
-                <!-- Shows up when filters are applied for an easy return to normality -->
-                <ViewerGlobalFilterReset v-if="hasAnyFiltersApplied" class="z-20" />
               </div>
             </div>
             <div class="flex items-end justify-center sm:justify-end">
@@ -120,7 +118,6 @@ import {
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
@@ -175,9 +172,6 @@ const projectId = writableAsyncComputed({
 const state = useSetupViewer({
   projectId
 })
-const {
-  filters: { hasAnyFiltersApplied }
-} = useFilterUtilities({ state })
 const {
   isEnabled: isEmbedEnabled,
   hideSelectionInfo,
