@@ -340,7 +340,8 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
   ) =>
     ensureCanUseWorkspacePlanFeatureFragment({
       getEnv: getEnvFake({
-        FF_WORKSPACES_MODULE_ENABLED: true
+        FF_WORKSPACES_MODULE_ENABLED: true,
+        FF_SAVED_VIEWS_ENABLED: true
       }),
       getWorkspacePlan: getWorkspacePlanFake({
         name: PaidWorkspacePlans.Pro,
