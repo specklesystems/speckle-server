@@ -2,15 +2,16 @@ import path from 'node:path'
 import { fileURLToPath } from 'url'
 
 // Conditionally change appRoot and packageRoot according to whether we're running from /dist/ or not (ts-node)
-const isTsNode =
+const isTsMode =
   !!process[Symbol.for('ts-node.register.instance')] ||
   process.env.VITEST === 'true' ||
-  (process._preload_modules || []).some((m) => m.match(/node_modules\/tsx\//)) // tsx running
+  (process._preload_modules || []).some((m) => m.match(/node_modules\/tsx\//)) // tsx running ||
+process.env.TSX === 'true'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const packageRoot = __dirname // we know this file is located in the package root
-const appRoot = isTsNode ? packageRoot : path.resolve(packageRoot, 'dist')
+const appRoot = isTsMode ? packageRoot : path.resolve(packageRoot, 'dist')
 
-export { appRoot, packageRoot }
+export { appRoot, packageRoot, isTsMode }
