@@ -4,7 +4,7 @@
     class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
     :class="{
       'opacity-100': isHidden || forceVisible,
-      'opacity-0': !isHidden && !forceVisible
+      'sm:opacity-0': !isHidden && !forceVisible
     }"
     @click.stop="$emit('click', $event)"
   >
