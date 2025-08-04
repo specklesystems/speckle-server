@@ -208,7 +208,7 @@ const resolvers: Resolvers = {
       subscribe: filteredSubscribe(
         ProjectSubscriptions.ProjectAccSyncItemUpdated,
         async (payload, args, ctx) => {
-          const { id: projectId, itemUrns } = args
+          const { id: projectId, itemIds } = args
           if (payload.projectId !== projectId) return false
 
           throwIfResourceAccessNotAllowed({
@@ -223,8 +223,8 @@ const resolvers: Resolvers = {
           })
           throwIfAuthNotOk(canReadProject)
 
-          if (!itemUrns?.length) return true
-          return itemUrns.includes(payload.projectAccSyncItemsUpdated.lineageUrn)
+          if (!itemIds?.length) return true
+          return itemIds.includes(payload.projectAccSyncItemsUpdated.id)
         }
       )
     }

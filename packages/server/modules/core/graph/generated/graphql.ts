@@ -3998,7 +3998,7 @@ export type SubscriptionCommitUpdatedArgs = {
 
 export type SubscriptionProjectAccSyncItemsUpdatedArgs = {
   id: Scalars['String']['input'];
-  itemUrns?: InputMaybe<Array<Scalars['String']['input']>>;
+  itemIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 

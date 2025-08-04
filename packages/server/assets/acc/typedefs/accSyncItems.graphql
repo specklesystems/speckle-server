@@ -94,7 +94,7 @@ extend type Subscription {
   """
   projectAccSyncItemsUpdated(
     id: String!
-    itemUrns: [String!]
+    itemIds: [String!]
   ): ProjectAccSyncItemsUpdatedMessage!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
