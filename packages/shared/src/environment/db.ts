@@ -136,7 +136,6 @@ export const createKnexConfig = ({
   migrationDirs,
   isTestEnv,
   isDevOrTestEnv,
-  isDevEnv,
   logger,
   maxConnections,
   caCertificate,
@@ -159,7 +158,7 @@ export const createKnexConfig = ({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       migrationSource,
       // these warnings are annoying locally when switching branches:
-      disableMigrationsListValidation: !!isDevEnv,
+      disableMigrationsListValidation: !!isDevOrTestEnv,
       ...(migrationSource
         ? {}
         : {

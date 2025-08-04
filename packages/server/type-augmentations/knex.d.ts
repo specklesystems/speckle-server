@@ -32,6 +32,8 @@ declare module 'knex/lib/migrations/migrate/sources/fs-migrations' {
       sortDirsSeparately: boolean,
       loadExtensions: string[]
     )
+
+    getMigrationName(migration: { file: string }): string
   }
   export { FsMigrations }
 }
