@@ -13,6 +13,7 @@ export const projectAccSyncItemFragment = graphql(`
     accFileName
     accFileExtension
     accFileVersionIndex
+    accFileViewName
     updatedAt
     status
     author {

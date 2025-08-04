@@ -1,11 +1,12 @@
 <template>
   <div class="flex flex-col space-y-2">
-    <div class="flex text-body-xs text-foreground font-medium">Sync items</div>
+    <div class="flex text-body-xs text-foreground font-medium">Sync models</div>
     <LayoutTable
       class="bg-foundation"
       :columns="[
         { id: 'status', header: 'Status', classes: 'col-span-2' },
         { id: 'accFileName', header: 'File name', classes: 'col-span-2' },
+        { id: 'accFileViewName', header: 'View name', classes: 'col-span-2' },
         { id: 'modelId', header: 'Model id', classes: 'col-span-2' },
         { id: 'createdBy', header: 'Created by', classes: 'col-span-2' },
         { id: 'actions', header: 'Actions', classes: 'col-span-2' }
@@ -17,6 +18,9 @@
       </template>
       <template #accFileName="{ item }">
         {{ item.accFileName }}
+      </template>
+      <template #accFileViewName="{ item }">
+        {{ item.accFileViewName || '-' }}
       </template>
       <template #modelId="{ item }">
         <NuxtLink
