@@ -58,8 +58,8 @@
       </template>
     </FormButton>
     <LayoutDialog v-model:open="showNewSyncDialog" title="Create new sync">
-      <div class="flex flex-col space-y-4">
-        <div v-if="step === 0">
+      <div class="flex flex-col">
+        <div v-if="step === 0" class="space-y-2">
           <ProjectPageAccHubs
             :hubs="hubs"
             :loading="loadingHubs"
@@ -80,7 +80,6 @@
             :sync-items="accSyncItems || []"
             :selected-folder-content="selectedFolderContent"
             :loading="loadingFiles"
-            @download="onDownloadClick"
             @select="onFileSelected"
           />
 
@@ -400,34 +399,6 @@ const fetchItemLatestVersion = async (projectId: string, itemId: string) => {
     })
   }
   return null
-}
-
-const getSignedDownloadUrl = async (projectId: string, versionId: string) => {
-  const res = await fetch(
-    `https://developer.api.autodesk.com/data/v1/projects/${projectId}/versions/${encodeURIComponent(
-      versionId
-    )}/download`,
-    { headers: { Authorization: `Bearer ${tokens.value!.access_token}` } }
-  )
-  if (!res.ok) throw new Error(`Failed to generate ACC download URL`)
-  const { links } = await res.json()
-  return links.self.href
-}
-
-const onDownloadClick = async (item: AccItem) => {
-  try {
-    const signedUrl = await getSignedDownloadUrl(
-      selectedProjectId.value as string,
-      item.latestVersionId as string
-    )
-    window.open(signedUrl, '_blank')
-  } catch (e) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Download failed',
-      description: e instanceof Error ? e.message : 'Unexpected error'
-    })
-  }
 }
 
 const onFileSelected = (item: AccItem) => {

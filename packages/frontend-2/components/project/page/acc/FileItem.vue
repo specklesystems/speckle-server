@@ -15,17 +15,6 @@
         </div>
         <div class="flex flex-row gap-2 items-center" :class="expanded ? 'mb-1' : ''">
           <FormButton
-            v-if="folderContent.storageUrn"
-            :icon-left="ArrowDownTrayIcon"
-            hide-text
-            color="outline"
-            size="sm"
-            @click.stop="$emit('download', folderContent)"
-          >
-            Details
-          </FormButton>
-
-          <FormButton
             size="sm"
             hide-text
             :icon-left="!expanded ? ChevronDownIcon : ChevronUpIcon"
@@ -56,11 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ArrowDownTrayIcon,
-  ChevronDownIcon,
-  ChevronUpIcon
-} from '@heroicons/vue/20/solid'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/20/solid'
 import type { AccItem } from '~/lib/acc/types'
 
 defineProps<{
@@ -71,7 +56,6 @@ defineProps<{
 }>()
 
 defineEmits<{
-  (e: 'download', item: AccItem): void
   (e: 'select', item: AccItem): void
 }>()
 

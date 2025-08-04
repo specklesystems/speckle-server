@@ -11,7 +11,6 @@
           :disabled="
             syncItems.find((si) => si.accFileLineageUrn === item.id) !== undefined
           "
-          @download="(i) => $emit('download', i)"
           @select="(i) => $emit('select', i)"
         ></ProjectPageAccFileItem>
       </div>
@@ -32,7 +31,6 @@ const props = defineProps<{
 }>()
 
 defineEmits<{
-  (e: 'download', item: AccItem): void
   (e: 'select', item: AccItem): void
 }>()
 
