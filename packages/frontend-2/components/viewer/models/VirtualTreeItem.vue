@@ -23,18 +23,12 @@
           class="shrink-0"
         ></div>
 
-        <FormButton
+        <ViewerExpansionTriangle
           v-if="item.hasChildren"
-          size="sm"
-          color="subtle"
+          :is-expanded="item.isExpanded"
           :class="getItemOpacityClass()"
-          @click.stop="toggleExpansion()"
-        >
-          <IconTriangle
-            class="w-4 h-4 -ml-1.5 -mr-1.5 text-foreground-2"
-            :class="item.isExpanded ? 'rotate-90' : ''"
-          />
-        </FormButton>
+          @click="toggleExpansion()"
+        />
         <div v-else class="w-4 shrink-0"></div>
 
         <!-- Item content -->
@@ -56,28 +50,14 @@
         class="flex items-center group-hover:w-auto overflow-hidden shrink-0"
         :class="isTreeItemHidden || isTreeItemIsolated ? 'w-auto' : 'w-0'"
       >
-        <button
-          class="p-1 rounded-md hover:bg-highlight-3"
-          :class="
-            isTreeItemHidden ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-          "
-          @click.stop="toggleTreeItemVisibility()"
-        >
-          <IconEyeClosed v-if="isTreeItemHidden" class="w-4 h-4" />
-          <IconEye v-else class="w-4 h-4" />
-        </button>
-        <button
-          class="p-1 rounded-md"
-          :class="
-            isTreeItemIsolated
-              ? 'opacity-100 hover:bg-highlight-1'
-              : 'opacity-0 group-hover:opacity-100 hover:bg-highlight-3'
-          "
-          @click.stop="toggleTreeItemIsolation()"
-        >
-          <IconViewerUnisolate v-if="isTreeItemIsolated" class="w-3.5 h-3.5" />
-          <IconViewerIsolate v-else class="w-3.5 h-3.5" />
-        </button>
+        <ViewerVisibilityButton
+          :is-hidden="isTreeItemHidden"
+          @click="toggleTreeItemVisibility()"
+        />
+        <ViewerIsolateButton
+          :is-isolated="isTreeItemIsolated"
+          @click="toggleTreeItemIsolation()"
+        />
       </div>
     </button>
   </div>

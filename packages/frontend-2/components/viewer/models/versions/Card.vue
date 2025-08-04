@@ -11,18 +11,10 @@
       @focusin="highlightObject"
       @focusout="unhighlightObject"
     >
-      <button
-        class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-4 flex items-center justify-center shrink-0"
-        @click.stop="showVersions = !showVersions"
-      >
-        <IconTriangle
-          class="w-4 h-4 text-foreground-2"
-          :class="showVersions ? 'rotate-90' : ''"
-        />
-        <span class="sr-only">
-          {{ showVersions ? 'Collapse' : 'Expand' }}
-        </span>
-      </button>
+      <ViewerExpansionTriangle
+        :is-expanded="showVersions"
+        @click="showVersions = !showVersions"
+      />
       <div
         class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
       >
