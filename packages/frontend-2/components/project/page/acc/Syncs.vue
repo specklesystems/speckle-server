@@ -439,10 +439,6 @@ const addSync = async () => {
         accFileViewName
       }
     })
-    // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
-    setTimeout(() => {
-      refetchAccSyncItems()
-    }, 1000)
   } catch (error) {
     triggerNotification({
       type: ToastNotificationType.Danger,
@@ -467,10 +463,6 @@ const handleDeleteSyncItem = async (id: string) => {
         id
       }
     })
-    // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
-    setTimeout(() => {
-      refetchAccSyncItems()
-    }, 1000)
   } catch (error) {
     triggerNotification({
       type: ToastNotificationType.Danger,
@@ -491,10 +483,6 @@ const handleStatusSyncItem = async (id: string, isPaused: boolean) => {
         status: isPaused ? 'PENDING' : 'PAUSED'
       }
     })
-    // TODO: NEED TO GO AWAY WHEN WE HAVE PROPER SUBSCRIPTIONS
-    setTimeout(() => {
-      refetchAccSyncItems()
-    }, 1000)
   } catch (error) {
     triggerNotification({
       type: ToastNotificationType.Danger,
