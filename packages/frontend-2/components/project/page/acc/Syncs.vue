@@ -243,7 +243,7 @@ onProjectAccSyncItemsUpdated((res) => {
   refetchAccSyncItems()
   triggerNotification({
     type: ToastNotificationType.Info,
-    title: 'Acc Sync Item updated',
+    title: 'ACC sync model updated',
     description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageUrn
   })
 })
@@ -450,6 +450,7 @@ const addSync = async () => {
       description: error instanceof Error ? error.message : 'Unexpected error'
     })
   } finally {
+    revitViewName.value = undefined
     selectedFolderContent.value = undefined
     showNewSyncDialog.value = false
     step.value = 0

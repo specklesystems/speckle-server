@@ -34,16 +34,7 @@
         </span>
       </div>
 
-      <FormButton
-        v-if="hasTokens"
-        class="mt-4"
-        color="outline"
-        size="sm"
-        @click="tokens = undefined"
-      >
-        Log out
-      </FormButton>
-      <div v-if="tokens?.access_token" class="flex flex-row items-center space-x-2">
+      <!-- <div v-if="tokens?.access_token" class="flex flex-row items-center space-x-2">
         <FormButton
           class="mr-2"
           hide-text
@@ -54,21 +45,18 @@
           Copy to clipboard
         </FormButton>
         {{ tokens?.access_token.slice(0, 32) }}...
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// import { useQuery, useSubscription } from '@vue/apollo-composable'
-// import { projectAccSyncItemsQuery } from '~/lib/acc/graphql/queries'
-// import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subscriptions'
 import type { AccTokens, AccUserInfo } from '~/lib/acc/types'
-import { DocumentDuplicateIcon } from '@heroicons/vue/24/outline'
+// import { DocumentDuplicateIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{ projectId: string }>()
 const { triggerNotification } = useGlobalToast()
-const { copy } = useClipboard()
+// const { copy } = useClipboard()
 
 const apiOrigin = useApiOrigin()
 const tokens = ref<AccTokens>()
@@ -76,53 +64,6 @@ const hasTokens = computed(() => !!tokens.value?.access_token)
 const loadingTokens = ref(true)
 const userInfo = ref<AccUserInfo>()
 const loadingUser = ref(false)
-
-// const { result: accSyncItemsResult, refetch: refetchAccSyncItems } = useQuery(
-//   projectAccSyncItemsQuery,
-//   () => ({
-//     id: props.projectId
-//   })
-// )
-
-// const accSyncItems = computed(
-//   () => accSyncItemsResult.value?.project.accSyncItems.items || []
-// )
-
-// const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
-//   onProjectAccSyncItemUpdatedSubscription,
-//   () => ({
-//     id: props.projectId,
-//     itemIds: accSyncItems.value.map((s) => s.accFileLineageUrn)
-//   })
-// )
-
-// onProjectAccSyncItemsUpdated((res) => {
-//   refetchAccSyncItems()
-//   triggerNotification({
-//     type: ToastNotificationType.Info,
-//     title: 'Acc Sync Item updated',
-//     description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileLineageUrn
-//   })
-// })
-
-// const syncs = ref<AccSyncItem[]>([
-//   {
-//     id: '1',
-//     projectId: '',
-//     modelId: '',
-//     projectName: 'test',
-//     modelName: 'test',
-//     status: 'paused',
-//     createdBy: 'Oguzhan Koral',
-//     accItem: {
-//       id: 'yo',
-//       attributes: {
-//         name: 'whatever.rvt',
-//         displayName: 'whatever.rvt'
-//       }
-//     }
-//   }
-// ])
 
 // AUTH + TOKEN FLOW
 const fetchTokens = async () => {
