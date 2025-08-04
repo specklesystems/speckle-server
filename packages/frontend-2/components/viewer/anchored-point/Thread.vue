@@ -411,9 +411,11 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
 
   switch (item.id) {
     case ActionTypes.CopyLink:
+      showMenu.value = false
       onCopyLink()
       break
     case ActionTypes.PopIn:
+      showMenu.value = false
       isDragged.value = false
       break
   }
