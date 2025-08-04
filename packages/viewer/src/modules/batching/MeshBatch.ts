@@ -266,6 +266,11 @@ export class MeshBatch extends PrimitiveBatch {
       /** We either copy over the provided vertex normals */
       if (geometry.attributes.NORMAL) {
         geometry.attributes?.NORMAL.copyToBuffer(normals, offset)
+        if (geometry.flipNormals) {
+          Geometry.flipNormalsBuffer(
+            normals.subarray(offset, offset + geometry.attributes?.NORMAL.length)
+          )
+        }
       } else {
         /** Either we compute them ourselves */
         Geometry.computeVertexNormalsBufferVirtual(
@@ -275,7 +280,8 @@ export class MeshBatch extends PrimitiveBatch {
               (this.renderViews[k].renderData.geometry.attributes?.POSITION.length ?? 0)
           ) as unknown as number[],
           geometry.attributes.POSITION,
-          geometry.attributes.INDEX
+          geometry.attributes.INDEX,
+          geometry.flipNormals
         )
       }
       batchIndices.fill(k, offset / 3, offset / 3 + geometry.attributes.POSITION.length)
