@@ -30,9 +30,9 @@ export async function up(knex: Knex): Promise<void> {
     table.string('accFileViewName').nullable()
     table.string('accWebhookId').nullable()
     table
-      .enum('status', ['PENDING', 'SYNCING', 'FAILED', 'PAUSED', 'SUCCEEDED'])
+      .enum('status', ['pending', 'syncing', 'failed', 'paused', 'succeeded'])
       .notNullable()
-      .defaultTo('PENDING')
+      .defaultTo('pending')
     table.string('authorId', 10).references('id').inTable('users').onDelete('set null')
     table
       .timestamp('createdAt', { precision: 3, useTz: true })
