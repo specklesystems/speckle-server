@@ -14,6 +14,10 @@ import {
   shutdownQueue,
   startQueue
 } from '@/modules/multiregion/services/queue'
+import {
+  shutdownSchedule,
+  startSchedule
+} from '@/modules/multiregion/services/schedule'
 
 const multiRegion: SpeckleModule = {
   async init({ isInitial }) {
@@ -38,10 +42,12 @@ const multiRegion: SpeckleModule = {
     if (isInitial) {
       await initializeQueue()
       await startQueue()
+      startSchedule()
     }
   },
   async shutdown() {
     await shutdownQueue()
+    shutdownSchedule()
   }
 }
 
