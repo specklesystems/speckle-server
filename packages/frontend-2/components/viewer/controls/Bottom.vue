@@ -54,6 +54,7 @@ import {
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 enum ActivePanel {
   none = 'none',
@@ -69,7 +70,13 @@ const emit = defineEmits<{
 }>()
 
 const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortcuts()
-const { toggleSectionBox, resetSectionBox, closeSectionBox } = useSectionBoxUtilities()
+const {
+  toggleSectionBox,
+  resetSectionBox,
+  closeSectionBox,
+  isSectionBoxEnabled,
+  isSectionBoxVisible
+} = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
@@ -77,6 +84,7 @@ const { getTooltipProps } = useSmartTooltipDelay()
 const { isEnabled: isEmbedEnabled } = useEmbed()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
+const mixpanel = useMixpanel()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
 
@@ -184,14 +192,14 @@ const onReset = () => {
   }
 }
 
+const forceClosePanels = () => {
+  activePanel.value = ActivePanel.none
+}
+
 registerShortcuts({
   ToggleMeasurements: () => toggleMeasurements(),
   ToggleSectionBox: () => toggleSectionBoxPanel()
 })
-
-const forceClosePanels = () => {
-  activePanel.value = ActivePanel.none
-}
 
 onKeyStroke('Escape', () => {
   const isActiveMeasurement = getActiveMeasurement()
@@ -206,6 +214,31 @@ onKeyStroke('Escape', () => {
     }
     activePanel.value = ActivePanel.none
   }
+})
+
+watch(activePanel, (newVal) => {
+  // Using 'controls' here to stick to the old naming convention
+  mixpanel.track('Viewer Action', {
+    type: 'action',
+    name: 'controls-toggle',
+    action: newVal
+  })
+})
+
+watch(isSectionBoxEnabled, (val) => {
+  mixpanel.track('Viewer Action', {
+    type: 'action',
+    name: 'section-box',
+    status: val
+  })
+})
+
+watch(isSectionBoxVisible, (val) => {
+  mixpanel.track('Viewer Action', {
+    type: 'action',
+    name: 'section-box-visibility',
+    status: val
+  })
 })
 
 defineExpose({
