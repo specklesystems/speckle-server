@@ -1,6 +1,6 @@
 <template>
   <button
-    v-tippy="tooltip"
+    v-tippy="getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate')"
     :aria-label="isIsolated ? 'Unisolate' : 'Isolate'"
     class="group-hover:opacity-100 rounded-md h-6 w-6 flex items-center justify-center"
     :class="buttonClasses"
@@ -12,13 +12,12 @@
 </template>
 
 <script setup lang="ts">
-import type { Nullable } from '@speckle/shared'
-
 const props = defineProps<{
   isIsolated: boolean
   forceVisible?: boolean
-  tooltip?: Nullable<object | string>
 }>()
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 defineEmits<{
   click: [event: Event]
