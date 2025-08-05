@@ -1,6 +1,6 @@
 <template>
   <button
-    v-tippy="tooltip"
+    v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide')"
     :aria-label="isHidden ? 'Show' : 'Hide'"
     class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
     :class="buttonClasses"
@@ -12,17 +12,16 @@
 </template>
 
 <script setup lang="ts">
-import type { Nullable } from '@speckle/shared'
-
 const props = defineProps<{
   isHidden: boolean
   forceVisible?: boolean
-  tooltip?: Nullable<object | string>
 }>()
 
 defineEmits<{
   click: [event: Event]
 }>()
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const buttonClasses = computed(() => {
   return {

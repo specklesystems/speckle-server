@@ -61,21 +61,11 @@
           <ViewerVisibilityButton
             :is-hidden="isHidden"
             :force-visible="showActionsMenu"
-            :tooltip="
-              getTooltipProps(isHidden ? 'Show' : 'Hide', {
-                placement: 'top'
-              })
-            "
             @click="hideOrShowObject"
           />
           <ViewerIsolateButton
             :is-isolated="isIsolated"
             :force-visible="showActionsMenu"
-            :tooltip="
-              getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', {
-                placement: 'top'
-              })
-            "
             @click="isolateOrUnisolateObject"
           />
         </div>
@@ -123,7 +113,6 @@ const props = defineProps<{
   isExpanded?: boolean
 }>()
 
-const { getTooltipProps } = useSmartTooltipDelay()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
