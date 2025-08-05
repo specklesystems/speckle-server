@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach } from 'vitest'
 import { type FeatureFlags, parseFeatureFlags } from './index.js'
 
 const originalDisableAllFfs = process.env.DISABLE_ALL_FFS || ''
@@ -18,6 +18,12 @@ const resetEnv = () => {
 }
 
 describe('parseFeatureFlags', () => {
+  beforeEach(() => {
+    // Disable global "ALL FFs"/"NO FFs" modes for these tests, cause they break em
+    setDisableAllFfs(false)
+    setEnableAllFfs(false)
+  })
+
   afterEach(() => {
     resetEnv()
   })
