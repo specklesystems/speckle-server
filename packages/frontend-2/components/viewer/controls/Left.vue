@@ -64,7 +64,7 @@
         v-if="allAutomationRuns.length !== 0"
         v-tippy="{
           content: summary.longSummary,
-          placement: 'top'
+          placement: 'right'
         }"
         :active="activePanel === 'automate'"
         @click="toggleActivePanel('automate')"
@@ -93,7 +93,11 @@
           @click="toggleActivePanel('devMode')"
         />
         <ViewerControlsButtonToggle
-          v-tippy="getTooltipProps('Documentation')"
+          v-tippy="
+            getTooltipProps('Documentation', {
+              placement: 'right'
+            })
+          "
           :icon="'IconDocs'"
           secondary
           @click="openDocs"
