@@ -73,6 +73,8 @@ export const schedulePendingSyncItemsCheck = (deps: {
           getAutomationToken: getAutomationTokenFactory({
             db: projectDb
           })
+        })({
+          id: syncItem.id
         })
       }
     }
