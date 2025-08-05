@@ -7,6 +7,8 @@ import { Version } from '../authz/domain/versions/types.js'
 import { Workspace } from '../authz/domain/workspaces/types.js'
 import { FeatureFlags, parseFeatureFlags } from '../environment/index.js'
 import { mapValues } from 'lodash'
+import { WorkspacePlan } from '../workspaces/index.js'
+import { TIME_MS } from '../core/index.js'
 
 export const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: () => T) =>
@@ -32,6 +34,14 @@ export const getWorkspaceFake = fakeGetFactory<Workspace>(() => ({
   isExclusive: false
 }))
 
+export const getWorkspacePlanFake = fakeGetFactory<WorkspacePlan>(() => ({
+  name: 'team',
+  status: 'valid',
+  workspaceId: nanoid(10),
+  createdAt: new Date(Date.now() - TIME_MS.day),
+  updatedAt: new Date(Date.now() - TIME_MS.day)
+}))
+
 export const getCommentFake = fakeGetFactory<Comment>(() => ({
   id: nanoid(10),
   authorId: nanoid(10),
@@ -51,5 +61,6 @@ export const getVersionFake = fakeGetFactory<Version>(() => ({
   authorId: nanoid(10)
 }))
 
-export const getEnvFake = (overrides?: Partial<FeatureFlags>) =>
+// eslint-disable-next-line @typescript-eslint/require-await
+export const getEnvFake = (overrides?: Partial<FeatureFlags>) => async () =>
   parseFeatureFlags(mapValues(overrides || {}, (v) => `${v}` as 'true' | 'false'))
