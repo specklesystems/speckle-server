@@ -62,6 +62,7 @@ import {
 } from '@/modules/fileuploads/services/requestHandler'
 import type { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
 
 const {
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED,
@@ -163,7 +164,7 @@ export const init: SpeckleModule['init'] = async ({
           requestQueues.push(
             await initializePostgresQueue({
               label: 'rhino',
-              supportedFileTypes: ['obj', 'stl', 'skp'],
+              supportedFileTypes: [...rhinoImporterSupportedFileExtensions],
               // using public here, as the private uri is not applicable here
               db: queueDb
             })
