@@ -110,8 +110,14 @@ export const loadMultiRegionsConfig = async ({
 
 export type KnexConfigArgs = {
   migrationDirs: string[]
-  isTestEnv: boolean
-  isDevOrTestEnv: boolean
+  /**
+   * Override migration source loader to load migrations a custom way
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  migrationSource?: any // no type from knex for this
+  isTestEnv?: boolean
+  isDevOrTestEnv?: boolean
+  isDevEnv?: boolean
   logger: Logger
   maxConnections: number
   applicationName: string
@@ -135,7 +141,8 @@ export const createKnexConfig = ({
   caCertificate,
   connectionAcquireTimeoutMillis,
   connectionCreateTimeoutMillis,
-  asyncStackTraces
+  asyncStackTraces,
+  migrationSource
 }: {
   connectionString?: string | undefined
   caCertificate?: string | undefined
@@ -148,8 +155,17 @@ export const createKnexConfig = ({
     client: 'pg',
     migrations: {
       extension: 'ts',
-      loadExtensions: isTestEnv ? ['.js', '.ts'] : ['.js'],
-      directory: migrationDirs
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      migrationSource,
+      // these warnings are annoying locally when switching branches:
+      disableMigrationsListValidation: !!isDevOrTestEnv,
+      ...(migrationSource
+        ? {}
+        : {
+            // Can only be set if migrationSource is not set
+            loadExtensions: isTestEnv ? ['.js', '.ts'] : ['.js'],
+            directory: migrationDirs
+          })
     },
     log: {
       warn(message: unknown) {

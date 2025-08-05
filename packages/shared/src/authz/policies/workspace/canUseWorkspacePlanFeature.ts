@@ -14,13 +14,10 @@ import { MaybeUserContext, WorkspaceContext } from '../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
 import {
-  ensureUserIsWorkspaceAdminFragment,
-  ensureWorkspaceNotReadOnlyFragment
+  ensureCanUseWorkspacePlanFeatureFragment,
+  ensureUserIsWorkspaceAdminFragment
 } from '../../fragments/workspaces.js'
-import {
-  WorkspacePlanFeatures,
-  workspacePlanHasAccessToFeature
-} from '../../../workspaces/index.js'
+import { WorkspacePlanFeatures } from '../../../workspaces/index.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -45,6 +42,11 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
   | InstanceType<typeof WorkspacePlanNoFeatureAccessError>
 
+/**
+ * TODO: Refactor. Just use the fragment if you want to check if a workspace has access to a feature,
+ * and create more specific policies for the actual use cases, cause policies shouldn't be reusable
+ * building blocks like this.
+ */
 export const canUseWorkspacePlanFeature: AuthPolicy<
   PolicyLoaderKeys,
   PolicyArgs,
@@ -57,16 +59,11 @@ export const canUseWorkspacePlanFeature: AuthPolicy<
       workspaceId
     })
     if (isWorkspaceAdmin.isErr) return err(isWorkspaceAdmin.error)
-    const ensuredNotReadOnly = await ensureWorkspaceNotReadOnlyFragment(loaders)({
-      workspaceId
-    })
-    if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
 
-    const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-    if (!workspacePlan) return err(new WorkspacePlanNoFeatureAccessError())
-    const canUseFeature = workspacePlanHasAccessToFeature({
-      plan: workspacePlan.name,
+    const canUseFeature = await ensureCanUseWorkspacePlanFeatureFragment(loaders)({
+      workspaceId,
       feature
     })
-    return canUseFeature ? ok() : err(new WorkspacePlanNoFeatureAccessError())
+    if (canUseFeature.isErr) return err(canUseFeature.error)
+    return ok()
   }

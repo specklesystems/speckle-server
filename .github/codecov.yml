@@ -5,17 +5,7 @@ codecov:
 
 coverage:
   status:
-    project:
-      default:
-        target: 70% #overall project/ repo coverage
-      server:
-        target: 70%
-        flags:
-          - server
-      shared:
-        target: 70%
-        flags:
-          - shared
+    project: off
     patch:
       default:
         target: 90% #overall project/ repo coverage

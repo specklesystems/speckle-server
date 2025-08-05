@@ -32,6 +32,16 @@
         <ChatBubbleLeftRightIcon class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
+      <!-- Saved views -->
+      <ViewerControlsButtonToggle
+        v-if="isSavedViewsEnabled"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleSavedViews)"
+        :active="activePanel === 'savedViews'"
+        @click="toggleActivePanel('savedViews')"
+      >
+        <Camera class="h-4 w-4 md:h-5 md:w-5" />
+      </ViewerControlsButtonToggle>
+
       <!-- Automation runs -->
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
@@ -192,6 +202,12 @@
           <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
         </KeepAlive>
       </div>
+      <div v-if="activePanel === 'savedViews'">
+        <ViewerSavedViewsPanel
+          v-if="isSavedViewsEnabled"
+          @close="activePanel = 'none'"
+        />
+      </div>
       <div v-show="activePanel === 'models'">
         <KeepAlive>
           <div>
@@ -287,6 +303,8 @@ import {
 } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { Camera } from 'lucide-vue-next'
+import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
 
 type ActivePanel =
   | 'none'
@@ -297,6 +315,7 @@ type ActivePanel =
   | 'measurements'
   | 'gendo'
   | 'mobileOverflow'
+  | 'savedViews'
 
 type ActiveControl =
   | 'none'
@@ -308,6 +327,7 @@ type ActiveControl =
   | 'explode'
   | 'settings'
 
+const isSavedViewsEnabled = useAreSavedViewsEnabled()
 const isGendoEnabled = useIsGendoModuleEnabled()
 const { width: windowWidth } = useWindowSize()
 
@@ -427,6 +447,7 @@ registerShortcuts({
   ToggleMeasurements: () => toggleMeasurements(),
   ToggleProjection: () => trackAndtoggleProjection(),
   ToggleSectionBox: () => toggleSectionBox(),
+  ToggleSavedViews: () => isSavedViewsEnabled && toggleActivePanel('savedViews'),
   ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection()
 })
 

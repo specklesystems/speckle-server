@@ -3,6 +3,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { workspaceLimitsQuery } from '~/lib/workspaces/graphql/queries'
 import { WorkspacePlanConfigs, type MaybeNullOrUndefined } from '@speckle/shared'
 import type { WorkspacePlanLimits_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { useFeatureFlags } from '~/lib/common/composables/env'
 
 graphql(`
   fragment WorkspacePlanLimits_Workspace on Workspace {
@@ -19,6 +20,8 @@ export const useWorkspaceLimits = (params: {
   workspace?: MaybeRef<MaybeNullOrUndefined<WorkspacePlanLimits_WorkspaceFragment>>
 }) => {
   const { slug } = params
+
+  const featureFlags = useFeatureFlags()
   const { result } = useQuery(
     workspaceLimitsQuery,
     () => ({
@@ -44,7 +47,7 @@ export const useWorkspaceLimits = (params: {
         commentHistory: null
       }
 
-    const planConfig = WorkspacePlanConfigs[planName]
+    const planConfig = WorkspacePlanConfigs({ featureFlags })[planName]
     return planConfig?.limits
   })
 

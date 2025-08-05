@@ -9,7 +9,7 @@ import {
 import { logger } from '@/observability/logging'
 import { initOpenTelemetry } from '@/observability/otel'
 import { patchKnex } from '@/modules/core/patches/knex'
-import { appRoot, packageRoot } from '#/root.js'
+import { appRoot, packageRoot, isTsMode } from '#/root.js'
 import inspector from 'node:inspector'
 
 /**
@@ -44,10 +44,11 @@ if ((isTestEnv() || isDevEnv()) && startDebugger) {
   }
 }
 
+// Load dotenv
 dotenv.config({ path: `${packageRoot}/.env` })
 
 // knex is a singleton controlled by module so can't wait til app init
 initOpenTelemetry()
 patchKnex()
 
-export { appRoot, packageRoot }
+export { appRoot, packageRoot, isTsMode }
