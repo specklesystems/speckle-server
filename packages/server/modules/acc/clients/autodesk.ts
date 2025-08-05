@@ -263,6 +263,8 @@ export const tryRegisterAccWebhook = async (
       logger.info({ location: response.headers.get('Location') })
       throw new Error('Webhook created but failed to parse id')
     }
+
+    return webhookId
   }
 
   const e = await response.json().catch(() => null)
