@@ -139,6 +139,11 @@
           "type": "boolean",
           "description": "Enables the dedicated Rhino based file importer. This is not part of the deployment.",
           "default": false
+        },
+        "savedViewsEnabled": {
+          "type": "boolean",
+          "description": "Enables the ability to create and manage saved views",
+          "default": false
         }
       }
     },
