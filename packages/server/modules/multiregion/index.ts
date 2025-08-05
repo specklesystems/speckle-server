@@ -35,6 +35,18 @@ const multiRegion: SpeckleModule = {
       await initBlobs()
     }
 
+    /**
+     * TODO: CRON JOB
+     * to clear transactions
+     *
+     * SELECT *
+     * FROM pg_prepared_xacts
+     * WHERE prepared < NOW() - INTERVAL '10 minutes';
+     *
+     * ROLLBACK PREPARED 'id';          -- Clean up manually
+     * Consider a recovery job if you use this pattern in production.
+     */
+
     if (isInitial) {
       await initializeQueue()
       await startQueue()

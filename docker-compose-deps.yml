@@ -16,6 +16,7 @@ services:
       - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
     ports:
       - '127.0.0.1:5432:5432'
+    command: postgres -c max_prepared_transactions=150
 
   postgres-region1:
     build:
@@ -32,6 +33,7 @@ services:
       - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
     ports:
       - '127.0.0.1:5401:5432'
+    command: postgres -c max_prepared_transactions=150
 
   postgres-region2:
     build:
@@ -48,6 +50,7 @@ services:
       - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
     ports:
       - '127.0.0.1:5402:5432'
+    command: postgres -c max_prepared_transactions=150
 
   redis:
     image: 'valkey/valkey:8.1-alpine'
