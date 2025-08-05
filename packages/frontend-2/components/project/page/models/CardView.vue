@@ -5,6 +5,7 @@
         :items="items"
         :project="project"
         :project-id="projectId"
+        :small-view="smallView"
         :show-actions="showActions"
         :show-versions="showVersions"
         :disable-default-links="disableDefaultLinks"
@@ -75,6 +76,7 @@ const props = withDefaults(
     disablePagination?: boolean
     sourceApps?: SourceAppDefinition[]
     contributors?: FormUsersSelectItemFragment[]
+    smallView?: boolean
     hideFileUpload?: boolean
   }>(),
   {
