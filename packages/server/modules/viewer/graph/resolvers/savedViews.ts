@@ -1,4 +1,3 @@
-import { db } from '@/db/knex'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapGqlToDbSortDirection } from '@/modules/core/helpers/project'
@@ -60,12 +59,13 @@ const resolvers: Resolvers = {
     async savedViewGroups(parent, args, ctx) {
       const { input } = args
 
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
       const getProjectSavedViewGroups = getProjectSavedViewGroupsFactory({
         getProjectSavedViewGroupsPageItems: getProjectSavedViewGroupsPageItemsFactory({
-          db
+          db: projectDb
         }),
         getProjectSavedViewGroupsTotalCount: getProjectSavedViewGroupsTotalCountFactory(
-          { db }
+          { db: projectDb }
         )
       })
 
@@ -161,9 +161,14 @@ const resolvers: Resolvers = {
     groupId: (parent) => (parent.name ? parent.id : null),
     async views(parent, args, ctx) {
       const { input } = args
+      const projectDb = await getProjectDbClient({ projectId: parent.projectId })
       const getGroupSavedViews = getGroupSavedViewsFactory({
-        getGroupSavedViewsPageItems: getGroupSavedViewsPageItemsFactory({ db }),
-        getGroupSavedViewsTotalCount: getGroupSavedViewsTotalCountFactory({ db })
+        getGroupSavedViewsPageItems: getGroupSavedViewsPageItemsFactory({
+          db: projectDb
+        }),
+        getGroupSavedViewsTotalCount: getGroupSavedViewsTotalCountFactory({
+          db: projectDb
+        })
       })
 
       const allowedSortBy = <const>['createdAt', 'name', 'updatedAt']
