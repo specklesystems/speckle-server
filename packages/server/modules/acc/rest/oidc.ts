@@ -11,21 +11,14 @@ import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import {
   getAutodeskIntegrationClientId,
   getAutodeskIntegrationClientSecret,
-  getFrontendOrigin,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import type { Express } from 'express'
 
 export const setupAccOidcEndpoints = (app: Express) => {
-  const corsMiddleware = corsMiddlewareFactory({
-    corsConfig: {
-      origin: [getServerOrigin(), getFrontendOrigin()],
-      credentials: true
-    }
-  })
+  const corsMiddleware = corsMiddlewareFactory()
   const sessionMiddleware = sessionMiddlewareFactory()
 
-  app.options('/api/v1/acc/auth/login', corsMiddleware)
   app.post(
     '/api/v1/acc/auth/login',
     corsMiddleware,
@@ -50,7 +43,6 @@ export const setupAccOidcEndpoints = (app: Express) => {
     }
   )
 
-  app.options('/api/v1/acc/auth/callback', corsMiddleware)
   app.get(
     '/api/v1/acc/auth/callback',
     corsMiddleware,
@@ -82,7 +74,6 @@ export const setupAccOidcEndpoints = (app: Express) => {
     }
   )
 
-  app.options('/api/v1/acc/auth/status', corsMiddleware)
   app.get('/api/v1/acc/auth/status', corsMiddleware, sessionMiddleware, (req, res) => {
     if (!req.session.accTokens) {
       return res.status(404).send({ error: 'No ACC tokens found' })
@@ -90,7 +81,6 @@ export const setupAccOidcEndpoints = (app: Express) => {
     res.send(req.session.accTokens)
   })
 
-  app.options('/api/v1/acc/auth/refresh', corsMiddleware)
   app.post(
     '/api/v1/acc/auth/refresh',
     corsMiddleware,
