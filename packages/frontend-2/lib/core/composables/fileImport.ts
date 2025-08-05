@@ -11,7 +11,14 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { BlobUploadStatus, type BlobPostResultItem } from '~~/lib/core/api/blobStorage'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~/lib/common/generated/gql'
-import { useIsNextGenFileImporterEnabled } from '~/composables/globals'
+import {
+  useIsNextGenFileImporterEnabled,
+  useIsRhinoFileImporterEnabled
+} from '~/composables/globals'
+import {
+  rhinoImporterSupportedFileExtensions,
+  FileUploadConvertedStatus
+} from '@speckle/shared/blobs'
 import type {
   UseFailedFileImportJobUtils_FileUploadFragment,
   UseFileImport_ModelFragment,
@@ -26,7 +33,7 @@ import {
   prettyFileSize,
   resolveFileExtension
 } from '@speckle/ui-components'
-import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+
 import dayjs from 'dayjs'
 import { uniqBy } from 'lodash-es'
 
@@ -350,9 +357,19 @@ graphql(`
 export const useFileImportBaseSettings = () => {
   const { maxSizeInBytes } = useServerFileUploadLimit()
   const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
+  const isRhinoFileImportEnabled = useIsRhinoFileImporterEnabled()
 
-  const accept = computed(
-    () => `.ifc,.stl,.obj${isNextGenFileImporterEnabled.value ? ',.skp' : ''}`
+  const legacyFileImportService = '.ifc,.obj,.stl'
+  const nextGenBackgroundJobs = `.ifc,${
+    isRhinoFileImportEnabled.value
+      ? [...rhinoImporterSupportedFileExtensions]
+          .map((ext: string) => `.${ext}`)
+          .join(',')
+      : ''
+  }`
+
+  const accept = computed(() =>
+    isNextGenFileImporterEnabled.value ? nextGenBackgroundJobs : legacyFileImportService
   )
 
   return { maxSizeInBytes, accept }
