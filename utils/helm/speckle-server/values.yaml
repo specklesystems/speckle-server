@@ -75,6 +75,8 @@ featureFlags:
   backgroundJobsEnabled: false
   ## @param featureFlags.rhinoFileImporterEnabled  Enables the dedicated Rhino based file importer. This is not part of the deployment.
   rhinoFileImporterEnabled: false
+  ## @param featureFlags.savedViewsEnabled Enables the ability to create and manage saved views
+  savedViewsEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
